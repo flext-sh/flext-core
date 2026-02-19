@@ -1,7 +1,7 @@
 # Domain-Driven Design with FlextModels
 
-
 <!-- TOC START -->
+
 - [Core Concepts](#core-concepts)
   - [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
   - [FlextModels Architecture](#flextmodels-architecture)
@@ -27,6 +27,7 @@
 - [Key Takeaways](#key-takeaways)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation
@@ -40,10 +41,10 @@ FlextModels provides domain-driven design (DDD) patterns through semantic base c
 DDD is an approach to software development that emphasizes:
 
 1. **Ubiquitous Language**: Domain experts and developers use the same terminology
-2. **Bounded Contexts**: Clear boundaries around domain concepts
-3. **Entity Invariants**: Objects protect their own business rules
-4. **Value Objects**: Immutable objects compared by value, not identity
-5. **Aggregates**: Clusters of entities that maintain invariants together
+1. **Bounded Contexts**: Clear boundaries around domain concepts
+1. **Entity Invariants**: Objects protect their own business rules
+1. **Value Objects**: Immutable objects compared by value, not identity
+1. **Aggregates**: Clusters of entities that maintain invariants together
 
 ### FlextModels Architecture
 
@@ -919,11 +920,11 @@ if result.is_success:
 ### Benefits of CQRS in FLEXT
 
 1. **Clear Intent**: Commands for writes, Queries for reads
-2. **Scalability**: Scale read/write sides independently
-3. **Performance**: Optimize queries separately from commands
-4. **Testing**: Easier to test command/query logic in isolation
-5. **Type Safety**: `FlextResult[T]` ensures predictable contracts
-6. **Error Handling**: Consistent `FlextResult` return types
+1. **Scalability**: Scale read/write sides independently
+1. **Performance**: Optimize queries separately from commands
+1. **Testing**: Easier to test command/query logic in isolation
+1. **Type Safety**: `FlextResult[T]` ensures predictable contracts
+1. **Error Handling**: Consistent `FlextResult` return types
 
 ### When to Use CQRS
 
@@ -993,19 +994,19 @@ def add_to_cart(cart, item):
 ## Key Takeaways
 
 1. **Value Objects**: Immutable, compared by value, no identity
-2. **Entities**: Have identity, mutable, encapsulate business logic
-3. **Aggregates**: Clusters of entities maintaining invariants
-4. **Ubiquitous Language**: Use domain terms in code
-5. **Invariants**: Protect business rules in entity methods
-6. **FlextResult**: Use for operations that can fail
+1. **Entities**: Have identity, mutable, encapsulate business logic
+1. **Aggregates**: Clusters of entities maintaining invariants
+1. **Ubiquitous Language**: Use domain terms in code
+1. **Invariants**: Protect business rules in entity methods
+1. **FlextResult**: Use for operations that can fail
 
 ## Next Steps
 
 1. **Service Patterns**: Explore Service Patterns for domain service implementation
-2. **Dependency Injection**: See Advanced DI for service composition
-3. **Error Handling**: Check Error Handling Guide for domain error patterns
-4. **Railway Patterns**: Review Railway-Oriented Programming for result composition
-5. **Architecture**: Study Clean Architecture for layer organization
+1. **Dependency Injection**: See Advanced DI for service composition
+1. **Error Handling**: Check Error Handling Guide for domain error patterns
+1. **Railway Patterns**: Review Railway-Oriented Programming for result composition
+1. **Architecture**: Study Clean Architecture for layer organization
 
 ## See Also
 
@@ -1017,6 +1018,6 @@ def add_to_cart(cart, item):
 - API Reference: FlextModels - Complete models API
 - **FLEXT CLAUDE.md**: Development patterns and standards
 
----
+______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_models.py` for 200+ test cases demonstrating DDD patterns with FlextModels.

@@ -1,7 +1,7 @@
 # Architecture Decision Records (ADRs)
 
-
 <!-- TOC START -->
+
 - [ADR-001: 5-Layer Architecture](#adr-001-5-layer-architecture)
   - [Problem](#problem)
   - [Decision](#decision)
@@ -68,6 +68,7 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Viewing Decisions](#viewing-decisions)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -114,7 +115,7 @@ Implement strict 5-layer architecture with unidirectional dependencies:
 - ❌ Cannot use arbitrary imports
 - ❌ Requires discipline
 
----
+______________________________________________________________________
 
 ## ADR-002: Railway-Oriented Programming with FlextResult[T]
 
@@ -139,7 +140,7 @@ Implement `FlextResult[T]` monad supporting both success and failure states with
 ### Alternatives Considered
 
 - Exceptions: Implicit, implicit error paths
-- Optional[T]: Only represents absence, not failures
+- Optional\[T\]: Only represents absence, not failures
 - Result enums: Language-dependent, less composable
 
 ### Consequences
@@ -150,7 +151,7 @@ Implement `FlextResult[T]` monad supporting both success and failure states with
 - ❌ Learning curve for new developers
 - ❌ Verbose in some cases
 
----
+______________________________________________________________________
 
 ## ADR-003: Pydantic v2 (No v1 Legacy)
 
@@ -185,7 +186,7 @@ Use Pydantic v2 exclusively with zero v1 legacy code (.dict(), .parse_obj() forb
 - ❌ Cannot use Pydantic v1 packages
 - ❌ Requires Python 3.13+
 
----
+______________________________________________________________________
 
 ## ADR-004: Single Class Per Module Pattern
 
@@ -232,7 +233,7 @@ class FlextContainer:  # Second top-level class
 - ❌ Less flexible organization
 - ❌ Requires discipline
 
----
+______________________________________________________________________
 
 ## ADR-005: Global Container Singleton Pattern
 
@@ -266,7 +267,7 @@ Implement `FlextContainer.get_global()` singleton for service registration and r
 - ❌ Global state (testability requires cleanup)
 - ❌ Can hide dependencies
 
----
+______________________________________________________________________
 
 ## ADR-006: Ecosystem API Stability
 
@@ -312,7 +313,7 @@ FlextResult[T].value  # `.data` remains available as a legacy alias
 - ❌ Limited evolution
 - ❌ Deprecation cycles needed
 
----
+______________________________________________________________________
 
 ## ADR-007: Type Safety: No `Any` Type
 
@@ -346,7 +347,7 @@ Need complete type safety without escape hatches that reduce code reliability.
 - ❌ More complex types initially
 - ❌ Learning curve for developers
 
----
+______________________________________________________________________
 
 ## ADR-008: Clean Layered Dependencies Only (No Shortcuts)
 
@@ -379,7 +380,7 @@ Developers want to take shortcuts across layers to "just make it work" causing t
 - ❌ Requires discipline
 - ❌ Cannot take shortcuts
 
----
+______________________________________________________________________
 
 ## ADR-009: Python 3.13+ Exclusive
 
@@ -419,7 +420,7 @@ Features enabled:
 - ❌ Cannot use on older Python
 - ❌ Limits some user adoption
 
----
+______________________________________________________________________
 
 ## ADR-010: Domain Events Over Direct Calls
 
@@ -462,18 +463,18 @@ class OrderService(FlextService):
 - ❌ Complexity in event orchestration
 - ❌ Debugging trace requires event log
 
----
+______________________________________________________________________
 
 ## Decision Making Process
 
 For new ADRs:
 
 1. **Problem**: What's the issue?
-2. **Decision**: What are we choosing?
-3. **Rationale**: Why this choice?
-4. **Alternatives**: What else could work?
-5. **Consequences**: Trade-offs?
-6. **Status**: Proposed/Accepted/Deprecated
+1. **Decision**: What are we choosing?
+1. **Rationale**: Why this choice?
+1. **Alternatives**: What else could work?
+1. **Consequences**: Trade-offs?
+1. **Status**: Proposed/Accepted/Deprecated
 
 ## Obsoleted Decisions
 
@@ -491,10 +492,10 @@ For new ADRs:
 ## Next Steps
 
 1. **Architecture Overview**: See Architecture Overview for layer structure
-2. **Clean Architecture**: Review Clean Architecture for dependency rules
-3. **CQRS Patterns**: Explore CQRS Architecture for implementation details
-4. **Architecture Patterns**: Check Architecture Patterns for common patterns
-5. **Implementation Guides**: Review Getting Started for practical usage
+1. **Clean Architecture**: Review Clean Architecture for dependency rules
+1. **CQRS Patterns**: Explore CQRS Architecture for implementation details
+1. **Architecture Patterns**: Check Architecture Patterns for common patterns
+1. **Implementation Guides**: Review Getting Started for practical usage
 
 ## See Also
 

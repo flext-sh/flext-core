@@ -1,14 +1,14 @@
 # Railway-Oriented Programming Guide - Audit Report
 
-
 <!-- TOC START -->
+
 - [Audit Summary](#audit-summary)
-  - [✅ Accurate Documentation (7 methods)](#-accurate-documentation-7-methods)
-  - [❌ Missing Critical Methods (13 methods)](#-missing-critical-methods-13-methods)
-  - [⚠️ Documented But Need Verification](#-documented-but-need-verification)
-  - [🔍 Instance Methods & Properties Not Documented](#-instance-methods-properties-not-documented)
+  - [✅ Accurate Documentation (7 methods)](#accurate-documentation-7-methods)
+  - [❌ Missing Critical Methods (13 methods)](#missing-critical-methods-13-methods)
+  - [⚠️ Documented But Need Verification](#documented-but-need-verification)
+  - [🔍 Instance Methods & Properties Not Documented](#instance-methods-properties-not-documented)
 - [Incorrect Facts Found](#incorrect-facts-found)
-  - [None Found ✅](#none-found-)
+  - [None Found ✅](#none-found)
 - [Improvements Needed](#improvements-needed)
   - [High Priority](#high-priority)
   - [Medium Priority](#medium-priority)
@@ -21,10 +21,11 @@
   - [Short Term (Next Session)](#short-term-next-session)
   - [Long Term](#long-term)
 - [Source Code Verification](#source-code-verification)
-  - [Verified Line Numbers ✅](#verified-line-numbers-)
-  - [Verified Instance Methods ✅](#verified-instance-methods-)
+  - [Verified Line Numbers ✅](#verified-line-numbers)
+  - [Verified Instance Methods ✅](#verified-instance-methods)
   - [Still Need to Find](#still-need-to-find)
 - [Conclusion](#conclusion)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -34,7 +35,7 @@
 **Date**: 2025-10-21
 **Status**: ⚠️ INCOMPLETE - Missing 13 major methods
 
----
+______________________________________________________________________
 
 ## Audit Summary
 
@@ -43,36 +44,43 @@
 These methods are correctly documented with accurate line references:
 
 1. **FlextResult.ok()** - Line 313 ✅
+
    - Documented accurately
    - Example correct
    - Source reference valid
 
-2. **FlextResult.fail()** - Line 343 ✅
+1. **FlextResult.fail()** - Line 343 ✅
+
    - Documented accurately
    - Error code and error_data parameters covered
    - Source reference valid
 
-3. **map()** - Line 529 ✅
+1. **map()** - Line 529 ✅
+
    - Documented accurately
    - Transformation behavior correct
    - Example valid
 
-4. **flat_map()** - Line 575 ✅
+1. **flat_map()** - Line 575 ✅
+
    - Documented accurately
    - Monadic bind explained
    - Chaining examples correct
 
-5. **filter()** - Line 996 ✅
+1. **filter()** - Line 996 ✅
+
    - Documented accurately
    - Predicate functionality correct
    - Example valid
 
-6. **traverse()** - Line 1257 ✅
+1. **traverse()** - Line 1257 ✅
+
    - Documented in "Combining Multiple Results" section
    - Behavior correct
    - Should be expanded with more examples
 
-7. **from_callable()** - Line 395 ✅
+1. **from_callable()** - Line 395 ✅
+
    - Documented accurately
    - Exception wrapping explained
    - Example correct
@@ -84,16 +92,19 @@ These **production-ready methods** exist in source but are **NOT documented**:
 #### Factory Methods
 
 1. **from_exception()** - Line 1014
+
    - **Purpose**: Create FlextResult from function that might raise
    - **Missing From**: All guides
    - **Impact**: HIGH - Alternative to from_callable
 
-2. **from_maybe()** - Line 1068
+1. **from_maybe()** - Line 1068
+
    - **Purpose**: Convert returns.maybe.Maybe to FlextResult
    - **Missing From**: Railway guide, API reference
    - **Impact**: MEDIUM - Interoperability with returns library
 
-3. **from_io_result()** - Line 1689
+1. **from_io_result()** - Line 1689
+
    - **Purpose**: Convert returns.io types to FlextResult
    - **Missing From**: All guides
    - **Impact**: MEDIUM - IO monad integration
@@ -101,7 +112,8 @@ These **production-ready methods** exist in source but are **NOT documented**:
 #### Collection Operations
 
 4. **sequence()** - Line 1126
-   - **Purpose**: Convert list[FlextResult[T]] → FlextResult[list[T]]
+
+   - **Purpose**: Convert list\[FlextResult[T]\] → FlextResult\[list[T]\]
    - **Missing From**: Railway guide
    - **Impact**: HIGH - Essential for batch operations
    - **Example Needed**:
@@ -112,17 +124,20 @@ These **production-ready methods** exist in source but are **NOT documented**:
    # FlextResult[list[int]].ok([1, 2, 3])
    ```
 
-5. **collect_successes()** - Line 1144
+1. **collect_successes()** - Line 1144
+
    - **Purpose**: Extract all successful values from list of results
    - **Missing From**: All guides
    - **Impact**: HIGH - Common pattern for partial success
 
-6. **collect_failures()** - Line 1151
+1. **collect_failures()** - Line 1151
+
    - **Purpose**: Extract all failures from list of results
    - **Missing From**: All guides
    - **Impact**: HIGH - Error aggregation pattern
 
-7. **success_rate()** - Line 1159
+1. **success_rate()** - Line 1159
+
    - **Purpose**: Calculate percentage of successful results
    - **Missing From**: All guides
    - **Impact**: MEDIUM - Metrics and monitoring
@@ -130,55 +145,65 @@ These **production-ready methods** exist in source but are **NOT documented**:
 #### Advanced Composition
 
 8. **batch_process()** - Line 1167
+
    - **Purpose**: Process items in batches with error handling
    - **Missing From**: Railway guide
    - **Impact**: HIGH - Batch processing pattern
 
-9. **safe_call()** - Line 1179
+1. **safe_call()** - Line 1179
+
    - **Purpose**: Execute callable with automatic exception handling
    - **Missing From**: All guides
    - **Impact**: HIGH - Alternative to from_callable with better ergonomics
 
-10. **pipeline()** - Line 1276
-    - **Purpose**: Compose operations with initial value
-    - **Missing From**: Railway guide
-    - **Impact**: HIGH - Alternative to flow_through
-    - **Note**: Guide mentions flow_through but not pipeline
+1. **pipeline()** - Line 1276
 
-11. **accumulate_errors()** - Line 1327
-    - **Purpose**: Collect multiple errors instead of short-circuiting
-    - **Missing From**: Railway guide
-    - **Impact**: HIGH - Form validation pattern
+   - **Purpose**: Compose operations with initial value
+   - **Missing From**: Railway guide
+   - **Impact**: HIGH - Alternative to flow_through
+   - **Note**: Guide mentions flow_through but not pipeline
 
-12. **parallel_map()** - Line 1352
-    - **Purpose**: Map with fail-fast or collect-all modes
-    - **Missing From**: Railway guide
-    - **Impact**: HIGH - Concurrent processing
+1. **accumulate_errors()** - Line 1327
 
-13. **validate_all()** - Line 1454
-    - **Purpose**: Validate all items returning all errors
-    - **Missing From**: Railway guide
-    - **Impact**: HIGH - Comprehensive validation pattern
+   - **Purpose**: Collect multiple errors instead of short-circuiting
+   - **Missing From**: Railway guide
+   - **Impact**: HIGH - Form validation pattern
+
+1. **parallel_map()** - Line 1352
+
+   - **Purpose**: Map with fail-fast or collect-all modes
+   - **Missing From**: Railway guide
+   - **Impact**: HIGH - Concurrent processing
+
+1. **validate_all()** - Line 1454
+
+   - **Purpose**: Validate all items returning all errors
+   - **Missing From**: Railway guide
+   - **Impact**: HIGH - Comprehensive validation pattern
 
 ### ⚠️ Documented But Need Verification
 
 These are mentioned but need source verification:
 
 1. **flow_through()** - Mentioned in guide
+
    - **Need**: Verify existence and line number
    - **Status**: Not found in @classmethod search
    - **Action**: Check if it's an instance method
 
-2. **lash()** - Mentioned in guide
+1. **lash()** - Mentioned in guide
+
    - **Purpose**: Error recovery (opposite of flat_map)
    - **Need**: Verify implementation
    - **Status**: Check instance methods
 
-3. **alt()** - Mentioned in guide
+1. **alt()** - Mentioned in guide
+
    - **Purpose**: Alternative result on failure
    - **Need**: Verify implementation
 
-4. **with_resource()** - Mentioned in guide
+1. **with_resource()** - Mentioned in guide
+
    - **Purpose**: Resource management
    - **Need**: Verify implementation
 
@@ -190,7 +215,7 @@ Need to search for:
 - Instance methods: `unwrap()`, `unwrap_or()`, `map_error()`, `recover()`, `tap()`
 - Operators: `__or__`, `__bool__`, `__iter__`
 
----
+______________________________________________________________________
 
 ## Incorrect Facts Found
 
@@ -198,28 +223,32 @@ Need to search for:
 
 All documented information appears to be accurate. The issue is **incompleteness**, not incorrectness.
 
----
+______________________________________________________________________
 
 ## Improvements Needed
 
 ### High Priority
 
 1. **Add Missing Factory Methods Section**
+
    - Document from_exception, from_maybe, from_io_result
    - Show when to use each
    - Provide examples
 
-2. **Add Collection Operations Section**
+1. **Add Collection Operations Section**
+
    - Document sequence, collect_successes, collect_failures
    - Essential for batch processing
    - Real-world examples needed
 
-3. **Expand Advanced Composition**
+1. **Expand Advanced Composition**
+
    - Document batch_process, pipeline, accumulate_errors
    - Document parallel_map with modes
    - Show performance considerations
 
-4. **Add Comprehensive Validation Patterns**
+1. **Add Comprehensive Validation Patterns**
+
    - Document validate_all for form validation
    - Show accumulate_errors usage
    - Multi-field validation examples
@@ -227,11 +256,13 @@ All documented information appears to be accurate. The issue is **incompleteness
 ### Medium Priority
 
 5. **Verify Advanced Methods**
+
    - Check flow_through() existence
    - Verify lash(), alt(), with_resource()
    - Update or remove if not found
 
-6. **Add Complete API Reference Section**
+1. **Add Complete API Reference Section**
+
    - List ALL methods in table format
    - Include line numbers
    - Brief description of each
@@ -240,16 +271,18 @@ All documented information appears to be accurate. The issue is **incompleteness
 ### Low Priority
 
 7. **Add Performance Section**
+
    - Document parallel_map performance
    - Batch processing guidelines
    - When to use batch_process vs traverse
 
-8. **Add Metrics Section**
+1. **Add Metrics Section**
+
    - Document success_rate usage
    - Monitoring patterns
    - Error rate tracking
 
----
+______________________________________________________________________
 
 ## Recommended Structure Changes
 
@@ -319,7 +352,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 15. Key Takeaways ✅
 ```
 
----
+______________________________________________________________________
 
 ## Action Items
 
@@ -345,7 +378,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 - [ ] Create decision tree for method selection
 - [ ] Generate API reference from source docstrings
 
----
+______________________________________________________________________
 
 ## Source Code Verification
 
@@ -386,7 +419,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 
 - map_error() - Search needed (might be in a different form)
 
----
+______________________________________________________________________
 
 ## Conclusion
 
@@ -402,6 +435,6 @@ The Railway-Oriented Programming guide is **accurate but significantly incomplet
 
 **Priority**: HIGH - This is the foundation pattern guide and must be complete.
 
----
+______________________________________________________________________
 
 **Next**: Continue verification of instance methods and create improved version of the guide.

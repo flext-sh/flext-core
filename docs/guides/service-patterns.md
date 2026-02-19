@@ -1,7 +1,7 @@
 # Service Patterns Guide
 
-
 <!-- TOC START -->
+
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Execution Patterns](#execution-patterns)
@@ -21,18 +21,19 @@
   - [From V1 to V2 Property](#from-v1-to-v2-property)
   - [Gradual Adoption](#gradual-adoption)
 - [Best Practices](#best-practices)
-  - [DO ✅](#do-)
-  - [DON'T ❌](#dont-)
+  - [DO ✅](#do)
+  - [DON'T ❌](#dont)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [References](#references)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services
 
-**Version:** 1.0 (2025-12-03)  
-**Python:** 3.13+  
-**Pydantic:** 2.x  
+**Version:** 1.0 (2025-12-03)\
+**Python:** 3.13+\
+**Pydantic:** 2.x\
 **Status:** V1 stable; V2 patterns under validation
 
 This guide describes FlextService usage patterns and the evolution from
@@ -44,7 +45,7 @@ explicit execution (V1) to zero-ceremony patterns (V2).
 - Keep service examples returning `FlextResult[T]` and matching layer boundaries.
 - Keep runtime/DI guidance aligned with `dependency-injection-advanced.md`.
 
----
+______________________________________________________________________
 
 ## Overview
 
@@ -64,7 +65,7 @@ class CreateUserService(FlextService[User]):
         return FlextResult[User].ok(user)
 ```
 
----
+______________________________________________________________________
 
 ## Execution Patterns
 
@@ -148,7 +149,7 @@ print(f"Created user: {user.name}")
 - ⚠️ Opt-in via `auto_execute = True`
 - ⚠️ Error handling via exceptions
 
----
+______________________________________________________________________
 
 ## Infrastructure Properties
 
@@ -186,7 +187,7 @@ class ProcessOrderService(FlextService[Order]):
         return repo.find_by_id(self.order_id)
 ```
 
----
+______________________________________________________________________
 
 ## Composition Patterns
 
@@ -227,7 +228,7 @@ service = create_notification_service("email", "Hello!")
 result = service.execute()
 ```
 
----
+______________________________________________________________________
 
 ## Integration with Handlers
 
@@ -248,7 +249,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
 
 See CQRS Architecture for handler details.
 
----
+______________________________________________________________________
 
 ## Testing Services
 
@@ -284,7 +285,7 @@ def test_service_with_container(container: FlextContainer):
     assert result.is_success
 ```
 
----
+______________________________________________________________________
 
 ## Migration Guide
 
@@ -308,10 +309,10 @@ except FlextExceptions.BaseError as e:
 ### Gradual Adoption
 
 1. **New code:** Consider V2 patterns if tests pass
-2. **Existing code:** Keep V1 (no changes required)
-3. **Critical paths:** Prefer V1 for explicit error handling
+1. **Existing code:** Keep V1 (no changes required)
+1. **Critical paths:** Prefer V1 for explicit error handling
 
----
+______________________________________________________________________
 
 ## Best Practices
 
@@ -328,15 +329,15 @@ except FlextExceptions.BaseError as e:
 - Access infrastructure in `__init__` (properties are lazy)
 - Mix V1 and V2 patterns in the same module
 
----
+______________________________________________________________________
 
 ## Next Steps
 
 1. **Domain-Driven Design**: Explore DDD Patterns for entity and aggregate patterns
-2. **Dependency Injection**: See Advanced DI for service composition
-3. **Railway Patterns**: Review Railway-Oriented Programming for result composition
-4. **Error Handling**: Check Error Handling Guide for comprehensive error patterns
-5. **API Reference**: Review FlextService API for complete API
+1. **Dependency Injection**: See Advanced DI for service composition
+1. **Railway Patterns**: Review Railway-Oriented Programming for result composition
+1. **Error Handling**: Check Error Handling Guide for comprehensive error patterns
+1. **API Reference**: Review FlextService API for complete API
 
 ## See Also
 
@@ -354,6 +355,6 @@ except FlextExceptions.BaseError as e:
 - `flext_core/result.py` – FlextResult monad
 - CQRS Architecture
 
----
+______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_service.py` for comprehensive service pattern examples and test cases.

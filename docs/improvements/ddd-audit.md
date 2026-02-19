@@ -1,9 +1,10 @@
 # Domain-Driven Design Guide - Audit Report
 
-
 <!-- TOC START -->
+
 - [Findings](#findings)
 - [Recommended Actions](#recommended-actions)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -12,7 +13,7 @@
 **Date**: 2025-11-15
 **Status**: ✅ Examples compile; adjust integration notes
 
----
+______________________________________________________________________
 
 ## Findings
 
@@ -23,5 +24,5 @@
 ## Recommended Actions
 
 1. Update integration callouts to reference `FlextDispatcher` (dispatcher registration + dispatch) instead of the removed bus layer.
-2. Add a brief note on how aggregates can publish events handled through dispatcher-managed subscribers.
-3. Keep imports scoped to the symbols used in each example.
+1. Add a brief note on how aggregates can publish events handled through dispatcher-managed subscribers.
+1. Keep imports scoped to the symbols used in each example.

@@ -1,7 +1,7 @@
 # Architecture Patterns
 
-
 <!-- TOC START -->
+
 - [Railway-Oriented Programming](#railway-oriented-programming)
 - [Dependency Injection](#dependency-injection)
 - [Domain-Driven Design](#domain-driven-design)
@@ -17,6 +17,7 @@
 - [Summary](#summary)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -448,10 +449,10 @@ Use these patterns to build maintainable, scalable FLEXT-Core applications.
 ## Next Steps
 
 1. **Architecture Overview**: See Architecture Overview for layer structure
-2. **Clean Architecture**: Review Clean Architecture for dependency rules
-3. **CQRS Patterns**: Explore CQRS Architecture for handler patterns
-4. **Railway Patterns**: Check Railway-Oriented Programming Guide for detailed examples
-5. **Service Patterns**: Review Service Patterns Guide for domain services
+1. **Clean Architecture**: Review Clean Architecture for dependency rules
+1. **CQRS Patterns**: Explore CQRS Architecture for handler patterns
+1. **Railway Patterns**: Check Railway-Oriented Programming Guide for detailed examples
+1. **Service Patterns**: Review Service Patterns Guide for domain services
 
 ## See Also
 

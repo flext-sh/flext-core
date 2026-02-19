@@ -1,7 +1,7 @@
 # Documentation Templates
 
-
 <!-- TOC START -->
+
 - [Feature Guide Template](#feature-guide-template)
 - [Overview](#overview)
 - [Basic Usage](#basic-usage)
@@ -11,8 +11,8 @@
   - [Method/Class 1](#methodclass-1)
   - [Method/Class 2](#methodclass-2)
 - [Best Practices](#best-practices)
-  - [✅ DO](#-do)
-  - [❌ DON'T](#-dont)
+  - [✅ DO](#do)
+  - [❌ DON'T](#dont)
 - [Common Issues](#common-issues)
   - [Issue: [Problem Description]](#issue-problem-description)
   - [Issue: [Problem Description]](#issue-problem-description)
@@ -33,7 +33,7 @@
 - [[Another Category]](#another-category)
   - [Issue: [Problem Description]](#issue-problem-description)
 - [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
-- [ADR-[Number]: [Title]](#adr-number-title)
+- [ADR-\[Number\]: [Title]](#adr-number-title)
   - [Problem](#problem)
   - [Decision](#decision)
   - [Rationale](#rationale)
@@ -84,6 +84,7 @@
 - [Tips for Using Templates](#tips-for-using-templates)
 - [Example: Using the Feature Guide Template](#example-using-the-feature-guide-template)
 - [Maintenance](#maintenance)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -317,7 +318,7 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 - When X happens
 - When Y is configured as Z
 
----
+______________________________________________________________________
 
 ## [Another Category]
 

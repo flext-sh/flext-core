@@ -1,13 +1,14 @@
 # Contributing to FLEXT-Core
 
-
 <!-- TOC START -->
+
 - [Quick Workflow](#quick-workflow)
 - [Required Local Checks](#required-local-checks)
 - [Architecture and Typing Rules](#architecture-and-typing-rules)
 - [Pull Request Expectations](#pull-request-expectations)
 - [Issue and Feature Requests](#issue-and-feature-requests)
 - [Need More Detail?](#need-more-detail)
+
 <!-- TOC END -->
 
 Thanks for contributing.
@@ -21,10 +22,10 @@ This file is the fast entrypoint. Canonical contributor guidance lives in:
 ## Quick Workflow
 
 1. Create a focused branch from `0.10.0-dev`.
-2. Keep changes scoped to one concern per commit.
-3. Add or update tests in the same change when behavior changes.
-4. Run quality gates before opening a PR.
-5. Update docs for API, behavior, or architecture changes.
+1. Keep changes scoped to one concern per commit.
+1. Add or update tests in the same change when behavior changes.
+1. Run quality gates before opening a PR.
+1. Update docs for API, behavior, or architecture changes.
 
 ## Required Local Checks
 

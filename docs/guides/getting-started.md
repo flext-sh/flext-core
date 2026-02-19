@@ -1,33 +1,34 @@
 <!-- Generated from docs/guides/getting-started.md for flext-core. -->
+
 <!-- Source of truth: workspace docs/guides/. -->
 
 # flext-core - Getting Started with FLEXT
 
 > Project profile: `flext-core`
 
-
-
 <!-- TOC START -->
-- What is FLEXT
-- Prerequisites
-- Installation
-  - Basic Installation
-  - Development Installation
-  - Docker Installation
-- Your First FLEXT Application
-  - 1. Basic Setup
-  - 2. Using flext-ldif for LDIF Processing
-  - 3. Railway-Oriented Error Handling
-  - 4. CQRS Pattern with Commands and Queries
-- Configuration
-  - Basic Configuration
-  - Programmatic Configuration
-- Next Steps
-  - Explore the Ecosystem
-  - Learn Key Patterns
-  - Build Real Applications
-- Getting Help
-- What's Next
+
+- [What is FLEXT](#what-is-flext)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+  - [Basic Installation](#basic-installation)
+  - [Development Installation](#development-installation)
+  - [Docker Installation](#docker-installation)
+- [Your First FLEXT Application](#your-first-flext-application)
+  - [1. Basic Setup](#1-basic-setup)
+  - [2. Using flext-ldif for LDIF Processing](#2-using-flext-ldif-for-ldif-processing)
+  - [3. Railway-Oriented Error Handling](#3-railway-oriented-error-handling)
+  - [4. CQRS Pattern with Commands and Queries](#4-cqrs-pattern-with-commands-and-queries)
+- [Configuration](#configuration)
+  - [Basic Configuration](#basic-configuration)
+  - [Programmatic Configuration](#programmatic-configuration)
+- [Next Steps](#next-steps)
+  - [Explore the Ecosystem](#explore-the-ecosystem)
+  - [Learn Key Patterns](#learn-key-patterns)
+  - [Build Real Applications](#build-real-applications)
+- [Getting Help](#getting-help)
+- [What's Next](#whats-next)
+
 <!-- TOC END -->
 
 ## What is FLEXT
@@ -293,10 +294,10 @@ ldif = FlextLdif(config=config)
 ### Explore the Ecosystem
 
 1. **flext-core**: Master the core patterns and abstractions
-2. **flext-ldif**: Learn LDIF processing and migration
-3. **flext-api**: Build REST APIs with FLEXT
-4. **flext-auth**: Implement authentication and authorization
-5. **flext-ldap**: Integrate with LDAP servers
+1. **flext-ldif**: Learn LDIF processing and migration
+1. **flext-api**: Build REST APIs with FLEXT
+1. **flext-auth**: Implement authentication and authorization
+1. **flext-ldap**: Integrate with LDAP servers
 
 ### Learn Key Patterns
 
@@ -324,8 +325,8 @@ ldif = FlextLdif(config=config)
 Now that you have FLEXT installed and running, explore these areas:
 
 1. **Architecture Guide**: Understand FLEXT's design principles
-2. **API Reference**: Complete API documentation
-3. **Project Guides**: Deep dive into specific libraries
-4. **Examples**: Real-world usage examples
+1. **API Reference**: Complete API documentation
+1. **Project Guides**: Deep dive into specific libraries
+1. **Examples**: Real-world usage examples
 
 Happy coding with FLEXT! 🚀

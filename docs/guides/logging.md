@@ -1,7 +1,7 @@
 # Logging Guide
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Canonical Rules](#canonical-rules)
 - [3-Tier Context System](#3-tier-context-system)
@@ -14,6 +14,7 @@
 - [Example: Request Handler Pattern](#example-request-handler-pattern)
 - [Auto-Configuration](#auto-configuration)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 ## Overview
@@ -171,9 +172,9 @@ FlextLogger.Context.unbind_context_for_level(level=logging.DEBUG)
 When multiple context sources are active, they are merged in the following order (later sources override earlier ones):
 
 1. **Global Context** (lowest priority)
-2. **Scoped Contexts** (APPLICATION, then REQUEST, then OPERATION)
-3. **Level Context** (only for matching log levels)
-4. **Message-specific context** (highest priority, passed directly to log methods)
+1. **Scoped Contexts** (APPLICATION, then REQUEST, then OPERATION)
+1. **Level Context** (only for matching log levels)
+1. **Message-specific context** (highest priority, passed directly to log methods)
 
 ## Automatic Context Propagation
 
@@ -196,10 +197,10 @@ logger.error("Operation failed")  # Automatically includes request_id
 ## Best Practices
 
 1. **Use Global Context** for application-wide metadata that doesn't change
-2. **Use Scoped Context** for request/operation-specific data that should be isolated
-3. **Use Level Context** for verbose debugging information that shouldn't appear in production
-4. **Clean up context** when scopes end (e.g., unbind REQUEST context after request completes)
-5. **Use context managers** for automatic cleanup when available
+1. **Use Scoped Context** for request/operation-specific data that should be isolated
+1. **Use Level Context** for verbose debugging information that shouldn't appear in production
+1. **Clean up context** when scopes end (e.g., unbind REQUEST context after request completes)
+1. **Use context managers** for automatic cleanup when available
 
 ## Example: Request Handler Pattern
 

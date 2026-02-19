@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+"""Auto-fix broken links and insert/update TOC in markdown files."""
+
 from __future__ import annotations
 
 import argparse
@@ -5,7 +9,7 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from _shared import (
+from shared import (
     Scope,
     build_scopes,
     iter_markdown_files,
@@ -21,12 +25,15 @@ TOC_END = "<!-- TOC END -->"
 
 @dataclass(frozen=True)
 class FixItem:
+    """Per-file summary of applied fixes."""
+
     file: str
     links: int
     toc: int
 
 
 def maybe_fix_link(md_file: Path, raw_link: str) -> str | None:
+    """Return a corrected link target or None if no fix is needed."""
     if raw_link.startswith(("http://", "https://", "mailto:", "tel:", "#")):
         return None
     base = raw_link.split("#", maxsplit=1)[0]
@@ -43,13 +50,15 @@ def maybe_fix_link(md_file: Path, raw_link: str) -> str | None:
 
 
 def anchorize(text: str) -> str:
+    """Convert a heading title to a GitHub-compatible anchor slug."""
     value = text.strip().lower()
     value = re.sub(r"[^a-z0-9\s-]", "", value)
     value = re.sub(r"\s+", "-", value)
-    return re.sub(r"-+", "-", value)
+    return re.sub(r"-+", "-", value).strip("-")
 
 
 def build_toc(content: str) -> str:
+    """Generate a TOC block from ## and ### headings in *content*."""
     items: list[str] = []
     for level, title in HEADING_RE.findall(content):
         anchor = anchorize(title)
@@ -63,6 +72,7 @@ def build_toc(content: str) -> str:
 
 
 def update_toc(content: str) -> tuple[str, int]:
+    """Insert or replace the TOC in *content*, returning (updated, changed)."""
     toc = build_toc(content)
     if TOC_START in content and TOC_END in content:
         updated = re.sub(
@@ -85,7 +95,8 @@ def update_toc(content: str) -> tuple[str, int]:
     return toc + "\n\n" + content, 1
 
 
-def process_file(md_file: Path, apply: bool) -> FixItem:
+def process_file(md_file: Path, *, apply: bool) -> FixItem:
+    """Fix links and TOC in a single markdown file."""
     original = md_file.read_text(encoding="utf-8", errors="ignore")
     link_count = 0
 
@@ -105,7 +116,8 @@ def process_file(md_file: Path, apply: bool) -> FixItem:
     return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
 
 
-def run_scope(scope: Scope, apply: bool) -> int:
+def run_scope(scope: Scope, *, apply: bool) -> int:
+    """Run link and TOC fixes across all markdown files in *scope*."""
     items: list[FixItem] = []
     for md in iter_markdown_files(scope.path):
         item = process_file(md, apply=apply)
@@ -140,6 +152,7 @@ def run_scope(scope: Scope, apply: bool) -> int:
 
 
 def main() -> int:
+    """CLI entry point for the documentation fixer."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--project")

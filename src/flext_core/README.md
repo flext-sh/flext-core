@@ -1,7 +1,7 @@
 # FLEXT Core
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Architecture](#architecture)
   - [Foundation Layer](#foundation-layer)
@@ -17,6 +17,7 @@
   - [CQRS Pattern](#cqrs-pattern)
 - [Dependencies](#dependencies)
 - [Extension Points](#extension-points)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

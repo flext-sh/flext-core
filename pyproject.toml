@@ -197,6 +197,9 @@ ini_options.addopts = [
   "-p no:sugar",
   "-q",
   "-ra",
+  "--timeout=30",
+  "--timeout-method=signal",
+  "--durations=0",
 ]
 ini_options.filterwarnings = [
   "ignore::DeprecationWarning:pyasn1(.*|$)",

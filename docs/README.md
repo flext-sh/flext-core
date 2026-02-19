@@ -1,14 +1,15 @@
 # FLEXT-Core Documentation
 
-
 <!-- TOC START -->
+
 - [Scope and Compatibility](#scope-and-compatibility)
 - [Navigation](#navigation)
-- [🔧 Quality Assurance](#-quality-assurance)
+- [🔧 Quality Assurance](#quality-assurance)
 - [Quick Start](#quick-start)
 - [Core Concepts](#core-concepts)
 - [Style Expectations](#style-expectations)
 - [Support](#support)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -28,15 +29,23 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 This project integrates with FLEXT's comprehensive quality assurance system:
 
 - **Pattern Enforcement**: Automatic validation of architectural patterns
+
 - **Consolidation Guidance**: SOLID-based refactoring recommendations
+
 - **Quality Validation**: Continuous checks for enterprise standards
 
 - **Quick start:** `quick-start.md`
+
 - **Architecture:** `architecture/overview.md` and `architecture/clean-architecture.md`
+
 - **API reference:** `api-reference/` grouped by layer (foundation, domain, application, infrastructure)
+
 - **Guides:** `guides/` for patterns such as railway execution, DI, DDD, error handling, configuration, testing, and troubleshooting
+
 - **Standards:** `standards/` for code, documentation, and templates
+
 - **Contributing:** `development/contributing.md`
+
 - **DI pattern prompt:** `dependency_injector_prompt.md` for the canonical dependency-injector bridge guidance
 
 ## Quick Start
@@ -54,10 +63,10 @@ PY
 ## Core Concepts
 
 1. **Railway-oriented programming (`FlextResult`)** — express success/failure without exceptions and chain operations with `map`/`flat_map`.
-2. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
-3. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
-4. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `FlextResult`.
-5. **Layered dependency-injector bridge** — isolate dependency-injector usage to the runtime/container while handlers use `provide`/`inject` only.
+1. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
+1. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
+1. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `FlextResult`.
+1. **Layered dependency-injector bridge** — isolate dependency-injector usage to the runtime/container while handlers use `provide`/`inject` only.
 
 ## Style Expectations
 

@@ -1,7 +1,7 @@
 # Error Handling Guide
 
-
 <!-- TOC START -->
+
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Core Concepts](#core-concepts)
@@ -29,6 +29,7 @@
 - [Summary](#summary)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Railway-Oriented Programming
@@ -601,10 +602,10 @@ This approach makes error handling explicit, composable, and maintainable.
 ## Next Steps
 
 1. **Railway Patterns**: Deep dive into Railway-Oriented Programming for advanced composition
-2. **Decorators**: Learn about Error Handling with Decorators for automatic error recovery
-3. **Testing**: See Testing Guide for testing error scenarios without mocks
-4. **Services**: Check Service Patterns for service-level error handling
-5. **API Reference**: Review FlextResult API for complete method reference
+1. **Decorators**: Learn about Error Handling with Decorators for automatic error recovery
+1. **Testing**: See Testing Guide for testing error scenarios without mocks
+1. **Services**: Check Service Patterns for service-level error handling
+1. **API Reference**: Review FlextResult API for complete method reference
 
 ## See Also
 
@@ -615,6 +616,6 @@ This approach makes error handling explicit, composable, and maintainable.
 - API Reference: FlextResult - Complete API documentation
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
----
+______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for comprehensive test cases demonstrating all error handling patterns.

@@ -1,22 +1,29 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+"""Standardize README.md files across workspace projects."""
+
 from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
-from _shared import write_json
+from shared import write_json
 
 ECOSYSTEM_LINE = "Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem."
 
 
 @dataclass(frozen=True)
 class Result:
+    """Outcome of processing a single README."""
+
     file: str
     changed: bool
     issues: int
 
 
 def target_projects(root: Path, project_names: list[str] | None) -> list[Path]:
+    """Resolve project directories that contain a README.md."""
     if not project_names:
         return [
             p
@@ -32,6 +39,7 @@ def target_projects(root: Path, project_names: list[str] | None) -> list[Path]:
 
 
 def normalize_content(name: str, content: str) -> tuple[str, int]:
+    """Ensure title heading and ecosystem badge are present."""
     lines = content.splitlines()
     issues = 0
     title = f"# {name}"
@@ -39,7 +47,7 @@ def normalize_content(name: str, content: str) -> tuple[str, int]:
         lines = [title, ""] + lines
         issues += 1
     if ECOSYSTEM_LINE not in content:
-        if lines and lines[-1] != "":
+        if lines and lines[-1]:
             lines.append("")
         lines.append(ECOSYSTEM_LINE)
         issues += 1
@@ -47,7 +55,8 @@ def normalize_content(name: str, content: str) -> tuple[str, int]:
     return updated, issues
 
 
-def process_readme(path: Path, apply: bool) -> Result:
+def process_readme(path: Path, *, apply: bool) -> Result:
+    """Normalize a single README and optionally write changes."""
     original = path.read_text(encoding="utf-8", errors="ignore")
     updated, issues = normalize_content(path.parent.name, original)
     changed = updated != original
@@ -57,6 +66,7 @@ def process_readme(path: Path, apply: bool) -> Result:
 
 
 def main() -> int:
+    """CLI entry point for the README standardizer."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--projects", nargs="*")
@@ -64,13 +74,13 @@ def main() -> int:
     parser.add_argument("--fix", action="store_true")
     args = parser.parse_args()
 
-    apply = args.fix and not args.check
+    apply_mode = args.fix and not args.check
     root = Path(args.root).resolve()
     results: list[Result] = []
     for project in target_projects(root, args.projects):
         readme = project / "README.md"
         if readme.exists():
-            result = process_readme(readme, apply=apply)
+            result = process_readme(readme, apply=apply_mode)
             results.append(result)
             print(
                 f"{project.name}: issues={result.issues} changed={int(result.changed)}"
@@ -83,7 +93,7 @@ def main() -> int:
             "summary": {
                 "projects": len(results),
                 "issues": sum(item.issues for item in results),
-                "fix_mode": apply,
+                "fix_mode": apply_mode,
             },
             "results": [item.__dict__ for item in results],
         },

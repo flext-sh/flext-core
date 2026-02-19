@@ -1,19 +1,93 @@
+#!/usr/bin/env python3
+# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+"""Generate project-level docs from workspace SSOT guides."""
+
 from __future__ import annotations
 
 import argparse
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from _shared import Scope, build_scopes, write_json, write_markdown
+from shared import Scope, build_scopes, write_json, write_markdown
 
 
 @dataclass(frozen=True)
 class GeneratedFile:
+    """Record of a single generated file and whether it was written."""
+
     path: str
     written: bool
 
 
-def write_if_needed(path: Path, content: str, apply: bool) -> GeneratedFile:
+HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
+ANCHOR_LINK_RE = re.compile(r"\[([^\]]+)\]\(#([^)]+)\)")
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+TOC_START = "<!-- TOC START -->"
+TOC_END = "<!-- TOC END -->"
+
+
+def normalize_anchor(value: str) -> str:
+    """Convert a heading to a GitHub-compatible anchor slug."""
+    text = value.strip().lower()
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"\s+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
+
+
+def sanitize_internal_anchor_links(content: str) -> str:
+    """Normalize generated guides by stripping non-external markdown links."""
+
+    def replace(match: re.Match[str]) -> str:
+        label, target = match.groups()
+        lower = target.lower().strip()
+        if lower.startswith(("http://", "https://", "mailto:", "tel:")):
+            return match.group(0)
+        return label
+
+    return MARKDOWN_LINK_RE.sub(replace, content)
+
+
+def build_toc(content: str) -> str:
+    items: list[str] = []
+    for level, title in re.findall(
+        r"^(##|###)\s+(.+?)\s*$", content, flags=re.MULTILINE
+    ):
+        anchor = normalize_anchor(title)
+        if not anchor:
+            continue
+        indent = "  " if level == "###" else ""
+        items.append(f"{indent}- [{title}](#{anchor})")
+    if not items:
+        items = ["- No sections found"]
+    return f"{TOC_START}\n" + "\n".join(items) + f"\n{TOC_END}"
+
+
+def update_toc(content: str) -> str:
+    toc = build_toc(content)
+    if TOC_START in content and TOC_END in content:
+        return re.sub(
+            r"<!-- TOC START -->.*?<!-- TOC END -->",
+            toc,
+            content,
+            count=1,
+            flags=re.DOTALL,
+        )
+    lines = content.splitlines()
+    if lines and lines[0].startswith("# "):
+        insert_at = 1
+        while insert_at < len(lines) and not lines[insert_at].strip():
+            insert_at += 1
+        lines.insert(insert_at, "")
+        lines.insert(insert_at + 1, toc)
+        lines.insert(insert_at + 2, "")
+        return "\n".join(lines).rstrip() + "\n"
+    return toc + "\n\n" + content.rstrip() + "\n"
+
+
+def write_if_needed(path: Path, content: str, *, apply: bool) -> GeneratedFile:
+    """Write *content* to *path* only when changed and *apply* is True."""
     exists = path.exists()
     current = path.read_text(encoding="utf-8") if exists else ""
     if current == content:
@@ -25,6 +99,7 @@ def write_if_needed(path: Path, content: str, apply: bool) -> GeneratedFile:
 
 
 def project_guide_content(content: str, project: str, source_name: str) -> str:
+    """Render workspace guide *content* with a project-specific heading."""
     lines = content.splitlines()
     out: list[str] = [
         f"<!-- Generated from docs/guides/{source_name} for {project}. -->",
@@ -35,22 +110,28 @@ def project_guide_content(content: str, project: str, source_name: str) -> str:
     for line in lines:
         if not heading_done and line.startswith("# "):
             title = line[2:].strip()
-            out.append(f"# {project} - {title}")
-            out.append("")
-            out.append(f"> Project profile: `{project}`")
-            out.append("")
+            out.extend([
+                f"# {project} - {title}",
+                "",
+                f"> Project profile: `{project}`",
+                "",
+            ])
             heading_done = True
             continue
         out.append(line)
-    return "\n".join(out).rstrip() + "\n"
+    rendered = "\n".join(out).rstrip() + "\n"
+    return update_toc(sanitize_internal_anchor_links(rendered))
 
 
-def generate_root_docs(scope: Scope, apply: bool) -> list[GeneratedFile]:
-    changelog = (
+def generate_root_docs(scope: Scope, *, apply: bool) -> list[GeneratedFile]:
+    """Generate placeholder docs at the workspace root."""
+    changelog = update_toc(
         "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n"
     )
-    release = "# Latest Release\n\nNo tagged release notes were generated yet.\n"
-    roadmap = (
+    release = update_toc(
+        "# Latest Release\n\nNo tagged release notes were generated yet.\n"
+    )
+    roadmap = update_toc(
         "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n"
     )
     return [
@@ -61,8 +142,9 @@ def generate_root_docs(scope: Scope, apply: bool) -> list[GeneratedFile]:
 
 
 def generate_project_guides(
-    scope: Scope, workspace_root: Path, apply: bool
+    scope: Scope, workspace_root: Path, *, apply: bool
 ) -> list[GeneratedFile]:
+    """Copy workspace guides into a project, injecting the project name."""
     source_dir = workspace_root / "docs/guides"
     if not source_dir.exists():
         return []
@@ -81,7 +163,45 @@ def generate_project_guides(
     return files
 
 
-def run_scope(scope: Scope, apply: bool, workspace_root: Path) -> int:
+def generate_project_mkdocs(scope: Scope, *, apply: bool) -> list[GeneratedFile]:
+    """Generate mkdocs.yml for projects that do not have one yet."""
+    mkdocs_path = scope.path / "mkdocs.yml"
+    if mkdocs_path.exists():
+        return []
+    site_name = f"{scope.name} Documentation"
+    content = (
+        "\n".join([
+            f"site_name: {site_name}",
+            f"site_description: Standard guides for {scope.name}",
+            "site_url: https://github.com/flext-sh/flext",
+            "repo_name: flext-sh/flext",
+            "repo_url: https://github.com/flext-sh/flext",
+            f"edit_uri: edit/main/{scope.name}/docs/guides/",
+            "docs_dir: docs/guides",
+            "site_dir: .reports/docs/site",
+            "",
+            "theme:",
+            "  name: mkdocs",
+            "",
+            "plugins: []",
+            "",
+            "nav:",
+            "  - Home: README.md",
+            "  - Getting Started: getting-started.md",
+            "  - Configuration: configuration.md",
+            "  - Development: development.md",
+            "  - Testing: testing.md",
+            "  - Troubleshooting: troubleshooting.md",
+            "  - Security: security.md",
+            "  - Automation Skill Pattern: skill-automation-pattern.md",
+        ])
+        + "\n"
+    )
+    return [write_if_needed(mkdocs_path, content, apply=apply)]
+
+
+def run_scope(scope: Scope, *, apply: bool, workspace_root: Path) -> int:
+    """Generate docs for *scope* and write reports."""
     if scope.name == "root":
         files = generate_root_docs(scope=scope, apply=apply)
         source = "root-generated-artifacts"
@@ -89,6 +209,7 @@ def run_scope(scope: Scope, apply: bool, workspace_root: Path) -> int:
         files = generate_project_guides(
             scope=scope, workspace_root=workspace_root, apply=apply
         )
+        files.extend(generate_project_mkdocs(scope=scope, apply=apply))
         source = "workspace-docs-guides"
 
     generated = sum(1 for item in files if item.written)
@@ -122,6 +243,7 @@ def run_scope(scope: Scope, apply: bool, workspace_root: Path) -> int:
 
 
 def main() -> int:
+    """CLI entry point for the documentation generator."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--project")

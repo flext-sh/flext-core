@@ -1,7 +1,7 @@
 # Python Coding Standards
 
-
 <!-- TOC START -->
+
 - [Type Annotations](#type-annotations)
   - [ZERO TOLERANCE: Complete Type Annotations](#zero-tolerance-complete-type-annotations)
   - [Type Hints for Collections](#type-hints-for-collections)
@@ -31,6 +31,7 @@
 - [Quality Gate Checklist](#quality-gate-checklist)
 - [Common Violations and Fixes](#common-violations-and-fixes)
 - [Philosophy](#philosophy)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

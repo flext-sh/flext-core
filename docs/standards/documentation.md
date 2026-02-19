@@ -1,7 +1,7 @@
 # Documentation Standards
 
-
 <!-- TOC START -->
+
 - [Documentation Structure](#documentation-structure)
   - [Every Feature Needs](#every-feature-needs)
 - [Overview](#overview)
@@ -9,8 +9,8 @@
 - [API Reference](#api-reference)
   - [Method Name](#method-name)
 - [Best Practices](#best-practices)
-  - [✅ DO](#-do)
-  - [❌ DON'T](#-dont)
+  - [✅ DO](#do)
+  - [❌ DON'T](#dont)
 - [Common Issues](#common-issues)
   - [Issue: Something breaks](#issue-something-breaks)
 - [Code Examples](#code-examples)
@@ -81,6 +81,7 @@
   - [Spelling](#spelling)
 - [Examples of Excellent Documentation](#examples-of-excellent-documentation)
 - [Summary](#summary)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

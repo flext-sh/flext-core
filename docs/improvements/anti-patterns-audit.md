@@ -1,10 +1,10 @@
 # Anti-Patterns and Best Practices Guide - Audit Report
 
-
 <!-- TOC START -->
+
 - [Audit Summary](#audit-summary)
-  - [✅ Guide Accuracy: 10/10](#-guide-accuracy-1010)
-  - [✅ Verified Against Source Code](#-verified-against-source-code)
+  - [✅ Guide Accuracy: 10/10](#guide-accuracy-1010)
+  - [✅ Verified Against Source Code](#verified-against-source-code)
 - [Detailed Findings](#detailed-findings)
   - [Category 1: Error Handling Anti-Patterns (3 patterns)](#category-1-error-handling-anti-patterns-3-patterns)
   - [Category 2: Type Safety Anti-Patterns (3 patterns)](#category-2-type-safety-anti-patterns-3-patterns)
@@ -13,8 +13,8 @@
   - [Category 5: Model Anti-Patterns (2 patterns)](#category-5-model-anti-patterns-2-patterns)
   - [Category 6: Configuration Anti-Patterns (2 patterns)](#category-6-configuration-anti-patterns-2-patterns)
 - [Cross-Reference Verification](#cross-reference-verification)
-  - [Internal Links ✅](#internal-links-)
-  - [External References ✅](#external-references-)
+  - [Internal Links ✅](#internal-links)
+  - [External References ✅](#external-references)
 - [Evidence Summary](#evidence-summary)
   - [Quantitative Metrics](#quantitative-metrics)
   - [Qualitative Assessment](#qualitative-assessment)
@@ -25,6 +25,7 @@
 - [Accuracy Assessment](#accuracy-assessment)
 - [Completeness Assessment](#completeness-assessment)
 - [Conclusion](#conclusion)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -34,7 +35,7 @@
 **Date**: 2025-10-21
 **Status**: ✅ ACCURATE & EXCELLENT - Educational guide with real FLEXT patterns
 
----
+______________________________________________________________________
 
 ## Audit Summary
 
@@ -69,7 +70,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 14. Hardcoded Config             | Says: Use BaseSettings          | config.py uses BaseSettings         | ✅ FOLLOWED |
 | 15. No Config Validation         | Says: Validate on load          | Pydantic validation used            | ✅ FOLLOWED |
 
----
+______________________________________________________________________
 
 ## Detailed Findings
 
@@ -159,7 +160,7 @@ def fail(
 - FlextResult.fail() supports error_code and error_data parameters
 - Documented pattern matches actual implementation
 
----
+______________________________________________________________________
 
 ### Category 2: Type Safety Anti-Patterns (3 patterns)
 
@@ -234,7 +235,7 @@ $ grep -n "type: ignore" src/flext_core/*.py | wc -l
 - Minimal type ignore usage in codebase
 - FLEXT-Core follows strict type checking (MyPy/Pyrefly strict mode)
 
----
+______________________________________________________________________
 
 ### Category 3: Architecture Anti-Patterns (3 patterns)
 
@@ -335,7 +336,7 @@ $ wc -l src/flext_core/*.py | sort -nr | head -5
 - models.py follows FLEXT pattern (one main class with nested helpers)
 - Not a god object - focused domain model collection
 
----
+______________________________________________________________________
 
 ### Category 4: Dependency Injection Anti-Patterns (2 patterns)
 
@@ -386,7 +387,7 @@ def get(self, identifier: str) -> FlextResult[object]:
 - Forces explicit error handling
 - Pattern enforced by API design
 
----
+______________________________________________________________________
 
 ### Category 5: Model Anti-Patterns (2 patterns)
 
@@ -402,7 +403,7 @@ def get(self, identifier: str) -> FlextResult[object]:
 The guide shows wrapping pattern, and source code demonstrates both approaches:
 
 1. **Pydantic validation** (models.py uses validators for data integrity)
-2. **FlextResult wrapping** (recommended for business logic)
+1. **FlextResult wrapping** (recommended for business logic)
 
 **Verification**: ✅ ACCURATE
 
@@ -435,7 +436,7 @@ $ grep -n "frozen.*True" src/flext_core/models.py
 - Found 4 explicit frozen=True configurations
 - Immutability enforced for value semantics
 
----
+______________________________________________________________________
 
 ### Category 6: Configuration Anti-Patterns (2 patterns)
 
@@ -487,7 +488,7 @@ class FlextSettings(BaseSettings):
 - Field constraints enforced automatically
 - Validation errors caught on construction
 
----
+______________________________________________________________________
 
 ## Cross-Reference Verification
 
@@ -507,7 +508,7 @@ Checked all referenced guides:
 - ✅ CLAUDE.md references - Accurate
 - ✅ Version reference (0.9.9) - Current
 
----
+______________________________________________________________________
 
 ## Evidence Summary
 
@@ -546,10 +547,10 @@ Type-safe retrieval: Yes (get_typed at line 574)
 **Strengths**:
 
 1. ✅ **100% Educational Value** - Guide clearly shows wrong vs right patterns
-2. ✅ **Source-Verified Examples** - All patterns match actual codebase
-3. ✅ **Real-World Relevance** - Anti-patterns are common mistakes in ecosystem
-4. ✅ **Clear Solutions** - Every anti-pattern has working alternative
-5. ✅ **FLEXT-Core Exemplifies Best Practices** - Codebase avoids all anti-patterns
+1. ✅ **Source-Verified Examples** - All patterns match actual codebase
+1. ✅ **Real-World Relevance** - Anti-patterns are common mistakes in ecosystem
+1. ✅ **Clear Solutions** - Every anti-pattern has working alternative
+1. ✅ **FLEXT-Core Exemplifies Best Practices** - Codebase avoids all anti-patterns
 
 **Completeness**:
 
@@ -557,14 +558,15 @@ Type-safe retrieval: Yes (get_typed at line 574)
 - ✅ Examples are practical and realistic
 - ✅ Solutions are implemented in actual codebase
 
----
+______________________________________________________________________
 
 ## Recommendations
 
 ### High Priority
 
 1. **✅ NO CORRECTIONS NEEDED** - Guide is accurate
-2. **Add Source Line References** - Like railway/DI guides
+
+1. **Add Source Line References** - Like railway/DI guides
 
    ```markdown
    Example: Anti-Pattern 1 - See result.py:313 (ok method)
@@ -573,14 +575,16 @@ Type-safe retrieval: Yes (get_typed at line 574)
 ### Medium Priority
 
 3. **Create Missing Referenced Guides**:
+
    - `../architecture/clean-architecture.md` - Layer hierarchy
    - `../standards/development.md` - Coding standards
 
-4. **Add "Real Examples" Section**:
+1. **Add "Real Examples" Section**:
+
    - Link to specific source files demonstrating correct patterns
    - Show before/after refactoring examples from actual commits
 
-5. **Add Anti-Pattern Detection**:
+1. **Add Anti-Pattern Detection**:
 
    ````markdown
    ## How to Detect These Anti-Patterns
@@ -596,10 +600,10 @@ Type-safe retrieval: Yes (get_typed at line 574)
 ### Low Priority
 
 6. **Expand Examples**: Add more complex real-world scenarios
-7. **Add Metrics**: Include performance comparisons (exception vs FlextResult)
-8. **Add Migration Guide**: How to refactor code with anti-patterns
+1. **Add Metrics**: Include performance comparisons (exception vs FlextResult)
+1. **Add Migration Guide**: How to refactor code with anti-patterns
 
----
+______________________________________________________________________
 
 ## Accuracy Assessment
 
@@ -611,7 +615,7 @@ Type-safe retrieval: Yes (get_typed at line 574)
 - **Educational Value**: 100% - Clear wrong vs right examples
 - **Completeness**: 95% - Covers all major categories, minor enhancements possible
 
----
+______________________________________________________________________
 
 ## Completeness Assessment
 
@@ -633,7 +637,7 @@ Type-safe retrieval: Yes (get_typed at line 574)
 - Security anti-patterns (SQL injection, XSS vulnerabilities)
 - Concurrency anti-patterns (race conditions, deadlocks)
 
----
+______________________________________________________________________
 
 ## Conclusion
 
@@ -652,6 +656,6 @@ The Anti-Patterns and Best Practices guide is **EXCELLENT** and serves as a **go
 
 **Recommendation**: Add source line references and create missing referenced guides. Otherwise, guide is exemplary.
 
----
+______________________________________________________________________
 
 **Next**: Audit Pydantic v2 Patterns guide

@@ -1,8 +1,9 @@
 # FLEXT Core Integration Tests
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

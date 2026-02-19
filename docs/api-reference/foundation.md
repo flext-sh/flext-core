@@ -1,7 +1,7 @@
 # Foundation Layers API Reference
 
-
 <!-- TOC START -->
+
 - [Architecture Overview](#architecture-overview)
 - [Layer 0: Pure Constants](#layer-0-pure-constants)
   - [FlextConstants - Centralized Defaults](#flextconstants-centralized-defaults)
@@ -16,6 +16,7 @@
 - [Short Alias Reference](#short-alias-reference)
 - [Related Documentation](#related-documentation)
 - [Verification Commands](#verification-commands)
+
 <!-- TOC END -->
 
 This reference covers Layers 0, 0.5, and 1: the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
@@ -34,7 +35,7 @@ Canonical references:
 
 See the Architecture Overview for the full layering model.
 
----
+______________________________________________________________________
 
 ## Layer 0: Pure Constants
 
@@ -76,7 +77,7 @@ if isinstance(service, p.Configurable):
     service.configure(config)
 ```
 
----
+______________________________________________________________________
 
 ## Layer 0.5: Runtime Bridge
 
@@ -93,7 +94,7 @@ if FlextRuntime.is_valid_email(email):
 data = FlextRuntime.to_json_serializable(payload)
 ```
 
----
+______________________________________________________________________
 
 ## Layer 1: Foundation (Core Primitives)
 
@@ -209,7 +210,7 @@ if u.chk().eq(value, expected):
 
 See the Type System Guidelines in the main README for detailed usage patterns.
 
----
+______________________________________________________________________
 
 The foundation layers provide stable, dependency-light building blocks for dispatcher orchestration, domain modeling, and infrastructure integration.
 

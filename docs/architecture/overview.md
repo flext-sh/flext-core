@@ -1,13 +1,14 @@
 # Architecture Overview
 
-
 <!-- TOC START -->
+
 - [Layered Topology](#layered-topology)
 - [Layer Catalog (source-aligned)](#layer-catalog-source-aligned)
 - [Key Execution Flows](#key-execution-flows)
 - [Next Steps](#next-steps)
 - [Related Documentation](#related-documentation)
 - [Verification Commands](#verification-commands)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -54,6 +55,7 @@ Canonical references:
 ## Layer Catalog (source-aligned)
 
 - **L0 – contracts and primitives**
+
   - `constants.py` centralizes error codes, retry defaults, cache TTLs, and
     logging keys as immutable data.
   - `typings.py` provides structured aliases for handler callables, cache
@@ -62,6 +64,7 @@ Canonical references:
     contexts, containers, and handlers.
 
 - **L1 – runtime bridge and results**
+
   - `runtime.py` wraps structlog and dependency-injector factories so higher
     layers can configure logging and DI without depending on third-party types.
   - `result.py` delivers the railway-oriented `FlextResult`; `exceptions.py`
@@ -70,6 +73,7 @@ Canonical references:
     container, and decorators.
 
 - **L2 – domain and infrastructure services**
+
   - Domain façade modules (`models.py`, `_models/*`, `mixins.py`, `service.py`)
     host Pydantic-backed DDD entities, aggregates, validators, and mixins for
     timestamps, versioning, and domain events.
@@ -81,6 +85,7 @@ Canonical references:
     factory).
 
 - **L3 – application orchestration**
+
   - `dispatcher.py` drives CQRS routing with reliability policies from
     `_dispatcher/reliability.py` (circuit breakers, retries, rate limiting) and
     `_dispatcher/timeout.py` (deadline enforcement).
@@ -108,10 +113,10 @@ guide.
 ## Next Steps
 
 1. **Clean Architecture**: Deep dive into Clean Architecture for dependency rules
-2. **CQRS Patterns**: Explore CQRS Architecture for handler and dispatcher patterns
-3. **Architecture Patterns**: See Architecture Patterns for common patterns
-4. **Decision Records**: Review Architecture Decisions for design rationale
-5. **Guides**: Check Getting Started for practical usage
+1. **CQRS Patterns**: Explore CQRS Architecture for handler and dispatcher patterns
+1. **Architecture Patterns**: See Architecture Patterns for common patterns
+1. **Decision Records**: Review Architecture Decisions for design rationale
+1. **Guides**: Check Getting Started for practical usage
 
 ## Related Documentation
 

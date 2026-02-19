@@ -1,14 +1,15 @@
 <!-- Generated from docs/guides/security.md for flext-core. -->
+
 <!-- Source of truth: workspace docs/guides/. -->
 
 # flext-core - Security Guide
 
 > Project profile: `flext-core`
 
-
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 Security practices are governed by project-specific policies and central architecture ADRs.

@@ -1,9 +1,10 @@
 # Remaining Docs Audit
 
-
 <!-- TOC START -->
+
 - [Key Findings](#key-findings)
 - [Recommended Remediations](#recommended-remediations)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -12,7 +13,7 @@
 **Date**: 2025-11-15
 **Status**: ⚠️ Cleanup required for legacy bus references
 
----
+______________________________________________________________________
 
 ## Key Findings
 
@@ -25,6 +26,6 @@
 1. Replace `FlextBus` with `FlextDispatcher` (or remove entirely) in:
    - verification commands (`python -c "from flext_core import FlextDispatcher ..."`)
    - example import blocks in secondary guides and standards files.
-2. Drop `FlextProcessors` from standards/checklists where it was previously listed as an application-layer component.
-3. Re-run a quick `rg "FlextBus" docs/` check after edits to ensure no residual mentions remain.
-4. Keep existing minimal import style; avoid reintroducing broad import lists.
+1. Drop `FlextProcessors` from standards/checklists where it was previously listed as an application-layer component.
+1. Re-run a quick `rg "FlextBus" docs/` check after edits to ensure no residual mentions remain.
+1. Keep existing minimal import style; avoid reintroducing broad import lists.

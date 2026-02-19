@@ -1,7 +1,7 @@
 # CQRS Architecture
 
-
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [FlextHandlers](#flexthandlers)
   - [Current Implementation (V1)](#current-implementation-v1)
@@ -40,6 +40,7 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -55,7 +56,7 @@ Canonical references:
 - `./clean-architecture.md`
 - `../../README.md`
 
----
+______________________________________________________________________
 
 ## Overview
 
@@ -84,7 +85,7 @@ integrate with the infrastructure provided by `FlextMixins`.
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
+______________________________________________________________________
 
 ## FlextHandlers
 
@@ -154,7 +155,7 @@ handler.pop_context()
 > for metrics and context once Phase 1 of CQRS modernization lands. See
 > Modernization Roadmap.
 
----
+______________________________________________________________________
 
 ## FlextDispatcher
 
@@ -215,7 +216,7 @@ dispatcher.register_event(UserCreatedEvent, handler)
 > for dependency injection of reliability managers. See Phase 2 of
 > Modernization Roadmap.
 
----
+______________________________________________________________________
 
 ## Integration with FlextService
 
@@ -238,7 +239,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
 
 See Service Patterns Guide for service usage.
 
----
+______________________________________________________________________
 
 ## Modernization Roadmap
 
@@ -290,7 +291,7 @@ container.register("circuit_breaker", CustomCircuitBreaker())
 dispatcher = FlextDispatcher(container=container)
 ```
 
----
+______________________________________________________________________
 
 ## Handler Patterns
 
@@ -335,11 +336,11 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 ### Migration Path
 
 1. **Phase 1:** Add `cqrs_metrics` and `cqrs_context` properties to `FlextMixins.CQRS`
-2. **Phase 2:** Deprecate `record_metric()`, `push_context()`, `pop_context()` with warnings
-3. **Phase 3:** Update all handlers to use new patterns
-4. **Phase 4:** Remove deprecated methods in v3.0
+1. **Phase 2:** Deprecate `record_metric()`, `push_context()`, `pop_context()` with warnings
+1. **Phase 3:** Update all handlers to use new patterns
+1. **Phase 4:** Remove deprecated methods in v3.0
 
----
+______________________________________________________________________
 
 ## Modernization Roadmap
 
@@ -398,16 +399,16 @@ V1 (Atual)           V2 Integration         V2 Complete
 **FlextMixins.CQRS (Phase 1):**
 
 1. Extract metrics to `self.cqrs_metrics`
-2. Extract context to `self.context`
-3. Integrate logging/tracking in the pipeline
-4. Deprecate manual methods with grace period
+1. Extract context to `self.context`
+1. Integrate logging/tracking in the pipeline
+1. Deprecate manual methods with grace period
 
 **FlextDI (Phase 2):**
 
 1. Define protocols for managers
-2. Extract managers to `_managers/` module
-3. Refactor `FlextDispatcher.__init__()` to accept container
-4. Register default managers in container
+1. Extract managers to `_managers/` module
+1. Refactor `FlextDispatcher.__init__()` to accept container
+1. Register default managers in container
 
 **Expected Benefits:**
 
@@ -417,7 +418,7 @@ V1 (Atual)           V2 Integration         V2 Complete
 - ✅ **Testability** - mock managers via container
 - ✅ **Observability** - automatic tracking
 
----
+______________________________________________________________________
 
 ## TODO Backlog
 
@@ -430,7 +431,7 @@ V1 (Atual)           V2 Integration         V2 Complete
 | Update `_dispatcher.reliability` to use `FlextResult.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
 | Scaffolding CLI for zero-ceremony handlers                               | Phase 5 | Automatic handler generation                    | CLI tools                    |
 
----
+______________________________________________________________________
 
 ## Testing Guidance
 
@@ -486,7 +487,7 @@ Target metrics for CQRS components:
 | Coverage handlers.py     | 65%     | 85%       | 95%       |
 | Coverage dispatcher.py   | 60%     | 80%       | 90%       |
 
----
+______________________________________________________________________
 
 ## References
 
@@ -517,10 +518,10 @@ Target metrics for CQRS components:
 ## Next Steps
 
 1. **Clean Architecture**: Review Clean Architecture for layer boundaries
-2. **Architecture Overview**: See Architecture Overview for layer topology
-3. **Service Patterns**: Check Service Patterns Guide for handler implementation
-4. **Dependency Injection**: See Advanced DI Guide for dispatcher configuration
-5. **Railway Patterns**: Review Railway-Oriented Programming for result composition
+1. **Architecture Overview**: See Architecture Overview for layer topology
+1. **Service Patterns**: Check Service Patterns Guide for handler implementation
+1. **Dependency Injection**: See Advanced DI Guide for dispatcher configuration
+1. **Railway Patterns**: Review Railway-Oriented Programming for result composition
 
 ## See Also
 

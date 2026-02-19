@@ -1,7 +1,7 @@
 # QUICK START
 
-
 <!-- TOC START -->
+
 - [Installation](#installation)
 - [Core Concepts (2 minutes)](#core-concepts-2-minutes)
   - [1. Railway-Oriented Programming (FlextResult[T])](#1-railway-oriented-programming-flextresultt)
@@ -24,6 +24,7 @@
 - [Command Reference](#command-reference)
 - [Quick Reference](#quick-reference)
 - [Getting Help](#getting-help)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -438,6 +439,6 @@ make validate
 - **Examples**: Check examples/ directory
 - **Issues**: Report bugs on GitHub
 
----
+______________________________________________________________________
 
 **Ready to dive deeper?** Start with the Configuration Guide to learn how to configure FLEXT-Core for your application.

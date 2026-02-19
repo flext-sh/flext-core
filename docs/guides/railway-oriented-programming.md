@@ -1,9 +1,9 @@
 # Railway-Oriented Programming with FlextResult[T]
 
-
 <!-- TOC START -->
+
 - [Core Concept: The Railway Metaphor](#core-concept-the-railway-metaphor)
-- [FlextResult[T]: The Railway Implementation](#flextresultt-the-railway-implementation)
+- [FlextResult\[T\]: The Railway Implementation](#flextresultt-the-railway-implementation)
   - [Creating Results](#creating-results)
   - [Checking Result State](#checking-result-state)
   - [Accessing Success Values](#accessing-success-values)
@@ -41,6 +41,7 @@
 - [Key Takeaways](#key-takeaways)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Coverage**: 100% type-safe
@@ -63,7 +64,7 @@ Failure Track (error path):    error -> error -> error -> error (short-circuit)
 
 When an operation fails, execution automatically switches to the failure track and skips remaining operations. No exceptions needed.
 
-## FlextResult[T]: The Railway Implementation
+## FlextResult\[T\]: The Railway Implementation
 
 `FlextResult[T]` is FLEXT's railway-oriented result type. It wraps either:
 
@@ -1041,19 +1042,19 @@ except Exception:
 ## Key Takeaways
 
 1. **Railway Pattern**: Errors automatically short-circuit the pipeline
-2. **Type-Safe**: Generic `FlextResult[T]` ensures type safety through composition
-3. **Composable**: Chain operations with `flat_map`, transform with `map`
-4. **Error Context**: Include error codes and metadata for observability
-5. **No Exceptions**: Business logic errors use FlextResult, not exceptions
-6. **Foundation Pattern**: Used throughout 32+ FLEXT ecosystem projects
+1. **Type-Safe**: Generic `FlextResult[T]` ensures type safety through composition
+1. **Composable**: Chain operations with `flat_map`, transform with `map`
+1. **Error Context**: Include error codes and metadata for observability
+1. **No Exceptions**: Business logic errors use FlextResult, not exceptions
+1. **Foundation Pattern**: Used throughout 32+ FLEXT ecosystem projects
 
 ## Next Steps
 
 1. **Advanced Patterns**: Explore Dependency Injection Advanced for service composition
-2. **Decorators**: See decorator composition examples above for automated error handling
-3. **Services**: Read Service Patterns for domain service patterns
-4. **Error Handling**: Check Error Handling Guide for detailed error patterns
-5. **API Reference**: Review FlextResult API for all methods
+1. **Decorators**: See decorator composition examples above for automated error handling
+1. **Services**: Read Service Patterns for domain service patterns
+1. **Error Handling**: Check Error Handling Guide for detailed error patterns
+1. **API Reference**: Review FlextResult API for all methods
 
 ## See Also
 
@@ -1064,6 +1065,6 @@ except Exception:
 - API Reference: FlextDecorators - Decorator composition patterns
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
----
+______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for 250+ test cases demonstrating all FlextResult patterns and edge cases.

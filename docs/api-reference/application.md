@@ -1,13 +1,14 @@
 # Application Layer API Reference
 
-
 <!-- TOC START -->
+
 - [FlextDispatcher - Unified CQRS Dispatcher](#flextdispatcher-unified-cqrs-dispatcher)
 - [h - CQRS Handler Base](#h-cqrs-handler-base)
 - [FlextRegistry - Handler Registration Utilities](#flextregistry-handler-registration-utilities)
 - [FlextDecorators - Cross-Cutting Concerns](#flextdecorators-cross-cutting-concerns)
 - [Quick Start Checklist](#quick-start-checklist)
 - [Verification Commands](#verification-commands)
+
 <!-- TOC END -->
 
 The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability.
@@ -124,9 +125,9 @@ def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
 ## Quick Start Checklist
 
 1. Define command/query messages and corresponding handlers inheriting `h`.
-2. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
-3. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
-4. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `FlextResult` outputs.
+1. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
+1. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
+1. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `FlextResult` outputs.
 
 ## Verification Commands
 

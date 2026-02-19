@@ -1,7 +1,7 @@
 # Pydantic v2 Patterns for FLEXT Ecosystem
 
-
 <!-- TOC START -->
+
 - [Canonical Rules](#canonical-rules)
 - [Core Principles](#core-principles)
 - [Pattern 1: Basic Model with Constraints](#pattern-1-basic-model-with-constraints)
@@ -24,6 +24,7 @@
   - [Field Validation](#field-validation)
   - [Serialization](#serialization)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Target**: flext-core and dependent projects
@@ -41,12 +42,12 @@ This guide documents essential Pydantic v2 patterns used throughout the FLEXT ec
 FLEXT projects use **pure Pydantic v2 patterns** (no v1 compatibility layer):
 
 1. Use `BaseModel` and `BaseSettings` from pydantic
-2. Use `ConfigDict` for model configuration
-3. Use `Field()` with constraints and descriptions
-4. Use `@field_validator` for field-level validation
-5. Use `@model_validator` for cross-field validation
-6. Use `Annotated` types for semantic meaning
-7. Use `computed_field` for derived properties
+1. Use `ConfigDict` for model configuration
+1. Use `Field()` with constraints and descriptions
+1. Use `@field_validator` for field-level validation
+1. Use `@model_validator` for cross-field validation
+1. Use `Annotated` types for semantic meaning
+1. Use `computed_field` for derived properties
 
 **Important**: Do NOT use old Pydantic v1 patterns:
 
@@ -598,7 +599,7 @@ else:
    name: str
    ```
 
-2. **Validate in `@field_validator`**
+1. **Validate in `@field_validator`**
 
    ```python
    # Good - validation is explicit
@@ -613,7 +614,7 @@ else:
    age: int = Field(ge=0)  # Only for simple cases
    ```
 
-3. **Use ConfigDict for strict validation**
+1. **Use ConfigDict for strict validation**
 
    ```python
    # Good - strict configuration
@@ -625,7 +626,7 @@ else:
        extra = "allow"
    ```
 
-4. **Use computed_field for derived properties**
+1. **Use computed_field for derived properties**
 
    ```python
    # Good - automatically included in serialization
@@ -673,7 +674,7 @@ else:
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.4/)
 - **FLEXT CLAUDE.md**: Development standards and patterns
 
----
+______________________________________________________________________
 
 **Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 

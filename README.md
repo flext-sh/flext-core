@@ -1,7 +1,7 @@
 # FLEXT-Core
 
-
 <!-- TOC START -->
+
 - [🚀 Key Features](#-key-features)
 - [📦 Installation](#-installation)
 - [🛠️ Usage](#-usage)
@@ -11,6 +11,7 @@
 - [🏗️ Architecture](#-architecture)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
+
 <!-- TOC END -->
 
 **FLEXT-Core** is the foundational library for the FLEXT ecosystem, providing a robust set of architectural primitives, patterns, and utilities for building enterprise-grade Python applications. It enforces Railway-Oriented Programming (ROP), Dependency Injection (DI), and Command Query Responsibility Segregation (CQRS) to ensure type safety, scalability, and maintainability.
@@ -128,10 +129,10 @@ FLEXT-Core is designed around Clean Architecture and SOLID principles.
 Contributions are welcome! Please read our [Contributing Guide](docs/development/contributing.md) to get started.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Create your feature branch (`git checkout -b feature/amazing-feature`)
+1. Commit your changes (`git commit -m 'Add amazing feature'`)
+1. Push to the branch (`git push origin feature/amazing-feature`)
+1. Open a Pull Request
 
 ## 📄 License
 

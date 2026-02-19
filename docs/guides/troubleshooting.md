@@ -1,45 +1,46 @@
 <!-- Generated from docs/guides/troubleshooting.md for flext-core. -->
+
 <!-- Source of truth: workspace docs/guides/. -->
 
 # flext-core - FLEXT Troubleshooting Guide
 
 > Project profile: `flext-core`
 
-
-
 <!-- TOC START -->
-- Quick Diagnosis
-  - Health Check Commands
-  - System Status
-- Common Issues
-  - 1. Import Errors
-  - r
-  - 2. Type Checking Errors
-  - 3. Test Failures
-  - 4. Configuration Issues
-  - 5. LDIF Processing Issues
-  - 6. Migration Issues
-  - 7. Performance Issues
-- Debugging Techniques
-  - 1. Logging Configuration
-  - 2. Exception Handling
-  - 3. Debug Mode
-  - 4. Step-by-Step Debugging
-- Error Codes Reference
-  - FLEXT Core Errors
-  - LDIF Processing Errors
-  - API Errors
-- Performance Troubleshooting
-  - Memory Issues
-  - CPU Issues
-- Getting Help
-  - Self-Service Resources
-  - Community Support
-  - Reporting Issues
-  - Your minimal example here
-- Prevention
-  - Best Practices
-- Resources
+
+- [Quick Diagnosis](#quick-diagnosis)
+  - [Health Check Commands](#health-check-commands)
+  - [System Status](#system-status)
+- [Common Issues](#common-issues)
+  - [1. Import Errors](#1-import-errors)
+  - [r](#r)
+  - [2. Type Checking Errors](#2-type-checking-errors)
+  - [3. Test Failures](#3-test-failures)
+  - [4. Configuration Issues](#4-configuration-issues)
+  - [5. LDIF Processing Issues](#5-ldif-processing-issues)
+  - [6. Migration Issues](#6-migration-issues)
+  - [7. Performance Issues](#7-performance-issues)
+- [Debugging Techniques](#debugging-techniques)
+  - [1. Logging Configuration](#1-logging-configuration)
+  - [2. Exception Handling](#2-exception-handling)
+  - [3. Debug Mode](#3-debug-mode)
+  - [4. Step-by-Step Debugging](#4-step-by-step-debugging)
+- [Error Codes Reference](#error-codes-reference)
+  - [FLEXT Core Errors](#flext-core-errors)
+  - [LDIF Processing Errors](#ldif-processing-errors)
+  - [API Errors](#api-errors)
+- [Performance Troubleshooting](#performance-troubleshooting)
+  - [Memory Issues](#memory-issues)
+  - [CPU Issues](#cpu-issues)
+- [Getting Help](#getting-help)
+  - [Self-Service Resources](#self-service-resources)
+  - [Community Support](#community-support)
+  - [Reporting Issues](#reporting-issues)
+  - [Your minimal example here](#your-minimal-example-here)
+- [Prevention](#prevention)
+  - [Best Practices](#best-practices)
+- [Resources](#resources)
+
 <!-- TOC END -->
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
@@ -663,11 +664,12 @@ monitor_cpu()
 ### Self-Service Resources
 
 1. **Check Documentation**
+
    - API Reference
    - Configuration Guide
    - Development Guide
 
-2. **Run Diagnostics**
+1. **Run Diagnostics**
 
    ```bash
    # System health check
@@ -677,7 +679,7 @@ monitor_cpu()
    cd flext-core && make validate
    ```
 
-3. **Check Logs**
+1. **Check Logs**
 
    ```bash
    # Enable debug logging
@@ -688,16 +690,19 @@ monitor_cpu()
 ### Community Support
 
 1. **GitHub Issues**
+
    - [Create Issue](https://github.com/flext-sh/flext/issues)
    - Search existing issues
    - Check closed issues for solutions
 
-2. **GitHub Discussions**
+1. **GitHub Discussions**
+
    - [Ask Question](https://github.com/flext-sh/flext/discussions)
    - Share solutions
    - Discuss best practices
 
-3. **Email Support**
+1. **Email Support**
+
    - <dev@flext.com> for technical issues
    - <support@flext.com> for general questions
 
@@ -713,7 +718,7 @@ When reporting issues, include:
    make info
    ```
 
-2. **Error Details**
+1. **Error Details**
 
    ```python
    # Full error traceback
@@ -724,7 +729,7 @@ When reporting issues, include:
        traceback.print_exc()
    ```
 
-3. **Minimal Reproduction**
+1. **Minimal Reproduction**
 
    ```python
    # Minimal code that reproduces the issue
@@ -754,6 +759,7 @@ from flext_core import u
 ### Your minimal example here
 
 4. **Expected vs Actual Behavior**
+
 - What you expected to happen
 - What actually happened
 - Steps to reproduce
@@ -785,7 +791,7 @@ def process(data: dict) -> ProcessedData:
        return FlextResult.ok(processed_data)
    ```
 
-3. **Use Type Hints**
+1. **Use Type Hints**
 
    ```python
    # ✅ GOOD
@@ -797,7 +803,7 @@ def process(data: dict) -> ProcessedData:
        pass
    ```
 
-4. **Test Thoroughly**
+1. **Test Thoroughly**
 
    ```python
    def test_process_data():

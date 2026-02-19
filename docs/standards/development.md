@@ -1,38 +1,39 @@
 # Development Standards
 
-
 <!-- TOC START -->
-- [🎯 Mission & Authority](#-mission-authority)
-- [📋 Quality Imperatives](#-quality-imperatives)
+
+- [🎯 Mission & Authority](#mission-authority)
+- [📋 Quality Imperatives](#quality-imperatives)
   - [Zero Tolerance Standards](#zero-tolerance-standards)
   - [Quality Gates](#quality-gates)
-- [🏗️ Architecture Standards](#-architecture-standards)
+- [🏗️ Architecture Standards](#architecture-standards)
   - [Clean Architecture Compliance](#clean-architecture-compliance)
   - [Module Organization](#module-organization)
-- [🔧 Development Workflow](#-development-workflow)
+- [🔧 Development Workflow](#development-workflow)
   - [Environment Setup](#environment-setup)
   - [Development Commands](#development-commands)
-- [📝 Code Standards](#-code-standards)
+- [📝 Code Standards](#code-standards)
   - [Python Standards](#python-standards)
   - [Pattern Standards](#pattern-standards)
-- [🔒 API Stability Standards](#-api-stability-standards)
+- [🔒 API Stability Standards](#api-stability-standards)
   - [Versioning Strategy](#versioning-strategy)
-- [🧪 Testing Standards](#-testing-standards)
+- [🧪 Testing Standards](#testing-standards)
   - [Test Organization](#test-organization)
   - [Test Patterns](#test-patterns)
-- [📚 Documentation Standards](#-documentation-standards)
+- [📚 Documentation Standards](#documentation-standards)
   - [Documentation Requirements](#documentation-requirements)
   - [Documentation Structure](#documentation-structure)
-- [🔄 Refactoring Standards](#-refactoring-standards)
+- [🔄 Refactoring Standards](#refactoring-standards)
   - [Refactoring Guidelines](#refactoring-guidelines)
   - [Refactoring Process](#refactoring-process)
-- [🚨 Emergency Procedures](#-emergency-procedures)
+- [🚨 Emergency Procedures](#emergency-procedures)
   - [Breaking Issues](#breaking-issues)
   - [Ecosystem Impact](#ecosystem-impact)
-- [📊 Quality Metrics](#-quality-metrics)
+- [📊 Quality Metrics](#quality-metrics)
   - [Target Metrics (1.0.0 Release)](#target-metrics-100-release)
   - [Coverage by Layer](#coverage-by-layer)
-- [🔗 Related Documentation](#-related-documentation)
+- [🔗 Related Documentation](#related-documentation)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -62,10 +63,10 @@ This document outlines the development standards, patterns, and quality requirem
 **MANDATORY - NO EXCEPTIONS:**
 
 1. **Ruff Violations**: ZERO allowed (checked via `make lint`)
-2. **MyPy Errors**: ZERO allowed (checked via `make type-check`)
-3. **PyRight Errors**: ZERO allowed (enhanced type checking)
-4. **Test Failures**: ZERO allowed (comprehensive test suite)
-5. **Breaking Changes**: ZERO allowed without migration guide
+1. **MyPy Errors**: ZERO allowed (checked via `make type-check`)
+1. **PyRight Errors**: ZERO allowed (enhanced type checking)
+1. **Test Failures**: ZERO allowed (comprehensive test suite)
+1. **Breaking Changes**: ZERO allowed without migration guide
 
 ### Quality Gates
 
@@ -104,22 +105,26 @@ Inner layers know NOTHING about outer layers.
 **Layer Responsibilities:**
 
 1. **Foundation Layer** (No Dependencies):
+
    - FlextResult[T] - Railway pattern
    - FlextContainer - Dependency injection
    - t - Type system
    - FlextConstants - Centralized constants
 
-2. **Domain Layer** (Foundation Only):
+1. **Domain Layer** (Foundation Only):
+
    - FlextModels - DDD patterns
    - FlextService - Domain services
    - x - Reusable behaviors
 
-3. **Application Layer** (Foundation + Domain):
+1. **Application Layer** (Foundation + Domain):
+
    - FlextDispatcher - Message routing
    - h - Handler registry
    - FlextRegistry - Component management
 
-4. **Infrastructure Layer** (All Layers):
+1. **Infrastructure Layer** (All Layers):
+
    - FlextSettings - Configuration management
    - FlextLogger - Structured logging
    - FlextContext - Context propagation
@@ -327,15 +332,15 @@ class Order:
 **Adding New Features:**
 
 1. Add to existing modules (preferred)
-2. New modules with clear deprecation path
-3. Feature flags for experimental features
+1. New modules with clear deprecation path
+1. Feature flags for experimental features
 
 **Deprecation Process:**
 
 1. Mark as deprecated in docstring
-2. Add warning in implementation
-3. Remove in next major version (2.0.0)
-4. Update migration guide
+1. Add warning in implementation
+1. Remove in next major version (2.0.0)
+1. Update migration guide
 
 ## 🧪 Testing Standards
 
@@ -442,10 +447,10 @@ def test_container_singleton():
 ### Refactoring Process
 
 1. **Create Issue**: Document proposed changes
-2. **Write Tests**: Ensure existing functionality preserved
-3. **Implement**: Make changes with full validation
-4. **Update Docs**: Update all affected documentation
-5. **PR Review**: Comprehensive review by maintainers
+1. **Write Tests**: Ensure existing functionality preserved
+1. **Implement**: Make changes with full validation
+1. **Update Docs**: Update all affected documentation
+1. **PR Review**: Comprehensive review by maintainers
 
 ## 🚨 Emergency Procedures
 
@@ -454,19 +459,19 @@ def test_container_singleton():
 **If Breaking Issue Discovered:**
 
 1. **Immediate Action**: Create hotfix branch
-2. **Root Cause**: Identify and document cause
-3. **Fix Implementation**: Minimal, targeted fix
-4. **Test Coverage**: Comprehensive tests for issue
-5. **Documentation**: Update with issue details
+1. **Root Cause**: Identify and document cause
+1. **Fix Implementation**: Minimal, targeted fix
+1. **Test Coverage**: Comprehensive tests for issue
+1. **Documentation**: Update with issue details
 
 ### Ecosystem Impact
 
 **For Ecosystem-Wide Issues:**
 
 1. **Notify Maintainers**: Immediate notification
-2. **Coordinate Response**: Cross-project coordination
-3. **Staged Rollout**: Gradual fix deployment
-4. **Monitoring**: Enhanced monitoring during fix
+1. **Coordinate Response**: Cross-project coordination
+1. **Staged Rollout**: Gradual fix deployment
+1. **Monitoring**: Enhanced monitoring during fix
 
 ## 📊 Quality Metrics
 
@@ -497,6 +502,6 @@ def test_container_singleton():
 - **API Reference**: Complete API documentation
 - **Contributing Guide**: How to contribute
 
----
+______________________________________________________________________
 
 **FLEXT-Core Development Standards** - Ensuring the highest quality foundation for the entire FLEXT ecosystem.

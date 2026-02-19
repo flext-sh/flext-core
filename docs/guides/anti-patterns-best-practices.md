@@ -1,7 +1,7 @@
 # Anti-Patterns and Best Practices
 
-
 <!-- TOC START -->
+
 - [Table of Contents](#table-of-contents)
 - [Error Handling Anti-Patterns](#error-handling-anti-patterns)
   - [Anti-Pattern 1: Using Exceptions for Business Logic](#anti-pattern-1-using-exceptions-for-business-logic)
@@ -33,6 +33,7 @@
   - [Configuration](#configuration)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions
@@ -42,13 +43,13 @@ This guide documents common anti-patterns found in FLEXT ecosystem projects and 
 ## Table of Contents
 
 1. Error Handling Anti-Patterns
-2. Type Safety Anti-Patterns
-3. Architecture Anti-Patterns
-4. Dependency Injection Anti-Patterns
-5. Model Anti-Patterns
-6. Configuration Anti-Patterns
+1. Type Safety Anti-Patterns
+1. Architecture Anti-Patterns
+1. Dependency Injection Anti-Patterns
+1. Model Anti-Patterns
+1. Configuration Anti-Patterns
 
----
+______________________________________________________________________
 
 ## Error Handling Anti-Patterns
 
@@ -193,7 +194,7 @@ result = FlextResult[dict].fail(
 )
 ```
 
----
+______________________________________________________________________
 
 ## Type Safety Anti-Patterns
 
@@ -294,7 +295,7 @@ def calculate_total(items: list[Item]) -> Decimal:
     return total
 ```
 
----
+______________________________________________________________________
 
 ## Architecture Anti-Patterns
 
@@ -458,7 +459,7 @@ class MeltanoExecutor:
         pass
 ```
 
----
+______________________________________________________________________
 
 ## Dependency Injection Anti-Patterns
 
@@ -540,7 +541,7 @@ logger = logger_result.value
 logger.info("Service started")
 ```
 
----
+______________________________________________________________________
 
 ## Model Anti-Patterns
 
@@ -653,7 +654,7 @@ money.amount = Decimal("50")  # TypeError: frozen object cannot be modified
 # Now safe - value objects can't be modified
 ```
 
----
+______________________________________________________________________
 
 ## Configuration Anti-Patterns
 
@@ -771,7 +772,7 @@ except ValidationError as e:
     # Clear errors, easy to fix
 ```
 
----
+______________________________________________________________________
 
 ## Summary: Anti-Pattern Checklist
 
@@ -823,15 +824,15 @@ except ValidationError as e:
 - ❌ Don't hardcode configuration
 - ❌ Don't skip configuration validation
 
----
+______________________________________________________________________
 
 ## Next Steps
 
 1. **Error Handling**: Review Error Handling Guide for correct error patterns
-2. **Testing**: See Testing Guide for testing best practices (no mocks policy)
-3. **Service Patterns**: Check Service Patterns for service design patterns
-4. **Railway Patterns**: Explore Railway-Oriented Programming for functional error handling
-5. **Configuration**: Review Configuration Guide for configuration best practices
+1. **Testing**: See Testing Guide for testing best practices (no mocks policy)
+1. **Service Patterns**: Check Service Patterns for service design patterns
+1. **Railway Patterns**: Explore Railway-Oriented Programming for functional error handling
+1. **Configuration**: Review Configuration Guide for configuration best practices
 
 ## See Also
 
@@ -844,6 +845,6 @@ except ValidationError as e:
 - Development Standards - Development standards
 - **FLEXT CLAUDE.md**: Architecture principles and zero-tolerance standards
 
----
+______________________________________________________________________
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned

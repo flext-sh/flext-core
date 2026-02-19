@@ -1,30 +1,30 @@
 # Pydantic v2 Patterns Guide - Audit Report
 
-
 <!-- TOC START -->
+
 - [Audit Summary](#audit-summary)
-  - [✅ Guide Accuracy: 10/10](#-guide-accuracy-1010)
-  - [✅ Verified Against Source Code](#-verified-against-source-code)
+  - [✅ Guide Accuracy: 10/10](#guide-accuracy-1010)
+  - [✅ Verified Against Source Code](#verified-against-source-code)
 - [Detailed Findings](#detailed-findings)
-  - [Pattern 1: Basic Model with Constraints ✅](#pattern-1-basic-model-with-constraints-)
-  - [Pattern 2: ConfigDict for Model Settings ✅](#pattern-2-configdict-for-model-settings-)
-  - [Pattern 3: Field Validators ✅](#pattern-3-field-validators-)
-  - [Pattern 4: Model Validators (Cross-Field) ✅](#pattern-4-model-validators-cross-field-)
-  - [Pattern 5: Computed Fields ✅](#pattern-5-computed-fields-)
-  - [Pattern 6: Annotated Types for Semantic Meaning ✅](#pattern-6-annotated-types-for-semantic-meaning-)
-  - [Pattern 7: Settings with Environment Variables ✅](#pattern-7-settings-with-environment-variables-)
-  - [Pattern 8: Custom Types ✅](#pattern-8-custom-types-)
-  - [Pattern 9: Discriminated Unions for Polymorphism ✅](#pattern-9-discriminated-unions-for-polymorphism-)
-  - [Pattern 10: JSON Schema Generation ✅](#pattern-10-json-schema-generation-)
+  - [Pattern 1: Basic Model with Constraints ✅](#pattern-1-basic-model-with-constraints)
+  - [Pattern 2: ConfigDict for Model Settings ✅](#pattern-2-configdict-for-model-settings)
+  - [Pattern 3: Field Validators ✅](#pattern-3-field-validators)
+  - [Pattern 4: Model Validators (Cross-Field) ✅](#pattern-4-model-validators-cross-field)
+  - [Pattern 5: Computed Fields ✅](#pattern-5-computed-fields)
+  - [Pattern 6: Annotated Types for Semantic Meaning ✅](#pattern-6-annotated-types-for-semantic-meaning)
+  - [Pattern 7: Settings with Environment Variables ✅](#pattern-7-settings-with-environment-variables)
+  - [Pattern 8: Custom Types ✅](#pattern-8-custom-types)
+  - [Pattern 9: Discriminated Unions for Polymorphism ✅](#pattern-9-discriminated-unions-for-polymorphism)
+  - [Pattern 10: JSON Schema Generation ✅](#pattern-10-json-schema-generation)
 - [Critical Discovery: Pure Pydantic v2 Implementation](#critical-discovery-pure-pydantic-v2-implementation)
 - [Quantitative Metrics](#quantitative-metrics)
   - [Pydantic v2 Pattern Adoption](#pydantic-v2-pattern-adoption)
   - [Pydantic v1 Legacy Code](#pydantic-v1-legacy-code)
-- [Integration with FlextResult Pattern ✅](#integration-with-flextresult-pattern-)
+- [Integration with FlextResult Pattern ✅](#integration-with-flextresult-pattern)
 - [Cross-Reference Verification](#cross-reference-verification)
-  - [Internal Links ✅](#internal-links-)
-  - [External References ✅](#external-references-)
-  - [Source Line References ⚠️](#source-line-references-)
+  - [Internal Links ✅](#internal-links)
+  - [External References ✅](#external-references)
+  - [Source Line References ⚠️](#source-line-references)
 - [File Size Accuracy](#file-size-accuracy)
 - [Recommendations](#recommendations)
   - [High Priority](#high-priority)
@@ -33,6 +33,7 @@
 - [Accuracy Assessment](#accuracy-assessment)
 - [Completeness Assessment](#completeness-assessment)
 - [Conclusion](#conclusion)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -42,7 +43,7 @@
 **Date**: 2025-10-21
 **Status**: ✅ ACCURATE & EXCELLENT - Pure Pydantic v2, zero v1 compatibility code
 
----
+______________________________________________________________________
 
 ## Audit Summary
 
@@ -69,7 +70,7 @@ All 10 documented patterns verified against actual implementation:
 | 9. Discriminated Unions         | Discriminator()                | models.py:3582-3585       | ✅ VERIFIED |
 | 10. JSON Schema Generation      | models_JSON_schema()           | Referenced pattern        | ✅ VERIFIED |
 
----
+______________________________________________________________________
 
 ## Detailed Findings
 
@@ -367,7 +368,7 @@ class Query(BaseModel):
 - Not actively used in core (typical for foundation libraries)
 - Guide correctly documents the capability
 
----
+______________________________________________________________________
 
 ## Critical Discovery: Pure Pydantic v2 Implementation
 
@@ -397,7 +398,7 @@ $ grep -rn "class Config:" src/flext_core/*.py
 - ✅ **Discriminator for polymorphism** implemented
 - ❌ **ZERO v1 patterns** (.dict, .JSON, .parse_obj, class Config, @validator)
 
----
+______________________________________________________________________
 
 ## Quantitative Metrics
 
@@ -428,7 +429,7 @@ $ grep -rn "class Config:" src/flext_core/*.py
 
 **Result**: ✅ **100% Pydantic v2 Migration** - Zero legacy code
 
----
+______________________________________________________________________
 
 ## Integration with FlextResult Pattern ✅
 
@@ -443,7 +444,7 @@ The guide correctly shows the integration pattern. While direct examples aren't 
 - Recommended best practice for FLEXT ecosystem
 - Aligns with anti-patterns guide (wrapping validation)
 
----
+______________________________________________________________________
 
 ## Cross-Reference Verification
 
@@ -469,7 +470,7 @@ Checked all referenced guides:
 
 **Recommendation**: Update line count in guide footer
 
----
+______________________________________________________________________
 
 ## File Size Accuracy
 
@@ -483,7 +484,7 @@ Checked all referenced guides:
 
 **Recommendation**: Update guide to reflect current file sizes (minor cosmetic issue).
 
----
+______________________________________________________________________
 
 ## Recommendations
 
@@ -504,13 +505,15 @@ Checked all referenced guides:
 ### Medium Priority
 
 2. **Add Source Line References** (like other audited guides)
+
    - Pattern 2: ConfigDict - config.py:178-200
    - Pattern 3: field_validator - config.py:427, 439, models.py:975+
    - Pattern 5: computed_field - config.py:574-593, models.py:379+
    - Pattern 6: Annotated types - typings.py:311-350+
    - Pattern 9: Discriminator - models.py:3582-3585
 
-3. **Add Migration Section**
+1. **Add Migration Section**
+
    - Document migration from v1 to v2 (for reference)
    - Show before/after examples
    - List breaking changes from v1
@@ -518,16 +521,18 @@ Checked all referenced guides:
 ### Low Priority
 
 4. **Add Performance Notes**
+
    - Pydantic v2 is 5-50x faster than v1
    - Rust-based validation core
    - Compiled validation schemas
 
-5. **Add Validation Error Handling**
+1. **Add Validation Error Handling**
+
    - Expand FlextResult integration examples
    - Show error serialization patterns
    - Document validation error codes
 
----
+______________________________________________________________________
 
 ## Accuracy Assessment
 
@@ -539,7 +544,7 @@ Checked all referenced guides:
 - **Best Practices**: 100% - Aligns with Pydantic v2 docs
 - **FLEXT Integration**: 100% - Matches ecosystem patterns
 
----
+______________________________________________________________________
 
 ## Completeness Assessment
 
@@ -567,7 +572,7 @@ Checked all referenced guides:
 - Validation context usage
 - Model inheritance patterns
 
----
+______________________________________________________________________
 
 ## Conclusion
 
@@ -592,6 +597,6 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 
 **Recommendation**: Update config.py line count reference. Otherwise, guide is exemplary and should serve as reference for ecosystem projects.
 
----
+______________________________________________________________________
 
 **Next**: Complete Phase 1.6 - API Reference audits

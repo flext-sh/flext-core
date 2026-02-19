@@ -7,10 +7,7 @@ include base.mk
 endif
 
 # === PROJECT-SPECIFIC TARGETS ===
-.PHONY: docs docs-serve diagnose doctor deps-update deps-show
-
-docs: ## Build documentation
-	$(Q)$(POETRY) run mkdocs build
+.PHONY: docs-serve diagnose doctor deps-update deps-show
 
 docs-serve: ## Serve documentation
 	$(Q)$(POETRY) run mkdocs serve

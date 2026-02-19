@@ -1,7 +1,7 @@
 # Advanced Dependency Injection with FlextContainer
 
-
 <!-- TOC START -->
+
 - [Core Concepts](#core-concepts)
   - [Service Locator Pattern](#service-locator-pattern)
   - [Singleton Pattern](#singleton-pattern)
@@ -45,6 +45,7 @@
 - [Key Takeaways](#key-takeaways)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Type-Safety**: Full Generic Support
@@ -930,18 +931,18 @@ Layer 0: FlextConstants, t
 ## Key Takeaways
 
 1. **Global Singleton**: Only one container instance per application
-2. **Type-Safe**: Generic support preserves type information
-3. **Railway Pattern**: All operations return FlextResult
-4. **Flexible Registration**: Support for instances and factories
-5. **Lifecycle Management**: Can manage service initialization and cleanup
-6. **Testable**: Easy to substitute mock services for testing
+1. **Type-Safe**: Generic support preserves type information
+1. **Railway Pattern**: All operations return FlextResult
+1. **Flexible Registration**: Support for instances and factories
+1. **Lifecycle Management**: Can manage service initialization and cleanup
+1. **Testable**: Easy to substitute mock services for testing
 
 ## Next Steps
 
 1. **Reliability Settings**: Review dispatcher reliability configuration above
-2. **Service Patterns**: Explore Service Patterns for service-level DI
-3. **Railway Pattern**: See Railway-Oriented Programming for result handling
-4. **Dispatcher**: Check API Reference: FlextDispatcher for complete API
+1. **Service Patterns**: Explore Service Patterns for service-level DI
+1. **Railway Pattern**: See Railway-Oriented Programming for result handling
+1. **Dispatcher**: Check API Reference: FlextDispatcher for complete API
 
 ## See Also
 
@@ -952,6 +953,6 @@ Layer 0: FlextConstants, t
 - API Reference: FlextDispatcher - Dispatcher reliability API
 - **FLEXT CLAUDE.md**: Development workflow and patterns
 
----
+______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_container.py` for 180+ test cases demonstrating container patterns and edge cases.

@@ -1,17 +1,18 @@
 # FLEXT Core Test Suite
 
-
 <!-- TOC START -->
+
 - [Layout](#layout)
 - [Running the Suite](#running-the-suite)
 - [Modernization Expectations](#modernization-expectations)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 Test coverage aligns with the 1.0.0 modernization pillars: dispatcher unification, context-first observability, and shared configuration/runtime services.
 
----
+______________________________________________________________________
 
 ## Layout
 
@@ -31,7 +32,7 @@ Notable files:
 - `integration/test_wildcard_exports_clean.py` – protects the public API surface.
 - `patterns/test_patterns_commands.py` – codifies CQRS usage expected downstream.
 
----
+______________________________________________________________________
 
 ## Running the Suite
 
@@ -47,7 +48,7 @@ For dispatcher pilots, run the focused marker:
 poetry run pytest tests/patterns -m dispatcher
 ```
 
----
+______________________________________________________________________
 
 ## Modernization Expectations
 

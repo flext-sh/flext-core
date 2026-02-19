@@ -1,13 +1,14 @@
 # Clean Architecture
 
-
 <!-- TOC START -->
+
 - [Layer Hierarchy](#layer-hierarchy)
 - [Dependency Rules](#dependency-rules)
 - [Layer Responsibilities](#layer-responsibilities)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
+
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -62,6 +63,7 @@ from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.p
 ## Layer Responsibilities
 
 - **L0 – Contracts**
+
   - `constants.py` keeps error codes, retry defaults, cache TTLs, and logging
     keys immutable.
   - `typings.py` defines structured aliases for dispatcher callbacks, cached
@@ -70,6 +72,7 @@ from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.p
     dispatcher, and context implementations.
 
 - **L1 – Foundation & Bridge**
+
   - `result.py` delivers the railway-oriented `FlextResult` that propagates
     errors without raising.
   - `exceptions.py` centralizes typed exceptions surfaced by dispatcher
@@ -80,6 +83,7 @@ from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.p
     avoiding imports from L2/L3 to prevent cycles.
 
 - **L2 – Domain & Infrastructure**
+
   - Domain modules (`models.py`, `_models/`, `mixins.py`, `service.py`) wrap
     Pydantic v2 for aggregates, events, validators, and cross-cutting mixins
     (timestamps, versioning, soft deletes).
@@ -90,6 +94,7 @@ from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.p
     scoped containers).
 
 - **L3 – Application / Orchestration**
+
   - `dispatcher.py` coordinates middleware, rate limiting, circuit breaking,
     retries, timeouts, and handler invocation.
   - `_dispatcher/reliability.py` and `_dispatcher/timeout.py` encapsulate
@@ -104,10 +109,10 @@ circular dependencies and keeps FLEXT-Core safe for reuse across services.
 ## Next Steps
 
 1. **Architecture Overview**: See Architecture Overview for visual layer layout
-2. **CQRS Patterns**: Explore CQRS Architecture for application layer patterns
-3. **Domain-Driven Design**: Review DDD Guide for domain patterns
-4. **Dependency Injection**: Check Advanced DI Guide for DI patterns
-5. **Service Patterns**: See Service Patterns for domain services
+1. **CQRS Patterns**: Explore CQRS Architecture for application layer patterns
+1. **Domain-Driven Design**: Review DDD Guide for domain patterns
+1. **Dependency Injection**: Check Advanced DI Guide for DI patterns
+1. **Service Patterns**: See Service Patterns for domain services
 
 ## See Also
 

@@ -1,37 +1,38 @@
 <!-- Generated from docs/guides/README.md for flext-core. -->
+
 <!-- Source of truth: workspace docs/guides/. -->
 
 # flext-core - User Guides
 
 > Project profile: `flext-core`
 
-
-
 <!-- TOC START -->
-- Getting Started
-  - [Installation Guide ✅](#installation-guidegetting-startedmd-)
-  - Quick Start Tutorial (Coming Soon)
-  - [Configuration Guide ✅](#configuration-guideconfigurationmd-)
-- Development
-  - [Development Setup ✅](#development-setupdevelopmentmd-)
-  - [Automation Skill Pattern ✅](#automation-skill-patternskill-automation-patternmd-)
-  - Contributing Guide (Coming Soon)
-  - [Testing Guide ✅](#testing-guidetestingmd-)
-- Operations
-  - Deployment Guide (Coming Soon)
-  - Monitoring Guide (Coming Soon)
-  - [Troubleshooting Guide ✅](#troubleshooting-guidetroubleshootingmd-)
-- Integration
-  - LDAP Integration (Coming Soon)
-  - Database Integration (Coming Soon)
-  - API Integration (Coming Soon)
-- Migration
-  - LDIF Migration Guide (Coming Soon)
-  - Data Migration (Coming Soon)
-- Best Practices
-  - Performance Optimization (Coming Soon)
-  - Security Best Practices (Coming Soon)
-  - Error Handling (Coming Soon)
+
+- [Getting Started](#getting-started)
+  - [Installation Guide ✅](#installation-guide)
+  - [Quick Start Tutorial (Coming Soon)](#quick-start-tutorial-coming-soon)
+  - [Configuration Guide ✅](#configuration-guide)
+- [Development](#development)
+  - [Development Setup ✅](#development-setup)
+  - [Automation Skill Pattern ✅](#automation-skill-pattern)
+  - [Contributing Guide (Coming Soon)](#contributing-guide-coming-soon)
+  - [Testing Guide ✅](#testing-guide)
+- [Operations](#operations)
+  - [Deployment Guide (Coming Soon)](#deployment-guide-coming-soon)
+  - [Monitoring Guide (Coming Soon)](#monitoring-guide-coming-soon)
+  - [Troubleshooting Guide ✅](#troubleshooting-guide)
+- [Integration](#integration)
+  - [LDAP Integration (Coming Soon)](#ldap-integration-coming-soon)
+  - [Database Integration (Coming Soon)](#database-integration-coming-soon)
+  - [API Integration (Coming Soon)](#api-integration-coming-soon)
+- [Migration](#migration)
+  - [LDIF Migration Guide (Coming Soon)](#ldif-migration-guide-coming-soon)
+  - [Data Migration (Coming Soon)](#data-migration-coming-soon)
+- [Best Practices](#best-practices)
+  - [Performance Optimization (Coming Soon)](#performance-optimization-coming-soon)
+  - [Security Best Practices (Coming Soon)](#security-best-practices-coming-soon)
+  - [Error Handling (Coming Soon)](#error-handling-coming-soon)
+
 <!-- TOC END -->
 
 ## Getting Started
@@ -118,7 +119,7 @@ Security considerations when using FLEXT.
 
 Effective error handling strategies in FLEXT applications.
 
----
+______________________________________________________________________
 
 **Note**: This guide structure is being updated. Currently,
 only the Getting Started guide is available. Additional guides are being created as part of the documentation maintenance process.

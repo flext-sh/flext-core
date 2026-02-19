@@ -1,7 +1,7 @@
 # FLEXT-Core Examples
 
-
 <!-- TOC START -->
+
 - [Quick Start](#quick-start)
 - [Example Categories](#example-categories)
   - [🚀 Foundation & Core Patterns](#-foundation-core-patterns)
@@ -12,6 +12,7 @@
 - [Requirements](#requirements)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -111,8 +112,8 @@ Each example produces structured output demonstrating the patterns. Examples inc
 After running examples:
 
 1. **Read Guides**: Explore [Documentation Guides](../docs/guides/) for detailed explanations
-2. **API Reference**: Check [API Reference](../docs/api-reference/) for complete API documentation
-3. **Patterns**: Review [Service Patterns](../docs/guides/service-patterns.md) for production patterns
+1. **API Reference**: Check [API Reference](../docs/api-reference/) for complete API documentation
+1. **Patterns**: Review [Service Patterns](../docs/guides/service-patterns.md) for production patterns
 
 ## See Also
 

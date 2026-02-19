@@ -1,21 +1,22 @@
 <!-- Generated from docs/guides/skill-automation-pattern.md for flext-core. -->
+
 <!-- Source of truth: workspace docs/guides/. -->
 
 # flext-core - Skill Automation Pattern
 
 > Project profile: `flext-core`
 
-
-
 <!-- TOC START -->
-- Goal
-- Required Outputs
-- Standard Skill Contract
-- Standard Skill Format
-- Implementation Checklist
-- Example (Current Pattern)
-- Verification Commands
-- Adoption Rule
+
+- [Goal](#goal)
+- [Required Outputs](#required-outputs)
+- [Standard Skill Contract](#standard-skill-contract)
+- [Standard Skill Format](#standard-skill-format)
+- [Implementation Checklist](#implementation-checklist)
+- [Example (Current Pattern)](#example-current-pattern)
+- [Verification Commands](#verification-commands)
+- [Adoption Rule](#adoption-rule)
+
 <!-- TOC END -->
 
 This guide defines the standard way to create reusable automation skills in this repository.
@@ -33,7 +34,7 @@ For each new automation family, deliver all items below:
    - `rules.yml` — detection rules (ast-grep, ripgrep, or custom)
    - `rules/` — ast-grep rule files (if any)
    - `baseline.json` — violation baseline (auto-generated)
-2. One docs page in `docs/guides/` (if cross-cutting)
+1. One docs page in `docs/guides/` (if cross-cutting)
 
 ## Standard Skill Contract
 
@@ -66,12 +67,12 @@ The skill must follow the canonical format from `skill-format-universal` and inc
 ## Implementation Checklist
 
 1. Define the invariant (policy or quality requirement).
-2. Create `rules.yml` with detection rules (ast-grep, ripgrep, or custom).
-3. Place ast-grep rule files in skill `rules/` directory.
-4. Initialize baseline with `python3 scripts/core/skill_validate.py --skill <name> --update-baseline`.
-5. Write or update skill doc with exact commands.
-6. Add or update a docs guide in `docs/guides/` (if cross-cutting).
-7. Run `python3 scripts/core/skill_validate.py --all` to verify integration.
+1. Create `rules.yml` with detection rules (ast-grep, ripgrep, or custom).
+1. Place ast-grep rule files in skill `rules/` directory.
+1. Initialize baseline with `python3 scripts/core/skill_validate.py --skill <name> --update-baseline`.
+1. Write or update skill doc with exact commands.
+1. Add or update a docs guide in `docs/guides/` (if cross-cutting).
+1. Run `python3 scripts/core/skill_validate.py --all` to verify integration.
 
 ## Example (Current Pattern)
 
@@ -81,18 +82,21 @@ folder (`.claude/skills/<skill>/`) owns its own `rules.yml`, `rules/` ast-grep f
 discovers and executes everything.
 
 **Dict/Any Policy Gate**:
+
 - Skill: `.claude/skills/flext-strict-typing/SKILL.md`
 - Rules: `.claude/skills/flext-strict-typing/rules.yml` (10 rules: 8 ast-grep + 2 ripgrep)
 - AST rules: `.claude/skills/flext-strict-typing/rules/*.yml`
 - Baseline: `.claude/skills/flext-strict-typing/baseline.json`
 
 **Pydantic v2 Policy Gate**:
+
 - Skill: `.claude/skills/lib-pydantic-v2/SKILL.md`
 - Rules: `.claude/skills/lib-pydantic-v2/rules.yml` (8 ast-grep rules)
 - AST rules: `.claude/skills/lib-pydantic-v2/rules/*.yml`
 - Baseline: `.claude/skills/lib-pydantic-v2/baseline.json`
 
 **Generic runner**:
+
 - `scripts/core/skill_validate.py` — auto-discovers `.claude/skills/*/rules.yml`
 
 ## Verification Commands

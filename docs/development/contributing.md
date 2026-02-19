@@ -1,7 +1,7 @@
 # Contributing to FLEXT-Core
 
-
 <!-- TOC START -->
+
 - [Code of Conduct](#code-of-conduct)
 - [Canonical Rules](#canonical-rules)
 - [Quick Start](#quick-start)
@@ -33,6 +33,7 @@
 - [Getting Help](#getting-help)
   - [Resources](#resources)
   - [Support Levels](#support-levels)
+
 <!-- TOC END -->
 
 Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for contributing to the project.
@@ -131,11 +132,11 @@ python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
 **PR Process:**
 
 1. **Create branch**: `git checkout -b feature/your-feature-name`
-2. **Make changes**: Implement your feature or fix
-3. **Write tests**: Add comprehensive tests
-4. **Update docs**: Update documentation if needed
-5. **Run checks**: `make validate` (lint + type-check + tests)
-6. **Submit PR**: Create pull request with clear description
+1. **Make changes**: Implement your feature or fix
+1. **Write tests**: Add comprehensive tests
+1. **Update docs**: Update documentation if needed
+1. **Run checks**: `make validate` (lint + type-check + tests)
+1. **Submit PR**: Create pull request with clear description
 
 ## Development Workflow
 
@@ -225,7 +226,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    make install
    ```
 
-2. **Type Errors**
+1. **Type Errors**
 
    ```bash
    # Run type checker
@@ -235,7 +236,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    mypy src/flext_core/your_module.py
    ```
 
-3. **Test Failures**
+1. **Test Failures**
 
    ```bash
    # Run with verbose output
@@ -369,10 +370,10 @@ from .result import FlextResult
 ### Approval Process
 
 1. **Automated Checks**: All PRs must pass CI/CD pipeline
-2. **Code Review**: At least one maintainer approval required
-3. **Testing**: All tests must pass on multiple Python versions
-4. **Documentation**: Documentation updates must be approved
-5. **Merge**: Maintainers merge approved PRs
+1. **Code Review**: At least one maintainer approval required
+1. **Testing**: All tests must pass on multiple Python versions
+1. **Documentation**: Documentation updates must be approved
+1. **Merge**: Maintainers merge approved PRs
 
 ## Community Guidelines
 
@@ -424,7 +425,7 @@ Contributors who make significant improvements may be:
 - Custom feature development
 - Training and consulting
 
----
+______________________________________________________________________
 
 Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
 

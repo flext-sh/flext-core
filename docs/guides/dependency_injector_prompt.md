@@ -1,8 +1,9 @@
 # dependency-injector pattern prompt
 
-
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 Use this prompt whenever you evolve **flext-core** or downstream projects to keep the dependency-injector integration pattern aligned (bridge L0.5/L1 + container L2 + handlers L3), without breaking the ABI or reintroducing ad-hoc registries.
