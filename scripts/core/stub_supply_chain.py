@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+# Owner-Skill: .claude/skills/scripts-infra/SKILL.md
 from __future__ import annotations
 
 import subprocess
@@ -9,7 +9,7 @@ from pathlib import Path
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    script = root / "archive" / "legacy" / "documentation" / "fix.py"
+    script = root / "archive" / "legacy" / "core" / "stub_supply_chain.py"
     return subprocess.run(
         [sys.executable, str(script), *sys.argv[1:]], check=False
     ).returncode
