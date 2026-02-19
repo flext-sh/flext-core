@@ -1225,7 +1225,7 @@ class FlextUtilitiesValidation:
         """Validate string length within bounds.
 
         This pattern is repeated 6+ times across flext-ldap (passwords, DN, etc),
-        flext-ldif, flext-meltano, flext-target-ldif, and client-a-oud-mig.
+        flext-ldif, flext-meltano, flext-target-ldif, and flext-oud-mig.
         Consolidation ensures consistent boundary checking.
 
         Args:

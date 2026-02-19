@@ -75,7 +75,7 @@ class FlextModels:
     #
     # This enables hierarchical inheritance in subprojects:
     # - flext-cli: m.Cli.Configuration, m.Cli.Service (inherit from m.Configuration, m.Service)
-    # - client-a-oud-mig: m.client-aOudMig.Configuration (inherit from parent project's namespace)
+    # - flext-oud-mig: m.FlextOudMig.Configuration (inherit from parent project's namespace)
 
     # VALUE OBJECTS - Immutable data compared by value
     class OperationContext(FlextGenericModels.Value.OperationContext):

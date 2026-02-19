@@ -1,8 +1,5 @@
 # flext-core - Foundation Library
 PROJECT_NAME := flext-core
-COV_DIR := flext_core
-MIN_COVERAGE := 80
-
 include ../base.mk
 
 # === PROJECT-SPECIFIC TARGETS ===
