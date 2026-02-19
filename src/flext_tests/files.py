@@ -37,10 +37,10 @@ from types import TracebackType
 from typing import ClassVar, Self, TypeVar, cast, overload
 
 import yaml
-from pydantic import BaseModel
-
 from flext_core import r
 from flext_core.runtime import FlextRuntime
+from pydantic import BaseModel
+
 from flext_tests.base import su
 from flext_tests.constants import FlextTestsConstants, c
 from flext_tests.models import m

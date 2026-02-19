@@ -580,20 +580,14 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize not found error with resource context."""
-            # Preserve metadata and correlation_id from extra_kwargs
+            # Preserve metadata from extra_kwargs (correlation_id is
+            # consumed by the explicit parameter and never reaches **extra_kwargs)
             preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
+            extra_kwargs.pop("correlation_id", None)
 
             # Use explicit params or preserved from extra_kwargs
             final_metadata = metadata if metadata is not None else preserved_metadata
-            # Type-narrow preserved_corr_id with isinstance for mypy
-            final_corr_id: str | None
-            if correlation_id is not None:
-                final_corr_id = correlation_id
-            elif isinstance(preserved_corr_id, str):
-                final_corr_id = preserved_corr_id
-            else:
-                final_corr_id = None
+            final_corr_id = correlation_id
 
             # Build notfound context
             notfound_context: dict[str, t.MetadataAttributeValue] = {

@@ -14,6 +14,10 @@ import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
+from flext_core import r, u as flext_u
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.entity import FlextModelsEntity
+from flext_core.models import FlextModels as FlextModelsBase
 from pydantic import (
     AliasChoices,
     BaseModel,
@@ -24,10 +28,6 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import r, u as flext_u
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.models import FlextModels as FlextModelsBase
 from flext_tests.constants import ContainerStatus, FlextTestsConstants, c
 from flext_tests.typings import FileContent as TestsFileContent, t
 

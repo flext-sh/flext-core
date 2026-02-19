@@ -286,7 +286,7 @@ class FlextModelsCollections:
                 Statistics instance
 
             """
-            return cls.model_validate(dict(data.items()))
+            return cls.model_validate(data.root)
 
         @classmethod
         def aggregate(cls, stats_list: list[Self]) -> dict[str, t.GeneralValueType]:

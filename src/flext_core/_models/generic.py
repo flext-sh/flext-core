@@ -784,7 +784,7 @@ class FlextGenericModels:
 
                 failure_rate = self.unhealthy_checks_count / self.total_checks
 
-                if failure_rate == 0.0:
+                if failure_rate <= 0.0:
                     return "healthy"
                 if failure_rate <= c.Performance.FAILURE_RATE_WARNING_THRESHOLD:
                     return "warning"

@@ -15,14 +15,14 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal, Self, TypeGuard, cast, overload
 
-from pydantic import BaseModel
-
 from flext_core import (
     FlextResult as r,
     u,
 )
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c as core_c
+from pydantic import BaseModel
+
 from flext_tests.constants import c
 from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m

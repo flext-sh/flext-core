@@ -28,11 +28,11 @@ import docker
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
+from flext_core.loggings import FlextLogger
+from flext_core.result import r
 from python_on_whales import DockerClient as PowDockerClient, docker as pow_docker
 from python_on_whales.exceptions import DockerException as PowDockerException
 
-from flext_core.loggings import FlextLogger
-from flext_core.result import r
 from flext_tests.constants import ContainerStatus, c
 from flext_tests.models import m
 

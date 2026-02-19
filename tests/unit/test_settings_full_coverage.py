@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+from pydantic_settings import BaseSettings
+
+from flext_core import c, m, r, t, u
+
+
+settings_mod = __import__("flext_core.settings", fromlist=["FlextSettings"])
+FlextSettings = settings_mod.FlextSettings
+
+
+class _SubSettings(FlextSettings):
+    pass
+
+
+def test_settings_materialize_and_context_overrides() -> None:
+    assert c.Errors.UNKNOWN_ERROR
+    assert isinstance(m.Categories(), m.Categories)
+    assert r[int].ok(1).is_success
+    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert u.Conversion.to_str(1) == "1"
+
+    sub = _SubSettings.materialize()
+    assert isinstance(sub, _SubSettings)
+
+    FlextSettings.register_context_overrides("ctx-a", app_name="A")
+    cfg = FlextSettings.for_context("ctx-a")
+    assert cfg.app_name == "A"
+
+    unchanged = FlextSettings.for_context("ctx-b")
+    assert isinstance(unchanged, FlextSettings)
+
+    class _N(BaseSettings):
+        x: int = 1
+
+    FlextSettings.register_namespace("n1", _N)
+    assert FlextSettings.get_namespace_config("n1") is _N

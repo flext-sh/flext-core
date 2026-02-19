@@ -2981,8 +2981,6 @@ class FlextUtilitiesValidation:
 
             """
             all_suffixes: tuple[str, ...] = (suffix, *suffixes)
-            if not all_suffixes:
-                return False
             return any(value.endswith(s) for s in all_suffixes)
 
         @staticmethod

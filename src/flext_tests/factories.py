@@ -24,9 +24,9 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence
 from typing import Never, TypeVar
 
+from flext_core import FlextResult, r
 from pydantic import BaseModel as _BaseModel
 
-from flext_core import FlextResult, r
 from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -1503,10 +1503,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                 # Only validate if name was explicitly provided (not None)
                 # If name is None, it means it wasn't provided, so skip validation
                 # If name is provided but empty, fail validation
-                if (
-                    self.name is not None
-                    and not self.name
-                ):
+                if self.name is not None and not self.name:
                     return r[bool].fail("Name is required")
                 return r[bool].ok(value=True)
 

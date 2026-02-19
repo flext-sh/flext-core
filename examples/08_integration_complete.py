@@ -22,8 +22,6 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import cast
 
-from pydantic import BaseModel, Field
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -40,6 +38,7 @@ from flext_core import (
     t,
     u,
 )
+from pydantic import BaseModel, Field
 
 # ═══════════════════════════════════════════════════════════════════
 # DOMAIN MODELS

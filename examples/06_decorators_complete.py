@@ -21,8 +21,6 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Sequence
 
-from pydantic import BaseModel
-
 from flext_core import (
     FlextContainer,
     FlextDecorators,
@@ -33,6 +31,7 @@ from flext_core import (
     s,
     t,
 )
+from pydantic import BaseModel
 
 # ═══════════════════════════════════════════════════════════════════
 # SERVICE IMPLEMENTATION

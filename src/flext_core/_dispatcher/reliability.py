@@ -288,7 +288,7 @@ class RateLimiterManager:
             Jittered delay value.
 
         """
-        if base_delay <= 0.0 or self._jitter_factor == 0.0:
+        if base_delay <= 0.0 or self._jitter_factor <= 0.0:
             return base_delay
 
         secure_random = secrets.SystemRandom()
@@ -407,7 +407,7 @@ class RetryPolicy:
             Exponential backoff delay in seconds.
 
         """
-        if self._base_delay == 0.0:
+        if self._base_delay <= 0.0:
             return 0.0
 
         exponential_delay = self._base_delay * (

@@ -12,11 +12,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal, TypeGuard, TypeVar
 
-from pydantic import BaseModel, InstanceOf
-
 from flext_core import FlextTypes
 from flext_core.models import m
 from flext_core.result import r
+from pydantic import BaseModel, InstanceOf
 
 # Note: p.Tests.* protocols are defined in flext_tests.protocols
 # Use forward reference strings "FlextTestsProtocols" in type hints if needed

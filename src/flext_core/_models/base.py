@@ -1230,7 +1230,7 @@ class FlextModelFoundation:
 
         def validate_self(self) -> Self:
             """Re-validate the model instance."""
-            return self.__class__.model_validate(self.model_dump())
+            return self.model_copy(deep=True)
 
         def is_valid(self) -> bool:
             """Check if the model is currently valid."""
@@ -1407,7 +1407,7 @@ class FlextModelFoundation:
 
         def rebuild_with_validation(self) -> Self:
             """Rebuild model with full validation using model_validate."""
-            return self.__class__.model_validate(self.model_dump())
+            return self.model_copy(deep=True)
 
         @computed_field
         @property

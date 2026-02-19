@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_core import r
+
 from flext_tests._validator import (
     FlextValidatorBypass,
     FlextValidatorImports,

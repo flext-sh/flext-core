@@ -32,13 +32,13 @@ from flext_core import (
     r,
 )
 from flext_core.utilities import u as u_core
+
 from flext_tests.constants import c
 from flext_tests.models import m
 
 if TYPE_CHECKING:
-    from pydantic import BaseModel
-
     from flext_core._models.base import FlextModelsBase
+    from pydantic import BaseModel
 
 # Type alias for model factory methods - class constructors or factory functions
 # Using type[T] since factories are typically class constructors accepting **kwargs

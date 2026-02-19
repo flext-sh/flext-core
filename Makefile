@@ -1,7 +1,7 @@
 # flext-core - Foundation Library
 PROJECT_NAME := flext-core
 COV_DIR := flext_core
-MIN_COVERAGE := 80
+MIN_COVERAGE := 100
 
 include ../base.mk
 

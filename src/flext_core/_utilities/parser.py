@@ -1619,12 +1619,7 @@ class FlextUtilitiesParser:
     ) -> T:
         """Fallback: try direct type constructor."""
         # Guard: object type doesn't accept constructor arguments
-        if target_type is object:
-            return default
-        try:
-            return default
-        except (ValueError, TypeError, Exception):
-            return default
+        return default
 
     # =========================================================================
     # CONV_* METHODS - Convenience conversion wrappers

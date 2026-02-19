@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import TypeVar
 
 import pytest
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -26,6 +25,7 @@ from flext_core import (
     m,
     r,
 )
+
 from tests.helpers.scenarios import (
     ParserScenarios,
     ReliabilityScenarios,
@@ -487,14 +487,11 @@ def test_context() -> FlextContext:
 def clean_container() -> FlextContainer:
     """Provide a clean FlextContainer instance for testing.
 
-    Creates a container and clears auto-registered services for testing
-    in isolation.
+    Creates a container and clears all registered services for testing
+    in isolation regardless of what other tests may have registered.
     """
     container = FlextContainer()
-    # Clear auto-registered services for test isolation
-    container.unregister("config")
-    container.unregister("logger")
-    container.unregister("container")
+    container.clear_all()
     return container
 
 

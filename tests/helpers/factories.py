@@ -17,6 +17,7 @@ from typing import ClassVar
 
 from flext_core import FlextModels, FlextResult, FlextService
 from flext_core.models import m
+
 from tests.constants import TestsFlextConstants
 
 # =========================================================================

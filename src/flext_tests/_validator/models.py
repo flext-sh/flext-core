@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_core._models.entity import FlextModelsEntity
 from pydantic import Field
 
-from flext_core._models.entity import FlextModelsEntity
 from flext_tests.constants import FlextTestsConstants, c
 from flext_tests.models import m
 

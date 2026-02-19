@@ -13,9 +13,8 @@ import builtins
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol, Self, runtime_checkable
 
-from pydantic import BaseModel
-
 from flext_core import FlextProtocols, FlextTypes as t, r
+from pydantic import BaseModel
 
 # Import base types from flext_core
 # FlextTestsTypes extends FlextTypes, so we can use base types directly
