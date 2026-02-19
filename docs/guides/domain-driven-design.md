@@ -2,31 +2,31 @@
 
 
 <!-- TOC START -->
-- [Core Concepts](#core-concepts)
-  - [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
-  - [FlextModels Architecture](#flextmodels-architecture)
-- [Building Blocks](#building-blocks)
-  - [Value Objects: Immutable by Semantics](#value-objects-immutable-by-semantics)
-  - [Entities: Identity and Mutability](#entities-identity-and-mutability)
-  - [Aggregate Roots: Consistency Boundaries](#aggregate-roots-consistency-boundaries)
-- [Domain Events and CQRS Integration](#domain-events-and-cqrs-integration)
-- [Real-World Examples](#real-world-examples)
-  - [Example 1: E-Commerce Order System](#example-1-e-commerce-order-system)
-  - [Example 2: User Authentication System](#example-2-user-authentication-system)
-- [Integration with FlextResult](#integration-with-flextresult)
-- [CQRS: Command Query Responsibility Segregation](#cqrs-command-query-responsibility-segregation)
-  - [Commands: Write Operations](#commands-write-operations)
-  - [Queries: Read Operations](#queries-read-operations)
-  - [Dispatcher: Unified Command/Query Bus](#dispatcher-unified-commandquery-bus)
-  - [Benefits of CQRS in FLEXT](#benefits-of-cqrs-in-flext)
-  - [When to Use CQRS](#when-to-use-cqrs)
-- [Best Practices](#best-practices)
-  - [1. Protect Invariants in **init**](#1-protect-invariants-in-init)
-  - [2. Use Semantic Types for Values](#2-use-semantic-types-for-values)
-  - [3. Enforce Business Rules](#3-enforce-business-rules)
-- [Key Takeaways](#key-takeaways)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
+- Core Concepts
+  - Domain-Driven Design (DDD)
+  - FlextModels Architecture
+- Building Blocks
+  - Value Objects: Immutable by Semantics
+  - Entities: Identity and Mutability
+  - Aggregate Roots: Consistency Boundaries
+- Domain Events and CQRS Integration
+- Real-World Examples
+  - Example 1: E-Commerce Order System
+  - Example 2: User Authentication System
+- Integration with FlextResult
+- CQRS: Command Query Responsibility Segregation
+  - Commands: Write Operations
+  - Queries: Read Operations
+  - Dispatcher: Unified Command/Query Bus
+  - Benefits of CQRS in FLEXT
+  - When to Use CQRS
+- Best Practices
+  - 1. Protect Invariants in **init**
+  - 2. Use Semantic Types for Values
+  - 3. Enforce Business Rules
+- Key Takeaways
+- Next Steps
+- See Also
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation
@@ -1001,20 +1001,20 @@ def add_to_cart(cart, item):
 
 ## Next Steps
 
-1. **Service Patterns**: Explore [Service Patterns](./service-patterns.md) for domain service implementation
-2. **Dependency Injection**: See [Advanced DI](./dependency-injection-advanced.md) for service composition
-3. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for domain error patterns
-4. **Railway Patterns**: Review [Railway-Oriented Programming](./railway-oriented-programming.md) for result composition
-5. **Architecture**: Study [Clean Architecture](../architecture/clean-architecture.md) for layer organization
+1. **Service Patterns**: Explore Service Patterns for domain service implementation
+2. **Dependency Injection**: See Advanced DI for service composition
+3. **Error Handling**: Check Error Handling Guide for domain error patterns
+4. **Railway Patterns**: Review Railway-Oriented Programming for result composition
+5. **Architecture**: Study Clean Architecture for layer organization
 
 ## See Also
 
-- [Service Patterns](./service-patterns.md) - Domain services with FlextService
-- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition patterns
-- [Railway-Oriented Programming](./railway-oriented-programming.md) - Result composition with FlextResult
-- [Error Handling Guide](./error-handling.md) - Domain error handling patterns
-- [Clean Architecture](../architecture/clean-architecture.md) - Architecture patterns and layers
-- [API Reference: FlextModels](../api-reference/domain.md#flextmodels) - Complete models API
+- Service Patterns - Domain services with FlextService
+- Dependency Injection Advanced - Service composition patterns
+- Railway-Oriented Programming - Result composition with FlextResult
+- Error Handling Guide - Domain error handling patterns
+- Clean Architecture - Architecture patterns and layers
+- API Reference: FlextModels - Complete models API
 - **FLEXT CLAUDE.md**: Development patterns and standards
 
 ---

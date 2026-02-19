@@ -2,9 +2,9 @@
 
 
 <!-- TOC START -->
-- [Highlights](#highlights)
-- [Issues to Address](#issues-to-address)
-- [Recommended Updates](#recommended-updates)
+- Highlights
+- Issues to Address
+- Recommended Updates
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

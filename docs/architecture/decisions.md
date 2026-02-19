@@ -2,72 +2,72 @@
 
 
 <!-- TOC START -->
-- [ADR-001: 5-Layer Architecture](#adr-001-5-layer-architecture)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
+- ADR-001: 5-Layer Architecture
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
 - [ADR-002: Railway-Oriented Programming with FlextResult[T]](#adr-002-railway-oriented-programming-with-flextresultt)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-003: Pydantic v2 (No v1 Legacy)](#adr-003-pydantic-v2-no-v1-legacy)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-004: Single Class Per Module Pattern](#adr-004-single-class-per-module-pattern)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-005: Global Container Singleton Pattern](#adr-005-global-container-singleton-pattern)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-006: Ecosystem API Stability](#adr-006-ecosystem-api-stability)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-007: Type Safety: No `Any` Type](#adr-007-type-safety-no-any-type)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-008: Clean Layered Dependencies Only (No Shortcuts)](#adr-008-clean-layered-dependencies-only-no-shortcuts)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-009: Python 3.13+ Exclusive](#adr-009-python-313-exclusive)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [ADR-010: Domain Events Over Direct Calls](#adr-010-domain-events-over-direct-calls)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-- [Decision Making Process](#decision-making-process)
-- [Obsoleted Decisions](#obsoleted-decisions)
-- [Future Decisions Needed](#future-decisions-needed)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-- [Viewing Decisions](#viewing-decisions)
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-003: Pydantic v2 (No v1 Legacy)
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-004: Single Class Per Module Pattern
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-005: Global Container Singleton Pattern
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-006: Ecosystem API Stability
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-007: Type Safety: No `Any` Type
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-008: Clean Layered Dependencies Only (No Shortcuts)
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-009: Python 3.13+ Exclusive
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- ADR-010: Domain Events Over Direct Calls
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+- Decision Making Process
+- Obsoleted Decisions
+- Future Decisions Needed
+- Next Steps
+- See Also
+- Viewing Decisions
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -490,19 +490,19 @@ For new ADRs:
 
 ## Next Steps
 
-1. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer structure
-2. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for dependency rules
-3. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for implementation details
-4. **Architecture Patterns**: Check [Architecture Patterns](./patterns.md) for common patterns
-5. **Implementation Guides**: Review [Getting Started](../guides/getting-started.md) for practical usage
+1. **Architecture Overview**: See Architecture Overview for layer structure
+2. **Clean Architecture**: Review Clean Architecture for dependency rules
+3. **CQRS Patterns**: Explore CQRS Architecture for implementation details
+4. **Architecture Patterns**: Check Architecture Patterns for common patterns
+5. **Implementation Guides**: Review Getting Started for practical usage
 
 ## See Also
 
-- [Architecture Overview](./overview.md) - Visual layer topology
-- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
-- [CQRS Architecture](./cqrs.md) - Handler and dispatcher implementation
-- [Architecture Patterns](./patterns.md) - Common implementation patterns
-- [Getting Started Guide](../guides/getting-started.md) - Practical implementation
+- Architecture Overview - Visual layer topology
+- Clean Architecture - Dependency rules and layer responsibilities
+- CQRS Architecture - Handler and dispatcher implementation
+- Architecture Patterns - Common implementation patterns
+- Getting Started Guide - Practical implementation
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ## Viewing Decisions

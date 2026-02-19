@@ -2,88 +2,88 @@
 
 
 <!-- TOC START -->
-- [Feature Guide Template](#feature-guide-template)
-- [Overview](#overview)
-- [Basic Usage](#basic-usage)
-  - [Simple Example](#simple-example)
-  - [Common Patterns](#common-patterns)
-- [API Reference](#api-reference)
-  - [Method/Class 1](#methodclass-1)
-  - [Method/Class 2](#methodclass-2)
-- [Best Practices](#best-practices)
-  - [✅ DO](#-do)
-  - [❌ DON'T](#-dont)
-- [Common Issues](#common-issues)
+- Feature Guide Template
+- Overview
+- Basic Usage
+  - Simple Example
+  - Common Patterns
+- API Reference
+  - Method/Class 1
+  - Method/Class 2
+- Best Practices
+  - ✅ DO
+  - ❌ DON'T
+- Common Issues
   - [Issue: [Problem Description]](#issue-problem-description)
   - [Issue: [Problem Description]](#issue-problem-description)
-- [Advanced Topics](#advanced-topics)
-- [Summary](#summary)
-- [See Also](#see-also)
-- [API Reference Template](#api-reference-template)
+- Advanced Topics
+- Summary
+- See Also
+- API Reference Template
 - [[Class/Module Name]](#classmodule-name)
-  - [Class Methods](#class-methods)
-  - [Properties](#properties)
-- [Quality Metrics](#quality-metrics)
-- [Usage Examples](#usage-examples)
-  - [Complete Example](#complete-example)
-- [See Also](#see-also)
-- [Troubleshooting Template](#troubleshooting-template)
+  - Class Methods
+  - Properties
+- Quality Metrics
+- Usage Examples
+  - Complete Example
+- See Also
+- Troubleshooting Template
 - [[Category of Issues]](#category-of-issues)
   - [Issue: [Problem Description]](#issue-problem-description)
 - [[Another Category]](#another-category)
   - [Issue: [Problem Description]](#issue-problem-description)
-- [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
+- Architecture Decision Record (ADR) Template
 - [ADR-[Number]: [Title]](#adr-number-title)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-  - [Related Decisions](#related-decisions)
-- [Best Practices Guide Template](#best-practices-guide-template)
+  - Problem
+  - Decision
+  - Rationale
+  - Alternatives Considered
+  - Consequences
+  - Related Decisions
+- Best Practices Guide Template
 - [Principle 1: [Name]](#principle-1-name)
 - [Principle 2: [Name]](#principle-2-name)
-- [Common Patterns](#common-patterns)
+- Common Patterns
   - [Pattern 1: [Name]](#pattern-1-name)
   - [Pattern 2: [Name]](#pattern-2-name)
-- [Common Mistakes](#common-mistakes)
+- Common Mistakes
   - [Mistake 1: [What people get wrong]](#mistake-1-what-people-get-wrong)
-- [Summary](#summary)
-- [Quick Reference Card Template](#quick-reference-card-template)
-- [Installation](#installation)
-- [Basic Setup](#basic-setup)
-- [Common Tasks](#common-tasks)
-  - [Task 1](#task-1)
-  - [Task 2](#task-2)
-- [Common Issues](#common-issues)
-- [Resources](#resources)
-- [Configuration Documentation Template](#configuration-documentation-template)
-- [Overview](#overview)
-- [Configuration Methods](#configuration-methods)
-  - [Method 1: Configuration File](#method-1-configuration-file)
-  - [Method 2: Environment Variables](#method-2-environment-variables)
-  - [Method 3: Programmatic](#method-3-programmatic)
-- [Configuration Options](#configuration-options)
-  - [option_name](#optionname)
-- [Environment-Specific](#environment-specific)
-  - [Development](#development)
-  - [Production](#production)
-- [Complete Example](#complete-example)
-- [Comparison/Alternatives Template](#comparisonalternatives-template)
+- Summary
+- Quick Reference Card Template
+- Installation
+- Basic Setup
+- Common Tasks
+  - Task 1
+  - Task 2
+- Common Issues
+- Resources
+- Configuration Documentation Template
+- Overview
+- Configuration Methods
+  - Method 1: Configuration File
+  - Method 2: Environment Variables
+  - Method 3: Programmatic
+- Configuration Options
+  - option_name
+- Environment-Specific
+  - Development
+  - Production
+- Complete Example
+- Comparison/Alternatives Template
 - [[Feature A] Details](#feature-a-details)
 - [[Feature B] Details](#feature-b-details)
 - [[Feature C] Details](#feature-c-details)
-- [Decision Matrix](#decision-matrix)
-- [Implementation Guide Template](#implementation-guide-template)
+- Decision Matrix
+- Implementation Guide Template
 - [Step 1: [Name]](#step-1-name)
 - [Step 2: [Name]](#step-2-name)
 - [Step 3: [Name]](#step-3-name)
-- [Verification](#verification)
-- [Troubleshooting](#troubleshooting)
-- [What's Next](#whats-next)
-- [Tips for Using Templates](#tips-for-using-templates)
-- [Example: Using the Feature Guide Template](#example-using-the-feature-guide-template)
-- [Maintenance](#maintenance)
+- Verification
+- Troubleshooting
+- What's Next
+- Tips for Using Templates
+- Example: Using the Feature Guide Template
+- Maintenance
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -198,9 +198,9 @@ from flext_core import [Import]
 
 ## See Also
 
-- [Related Guide 1](link)
-- [Related Guide 2](link)
-- [API Reference](link)
+- Related Guide 1
+- Related Guide 2
+- API Reference
 
 ````
 
@@ -275,8 +275,8 @@ obj.property_name  # Access property
 
 ## See Also
 
-- [Related API Reference](link)
-- [How-To Guide](link)
+- Related API Reference
+- How-To Guide
 
 ````
 
@@ -359,8 +359,8 @@ Use for architecture/decisions.md.
 - ❌ Bad consequence 2
 
 ### Related Decisions
-- [Related ADR](link)
-- [Related pattern](link)
+- Related ADR
+- Related pattern
 ````
 
 ## Best Practices Guide Template
@@ -466,9 +466,9 @@ from flext_core import [Import]
 
 ## Resources
 
-- [Full Guide](link)
-- [API Reference](link)
-- [Examples](link)
+- Full Guide
+- API Reference
+- Examples
 
 ````
 
@@ -505,10 +505,7 @@ export SETTING_NAME=value
 ```python
 from flext_core import [Component]
 
-config = [Component](
-    key1="value",
-    key2=123,
-)
+config = Component
 ```
 
 ## Configuration Options
@@ -656,8 +653,8 @@ Expected output:
 
 ## What's Next
 
-- [Next feature](link)
-- [Related topic](link)
+- Next feature
+- Related topic
 
 ```
 
@@ -673,7 +670,7 @@ Expected output:
 
 ## Example: Using the Feature Guide Template
 
-See [Configuration Guide](../guides/configuration.md) as a real example of the Feature Guide Template.
+See Configuration Guide as a real example of the Feature Guide Template.
 
 ## Maintenance
 

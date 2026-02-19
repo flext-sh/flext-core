@@ -7,81 +7,9 @@
 
 
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Overview](#overview)
-- [Configuration Sources](#configuration-sources)
-- [Basic Configuration](#basic-configuration)
-  - [Environment Variables](#environment-variables)
-  - [Configuration Files](#configuration-files)
-  - [Programmatic Configuration](#programmatic-configuration)
-- [Project-Specific Configuration](#project-specific-configuration)
-  - [flext-ldif Configuration](#flext-ldif-configuration)
-  - [flext-api Configuration](#flext-api-configuration)
-  - [flext-auth Configuration](#flext-auth-configuration)
-- [Environment-Specific Configuration](#environment-specific-configuration)
-  - [Development Environment](#development-environment)
-  - [Production Environment](#production-environment)
-- [Configuration Validation](#configuration-validation)
-- [Configuration Inheritance](#configuration-inheritance)
-- [Best Practices](#best-practices)
-  - [1. Use Environment Variables for Secrets](#1-use-environment-variables-for-secrets)
-  - [2. Validate Configuration Early](#2-validate-configuration-early)
-  - [3. Use Configuration Classes](#3-use-configuration-classes)
-  - [4. Document Configuration Options](#4-document-configuration-options)
-- [Troubleshooting](#troubleshooting)
-  - [Common Configuration Issues](#common-configuration-issues)
-  - [Debug Configuration](#debug-configuration)
-- [Examples](#examples)
-  - [Complete Configuration Example](#complete-configuration-example)
-- [Reference](#reference)
-<!-- TOC END -->
 
-## Table of Contents
 
-- [FLEXT Configuration Guide](#flext-configuration-guide)
-  - [Overview](#overview)
-  - [Configuration Sources](#configuration-sources)
-  - [Basic Configuration](#basic-configuration)
-    - [Environment Variables](#environment-variables)
-- [Core configuration](#core-configuration)
-- [LDIF processing](#ldif-processing)
-- [API configuration](#api-configuration)
-  - [Configuration Files](#configuration-files)
-- [FLEXT Configuration](#flext-configuration)
-- [LDIF Processing](#ldif-processing)
-- [API Configuration](#api-configuration)
-  - [Programmatic Configuration](#programmatic-configuration)
-- [Core configuration](#core-configuration)
-- [LDIF configuration](#ldif-configuration)
-  - [Project-Specific Configuration](#project-specific-configuration)
-    - [flext-ldif Configuration](#flext-ldif-configuration)
-    - [flext-api Configuration](#flext-api-configuration)
-    - [flext-auth Configuration](#flext-auth-configuration)
-  - [Environment-Specific Configuration](#environment-specific-configuration)
-    - [Development Environment](#development-environment)
-- [config.dev.YAML](#configdevyaml)
-  - [Production Environment](#production-environment)
-- [config.prod.YAML](#configprodyaml)
-  - [Configuration Validation](#configuration-validation)
-  - [Configuration Inheritance](#configuration-inheritance)
-- [Base configuration](#base-configuration)
-- [Extended configuration](#extended-configuration)
-  - [Best Practices](#best-practices)
-    - [1. Use Environment Variables for Secrets](#1-use-environment-variables-for-secrets)
-- [Never put secrets in configuration files](#never-put-secrets-in-configuration-files)
-  - [2. Validate Configuration Early](#2-validate-configuration-early)
-  - [3. Use Configuration Classes](#3-use-configuration-classes)
-  - [4. Document Configuration Options](#4-document-configuration-options)
-  - [Troubleshooting](#troubleshooting)
-    - [Common Configuration Issues](#common-configuration-issues)
-    - [Debug Configuration](#debug-configuration)
-- [Enable debug logging](#enable-debug-logging)
-- [Print configuration](#print-configuration)
-- [Validate configuration](#validate-configuration)
-  - [Examples](#examples)
-    - [Complete Configuration Example](#complete-configuration-example)
-  - [Reference](#reference)
+
 
 This guide covers how to configure FLEXT for your specific environment and requirements.
 
@@ -570,7 +498,7 @@ if __name__ == "__main__":
 
 ## Reference
 
-- [FLEXT Core Configuration](../api-reference/foundation.md#configuration)
-- [Environment Variables](../api-reference/foundation.md#environment-variables)
+- FLEXT Core Configuration
+- Environment Variables
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.0/)
-- [Configuration Best Practices](../standards/configuration.md)
+- Configuration Best Practices

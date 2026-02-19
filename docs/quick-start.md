@@ -2,28 +2,28 @@
 
 
 <!-- TOC START -->
-- [Installation](#installation)
-- [Core Concepts (2 minutes)](#core-concepts-2-minutes)
+- Installation
+- Core Concepts (2 minutes)
   - [1. Railway-Oriented Programming (FlextResult[T])](#1-railway-oriented-programming-flextresultt)
-  - [2. Dependency Injection (FlextContainer)](#2-dependency-injection-flextcontainer)
-  - [3. Domain-Driven Design (FlextModels)](#3-domain-driven-design-flextmodels)
-- [Common Use Cases (3 minutes)](#common-use-cases-3-minutes)
-  - [Use Case 1: Validation Pipeline](#use-case-1-validation-pipeline)
-  - [Use Case 2: Service with Dependency Injection](#use-case-2-service-with-dependency-injection)
-  - [Use Case 3: Domain Models with Validation](#use-case-3-domain-models-with-validation)
-  - [Use Case 4: Dispatcher-Driven CQRS](#use-case-4-dispatcher-driven-cqrs)
-- [Key Patterns Cheat Sheet](#key-patterns-cheat-sheet)
-  - [Pattern 1: Success/Failure Handling](#pattern-1-successfailure-handling)
-  - [Pattern 2: Transform Values](#pattern-2-transform-values)
-  - [Pattern 3: Chain Operations](#pattern-3-chain-operations)
-  - [Pattern 4: Error Recovery](#pattern-4-error-recovery)
-  - [Pattern 5: Access Both APIs](#pattern-5-access-both-apis)
-- [Testing Example](#testing-example)
-- [Next Steps](#next-steps)
-- [Common Questions](#common-questions)
-- [Command Reference](#command-reference)
-- [Quick Reference](#quick-reference)
-- [Getting Help](#getting-help)
+  - 2. Dependency Injection (FlextContainer)
+  - 3. Domain-Driven Design (FlextModels)
+- Common Use Cases (3 minutes)
+  - Use Case 1: Validation Pipeline
+  - Use Case 2: Service with Dependency Injection
+  - Use Case 3: Domain Models with Validation
+  - Use Case 4: Dispatcher-Driven CQRS
+- Key Patterns Cheat Sheet
+  - Pattern 1: Success/Failure Handling
+  - Pattern 2: Transform Values
+  - Pattern 3: Chain Operations
+  - Pattern 4: Error Recovery
+  - Pattern 5: Access Both APIs
+- Testing Example
+- Next Steps
+- Common Questions
+- Command Reference
+- Quick Reference
+- Getting Help
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -348,13 +348,13 @@ def test_chained_operations():
 
 ## Next Steps
 
-- **Configuration**: [Configuration Guide](guides/configuration.md) - Learn FlextSettings patterns
-- **Error Handling**: [Error Handling Guide](guides/error-handling.md) - Deep dive into railway patterns
-- **Testing**: [Testing Guide](guides/testing.md) - Testing with pytest and fixtures
-- **Architecture**: [Clean Architecture](architecture/clean-architecture.md) - 5-layer patterns
-- **Patterns**: [Architecture Patterns](architecture/patterns.md) - 9 design patterns
-- **API Reference**: [API Documentation](api-reference/) - Complete API reference
-- **Troubleshooting**: [Troubleshooting Guide](guides/troubleshooting.md) - Common issues and fixes
+- **Configuration**: Configuration Guide - Learn FlextSettings patterns
+- **Error Handling**: Error Handling Guide - Deep dive into railway patterns
+- **Testing**: Testing Guide - Testing with pytest and fixtures
+- **Architecture**: Clean Architecture - 5-layer patterns
+- **Patterns**: Architecture Patterns - 9 design patterns
+- **API Reference**: API Documentation - Complete API reference
+- **Troubleshooting**: Troubleshooting Guide - Common issues and fixes
 
 ## Common Questions
 
@@ -434,10 +434,10 @@ make validate
 ## Getting Help
 
 - **Documentation**: See guides/ and api-reference/
-- **Troubleshooting**: See [guides/troubleshooting.md](guides/troubleshooting.md)
+- **Troubleshooting**: See guides/troubleshooting.md
 - **Examples**: Check examples/ directory
 - **Issues**: Report bugs on GitHub
 
 ---
 
-**Ready to dive deeper?** Start with the [Configuration Guide](guides/configuration.md) to learn how to configure FLEXT-Core for your application.
+**Ready to dive deeper?** Start with the Configuration Guide to learn how to configure FLEXT-Core for your application.

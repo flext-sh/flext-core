@@ -2,28 +2,28 @@
 
 
 <!-- TOC START -->
-- [Canonical Rules](#canonical-rules)
-- [Core Principles](#core-principles)
-- [Pattern 1: Basic Model with Constraints](#pattern-1-basic-model-with-constraints)
-- [Pattern 2: ConfigDict for Model Settings](#pattern-2-configdict-for-model-settings)
-- [Pattern 3: Field Validators](#pattern-3-field-validators)
-  - [Single Field Validator](#single-field-validator)
-  - [Validator Modes: before, after, wrap](#validator-modes-before-after-wrap)
-  - [Validate Multiple Fields](#validate-multiple-fields)
-- [Pattern 4: Model Validators (Cross-Field)](#pattern-4-model-validators-cross-field)
-- [Pattern 5: Computed Fields](#pattern-5-computed-fields)
-- [Pattern 6: Annotated Types for Semantic Meaning](#pattern-6-annotated-types-for-semantic-meaning)
-- [Pattern 7: Settings with Environment Variables](#pattern-7-settings-with-environment-variables)
-- [Pattern 8: Custom Types](#pattern-8-custom-types)
-- [Pattern 9: Discriminated Unions for Polymorphism](#pattern-9-discriminated-unions-for-polymorphism)
-- [Pattern 10: JSON Schema Generation](#pattern-10-json-schema-generation)
-- [Integration with FlextResult](#integration-with-flextresult)
-- [Best Practices](#best-practices)
-- [Checklists](#checklists)
-  - [Model Configuration](#model-configuration)
-  - [Field Validation](#field-validation)
-  - [Serialization](#serialization)
-- [See Also](#see-also)
+- Canonical Rules
+- Core Principles
+- Pattern 1: Basic Model with Constraints
+- Pattern 2: ConfigDict for Model Settings
+- Pattern 3: Field Validators
+  - Single Field Validator
+  - Validator Modes: before, after, wrap
+  - Validate Multiple Fields
+- Pattern 4: Model Validators (Cross-Field)
+- Pattern 5: Computed Fields
+- Pattern 6: Annotated Types for Semantic Meaning
+- Pattern 7: Settings with Environment Variables
+- Pattern 8: Custom Types
+- Pattern 9: Discriminated Unions for Polymorphism
+- Pattern 10: JSON Schema Generation
+- Integration with FlextResult
+- Best Practices
+- Checklists
+  - Model Configuration
+  - Field Validation
+  - Serialization
+- See Also
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Target**: flext-core and dependent projects
@@ -668,8 +668,8 @@ else:
 
 ## See Also
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md)
-- [Anti-Patterns and Best Practices](./anti-patterns-best-practices.md)
+- Railway-Oriented Programming
+- Anti-Patterns and Best Practices
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.4/)
 - **FLEXT CLAUDE.md**: Development standards and patterns
 

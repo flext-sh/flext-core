@@ -2,8 +2,8 @@
 
 
 <!-- TOC START -->
-- [Findings](#findings)
-- [Recommended Actions](#recommended-actions)
+- Findings
+- Recommended Actions
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

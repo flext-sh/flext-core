@@ -2,49 +2,49 @@
 
 
 <!-- TOC START -->
-- [Core Concepts](#core-concepts)
-  - [Service Locator Pattern](#service-locator-pattern)
-  - [Singleton Pattern](#singleton-pattern)
-  - [Type-Safe Resolution (v0.10.0+)](#type-safe-resolution-v0100)
-- [Getting Started](#getting-started)
-  - [Global Container Access](#global-container-access)
-  - [Registering Services](#registering-services)
-  - [Retrieving Services](#retrieving-services)
-- [Real-World Patterns](#real-world-patterns)
-  - [Pattern 1: Application Initialization](#pattern-1-application-initialization)
-  - [Pattern 2: Service Resolution Chain](#pattern-2-service-resolution-chain)
-  - [Pattern 3: Lazy Service Initialization](#pattern-3-lazy-service-initialization)
-  - [Pattern 4: Conditional Service Registration](#pattern-4-conditional-service-registration)
-  - [Pattern 5: Service Lifecycle Management](#pattern-5-service-lifecycle-management)
-- [Advanced Features](#advanced-features)
-  - [Batch Operations](#batch-operations)
-  - [Fallback Resolution](#fallback-resolution)
-  - [Service Validation](#service-validation)
-- [Type Safety Best Practices](#type-safety-best-practices)
-  - [Correct: Type-Safe Retrieval](#correct-type-safe-retrieval)
-  - [Avoid: Untyped Retrieval](#avoid-untyped-retrieval)
-  - [Correct: Semantic Type Aliases](#correct-semantic-type-aliases)
-- [Common Patterns](#common-patterns)
-  - [Pattern: Dependency Injection in Handlers](#pattern-dependency-injection-in-handlers)
-  - [Pattern: Testing with Mock Services](#pattern-testing-with-mock-services)
-- [Best Practices](#best-practices)
-  - [1. Use Global Singleton](#1-use-global-singleton)
-  - [2. Check Results](#2-check-results)
-  - [3. Register Early](#3-register-early)
-  - [4. Type-Safe Retrieval](#4-type-safe-retrieval)
-- [FlextDispatcher Reliability Settings](#flextdispatcher-reliability-settings)
-  - [Configuration via FlextSettings](#configuration-via-flextsettings)
-  - [Circuit Breaker Configuration](#circuit-breaker-configuration)
-  - [Rate Limiting Configuration](#rate-limiting-configuration)
-  - [Retry Policy Configuration](#retry-policy-configuration)
-  - [Timeout Configuration](#timeout-configuration)
-  - [Complete Reliability Configuration Example](#complete-reliability-configuration-example)
-  - [Environment-Based Configuration](#environment-based-configuration)
-  - [Monitoring Reliability Metrics](#monitoring-reliability-metrics)
-- [Architecture Integration](#architecture-integration)
-- [Key Takeaways](#key-takeaways)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
+- Core Concepts
+  - Service Locator Pattern
+  - Singleton Pattern
+  - Type-Safe Resolution (v0.10.0+)
+- Getting Started
+  - Global Container Access
+  - Registering Services
+  - Retrieving Services
+- Real-World Patterns
+  - Pattern 1: Application Initialization
+  - Pattern 2: Service Resolution Chain
+  - Pattern 3: Lazy Service Initialization
+  - Pattern 4: Conditional Service Registration
+  - Pattern 5: Service Lifecycle Management
+- Advanced Features
+  - Batch Operations
+  - Fallback Resolution
+  - Service Validation
+- Type Safety Best Practices
+  - Correct: Type-Safe Retrieval
+  - Avoid: Untyped Retrieval
+  - Correct: Semantic Type Aliases
+- Common Patterns
+  - Pattern: Dependency Injection in Handlers
+  - Pattern: Testing with Mock Services
+- Best Practices
+  - 1. Use Global Singleton
+  - 2. Check Results
+  - 3. Register Early
+  - 4. Type-Safe Retrieval
+- FlextDispatcher Reliability Settings
+  - Configuration via FlextSettings
+  - Circuit Breaker Configuration
+  - Rate Limiting Configuration
+  - Retry Policy Configuration
+  - Timeout Configuration
+  - Complete Reliability Configuration Example
+  - Environment-Based Configuration
+  - Monitoring Reliability Metrics
+- Architecture Integration
+- Key Takeaways
+- Next Steps
+- See Also
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Type-Safety**: Full Generic Support
@@ -939,17 +939,17 @@ Layer 0: FlextConstants, t
 ## Next Steps
 
 1. **Reliability Settings**: Review dispatcher reliability configuration above
-2. **Service Patterns**: Explore [Service Patterns](./service-patterns.md) for service-level DI
-3. **Railway Pattern**: See [Railway-Oriented Programming](./railway-oriented-programming.md) for result handling
-4. **Dispatcher**: Check [API Reference: FlextDispatcher](../api-reference/application.md#flextdispatcher) for complete API
+2. **Service Patterns**: Explore Service Patterns for service-level DI
+3. **Railway Pattern**: See Railway-Oriented Programming for result handling
+4. **Dispatcher**: Check API Reference: FlextDispatcher for complete API
 
 ## See Also
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md) - Result handling with DI
-- [Service Patterns](./service-patterns.md) - Service-level dependency injection
-- [Architecture Overview](../architecture/overview.md) - System architecture
-- [API Reference: FlextContainer](../api-reference/foundation.md#flextcontainer) - Complete container API
-- [API Reference: FlextDispatcher](../api-reference/application.md#flextdispatcher) - Dispatcher reliability API
+- Railway-Oriented Programming - Result handling with DI
+- Service Patterns - Service-level dependency injection
+- Architecture Overview - System architecture
+- API Reference: FlextContainer - Complete container API
+- API Reference: FlextDispatcher - Dispatcher reliability API
 - **FLEXT CLAUDE.md**: Development workflow and patterns
 
 ---

@@ -2,18 +2,18 @@
 
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [Canonical Rules](#canonical-rules)
-- [3-Tier Context System](#3-tier-context-system)
-  - [1. Global Context](#1-global-context)
-  - [2. Scoped Context](#2-scoped-context)
-  - [3. Level Context](#3-level-context)
-- [Context Precedence](#context-precedence)
-- [Automatic Context Propagation](#automatic-context-propagation)
-- [Best Practices](#best-practices)
-- [Example: Request Handler Pattern](#example-request-handler-pattern)
-- [Auto-Configuration](#auto-configuration)
-- [See Also](#see-also)
+- Overview
+- Canonical Rules
+- 3-Tier Context System
+  - 1. Global Context
+  - 2. Scoped Context
+  - 3. Level Context
+- Context Precedence
+- Automatic Context Propagation
+- Best Practices
+- Example: Request Handler Pattern
+- Auto-Configuration
+- See Also
 <!-- TOC END -->
 
 ## Overview
@@ -244,6 +244,6 @@ For custom configuration, you can still call `FlextRuntime.configure_structlog()
 
 ## See Also
 
-- [Service Patterns Guide](./service-patterns.md) - Using logging in services
-- [Error Handling Guide](./error-handling.md) - Logging errors and exceptions
-- [Testing Guide](./testing.md) - Testing with structured logging
+- Service Patterns Guide - Using logging in services
+- Error Handling Guide - Logging errors and exceptions
+- Testing Guide - Testing with structured logging

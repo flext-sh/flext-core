@@ -7,42 +7,9 @@
 
 
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Quick Diagnosis](#quick-diagnosis)
-  - [Health Check Commands](#health-check-commands)
-  - [System Status](#system-status)
-- [Common Issues](#common-issues)
-  - [1. Import Errors](#1-import-errors)
-  - [r](#r)
-  - [2. Type Checking Errors](#2-type-checking-errors)
-  - [3. Test Failures](#3-test-failures)
-  - [4. Configuration Issues](#4-configuration-issues)
-  - [5. LDIF Processing Issues](#5-ldif-processing-issues)
-  - [6. Migration Issues](#6-migration-issues)
-  - [7. Performance Issues](#7-performance-issues)
-- [Debugging Techniques](#debugging-techniques)
-  - [1. Logging Configuration](#1-logging-configuration)
-  - [2. Exception Handling](#2-exception-handling)
-  - [3. Debug Mode](#3-debug-mode)
-  - [4. Step-by-Step Debugging](#4-step-by-step-debugging)
-- [Error Codes Reference](#error-codes-reference)
-  - [FLEXT Core Errors](#flext-core-errors)
-  - [LDIF Processing Errors](#ldif-processing-errors)
-  - [API Errors](#api-errors)
-- [Performance Troubleshooting](#performance-troubleshooting)
-  - [Memory Issues](#memory-issues)
-  - [CPU Issues](#cpu-issues)
-- [Getting Help](#getting-help)
-  - [Self-Service Resources](#self-service-resources)
-  - [Community Support](#community-support)
-  - [Reporting Issues](#reporting-issues)
-- [Prevention](#prevention)
-  - [Best Practices](#best-practices)
-- [Resources](#resources)
-<!-- TOC END -->
 
-## Table of Contents
+
+
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
 
@@ -665,9 +632,9 @@ monitor_cpu()
 ### Self-Service Resources
 
 1. **Check Documentation**
-   - [API Reference](../api-reference/README.md)
-   - [Configuration Guide](./configuration.md)
-   - [Development Guide](./development.md)
+   - API Reference
+   - Configuration Guide
+   - Development Guide
 
 2. **Run Diagnostics**
 
@@ -814,9 +781,9 @@ def process(data: dict) -> ProcessedData:
 
 ## Resources
 
-- [FLEXT Core Documentation](../api-reference/foundation.md)
-- [Configuration Guide](./configuration.md)
-- [Development Guide](./development.md)
-- [Testing Guide](./testing.md)
+- FLEXT Core Documentation
+- Configuration Guide
+- Development Guide
+- Testing Guide
 - [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - [GitHub Discussions](https://github.com/flext-sh/flext/discussions)

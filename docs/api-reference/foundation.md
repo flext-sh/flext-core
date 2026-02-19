@@ -2,20 +2,20 @@
 
 
 <!-- TOC START -->
-- [Architecture Overview](#architecture-overview)
-- [Layer 0: Pure Constants](#layer-0-pure-constants)
-  - [FlextConstants - Centralized Defaults](#flextconstants-centralized-defaults)
-  - [t — Type System](#t-type-system)
-  - [p — Runtime Interfaces](#p-runtime-interfaces)
-- [Layer 0.5: Runtime Bridge](#layer-05-runtime-bridge)
-  - [FlextRuntime — External Library Integration](#flextruntime-external-library-integration)
-- [Layer 1: Foundation (Core Primitives)](#layer-1-foundation-core-primitives)
+- Architecture Overview
+- Layer 0: Pure Constants
+  - FlextConstants - Centralized Defaults
+  - t — Type System
+  - p — Runtime Interfaces
+- Layer 0.5: Runtime Bridge
+  - FlextRuntime — External Library Integration
+- Layer 1: Foundation (Core Primitives)
   - [FlextResult[T] — Railway-Oriented Programming {#flextresult}](#flextresultt-railway-oriented-programming-flextresult)
-  - [FlextContainer — Dependency Injection {#flextcontainer}](#flextcontainer-dependency-injection-flextcontainer)
-  - [FlextExceptions — Exception Hierarchy](#flextexceptions-exception-hierarchy)
-- [Short Alias Reference](#short-alias-reference)
-- [Related Documentation](#related-documentation)
-- [Verification Commands](#verification-commands)
+  - FlextContainer — Dependency Injection {#flextcontainer}
+  - FlextExceptions — Exception Hierarchy
+- Short Alias Reference
+- Related Documentation
+- Verification Commands
 <!-- TOC END -->
 
 This reference covers Layers 0, 0.5, and 1: the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
@@ -32,7 +32,7 @@ Canonical references:
 - **Layer 0.5** — Runtime bridge that adapts external libraries without importing application or domain code.
 - **Layer 1** — Core primitives (`FlextResult`, `FlextContainer`, `FlextExceptions`) that Domain and Application layers rely on.
 
-See the [Architecture Overview](../architecture/overview.md) for the full layering model.
+See the Architecture Overview for the full layering model.
 
 ---
 
@@ -207,7 +207,7 @@ if u.chk().eq(value, expected):
 | `d`   | `FlextDecorators` | `decorators` | Cross-cutting decorators                     |
 | `h`   | `FlextHandlers`   | `handlers`   | CQRS handler base class                      |
 
-See the [Type System Guidelines](../../README.md#type-system-guidelines) in the main README for detailed usage patterns.
+See the Type System Guidelines in the main README for detailed usage patterns.
 
 ---
 
@@ -217,12 +217,12 @@ The foundation layers provide stable, dependency-light building blocks for dispa
 
 **Within Project**:
 
-- [Getting Started](../guides/getting-started.md) - Installation and basic usage
-- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - FlextResult pattern
-- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - FlextContainer usage
-- [Architecture Overview](../architecture/overview.md) - System architecture and layering
-- [Domain API Reference](./domain.md) - Domain layer APIs
-- [Application API Reference](./application.md) - Application layer APIs
+- Getting Started - Installation and basic usage
+- Railway-Oriented Programming - FlextResult pattern
+- Dependency Injection Advanced - FlextContainer usage
+- Architecture Overview - System architecture and layering
+- Domain API Reference - Domain layer APIs
+- Application API Reference - Application layer APIs
 
 **External Resources**:
 

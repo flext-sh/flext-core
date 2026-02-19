@@ -7,67 +7,13 @@
 
 
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Getting Started](#getting-started)
-  - [[Installation Guide](./getting-started.md) ✅](#installation-guidegetting-startedmd-)
-  - [Quick Start Tutorial (Coming Soon)](#quick-start-tutorial-coming-soon)
-  - [[Configuration Guide](./configuration.md) ✅](#configuration-guideconfigurationmd-)
-- [Development](#development)
-  - [[Development Setup](./development.md) ✅](#development-setupdevelopmentmd-)
-  - [[Automation Skill Pattern](./skill-automation-pattern.md) ✅](#automation-skill-patternskill-automation-patternmd-)
-  - [Contributing Guide (Coming Soon)](#contributing-guide-coming-soon)
-  - [[Testing Guide](./testing.md) ✅](#testing-guidetestingmd-)
-- [Operations](#operations)
-  - [Deployment Guide (Coming Soon)](#deployment-guide-coming-soon)
-  - [Monitoring Guide (Coming Soon)](#monitoring-guide-coming-soon)
-  - [[Troubleshooting Guide](./troubleshooting.md) ✅](#troubleshooting-guidetroubleshootingmd-)
-- [Integration](#integration)
-  - [LDAP Integration (Coming Soon)](#ldap-integration-coming-soon)
-  - [Database Integration (Coming Soon)](#database-integration-coming-soon)
-  - [API Integration (Coming Soon)](#api-integration-coming-soon)
-- [Migration](#migration)
-  - [LDIF Migration Guide (Coming Soon)](#ldif-migration-guide-coming-soon)
-  - [Data Migration (Coming Soon)](#data-migration-coming-soon)
-- [Best Practices](#best-practices)
-  - [Performance Optimization (Coming Soon)](#performance-optimization-coming-soon)
-  - [Security Best Practices (Coming Soon)](#security-best-practices-coming-soon)
-  - [Error Handling (Coming Soon)](#error-handling-coming-soon)
-<!-- TOC END -->
 
-## Table of Contents
 
-- [User Guides](#user-guides)
-  - [Getting Started](#getting-started)
-    - [[Installation Guide](./getting-started.md) ✅](#installation-guidegetting-startedmd-)
-    - [Quick Start Tutorial (Coming Soon)](#quick-start-tutorial-coming-soon)
-    - [[Configuration Guide](./configuration.md) ✅](#configuration-guideconfigurationmd-)
-  - [Development](#development)
-    - [[Development Setup](./development.md) ✅](#development-setupdevelopmentmd-)
-    - [[Automation Skill Pattern](./skill-automation-pattern.md) ✅](#automation-skill-patternskill-automation-patternmd-)
-    - [Contributing Guide (Coming Soon)](#contributing-guide-coming-soon)
-    - [[Testing Guide](./testing.md) ✅](#testing-guidetestingmd-)
-  - [Operations](#operations)
-    - [Deployment Guide (Coming Soon)](#deployment-guide-coming-soon)
-    - [Monitoring Guide (Coming Soon)](#monitoring-guide-coming-soon)
-    - [[Troubleshooting Guide](./troubleshooting.md) ✅](#troubleshooting-guidetroubleshootingmd-)
-  - [Integration](#integration)
-    - [LDAP Integration (Coming Soon)](#ldap-integration-coming-soon)
-    - [Database Integration (Coming Soon)](#database-integration-coming-soon)
-    - [API Integration (Coming Soon)](#api-integration-coming-soon)
-  - [Migration](#migration)
-    - [LDIF Migration Guide (Coming Soon)](#ldif-migration-guide-coming-soon)
-    - [Data Migration (Coming Soon)](#data-migration-coming-soon)
-  - [Best Practices](#best-practices)
-    - [Performance Optimization (Coming Soon)](#performance-optimization-coming-soon)
-    - [Security Best Practices (Coming Soon)](#security-best-practices-coming-soon)
-    - [Error Handling (Coming Soon)](#error-handling-coming-soon)
 
-Comprehensive guides for using FLEXT effectively in various scenarios.
 
 ## Getting Started
 
-### [Installation Guide](./getting-started.md) ✅
+### Installation Guide ✅
 
 Complete installation instructions for FLEXT and all its components.
 
@@ -75,17 +21,17 @@ Complete installation instructions for FLEXT and all its components.
 
 Hands-on tutorial to get you up and running with FLEXT in minutes.
 
-### [Configuration Guide](./configuration.md) ✅
+### Configuration Guide ✅
 
 How to configure FLEXT for your specific environment and requirements.
 
 ## Development
 
-### [Development Setup](./development.md) ✅
+### Development Setup ✅
 
 Setting up a development environment for FLEXT contributions.
 
-### [Automation Skill Pattern](./skill-automation-pattern.md) ✅
+### Automation Skill Pattern ✅
 
 Standard pattern for creating future script-backed automation skills and docs.
 
@@ -93,7 +39,7 @@ Standard pattern for creating future script-backed automation skills and docs.
 
 Guidelines for contributing to the FLEXT ecosystem.
 
-### [Testing Guide](./testing.md) ✅
+### Testing Guide ✅
 
 Best practices for testing FLEXT applications and libraries.
 
@@ -107,7 +53,7 @@ Deploying FLEXT applications to production environments.
 
 Monitoring and observability for FLEXT applications.
 
-### [Troubleshooting Guide](./troubleshooting.md) ✅
+### Troubleshooting Guide ✅
 
 Common issues and their solutions.
 

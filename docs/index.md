@@ -2,9 +2,9 @@
 
 
 <!-- TOC START -->
-- [Quick Navigation](#quick-navigation)
-- [Repository Structure (docs)](#repository-structure-docs)
-- [Notes on Accuracy and Duplication](#notes-on-accuracy-and-duplication)
+- Quick Navigation
+- Repository Structure (docs)
+- Notes on Accuracy and Duplication
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -13,15 +13,15 @@ Concise navigation for FLEXT-Core reference materials. All documents follow the 
 
 ## Quick Navigation
 
-- **Onboarding:** [`quick-start.md`](./quick-start.md)
-- **Architecture overview:** [`architecture/overview.md`](./architecture/overview.md)
-- **CQRS architecture:** [`architecture/cqrs.md`](./architecture/cqrs.md)
-- **Clean architecture details:** [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
-- **API reference by layer:** [`api-reference/`](./api-reference/) (foundation, domain, application, infrastructure)
-- **Guides:** [`guides/`](./guides/) covering railway-oriented programming, DI, DDD, configuration, error handling, testing, and troubleshooting
-- **Service patterns:** [`guides/service-patterns.md`](./guides/service-patterns.md)
-- **Standards:** [`standards/`](./standards/) for development, documentation, and templates
-- **Contributing:** [`development/contributing.md`](./development/contributing.md)
+- **Onboarding:** `quick-start.md`
+- **Architecture overview:** `architecture/overview.md`
+- **CQRS architecture:** `architecture/cqrs.md`
+- **Clean architecture details:** `architecture/clean-architecture.md`
+- **API reference by layer:** `api-reference/` (foundation, domain, application, infrastructure)
+- **Guides:** `guides/` covering railway-oriented programming, DI, DDD, configuration, error handling, testing, and troubleshooting
+- **Service patterns:** `guides/service-patterns.md`
+- **Standards:** `standards/` for development, documentation, and templates
+- **Contributing:** `development/contributing.md`
 
 ## Repository Structure (docs)
 

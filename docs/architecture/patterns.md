@@ -2,21 +2,21 @@
 
 
 <!-- TOC START -->
-- [Railway-Oriented Programming](#railway-oriented-programming)
-- [Dependency Injection](#dependency-injection)
-- [Domain-Driven Design](#domain-driven-design)
-- [Command Query Responsibility Segregation (CQRS)](#command-query-responsibility-segregation-cqrs)
-- [Event-Driven Architecture](#event-driven-architecture)
-- [Hexagonal Architecture (Ports & Adapters)](#hexagonal-architecture-ports-adapters)
-- [Layer Caching Pattern](#layer-caching-pattern)
-- [Validation Pipeline Pattern](#validation-pipeline-pattern)
-- [Middleware Pipeline Pattern](#middleware-pipeline-pattern)
-- [Service Locator Pattern (Anti-Pattern Warning)](#service-locator-pattern-anti-pattern-warning)
-- [Adapter Pattern](#adapter-pattern)
-- [Factory Pattern](#factory-pattern)
-- [Summary](#summary)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
+- Railway-Oriented Programming
+- Dependency Injection
+- Domain-Driven Design
+- Command Query Responsibility Segregation (CQRS)
+- Event-Driven Architecture
+- Hexagonal Architecture (Ports & Adapters)
+- Layer Caching Pattern
+- Validation Pipeline Pattern
+- Middleware Pipeline Pattern
+- Service Locator Pattern (Anti-Pattern Warning)
+- Adapter Pattern
+- Factory Pattern
+- Summary
+- Next Steps
+- See Also
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -447,18 +447,18 @@ Use these patterns to build maintainable, scalable FLEXT-Core applications.
 
 ## Next Steps
 
-1. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer structure
-2. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for dependency rules
-3. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for handler patterns
-4. **Railway Patterns**: Check [Railway-Oriented Programming Guide](../guides/railway-oriented-programming.md) for detailed examples
-5. **Service Patterns**: Review [Service Patterns Guide](../guides/service-patterns.md) for domain services
+1. **Architecture Overview**: See Architecture Overview for layer structure
+2. **Clean Architecture**: Review Clean Architecture for dependency rules
+3. **CQRS Patterns**: Explore CQRS Architecture for handler patterns
+4. **Railway Patterns**: Check Railway-Oriented Programming Guide for detailed examples
+5. **Service Patterns**: Review Service Patterns Guide for domain services
 
 ## See Also
 
-- [Architecture Overview](./overview.md) - Visual layer topology and execution flows
-- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
-- [CQRS Architecture](./cqrs.md) - Handler and dispatcher patterns
-- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
-- [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
-- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container patterns
+- Architecture Overview - Visual layer topology and execution flows
+- Clean Architecture - Dependency rules and layer responsibilities
+- CQRS Architecture - Handler and dispatcher patterns
+- Railway-Oriented Programming - Result composition patterns
+- Service Patterns Guide - Domain service implementation
+- Dependency Injection Advanced - DI container patterns
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow

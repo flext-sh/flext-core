@@ -2,33 +2,33 @@
 
 
 <!-- TOC START -->
-- [Canonical Rules](#canonical-rules)
-- [Overview](#overview)
-- [Core Concepts](#core-concepts)
+- Canonical Rules
+- Overview
+- Core Concepts
   - [FlextResult[T] - The Foundation](#flextresultt-the-foundation)
-  - [Checking Result State](#checking-result-state)
-  - [Extracting Values Safely](#extracting-values-safely)
-- [Railway-Oriented Programming](#railway-oriented-programming)
-  - [The Railway Pattern](#the-railway-pattern)
-  - [Monadic Operations](#monadic-operations)
-- [Practical Error Handling Patterns](#practical-error-handling-patterns)
-  - [Pattern 1: Validation Pipeline](#pattern-1-validation-pipeline)
-  - [Pattern 2: Database Operations](#pattern-2-database-operations)
-  - [Pattern 3: External Service Calls](#pattern-3-external-service-calls)
-  - [Pattern 4: Error Recovery](#pattern-4-error-recovery)
-  - [Pattern 5: Batch Operations](#pattern-5-batch-operations)
-- [Error Types and Categorization](#error-types-and-categorization)
-  - [Domain Errors (Business Logic)](#domain-errors-business-logic)
-  - [System Errors (Infrastructure)](#system-errors-infrastructure)
-- [Best Practices](#best-practices)
-  - [1. Always Return FlextResult from Operations That Can Fail](#1-always-return-flextresult-from-operations-that-can-fail)
-  - [2. Chain Operations with flat_map](#2-chain-operations-with-flatmap)
-  - [3. Use Meaningful Error Messages](#3-use-meaningful-error-messages)
-  - [4. Handle Errors at Application Boundaries](#4-handle-errors-at-application-boundaries)
-  - [5. Log Errors Appropriately](#5-log-errors-appropriately)
-- [Summary](#summary)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
+  - Checking Result State
+  - Extracting Values Safely
+- Railway-Oriented Programming
+  - The Railway Pattern
+  - Monadic Operations
+- Practical Error Handling Patterns
+  - Pattern 1: Validation Pipeline
+  - Pattern 2: Database Operations
+  - Pattern 3: External Service Calls
+  - Pattern 4: Error Recovery
+  - Pattern 5: Batch Operations
+- Error Types and Categorization
+  - Domain Errors (Business Logic)
+  - System Errors (Infrastructure)
+- Best Practices
+  - 1. Always Return FlextResult from Operations That Can Fail
+  - 2. Chain Operations with flat_map
+  - 3. Use Meaningful Error Messages
+  - 4. Handle Errors at Application Boundaries
+  - 5. Log Errors Appropriately
+- Summary
+- Next Steps
+- See Also
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Railway-Oriented Programming
@@ -600,19 +600,19 @@ This approach makes error handling explicit, composable, and maintainable.
 
 ## Next Steps
 
-1. **Railway Patterns**: Deep dive into [Railway-Oriented Programming](./railway-oriented-programming.md) for advanced composition
-2. **Decorators**: Learn about [Error Handling with Decorators](./railway-oriented-programming.md#decorator-composition-with-railway-pattern) for automatic error recovery
-3. **Testing**: See [Testing Guide](./testing.md) for testing error scenarios without mocks
-4. **Services**: Check [Service Patterns](./service-patterns.md) for service-level error handling
-5. **API Reference**: Review [FlextResult API](../api-reference/foundation.md#flextresult) for complete method reference
+1. **Railway Patterns**: Deep dive into Railway-Oriented Programming for advanced composition
+2. **Decorators**: Learn about Error Handling with Decorators for automatic error recovery
+3. **Testing**: See Testing Guide for testing error scenarios without mocks
+4. **Services**: Check Service Patterns for service-level error handling
+5. **API Reference**: Review FlextResult API for complete method reference
 
 ## See Also
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md) - Complete ROP patterns and composition
-- [Testing Guide](./testing.md) - Testing error scenarios with real implementations
-- [Service Patterns](./service-patterns.md) - Error handling in domain services
-- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Error handling with DI
-- [API Reference: FlextResult](../api-reference/foundation.md#flextresult) - Complete API documentation
+- Railway-Oriented Programming - Complete ROP patterns and composition
+- Testing Guide - Testing error scenarios with real implementations
+- Service Patterns - Error handling in domain services
+- Dependency Injection Advanced - Error handling with DI
+- API Reference: FlextResult - Complete API documentation
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ---

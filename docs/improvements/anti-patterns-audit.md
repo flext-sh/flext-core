@@ -2,29 +2,29 @@
 
 
 <!-- TOC START -->
-- [Audit Summary](#audit-summary)
-  - [✅ Guide Accuracy: 10/10](#-guide-accuracy-1010)
-  - [✅ Verified Against Source Code](#-verified-against-source-code)
-- [Detailed Findings](#detailed-findings)
-  - [Category 1: Error Handling Anti-Patterns (3 patterns)](#category-1-error-handling-anti-patterns-3-patterns)
-  - [Category 2: Type Safety Anti-Patterns (3 patterns)](#category-2-type-safety-anti-patterns-3-patterns)
-  - [Category 3: Architecture Anti-Patterns (3 patterns)](#category-3-architecture-anti-patterns-3-patterns)
-  - [Category 4: Dependency Injection Anti-Patterns (2 patterns)](#category-4-dependency-injection-anti-patterns-2-patterns)
-  - [Category 5: Model Anti-Patterns (2 patterns)](#category-5-model-anti-patterns-2-patterns)
-  - [Category 6: Configuration Anti-Patterns (2 patterns)](#category-6-configuration-anti-patterns-2-patterns)
-- [Cross-Reference Verification](#cross-reference-verification)
-  - [Internal Links ✅](#internal-links-)
-  - [External References ✅](#external-references-)
-- [Evidence Summary](#evidence-summary)
-  - [Quantitative Metrics](#quantitative-metrics)
-  - [Qualitative Assessment](#qualitative-assessment)
-- [Recommendations](#recommendations)
-  - [High Priority](#high-priority)
-  - [Medium Priority](#medium-priority)
-  - [Low Priority](#low-priority)
-- [Accuracy Assessment](#accuracy-assessment)
-- [Completeness Assessment](#completeness-assessment)
-- [Conclusion](#conclusion)
+- Audit Summary
+  - ✅ Guide Accuracy: 10/10
+  - ✅ Verified Against Source Code
+- Detailed Findings
+  - Category 1: Error Handling Anti-Patterns (3 patterns)
+  - Category 2: Type Safety Anti-Patterns (3 patterns)
+  - Category 3: Architecture Anti-Patterns (3 patterns)
+  - Category 4: Dependency Injection Anti-Patterns (2 patterns)
+  - Category 5: Model Anti-Patterns (2 patterns)
+  - Category 6: Configuration Anti-Patterns (2 patterns)
+- Cross-Reference Verification
+  - Internal Links ✅
+  - External References ✅
+- Evidence Summary
+  - Quantitative Metrics
+  - Qualitative Assessment
+- Recommendations
+  - High Priority
+  - Medium Priority
+  - Low Priority
+- Accuracy Assessment
+- Completeness Assessment
+- Conclusion
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -201,11 +201,7 @@ T = TypeVar("T")
 **Source Code Evidence** (container.py:574):
 
 ```python
-def get_typed[T](
-    self,
-    identifier: str,
-    expected_type: type[T],
-) -> FlextResult[T]:
+def get_typedT -> FlextResult[T]:
     """Get service with type checking and inference.
 
     Returns FlextResult[T] with proper type information.
@@ -499,9 +495,9 @@ class FlextSettings(BaseSettings):
 
 Checked all referenced guides:
 
-- ✅ [Railway-Oriented Programming](./railway-oriented-programming.md) - EXISTS
-- ❌ [Clean Architecture](../architecture/clean-architecture.md) - MISSING (should create)
-- ❌ [Development Standards](../standards/development.md) - MISSING (should create)
+- ✅ Railway-Oriented Programming - EXISTS
+- ❌ Clean Architecture - MISSING (should create)
+- ❌ Development Standards - MISSING (should create)
 - ✅ FLEXT CLAUDE.md - EXISTS
 
 **Recommendation**: Create missing guides referenced in "See Also" section.

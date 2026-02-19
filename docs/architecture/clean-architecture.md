@@ -2,12 +2,12 @@
 
 
 <!-- TOC START -->
-- [Layer Hierarchy](#layer-hierarchy)
-- [Dependency Rules](#dependency-rules)
-- [Layer Responsibilities](#layer-responsibilities)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-- [Verification Commands](#verification-commands)
+- Layer Hierarchy
+- Dependency Rules
+- Layer Responsibilities
+- Next Steps
+- See Also
+- Verification Commands
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -103,20 +103,20 @@ circular dependencies and keeps FLEXT-Core safe for reuse across services.
 
 ## Next Steps
 
-1. **Architecture Overview**: See [Architecture Overview](./overview.md) for visual layer layout
-2. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for application layer patterns
-3. **Domain-Driven Design**: Review [DDD Guide](../guides/domain-driven-design.md) for domain patterns
-4. **Dependency Injection**: Check [Advanced DI Guide](../guides/dependency-injection-advanced.md) for DI patterns
-5. **Service Patterns**: See [Service Patterns](../guides/service-patterns.md) for domain services
+1. **Architecture Overview**: See Architecture Overview for visual layer layout
+2. **CQRS Patterns**: Explore CQRS Architecture for application layer patterns
+3. **Domain-Driven Design**: Review DDD Guide for domain patterns
+4. **Dependency Injection**: Check Advanced DI Guide for DI patterns
+5. **Service Patterns**: See Service Patterns for domain services
 
 ## See Also
 
-- [Architecture Overview](./overview.md) - Visual layer topology and execution flows
-- [CQRS Architecture](./cqrs.md) - Application layer orchestration patterns
-- [Architecture Patterns](./patterns.md) - Implementation patterns
-- [Domain-Driven Design Guide](../guides/domain-driven-design.md) - DDD patterns with FlextModels
-- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container usage
-- [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
+- Architecture Overview - Visual layer topology and execution flows
+- CQRS Architecture - Application layer orchestration patterns
+- Architecture Patterns - Implementation patterns
+- Domain-Driven Design Guide - DDD patterns with FlextModels
+- Dependency Injection Advanced - DI container usage
+- Service Patterns Guide - Domain service implementation
 - `../../README.md`: architecture principles and development workflow entrypoint
 
 ## Verification Commands

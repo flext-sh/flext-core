@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import configparser
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -180,6 +181,17 @@ def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
         if not dep_path.startswith(".flext-deps/"):
             continue
         result[dep_name] = project_root / dep_path
+
+    project_deps = data.get("project", {}).get("dependencies", [])
+    dep_pattern = re.compile(r"@\s*\.\.?/\.flext-deps/([A-Za-z0-9_.-]+)")
+    for dep in project_deps:
+        if not isinstance(dep, str):
+            continue
+        match = dep_pattern.search(dep)
+        if not match:
+            continue
+        repo_name = match.group(1)
+        result.setdefault(repo_name, project_root / ".flext-deps" / repo_name)
     return result
 
 

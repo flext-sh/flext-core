@@ -2,44 +2,44 @@
 
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [FlextHandlers](#flexthandlers)
-  - [Current Implementation (V1)](#current-implementation-v1)
-  - [Execution Pipeline](#execution-pipeline)
-  - [Handler Configuration](#handler-configuration)
-  - [Metrics and Context (V1 – Manual)](#metrics-and-context-v1-manual)
-- [FlextDispatcher](#flextdispatcher)
-  - [Current Implementation (V1)](#current-implementation-v1)
-  - [Reliability Patterns](#reliability-patterns)
-  - [Dispatch Flow](#dispatch-flow)
-  - [Handler Registration](#handler-registration)
-- [Integration with FlextService](#integration-with-flextservice)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1)](#current-state-v1)
-  - [Planned Phases](#planned-phases)
-  - [Phase 1: FlextMixins.CQRS](#phase-1-flextmixinscqrs)
-  - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
-- [Handler Patterns](#handler-patterns)
-  - [V1 Handler (Current Production)](#v1-handler-current-production)
-  - [V2 Handler (Target - Phase 3+)](#v2-handler-target-phase-3)
-  - [Migration Path](#migration-path)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1) vs Target (V2)](#current-state-v1-vs-target-v2)
-  - [Timeline](#timeline)
-  - [Problems Addressed](#problems-addressed)
-  - [Solution Strategy](#solution-strategy)
-- [TODO Backlog](#todo-backlog)
-- [Testing Guidance](#testing-guidance)
-  - [Test Structure](#test-structure)
-  - [Running Tests](#running-tests)
-  - [Performance Benchmarks](#performance-benchmarks)
-  - [Success Metrics by Version](#success-metrics-by-version)
-- [References](#references)
-  - [Internal](#internal)
-  - [External Resources](#external-resources)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-- [Verification Commands](#verification-commands)
+- Overview
+- FlextHandlers
+  - Current Implementation (V1)
+  - Execution Pipeline
+  - Handler Configuration
+  - Metrics and Context (V1 – Manual)
+- FlextDispatcher
+  - Current Implementation (V1)
+  - Reliability Patterns
+  - Dispatch Flow
+  - Handler Registration
+- Integration with FlextService
+- Modernization Roadmap
+  - Current State (V1)
+  - Planned Phases
+  - Phase 1: FlextMixins.CQRS
+  - Phase 2: Dispatcher DI
+- Handler Patterns
+  - V1 Handler (Current Production)
+  - V2 Handler (Target - Phase 3+)
+  - Migration Path
+- Modernization Roadmap
+  - Current State (V1) vs Target (V2)
+  - Timeline
+  - Problems Addressed
+  - Solution Strategy
+- TODO Backlog
+- Testing Guidance
+  - Test Structure
+  - Running Tests
+  - Performance Benchmarks
+  - Success Metrics by Version
+- References
+  - Internal
+  - External Resources
+- Next Steps
+- See Also
+- Verification Commands
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -152,7 +152,7 @@ handler.pop_context()
 
 > **TODO(handlers.py::FlextHandlers):** Migrate to `FlextMixins.CQRS` utilities
 > for metrics and context once Phase 1 of CQRS modernization lands. See
-> [Modernization Roadmap](#modernization-roadmap).
+> Modernization Roadmap.
 
 ---
 
@@ -213,7 +213,7 @@ dispatcher.register_event(UserCreatedEvent, handler)
 
 > **TODO(dispatcher.py::FlextDispatcher.**init**):** Accept `container` parameter
 > for dependency injection of reliability managers. See Phase 2 of
-> [Modernization Roadmap](#modernization-roadmap).
+> Modernization Roadmap.
 
 ---
 
@@ -236,7 +236,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         ).execute()
 ```
 
-See [Service Patterns Guide](../guides/service-patterns.md) for service usage.
+See Service Patterns Guide for service usage.
 
 ---
 
@@ -496,9 +496,9 @@ Target metrics for CQRS components:
 - `flext_core/dispatcher.py` – Dispatcher implementation
 - `flext_core/_dispatcher/` – Reliability managers
 - `flext_core/mixins.py` – Infrastructure properties
-- [Architecture Overview](./overview.md)
-- [Architecture Patterns](./patterns.md)
-- [Service Patterns Guide](../guides/service-patterns.md)
+- Architecture Overview
+- Architecture Patterns
+- Service Patterns Guide
 
 ### External Resources
 
@@ -516,20 +516,20 @@ Target metrics for CQRS components:
 
 ## Next Steps
 
-1. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for layer boundaries
-2. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer topology
-3. **Service Patterns**: Check [Service Patterns Guide](../guides/service-patterns.md) for handler implementation
-4. **Dependency Injection**: See [Advanced DI Guide](../guides/dependency-injection-advanced.md) for dispatcher configuration
-5. **Railway Patterns**: Review [Railway-Oriented Programming](../guides/railway-oriented-programming.md) for result composition
+1. **Clean Architecture**: Review Clean Architecture for layer boundaries
+2. **Architecture Overview**: See Architecture Overview for layer topology
+3. **Service Patterns**: Check Service Patterns Guide for handler implementation
+4. **Dependency Injection**: See Advanced DI Guide for dispatcher configuration
+5. **Railway Patterns**: Review Railway-Oriented Programming for result composition
 
 ## See Also
 
-- [Clean Architecture](./clean-architecture.md) - Layer responsibilities and dependency rules
-- [Architecture Overview](./overview.md) - Visual layer layout and execution flows
-- [Architecture Patterns](./patterns.md) - Common CQRS and handler patterns
-- [Service Patterns Guide](../guides/service-patterns.md) - Handler and service implementation
-- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - Dispatcher reliability configuration
-- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
+- Clean Architecture - Layer responsibilities and dependency rules
+- Architecture Overview - Visual layer layout and execution flows
+- Architecture Patterns - Common CQRS and handler patterns
+- Service Patterns Guide - Handler and service implementation
+- Dependency Injection Advanced - Dispatcher reliability configuration
+- Railway-Oriented Programming - Result composition patterns
 - `../../README.md`: architecture principles and development workflow entrypoint
 
 ## Verification Commands

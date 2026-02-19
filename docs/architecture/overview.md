@@ -2,19 +2,19 @@
 
 
 <!-- TOC START -->
-- [Layered Topology](#layered-topology)
-- [Layer Catalog (source-aligned)](#layer-catalog-source-aligned)
-- [Key Execution Flows](#key-execution-flows)
-- [Next Steps](#next-steps)
-- [Related Documentation](#related-documentation)
-- [Verification Commands](#verification-commands)
+- Layered Topology
+- Layer Catalog (source-aligned)
+- Key Execution Flows
+- Next Steps
+- Related Documentation
+- Verification Commands
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
 
 FLEXT-Core implements CQRS on top of a clean-architecture skeleton. The outline
 below mirrors the `src/flext_core` layout (Python 3.13+, Pydantic v2) and
-references [`clean-architecture.md`](./clean-architecture.md) for the
+references `clean-architecture.md` for the
 dependency rules and rationale.
 
 Canonical references:
@@ -107,23 +107,23 @@ guide.
 
 ## Next Steps
 
-1. **Clean Architecture**: Deep dive into [Clean Architecture](./clean-architecture.md) for dependency rules
-2. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for handler and dispatcher patterns
-3. **Architecture Patterns**: See [Architecture Patterns](./patterns.md) for common patterns
-4. **Decision Records**: Review [Architecture Decisions](./decisions.md) for design rationale
-5. **Guides**: Check [Getting Started](../guides/getting-started.md) for practical usage
+1. **Clean Architecture**: Deep dive into Clean Architecture for dependency rules
+2. **CQRS Patterns**: Explore CQRS Architecture for handler and dispatcher patterns
+3. **Architecture Patterns**: See Architecture Patterns for common patterns
+4. **Decision Records**: Review Architecture Decisions for design rationale
+5. **Guides**: Check Getting Started for practical usage
 
 ## Related Documentation
 
 **Within Project**:
 
-- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
-- [CQRS Architecture](./cqrs.md) - Handler pipeline and dispatcher orchestration
-- [Architecture Patterns](./patterns.md) - Common patterns and best practices
-- [Architecture Decisions](./decisions.md) - ADRs documenting design choices
-- [Getting Started Guide](../guides/getting-started.md) - Practical implementation guide
-- [Service Patterns](../guides/service-patterns.md) - Domain service patterns
-- [API Reference](../api-reference/foundation.md) - Foundation layer APIs
+- Clean Architecture - Dependency rules and layer responsibilities
+- CQRS Architecture - Handler pipeline and dispatcher orchestration
+- Architecture Patterns - Common patterns and best practices
+- Architecture Decisions - ADRs documenting design choices
+- Getting Started Guide - Practical implementation guide
+- Service Patterns - Domain service patterns
+- API Reference - Foundation layer APIs
 
 **External Resources**:
 

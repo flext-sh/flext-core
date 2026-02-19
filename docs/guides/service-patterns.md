@@ -2,30 +2,30 @@
 
 
 <!-- TOC START -->
-- [Canonical Rules](#canonical-rules)
-- [Overview](#overview)
-- [Execution Patterns](#execution-patterns)
-  - [V1: Explicit Execution (✅ Production Ready)](#v1-explicit-execution-production-ready)
-  - [V2 Property: `.result` (🟡 Under Validation)](#v2-property-result-under-validation)
-  - [V2 Auto: `auto_execute` (🟡 Under Validation)](#v2-auto-autoexecute-under-validation)
-- [Infrastructure Properties](#infrastructure-properties)
-  - [Example with Infrastructure](#example-with-infrastructure)
-- [Composition Patterns](#composition-patterns)
-  - [Railway Composition](#railway-composition)
-  - [Service Factories](#service-factories)
-- [Integration with Handlers](#integration-with-handlers)
-- [Testing Services](#testing-services)
-  - [Unit Testing](#unit-testing)
-  - [Integration Testing](#integration-testing)
-- [Migration Guide](#migration-guide)
-  - [From V1 to V2 Property](#from-v1-to-v2-property)
-  - [Gradual Adoption](#gradual-adoption)
-- [Best Practices](#best-practices)
-  - [DO ✅](#do-)
-  - [DON'T ❌](#dont-)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-- [References](#references)
+- Canonical Rules
+- Overview
+- Execution Patterns
+  - V1: Explicit Execution (✅ Production Ready)
+  - V2 Property: `.result` (🟡 Under Validation)
+  - V2 Auto: `auto_execute` (🟡 Under Validation)
+- Infrastructure Properties
+  - Example with Infrastructure
+- Composition Patterns
+  - Railway Composition
+  - Service Factories
+- Integration with Handlers
+- Testing Services
+  - Unit Testing
+  - Integration Testing
+- Migration Guide
+  - From V1 to V2 Property
+  - Gradual Adoption
+- Best Practices
+  - DO ✅
+  - DON'T ❌
+- Next Steps
+- See Also
+- References
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services
@@ -246,7 +246,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         ).execute()
 ```
 
-See [CQRS Architecture](../architecture/cqrs.md) for handler details.
+See CQRS Architecture for handler details.
 
 ---
 
@@ -332,19 +332,19 @@ except FlextExceptions.BaseError as e:
 
 ## Next Steps
 
-1. **Domain-Driven Design**: Explore [DDD Patterns](./domain-driven-design.md) for entity and aggregate patterns
-2. **Dependency Injection**: See [Advanced DI](./dependency-injection-advanced.md) for service composition
-3. **Railway Patterns**: Review [Railway-Oriented Programming](./railway-oriented-programming.md) for result composition
-4. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for comprehensive error patterns
-5. **API Reference**: Review [FlextService API](../api-reference/domain.md#flextservice) for complete API
+1. **Domain-Driven Design**: Explore DDD Patterns for entity and aggregate patterns
+2. **Dependency Injection**: See Advanced DI for service composition
+3. **Railway Patterns**: Review Railway-Oriented Programming for result composition
+4. **Error Handling**: Check Error Handling Guide for comprehensive error patterns
+5. **API Reference**: Review FlextService API for complete API
 
 ## See Also
 
-- [Domain-Driven Design](./domain-driven-design.md) - DDD patterns with FlextModels
-- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition with DI
-- [Railway-Oriented Programming](./railway-oriented-programming.md) - Result composition patterns
-- [Error Handling Guide](./error-handling.md) - Comprehensive error handling
-- [API Reference: FlextService](../api-reference/domain.md#flextservice) - Complete service API
+- Domain-Driven Design - DDD patterns with FlextModels
+- Dependency Injection Advanced - Service composition with DI
+- Railway-Oriented Programming - Result composition patterns
+- Error Handling Guide - Comprehensive error handling
+- API Reference: FlextService - Complete service API
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ## References
@@ -352,7 +352,7 @@ except FlextExceptions.BaseError as e:
 - `flext_core/service.py` – Service base class
 - `flext_core/mixins.py` – Infrastructure properties
 - `flext_core/result.py` – FlextResult monad
-- [CQRS Architecture](../architecture/cqrs.md)
+- CQRS Architecture
 
 ---
 

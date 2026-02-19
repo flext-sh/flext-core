@@ -2,37 +2,37 @@
 
 
 <!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Error Handling Anti-Patterns](#error-handling-anti-patterns)
-  - [Anti-Pattern 1: Using Exceptions for Business Logic](#anti-pattern-1-using-exceptions-for-business-logic)
-  - [Anti-Pattern 2: Swallowing Errors](#anti-pattern-2-swallowing-errors)
-  - [Anti-Pattern 3: Ignoring Error Information](#anti-pattern-3-ignoring-error-information)
-- [Type Safety Anti-Patterns](#type-safety-anti-patterns)
-  - [Anti-Pattern 4: Using `Any` Type](#anti-pattern-4-using-any-type)
-  - [Anti-Pattern 5: Untyped Container Retrieval](#anti-pattern-5-untyped-container-retrieval)
-  - [Anti-Pattern 6: Type Ignores Without Justification](#anti-pattern-6-type-ignores-without-justification)
-- [Architecture Anti-Patterns](#architecture-anti-patterns)
-  - [Anti-Pattern 7: Circular Dependencies](#anti-pattern-7-circular-dependencies)
-  - [Anti-Pattern 8: Multiple Exports per Module](#anti-pattern-8-multiple-exports-per-module)
-  - [Anti-Pattern 9: God Objects](#anti-pattern-9-god-objects)
-- [Dependency Injection Anti-Patterns](#dependency-injection-anti-patterns)
-  - [Anti-Pattern 10: Creating New Containers](#anti-pattern-10-creating-new-containers)
-  - [Anti-Pattern 11: Not Checking Container Results](#anti-pattern-11-not-checking-container-results)
-- [Model Anti-Patterns](#model-anti-patterns)
-  - [Anti-Pattern 12: Validation in Models Without FlextResult](#anti-pattern-12-validation-in-models-without-flextresult)
-  - [Anti-Pattern 13: Mutable Value Objects](#anti-pattern-13-mutable-value-objects)
-- [Configuration Anti-Patterns](#configuration-anti-patterns)
-  - [Anti-Pattern 14: Hardcoded Configuration](#anti-pattern-14-hardcoded-configuration)
-  - [Anti-Pattern 15: No Configuration Validation](#anti-pattern-15-no-configuration-validation)
-- [Summary: Anti-Pattern Checklist](#summary-anti-pattern-checklist)
-  - [Error Handling](#error-handling)
-  - [Type Safety](#type-safety)
-  - [Architecture](#architecture)
-  - [Dependency Injection](#dependency-injection)
-  - [Models](#models)
-  - [Configuration](#configuration)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
+- Table of Contents
+- Error Handling Anti-Patterns
+  - Anti-Pattern 1: Using Exceptions for Business Logic
+  - Anti-Pattern 2: Swallowing Errors
+  - Anti-Pattern 3: Ignoring Error Information
+- Type Safety Anti-Patterns
+  - Anti-Pattern 4: Using `Any` Type
+  - Anti-Pattern 5: Untyped Container Retrieval
+  - Anti-Pattern 6: Type Ignores Without Justification
+- Architecture Anti-Patterns
+  - Anti-Pattern 7: Circular Dependencies
+  - Anti-Pattern 8: Multiple Exports per Module
+  - Anti-Pattern 9: God Objects
+- Dependency Injection Anti-Patterns
+  - Anti-Pattern 10: Creating New Containers
+  - Anti-Pattern 11: Not Checking Container Results
+- Model Anti-Patterns
+  - Anti-Pattern 12: Validation in Models Without FlextResult
+  - Anti-Pattern 13: Mutable Value Objects
+- Configuration Anti-Patterns
+  - Anti-Pattern 14: Hardcoded Configuration
+  - Anti-Pattern 15: No Configuration Validation
+- Summary: Anti-Pattern Checklist
+  - Error Handling
+  - Type Safety
+  - Architecture
+  - Dependency Injection
+  - Models
+  - Configuration
+- Next Steps
+- See Also
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions
@@ -41,12 +41,12 @@ This guide documents common anti-patterns found in FLEXT ecosystem projects and 
 
 ## Table of Contents
 
-1. [Error Handling Anti-Patterns](#error-handling-anti-patterns)
-2. [Type Safety Anti-Patterns](#type-safety-anti-patterns)
-3. [Architecture Anti-Patterns](#architecture-anti-patterns)
-4. [Dependency Injection Anti-Patterns](#dependency-injection-anti-patterns)
-5. [Model Anti-Patterns](#model-anti-patterns)
-6. [Configuration Anti-Patterns](#configuration-anti-patterns)
+1. Error Handling Anti-Patterns
+2. Type Safety Anti-Patterns
+3. Architecture Anti-Patterns
+4. Dependency Injection Anti-Patterns
+5. Model Anti-Patterns
+6. Configuration Anti-Patterns
 
 ---
 
@@ -827,21 +827,21 @@ except ValidationError as e:
 
 ## Next Steps
 
-1. **Error Handling**: Review [Error Handling Guide](./error-handling.md) for correct error patterns
-2. **Testing**: See [Testing Guide](./testing.md) for testing best practices (no mocks policy)
-3. **Service Patterns**: Check [Service Patterns](./service-patterns.md) for service design patterns
-4. **Railway Patterns**: Explore [Railway-Oriented Programming](./railway-oriented-programming.md) for functional error handling
-5. **Configuration**: Review [Configuration Guide](./configuration.md) for configuration best practices
+1. **Error Handling**: Review Error Handling Guide for correct error patterns
+2. **Testing**: See Testing Guide for testing best practices (no mocks policy)
+3. **Service Patterns**: Check Service Patterns for service design patterns
+4. **Railway Patterns**: Explore Railway-Oriented Programming for functional error handling
+5. **Configuration**: Review Configuration Guide for configuration best practices
 
 ## See Also
 
-- [Error Handling Guide](./error-handling.md) - Correct error handling patterns
-- [Testing Guide](./testing.md) - Testing best practices and no mocks policy
-- [Service Patterns](./service-patterns.md) - Service design patterns
-- [Railway-Oriented Programming](./railway-oriented-programming.md) - Functional error handling
-- [Configuration Guide](./configuration.md) - Configuration best practices
-- [Clean Architecture](../architecture/clean-architecture.md) - Architecture patterns
-- [Development Standards](../standards/development.md) - Development standards
+- Error Handling Guide - Correct error handling patterns
+- Testing Guide - Testing best practices and no mocks policy
+- Service Patterns - Service design patterns
+- Railway-Oriented Programming - Functional error handling
+- Configuration Guide - Configuration best practices
+- Clean Architecture - Architecture patterns
+- Development Standards - Development standards
 - **FLEXT CLAUDE.md**: Architecture principles and zero-tolerance standards
 
 ---

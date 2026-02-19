@@ -2,12 +2,12 @@
 
 
 <!-- TOC START -->
-- [FlextDispatcher - Unified CQRS Dispatcher](#flextdispatcher-unified-cqrs-dispatcher)
-- [h - CQRS Handler Base](#h-cqrs-handler-base)
-- [FlextRegistry - Handler Registration Utilities](#flextregistry-handler-registration-utilities)
-- [FlextDecorators - Cross-Cutting Concerns](#flextdecorators-cross-cutting-concerns)
-- [Quick Start Checklist](#quick-start-checklist)
-- [Verification Commands](#verification-commands)
+- FlextDispatcher - Unified CQRS Dispatcher
+- h - CQRS Handler Base
+- FlextRegistry - Handler Registration Utilities
+- FlextDecorators - Cross-Cutting Concerns
+- Quick Start Checklist
+- Verification Commands
 <!-- TOC END -->
 
 The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability.

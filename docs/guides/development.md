@@ -7,133 +7,9 @@
 
 
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [Prerequisites](#prerequisites)
-- [Development Environment Setup](#development-environment-setup)
-  - [1. Clone the Repository](#1-clone-the-repository)
-  - [2. Install Dependencies](#2-install-dependencies)
-  - [3. Verify Installation](#3-verify-installation)
-- [Project Structure](#project-structure)
-- [Development Workflow](#development-workflow)
-  - [1. Create a Feature Branch](#1-create-a-feature-branch)
-  - [2. Make Changes](#2-make-changes)
-  - [3. Run Quality Gates](#3-run-quality-gates)
-  - [4. Commit Changes](#4-commit-changes)
-- [Code Standards](#code-standards)
-  - [Type Safety (ZERO TOLERANCE)](#type-safety-zero-tolerance)
-  - [Railway-Oriented Programming](#railway-oriented-programming)
-  - [Unified Models Pattern](#unified-models-pattern)
-- [Testing](#testing)
-  - [Running Tests](#running-tests)
-  - [Writing Tests](#writing-tests)
-- [Quality Gates](#quality-gates)
-  - [Pre-commit Hooks](#pre-commit-hooks)
-  - [Quality Checks](#quality-checks)
-- [Adding New Projects](#adding-new-projects)
-  - [1. Create Project Structure](#1-create-project-structure)
-  - [2. Implement Core Patterns](#2-implement-core-patterns)
-  - [3. Add to Workspace](#3-add-to-workspace)
-- [Debugging](#debugging)
-  - [Type Errors](#type-errors)
-  - [Test Failures](#test-failures)
-  - [Import Issues](#import-issues)
-- [Documentation](#documentation)
-  - [Code Documentation](#code-documentation)
-  - [README Updates](#readme-updates)
-- [New Feature](#new-feature)
-  - [Usage](#usage)
-  - [Configuration](#configuration)
-- [Contributing](#contributing)
-  - [Pull Request Process](#pull-request-process)
-  - [Code Review Guidelines](#code-review-guidelines)
-- [Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-- [Resources](#resources)
-- [Support](#support)
-<!-- TOC END -->
 
-## Table of Contents
 
-- [FLEXT Development Guide](#flext-development-guide)
-  - [Prerequisites](#prerequisites)
-  - [Development Environment Setup](#development-environment-setup)
-    - [1. Clone the Repository](#1-clone-the-repository)
-    - [2. Install Dependencies](#2-install-dependencies)
-- [Install all dependencies and pre-commit hooks](#install-all-dependencies-and-pre-commit-hooks)
-- [Or install manually](#or-install-manually)
-  - [3. Verify Installation](#3-verify-installation)
-- [Run quality gates to verify setup](#run-quality-gates-to-verify-setup)
-- [Check individual components](#check-individual-components)
-  - [Project Structure](#project-structure)
-  - [Development Workflow](#development-workflow)
-    - [1. Create a Feature Branch](#1-create-a-feature-branch)
-    - [2. Make Changes](#2-make-changes)
-    - [3. Run Quality Gates](#3-run-quality-gates)
-- [Quick validation (before commit)](#quick-validation-before-commit)
-- [Full validation (before push)](#full-validation-before-push)
-  - [4. Commit Changes](#4-commit-changes)
-  - [Code Standards](#code-standards)
-    - [Type Safety (ZERO TOLERANCE)](#type-safety-zero-tolerance)
-- [✅ CORRECT - Complete type annotations](#-correct---complete-type-annotations)
-- [❌ WRONG - Missing type annotations](#-wrong---missing-type-annotations)
-  - [Railway-Oriented Programming](#railway-oriented-programming)
-- [✅ CORRECT - Use FlextResult for all operations](#-correct---use-flextresult-for-all-operations)
-- [❌ WRONG - Exception-based error handling](#-wrong---exception-based-error-handling)
-  - [Unified Models Pattern](#unified-models-pattern)
-- [✅ CORRECT - Use [Project]Models pattern](#-correct---use-projectmodels-pattern)
-- [❌ WRONG - Scattered model definitions](#-wrong---scattered-model-definitions)
-  - [Testing](#testing)
-    - [Running Tests](#running-tests)
-- [Run all tests](#run-all-tests)
-- [Run specific test categories](#run-specific-test-categories)
-- [Run with coverage](#run-with-coverage)
-  - [Writing Tests](#writing-tests)
-  - [Quality Gates](#quality-gates)
-    - [Pre-commit Hooks](#pre-commit-hooks)
-- [Install pre-commit hooks](#install-pre-commit-hooks)
-- [Run hooks manually](#run-hooks-manually)
-  - [Quality Checks](#quality-checks)
-- [Linting (Ruff)](#linting-ruff)
-- [Type checking (MyPy)](#type-checking-mypy)
-- [Security scanning (Bandit)](#security-scanning-bandit)
-- [All quality checks](#all-quality-checks)
-  - [Adding New Projects](#adding-new-projects)
-    - [1. Create Project Structure](#1-create-project-structure)
-- [Copy from existing project](#copy-from-existing-project)
-- [Update project metadata](#update-project-metadata)
-- [Edit pyproject.toml, README.md, etc.](#edit-pyprojecttoml-readmemd-etc)
-  - [2. Implement Core Patterns](#2-implement-core-patterns)
-- [src/flext_newlib/**init**.py](#srcflext_newlib__init__py)
-- [Main API class](#main-api-class)
-- [Models class](#models-class)
-  - [3. Add to Workspace](#3-add-to-workspace)
-- [Add to workspace pyproject.toml](#add-to-workspace-pyprojecttoml)
-- [Add to workspace Makefile](#add-to-workspace-makefile)
-- [Update documentation](#update-documentation)
-  - [Debugging](#debugging)
-    - [Type Errors](#type-errors)
-- [Run MyPy with full context](#run-mypy-with-full-context)
-- [Check specific error](#check-specific-error)
-  - [Test Failures](#test-failures)
-- [Run with verbose output](#run-with-verbose-output)
-- [Debug mode](#debug-mode)
-  - [Import Issues](#import-issues)
-- [Verify PYTHONPATH](#verify-pythonpath)
-- [Check poetry environment](#check-poetry-environment)
-  - [Documentation](#documentation)
-    - [Code Documentation](#code-documentation)
-    - [README Updates](#readme-updates)
-  - [New Feature](#new-feature)
-    - [Usage](#usage)
-    - [Configuration](#configuration)
-  - [Contributing](#contributing)
-    - [Pull Request Process](#pull-request-process)
-    - [Code Review Guidelines](#code-review-guidelines)
-  - [Troubleshooting](#troubleshooting)
-    - [Common Issues](#common-issues)
-  - [Resources](#resources)
-  - [Support](#support)
+
 
 This guide covers setting up a development environment for FLEXT contributions and understanding the development workflow.
 
@@ -509,30 +385,17 @@ def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
 
 Update project README.md files when adding new features:
 
-````markdown
-## New Feature
-
-### Usage
+- Add a "New Feature" section with usage and configuration examples.
 
 ```python
 from flext_newlib import FlextNewlib
+from flext_newlib import FlextNewlibSettings
 
 lib = FlextNewlib()
 result = lib.new_feature()
+
+config = FlextNewlibSettings(new_setting="value")
 ```
-````
-
-### Configuration
-
-```python
-from flext_newlib import FlextNewlibSettings
-
-config = FlextNewlibSettings(
-    new_setting="value"
-)
-```
-
-````
 
 ## Contributing
 
@@ -565,7 +428,7 @@ config = FlextNewlibSettings(
 
    # Reinstall dependencies
    make clean && make setup
-````
+```
 
 2. **Test Failures**
 
@@ -588,11 +451,11 @@ config = FlextNewlibSettings(
 
 ## Resources
 
-- [FLEXT Core Patterns](../api-reference/foundation.md)
-- [Quality Standards](../standards/development.md)
-- [Testing Guide](./testing.md)
-- [API Reference](../api-reference/README.md)
-- [Examples](../examples/README.md)
+- FLEXT Core Patterns
+- Quality Standards
+- Testing Guide
+- API Reference
+- Examples
 
 ## Support
 

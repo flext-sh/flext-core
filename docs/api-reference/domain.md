@@ -2,10 +2,10 @@
 
 
 <!-- TOC START -->
-- [Domain Models](#domain-models)
-  - [FlextModels — DDD Base Classes {#flextmodels}](#flextmodels-ddd-base-classes-flextmodels)
-  - [FlextService — Service Base](#flextservice-service-base)
-- [Verification Commands](#verification-commands)
+- Domain Models
+  - FlextModels — DDD Base Classes {#flextmodels}
+  - FlextService — Service Base
+- Verification Commands
 <!-- TOC END -->
 
 Layer 2 covers Domain-Driven Design building blocks used by command/query handlers and service orchestration.

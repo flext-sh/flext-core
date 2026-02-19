@@ -7,75 +7,9 @@
 
 
 
-<!-- TOC START -->
-- [Table of Contents](#table-of-contents)
-- [What is FLEXT](#what-is-flext)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-  - [Basic Installation](#basic-installation)
-  - [Development Installation](#development-installation)
-  - [Docker Installation](#docker-installation)
-- [Your First FLEXT Application](#your-first-flext-application)
-  - [1. Basic Setup](#1-basic-setup)
-  - [2. Using flext-ldif for LDIF Processing](#2-using-flext-ldif-for-ldif-processing)
-  - [3. Railway-Oriented Error Handling](#3-railway-oriented-error-handling)
-  - [4. CQRS Pattern with Commands and Queries](#4-cqrs-pattern-with-commands-and-queries)
-- [Configuration](#configuration)
-  - [Basic Configuration](#basic-configuration)
-  - [Programmatic Configuration](#programmatic-configuration)
-- [Next Steps](#next-steps)
-  - [Explore the Ecosystem](#explore-the-ecosystem)
-  - [Learn Key Patterns](#learn-key-patterns)
-  - [Build Real Applications](#build-real-applications)
-- [Getting Help](#getting-help)
-- [What's Next](#whats-next)
-<!-- TOC END -->
 
-## Table of Contents
 
-- [Getting Started with FLEXT](#getting-started-with-flext)
-  - [What is FLEXT](#what-is-flext)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-    - [Basic Installation](#basic-installation)
-- [Install core framework](#install-core-framework)
-- [Install LDIF processing (most common use case)](#install-ldif-processing-most-common-use-case)
-- [Install additional libraries as needed](#install-additional-libraries-as-needed)
-  - [Development Installation](#development-installation)
-- [Clone the repository](#clone-the-repository)
-- [Create virtual environment](#create-virtual-environment)
-- [Install in development mode](#install-in-development-mode)
-- [Install development dependencies](#install-development-dependencies)
-  - [Docker Installation](#docker-installation)
-- [Build FLEXT image](#build-flext-image)
-- [Run FLEXT container](#run-flext-container)
-  - [Your First FLEXT Application](#your-first-flext-application)
-    - [1. Basic Setup](#1-basic-setup)
-- [Create dependency injection container](#create-dependency-injection-container)
-- [Register services (example)](#register-services-example)
-- [container.register(IService, ServiceImplementation())](#containerregisteriservice-serviceimplementation)
-  - [2. Using flext-ldif for LDIF Processing](#2-using-flext-ldif-for-ldif-processing)
-- [Initialize LDIF API](#initialize-ldif-api)
-- [Parse LDIF content](#parse-ldif-content)
-  - [3. Railway-Oriented Error Handling](#3-railway-oriented-error-handling)
-- [Usage](#usage)
-  - [4. CQRS Pattern with Commands and Queries](#4-cqrs-pattern-with-commands-and-queries)
-- [Setup dispatcher](#setup-dispatcher)
-- [Use the dispatcher](#use-the-dispatcher)
-  - [Configuration](#configuration)
-    - [Basic Configuration](#basic-configuration)
-- [Set configuration](#set-configuration)
-  - [Programmatic Configuration](#programmatic-configuration)
-- [Create custom configuration](#create-custom-configuration)
-- [Use configuration](#use-configuration)
-  - [Next Steps](#next-steps)
-    - [Explore the Ecosystem](#explore-the-ecosystem)
-    - [Learn Key Patterns](#learn-key-patterns)
-    - [Build Real Applications](#build-real-applications)
-  - [Getting Help](#getting-help)
-  - [What's Next](#whats-next)
 
-Welcome to FLEXT! This guide will help you get started with the FLEXT ecosystem quickly and efficiently.
 
 ## What is FLEXT
 
@@ -370,9 +304,9 @@ ldif = FlextLdif(config=config)
 
 Now that you have FLEXT installed and running, explore these areas:
 
-1. **[Architecture Guide](../architecture/README.md)**: Understand FLEXT's design principles
-2. **[API Reference](../api-reference/README.md)**: Complete API documentation
-3. **[Project Guides](../projects/README.md)**: Deep dive into specific libraries
-4. **[Examples](../../../examples/)**: Real-world usage examples
+1. **Architecture Guide**: Understand FLEXT's design principles
+2. **API Reference**: Complete API documentation
+3. **Project Guides**: Deep dive into specific libraries
+4. **Examples**: Real-world usage examples
 
 Happy coding with FLEXT! 🚀
