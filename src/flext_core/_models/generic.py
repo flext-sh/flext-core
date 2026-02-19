@@ -7,7 +7,7 @@ This module provides generic models organized by business function:
 - Snapshots: State captured at a specific moment (FrozenStrictModel)
 - Progress Trackers: Mutable accumulators during operations (ArbitraryTypesModel)
 
-All downstream projects (flext-cli, flext-ldif, flext-ldap, client-a-oud-mig)
+All downstream projects (flext-cli, flext-ldif, flext-ldap, flext-oud-mig)
 should use these models instead of creating their own dict patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

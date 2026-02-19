@@ -294,7 +294,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             >>> # Application-level context (app name, version, environment)
             >>> FlextLogger.bind_context(
             ...     c.Context.SCOPE_APPLICATION,
-            ...     app_name="client-a-oud-mig",
+            ...     app_name="flext-oud-mig",
             ...     app_version="0.9.0",
             ...     environment="production",
             ... )
