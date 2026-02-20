@@ -1203,10 +1203,10 @@ class FlextExceptions:
                     context[k] = normalized
             elif isinstance(attrs, Mapping):
                 for k, v in attrs.items():
-                    normalized: t.MetadataAttributeValue = (
+                    normalized_mapping_attr: t.MetadataAttributeValue = (
                         FlextRuntime.normalize_to_metadata_value(v)
                     )
-                    context[k] = normalized
+                    context[k] = normalized_mapping_attr
         elif isinstance(metadata_obj, dict):
             # Direct dict - normalize values and update
             for k, v in metadata_obj.items():

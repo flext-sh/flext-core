@@ -1403,8 +1403,10 @@ class FlextTestsBuilders:
                 error: str,
                 code: str | None = None,
                 data: t.ConfigMap | None = None,
+                expected_type: type[T] | None = None,
             ) -> r[T]:
                 """Create failure result using r[T] directly."""
+                _ = expected_type
                 error_code = code or c.Errors.VALIDATION_ERROR
                 return r[T].fail(error, error_code=error_code, error_data=data)
 
@@ -1414,8 +1416,12 @@ class FlextTestsBuilders:
                 return tt.results(values=list(values))
 
             @staticmethod
-            def batch_fail[T](errors: Sequence[str]) -> list[r[T]]:
+            def batch_fail[T](
+                errors: Sequence[str],
+                expected_type: type[T] | None = None,
+            ) -> list[r[T]]:
                 """Create batch of failure results - DELEGATES to tt.results()."""
+                _ = expected_type
                 return tt.results(values=[], errors=list(errors))
 
             @staticmethod

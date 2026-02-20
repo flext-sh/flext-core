@@ -1729,14 +1729,14 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 }
             )
         if isinstance(content, Sequence):
-            rows: list[list[str]] = []
+            content_rows: list[list[str]] = []
             for row in content:
                 if not isinstance(row, Sequence) or isinstance(row, (str, bytes)):
-                    rows = []
+                    content_rows = []
                     break
-                rows.append([str(cell) for cell in row])
-            if rows:
-                return rows
+                content_rows.append([str(cell) for cell in row])
+            if content_rows:
+                return content_rows
         # Fallback for unexpected types
         return str(content)
 

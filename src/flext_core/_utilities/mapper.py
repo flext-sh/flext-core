@@ -1898,13 +1898,13 @@ class FlextUtilitiesMapper:
                 grouped[key].append(item)
             return grouped
         if callable(group_spec):
-            grouped: dict[str, list[t.GeneralValueType]] = {}
+            grouped_callable: dict[str, list[t.GeneralValueType]] = {}
             for item in current_list:
                 key = str(group_spec(item))
-                if key not in grouped:
-                    grouped[key] = []
-                grouped[key].append(item)
-            return grouped
+                if key not in grouped_callable:
+                    grouped_callable[key] = []
+                grouped_callable[key].append(item)
+            return grouped_callable
         return current
 
     @staticmethod

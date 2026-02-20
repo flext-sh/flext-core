@@ -506,7 +506,6 @@ class FlextModelFoundation:
             """
             return self.updated_at is not None
 
-        @computed_field
         @property
         def age_seconds(self) -> float:
             """Calculate age of the model in seconds since creation.
@@ -518,7 +517,6 @@ class FlextModelFoundation:
             now = datetime.now(UTC)
             return (now - self.created_at).total_seconds()
 
-        @computed_field
         @property
         def age_minutes(self) -> float:
             """Calculate age of the model in minutes since creation.
@@ -531,7 +529,6 @@ class FlextModelFoundation:
             age_seconds = (now - self.created_at).total_seconds()
             return age_seconds / 60.0
 
-        @computed_field
         @property
         def age_hours(self) -> float:
             """Calculate age of the model in hours since creation.
@@ -544,7 +541,6 @@ class FlextModelFoundation:
             age_seconds = (now - self.created_at).total_seconds()
             return age_seconds / 3600.0
 
-        @computed_field
         @property
         def age_days(self) -> float:
             """Calculate age of the model in days since creation.
@@ -557,7 +553,6 @@ class FlextModelFoundation:
             age_seconds = (now - self.created_at).total_seconds()
             return age_seconds / 86400.0
 
-        @computed_field
         @property
         def last_modified_age_seconds(self) -> float | None:
             """Calculate age since last modification in seconds.
@@ -594,7 +589,6 @@ class FlextModelFoundation:
 
             return " ".join(parts)
 
-        @computed_field
         @property
         def is_recent(self) -> bool:
             """Check if the model was created within the last hour.
@@ -607,7 +601,6 @@ class FlextModelFoundation:
             age_minutes = (now - self.created_at).total_seconds() / 60.0
             return age_minutes <= c.Performance.RECENT_THRESHOLD_MINUTES
 
-        @computed_field
         @property
         def is_very_recent(self) -> bool:
             """Check if the model was created within the last 5 minutes.
@@ -1050,7 +1043,6 @@ class FlextModelFoundation:
                     cleaned[cleaned_key] = cleaned_value
             return cleaned
 
-        @computed_field
         @property
         def tag_count(self) -> int:
             """Get number of tags.
@@ -1061,7 +1053,6 @@ class FlextModelFoundation:
             """
             return len(self.tags)
 
-        @computed_field
         @property
         def category_count(self) -> int:
             """Get number of categories.
@@ -1082,7 +1073,6 @@ class FlextModelFoundation:
             """
             return len(self.tags) > 0
 
-        @computed_field
         @property
         def has_categories(self) -> bool:
             """Check if record has any categories.
@@ -1409,13 +1399,11 @@ class FlextModelFoundation:
             """Rebuild model with full validation using model_validate."""
             return self.model_copy(deep=True)
 
-        @computed_field
         @property
         def dynamic_field_count(self) -> int:
             """Count of dynamic fields."""
             return len(self.fields)
 
-        @computed_field
         @property
         def has_dynamic_fields(self) -> bool:
             """Check if model has dynamic fields."""

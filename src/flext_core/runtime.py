@@ -1750,6 +1750,7 @@ class FlextRuntime:
             error: str | None,
             error_code: str | None = None,
             error_data: ConfigMap | None = None,
+            expected_type: type[U] | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
@@ -1766,6 +1767,7 @@ class FlextRuntime:
                 Failed RuntimeResult instance
 
             """
+            _ = expected_type
             error_msg = error if error is not None else ""
             return cast(
                 "FlextRuntime.RuntimeResult[U]",

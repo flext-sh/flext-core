@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Self, TypeGuard, override
 
-from dependency_injector import containers, providers
+from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
@@ -52,13 +52,13 @@ class FlextContainer(FlextRuntime, p.DI):
     _user_overrides: dict[str, t.GeneralValueType]
     containers: ModuleType
     providers: ModuleType
-    _di_bridge: containers.DeclarativeContainer
-    _di_services: containers.DynamicContainer
-    _di_resources: containers.DynamicContainer
-    _di_container: containers.DynamicContainer
+    _di_bridge: di_containers.DeclarativeContainer
+    _di_services: di_containers.DynamicContainer
+    _di_resources: di_containers.DynamicContainer
+    _di_container: di_containers.DynamicContainer
     _config_provider: object
-    _base_config_provider: providers.Configuration
-    _user_config_provider: providers.Configuration
+    _base_config_provider: di_providers.Configuration
+    _user_config_provider: di_providers.Configuration
     _services: dict[str, m.Container.ServiceRegistration]
     _factories: dict[str, m.Container.FactoryRegistration]
     _resources: dict[str, m.Container.ResourceRegistration]
@@ -326,7 +326,7 @@ class FlextContainer(FlextRuntime, p.DI):
         bridge = bridge_tuple[0]  # DeclarativeContainer with config attribute
         service_module = bridge_tuple[1]  # DynamicContainer
         resource_module = bridge_tuple[2]  # DynamicContainer
-        di_container = containers.DynamicContainer()
+        di_container = di_containers.DynamicContainer()
         # Internal initialization - direct assignment to private attributes
         # These are set during object construction, not accessed from outside
         self._di_bridge = bridge
@@ -338,15 +338,15 @@ class FlextContainer(FlextRuntime, p.DI):
         # We access it without strict type checking for this internal setup
         config_attr = "config"
         config_provider_obj = getattr(bridge, config_attr, None)
-        if not isinstance(config_provider_obj, providers.Configuration):
+        if not isinstance(config_provider_obj, di_providers.Configuration):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
         config_provider = config_provider_obj
         if config_provider is None:
             error_msg = "Bridge config provider cannot be None"
             raise TypeError(error_msg)
-        base_config_provider = providers.Configuration()
-        user_config_provider = providers.Configuration()
+        base_config_provider = di_providers.Configuration()
+        user_config_provider = di_providers.Configuration()
         self._base_config_provider = base_config_provider
         self._user_config_provider = user_config_provider
         # Configure providers - override() returns OverridingContext for chaining

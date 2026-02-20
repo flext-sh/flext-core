@@ -118,10 +118,8 @@ class FlextUtilitiesCast:
         if callable(value):
             return value
 
-        # If not callable, maybe it's already the target value (e.g. static result)
-        # This handles cases where a static value is passed instead of a factory
-        if isinstance(value, target_type):
-            return value
+        if isinstance(target_type, type):
+            return FlextUtilitiesCast.general_value(value, target_type)
 
         source_name = getattr(type(value), "__name__", str(type(value)))
         target_name = getattr(target_type, "__name__", str(target_type))

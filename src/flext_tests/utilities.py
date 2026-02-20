@@ -1321,7 +1321,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_entity_instance[TEntity](
                 name: str,
                 value: t.GeneralValueType,
-                entity_class: type[TEntity],
+                entity_class: Callable[..., TEntity],
                 *,
                 remove_id: bool = False,
             ) -> TEntity:
@@ -1337,7 +1337,7 @@ class FlextTestsUtilities(FlextUtilities):
                     TEntity: Created entity instance
 
                 """
-                entity = entity_class(name=name, value=value)
+                entity = entity_class(name, value)
                 if remove_id and hasattr(entity, "unique_id"):
                     delattr(entity, "unique_id")
                 return entity
@@ -1346,7 +1346,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_entities_batch[TEntity](
                 names: list[str],
                 values: list[t.GeneralValueType],
-                entity_class: type[TEntity],
+                entity_class: Callable[..., TEntity],
                 remove_ids: list[bool] | None = None,
             ) -> r[list[TEntity]]:
                 """Create batch of test entities.
@@ -1388,7 +1388,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_object_instance[TValue](
                 data: str,
                 count: int,
-                value_class: type[TValue],
+                value_class: Callable[..., TValue],
             ) -> TValue:
                 """Create a test value object instance.
 
@@ -1401,7 +1401,7 @@ class FlextTestsUtilities(FlextUtilities):
                     TValue: Created value object instance
 
                 """
-                return value_class(data=data, count=count)
+                return value_class(data, count)
 
             @staticmethod
             def create_test_value_objects_batch[TValue](

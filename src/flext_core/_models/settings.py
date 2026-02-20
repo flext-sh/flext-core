@@ -235,8 +235,7 @@ class FlextModelsConfig:
 
             # Adjust max_workers to not exceed batch_size without triggering validation
             adjusted_workers = min(self.max_workers, self.batch_size)
-            # Use direct assignment to __dict__ to bypass Pydantic validation
-            self.__dict__["max_workers"] = adjusted_workers
+            self.max_workers = adjusted_workers
 
             return self
 

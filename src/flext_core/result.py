@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
+from returns.unsafe import unsafe_perform_io
 
 from flext_core.exceptions import e
 from flext_core.protocols import p
@@ -154,6 +155,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigMap | None = None,
+        expected_type: type[U] | None = None,
     ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
@@ -179,6 +181,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             Failed FlextResult instance
 
         """
+        _ = expected_type
         error_msg = error if error is not None else ""
 
         # Use returns library Failure wrapper for railway-oriented programming
@@ -791,7 +794,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return FlextResult[T].fail(str(io_result.failure()))
 
         if isinstance(io_result, IOSuccess):
-            return FlextResult[T].ok(io_result.unwrap())
+            unwrapped_io = io_result.unwrap()
+            return FlextResult[T].ok(
+                unsafe_perform_io(cast("IO[T]", unwrapped_io)),
+            )
 
         return FlextResult[T].fail("Invalid IOResult structure")
 

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -302,6 +302,10 @@ class FlextTypes:
     # Replaces raw dict aliases with strict typed models
     # =========================================================================
 
+    @typing.runtime_checkable
+    class _RootDictProtocol[RootValueT](typing.Protocol):
+        root: dict[str, RootValueT]
+
     class _DictMixin(typing.Generic[DictValueT]):
         """Shared dict-like API for all RootModel containers.
 
@@ -311,62 +315,115 @@ class FlextTypes:
 
         def __getitem__(self, key: str) -> DictValueT:
             """Get item by key."""
-            return self.root[key]
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root[key]
 
         def __setitem__(self, key: str, value: DictValueT) -> None:
             """Set item by key."""
-            self.root[key] = value
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            root[key] = value
 
         def __delitem__(self, key: str) -> None:
             """Delete item by key."""
-            del self.root[key]
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            del root[key]
 
         def __len__(self) -> int:
             """Get length."""
-            return len(self.root)
-
-        def __iter__(self) -> Iterator[str]:
-            return iter(self.root)
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return len(root)
 
         def __contains__(self, key: object) -> bool:
             """Check if key exists."""
-            return key in self.root
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return key in root
 
         def get(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
             """Get item with default."""
-            return self.root.get(key, default)
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.get(key, default)
 
         def items(self) -> typing.ItemsView[str, DictValueT]:
             """Get items view."""
-            return self.root.items()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.items()
 
         def keys(self) -> typing.KeysView[str]:
             """Get keys view."""
-            return self.root.keys()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.keys()
 
         def values(self) -> typing.ValuesView[DictValueT]:
             """Get values view."""
-            return self.root.values()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.values()
 
         def update(self, other: Mapping[str, DictValueT]) -> None:
             """Update with other mapping."""
-            self.root.update(other)
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            root.update(other)
 
         def clear(self) -> None:
             """Clear all items."""
-            self.root.clear()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            root.clear()
 
         def pop(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
             """Pop item by key."""
-            return self.root.pop(key, default)
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.pop(key, default)
 
         def popitem(self) -> tuple[str, DictValueT]:
             """Pop last item."""
-            return self.root.popitem()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.popitem()
 
         def setdefault(self, key: str, default: DictValueT) -> DictValueT:
             """Set default value for key."""
-            return self.root.setdefault(key, default)
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return root.setdefault(key, default)
 
     class Dict(_DictMixin[GeneralValueType], RootModel[dict[str, GeneralValueType]]):
         """Generic dictionary container.
@@ -461,13 +518,21 @@ class FlextTypes:
             self,
         ) -> typing.ItemsView[str, Callable[[GeneralValueType], GeneralValueType]]:
             """Get validator items."""
-            return self.root.items()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[Callable[[GeneralValueType], GeneralValueType]]",
+                self,
+            ).root
+            return root.items()
 
         def values(
             self,
         ) -> typing.ValuesView[Callable[[GeneralValueType], GeneralValueType]]:
             """Get validator values."""
-            return self.root.values()
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[Callable[[GeneralValueType], GeneralValueType]]",
+                self,
+            ).root
+            return root.values()
 
     class FieldValidatorMap(
         _ValidatorMapMixin,

@@ -809,7 +809,7 @@ class FlextGenericModels:
                     t.Dict: Monitoring compatible dictionary.
 
                 """
-                data = {
+                data: dict[str, t.GeneralValueType] = {
                     "healthy": self.healthy,
                     "status": "up" if self.healthy else "down",
                     "checks": self.checks.root,
@@ -1153,7 +1153,7 @@ class FlextGenericModels:
                     t.Dict: Progress report dictionary.
 
                 """
-                data = {
+                data: dict[str, t.GeneralValueType] = {
                     "operation": self.operation_name,
                     "total_processed": self.total_count,
                     "success": self.success_count,
@@ -1505,7 +1505,7 @@ class FlextGenericModels:
                     t.Dict: Conversion report dictionary.
 
                 """
-                data = {
+                data: dict[str, t.GeneralValueType] = {
                     "source_format": self.source_format,
                     "target_format": self.target_format,
                     "converted_count": self.converted_count,

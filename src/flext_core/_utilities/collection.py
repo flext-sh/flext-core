@@ -26,7 +26,7 @@ class _Predicate(Protocol[T_contra]):
 
 class _BatchResultCompat(t.BatchResultDict):
     def __getitem__(self, key: str) -> t.GeneralValueType:
-        values = {
+        values: dict[str, t.GeneralValueType] = {
             "results": self.results,
             "errors": self.errors,
             "total": self.total,

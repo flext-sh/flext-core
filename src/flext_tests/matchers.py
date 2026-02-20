@@ -548,7 +548,10 @@ class FlextTestsMatchers:
 
         # Error data validation
         if params.data is not None:
-            actual_data = result.error_data or {}
+            actual_raw = result.error_data
+            actual_data: dict[str, t.GeneralValueType] = (
+                dict(actual_raw) if isinstance(actual_raw, Mapping) else {}
+            )
             for key, expected_value in params.data.items():
                 if key not in actual_data:
                     raise AssertionError(
@@ -1043,15 +1046,15 @@ class FlextTestsMatchers:
                 elif isinstance(params.kv, Mapping):
                     # Type narrowing: params.kv is Mapping[str, object]
                     mapping_kv: Mapping[str, object] = params.kv
-                    for key, expected_val in mapping_kv.items():
+                    for key, expected_obj in mapping_kv.items():
                         if key not in mapping_value:
                             raise AssertionError(
                                 params.msg or f"Key {key!r} not found in mapping",
                             )
-                        if mapping_value[key] != expected_val:
+                        if mapping_value[key] != expected_obj:
                             raise AssertionError(
                                 params.msg
-                                or f"Key {key!r}: expected {expected_val!r}, got {mapping_value[key]!r}",
+                                or f"Key {key!r}: expected {expected_obj!r}, got {mapping_value[key]!r}",
                             )
 
         # Object/Class assertions
