@@ -91,7 +91,7 @@ def main() -> int:
         "",
         "## Verification",
         "",
-        "- make release-ci RELEASE_PHASE=all",
+        "- make release INTERACTIVE=0 CREATE_BRANCHES=0 RELEASE_PHASE=all",
         "- make validate VALIDATE_SCOPE=workspace",
         "- make build",
     ])
