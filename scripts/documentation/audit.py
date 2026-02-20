@@ -11,7 +11,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-if __package__ in (None, ""):
+if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts.documentation.shared import (
@@ -75,9 +75,7 @@ def should_skip_target(raw: str, target: str) -> bool:
         return False
     if "," in raw and ".md" not in raw and "/" not in raw:
         return True
-    if " " in raw and ".md" not in raw and "/" not in raw:
-        return True
-    return False
+    return bool(" " in raw and ".md" not in raw and "/" not in raw)
 
 
 def is_external(target: str) -> bool:

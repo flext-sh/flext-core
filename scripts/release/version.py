@@ -1,35 +1,40 @@
 #!/usr/bin/env python3
+"""Script to update project and subproject versions in pyproject.toml files."""
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
-from release.shared import parse_semver, resolve_projects, workspace_root
+# pylint: disable=wrong-import-position
 from libs.versioning import replace_project_version
+from release.shared import parse_semver, resolve_projects, workspace_root
 
 
 def _replace_version(content: str, version: str) -> tuple[str, bool]:
+    """Replace the version field in a TOML content string."""
     return replace_project_version(content, version)
 
 
 def _version_files(root: Path, project_names: list[str]) -> list[Path]:
+    """Discover all pyproject.toml files that need version updates."""
     files: list[Path] = [root / "pyproject.toml"]
     for project in resolve_projects(root, project_names):
         pyproject = project.path / "pyproject.toml"
         if pyproject.exists():
             files.append(pyproject)
-    dedup = sorted({path.resolve() for path in files})
-    return dedup
+    return sorted({path.resolve() for path in files})
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments for the version update script."""
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--version", required=True)
     _ = parser.add_argument("--dev-suffix", type=int, default=0)
     _ = parser.add_argument("--projects", nargs="*", default=[])
@@ -39,6 +44,12 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Execute the version update process.
+
+    Returns:
+        0 on success.
+
+    """
     args = _parse_args()
     root = workspace_root(args.root)
     _ = parse_semver(args.version)

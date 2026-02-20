@@ -136,7 +136,7 @@ def _inject_guard(content: str) -> str:
     # Skip docstring (triple-quoted)
     if insert_idx < len(lines):
         line = lines[insert_idx].strip()
-        if line.startswith('"""') or line.startswith("'''"):
+        if line.startswith(('"""', "'''")):
             quote = line[:3]
             # Check if single-line docstring
             if line.count(quote) >= 2 and len(line) > 3:
@@ -239,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.check:
         print(f"✗ Some projects missing Python 3.{REQUIRED_MINOR} enforcement")
-        print(f"  Run: python scripts/maintenance/enforce_python_version.py")
+        print("  Run: python scripts/maintenance/enforce_python_version.py")
         return 1
 
     return 0

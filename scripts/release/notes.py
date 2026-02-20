@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
+"""Script to generate release notes based on Git history and project state."""
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
+# pylint: disable=wrong-import-position
 from release.shared import resolve_projects, run_capture, workspace_root
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments for the release notes script."""
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--tag", required=True)
     _ = parser.add_argument("--output", type=Path, required=True)
     _ = parser.add_argument("--version", default="")
@@ -23,6 +27,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _tag_exists(root: Path, tag: str) -> bool:
+    """Check if a Git tag exists in the repository."""
     try:
         _ = run_capture(["git", "rev-parse", "--verify", f"refs/tags/{tag}"], cwd=root)
         return True
@@ -31,6 +36,7 @@ def _tag_exists(root: Path, tag: str) -> bool:
 
 
 def _previous_tag(root: Path, tag: str) -> str:
+    """Find the tag immediately preceding the given tag in history."""
     output = run_capture(["git", "tag", "--sort=-v:refname"], cwd=root)
     tags = [line.strip() for line in output.splitlines() if line.strip()]
     if tag in tags:
@@ -44,12 +50,19 @@ def _previous_tag(root: Path, tag: str) -> str:
 
 
 def _collect_changes(root: Path, previous: str, tag: str) -> str:
+    """Collect Git commit messages between two tags."""
     target = tag if _tag_exists(root, tag) else "HEAD"
     rev = f"{previous}..{target}" if previous else target
     return run_capture(["git", "log", "--pretty=format:- %h %s (%an)", rev], cwd=root)
 
 
 def main() -> int:
+    """Execute the release notes generation process.
+
+    Returns:
+        0 on success.
+
+    """
     args = _parse_args()
     root = workspace_root(args.root)
     output_path = args.output if args.output.is_absolute() else root / args.output

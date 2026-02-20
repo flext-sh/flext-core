@@ -687,7 +687,7 @@ class FlextConstants:
             FlextConstants.Settings.Environment.STAGING,
             FlextConstants.Settings.Environment.PRODUCTION,
             FlextConstants.Settings.Environment.TESTING,
-            internal.invalid,
+            FlextConstants.Settings.Environment.LOCAL,
         ]
 
         type RegistrationStatusLiteral = Literal[

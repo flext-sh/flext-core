@@ -4,9 +4,8 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-from pathlib import Path
 import sys
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -25,9 +24,8 @@ def _run_capture(command: list[str], cwd: Path) -> str:
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
-        raise RuntimeError(
-            f"command failed ({result.returncode}): {' '.join(command)}: {detail}"
-        )
+        msg = f"command failed ({result.returncode}): {' '.join(command)}: {detail}"
+        raise RuntimeError(msg)
     return result.stdout.strip()
 
 
@@ -101,7 +99,7 @@ def _print_status(repo_root: Path, base: str, head: str) -> int:
 
 
 def _selector(pr_number: str, head: str) -> str:
-    return pr_number if pr_number else head
+    return pr_number or head
 
 
 def _release_tag_from_head(head: str) -> str | None:
@@ -143,7 +141,7 @@ def _create_pr(
 ) -> int:
     existing = _open_pr_for_head(repo_root, head)
     if existing is not None:
-        print(f"status=already-open")
+        print("status=already-open")
         print(f"pr_url={existing.get('url')}")
         return 0
 
@@ -210,7 +208,7 @@ def _merge_pr(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--repo-root", type=Path, default=Path("."))
+    _ = parser.add_argument("--repo-root", type=Path, default=Path())
     _ = parser.add_argument(
         "--action",
         default="status",
@@ -269,7 +267,8 @@ def main() -> int:
     if args.action == "close":
         return _run_stream(["gh", "pr", "close", selector], repo_root)
 
-    raise RuntimeError(f"unknown action: {args.action}")
+    msg = f"unknown action: {args.action}"
+    raise RuntimeError(msg)
 
 
 if __name__ == "__main__":

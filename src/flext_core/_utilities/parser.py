@@ -39,7 +39,9 @@ class FlextUtilitiesParser:
         >>> parser = FlextUtilitiesParser()
         >>> parser.parse_delimited("a, b, c", ",").value
         ['a', 'b', 'c']
-        >>> parser.split_on_char_with_escape("cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\").value
+        >>> parser.split_on_char_with_escape(
+        ...     "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
+        ... ).value
         ['cn=REDACTED_LDAP_BIND_PASSWORD', 'dc=com']
 
     """
@@ -138,7 +140,9 @@ class FlextUtilitiesParser:
             ... )
             >>> parser = FlextUtilitiesParser()
             >>> result = parser.parse_delimited(
-            ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ",", options=opts
+            ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com",
+            ...     ",",
+            ...     options=opts,
             ... )
             >>> components = result.value
             >>> # ["cn=REDACTED_LDAP_BIND_PASSWORD", "ou=users", "dc=example", "dc=com"]

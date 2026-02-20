@@ -80,8 +80,7 @@ def discover_projects(root: Path) -> list[Path]:
 
 def load_pyproject(project_dir: Path) -> dict[str, object]:
     pyproject = project_dir / "pyproject.toml"
-    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    return data
+    return tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
 
 def get_poetry_dependencies(data: dict[str, object]) -> set[str]:
@@ -400,9 +399,9 @@ def main() -> int:
     generated_root.mkdir(parents=True, exist_ok=True)
     before_snapshot = snapshot_tree(generated_root)
 
-    results: list[ProjectResult] = []
-    for project in projects:
-        results.append(process_project(project, root, args.apply))
+    results: list[ProjectResult] = [
+        process_project(project, root, args.apply) for project in projects
+    ]
 
     after_snapshot = snapshot_tree(generated_root)
 
@@ -415,9 +414,9 @@ def main() -> int:
     idempotency_enabled = bool(args.apply or args.idempotency_check)
     idempotency_pending = 0
     if idempotency_enabled:
-        second_pass: list[ProjectResult] = []
-        for project in projects:
-            second_pass.append(process_project(project, root, apply=False))
+        second_pass: list[ProjectResult] = [
+            process_project(project, root, apply=False) for project in projects
+        ]
         idempotency_pending = sum(
             len(item.unresolved_missing_imports) + len(item.types_packages_missing)
             for item in second_pass
@@ -456,8 +455,8 @@ def main() -> int:
     for result in results:
         line = (
             f"{result.project}: internal={len(result.internal_missing_imports)} "
-            + f"unresolved={len(result.unresolved_missing_imports)} "
-            + f"types_added={len(result.types_packages_added)} generated={len(result.generated_files)}"
+            f"unresolved={len(result.unresolved_missing_imports)} "
+            f"types_added={len(result.types_packages_added)} generated={len(result.generated_files)}"
         )
         print(line)
 

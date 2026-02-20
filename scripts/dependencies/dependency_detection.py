@@ -23,6 +23,8 @@ from typing import Any
 if str(Path(__file__).resolve().parents[2]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+import contextlib
+
 from libs.selection import resolve_projects
 
 # Mypy output patterns for typing library detection (aligned with stub_supply_chain)
@@ -128,10 +130,8 @@ def run_deptry(
         except (json.JSONDecodeError, OSError):
             pass
         if json_output_path is None:
-            try:
+            with contextlib.suppress(OSError):
                 out_file.unlink()
-            except OSError:
-                pass
 
     return issues, result.returncode
 

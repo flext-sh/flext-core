@@ -5,11 +5,14 @@ type-system-architecture.md rules with real functionality testing.
 """
 
 from __future__ import annotations
+
 # PYTHON_VERSION_GUARD — Do not remove. Managed by scripts/maintenance/enforce_python_version.py
 import sys as _sys
 
 if _sys.version_info[:2] != (3, 13):
-    _v = f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}"
+    _v = (
+        f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}"
+    )
     raise RuntimeError(
         f"\n{'=' * 72}\n"
         f"FATAL: Python {_v} detected — this project requires Python 3.13.\n"
@@ -29,9 +32,9 @@ del _sys
 # PYTHON_VERSION_GUARD_END
 
 import math
+import queue
 import tempfile
 import threading
-import queue
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TypeVar

@@ -242,7 +242,9 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         )
 
         # Split with escape handling using railway pattern (DRY)
-        parser.split_on_char_with_escape("cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\").map(
+        parser.split_on_char_with_escape(
+            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
+        ).map(
             lambda split: print(f"✅ Escaped split: {split}"),
         )
 

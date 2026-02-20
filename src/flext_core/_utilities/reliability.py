@@ -696,7 +696,10 @@ class FlextUtilitiesReliability:
             >>> u.Reliability.match(
             ...     "REDACTED_LDAP_BIND_PASSWORD",
             ...     (str, lambda s: s.upper()),  # type match
-            ...     ("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD"),  # value match
+            ...     (
+            ...         "REDACTED_LDAP_BIND_PASSWORD",
+            ...         "is_REDACTED_LDAP_BIND_PASSWORD",
+            ...     ),  # value match
             ...     default="unknown",
             ... )
             'ADMIN'

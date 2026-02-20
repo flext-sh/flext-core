@@ -131,7 +131,7 @@ def _read_min_coverage(project_dir: Path) -> int:
 
     makefile = project_dir / "Makefile"
     if makefile.exists():
-        match = re.search(r"MIN" r"_COVERAGE\s*:?=\s*(\d+)", makefile.read_text())
+        match = re.search(r"MIN_COVERAGE\s*:?=\s*(\d+)", makefile.read_text())
         if match:
             return int(match.group(1))
 
@@ -166,22 +166,24 @@ def _get_ssot_bandit_skips() -> list[str]:
     root_doc = tomlkit.parse((ROOT / "pyproject.toml").read_text())
     tool = root_doc.get("tool")
     if not tool:
-        raise RuntimeError("workspace pyproject missing [tool] for Bandit SSOT")
+        msg = "workspace pyproject missing [tool] for Bandit SSOT"
+        raise RuntimeError(msg)
     bandit = tool.get("bandit")
     if not bandit:
-        raise RuntimeError("workspace pyproject missing [tool.bandit] for Bandit SSOT")
+        msg = "workspace pyproject missing [tool.bandit] for Bandit SSOT"
+        raise RuntimeError(msg)
     skips = bandit.get("skips")
     if not skips or not isinstance(skips, list):
-        raise RuntimeError(
-            "workspace pyproject missing [tool.bandit].skips list for Bandit SSOT"
-        )
+        msg = "workspace pyproject missing [tool.bandit].skips list for Bandit SSOT"
+        raise RuntimeError(msg)
     unique: list[str] = []
     for item in skips:
         value = str(item).strip()
         if value and value not in unique:
             unique.append(value)
     if not unique:
-        raise RuntimeError("workspace pyproject defines empty [tool.bandit].skips")
+        msg = "workspace pyproject defines empty [tool.bandit].skips"
+        raise RuntimeError(msg)
     return unique
 
 
@@ -190,23 +192,24 @@ def _get_ssot_pytest_addopts() -> list[str]:
     root_doc = tomlkit.parse((ROOT / "pyproject.toml").read_text())
     tool = root_doc.get("tool")
     if not tool:
-        raise RuntimeError("workspace pyproject missing [tool] for pytest SSOT")
+        msg = "workspace pyproject missing [tool] for pytest SSOT"
+        raise RuntimeError(msg)
     pytest_section = tool.get("pytest")
     if not pytest_section:
-        raise RuntimeError("workspace pyproject missing [tool.pytest] for pytest SSOT")
+        msg = "workspace pyproject missing [tool.pytest] for pytest SSOT"
+        raise RuntimeError(msg)
     ini_options = pytest_section.get("ini_options")
     if not ini_options:
-        raise RuntimeError(
-            "workspace pyproject missing [tool.pytest.ini_options] for pytest SSOT"
-        )
+        msg = "workspace pyproject missing [tool.pytest.ini_options] for pytest SSOT"
+        raise RuntimeError(msg)
     addopts = ini_options.get("addopts")
     if not addopts or not isinstance(addopts, list):
-        raise RuntimeError(
-            "workspace pyproject missing [tool.pytest.ini_options].addopts list for pytest SSOT"
-        )
+        msg = "workspace pyproject missing [tool.pytest.ini_options].addopts list for pytest SSOT"
+        raise RuntimeError(msg)
     normalized: list[str] = [str(item) for item in addopts if str(item).strip()]
     if not normalized:
-        raise RuntimeError("workspace pyproject defines empty pytest addopts SSOT")
+        msg = "workspace pyproject defines empty pytest addopts SSOT"
+        raise RuntimeError(msg)
     return normalized
 
 
@@ -538,12 +541,12 @@ def fix_bandit_skips(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None
 
 def _has_array_of_tables(path: Path) -> bool:
     """Detect [[array.of.tables]] that tomlkit corrupts on write (indented sub-configs)."""
-    return "[[tool.pyrefly.sub-config]]" in path.read_text()
+    return "[[tool.pyrefly.sub-config]]" in path.read_text(encoding="utf-8")
 
 
 def process_file(path: Path, spec: ProjectSpec, *, dry_run: bool = False) -> list[str]:
     """Run all fix functions on a single pyproject.toml. Returns fix descriptions."""
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     unsafe_write = _has_array_of_tables(path)
 
     doc = tomlkit.parse(text)
@@ -573,7 +576,7 @@ def process_file(path: Path, spec: ProjectSpec, *, dry_run: bool = False) -> lis
         if unsafe_write:
             _apply_regex_fixes(path, spec, fixes)
         else:
-            path.write_text(tomlkit.dumps(doc))
+            path.write_text(tomlkit.dumps(doc), encoding="utf-8")
 
     return fixes
 
@@ -583,7 +586,7 @@ def _apply_regex_fixes(path: Path, spec: ProjectSpec, fixes: list[str]) -> None:
 
     Comprehensive handler for all fix types since tomlkit cannot safely write these files.
     """
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     original = text
 
     # 1. poetry-core version bump
@@ -810,7 +813,7 @@ def _apply_regex_fixes(path: Path, spec: ProjectSpec, fixes: list[str]) -> None:
             text = text[: section_match.start()] + section + text[section_match.end() :]
 
     if text != original:
-        path.write_text(text)
+        path.write_text(text, encoding="utf-8")
 
 
 # ── Makefile cleanup ─────────────────────────────────────────────────
@@ -827,9 +830,7 @@ def cleanup_makefiles(*, dry_run: bool = False) -> list[str]:
         text = makefile.read_text()
         original = text
 
-        text = re.sub(
-            r"^MIN" r"_COVERAGE\s*:?=\s*\d+\s*\n", "", text, flags=re.MULTILINE
-        )
+        text = re.sub(r"^MIN_COVERAGE\s*:?=\s*\d+\s*\n", "", text, flags=re.MULTILINE)
         text = re.sub(r"^COV_DIR\s*:?=\s*\S+\s*\n", "", text, flags=re.MULTILINE)
 
         if text != original:
@@ -940,7 +941,7 @@ def main() -> int:
         print(f"\n  Total: {total_fixes} {word} across {len(violations)} files")
 
     # Phase 1b: Makefile cleanup (remove legacy coverage var/COV_DIR)
-    print(f"\n\nPhase 1b: Makefile cleanup")
+    print("\n\nPhase 1b: Makefile cleanup")
     print("=" * 60)
     mk_fixes = cleanup_makefiles(dry_run=dry_run)
     if mk_fixes:

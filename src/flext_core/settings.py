@@ -254,8 +254,15 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         clean state between test runs.
         """
         with cls._lock:
-            if cls in cls._instances:
-                del cls._instances[cls]
+            keys_to_remove = [
+                instance_cls
+                for instance_cls in cls._instances
+                if instance_cls is cls
+                or issubclass(instance_cls, cls)
+                or issubclass(cls, instance_cls)
+            ]
+            for instance_cls in keys_to_remove:
+                del cls._instances[instance_cls]
 
     def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.

@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import sys
 import time
 from pathlib import Path
-import sys
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -18,7 +17,7 @@ from libs.subprocess import run_capture, run_checked
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--workspace-root", type=Path, default=Path("."))
+    _ = parser.add_argument("--workspace-root", type=Path, default=Path())
     _ = parser.add_argument("--project", action="append", default=[])
     _ = parser.add_argument("--include-root", type=int, default=1)
     _ = parser.add_argument("--branch", default="")

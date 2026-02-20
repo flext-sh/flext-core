@@ -305,23 +305,22 @@ def _main() -> int:
         repo_map = _parse_gitmodules(workspace_root / ".gitmodules")
         if map_file.exists():
             repo_map = {**_parse_repo_map(map_file), **repo_map}
+    elif not map_file.exists():
+        owner = _infer_owner_from_origin(project_root)
+        if owner is None:
+            error_msg = (
+                "missing flext-repo-map.toml for standalone dependency resolution "
+                "and unable to infer GitHub owner from remote.origin.url"
+            )
+            raise RuntimeError(error_msg)
+        repo_map = _synthesized_repo_map(
+            owner, {dep_path.name for dep_path in deps.values()}
+        )
+        print(
+            f"[sync-deps] warning: using synthesized standalone repo map for owner '{owner}'"
+        )
     else:
-        if not map_file.exists():
-            owner = _infer_owner_from_origin(project_root)
-            if owner is None:
-                error_msg = (
-                    "missing flext-repo-map.toml for standalone dependency resolution "
-                    "and unable to infer GitHub owner from remote.origin.url"
-                )
-                raise RuntimeError(error_msg)
-            repo_map = _synthesized_repo_map(
-                owner, {dep_path.name for dep_path in deps.values()}
-            )
-            print(
-                f"[sync-deps] warning: using synthesized standalone repo map for owner '{owner}'"
-            )
-        else:
-            repo_map = _parse_repo_map(map_file)
+        repo_map = _parse_repo_map(map_file)
 
     ref_name = _resolve_ref(project_root)
     force_https = (

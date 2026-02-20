@@ -51,12 +51,14 @@ def _resolve_source_workflow(
         ).resolve()
         if candidate.exists():
             return candidate
-        raise RuntimeError(f"missing source workflow: {candidate}")
+        msg = f"missing source workflow: {candidate}"
+        raise RuntimeError(msg)
 
     default_source = (workspace_root / ".github" / "workflows" / "ci.yml").resolve()
     if default_source.exists():
         return default_source
-    raise RuntimeError(f"missing source workflow: {default_source}")
+    msg = f"missing source workflow: {default_source}"
+    raise RuntimeError(msg)
 
 
 def _sync_project(

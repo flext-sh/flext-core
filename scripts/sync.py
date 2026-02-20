@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
-import os
 import shutil
 import stat
 import sys
@@ -25,15 +24,17 @@ def _copy_if_changed(source: Path, target: Path) -> bool:
     if target.exists() and _sha256(source) == _sha256(target):
         return False
     target.parent.mkdir(parents=True, exist_ok=True)
-    with source.open("rb") as source_handle:
-        with tempfile.NamedTemporaryFile(
+    with (
+        source.open("rb") as source_handle,
+        tempfile.NamedTemporaryFile(
             mode="wb", dir=str(target.parent), delete=False
-        ) as tmp:
-            shutil.copyfileobj(source_handle, tmp)
-            tmp_path = Path(tmp.name)
+        ) as tmp,
+    ):
+        shutil.copyfileobj(source_handle, tmp)
+        tmp_path = Path(tmp.name)
     source_mode = stat.S_IMODE(source.stat().st_mode)
-    os.chmod(tmp_path, source_mode)
-    os.replace(tmp_path, target)
+    Path(tmp_path).chmod(source_mode)
+    Path(tmp_path).replace(target)
     return True
 
 

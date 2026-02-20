@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
+"""Main orchestrator for the workspace release process."""
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
+# pylint: disable=wrong-import-position
+from libs.versioning import current_workspace_version
 from release.shared import (
     bump_version,
     parse_semver,
@@ -17,12 +21,12 @@ from release.shared import (
     run_checked,
     workspace_root,
 )
-from libs.versioning import current_workspace_version
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments for the release runner."""
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--phase", default="all")
     _ = parser.add_argument("--version", default="")
     _ = parser.add_argument("--tag", default="")
@@ -39,10 +43,12 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _current_version(root: Path) -> str:
+    """Retrieve the current workspace version."""
     return current_workspace_version(root)
 
 
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:
+    """Determine the target release version based on arguments or interaction."""
     if args.version:
         _ = parse_semver(args.version)
         return args.version
@@ -57,14 +63,17 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     print("Select version bump type: [major|minor|patch]")
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
-        raise RuntimeError("invalid bump type")
+        msg = "invalid bump type"
+        raise RuntimeError(msg)
     return bump_version(current, bump)
 
 
 def _resolve_tag(args: argparse.Namespace, version: str) -> str:
+    """Determine the Git tag for the release."""
     if args.tag:
         if not args.tag.startswith("v"):
-            raise RuntimeError("tag must start with v")
+            msg = "tag must start with v"
+            raise RuntimeError(msg)
         return args.tag
     return f"v{version}"
 
@@ -72,6 +81,7 @@ def _resolve_tag(args: argparse.Namespace, version: str) -> str:
 def _create_release_branches(
     root: Path, version: str, selected_projects: list[Path]
 ) -> None:
+    """Create local release branches for the workspace and selected projects."""
     branch = f"release/{version}"
     run_checked(["git", "checkout", "-B", branch], cwd=root)
     for project_path in selected_projects:
@@ -85,6 +95,7 @@ def _phase_version(
     project_names: list[str],
     dev_suffix: bool,
 ) -> None:
+    """Execute the versioning phase by calling the versioning script."""
     command = [
         "python",
         "scripts/release/version.py",
@@ -102,10 +113,12 @@ def _phase_version(
 
 
 def _phase_validate(root: Path) -> None:
+    """Execute the validation phase by running the workspace validation suite."""
     run_checked(["make", "validate", "VALIDATE_SCOPE=workspace"], cwd=root)
 
 
 def _phase_build(root: Path, version: str, project_names: list[str]) -> None:
+    """Execute the build phase by calling the build script."""
     output = root / ".reports" / "release" / f"v{version}"
     command = [
         "python",
@@ -130,6 +143,7 @@ def _phase_publish(
     dry_run: bool,
     project_names: list[str],
 ) -> None:
+    """Execute the publishing phase: notes, changelog, and Git tagging."""
     notes = root / ".reports" / "release" / tag / "RELEASE_NOTES.md"
     notes.parent.mkdir(parents=True, exist_ok=True)
     command = [
@@ -175,6 +189,7 @@ def _phase_publish(
 def _phase_next_dev(
     root: Path, version: str, project_names: list[str], bump: str
 ) -> str:
+    """Bump to the next development version after a release."""
     next_version = bump_version(version, bump)
     _phase_version(
         root=root,
@@ -187,6 +202,12 @@ def _phase_next_dev(
 
 
 def main() -> int:
+    """Orchestrate the entire release process through all configured phases.
+
+    Returns:
+        0 on success, 1 on failure.
+
+    """
     args = _parse_args()
     root = workspace_root(args.root)
     selected_projects = resolve_projects(root, args.projects)
@@ -235,7 +256,8 @@ def main() -> int:
                 selected_project_names,
             )
             continue
-        raise RuntimeError(f"invalid phase: {phase}")
+        msg = f"invalid phase: {phase}"
+        raise RuntimeError(msg)
 
     if args.next_dev == 1:
         if args.dry_run == 1:

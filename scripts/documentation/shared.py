@@ -88,7 +88,6 @@ def write_markdown(path: Path, lines: list[str]) -> None:
 
 def iter_markdown_files(root: Path) -> list[Path]:
     """Recursively collect markdown files under the docs scope."""
-
     docs_root = root / "docs"
     search_root = docs_root if docs_root.is_dir() else root
     return sorted(

@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
+"""Script to update the CHANGELOG.md file and release notes."""
+
 from __future__ import annotations
 
 import argparse
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
-import sys
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
+# pylint: disable=wrong-import-position
 from release.shared import workspace_root
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments for the changelog script."""
     parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--root", type=Path, default=Path("."))
+    _ = parser.add_argument("--root", type=Path, default=Path())
     _ = parser.add_argument("--version", required=True)
     _ = parser.add_argument("--tag", required=True)
     _ = parser.add_argument("--notes", type=Path, required=True)
@@ -24,6 +28,17 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _update_changelog(existing: str, version: str, tag: str) -> str:
+    """Insert a new release entry into the changelog content.
+
+    Args:
+        existing: The current content of CHANGELOG.md.
+        version: The version string being released.
+        tag: The Git tag associated with the release.
+
+    Returns:
+        The updated changelog content.
+
+    """
     date = datetime.now(UTC).date().isoformat()
     heading = f"## {version} - "
     section = (
@@ -41,6 +56,12 @@ def _update_changelog(existing: str, version: str, tag: str) -> str:
 
 
 def main() -> int:
+    """Execute the changelog and release notes update process.
+
+    Returns:
+        0 on success.
+
+    """
     args = _parse_args()
     root = workspace_root(args.root)
     changelog_path = root / "docs" / "CHANGELOG.md"

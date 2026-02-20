@@ -10,7 +10,7 @@ from xml.etree import ElementTree as ET
 
 
 def _write_or_placeholder(path: Path, entries: list[str], placeholder: str) -> None:
-    values = entries if entries else [placeholder]
+    values = entries or [placeholder]
     _ = path.write_text("\n".join(values) + "\n", encoding="utf-8")
 
 
@@ -24,9 +24,8 @@ def _count_effective(path: Path, placeholder: str) -> int:
 
 def main() -> int:
     if len(sys.argv) != 8:
-        raise SystemExit(
-            "usage: pytest_diag_extract.py <junit> <log> <failed> <errors> <warnings> <slowest> <skips>"
-        )
+        msg = "usage: pytest_diag_extract.py <junit> <log> <failed> <errors> <warnings> <slowest> <skips>"
+        raise SystemExit(msg)
 
     junit_path = Path(sys.argv[1])
     log_path = Path(sys.argv[2])
@@ -165,12 +164,10 @@ def main() -> int:
         for line in errors_path.read_text(
             encoding="utf-8", errors="replace"
         ).splitlines()
-        if line.startswith("=== FAILURE:") or line.startswith("=== ERROR:")
+        if line.startswith(("=== FAILURE:", "=== ERROR:"))
     )
-    error_count = (
-        error_headers
-        if error_headers
-        else _count_effective(errors_path, "No error traces captured.")
+    error_count = error_headers or _count_effective(
+        errors_path, "No error traces captured."
     )
     warning_count = _count_effective(warnings_path, "No warnings captured.")
     skipped_count = _count_effective(skips_path, "No skipped tests.")
