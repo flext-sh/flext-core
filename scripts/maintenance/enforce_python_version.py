@@ -17,6 +17,7 @@ Modes:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -103,20 +104,11 @@ def _has_guard(content: str) -> bool:
 
 def _remove_existing_guard(content: str) -> str:
     """Remove existing guard block (for replacement)."""
-    start = content.find(GUARD_MARKER)
-    if start == -1:
-        return content
-
-    end_marker = f"{GUARD_MARKER}_END"
-    end = content.find(end_marker, start)
-    if end == -1:
-        return content
-
-    end += len(end_marker)
-    if end < len(content) and content[end] == "\n":
-        end += 1
-
-    return content[:start] + content[end:]
+    pattern = re.compile(
+        rf"^{re.escape(GUARD_MARKER)}.*?^{re.escape(GUARD_MARKER)}_END\n?",
+        re.MULTILINE | re.DOTALL,
+    )
+    return pattern.sub("", content)
 
 
 def _inject_guard(content: str) -> str:
