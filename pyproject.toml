@@ -4,7 +4,7 @@ requires = [ "poetry-core>=2" ]
 
 [project]
 name = "flext-core"
-version = "0.11.0"
+version = "0.12.0-dev"
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 readme = "README.md"
 keywords = [
