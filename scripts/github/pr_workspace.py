@@ -66,6 +66,10 @@ def _checkout_branch(repo_root: Path, branch: str) -> None:
     )
     if checkout.returncode == 0:
         return
+    detail = (checkout.stderr or checkout.stdout).lower()
+    if "local changes" in detail or "would be overwritten" in detail:
+        run_checked(["git", "checkout", "-B", branch], cwd=repo_root)
+        return
     fetch = subprocess.run(
         ["git", "fetch", "origin", branch],
         cwd=repo_root,
