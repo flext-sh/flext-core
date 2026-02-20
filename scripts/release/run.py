@@ -164,12 +164,10 @@ def _phase_publish(
             ],
             cwd=root,
         )
+        tag_exists = run_capture(["git", "tag", "-l", tag], cwd=root)
+        if tag_exists.strip() != tag:
+            run_checked(["git", "tag", "-a", tag, "-m", f"release: {tag}"], cwd=root)
         if push:
-            tag_exists = run_capture(["git", "tag", "-l", tag], cwd=root)
-            if tag_exists.strip() != tag:
-                run_checked(
-                    ["git", "tag", "-a", tag, "-m", f"release: {tag}"], cwd=root
-                )
             run_checked(["git", "push", "origin", "HEAD"], cwd=root)
             run_checked(["git", "push", "origin", tag], cwd=root)
 

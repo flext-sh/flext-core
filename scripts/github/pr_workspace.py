@@ -96,18 +96,17 @@ def _checkpoint(repo_root: Path, branch: str) -> None:
         ["git", "commit", "-m", "chore: checkpoint pending 0.11.0-dev changes"],
         cwd=repo_root,
     )
+    push_cmd = ["git", "push", "-u", "origin", branch] if branch else ["git", "push"]
+    push = subprocess.run(
+        push_cmd, cwd=repo_root, check=False, capture_output=True, text=True
+    )
+    if push.returncode == 0:
+        return
     if branch:
-        push = subprocess.run(
-            ["git", "push", "-u", "origin", branch],
-            cwd=repo_root,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        if push.returncode != 0:
-            run_checked(["git", "push"], cwd=repo_root)
+        run_checked(["git", "pull", "--rebase", "origin", branch], cwd=repo_root)
     else:
-        run_checked(["git", "push"], cwd=repo_root)
+        run_checked(["git", "pull", "--rebase"], cwd=repo_root)
+    run_checked(push_cmd, cwd=repo_root)
 
 
 def _run_pr(repo_root: Path, workspace_root: Path, args: argparse.Namespace) -> int:
