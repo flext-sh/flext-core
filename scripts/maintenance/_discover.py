@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -53,7 +54,9 @@ def main() -> int:
     _ = parser.add_argument(
         "--kind", choices=("submodule", "external", "all"), default="all"
     )
-    _ = parser.add_argument("--format", choices=("human", "makefile"), default="human")
+    _ = parser.add_argument(
+        "--format", choices=("human", "makefile", "json"), default="human"
+    )
     _ = parser.add_argument("--workspace-root", type=Path, default=Path.cwd())
     args = parser.parse_args()
 
@@ -63,6 +66,23 @@ def main() -> int:
 
     if args.format == "makefile":
         print(" ".join(project.name for project in projects))
+        return 0
+
+    if args.format == "json":
+        payload = {
+            "workspace_root": str(args.workspace_root.resolve()),
+            "kind": args.kind,
+            "count": len(projects),
+            "projects": [
+                {
+                    "name": project.name,
+                    "kind": project.kind,
+                    "path": str(project.path.resolve()),
+                }
+                for project in projects
+            ],
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
 
     for project in projects:

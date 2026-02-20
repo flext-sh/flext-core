@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
-def _artifact_path(directory: str, slug: str) -> Path:
-    return Path(".sisyphus") / directory / f"scripts-infra--json--{slug}.json"
+def _artifact_path(slug: str) -> Path:
+    return Path(".reports") / f"scripts-infra--json--{slug}.json"
 
 
 def main() -> int:
@@ -38,9 +38,9 @@ def main() -> int:
     external = {"generated_at": datetime.now(UTC).isoformat(), "candidates": []}
 
     outputs = {
-        _artifact_path("reports", "scripts-inventory"): inventory,
-        _artifact_path("reports", "scripts-wiring"): wiring,
-        _artifact_path("reports", "external-scripts-candidates"): external,
+        _artifact_path("scripts-inventory"): inventory,
+        _artifact_path("scripts-wiring"): wiring,
+        _artifact_path("external-scripts-candidates"): external,
     }
     for path, payload in outputs.items():
         path.parent.mkdir(parents=True, exist_ok=True)

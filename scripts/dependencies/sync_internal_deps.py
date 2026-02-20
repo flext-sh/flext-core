@@ -15,12 +15,30 @@ import tomllib
 from pathlib import Path
 
 GIT_BIN = shutil.which("git") or "git"
+GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$")
+GITHUB_REPO_URL_RE = re.compile(
+    r"^(?:git@github\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?)$"
+)
 
 
 def _run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [GIT_BIN, *args], cwd=cwd, text=True, capture_output=True, check=False
     )
+
+
+def _validate_git_ref(ref_name: str) -> str:
+    if not GIT_REF_RE.fullmatch(ref_name):
+        error_msg = f"invalid git ref: {ref_name!r}"
+        raise RuntimeError(error_msg)
+    return ref_name
+
+
+def _validate_repo_url(repo_url: str) -> str:
+    if not GITHUB_REPO_URL_RE.fullmatch(repo_url):
+        error_msg = f"invalid repository URL: {repo_url!r}"
+        raise RuntimeError(error_msg)
+    return repo_url
 
 
 def _ssh_to_https(url: str) -> str:
@@ -76,9 +94,41 @@ def _resolve_ref(project_root: Path) -> str:
     return "main"
 
 
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
+
+
+def _workspace_root_from_env(project_root: Path) -> Path | None:
+    env_root = os.getenv("FLEXT_WORKSPACE_ROOT")
+    if not env_root:
+        return None
+    candidate = Path(env_root).expanduser().resolve()
+    if not candidate.exists() or not candidate.is_dir():
+        return None
+    if _is_relative_to(project_root, candidate):
+        return candidate
+    return None
+
+
+def _workspace_root_from_parents(project_root: Path) -> Path | None:
+    for candidate in (project_root, *project_root.parents):
+        if (candidate / ".gitmodules").exists():
+            return candidate
+    return None
+
+
 def _is_workspace_mode(project_root: Path) -> tuple[bool, Path | None]:
     if os.getenv("FLEXT_STANDALONE") == "1":
         return False, None
+
+    env_workspace_root = _workspace_root_from_env(project_root)
+    if env_workspace_root is not None:
+        return True, env_workspace_root
+
     superproject = _run_git(
         ["rev-parse", "--show-superproject-working-tree"], project_root
     )
@@ -86,9 +136,44 @@ def _is_workspace_mode(project_root: Path) -> tuple[bool, Path | None]:
         value = superproject.stdout.strip()
         if value:
             return True, Path(value)
-    if (project_root / ".gitmodules").exists():
-        return True, project_root
+    heuristic_workspace_root = _workspace_root_from_parents(project_root)
+    if heuristic_workspace_root is not None:
+        return True, heuristic_workspace_root
+
     return False, None
+
+
+def _owner_from_remote_url(remote_url: str) -> str | None:
+    patterns = (
+        r"^git@github\.com:(?P<owner>[^/]+)/[^/]+(?:\.git)?$",
+        r"^https://github\.com/(?P<owner>[^/]+)/[^/]+(?:\.git)?$",
+        r"^http://github\.com/(?P<owner>[^/]+)/[^/]+(?:\.git)?$",
+    )
+    for pattern in patterns:
+        match = re.match(pattern, remote_url)
+        if match:
+            return match.group("owner")
+    return None
+
+
+def _infer_owner_from_origin(project_root: Path) -> str | None:
+    remote = _run_git(["config", "--get", "remote.origin.url"], project_root)
+    if remote.returncode != 0:
+        return None
+    return _owner_from_remote_url(remote.stdout.strip())
+
+
+def _synthesized_repo_map(
+    owner: str, repo_names: set[str]
+) -> dict[str, dict[str, str]]:
+    result: dict[str, dict[str, str]] = {}
+    for repo_name in sorted(repo_names):
+        ssh_url = f"git@github.com:{owner}/{repo_name}.git"
+        result[repo_name] = {
+            "ssh_url": ssh_url,
+            "https_url": _ssh_to_https(ssh_url),
+        }
+    return result
 
 
 def _ensure_symlink(target: Path, source: Path) -> None:
@@ -104,8 +189,15 @@ def _ensure_symlink(target: Path, source: Path) -> None:
 
 
 def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
+    safe_repo_url = _validate_repo_url(repo_url)
+    safe_ref_name = _validate_git_ref(ref_name)
     dep_path.parent.mkdir(parents=True, exist_ok=True)
     if not (dep_path / ".git").exists():
+        if dep_path.exists() or dep_path.is_symlink():
+            if dep_path.is_dir() and not dep_path.is_symlink():
+                shutil.rmtree(dep_path)
+            else:
+                dep_path.unlink()
         cloned = subprocess.run(
             [
                 GIT_BIN,
@@ -113,8 +205,8 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
                 "--depth",
                 "1",
                 "--branch",
-                ref_name,
-                repo_url,
+                safe_ref_name,
+                safe_repo_url,
                 str(dep_path),
             ],
             text=True,
@@ -131,7 +223,7 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
                 "1",
                 "--branch",
                 "main",
-                repo_url,
+                safe_repo_url,
                 str(dep_path),
             ],
             text=True,
@@ -142,7 +234,7 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
             error_msg = f"clone failed for {dep_path.name}: {fallback.stderr.strip()}"
             raise RuntimeError(error_msg)
         print(
-            f"[sync-deps] warning: {dep_path.name} missing ref '{ref_name}', using 'main'"
+            f"[sync-deps] warning: {dep_path.name} missing ref '{safe_ref_name}', using 'main'"
         )
         return
 
@@ -151,9 +243,9 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
         error_msg = f"fetch failed for {dep_path.name}: {fetch.stderr.strip()}"
         raise RuntimeError(error_msg)
 
-    checkout = _run_git(["checkout", ref_name], dep_path)
+    checkout = _run_git(["checkout", safe_ref_name], dep_path)
     if checkout.returncode == 0:
-        _run_git(["pull", "--ff-only", "origin", ref_name], dep_path)
+        _run_git(["pull", "--ff-only", "origin", safe_ref_name], dep_path)
         return
 
     fallback_checkout = _run_git(["checkout", "main"], dep_path)
@@ -162,7 +254,7 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
         raise RuntimeError(error_msg)
     _run_git(["pull", "--ff-only", "origin", "main"], dep_path)
     print(
-        f"[sync-deps] warning: {dep_path.name} missing ref '{ref_name}', using 'main'"
+        f"[sync-deps] warning: {dep_path.name} missing ref '{safe_ref_name}', using 'main'"
     )
 
 
@@ -215,11 +307,21 @@ def _main() -> int:
             repo_map = {**_parse_repo_map(map_file), **repo_map}
     else:
         if not map_file.exists():
-            error_msg = (
-                "missing flext-repo-map.toml for standalone dependency resolution"
+            owner = _infer_owner_from_origin(project_root)
+            if owner is None:
+                error_msg = (
+                    "missing flext-repo-map.toml for standalone dependency resolution "
+                    "and unable to infer GitHub owner from remote.origin.url"
+                )
+                raise RuntimeError(error_msg)
+            repo_map = _synthesized_repo_map(
+                owner, {dep_path.name for dep_path in deps.values()}
             )
-            raise RuntimeError(error_msg)
-        repo_map = _parse_repo_map(map_file)
+            print(
+                f"[sync-deps] warning: using synthesized standalone repo map for owner '{owner}'"
+            )
+        else:
+            repo_map = _parse_repo_map(map_file)
 
     ref_name = _resolve_ref(project_root)
     force_https = (
