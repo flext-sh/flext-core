@@ -2,13 +2,19 @@
 # Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 from __future__ import annotations
 
-import json
 import re
-import shlex
-import subprocess
 import sys
-from dataclasses import dataclass
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from libs.discovery import ProjectInfo
+from libs.paths import workspace_root as _workspace_root
+from libs.selection import resolve_projects as _resolve_projects
+from libs.subprocess import run_capture as _run_capture
+from libs.subprocess import run_checked as _run_checked
 
 
 SEMVER_RE = re.compile(
@@ -16,58 +22,20 @@ SEMVER_RE = re.compile(
 )
 
 
-@dataclass(frozen=True)
-class Project:
-    name: str
-    path: Path
+Project = ProjectInfo
 
 
 def workspace_root(path: str | Path = ".") -> Path:
-    return Path(path).resolve()
-
-
-def discover_projects(root: Path) -> list[Project]:
-    discover = root / "scripts" / "maintenance" / "_discover.py"
-    command = [
-        sys.executable,
-        str(discover),
-        "--workspace-root",
-        str(root),
-        "--kind",
-        "all",
-        "--format",
-        "json",
-    ]
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
-    if result.returncode != 0:
-        msg = (result.stderr or result.stdout).strip()
-        raise RuntimeError(f"project discovery failed: {msg}")
-    payload = json.loads(result.stdout)
-    projects: list[Project] = []
-    for item in payload.get("projects", []):
-        if not isinstance(item, dict):
-            continue
-        name = item.get("name")
-        path_value = item.get("path")
-        if not isinstance(name, str) or not isinstance(path_value, str):
-            continue
-        projects.append(Project(name=name, path=Path(path_value).resolve()))
-    return sorted(projects, key=lambda project: project.name)
+    return _workspace_root(path)
 
 
 def resolve_projects(root: Path, names: list[str]) -> list[Project]:
-    projects = discover_projects(root)
-    if not names:
-        return projects
-
-    by_name = {project.name: project for project in projects}
-    missing = [name for name in names if name not in by_name]
-    if missing:
-        missing_text = ", ".join(sorted(missing))
-        raise RuntimeError(f"unknown release projects: {missing_text}")
-
-    resolved = [by_name[name] for name in names]
-    return sorted(resolved, key=lambda project: project.name)
+    try:
+        return _resolve_projects(root, names)
+    except RuntimeError as exc:
+        raise RuntimeError(
+            str(exc).replace("unknown projects", "unknown release projects")
+        ) from exc
 
 
 def parse_semver(version: str) -> tuple[int, int, int]:
@@ -93,18 +61,8 @@ def bump_version(current_version: str, bump: str) -> str:
 
 
 def run_checked(command: list[str], cwd: Path | None = None) -> None:
-    result = subprocess.run(command, cwd=cwd, check=False)
-    if result.returncode != 0:
-        cmd = shlex.join(command)
-        raise RuntimeError(f"command failed ({result.returncode}): {cmd}")
+    _run_checked(command, cwd=cwd)
 
 
 def run_capture(command: list[str], cwd: Path | None = None) -> str:
-    result = subprocess.run(
-        command, cwd=cwd, capture_output=True, text=True, check=False
-    )
-    if result.returncode != 0:
-        cmd = shlex.join(command)
-        detail = (result.stderr or result.stdout).strip()
-        raise RuntimeError(f"command failed ({result.returncode}): {cmd}: {detail}")
-    return result.stdout.strip()
+    return _run_capture(command, cwd=cwd)
