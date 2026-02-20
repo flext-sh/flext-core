@@ -31,6 +31,8 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument("--push", type=int, default=0)
     _ = parser.add_argument("--dry-run", type=int, default=0)
     _ = parser.add_argument("--dev-suffix", type=int, default=0)
+    _ = parser.add_argument("--next-dev", type=int, default=0)
+    _ = parser.add_argument("--next-bump", default="minor")
     _ = parser.add_argument("--create-branches", type=int, default=1)
     _ = parser.add_argument("--projects", nargs="*", default=[])
     return parser.parse_args()
@@ -170,6 +172,20 @@ def _phase_publish(
             run_checked(["git", "push", "origin", tag], cwd=root)
 
 
+def _phase_next_dev(
+    root: Path, version: str, project_names: list[str], bump: str
+) -> str:
+    next_version = bump_version(version, bump)
+    _phase_version(
+        root=root,
+        version=next_version,
+        dry_run=False,
+        project_names=project_names,
+        dev_suffix=True,
+    )
+    return next_version
+
+
 def main() -> int:
     args = _parse_args()
     root = workspace_root(args.root)
@@ -188,6 +204,7 @@ def main() -> int:
     _ = print(f"release_tag={tag}")
     _ = print(f"phases={','.join(phases)}")
     _ = print(f"projects={','.join(selected_project_names)}")
+    _ = print(f"next_dev={args.next_dev}")
 
     if args.create_branches == 1 and args.dry_run == 0:
         _create_release_branches(root, version, selected_project_paths)
@@ -219,6 +236,18 @@ def main() -> int:
             )
             continue
         raise RuntimeError(f"invalid phase: {phase}")
+
+    if args.next_dev == 1:
+        if args.dry_run == 1:
+            print("status=skip-next-dev reason=dry-run")
+        else:
+            next_version = _phase_next_dev(
+                root=root,
+                version=version,
+                project_names=selected_project_names,
+                bump=args.next_bump,
+            )
+            print(f"next_dev_version={next_version}-dev")
 
     _ = print("release_run=ok")
     return 0
