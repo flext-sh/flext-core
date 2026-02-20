@@ -114,28 +114,60 @@ def _run_pr(repo_root: Path, workspace_root: Path, args: argparse.Namespace) -> 
     report_dir.mkdir(parents=True, exist_ok=True)
     display = _repo_display_name(repo_root, workspace_root)
     log_path = report_dir / f"{display}.log"
-    command = [
-        "make",
-        "-C",
-        str(repo_root),
-        "pr",
-        f"PR_ACTION={args.pr_action}",
-        f"PR_BASE={args.pr_base}",
-        f"PR_DRAFT={args.pr_draft}",
-        f"PR_MERGE_METHOD={args.pr_merge_method}",
-        f"PR_AUTO={args.pr_auto}",
-        f"PR_DELETE_BRANCH={args.pr_delete_branch}",
-        f"PR_CHECKS_STRICT={args.pr_checks_strict}",
-        f"PR_RELEASE_ON_MERGE={args.pr_release_on_merge}",
-    ]
-    if args.pr_head:
-        command.append(f"PR_HEAD={args.pr_head}")
-    if args.pr_number:
-        command.append(f"PR_NUMBER={args.pr_number}")
-    if args.pr_title:
-        command.append(f"PR_TITLE={args.pr_title}")
-    if args.pr_body:
-        command.append(f"PR_BODY={args.pr_body}")
+    if repo_root == workspace_root:
+        command = [
+            "python",
+            "scripts/github/pr_manager.py",
+            "--repo-root",
+            str(repo_root),
+            "--action",
+            args.pr_action,
+            "--base",
+            args.pr_base,
+            "--draft",
+            args.pr_draft,
+            "--merge-method",
+            args.pr_merge_method,
+            "--auto",
+            args.pr_auto,
+            "--delete-branch",
+            args.pr_delete_branch,
+            "--checks-strict",
+            args.pr_checks_strict,
+            "--release-on-merge",
+            args.pr_release_on_merge,
+        ]
+        if args.pr_head:
+            command.extend(["--head", args.pr_head])
+        if args.pr_number:
+            command.extend(["--number", args.pr_number])
+        if args.pr_title:
+            command.extend(["--title", args.pr_title])
+        if args.pr_body:
+            command.extend(["--body", args.pr_body])
+    else:
+        command = [
+            "make",
+            "-C",
+            str(repo_root),
+            "pr",
+            f"PR_ACTION={args.pr_action}",
+            f"PR_BASE={args.pr_base}",
+            f"PR_DRAFT={args.pr_draft}",
+            f"PR_MERGE_METHOD={args.pr_merge_method}",
+            f"PR_AUTO={args.pr_auto}",
+            f"PR_DELETE_BRANCH={args.pr_delete_branch}",
+            f"PR_CHECKS_STRICT={args.pr_checks_strict}",
+            f"PR_RELEASE_ON_MERGE={args.pr_release_on_merge}",
+        ]
+        if args.pr_head:
+            command.append(f"PR_HEAD={args.pr_head}")
+        if args.pr_number:
+            command.append(f"PR_NUMBER={args.pr_number}")
+        if args.pr_title:
+            command.append(f"PR_TITLE={args.pr_title}")
+        if args.pr_body:
+            command.append(f"PR_BODY={args.pr_body}")
 
     started = time.monotonic()
     with log_path.open("w", encoding="utf-8") as handle:
@@ -160,6 +192,8 @@ def main() -> int:
 
     failures = 0
     for repo_root in repos:
+        display = _repo_display_name(repo_root, workspace_root)
+        print(f"[RUN] {display}", flush=True)
         _checkout_branch(repo_root, args.branch)
         if args.checkpoint == 1:
             _checkpoint(repo_root, args.branch)
