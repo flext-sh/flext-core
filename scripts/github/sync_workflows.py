@@ -71,10 +71,6 @@ def _resolve_source_workflow(
             return candidate
         raise RuntimeError(f"missing source workflow: {candidate}")
 
-    template_source = (workspace_root / ".github" / "ci-template" / "ci.yml").resolve()
-    if template_source.exists():
-        return template_source
-
     default_source = (workspace_root / ".github" / "workflows" / "ci.yml").resolve()
     if default_source.exists():
         return default_source
@@ -134,17 +130,6 @@ def _sync_project(
         )
         for path in candidates:
             if path.name in MANAGED_FILES:
-                continue
-            current = path.read_text(encoding="utf-8") if path.exists() else ""
-            if not current.startswith(GENERATED_HEADER):
-                operations.append(
-                    Operation(
-                        project=project_name,
-                        path=str(path.relative_to(project_root)),
-                        action="skip-prune",
-                        reason="non-generated workflow preserved",
-                    )
-                )
                 continue
             if apply:
                 path.unlink()
