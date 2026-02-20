@@ -2,17 +2,37 @@
 # Owner-Skill: .claude/skills/scripts-infra/SKILL.md
 from __future__ import annotations
 
-import subprocess
+import hashlib
 import sys
 from pathlib import Path
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
-    script = root / "archive" / "legacy" / "core" / "check_base_mk_sync.py"
-    return subprocess.run(
-        [sys.executable, str(script), *sys.argv[1:]], check=False
-    ).returncode
+    root = Path.cwd().resolve()
+    source = root / "base.mk"
+    if not source.exists():
+        print("[base-mk-sync] missing root base.mk", file=sys.stderr)
+        return 1
+    source_hash = _sha256(source)
+    mismatched: list[Path] = []
+    checked = 0
+    for pyproject in sorted(root.glob("*/pyproject.toml")):
+        local_base = pyproject.parent / "base.mk"
+        if not local_base.exists():
+            continue
+        checked += 1
+        if _sha256(local_base) != source_hash:
+            mismatched.append(local_base.relative_to(root))
+    if mismatched:
+        for path in mismatched:
+            print(f"[base-mk-sync] drift: {path}")
+        return 1
+    print(f"[base-mk-sync] all vendored base.mk copies are in sync ({checked} checked)")
+    return 0
 
 
 if __name__ == "__main__":

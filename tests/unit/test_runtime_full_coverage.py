@@ -186,6 +186,48 @@ def test_async_log_writer_paths() -> None:
     continue_writer._worker()
 
 
+def test_async_log_writer_shutdown_with_full_queue() -> None:
+    class FlushOnlyStream(io.StringIO):
+        def __init__(self) -> None:
+            super().__init__()
+            self.flush_calls = 0
+
+        def flush(self) -> None:
+            self.flush_calls += 1
+
+    class FullQueue:
+        def put_nowait(self, message: str | None) -> None:
+            _ = message
+            raise queue.Full
+
+    class JoinRecorderThread:
+        def __init__(self) -> None:
+            self.join_timeout: float | None = None
+
+        def is_alive(self) -> bool:
+            return True
+
+        def join(self, timeout: float | None = None) -> None:
+            self.join_timeout = timeout
+
+    stream = FlushOnlyStream()
+    writer = cast(
+        "FlextRuntime._AsyncLogWriter",
+        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+    )
+    writer.stream = stream
+    writer.queue = cast("queue.Queue[str | None]", cast(object, FullQueue()))
+    writer.stop_event = runtime_module.threading.Event()
+    thread = JoinRecorderThread()
+    writer.thread = cast("runtime_module.threading.Thread", cast(object, thread))
+
+    writer.shutdown()
+
+    assert writer.stop_event.is_set()
+    assert thread.join_timeout == 2.0
+    assert stream.flush_calls == 1
+
+
 def test_runtime_create_instance_failure_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

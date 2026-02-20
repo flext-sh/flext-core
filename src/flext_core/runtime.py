@@ -222,8 +222,10 @@ class FlextRuntime:
             if self.stop_event.is_set():
                 return
             self.stop_event.set()
-            self.queue.put(None)  # Sentinel
-            self.thread.join(timeout=2.0)
+            with contextlib.suppress(queue.Full):
+                self.queue.put_nowait(None)  # Best-effort sentinel
+            if self.thread.is_alive():
+                self.thread.join(timeout=2.0)
             self.flush()
 
         def _worker(self) -> None:

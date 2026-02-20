@@ -309,8 +309,6 @@ class FlextTypes:
         Subclasses must define ``root: dict[str, V]`` via ``RootModel``.
         """
 
-        root: dict[str, DictValueT] = Field(default_factory=dict)
-
         def __getitem__(self, key: str) -> DictValueT:
             """Get item by key."""
             return self.root[key]
@@ -458,10 +456,6 @@ class FlextTypes:
 
     class _ValidatorMapMixin:
         """Shared API for validator map containers."""
-
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]] = Field(
-            default_factory=dict,
-        )
 
         def items(
             self,

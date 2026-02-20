@@ -7,11 +7,10 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 import math
-import signal
 import tempfile
-import types
+import threading
+import queue
 from collections.abc import Callable, Generator
-from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeVar
 
@@ -163,27 +162,28 @@ class FlextTestAutomationFramework:
             FlextResult[object]: Result of execution or timeout error
 
         """
+        result_queue: queue.Queue[tuple[bool, object]] = queue.Queue(maxsize=1)
 
-        @contextmanager
-        def timeout_context_manager() -> Generator[None]:
-            def timeout_handler(signum: int, frame: types.FrameType | None) -> None:
-                raise TimeoutError(f"Operation timed out after {timeout_seconds}s")
-
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(int(timeout_seconds))
+        def _target() -> None:
             try:
-                yield
-            finally:
-                signal.alarm(0)
+                result_queue.put((True, func()))
+            except Exception as error:
+                result_queue.put((False, error))
 
+        worker = threading.Thread(target=_target, daemon=True)
         try:
-            with timeout_context_manager():
-                result = func()
-                return r[object].ok(result)
-        except TimeoutError as e:
-            return r[object].fail(str(e))
-        except Exception as e:
-            return r[object].fail(f"Execution failed: {e}")
+            worker.start()
+            worker.join(timeout=timeout_seconds)
+            if worker.is_alive():
+                return r[object].fail(f"Operation timed out after {timeout_seconds}s")
+
+            succeeded, payload = result_queue.get_nowait()
+            if succeeded:
+                return r[object].ok(payload)
+
+            return r[object].fail(f"Execution failed: {payload}")
+        except queue.Empty:
+            return r[object].fail("Execution failed: no result produced")
 
     @staticmethod
     def parametrize_real_data(
