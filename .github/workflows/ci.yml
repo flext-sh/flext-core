@@ -41,12 +41,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libldap2-dev libsasl2-dev libssl-dev
 
-      - name: Bootstrap base.mk
-        run: |
-          if [ ! -f base.mk ]; then
-            curl -fsSL "https://raw.githubusercontent.com/flext-sh/flext/0.10.0-dev/base.mk" -o base.mk
-          fi
-
       - name: Setup (advisory)
         continue-on-error: true
         run: make setup
