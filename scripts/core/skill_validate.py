@@ -12,6 +12,11 @@ import sys
 import time
 from pathlib import Path
 
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from libs.discovery import discover_projects as ssot_discover_projects
+
 try:
     import yaml  # type: ignore[import-untyped]
 except ImportError:
@@ -198,43 +203,13 @@ def discover_projects(root: Path) -> dict[str, object]:
          "root": "."}
 
     """
-    gitmodules = root / ".gitmodules"
-    gitmodules_text = ""
-    if gitmodules.exists():
-        try:
-            gitmodules_text = gitmodules.read_text(encoding="utf-8")
-        except OSError as exc:
-            msg = f"Cannot read {gitmodules}"
-            raise SkillInfraError(msg) from exc
-
-    flext_projects: list[str] = []
-    for line in gitmodules_text.splitlines():
-        stripped = line.strip()
-        if "path = flext-" not in stripped:
-            continue
-        name = stripped.split("path = ", 1)[-1].strip()
-        if not name:
-            continue
-        if (root / name / "pyproject.toml").is_file():
-            flext_projects.append(name)
-
-    external_projects: list[str] = []
-    for child in sorted(root.iterdir(), key=lambda p: p.name):
-        if not child.is_dir():
-            continue
-        name = child.name
-        pyproject = child / "pyproject.toml"
-        if not pyproject.is_file():
-            continue
-        if f"path = {name}" in gitmodules_text:
-            continue
-        try:
-            pyproject_text = pyproject.read_text(encoding="utf-8")
-        except OSError as exc:
-            msg = f"Cannot read {pyproject}"
-            raise SkillInfraError(msg) from exc
-        if "flext-core" in pyproject_text or "flext_core" in pyproject_text:
-            external_projects.append(name)
+    discovered = ssot_discover_projects(root)
+    flext_projects = [
+        project.name for project in discovered if project.kind == "submodule"
+    ]
+    external_projects = [
+        project.name for project in discovered if project.kind == "external"
+    ]
 
     return {
         "flext": unique_sorted(flext_projects),

@@ -21,6 +21,11 @@ import re
 import sys
 from pathlib import Path
 
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from libs.selection import resolve_projects
+
 ROOT = Path(__file__).resolve().parents[2]
 REQUIRED_MINOR = 13
 PYTHON_VERSION_CONTENT = f"3.{REQUIRED_MINOR}\n"
@@ -56,14 +61,11 @@ del _sys
 
 
 def _discover_projects(workspace_root: Path) -> list[Path]:
-    """Discover all flext-* projects with pyproject.toml."""
-    projects: list[Path] = []
-    for entry in sorted(workspace_root.iterdir(), key=lambda v: v.name):
-        if not entry.is_dir() or not entry.name.startswith("flext-"):
-            continue
-        if (entry / "pyproject.toml").exists():
-            projects.append(entry)
-    return projects
+    return [
+        project.path
+        for project in resolve_projects(workspace_root, names=[])
+        if (project.path / "pyproject.toml").exists()
+    ]
 
 
 def _ensure_python_version_file(

@@ -16,6 +16,11 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from libs.selection import resolve_projects
+
 MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
 MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')
 MYPY_STUB_RE = re.compile(r'Library stubs not installed for "([^"]+)"')
@@ -65,13 +70,12 @@ def run_cmd(
 
 
 def discover_projects(root: Path) -> list[Path]:
-    projects: list[Path] = []
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir():
-            continue
-        if (entry / "pyproject.toml").exists() and (entry / "src").is_dir():
-            projects.append(entry)
-    return projects
+    return [
+        project.path
+        for project in resolve_projects(root, names=[])
+        if (project.path / "pyproject.toml").exists()
+        and (project.path / "src").is_dir()
+    ]
 
 
 def load_pyproject(project_dir: Path) -> dict[str, object]:

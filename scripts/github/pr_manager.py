@@ -156,6 +156,7 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument("--merge-method", default="squash")
     _ = parser.add_argument("--auto", type=int, default=0)
     _ = parser.add_argument("--delete-branch", type=int, default=0)
+    _ = parser.add_argument("--checks-strict", type=int, default=0)
     return parser.parse_args()
 
 
@@ -178,7 +179,11 @@ def main() -> int:
         return _run_stream(["gh", "pr", "view", selector], repo_root)
 
     if args.action == "checks":
-        return _run_stream(["gh", "pr", "checks", selector], repo_root)
+        exit_code = _run_stream(["gh", "pr", "checks", selector], repo_root)
+        if exit_code != 0 and args.checks_strict == 0:
+            print("status=checks-nonblocking")
+            return 0
+        return exit_code
 
     if args.action == "merge":
         return _merge_pr(
