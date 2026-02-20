@@ -91,7 +91,7 @@ def _ensure_python_version_file(
         if verbose:
             print(f"  + .python-version CREATED: {project.name}")
 
-    pv_file.write_text(PYTHON_VERSION_CONTENT, encoding="utf-8")
+    _ = pv_file.write_text(PYTHON_VERSION_CONTENT, encoding="utf-8")
     return True
 
 
@@ -192,7 +192,7 @@ def _ensure_conftest_guard(project: Path, *, check_only: bool, verbose: bool) ->
         return False
 
     new_content = _inject_guard(content)
-    conftest.write_text(new_content, encoding="utf-8")
+    _ = conftest.write_text(new_content, encoding="utf-8")
     if verbose:
         print(f"  + conftest.py guard INJECTED: {project.name}")
     return True
@@ -201,8 +201,12 @@ def _ensure_conftest_guard(project: Path, *, check_only: bool, verbose: bool) ->
 def main(argv: list[str] | None = None) -> int:
     """Run enforcement."""
     parser = argparse.ArgumentParser(description="Enforce Python version constraints")
-    parser.add_argument("--check", action="store_true", help="Check mode (no writes)")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    _ = parser.add_argument(
+        "--check", action="store_true", help="Check mode (no writes)"
+    )
+    _ = parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Verbose output"
+    )
     args = parser.parse_args(argv)
 
     projects = _discover_projects(ROOT)
