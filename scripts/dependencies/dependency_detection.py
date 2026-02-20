@@ -12,11 +12,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 from typing import Any
+
+if str(Path(__file__).resolve().parents[2]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from libs.selection import resolve_projects
 
 # Mypy output patterns for typing library detection (aligned with stub_supply_chain)
 MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')
@@ -62,22 +69,16 @@ def discover_projects(
     workspace_root: Path,
     projects_filter: list[str] | None = None,
 ) -> list[Path]:
-    """Discover all Python projects under workspace (top-level dirs with pyproject.toml).
-
-    Matches root Makefile / sync_dependencies: any dir with pyproject.toml, excluding SKIP_DIRS.
-    """
-    projects: list[Path] = []
-    for item in sorted(workspace_root.iterdir()):
-        if not item.is_dir():
-            continue
-        if any(skip in item.name for skip in SKIP_DIRS):
-            continue
-        if not (item / "pyproject.toml").exists():
-            continue
-        if projects_filter is not None and item.name not in projects_filter:
-            continue
-        projects.append(item)
-    return projects
+    projects = [
+        project.path
+        for project in resolve_projects(workspace_root, names=[])
+        if (project.path / "pyproject.toml").exists()
+        and not any(skip in project.name for skip in SKIP_DIRS)
+    ]
+    if projects_filter is not None:
+        filter_set = set(projects_filter)
+        projects = [path for path in projects if path.name in filter_set]
+    return sorted(projects)
 
 
 def run_deptry(
@@ -146,7 +147,7 @@ def run_pip_check(workspace_root: Path, venv_bin: Path) -> tuple[list[str], int]
         capture_output=True,
         text=True,
         timeout=60,
-        env={**subprocess.os.environ, "VIRTUAL_ENV": str(venv_bin.parent)},
+        env={**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)},
     )
     out = (result.stdout or "").strip().splitlines() if result.stdout else []
     return out, result.returncode
@@ -219,9 +220,9 @@ def run_mypy_stub_hints(
         "--no-error-summary",
     ]
     env = {
-        **subprocess.os.environ,
+        **os.environ,
         "VIRTUAL_ENV": str(venv_bin.parent),
-        "PATH": f"{venv_bin}:{subprocess.os.environ.get('PATH', '')}",
+        "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
     }
     result = subprocess.run(
         cmd,
