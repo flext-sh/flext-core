@@ -173,6 +173,11 @@ def _ensure_symlink(target: Path, source: Path) -> None:
 def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
     dep_path.parent.mkdir(parents=True, exist_ok=True)
     if not (dep_path / ".git").exists():
+        if dep_path.exists() or dep_path.is_symlink():
+            if dep_path.is_dir() and not dep_path.is_symlink():
+                shutil.rmtree(dep_path)
+            else:
+                dep_path.unlink()
         cloned = subprocess.run(
             [
                 GIT_BIN,
