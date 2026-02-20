@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2" ]
+requires = [ "poetry-core>=2.0", "poetry-core>=2" ]
 
 [project]
 name = "flext-core"
@@ -16,19 +16,21 @@ keywords = [
   "solid",
 ]
 license = "MIT"
-maintainers = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
-authors = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
+maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 requires-python = ">=3.13,<3.14"
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Framework :: Pydantic",
-  "Framework :: Pydantic :: 2",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Topic :: Software Development :: Libraries :: Python Modules",
   "Typing :: Typed",
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: Pydantic",
+  "Framework :: Pydantic :: 2",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
   "attrs>=25.4,<26",
@@ -103,8 +105,8 @@ urls.Repository = "https://github.com/flext-sh/flext-core"
 [tool]
 [tool.poetry]
 packages = [
-  { include = "flext_core", from = "src" },
-  { include = "flext_tests", from = "src" },
+  {include = "flext_core", from = "src"},
+  {include = "flext_tests", from = "src"},
 ]
 group.dev.dependencies.beartype = "^0.22.9"
 group.dev.dependencies.click = "^8.3.0"
@@ -128,8 +130,8 @@ extend = "../ruff-shared.toml"
 
 [tool.deptry]
 known_first_party = [ "flext_core", "flext_tests" ]
-pep621_dev_dependency_groups = [ "dev" ]
 package_module_name_map.pyyaml = "yaml"
+pep621_dev_dependency_groups = [ "dev" ]
 per_rule_ignores.DEP002 = [
   "autoflake",
   "bandit",
@@ -252,12 +254,6 @@ ini_options.norecursedirs = [
 ]
 
 [tool.coverage]
-run.omit = [
-  "*/dependency_injector/*.pxd",
-  "*/dependency_injector/*.pyx",
-  "*/flext_tests/*",
-]
-run.source = [ "src/flext_core" ]
 report.fail_under = 100
 report.omit = [
   "*/dependency_injector/*.pxd",
@@ -265,17 +261,16 @@ report.omit = [
   "*/flext_tests/*",
 ]
 report.precision = 2
+run.omit = [
+  "*/dependency_injector/*.pxd",
+  "*/dependency_injector/*.pyx",
+  "*/flext_tests/*",
+]
+run.source = [ "src/flext_core" ]
 
 [tool.pyrefly]
-search-path = [
-  "../typings",
-  "../typings/generated",
-  ".",
-  "src",
-  "tests",
-  "examples",
-  "scripts",
-]
+project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
+search-path = [ "../typings", "../typings/generated", "src", "tests", "examples", "scripts", "." ]
 
 [tool.bandit]
 skips = [ "B404", "B603", "B607", "B105", "B608" ]
