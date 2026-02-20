@@ -66,6 +66,8 @@ class FlextTestsModels(FlextModelsBase):
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Warn when FlextTestsModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
+        if cls.__module__.startswith("tests"):
+            return
         flext_u.Deprecation.warn_once(
             f"subclass:{cls.__name__}",
             "Subclassing FlextTestsModels is deprecated. Use FlextModels directly with composition instead.",

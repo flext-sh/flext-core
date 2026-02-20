@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import sys
-import tomllib
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_ROOT) not in sys.path:
@@ -18,6 +17,7 @@ from release.shared import (
     run_checked,
     workspace_root,
 )
+from libs.versioning import current_workspace_version
 
 
 def _parse_args() -> argparse.Namespace:
@@ -30,22 +30,14 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument("--interactive", type=int, default=1)
     _ = parser.add_argument("--push", type=int, default=0)
     _ = parser.add_argument("--dry-run", type=int, default=0)
+    _ = parser.add_argument("--dev-suffix", type=int, default=0)
     _ = parser.add_argument("--create-branches", type=int, default=1)
     _ = parser.add_argument("--projects", nargs="*", default=[])
     return parser.parse_args()
 
 
 def _current_version(root: Path) -> str:
-    pyproject = root / "pyproject.toml"
-    content = pyproject.read_bytes()
-    data = tomllib.loads(content.decode("utf-8"))
-    project = data.get("project")
-    if not isinstance(project, dict):
-        raise RuntimeError("unable to detect [project] section from pyproject.toml")
-    version = project.get("version")
-    if not isinstance(version, str) or not version:
-        raise RuntimeError("unable to detect version from pyproject.toml")
-    return version.removesuffix("-dev")
+    return current_workspace_version(root)
 
 
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:
@@ -85,7 +77,11 @@ def _create_release_branches(
 
 
 def _phase_version(
-    root: Path, version: str, dry_run: bool, project_names: list[str]
+    root: Path,
+    version: str,
+    dry_run: bool,
+    project_names: list[str],
+    dev_suffix: bool,
 ) -> None:
     command = [
         "python",
@@ -96,6 +92,8 @@ def _phase_version(
         version,
         "--check" if dry_run else "--apply",
     ]
+    if dev_suffix:
+        command.extend(["--dev-suffix", "1"])
     if project_names:
         command.extend(["--projects", *project_names])
     run_checked(command, cwd=root)
@@ -199,7 +197,13 @@ def main() -> int:
             _phase_validate(root)
             continue
         if phase == "version":
-            _phase_version(root, version, args.dry_run == 1, selected_project_names)
+            _phase_version(
+                root,
+                version,
+                args.dry_run == 1,
+                selected_project_names,
+                args.dev_suffix == 1,
+            )
             continue
         if phase == "build":
             _phase_build(root, version, selected_project_names)

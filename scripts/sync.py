@@ -40,7 +40,11 @@ def _copy_if_changed(source: Path, target: Path) -> bool:
 def _sync_tree(source_dir: Path, target_dir: Path, prune: bool) -> int:
     changed = 0
     source_files = {
-        p.relative_to(source_dir) for p in source_dir.rglob("*") if p.is_file()
+        p.relative_to(source_dir)
+        for p in source_dir.rglob("*")
+        if p.is_file()
+        and "__pycache__" not in p.parts
+        and not any(part.startswith(".") for part in p.parts)
     }
     for rel in sorted(source_files):
         changed += 1 if _copy_if_changed(source_dir / rel, target_dir / rel) else 0
@@ -78,6 +82,9 @@ def main() -> int:
         )
         changed += _sync_tree(
             canonical_root / "scripts", project_root / "scripts", args.prune
+        )
+        changed += _sync_tree(
+            canonical_root / "libs", project_root / "libs", args.prune
         )
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 

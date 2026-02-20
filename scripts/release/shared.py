@@ -2,7 +2,6 @@
 # Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
@@ -15,11 +14,8 @@ from libs.paths import workspace_root as _workspace_root
 from libs.selection import resolve_projects as _resolve_projects
 from libs.subprocess import run_capture as _run_capture
 from libs.subprocess import run_checked as _run_checked
-
-
-SEMVER_RE = re.compile(
-    r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)$"
-)
+from libs.versioning import bump_version as _bump_version
+from libs.versioning import parse_semver as _parse_semver
 
 
 Project = ProjectInfo
@@ -39,25 +35,11 @@ def resolve_projects(root: Path, names: list[str]) -> list[Project]:
 
 
 def parse_semver(version: str) -> tuple[int, int, int]:
-    match = SEMVER_RE.match(version)
-    if not match:
-        raise ValueError(f"invalid semver version: {version}")
-    return (
-        int(match.group("major")),
-        int(match.group("minor")),
-        int(match.group("patch")),
-    )
+    return _parse_semver(version)
 
 
 def bump_version(current_version: str, bump: str) -> str:
-    major, minor, patch = parse_semver(current_version)
-    if bump == "major":
-        return f"{major + 1}.0.0"
-    if bump == "minor":
-        return f"{major}.{minor + 1}.0"
-    if bump == "patch":
-        return f"{major}.{minor}.{patch + 1}"
-    raise ValueError(f"unsupported bump: {bump}")
+    return _bump_version(current_version, bump)
 
 
 def run_checked(command: list[str], cwd: Path | None = None) -> None:
