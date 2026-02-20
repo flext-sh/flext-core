@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -79,6 +80,41 @@ def _selector(pr_number: str, head: str) -> str:
     return pr_number if pr_number else head
 
 
+def _release_tag_from_head(head: str) -> str | None:
+    version = head.removesuffix("-dev")
+    if re.fullmatch(r"\d+\.\d+\.\d+", version):
+        return f"v{version}"
+    match = re.fullmatch(r"release/(?P<version>\d+\.\d+\.\d+)", head)
+    if match:
+        return f"v{match.group('version')}"
+    return None
+
+
+def _is_workspace_release_repo(repo_root: Path) -> bool:
+    return (repo_root / ".github" / "workflows" / "release.yml").exists()
+
+
+def _trigger_release_if_needed(repo_root: Path, head: str) -> None:
+    if not _is_workspace_release_repo(repo_root):
+        return
+    tag = _release_tag_from_head(head)
+    if tag is None:
+        return
+
+    if _run_stream(["gh", "release", "view", tag], repo_root) == 0:
+        print(f"status=release-exists tag={tag}")
+        return
+
+    run_code = _run_stream(
+        ["gh", "workflow", "run", "release.yml", "-f", f"tag={tag}"],
+        repo_root,
+    )
+    if run_code == 0:
+        print(f"status=release-dispatched tag={tag}")
+    else:
+        print(f"status=release-dispatch-failed tag={tag} exit={run_code}")
+
+
 def _create_pr(
     repo_root: Path,
     base: str,
@@ -118,9 +154,11 @@ def _create_pr(
 def _merge_pr(
     repo_root: Path,
     selector: str,
+    head: str,
     method: str,
     auto: int,
     delete_branch: int,
+    release_on_merge: int,
 ) -> int:
     command = ["gh", "pr", "merge", selector]
     merge_flag = {
@@ -136,6 +174,8 @@ def _merge_pr(
     exit_code = _run_stream(command, repo_root)
     if exit_code == 0:
         print("status=merged")
+        if release_on_merge == 1:
+            _trigger_release_if_needed(repo_root, head)
     return exit_code
 
 
@@ -157,6 +197,7 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument("--auto", type=int, default=0)
     _ = parser.add_argument("--delete-branch", type=int, default=0)
     _ = parser.add_argument("--checks-strict", type=int, default=0)
+    _ = parser.add_argument("--release-on-merge", type=int, default=1)
     return parser.parse_args()
 
 
@@ -189,9 +230,11 @@ def main() -> int:
         return _merge_pr(
             repo_root,
             selector,
+            head,
             args.merge_method,
             args.auto,
             args.delete_branch,
+            args.release_on_merge,
         )
 
     if args.action == "close":
