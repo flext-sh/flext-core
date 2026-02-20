@@ -29,6 +29,23 @@ def _run_stream(command: list[str], cwd: Path) -> int:
     return result.returncode
 
 
+def _run_stream_with_output(command: list[str], cwd: Path) -> tuple[int, str]:
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output_parts = [
+        part.strip() for part in (result.stdout, result.stderr) if part.strip()
+    ]
+    output = "\n".join(output_parts)
+    if output:
+        print(output)
+    return result.returncode, output
+
+
 def _current_branch(repo_root: Path) -> str:
     return _run_capture(["git", "rev-parse", "--abbrev-ref", "HEAD"], repo_root)
 
@@ -171,7 +188,14 @@ def _merge_pr(
         command.append("--auto")
     if delete_branch == 1:
         command.append("--delete-branch")
-    exit_code = _run_stream(command, repo_root)
+    exit_code, output = _run_stream_with_output(command, repo_root)
+    if exit_code != 0 and "not mergeable" in output:
+        update_code, _ = _run_stream_with_output(
+            ["gh", "pr", "update-branch", selector, "--rebase"],
+            repo_root,
+        )
+        if update_code == 0:
+            exit_code, _ = _run_stream_with_output(command, repo_root)
     if exit_code == 0:
         print("status=merged")
         if release_on_merge == 1:
