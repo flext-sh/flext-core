@@ -47,7 +47,8 @@ jobs:
             curl -fsSL "https://raw.githubusercontent.com/flext-sh/flext/0.10.0-dev/base.mk" -o base.mk
           fi
 
-      - name: Setup
+      - name: Setup (advisory)
+        continue-on-error: true
         run: make setup
 
       - name: Install CI gate toolchain
