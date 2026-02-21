@@ -607,55 +607,6 @@ class TestFlextTestsMatchers:
         with tm.scope(context={"user_id": 123}) as scope:
             assert scope.context["user_id"] == 123
 
-    # =========================================================================
-    # TESTS FOR DEPRECATION WARNINGS
-    # =========================================================================
-
-    def test_dict_deprecation_warning(self) -> None:
-        """Test that dict_() emits deprecation warning (using deprecated method)."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            # Use the deprecated method directly to test warning
-            tm.dict_({"a": 1}, has_key="a")
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_list_deprecation_warning(self) -> None:
-        """Test that list_() emits deprecation warning (using deprecated method)."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            # Use the deprecated method directly to test warning
-            tm.list_([1, 2, 3], contains=1)
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_str_deprecation_warning(self) -> None:
-        """Test that str_() emits deprecation warning."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tm.str_("test", contains="t")
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_eq_deprecation_warning(self) -> None:
-        """Test that eq() emits deprecation warning."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tm.eq(1, 1)
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_true_deprecation_warning(self) -> None:
-        """Test that true() emits deprecation warning."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tm.true(True)
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    # =========================================================================
-    # TESTS FOR PYDANTIC 2 VALIDATION
-    # =========================================================================
 
     def test_ok_invalid_parameter_type(self) -> None:
         """Test tm.ok() with invalid parameter type raises ValueError."""

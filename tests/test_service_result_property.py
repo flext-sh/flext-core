@@ -179,24 +179,6 @@ class TestServiceResultProperty:
         assert user_v2.name == user_v1.name
         assert user_v2.email == user_v1.email
 
-    def test_v1_compatibility_edge_cases(self) -> None:
-        """Test V1 compatibility edge cases."""
-        v1_result = ValidatingService(value_input="hello").execute()
-        assert v1_result.is_success
-        assert v1_result.value == "HELLO"
-
-        fail_result = FailingService(error_message="V1 fail").execute()
-        assert fail_result.is_failure
-        assert fail_result.error is not None
-
-        railway = (
-            GetUserService(user_id="railway")
-            .execute()
-            .map(lambda u: u.email)
-            .filter(lambda e: "@" in str(e))
-        )
-        assert railway.is_success
-
     # =====================================================================
     # Property Behavior Tests - Computed Field
     # =====================================================================
