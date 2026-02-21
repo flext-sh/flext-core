@@ -329,6 +329,5 @@ class FlextModels:
 
 # Main alias for direct access
 m = FlextModels
-m_core = FlextModels
 
-__all__ = ["FlextModels", "m", "m_core"]
+__all__ = ["FlextModels", "m"]
