@@ -14,7 +14,7 @@ import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
-from flext_core import r, u as flext_u
+from flext_core import r, u
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import FlextModels as FlextModelsBase
@@ -68,7 +68,7 @@ class FlextTestsModels(FlextModelsBase):
         super().__init_subclass__(**kwargs)
         if cls.__module__.startswith("tests"):
             return
-        flext_u.Deprecation.warn_once(
+        u.Deprecation.warn_once(
             f"subclass:{cls.__name__}",
             "Subclassing FlextTestsModels is deprecated. Use FlextModels directly with composition instead.",
         )

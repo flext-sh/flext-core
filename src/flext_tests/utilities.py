@@ -25,13 +25,13 @@ from flext_core import (
     FlextDispatcher,
     FlextRegistry,
     FlextSettings,
-    FlextTypes as t,
     FlextUtilities,
     T,
     p,
     r,
+    t,
 )
-from flext_core.utilities import u as u_core
+from flext_core.utilities import u
 
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -468,7 +468,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Generated UUID string.
 
                 """
-                return u_core.generate()
+                return u.generate()
 
             @staticmethod
             def generate_short_id(length: int = 8) -> str:
@@ -482,7 +482,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Generated short ID string.
 
                 """
-                return u_core.generate("ulid", length=length)
+                return u.generate("ulid", length=length)
 
         # Compatibility aliases for existing test code
         class TestUtilities:

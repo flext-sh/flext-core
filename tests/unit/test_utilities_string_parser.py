@@ -30,7 +30,7 @@ from typing import cast
 import pytest
 
 from flext_core import (
-    FlextModels as core_m,
+    FlextModels as m,
     FlextResult as r,
     t,
 )
@@ -471,7 +471,7 @@ class TestuStringParser:
                 """Execute parse_delimited based on case configuration."""
                 if case.use_legacy:
                     # Legacy params not supported, use options instead
-                    options = core_m.CollectionsParseOptions(
+                    options = m.CollectionsParseOptions(
                         strip=case.strip or True,
                         remove_empty=case.remove_empty or True,
                         validator=case.validator,

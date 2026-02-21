@@ -34,7 +34,7 @@ from pydantic import Field, ValidationError, field_validator
 from flext_core import (
     FlextConstants as c,
     FlextModels as m,
-    FlextTypes as t,
+    t,
 )
 from flext_tests.matchers import tm
 from flext_tests.utilities import u

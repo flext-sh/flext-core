@@ -17,8 +17,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core.constants import c as core_c
-from flext_core.models import m as core_m
+from flext_core.constants import c
+from flext_core.models import m
 from flext_tests.constants import FlextTestsConstants
 
 
@@ -237,123 +237,123 @@ class TestsFlextConstants(FlextTestsConstants):
         MISSING_VALUE: Final[str] = "Missing value"
         INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
         CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-        TEST_DATA: Final[core_m.ConfigMap] = core_m.ConfigMap({
+        TEST_DATA: Final[m.ConfigMap] = m.ConfigMap({
             "key": "value",
             "value": 5,
         })
-        TEST_DICT: Final[core_m.ConfigMap] = core_m.ConfigMap({"key": "value"})
+        TEST_DICT: Final[m.ConfigMap] = m.ConfigMap({"key": "value"})
         TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
         MAX_EXECUTION_TIME: Final[float] = 1.0
         ITERATION_COUNT: Final[int] = 1000
         TEST_BATCH_SIZE: Final[int] = 10
 
-    class Network(core_c.Network):
+    class Network(c.Network):
         """Network-related defaults for tests - real inheritance."""
 
-    class Validation(core_c.Validation):
+    class Validation(c.Validation):
         """Input validation limits for tests - real inheritance."""
 
-    class Errors(core_c.Errors):
+    class Errors(c.Errors):
         """Error codes for tests - real inheritance."""
 
-    class Exceptions(core_c.Exceptions):
+    class Exceptions(c.Exceptions):
         """Exception handling configuration for tests."""
 
-        FailureLevel = core_c.Exceptions.FailureLevel
+        FailureLevel = c.Exceptions.FailureLevel
 
-    class Messages(core_c.Messages):
+    class Messages(c.Messages):
         """User-facing message templates for tests - real inheritance."""
 
-    class Defaults(core_c.Defaults):
+    class Defaults(c.Defaults):
         """Default values for tests - real inheritance."""
 
-    class Utilities(core_c.Utilities):
+    class Utilities(c.Utilities):
         """Utility constants for tests - real inheritance."""
 
-    class Settings(core_c.Settings):
+    class Settings(c.Settings):
         """Configuration defaults for tests."""
 
-        LogLevel = core_c.Settings.LogLevel
-        Environment = core_c.Settings.Environment
+        LogLevel = c.Settings.LogLevel
+        Environment = c.Settings.Environment
 
-    class ModelConfig(core_c.ModelConfig):
+    class ModelConfig(c.ModelConfig):
         """Pydantic model configuration defaults for tests - real inheritance."""
 
-    class Platform(core_c.Platform):
+    class Platform(c.Platform):
         """Platform-specific constants for tests - real inheritance."""
 
-    class Performance(core_c.Performance):
+    class Performance(c.Performance):
         """Performance thresholds for tests - real inheritance."""
 
-        class BatchProcessing(core_c.Performance.BatchProcessing):
+        class BatchProcessing(c.Performance.BatchProcessing):
             """Batch processing constants for tests - real inheritance."""
 
-    class Reliability(core_c.Reliability):
+    class Reliability(c.Reliability):
         """Reliability thresholds for tests - real inheritance."""
 
-        CircuitBreakerState = core_c.Reliability.CircuitBreakerState
+        CircuitBreakerState = c.Reliability.CircuitBreakerState
 
-    class Security(core_c.Security):
+    class Security(c.Security):
         """Security constants for tests - real inheritance."""
 
-    class Logging(core_c.Logging):
+    class Logging(c.Logging):
         """Logging configuration for tests - real inheritance."""
 
-        ContextOperation = core_c.Logging.ContextOperation
+        ContextOperation = c.Logging.ContextOperation
 
-    class Literals(core_c.Literals):
+    class Literals(c.Literals):
         """Literal type aliases for tests - real inheritance."""
 
-    class Domain(core_c.Domain):
+    class Domain(c.Domain):
         """Domain-specific constants for tests."""
 
-        Status = core_c.Domain.Status
-        Currency = core_c.Domain.Currency
-        OrderStatus = core_c.Domain.OrderStatus
+        Status = c.Domain.Status
+        Currency = c.Domain.Currency
+        OrderStatus = c.Domain.OrderStatus
 
-    class Cqrs(core_c.Cqrs):
+    class Cqrs(c.Cqrs):
         """CQRS pattern constants for tests."""
 
-        Status = core_c.Cqrs.Status
-        HandlerType = core_c.Cqrs.HandlerType
-        CommonStatus = core_c.Cqrs.CommonStatus
-        MetricType = core_c.Cqrs.MetricType
-        ProcessingMode = core_c.Cqrs.ProcessingMode
-        ValidationLevel = core_c.Cqrs.ValidationLevel
-        ProcessingPhase = core_c.Cqrs.ProcessingPhase
-        BindType = core_c.Cqrs.BindType
-        MergeStrategy = core_c.Cqrs.MergeStrategy
-        HealthStatus = core_c.Cqrs.HealthStatus
-        SpecialStatus = core_c.Cqrs.SpecialStatus
-        TokenType = core_c.Cqrs.TokenType
-        OperationStatus = core_c.Cqrs.OperationStatus
-        SerializationFormat = core_c.Cqrs.SerializationFormat
-        Compression = core_c.Cqrs.Compression
-        Aggregation = core_c.Cqrs.Aggregation
-        Action = core_c.Cqrs.Action
-        PersistenceLevel = core_c.Cqrs.PersistenceLevel
-        TargetFormat = core_c.Cqrs.TargetFormat
-        WarningLevel = core_c.Cqrs.WarningLevel
-        OutputFormat = core_c.Cqrs.OutputFormat
-        Mode = core_c.Cqrs.Mode
-        RegistrationStatus = core_c.Cqrs.RegistrationStatus
+        Status = c.Cqrs.Status
+        HandlerType = c.Cqrs.HandlerType
+        CommonStatus = c.Cqrs.CommonStatus
+        MetricType = c.Cqrs.MetricType
+        ProcessingMode = c.Cqrs.ProcessingMode
+        ValidationLevel = c.Cqrs.ValidationLevel
+        ProcessingPhase = c.Cqrs.ProcessingPhase
+        BindType = c.Cqrs.BindType
+        MergeStrategy = c.Cqrs.MergeStrategy
+        HealthStatus = c.Cqrs.HealthStatus
+        SpecialStatus = c.Cqrs.SpecialStatus
+        TokenType = c.Cqrs.TokenType
+        OperationStatus = c.Cqrs.OperationStatus
+        SerializationFormat = c.Cqrs.SerializationFormat
+        Compression = c.Cqrs.Compression
+        Aggregation = c.Cqrs.Aggregation
+        Action = c.Cqrs.Action
+        PersistenceLevel = c.Cqrs.PersistenceLevel
+        TargetFormat = c.Cqrs.TargetFormat
+        WarningLevel = c.Cqrs.WarningLevel
+        OutputFormat = c.Cqrs.OutputFormat
+        Mode = c.Cqrs.Mode
+        RegistrationStatus = c.Cqrs.RegistrationStatus
 
-    class Context(core_c.Context):
+    class Context(c.Context):
         """Context management constants for tests - real inheritance."""
 
-    class Container(core_c.Container):
+    class Container(c.Container):
         """Dependency injection container constants for tests - real inheritance."""
 
-    class Dispatcher(core_c.Dispatcher):
+    class Dispatcher(c.Dispatcher):
         """Message dispatcher constants for tests - real inheritance."""
 
-    class Pagination(core_c.Pagination):
+    class Pagination(c.Pagination):
         """Pagination configuration for tests - real inheritance."""
 
-    class Mixins(core_c.Mixins):
+    class Mixins(c.Mixins):
         """Constants for mixin operations for tests - real inheritance."""
 
-    class Processing(core_c.Processing):
+    class Processing(c.Processing):
         """Processing pipeline constants for tests - real inheritance."""
 
     class Fixtures:

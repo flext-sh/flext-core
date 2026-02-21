@@ -16,8 +16,8 @@ from __future__ import annotations
 from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 
-from flext_core import FlextResult, t as core_t
-from flext_core.utilities import u as core_u
+from flext_core import FlextResult, t
+from flext_core.utilities import u
 from flext_tests.utilities import FlextTestsUtilities
 
 from tests.test_utils import assertion_helpers
@@ -46,55 +46,55 @@ class TestsFlextUtilities(FlextTestsUtilities):
     # These are available through inheritance.
 
     # Expose FlextUtilities classes through real inheritance
-    class Args(core_u.Args):
+    class Args(u.Args):
         """Args utility class for tests - real inheritance."""
 
-    class Cache(core_u.Cache):
+    class Cache(u.Cache):
         """Cache utility class for tests - real inheritance."""
 
-    class Checker(core_u.Checker):
+    class Checker(u.Checker):
         """Checker utility class for tests - real inheritance."""
 
-    class Collection(core_u.Collection):
+    class Collection(u.Collection):
         """Collection utility class for tests - real inheritance."""
 
-    class Configuration(core_u.Configuration):
+    class Configuration(u.Configuration):
         """Configuration utility class for tests - real inheritance."""
 
-    class Context(core_u.Context):
+    class Context(u.Context):
         """Context utility class for tests - real inheritance."""
 
-    class Domain(core_u.Domain):
+    class Domain(u.Domain):
         """Domain utility class for tests - real inheritance."""
 
-    class Enum(core_u.Enum):
+    class Enum(u.Enum):
         """Enum utility class for tests - real inheritance."""
 
-    class Generators(core_u.Generators):
+    class Generators(u.Generators):
         """Generators utility class for tests - real inheritance."""
 
-    class Guards(core_u.Guards):
+    class Guards(u.Guards):
         """Guards utility class for tests - real inheritance."""
 
-    class Mapper(core_u.Mapper):
+    class Mapper(u.Mapper):
         """Mapper utility class for tests - real inheritance."""
 
-    class Model(core_u.Model):
+    class Model(u.Model):
         """Model utility class for tests - real inheritance."""
 
-    class Pagination(core_u.Pagination):
+    class Pagination(u.Pagination):
         """Pagination utility class for tests - real inheritance."""
 
-    class Parser(core_u.Parser):
+    class Parser(u.Parser):
         """Parser utility class for tests - real inheritance."""
 
-    class Reliability(core_u.Reliability):
+    class Reliability(u.Reliability):
         """Reliability utility class for tests - real inheritance."""
 
-    class Text(core_u.Text):
+    class Text(u.Text):
         """Text utility class for tests - real inheritance."""
 
-    class Validation(core_u.Validation):
+    class Validation(u.Validation):
         """Validation utility class for tests - real inheritance."""
 
     class CoreParserHelpers:
@@ -102,8 +102,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def execute_and_assert_parser_result(
-            operation: Callable[[], FlextResult[core_t.GeneralValueType]],
-            expected_value: core_t.GeneralValueType | None = None,
+            operation: Callable[[], FlextResult[t.GeneralValueType]],
+            expected_value: t.GeneralValueType | None = None,
             expected_error: str | None = None,
             description: str = "",
         ) -> None:
@@ -144,8 +144,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             def split(
                 self,
-                *_args: core_t.GeneralValueType,
-                **_kwargs: core_t.GeneralValueType,
+                *_args: t.GeneralValueType,
+                **_kwargs: t.GeneralValueType,
             ) -> list[str]:
                 """Raise error on split attempt."""
                 msg = "Bad split"
@@ -190,18 +190,18 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """Create object that fails on str()."""
             return TestsFlextUtilities.CoreBadObjects.BadStrObject()
 
-        class BadDict(UserDict[str, core_t.GeneralValueType]):
+        class BadDict(UserDict[str, t.GeneralValueType]):
             """Dict that raises on get()."""
 
-            def __getitem__(self, key: str) -> core_t.GeneralValueType:
+            def __getitem__(self, key: str) -> t.GeneralValueType:
                 """Raise error on get attempt."""
                 msg = "Bad dict get"
                 raise RuntimeError(msg)
 
-        class BadList(UserList[core_t.GeneralValueType]):
+        class BadList(UserList[t.GeneralValueType]):
             """List that raises on iteration."""
 
-            def __iter__(self) -> Iterator[core_t.GeneralValueType]:
+            def __iter__(self) -> Iterator[t.GeneralValueType]:
                 """Raise error on iteration."""
                 msg = "Bad list iteration"
                 raise RuntimeError(msg)
@@ -209,7 +209,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadModelDump:
             """Object with model_dump that raises."""
 
-            def model_dump(self) -> dict[str, core_t.GeneralValueType]:
+            def model_dump(self) -> dict[str, t.GeneralValueType]:
                 """Raise error on model_dump."""
                 msg = "Bad model_dump"
                 raise RuntimeError(msg)
@@ -217,7 +217,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadConfig:
             """Config object that raises on attribute access."""
 
-            def get_attribute(self, name: str) -> core_t.GeneralValueType:
+            def get_attribute(self, name: str) -> t.GeneralValueType:
                 """Raise error on attribute access."""
                 msg = f"Bad config: {name}"
                 raise AttributeError(msg)
@@ -227,7 +227,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def assert_failure(
-            result: FlextResult[core_t.GeneralValueType],
+            result: FlextResult[t.GeneralValueType],
             expected_error: str,
             description: str = "",
         ) -> None:
@@ -245,7 +245,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def assert_success(
-            result: FlextResult[core_t.GeneralValueType],
+            result: FlextResult[t.GeneralValueType],
             description: str = "",
         ) -> None:
             """Assert that result is a success.
@@ -262,8 +262,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def assert_success_with_value(
-            result: FlextResult[core_t.GeneralValueType],
-            expected_value: core_t.GeneralValueType,
+            result: FlextResult[t.GeneralValueType],
+            expected_value: t.GeneralValueType,
             description: str = "",
         ) -> None:
             """Assert result is success with specific value.

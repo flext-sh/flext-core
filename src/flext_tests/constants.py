@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core.constants import FlextConstants, c as flext_c
+from flext_core.constants import FlextConstants, c
 from flext_core.models import m
 
 
@@ -643,7 +643,7 @@ class FlextTestsConstants(FlextConstants):
 
             # Default values
             DEFAULT_DATABASE_URL: Final[str] = (
-                f"postgresql://{flext_c.Platform.DEFAULT_HOST}/testdb"
+                f"postgresql://{c.Platform.DEFAULT_HOST}/testdb"
             )
             DEFAULT_MAX_CONNECTIONS: Final[int] = 10
             DEFAULT_ENVIRONMENT_PRODUCTION: Final[str] = "production"
@@ -657,7 +657,7 @@ class FlextTestsConstants(FlextConstants):
             )
             VALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = (
                 "example.com",
-                flext_c.Platform.DEFAULT_HOST,
+                c.Platform.DEFAULT_HOST,
             )
             INVALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = ("invalid..hostname", "")
 

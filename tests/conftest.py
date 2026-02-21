@@ -20,7 +20,7 @@ from flext_core import (
     FlextContext,
     FlextResult,
     FlextSettings,
-    FlextTypes as t,
+    t,
     m,
     r,
 )

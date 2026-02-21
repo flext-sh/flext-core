@@ -16,8 +16,8 @@ import pytest
 import yaml
 from pydantic import BaseModel
 
-from flext_core import r
-from flext_core.typings import t as t_core
+from flext import r
+from flext.typings import t
 from flext_tests.files import FlextTestsFiles, tf
 from flext_tests.models import m
 from tests.test_utils import assertion_helpers
@@ -181,7 +181,7 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.ConfigurationMapping
+            | t.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = {
@@ -205,7 +205,7 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.ConfigurationMapping
+            | t.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = {"file1": "content1"}
@@ -355,7 +355,7 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.ConfigurationMapping
+            | t.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = {
@@ -380,7 +380,7 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.ConfigurationMapping
+            | t.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = {"file1": "content1"}
@@ -395,7 +395,7 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.ConfigurationMapping
+            | t.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = {"file1": "content1"}
@@ -455,7 +455,7 @@ class TestFlextTestsFilesNewApi:
     def test_create_json_auto_detect_from_dict(self, tmp_path: Path) -> None:
         """Test create() auto-detects JSON from dict content."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content: t_core.ConfigurationMapping = {"key": "value", "number": 42}
+        content: t.ConfigurationMapping = {"key": "value", "number": 42}
 
         path = manager.create(content, "config.json")
 
@@ -466,7 +466,7 @@ class TestFlextTestsFilesNewApi:
     def test_create_yaml_auto_detect_from_extension(self, tmp_path: Path) -> None:
         """Test create() auto-detects YAML from .yaml extension."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content: t_core.ConfigurationMapping = {"name": "test", "enabled": True}
+        content: t.ConfigurationMapping = {"name": "test", "enabled": True}
 
         path = manager.create(content, "config.yaml")
 
@@ -564,7 +564,7 @@ class TestFlextTestsFilesNewApi:
     def test_read_json_file(self, tmp_path: Path) -> None:
         """Test read() returns dict content for .json files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content: t_core.ConfigurationMapping = {"key": "value", "number": 42}
+        content: t.ConfigurationMapping = {"key": "value", "number": 42}
         path = manager.create(content, "config.json")
 
         result = manager.read(path)
@@ -575,7 +575,7 @@ class TestFlextTestsFilesNewApi:
     def test_read_yaml_file(self, tmp_path: Path) -> None:
         """Test read() returns dict content for .yaml files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content: t_core.ConfigurationMapping = {"name": "test", "enabled": True}
+        content: t.ConfigurationMapping = {"name": "test", "enabled": True}
         path = manager.create(content, "config.yaml")
 
         result = manager.read(path)
@@ -1365,7 +1365,7 @@ class TestCreateInStatic:
 
     def test_create_in_with_flextresult(self, tmp_path: Path) -> None:
         """Test create_in() with FlextResult content extraction."""
-        result = r[t_core.ConfigMap].ok({"status": "success"})
+        result = r[t.ConfigMap].ok({"status": "success"})
         path = tf.create_in(result, "result.json", tmp_path)
 
         assert path.exists()
@@ -1388,7 +1388,7 @@ class TestCreateInStatic:
 
     def test_create_in_json_indent(self, tmp_path: Path) -> None:
         """Test create_in() with custom JSON indentation."""
-        content: t_core.ConfigurationMapping = {"key": "value", "nested": {"a": 1}}
+        content: t.ConfigurationMapping = {"key": "value", "nested": {"a": 1}}
         path = tf.create_in(content, "config.json", tmp_path, indent=4)
 
         assert path.exists()

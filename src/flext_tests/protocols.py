@@ -13,7 +13,7 @@ import builtins
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, FlextTypes as t, r
+from flext_core import FlextProtocols, r, t
 from pydantic import BaseModel
 
 # Import base types from flext_core
