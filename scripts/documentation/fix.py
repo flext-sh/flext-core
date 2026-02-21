@@ -9,7 +9,7 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from documentation.shared import (
+from scripts.documentation.shared import (
     Scope,
     build_scopes,
     iter_markdown_files,
@@ -112,7 +112,7 @@ def process_file(md_file: Path, *, apply: bool) -> FixItem:
     updated = LINK_RE.sub(replace_link, original)
     updated, toc_changed = update_toc(updated)
     if apply and (link_count > 0 or toc_changed > 0) and updated != original:
-        md_file.write_text(updated, encoding="utf-8")
+        _ = md_file.write_text(updated, encoding="utf-8")
     return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
 
 
@@ -154,11 +154,11 @@ def run_scope(scope: Scope, *, apply: bool) -> int:
 def main() -> int:
     """CLI entry point for the documentation fixer."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--project")
-    parser.add_argument("--projects")
-    parser.add_argument("--output-dir", default=".reports/docs")
-    parser.add_argument("--apply", action="store_true")
+    _ = parser.add_argument("--root", default=".")
+    _ = parser.add_argument("--project")
+    _ = parser.add_argument("--projects")
+    _ = parser.add_argument("--output-dir", default=".reports/docs")
+    _ = parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -169,7 +169,7 @@ def main() -> int:
         output_dir=args.output_dir,
     )
     for scope in scopes:
-        run_scope(scope, apply=args.apply)
+        _ = run_scope(scope, apply=args.apply)
     return 0
 
 

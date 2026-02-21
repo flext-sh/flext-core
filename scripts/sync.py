@@ -36,7 +36,7 @@ def _copy_if_changed(source: Path, target: Path) -> bool:
         tmp_path = Path(tmp.name)
     source_mode = stat.S_IMODE(source.stat().st_mode)
     Path(tmp_path).chmod(source_mode)
-    Path(tmp_path).replace(target)
+    _ = Path(tmp_path).replace(target)
     return True
 
 
@@ -75,6 +75,7 @@ def _ensure_gitignore_entries(project_root: Path, required: list[str]) -> int:
 
     Returns:
         1 if the file was changed, 0 otherwise.
+
     """
     gitignore = project_root / ".gitignore"
     existing_lines: list[str] = []
@@ -87,9 +88,11 @@ def _ensure_gitignore_entries(project_root: Path, required: list[str]) -> int:
         return 0
 
     with gitignore.open("a", encoding="utf-8") as handle:
-        handle.write("\n# --- workspace-sync: required ignores (auto-managed) ---\n")
+        _ = handle.write(
+            "\n# --- workspace-sync: required ignores (auto-managed) ---\n"
+        )
         for pattern in missing:
-            handle.write(f"{pattern}\n")
+            _ = handle.write(f"{pattern}\n")
     return 1
 
 
@@ -148,8 +151,10 @@ def main() -> int:
             readme = examples_dir / "README.md"
             project_name = project_root.name.replace("-", " ").title()
             readme.write_text(
-                f"# {project_name} Examples\n\n"
-                f"Usage examples for `{project_root.name}`.\n",
+                (
+                    f"# {project_name} Examples\n\n"
+                    f"Usage examples for `{project_root.name}`.\n"
+                ),
                 encoding="utf-8",
             )
             changed += 1

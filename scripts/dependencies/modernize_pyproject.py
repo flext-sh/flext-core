@@ -24,10 +24,10 @@ import sys
 from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 import tomlkit
 from tomlkit.items import Table
-from typing import cast
 
 _TableLike = Table | MutableMapping[str, object]
 
@@ -157,13 +157,13 @@ def _norm(dep_str: str) -> str:
 def _replace_inplace(arr: list[object], new_items: list[object]) -> None:
     """Replace contents of a tomlkit array in-place (preserves TOML structure)."""
     while arr:
-        arr.pop()
+        _ = arr.pop()
     arr.extend(new_items)
 
 
 def _ensure_tool(doc: tomlkit.TOMLDocument) -> Table:
     if "tool" not in doc:
-        doc.add("tool", tomlkit.table())
+        _ = doc.add("tool", tomlkit.table())
     tool = doc["tool"]
     if not isinstance(tool, Table):
         msg = "Invalid [tool] table structure"
@@ -282,7 +282,7 @@ def fix_duplicate_poetry_metadata(doc: tomlkit.TOMLDocument) -> str | None:
     tool = doc.get("tool")
     if not project or not tool:
         return None
-    poetry = cast(dict[str, object] | None, tool.get("poetry"))
+    poetry = cast("dict[str, object] | None", tool.get("poetry"))
     if not poetry:
         return None
     changed = False
@@ -394,37 +394,37 @@ def fix_coverage_config(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | N
         cov = tomlkit.table()
         run_table = tomlkit.table()
         run_table["source"] = [spec.coverage_source]
-        cov.add("run", run_table)
+        _ = cov.add("run", run_table)
         report_table = tomlkit.table()
         report_table["fail_under"] = spec.min_coverage
         report_table["precision"] = 2
-        cov.add("report", report_table)
-        cast(MutableMapping[str, object], tool)["coverage"] = cov
+        _ = cov.add("report", report_table)
+        cast("MutableMapping[str, object]", tool)["coverage"] = cov
         return f"coverage: added run.source=[{spec.coverage_source}] fail_under={spec.min_coverage}"
 
     cov_obj = tool["coverage"]
     if not isinstance(cov_obj, MutableMapping):
         return None
-    cov = cov_obj
+    existing_cov: MutableMapping[str, object] = cov_obj
 
-    run_sec_obj = cov.get("run")
+    run_sec_obj = existing_cov.get("run")
     if not isinstance(run_sec_obj, MutableMapping):
-        if isinstance(cov, Table):
-            cov.add("run", tomlkit.table())
+        if isinstance(existing_cov, Table):
+            _ = existing_cov.add("run", tomlkit.table())
         else:
-            cov["run"] = tomlkit.table()
-        run_sec_obj = cov.get("run")
+            existing_cov["run"] = tomlkit.table()
+        run_sec_obj = existing_cov.get("run")
     if isinstance(run_sec_obj, MutableMapping) and "source" not in run_sec_obj:
         run_sec_obj["source"] = [spec.coverage_source]
         changes.append("run.source")
 
-    report_sec_obj = cov.get("report")
+    report_sec_obj = existing_cov.get("report")
     if not isinstance(report_sec_obj, MutableMapping):
-        if isinstance(cov, Table):
-            cov.add("report", tomlkit.table())
+        if isinstance(existing_cov, Table):
+            _ = existing_cov.add("report", tomlkit.table())
         else:
-            cov["report"] = tomlkit.table()
-        report_sec_obj = cov.get("report")
+            existing_cov["report"] = tomlkit.table()
+        report_sec_obj = existing_cov.get("report")
     if not isinstance(report_sec_obj, MutableMapping):
         return None
 
@@ -451,8 +451,8 @@ def fix_pytest_section(doc: tomlkit.TOMLDocument) -> str | None:
     pt = tomlkit.table()
     ini = tomlkit.table()
     ini["addopts"] = list(standard_addopts)
-    pt.add("ini_options", ini)
-    cast(MutableMapping[str, object], tool)["pytest"] = pt
+    _ = pt.add("ini_options", ini)
+    cast("MutableMapping[str, object]", tool)["pytest"] = pt
     return "pytest: added standard ini_options"
 
 
@@ -584,7 +584,7 @@ def fix_bandit_skips(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None
     if bandit is None:
         bandit = tomlkit.table()
         bandit["skips"] = list(standard_skips)
-        cast(MutableMapping[str, object], tool)["bandit"] = bandit
+        cast("MutableMapping[str, object]", tool)["bandit"] = bandit
         return "bandit: added [tool.bandit] from workspace SSOT"
     skips = bandit.get("skips")
     if not skips or not isinstance(skips, list):
@@ -639,7 +639,7 @@ def process_file(path: Path, spec: ProjectSpec, *, dry_run: bool = False) -> lis
         if unsafe_write:
             _apply_regex_fixes(path, spec, fixes)
         else:
-            path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+            _ = path.write_text(tomlkit.dumps(doc), encoding="utf-8")
 
     return fixes
 
@@ -898,7 +898,7 @@ def _apply_regex_fixes(path: Path, spec: ProjectSpec, fixes: list[str]) -> None:
             text = text[: section_match.start()] + section + text[section_match.end() :]
 
     if text != original:
-        path.write_text(text, encoding="utf-8")
+        _ = path.write_text(text, encoding="utf-8")
 
 
 # ── Makefile cleanup ─────────────────────────────────────────────────
@@ -922,7 +922,7 @@ def cleanup_makefiles(*, dry_run: bool = False) -> list[str]:
             name = makefile.parent.name
             fixes.append(name)
             if not dry_run:
-                makefile.write_text(text)
+                _ = makefile.write_text(text)
 
     return fixes
 
@@ -1056,7 +1056,7 @@ def main() -> int:
         label = "(check only)" if dry_run else "(apply)"
         print(f"\n\nPhase 2: pyproject-fmt {label}")
         print("=" * 60)
-        run_pyproject_fmt(files, dry_run=dry_run)
+        _ = run_pyproject_fmt(files, dry_run=dry_run)
 
     # Phase 3: poetry check
     if not skip_check and not dry_run:

@@ -8,7 +8,6 @@ import re
 from pathlib import Path
 
 from scripts.libs.versioning import replace_project_version
-
 from scripts.release.shared import parse_semver, resolve_projects, workspace_root
 
 

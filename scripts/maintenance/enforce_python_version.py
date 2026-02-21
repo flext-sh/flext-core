@@ -25,6 +25,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
+
 from scripts.libs.selection import resolve_projects
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -61,33 +62,46 @@ def _ensure_python_version_file(
 ) -> bool:
     """Ensure ``pyproject.toml`` requires-python matches the required minor version and runtime."""
     local_minor = _read_required_minor(project)
-    
+
     # 1. Validate pyproject.toml
     if local_minor != required_minor:
         if check_only:
-            print(f"  ✗ pyproject.toml requires-python WRONG ({local_minor}): {project.name}")
+            print(
+                f"  ✗ pyproject.toml requires-python WRONG ({local_minor}): {project.name}"
+            )
         else:
-            print(f"  ✗ pyproject.toml requires-python MISMATCH ({local_minor} != {required_minor}): {project.name}")
-            print(f"    Please manually update requires-python in {project.name}/pyproject.toml")
+            print(
+                f"  ✗ pyproject.toml requires-python MISMATCH ({local_minor} != {required_minor}): {project.name}"
+            )
+            print(
+                f"    Please manually update requires-python in {project.name}/pyproject.toml"
+            )
         return False
 
     # 2. Validate current runtime
     runtime_minor = sys.version_info.minor
     if runtime_minor != required_minor:
-        print(f"  ✗ Runtime Python mismatch (3.{runtime_minor} != 3.{required_minor}): {project.name}")
+        print(
+            f"  ✗ Runtime Python mismatch (3.{runtime_minor} != 3.{required_minor}): {project.name}"
+        )
         return False
 
     if verbose:
-        print(f"  ✓ Python 3.{required_minor} validated for runtime and pyproject.toml: {project.name}")
-        
+        print(
+            f"  ✓ Python 3.{required_minor} validated for runtime and pyproject.toml: {project.name}"
+        )
+
     return True
+
 
 # ── Main ───────────────────────────────────────────────────────────
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run enforcement."""
-    parser = argparse.ArgumentParser(description="Enforce Python version constraints via pyproject.toml")
+    parser = argparse.ArgumentParser(
+        description="Enforce Python version constraints via pyproject.toml"
+    )
     _ = parser.add_argument(
         "--check", action="store_true", help="Check mode (no writes)"
     )

@@ -21,7 +21,7 @@ def sync_base_mk(root: Path, projects: list[str]) -> None:
     content = source.read_text(encoding="utf-8")
     for name in projects:
         target = root / name / "base.mk"
-        target.write_text(content, encoding="utf-8")
+        _ = target.write_text(content, encoding="utf-8")
 
 
 def read_summary(report_dir: Path, file_name: str) -> dict[str, object]:
@@ -76,11 +76,11 @@ def extract_reason(log_text: str) -> str:
 def main() -> int:
     """Run docs phase across selected projects."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--projects", required=True)
-    parser.add_argument("--phase", default="all")
-    parser.add_argument("--fix", default="")
-    parser.add_argument("--fail-fast", default="0")
+    _ = parser.add_argument("--root", default=".")
+    _ = parser.add_argument("--projects", required=True)
+    _ = parser.add_argument("--phase", default="all")
+    _ = parser.add_argument("--fix", default="")
+    _ = parser.add_argument("--fail-fast", default="0")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -106,7 +106,7 @@ def main() -> int:
             text=True,
         )
         log_text = (completed.stdout or "") + (completed.stderr or "")
-        log_file.write_text(log_text, encoding="utf-8")
+        _ = log_file.write_text(log_text, encoding="utf-8")
 
         if completed.returncode == 0:
             summary = summarize(root / project / ".reports/docs", args.phase)

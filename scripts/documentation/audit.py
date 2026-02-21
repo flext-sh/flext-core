@@ -7,14 +7,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from documentation.shared import (
+from scripts.documentation.shared import (
     Scope,
     build_scopes,
     iter_markdown_files,
@@ -211,12 +207,12 @@ def run_scope(
 def main() -> int:
     """CLI entry point for the documentation audit."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--project")
-    parser.add_argument("--projects")
-    parser.add_argument("--output-dir", default=".reports/docs")
-    parser.add_argument("--check", default="all")
-    parser.add_argument("--strict", type=int, default=1)
+    _ = parser.add_argument("--root", default=".")
+    _ = parser.add_argument("--project")
+    _ = parser.add_argument("--projects")
+    _ = parser.add_argument("--output-dir", default=".reports/docs")
+    _ = parser.add_argument("--check", default="all")
+    _ = parser.add_argument("--strict", type=int, default=1)
     args = parser.parse_args()
 
     root = Path(args.root).resolve()

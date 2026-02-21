@@ -27,6 +27,12 @@ ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = ROOT / ".reports" / "check"
 DEFAULT_GATES = "lint,format,pyrefly,mypy,pyright,security,markdown,go"
 DEFAULT_SRC_DIR = "src"
+_CHECK_DIRS = ("src", "tests", "examples", "scripts")
+
+
+def _existing_check_dirs(project_dir: Path) -> list[str]:
+    """Return subset of _CHECK_DIRS that exist in *project_dir*."""
+    return [d for d in _CHECK_DIRS if (project_dir / d).is_dir()]
 
 
 @dataclass
@@ -88,10 +94,11 @@ def _run(
     )
 
 
-def _run_ruff_lint(project_dir: Path, src_dir: str) -> GateResult:
-    target = src_dir if (project_dir / src_dir).exists() else "."
+def _run_ruff_lint(project_dir: Path, _src_dir: str) -> GateResult:
+    check_dirs = _existing_check_dirs(project_dir)
+    targets = check_dirs or ["."]
     result = _run(
-        ["ruff", "check", target, "--output-format", "json", "--quiet"],
+        ["ruff", "check", *targets, "--output-format", "json", "--quiet"],
         project_dir,
     )
     errors: list[CheckError] = []
@@ -118,9 +125,10 @@ def _run_ruff_lint(project_dir: Path, src_dir: str) -> GateResult:
     )
 
 
-def _run_ruff_format(project_dir: Path, src_dir: str) -> GateResult:
-    target = src_dir if (project_dir / src_dir).exists() else "."
-    result = _run(["ruff", "format", "--check", target, "--quiet"], project_dir)
+def _run_ruff_format(project_dir: Path, _src_dir: str) -> GateResult:
+    check_dirs = _existing_check_dirs(project_dir)
+    targets = check_dirs or ["."]
+    result = _run(["ruff", "format", "--check", *targets, "--quiet"], project_dir)
     errors: list[CheckError] = []
     if result.returncode != 0 and result.stdout.strip():
         for line in result.stdout.strip().splitlines():
@@ -145,11 +153,13 @@ def _run_ruff_format(project_dir: Path, src_dir: str) -> GateResult:
 
 
 def _run_pyrefly(project_dir: Path, src_dir: str, reports_dir: Path) -> GateResult:
+    check_dirs = _existing_check_dirs(project_dir)
+    targets = check_dirs or [src_dir]
     json_file = reports_dir / f"{project_dir.name}-pyrefly.json"
     cmd = [
         "pyrefly",
         "check",
-        src_dir,
+        *targets,
         "--config",
         "pyproject.toml",
         "--output-format",
@@ -231,23 +241,16 @@ def _run_bandit(project_dir: Path, src_dir: str) -> GateResult:
     )
 
 
-def _run_mypy(project_dir: Path, src_dir: str) -> GateResult:
-    src_path = project_dir / src_dir
-    if not src_path.exists():
+def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
+    check_dirs = _existing_check_dirs(project_dir)
+    if not check_dirs:
         return GateResult(gate="mypy", project=project_dir.name, passed=True)
 
-    package_candidates = [
-        child.name
-        for child in src_path.iterdir()
-        if child.is_dir() and (child / "__init__.py").exists()
-    ]
-    if len(package_candidates) == 1:
-        result = _run(
-            ["mypy", "-p", package_candidates[0], "--output", "json"],
-            project_dir,
-        )
-    else:
-        result = _run(["mypy", src_dir, "--output", "json"], project_dir)
+    config_file = str(ROOT / "pyproject.toml")
+    result = _run(
+        ["mypy", *check_dirs, "--config-file", config_file, "--output", "json"],
+        project_dir,
+    )
 
     errors: list[CheckError] = []
     for raw_line in (result.stdout or "").splitlines():
@@ -278,11 +281,11 @@ def _run_mypy(project_dir: Path, src_dir: str) -> GateResult:
     )
 
 
-def _run_pyright(project_dir: Path, src_dir: str) -> GateResult:
-    src_path = project_dir / src_dir
-    if not src_path.exists():
+def _run_pyright(project_dir: Path, _src_dir: str) -> GateResult:
+    check_dirs = _existing_check_dirs(project_dir)
+    if not check_dirs:
         return GateResult(gate="pyright", project=project_dir.name, passed=True)
-    result = _run(["pyright", src_dir, "--outputjson"], project_dir, timeout=600)
+    result = _run(["pyright", *check_dirs, "--outputjson"], project_dir, timeout=600)
     errors: list[CheckError] = []
     try:
         data = json.loads(result.stdout or "{}")
@@ -616,10 +619,10 @@ def _generate_sarif(
 def main() -> int:
     """Run workspace checks and write markdown plus SARIF reports."""
     parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
-    parser.add_argument("projects", nargs="*")
-    parser.add_argument("--gates", default=DEFAULT_GATES)
-    parser.add_argument("--reports-dir", default=str(REPORTS_DIR))
-    parser.add_argument("--fail-fast", action="store_true")
+    _ = parser.add_argument("projects", nargs="*")
+    _ = parser.add_argument("--gates", default=DEFAULT_GATES)
+    _ = parser.add_argument("--reports-dir", default=str(REPORTS_DIR))
+    _ = parser.add_argument("--fail-fast", action="store_true")
     args = parser.parse_args()
 
     if not args.projects:
@@ -661,8 +664,8 @@ def main() -> int:
             print(f"[{i:2d}/{total:2d}] {proj_name} ... skipped")
             continue
 
-        sys.stdout.write(f"[{i:2d}/{total:2d}] {proj_name} ... ")
-        sys.stdout.flush()
+        _ = sys.stdout.write(f"[{i:2d}/{total:2d}] {proj_name} ... ")
+        _ = sys.stdout.flush()
         result = check_project(project_dir, gates, reports_dir)
         all_results.append(result)
 
@@ -682,10 +685,10 @@ def main() -> int:
     timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     md_path = reports_dir / "check-report.md"
-    md_path.write_text(_generate_md(all_results, gates, timestamp))
+    _ = md_path.write_text(_generate_md(all_results, gates, timestamp))
 
     sarif_path = reports_dir / "check-report.sarif"
-    sarif_path.write_text(json.dumps(_generate_sarif(all_results, gates), indent=2))
+    _ = sarif_path.write_text(json.dumps(_generate_sarif(all_results, gates), indent=2))
 
     total_errors = sum(r.total_errors for r in all_results)
     print(f"\n{'=' * 60}")

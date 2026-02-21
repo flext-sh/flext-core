@@ -16,10 +16,10 @@ import json
 import os
 import re
 import subprocess
-import sys
 import tomllib
 from pathlib import Path
-from scripts.libs.selection import resolve_projects  # noqa: E402
+
+from scripts.libs.selection import resolve_projects
 
 # Mypy output patterns for typing library detection (aligned with stub_supply_chain)
 MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')

@@ -11,13 +11,12 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from scripts.libs.discovery import discover_projects as ssot_discover_projects  # noqa: E402
 
-try:
-    import yaml
-except ImportError:
-    yaml = None
+import yaml
 
+from scripts.libs.discovery import (
+    discover_projects as ssot_discover_projects,
+)
 
 SKILLS_DIR = Path(".claude/skills")
 REPORT_DEFAULT = ".claude/skills/{skill}/report.json"

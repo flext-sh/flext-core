@@ -49,7 +49,7 @@ def _ssh_to_https(url: str) -> str:
 
 def _parse_gitmodules(path: Path) -> dict[str, dict[str, str]]:
     parser = configparser.RawConfigParser()
-    parser.read(path)
+    _ = parser.read(path)
     mapping: dict[str, dict[str, str]] = {}
     for section in parser.sections():
         if not section.startswith("submodule "):
@@ -96,7 +96,7 @@ def _resolve_ref(project_root: Path) -> str:
 
 def _is_relative_to(path: Path, parent: Path) -> bool:
     try:
-        path.relative_to(parent)
+        _ = path.relative_to(parent)
     except ValueError:
         return False
     return True
@@ -245,14 +245,14 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
 
     checkout = _run_git(["checkout", safe_ref_name], dep_path)
     if checkout.returncode == 0:
-        _run_git(["pull", "--ff-only", "origin", safe_ref_name], dep_path)
+        _ = _run_git(["pull", "--ff-only", "origin", safe_ref_name], dep_path)
         return
 
     fallback_checkout = _run_git(["checkout", "main"], dep_path)
     if fallback_checkout.returncode != 0:
         error_msg = f"checkout failed for {dep_path.name}: {checkout.stderr.strip()}"
         raise RuntimeError(error_msg)
-    _run_git(["pull", "--ff-only", "origin", "main"], dep_path)
+    _ = _run_git(["pull", "--ff-only", "origin", "main"], dep_path)
     print(
         f"[sync-deps] warning: {dep_path.name} missing ref '{safe_ref_name}', using 'main'"
     )
@@ -284,13 +284,13 @@ def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
         if not match:
             continue
         repo_name = match.group(1)
-        result.setdefault(repo_name, project_root / ".flext-deps" / repo_name)
+        _ = result.setdefault(repo_name, project_root / ".flext-deps" / repo_name)
     return result
 
 
 def _main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--project-root", type=Path, required=True)
+    _ = parser.add_argument("--project-root", type=Path, required=True)
     args = parser.parse_args()
 
     project_root = args.project_root.resolve()

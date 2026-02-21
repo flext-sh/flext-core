@@ -75,7 +75,7 @@ def build_scopes(
 def write_json(path: Path, payload: object) -> None:
     """Write a JSON payload to *path*, creating parent dirs as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    _ = path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
     )
 
@@ -83,7 +83,7 @@ def write_json(path: Path, payload: object) -> None:
 def write_markdown(path: Path, lines: list[str]) -> None:
     """Write markdown lines to *path*, creating parent dirs as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    _ = path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def iter_markdown_files(root: Path) -> list[Path]:

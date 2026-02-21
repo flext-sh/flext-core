@@ -14,21 +14,21 @@ from pathlib import Path
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments for text pattern scanning."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", required=True, help="Project root directory")
-    parser.add_argument("--pattern", required=True, help="Regex pattern")
-    parser.add_argument(
+    _ = parser.add_argument("--root", required=True, help="Project root directory")
+    _ = parser.add_argument("--pattern", required=True, help="Regex pattern")
+    _ = parser.add_argument(
         "--match",
         choices=("present", "absent"),
         default="present",
         help="Violation mode",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--include",
         action="append",
         required=True,
         help="Glob pattern to include (repeatable)",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--exclude",
         action="append",
         default=[],

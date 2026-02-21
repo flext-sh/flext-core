@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from documentation.shared import Scope, build_scopes, write_json, write_markdown
+from scripts.documentation.shared import Scope, build_scopes, write_json, write_markdown
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,7 @@ def write_if_needed(path: Path, content: str, *, apply: bool) -> GeneratedFile:
         return GeneratedFile(path=path.as_posix(), written=False)
     if apply:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        _ = path.write_text(content, encoding="utf-8")
     return GeneratedFile(path=path.as_posix(), written=apply)
 
 
@@ -247,11 +247,11 @@ def run_scope(scope: Scope, *, apply: bool, workspace_root: Path) -> int:
 def main() -> int:
     """CLI entry point for the documentation generator."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--project")
-    parser.add_argument("--projects")
-    parser.add_argument("--output-dir", default=".reports/docs")
-    parser.add_argument("--apply", action="store_true")
+    _ = parser.add_argument("--root", default=".")
+    _ = parser.add_argument("--project")
+    _ = parser.add_argument("--projects")
+    _ = parser.add_argument("--output-dir", default=".reports/docs")
+    _ = parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -262,7 +262,7 @@ def main() -> int:
         output_dir=args.output_dir,
     )
     for scope in scopes:
-        run_scope(scope=scope, apply=args.apply, workspace_root=root)
+        _ = run_scope(scope=scope, apply=args.apply, workspace_root=root)
     return 0
 
 

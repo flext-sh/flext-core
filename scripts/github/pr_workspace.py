@@ -5,11 +5,11 @@ from __future__ import annotations
 
 import argparse
 import subprocess
-import sys
 import time
 from pathlib import Path
-from scripts.libs.selection import resolve_projects  # noqa: E402
-from scripts.libs.subprocess import run_capture, run_checked  # noqa: E402
+
+from scripts.libs.selection import resolve_projects
+from scripts.libs.subprocess import run_capture, run_checked
 
 
 def _parse_args() -> argparse.Namespace:

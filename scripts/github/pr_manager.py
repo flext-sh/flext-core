@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-import sys
 from pathlib import Path
-from scripts.libs.versioning import release_tag_from_branch  # noqa: E402
+
+from scripts.libs.versioning import release_tag_from_branch
 
 
 def _run_capture(command: list[str], cwd: Path) -> str:

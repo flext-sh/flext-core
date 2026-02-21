@@ -9,7 +9,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from documentation.shared import (
+from scripts.documentation.shared import (
     Scope,
     build_scopes,
     write_json,
@@ -74,10 +74,10 @@ def write_reports(scope: Scope, result: BuildResult) -> None:
 def main() -> int:
     """CLI entry point for the documentation build."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--project")
-    parser.add_argument("--projects")
-    parser.add_argument("--output-dir", default=".reports/docs")
+    _ = parser.add_argument("--root", default=".")
+    _ = parser.add_argument("--project")
+    _ = parser.add_argument("--projects")
+    _ = parser.add_argument("--output-dir", default=".reports/docs")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
