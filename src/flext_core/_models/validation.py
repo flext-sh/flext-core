@@ -13,7 +13,6 @@ import re
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import cast
 from urllib.parse import urlparse
 
 from pydantic import BaseModel
@@ -33,12 +32,11 @@ class FlextModelsValidation:
         message: str,
         expected_type: type[T] | None = None,
     ) -> r[T]:
-        failure_result = r[t.GeneralValueType].fail(
+        return r[T].fail(
             message,
             error_code=c.Errors.VALIDATION_ERROR,
             expected_type=expected_type,
         )
-        return cast("r[T]", failure_result)
 
     @staticmethod
     def _validation_failure_message(

@@ -18,7 +18,7 @@ from collections.abc import Callable, Generator, Mapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from flext_core import (
     FlextContext,
@@ -31,17 +31,11 @@ from flext_core import (
     r,
     t,
 )
+from flext_core._models.base import FlextModelsBase
+from pydantic import BaseModel
 
 from flext_tests.constants import c
 from flext_tests.models import m
-
-if TYPE_CHECKING:
-    from flext_core._models.base import FlextModelsBase
-    from pydantic import BaseModel
-
-# Type alias for model factory methods - class constructors or factory functions
-# Using type[T] since factories are typically class constructors accepting **kwargs
-ModelFactory = type[T]
 
 
 class FlextTestsUtilities(FlextUtilities):
@@ -863,7 +857,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_model_creation_success[TResult](
-                factory_method: ModelFactory[TResult],
+                factory_method: Callable[..., TResult],
                 expected_attrs: m.ConfigMap,
                 **factory_kwargs: t.GeneralValueType,
             ) -> TResult:
@@ -2237,4 +2231,4 @@ class FlextTestsUtilities(FlextUtilities):
 
 u = FlextTestsUtilities
 
-__all__ = ["FlextTestsUtilities", "ModelFactory", "u"]
+__all__ = ["FlextTestsUtilities", "u"]

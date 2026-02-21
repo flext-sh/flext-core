@@ -27,7 +27,7 @@ from flext_tests.matchers import FlextTestsMatchers, tm
 from flext_tests.models import FlextTestsModels, m
 from flext_tests.protocols import FlextTestsProtocols, p
 from flext_tests.typings import FlextTestsTypes, t
-from flext_tests.utilities import FlextTestsUtilities, ModelFactory, u
+from flext_tests.utilities import FlextTestsUtilities, u
 from flext_tests.validator import FlextTestsValidator, tv
 
 __all__ = [
@@ -45,7 +45,6 @@ __all__ = [
     "FlextTestsUtilities",
     "FlextTestsUtilityBase",
     "FlextTestsValidator",
-    "ModelFactory",
     "c",
     "f",
     "m",

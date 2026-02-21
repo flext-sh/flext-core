@@ -15,10 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal, Self, TypeGuard, cast, overload
 
-from flext_core import (
-    FlextResult as r,
-    u,
-)
+from flext_core import FlextResult as r
 from flext_core._models.entity import FlextModelsEntity
 from pydantic import BaseModel
 
@@ -26,7 +23,7 @@ from flext_tests.constants import c
 from flext_tests.factories import tt
 from flext_tests.models import m
 from flext_tests.typings import t
-from flext_tests.utilities import FlextTestsUtilities as tu
+from flext_tests.utilities import u
 
 
 class FlextTestsBuilders:
@@ -227,7 +224,7 @@ class FlextTestsBuilders:
             if is_entity_class(cls_type):
                 name_val = cls_kwargs.get("name", "")
                 value_val = cls_kwargs.get("value", "")
-                resolved_value = tu.Tests.DomainHelpers.create_test_entity_instance(
+                resolved_value = u.Tests.DomainHelpers.create_test_entity_instance(
                     name=str(name_val) if name_val else "",
                     value=value_val or "",
                     entity_class=cls_type,
@@ -237,7 +234,7 @@ class FlextTestsBuilders:
                 data_val = cls_kwargs.get("data", "")
                 count_val = cls_kwargs.get("count", 1)
                 resolved_value = (
-                    tu.Tests.DomainHelpers.create_test_value_object_instance(
+                    u.Tests.DomainHelpers.create_test_value_object_instance(
                         data=str(data_val) if data_val else "",
                         count=int(count_val)
                         if isinstance(count_val, (int, float))
@@ -1448,17 +1445,17 @@ class FlextTestsBuilders:
             @staticmethod
             def assert_success[T](result: r[T]) -> T:
                 """Assert success - r[T] satisfies protocol p.Result[T]."""
-                return tu.Tests.Result.assert_success(result)
+                return u.Tests.Result.assert_success(result)
 
             @staticmethod
             def assert_failure(result: r[t.GeneralValueType]) -> str:
                 """Assert failure - r[T] satisfies protocol p.Result[T]."""
-                return tu.Tests.Result.assert_failure(result)
+                return u.Tests.Result.assert_failure(result)
 
         class Batch:
             """Batch operations - tb.Tests.Batch.*.
 
-            DELEGATES TO: tu.Tests.GenericHelpers.*, tu.Tests.TestCaseHelpers.*
+            DELEGATES TO: u.Tests.GenericHelpers.*, u.Tests.TestCaseHelpers.*
             """
 
             @staticmethod
@@ -1480,8 +1477,8 @@ class FlextTestsBuilders:
                 success_values: Sequence[t.GeneralValueType],
                 failure_errors: Sequence[str],
             ) -> list[tuple[str, dict[str, t.GeneralValueType]]]:
-                """Create parametrized cases - DELEGATES to tu.Tests.GenericHelpers."""
-                cases = tu.Tests.GenericHelpers.create_parametrized_cases(
+                """Create parametrized cases - DELEGATES to u.Tests.GenericHelpers."""
+                cases = u.Tests.GenericHelpers.create_parametrized_cases(
                     success_values=list(success_values),
                     failure_errors=list(failure_errors),
                 )
@@ -1509,8 +1506,8 @@ class FlextTestsBuilders:
                 inputs: Sequence[dict[str, t.GeneralValueType]],
                 expected: Sequence[t.GeneralValueType],
             ) -> list[dict[str, t.GeneralValueType]]:
-                """Create batch test cases - DELEGATES to tu.Tests.TestCaseHelpers."""
-                return tu.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+                """Create batch test cases - DELEGATES to u.Tests.TestCaseHelpers."""
+                return u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
                     operation=operation,
                     descriptions=list(descriptions),
                     input_data_list=list(inputs),
@@ -1520,7 +1517,7 @@ class FlextTestsBuilders:
         class Data:
             """Data generation helpers - tb.Tests.Data.*.
 
-            DELEGATES TO: u.Collection.*, u.Mapper.*, tu.Tests.Factory.*
+            DELEGATES TO: u.Collection.*, u.Mapper.*, u.Tests.Factory.*
             """
 
             @staticmethod
@@ -1592,18 +1589,18 @@ class FlextTestsBuilders:
 
             @staticmethod
             def id() -> str:
-                """Generate UUID - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.generate_id()
+                """Generate UUID - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.generate_id()
 
             @staticmethod
             def short_id(length: int = 8) -> str:
-                """Generate short ID - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.generate_short_id(length)
+                """Generate short ID - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.generate_short_id(length)
 
         class Model:
             """Model creation helpers - tb.Tests.Model.*.
 
-            DELEGATES TO: tt.model(), tt.batch(), tu.Tests.DomainHelpers.*
+            DELEGATES TO: tt.model(), tt.batch(), u.Tests.DomainHelpers.*
             """
 
             @staticmethod
@@ -1643,8 +1640,8 @@ class FlextTestsBuilders:
                 name: str = "",
                 value: t.GeneralValueType = "",
             ) -> T:
-                """Create entity - DELEGATES to tu.Tests.DomainHelpers."""
-                return tu.Tests.DomainHelpers.create_test_entity_instance(
+                """Create entity - DELEGATES to u.Tests.DomainHelpers."""
+                return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=name,
                     value=value,
                     entity_class=entity_class,
@@ -1656,8 +1653,8 @@ class FlextTestsBuilders:
                 data: str = "",
                 count: int = 1,
             ) -> T:
-                """Create value object - DELEGATES to tu.Tests.DomainHelpers."""
-                return tu.Tests.DomainHelpers.create_test_value_object_instance(
+                """Create value object - DELEGATES to u.Tests.DomainHelpers."""
+                return u.Tests.DomainHelpers.create_test_value_object_instance(
                     data=data,
                     count=count,
                     value_class=value_class,
@@ -1682,8 +1679,8 @@ class FlextTestsBuilders:
                 names: Sequence[str],
                 values: Sequence[t.GeneralValueType],
             ) -> list[T]:
-                """Create batch entities - DELEGATES to tu.Tests.DomainHelpers."""
-                result = tu.Tests.DomainHelpers.create_test_entities_batch(
+                """Create batch entities - DELEGATES to u.Tests.DomainHelpers."""
+                result = u.Tests.DomainHelpers.create_test_entities_batch(
                     names=list(names),
                     values=list(values),
                     entity_class=entity_class,
@@ -1695,38 +1692,38 @@ class FlextTestsBuilders:
         class Operation:
             """Operation helpers - tb.Tests.Operation.*.
 
-            DELEGATES TO: tu.Tests.Factory.*, tt.op()
+            DELEGATES TO: u.Tests.Factory.*, tt.op()
             """
 
             @staticmethod
             def simple() -> Callable[[], t.GeneralValueType]:
-                """Simple operation - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.simple_operation
+                """Simple operation - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.simple_operation
 
             @staticmethod
             def add() -> Callable[
                 [t.GeneralValueType, t.GeneralValueType],
                 t.GeneralValueType,
             ]:
-                """Add operation - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.add_operation
+                """Add operation - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.add_operation
 
             @staticmethod
             def format() -> Callable[[str, int], str]:
-                """Format operation - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.format_operation
+                """Format operation - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.format_operation
 
             @staticmethod
             def error(message: str) -> Callable[[], t.GeneralValueType]:
-                """Error operation - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.create_error_operation(message)
+                """Error operation - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.create_error_operation(message)
 
             @staticmethod
             def execute_service(
                 overrides: dict[str, t.GeneralValueType] | None = None,
             ) -> r[t.GeneralValueType]:
-                """Execute service - DELEGATES to tu.Tests.Factory."""
-                return tu.Tests.Factory.execute_user_service(overrides or {})
+                """Execute service - DELEGATES to u.Tests.Factory."""
+                return u.Tests.Factory.execute_user_service(overrides or {})
 
 
 # Short alias for convenient test usage
