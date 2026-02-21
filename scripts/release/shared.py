@@ -4,22 +4,16 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
-if str(SCRIPTS_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_ROOT))
-
-# pylint: disable=wrong-import-position
-from libs.discovery import ProjectInfo  # noqa: E402
-from libs.paths import workspace_root as _workspace_root  # noqa: E402
-from libs.selection import resolve_projects as _resolve_projects  # noqa: E402
-from libs.subprocess import (  # noqa: E402
+from libs.discovery import ProjectInfo
+from libs.paths import workspace_root as _workspace_root
+from libs.selection import resolve_projects as _resolve_projects
+from libs.subprocess import (
     run_capture as _run_capture,
     run_checked as _run_checked,
 )
-from libs.versioning import (  # noqa: E402
+from libs.versioning import (
     bump_version as _bump_version,
     parse_semver as _parse_semver,
 )

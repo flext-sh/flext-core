@@ -4,15 +4,9 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
-SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
-if str(SCRIPTS_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_ROOT))
-
-# pylint: disable=wrong-import-position
-from release.shared import resolve_projects, run_capture, workspace_root  # noqa: E402
+from release.shared import resolve_projects, run_capture, workspace_root
 
 
 def _parse_args() -> argparse.Namespace:

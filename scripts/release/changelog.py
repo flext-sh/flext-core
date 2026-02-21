@@ -4,16 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
-if str(SCRIPTS_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_ROOT))
-
-# pylint: disable=wrong-import-position
-from release.shared import workspace_root  # noqa: E402
+from release.shared import workspace_root
 
 
 def _parse_args() -> argparse.Namespace:

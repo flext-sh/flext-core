@@ -4,17 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
-SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
-if str(SCRIPTS_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_ROOT))
+from libs.versioning import current_workspace_version
 
-# pylint: disable=wrong-import-position
-from libs.versioning import current_workspace_version  # noqa: E402
-
-from release.shared import (  # noqa: E402
+from release.shared import (
     bump_version,
     parse_semver,
     resolve_projects,

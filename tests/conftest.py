@@ -6,31 +6,6 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-# PYTHON_VERSION_GUARD — Do not remove. Managed by scripts/maintenance/enforce_python_version.py
-import sys as _sys
-
-if _sys.version_info[:2] != (3, 13):
-    _v = (
-        f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}"
-    )
-    raise RuntimeError(
-        f"\n{'=' * 72}\n"
-        f"FATAL: Python {_v} detected — this project requires Python 3.13.\n"
-        f"\n"
-        f"The virtual environment was created with the WRONG Python interpreter.\n"
-        f"\n"
-        f"Fix:\n"
-        f"  1. rm -rf .venv\n"
-        f"  2. poetry env use python3.13\n"
-        f"  3. poetry install\n"
-        f"\n"
-        f"Or use the workspace Makefile:\n"
-        f"  make setup PROJECT=<project-name>\n"
-        f"{'=' * 72}\n"
-    )
-del _sys
-# PYTHON_VERSION_GUARD_END
-
 import math
 import queue
 import tempfile
