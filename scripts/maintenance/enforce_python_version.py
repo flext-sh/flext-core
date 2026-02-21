@@ -21,10 +21,11 @@ import re
 import sys
 from pathlib import Path
 
-if str(Path(__file__).resolve().parents[2]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-from libs.selection import resolve_projects
+from libs.selection import resolve_projects  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 REQUIRED_MINOR = 13

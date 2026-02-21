@@ -11,10 +11,12 @@ from pathlib import Path
 
 
 def parse_projects(raw: str) -> list[str]:
+    """Parse whitespace-separated project names."""
     return [part for part in raw.split() if part]
 
 
 def sync_base_mk(root: Path, projects: list[str]) -> None:
+    """Sync root base.mk into selected project directories."""
     source = root / "base.mk"
     content = source.read_text(encoding="utf-8")
     for name in projects:
@@ -23,14 +25,19 @@ def sync_base_mk(root: Path, projects: list[str]) -> None:
 
 
 def read_summary(report_dir: Path, file_name: str) -> dict[str, object]:
+    """Read summary payload from one docs report file."""
     path = report_dir / file_name
     if not path.exists():
         return {}
     payload = json.loads(path.read_text(encoding="utf-8"))
-    return payload.get("summary", {})
+    if not isinstance(payload, dict):
+        return {}
+    summary = payload.get("summary", {})
+    return summary if isinstance(summary, dict) else {}
 
 
 def summarize(report_dir: Path, phase: str) -> str:
+    """Build compact phase summary from docs reports."""
     parts: list[str] = []
     if phase in {"all", "generate"}:
         parts.append(
@@ -56,6 +63,7 @@ def summarize(report_dir: Path, phase: str) -> str:
 
 
 def extract_reason(log_text: str) -> str:
+    """Extract one-line failure reason from command logs."""
     lines = [line.strip() for line in log_text.splitlines() if line.strip()]
     for line in lines:
         if line.startswith("Error:"):
@@ -66,6 +74,7 @@ def extract_reason(log_text: str) -> str:
 
 
 def main() -> int:
+    """Run docs phase across selected projects."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--projects", required=True)

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Manage pull request lifecycle actions for a repository."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,11 +9,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-from libs.versioning import release_tag_from_branch
+from libs.versioning import release_tag_from_branch  # noqa: E402
 
 
 def _run_capture(command: list[str], cwd: Path) -> str:
@@ -229,6 +231,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Dispatch requested PR action and return its exit code."""
     args = _parse_args()
     repo_root = args.repo_root.resolve()
     head = args.head or _current_branch(repo_root)

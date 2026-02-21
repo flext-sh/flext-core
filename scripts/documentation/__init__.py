@@ -1,0 +1,1 @@
+"""Documentation automation scripts package."""

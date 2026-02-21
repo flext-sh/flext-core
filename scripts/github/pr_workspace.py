@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Run PR automation across workspace repositories."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,12 +9,12 @@ import sys
 import time
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-from libs.selection import resolve_projects
-from libs.subprocess import run_capture, run_checked
+from libs.selection import resolve_projects  # noqa: E402
+from libs.subprocess import run_capture, run_checked  # noqa: E402
 
 
 def _parse_args() -> argparse.Namespace:
@@ -57,7 +59,7 @@ def _checkout_branch(repo_root: Path, branch: str) -> None:
     if current == branch:
         return
     checkout = subprocess.run(
-        ["git", "checkout", branch],
+        ["git", "checkout", branch],  # noqa: S607
         cwd=repo_root,
         check=False,
         capture_output=True,
@@ -70,7 +72,7 @@ def _checkout_branch(repo_root: Path, branch: str) -> None:
         run_checked(["git", "checkout", "-B", branch], cwd=repo_root)
         return
     fetch = subprocess.run(
-        ["git", "fetch", "origin", branch],
+        ["git", "fetch", "origin", branch],  # noqa: S607
         cwd=repo_root,
         check=False,
         capture_output=True,
@@ -182,6 +184,7 @@ def _run_pr(repo_root: Path, workspace_root: Path, args: argparse.Namespace) -> 
 
 
 def main() -> int:
+    """Execute PR workflow for selected repositories."""
     args = _parse_args()
     workspace_root = args.workspace_root.resolve()
     projects = resolve_projects(workspace_root, list(args.project))

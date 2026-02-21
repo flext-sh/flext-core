@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -12,13 +13,17 @@ if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
 # pylint: disable=wrong-import-position
-from libs.versioning import replace_project_version
-from release.shared import parse_semver, resolve_projects, workspace_root
+from libs.versioning import replace_project_version  # noqa: E402
+
+from release.shared import parse_semver, resolve_projects, workspace_root  # noqa: E402
 
 
-def _replace_version(content: str, version: str) -> tuple[str, bool]:
-    """Replace the version field in a TOML content string."""
-    return replace_project_version(content, version)
+def _needs_version_update(content: str, version: str) -> bool:
+    """Return whether TOML content has a different version value."""
+    match = re.search(r'^version\s*=\s*"(.+?)"', content, re.MULTILINE)
+    if match is None:
+        return True
+    return match.group(1) != version
 
 
 def _version_files(root: Path, project_names: list[str]) -> list[Path]:
@@ -58,11 +63,11 @@ def main() -> int:
     changed = 0
     for file_path in _version_files(root, args.projects):
         content = file_path.read_text(encoding="utf-8")
-        updated, did_change = _replace_version(content, target_version)
+        did_change = _needs_version_update(content, target_version)
         if did_change:
             changed += 1
             if args.apply:
-                _ = file_path.write_text(updated, encoding="utf-8")
+                replace_project_version(file_path.parent, target_version)
             _ = print(f"update: {file_path}")
 
     if args.check:

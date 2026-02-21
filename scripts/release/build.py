@@ -14,7 +14,7 @@ if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
 # pylint: disable=wrong-import-position
-from release.shared import resolve_projects, workspace_root
+from release.shared import resolve_projects, workspace_root  # noqa: E402
 
 
 def _parse_args() -> argparse.Namespace:

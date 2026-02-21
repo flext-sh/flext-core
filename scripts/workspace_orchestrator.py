@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+"""Run make verbs across projects with per-project logs."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +16,7 @@ def _run(
     verb: str,
     index: int,
     _total: int,
+    *,
     fail_fast: bool,
     make_args: list[str],
 ) -> tuple[int, bool]:
@@ -23,7 +26,7 @@ def _run(
     started = time.monotonic()
     with log_path.open("w", encoding="utf-8") as log_handle:
         proc = subprocess.run(
-            ["make", "-C", project, verb, *make_args],
+            ["make", "-C", project, verb, *make_args],  # noqa: S607
             stdout=log_handle,
             stderr=subprocess.STDOUT,
             check=False,
@@ -39,6 +42,7 @@ def _run(
 
 
 def main() -> int:
+    """Execute make verb across projects with optional fail-fast."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument("--verb", required=True)
     _ = parser.add_argument("--fail-fast", action="store_true")
@@ -61,8 +65,8 @@ def main() -> int:
             args.verb,
             idx,
             total,
-            args.fail_fast,
-            args.make_arg,
+            fail_fast=args.fail_fast,
+            make_args=args.make_arg,
         )
         if code == 0:
             success += 1

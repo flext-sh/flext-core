@@ -9,7 +9,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from shared import (
+from documentation.shared import (
     Scope,
     build_scopes,
     write_json,

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/scripts-infra/SKILL.md
+"""Supply typing stubs and typing dependencies for workspace projects."""
 
 from __future__ import annotations
 
@@ -16,10 +17,11 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-if str(Path(__file__).resolve().parents[2]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-from libs.selection import resolve_projects
+from libs.selection import resolve_projects  # noqa: E402
 
 MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
 MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')
@@ -29,6 +31,8 @@ INTERNAL_PREFIXES = ("flext_", "flext_", "flext_")
 
 @dataclass(frozen=True)
 class ProjectResult:
+    """Capture stub supply-chain results for one project."""
+
     project: str
     internal_missing_imports: list[str]
     unresolved_missing_imports: list[str]
@@ -41,6 +45,7 @@ class ProjectResult:
 def run_cmd(
     command: list[str], cwd: Path, timeout: int = 900
 ) -> subprocess.CompletedProcess[str]:
+    """Run command with workspace venv environment wiring."""
     env = os.environ.copy()
     workspace_venv: Path | None = None
     if (cwd / ".venv").exists():
@@ -70,6 +75,7 @@ def run_cmd(
 
 
 def discover_projects(root: Path) -> list[Path]:
+    """Discover Python projects that should participate in stub checks."""
     return [
         project.path
         for project in resolve_projects(root, names=[])
@@ -79,11 +85,13 @@ def discover_projects(root: Path) -> list[Path]:
 
 
 def load_pyproject(project_dir: Path) -> dict[str, object]:
+    """Load pyproject.toml as a dictionary."""
     pyproject = project_dir / "pyproject.toml"
     return tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
 
 def get_poetry_dependencies(data: dict[str, object]) -> set[str]:
+    """Collect dependency names from Poetry dependency groups."""
     tool = data.get("tool")
     if not isinstance(tool, dict):
         return set()
@@ -109,6 +117,7 @@ def get_poetry_dependencies(data: dict[str, object]) -> set[str]:
 
 
 def parse_mypy_signal(output: str) -> tuple[list[str], list[str]]:
+    """Parse mypy output for suggested types packages and missing libs."""
     hinted: set[str] = set()
     missing_libs: set[str] = set()
 
@@ -126,6 +135,7 @@ def parse_mypy_signal(output: str) -> tuple[list[str], list[str]]:
 
 
 def run_mypy_signal(project_dir: Path) -> tuple[list[str], list[str], str]:
+    """Run mypy and return parsed hints with raw output."""
     command = [
         "poetry",
         "run",
@@ -144,8 +154,10 @@ def run_mypy_signal(project_dir: Path) -> tuple[list[str], list[str], str]:
 def install_types_packages(
     project_dir: Path,
     packages: list[str],
+    *,
     apply: bool,
 ) -> tuple[list[str], list[str]]:
+    """Install missing types packages when apply mode is enabled."""
     existing = get_poetry_dependencies(load_pyproject(project_dir))
     missing = [pkg for pkg in packages if pkg not in existing]
     if not missing:
@@ -171,6 +183,7 @@ def install_types_packages(
 
 
 def parse_pyrefly_missing_imports(output: str) -> list[str]:
+    """Extract missing-import module names from pyrefly output."""
     seen: set[str] = set()
     ordered: list[str] = []
     for match in MISSING_IMPORT_RE.finditer(output):
@@ -182,6 +195,7 @@ def parse_pyrefly_missing_imports(output: str) -> list[str]:
 
 
 def project_missing_imports(project_dir: Path) -> list[str]:
+    """Run pyrefly check and return missing imports."""
     result = run_cmd(
         ["poetry", "run", "pyrefly", "check", "src", "--config", "pyproject.toml"],
         cwd=project_dir,
@@ -192,6 +206,7 @@ def project_missing_imports(project_dir: Path) -> list[str]:
 
 
 def is_internal_module(module_name: str, project_name: str) -> bool:
+    """Return whether a missing import belongs to internal project code."""
     root = module_name.split(".", 1)[0]
     project_root = project_name.replace("-", "_")
     if root.startswith(INTERNAL_PREFIXES):
@@ -200,6 +215,7 @@ def is_internal_module(module_name: str, project_name: str) -> bool:
 
 
 def existing_stub(module_name: str, root: Path) -> bool:
+    """Check whether a stub already exists for a module."""
     rel = module_name.replace(".", "/")
     manual = root / "typings" / rel
     generated = root / "typings" / "generated" / rel
@@ -213,6 +229,7 @@ def existing_stub(module_name: str, root: Path) -> bool:
 
 
 def stub_presence(module_name: str, root: Path) -> tuple[bool, bool]:
+    """Return whether manual and generated stubs exist for a module."""
     rel = module_name.replace(".", "/")
     manual = root / "typings" / rel
     generated = root / "typings" / "generated" / rel
@@ -230,6 +247,7 @@ def stub_presence(module_name: str, root: Path) -> tuple[bool, bool]:
 
 
 def snapshot_tree(root: Path) -> dict[str, str]:
+    """Snapshot stub tree files to SHA256 digests."""
     if not root.exists():
         return {}
     snapshot: dict[str, str] = {}
@@ -241,6 +259,7 @@ def snapshot_tree(root: Path) -> dict[str, str]:
 
 
 def merge_generated_stubs(temp_root: Path, dest_root: Path) -> list[str]:
+    """Copy newly generated stubs into destination root."""
     created: list[str] = []
     if not temp_root.exists():
         return created
@@ -257,6 +276,7 @@ def merge_generated_stubs(temp_root: Path, dest_root: Path) -> list[str]:
 def run_stubgen_for_module(
     module_name: str, temp_root: Path, project_dir: Path
 ) -> bool:
+    """Run stubgen for a module using package or module mode."""
     pkg_result = run_cmd(
         [
             "poetry",
@@ -299,8 +319,10 @@ def generate_stubgen_stubs(
     project_dir: Path,
     modules: list[str],
     root: Path,
+    *,
     apply: bool,
 ) -> list[str]:
+    """Generate stubs for unresolved third-party imports."""
     if not modules or not apply:
         return []
 
@@ -319,9 +341,14 @@ def generate_stubgen_stubs(
     return sorted(created)
 
 
-def process_project(project_dir: Path, root: Path, apply: bool) -> ProjectResult:
+def process_project(project_dir: Path, root: Path, *, apply: bool) -> ProjectResult:
+    """Process one project through stub and typing remediation."""
     mypy_hints, _, _ = run_mypy_signal(project_dir)
-    types_added, types_missing = install_types_packages(project_dir, mypy_hints, apply)
+    types_added, types_missing = install_types_packages(
+        project_dir,
+        mypy_hints,
+        apply=apply,
+    )
 
     missing_imports = project_missing_imports(project_dir)
     internal_missing = [
@@ -342,7 +369,12 @@ def process_project(project_dir: Path, root: Path, apply: bool) -> ProjectResult
 
     generated_files: list[str] = []
     if apply:
-        generated_files = generate_stubgen_stubs(project_dir, unresolved, root, apply)
+        generated_files = generate_stubgen_stubs(
+            project_dir,
+            unresolved,
+            root,
+            apply=apply,
+        )
         unresolved = [
             module_name
             for module_name in unresolved
@@ -361,6 +393,7 @@ def process_project(project_dir: Path, root: Path, apply: bool) -> ProjectResult
 
 
 def write_report(path: Path, payload: object) -> None:
+    """Write JSON report payload to disk."""
     path.parent.mkdir(parents=True, exist_ok=True)
     _ = path.write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -368,6 +401,7 @@ def write_report(path: Path, payload: object) -> None:
 
 
 def main() -> int:
+    """Run stub supply-chain workflow for selected projects."""
     parser = argparse.ArgumentParser(description="Typing stub supply-chain gate")
     _ = parser.add_argument("--all", action="store_true", help="Process all projects")
     _ = parser.add_argument(
@@ -400,7 +434,7 @@ def main() -> int:
     before_snapshot = snapshot_tree(generated_root)
 
     results: list[ProjectResult] = [
-        process_project(project, root, args.apply) for project in projects
+        process_project(project, root, apply=args.apply) for project in projects
     ]
 
     after_snapshot = snapshot_tree(generated_root)

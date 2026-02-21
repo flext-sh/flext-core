@@ -12,9 +12,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.documentation.shared import (
+from documentation.shared import (
     Scope,
     build_scopes,
     iter_markdown_files,
@@ -71,6 +71,7 @@ def normalize_link(target: str) -> str:
 
 
 def should_skip_target(raw: str, target: str) -> bool:
+    """Return whether link text should be ignored as a non-path target."""
     if target.startswith("http"):
         return False
     if "," in raw and ".md" not in raw and "/" not in raw:

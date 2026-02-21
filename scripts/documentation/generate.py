@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from shared import Scope, build_scopes, write_json, write_markdown
+from documentation.shared import Scope, build_scopes, write_json, write_markdown
 
 
 @dataclass(frozen=True)
@@ -50,6 +50,7 @@ def sanitize_internal_anchor_links(content: str) -> str:
 
 
 def build_toc(content: str) -> str:
+    """Build a markdown TOC from level-2 and level-3 headings."""
     items: list[str] = []
     for level, title in re.findall(
         r"^(##|###)\s+(.+?)\s*$", content, flags=re.MULTILINE
@@ -65,6 +66,7 @@ def build_toc(content: str) -> str:
 
 
 def update_toc(content: str) -> str:
+    """Insert or replace TOC markers in markdown content."""
     toc = build_toc(content)
     if TOC_START in content and TOC_END in content:
         return re.sub(

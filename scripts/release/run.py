@@ -12,8 +12,9 @@ if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
 # pylint: disable=wrong-import-position
-from libs.versioning import current_workspace_version
-from release.shared import (
+from libs.versioning import current_workspace_version  # noqa: E402
+
+from release.shared import (  # noqa: E402
     bump_version,
     parse_semver,
     resolve_projects,
@@ -50,8 +51,9 @@ def _current_version(root: Path) -> str:
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     """Determine the target release version based on arguments or interaction."""
     if args.version:
-        _ = parse_semver(args.version)
-        return args.version
+        requested = str(args.version)
+        _ = parse_semver(requested)
+        return requested
 
     current = _current_version(root)
     if args.bump:
@@ -71,10 +73,11 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
 def _resolve_tag(args: argparse.Namespace, version: str) -> str:
     """Determine the Git tag for the release."""
     if args.tag:
-        if not args.tag.startswith("v"):
+        requested = str(args.tag)
+        if not requested.startswith("v"):
             msg = "tag must start with v"
             raise RuntimeError(msg)
-        return args.tag
+        return requested
     return f"v{version}"
 
 
@@ -91,6 +94,7 @@ def _create_release_branches(
 def _phase_version(
     root: Path,
     version: str,
+    *,
     dry_run: bool,
     project_names: list[str],
     dev_suffix: bool,
@@ -139,6 +143,7 @@ def _phase_publish(
     root: Path,
     version: str,
     tag: str,
+    *,
     push: bool,
     dry_run: bool,
     project_names: list[str],
@@ -238,9 +243,9 @@ def main() -> int:
             _phase_version(
                 root,
                 version,
-                args.dry_run == 1,
-                selected_project_names,
-                args.dev_suffix == 1,
+                dry_run=args.dry_run == 1,
+                project_names=selected_project_names,
+                dev_suffix=args.dev_suffix == 1,
             )
             continue
         if phase == "build":
@@ -251,9 +256,9 @@ def main() -> int:
                 root,
                 version,
                 tag,
-                args.push == 1,
-                args.dry_run == 1,
-                selected_project_names,
+                push=args.push == 1,
+                dry_run=args.dry_run == 1,
+                project_names=selected_project_names,
             )
             continue
         msg = f"invalid phase: {phase}"

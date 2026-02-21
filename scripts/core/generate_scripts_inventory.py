@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/scripts-infra/SKILL.md
+"""Generate script inventory artifacts for workspace governance."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +16,7 @@ def _artifact_path(slug: str) -> Path:
 
 
 def main() -> int:
+    """Build and write scripts inventory reports."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument("--root", default=".")
     args = parser.parse_args()

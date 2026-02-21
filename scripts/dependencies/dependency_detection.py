@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -18,14 +19,12 @@ import subprocess
 import sys
 import tomllib
 from pathlib import Path
-from typing import Any
 
-if str(Path(__file__).resolve().parents[2]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-import contextlib
-
-from libs.selection import resolve_projects
+from libs.selection import resolve_projects  # noqa: E402
 
 # Mypy output patterns for typing library detection (aligned with stub_supply_chain)
 MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')
@@ -71,6 +70,7 @@ def discover_projects(
     workspace_root: Path,
     projects_filter: list[str] | None = None,
 ) -> list[Path]:
+    """Discover workspace projects eligible for dependency checks."""
     projects = [
         project.path
         for project in resolve_projects(workspace_root, names=[])
@@ -90,7 +90,7 @@ def run_deptry(
     config_path: Path | None = None,
     json_output_path: Path | None = None,
     extend_exclude: list[str] | None = None,
-) -> tuple[list[dict[str, Any]], int]:
+) -> tuple[list[dict[str, object]], int]:
     """Run deptry on a project. Returns (parsed JSON issues, exit_code).
 
     If json_output_path is set, deptry writes JSON there and we read it.
@@ -120,9 +120,10 @@ def run_deptry(
         capture_output=True,
         text=True,
         timeout=120,
+        check=False,
     )
 
-    issues: list[dict[str, Any]] = []
+    issues: list[dict[str, object]] = []
     if out_file.exists():
         try:
             raw = out_file.read_text(encoding="utf-8")
@@ -148,30 +149,34 @@ def run_pip_check(workspace_root: Path, venv_bin: Path) -> tuple[list[str], int]
         text=True,
         timeout=60,
         env={**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)},
+        check=False,
     )
     out = (result.stdout or "").strip().splitlines() if result.stdout else []
     return out, result.returncode
 
 
-def classify_issues(issues: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+def classify_issues(
+    issues: list[dict[str, object]],
+) -> dict[str, list[dict[str, object]]]:
     """Group deptry issues by error code (DEP001=missing, DEP002=unused, DEP003=transitive, DEP004=dev in runtime)."""
-    groups: dict[str, list[dict[str, Any]]] = {
+    groups: dict[str, list[dict[str, object]]] = {
         "DEP001": [],
         "DEP002": [],
         "DEP003": [],
         "DEP004": [],
     }
     for item in issues:
-        code = (item.get("error") or {}).get("code")
-        if code in groups:
+        error_obj = item.get("error")
+        code = error_obj.get("code") if isinstance(error_obj, dict) else None
+        if isinstance(code, str) and code in groups:
             groups[code].append(item)
     return groups
 
 
 def build_project_report(
     project_name: str,
-    deptry_issues: list[dict[str, Any]],
-) -> dict[str, Any]:
+    deptry_issues: list[dict[str, object]],
+) -> dict[str, object]:
     """Build a single-project report for runtime/dev dependency detection."""
     classified = classify_issues(deptry_issues)
     return {
@@ -186,7 +191,7 @@ def build_project_report(
     }
 
 
-def load_dependency_limits(limits_path: Path | None = None) -> dict[str, Any]:
+def load_dependency_limits(limits_path: Path | None = None) -> dict[str, object]:
     """Load dependency_limits.toml. Returns empty dict if file missing or invalid."""
     path = limits_path or (Path(__file__).resolve().parent / "dependency_limits.toml")
     if not path.exists():
@@ -231,6 +236,7 @@ def run_mypy_stub_hints(
         text=True,
         timeout=timeout,
         env=env,
+        check=False,
     )
     output = (result.stdout or "") + "\n" + (result.stderr or "")
 
@@ -249,12 +255,15 @@ def run_mypy_stub_hints(
     return sorted(hinted), sorted(missing)
 
 
-def module_to_types_package(module_name: str, limits: dict[str, Any]) -> str | None:
+def module_to_types_package(module_name: str, limits: dict[str, object]) -> str | None:
     """Map importable module name to types-* PyPI package. Returns None if internal or unknown."""
     root = module_name.split(".", 1)[0]
     if root.startswith(INTERNAL_PREFIXES):
         return None
-    overrides = (limits.get("typing_libraries") or {}).get("module_to_package")
+    typing_libraries = limits.get("typing_libraries")
+    overrides: object = None
+    if isinstance(typing_libraries, dict):
+        overrides = typing_libraries.get("module_to_package")
     if isinstance(overrides, dict) and root in overrides:
         return str(overrides[root])
     return DEFAULT_MODULE_TO_TYPES_PACKAGE.get(root.lower())
@@ -309,16 +318,18 @@ def get_required_typings(
     limits_path: Path | None = None,
     *,
     include_mypy: bool = True,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Detect required typing libraries (types-*) for a project using mypy stub hints and limits.
 
     Returns dict with: required_packages, hinted, missing_modules, current, to_add, to_remove, limits_applied, exclude.
     """
     limits = load_dependency_limits(limits_path)
     exclude_set = set()
-    typing_limits = limits.get("typing_libraries") or {}
-    if isinstance(typing_limits.get("exclude"), list):
-        exclude_set = set(typing_limits["exclude"])
+    typing_limits = limits.get("typing_libraries")
+    if isinstance(typing_limits, dict):
+        excluded_obj = typing_limits.get("exclude")
+        if isinstance(excluded_obj, list):
+            exclude_set = {str(item) for item in excluded_obj}
 
     hinted: list[str] = []
     missing_modules: list[str] = []
@@ -340,6 +351,9 @@ def get_required_typings(
         current_set - required_set
     )  # optional: suggest removing unused typings
 
+    python_cfg = limits.get("python")
+    python_version = python_cfg.get("version") if isinstance(python_cfg, dict) else None
+
     return {
         "required_packages": required_packages,
         "hinted": hinted,
@@ -348,7 +362,5 @@ def get_required_typings(
         "to_add": to_add,
         "to_remove": to_remove,
         "limits_applied": bool(limits),
-        "python_version": (limits.get("python") or {}).get("version")
-        if isinstance(limits.get("python"), dict)
-        else None,
+        "python_version": python_version,
     }

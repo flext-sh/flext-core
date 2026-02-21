@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+"""Detect whether a project runs in standalone or workspace mode."""
+
 from __future__ import annotations
 
 import argparse
@@ -17,12 +19,13 @@ def _repo_name_from_url(url: str) -> str:
 
 
 def detect_mode(project_root: Path) -> str:
+    """Detect mode by inspecting parent repository origin URL."""
     parent = project_root.resolve().parent
     git_marker = parent / ".git"
     if not git_marker.exists():
         return "standalone"
     result = subprocess.run(
-        ["git", "-C", str(parent), "config", "--get", "remote.origin.url"],
+        ["git", "-C", str(parent), "config", "--get", "remote.origin.url"],  # noqa: S607
         check=False,
         capture_output=True,
         text=True,
@@ -36,6 +39,7 @@ def detect_mode(project_root: Path) -> str:
 
 
 def main() -> int:
+    """Print detected execution mode for a project path."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument("--project-root", required=True, type=Path)
     args = parser.parse_args()

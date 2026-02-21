@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree as ET  # noqa: S405
 
 
 def _write_or_placeholder(path: Path, entries: list[str], placeholder: str) -> None:
@@ -23,6 +23,7 @@ def _count_effective(path: Path, placeholder: str) -> int:
 
 
 def main() -> int:
+    """Extract diagnostics from junit XML and pytest logs."""
     if len(sys.argv) != 8:
         msg = "usage: pytest_diag_extract.py <junit> <log> <failed> <errors> <warnings> <slowest> <skips>"
         raise SystemExit(msg)
@@ -47,11 +48,12 @@ def main() -> int:
     skip_cases: list[str] = []
     warning_lines: list[str] = []
     slow_rows: list[tuple[float, str]] = []
+    slow_entries: list[str] = []
 
     xml_parsed = False
     if junit_path.exists():
         try:
-            root = ET.parse(junit_path).getroot()
+            root = ET.parse(junit_path).getroot()  # noqa: S314
             for case in root.iter("testcase"):
                 classname = case.attrib.get("classname", "")
                 name = case.attrib.get("name", "")
@@ -142,7 +144,6 @@ def main() -> int:
         ]
     else:
         capture_slow = False
-        slow_entries: list[str] = []
         for line in lines:
             if re.match(r"^=+ slowest durations =+", line):
                 capture_slow = True

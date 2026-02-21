@@ -12,10 +12,11 @@ import sys
 import time
 from pathlib import Path
 
-if str(Path(__file__).resolve().parents[2]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-from libs.discovery import discover_projects as ssot_discover_projects
+from libs.discovery import discover_projects as ssot_discover_projects  # noqa: E402
 
 try:
     import yaml  # type: ignore[import-untyped]
@@ -35,14 +36,15 @@ EXIT_INFRA = 3
 
 
 class SkillUsageError(Exception):
-    pass
+    """Raise when rules.yml or CLI usage is invalid."""
 
 
 class SkillInfraError(Exception):
-    pass
+    """Raise when external tools or filesystem operations fail."""
 
 
 def eprint(message: str) -> None:
+    """Print an error message to stderr."""
     print(message, file=sys.stderr)
 
 
@@ -51,6 +53,7 @@ def run_cmd(
     cwd: Path,
     timeout: int = 300,
 ) -> subprocess.CompletedProcess[str]:
+    """Run a command and normalize infrastructure failures."""
     try:
         return subprocess.run(
             command,
@@ -69,6 +72,7 @@ def run_cmd(
 
 
 def tool_available(name: str) -> bool:
+    """Return whether a CLI tool is available in PATH."""
     try:
         result = subprocess.run(
             [name, "--version"],
@@ -83,6 +87,7 @@ def tool_available(name: str) -> bool:
 
 
 def normalize_rel_path(value: str) -> str:
+    """Normalize path separators and leading relative markers."""
     return value.replace("\\", "/").lstrip("./")
 
 
@@ -112,6 +117,7 @@ def normalize_exclude_globs(
 
 
 def unique_sorted(items: list[str]) -> list[str]:
+    """Return sorted unique values preserving first-seen semantics."""
     seen: set[str] = set()
     out: list[str] = []
     for item in items:
@@ -123,38 +129,33 @@ def unique_sorted(items: list[str]) -> list[str]:
 
 
 def load_rules_yml(path: Path) -> dict[str, object]:
+    """Load rules metadata from YAML or JSON fallback."""
     try:
         raw = path.read_text(encoding="utf-8")
     except OSError as exc:
         msg = f"Cannot read rules file: {path}"
         raise SkillInfraError(msg) from exc
 
-    if yaml is not None:
-        try:
-            parsed = yaml.safe_load(raw)
-        except Exception as exc:
-            msg = f"Invalid YAML at {path}: {exc}"
-            raise SkillInfraError(msg) from exc
-        if parsed is None:
-            return {}
-        if not isinstance(parsed, dict):
-            msg = f"rules.yml must be a mapping: {path}"
-            raise SkillUsageError(msg)
-        return dict(parsed)
+    safe_load = getattr(yaml, "safe_load", None)
+    if safe_load is None:
+        msg = "PyYAML safe_load is unavailable"
+        raise SkillInfraError(msg)
 
     try:
-        parsed_json = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        msg = f"PyYAML unavailable and rules file is not JSON: {path}"
+        parsed = safe_load(raw)
+    except Exception as exc:
+        msg = f"Invalid YAML at {path}: {exc}"
         raise SkillInfraError(msg) from exc
-
-    if not isinstance(parsed_json, dict):
-        msg = f"rules file must parse as an object: {path}"
+    if parsed is None:
+        return {}
+    if not isinstance(parsed, dict):
+        msg = f"rules.yml must be a mapping: {path}"
         raise SkillUsageError(msg)
-    return dict(parsed_json)
+    return dict(parsed)
 
 
 def write_json(path: Path, payload: dict[str, object]) -> None:
+    """Write a JSON payload to disk with stable formatting."""
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         _ = path.write_text(
@@ -167,6 +168,7 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 def read_json(path: Path) -> dict[str, object]:
+    """Read a JSON object from disk or return an empty mapping."""
     if not path.exists():
         return {}
     try:
@@ -186,6 +188,7 @@ def render_path_template(
     skill: str,
     fallback: str,
 ) -> Path:
+    """Render a skill path template into an absolute filesystem path."""
     value = template or fallback
     rendered = value.replace("{skill}", skill)
     candidate = Path(rendered)
@@ -222,6 +225,7 @@ def build_project_lookup(
     root: Path,
     discovered: dict[str, object],
 ) -> dict[str, Path]:
+    """Build a lookup table from project names to absolute paths."""
     lookup: dict[str, Path] = {".": root.resolve()}
 
     flext_values = discovered.get("flext", [])
@@ -277,6 +281,7 @@ def filter_files(
     exclude_globs: list[str],
     project_path: Path | None = None,
 ) -> list[str]:
+    """Filter tracked files using include and exclude glob patterns."""
     includes = include_globs or ["**/*"]
     excludes = exclude_globs or []
 
@@ -295,6 +300,7 @@ def filter_files(
 
 
 def chunk_list(items: list[str], size: int) -> list[list[str]]:
+    """Split a list into fixed-size chunks."""
     if size <= 0:
         return [items]
     out: list[list[str]] = [
@@ -304,6 +310,7 @@ def chunk_list(items: list[str], size: int) -> list[list[str]]:
 
 
 def parse_count_from_json_lines(output: str) -> int:
+    """Sum violation counts from line-delimited JSON output."""
     total = 0
     for raw_line in output.splitlines():
         line = raw_line.strip()
@@ -331,6 +338,7 @@ def run_ast_grep_rule(
     exclude_globs: list[str],
     allowed_files: set[str],
 ) -> tuple[dict[str, int], int]:
+    """Execute one ast-grep rule and aggregate matched counts."""
     if not tool_available("sg"):
         msg = "ast-grep (sg) is required but not available"
         raise SkillInfraError(msg)
@@ -411,6 +419,7 @@ def run_ast_grep_rule(
 
 
 def build_custom_command(script: Path) -> list[str]:
+    """Build command argv for a custom validator script."""
     if script.suffix == ".py":
         return [sys.executable, str(script)]
     return [str(script)]
@@ -423,6 +432,7 @@ def run_custom_rule(
     project_path: Path,
     mode: str,
 ) -> int:
+    """Run one custom rule script and return violation count."""
     rule_id = str(rule.get("id", "")).strip()
     script_raw = str(rule.get("script", "")).strip()
     if not script_raw:
@@ -473,6 +483,7 @@ def run_custom_validate(
     project_path: Path,
     mode: str,
 ) -> int:
+    """Run custom skill-level validation script for one project."""
     script = Path(custom_script_raw)
     if not script.is_absolute():
         script = (skill_dir / custom_script_raw).resolve()
@@ -504,6 +515,7 @@ def compare_baseline(
     baseline_counts: dict[str, int],
     strategy: str,
 ) -> tuple[bool, dict[str, int], int, int]:
+    """Compare current violations against stored baseline counts."""
     if strategy not in {"total", "per_group"}:
         msg = f"Unsupported baseline strategy: {strategy}"
         raise SkillUsageError(msg)
@@ -572,6 +584,7 @@ def _extract_fixes(rules_list: list[object]) -> list[dict[str, object]]:
 
 
 def discover_skills(skills_dir: Path) -> list[tuple[str, Path]]:
+    """Discover skills that define a rules.yml file."""
     if not skills_dir.exists():
         return []
     found: list[tuple[str, Path]] = []
@@ -585,6 +598,7 @@ def discover_skills(skills_dir: Path) -> list[tuple[str, Path]]:
 
 
 def normalize_string_list(value: object, field_name: str) -> list[str]:
+    """Validate and normalize a list[str] configuration field."""
     if value is None:
         return []
     if isinstance(value, list):
@@ -605,6 +619,7 @@ def resolve_scan_projects(
     discovered: dict[str, object],
     cli_projects: list[str],
 ) -> list[str]:
+    """Resolve selected scan targets from config and CLI filters."""
     auto = ["."]
     flext_values = discovered.get("flext", [])
     external_values = discovered.get("external", [])
@@ -649,6 +664,7 @@ def validate_skill(
     discovered_projects: dict[str, object],
     project_lookup: dict[str, Path],
 ) -> tuple[bool, dict[str, object]]:
+    """Validate one skill across selected projects."""
     rules = load_rules_yml(rules_path)
     skill_dir = rules_path.parent.resolve()
 
@@ -669,7 +685,7 @@ def validate_skill(
         scan_targets_obj.get("exclude", []),
         "scan_targets.exclude",
     )
-    all_known = set()
+    all_known: set[str] = set()
     for group in discovered_projects.values():
         if isinstance(group, list):
             all_known.update(str(p) for p in group)
@@ -719,7 +735,7 @@ def validate_skill(
         msg = "rules must be a list"
         raise SkillUsageError(msg)
 
-    VALID_FIX_TYPES = {"ast-grep", "custom"}
+    valid_fix_types = {"ast-grep", "custom"}
     for rule in rules_obj:
         if not isinstance(rule, dict):
             continue
@@ -730,9 +746,9 @@ def validate_skill(
             eprint(
                 f"  ERROR [{rid}]: fix_type: manual is invalid. Remove fix_type when fix_auto: false."
             )
-        if ft and ft not in VALID_FIX_TYPES and ft != "manual":
+        if ft and ft not in valid_fix_types and ft != "manual":
             eprint(
-                f"  ERROR [{rid}]: fix_type: '{ft}' is invalid. Valid: {sorted(VALID_FIX_TYPES)}"
+                f"  ERROR [{rid}]: fix_type: '{ft}' is invalid. Valid: {sorted(valid_fix_types)}"
             )
         if fa and not ft:
             fix_file = rule.get("fix_file")
@@ -920,6 +936,7 @@ def validate_skill(
 
 
 def list_skills(skills_dir: Path) -> int:
+    """List skills and their configured rule metadata."""
     skills = discover_skills(skills_dir)
     if not skills:
         print("No skills with rules.yml found")
@@ -940,6 +957,7 @@ def list_skills(skills_dir: Path) -> int:
 
 
 def list_projects(root: Path) -> int:
+    """List discovered workspace projects."""
     discovered = discover_projects(root)
     raw_flext = discovered.get("flext", [])
     raw_external = discovered.get("external", [])
@@ -966,6 +984,7 @@ def list_projects(root: Path) -> int:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
+    """Parse validator CLI arguments."""
     parser = argparse.ArgumentParser(description="Generic data-driven skill validator")
     _ = parser.add_argument("--skill", help="Validate one skill by folder name")
     _ = parser.add_argument("--all", action="store_true", help="Validate all skills")
@@ -1005,6 +1024,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def run_main(argv: list[str]) -> int:
+    """Run validator workflow and return standardized exit code."""
     try:
         args = parse_args(argv)
     except SkillUsageError as exc:
@@ -1127,6 +1147,7 @@ def run_main(argv: list[str]) -> int:
 
 
 def main() -> None:
+    """Execute CLI entry point and exit with normalized code."""
     code = run_main(sys.argv[1:])
     if code not in {EXIT_PASS, EXIT_FAIL, EXIT_USAGE, EXIT_INFRA}:
         code = EXIT_INFRA

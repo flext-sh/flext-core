@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/scripts-maintenance/SKILL.md
+"""Synchronize canonical workspace files into a project."""
+
 from __future__ import annotations
 
 import argparse
@@ -38,7 +40,7 @@ def _copy_if_changed(source: Path, target: Path) -> bool:
     return True
 
 
-def _sync_tree(source_dir: Path, target_dir: Path, prune: bool) -> int:
+def _sync_tree(source_dir: Path, target_dir: Path, *, prune: bool) -> int:
     changed = 0
     source_files = {
         p.relative_to(source_dir)
@@ -62,6 +64,7 @@ def _sync_tree(source_dir: Path, target_dir: Path, prune: bool) -> int:
 
 
 def main() -> int:
+    """Run file sync for base.mk and scripts tree."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument("--project-root", type=Path, required=True)
     _ = parser.add_argument("--canonical-root", type=Path, required=True)
@@ -82,11 +85,33 @@ def main() -> int:
             else 0
         )
         changed += _sync_tree(
-            canonical_root / "scripts", project_root / "scripts", args.prune
+            canonical_root / "scripts", project_root / "scripts", prune=args.prune
         )
-        changed += _sync_tree(
-            canonical_root / "libs", project_root / "libs", args.prune
-        )
+        # Clean up legacy top-level libs/ (now lives under scripts/libs/)
+        legacy_libs = project_root / "libs"
+        if legacy_libs.is_dir():
+            for path in sorted(legacy_libs.rglob("*"), reverse=True):
+                if path.is_file() and "__pycache__" not in path.parts:
+                    path.unlink()
+                    changed += 1
+            for path in sorted(legacy_libs.rglob("*"), reverse=True):
+                if path.is_dir() and not any(path.iterdir()):
+                    path.rmdir()
+                    changed += 1
+            if legacy_libs.is_dir() and not any(legacy_libs.iterdir()):
+                legacy_libs.rmdir()
+                changed += 1
+        examples_dir = project_root / "examples"
+        if not examples_dir.exists():
+            examples_dir.mkdir()
+            readme = examples_dir / "README.md"
+            project_name = project_root.name.replace("-", " ").title()
+            readme.write_text(
+                f"# {project_name} Examples\n\n"
+                f"Usage examples for `{project_root.name}`.\n",
+                encoding="utf-8",
+            )
+            changed += 1
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
     print(f"files_changed={changed}")

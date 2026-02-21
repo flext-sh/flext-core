@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/scripts-infra/SKILL.md
+"""Check that vendored project base.mk files match root base.mk."""
+
 from __future__ import annotations
 
 import hashlib
@@ -12,6 +14,7 @@ def _sha256(path: Path) -> str:
 
 
 def main() -> int:
+    """Validate base.mk copies and report drift."""
     root = Path.cwd().resolve()
     source = root / "base.mk"
     if not source.exists():

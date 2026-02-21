@@ -21,24 +21,18 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-_DEPS_DIR = Path(__file__).resolve().parent
-if str(_DEPS_DIR) not in sys.path:
-    sys.path.insert(0, str(_DEPS_DIR))
-from dependency_detection import (
-    build_project_report,
-    discover_projects,
-    get_required_typings,
-    load_dependency_limits,
-    run_deptry,
-    run_pip_check,
-)
+_SCRIPTS_DIR = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+from dependencies import dependency_detection as dd  # noqa: E402
 
 VENV_BIN = ROOT / ".venv" / "bin"
 REPORTS_DIR = ROOT / ".reports" / "dependencies"
-LIMITS_PATH = _DEPS_DIR / "dependency_limits.toml"
+LIMITS_PATH = Path(__file__).resolve().parent / "dependency_limits.toml"
 
 
 def main() -> int:
+    """Run dependency detection and emit workspace report."""
     parser = argparse.ArgumentParser(
         description="Detect runtime vs dev dependencies (deptry + pip check).",
     )
@@ -113,7 +107,7 @@ def main() -> int:
     elif args.projects:
         projects_filter = [p.strip() for p in args.projects.split(",") if p.strip()]
 
-    projects = discover_projects(ROOT, projects_filter=projects_filter)
+    projects = dd.discover_projects(ROOT, projects_filter=projects_filter)
     if not projects:
         print("No projects found.", file=sys.stderr)
         return 2
@@ -122,19 +116,21 @@ def main() -> int:
         print("deptry not found in .venv. Run make setup first.", file=sys.stderr)
         return 3
 
+    projects_report: dict[str, dict[str, object]] = {}
     report: dict[str, object] = {
         "workspace": str(ROOT),
-        "projects": {},
+        "projects": projects_report,
         "pip_check": None,
         "dependency_limits": None,
     }
     if do_typings:
-        limits_data = load_dependency_limits(limits_path)
-        if limits_data:
+        limits_data = dd.load_dependency_limits(limits_path)
+        if isinstance(limits_data, dict) and limits_data:
+            python_cfg = limits_data.get("python")
             report["dependency_limits"] = {
-                "python_version": (limits_data.get("python") or {}).get("version")
-                if isinstance(limits_data.get("python"), dict)
-                else None,
+                "python_version": (
+                    python_cfg.get("version") if isinstance(python_cfg, dict) else None
+                ),
                 "limits_path": str(limits_path),
             }
 
@@ -142,30 +138,36 @@ def main() -> int:
         name = proj_path.name
         if not args.quiet:
             print(f"Running deptry for {name}...", file=sys.stderr)
-        issues, _ = run_deptry(proj_path, VENV_BIN)
-        report["projects"][name] = build_project_report(name, issues)
+        issues, _ = dd.run_deptry(proj_path, VENV_BIN)
+        project_payload = dd.build_project_report(name, issues)
+        projects_report[name] = dict(project_payload)
 
         if do_typings and (proj_path / "src").is_dir():
             if not args.quiet:
                 print(f"Detecting typings for {name}...", file=sys.stderr)
-            typings_report = get_required_typings(
+            typings_report = dd.get_required_typings(
                 proj_path, VENV_BIN, limits_path=limits_path
             )
-            report["projects"][name]["typings"] = typings_report
-            if apply_typings and typings_report.get("to_add") and not args.dry_run:
+            projects_report[name]["typings"] = typings_report
+            to_add_obj = typings_report.get("to_add")
+            to_add = to_add_obj if isinstance(to_add_obj, list) else []
+            if apply_typings and to_add and not args.dry_run:
                 env = {
                     **os.environ,
                     "VIRTUAL_ENV": str(VENV_BIN.parent),
                     "PATH": f"{VENV_BIN}:{os.environ.get('PATH', '')}",
                 }
-                for pkg in typings_report["to_add"]:
+                for pkg in to_add:
+                    if not isinstance(pkg, str):
+                        continue
                     rc = subprocess.run(
-                        ["poetry", "add", "--group", "typings", pkg],
+                        ["poetry", "add", "--group", "typings", pkg],  # noqa: S607
                         cwd=proj_path,
                         capture_output=True,
                         text=True,
                         timeout=120,
                         env=env,
+                        check=False,
                     )
                     if rc.returncode != 0 and not args.quiet:
                         print(f"  add {pkg}: failed", file=sys.stderr)
@@ -173,7 +175,7 @@ def main() -> int:
     if not args.no_pip_check:
         if not args.quiet:
             print("Running pip check (workspace)...", file=sys.stderr)
-        pip_lines, pip_exit = run_pip_check(ROOT, VENV_BIN)
+        pip_lines, pip_exit = dd.run_pip_check(ROOT, VENV_BIN)
         report["pip_check"] = {"ok": pip_exit == 0, "lines": pip_lines}
 
     if args.json_stdout:
@@ -194,12 +196,21 @@ def main() -> int:
             print(f"Report written to {out_path}", file=sys.stderr)
 
     # Summary
-    total_issues = sum(
-        (p.get("deptry") or {}).get("raw_count", 0) for p in report["projects"].values()
-    )
-    pip_ok = report.get("pip_check") is None or (report["pip_check"] or {}).get(
-        "ok", True
-    )
+    total_issues = 0
+    for payload in projects_report.values():
+        deptry_obj = payload.get("deptry")
+        if isinstance(deptry_obj, dict):
+            raw_count = deptry_obj.get("raw_count", 0)
+            if isinstance(raw_count, int):
+                total_issues += raw_count
+
+    pip_check_obj = report.get("pip_check")
+    if pip_check_obj is None:
+        pip_ok = True
+    elif isinstance(pip_check_obj, dict):
+        pip_ok = bool(pip_check_obj.get("ok", True))
+    else:
+        pip_ok = True
     if not args.quiet:
         print(
             f"Projects: {len(projects)} | Deptry issues: {total_issues} | Pip check: {'ok' if pip_ok else 'FAIL'}",

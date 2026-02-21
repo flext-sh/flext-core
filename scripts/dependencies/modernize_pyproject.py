@@ -21,11 +21,14 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 import tomlkit
+from tomlkit.items import Table
+
+_TableLike = Table | MutableMapping[str, object]
 
 ROOT = Path(__file__).resolve().parents[2]
 VENV_BIN = ROOT / ".venv" / "bin"
@@ -59,6 +62,7 @@ LICENSE_CLASSIFIERS = frozenset({
 SKIP_DIRS = frozenset({
     ".claude.disabled",
     ".flext-deps",
+    ".sisyphus",
     ".venv",
     "node_modules",
     "__pycache__",
@@ -91,6 +95,7 @@ class ProjectSpec:
     coverage_source: str | None = field(init=False)
 
     def __post_init__(self) -> None:
+        """Derive project metadata from filesystem and config."""
         self.is_root = self.project_dir == ROOT
         self.ruff_extend = (
             "./ruff-shared.toml" if self.is_root else "../ruff-shared.toml"
@@ -148,18 +153,21 @@ def _norm(dep_str: str) -> str:
     return name.lower().replace("_", "-")
 
 
-def _replace_inplace(arr: Any, new_items: list[Any]) -> None:
+def _replace_inplace(arr: list[object], new_items: list[object]) -> None:
     """Replace contents of a tomlkit array in-place (preserves TOML structure)."""
     while arr:
         arr.pop()
-    for item in new_items:
-        arr.append(item)
+    arr.extend(new_items)
 
 
-def _ensure_tool(doc: tomlkit.TOMLDocument) -> Any:
+def _ensure_tool(doc: tomlkit.TOMLDocument) -> Table:
     if "tool" not in doc:
         doc.add("tool", tomlkit.table())
-    return doc["tool"]
+    tool = doc["tool"]
+    if not isinstance(tool, Table):
+        msg = "Invalid [tool] table structure"
+        raise TypeError(msg)
+    return tool
 
 
 def _get_ssot_bandit_skips() -> list[str]:
@@ -218,6 +226,7 @@ def _get_ssot_pytest_addopts() -> list[str]:
 
 
 def fix_license_format(doc: tomlkit.TOMLDocument) -> str | None:
+    """Convert table-based project license metadata to SPDX string."""
     project = doc.get("project")
     if not project:
         return None
@@ -231,6 +240,7 @@ def fix_license_format(doc: tomlkit.TOMLDocument) -> str | None:
 
 
 def fix_license_classifiers(doc: tomlkit.TOMLDocument) -> str | None:
+    """Remove deprecated license classifiers from project metadata."""
     project = doc.get("project")
     if not project:
         return None
@@ -245,13 +255,15 @@ def fix_license_classifiers(doc: tomlkit.TOMLDocument) -> str | None:
 
 
 def fix_test_deps_in_runtime(doc: tomlkit.TOMLDocument) -> tuple[str | None, list[str]]:
+    """Move test-only packages out of runtime dependencies."""
     project = doc.get("project")
     if not project:
         return None, []
     deps = project.get("dependencies")
     if not deps:
         return None, []
-    removed, kept = [], []
+    removed: list[object] = []
+    kept: list[object] = []
     for dep in deps:
         (_removed_list := removed if _norm(str(dep)) in TEST_PACKAGES else kept).append(
             dep
@@ -264,11 +276,12 @@ def fix_test_deps_in_runtime(doc: tomlkit.TOMLDocument) -> tuple[str | None, lis
 
 
 def fix_duplicate_poetry_metadata(doc: tomlkit.TOMLDocument) -> str | None:
+    """Remove duplicated metadata from [tool.poetry]."""
     project = doc.get("project")
     tool = doc.get("tool")
     if not project or not tool:
         return None
-    poetry: dict[str, Any] | None = tool.get("poetry")  # type: ignore[assignment]
+    poetry: dict[str, object] | None = tool.get("poetry")  # type: ignore[assignment]
     if not poetry:
         return None
     changed = False
@@ -280,6 +293,7 @@ def fix_duplicate_poetry_metadata(doc: tomlkit.TOMLDocument) -> str | None:
 
 
 def fix_license_in_maintainers(doc: tomlkit.TOMLDocument) -> str | None:
+    """Extract misplaced license keys from people tables."""
     project = doc.get("project")
     if not project:
         return None
@@ -300,6 +314,7 @@ def fix_license_in_maintainers(doc: tomlkit.TOMLDocument) -> str | None:
 def fix_deptry_ignores(
     doc: tomlkit.TOMLDocument, removed_pkgs: list[str]
 ) -> str | None:
+    """Clean deptry ignore entries for removed packages."""
     if not removed_pkgs:
         return None
     tool = doc.get("tool")
@@ -323,6 +338,7 @@ def fix_deptry_ignores(
 
 
 def fix_poetry_core_version(doc: tomlkit.TOMLDocument) -> str | None:
+    """Ensure build-system requires poetry-core>=2."""
     bs = doc.get("build-system")
     if not bs:
         return None
@@ -338,6 +354,7 @@ def fix_poetry_core_version(doc: tomlkit.TOMLDocument) -> str | None:
 
 
 def fix_ruff_extend(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
+    """Replace inline Ruff config with shared extend target."""
     tool = doc.get("tool")
     if not tool:
         return None
@@ -384,33 +401,41 @@ def fix_coverage_config(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | N
         tool.add("coverage", cov)  # type: ignore[union-attr]
         return f"coverage: added run.source=[{spec.coverage_source}] fail_under={spec.min_coverage}"
 
-    cov = tool["coverage"]  # type: ignore[index]
+    cov_obj = tool["coverage"]
+    if not isinstance(cov_obj, MutableMapping):
+        return None
+    cov = cov_obj
 
-    # Ensure run.source exists
-    run_sec = cov.get("run") if hasattr(cov, "get") else None  # type: ignore[union-attr]
-    if not run_sec:
-        cov.add("run", tomlkit.table())  # type: ignore[union-attr]
-        cov["run"]["source"] = [spec.coverage_source]  # type: ignore[index]
-        changes.append("run.source")
-    elif "source" not in run_sec:
-        run_sec["source"] = [spec.coverage_source]
+    run_sec_obj = cov.get("run")
+    if not isinstance(run_sec_obj, MutableMapping):
+        if isinstance(cov, Table):
+            cov.add("run", tomlkit.table())
+        else:
+            cov["run"] = tomlkit.table()
+        run_sec_obj = cov.get("run")
+    if isinstance(run_sec_obj, MutableMapping) and "source" not in run_sec_obj:
+        run_sec_obj["source"] = [spec.coverage_source]
         changes.append("run.source")
 
-    # Sync fail_under with Makefile-derived spec
-    report_sec = cov.get("report") if hasattr(cov, "get") else None  # type: ignore[union-attr]
-    if not report_sec:
-        cov.add("report", tomlkit.table())  # type: ignore[union-attr]
-        cov["report"]["fail_under"] = spec.min_coverage  # type: ignore[index]
-        cov["report"]["precision"] = 2  # type: ignore[index]
+    report_sec_obj = cov.get("report")
+    if not isinstance(report_sec_obj, MutableMapping):
+        if isinstance(cov, Table):
+            cov.add("report", tomlkit.table())
+        else:
+            cov["report"] = tomlkit.table()
+        report_sec_obj = cov.get("report")
+    if not isinstance(report_sec_obj, MutableMapping):
+        return None
+
+    if "fail_under" not in report_sec_obj:
+        report_sec_obj["fail_under"] = spec.min_coverage
+        report_sec_obj["precision"] = 2
         changes.append(f"fail_under={spec.min_coverage}")
     else:
-        current = report_sec.get("fail_under")
-        if current is not None and int(current) != spec.min_coverage:
-            report_sec["fail_under"] = spec.min_coverage
+        current = report_sec_obj.get("fail_under")
+        if current is not None and int(str(current)) != spec.min_coverage:
+            report_sec_obj["fail_under"] = spec.min_coverage
             changes.append(f"fail_under: {current}→{spec.min_coverage}")
-        elif current is None:
-            report_sec["fail_under"] = spec.min_coverage
-            changes.append(f"fail_under={spec.min_coverage}")
 
     return f"coverage: synced {', '.join(changes)}" if changes else None
 
@@ -490,7 +515,15 @@ def fix_pytest_cov_flags(doc: tomlkit.TOMLDocument) -> str | None:
     return f"pytest: removed {removed_count} --cov flags from addopts"
 
 
-def fix_pyrefly_search_path(doc: tomlkit.TOMLDocument) -> str | None:
+def fix_pyrefly_search_path(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
+    """Ensure pyrefly search-path matches canonical entries.
+
+    Root canonical:
+        ["typings", "typings/generated", "src", "examples", "scripts"]
+    Submodule canonical:
+        ["../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
+    Non-standard entries like "." or misplaced "../typings" on root are removed.
+    """
     tool = doc.get("tool")
     if not tool:
         return None
@@ -500,19 +533,48 @@ def fix_pyrefly_search_path(doc: tomlkit.TOMLDocument) -> str | None:
     sp = pyrefly.get("search-path")
     if not sp:
         return None
-    strs = [str(p) for p in sp]
-    changed = False
-    if "../typings" not in strs:
-        sp.insert(0, "../typings")
-        changed = True
-    strs = [str(p) for p in sp]
-    if "../typings/generated" not in strs:
-        sp.insert(strs.index("../typings") + 1, "../typings/generated")
-        changed = True
-    return "pyrefly: added ../typings to search-path" if changed else None
+
+    if spec.is_root:
+        canonical = [
+            "typings",
+            "typings/generated",
+            "src",
+            "examples",
+            "scripts",
+        ]
+    else:
+        canonical = [
+            "../typings",
+            "../typings/generated",
+            "src",
+            "tests",
+            "examples",
+            "scripts",
+        ]
+
+    current = [str(p) for p in sp]
+    if current == canonical:
+        return None
+
+    # Rebuild the array in-place to preserve tomlkit formatting context.
+    while len(sp) > 0:
+        sp.pop()
+    for entry in canonical:
+        sp.append(entry)
+
+    removed = [e for e in current if e not in canonical]
+    added = [e for e in canonical if e not in current]
+    parts: list[str] = []
+    if removed:
+        parts.append(f"removed {removed}")
+    if added:
+        parts.append(f"added {added}")
+    detail = ", ".join(parts) if parts else "reordered"
+    return f"pyrefly: standardized search-path ({detail})"
 
 
 def fix_bandit_skips(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
+    """Sync non-root Bandit skip rules with workspace defaults."""
     if spec.is_root:
         return None
     standard_skips = _get_ssot_bandit_skips()
@@ -569,7 +631,7 @@ def process_file(path: Path, spec: ProjectSpec, *, dry_run: bool = False) -> lis
     _apply(fix_pytest_section(doc))
     _apply(fix_pytest_addopts_sync(doc, spec))
     _apply(fix_pytest_cov_flags(doc))
-    _apply(fix_pyrefly_search_path(doc))
+    _apply(fix_pyrefly_search_path(doc, spec))
     _apply(fix_bandit_skips(doc, spec))
 
     if fixes and not dry_run:
@@ -662,13 +724,35 @@ def _apply_regex_fixes(path: Path, spec: ProjectSpec, fixes: list[str]) -> None:
                 flags=re.MULTILINE,
             )
 
-    # 6. pyrefly search-path: add ../typings entries
-    if any("pyrefly" in f for f in fixes) and '"../typings"' not in text:
+    # 6. pyrefly search-path: replace with canonical entries
+    if any("pyrefly" in f and "search-path" in f for f in fixes):
+        if spec.is_root:
+            canonical_sp = (
+                "[\n"
+                '            "typings",\n'
+                '            "typings/generated",\n'
+                '            "src",\n'
+                '            "examples",\n'
+                '            "scripts",\n'
+                "        ]"
+            )
+        else:
+            canonical_sp = (
+                "[\n"
+                '            "../typings",\n'
+                '            "../typings/generated",\n'
+                '            "src",\n'
+                '            "tests",\n'
+                '            "examples",\n'
+                '            "scripts",\n'
+                "        ]"
+            )
         text = re.sub(
-            r"(search-path\s*=\s*\[)\s*\n",
-            r'\1\n            "../typings",\n            "../typings/generated",\n',
+            r"search-path\s*=\s*\[.*?\]",
+            f"search-path = {canonical_sp}",
             text,
             count=1,
+            flags=re.DOTALL,
         )
 
     # 7. Coverage: sync existing fail_under value
@@ -722,9 +806,9 @@ def _apply_regex_fixes(path: Path, spec: ProjectSpec, fixes: list[str]) -> None:
     if any("--cov flags" in f for f in fixes):
         lines = text.split("\n")
         filtered = [
-            l
-            for l in lines
-            if not COV_FLAG.search(l.strip().strip('"').strip("'").strip(","))
+            line
+            for line in lines
+            if not COV_FLAG.search(line.strip().strip('"').strip("'").strip(","))
         ]
         text = "\n".join(filtered)
 
@@ -846,6 +930,7 @@ def cleanup_makefiles(*, dry_run: bool = False) -> list[str]:
 
 
 def find_pyproject_files() -> list[Path]:
+    """Find pyproject.toml files under workspace scope."""
     results = []
     for p in sorted(ROOT.rglob("pyproject.toml")):
         if any(skip in p.parts for skip in SKIP_DIRS):
@@ -858,6 +943,7 @@ def find_pyproject_files() -> list[Path]:
 
 
 def run_pyproject_fmt(paths: list[Path], *, dry_run: bool = False) -> int:
+    """Run pyproject-fmt over safe files and return exit code."""
     fmt_bin = VENV_BIN / "pyproject-fmt"
     if not fmt_bin.exists():
         print(f"  ⚠ pyproject-fmt not found at {fmt_bin}")
@@ -874,7 +960,7 @@ def run_pyproject_fmt(paths: list[Path], *, dry_run: bool = False) -> int:
     if dry_run:
         args.append("--check")
     args.extend(str(p) for p in safe)
-    result = subprocess.run(args, capture_output=True, text=True)
+    result = subprocess.run(args, capture_output=True, text=True, check=False)
     if result.returncode != 0 and dry_run:
         print(f"  ℹ {len(safe)} files would be reformatted")
     elif result.returncode == 0:
@@ -883,12 +969,17 @@ def run_pyproject_fmt(paths: list[Path], *, dry_run: bool = False) -> int:
 
 
 def run_poetry_check(paths: list[Path]) -> dict[str, list[str]]:
+    """Run poetry check for each project and collect warnings."""
     results: dict[str, list[str]] = {}
     for path in paths:
         project_dir = path.parent
         label = "root" if project_dir == ROOT else project_dir.name
         result = subprocess.run(
-            ["poetry", "check"], capture_output=True, text=True, cwd=project_dir
+            ["poetry", "check"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            cwd=project_dir,
+            check=False,
         )
         warnings = [
             line.strip()
@@ -904,6 +995,7 @@ def run_poetry_check(paths: list[Path]) -> dict[str, list[str]]:
 
 
 def main() -> int:
+    """Run pyproject modernization phases across workspace files."""
     audit = "--audit" in sys.argv
     dry_run = "--dry-run" in sys.argv or audit
     skip_fmt = "--skip-fmt" in sys.argv

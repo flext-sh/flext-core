@@ -31,6 +31,8 @@ DEFAULT_SRC_DIR = "src"
 
 @dataclass
 class CheckError:
+    """Represent one lint or type-check issue."""
+
     file: str
     line: int
     column: int
@@ -41,6 +43,8 @@ class CheckError:
 
 @dataclass
 class GateResult:
+    """Store the result of running one gate for one project."""
+
     gate: str
     project: str
     passed: bool
@@ -49,27 +53,39 @@ class GateResult:
 
     @property
     def error_count(self) -> int:
+        """Return total issues found by this gate."""
         return len(self.errors)
 
 
 @dataclass
 class ProjectResult:
+    """Aggregate all gate results for a project."""
+
     project: str
     gates: dict[str, GateResult] = field(default_factory=dict)
 
     @property
     def total_errors(self) -> int:
+        """Return total issues across all gates."""
         return sum(g.error_count for g in self.gates.values())
 
     @property
     def passed(self) -> bool:
+        """Return True when every gate passed."""
         return all(g.passed for g in self.gates.values())
 
 
 def _run(
     cmd: list[str], cwd: Path, timeout: int = 300
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout)
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+        timeout=timeout,
+        check=False,
+    )
 
 
 def _run_ruff_lint(project_dir: Path, src_dir: str) -> GateResult:
@@ -446,6 +462,7 @@ def _run_go(project_dir: Path) -> GateResult:
 def check_project(
     project_dir: Path, gates: list[str], reports_dir: Path
 ) -> ProjectResult:
+    """Run selected gates for one project and collect results."""
     result = ProjectResult(project=project_dir.name)
     src_dir = DEFAULT_SRC_DIR
     runners = {
@@ -597,6 +614,7 @@ def _generate_sarif(
 
 
 def main() -> int:
+    """Run workspace checks and write markdown plus SARIF reports."""
     parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
     parser.add_argument("projects", nargs="*")
     parser.add_argument("--gates", default=DEFAULT_GATES)

@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments for text pattern scanning."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True, help="Project root directory")
     parser.add_argument("--pattern", required=True, help="Regex pattern")
@@ -37,6 +38,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def collect_files(root: Path, includes: list[str], excludes: list[str]) -> list[Path]:
+    """Collect files that match include and exclude globs."""
     selected: list[Path] = []
     for path in root.rglob("*"):
         if not path.is_file():
@@ -50,6 +52,7 @@ def collect_files(root: Path, includes: list[str], excludes: list[str]) -> list[
 
 
 def count_matches(files: list[Path], regex: re.Pattern[str]) -> int:
+    """Count regex matches across selected files."""
     total = 0
     for file_path in files:
         try:
@@ -61,6 +64,7 @@ def count_matches(files: list[Path], regex: re.Pattern[str]) -> int:
 
 
 def main() -> int:
+    """Run scanner and emit JSON violation count."""
     args = parse_args()
     root = Path(args.root).resolve()
     pattern = str(args.pattern)

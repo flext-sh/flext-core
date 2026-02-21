@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Owner-Skill: .claude/skills/workspace-maintenance/SKILL.md
+"""Discover workspace projects for maintenance workflows."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,14 +9,15 @@ import json
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
+if _SCRIPTS_ROOT not in sys.path:
+    sys.path.insert(0, _SCRIPTS_ROOT)
 
-from libs.discovery import discover_projects
+from libs.discovery import discover_projects  # noqa: E402
 
 
 def main() -> int:
+    """List discovered projects in requested output format."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument(
         "--kind", choices=("submodule", "external", "all"), default="all"

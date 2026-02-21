@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Run actionlint and persist workflow lint reports."""
+
 from __future__ import annotations
 
 import argparse
@@ -21,6 +23,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Execute workflow linting and write JSON result."""
     args = _parse_args()
     root = args.root.resolve()
     report = args.report if args.report.is_absolute() else root / args.report
@@ -28,12 +31,13 @@ def main() -> int:
 
     actionlint = shutil.which("actionlint")
     if actionlint is None:
-        payload = {
+        payload_skipped: dict[str, object] = {
             "status": "skipped",
             "reason": "actionlint not installed",
         }
         report.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            json.dumps(payload_skipped, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
         )
         _ = print(f"wrote: {report}")
         return 0
@@ -45,7 +49,7 @@ def main() -> int:
         text=True,
         check=False,
     )
-    payload = {
+    payload: dict[str, object] = {
         "status": "ok" if result.returncode == 0 else "fail",
         "exit_code": result.returncode,
         "stdout": result.stdout,
