@@ -20,9 +20,9 @@ from flext_core import (
     FlextContext,
     FlextResult,
     FlextSettings,
-    t,
     m,
     r,
+    t,
 )
 
 from tests.helpers.scenarios import (
