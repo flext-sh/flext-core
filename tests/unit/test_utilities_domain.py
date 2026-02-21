@@ -32,16 +32,16 @@ from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 from flext_core.models import m
 
-ComplexValue = TestsFlextModels.ComplexValue
-CustomEntity = TestsFlextModels.CustomEntity
-DomainTestEntity = TestsFlextModels.DomainTestEntity
-DomainTestValue = TestsFlextModels.DomainTestValue
-ImmutableObj = TestsFlextModels.ImmutableObj
-MutableObj = TestsFlextModels.MutableObj
-NoConfigNoSetattr = TestsFlextModels.NoConfigNoSetattr
-NoDict = TestsFlextModels.NoDict
-NoSetattr = TestsFlextModels.NoSetattr
-SimpleValue = TestsFlextModels.SimpleValue
+ComplexValue = TestsFlextModels.Core.ComplexValue
+CustomEntity = TestsFlextModels.Core.CustomEntity
+DomainTestEntity = TestsFlextModels.Core.DomainTestEntity
+DomainTestValue = TestsFlextModels.Core.DomainTestValue
+ImmutableObj = TestsFlextModels.Core.ImmutableObj
+MutableObj = TestsFlextModels.Core.MutableObj
+NoConfigNoSetattr = TestsFlextModels.Core.NoConfigNoSetattr
+NoDict = TestsFlextModels.Core.NoDict
+NoSetattr = TestsFlextModels.Core.NoSetattr
+SimpleValue = TestsFlextModels.Core.SimpleValue
 
 
 # Module-level helper functions (must be defined before class for @pytest.mark.parametrize)

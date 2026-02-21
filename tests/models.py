@@ -162,19 +162,6 @@ class TestsFlextModels:
         class ParseOptions(m.CollectionsParseOptions):
             """Parse options - real inheritance."""
 
-    # Backward compatibility: expose Core classes at root level
-    DomainTestEntity = Core.DomainTestEntity
-    DomainTestValue = Core.DomainTestValue
-    CustomEntity = Core.CustomEntity
-    SimpleValue = Core.SimpleValue
-    ComplexValue = Core.ComplexValue
-    NoDict = Core.NoDict
-    MutableObj = Core.MutableObj
-    ImmutableObj = Core.ImmutableObj
-    NoConfigNoSetattr = Core.NoConfigNoSetattr
-    NoSetattr = Core.NoSetattr
-    ParseOptions = Core.ParseOptions
-
     @dataclass(frozen=True, slots=True)
     class ParseDelimitedCase:
         """Test case for parse_delimited method."""

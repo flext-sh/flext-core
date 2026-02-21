@@ -43,7 +43,7 @@ from tests.utilities import TestsFlextUtilities
 NormalizeWhitespaceCase = TestsFlextModels.NormalizeWhitespaceCase
 ObjectKeyCase = TestsFlextModels.ObjectKeyCase
 ParseDelimitedCase = TestsFlextModels.ParseDelimitedCase
-ParseOptions = TestsFlextModels.ParseOptions
+ParseOptions = TestsFlextModels.Core.ParseOptions
 RegexPipelineCase = TestsFlextModels.RegexPipelineCase
 SplitEscapeCase = TestsFlextModels.SplitEscapeCase
 
