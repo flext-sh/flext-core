@@ -27,6 +27,7 @@ from pathlib import Path
 
 import tomlkit
 from tomlkit.items import Table
+from typing import cast
 
 _TableLike = Table | MutableMapping[str, object]
 
@@ -281,7 +282,7 @@ def fix_duplicate_poetry_metadata(doc: tomlkit.TOMLDocument) -> str | None:
     tool = doc.get("tool")
     if not project or not tool:
         return None
-    poetry: dict[str, object] | None = tool.get("poetry")  # type: ignore[assignment]
+    poetry = cast(dict[str, object] | None, tool.get("poetry"))
     if not poetry:
         return None
     changed = False
@@ -320,13 +321,13 @@ def fix_deptry_ignores(
     tool = doc.get("tool")
     if not tool:
         return None
-    deptry = tool.get("deptry")  # type: ignore[union-attr]
-    if not deptry:
+    deptry_obj = tool.get("deptry")
+    if not isinstance(deptry_obj, MutableMapping):
         return None
-    per_rule = deptry.get("per_rule_ignores")
-    if not per_rule:
+    per_rule_obj = deptry_obj.get("per_rule_ignores")
+    if not isinstance(per_rule_obj, MutableMapping):
         return None
-    dep002 = per_rule.get("DEP002")
+    dep002 = per_rule_obj.get("DEP002")
     if not dep002:
         return None
     removed_set = set(removed_pkgs)
@@ -398,7 +399,7 @@ def fix_coverage_config(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | N
         report_table["fail_under"] = spec.min_coverage
         report_table["precision"] = 2
         cov.add("report", report_table)
-        tool.add("coverage", cov)  # type: ignore[union-attr]
+        cast(MutableMapping[str, object], tool)["coverage"] = cov
         return f"coverage: added run.source=[{spec.coverage_source}] fail_under={spec.min_coverage}"
 
     cov_obj = tool["coverage"]
@@ -451,7 +452,7 @@ def fix_pytest_section(doc: tomlkit.TOMLDocument) -> str | None:
     ini = tomlkit.table()
     ini["addopts"] = list(standard_addopts)
     pt.add("ini_options", ini)
-    tool.add("pytest", pt)  # type: ignore[union-attr]
+    cast(MutableMapping[str, object], tool)["pytest"] = pt
     return "pytest: added standard ini_options"
 
 
@@ -583,7 +584,7 @@ def fix_bandit_skips(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None
     if bandit is None:
         bandit = tomlkit.table()
         bandit["skips"] = list(standard_skips)
-        tool.add("bandit", bandit)  # type: ignore[union-attr]
+        cast(MutableMapping[str, object], tool)["bandit"] = bandit
         return "bandit: added [tool.bandit] from workspace SSOT"
     skips = bandit.get("skips")
     if not skips or not isinstance(skips, list):

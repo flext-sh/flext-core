@@ -19,9 +19,9 @@ if _SCRIPTS_ROOT not in sys.path:
 from libs.discovery import discover_projects as ssot_discover_projects  # noqa: E402
 
 try:
-    import yaml  # type: ignore[import-untyped]
+    import yaml
 except ImportError:
-    yaml = None  # type: ignore[assignment]
+    yaml = None
 
 
 SKILLS_DIR = Path(".claude/skills")
