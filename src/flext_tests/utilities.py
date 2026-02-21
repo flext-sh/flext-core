@@ -31,7 +31,6 @@ from flext_core import (
     r,
     t,
 )
-from flext_core.utilities import u
 
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -468,7 +467,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Generated UUID string.
 
                 """
-                return u.generate()
+                return FlextUtilities.generate()
 
             @staticmethod
             def generate_short_id(length: int = 8) -> str:
@@ -482,7 +481,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Generated short ID string.
 
                 """
-                return u.generate("ulid", length=length)
+                return FlextUtilities.generate("ulid", length=length)
 
         # Compatibility aliases for existing test code
         class TestUtilities:
@@ -1733,15 +1732,15 @@ class FlextTestsUtilities(FlextUtilities):
                 # Detect from content type
                 if isinstance(content, bytes):
                     return c.Tests.Files.Format.BIN
-                if u.is_type(content, "mapping"):
+                if FlextUtilities.is_type(content, "mapping"):
                     # Check extension for yaml vs json
                     ext = Path(name).suffix.lower()
                     if ext in {".yaml", ".yml"}:
                         return c.Tests.Files.Format.YAML
                     return c.Tests.Files.Format.JSON
                 # Runtime check needed to distinguish nested sequences from flat sequences
-                if u.is_type(content, "list") and all(
-                    u.is_type(row, "list") for row in content
+                if FlextUtilities.is_type(content, "list") and all(
+                    FlextUtilities.is_type(row, "list") for row in content
                 ):
                     return c.Tests.Files.Format.CSV
 

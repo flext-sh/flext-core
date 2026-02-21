@@ -20,12 +20,11 @@ from flext_core import (
     u,
 )
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import c
 from pydantic import BaseModel
 
 from flext_tests.constants import c
-from flext_tests.factories import FlextTestsFactories as tt
-from flext_tests.models import FlextTestsModels as m
+from flext_tests.factories import tt
+from flext_tests.models import m
 from flext_tests.typings import t
 from flext_tests.utilities import FlextTestsUtilities as tu
 
