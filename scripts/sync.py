@@ -63,6 +63,45 @@ def _sync_tree(source_dir: Path, target_dir: Path, *, prune: bool) -> int:
     return changed
 
 
+def _ensure_gitignore_entries(project_root: Path, required: list[str]) -> int:
+    """Idempotently add missing .gitignore entries to a project.
+
+    Appends only entries that are not already present (exact line match).
+    Never removes or reorders existing entries.
+
+    Args:
+        project_root: Root directory of the project to update.
+        required: List of gitignore patterns that must be present.
+
+    Returns:
+        1 if the file was changed, 0 otherwise.
+    """
+    gitignore = project_root / ".gitignore"
+    existing_lines: list[str] = []
+    if gitignore.exists():
+        existing_lines = gitignore.read_text(encoding="utf-8").splitlines()
+
+    existing_patterns = {line.strip() for line in existing_lines if line.strip()}
+    missing = [p for p in required if p not in existing_patterns]
+    if not missing:
+        return 0
+
+    with gitignore.open("a", encoding="utf-8") as handle:
+        handle.write("\n# --- workspace-sync: required ignores (auto-managed) ---\n")
+        for pattern in missing:
+            handle.write(f"{pattern}\n")
+    return 1
+
+
+# Patterns that MUST be in every subproject .gitignore.
+# These are workspace-level transient artifacts that must never be tracked.
+_REQUIRED_GITIGNORE_ENTRIES: list[str] = [
+    ".reports/",
+    ".venv/",
+    "__pycache__/",
+]
+
+
 def main() -> int:
     """Run file sync for base.mk and scripts tree."""
     parser = argparse.ArgumentParser()
@@ -87,6 +126,8 @@ def main() -> int:
         changed += _sync_tree(
             canonical_root / "scripts", project_root / "scripts", prune=args.prune
         )
+        # Ensure required .gitignore entries are present (idempotent, additive only)
+        changed += _ensure_gitignore_entries(project_root, _REQUIRED_GITIGNORE_ENTRIES)
         # Clean up legacy top-level libs/ (now lives under scripts/libs/)
         legacy_libs = project_root / "libs"
         if legacy_libs.is_dir():

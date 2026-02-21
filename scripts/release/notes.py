@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from release.shared import resolve_projects, run_capture, workspace_root
+from scripts.release.shared import resolve_projects, run_capture, workspace_root
 
 
 def _parse_args() -> argparse.Namespace:

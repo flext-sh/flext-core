@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from libs.discovery import ProjectInfo, discover_projects
+from .discovery import ProjectInfo, discover_projects
 
 
 def filter_projects(projects: list[ProjectInfo], kind: str) -> list[ProjectInfo]:

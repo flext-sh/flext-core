@@ -16,12 +16,7 @@ import tempfile
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-
-_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
-if _SCRIPTS_ROOT not in sys.path:
-    sys.path.insert(0, _SCRIPTS_ROOT)
-
-from libs.selection import resolve_projects  # noqa: E402
+from scripts.libs.selection import resolve_projects  # noqa: E402
 
 MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
 MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')

@@ -8,12 +8,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-
-_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
-if _SCRIPTS_ROOT not in sys.path:
-    sys.path.insert(0, _SCRIPTS_ROOT)
-
-from libs.versioning import release_tag_from_branch  # noqa: E402
+from scripts.libs.versioning import release_tag_from_branch  # noqa: E402
 
 
 def _run_capture(command: list[str], cwd: Path) -> str:

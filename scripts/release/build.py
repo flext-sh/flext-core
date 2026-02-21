@@ -8,7 +8,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from release.shared import resolve_projects, workspace_root
+from scripts.release.shared import resolve_projects, workspace_root
 
 
 def _parse_args() -> argparse.Namespace:

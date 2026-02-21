@@ -6,14 +6,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from libs.discovery import ProjectInfo
-from libs.paths import workspace_root as _workspace_root
-from libs.selection import resolve_projects as _resolve_projects
-from libs.subprocess import (
+from scripts.libs.discovery import ProjectInfo
+from scripts.libs.paths import workspace_root as _workspace_root
+from scripts.libs.selection import resolve_projects as _resolve_projects
+from scripts.libs.subprocess import (
     run_capture as _run_capture,
     run_checked as _run_checked,
 )
-from libs.versioning import (
+from scripts.libs.versioning import (
     bump_version as _bump_version,
     parse_semver as _parse_semver,
 )

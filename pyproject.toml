@@ -267,14 +267,7 @@ report.omit = [
 report.precision = 2
 
 [tool.pyrefly]
-search-path = [
-    "../typings",
-    "../typings/generated",
-    "src",
-    "tests",
-    "examples",
-    "scripts"
-]
+search-path = [ "../typings", "../typings/generated", "src", "tests", "examples", "scripts" ]
 
 [tool.bandit]
 skips = [ "B404", "B603", "B607", "B105", "B608" ]

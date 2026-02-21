@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from libs.subprocess import run_capture
+from .subprocess import run_capture
 
 
 def current_branch(repo_root: Path) -> str:

@@ -7,9 +7,9 @@ import argparse
 import re
 from pathlib import Path
 
-from libs.versioning import replace_project_version
+from scripts.libs.versioning import replace_project_version
 
-from release.shared import parse_semver, resolve_projects, workspace_root
+from scripts.release.shared import parse_semver, resolve_projects, workspace_root
 
 
 def _needs_version_update(content: str, version: str) -> bool:

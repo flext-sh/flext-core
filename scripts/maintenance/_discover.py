@@ -9,11 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-_SCRIPTS_ROOT = str(Path(__file__).resolve().parents[1])
-if _SCRIPTS_ROOT not in sys.path:
-    sys.path.insert(0, _SCRIPTS_ROOT)
-
-from libs.discovery import discover_projects  # noqa: E402
+from scripts.libs.discovery import discover_projects
 
 
 def main() -> int:
