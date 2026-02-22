@@ -9,22 +9,118 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Final
 
-class FlextInfraConstants:
-    """Namespace for infrastructure constants.
 
-    Provides configuration constants and enumerations for all infrastructure
-    services including base.mk templates, check types, dependency rules,
-    and workspace orchestration settings.
+class InfraConstants:
+    """Centralized constants for FLEXT infrastructure (Layer 0).
+
+    Provides immutable, namespace-organized constants for infrastructure
+    configuration, validation rules, check types, and workspace settings.
 
     Usage:
-        >>> from flext_infra import c
-        >>> # Access constants via c.ServiceName.CONSTANT_NAME
+        >>> from flext_infra.constants import ic
+        >>> # Access constants via ic.Status.PASS
+        >>> # Access paths via ic.Paths.VENV_BIN_REL
     """
 
-    pass
+    class Paths:
+        """Path-related constants."""
+
+        VENV_BIN_REL: Final[str] = ".venv/bin"
+        """Relative path to the virtualenv bin directory from workspace root."""
+
+        DEFAULT_SRC_DIR: Final[str] = "src"
+        """Default source directory for Python projects."""
+
+    class Files:
+        """File-related constants."""
+
+        PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
+        """Standard filename for Python project configuration."""
+
+        MAKEFILE_FILENAME: Final[str] = "Makefile"
+        """Standard filename for Makefile project markers."""
+
+    class Status:
+        """Status strings for check results."""
+
+        PASS: Final[str] = "PASS"
+        """Status string for checks that passed."""
+
+        FAIL: Final[str] = "FAIL"
+        """Status string for checks that failed."""
+
+        OK: Final[str] = "OK"
+        """Status string for successful operations."""
+
+        WARN: Final[str] = "WARN"
+        """Status string for operations with warnings."""
+
+    class Excluded:
+        """Directory exclusion sets for analysis."""
+
+        COMMON_EXCLUDED_DIRS: Final[frozenset[str]] = frozenset({
+            ".git",
+            ".venv",
+            "node_modules",
+            "__pycache__",
+            "dist",
+            "build",
+            ".reports",
+            ".mypy_cache",
+            ".pytest_cache",
+            ".ruff_cache",
+        })
+        """Common directories to exclude from analysis across all scripts."""
+
+        DOC_EXCLUDED_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {"site"}
+        """Directories to exclude when analyzing documentation."""
+
+        PYPROJECT_SKIP_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {
+            ".claude.disabled",
+            ".flext-deps",
+            ".sisyphus",
+        }
+        """Directories to skip when scanning pyproject.toml files."""
+
+        CHECK_EXCLUDED_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {
+            ".flext-deps",
+            "reports",
+        }
+        """Directories to exclude during quality checks."""
+
+    class Check:
+        """Check directory configuration."""
+
+        DEFAULT_CHECK_DIRS: Final[tuple[str, ...]] = (
+            "src",
+            "tests",
+            "examples",
+            "scripts",
+        )
+        """Default directories to check in a project (root only uses scripts)."""
+
+        CHECK_DIRS_SUBPROJECT: Final[tuple[str, ...]] = ("src", "tests", "examples")
+        """Subprojects: type-check src/tests/examples only (scripts are workspace copies, run from root)."""
+
+    class Github:
+        """GitHub repository constants."""
+
+        GITHUB_REPO_URL: Final[str] = "https://github.com/flext-sh/flext"
+        """Official GitHub repository URL for the FLEXT project."""
+
+        GITHUB_REPO_NAME: Final[str] = "flext-sh/flext"
+        """GitHub repository name in owner/repo format."""
+
+    class Encoding:
+        """Encoding constants."""
+
+        DEFAULT_ENCODING: Final[str] = "utf-8"
+        """Default text encoding for file operations."""
 
 
-c = FlextInfraConstants
+# Alias for convenience
+ic = InfraConstants
 
-__all__ = ["FlextInfraConstants", "c"]
+__all__ = ["InfraConstants", "ic"]

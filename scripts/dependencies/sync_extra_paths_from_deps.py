@@ -19,6 +19,7 @@ from pathlib import Path
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
+from scripts.dependencies.sync_dep_paths import extract_dep_name
 from scripts.libs.config import PYPROJECT_FILENAME
 from scripts.libs.paths import workspace_root_from_file
 from scripts.libs.toml_io import read_toml_document, write_toml_document
@@ -99,15 +100,15 @@ def _path_dep_paths(doc: TOMLDocument) -> list[str]:
 def get_dep_paths(doc: TOMLDocument, *, is_root: bool = False) -> list[str]:
     """Return type-checker src paths for path deps (SSOT for modernize_pyproject).
 
-    Resolves ``.flext-deps/X`` → actual workspace project ``X`` so paths
-    reference real sibling projects instead of the symlink staging directory.
+    Handles both ``.flext-deps/X`` (standalone) and ``../X`` / ``X`` (workspace)
+    path formats by extracting the bare project name first.
     """
     raw_paths = _path_dep_paths(doc)
     resolved: list[str] = []
     for p in raw_paths:
         if not p:
             continue
-        name = p.removeprefix(".flext-deps/")
+        name = extract_dep_name(p)
         if is_root:
             resolved.append(f"{name}/src")
         else:

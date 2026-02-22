@@ -31,6 +31,7 @@ import tomlkit
 from tomlkit.items import Table
 
 from scripts.dependencies.sync_extra_paths_from_deps import (
+    MYPY_BASE_PROJECT,
     PYRIGHT_BASE_PROJECT,
     get_dep_paths,
 )
@@ -260,6 +261,9 @@ SSOT_RULES: dict[str, SSOTRule] = {
             "lint.isort.known-first-party": "project_pkg_list",
         }
     ),
+    "mypy": SSOTRule(
+        root_only=frozenset({"mypy_path", "files", "overrides", "plugins"}),
+    ),
     "codespell": SSOTRule(),
     "complexipy": SSOTRule(),
     "vulture": SSOTRule(),
@@ -338,6 +342,8 @@ def _enforce_one(
         canonical["extraPaths"] = PYRIGHT_BASE_PROJECT + get_dep_paths(
             doc, is_root=False
         )
+    if tool_name == "mypy":
+        canonical["mypy_path"] = MYPY_BASE_PROJECT + get_dep_paths(doc, is_root=False)
     if tool_name == "pyrefly":
         canonical["search-path"] = [
             "..",
@@ -409,6 +415,14 @@ class NormalizeRule:
     message: str
     path: tuple[str, ...] = ()
     fields: tuple[str, ...] = ()
+    skip_root: bool = False
+
+
+ALLOWED_TOOL_SECTIONS: frozenset[str] = frozenset(SSOT_RULES) | {
+    "poetry",
+    "django-stubs",
+}
+"""Tool sections allowed in subprojects.  Anything else is removed."""
 
 
 NORMALIZE_RULES: tuple[NormalizeRule, ...] = (
@@ -437,6 +451,12 @@ NORMALIZE_RULES: tuple[NormalizeRule, ...] = (
         kind="normalize_poetry_core",
         message="build-system: poetry-core>=2",
         path=("build-system",),
+    ),
+    NormalizeRule(
+        kind="remove_stale_tool_sections",
+        message="tool: removed stale sections",
+        path=("tool",),
+        skip_root=True,
     ),
 )
 
@@ -520,12 +540,25 @@ def _apply_normalize_rule(doc: tomlkit.TOMLDocument, rule: NormalizeRule) -> str
                 return rule.message
         return None
 
+    if rule.kind == "remove_stale_tool_sections":
+        tool = cast("MutableMapping[str, object]", target)
+        stale = sorted(k for k in tool if k not in ALLOWED_TOOL_SECTIONS)
+        if not stale:
+            return None
+        for k in stale:
+            del tool[k]
+        return f"tool: removed stale sections: {', '.join(stale)}"
+
     return None
 
 
-def _apply_normalize_rules(doc: tomlkit.TOMLDocument) -> list[str]:
+def _apply_normalize_rules(
+    doc: tomlkit.TOMLDocument, *, is_root: bool = False
+) -> list[str]:
     results: list[str] = []
     for rule in NORMALIZE_RULES:
+        if rule.skip_root and is_root:
+            continue
         result = _apply_normalize_rule(doc, rule)
         if result:
             results.append(result)
@@ -599,7 +632,7 @@ def process_file(path: Path, spec: ProjectSpec, *, dry_run: bool = False) -> lis
         if result:
             fixes.append(result)
 
-    fixes.extend(_apply_normalize_rules(doc))
+    fixes.extend(_apply_normalize_rules(doc, is_root=spec.is_root))
     test_msg, removed_pkgs = fix_test_deps_in_runtime(doc)
     _apply(test_msg)
     _apply(fix_deptry_ignores(doc, removed_pkgs))

@@ -265,6 +265,24 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
     )
 
 
+def _is_internal_path_dep(raw_path: str) -> str | None:
+    """Extract the project name from a path dep if it looks like an internal FLEXT dep.
+
+    Recognises both standalone (``.flext-deps/X``) and workspace (``../X``, ``X``)
+    formats.  Returns the bare project name or ``None`` if not an internal dep.
+    """
+    p = raw_path.strip().removeprefix("./")
+    if p.startswith(".flext-deps/"):
+        return p.removeprefix(".flext-deps/")
+    if p.startswith("../"):
+        candidate = p.removeprefix("../")
+        if candidate and "/" not in candidate:
+            return candidate
+    if p and "/" not in p and p not in (".", ".."):
+        return p
+    return None
+
+
 def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
     pyproject = project_root / PYPROJECT_FILENAME
     if not pyproject.exists():
@@ -282,9 +300,10 @@ def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
         dep_path = dep_value.get("path")
         if not isinstance(dep_path, str):
             continue
-        if not dep_path.startswith(".flext-deps/"):
+        repo_name = _is_internal_path_dep(dep_path)
+        if repo_name is None:
             continue
-        result[dep_name] = project_root / dep_path
+        result[dep_name] = project_root / ".flext-deps" / repo_name
 
     project_obj = data.get("project")
     project_deps = (
@@ -292,14 +311,16 @@ def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
     )
     if not isinstance(project_deps, list):
         project_deps = []
-    dep_pattern = re.compile(r"@\s*\.\.?/\.flext-deps/([A-Za-z0-9_.-]+)")
+    pep621_path_re = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
     for dep in project_deps:
-        if not isinstance(dep, str):
+        if not isinstance(dep, str) or " @ " not in dep:
             continue
-        match = dep_pattern.search(dep)
+        match = pep621_path_re.search(dep)
         if not match:
             continue
-        repo_name = match.group(1)
+        repo_name = _is_internal_path_dep(match.group("path"))
+        if repo_name is None:
+            continue
         _ = result.setdefault(repo_name, project_root / ".flext-deps" / repo_name)
     return result
 
