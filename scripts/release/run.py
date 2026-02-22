@@ -6,14 +6,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from scripts.libs.versioning import current_workspace_version
-from scripts.release.shared import (
+from scripts.libs.paths import workspace_root
+from scripts.libs.reporting import ensure_report_dir
+from scripts.libs.selection import resolve_projects
+from scripts.libs.subprocess import run_capture, run_checked
+from scripts.libs.versioning import (
     bump_version,
+    current_workspace_version,
     parse_semver,
-    resolve_projects,
-    run_capture,
-    run_checked,
-    workspace_root,
 )
 
 
@@ -116,7 +116,7 @@ def _phase_validate(root: Path) -> None:
 
 def _phase_build(root: Path, version: str, project_names: list[str]) -> None:
     """Execute the build phase by calling the build script."""
-    output = root / ".reports" / "release" / f"v{version}"
+    output = ensure_report_dir(root, "release", f"v{version}")
     command = [
         "python",
         "scripts/release/build.py",
@@ -142,8 +142,7 @@ def _phase_publish(
     project_names: list[str],
 ) -> None:
     """Execute the publishing phase: notes, changelog, and Git tagging."""
-    notes = root / ".reports" / "release" / tag / "RELEASE_NOTES.md"
-    notes.parent.mkdir(parents=True, exist_ok=True)
+    notes = ensure_report_dir(root, "release", tag) / "RELEASE_NOTES.md"
     command = [
         "python",
         "scripts/release/notes.py",

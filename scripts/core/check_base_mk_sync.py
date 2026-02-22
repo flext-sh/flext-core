@@ -8,6 +8,8 @@ import hashlib
 import sys
 from pathlib import Path
 
+from scripts.libs.paths import workspace_root_from_file
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -15,7 +17,7 @@ def _sha256(path: Path) -> str:
 
 def main() -> int:
     """Validate base.mk copies and report drift."""
-    root = Path.cwd().resolve()
+    root = workspace_root_from_file(__file__)
     source = root / "base.mk"
     if not source.exists():
         print("[base-mk-sync] missing root base.mk", file=sys.stderr)

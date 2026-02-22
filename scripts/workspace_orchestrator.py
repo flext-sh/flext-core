@@ -10,6 +10,9 @@ import sys
 import time
 from pathlib import Path
 
+from scripts.libs.config import DEFAULT_ENCODING, STATUS_FAIL, STATUS_OK
+from scripts.libs.reporting import ensure_report_dir
+
 
 def _run(
     project: str,
@@ -20,11 +23,10 @@ def _run(
     fail_fast: bool,
     make_args: list[str],
 ) -> tuple[int, bool]:
-    reports_dir = Path(".reports") / "workspace" / verb
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir = ensure_report_dir(Path(), "workspace", verb)
     log_path = reports_dir / f"{project}.log"
     started = time.monotonic()
-    with log_path.open("w", encoding="utf-8") as log_handle:
+    with log_path.open("w", encoding=DEFAULT_ENCODING) as log_handle:
         proc = subprocess.run(
             ["make", "-C", project, verb, *make_args],  # noqa: S607
             stdout=log_handle,
@@ -32,7 +34,7 @@ def _run(
             check=False,
         )
     elapsed = int(time.monotonic() - started)
-    status = "OK" if proc.returncode == 0 else "FAIL"
+    status = STATUS_OK if proc.returncode == 0 else STATUS_FAIL
     print(
         f"{index:02d} [{status}] {project} {verb} ({elapsed}s) exit={proc.returncode} log={log_path}"
     )

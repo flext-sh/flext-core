@@ -10,6 +10,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.documentation.shared import Scope, build_scopes, write_json, write_markdown
+from scripts.libs.config import (
+    DEFAULT_ENCODING,
+    GITHUB_REPO_NAME,
+    GITHUB_REPO_URL,
+    STATUS_OK,
+    STATUS_WARN,
+)
+from scripts.libs.doc_patterns import HEADING_H2_H3_RE, MARKDOWN_LINK_RE
+from scripts.libs.templates import TOC_END, TOC_START
 
 
 @dataclass(frozen=True)
@@ -18,13 +27,6 @@ class GeneratedFile:
 
     path: str
     written: bool
-
-
-HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
-ANCHOR_LINK_RE = re.compile(r"\[([^\]]+)\]\(#([^)]+)\)")
-MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
-TOC_START = "<!-- TOC START -->"
-TOC_END = "<!-- TOC END -->"
 
 
 def normalize_anchor(value: str) -> str:
@@ -52,9 +54,7 @@ def sanitize_internal_anchor_links(content: str) -> str:
 def build_toc(content: str) -> str:
     """Build a markdown TOC from level-2 and level-3 headings."""
     items: list[str] = []
-    for level, title in re.findall(
-        r"^(##|###)\s+(.+?)\s*$", content, flags=re.MULTILINE
-    ):
+    for level, title in HEADING_H2_H3_RE.findall(content):
         anchor = normalize_anchor(title)
         if not anchor:
             continue
@@ -91,12 +91,12 @@ def update_toc(content: str) -> str:
 def write_if_needed(path: Path, content: str, *, apply: bool) -> GeneratedFile:
     """Write *content* to *path* only when changed and *apply* is True."""
     exists = path.exists()
-    current = path.read_text(encoding="utf-8") if exists else ""
+    current = path.read_text(encoding=DEFAULT_ENCODING) if exists else ""
     if current == content:
         return GeneratedFile(path=path.as_posix(), written=False)
     if apply:
         path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_text(content, encoding="utf-8")
+        _ = path.write_text(content, encoding=DEFAULT_ENCODING)
     return GeneratedFile(path=path.as_posix(), written=apply)
 
 
@@ -153,7 +153,7 @@ def generate_project_guides(
     files: list[GeneratedFile] = []
     for source in sorted(source_dir.glob("*.md")):
         rendered = project_guide_content(
-            content=source.read_text(encoding="utf-8"),
+            content=source.read_text(encoding=DEFAULT_ENCODING),
             project=scope.name,
             source_name=source.name,
         )
@@ -175,9 +175,9 @@ def generate_project_mkdocs(scope: Scope, *, apply: bool) -> list[GeneratedFile]
         "\n".join([
             f"site_name: {site_name}",
             f"site_description: Standard guides for {scope.name}",
-            "site_url: https://github.com/flext-sh/flext",
-            "repo_name: flext-sh/flext",
-            "repo_url: https://github.com/flext-sh/flext",
+            f"site_url: {GITHUB_REPO_URL}",
+            f"repo_name: {GITHUB_REPO_NAME}",
+            f"repo_url: {GITHUB_REPO_URL}",
             f"edit_uri: edit/main/{scope.name}/docs/guides/",
             "docs_dir: docs/guides",
             "site_dir: .reports/docs/site",
@@ -238,7 +238,7 @@ def run_scope(scope: Scope, *, apply: bool, workspace_root: Path) -> int:
             f"Source: {source}",
         ],
     )
-    result = "OK" if apply else "WARN"
+    result = STATUS_OK if apply else STATUS_WARN
     reason = f"generated:{generated}" if apply else "dry-run"
     print(f"PROJECT={scope.name} PHASE=generate RESULT={result} REASON={reason}")
     return 0

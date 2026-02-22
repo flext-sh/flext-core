@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import MutableMapping
 from pathlib import Path
+
+from .config import PYPROJECT_FILENAME
+from .toml_io import read_toml_document, write_toml_document
 
 
 def parse_semver(version: str) -> tuple[int, int, int]:
@@ -81,13 +85,18 @@ def current_workspace_version(workspace_root: Path) -> str:
         The version string.
 
     """
-    pyproject = workspace_root / "pyproject.toml"
-    content = pyproject.read_text(encoding="utf-8")
-    match = re.search(r'^version\s*=\s*"(.+?)"', content, re.MULTILINE)
-    if not match:
+    pyproject = workspace_root / PYPROJECT_FILENAME
+    doc = read_toml_document(pyproject)
+    if doc is None:
+        msg = f"invalid or missing {pyproject}"
+        raise RuntimeError(msg)
+    project = doc.get("project")
+    project_table = project if isinstance(project, MutableMapping) else None
+    version = project_table.get("version") if project_table is not None else None
+    if not isinstance(version, str) or not version.strip():
         msg = "version not found in pyproject.toml"
         raise RuntimeError(msg)
-    return match.group(1)
+    return version
 
 
 def replace_project_version(project_path: Path, version: str) -> None:
@@ -98,13 +107,14 @@ def replace_project_version(project_path: Path, version: str) -> None:
         version: The new version string to set.
 
     """
-    pyproject = project_path / "pyproject.toml"
-    content = pyproject.read_text(encoding="utf-8")
-    updated = re.sub(
-        r'^version\s*=\s*".+?"',
-        f'version = "{version}"',
-        content,
-        count=1,
-        flags=re.MULTILINE,
-    )
-    _ = pyproject.write_text(updated, encoding="utf-8")
+    pyproject = project_path / PYPROJECT_FILENAME
+    doc = read_toml_document(pyproject)
+    if doc is None:
+        msg = f"invalid or missing {pyproject}"
+        raise RuntimeError(msg)
+    project = doc.get("project")
+    if not isinstance(project, MutableMapping):
+        msg = f"missing [project] table in {pyproject}"
+        raise TypeError(msg)
+    project["version"] = version
+    write_toml_document(pyproject, doc)

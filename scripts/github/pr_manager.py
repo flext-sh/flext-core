@@ -8,22 +8,9 @@ import json
 import subprocess
 from pathlib import Path
 
+from scripts.libs.git import current_branch
+from scripts.libs.subprocess import run_capture
 from scripts.libs.versioning import release_tag_from_branch
-
-
-def _run_capture(command: list[str], cwd: Path) -> str:
-    result = subprocess.run(
-        command,
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
-        msg = f"command failed ({result.returncode}): {' '.join(command)}: {detail}"
-        raise RuntimeError(msg)
-    return result.stdout.strip()
 
 
 def _run_stream(command: list[str], cwd: Path) -> int:
@@ -48,12 +35,8 @@ def _run_stream_with_output(command: list[str], cwd: Path) -> tuple[int, str]:
     return result.returncode, output
 
 
-def _current_branch(repo_root: Path) -> str:
-    return _run_capture(["git", "rev-parse", "--abbrev-ref", "HEAD"], repo_root)
-
-
 def _open_pr_for_head(repo_root: Path, head: str) -> dict[str, object] | None:
-    raw = _run_capture(
+    raw = run_capture(
         [
             "gh",
             "pr",
@@ -158,7 +141,7 @@ def _create_pr(
     if draft == 1:
         command.append("--draft")
 
-    created = _run_capture(command, repo_root)
+    created = run_capture(command, repo_root)
     print("status=created")
     print(f"pr_url={created}")
     return 0
@@ -229,7 +212,7 @@ def main() -> int:
     """Dispatch requested PR action and return its exit code."""
     args = _parse_args()
     repo_root = args.repo_root.resolve()
-    head = args.head or _current_branch(repo_root)
+    head = args.head or current_branch(repo_root)
     base = args.base
     selector = _selector(args.number, head)
 

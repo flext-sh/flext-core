@@ -15,6 +15,7 @@ from scripts.documentation.shared import (
     write_json,
     write_markdown,
 )
+from scripts.libs.config import STATUS_FAIL, STATUS_OK
 
 
 @dataclass(frozen=True)
@@ -44,14 +45,14 @@ def run_mkdocs(scope: Scope) -> BuildResult:
     if completed.returncode == 0:
         return BuildResult(
             scope=scope.name,
-            result="OK",
+            result=STATUS_OK,
             reason="build succeeded",
             site_dir=site_dir.as_posix(),
         )
     reason = (completed.stderr or completed.stdout).strip().splitlines()
     tail = reason[-1] if reason else f"mkdocs exited {completed.returncode}"
     return BuildResult(
-        scope=scope.name, result="FAIL", reason=tail, site_dir=site_dir.as_posix()
+        scope=scope.name, result=STATUS_FAIL, reason=tail, site_dir=site_dir.as_posix()
     )
 
 
@@ -94,7 +95,7 @@ def main() -> int:
         print(
             f"PROJECT={scope.name} PHASE=build RESULT={result.result} REASON={result.reason}"
         )
-        if result.result == "FAIL":
+        if result.result == STATUS_FAIL:
             failures += 1
     return 1 if failures else 0
 

@@ -8,16 +8,20 @@ import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET  # noqa: S405
 
+from scripts.libs.config import DEFAULT_ENCODING
+
 
 def _write_or_placeholder(path: Path, entries: list[str], placeholder: str) -> None:
     values = entries or [placeholder]
-    _ = path.write_text("\n".join(values) + "\n", encoding="utf-8")
+    _ = path.write_text("\n".join(values) + "\n", encoding=DEFAULT_ENCODING)
 
 
 def _count_effective(path: Path, placeholder: str) -> int:
     lines = [
         line.strip()
-        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()
+        for line in path.read_text(
+            encoding=DEFAULT_ENCODING, errors="replace"
+        ).splitlines()
     ]
     return sum(1 for line in lines if line and line != placeholder)
 
@@ -37,7 +41,7 @@ def main() -> int:
     skips_path = Path(sys.argv[7])
 
     log_text = (
-        log_path.read_text(encoding="utf-8", errors="replace")
+        log_path.read_text(encoding=DEFAULT_ENCODING, errors="replace")
         if log_path.exists()
         else ""
     )
@@ -163,7 +167,7 @@ def main() -> int:
     error_headers = sum(
         1
         for line in errors_path.read_text(
-            encoding="utf-8", errors="replace"
+            encoding=DEFAULT_ENCODING, errors="replace"
         ).splitlines()
         if line.startswith(("=== FAILURE:", "=== ERROR:"))
     )

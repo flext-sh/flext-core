@@ -7,7 +7,8 @@ import argparse
 from datetime import UTC, datetime
 from pathlib import Path
 
-from scripts.release.shared import workspace_root
+from scripts.libs.config import DEFAULT_ENCODING
+from scripts.libs.paths import workspace_root
 
 
 def _parse_args() -> argparse.Namespace:
@@ -63,9 +64,9 @@ def main() -> int:
     tagged_notes_path = root / "docs" / "releases" / f"{args.tag}.md"
     notes_path = args.notes if args.notes.is_absolute() else root / args.notes
 
-    notes_text = notes_path.read_text(encoding="utf-8")
+    notes_text = notes_path.read_text(encoding=DEFAULT_ENCODING)
     existing = (
-        changelog_path.read_text(encoding="utf-8")
+        changelog_path.read_text(encoding=DEFAULT_ENCODING)
         if changelog_path.exists()
         else "# Changelog\n\n"
     )
@@ -73,10 +74,10 @@ def main() -> int:
 
     if args.apply:
         changelog_path.parent.mkdir(parents=True, exist_ok=True)
-        _ = changelog_path.write_text(updated, encoding="utf-8")
+        _ = changelog_path.write_text(updated, encoding=DEFAULT_ENCODING)
         latest_path.parent.mkdir(parents=True, exist_ok=True)
-        _ = latest_path.write_text(notes_text, encoding="utf-8")
-        _ = tagged_notes_path.write_text(notes_text, encoding="utf-8")
+        _ = latest_path.write_text(notes_text, encoding=DEFAULT_ENCODING)
+        _ = tagged_notes_path.write_text(notes_text, encoding=DEFAULT_ENCODING)
 
     _ = print(f"changelog: {changelog_path}")
     _ = print(f"latest: {latest_path}")

@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import json
 import shutil
 import subprocess
 from pathlib import Path
+
+from scripts.libs.json_io import write_json
 
 
 def _parse_args() -> argparse.Namespace:
@@ -27,7 +28,6 @@ def main() -> int:
     args = _parse_args()
     root = args.root.resolve()
     report = args.report if args.report.is_absolute() else root / args.report
-    report.parent.mkdir(parents=True, exist_ok=True)
 
     actionlint = shutil.which("actionlint")
     if actionlint is None:
@@ -35,10 +35,7 @@ def main() -> int:
             "status": "skipped",
             "reason": "actionlint not installed",
         }
-        report.write_text(
-            json.dumps(payload_skipped, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        write_json(report, payload_skipped, sort_keys=True)
         _ = print(f"wrote: {report}")
         return 0
 
@@ -55,9 +52,7 @@ def main() -> int:
         "stdout": result.stdout,
         "stderr": result.stderr,
     }
-    report.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    write_json(report, payload, sort_keys=True)
     _ = print(f"wrote: {report}")
     if result.returncode != 0:
         _ = print(result.stdout)

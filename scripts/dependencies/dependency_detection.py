@@ -14,18 +14,13 @@ from __future__ import annotations
 import contextlib
 import json
 import os
-import re
 import subprocess
-import tomllib
 from pathlib import Path
 
+from scripts.libs.config import DEFAULT_ENCODING, PYPROJECT_FILENAME
+from scripts.libs.patterns import INTERNAL_PREFIXES, MYPY_HINT_RE, MYPY_STUB_RE
 from scripts.libs.selection import resolve_projects
-
-# Mypy output patterns for typing library detection (aligned with stub_supply_chain)
-MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')
-MYPY_STUB_RE = re.compile(r'Library stubs not installed for "([^"]+)"')
-# Internal FLEXT modules: do not suggest types-* for these (fix in code)
-INTERNAL_PREFIXES = ("flext_", "flext_", "flext_")
+from scripts.libs.toml_io import read_toml_file
 
 # Default module name -> types-* PyPI package (overridable via dependency_limits.toml)
 DEFAULT_MODULE_TO_TYPES_PACKAGE: dict[str, str] = {
@@ -46,31 +41,22 @@ DEFAULT_MODULE_TO_TYPES_PACKAGE: dict[str, str] = {
     "xlrd": "types-xlrd",
 }
 
-# Skip directories when discovering projects (same as sync_dependencies / modernize)
-SKIP_DIRS = frozenset({
-    "archive",
-    "backup",
-    "node_modules",
-    ".git",
-    ".venv",
-    "cmd",
-    "scripts",
-    "docs",
-    "typings",
-    ".claude.disabled",
-})
-
 
 def discover_projects(
     workspace_root: Path,
     projects_filter: list[str] | None = None,
 ) -> list[Path]:
-    """Discover workspace projects eligible for dependency checks."""
+    """Discover workspace projects eligible for dependency checks.
+
+    Uses the canonical ``resolve_projects`` from ``scripts.libs.selection``
+    which already filters non-project directories (no ``.git``, no ``Makefile``,
+    dot-prefixed, ``cmd``).  Only an additional ``pyproject.toml`` guard is
+    needed here since dependency tools require it.
+    """
     projects = [
         project.path
         for project in resolve_projects(workspace_root, names=[])
-        if (project.path / "pyproject.toml").exists()
-        and not any(skip in project.name for skip in SKIP_DIRS)
+        if (project.path / PYPROJECT_FILENAME).exists()
     ]
     if projects_filter is not None:
         filter_set = set(projects_filter)
@@ -91,7 +77,7 @@ def run_deptry(
     If json_output_path is set, deptry writes JSON there and we read it.
     Otherwise we run with a temp file. Exit code 0 = no issues, 1 = issues found.
     """
-    config = config_path or (project_path / "pyproject.toml")
+    config = config_path or (project_path / PYPROJECT_FILENAME)
     if not config.exists():
         return [], 0
 
@@ -121,7 +107,7 @@ def run_deptry(
     issues: list[dict[str, object]] = []
     if out_file.exists():
         try:
-            raw = out_file.read_text(encoding="utf-8")
+            raw = out_file.read_text(encoding=DEFAULT_ENCODING)
             issues = json.loads(raw) if raw.strip() else []
         except (json.JSONDecodeError, OSError):
             pass
@@ -189,12 +175,7 @@ def build_project_report(
 def load_dependency_limits(limits_path: Path | None = None) -> dict[str, object]:
     """Load dependency_limits.toml. Returns empty dict if file missing or invalid."""
     path = limits_path or (Path(__file__).resolve().parent / "dependency_limits.toml")
-    if not path.exists():
-        return {}
-    try:
-        return dict(tomllib.loads(path.read_text(encoding="utf-8")))
-    except (tomllib.TOMLDecodeError, OSError):
-        return {}
+    return dict(read_toml_file(path))
 
 
 def run_mypy_stub_hints(
@@ -266,12 +247,9 @@ def module_to_types_package(module_name: str, limits: dict[str, object]) -> str 
 
 def get_current_typings_from_pyproject(project_path: Path) -> list[str]:
     """Return list of package names in [tool.poetry.group.typings.dependencies] or optional-dependencies.typings."""
-    pyproject = project_path / "pyproject.toml"
-    if not pyproject.exists():
-        return []
-    try:
-        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    except (tomllib.TOMLDecodeError, OSError):
+    pyproject = project_path / PYPROJECT_FILENAME
+    data = read_toml_file(pyproject)
+    if not data:
         return []
 
     names: set[str] = set()

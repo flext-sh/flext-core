@@ -14,8 +14,13 @@ from pathlib import Path
 
 import yaml
 
+from scripts.libs.config import DEFAULT_ENCODING, STATUS_FAIL, STATUS_PASS
 from scripts.libs.discovery import (
     discover_projects as ssot_discover_projects,
+)
+from scripts.libs.json_io import (
+    read_json as _read_json,
+    write_json as _write_json,
 )
 
 SKILLS_DIR = Path(".claude/skills")
@@ -125,7 +130,7 @@ def unique_sorted(items: list[str]) -> list[str]:
 def load_rules_yml(path: Path) -> dict[str, object]:
     """Load rules metadata from YAML or JSON fallback."""
     try:
-        raw = path.read_text(encoding="utf-8")
+        raw = path.read_text(encoding=DEFAULT_ENCODING)
     except OSError as exc:
         msg = f"Cannot read rules file: {path}"
         raise SkillInfraError(msg) from exc
@@ -149,31 +154,21 @@ def load_rules_yml(path: Path) -> dict[str, object]:
 
 
 def write_json(path: Path, payload: dict[str, object]) -> None:
-    """Write a JSON payload to disk with stable formatting."""
+    """Write JSON with SkillInfraError wrapping."""
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        _write_json(path, payload, sort_keys=True)
     except OSError as exc:
         msg = f"Cannot write JSON file: {path}"
         raise SkillInfraError(msg) from exc
 
 
 def read_json(path: Path) -> dict[str, object]:
-    """Read a JSON object from disk or return an empty mapping."""
-    if not path.exists():
-        return {}
+    """Read JSON with SkillInfraError wrapping."""
     try:
-        parsed = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        msg = f"Cannot parse JSON file: {path}"
+        return _read_json(path)
+    except OSError as exc:
+        msg = f"Cannot read JSON file: {path}"
         raise SkillInfraError(msg) from exc
-    if not isinstance(parsed, dict):
-        msg = f"JSON file must be an object: {path}"
-        raise SkillInfraError(msg)
-    return dict(parsed)
 
 
 def render_path_template(
@@ -1106,7 +1101,7 @@ def run_main(argv: list[str]) -> int:
     print(f"\n{'=' * 72}")
     print(f"Validation summary: {len(skills)} skill(s)")
     for skill_name, _rules_path in skills:
-        status = "PASS" if pass_map.get(skill_name) else "FAIL"
+        status = STATUS_PASS if pass_map.get(skill_name) else STATUS_FAIL
         total = 0
         for report in reports:
             if report.get("skill") == skill_name:

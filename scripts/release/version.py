@@ -7,8 +7,10 @@ import argparse
 import re
 from pathlib import Path
 
-from scripts.libs.versioning import replace_project_version
-from scripts.release.shared import parse_semver, resolve_projects, workspace_root
+from scripts.libs.config import DEFAULT_ENCODING, PYPROJECT_FILENAME
+from scripts.libs.paths import workspace_root
+from scripts.libs.selection import resolve_projects
+from scripts.libs.versioning import parse_semver, replace_project_version
 
 
 def _needs_version_update(content: str, version: str) -> bool:
@@ -21,9 +23,9 @@ def _needs_version_update(content: str, version: str) -> bool:
 
 def _version_files(root: Path, project_names: list[str]) -> list[Path]:
     """Discover all pyproject.toml files that need version updates."""
-    files: list[Path] = [root / "pyproject.toml"]
+    files: list[Path] = [root / PYPROJECT_FILENAME]
     for project in resolve_projects(root, project_names):
-        pyproject = project.path / "pyproject.toml"
+        pyproject = project.path / PYPROJECT_FILENAME
         if pyproject.exists():
             files.append(pyproject)
     return sorted({path.resolve() for path in files})
@@ -55,7 +57,7 @@ def main() -> int:
 
     changed = 0
     for file_path in _version_files(root, args.projects):
-        content = file_path.read_text(encoding="utf-8")
+        content = file_path.read_text(encoding=DEFAULT_ENCODING)
         did_change = _needs_version_update(content, target_version)
         if did_change:
             changed += 1

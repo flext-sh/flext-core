@@ -18,6 +18,7 @@ Options:
 
 from __future__ import annotations
 
+import functools
 import re
 import subprocess
 import sys
@@ -29,10 +30,26 @@ from typing import cast
 import tomlkit
 from tomlkit.items import Table
 
+from scripts.libs.config import (
+    DEFAULT_ENCODING,
+    MAKEFILE_FILENAME,
+    PYPROJECT_FILENAME,
+    PYPROJECT_SKIP_DIRS as SKIP_DIRS,
+    VENV_BIN_REL,
+)
+from scripts.libs.discovery import find_all_pyproject_files
+from scripts.libs.paths import workspace_root_from_file
+from scripts.libs.toml_io import (
+    build_table,
+    read_toml_document,
+    sync_section,
+    write_toml_document,
+)
+
 _TableLike = Table | MutableMapping[str, object]
 
-ROOT = Path(__file__).resolve().parents[2]
-VENV_BIN = ROOT / ".venv" / "bin"
+ROOT = workspace_root_from_file(__file__)
+VENV_BIN = ROOT / VENV_BIN_REL
 
 TEST_PACKAGES = frozenset({
     "pytest",
@@ -59,19 +76,6 @@ LICENSE_CLASSIFIERS = frozenset({
     "License :: OSI Approved :: MIT License",
     "License :: OSI Approved",
 })
-
-SKIP_DIRS = frozenset({
-    ".claude.disabled",
-    ".flext-deps",
-    ".sisyphus",
-    ".venv",
-    "node_modules",
-    "__pycache__",
-    ".git",
-})
-
-COV_FLAG = re.compile(r"^--cov")
-
 
 # ── ProjectSpec ──────────────────────────────────────────────────────
 
@@ -122,9 +126,11 @@ def _detect_src_package(project_dir: Path) -> str | None:
 
 def _read_min_coverage(project_dir: Path) -> int:
     """Read min coverage: pyproject.toml is source of truth, Makefile is migration fallback."""
-    pyproject = project_dir / "pyproject.toml"
+    pyproject = project_dir / PYPROJECT_FILENAME
     if pyproject.exists():
-        doc = tomlkit.parse(pyproject.read_text())
+        doc = read_toml_document(pyproject)
+        if doc is None:
+            doc = tomlkit.parse(pyproject.read_text())
         tool = doc.get("tool")
         if tool:
             cov = tool.get("coverage")
@@ -135,7 +141,7 @@ def _read_min_coverage(project_dir: Path) -> int:
                     if val is not None:
                         return int(val)
 
-    makefile = project_dir / "Makefile"
+    makefile = project_dir / MAKEFILE_FILENAME
     if makefile.exists():
         match = re.search(r"MIN_COVERAGE\s*:?=\s*(\d+)", makefile.read_text())
         if match:
@@ -171,88 +177,344 @@ def _ensure_tool(doc: tomlkit.TOMLDocument) -> Table:
     return tool
 
 
-def _get_ssot_bandit_skips() -> list[str]:
-    root_doc = tomlkit.parse((ROOT / "pyproject.toml").read_text())
-    tool = root_doc.get("tool")
-    if not tool:
-        msg = "workspace pyproject missing [tool] for Bandit SSOT"
+def _require_table(value: object, msg: str = "expected Table") -> Table:
+    """Return value as Table after runtime check; raise if not."""
+    if not value or not isinstance(value, Table):
         raise RuntimeError(msg)
-    bandit = tool.get("bandit")
-    if not bandit:
-        msg = "workspace pyproject missing [tool.bandit] for Bandit SSOT"
-        raise RuntimeError(msg)
-    skips = bandit.get("skips")
-    if not skips or not isinstance(skips, list):
-        msg = "workspace pyproject missing [tool.bandit].skips list for Bandit SSOT"
-        raise RuntimeError(msg)
-    unique: list[str] = []
-    for item in skips:
-        value = str(item).strip()
-        if value and value not in unique:
-            unique.append(value)
-    if not unique:
-        msg = "workspace pyproject defines empty [tool.bandit].skips"
-        raise RuntimeError(msg)
-    return unique
+    return value
 
 
-def _get_ssot_pytest_addopts() -> list[str]:
-    """Read canonical pytest addopts from workspace pyproject SSOT."""
-    root_doc = tomlkit.parse((ROOT / "pyproject.toml").read_text())
+@functools.cache
+def _root_tool_doc() -> Table:
+    """Parse workspace root pyproject.toml ONCE and return the ``[tool]`` table."""
+    root_doc = read_toml_document(ROOT / PYPROJECT_FILENAME)
+    if root_doc is None:
+        msg = "workspace pyproject.toml is missing or invalid"
+        raise RuntimeError(msg)
     tool = root_doc.get("tool")
-    if not tool:
-        msg = "workspace pyproject missing [tool] for pytest SSOT"
-        raise RuntimeError(msg)
-    pytest_section = tool.get("pytest")
-    if not pytest_section:
-        msg = "workspace pyproject missing [tool.pytest] for pytest SSOT"
-        raise RuntimeError(msg)
-    ini_options = pytest_section.get("ini_options")
-    if not ini_options:
-        msg = "workspace pyproject missing [tool.pytest.ini_options] for pytest SSOT"
-        raise RuntimeError(msg)
-    addopts = ini_options.get("addopts")
-    if not addopts or not isinstance(addopts, list):
-        msg = "workspace pyproject missing [tool.pytest.ini_options].addopts list for pytest SSOT"
-        raise RuntimeError(msg)
-    normalized: list[str] = [str(item) for item in addopts if str(item).strip()]
-    if not normalized:
-        msg = "workspace pyproject defines empty pytest addopts SSOT"
-        raise RuntimeError(msg)
-    return normalized
+    return _require_table(tool, "workspace pyproject.toml missing valid [tool] section")
+
+
+def _ssot_section(*keys: str) -> object:
+    """Navigate nested keys under the cached root ``[tool]`` table.
+
+    ``_ssot_section("pytest", "ini_options")`` returns ``[tool.pytest.ini_options]``.
+    Raises ``RuntimeError`` if any key is missing.
+    """
+    current: object = _root_tool_doc()
+    path_so_far = "tool"
+    for key in keys:
+        if not hasattr(current, "get"):
+            msg = f"workspace SSOT: [tool.{path_so_far}] is not a table"
+            raise RuntimeError(msg)
+        current = current.get(key)  # type: ignore[union-attr]
+        path_so_far = f"{path_so_far}.{key}"
+        if current is None:
+            msg = f"workspace SSOT: [{path_so_far}] not found"
+            raise RuntimeError(msg)
+    return current
+
+
+# ── Declarative SSOT enforcement ─────────────────────────────────────
+
+_SKIP = object()
+
+
+@dataclass(frozen=True)
+class SSOTRule:
+    """Rule for SSOT section: root_only keys, per_project overrides, entry_point, guard."""
+
+    from_root: bool = True
+    prune_extras: bool = True
+    root_only: frozenset[str] = frozenset()
+    per_project: dict[str, object] = field(default_factory=dict)
+    entry_point: str | None = None
+    guard: str | None = None
+
+
+SSOT_RULES: dict[str, SSOTRule] = {
+    "bandit": SSOTRule(),
+    "pyright": SSOTRule(root_only=frozenset({"executionEnvironments"})),
+    "coverage": SSOTRule(
+        from_root=False,
+        prune_extras=False,
+        guard="coverage_source",
+        per_project={
+            "run.source": "coverage_source_list",
+            "report.fail_under": "min_coverage",
+            "report.precision": "coverage_precision",
+        },
+    ),
+    "pytest": SSOTRule(entry_point="ini_options"),
+    "pyrefly": SSOTRule(
+        prune_extras=False,
+        root_only=frozenset({"sub-config"}),
+        per_project={"search-path": "pyrefly_sub_path"},
+    ),
+    "ruff": SSOTRule(
+        per_project={
+            "extend": "ruff_extend",
+            "lint.isort.known-first-party": "project_pkg_list",
+        }
+    ),
+    "codespell": SSOTRule(),
+    "complexipy": SSOTRule(),
+    "vulture": SSOTRule(),
+    "deptry": SSOTRule(prune_extras=False),
+}
+
+_PYREFLY_SUB_PATH: list[str] = [
+    "../typings",
+    "../typings/generated",
+    "src",
+    "tests",
+    "examples",
+    "scripts",
+]
+
+
+def _resolve_override(key: str, spec: ProjectSpec) -> object:
+    overrides: dict[str, object] = {
+        "coverage_source_list": (
+            [spec.coverage_source] if spec.coverage_source else _SKIP
+        ),
+        "min_coverage": spec.min_coverage,
+        "coverage_precision": 2,
+        "pyrefly_sub_path": _PYREFLY_SUB_PATH,
+        "ruff_extend": spec.ruff_extend,
+        "project_pkg_list": [spec.pkg_name] if spec.pkg_name else [],
+    }
+    return overrides.get(key, _SKIP)
+
+
+def _enforce_one(
+    doc: tomlkit.TOMLDocument,
+    tool_name: str,
+    rule: SSOTRule,
+    spec: ProjectSpec,
+) -> str | None:
+    if spec.is_root:
+        return None
+    if rule.guard and not getattr(spec, rule.guard, None):
+        return None
+
+    canonical: dict[str, object] = {}
+    if rule.from_root:
+        root_keys = list((rule.entry_point and [rule.entry_point]) or [])
+        try:
+            root_sec = cast(
+                "MutableMapping[str, object]",
+                _ssot_section(tool_name, *root_keys),
+            )
+        except RuntimeError:
+            return None
+        for k, v in root_sec.items():
+            if k in rule.root_only:
+                continue
+            if hasattr(v, "items") and not isinstance(v, (list, str)):
+                canonical[k] = dict(cast("MutableMapping[str, object]", v).items())
+            else:
+                canonical[k] = v
+
+    for dotted, resolver_key in rule.per_project.items():
+        value = _resolve_override(str(resolver_key), spec)
+        if value is _SKIP:
+            continue
+        parts = dotted.split(".")
+        target: dict[str, object] = canonical
+        for p in parts[:-1]:
+            nxt = target.get(p)
+            if not isinstance(nxt, dict):
+                nxt = {}
+                target[p] = nxt
+            target = nxt
+        target[parts[-1]] = value
+
+    tool = _ensure_tool(doc)
+    section = tool.get(tool_name)
+
+    if section is None:
+        outer = build_table(canonical)
+        if rule.entry_point:
+            wrapper = tomlkit.table()
+            wrapper[rule.entry_point] = outer
+            cast("MutableMapping[str, object]", tool)[tool_name] = wrapper
+        else:
+            cast("MutableMapping[str, object]", tool)[tool_name] = outer
+        return f"{tool_name}: added from workspace SSOT"
+
+    if rule.entry_point:
+        inner = section.get(rule.entry_point) if hasattr(section, "get") else None
+        if inner is None:
+            section[rule.entry_point] = build_table(canonical)
+            return f"{tool_name}: added {rule.entry_point} from workspace SSOT"
+        target_sec = cast("_TableLike", inner)
+    else:
+        target_sec = cast("_TableLike", section)
+
+    added, updated, removed = sync_section(
+        target_sec,
+        canonical,
+        prune_extras=rule.prune_extras,
+    )
+    if not added and not updated and not removed:
+        return None
+
+    parts_msg: list[str] = []
+    if added:
+        parts_msg.append(f"added {added}")
+    if updated:
+        parts_msg.append(f"updated {updated}")
+    if removed:
+        parts_msg.append(f"removed {removed}")
+    return f"{tool_name}: enforced SSOT ({', '.join(parts_msg)})"
+
+
+def _enforce_ssot_tools(
+    doc: tomlkit.TOMLDocument,
+    spec: ProjectSpec,
+) -> list[str]:
+    results: list[str] = []
+    for tool_name, rule in SSOT_RULES.items():
+        result = _enforce_one(doc, tool_name, rule, spec)
+        if result:
+            results.append(result)
+    return results
 
 
 # ── Fix functions ────────────────────────────────────────────────────
 # Each returns a description string if a fix was applied, None otherwise.
 
 
-def fix_license_format(doc: tomlkit.TOMLDocument) -> str | None:
-    """Convert table-based project license metadata to SPDX string."""
-    project = doc.get("project")
-    if not project:
+@dataclass(frozen=True)
+class NormalizeRule:
+    """Describes one declarative normalization rule for pyproject.toml."""
+
+    kind: str
+    message: str
+    path: tuple[str, ...] = ()
+    fields: tuple[str, ...] = ()
+
+
+NORMALIZE_RULES: tuple[NormalizeRule, ...] = (
+    NormalizeRule(
+        kind="license_table_to_string",
+        message="license: table → SPDX string",
+        path=("project",),
+    ),
+    NormalizeRule(
+        kind="remove_license_classifiers",
+        message="classifiers: removed deprecated License classifier",
+        path=("project",),
+    ),
+    NormalizeRule(
+        kind="remove_poetry_duplicates",
+        message="tool.poetry: removed fields duplicated in [project]",
+        path=("tool", "poetry"),
+        fields=("name", "version", "description", "authors", "readme", "license"),
+    ),
+    NormalizeRule(
+        kind="extract_license_from_people",
+        message="maintainers: extracted misplaced license key",
+        path=("project",),
+    ),
+    NormalizeRule(
+        kind="normalize_poetry_core",
+        message="build-system: poetry-core>=2",
+        path=("build-system",),
+    ),
+)
+
+
+def _get_path_table(doc: tomlkit.TOMLDocument, path: tuple[str, ...]) -> object:
+    current: object = doc
+    for key in path:
+        if not hasattr(current, "get"):
+            return None
+        current = current.get(key)
+        if current is None:
+            return None
+    return current
+
+
+def _apply_normalize_rule(doc: tomlkit.TOMLDocument, rule: NormalizeRule) -> str | None:
+    target = _get_path_table(doc, rule.path)
+    if target is None:
         return None
-    val = project.get("license")
-    if val is None or isinstance(val, str):
+
+    if rule.kind == "license_table_to_string":
+        project = cast("MutableMapping[str, object]", target)
+        val = project.get("license")
+        if val is None or isinstance(val, str):
+            return None
+        if isinstance(val, dict):
+            project["license"] = str(val.get("text", "MIT"))
+            return rule.message
         return None
-    if isinstance(val, dict):
-        project["license"] = str(val.get("text", "MIT"))
-        return "license: table → SPDX string"
+
+    if rule.kind == "remove_license_classifiers":
+        project = cast("MutableMapping[str, object]", target)
+        cls_obj = project.get("classifiers")
+        if not isinstance(cls_obj, list):
+            return None
+        cls = cast("list[object]", cls_obj)
+        filtered = [c for c in cls if str(c) not in LICENSE_CLASSIFIERS]
+        if len(filtered) == len(cls):
+            return None
+        _replace_inplace(cls, filtered)
+        return rule.message
+
+    if rule.kind == "remove_poetry_duplicates":
+        project_table = _get_path_table(doc, ("project",))
+        if project_table is None:
+            return None
+        project = cast("MutableMapping[str, object]", project_table)
+        poetry = cast("MutableMapping[str, object]", target)
+        changed = False
+        for field_name in rule.fields:
+            if field_name in poetry and field_name in project:
+                del poetry[field_name]
+                changed = True
+        return rule.message if changed else None
+
+    if rule.kind == "extract_license_from_people":
+        project = cast("MutableMapping[str, object]", target)
+        changed = False
+        for field_name in ("maintainers", "authors"):
+            people_obj = project.get(field_name)
+            if not isinstance(people_obj, list):
+                continue
+            for person in people_obj:
+                if isinstance(person, dict) and "license" in person:
+                    license_val = person.pop("license")
+                    if "license" not in project:
+                        project["license"] = str(license_val)
+                    changed = True
+        return rule.message if changed else None
+
+    if rule.kind == "normalize_poetry_core":
+        build_system = cast("MutableMapping[str, object]", target)
+        requires_obj = build_system.get("requires")
+        if not isinstance(requires_obj, list):
+            return None
+        requires = cast("list[object]", requires_obj)
+        for i, req in enumerate(requires):
+            s = str(req)
+            if _norm(s) == "poetry-core" and ">=2" not in s:
+                requires[i] = "poetry-core>=2"
+                return rule.message
+        return None
+
     return None
 
 
-def fix_license_classifiers(doc: tomlkit.TOMLDocument) -> str | None:
-    """Remove deprecated license classifiers from project metadata."""
-    project = doc.get("project")
-    if not project:
-        return None
-    cls = project.get("classifiers")
-    if not cls:
-        return None
-    filtered = [c for c in cls if c not in LICENSE_CLASSIFIERS]
-    if len(filtered) == len(cls):
-        return None
-    _replace_inplace(cls, filtered)
-    return "classifiers: removed deprecated License classifier"
+def _apply_normalize_rules(doc: tomlkit.TOMLDocument) -> list[str]:
+    results: list[str] = []
+    for rule in NORMALIZE_RULES:
+        result = _apply_normalize_rule(doc, rule)
+        if result:
+            results.append(result)
+    return results
 
 
 def fix_test_deps_in_runtime(doc: tomlkit.TOMLDocument) -> tuple[str | None, list[str]]:
@@ -274,42 +536,6 @@ def fix_test_deps_in_runtime(doc: tomlkit.TOMLDocument) -> tuple[str | None, lis
     names = sorted(_norm(str(d)) for d in removed)
     _replace_inplace(deps, kept)
     return f"dependencies: removed {len(removed)} test deps: {', '.join(names)}", names
-
-
-def fix_duplicate_poetry_metadata(doc: tomlkit.TOMLDocument) -> str | None:
-    """Remove duplicated metadata from [tool.poetry]."""
-    project = doc.get("project")
-    tool = doc.get("tool")
-    if not project or not tool:
-        return None
-    poetry = cast("dict[str, object] | None", tool.get("poetry"))
-    if not poetry:
-        return None
-    changed = False
-    for f in ("name", "version", "description", "authors", "readme", "license"):
-        if f in poetry and f in project:
-            del poetry[f]
-            changed = True
-    return "tool.poetry: removed fields duplicated in [project]" if changed else None
-
-
-def fix_license_in_maintainers(doc: tomlkit.TOMLDocument) -> str | None:
-    """Extract misplaced license keys from people tables."""
-    project = doc.get("project")
-    if not project:
-        return None
-    changed = False
-    for field_name in ("maintainers", "authors"):
-        people = project.get(field_name)
-        if not people:
-            continue
-        for person in people:
-            if isinstance(person, dict) and "license" in person:
-                license_val = person.pop("license")
-                if "license" not in project:
-                    project["license"] = str(license_val)
-                changed = True
-    return "maintainers: extracted misplaced license key" if changed else None
 
 
 def fix_deptry_ignores(
@@ -338,567 +564,36 @@ def fix_deptry_ignores(
     return "deptry: cleaned DEP002 ignores for moved deps"
 
 
-def fix_poetry_core_version(doc: tomlkit.TOMLDocument) -> str | None:
-    """Ensure build-system requires poetry-core>=2."""
-    bs = doc.get("build-system")
-    if not bs:
-        return None
-    requires = bs.get("requires")
-    if not requires:
-        return None
-    for i, req in enumerate(requires):
-        s = str(req)
-        if _norm(s) == "poetry-core" and ">=2" not in s:
-            requires[i] = "poetry-core>=2"
-            return "build-system: poetry-core>=2"
-    return None
-
-
-def fix_ruff_extend(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
-    """Replace inline Ruff config with shared extend target."""
-    tool = doc.get("tool")
-    if not tool:
-        return None
-    ruff = tool.get("ruff")
-    if not ruff or "extend" in ruff:
-        return None
-
-    first_party = None
-    lint = ruff.get("lint")
-    if lint:
-        isort = lint.get("isort")
-        if isort:
-            first_party = isort.get("known-first-party")
-
-    for key in list(ruff.keys()):
-        del ruff[key]
-    ruff["extend"] = spec.ruff_extend
-
-    if first_party:
-        ruff.add("lint", tomlkit.table())
-        ruff["lint"].add("isort", tomlkit.table())
-        ruff["lint"]["isort"]["known-first-party"] = first_party
-
-    return "ruff: replaced inline config with extend"
-
-
-def fix_coverage_config(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
-    """Ensure [tool.coverage] has correct run.source and report.fail_under from ProjectSpec."""
-    if not spec.coverage_source:
-        return None
-
-    tool = _ensure_tool(doc)
-    changes: list[str] = []
-
-    if "coverage" not in tool:
-        cov = tomlkit.table()
-        run_table = tomlkit.table()
-        run_table["source"] = [spec.coverage_source]
-        _ = cov.add("run", run_table)
-        report_table = tomlkit.table()
-        report_table["fail_under"] = spec.min_coverage
-        report_table["precision"] = 2
-        _ = cov.add("report", report_table)
-        cast("MutableMapping[str, object]", tool)["coverage"] = cov
-        return f"coverage: added run.source=[{spec.coverage_source}] fail_under={spec.min_coverage}"
-
-    cov_obj = tool["coverage"]
-    if not isinstance(cov_obj, MutableMapping):
-        return None
-    existing_cov: MutableMapping[str, object] = cov_obj
-
-    run_sec_obj = existing_cov.get("run")
-    if not isinstance(run_sec_obj, MutableMapping):
-        if isinstance(existing_cov, Table):
-            _ = existing_cov.add("run", tomlkit.table())
-        else:
-            existing_cov["run"] = tomlkit.table()
-        run_sec_obj = existing_cov.get("run")
-    if isinstance(run_sec_obj, MutableMapping) and "source" not in run_sec_obj:
-        run_sec_obj["source"] = [spec.coverage_source]
-        changes.append("run.source")
-
-    report_sec_obj = existing_cov.get("report")
-    if not isinstance(report_sec_obj, MutableMapping):
-        if isinstance(existing_cov, Table):
-            _ = existing_cov.add("report", tomlkit.table())
-        else:
-            existing_cov["report"] = tomlkit.table()
-        report_sec_obj = existing_cov.get("report")
-    if not isinstance(report_sec_obj, MutableMapping):
-        return None
-
-    if "fail_under" not in report_sec_obj:
-        report_sec_obj["fail_under"] = spec.min_coverage
-        report_sec_obj["precision"] = 2
-        changes.append(f"fail_under={spec.min_coverage}")
-    else:
-        current = report_sec_obj.get("fail_under")
-        if current is not None and int(str(current)) != spec.min_coverage:
-            report_sec_obj["fail_under"] = spec.min_coverage
-            changes.append(f"fail_under: {current}→{spec.min_coverage}")
-
-    return f"coverage: synced {', '.join(changes)}" if changes else None
-
-
-def fix_pytest_section(doc: tomlkit.TOMLDocument) -> str | None:
-    """Add [tool.pytest] with standard addopts if missing entirely."""
-    standard_addopts = _get_ssot_pytest_addopts()
-    tool = doc.get("tool")
-    if tool and "pytest" in tool:
-        return None
-    tool = _ensure_tool(doc)
-    pt = tomlkit.table()
-    ini = tomlkit.table()
-    ini["addopts"] = list(standard_addopts)
-    _ = pt.add("ini_options", ini)
-    cast("MutableMapping[str, object]", tool)["pytest"] = pt
-    return "pytest: added standard ini_options"
-
-
-def fix_pytest_addopts_sync(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
-    """Sync pytest addopts to workspace SSOT for all non-root projects."""
-    if spec.is_root:
-        return None
-
-    standard_addopts = _get_ssot_pytest_addopts()
-    tool = doc.get("tool")
-    if not tool:
-        return None
-
-    pytest_cfg = tool.get("pytest")
-    if not pytest_cfg:
-        return None
-
-    ini = pytest_cfg.get("ini_options") if hasattr(pytest_cfg, "get") else None
-    if ini is None:
-        ini = pytest_cfg
-
-    addopts = ini.get("addopts") if hasattr(ini, "get") else None
-    if addopts is None:
-        ini["addopts"] = list(standard_addopts)
-        return "pytest: set addopts from workspace SSOT"
-
-    if not isinstance(addopts, list):
-        ini["addopts"] = list(standard_addopts)
-        return "pytest: normalized non-list addopts from workspace SSOT"
-
-    current = [str(item) for item in addopts]
-    if current == standard_addopts:
-        return None
-
-    _replace_inplace(addopts, list(standard_addopts))
-    return "pytest: synced addopts from workspace SSOT"
-
-
-def fix_pytest_cov_flags(doc: tomlkit.TOMLDocument) -> str | None:
-    """Remove --cov* flags from pytest addopts (coverage is owned by [tool.coverage])."""
-    tool = doc.get("tool")
-    if not tool:
-        return None
-    pytest_cfg = tool.get("pytest")
-    if not pytest_cfg:
-        return None
-
-    ini = pytest_cfg.get("ini_options") if hasattr(pytest_cfg, "get") else None
-    if ini is None:
-        ini = pytest_cfg  # handle [tool.pytest.ini_options] parsed as subtable
-
-    addopts = ini.get("addopts") if hasattr(ini, "get") else None
-    if not addopts or not isinstance(addopts, list):
-        return None
-
-    filtered = [opt for opt in addopts if not COV_FLAG.match(str(opt))]
-    if len(filtered) == len(addopts):
-        return None
-    removed_count = len(addopts) - len(filtered)
-    _replace_inplace(addopts, filtered)
-    return f"pytest: removed {removed_count} --cov flags from addopts"
-
-
-def fix_pyrefly_search_path(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
-    """Ensure pyrefly search-path matches canonical entries.
-
-    Root canonical:
-        ["typings", "typings/generated", "src", "examples", "scripts"]
-    Submodule canonical:
-        ["../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
-    Non-standard entries like "." or misplaced "../typings" on root are removed.
-    """
-    tool = doc.get("tool")
-    if not tool:
-        return None
-    pyrefly = tool.get("pyrefly")
-    if not pyrefly:
-        return None
-    sp = pyrefly.get("search-path")
-    if not sp:
-        return None
-
-    if spec.is_root:
-        canonical = [
-            "typings",
-            "typings/generated",
-            "src",
-            "examples",
-            "scripts",
-        ]
-    else:
-        canonical = [
-            "../typings",
-            "../typings/generated",
-            "src",
-            "tests",
-            "examples",
-            "scripts",
-        ]
-
-    current = [str(p) for p in sp]
-    if current == canonical:
-        return None
-
-    # Rebuild the array in-place to preserve tomlkit formatting context.
-    while len(sp) > 0:
-        sp.pop()
-    for entry in canonical:
-        sp.append(entry)
-
-    removed = [e for e in current if e not in canonical]
-    added = [e for e in canonical if e not in current]
-    parts: list[str] = []
-    if removed:
-        parts.append(f"removed {removed}")
-    if added:
-        parts.append(f"added {added}")
-    detail = ", ".join(parts) if parts else "reordered"
-    return f"pyrefly: standardized search-path ({detail})"
-
-
-def fix_bandit_skips(doc: tomlkit.TOMLDocument, spec: ProjectSpec) -> str | None:
-    """Sync non-root Bandit skip rules with workspace defaults."""
-    if spec.is_root:
-        return None
-    standard_skips = _get_ssot_bandit_skips()
-    tool = _ensure_tool(doc)
-    bandit = tool.get("bandit")
-    if bandit is None:
-        bandit = tomlkit.table()
-        bandit["skips"] = list(standard_skips)
-        cast("MutableMapping[str, object]", tool)["bandit"] = bandit
-        return "bandit: added [tool.bandit] from workspace SSOT"
-    skips = bandit.get("skips")
-    if not skips or not isinstance(skips, list):
-        bandit["skips"] = list(standard_skips)
-        return "bandit: set skips from workspace SSOT"
-    existing = {str(s).strip() for s in skips}
-    missing = [s for s in standard_skips if s not in existing]
-    if not missing:
-        return None
-    for s in missing:
-        skips.append(s)
-    return f"bandit: added SSOT skips {missing}"
-
-
 # ── Pipeline ─────────────────────────────────────────────────────────
 
 
 def _has_array_of_tables(path: Path) -> bool:
-    """Detect [[array.of.tables]] that tomlkit corrupts on write (indented sub-configs)."""
-    return "[[tool.pyrefly.sub-config]]" in path.read_text(encoding="utf-8")
+    """Detect ``[[array.of.tables]]`` that pyproject-fmt corrupts on reformat."""
+    return "[[tool.pyrefly.sub-config]]" in path.read_text(encoding=DEFAULT_ENCODING)
 
 
 def process_file(path: Path, spec: ProjectSpec, *, dry_run: bool = False) -> list[str]:
     """Run all fix functions on a single pyproject.toml. Returns fix descriptions."""
-    text = path.read_text(encoding="utf-8")
-    unsafe_write = _has_array_of_tables(path)
-
-    doc = tomlkit.parse(text)
+    doc = read_toml_document(path)
+    if doc is None:
+        msg = f"invalid TOML: {path}"
+        raise RuntimeError(msg)
     fixes: list[str] = []
 
     def _apply(result: str | None) -> None:
         if result:
             fixes.append(result)
 
-    _apply(fix_license_format(doc))
-    _apply(fix_license_classifiers(doc))
+    fixes.extend(_apply_normalize_rules(doc))
     test_msg, removed_pkgs = fix_test_deps_in_runtime(doc)
     _apply(test_msg)
     _apply(fix_deptry_ignores(doc, removed_pkgs))
-    _apply(fix_duplicate_poetry_metadata(doc))
-    _apply(fix_license_in_maintainers(doc))
-    _apply(fix_poetry_core_version(doc))
-    _apply(fix_ruff_extend(doc, spec))
-    _apply(fix_coverage_config(doc, spec))
-    _apply(fix_pytest_section(doc))
-    _apply(fix_pytest_addopts_sync(doc, spec))
-    _apply(fix_pytest_cov_flags(doc))
-    _apply(fix_pyrefly_search_path(doc, spec))
-    _apply(fix_bandit_skips(doc, spec))
+    fixes.extend(_enforce_ssot_tools(doc, spec))
 
     if fixes and not dry_run:
-        if unsafe_write:
-            _apply_regex_fixes(path, spec, fixes)
-        else:
-            _ = path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+        write_toml_document(path, doc)
 
     return fixes
-
-
-def _apply_regex_fixes(path: Path, spec: ProjectSpec, fixes: list[str]) -> None:
-    """Apply fixes via regex for files where tomlkit corrupts [[array.of.tables]].
-
-    Comprehensive handler for all fix types since tomlkit cannot safely write these files.
-    """
-    text = path.read_text(encoding="utf-8")
-    original = text
-
-    # 1. poetry-core version bump
-    text = re.sub(r"poetry-core>=1\.\d+", "poetry-core>=2", text)
-
-    # 2. License: [project.license] table → PEP 639 SPDX string
-    if any("license" in f and "SPDX" in f for f in fixes):
-        license_match = re.search(
-            r"^\s*\[project\.license\]\s*\n\s*text\s*=\s*\"([^\"]+)\"\s*\n",
-            text,
-            flags=re.MULTILINE,
-        )
-        if license_match:
-            license_val = license_match.group(1)
-            text = text[: license_match.start()] + text[license_match.end() :]
-            text = re.sub(
-                r"(^\s*\[\[project\.(authors|maintainers)\]\])",
-                f'    license = "{license_val}"\n\n\\1',
-                text,
-                count=1,
-                flags=re.MULTILINE,
-            )
-
-    # 3. License classifier removal
-    if any("License classifier" in f for f in fixes):
-        text = re.sub(
-            r'^\s*"License :: [^"]*",?\s*\n',
-            "",
-            text,
-            flags=re.MULTILINE,
-        )
-
-    # 4. Test deps in runtime dependencies
-    if any("test deps" in f for f in fixes):
-        test_pkg_pattern = "|".join(re.escape(p) for p in sorted(TEST_PACKAGES))
-        text = re.sub(
-            rf'^\s*"({test_pkg_pattern})\s*[\(@>=<~!].*",?\s*\n',
-            "",
-            text,
-            flags=re.MULTILINE | re.IGNORECASE,
-        )
-
-    # 4b. Deptry DEP002 cleanup for removed test deps
-    if any("DEP002" in f for f in fixes):
-        test_pkg_pattern = "|".join(re.escape(p) for p in sorted(TEST_PACKAGES))
-        text = re.sub(
-            rf'^\s*"({test_pkg_pattern})",?\s*\n',
-            "",
-            text,
-            flags=re.MULTILINE | re.IGNORECASE,
-        )
-
-    # 4c. Misplaced license key inside [[project.maintainers]] or [[project.authors]]
-    if any("misplaced license" in f for f in fixes):
-        text = re.sub(
-            r"(^\s*\[\[project\.(maintainers|authors)\]\]\s*\n(?:\s+\w+\s*=\s*[^\n]+\n)*)\s+license\s*=\s*[^\n]+\n",
-            r"\1",
-            text,
-            flags=re.MULTILINE,
-        )
-
-    # 5. Duplicate poetry metadata removal
-    if any("duplicated in [project]" in f for f in fixes):
-        # In [tool.poetry] section, remove name/version/description/authors/readme/license
-        # that duplicate [project] fields. This is complex with regex; only remove
-        # simple key = value lines within [tool.poetry] block.
-        for field in ("name", "version", "description", "authors", "readme", "license"):
-            text = re.sub(
-                rf"^(\[tool\.poetry\]\s*\n(?:.*\n)*?)\s+{field}\s*=\s*[^\n]+\n",
-                r"\1",
-                text,
-                count=1,
-                flags=re.MULTILINE,
-            )
-
-    # 6. pyrefly search-path: replace with canonical entries
-    if any("pyrefly" in f and "search-path" in f for f in fixes):
-        if spec.is_root:
-            canonical_sp = (
-                "[\n"
-                '            "typings",\n'
-                '            "typings/generated",\n'
-                '            "src",\n'
-                '            "examples",\n'
-                '            "scripts",\n'
-                "        ]"
-            )
-        else:
-            canonical_sp = (
-                "[\n"
-                '            "../typings",\n'
-                '            "../typings/generated",\n'
-                '            "src",\n'
-                '            "tests",\n'
-                '            "examples",\n'
-                '            "scripts",\n'
-                "        ]"
-            )
-        text = re.sub(
-            r"search-path\s*=\s*\[.*?\]",
-            f"search-path = {canonical_sp}",
-            text,
-            count=1,
-            flags=re.DOTALL,
-        )
-
-    # 7. Coverage: sync existing fail_under value
-    if any("fail_under" in f and "→" in f for f in fixes):
-        text = re.sub(
-            r"(fail_under\s*=\s*)\d+",
-            rf"\g<1>{spec.min_coverage}",
-            text,
-            count=1,
-        )
-
-    # 8. Coverage: add fail_under to existing [tool.coverage.report] section
-    if any("fail_under=" in f for f in fixes) and "fail_under" not in text:
-        if "[tool.coverage.report]" in text:
-            # Add fail_under after the section header
-            text = re.sub(
-                r"(\[tool\.coverage\.report\]\s*\n)",
-                rf"\1        fail_under = {spec.min_coverage}\n",
-                text,
-                count=1,
-            )
-        elif "[tool.coverage" in text:
-            # Has [tool.coverage.run] but no report section — append report section
-            text = re.sub(
-                r"(\[tool\.coverage\.run\](?:.*\n)*?)((?=\s*\[)|\Z)",
-                rf"\1\n    [tool.coverage.report]\n        fail_under = {spec.min_coverage}\n        precision = 2\n\n\2",
-                text,
-                count=1,
-            )
-        else:
-            # No coverage section at all — append before last section or at end
-            coverage_block = (
-                f"\n[tool.coverage]\n"
-                f"    [tool.coverage.run]\n"
-                f'        source = ["{spec.coverage_source}"]\n'
-                f"\n"
-                f"    [tool.coverage.report]\n"
-                f"        fail_under = {spec.min_coverage}\n"
-                f"        precision = 2\n"
-            )
-            # Insert before [dependency-groups] if it exists, otherwise append
-            if "[dependency-groups]" in text:
-                text = text.replace(
-                    "[dependency-groups]",
-                    f"{coverage_block}\n[dependency-groups]",
-                )
-            else:
-                text = text.rstrip() + "\n" + coverage_block + "\n"
-
-    # 9. --cov flag removal from pytest addopts
-    if any("--cov flags" in f for f in fixes):
-        lines = text.split("\n")
-        filtered = [
-            line
-            for line in lines
-            if not COV_FLAG.search(line.strip().strip('"').strip("'").strip(","))
-        ]
-        text = "\n".join(filtered)
-
-    if any(
-        "pytest: synced addopts" in f
-        or "pytest: set addopts" in f
-        or "pytest: normalized non-list addopts" in f
-        for f in fixes
-    ):
-        ssot_addopts = _get_ssot_pytest_addopts()
-        addopts_literal = "[ " + ", ".join(f'"{opt}"' for opt in ssot_addopts) + " ]"
-        text, replaced = re.subn(
-            r"(^\s*ini_options\.addopts\s*=\s*)(\[[\s\S]*?\]|\"[^\"]*\")",
-            rf"\1{addopts_literal}",
-            text,
-            count=1,
-            flags=re.MULTILINE,
-        )
-        if replaced == 0:
-
-            def _replace_pytest_ini_options_section(match: re.Match[str]) -> str:
-                section_header = match.group(1)
-                section_body = match.group(2)
-                updated_body, _ = re.subn(
-                    r"(^\s*addopts\s*=\s*)(\[[\s\S]*?\]|\"[^\"]*\")",
-                    rf"\1{addopts_literal}",
-                    section_body,
-                    count=1,
-                    flags=re.MULTILINE,
-                )
-                return f"{section_header}{updated_body}"
-
-            text = re.sub(
-                r"(?ms)(^\s*\[tool\.pytest\.ini_options\]\s*\n)(.*?)(?=^\s*\[|\Z)",
-                _replace_pytest_ini_options_section,
-                text,
-                count=1,
-            )
-
-    if any(f.startswith("bandit:") for f in fixes):
-        ssot_skips = _get_ssot_bandit_skips()
-        section_match = re.search(
-            r"(?ms)^\s*\[tool\.bandit\]\s*\n.*?(?=^\s*\[|\Z)",
-            text,
-        )
-        if not section_match:
-            block = "[tool.bandit]\n    skips = [\n"
-            for item in ssot_skips:
-                block += f'        "{item}",\n'
-            block += "    ]\n"
-            if "[dependency-groups]" in text:
-                text = text.replace(
-                    "[dependency-groups]", f"{block}\n[dependency-groups]"
-                )
-            else:
-                text = text.rstrip() + "\n\n" + block + "\n"
-        else:
-            section = section_match.group(0)
-            skips_match = re.search(
-                r"(?ms)^\s*skips\s*=\s*\[(?P<body>.*?)^\s*\]",
-                section,
-            )
-            if not skips_match:
-                insert = "    skips = [\n"
-                for item in ssot_skips:
-                    insert += f'        "{item}",\n'
-                insert += "    ]\n"
-                section = re.sub(
-                    r"(^\s*\[tool\.bandit\]\s*\n)",
-                    rf"\1{insert}",
-                    section,
-                    count=1,
-                    flags=re.MULTILINE,
-                )
-            else:
-                existing = set(re.findall(r'"([^"]+)"', skips_match.group("body")))
-                missing = [item for item in ssot_skips if item not in existing]
-                if missing:
-                    append_lines = "".join(f'        "{item}",\n' for item in missing)
-                    body = skips_match.group("body") + append_lines
-                    section = (
-                        section[: skips_match.start("body")]
-                        + body
-                        + section[skips_match.end("body") :]
-                    )
-            text = text[: section_match.start()] + section + text[section_match.end() :]
-
-    if text != original:
-        _ = path.write_text(text, encoding="utf-8")
 
 
 # ── Makefile cleanup ─────────────────────────────────────────────────
@@ -931,13 +626,8 @@ def cleanup_makefiles(*, dry_run: bool = False) -> list[str]:
 
 
 def find_pyproject_files() -> list[Path]:
-    """Find pyproject.toml files under workspace scope."""
-    results = []
-    for p in sorted(ROOT.rglob("pyproject.toml")):
-        if any(skip in p.parts for skip in SKIP_DIRS):
-            continue
-        results.append(p)
-    return results
+    """Discover pyproject.toml files under ROOT, excluding SKIP_DIRS."""
+    return find_all_pyproject_files(ROOT, skip_dirs=SKIP_DIRS)
 
 
 # ── Formatting + validation ──────────────────────────────────────────

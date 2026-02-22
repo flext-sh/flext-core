@@ -5,14 +5,17 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+from scripts.libs.config import MAKEFILE_FILENAME
+from scripts.libs.json_io import write_json
+from scripts.libs.reporting import reports_root
+
 
 def _artifact_path(slug: str) -> Path:
-    return Path(".reports") / f"scripts-infra--json--{slug}.json"
+    return reports_root(Path()) / f"scripts-infra--json--{slug}.json"
 
 
 def main() -> int:
@@ -35,7 +38,7 @@ def main() -> int:
     }
     wiring = {
         "generated_at": datetime.now(UTC).isoformat(),
-        "root_makefile": ["Makefile"],
+        "root_makefile": [MAKEFILE_FILENAME],
         "unwired_scripts": [],
     }
     external = {"generated_at": datetime.now(UTC).isoformat(), "candidates": []}
@@ -46,10 +49,7 @@ def main() -> int:
         _artifact_path("external-scripts-candidates"): external,
     }
     for path, payload in outputs.items():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        _ = path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        write_json(path, payload, sort_keys=True)
         print(f"Wrote: {path}")
     return 0
 

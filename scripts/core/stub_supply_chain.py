@@ -6,23 +6,23 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from scripts.libs.config import PYPROJECT_FILENAME
+from scripts.libs.json_io import write_json
+from scripts.libs.paths import workspace_root_from_file
+from scripts.libs.patterns import INTERNAL_PREFIXES, MYPY_HINT_RE, MYPY_STUB_RE
 from scripts.libs.selection import resolve_projects
+from scripts.libs.toml_io import read_pyproject
 
 MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
-MYPY_HINT_RE = re.compile(r'note: Hint: "python3 -m pip install ([^"]+)"')
-MYPY_STUB_RE = re.compile(r'Library stubs not installed for "([^"]+)"')
-INTERNAL_PREFIXES = ("flext_", "flext_", "flext_")
 
 
 @dataclass(frozen=True)
@@ -70,20 +70,23 @@ def run_cmd(
         raise RuntimeError(msg) from exc
 
 
-def discover_projects(root: Path) -> list[Path]:
-    """Discover Python projects that should participate in stub checks."""
+def discover_stub_projects(root: Path) -> list[Path]:
+    """Discover Python projects that should participate in stub checks.
+
+    Uses ``resolve_projects`` (canonical discovery) and keeps only projects
+    that have both ``pyproject.toml`` **and** a ``src/`` directory.
+    """
     return [
         project.path
         for project in resolve_projects(root, names=[])
-        if (project.path / "pyproject.toml").exists()
+        if (project.path / PYPROJECT_FILENAME).exists()
         and (project.path / "src").is_dir()
     ]
 
 
 def load_pyproject(project_dir: Path) -> dict[str, object]:
-    """Load pyproject.toml as a dictionary."""
-    pyproject = project_dir / "pyproject.toml"
-    return tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    """Load and return pyproject.toml data for the given project directory."""
+    return read_pyproject(project_dir)
 
 
 def get_poetry_dependencies(data: dict[str, object]) -> set[str]:
@@ -388,14 +391,6 @@ def process_project(project_dir: Path, root: Path, *, apply: bool) -> ProjectRes
     )
 
 
-def write_report(path: Path, payload: object) -> None:
-    """Write JSON report payload to disk."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    _ = path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-
-
 def main() -> int:
     """Run stub supply-chain workflow for selected projects."""
     parser = argparse.ArgumentParser(description="Typing stub supply-chain gate")
@@ -416,8 +411,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    root = Path.cwd()
-    projects = discover_projects(root)
+    root = workspace_root_from_file(__file__)
+    projects = discover_stub_projects(root)
     if args.project:
         wanted = set(args.project)
         projects = [project for project in projects if project.name in wanted]
@@ -480,7 +475,7 @@ def main() -> int:
             "idempotency_check": idempotency_enabled,
         },
     }
-    write_report(Path(args.report), report)
+    write_json(Path(args.report), report, sort_keys=True)
 
     for result in results:
         line = (

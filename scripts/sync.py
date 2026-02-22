@@ -13,6 +13,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from scripts.libs.config import DEFAULT_ENCODING
+
 
 def _sha256(path: Path) -> str:
     hasher = hashlib.sha256()
@@ -80,14 +82,14 @@ def _ensure_gitignore_entries(project_root: Path, required: list[str]) -> int:
     gitignore = project_root / ".gitignore"
     existing_lines: list[str] = []
     if gitignore.exists():
-        existing_lines = gitignore.read_text(encoding="utf-8").splitlines()
+        existing_lines = gitignore.read_text(encoding=DEFAULT_ENCODING).splitlines()
 
     existing_patterns = {line.strip() for line in existing_lines if line.strip()}
     missing = [p for p in required if p not in existing_patterns]
     if not missing:
         return 0
 
-    with gitignore.open("a", encoding="utf-8") as handle:
+    with gitignore.open("a", encoding=DEFAULT_ENCODING) as handle:
         _ = handle.write(
             "\n# --- workspace-sync: required ignores (auto-managed) ---\n"
         )
@@ -118,7 +120,7 @@ def main() -> int:
     lock_path = project_root / ".sync.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with lock_path.open("w", encoding="utf-8") as lock_handle:
+    with lock_path.open("w", encoding=DEFAULT_ENCODING) as lock_handle:
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
         changed = 0
         changed += (
@@ -155,7 +157,7 @@ def main() -> int:
                     f"# {project_name} Examples\n\n"
                     f"Usage examples for `{project_root.name}`.\n"
                 ),
-                encoding="utf-8",
+                encoding=DEFAULT_ENCODING,
             )
             changed += 1
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)

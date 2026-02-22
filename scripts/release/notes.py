@@ -6,7 +6,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from scripts.release.shared import resolve_projects, run_capture, workspace_root
+from scripts.libs.config import DEFAULT_ENCODING
+from scripts.libs.paths import workspace_root
+from scripts.libs.selection import resolve_projects
+from scripts.libs.subprocess import run_capture
 
 
 def _parse_args() -> argparse.Namespace:
@@ -103,7 +106,7 @@ def main() -> int:
         "- make build",
     ])
 
-    output_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    output_path.write_text("\n".join(lines).rstrip() + "\n", encoding=DEFAULT_ENCODING)
     _ = print(f"wrote: {output_path}")
     return 0
 

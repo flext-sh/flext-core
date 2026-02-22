@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -17,9 +16,8 @@ from scripts.documentation.shared import (
     write_json,
     write_markdown,
 )
-
-LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
-INLINE_CODE_RE = re.compile(r"`[^`]*`")
+from scripts.libs.config import DEFAULT_ENCODING, STATUS_FAIL, STATUS_OK
+from scripts.libs.doc_patterns import INLINE_CODE_RE, MARKDOWN_LINK_URL_RE as LINK_RE
 
 
 def load_audit_budgets(root: Path) -> tuple[int | None, dict[str, int]]:
@@ -33,7 +31,9 @@ def load_audit_budgets(root: Path) -> tuple[int | None, dict[str, int]]:
     if config_path is None:
         return None, {}
 
-    payload = json.loads(config_path.read_text(encoding="utf-8", errors="ignore"))
+    payload = json.loads(
+        config_path.read_text(encoding=DEFAULT_ENCODING, errors="ignore")
+    )
     docs_validation = payload.get("docs_validation", {})
     audit_gate = docs_validation.get("audit_gate", {})
     default_budget = audit_gate.get("max_issues_default")
@@ -85,7 +85,7 @@ def broken_link_issues(scope: Scope) -> list[Issue]:
     """Collect broken internal-link issues for all markdown files in *scope*."""
     issues: list[Issue] = []
     for md_file in iter_markdown_files(scope.path):
-        content = md_file.read_text(encoding="utf-8", errors="ignore")
+        content = md_file.read_text(encoding=DEFAULT_ENCODING, errors="ignore")
         rel = md_file.relative_to(scope.path).as_posix()
         in_fenced_code = False
         for number, line in enumerate(content.splitlines(), start=1):
@@ -127,7 +127,7 @@ def forbidden_term_issues(scope: Scope) -> list[Issue]:
                 continue
         elif not scope.name.startswith("flext-"):
             continue
-        content = md_file.read_text(encoding="utf-8", errors="ignore").lower()
+        content = md_file.read_text(encoding=DEFAULT_ENCODING, errors="ignore").lower()
         issues.extend(
             Issue(
                 file=rel,
@@ -199,7 +199,7 @@ def run_scope(
     else:
         has_error = 0
         reason = f"issues:{len(issues)}"
-    result = "FAIL" if has_error else "OK"
+    result = STATUS_FAIL if has_error else STATUS_OK
     print(f"PROJECT={scope.name} PHASE=audit RESULT={result} REASON={reason}")
     return len(issues), has_error
 

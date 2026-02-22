@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 from pathlib import Path
 
-from scripts.release.shared import resolve_projects, workspace_root
+from scripts.libs.config import DEFAULT_ENCODING
+from scripts.libs.json_io import write_json
+from scripts.libs.paths import workspace_root
+from scripts.libs.selection import resolve_projects
 
 
 def _parse_args() -> argparse.Namespace:
@@ -76,7 +78,7 @@ def main() -> int:
         if code != 0:
             failures += 1
         log = output_dir / f"build-{name}.log"
-        log.write_text(output + "\n", encoding="utf-8")
+        log.write_text(output + "\n", encoding=DEFAULT_ENCODING)
         records.append({
             "project": name,
             "path": str(path),
@@ -91,9 +93,7 @@ def main() -> int:
         "failures": failures,
         "records": records,
     }
-    report_path.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    write_json(report_path, report, sort_keys=True)
     _ = print(f"report: {report_path}")
     return 1 if failures else 0
 

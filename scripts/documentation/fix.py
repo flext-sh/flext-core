@@ -16,11 +16,12 @@ from scripts.documentation.shared import (
     write_json,
     write_markdown,
 )
-
-LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
-HEADING_RE = re.compile(r"^(##|###)\s+(.+?)\s*$", re.MULTILINE)
-TOC_START = "<!-- TOC START -->"
-TOC_END = "<!-- TOC END -->"
+from scripts.libs.config import DEFAULT_ENCODING, STATUS_OK, STATUS_WARN
+from scripts.libs.doc_patterns import (
+    HEADING_H2_H3_RE as HEADING_RE,
+    MARKDOWN_LINK_RE as LINK_RE,
+)
+from scripts.libs.templates import TOC_END, TOC_START
 
 
 @dataclass(frozen=True)
@@ -97,7 +98,7 @@ def update_toc(content: str) -> tuple[str, int]:
 
 def process_file(md_file: Path, *, apply: bool) -> FixItem:
     """Fix links and TOC in a single markdown file."""
-    original = md_file.read_text(encoding="utf-8", errors="ignore")
+    original = md_file.read_text(encoding=DEFAULT_ENCODING, errors="ignore")
     link_count = 0
 
     def replace_link(match: re.Match[str]) -> str:
@@ -112,7 +113,7 @@ def process_file(md_file: Path, *, apply: bool) -> FixItem:
     updated = LINK_RE.sub(replace_link, original)
     updated, toc_changed = update_toc(updated)
     if apply and (link_count > 0 or toc_changed > 0) and updated != original:
-        _ = md_file.write_text(updated, encoding="utf-8")
+        _ = md_file.write_text(updated, encoding=DEFAULT_ENCODING)
     return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
 
 
@@ -146,7 +147,7 @@ def run_scope(scope: Scope, *, apply: bool) -> int:
         *[f"| {item.file} | {item.links} | {item.toc} |" for item in items],
     ]
     write_markdown(scope.report_dir / "fix-report.md", lines)
-    result = "OK" if apply or not items else "WARN"
+    result = STATUS_OK if apply or not items else STATUS_WARN
     print(f"PROJECT={scope.name} PHASE=fix RESULT={result} REASON=changes:{len(items)}")
     return 0
 

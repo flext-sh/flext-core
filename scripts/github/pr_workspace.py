@@ -8,6 +8,8 @@ import subprocess
 import time
 from pathlib import Path
 
+from scripts.libs.config import DEFAULT_ENCODING, STATUS_FAIL, STATUS_OK
+from scripts.libs.reporting import ensure_report_dir
 from scripts.libs.selection import resolve_projects
 from scripts.libs.subprocess import run_capture, run_checked
 
@@ -106,8 +108,7 @@ def _checkpoint(repo_root: Path, branch: str) -> None:
 
 
 def _run_pr(repo_root: Path, workspace_root: Path, args: argparse.Namespace) -> int:
-    report_dir = workspace_root / ".reports" / "workspace" / "pr"
-    report_dir.mkdir(parents=True, exist_ok=True)
+    report_dir = ensure_report_dir(workspace_root, "workspace", "pr")
     display = _repo_display_name(repo_root, workspace_root)
     log_path = report_dir / f"{display}.log"
     if repo_root == workspace_root:
@@ -166,12 +167,12 @@ def _run_pr(repo_root: Path, workspace_root: Path, args: argparse.Namespace) -> 
             command.append(f"PR_BODY={args.pr_body}")
 
     started = time.monotonic()
-    with log_path.open("w", encoding="utf-8") as handle:
+    with log_path.open("w", encoding=DEFAULT_ENCODING) as handle:
         result = subprocess.run(
             command, stdout=handle, stderr=subprocess.STDOUT, check=False
         )
     elapsed = int(time.monotonic() - started)
-    status = "OK" if result.returncode == 0 else "FAIL"
+    status = STATUS_OK if result.returncode == 0 else STATUS_FAIL
     print(
         f"[{status}] {display} pr ({elapsed}s) exit={result.returncode} log={log_path}"
     )

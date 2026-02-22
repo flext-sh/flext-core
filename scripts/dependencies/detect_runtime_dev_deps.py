@@ -21,10 +21,14 @@ import sys
 from pathlib import Path
 
 from scripts.dependencies import dependency_detection as dd
+from scripts.libs.config import VENV_BIN_REL
+from scripts.libs.json_io import write_json
+from scripts.libs.paths import workspace_root_from_file
+from scripts.libs.reporting import ensure_report_dir
 
-ROOT = Path(__file__).resolve().parents[2]
-VENV_BIN = ROOT / ".venv" / "bin"
-REPORTS_DIR = ROOT / ".reports" / "dependencies"
+ROOT = workspace_root_from_file(__file__)
+VENV_BIN = ROOT / VENV_BIN_REL
+REPORTS_DIR = ensure_report_dir(ROOT, "dependencies")
 LIMITS_PATH = Path(__file__).resolve().parent / "dependency_limits.toml"
 
 
@@ -183,12 +187,10 @@ def main() -> int:
     if args.output:
         out_path = Path(args.output)
     elif not args.dry_run:
-        REPORTS_DIR.mkdir(parents=True, exist_ok=True)
         out_path = REPORTS_DIR / "detect-runtime-dev-latest.json"
 
     if out_path and not args.dry_run:
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        _ = out_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        write_json(out_path, report)
         if not args.quiet:
             print(f"Report written to {out_path}", file=sys.stderr)
 

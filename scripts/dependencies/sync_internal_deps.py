@@ -11,8 +11,10 @@ import re
 import shutil
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
+
+from scripts.libs.config import PYPROJECT_FILENAME
+from scripts.libs.toml_io import read_toml_file
 
 GIT_BIN = shutil.which("git") or "git"
 GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$")
@@ -66,10 +68,15 @@ def _parse_gitmodules(path: Path) -> dict[str, dict[str, str]]:
 
 
 def _parse_repo_map(path: Path) -> dict[str, dict[str, str]]:
-    data = tomllib.loads(path.read_text(encoding="utf-8"))
-    repos = data.get("repo", {})
+    data = read_toml_file(path)
+    repos_obj = data.get("repo", {})
+    if not isinstance(repos_obj, dict):
+        return {}
+    repos = repos_obj
     result: dict[str, dict[str, str]] = {}
     for repo_name, values in repos.items():
+        if not isinstance(values, dict):
+            continue
         ssh_url = str(values.get("ssh_url", ""))
         https_url = str(values.get("https_url", _ssh_to_https(ssh_url)))
         if ssh_url:
@@ -259,11 +266,15 @@ def _ensure_checkout(dep_path: Path, repo_url: str, ref_name: str) -> None:
 
 
 def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
-    pyproject = project_root / "pyproject.toml"
+    pyproject = project_root / PYPROJECT_FILENAME
     if not pyproject.exists():
         return {}
-    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    deps = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
+    data = read_toml_file(pyproject)
+    tool = data.get("tool")
+    poetry = tool.get("poetry") if isinstance(tool, dict) else None
+    deps = poetry.get("dependencies") if isinstance(poetry, dict) else {}
+    if not isinstance(deps, dict):
+        deps = {}
     result: dict[str, Path] = {}
     for dep_name, dep_value in deps.items():
         if not isinstance(dep_value, dict):
@@ -275,7 +286,12 @@ def _collect_internal_deps(project_root: Path) -> dict[str, Path]:
             continue
         result[dep_name] = project_root / dep_path
 
-    project_deps = data.get("project", {}).get("dependencies", [])
+    project_obj = data.get("project")
+    project_deps = (
+        project_obj.get("dependencies", []) if isinstance(project_obj, dict) else []
+    )
+    if not isinstance(project_deps, list):
+        project_deps = []
     dep_pattern = re.compile(r"@\s*\.\.?/\.flext-deps/([A-Za-z0-9_.-]+)")
     for dep in project_deps:
         if not isinstance(dep, str):

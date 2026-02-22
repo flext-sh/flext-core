@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .config import PYPROJECT_FILENAME
 from .discovery import ProjectInfo, discover_projects
 
 
@@ -50,3 +51,19 @@ def resolve_projects(workspace_root: Path, names: list[str]) -> list[ProjectInfo
 
     resolved = [by_name[name] for name in names]
     return sorted(resolved, key=lambda project: project.name)
+
+
+def python_projects(
+    workspace_root: Path, names: list[str] | None = None
+) -> list[ProjectInfo]:
+    """Resolve projects that have ``pyproject.toml`` (Python projects only).
+
+    Thin wrapper around :func:`resolve_projects` that filters out Go-only
+    projects.  Eliminates the repeated ``(p.path / "pyproject.toml").exists()``
+    guard duplicated across consumer scripts.
+    """
+    return [
+        p
+        for p in resolve_projects(workspace_root, names or [])
+        if (p.path / PYPROJECT_FILENAME).exists()
+    ]

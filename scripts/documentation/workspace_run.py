@@ -9,6 +9,9 @@ import json
 import subprocess
 from pathlib import Path
 
+from scripts.libs.config import DEFAULT_ENCODING
+from scripts.libs.reporting import ensure_report_dir, reports_root
+
 
 def parse_projects(raw: str) -> list[str]:
     """Parse whitespace-separated project names."""
@@ -18,10 +21,10 @@ def parse_projects(raw: str) -> list[str]:
 def sync_base_mk(root: Path, projects: list[str]) -> None:
     """Sync root base.mk into selected project directories."""
     source = root / "base.mk"
-    content = source.read_text(encoding="utf-8")
+    content = source.read_text(encoding=DEFAULT_ENCODING)
     for name in projects:
         target = root / name / "base.mk"
-        _ = target.write_text(content, encoding="utf-8")
+        _ = target.write_text(content, encoding=DEFAULT_ENCODING)
 
 
 def read_summary(report_dir: Path, file_name: str) -> dict[str, object]:
@@ -29,7 +32,7 @@ def read_summary(report_dir: Path, file_name: str) -> dict[str, object]:
     path = report_dir / file_name
     if not path.exists():
         return {}
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding=DEFAULT_ENCODING))
     if not isinstance(payload, dict):
         return {}
     summary = payload.get("summary", {})
@@ -85,8 +88,7 @@ def main() -> int:
 
     root = Path(args.root).resolve()
     projects = parse_projects(args.projects)
-    reports_dir = root / ".reports/docs"
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir = ensure_report_dir(root, "docs")
 
     sync_base_mk(root, projects)
 
@@ -106,10 +108,10 @@ def main() -> int:
             text=True,
         )
         log_text = (completed.stdout or "") + (completed.stderr or "")
-        _ = log_file.write_text(log_text, encoding="utf-8")
+        _ = log_file.write_text(log_text, encoding=DEFAULT_ENCODING)
 
         if completed.returncode == 0:
-            summary = summarize(root / project / ".reports/docs", args.phase)
+            summary = summarize(reports_root(root / project) / "docs", args.phase)
             print(f"PROJECT={project} RESULT=OK {summary}".rstrip())
             continue
 

@@ -10,6 +10,8 @@ import json
 import re
 from pathlib import Path
 
+from scripts.libs.config import DEFAULT_ENCODING
+
 
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments for text pattern scanning."""
@@ -56,7 +58,7 @@ def count_matches(files: list[Path], regex: re.Pattern[str]) -> int:
     total = 0
     for file_path in files:
         try:
-            text = file_path.read_text(encoding="utf-8", errors="ignore")
+            text = file_path.read_text(encoding=DEFAULT_ENCODING, errors="ignore")
         except OSError:
             continue
         total += sum(1 for _ in regex.finditer(text))

@@ -4,20 +4,21 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 
-EXCLUDED_DIRS = {
-    ".git",
-    ".venv",
-    "node_modules",
-    "dist",
-    "build",
-    "__pycache__",
-    ".reports",
-    "site",
-}
+from scripts.libs.config import DEFAULT_ENCODING, DOC_EXCLUDED_DIRS, PYPROJECT_FILENAME
+from scripts.libs.discovery import discover_projects
+from scripts.libs.json_io import write_json
+
+__all__ = [
+    "Scope",
+    "build_scopes",
+    "iter_markdown_files",
+    "selected_project_names",
+    "write_json",
+    "write_markdown",
+]
 
 
 @dataclass(frozen=True)
@@ -29,20 +30,11 @@ class Scope:
     report_dir: Path
 
 
-def workspace_projects(root: Path) -> list[str]:
-    """Return sorted project names that contain a pyproject.toml."""
-    return [
-        item.name
-        for item in sorted(root.iterdir())
-        if item.is_dir() and (item / "pyproject.toml").exists()
-    ]
-
-
 def selected_project_names(
     root: Path, project: str | None, projects: str | None
 ) -> list[str]:
     """Resolve CLI project flags to a concrete name list."""
-    all_names = workspace_projects(root)
+    all_names = [p.name for p in discover_projects(root)]
     if project:
         return [project]
     if projects:
@@ -64,7 +56,7 @@ def build_scopes(
     ]
     for name in selected_project_names(root, project, projects):
         path = (root / name).resolve()
-        if not path.exists() or not (path / "pyproject.toml").exists():
+        if not path.exists() or not (path / PYPROJECT_FILENAME).exists():
             continue
         scopes.append(
             Scope(name=name, path=path, report_dir=(path / output_dir).resolve())
@@ -72,18 +64,10 @@ def build_scopes(
     return scopes
 
 
-def write_json(path: Path, payload: object) -> None:
-    """Write a JSON payload to *path*, creating parent dirs as needed."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    _ = path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
-    )
-
-
 def write_markdown(path: Path, lines: list[str]) -> None:
     """Write markdown lines to *path*, creating parent dirs as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    _ = path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    _ = path.write_text("\n".join(lines).rstrip() + "\n", encoding=DEFAULT_ENCODING)
 
 
 def iter_markdown_files(root: Path) -> list[Path]:
@@ -93,5 +77,7 @@ def iter_markdown_files(root: Path) -> list[Path]:
     return sorted(
         path
         for path in search_root.rglob("*.md")
-        if not any(part in EXCLUDED_DIRS or part.startswith(".") for part in path.parts)
+        if not any(
+            part in DOC_EXCLUDED_DIRS or part.startswith(".") for part in path.parts
+        )
     )

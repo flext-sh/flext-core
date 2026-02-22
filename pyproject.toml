@@ -125,10 +125,27 @@ group.dev.dependencies.urllib3 = "^2.6.0"
 
 [tool.ruff]
 extend = "../ruff-shared.toml"
+lint.isort.known-first-party = []
+
+[tool.codespell]
+ignore-words-list = "dn,cn,ou,uid,sn,aci,acl,ldif,flext,FLEXT,dbt,oic,wms,grpc,meltano,protobuf,creds,assertIn"
+skip = """\
+  .git,*.lock,*.egg-info,dist,build,.venv,__pycache__,.mypy_cache,.pytest_cache,.ruff_cache,node_modules,vendor,*.pb2*.\
+  py\
+  """
 
 [tool.deptry]
-known_first_party = [ "flext_core", "flext_tests" ]
-pep621_dev_dependency_groups = [ "dev" ]
+known_first_party = [
+  "flext",
+  "flext_quality",
+]
+pep621_dev_dependency_groups = [
+  "dev",
+  "docs",
+  "security",
+  "test",
+  "typings",
+]
 package_module_name_map.pyyaml = "yaml"
 per_rule_ignores.DEP002 = [
   "autoflake",
@@ -188,6 +205,29 @@ per_rule_ignores.DEP002 = [
   "python-dotenv",
   "wrapt",
 ]
+exclude = [
+  ".archive",
+  ".git",
+  ".meltano",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
+  "__pycache__",
+  "build",
+  "dist",
+  "htmlcov",
+  "node_modules",
+  "reports",
+  "scripts",
+  "tests",
+  "vendor",
+  "venv",
+]
+extend_exclude = [
+  "flexcore/",
+  "flext-.*/",
+]
 
 [tool.pytest]
 ini_options.addopts = [
@@ -201,54 +241,36 @@ ini_options.addopts = [
   "--timeout-method=signal",
   "--durations=0",
 ]
+ini_options.pythonpath = [
+  ".",
+  "src",
+]
 ini_options.filterwarnings = [
   "ignore::DeprecationWarning:pyasn1(.*|$)",
-  "ignore:pkg_resources is deprecated:UserWarning",
 ]
 ini_options.markers = [
-  "advanced: Advanced functionality tests",
-  "architecture: Architectural pattern tests",
-  "benchmark: Performance benchmark tests",
-  "boundary: Boundary condition tests",
-  "cleanup: Cleanup tests",
-  "concurrency: Concurrency and threading tests",
-  "core: Core framework functionality tests",
-  "coverage: Coverage improvement tests",
-  "dbt: dbt transformation tests",
-  "ddd: Domain-driven design tests",
-  "destructive: Tests that may modify external systems",
-  "e2e: End-to-end tests",
-  "error_path: Error path scenario tests",
-  "happy_path: Happy path scenario tests",
-  "integration: Integration tests",
-  "memory: Memory usage tests",
-  "oracle: Oracle database tests",
-  "parametrize_advanced: Advanced parametrized tests",
-  "pep8: PEP8 compliance validation tests",
-  "performance: Performance tests",
-  "race_condition: Race condition tests",
-  "regression: Regression testing and detection",
-  "slow: Slow tests",
-  "smoke: Smoke tests",
-  "snapshot: Snapshot regression tests",
-  "tap: Singer tap tests",
-  "target: Singer target tests",
-  "timeout: Tests that may timeout",
-  "unit: Unit tests",
+  "docker: marca testes que requerem Docker",
+  "e2e: marca testes como testes de integração end-to-end",
+  "edge_cases: marca testes de casos extremos",
+  "integration: marca testes como testes de integração",
+  "integrity: marca testes de integridade",
+  "oracle: marca testes específicos do Oracle",
+  "performance: marca testes de performance",
+  "resilience: marca testes de resiliência",
+  "slow: marca testes como execução lenta",
+  "stress: marca testes de stress",
+  "unit: marca testes como testes unitários",
 ]
 ini_options.minversion = "8.0"
 ini_options.python_classes = [ "Test*" ]
-ini_options.python_files = [ "*_test.py", "test_*.py" ]
+ini_options.python_files = [
+  "*_test.py",
+  "*_tests.py",
+  "test_*.py",
+]
 ini_options.python_functions = [ "test_*" ]
-ini_options.testpaths = [ "tests" ]
-ini_options.norecursedirs = [
-  ".hypothesis",
-  "*.bak",
-  "*.removed",
-  "fixtures.bak",
-  "fixtures.removed",
-  "helpers.bak",
-  "helpers.removed",
+ini_options.testpaths = [
+  "tests/",
 ]
 
 [tool.coverage]
@@ -267,7 +289,137 @@ report.omit = [
 report.precision = 2
 
 [tool.pyrefly]
-search-path = [ "../typings", "../typings/generated", "src", "tests", "examples", "scripts" ]
+search-path = ["..", "../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
+project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
+
+[tool.pyright]
+enableTypeIgnoreComments = false
+extraPaths = ["..", "src", "tests", "examples", "scripts", "../typings", "../typings/generated"]
+include = [ "src", "scripts", "tests", "examples" ]
+exclude = [
+  "**/*.pb2.py",
+  "**/*.pb2_grpc.py",
+  ".git/",
+  ".meltano/",
+  ".mypy_cache/",
+  ".pytest_cache/",
+  ".ruff_cache/",
+  "__pycache__/",
+  "build/",
+  "dist/",
+  "node_modules/",
+  "target/",
+]
+pythonPlatform = "Linux"
+pythonVersion = "3.13"
+reportAssertAlwaysTrue = false
+reportCallInDefaultInitializer = "error"
+reportCallIssue = "error"
+reportConstantRedefinition = "error"
+reportDuplicateImport = "error"
+reportFunctionMemberAccess = "error"
+reportGeneralTypeIssues = "error"
+reportImplicitRelativeImport = false
+reportImplicitStringConcatenation = "warning"
+reportImportCycles = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportIncompleteStub = "warning"
+reportInconsistentConstructor = "error"
+reportInvalidStringEscapeSequence = "error"
+reportInvalidStubStatement = "error"
+reportInvalidTypeForm = false
+reportInvalidTypeVarUse = "error"
+reportMatchNotExhaustive = "warning"
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportMissingParameterType = "error"
+reportMissingSuperCall = "warning"
+reportMissingTypeArgument = "error"
+reportMissingTypeStubs = "warning"
+reportOptionalCall = "error"
+reportOptionalContextManager = "error"
+reportOptionalIterable = "error"
+reportOptionalMemberAccess = "error"
+reportOptionalOperand = "error"
+reportOptionalSubscript = "error"
+reportPrivateUsage = false
+reportPropertyTypeMismatch = "error"
+reportSelfClsParameterName = "error"
+reportTypedDictNotRequiredAccess = "error"
+reportUnboundVariable = "error"
+typeCheckingMode = "strict"
+reportUninitializedInstanceVariable = "warning"
+reportUnknownArgumentType = false
+reportUnknownLambdaType = "error"
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+reportUnnecessaryCast = "warning"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportUnnecessaryTypeIgnoreComment = "warning"
+reportUnsupportedDunderAll = "error"
+reportUntypedBaseClass = "error"
+reportUntypedClassDecorator = "error"
+reportUntypedFunctionDecorator = "error"
+reportUntypedNamedTuple = "error"
+reportUnusedCallResult = "warning"
+reportUnusedClass = "warning"
+reportUnusedCoroutine = "error"
+reportUnusedExpression = "warning"
+reportUnusedFunction = "warning"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+reportWildcardImportFromLibrary = "error"
+strictDictionaryInference = true
+strictListInference = true
+strictParameterNoneValue = true
+strictSetInference = true
+useLibraryCodeForTypes = true
 
 [tool.bandit]
 skips = [ "B404", "B603", "B607", "B105", "B608" ]
+exclude_dirs = [
+  ".git",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
+  "__pycache__",
+  "build",
+  "dist",
+  "node_modules",
+  "tests",
+  "vendor",
+]
+
+[tool.complexipy]
+max_complexity = 15
+output_format = "plain"
+
+[tool.vulture]
+exclude = [
+  ".*/examples/",
+  ".*/scripts/",
+  ".*/tests/",
+  ".coverage.*",
+  ".git/",
+  ".mypy_cache/",
+  ".pytest_cache/",
+  ".ruff_cache/",
+  ".venv/",
+  "__pycache__/",
+  "build/",
+  "dist/",
+  "node_modules/",
+  "tests/",
+  "vendor/",
+]
+min_confidence = 80
+paths = [
+  "**/src",
+  "src",
+]
+sort_by_size = true
+verbose = false

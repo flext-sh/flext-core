@@ -26,9 +26,11 @@ import re
 import sys
 from pathlib import Path
 
-from scripts.libs.selection import resolve_projects
+from scripts.libs.config import DEFAULT_ENCODING, PYPROJECT_FILENAME
+from scripts.libs.paths import workspace_root_from_file
+from scripts.libs.selection import python_projects
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = workspace_root_from_file(__file__)
 
 
 # ── Helpers ────────────────────────────────────────────────────────
@@ -39,10 +41,10 @@ def _read_required_minor(workspace_root: Path) -> int:
 
     Falls back to ``13`` if the field cannot be parsed.
     """
-    pyproject = workspace_root / "pyproject.toml"
+    pyproject = workspace_root / PYPROJECT_FILENAME
     if not pyproject.is_file():
         return 13
-    content = pyproject.read_text(encoding="utf-8")
+    content = pyproject.read_text(encoding=DEFAULT_ENCODING)
     match = re.search(r'requires-python\s*=\s*"[>!=]*(\d+)\.(\d+)', content)
     if match is None:
         return 13
@@ -50,11 +52,7 @@ def _read_required_minor(workspace_root: Path) -> int:
 
 
 def _discover_projects(workspace_root: Path) -> list[Path]:
-    return [
-        project.path
-        for project in resolve_projects(workspace_root, names=[])
-        if (project.path / "pyproject.toml").exists()
-    ]
+    return [p.path for p in python_projects(workspace_root)]
 
 
 def _ensure_python_version_file(

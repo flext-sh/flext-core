@@ -23,11 +23,22 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-REPORTS_DIR = ROOT / ".reports" / "check"
+from scripts.libs.config import (
+    CHECK_EXCLUDED_DIRS,
+    DEFAULT_CHECK_DIRS,
+    DEFAULT_SRC_DIR,
+    PYPROJECT_FILENAME,
+    STATUS_FAIL,
+    STATUS_PASS,
+)
+from scripts.libs.json_io import write_json
+from scripts.libs.paths import workspace_root_from_file
+from scripts.libs.reporting import ensure_report_dir
+
+ROOT = workspace_root_from_file(__file__)
+REPORTS_DIR = ensure_report_dir(ROOT, "check")
 DEFAULT_GATES = "lint,format,pyrefly,mypy,pyright,security,markdown,go"
-DEFAULT_SRC_DIR = "src"
-_CHECK_DIRS = ("src", "tests", "examples", "scripts")
+_CHECK_DIRS = DEFAULT_CHECK_DIRS
 
 
 def _existing_check_dirs(project_dir: Path) -> list[str]:
@@ -125,15 +136,38 @@ def _run_ruff_lint(project_dir: Path, _src_dir: str) -> GateResult:
     )
 
 
+# Ruff format --check outputs "   --> path:line:col" per unformatted file; diff lines follow.
+_RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
+
+
 def _run_ruff_format(project_dir: Path, _src_dir: str) -> GateResult:
     check_dirs = _existing_check_dirs(project_dir)
     targets = check_dirs or ["."]
     result = _run(["ruff", "format", "--check", *targets, "--quiet"], project_dir)
     errors: list[CheckError] = []
     if result.returncode != 0 and result.stdout.strip():
+        seen: set[str] = set()
         for line in result.stdout.strip().splitlines():
             path = line.strip()
-            if path and not path.startswith("Would"):
+            if not path:
+                continue
+            match = _RUFF_FORMAT_FILE_RE.match(path)
+            if match:
+                filepath = match.group(1).strip()
+                if filepath not in seen:
+                    seen.add(filepath)
+                    errors.append(
+                        CheckError(
+                            file=filepath,
+                            line=0,
+                            column=0,
+                            code="format",
+                            message="Would be reformatted",
+                        )
+                    )
+            elif path.endswith(".py") and " " not in path and path not in seen:
+                # Fallback: line is a bare path (e.g. older ruff)
+                seen.add(path)
                 errors.append(
                     CheckError(
                         file=path,
@@ -246,7 +280,7 @@ def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
     if not check_dirs:
         return GateResult(gate="mypy", project=project_dir.name, passed=True)
 
-    config_file = str(ROOT / "pyproject.toml")
+    config_file = str(ROOT / PYPROJECT_FILENAME)
     result = _run(
         ["mypy", *check_dirs, "--config-file", config_file, "--output", "json"],
         project_dir,
@@ -313,22 +347,9 @@ def _run_pyright(project_dir: Path, _src_dir: str) -> GateResult:
 
 
 def _collect_markdown_files(project_dir: Path) -> list[Path]:
-    excluded = {
-        ".git",
-        ".reports",
-        ".venv",
-        "node_modules",
-        ".flext-deps",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "dist",
-        "build",
-        "reports",
-    }
     files: list[Path] = []
     for path in project_dir.rglob("*.md"):
-        if any(part in excluded for part in path.parts):
+        if any(part in CHECK_EXCLUDED_DIRS for part in path.parts):
             continue
         files.append(path)
     return files
@@ -513,7 +534,7 @@ def _generate_md(results: list[ProjectResult], gates: list[str], timestamp: str)
         for g in gates:
             gate = r.gates.get(g)
             row += f" {gate.error_count if gate else 0} |"
-        status = "PASS" if r.passed else "**FAIL**"
+        status = STATUS_PASS if r.passed else f"**{STATUS_FAIL}**"
         if not r.passed:
             failed_count += 1
         row += f" {r.total_errors} | {status} |"
@@ -650,7 +671,7 @@ def main() -> int:
 
     reports_dir = Path(args.reports_dir).expanduser()
     if not reports_dir.is_absolute():
-        reports_dir = (Path.cwd() / reports_dir).resolve()
+        reports_dir = (ROOT / reports_dir).resolve()
 
     reports_dir.mkdir(parents=True, exist_ok=True)
 
@@ -660,7 +681,7 @@ def main() -> int:
 
     for i, proj_name in enumerate(args.projects, 1):
         project_dir = ROOT / proj_name
-        if not project_dir.is_dir() or not (project_dir / "pyproject.toml").exists():
+        if not project_dir.is_dir() or not (project_dir / PYPROJECT_FILENAME).exists():
             print(f"[{i:2d}/{total:2d}] {proj_name} ... skipped")
             continue
 
@@ -688,7 +709,7 @@ def main() -> int:
     _ = md_path.write_text(_generate_md(all_results, gates, timestamp))
 
     sarif_path = reports_dir / "check-report.sarif"
-    _ = sarif_path.write_text(json.dumps(_generate_sarif(all_results, gates), indent=2))
+    write_json(sarif_path, _generate_sarif(all_results, gates))
 
     total_errors = sum(r.total_errors for r in all_results)
     print(f"\n{'=' * 60}")
