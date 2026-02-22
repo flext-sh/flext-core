@@ -1,0 +1,10 @@
+clean: ## Clean artifacts
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		rm -f coverage.out coverage.html; \
+		go clean; \
+	fi
+	$(Q)rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage* \
+		.mypy_cache/ .pyrefly_cache/ .ruff_cache/ $(LINT_CACHE_DIR)/ \
+		.pyright/ .pytype/ .pyrefly-report.json .pyrefly-output.txt
+	$(Q)find . -type d -name __pycache__ -exec rm -rf {} +
+	$(Q)find . -type f -name "*.pyc" -delete

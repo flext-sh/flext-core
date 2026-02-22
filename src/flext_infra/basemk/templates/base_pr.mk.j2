@@ -1,0 +1,15 @@
+pr: ## Manage pull requests for this repository
+	$(Q)python3 -m flext_infra.github.pr_manager \
+		--repo-root "$(CURDIR)" \
+		--action "$(PR_ACTION)" \
+		--base "$(PR_BASE)" \
+		$(if $(PR_HEAD),--head "$(PR_HEAD)",) \
+		$(if $(PR_NUMBER),--number "$(PR_NUMBER)",) \
+		$(if $(PR_TITLE),--title "$(PR_TITLE)",) \
+		$(if $(PR_BODY),--body "$(PR_BODY)",) \
+		--draft "$(PR_DRAFT)" \
+		--merge-method "$(PR_MERGE_METHOD)" \
+		--auto "$(PR_AUTO)" \
+		--delete-branch "$(PR_DELETE_BRANCH)" \
+		--checks-strict "$(PR_CHECKS_STRICT)" \
+		--release-on-merge "$(PR_RELEASE_ON_MERGE)"

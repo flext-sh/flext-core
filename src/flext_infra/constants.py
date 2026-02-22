@@ -116,7 +116,7 @@ class InfraConstants:
     class Encoding:
         """Encoding constants."""
 
-        DEFAULT_ENCODING: Final[str] = "utf-8"
+        DEFAULT: Final[str] = "utf-8"
         """Default text encoding for file operations."""
 
 

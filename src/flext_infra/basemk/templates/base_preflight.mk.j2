@@ -1,0 +1,82 @@
+# === SILENT MODE ===
+Q := @
+ifdef VERBOSE
+Q :=
+endif
+
+# === CACHE ===
+LINT_CACHE_DIR := .lint-cache
+CACHE_TIMEOUT := 300
+
+$(LINT_CACHE_DIR):
+	$(Q)mkdir -p $(LINT_CACHE_DIR)
+
+# === SIMPLE VERB SURFACE ===
+.PHONY: help setup build check security format docs docs-base docs-sync-scripts test validate clean pr _preflight
+STANDARD_VERBS := setup build check security format docs test validate clean pr
+$(STANDARD_VERBS): _preflight
+
+define ENFORCE_WORKSPACE_VENV
+if [ "$(FLEXT_MODE)" = "workspace" ]; then \
+	if [ -d "$(WORKSPACE_ROOT)/.venv" ]; then \
+		if [ -d ".venv" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
+			echo "Enforcing workspace venv: removing local .venv in $(CURDIR)"; \
+			rm -rf .venv; \
+			if [ -d ".venv" ]; then \
+				echo "ERROR: unable to remove local .venv in $(CURDIR)"; \
+				exit 1; \
+			fi; \
+		fi; \
+	elif [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+		echo "ERROR: workspace .venv not found at $(ACTIVE_VENV). Run 'make setup' in workspace root."; \
+		exit 1; \
+	elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
+		echo "ERROR: workspace .venv not found; fallback local .venv missing at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
+		exit 1; \
+	else \
+		echo "INFO: workspace .venv not found; using project-local fallback in $(PROJECT_NAME)."; \
+	fi; \
+elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
+	echo "ERROR: local .venv not found at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
+	exit 1; \
+fi
+endef
+
+define AUTO_ADJUST_PROJECT
+if [ "$(AUTO_ADJUST)" = "1" ]; then \
+	md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './node_modules/*' ! -path './.flext-deps/*' ! -path './.mypy_cache/*' ! -path './.pytest_cache/*' ! -path './.ruff_cache/*' ! -path './dist/*' ! -path './build/*'); \
+	if [ -n "$$md_files" ] && command -v mdformat >/dev/null 2>&1; then \
+		mkdir -p .reports/preflight; \
+		printf '%s\n' "$$md_files" | xargs -r mdformat 2>>.reports/preflight/mdformat.log || true; \
+	fi; \
+	if [ -n "$$md_files" ] && command -v markdownlint >/dev/null 2>&1; then \
+		md_config=""; \
+		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
+			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+		elif [ -f ".markdownlint.json" ]; then \
+			md_config="--config .markdownlint.json"; \
+		fi; \
+		markdownlint --fix $$md_config $$md_files || true; \
+	fi; \
+	if [ -f go.mod ] && command -v gofmt >/dev/null 2>&1; then \
+		go_files=$$(find . -type f -name '*.go' ! -path './.git/*'); \
+		if [ -n "$$go_files" ]; then \
+			printf '%s\n' "$$go_files" | xargs -r gofmt -w; \
+		fi; \
+	fi; \
+fi
+endef
+
+define AUTO_SYNC_BASE_AND_SCRIPTS
+if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
+	python3 -m flext_infra.workspace.sync \
+		--project-root "$(CURDIR)" \
+		--canonical-root "$(WORKSPACE_ROOT)" \
+		$(if $(filter 1,$(SYNC_PRUNE)),--prune,); \
+fi
+endef
+
+_preflight: ## Internal preflight for standardized verbs
+	$(Q)$(AUTO_SYNC_BASE_AND_SCRIPTS)
+	$(Q)$(ENFORCE_WORKSPACE_VENV)
+	$(Q)$(AUTO_ADJUST_PROJECT)

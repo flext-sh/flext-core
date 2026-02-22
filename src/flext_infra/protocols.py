@@ -92,8 +92,8 @@ FlextInfraProtocols = InfraProtocols
 p = InfraProtocols
 
 __all__ = [
-    "InfraProtocols",
     "FlextInfraProtocols",
+    "InfraProtocols",
     "ip",
     "p",
 ]

@@ -36,6 +36,7 @@ dependencies = [
   "cachetools>=5.3",
   "dependency-injector>=4.41",
   "docker>=7.1,<8",
+  "jinja2>=3.1.6",
   "limits>=3.6",
   "orjson>=3.11.3",
   "pybreaker>=0.8",

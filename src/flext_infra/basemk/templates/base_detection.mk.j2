@@ -1,0 +1,32 @@
+# === WORKSPACE/STANDALONE DETECTION ===
+BASE_MK_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+PROJECT_ROOT := $(CURDIR)
+
+ifeq ($(FLEXT_STANDALONE),1)
+FLEXT_MODE := standalone
+else
+DETECTED_MODE := $(shell python3 -m flext_infra.workspace --project-root "$(PROJECT_ROOT)" 2>/dev/null || printf standalone)
+FLEXT_MODE := $(DETECTED_MODE)
+endif
+
+ifeq ($(FLEXT_MODE),workspace)
+WORKSPACE_ROOT := $(BASE_MK_DIR)
+WORKSPACE_VENV := $(WORKSPACE_ROOT)/.venv
+ifeq ($(wildcard $(WORKSPACE_VENV)),)
+ACTIVE_VENV := $(PROJECT_ROOT)/.venv
+export POETRY_VIRTUALENVS_PATH := $(PROJECT_ROOT)
+export POETRY_VIRTUALENVS_IN_PROJECT := true
+export POETRY_VIRTUALENVS_CREATE := true
+else
+ACTIVE_VENV := $(WORKSPACE_VENV)
+export POETRY_VIRTUALENVS_PATH := $(WORKSPACE_ROOT)
+export POETRY_VIRTUALENVS_IN_PROJECT := false
+export POETRY_VIRTUALENVS_CREATE := false
+endif
+else
+WORKSPACE_ROOT := $(PROJECT_ROOT)
+ACTIVE_VENV := $(PROJECT_ROOT)/.venv
+export POETRY_VIRTUALENVS_PATH := $(PROJECT_ROOT)
+export POETRY_VIRTUALENVS_IN_PROJECT := true
+export POETRY_VIRTUALENVS_CREATE := true
+endif

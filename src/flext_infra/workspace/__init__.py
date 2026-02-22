@@ -9,4 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from flext_infra.workspace.detector import WorkspaceDetector, WorkspaceMode
+from flext_infra.workspace.orchestrator import OrchestratorService
+from flext_infra.workspace.sync import SyncService
+
+__all__ = [
+    "OrchestratorService",
+    "SyncService",
+    "WorkspaceDetector",
+    "WorkspaceMode",
+]

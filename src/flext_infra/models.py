@@ -11,21 +11,25 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
-try:
+if TYPE_CHECKING:
     from flext_core import FlextModels as _FlextModels
-except ModuleNotFoundError:
+else:
+    try:
+        from flext_core import FlextModels as _FlextModels
+    except ModuleNotFoundError:
 
-    class _FlextModels:
-        class ArbitraryTypesModel(BaseModel):
-            model_config = ConfigDict(
-                validate_assignment=True,
-                extra="forbid",
-                arbitrary_types_allowed=True,
-                use_enum_values=True,
-            )
+        class _FlextModels:
+            class ArbitraryTypesModel(BaseModel):
+                model_config = ConfigDict(
+                    validate_assignment=True,
+                    extra="forbid",
+                    arbitrary_types_allowed=True,
+                    use_enum_values=True,
+                )
 
 
 class InfraModels(_FlextModels):
@@ -98,4 +102,4 @@ im = InfraModels
 
 m = InfraModels
 
-__all__ = ["InfraModels", "FlextInfraModels", "im", "m"]
+__all__ = ["FlextInfraModels", "InfraModels", "im", "m"]
