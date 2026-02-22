@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextResult
-from flext_core.typings import t
+if TYPE_CHECKING:
+    from flext_core import FlextResult
 
 
 class InfraProtocols:
@@ -15,7 +15,7 @@ class InfraProtocols:
         def name(self) -> str: ...
 
         @property
-        def root(self) -> t.GeneralValueType: ...
+        def root(self) -> object: ...
 
     @runtime_checkable
     class CommandOutput(Protocol):
@@ -34,33 +34,33 @@ class InfraProtocols:
             self,
             project: str,
             gates: Sequence[str],
-        ) -> FlextResult[t.GeneralValueType]: ...
+        ) -> FlextResult[object]: ...
 
     @runtime_checkable
     class SyncerProtocol(Protocol):
         def sync(
             self,
-            source: t.GeneralValueType,
-            target: t.GeneralValueType,
-        ) -> FlextResult[t.GeneralValueType]: ...
+            source: object,
+            target: object,
+        ) -> FlextResult[object]: ...
 
     @runtime_checkable
     class GeneratorProtocol(Protocol):
         def generate(
             self,
-            config: Mapping[str, t.GeneralValueType],
+            config: Mapping[str, object],
         ) -> FlextResult[str]: ...
 
     @runtime_checkable
     class ReporterProtocol(Protocol):
         def report(
             self,
-            results: Sequence[FlextResult[t.GeneralValueType]],
+            results: Sequence[FlextResult[object]],
         ) -> FlextResult[Path]: ...
 
     @runtime_checkable
     class ValidatorProtocol(Protocol):
-        def validate(self, target: t.GeneralValueType) -> FlextResult[bool]: ...
+        def validate(self, target: object) -> FlextResult[bool]: ...
 
     @runtime_checkable
     class OrchestratorProtocol(Protocol):
@@ -68,13 +68,13 @@ class InfraProtocols:
             self,
             projects: Sequence[InfraProtocols.ProjectInfo],
             verb: str,
-        ) -> FlextResult[t.GeneralValueType]: ...
+        ) -> FlextResult[object]: ...
 
     @runtime_checkable
     class DiscoveryProtocol(Protocol):
         def discover(
             self,
-            root: t.GeneralValueType,
+            root: object,
         ) -> FlextResult[list[InfraProtocols.ProjectInfo]]: ...
 
     @runtime_checkable
@@ -82,7 +82,7 @@ class InfraProtocols:
         def run(
             self,
             cmd: Sequence[str],
-            cwd: t.GeneralValueType | None = None,
+            cwd: Path | None = None,
         ) -> FlextResult[InfraProtocols.CommandOutput]: ...
 
 

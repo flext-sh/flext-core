@@ -12,20 +12,31 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels
+try:
+    from flext_core import FlextModels as _FlextModels
+except ModuleNotFoundError:
+
+    class _FlextModels:
+        class ArbitraryTypesModel(BaseModel):
+            model_config = ConfigDict(
+                validate_assignment=True,
+                extra="forbid",
+                arbitrary_types_allowed=True,
+                use_enum_values=True,
+            )
 
 
-class InfraModels(FlextModels):
-    class ProjectInfo(FlextModels.ArbitraryTypesModel):
+class InfraModels(_FlextModels):
+    class ProjectInfo(_FlextModels.ArbitraryTypesModel):
         name: str = Field(min_length=1, description="Project name")
         path: Path = Field(description="Absolute or relative project path")
         stack: str = Field(min_length=1, description="Primary technology stack")
         has_tests: bool = Field(default=False, description="Project has test suite")
         has_src: bool = Field(default=True, description="Project has source directory")
 
-    class GateResult(FlextModels.ArbitraryTypesModel):
+    class GateResult(_FlextModels.ArbitraryTypesModel):
         gate: str = Field(min_length=1, description="Gate name")
         project: str = Field(min_length=1, description="Project name")
         passed: bool = Field(description="Gate execution status")
@@ -34,7 +45,7 @@ class InfraModels(FlextModels):
         )
         duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
 
-    class SyncResult(FlextModels.ArbitraryTypesModel):
+    class SyncResult(_FlextModels.ArbitraryTypesModel):
         files_changed: int = Field(default=0, ge=0, description="Total changed files")
         source: Path = Field(description="Sync source path")
         target: Path = Field(description="Sync target path")
@@ -43,13 +54,13 @@ class InfraModels(FlextModels):
             description="Execution timestamp in UTC",
         )
 
-    class CommandOutput(FlextModels.ArbitraryTypesModel):
+    class CommandOutput(_FlextModels.ArbitraryTypesModel):
         stdout: str = Field(default="", description="Captured standard output")
         stderr: str = Field(default="", description="Captured standard error")
         exit_code: int = Field(description="Command exit code")
         duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
 
-    class BaseMkConfig(FlextModels.ArbitraryTypesModel):
+    class BaseMkConfig(_FlextModels.ArbitraryTypesModel):
         project_name: str = Field(min_length=1, description="Project identifier")
         python_version: str = Field(min_length=1, description="Target Python version")
         core_stack: str = Field(min_length=1, description="Core stack classification")
@@ -61,12 +72,12 @@ class InfraModels(FlextModels):
         )
         test_command: str = Field(default="pytest", description="Default test command")
 
-    class MigrationResult(FlextModels.ArbitraryTypesModel):
+    class MigrationResult(_FlextModels.ArbitraryTypesModel):
         project: str = Field(min_length=1, description="Project identifier")
         changes: list[str] = Field(default_factory=list, description="Applied changes")
         errors: list[str] = Field(default_factory=list, description="Migration errors")
 
-    class ValidationReport(FlextModels.ArbitraryTypesModel):
+    class ValidationReport(_FlextModels.ArbitraryTypesModel):
         passed: bool = Field(description="Validation status")
         violations: list[str] = Field(
             default_factory=list,
@@ -76,7 +87,7 @@ class InfraModels(FlextModels):
             default="", description="Human-readable validation summary"
         )
 
-    class ReleaseSpec(FlextModels.ArbitraryTypesModel):
+    class ReleaseSpec(_FlextModels.ArbitraryTypesModel):
         version: str = Field(min_length=1, description="Semantic version string")
         tag: str = Field(min_length=1, description="Git tag for release")
         bump_type: str = Field(min_length=1, description="Release bump type")
