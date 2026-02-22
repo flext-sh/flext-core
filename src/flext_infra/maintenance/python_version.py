@@ -28,8 +28,8 @@ import re
 import sys
 from pathlib import Path
 from typing import override
-import structlog
 
+import structlog
 from flext_core import FlextService, r
 
 from flext_infra.constants import ic

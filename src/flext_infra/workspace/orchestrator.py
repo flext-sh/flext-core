@@ -13,8 +13,8 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 from typing import override
-import structlog
 
+import structlog
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import fcntl
 import hashlib
+import sys
 import tempfile
 from pathlib import Path
 from typing import override
@@ -248,9 +249,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
-
-    sys.exit(main())
+    raise SystemExit(main())
 
 
 __all__ = ["SyncService", "main"]

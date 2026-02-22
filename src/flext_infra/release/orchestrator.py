@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import override
 
 import structlog
-
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
 

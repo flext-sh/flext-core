@@ -17,8 +17,8 @@ import json
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-import structlog
 
+import structlog
 from flext_core.result import FlextResult, r
 
 from flext_infra.constants import ic
@@ -336,7 +336,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
 
 
 __all__ = ["AuditIssue", "AuditReport", "DocAuditor"]

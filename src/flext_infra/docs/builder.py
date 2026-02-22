@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
-import structlog
 
+import structlog
 from flext_core.result import FlextResult, r
 
 from flext_infra.constants import ic

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from pydantic import Field
 
 from flext_core import FlextModels as _FlextModels
+from pydantic import Field
 
 
 class InfraModels(_FlextModels):
