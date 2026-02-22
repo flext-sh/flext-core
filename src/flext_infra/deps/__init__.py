@@ -9,30 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_infra.deps.detection import (
-    DependencyDetectionModels,
-    DependencyDetectionService,
-    dm,
-)
-from flext_infra.deps.detector import (
-    DependencyDetectorModels,
-    RuntimeDevDependencyDetector,
-    ddm,
-    main,
-)
-from flext_infra.deps.extra_paths import (
-    MYPY_BASE_PROJECT,
-    MYPY_BASE_ROOT,
-    PYRIGHT_BASE_PROJECT,
-    PYRIGHT_BASE_ROOT,
-    ROOT as EXTRA_PATHS_ROOT,
-    get_dep_paths,
-    sync_extra_paths,
-    sync_one,
-)
-from flext_infra.deps.internal_sync import InternalDependencySyncService, RepoUrls
-from flext_infra.deps.modernizer import PyprojectModernizer
-
 FLEXT_DEPS_DIR = ".flext-deps"
 
 
@@ -52,6 +28,86 @@ def rewrite_dep_paths(pyproject_path, **kwargs):
     from flext_infra.deps.path_sync import rewrite_dep_paths as _rewrite_dep_paths
 
     return _rewrite_dep_paths(pyproject_path, **kwargs)
+
+
+def __getattr__(name: str):
+    if name in {"DependencyDetectionModels", "DependencyDetectionService", "dm"}:
+        from flext_infra.deps.detection import (
+            DependencyDetectionModels,
+            DependencyDetectionService,
+            dm,
+        )
+
+        return {
+            "DependencyDetectionModels": DependencyDetectionModels,
+            "DependencyDetectionService": DependencyDetectionService,
+            "dm": dm,
+        }[name]
+    if name in {
+        "DependencyDetectorModels",
+        "RuntimeDevDependencyDetector",
+        "ddm",
+        "main",
+    }:
+        from flext_infra.deps.detector import (
+            DependencyDetectorModels,
+            RuntimeDevDependencyDetector,
+            ddm,
+            main,
+        )
+
+        return {
+            "DependencyDetectorModels": DependencyDetectorModels,
+            "RuntimeDevDependencyDetector": RuntimeDevDependencyDetector,
+            "ddm": ddm,
+            "main": main,
+        }[name]
+    if name in {
+        "MYPY_BASE_PROJECT",
+        "MYPY_BASE_ROOT",
+        "PYRIGHT_BASE_PROJECT",
+        "PYRIGHT_BASE_ROOT",
+        "EXTRA_PATHS_ROOT",
+        "get_dep_paths",
+        "sync_extra_paths",
+        "sync_one",
+    }:
+        from flext_infra.deps.extra_paths import (
+            MYPY_BASE_PROJECT,
+            MYPY_BASE_ROOT,
+            PYRIGHT_BASE_PROJECT,
+            PYRIGHT_BASE_ROOT,
+            ROOT,
+            get_dep_paths,
+            sync_extra_paths,
+            sync_one,
+        )
+
+        return {
+            "MYPY_BASE_PROJECT": MYPY_BASE_PROJECT,
+            "MYPY_BASE_ROOT": MYPY_BASE_ROOT,
+            "PYRIGHT_BASE_PROJECT": PYRIGHT_BASE_PROJECT,
+            "PYRIGHT_BASE_ROOT": PYRIGHT_BASE_ROOT,
+            "EXTRA_PATHS_ROOT": ROOT,
+            "get_dep_paths": get_dep_paths,
+            "sync_extra_paths": sync_extra_paths,
+            "sync_one": sync_one,
+        }[name]
+    if name in {"InternalDependencySyncService", "RepoUrls"}:
+        from flext_infra.deps.internal_sync import (
+            InternalDependencySyncService,
+            RepoUrls,
+        )
+
+        return {
+            "InternalDependencySyncService": InternalDependencySyncService,
+            "RepoUrls": RepoUrls,
+        }[name]
+    if name == "PyprojectModernizer":
+        from flext_infra.deps.modernizer import PyprojectModernizer
+
+        return PyprojectModernizer
+    raise AttributeError(name)
 
 
 __all__ = [

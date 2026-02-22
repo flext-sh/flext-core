@@ -10,13 +10,38 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_infra.core.__main__ import main
-from flext_infra.core.basemk_validator import BaseMkValidator
-from flext_infra.core.inventory import InventoryService
-from flext_infra.core.pytest_diag import PytestDiagExtractor
-from flext_infra.core.scanner import TextPatternScanner
-from flext_infra.core.skill_validator import SkillValidator
-from flext_infra.core.stub_chain import StubSupplyChain
+
+def __getattr__(name: str):
+    if name == "main":
+        from flext_infra.core.__main__ import main
+
+        return main
+    if name == "BaseMkValidator":
+        from flext_infra.core.basemk_validator import BaseMkValidator
+
+        return BaseMkValidator
+    if name == "InventoryService":
+        from flext_infra.core.inventory import InventoryService
+
+        return InventoryService
+    if name == "PytestDiagExtractor":
+        from flext_infra.core.pytest_diag import PytestDiagExtractor
+
+        return PytestDiagExtractor
+    if name == "TextPatternScanner":
+        from flext_infra.core.scanner import TextPatternScanner
+
+        return TextPatternScanner
+    if name == "SkillValidator":
+        from flext_infra.core.skill_validator import SkillValidator
+
+        return SkillValidator
+    if name == "StubSupplyChain":
+        from flext_infra.core.stub_chain import StubSupplyChain
+
+        return StubSupplyChain
+    raise AttributeError(name)
+
 
 __all__ = [
     "BaseMkValidator",
