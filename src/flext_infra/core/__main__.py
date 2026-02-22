@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import cast
 
 from flext_infra.core.basemk_validator import BaseMkValidator
 from flext_infra.core.inventory import InventoryService
@@ -66,6 +67,32 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
+
+        if args.failed and data.get("failed_cases"):
+            Path(args.failed).write_text(
+                "\n\n".join(cast(list[str], data["failed_cases"])) + "\n",
+                encoding="utf-8",
+            )
+        if args.errors and data.get("error_traces"):
+            Path(args.errors).write_text(
+                "\n\n".join(cast(list[str], data["error_traces"])) + "\n",
+                encoding="utf-8",
+            )
+        if args.warnings and data.get("warning_lines"):
+            Path(args.warnings).write_text(
+                "\n".join(cast(list[str], data["warning_lines"])) + "\n",
+                encoding="utf-8",
+            )
+        if args.slowest and data.get("slow_entries"):
+            Path(args.slowest).write_text(
+                "\n".join(cast(list[str], data["slow_entries"])) + "\n",
+                encoding="utf-8",
+            )
+        if args.skips and data.get("skip_cases"):
+            Path(args.skips).write_text(
+                "\n".join(cast(list[str], data["skip_cases"])) + "\n", encoding="utf-8"
+            )
+
         print(f"failed_count={data.get('failed_count', 0)}")
         print(f"error_count={data.get('error_count', 0)}")
         print(f"warning_count={data.get('warning_count', 0)}")
@@ -149,6 +176,11 @@ def main() -> int:
     pd = subparsers.add_parser("pytest-diag", help="Extract pytest diagnostics")
     pd.add_argument("--junit", required=True, help="JUnit XML path")
     pd.add_argument("--log", required=True, help="Pytest log path")
+    pd.add_argument("--failed", help="Path to write failed cases")
+    pd.add_argument("--errors", help="Path to write error traces")
+    pd.add_argument("--warnings", help="Path to write warnings")
+    pd.add_argument("--slowest", help="Path to write slowest entries")
+    pd.add_argument("--skips", help="Path to write skipped cases")
 
     # scan
     sc = subparsers.add_parser("scan", help="Scan text files for patterns")

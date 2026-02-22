@@ -1,16 +1,310 @@
 from __future__ import annotations
 
-from scripts.dependencies import detect_runtime_dev_deps as legacy
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+import structlog
+from flext_core.result import FlextResult, r
+from pydantic import Field
+
+from flext_infra.constants import ic
+from flext_infra.deps.detection import DependencyDetectionService
+from flext_infra.models import im
+from flext_infra.paths import PathResolver
+from flext_infra.reporting import ReportingService
+from flext_infra.subprocess import CommandRunner
+from flext_infra.json_io import JsonService
+
+logger = structlog.get_logger(__name__)
 
 
-class RuntimeDevDetector:
-    def run(self) -> int:
-        return legacy.main()
+class DependencyDetectorModels(im):
+    class DependencyLimitsInfo(im.ArbitraryTypesModel):
+        python_version: str | None = None
+        limits_path: str = Field(default="")
+
+    class PipCheckReport(im.ArbitraryTypesModel):
+        ok: bool = True
+        lines: list[str] = Field(default_factory=list)
+
+    class WorkspaceDependencyReport(im.ArbitraryTypesModel):
+        workspace: str
+        projects: dict[str, dict[str, object]] = Field(default_factory=dict)
+        pip_check: dict[str, object] | None = None
+        dependency_limits: dict[str, object] | None = None
+
+
+ddm = DependencyDetectorModels
+
+
+class RuntimeDevDependencyDetector:
+    def __init__(self) -> None:
+        self._paths = PathResolver()
+        self._reporting = ReportingService()
+        self._json = JsonService()
+        self._deps = DependencyDetectionService()
+        self._runner = CommandRunner()
+
+    @staticmethod
+    def _parser(default_limits_path: Path) -> argparse.ArgumentParser:
+        parser = argparse.ArgumentParser(
+            description="Detect runtime vs dev dependencies (deptry + pip check).",
+        )
+        _ = parser.add_argument(
+            "--project",
+            metavar="NAME",
+            help="Run only for this project (directory name).",
+        )
+        _ = parser.add_argument(
+            "--projects",
+            metavar="NAMES",
+            help="Comma-separated list of project names.",
+        )
+        _ = parser.add_argument(
+            "--no-pip-check",
+            action="store_true",
+            help="Skip pip check (workspace-level).",
+        )
+        _ = parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Do not write report files.",
+        )
+        _ = parser.add_argument(
+            "--json",
+            action="store_true",
+            dest="json_stdout",
+            help="Print full report JSON to stdout only (no file write).",
+        )
+        _ = parser.add_argument(
+            "-o",
+            "--output",
+            metavar="FILE",
+            help=(
+                "Write report to this path "
+                "(default: .reports/dependencies/detect-runtime-dev-latest.json)."
+            ),
+        )
+        _ = parser.add_argument(
+            "-q",
+            "--quiet",
+            action="store_true",
+            help="Minimal output (summary only).",
+        )
+        _ = parser.add_argument(
+            "--no-fail",
+            action="store_true",
+            help="Always exit 0 (report only).",
+        )
+        _ = parser.add_argument(
+            "--typings",
+            action="store_true",
+            help="Detect required typing libraries (types-*).",
+        )
+        _ = parser.add_argument(
+            "--apply-typings",
+            action="store_true",
+            help="Add missing typings with poetry add --group typings.",
+        )
+        _ = parser.add_argument(
+            "--limits",
+            metavar="FILE",
+            default=str(default_limits_path),
+            help="Path to dependency_limits.toml.",
+        )
+        return parser
+
+    @staticmethod
+    def _project_filter(args: argparse.Namespace) -> list[str] | None:
+        if args.project:
+            return [args.project]
+        if args.projects:
+            return [name.strip() for name in args.projects.split(",") if name.strip()]
+        return None
+
+    def run(self, argv: list[str] | None = None) -> FlextResult[int]:
+        root_result = self._paths.workspace_root_from_file(__file__)
+        if root_result.is_failure:
+            return r[int].fail(root_result.error or "workspace root resolution failed")
+        root = root_result.value
+
+        venv_bin = root / ic.Paths.VENV_BIN_REL
+        limits_default = Path(__file__).resolve().parent / "dependency_limits.toml"
+        parser = self._parser(limits_default)
+        args = parser.parse_args(argv)
+
+        projects_result = self._deps.discover_projects(
+            root,
+            projects_filter=self._project_filter(args),
+        )
+        if projects_result.is_failure:
+            return r[int].fail(projects_result.error or "project discovery failed")
+        projects = projects_result.value
+        if not projects:
+            logger.error("deps_no_projects_found")
+            return r[int].ok(2)
+
+        if not (venv_bin / "deptry").exists():
+            logger.error("deps_deptry_missing", path=str(venv_bin / "deptry"))
+            return r[int].ok(3)
+
+        apply_typings = bool(getattr(args, "apply_typings", False))
+        do_typings = bool(getattr(args, "typings", False)) or apply_typings
+        limits_path = Path(args.limits) if args.limits else limits_default
+
+        projects_report: dict[str, dict[str, object]] = {}
+        report_model = ddm.WorkspaceDependencyReport(
+            workspace=str(root),
+            projects=projects_report,
+            pip_check=None,
+            dependency_limits=None,
+        )
+
+        if do_typings:
+            limits_data = self._deps.load_dependency_limits(limits_path)
+            if limits_data:
+                python_cfg = limits_data.get("python")
+                python_version = (
+                    str(python_cfg.get("version"))
+                    if isinstance(python_cfg, dict)
+                    and python_cfg.get("version") is not None
+                    else None
+                )
+                report_model.dependency_limits = ddm.DependencyLimitsInfo(
+                    python_version=python_version,
+                    limits_path=str(limits_path),
+                ).model_dump()
+
+        for project_path in projects:
+            project_name = project_path.name
+            if not args.quiet:
+                logger.info("deps_deptry_running", project=project_name)
+
+            deptry_result = self._deps.run_deptry(project_path, venv_bin)
+            if deptry_result.is_failure:
+                return r[int].fail(deptry_result.error or "deptry run failed")
+            issues, _ = deptry_result.value
+            project_payload = self._deps.build_project_report(project_name, issues)
+            project_dict = project_payload.model_dump()
+            projects_report[project_name] = project_dict
+
+            if do_typings and (project_path / ic.Paths.DEFAULT_SRC_DIR).is_dir():
+                if not args.quiet:
+                    logger.info("deps_typings_detect_running", project=project_name)
+                typings_result = self._deps.get_required_typings(
+                    project_path,
+                    venv_bin,
+                    limits_path=limits_path,
+                )
+                if typings_result.is_failure:
+                    return r[int].fail(
+                        typings_result.error or "typing dependency detection failed"
+                    )
+                typing_dict = typings_result.value.model_dump()
+                projects_report[project_name]["typings"] = typing_dict
+
+                to_add_obj = typing_dict.get("to_add")
+                to_add = to_add_obj if isinstance(to_add_obj, list) else []
+                if apply_typings and to_add and not args.dry_run:
+                    env = {
+                        **os.environ,
+                        "VIRTUAL_ENV": str(venv_bin.parent),
+                        "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
+                    }
+                    for package in to_add:
+                        if not isinstance(package, str):
+                            continue
+                        run = self._runner.run_raw(
+                            ["poetry", "add", "--group", "typings", package],
+                            cwd=project_path,
+                            timeout=120,
+                            env=env,
+                        )
+                        if run.is_failure or run.value.exit_code != 0:
+                            logger.warning(
+                                "deps_typings_add_failed",
+                                project=project_name,
+                                package=package,
+                            )
+
+        if not args.no_pip_check:
+            if not args.quiet:
+                logger.info("deps_pip_check_running")
+            pip_result = self._deps.run_pip_check(root, venv_bin)
+            if pip_result.is_failure:
+                return r[int].fail(pip_result.error or "pip check failed")
+            pip_lines, pip_exit = pip_result.value
+            report_model.pip_check = ddm.PipCheckReport(
+                ok=pip_exit == 0, lines=pip_lines
+            ).model_dump()
+
+        report_payload = report_model.model_dump()
+
+        if args.json_stdout:
+            sys.stdout.write(json.dumps(report_payload, indent=2) + "\n")
+            return r[int].ok(0)
+
+        out_path: Path | None = None
+        if args.output:
+            out_path = Path(args.output)
+        elif not args.dry_run:
+            report_dir_result = self._reporting.ensure_report_dir(root, "dependencies")
+            if report_dir_result.is_failure:
+                return r[int].fail(
+                    report_dir_result.error or "failed to create report directory"
+                )
+            out_path = report_dir_result.value / "detect-runtime-dev-latest.json"
+
+        if out_path is not None and not args.dry_run:
+            write_result = self._json.write(out_path, report_payload)
+            if write_result.is_failure:
+                return r[int].fail(write_result.error or "failed to write report")
+            if not args.quiet:
+                logger.info("deps_report_written", path=str(out_path))
+
+        total_issues = 0
+        for payload in projects_report.values():
+            deptry_obj = payload.get("deptry")
+            if isinstance(deptry_obj, dict):
+                raw_count = deptry_obj.get("raw_count", 0)
+                if isinstance(raw_count, int):
+                    total_issues += raw_count
+
+        pip_ok = True
+        if isinstance(report_model.pip_check, dict):
+            pip_ok = bool(report_model.pip_check.get("ok", True))
+
+        if not args.quiet:
+            logger.info(
+                "deps_summary",
+                projects=len(projects),
+                deptry_issues=total_issues,
+                pip_check="ok" if pip_ok else "FAIL",
+            )
+
+        if args.no_fail:
+            return r[int].ok(0)
+        return r[int].ok(0 if total_issues == 0 and pip_ok else 1)
 
 
 def main() -> int:
-    return RuntimeDevDetector().run()
+    result = RuntimeDevDependencyDetector().run()
+    if result.is_failure:
+        logger.error("deps_detector_failed", error=result.error or "unknown error")
+        return 1
+    return result.value
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+__all__ = [
+    "DependencyDetectorModels",
+    "RuntimeDevDependencyDetector",
+    "ddm",
+    "main",
+]
