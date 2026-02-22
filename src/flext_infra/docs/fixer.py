@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import structlog
 
 from flext_core.result import FlextResult, r
 
@@ -25,6 +26,8 @@ from flext_infra.docs.shared import (
 )
 from flext_infra.patterns import InfraPatterns
 from flext_infra.templates import TemplateEngine
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -123,9 +126,12 @@ class DocFixer:
         _ = write_markdown(scope.report_dir / "fix-report.md", lines)
 
         status = ic.Status.OK if apply or not items else ic.Status.WARN
-        print(
-            f"PROJECT={scope.name} PHASE=fix RESULT={status} "
-            f"REASON=changes:{len(items)}"
+        logger.info(
+            "docs_fix_scope_completed",
+            project=scope.name,
+            phase="fix",
+            result=status,
+            reason=f"changes:{len(items)}",
         )
 
         return FixReport(

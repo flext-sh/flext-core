@@ -75,7 +75,7 @@ def build_scopes(
                 ),
             )
         return r[list[DocScope]].ok(scopes)
-    except Exception as exc:
+    except (OSError, TypeError, ValueError) as exc:
         return r[list[DocScope]].fail(f"scope resolution failed: {exc}")
 
 

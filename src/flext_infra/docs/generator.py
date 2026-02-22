@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
+import structlog
 
 from flext_core.result import FlextResult, r
 
@@ -24,6 +25,8 @@ from flext_infra.docs.shared import (
 )
 from flext_infra.patterns import InfraPatterns
 from flext_infra.templates import TemplateEngine
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -134,7 +137,13 @@ class DocGenerator:
         )
         result = ic.Status.OK if apply else ic.Status.WARN
         reason = f"generated:{generated}" if apply else "dry-run"
-        print(f"PROJECT={scope.name} PHASE=generate RESULT={result} REASON={reason}")
+        logger.info(
+            "docs_generate_scope_completed",
+            project=scope.name,
+            phase="generate",
+            result=result,
+            reason=reason,
+        )
 
         return GenerateReport(
             scope=scope.name,

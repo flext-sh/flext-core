@@ -393,9 +393,9 @@ def main() -> int:
         result = manager.status(repo_root, base, head)
         if result.is_success:
             for key, value in result.value.items():
-                print(f"{key}={value}")
+                _ = sys.stdout.write(f"{key}={value}\n")
             return 0
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
 
     if args.action == "create":
@@ -411,17 +411,17 @@ def main() -> int:
         )
         if result.is_success:
             for key, value in result.value.items():
-                print(f"{key}={value}")
+                _ = sys.stdout.write(f"{key}={value}\n")
             return 0
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
 
     if args.action == "view":
         result_view = manager.view(repo_root, selector)
         if result_view.is_success:
-            print(result_view.value)
+            _ = sys.stdout.write(f"{result_view.value}\n")
             return 0
-        print(f"Error: {result_view.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result_view.error}\n")
         return 1
 
     if args.action == "checks":
@@ -432,9 +432,9 @@ def main() -> int:
         )
         if result.is_success:
             for key, value in result.value.items():
-                print(f"{key}={value}")
+                _ = sys.stdout.write(f"{key}={value}\n")
             return 0
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
 
     if args.action == "merge":
@@ -449,17 +449,17 @@ def main() -> int:
         )
         if result.is_success:
             for key, value in result.value.items():
-                print(f"{key}={value}")
+                _ = sys.stdout.write(f"{key}={value}\n")
             return 0
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
 
     if args.action == "close":
         result_close = manager.close(repo_root, selector)
         if result_close.is_success:
-            print("status=closed")
+            _ = sys.stdout.write("status=closed\n")
             return 0
-        print(f"Error: {result_close.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result_close.error}\n")
         return 1
 
     msg = f"unknown action: {args.action}"

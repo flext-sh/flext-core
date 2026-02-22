@@ -5,7 +5,7 @@ from typing import ClassVar, override
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, TemplateError
 
 from flext_infra.models import im
 
@@ -52,7 +52,7 @@ class TemplateEngine(FlextService[str]):
                 sections.append(rendered.rstrip("\n"))
             content = "\n\n".join(sections).rstrip("\n") + "\n"
             return r[str].ok(content)
-        except Exception as exc:
+        except (TemplateError, ValueError, TypeError) as exc:
             return r[str].fail(f"base.mk template render failed: {exc}")
 
     @staticmethod

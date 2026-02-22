@@ -200,7 +200,7 @@ class SkillValidator:
                     summary=summary,
                 ),
             )
-        except Exception as exc:
+        except (OSError, TypeError, ValueError, RuntimeError) as exc:
             return r[im.ValidationReport].fail(
                 f"skill validation failed: {exc}",
             )
@@ -228,7 +228,7 @@ class SkillValidator:
                 if child.is_dir() and (child / "rules.yml").exists()
             ]
             return r[list[str]].ok(found)
-        except Exception as exc:
+        except OSError as exc:
             return r[list[str]].fail(f"skill discovery failed: {exc}")
 
     def _run_ast_grep_count(

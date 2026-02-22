@@ -12,6 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
+import structlog
+
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
 
@@ -33,6 +35,7 @@ _MARKDOWN_RE = re.compile(
 _GO_VET_RE = re.compile(
     r"^(?P<file>[^:\n]+\.go):(?P<line>\d+)(?::(?P<col>\d+))?:\s*(?P<msg>.*)$",
 )
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -134,7 +137,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             project_dir = self._workspace_root / project_name
             pyproject_path = project_dir / ic.Files.PYPROJECT_FILENAME
             if not project_dir.is_dir() or not pyproject_path.exists():
-                print(f"[{index:2d}/{total:2d}] {project_name} ... skipped")
+                _ = sys.stdout.write(
+                    f"[{index:2d}/{total:2d}] {project_name} ... skipped\n"
+                )
                 continue
 
             _ = sys.stdout.write(f"[{index:2d}/{total:2d}] {project_name} ... ")
@@ -145,7 +150,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             results.append(project_result)
 
             if project_result.passed:
-                print("ok")
+                _ = sys.stdout.write("ok\n")
             else:
                 counts = " ".join(
                     f"{gate}={len(project_result.gates[gate].issues)}"
@@ -153,7 +158,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     if gate in project_result.gates
                     and len(project_result.gates[gate].issues) > 0
                 )
-                print(f"FAIL ({project_result.total_errors} errors: {counts})")
+                _ = sys.stdout.write(
+                    f"FAIL ({project_result.total_errors} errors: {counts})\n"
+                )
                 failed += 1
                 if fail_fast:
                     break
@@ -174,16 +181,16 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             )
 
         total_errors = sum(project.total_errors for project in results)
-        print(f"\n{'=' * 60}")
-        print(
-            f"Check: {len(results)} projects, {total_errors} errors, {failed} failed",
+        _ = sys.stdout.write(
+            f"\n{'=' * 60}\n"
+            f"Check: {len(results)} projects, {total_errors} errors, {failed} failed\n"
+            f"Reports: {md_path}\n"
+            f"         {sarif_path}\n"
+            f"{'=' * 60}\n"
         )
-        print(f"Reports: {md_path}")
-        print(f"         {sarif_path}")
-        print(f"{'=' * 60}")
 
         if total_errors > 0:
-            print("\nErrors by project:")
+            _ = sys.stdout.write("\nErrors by project:\n")
             for project in sorted(
                 results, key=lambda item: item.total_errors, reverse=True
             ):
@@ -194,8 +201,8 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     for gate in resolved_gates
                     if gate in project.gates and len(project.gates[gate].issues) > 0
                 )
-                print(
-                    f"  {project.project:30s} {project.total_errors:6d}  ({breakdown})"
+                _ = sys.stdout.write(
+                    f"  {project.project:30s} {project.total_errors:6d}  ({breakdown})\n"
                 )
 
         return r[list[_ProjectResult]].ok(results)
@@ -1014,11 +1021,11 @@ class PyreflyConfigFixer(FlextService[list[str]]):
                     rel = path
                 for fix in fixes:
                     line = f"  {'(dry)' if dry_run else '✓'} {rel}: {fix}"
-                    print(line)
+                    logger.info("pyrefly_config_fix", detail=line)
                     messages.append(line)
 
         if verbose and total_fixes == 0:
-            print("  All pyrefly configs clean.")
+            logger.info("pyrefly_configs_clean")
 
         return r[list[str]].ok(messages)
 
@@ -1199,7 +1206,7 @@ def run_cli(argv: list[str] | None = None) -> int:
             fail_fast=args.fail_fast,
         )
         if run_result.is_failure:
-            print(run_result.error or "check failed", file=sys.stderr)
+            _ = sys.stderr.write(f"{run_result.error or 'check failed'}\n")
             return 2
         failed_projects = [
             project for project in run_result.value if not project.passed
@@ -1214,7 +1221,7 @@ def run_cli(argv: list[str] | None = None) -> int:
             verbose=args.verbose,
         )
         if fix_result.is_failure:
-            print(fix_result.error or "pyrefly config fix failed", file=sys.stderr)
+            _ = sys.stderr.write(f"{fix_result.error or 'pyrefly config fix failed'}\n")
             return 1
         return 0
 

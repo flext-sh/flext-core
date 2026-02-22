@@ -17,6 +17,7 @@ import json
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import structlog
 
 from flext_core.result import FlextResult, r
 
@@ -29,6 +30,8 @@ from flext_infra.docs.shared import (
     write_markdown,
 )
 from flext_infra.patterns import InfraPatterns
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -153,7 +156,13 @@ class DocAuditor:
 
         status = ic.Status.OK if passed else ic.Status.FAIL
         reason = f"issues:{len(issues)}"
-        print(f"PROJECT={scope.name} PHASE=audit RESULT={status} REASON={reason}")
+        logger.info(
+            "docs_audit_scope_completed",
+            project=scope.name,
+            phase="audit",
+            result=status,
+            reason=reason,
+        )
 
         return AuditReport(
             scope=scope.name,
@@ -319,7 +328,7 @@ def main() -> int:
     )
 
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
 
     failures = sum(1 for report in result.value if not report.passed)

@@ -16,7 +16,7 @@ Usage::
     service = PythonVersionEnforcer()
     result = service.execute(check_only=True, verbose=True)
     if result.is_success:
-        print("Python version check passed")
+        logger.info("Python version check passed")
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,11 +28,14 @@ import re
 import sys
 from pathlib import Path
 from typing import override
+import structlog
 
 from flext_core import FlextService, r
 
 from flext_infra.constants import ic
 from flext_infra.discovery import DiscoveryService
+
+logger = structlog.get_logger(__name__)
 
 
 class PythonVersionEnforcer(FlextService[int]):
@@ -70,19 +73,37 @@ class PythonVersionEnforcer(FlextService[int]):
         projects = self._discover_projects(root)
         mode = "Checking" if check_only else "Enforcing"
 
-        print(f"{mode} Python 3.{required_minor} for {len(projects)} projects...")
+        logger.info(
+            "python_version_enforcement_started",
+            mode=mode,
+            required_minor=required_minor,
+            project_count=len(projects),
+        )
 
         # Workspace root pyproject.toml
         if not self._ensure_python_version_file(root, required_minor):
-            print(f"✗ Failed: Missing Python 3.{required_minor} enforcement")
+            logger.error(
+                "python_version_enforcement_failed",
+                reason="missing_enforcement",
+                required_minor=required_minor,
+            )
             return r[int].fail("enforcement failed")
 
         for project in projects:
             if not self._ensure_python_version_file(project, required_minor):
-                print(f"✗ Failed: Missing Python 3.{required_minor} enforcement")
+                logger.error(
+                    "python_version_enforcement_failed",
+                    reason="missing_enforcement",
+                    required_minor=required_minor,
+                    project=project.name,
+                )
                 return r[int].fail("enforcement failed")
 
-        print(f"✓ All {len(projects)} projects enforce Python 3.{required_minor}")
+        logger.info(
+            "python_version_enforcement_completed",
+            project_count=len(projects),
+            required_minor=required_minor,
+        )
         return r[int].ok(0)
 
     def _workspace_root_from_file(self, file: str | Path) -> Path:
@@ -170,29 +191,41 @@ class PythonVersionEnforcer(FlextService[int]):
         # 1. Validate pyproject.toml
         if local_minor != required_minor:
             if self.check_only:
-                print(
-                    f"  ✗ pyproject.toml requires-python WRONG ({local_minor}): {project.name}"
+                logger.error(
+                    "python_version_pyproject_wrong",
+                    local_minor=local_minor,
+                    project=project.name,
                 )
             else:
-                print(
-                    f"  ✗ pyproject.toml requires-python MISMATCH ({local_minor} != {required_minor}): {project.name}"
+                logger.error(
+                    "python_version_pyproject_mismatch",
+                    local_minor=local_minor,
+                    required_minor=required_minor,
+                    project=project.name,
                 )
-                print(
-                    f"    Please manually update requires-python in {project.name}/pyproject.toml"
+                logger.error(
+                    "python_version_manual_update_required",
+                    project=project.name,
+                    file=f"{project.name}/pyproject.toml",
                 )
             return False
 
         # 2. Validate current runtime
         runtime_minor = sys.version_info.minor
         if runtime_minor != required_minor:
-            print(
-                f"  ✗ Runtime Python mismatch (3.{runtime_minor} != 3.{required_minor}): {project.name}"
+            logger.error(
+                "python_runtime_minor_mismatch",
+                runtime_minor=runtime_minor,
+                required_minor=required_minor,
+                project=project.name,
             )
             return False
 
         if self.verbose:
-            print(
-                f"  ✓ Python 3.{required_minor} validated for runtime and pyproject.toml: {project.name}"
+            logger.info(
+                "python_version_validated",
+                required_minor=required_minor,
+                project=project.name,
             )
 
         return True

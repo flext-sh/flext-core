@@ -77,7 +77,7 @@ class BaseMkValidator:
                     summary=summary,
                 ),
             )
-        except Exception as exc:
+        except OSError as exc:
             return r[im.ValidationReport].fail(
                 f"base.mk validation failed: {exc}",
             )

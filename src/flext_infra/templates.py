@@ -57,7 +57,7 @@ class TemplateEngine:
             return r[str].ok(rendered)
         except KeyError as exc:
             return r[str].fail(f"missing template key: {exc}")
-        except Exception as exc:
+        except (IndexError, ValueError) as exc:
             return r[str].fail(f"template render error: {exc}")
 
     def render_generated_header(

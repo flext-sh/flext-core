@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import structlog
 
 from flext_core.result import FlextResult, r
 
@@ -22,6 +23,8 @@ from flext_infra.docs.shared import (
     write_markdown,
 )
 from flext_infra.subprocess import CommandRunner
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -84,9 +87,12 @@ class DocBuilder:
         """Run mkdocs build --strict for a single scope."""
         report = self._run_mkdocs(scope)
         self._write_reports(scope, report)
-        print(
-            f"PROJECT={scope.name} PHASE=build RESULT={report.result} "
-            f"REASON={report.reason}"
+        logger.info(
+            "docs_build_scope_completed",
+            project=scope.name,
+            phase="build",
+            result=report.result,
+            reason=report.reason,
         )
         return report
 

@@ -75,7 +75,7 @@ class StubSupplyChain:
                 "total_missing": len(missing_imports),
             }
             return r[dict[str, object]].ok(result)
-        except Exception as exc:
+        except (OSError, TypeError, ValueError) as exc:
             return r[dict[str, object]].fail(
                 f"stub analysis failed for {project_dir.name}: {exc}",
             )
@@ -126,7 +126,7 @@ class StubSupplyChain:
                     summary=summary,
                 ),
             )
-        except Exception as exc:
+        except (OSError, TypeError, ValueError) as exc:
             return r[im.ValidationReport].fail(
                 f"stub validation failed: {exc}",
             )
@@ -150,7 +150,7 @@ class StubSupplyChain:
                 digest = hashlib.sha256(path.read_bytes()).hexdigest()
                 snapshot[rel] = digest
             return r[dict[str, str]].ok(snapshot)
-        except Exception as exc:
+        except OSError as exc:
             return r[dict[str, str]].fail(f"snapshot failed: {exc}")
 
     def _run_mypy_hints(self, project_dir: Path) -> list[str]:

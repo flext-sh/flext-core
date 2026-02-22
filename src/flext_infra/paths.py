@@ -42,7 +42,7 @@ class PathResolver:
         try:
             resolved = Path(path).resolve()
             return r[Path].ok(resolved)
-        except Exception as exc:
+        except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
 
     def repo_root_from_script(self, script_file: str | Path) -> FlextResult[Path]:
@@ -58,7 +58,7 @@ class PathResolver:
         try:
             resolved = Path(script_file).resolve().parents[1]
             return r[Path].ok(resolved)
-        except (IndexError, Exception) as exc:
+        except (IndexError, OSError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve repo root: {exc}")
 
     def workspace_root_from_file(self, file: str | Path) -> FlextResult[Path]:
@@ -87,7 +87,7 @@ class PathResolver:
                 f"workspace root not found (looking for {_WORKSPACE_MARKERS}) "
                 f"starting from {file}",
             )
-        except Exception as exc:
+        except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
 
 

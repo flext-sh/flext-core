@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+import structlog
 
 from flext_core.result import FlextResult, r
 
@@ -22,6 +23,8 @@ from flext_infra.docs.shared import (
     write_json,
     write_markdown,
 )
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -132,7 +135,13 @@ class DocValidator:
                 f"TODO written: {int(wrote_todo)}",
             ],
         )
-        print(f"PROJECT={scope.name} PHASE=validate RESULT={status} REASON={message}")
+        logger.info(
+            "docs_validate_scope_completed",
+            project=scope.name,
+            phase="validate",
+            result=status,
+            reason=message,
+        )
 
         return ValidateReport(
             scope=scope.name,

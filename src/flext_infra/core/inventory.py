@@ -96,7 +96,7 @@ class InventoryService:
                 "reports_written": written,
             }
             return r[dict[str, object]].ok(result)
-        except Exception as exc:
+        except (OSError, TypeError, ValueError) as exc:
             return r[dict[str, object]].fail(
                 f"inventory generation failed: {exc}",
             )

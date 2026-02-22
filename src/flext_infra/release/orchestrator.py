@@ -15,6 +15,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
+import structlog
+
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
 
@@ -29,6 +31,7 @@ from flext_infra.versioning import VersioningService
 _VALID_PHASES = frozenset({"validate", "version", "build", "publish"})
 _VERSION_RE = re.compile(r'^version\s*=\s*"(.+?)"', re.MULTILINE)
 _DEFAULT_ENCODING = ic.Encoding.DEFAULT
+logger = structlog.get_logger(__name__)
 
 
 class ReleaseOrchestrator(FlextService[bool]):
@@ -97,10 +100,13 @@ class ReleaseOrchestrator(FlextService[bool]):
             if phase not in _VALID_PHASES:
                 return r[bool].fail(f"invalid phase: {phase}")
 
-        print(f"release_version={version}")
-        print(f"release_tag={tag}")
-        print(f"phases={','.join(phases)}")
-        print(f"projects={','.join(names)}")
+        logger.info(
+            "release_run_started",
+            release_version=version,
+            release_tag=tag,
+            phases=phases,
+            projects=names,
+        )
 
         if create_branches and not dry_run:
             branch_result = self._create_branches(root, version, names)
@@ -124,7 +130,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         if next_dev and not dry_run:
             return self._bump_next_dev(root, version, names, next_bump)
 
-        print("release_run=ok")
+        logger.info("release_run_completed", status="ok")
         return r[bool].ok(True)
 
     def phase_validate(self, root: Path, *, dry_run: bool = False) -> r[bool]:
@@ -142,7 +148,7 @@ class ReleaseOrchestrator(FlextService[bool]):
 
         """
         if dry_run:
-            print("phase=validate action=dry-run status=ok")
+            logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
         return CommandRunner().run_checked(
             ["make", "validate", "VALIDATE_SCOPE=workspace"],
@@ -193,11 +199,15 @@ class ReleaseOrchestrator(FlextService[bool]):
             changed += 1
             if not dry_run:
                 versioning.replace_project_version(path.parent, target)
-            print(f"version: {path} -> {target}")
+            logger.info(
+                "release_version_file_updated",
+                path=str(path),
+                target=target,
+            )
 
         if dry_run:
-            print(f"phase=version checked_version={target}")
-        print(f"phase=version files_changed={changed}")
+            logger.info("release_phase_version_checked", checked_version=target)
+        logger.info("release_phase_version_summary", files_changed=changed)
         return r[bool].ok(True)
 
     def phase_build(
@@ -242,7 +252,7 @@ class ReleaseOrchestrator(FlextService[bool]):
                 "exit_code": code,
                 "log": str(log),
             })
-            print(f"[{name}] build exit={code}")
+            logger.info("release_phase_build_project", project=name, exit_code=code)
 
         report = {
             "version": version,
@@ -251,7 +261,10 @@ class ReleaseOrchestrator(FlextService[bool]):
             "records": records,
         }
         JsonService().write(output_dir / "build-report.json", report, sort_keys=True)
-        print(f"phase=build report={output_dir / 'build-report.json'}")
+        logger.info(
+            "release_phase_build_report",
+            report=str(output_dir / "build-report.json"),
+        )
 
         if failures:
             return r[bool].fail(f"build failed: {failures} project(s)")
@@ -310,7 +323,7 @@ class ReleaseOrchestrator(FlextService[bool]):
                 if push_result.is_failure:
                     return push_result
 
-        print(f"phase=publish tag={tag} dry_run={dry_run}")
+        logger.info("release_phase_publish", tag=tag, dry_run=dry_run)
         return r[bool].ok(True)
 
     # ------------------------------------------------------------------
@@ -483,7 +496,7 @@ class ReleaseOrchestrator(FlextService[bool]):
                 "\n".join(lines).rstrip() + "\n",
                 encoding=_DEFAULT_ENCODING,
             )
-            print(f"notes: {output_path}")
+            logger.info("release_notes_written", path=str(output_path))
             return r[bool].ok(True)
         except OSError as exc:
             return r[bool].fail(f"failed to write release notes: {exc}")
@@ -565,8 +578,8 @@ class ReleaseOrchestrator(FlextService[bool]):
             latest_path.write_text(notes_text, encoding=_DEFAULT_ENCODING)
             tagged_path.write_text(notes_text, encoding=_DEFAULT_ENCODING)
 
-            print(f"changelog: {changelog_path}")
-            print(f"release_notes: {tagged_path}")
+            logger.info("release_changelog_written", path=str(changelog_path))
+            logger.info("release_tagged_notes_written", path=str(tagged_path))
             return r[bool].ok(True)
         except OSError as exc:
             return r[bool].fail(f"changelog update failed: {exc}")
@@ -611,7 +624,7 @@ class ReleaseOrchestrator(FlextService[bool]):
             dev_suffix=True,
         )
         if result.is_success:
-            print(f"next_dev_version={next_version}-dev")
+            logger.info("release_next_dev_version", version=f"{next_version}-dev")
         return result
 
 

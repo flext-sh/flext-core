@@ -33,13 +33,6 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
     Inspects parent repository origin URL to determine if a project
     runs in workspace (flext) or standalone mode.
 
-    Example:
-        detector = WorkspaceDetector()
-        result = detector.detect(Path("flext-core"))
-        if result.is_success:
-            mode = result.value
-            print(f"Mode: {mode}")
-
     """
 
     def __init__(self) -> None:
@@ -91,7 +84,7 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
             )
             return r[WorkspaceMode].ok(mode)
 
-        except Exception as exc:
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
             return r[WorkspaceMode].fail(f"Detection failed: {exc}")
 
     @staticmethod

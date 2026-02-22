@@ -40,12 +40,6 @@ class SyncService(FlextService[im.SyncResult]):
 
     This service explicitly does NOT sync the scripts/ tree.
 
-    Example:
-        service = SyncService()
-        result = service.sync(project_root=Path("flext-core"))
-        if result.is_success:
-            print(f"Changed: {result.value.files_changed}")
-
     """
 
     def __init__(self, generator: BaseMkGenerator | None = None) -> None:
@@ -247,9 +241,9 @@ def main() -> int:
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
-        print(f"files_changed={result.value.files_changed}")
+        _ = sys.stdout.write(f"files_changed={result.value.files_changed}\n")
         return 0
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 

@@ -76,7 +76,7 @@ class BaseMkGenerator(FlextService[str]):
         try:
             normalized = im.BaseMkConfig.model_validate(dict(config))
             return r[im.BaseMkConfig].ok(normalized)
-        except Exception as exc:
+        except (TypeError, ValueError) as exc:
             return r[im.BaseMkConfig].fail(
                 f"base.mk configuration validation failed: {exc}",
             )
@@ -102,7 +102,7 @@ class BaseMkGenerator(FlextService[str]):
                     return r[str].fail(
                         f"generated base.mk validation failed: {error_text}",
                     )
-        except Exception as exc:
+        except OSError as exc:
             return r[str].fail(f"generated base.mk validation failed: {exc}")
 
         return r[str].ok(content)

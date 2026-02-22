@@ -78,7 +78,7 @@ class TextPatternScanner:
             return r[dict[str, object]].ok(result)
         except re.error as exc:
             return r[dict[str, object]].fail(f"invalid regex pattern: {exc}")
-        except Exception as exc:
+        except (OSError, ValueError, TypeError) as exc:
             return r[dict[str, object]].fail(
                 f"text pattern scan failed: {exc}",
             )

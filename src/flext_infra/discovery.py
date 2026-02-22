@@ -78,7 +78,7 @@ class DiscoveryService:
                 )
 
             return r[list[im.ProjectInfo]].ok(projects)
-        except Exception as exc:
+        except OSError as exc:
             return r[list[im.ProjectInfo]].fail(
                 f"project discovery failed: {exc}",
             )
@@ -137,7 +137,7 @@ class DiscoveryService:
                 if not any(skip in p.parts for skip in effective_skip)
             ]
             return r[list[Path]].ok(result)
-        except Exception as exc:
+        except OSError as exc:
             return r[list[Path]].fail(
                 f"pyproject file scan failed: {exc}",
             )

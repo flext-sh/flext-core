@@ -13,6 +13,7 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 from typing import override
+import structlog
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
@@ -23,6 +24,7 @@ from flext_infra.subprocess import CommandRunner
 _DEFAULT_ENCODING = "utf-8"
 _STATUS_OK = "OK"
 _STATUS_FAIL = "FAIL"
+logger = structlog.get_logger(__name__)
 
 
 class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
@@ -31,17 +33,6 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
     Executes a make verb across a list of projects sequentially, capturing
     per-project output and timing. Supports fail-fast mode to stop on
     first failure.
-
-    Example:
-        service = OrchestratorService()
-        result = service.orchestrate(
-            projects=["flext-core", "flext-api"],
-            verb="check",
-            fail_fast=True,
-        )
-        if result.is_success:
-            for output in result.value:
-                print(f"exit={output.exit_code} duration={output.duration}s")
 
     """
 
@@ -85,7 +76,14 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
 
             for idx, project in enumerate(projects, start=1):
                 if skipped:
-                    print(f"{idx:02d} [SKIP] {project} {verb} (0s) exit=0")
+                    logger.info(
+                        "workspace_project_skipped",
+                        index=idx,
+                        project=project,
+                        verb=verb,
+                        elapsed_seconds=0,
+                        exit_code=0,
+                    )
                     results.append(
                         InfraModels.CommandOutput(
                             stdout="",
@@ -112,12 +110,16 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
                 if output.exit_code != 0 and fail_fast:
                     skipped = total - idx
 
-            print(
-                f"summary total={total} success={success} fail={failed} skip={skipped}"
+            logger.info(
+                "workspace_orchestration_summary",
+                total=total,
+                success=success,
+                failed=failed,
+                skipped=skipped,
             )
             return r[list[InfraModels.CommandOutput]].ok(results)
 
-        except Exception as exc:
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
             return r[list[InfraModels.CommandOutput]].fail(
                 f"Orchestration failed: {exc}"
             )
@@ -159,7 +161,17 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
             f"{index:02d} [{status}] {project} {verb}"
             f" ({int(elapsed)}s) exit={return_code} log={log_path}"
         )
-        print(msg)
+        logger.info(
+            "workspace_project_completed",
+            message=msg,
+            index=index,
+            status=status,
+            project=project,
+            verb=verb,
+            elapsed_seconds=int(elapsed),
+            exit_code=return_code,
+            log_path=str(log_path),
+        )
 
         return InfraModels.CommandOutput(
             stdout=str(log_path),

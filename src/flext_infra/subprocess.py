@@ -57,7 +57,7 @@ class CommandRunner:
             return r[im.CommandOutput].fail(
                 f"command timeout after {timeout_text}s: {cmd_str}",
             )
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             return r[im.CommandOutput].fail(f"command execution error: {exc}")
 
     def run(
@@ -142,7 +142,7 @@ class CommandRunner:
             return r[int].fail(f"command timeout after {timeout_text}s: {cmd_str}")
         except OSError as exc:
             return r[int].fail(f"command file output error: {exc}")
-        except Exception as exc:
+        except ValueError as exc:
             return r[int].fail(f"command execution error: {exc}")
 
     def capture(

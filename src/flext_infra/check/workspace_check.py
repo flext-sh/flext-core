@@ -16,7 +16,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not args.projects:
-        print("ERROR: no projects specified", file=sys.stderr)
+        _ = sys.stderr.write("ERROR: no projects specified\n")
         return 1
 
     checker = WorkspaceChecker()
@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
         fail_fast=args.fail_fast,
     )
     if result.is_failure:
-        print(result.error or "workspace check failed", file=sys.stderr)
+        _ = sys.stderr.write(f"{result.error or 'workspace check failed'}\n")
         return 2
 
     failed_projects = [project for project in result.value if not project.passed]
