@@ -121,6 +121,12 @@ def main() -> int:
         type=Path,
         help="Path to the project directory",
     )
+    _ = sync_parser.add_argument(
+        "--canonical-root",
+        type=Path,
+        default=None,
+        help="Canonical workspace root (accepted for compatibility)",
+    )
 
     # orchestrate subcommand
     orch_parser = subparsers.add_parser(

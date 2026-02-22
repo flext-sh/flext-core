@@ -236,6 +236,12 @@ def main() -> int:
         default=Path(),
         help="Project root directory",
     )
+    _ = parser.add_argument(
+        "--canonical-root",
+        type=Path,
+        default=None,
+        help="Canonical workspace root (accepted for compatibility)",
+    )
     args = parser.parse_args()
 
     service = SyncService()

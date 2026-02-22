@@ -32,12 +32,27 @@ from flext_infra.deps.extra_paths import (
 )
 from flext_infra.deps.internal_sync import InternalDependencySyncService, RepoUrls
 from flext_infra.deps.modernizer import PyprojectModernizer
-from flext_infra.deps.path_sync import (
-    FLEXT_DEPS_DIR,
-    detect_mode,
-    extract_dep_name,
-    rewrite_dep_paths,
-)
+
+FLEXT_DEPS_DIR = ".flext-deps"
+
+
+def detect_mode(project_root):
+    from flext_infra.deps.path_sync import detect_mode as _detect_mode
+
+    return _detect_mode(project_root)
+
+
+def extract_dep_name(raw_path):
+    from flext_infra.deps.path_sync import extract_dep_name as _extract_dep_name
+
+    return _extract_dep_name(raw_path)
+
+
+def rewrite_dep_paths(pyproject_path, **kwargs):
+    from flext_infra.deps.path_sync import rewrite_dep_paths as _rewrite_dep_paths
+
+    return _rewrite_dep_paths(pyproject_path, **kwargs)
+
 
 __all__ = [
     "DependencyDetectionModels",
