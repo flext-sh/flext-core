@@ -288,13 +288,72 @@ report.omit = [
 ]
 report.precision = 2
 
+[tool.mypy]
+cache_dir = ".mypy_cache"
+check_untyped_defs = true
+color_output = true
+disallow_any_decorated = false
+disallow_any_explicit = true
+disallow_any_expr = false
+disallow_any_generics = true
+disallow_any_unimported = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = false
+disallow_untyped_defs = true
+error_summary = true
+exclude = [
+  ".*/generate_config.py",
+  ".*/manage.py",
+  ".*_pb2\\.py$",
+  ".*_pb2_grpc\\.py$",
+  ".coverage.*",
+  ".git/",
+  ".mypy_cache/",
+  ".pytest_cache/",
+  ".ruff_cache/",
+  ".venv/",
+  "__pycache__/",
+  "build/",
+  "dist/",
+  "node_modules/",
+  "vendor/",
+]
+extra_checks = true
+follow_imports = "silent"
+follow_imports_for_stubs = true
+incremental = true
+local_partial_types = true
+namespace_packages = true
+no_implicit_optional = true
+no_implicit_reexport = true
+platform = "linux"
+pretty = true
+python_version = "3.13"
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+show_traceback = true
+strict = true
+strict_equality = true
+strict_optional = true
+warn_incomplete_stub = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = false
+mypy_path = [ "..", "../typings", "../typings/generated", "src" ]
+
 [tool.pyrefly]
-search-path = ["..", "../typings", "../typings/generated", "src", "tests", "examples", "scripts"]
+search-path = [ "..", "../typings", "../typings/generated", "src", "tests", "examples", "scripts" ]
 project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
 
 [tool.pyright]
 enableTypeIgnoreComments = false
-extraPaths = ["..", "src", "tests", "examples", "scripts", "../typings", "../typings/generated"]
+extraPaths = [ "..", "src", "tests", "examples", "scripts", "../typings", "../typings/generated" ]
 include = [ "src", "scripts", "tests", "examples" ]
 exclude = [
   "**/*.pb2.py",

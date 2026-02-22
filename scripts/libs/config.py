@@ -33,7 +33,10 @@ CHECK_EXCLUDED_DIRS: frozenset[str] = COMMON_EXCLUDED_DIRS | {
 """Directories to exclude during quality checks."""
 
 DEFAULT_CHECK_DIRS: tuple[str, ...] = ("src", "tests", "examples", "scripts")
-"""Default directories to check in a project."""
+"""Default directories to check in a project (root only uses scripts)."""
+
+# Subprojects: type-check src/tests/examples only (scripts are workspace copies, run from root).
+CHECK_DIRS_SUBPROJECT: tuple[str, ...] = ("src", "tests", "examples")
 
 DEFAULT_SRC_DIR: str = "src"
 """Default source directory for Python projects."""
@@ -70,6 +73,7 @@ STATUS_WARN: str = "WARN"
 
 
 __all__ = [
+    "CHECK_DIRS_SUBPROJECT",
     "CHECK_EXCLUDED_DIRS",
     "COMMON_EXCLUDED_DIRS",
     "DEFAULT_CHECK_DIRS",

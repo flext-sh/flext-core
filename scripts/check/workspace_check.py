@@ -24,6 +24,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from scripts.libs.config import (
+    CHECK_DIRS_SUBPROJECT,
     CHECK_EXCLUDED_DIRS,
     DEFAULT_CHECK_DIRS,
     DEFAULT_SRC_DIR,
@@ -38,12 +39,16 @@ from scripts.libs.reporting import ensure_report_dir
 ROOT = workspace_root_from_file(__file__)
 REPORTS_DIR = ensure_report_dir(ROOT, "check")
 DEFAULT_GATES = "lint,format,pyrefly,mypy,pyright,security,markdown,go"
-_CHECK_DIRS = DEFAULT_CHECK_DIRS
 
 
 def _existing_check_dirs(project_dir: Path) -> list[str]:
-    """Return subset of _CHECK_DIRS that exist in *project_dir*."""
-    return [d for d in _CHECK_DIRS if (project_dir / d).is_dir()]
+    """Return check dirs that exist. Root: DEFAULT_CHECK_DIRS; subprojects: CHECK_DIRS_SUBPROJECT (SSOT)."""
+    dirs = (
+        DEFAULT_CHECK_DIRS
+        if project_dir.resolve() == ROOT.resolve()
+        else CHECK_DIRS_SUBPROJECT
+    )
+    return [d for d in dirs if (project_dir / d).is_dir()]
 
 
 @dataclass
@@ -109,7 +114,16 @@ def _run_ruff_lint(project_dir: Path, _src_dir: str) -> GateResult:
     check_dirs = _existing_check_dirs(project_dir)
     targets = check_dirs or ["."]
     result = _run(
-        ["ruff", "check", *targets, "--output-format", "json", "--quiet"],
+        [
+            sys.executable,
+            "-m",
+            "ruff",
+            "check",
+            *targets,
+            "--output-format",
+            "json",
+            "--quiet",
+        ],
         project_dir,
     )
     errors: list[CheckError] = []
@@ -143,7 +157,10 @@ _RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
 def _run_ruff_format(project_dir: Path, _src_dir: str) -> GateResult:
     check_dirs = _existing_check_dirs(project_dir)
     targets = check_dirs or ["."]
-    result = _run(["ruff", "format", "--check", *targets, "--quiet"], project_dir)
+    result = _run(
+        [sys.executable, "-m", "ruff", "format", "--check", *targets, "--quiet"],
+        project_dir,
+    )
     errors: list[CheckError] = []
     if result.returncode != 0 and result.stdout.strip():
         seen: set[str] = set()
@@ -191,6 +208,8 @@ def _run_pyrefly(project_dir: Path, src_dir: str, reports_dir: Path) -> GateResu
     targets = check_dirs or [src_dir]
     json_file = reports_dir / f"{project_dir.name}-pyrefly.json"
     cmd = [
+        sys.executable,
+        "-m",
         "pyrefly",
         "check",
         *targets,
@@ -275,14 +294,42 @@ def _run_bandit(project_dir: Path, src_dir: str) -> GateResult:
     )
 
 
+def _dirs_with_py(project_dir: Path, dirs: list[str]) -> list[str]:
+    """Return only dirs that contain at least one .py or .pyi (mypy exits 2 on empty dirs)."""
+    out = []
+    for d in dirs:
+        p = project_dir / d
+        if not p.is_dir():
+            continue
+        if next(p.rglob("*.py"), None) or next(p.rglob("*.pyi"), None):
+            out.append(d)
+    return out
+
+
 def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
     check_dirs = _existing_check_dirs(project_dir)
-    if not check_dirs:
+    mypy_dirs = _dirs_with_py(project_dir, check_dirs)
+    if not mypy_dirs:
         return GateResult(gate="mypy", project=project_dir.name, passed=True)
 
-    config_file = str(ROOT / PYPROJECT_FILENAME)
+    proj_py = project_dir / PYPROJECT_FILENAME
+    cfg = (
+        proj_py
+        if proj_py.exists() and "[tool.mypy]" in proj_py.read_text()
+        else ROOT / PYPROJECT_FILENAME
+    )
+    config_file = str(cfg)
     result = _run(
-        ["mypy", *check_dirs, "--config-file", config_file, "--output", "json"],
+        [
+            sys.executable,
+            "-m",
+            "mypy",
+            *mypy_dirs,
+            "--config-file",
+            config_file,
+            "--output",
+            "json",
+        ],
         project_dir,
     )
 
@@ -316,10 +363,14 @@ def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
 
 
 def _run_pyright(project_dir: Path, _src_dir: str) -> GateResult:
-    check_dirs = _existing_check_dirs(project_dir)
+    check_dirs = _dirs_with_py(project_dir, _existing_check_dirs(project_dir))
     if not check_dirs:
         return GateResult(gate="pyright", project=project_dir.name, passed=True)
-    result = _run(["pyright", *check_dirs, "--outputjson"], project_dir, timeout=600)
+    result = _run(
+        [sys.executable, "-m", "pyright", *check_dirs, "--outputjson"],
+        project_dir,
+        timeout=600,
+    )
     errors: list[CheckError] = []
     try:
         data = json.loads(result.stdout or "{}")

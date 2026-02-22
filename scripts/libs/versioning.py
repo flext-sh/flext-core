@@ -61,17 +61,23 @@ def bump_version(version: str, bump_type: str) -> str:
 
 
 def release_tag_from_branch(branch: str) -> str:
-    """Extract a release tag name from a release branch name.
+    """Extract a release tag name from a branch name.
+
+    Supports both ``release/X.Y.Z`` and ``X.Y.Z-dev`` patterns.
 
     Args:
-        branch: The release branch name (e.g., "release/1.2.3").
+        branch: The branch name (e.g., "release/1.2.3" or "0.11.0-dev").
 
     Returns:
-        The corresponding tag name (e.g., "v1.2.3").
+        The corresponding tag name (e.g., "v1.2.3"), or ``""`` if the
+        branch does not match any known release pattern.
 
     """
     if branch.startswith("release/"):
         return f"v{branch.removeprefix('release/')}"
+    match = re.match(r"^(\d+\.\d+\.\d+)-dev$", branch)
+    if match:
+        return f"v{match.group(1)}"
     return ""
 
 

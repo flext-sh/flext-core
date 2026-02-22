@@ -83,7 +83,8 @@ def _selector(pr_number: str, head: str) -> str:
 
 
 def _release_tag_from_head(head: str) -> str | None:
-    return release_tag_from_branch(head)
+    tag = release_tag_from_branch(head)
+    return tag or None
 
 
 def _is_workspace_release_repo(repo_root: Path) -> bool:
