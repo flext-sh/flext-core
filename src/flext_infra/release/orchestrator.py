@@ -241,7 +241,12 @@ class ReleaseOrchestrator(FlextService[bool]):
         failures = 0
 
         for name, path in targets:
-            code, output = self._run_make(path, "build")
+            make_result = self._run_make(path, "build")
+            if make_result.is_failure:
+                code = 1
+                output = make_result.error or "make execution failed"
+            else:
+                code, output = make_result.value
             if code != 0:
                 failures += 1
             log = output_dir / f"build-{name}.log"
@@ -433,15 +438,15 @@ class ReleaseOrchestrator(FlextService[bool]):
         return unique
 
     @staticmethod
-    def _run_make(project_path: Path, verb: str) -> tuple[int, str]:
+    def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
         result = CommandRunner().run_raw(["make", "-C", str(project_path), verb])
         if result.is_failure:
-            return 1, result.error or "make execution failed"
+            return r[tuple[int, str]].fail(result.error or "make execution failed")
 
         output_model = result.value
         output = (output_model.stdout + "\n" + output_model.stderr).strip()
-        return output_model.exit_code, output
+        return r[tuple[int, str]].ok((output_model.exit_code, output))
 
     def _generate_notes(
         self,
@@ -452,8 +457,10 @@ class ReleaseOrchestrator(FlextService[bool]):
         output_path: Path,
     ) -> r[bool]:
         """Generate release notes from Git history."""
-        previous = self._previous_tag(root, tag)
-        changes = self._collect_changes(root, previous, tag)
+        previous_result = self._previous_tag(root, tag)
+        previous = previous_result.value if previous_result.is_success else ""
+        changes_result = self._collect_changes(root, previous, tag)
+        changes = changes_result.value if changes_result.is_success else ""
 
         selector = ProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
@@ -501,7 +508,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         except OSError as exc:
             return r[bool].fail(f"failed to write release notes: {exc}")
 
-    def _previous_tag(self, root: Path, tag: str) -> str:
+    def _previous_tag(self, root: Path, tag: str) -> r[str]:
         """Find the tag immediately preceding the given tag."""
         runner = CommandRunner()
         result = runner.capture(
@@ -509,18 +516,18 @@ class ReleaseOrchestrator(FlextService[bool]):
             cwd=root,
         )
         if result.is_failure:
-            return ""
+            return r[str].fail(result.error or "failed to list tags")
         tags = [line.strip() for line in result.value.splitlines() if line.strip()]
         if tag in tags:
             idx = tags.index(tag)
             if idx + 1 < len(tags):
-                return tags[idx + 1]
+                return r[str].ok(tags[idx + 1])
         for candidate in tags:
             if candidate != tag:
-                return candidate
-        return ""
+                return r[str].ok(candidate)
+        return r[str].ok("")
 
-    def _collect_changes(self, root: Path, previous: str, tag: str) -> str:
+    def _collect_changes(self, root: Path, previous: str, tag: str) -> r[str]:
         """Collect Git commit messages between two tags."""
         git = GitService()
         tag_result = git.tag_exists(root, tag)
@@ -532,7 +539,9 @@ class ReleaseOrchestrator(FlextService[bool]):
             ["git", "log", "--pretty=format:- %h %s (%an)", rev],
             cwd=root,
         )
-        return result.value if result.is_success else ""
+        if result.is_failure:
+            return r[str].fail(result.error or "failed to collect git changes")
+        return r[str].ok(result.value)
 
     def _update_changelog(
         self,

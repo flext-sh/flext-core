@@ -17,7 +17,11 @@ from flext_core import FlextModels as _FlextModels
 
 
 class InfraModels(_FlextModels):
+    """Pydantic model namespace for infrastructure services."""
+
     class ProjectInfo(_FlextModels.ArbitraryTypesModel):
+        """Discovered project metadata for workspace operations."""
+
         name: str = Field(min_length=1, description="Project name")
         path: Path = Field(description="Absolute or relative project path")
         stack: str = Field(min_length=1, description="Primary technology stack")
@@ -25,6 +29,8 @@ class InfraModels(_FlextModels):
         has_src: bool = Field(default=True, description="Project has source directory")
 
     class GateResult(_FlextModels.ArbitraryTypesModel):
+        """Result summary for a single quality gate execution."""
+
         gate: str = Field(min_length=1, description="Gate name")
         project: str = Field(min_length=1, description="Project name")
         passed: bool = Field(description="Gate execution status")
@@ -34,6 +40,8 @@ class InfraModels(_FlextModels):
         duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
 
     class SyncResult(_FlextModels.ArbitraryTypesModel):
+        """Result payload for sync operations."""
+
         files_changed: int = Field(default=0, ge=0, description="Total changed files")
         source: Path = Field(description="Sync source path")
         target: Path = Field(description="Sync target path")
@@ -43,12 +51,16 @@ class InfraModels(_FlextModels):
         )
 
     class CommandOutput(_FlextModels.ArbitraryTypesModel):
+        """Standardized subprocess output payload."""
+
         stdout: str = Field(default="", description="Captured standard output")
         stderr: str = Field(default="", description="Captured standard error")
         exit_code: int = Field(description="Command exit code")
         duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
 
     class BaseMkConfig(_FlextModels.ArbitraryTypesModel):
+        """Configuration model used to render base.mk templates."""
+
         project_name: str = Field(min_length=1, description="Project identifier")
         python_version: str = Field(min_length=1, description="Target Python version")
         core_stack: str = Field(min_length=1, description="Core stack classification")
@@ -61,11 +73,15 @@ class InfraModels(_FlextModels):
         test_command: str = Field(default="pytest", description="Default test command")
 
     class MigrationResult(_FlextModels.ArbitraryTypesModel):
+        """Migration operation outcome with applied changes and errors."""
+
         project: str = Field(min_length=1, description="Project identifier")
         changes: list[str] = Field(default_factory=list, description="Applied changes")
         errors: list[str] = Field(default_factory=list, description="Migration errors")
 
     class ValidationReport(_FlextModels.ArbitraryTypesModel):
+        """Validation report model with violations and summary."""
+
         passed: bool = Field(description="Validation status")
         violations: list[str] = Field(
             default_factory=list,
@@ -76,6 +92,8 @@ class InfraModels(_FlextModels):
         )
 
     class ReleaseSpec(_FlextModels.ArbitraryTypesModel):
+        """Release descriptor with version, tag, and bump metadata."""
+
         version: str = Field(min_length=1, description="Semantic version string")
         tag: str = Field(min_length=1, description="Git tag for release")
         bump_type: str = Field(min_length=1, description="Release bump type")

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from flext_core.result import FlextResult, r
 
+from flext_infra.constants import ic
 from flext_infra.models import im
 
 
@@ -35,6 +36,18 @@ class CommandRunner:
         timeout: int | None = None,
         env: dict[str, str] | None = None,
     ) -> FlextResult[im.CommandOutput]:
+        """Run a command without enforcing zero exit code.
+
+        Args:
+            cmd: Command line arguments as a sequence.
+            cwd: Optional working directory for the command.
+            timeout: Optional timeout in seconds.
+            env: Optional environment override.
+
+        Returns:
+            FlextResult containing raw command output and exit code.
+
+        """
         try:
             result = subprocess.run(
                 list(cmd),
@@ -123,9 +136,22 @@ class CommandRunner:
         timeout: int | None = None,
         env: dict[str, str] | None = None,
     ) -> FlextResult[int]:
+        """Run a command and stream combined output to a file.
+
+        Args:
+            cmd: Command line arguments as a sequence.
+            output_file: Destination file path for command output.
+            cwd: Optional working directory for the command.
+            timeout: Optional timeout in seconds.
+            env: Optional environment override.
+
+        Returns:
+            FlextResult containing the process exit code.
+
+        """
         try:
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            with output_file.open("w", encoding="utf-8") as handle:
+            with output_file.open("w", encoding=ic.Encoding.DEFAULT) as handle:
                 result = subprocess.run(
                     list(cmd),
                     cwd=cwd,

@@ -18,12 +18,10 @@ import structlog
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
 
+from flext_infra.constants import ic
 from flext_infra.models import InfraModels
 from flext_infra.subprocess import CommandRunner
 
-_DEFAULT_ENCODING = "utf-8"
-_STATUS_OK = "OK"
-_STATUS_FAIL = "FAIL"
 logger = structlog.get_logger(__name__)
 
 
@@ -94,14 +92,28 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
                     )
                     continue
 
-                output = self._run_project(
+                output_result = self._run_project(
                     project,
                     verb,
                     idx,
                     make_args=list(make_args),
                 )
-                results.append(output)
+                if output_result.is_failure:
+                    failed += 1
+                    results.append(
+                        InfraModels.CommandOutput(
+                            stdout="",
+                            stderr=output_result.error or "project execution failed",
+                            exit_code=1,
+                            duration=0.0,
+                        ),
+                    )
+                    if fail_fast:
+                        skipped = total - idx
+                    continue
 
+                output = output_result.value
+                results.append(output)
                 if output.exit_code == 0:
                     success += 1
                 else:
@@ -131,7 +143,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         index: int,
         *,
         make_args: list[str],
-    ) -> InfraModels.CommandOutput:
+    ) -> r[InfraModels.CommandOutput]:
         """Execute make verb for a single project.
 
         Args:
@@ -144,7 +156,12 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
             CommandOutput with log path in stdout, exit code, and timing.
 
         """
-        reports_dir = self._ensure_report_dir(verb)
+        reports_dir_result = self._ensure_report_dir(verb)
+        if reports_dir_result.is_failure:
+            return r[InfraModels.CommandOutput].fail(
+                reports_dir_result.error or "failed to create report directory"
+            )
+        reports_dir = reports_dir_result.value
         log_path = reports_dir / f"{project}.log"
         started = time.monotonic()
 
@@ -156,7 +173,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         stderr = "" if proc_result.is_success else (proc_result.error or "")
 
         elapsed = time.monotonic() - started
-        status = _STATUS_OK if return_code == 0 else _STATUS_FAIL
+        status = ic.Status.OK if return_code == 0 else ic.Status.FAIL
         msg = (
             f"{index:02d} [{status}] {project} {verb}"
             f" ({int(elapsed)}s) exit={return_code} log={log_path}"
@@ -173,15 +190,17 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
             log_path=str(log_path),
         )
 
-        return InfraModels.CommandOutput(
-            stdout=str(log_path),
-            stderr=stderr,
-            exit_code=return_code,
-            duration=round(elapsed, 2),
+        return r[InfraModels.CommandOutput].ok(
+            InfraModels.CommandOutput(
+                stdout=str(log_path),
+                stderr=stderr,
+                exit_code=return_code,
+                duration=round(elapsed, 2),
+            ),
         )
 
     @staticmethod
-    def _ensure_report_dir(verb: str) -> Path:
+    def _ensure_report_dir(verb: str) -> r[Path]:
         """Ensure report directory exists for workspace verb logs.
 
         Args:
@@ -192,8 +211,11 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
 
         """
         reports_dir = Path(".reports") / "workspace" / verb
-        reports_dir.mkdir(parents=True, exist_ok=True)
-        return reports_dir
+        try:
+            reports_dir.mkdir(parents=True, exist_ok=True)
+            return r[Path].ok(reports_dir)
+        except OSError as exc:
+            return r[Path].fail(f"failed to create report directory: {exc}")
 
 
 __all__ = [

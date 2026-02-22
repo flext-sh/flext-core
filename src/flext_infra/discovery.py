@@ -60,7 +60,7 @@ class DiscoveryService:
                     continue
 
                 has_pyproject = (entry / ic.Files.PYPROJECT_FILENAME).exists()
-                has_gomod = (entry / "go.mod").exists()
+                has_gomod = (entry / ic.Files.GO_MOD).exists()
                 if not has_pyproject and not has_gomod:
                     continue
 

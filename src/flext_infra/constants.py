@@ -42,6 +42,28 @@ class InfraConstants:
         MAKEFILE_FILENAME: Final[str] = "Makefile"
         """Standard filename for Makefile project markers."""
 
+        BASE_MK: Final[str] = "base.mk"
+        """Canonical base.mk filename."""
+
+        GO_MOD: Final[str] = "go.mod"
+        """Go module manifest filename."""
+
+    class Gates:
+        LINT: Final[str] = "lint"
+        FORMAT: Final[str] = "format"
+        PYREFLY: Final[str] = "pyrefly"
+        MYPY: Final[str] = "mypy"
+        PYRIGHT: Final[str] = "pyright"
+        SECURITY: Final[str] = "security"
+        MARKDOWN: Final[str] = "markdown"
+        GO: Final[str] = "go"
+
+        TYPE_ALIAS: Final[str] = "type"
+
+        DEFAULT_CSV: Final[str] = (
+            "lint,format,pyrefly,mypy,pyright,security,markdown,go"
+        )
+
     class Status:
         """Status strings for check results."""
 
