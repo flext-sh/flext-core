@@ -1,0 +1,193 @@
+"""Documentation validator service.
+
+Validates documentation for ADR skill references and generates
+validation reports, returning structured FlextResult reports.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
+from flext_core.result import FlextResult, r
+
+from flext_infra.constants import ic
+from flext_infra.docs.shared import (
+    DocScope,
+    build_scopes,
+    write_json,
+    write_markdown,
+)
+
+
+@dataclass(frozen=True)
+class ValidateReport:
+    """Structured validation report for a scope."""
+
+    scope: str
+    result: str
+    message: str
+    missing_adr_skills: list[str]
+    todo_written: bool
+
+
+class DocValidator:
+    """Infrastructure service for documentation validation.
+
+    Checks ADR skill references and generates validation reports,
+    returning structured FlextResult reports.
+    """
+
+    def validate(
+        self,
+        root: Path,
+        *,
+        project: str | None = None,
+        projects: str | None = None,
+        output_dir: str = ".reports/docs",
+        check: str = "all",
+        apply: bool = False,
+    ) -> FlextResult[list[ValidateReport]]:
+        """Run documentation validation across project scopes.
+
+        Args:
+            root: Workspace root directory.
+            project: Single project name filter.
+            projects: Comma-separated project names.
+            output_dir: Report output directory.
+            check: Validation checks to run.
+            apply: Write TODOS.md if needed.
+
+        Returns:
+            FlextResult with list of ValidateReport objects.
+
+        """
+        scopes_result = build_scopes(
+            root=root,
+            project=project,
+            projects=projects,
+            output_dir=output_dir,
+        )
+        if scopes_result.is_failure:
+            return r[list[ValidateReport]].fail(scopes_result.error or "scope error")
+
+        reports: list[ValidateReport] = []
+        for scope in scopes_result.value:
+            report = self._validate_scope(scope, check=check, apply_mode=apply)
+            reports.append(report)
+
+        return r[list[ValidateReport]].ok(reports)
+
+    def _validate_scope(
+        self,
+        scope: DocScope,
+        *,
+        check: str,
+        apply_mode: bool,
+    ) -> ValidateReport:
+        """Run validation for a single project scope."""
+        status = ic.Status.OK
+        message = "validation passed"
+        missing_adr_skills: list[str] = []
+
+        config_exists = (
+            scope.path / "docs/architecture/architecture_config.json"
+        ).exists()
+        if scope.name == "root" and config_exists and check in {"adr-skill", "all"}:
+            code, missing = self._run_adr_skill_check(scope.path)
+            missing_adr_skills = missing
+            if code != 0:
+                status = ic.Status.FAIL
+                message = f"missing adr references in skills: {', '.join(missing)}"
+
+        wrote_todo = self._maybe_write_todo(scope, apply_mode=apply_mode)
+
+        _ = write_json(
+            scope.report_dir / "validate-summary.json",
+            {
+                "summary": {
+                    "scope": scope.name,
+                    "result": status,
+                    "message": message,
+                    "apply": apply_mode,
+                },
+                "details": {
+                    "missing_adr_skills": missing_adr_skills,
+                    "todo_written": wrote_todo,
+                },
+            },
+        )
+        _ = write_markdown(
+            scope.report_dir / "validate-report.md",
+            [
+                "# Docs Validate Report",
+                "",
+                f"Scope: {scope.name}",
+                f"Result: {status}",
+                f"Message: {message}",
+                f"TODO written: {int(wrote_todo)}",
+            ],
+        )
+        print(f"PROJECT={scope.name} PHASE=validate RESULT={status} REASON={message}")
+
+        return ValidateReport(
+            scope=scope.name,
+            result=status,
+            message=message,
+            missing_adr_skills=missing_adr_skills,
+            todo_written=wrote_todo,
+        )
+
+    @staticmethod
+    def _has_adr_reference(skill_path: Path) -> bool:
+        """Check whether a skill file contains an ADR reference."""
+        text = skill_path.read_text(
+            encoding=ic.Encoding.DEFAULT, errors="ignore"
+        ).lower()
+        return "adr" in text
+
+    def _run_adr_skill_check(self, root: Path) -> tuple[int, list[str]]:
+        """Run ADR skill check and return exit code with missing skill names."""
+        skills_root = root / ".claude/skills"
+        required: list[str] = []
+        config = root / "docs/architecture/architecture_config.json"
+        if config.exists():
+            payload = json.loads(
+                config.read_text(encoding=ic.Encoding.DEFAULT, errors="ignore")
+            )
+            docs_validation = payload.get("docs_validation", {})
+            configured = docs_validation.get("required_skills", [])
+            if isinstance(configured, list):
+                required = [
+                    item for item in configured if isinstance(item, str) and item
+                ]
+        if not required:
+            required = ["rules-docs", "scripts-maintenance", "readme-standardization"]
+
+        missing: list[str] = []
+        for name in required:
+            skill = skills_root / name / "SKILL.md"
+            if not skill.exists() or not self._has_adr_reference(skill):
+                missing.append(name)
+        return (0 if not missing else 1), missing
+
+    @staticmethod
+    def _maybe_write_todo(scope: DocScope, *, apply_mode: bool) -> bool:
+        """Write a TODOS.md file for the scope if apply mode is enabled."""
+        if scope.name == "root" or not apply_mode:
+            return False
+        path = scope.path / "TODOS.md"
+        content = (
+            "# TODOS\n\n"
+            "- [ ] Resolve documentation validation findings "
+            "from `.reports/docs/validate-report.md`.\n"
+        )
+        _ = path.write_text(content, encoding=ic.Encoding.DEFAULT)
+        return True
+
+
+__all__ = ["DocValidator", "ValidateReport"]

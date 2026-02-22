@@ -17,6 +17,7 @@ from typing import override
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
+
 from flext_infra.models import InfraModels
 
 _DEFAULT_ENCODING = "utf-8"
@@ -143,7 +144,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
 
         with log_path.open("w", encoding=_DEFAULT_ENCODING) as log_handle:
             proc = subprocess.run(
-                ["make", "-C", project, verb, *make_args],  # noqa: S607, S603
+                ["make", "-C", project, verb, *make_args],  # noqa: S607
                 stdout=log_handle,
                 stderr=subprocess.STDOUT,
                 check=False,

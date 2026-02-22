@@ -8,4 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from flext_infra.maintenance.python_version import PythonVersionEnforcer
+
+__all__ = ["PythonVersionEnforcer"]

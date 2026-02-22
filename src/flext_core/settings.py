@@ -290,11 +290,12 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         # Field validators (e.g., validate_ldif_encoding) will run during initialization.
         # Call BaseSettings.__init__ directly to avoid mypy type mismatch with
         # ProtocolSettings intermediate __init__ signature.
-        # Cast kwargs to dict[str, object] for BaseSettings.__init__ (Pydantic accepts
-        # flexible kwargs; object is the minimal type that satisfies disallow_any_explicit).
-        from typing import cast  # noqa: PLC0415
+        # Policy exception (CLAUDE.md): BaseSettings.__init__ expects fixed keyword types;
+        # we pass dynamic config (e.g. from model_validate). Evidence: pydantic_settings
+        # BaseSettings has strict keyword params; only cast to Any at this boundary.
+        from typing import Any, cast  # noqa: PLC0415
 
-        BaseSettings.__init__(self, **cast("dict[str, object]", kwargs))
+        BaseSettings.__init__(self, **cast("dict[str, Any]", kwargs))
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as t.GeneralValueType to avoid direct dependency-injector import in this module

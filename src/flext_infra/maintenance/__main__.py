@@ -1,0 +1,41 @@
+"""CLI entry point for maintenance services.
+
+Allows running maintenance services via:
+    python -m flext_infra.maintenance.python_version [--check] [--verbose]
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+
+from flext_infra.maintenance.python_version import PythonVersionEnforcer
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run maintenance service CLI."""
+    parser = argparse.ArgumentParser(
+        description="Enforce Python version constraints via pyproject.toml"
+    )
+    _ = parser.add_argument(
+        "--check", action="store_true", help="Check mode (no writes)"
+    )
+    _ = parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Verbose output"
+    )
+    args = parser.parse_args(argv)
+
+    service = PythonVersionEnforcer()
+    result = service.execute(check_only=args.check, verbose=args.verbose)
+
+    if result.is_success:
+        return result.value
+    print(f"Error: {result.error}")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

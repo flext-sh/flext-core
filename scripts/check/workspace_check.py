@@ -98,7 +98,10 @@ class ProjectResult:
 
 
 def _run(
-    cmd: list[str], cwd: Path, timeout: int = 300
+    cmd: list[str],
+    cwd: Path,
+    timeout: int = 300,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         cmd,
@@ -107,6 +110,7 @@ def _run(
         cwd=cwd,
         timeout=timeout,
         check=False,
+        env=env,
     )
 
 
@@ -307,6 +311,8 @@ def _dirs_with_py(project_dir: Path, dirs: list[str]) -> list[str]:
 
 
 def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
+    import os
+
     check_dirs = _existing_check_dirs(project_dir)
     mypy_dirs = _dirs_with_py(project_dir, check_dirs)
     if not mypy_dirs:
@@ -319,6 +325,12 @@ def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
         else ROOT / PYPROJECT_FILENAME
     )
     config_file = str(cfg)
+    typings_generated = ROOT / "typings" / "generated"
+    mypy_env = os.environ.copy()
+    if typings_generated.is_dir():
+        existing = mypy_env.get("MYPYPATH", "")
+        mypy_env["MYPYPATH"] = str(typings_generated) + (f":{existing}" if existing else "")
+
     result = _run(
         [
             sys.executable,
@@ -331,6 +343,7 @@ def _run_mypy(project_dir: Path, _src_dir: str) -> GateResult:
             "json",
         ],
         project_dir,
+        env=mypy_env,
     )
 
     errors: list[CheckError] = []

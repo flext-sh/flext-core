@@ -1,0 +1,620 @@
+"""Release orchestration service.
+
+Manages the full release lifecycle through composable phases: validate,
+version, build, and publish. Each phase returns FlextResult for railway-style
+error handling. Migrated from scripts/release/run.py.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import override
+
+from flext_core.result import FlextResult as r
+from flext_core.service import FlextService
+
+from flext_infra.constants import ic
+from flext_infra.git import GitService
+from flext_infra.json_io import JsonService
+from flext_infra.reporting import ReportingService
+from flext_infra.selection import ProjectSelector
+from flext_infra.subprocess import CommandRunner
+from flext_infra.versioning import VersioningService
+
+_VALID_PHASES = frozenset({"validate", "version", "build", "publish"})
+_VERSION_RE = re.compile(r'^version\s*=\s*"(.+?)"', re.MULTILINE)
+_DEFAULT_ENCODING = ic.Encoding.DEFAULT
+
+
+class ReleaseOrchestrator(FlextService[bool]):
+    """Service for release lifecycle orchestration.
+
+    Composes infrastructure services to manage the full release process
+    through four distinct phases: validate, version, build, and publish.
+
+    Example:
+        service = ReleaseOrchestrator()
+        result = service.run_release(
+            root=Path("."),
+            version="1.0.0",
+            tag="v1.0.0",
+            phases=["validate", "version", "build", "publish"],
+        )
+
+    """
+
+    @override
+    def execute(self) -> r[bool]:
+        """Not used directly; call run_release() or individual phase methods."""
+        return r[bool].fail("Use run_release() or phase methods directly")
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def run_release(
+        self,
+        root: Path,
+        version: str,
+        tag: str,
+        phases: list[str],
+        *,
+        project_names: list[str] | None = None,
+        dry_run: bool = False,
+        push: bool = False,
+        dev_suffix: bool = False,
+        create_branches: bool = True,
+        next_dev: bool = False,
+        next_bump: str = "minor",
+    ) -> r[bool]:
+        """Run the release process through specified phases.
+
+        Args:
+            root: Workspace root directory.
+            version: Target semantic version string.
+            tag: Git tag for the release (e.g. "v1.0.0").
+            phases: Ordered list of phases to execute.
+            project_names: Optional project filter. Empty means all.
+            dry_run: If True, skip destructive operations.
+            push: If True, push tag and branch to remote.
+            dev_suffix: If True, append "-dev" to version.
+            create_branches: If True, create release branches.
+            next_dev: If True, bump to next dev version after release.
+            next_bump: Bump type for next dev version.
+
+        Returns:
+            FlextResult[bool] with True on success.
+
+        """
+        names = project_names or []
+
+        for phase in phases:
+            if phase not in _VALID_PHASES:
+                return r[bool].fail(f"invalid phase: {phase}")
+
+        print(f"release_version={version}")
+        print(f"release_tag={tag}")
+        print(f"phases={','.join(phases)}")
+        print(f"projects={','.join(names)}")
+
+        if create_branches and not dry_run:
+            branch_result = self._create_branches(root, version, names)
+            if branch_result.is_failure:
+                return branch_result
+
+        for phase in phases:
+            result = self._dispatch_phase(
+                phase,
+                root,
+                version,
+                tag,
+                names,
+                dry_run=dry_run,
+                push=push,
+                dev_suffix=dev_suffix,
+            )
+            if result.is_failure:
+                return result
+
+        if next_dev and not dry_run:
+            return self._bump_next_dev(root, version, names, next_bump)
+
+        print("release_run=ok")
+        return r[bool].ok(True)
+
+    def phase_validate(self, root: Path, *, dry_run: bool = False) -> r[bool]:
+        """Execute the validation phase.
+
+        Runs ``make validate VALIDATE_SCOPE=workspace`` to ensure the
+        workspace is in a releasable state.
+
+        Args:
+            root: Workspace root directory.
+            dry_run: If True, report what would run without executing.
+
+        Returns:
+            FlextResult[bool] with True on success.
+
+        """
+        if dry_run:
+            print("phase=validate action=dry-run status=ok")
+            return r[bool].ok(True)
+        return CommandRunner().run_checked(
+            ["make", "validate", "VALIDATE_SCOPE=workspace"],
+            cwd=root,
+        )
+
+    def phase_version(
+        self,
+        root: Path,
+        version: str,
+        project_names: list[str],
+        *,
+        dry_run: bool = False,
+        dev_suffix: bool = False,
+    ) -> r[bool]:
+        """Execute the versioning phase.
+
+        Updates version fields in pyproject.toml across workspace and
+        selected projects.
+
+        Args:
+            root: Workspace root directory.
+            version: Target semantic version string.
+            project_names: Projects to update. Empty means all.
+            dry_run: If True, report changes without applying.
+            dev_suffix: If True, append "-dev" to the version.
+
+        Returns:
+            FlextResult[bool] with True on success.
+
+        """
+        versioning = VersioningService()
+        target = f"{version}-dev" if dev_suffix else version
+
+        parse_result = versioning.parse_semver(version)
+        if parse_result.is_failure:
+            return r[bool].fail(parse_result.error or "invalid version")
+
+        files = self._version_files(root, project_names)
+        changed = 0
+        for path in files:
+            if not path.exists():
+                continue
+            content = path.read_text(encoding=_DEFAULT_ENCODING)
+            match = _VERSION_RE.search(content)
+            if match and match.group(1) == target:
+                continue
+            changed += 1
+            if not dry_run:
+                versioning.replace_project_version(path.parent, target)
+            print(f"version: {path} -> {target}")
+
+        if dry_run:
+            print(f"phase=version checked_version={target}")
+        print(f"phase=version files_changed={changed}")
+        return r[bool].ok(True)
+
+    def phase_build(
+        self,
+        root: Path,
+        version: str,
+        project_names: list[str],
+    ) -> r[bool]:
+        """Execute the build phase.
+
+        Runs ``make build`` for each target project and generates a
+        JSON build report.
+
+        Args:
+            root: Workspace root directory.
+            version: Release version for report naming.
+            project_names: Projects to build. Empty means all.
+
+        Returns:
+            FlextResult[bool] with True if all builds succeed.
+
+        """
+        reporting = ReportingService()
+        dir_result = reporting.ensure_report_dir(root, "release", f"v{version}")
+        if dir_result.is_failure:
+            return r[bool].fail(dir_result.error or "report dir creation failed")
+        output_dir = dir_result.value
+
+        targets = self._build_targets(root, project_names)
+        records: list[dict[str, str | int]] = []
+        failures = 0
+
+        for name, path in targets:
+            code, output = self._run_make(path, "build")
+            if code != 0:
+                failures += 1
+            log = output_dir / f"build-{name}.log"
+            log.write_text(output + "\n", encoding=_DEFAULT_ENCODING)
+            records.append({
+                "project": name,
+                "path": str(path),
+                "exit_code": code,
+                "log": str(log),
+            })
+            print(f"[{name}] build exit={code}")
+
+        report = {
+            "version": version,
+            "total": len(records),
+            "failures": failures,
+            "records": records,
+        }
+        JsonService().write(output_dir / "build-report.json", report, sort_keys=True)
+        print(f"phase=build report={output_dir / 'build-report.json'}")
+
+        if failures:
+            return r[bool].fail(f"build failed: {failures} project(s)")
+        return r[bool].ok(True)
+
+    def phase_publish(
+        self,
+        root: Path,
+        version: str,
+        tag: str,
+        project_names: list[str],
+        *,
+        dry_run: bool = False,
+        push: bool = False,
+    ) -> r[bool]:
+        """Execute the publishing phase.
+
+        Generates release notes, updates the changelog, creates a Git tag,
+        and optionally pushes to the remote.
+
+        Args:
+            root: Workspace root directory.
+            version: Release version string.
+            tag: Git tag for the release.
+            project_names: Projects included in the release.
+            dry_run: If True, generate notes but skip changelog/tag/push.
+            push: If True, push branch and tag to remote.
+
+        Returns:
+            FlextResult[bool] with True on success.
+
+        """
+        reporting = ReportingService()
+        dir_result = reporting.ensure_report_dir(root, "release", tag)
+        if dir_result.is_failure:
+            return r[bool].fail(dir_result.error or "report dir creation failed")
+
+        notes_path = dir_result.value / "RELEASE_NOTES.md"
+        notes_result = self._generate_notes(
+            root, version, tag, project_names, notes_path
+        )
+        if notes_result.is_failure:
+            return notes_result
+
+        if not dry_run:
+            changelog_result = self._update_changelog(root, version, tag, notes_path)
+            if changelog_result.is_failure:
+                return changelog_result
+
+            tag_result = self._create_tag(root, tag)
+            if tag_result.is_failure:
+                return tag_result
+
+            if push:
+                push_result = self._push_release(root, tag)
+                if push_result.is_failure:
+                    return push_result
+
+        print(f"phase=publish tag={tag} dry_run={dry_run}")
+        return r[bool].ok(True)
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _dispatch_phase(
+        self,
+        phase: str,
+        root: Path,
+        version: str,
+        tag: str,
+        project_names: list[str],
+        *,
+        dry_run: bool,
+        push: bool,
+        dev_suffix: bool,
+    ) -> r[bool]:
+        """Route to the correct phase method."""
+        if phase == "validate":
+            return self.phase_validate(root, dry_run=dry_run)
+        if phase == "version":
+            return self.phase_version(
+                root,
+                version,
+                project_names,
+                dry_run=dry_run,
+                dev_suffix=dev_suffix,
+            )
+        if phase == "build":
+            return self.phase_build(root, version, project_names)
+        if phase == "publish":
+            return self.phase_publish(
+                root,
+                version,
+                tag,
+                project_names,
+                dry_run=dry_run,
+                push=push,
+            )
+        return r[bool].fail(f"unknown phase: {phase}")
+
+    def _create_branches(
+        self,
+        root: Path,
+        version: str,
+        project_names: list[str],
+    ) -> r[bool]:
+        """Create local release branches for workspace and projects."""
+        runner = CommandRunner()
+        branch = f"release/{version}"
+        result = runner.run_checked(
+            ["git", "checkout", "-B", branch],
+            cwd=root,
+        )
+        if result.is_failure:
+            return result
+
+        selector = ProjectSelector()
+        projects_result = selector.resolve_projects(root, project_names)
+        if projects_result.is_success:
+            for project in projects_result.value:
+                proj_result = runner.run_checked(
+                    ["git", "checkout", "-B", branch],
+                    cwd=project.path,
+                )
+                if proj_result.is_failure:
+                    return proj_result
+
+        return r[bool].ok(True)
+
+    def _version_files(
+        self,
+        root: Path,
+        project_names: list[str],
+    ) -> list[Path]:
+        """Discover pyproject.toml files that need version updates."""
+        files: list[Path] = [root / ic.Files.PYPROJECT_FILENAME]
+        selector = ProjectSelector()
+        projects_result = selector.resolve_projects(root, project_names)
+        if projects_result.is_success:
+            for project in projects_result.value:
+                pyproject = project.path / ic.Files.PYPROJECT_FILENAME
+                if pyproject.exists():
+                    files.append(pyproject)
+        return sorted({path.resolve() for path in files if path.exists()})
+
+    def _build_targets(
+        self,
+        root: Path,
+        project_names: list[str],
+    ) -> list[tuple[str, Path]]:
+        """Resolve unique build targets from project names."""
+        targets: list[tuple[str, Path]] = [("root", root)]
+        selector = ProjectSelector()
+        projects_result = selector.resolve_projects(root, project_names)
+        if projects_result.is_success:
+            targets.extend((p.name, p.path) for p in projects_result.value)
+
+        seen: set[str] = set()
+        unique: list[tuple[str, Path]] = []
+        for name, path in targets:
+            if name in seen or not path.exists():
+                continue
+            seen.add(name)
+            unique.append((name, path))
+        return unique
+
+    @staticmethod
+    def _run_make(project_path: Path, verb: str) -> tuple[int, str]:
+        """Execute a make command for a project and return (exit_code, output)."""
+        result = subprocess.run(
+            ["make", "-C", str(project_path), verb],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        output = (result.stdout + "\n" + result.stderr).strip()
+        return result.returncode, output
+
+    def _generate_notes(
+        self,
+        root: Path,
+        version: str,
+        tag: str,
+        project_names: list[str],
+        output_path: Path,
+    ) -> r[bool]:
+        """Generate release notes from Git history."""
+        previous = self._previous_tag(root, tag)
+        changes = self._collect_changes(root, previous, tag)
+
+        selector = ProjectSelector()
+        projects_result = selector.resolve_projects(root, project_names)
+        project_list = projects_result.value if projects_result.is_success else []
+
+        lines: list[str] = [
+            f"# Release {tag}",
+            "",
+            "## Status",
+            "",
+            "- Quality: Alpha",
+            "- Usage: Non-production",
+            "",
+            "## Scope",
+            "",
+            f"- Workspace release version: {version}",
+            f"- Projects packaged: {len(project_list) + 1}",
+            "",
+            "## Projects impacted",
+            "",
+            "- root",
+        ]
+        lines.extend(f"- {p.name}" for p in project_list)
+        lines.extend([
+            "",
+            "## Changes since last tag",
+            "",
+            changes or "- Initial tagged release",
+            "",
+            "## Verification",
+            "",
+            "- make release INTERACTIVE=0 CREATE_BRANCHES=0 RELEASE_PHASE=all",
+            "- make validate VALIDATE_SCOPE=workspace",
+            "- make build",
+        ])
+
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                "\n".join(lines).rstrip() + "\n",
+                encoding=_DEFAULT_ENCODING,
+            )
+            print(f"notes: {output_path}")
+            return r[bool].ok(True)
+        except OSError as exc:
+            return r[bool].fail(f"failed to write release notes: {exc}")
+
+    def _previous_tag(self, root: Path, tag: str) -> str:
+        """Find the tag immediately preceding the given tag."""
+        runner = CommandRunner()
+        result = runner.capture(
+            ["git", "tag", "--sort=-v:refname"],
+            cwd=root,
+        )
+        if result.is_failure:
+            return ""
+        tags = [line.strip() for line in result.value.splitlines() if line.strip()]
+        if tag in tags:
+            idx = tags.index(tag)
+            if idx + 1 < len(tags):
+                return tags[idx + 1]
+        for candidate in tags:
+            if candidate != tag:
+                return candidate
+        return ""
+
+    def _collect_changes(self, root: Path, previous: str, tag: str) -> str:
+        """Collect Git commit messages between two tags."""
+        git = GitService()
+        tag_result = git.tag_exists(root, tag)
+        target = tag if (tag_result.is_success and tag_result.value) else "HEAD"
+        rev = f"{previous}..{target}" if previous else target
+
+        runner = CommandRunner()
+        result = runner.capture(
+            ["git", "log", "--pretty=format:- %h %s (%an)", rev],
+            cwd=root,
+        )
+        return result.value if result.is_success else ""
+
+    def _update_changelog(
+        self,
+        root: Path,
+        version: str,
+        tag: str,
+        notes_path: Path,
+    ) -> r[bool]:
+        """Update changelog and release notes files."""
+        changelog_path = root / "docs" / "CHANGELOG.md"
+        latest_path = root / "docs" / "releases" / "latest.md"
+        tagged_path = root / "docs" / "releases" / f"{tag}.md"
+
+        try:
+            notes_text = notes_path.read_text(encoding=_DEFAULT_ENCODING)
+            existing = (
+                changelog_path.read_text(encoding=_DEFAULT_ENCODING)
+                if changelog_path.exists()
+                else "# Changelog\n\n"
+            )
+
+            date = datetime.now(UTC).date().isoformat()
+            heading = f"## {version} - "
+            section = (
+                f"{heading}{date}\n\n"
+                f"- Workspace release tag: `{tag}`\n"
+                "- Status: Alpha, non-production\n\n"
+                f"Full notes: `docs/releases/{tag}.md`\n\n"
+            )
+
+            if heading not in existing:
+                marker = "# Changelog\n\n"
+                if marker in existing:
+                    updated = existing.replace(marker, marker + section, 1)
+                else:
+                    updated = "# Changelog\n\n" + section + existing
+            else:
+                updated = existing
+
+            changelog_path.parent.mkdir(parents=True, exist_ok=True)
+            changelog_path.write_text(updated, encoding=_DEFAULT_ENCODING)
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(notes_text, encoding=_DEFAULT_ENCODING)
+            tagged_path.write_text(notes_text, encoding=_DEFAULT_ENCODING)
+
+            print(f"changelog: {changelog_path}")
+            print(f"release_notes: {tagged_path}")
+            return r[bool].ok(True)
+        except OSError as exc:
+            return r[bool].fail(f"changelog update failed: {exc}")
+
+    def _create_tag(self, root: Path, tag: str) -> r[bool]:
+        """Create an annotated Git tag if it doesn't exist."""
+        git = GitService()
+        exists_result = git.tag_exists(root, tag)
+        if exists_result.is_success and exists_result.value:
+            return r[bool].ok(True)
+        runner = CommandRunner()
+        return runner.run_checked(
+            ["git", "tag", "-a", tag, "-m", f"release: {tag}"],
+            cwd=root,
+        )
+
+    def _push_release(self, root: Path, tag: str) -> r[bool]:
+        """Push branch and tag to remote origin."""
+        runner = CommandRunner()
+        result = runner.run_checked(["git", "push", "origin", "HEAD"], cwd=root)
+        if result.is_failure:
+            return result
+        return runner.run_checked(["git", "push", "origin", tag], cwd=root)
+
+    def _bump_next_dev(
+        self,
+        root: Path,
+        version: str,
+        project_names: list[str],
+        bump: str,
+    ) -> r[bool]:
+        """Bump to the next development version."""
+        versioning = VersioningService()
+        bump_result = versioning.bump_version(version, bump)
+        if bump_result.is_failure:
+            return r[bool].fail(bump_result.error or "bump failed")
+        next_version = bump_result.value
+        result = self.phase_version(
+            root,
+            next_version,
+            project_names,
+            dev_suffix=True,
+        )
+        if result.is_success:
+            print(f"next_dev_version={next_version}-dev")
+        return result
+
+
+__all__ = ["ReleaseOrchestrator"]

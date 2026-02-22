@@ -1,0 +1,224 @@
+"""Documentation fixer service.
+
+Auto-fixes broken links and inserts/updates TOC in markdown files,
+returning structured FlextResult reports.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+from flext_core.result import FlextResult, r
+
+from flext_infra.constants import ic
+from flext_infra.docs.shared import (
+    DocScope,
+    build_scopes,
+    iter_markdown_files,
+    write_json,
+    write_markdown,
+)
+from flext_infra.patterns import InfraPatterns
+from flext_infra.templates import TemplateEngine
+
+
+@dataclass(frozen=True)
+class FixItem:
+    """Per-file summary of applied fixes."""
+
+    file: str
+    links: int
+    toc: int
+
+
+@dataclass(frozen=True)
+class FixReport:
+    """Structured fix report for a scope."""
+
+    scope: str
+    changed_files: int
+    applied: bool
+    items: list[FixItem]
+
+
+class DocFixer:
+    """Infrastructure service for documentation auto-fixing.
+
+    Fixes broken markdown links and inserts/updates TOC blocks,
+    returning structured FlextResult reports.
+    """
+
+    def fix(
+        self,
+        root: Path,
+        *,
+        project: str | None = None,
+        projects: str | None = None,
+        output_dir: str = ".reports/docs",
+        apply: bool = False,
+    ) -> FlextResult[list[FixReport]]:
+        """Run documentation fixes across project scopes.
+
+        Args:
+            root: Workspace root directory.
+            project: Single project name filter.
+            projects: Comma-separated project names.
+            output_dir: Report output directory.
+            apply: Actually write changes (dry-run if False).
+
+        Returns:
+            FlextResult with list of FixReport objects.
+
+        """
+        scopes_result = build_scopes(
+            root=root,
+            project=project,
+            projects=projects,
+            output_dir=output_dir,
+        )
+        if scopes_result.is_failure:
+            return r[list[FixReport]].fail(scopes_result.error or "scope error")
+
+        reports: list[FixReport] = []
+        for scope in scopes_result.value:
+            report = self._fix_scope(scope, apply=apply)
+            reports.append(report)
+
+        return r[list[FixReport]].ok(reports)
+
+    def _fix_scope(self, scope: DocScope, *, apply: bool) -> FixReport:
+        """Run link and TOC fixes across all markdown files in scope."""
+        items: list[FixItem] = []
+        for md in iter_markdown_files(scope.path):
+            item = self._process_file(md, apply=apply)
+            if item.links or item.toc:
+                rel = md.relative_to(scope.path).as_posix()
+                items.append(FixItem(file=rel, links=item.links, toc=item.toc))
+
+        payload = {
+            "summary": {
+                "scope": scope.name,
+                "changed_files": len(items),
+                "apply": apply,
+            },
+            "changes": [asdict(item) for item in items],
+        }
+        _ = write_json(scope.report_dir / "fix-summary.json", payload)
+        lines = [
+            "# Docs Fix Report",
+            "",
+            f"Scope: {scope.name}",
+            f"Apply: {int(apply)}",
+            f"Changed files: {len(items)}",
+            "",
+            "| file | link_fixes | toc_updates |",
+            "|---|---:|---:|",
+            *[f"| {item.file} | {item.links} | {item.toc} |" for item in items],
+        ]
+        _ = write_markdown(scope.report_dir / "fix-report.md", lines)
+
+        status = ic.Status.OK if apply or not items else ic.Status.WARN
+        print(
+            f"PROJECT={scope.name} PHASE=fix RESULT={status} "
+            f"REASON=changes:{len(items)}"
+        )
+
+        return FixReport(
+            scope=scope.name,
+            changed_files=len(items),
+            applied=apply,
+            items=items,
+        )
+
+    def _process_file(self, md_file: Path, *, apply: bool) -> FixItem:
+        """Fix links and TOC in a single markdown file."""
+        original = md_file.read_text(encoding=ic.Encoding.DEFAULT, errors="ignore")
+        link_count = 0
+
+        def replace_link(match: re.Match[str]) -> str:
+            nonlocal link_count
+            text, link = match.groups()
+            fixed = self._maybe_fix_link(md_file, link)
+            if fixed is None:
+                return match.group(0)
+            link_count += 1
+            return f"[{text}]({fixed})"
+
+        updated = InfraPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
+        updated, toc_changed = self._update_toc(updated)
+        if apply and (link_count > 0 or toc_changed > 0) and updated != original:
+            _ = md_file.write_text(updated, encoding=ic.Encoding.DEFAULT)
+        return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
+
+    @staticmethod
+    def _maybe_fix_link(md_file: Path, raw_link: str) -> str | None:
+        """Return a corrected link target or None if no fix is needed."""
+        if raw_link.startswith(("http://", "https://", "mailto:", "tel:", "#")):
+            return None
+        base = raw_link.split("#", maxsplit=1)[0]
+        if not base:
+            return None
+        if (md_file.parent / base).exists():
+            return None
+        if not base.endswith(".md"):
+            md_candidate = md_file.parent / f"{base}.md"
+            if md_candidate.exists():
+                suffix = raw_link[len(base) :]
+                return f"{base}.md{suffix}"
+        return None
+
+    @staticmethod
+    def _anchorize(text: str) -> str:
+        """Convert a heading title to a GitHub-compatible anchor slug."""
+        value = text.strip().lower()
+        value = re.sub(r"[^a-z0-9\s-]", "", value)
+        value = re.sub(r"\s+", "-", value)
+        return re.sub(r"-+", "-", value).strip("-")
+
+    def _build_toc(self, content: str) -> str:
+        """Generate a TOC block from ## and ### headings in content."""
+        items: list[str] = []
+        for level, title in InfraPatterns.HEADING_H2_H3_RE.findall(content):
+            anchor = self._anchorize(title)
+            if not anchor:
+                continue
+            indent = "  " if level == "###" else ""
+            items.append(f"{indent}- [{title}](#{anchor})")
+        if not items:
+            items = ["- No sections found"]
+        return (
+            f"{TemplateEngine.TOC_START}\n"
+            + "\n".join(items)
+            + f"\n{TemplateEngine.TOC_END}"
+        )
+
+    def _update_toc(self, content: str) -> tuple[str, int]:
+        """Insert or replace the TOC in content, returning (updated, changed)."""
+        toc = self._build_toc(content)
+        if TemplateEngine.TOC_START in content and TemplateEngine.TOC_END in content:
+            updated = re.sub(
+                r"<!-- TOC START -->.*?<!-- TOC END -->",
+                toc,
+                content,
+                count=1,
+                flags=re.DOTALL,
+            )
+            return updated, int(updated != content)
+        lines = content.splitlines()
+        if lines and lines[0].startswith("# "):
+            insert_at = 1
+            while insert_at < len(lines) and not lines[insert_at].strip():
+                insert_at += 1
+            lines.insert(insert_at, "")
+            lines.insert(insert_at + 1, toc)
+            lines.insert(insert_at + 2, "")
+            return "\n".join(lines) + ("\n" if content.endswith("\n") else ""), 1
+        return toc + "\n\n" + content, 1
+
+
+__all__ = ["DocFixer", "FixItem", "FixReport"]

@@ -1,7 +1,13 @@
+# [MANAGED] FLEXT pyproject standardization
+# Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
+# Sections with [CUSTOM] are project-specific extension points.
+# Sections with [AUTO] are derived from workspace layout and dependencies.
+# [MANAGED] build system
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = [ "poetry-core>=2" ]
 
+# [CUSTOM] project metadata
 [project]
 name = "flext-core"
 version = "0.12.0-dev"
@@ -50,52 +56,73 @@ dependencies = [
   "structlog>=25.4",
   "wrapt>=1.17,<2",
 ]
+# [MANAGED] consolidated development dependencies
+# [AUTO] merged from dev/docs/security/test/typings
 optional-dependencies.dev = [
-  "autoflake>=2.3.1",
-  "bandit>=1.8",
-  "beartype>=0.19",
-  "black>=25.1",
-  "codespell>=2.3",
-  "deptry>=0.23",
-  "detect-secrets>=1.5",
-  "django-stubs>=5.2.2",
-  "factory-boy>=3.3.1",
-  "faker>=37.4",
-  "hypothesis>=6.125",
-  "interrogate>=1.7",
-  "isort>=6.0.1",
-  "mypy>=1.18.2",
-  "pip-audit>=2.7.3",
-  "pre-commit>=4.0.1",
-  "pylint>=3.3",
-  "pytest>=8.4",
-  "pytest-benchmark>=5.1",
-  "pytest-clarity>=1.0.1",
-  "pytest-cov>=6.2",
-  "pytest-deadfixtures>=2.2.1",
-  "pytest-env>=1.1.5",
-  "pytest-mock>=3.14",
-  "pytest-randomly>=3.16",
-  "pytest-sugar>=1",
-  "pytest-timeout>=2.4",
-  "pytest-xdist>=3.8",
-  "pyupgrade>=3.19",
-  "radon>=6.0.1",
-  "ruff>=0.12.3",
-  "types-cachetools>=5.3",
-  "types-docker>=7.1",
-  "types-ldap3>=2.9.13.20250622",
-  "types-protobuf>=6.30.2.20250703",
-  "types-psutil>=7",
-  "types-psycopg2>=2.9.21.20250718",
-  "types-python-dateutil>=2.9",
-  "types-pyyaml>=6.0.12",
-  "types-redis>=4.6",
-  "types-requests>=2.32.4",
-  "types-setuptools>=80.9",
-  "types-toml>=0.10.8.20240310",
-  "uv>=0.9.6",
-  "vulture>=2.13",
+    "autoflake>=2.3.1",
+    "bandit>=1.8.0",
+    "beartype>=0.19",
+    "black>=25.1.0",
+    "codespell>=2.3.0",
+    "deptry>=0.23.0",
+    "detect-secrets>=1.5",
+    "django-stubs>=5.2.2",
+    "factory-boy>=3.3.1",
+    "faker>=37.4.0",
+    "hypothesis>=6.125.0",
+    "interrogate>=1.7",
+    "isort>=6.0.1",
+    "mkdocs>=1.6.0",
+    "mkdocs-awesome-pages-plugin>=2.9.0",
+    "mkdocs-encryptcontent-plugin>=2.0.0",
+    "mkdocs-exclude>=1.0.0",
+    "mkdocs-get-deps>=0.2.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.2.0",
+    "mkdocs-literate-nav>=0.6.0",
+    "mkdocs-macros-plugin>=1.0.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocs-material-extensions>=1.3.1",
+    "mkdocs-mermaid2-plugin>=1.1.0",
+    "mkdocs-minify-plugin>=0.7.0",
+    "mkdocs-newsletter>=0.1.0",
+    "mkdocs-print-site-plugin>=0.8.0",
+    "mkdocs-redirects>=1.2.0",
+    "mkdocs-section-index>=0.3.0",
+    "mkdocs-versioning>=0.2.0",
+    "mkdocstrings>=0.24.0",
+    "mkdocstrings-python>=1.7.0",
+    "mypy>=1.18.2",
+    "pip-audit>=2.7.3",
+    "pre-commit>=4.0.1",
+    "pylint>=3.3.0",
+    "pytest>=8.4.0",
+    "pytest-benchmark>=5.1.0",
+    "pytest-clarity>=1.0.1",
+    "pytest-cov>=6.2.0",
+    "pytest-deadfixtures>=2.2.1",
+    "pytest-env>=1.1.5",
+    "pytest-mock>=3.14.0",
+    "pytest-randomly>=3.16.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+    "pyupgrade>=3.19.0",
+    "radon>=6.0.1",
+    "ruff>=0.12.3",
+    "types-cachetools>=5.3",
+    "types-docker>=7.1.0",
+    "types-ldap3>=2.9.13.20250622",
+    "types-protobuf>=6.30.2.20250703",
+    "types-psutil>=7.0.0",
+    "types-psycopg2>=2.9.21.20250718",
+    "types-python-dateutil>=2.9.0",
+    "types-pyyaml>=6.0.12",
+    "types-redis>=4.6.0",
+    "types-requests>=2.32.4",
+    "types-setuptools>=80.9.0",
+    "types-toml>=0.10.8.20240310",
+    "uv>=0.9.6",
+    "vulture>=2.13",
 ]
 urls.Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
 urls.Homepage = "https://github.com/flext-sh/flext-core"
@@ -108,42 +135,27 @@ packages = [
   { include = "flext_infra", from = "src" },
   { include = "flext_tests", from = "src" },
 ]
-group.dev.dependencies.beartype = "^0.22.9"
-group.dev.dependencies.click = "^8.3.0"
-group.dev.dependencies.coverage = "^7.13.1"
-group.dev.dependencies.hypothesis = "^6.148.7"
-group.dev.dependencies.pyrefly = "^0.46.3"
-group.dev.dependencies.pytest = "^9.0.2"
-group.dev.dependencies.pytest-cov = "^7.0.0"
-group.dev.dependencies.rich = "^14.2.0"
-group.dev.dependencies.types-cachetools = "^6.2.0.20251022"
-group.dev.dependencies.types-colorama = ">=0.4.15.20240311"
-group.dev.dependencies.types-docker = "^7.1.0.20251202"
-group.dev.dependencies.types-pexpect = ">=4.9.0.20250516"
-group.dev.dependencies.types-pygments = ">=2.19.0.20250715"
-group.dev.dependencies.types-pysocks = "^1.7.1.20251001"
-group.dev.dependencies.types-pyyaml = "^6.0.12.20250915"
-group.dev.dependencies.urllib3 = "^2.6.0"
 
+[group.dev.dependencies]
+
+# [MANAGED] ruff
 [tool.ruff]
 extend = "../ruff-shared.toml"
 lint.isort.known-first-party = []
 
+# [MANAGED] codespell
 [tool.codespell]
 ignore-words-list = "dn,cn,ou,uid,sn,aci,acl,ldif,flext,FLEXT,dbt,oic,wms,grpc,meltano,protobuf,creds,assertIn"
 skip = ".git,*.lock,*.egg-info,dist,build,.venv,__pycache__,.mypy_cache,.pytest_cache,.ruff_cache,node_modules,typings,vendor,*.pb2*.py"
 
+# [MANAGED] deptry
 [tool.deptry]
 known_first_party = [
   "flext",
   "flext_quality",
 ]
 pep621_dev_dependency_groups = [
-  "dev",
-  "docs",
-  "security",
-  "test",
-  "typings",
+    "dev",
 ]
 package_module_name_map.pyyaml = "yaml"
 per_rule_ignores.DEP002 = [
@@ -229,6 +241,7 @@ extend_exclude = [
   "flext-.*/",
 ]
 
+# [MANAGED] pytest
 [tool.pytest]
 ini_options.addopts = [
   "--strict-config",
@@ -273,6 +286,7 @@ ini_options.testpaths = [
   "tests/",
 ]
 
+# [MANAGED] coverage
 [tool.coverage]
 run.omit = [
   "*/dependency_injector/*.pxd",
@@ -288,6 +302,7 @@ report.omit = [
 ]
 report.precision = 2
 
+# [MANAGED] mypy
 [tool.mypy]
 cache_dir = ".mypy_cache"
 check_untyped_defs = true
@@ -348,10 +363,12 @@ warn_unused_configs = true
 warn_unused_ignores = false
 mypy_path = [ "..", "../typings", "../typings/generated", "src" ]
 
+# [MANAGED] pyrefly
 [tool.pyrefly]
 search-path = [ "..", "../typings", "../typings/generated", "src", "tests", "examples", "scripts" ]
 project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
 
+# [MANAGED] pyright
 [tool.pyright]
 enableTypeIgnoreComments = false
 extraPaths = [ "..", "src", "tests", "examples", "scripts", "../typings", "../typings/generated" ]

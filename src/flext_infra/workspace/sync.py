@@ -23,7 +23,6 @@ from flext_infra.basemk.generator import BaseMkGenerator
 from flext_infra.constants import ic
 from flext_infra.models import im
 
-
 # Patterns that MUST be in every subproject .gitignore.
 _REQUIRED_GITIGNORE_ENTRIES: list[str] = [
     ".reports/",

@@ -30,9 +30,9 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextService, r
+
 from flext_infra.constants import ic
 from flext_infra.discovery import DiscoveryService
-from flext_infra.models import im
 
 
 class PythonVersionEnforcer(FlextService[int]):
@@ -44,6 +44,7 @@ class PythonVersionEnforcer(FlextService[int]):
     Attributes:
         check_only: If True, only verify without making changes.
         verbose: If True, print detailed output for each project.
+
     """
 
     check_only: bool = False
@@ -59,6 +60,7 @@ class PythonVersionEnforcer(FlextService[int]):
 
         Returns:
             FlextResult[int]: Exit code (0 for success, 1 for failure).
+
         """
         self.check_only = check_only
         self.verbose = verbose
@@ -96,6 +98,7 @@ class PythonVersionEnforcer(FlextService[int]):
 
         Raises:
             RuntimeError: If workspace root cannot be found.
+
         """
         current = Path(file).resolve()
         if current.is_file():
@@ -120,6 +123,7 @@ class PythonVersionEnforcer(FlextService[int]):
 
         Returns:
             int: Required Python minor version.
+
         """
         pyproject = workspace_root / ic.Files.PYPROJECT_FILENAME
         if not pyproject.is_file():
@@ -138,6 +142,7 @@ class PythonVersionEnforcer(FlextService[int]):
 
         Returns:
             list[Path]: List of project paths.
+
         """
         discovery = DiscoveryService()
         result = discovery.discover_projects(workspace_root)
@@ -158,6 +163,7 @@ class PythonVersionEnforcer(FlextService[int]):
 
         Returns:
             bool: True if validation passed, False otherwise.
+
         """
         local_minor = self._read_required_minor(project)
 
