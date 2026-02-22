@@ -69,10 +69,8 @@ endef
 
 define AUTO_SYNC_BASE_AND_SCRIPTS
 if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
-	python3 -m flext_infra.workspace.sync \
-		--project-root "$(CURDIR)" \
-		--canonical-root "$(WORKSPACE_ROOT)" \
-		$(if $(filter 1,$(SYNC_PRUNE)),--prune,); \
+	python -m flext_infra.workspace sync \
+		--project-root "$(CURDIR)"; \
 fi
 endef
 

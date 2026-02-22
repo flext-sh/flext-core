@@ -15,7 +15,6 @@
 !tests/
 !docs/
 !examples/
-!scripts/
 !ansible/
 !docker/
 !dbt/
@@ -57,7 +56,6 @@
 !tests/**
 !docs/**
 !examples/**
-!scripts/**
 !ansible/**
 !docker/**
 !dbt/**

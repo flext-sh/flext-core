@@ -4,7 +4,6 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 from collections.abc import Callable, Sequence
@@ -22,13 +21,14 @@ from flext_infra.json_io import JsonService
 from flext_infra.models import im
 from flext_infra.paths import PathResolver
 from flext_infra.reporting import ReportingService
+from flext_infra.subprocess import CommandRunner
 
 DEFAULT_GATES = "lint,format,pyrefly,mypy,pyright,security,markdown,go"
 _REQUIRED_EXCLUDES = ['"**/*_pb2*.py"', '"**/*_pb2_grpc*.py"']
 _RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
 _MARKDOWN_RE = re.compile(
     r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"
-     r"(?P<code>MD\d+)(?:/[^\s]+)?\s+(?P<msg>.*)$",
+    r"(?P<code>MD\d+)(?:/[^\s]+)?\s+(?P<msg>.*)$",
 )
 _GO_VET_RE = re.compile(
     r"^(?P<file>[^:\n]+\.go):(?P<line>\d+)(?::(?P<col>\d+))?:\s*(?P<msg>.*)$",
@@ -66,6 +66,13 @@ class _ProjectResult:
         return all(v.result.passed for v in self.gates.values())
 
 
+@dataclass
+class _RunCommandResult:
+    stdout: str
+    stderr: str
+    returncode: int
+
+
 def _format_issue(issue: _CheckIssue) -> str:
     code_part = f"[{issue.code}] " if issue.code else ""
     return (
@@ -79,6 +86,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._path_resolver = PathResolver()
         self._reporting = ReportingService()
         self._json = JsonService()
+        self._runner = CommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir_result = self._reporting.ensure_report_dir(
             self._workspace_root, "check"
@@ -444,15 +452,25 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         cwd: Path,
         timeout: int = 300,
         env: dict[str, str] | None = None,
-    ) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
+    ) -> _RunCommandResult:
+        result = self._runner.run_raw(
             cmd,
-            capture_output=True,
-            text=True,
             cwd=cwd,
             timeout=timeout,
-            check=False,
             env=env,
+        )
+        if result.is_failure:
+            return _RunCommandResult(
+                stdout="",
+                stderr=result.error or "command execution failed",
+                returncode=1,
+            )
+
+        output = result.value
+        return _RunCommandResult(
+            stdout=output.stdout,
+            stderr=output.stderr,
+            returncode=output.exit_code,
         )
 
     def _build_gate_result(
@@ -1095,8 +1113,8 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         fixes: list[str] = []
         pattern = re.compile(
             r"\s*\[\[tool\.pyrefly\.sub-config\]\]\s*\n"
-             r"\s*matches\s*=\s*\"([^\"]+)\"\s*\n"
-             r"\s*ignore\s*=\s*true\s*\n?",
+            r"\s*matches\s*=\s*\"([^\"]+)\"\s*\n"
+            r"\s*ignore\s*=\s*true\s*\n?",
             flags=re.MULTILINE,
         )
         match = pattern.search(text)

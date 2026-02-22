@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import subprocess
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
@@ -12,6 +11,7 @@ from flext_core.service import FlextService
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.constants import ic
 from flext_infra.models import im
+from flext_infra.subprocess import CommandRunner
 
 
 class _TemplateRenderer(Protocol):
@@ -22,6 +22,7 @@ class BaseMkGenerator(FlextService[str]):
     def __init__(self, template_engine: _TemplateRenderer | None = None) -> None:
         super().__init__()
         self._template_engine = template_engine or TemplateEngine()
+        self._runner = CommandRunner()
 
     @override
     def execute(self) -> r[str]:
@@ -93,14 +94,11 @@ class BaseMkGenerator(FlextService[str]):
                     encoding=ic.Encoding.DEFAULT,
                 )
 
-                process = subprocess.run(
+                process_result = self._runner.run(
                     ["make", "-C", str(temp_dir), "--dry-run", "help"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
                 )
-                if process.returncode != 0:
-                    error_text = process.stderr.strip() or process.stdout.strip()
+                if process_result.is_failure:
+                    error_text = process_result.error or "make validation failed"
                     return r[str].fail(
                         f"generated base.mk validation failed: {error_text}",
                     )

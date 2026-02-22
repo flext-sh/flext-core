@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from flext_infra.workspace.detector import WorkspaceDetector
+from flext_infra.workspace.migrator import ProjectMigrator
 from flext_infra.workspace.orchestrator import OrchestratorService
 from flext_infra.workspace.sync import SyncService
 
@@ -67,6 +68,33 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
     return 1
 
 
+def _run_migrate(args: argparse.Namespace) -> int:
+    service = ProjectMigrator()
+    result = service.migrate(
+        workspace_root=args.workspace_root,
+        dry_run=args.dry_run,
+    )
+
+    if result.is_failure:
+        print(f"Error: {result.error}", file=sys.stderr)
+        return 1
+
+    failed_projects = 0
+    for migration in result.value:
+        print(f"project={migration.project}")
+        for change in migration.changes:
+            print(f"  - {change}")
+        for error in migration.errors:
+            print(f"  ! {error}")
+        if migration.errors:
+            failed_projects += 1
+
+    print(
+        f"summary total={len(result.value)} failed={failed_projects} dry_run={str(args.dry_run).lower()}"
+    )
+    return 1 if failed_projects else 0
+
+
 def main() -> int:
     """Run workspace utilities: detect mode, sync base.mk, orchestrate projects."""
     parser = argparse.ArgumentParser(description="Workspace management utilities")
@@ -76,7 +104,7 @@ def main() -> int:
     detect_parser = subparsers.add_parser(
         "detect", help="Detect workspace or standalone mode"
     )
-    detect_parser.add_argument(
+    _ = detect_parser.add_argument(
         "--project-root",
         required=True,
         type=Path,
@@ -87,7 +115,7 @@ def main() -> int:
     sync_parser = subparsers.add_parser(
         "sync", help="Sync base.mk to project root (no scripts/ sync)"
     )
-    sync_parser.add_argument(
+    _ = sync_parser.add_argument(
         "--project-root",
         required=True,
         type=Path,
@@ -109,6 +137,21 @@ def main() -> int:
         "projects", nargs="*", help="Project directories to orchestrate"
     )
 
+    migrate_parser = subparsers.add_parser(
+        "migrate", help="Migrate workspace projects to flext_infra tooling"
+    )
+    _ = migrate_parser.add_argument(
+        "--workspace-root",
+        required=True,
+        type=Path,
+        help="Workspace root directory containing subprojects",
+    )
+    _ = migrate_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview migration changes without writing files",
+    )
+
     args = parser.parse_args()
 
     if args.command == "detect":
@@ -117,6 +160,8 @@ def main() -> int:
         return _run_sync(args)
     if args.command == "orchestrate":
         return _run_orchestrate(args)
+    if args.command == "migrate":
+        return _run_migrate(args)
 
     parser.print_help()
     return 1

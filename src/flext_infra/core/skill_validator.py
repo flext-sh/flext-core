@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
@@ -257,19 +256,16 @@ class SkillValidator:
             cmd.extend(["--globs", f"!{pat}"])
         cmd.append(str(project_path))
 
-        try:
-            result = subprocess.run(
-                cmd,
-                cwd=str(project_path),
-                text=True,
-                capture_output=True,
-                timeout=300,
-                check=False,
-            )
-        except (FileNotFoundError, subprocess.TimeoutExpired):
+        result_wrapper = self._runner.run_raw(
+            cmd,
+            cwd=project_path,
+            timeout=300,
+        )
+        if result_wrapper.is_failure:
             return 0
+        result = result_wrapper.value
 
-        if result.returncode not in {0, 1}:
+        if result.exit_code not in {0, 1}:
             return 0
 
         count = 0
@@ -310,17 +306,14 @@ class SkillValidator:
         if bool(rule.get("pass_mode")):
             cmd.extend(["--mode", mode])
 
-        try:
-            result = subprocess.run(
-                cmd,
-                cwd=str(project_path),
-                text=True,
-                capture_output=True,
-                timeout=300,
-                check=False,
-            )
-        except (FileNotFoundError, subprocess.TimeoutExpired):
+        result_wrapper = self._runner.run_raw(
+            cmd,
+            cwd=project_path,
+            timeout=300,
+        )
+        if result_wrapper.is_failure:
             return 0
+        result = result_wrapper.value
 
         count = 0
         for raw_line in (result.stdout or "").splitlines():
@@ -335,7 +328,7 @@ class SkillValidator:
                 maybe = payload.get("violation_count", payload.get("count", 0))
                 if isinstance(maybe, int):
                     count += maybe
-        if result.returncode == 1:
+        if result.exit_code == 1:
             count = max(count, 1)
         return count
 

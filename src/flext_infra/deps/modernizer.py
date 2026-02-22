@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import tomlkit
 from tomlkit.items import Table
+
+from flext_infra.subprocess import CommandRunner
 
 
 def _workspace_root(start: Path) -> Path:
@@ -258,6 +259,7 @@ class PyprojectModernizer:
     def __init__(self, root: Path | None = None) -> None:
         super().__init__()
         self.root = root or ROOT
+        self._runner = CommandRunner()
 
     def find_pyproject_files(self) -> list[Path]:
         files: list[Path] = []
@@ -337,25 +339,22 @@ class PyprojectModernizer:
         fmt_bin = self.root / ".venv" / "bin" / "pyproject-fmt"
         if not fmt_bin.exists():
             return
-        _ = subprocess.run(
+        _ = self._runner.run_raw(
             [str(fmt_bin), *[str(path) for path in files]],
-            check=False,
-            capture_output=True,
-            text=True,
         )
 
     def _run_poetry_check(self, files: list[Path]) -> int:
         has_warning = False
         for path in files:
             project_dir = path.parent
-            result = subprocess.run(
+            result = self._runner.run_raw(
                 ["poetry", "check"],
                 cwd=project_dir,
-                check=False,
-                capture_output=True,
-                text=True,
             )
-            if result.returncode != 0:
+            if result.is_failure:
+                has_warning = True
+                continue
+            if result.value.exit_code != 0:
                 has_warning = True
         return 1 if has_warning else 0
 

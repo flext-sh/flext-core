@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
 import time
 from pathlib import Path
 
@@ -205,31 +204,28 @@ class PrWorkspaceManager:
             command = self._build_subproject_command(repo_root, pr_args)
 
         started = time.monotonic()
-        try:
-            if log_path is not None:
-                with log_path.open("w", encoding=ic.Encoding.DEFAULT) as handle:
-                    result = subprocess.run(
-                        command,
-                        stdout=handle,
-                        stderr=subprocess.STDOUT,
-                        check=False,
-                    )
-            else:
-                result = subprocess.run(
-                    command,
-                    capture_output=True,
-                    check=False,
+        if log_path is not None:
+            execution = self._runner.run_to_file(command, log_path)
+            if execution.is_failure:
+                return r[dict[str, object]].fail(
+                    execution.error or "command execution error",
                 )
-        except OSError as exc:
-            return r[dict[str, object]].fail(f"command execution error: {exc}")
+            exit_code = execution.value
+        else:
+            execution = self._runner.run_raw(command)
+            if execution.is_failure:
+                return r[dict[str, object]].fail(
+                    execution.error or "command execution error",
+                )
+            exit_code = execution.value.exit_code
 
         elapsed = int(time.monotonic() - started)
-        status = ic.Status.OK if result.returncode == 0 else ic.Status.FAIL
+        status = ic.Status.OK if exit_code == 0 else ic.Status.FAIL
         return r[dict[str, object]].ok({
             "display": display,
             "status": status,
             "elapsed": elapsed,
-            "exit_code": result.returncode,
+            "exit_code": exit_code,
             "log_path": str(log_path) if log_path else None,
         })
 

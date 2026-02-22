@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -22,6 +21,7 @@ from flext_infra.docs.shared import (
     write_json,
     write_markdown,
 )
+from flext_infra.subprocess import CommandRunner
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,9 @@ class DocBuilder:
     Runs MkDocs build for workspace projects and returns
     structured FlextResult reports.
     """
+
+    def __init__(self) -> None:
+        self._runner = CommandRunner()
 
     def build(
         self,
@@ -87,8 +90,7 @@ class DocBuilder:
         )
         return report
 
-    @staticmethod
-    def _run_mkdocs(scope: DocScope) -> BuildReport:
+    def _run_mkdocs(self, scope: DocScope) -> BuildReport:
         """Run mkdocs build --strict and return the result."""
         config = scope.path / "mkdocs.yml"
         if not config.exists():
@@ -110,18 +112,25 @@ class DocBuilder:
             "-d",
             str(site_dir),
         ]
-        completed = subprocess.run(
-            cmd, cwd=scope.path, check=False, capture_output=True, text=True
-        )
-        if completed.returncode == 0:
+        completed = self._runner.run_raw(cmd, cwd=scope.path)
+        if completed.is_failure:
+            return BuildReport(
+                scope=scope.name,
+                result=ic.Status.FAIL,
+                reason=completed.error or "mkdocs build failed",
+                site_dir=site_dir.as_posix(),
+            )
+
+        output = completed.value
+        if output.exit_code == 0:
             return BuildReport(
                 scope=scope.name,
                 result=ic.Status.OK,
                 reason="build succeeded",
                 site_dir=site_dir.as_posix(),
             )
-        reason = (completed.stderr or completed.stdout).strip().splitlines()
-        tail = reason[-1] if reason else f"mkdocs exited {completed.returncode}"
+        reason = (output.stderr or output.stdout).strip().splitlines()
+        tail = reason[-1] if reason else f"mkdocs exited {output.exit_code}"
         return BuildReport(
             scope=scope.name,
             result=ic.Status.FAIL,

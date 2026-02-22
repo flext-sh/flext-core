@@ -9,7 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_infra.basemk.__main__ import main
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator
 
-__all__ = ["BaseMkGenerator", "TemplateEngine"]
+__all__ = ["BaseMkGenerator", "TemplateEngine", "main"]

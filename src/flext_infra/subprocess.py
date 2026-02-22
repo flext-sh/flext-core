@@ -28,10 +28,44 @@ class CommandRunner:
     Structurally satisfies ``InfraProtocols.CommandRunnerProtocol``.
     """
 
+    def run_raw(
+        self,
+        cmd: Sequence[str],
+        cwd: Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
+    ) -> FlextResult[im.CommandOutput]:
+        try:
+            result = subprocess.run(
+                list(cmd),
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=timeout,
+                env=env,
+            )
+            output = im.CommandOutput(
+                stdout=result.stdout or "",
+                stderr=result.stderr or "",
+                exit_code=result.returncode,
+            )
+            return r[im.CommandOutput].ok(output)
+        except subprocess.TimeoutExpired as exc:
+            cmd_str = shlex.join(list(cmd))
+            timeout_text = str(exc.timeout)
+            return r[im.CommandOutput].fail(
+                f"command timeout after {timeout_text}s: {cmd_str}",
+            )
+        except Exception as exc:
+            return r[im.CommandOutput].fail(f"command execution error: {exc}")
+
     def run(
         self,
         cmd: Sequence[str],
         cwd: Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
     ) -> FlextResult[im.CommandOutput]:
         """Run a command and return structured output.
 
@@ -44,33 +78,27 @@ class CommandRunner:
             or failure with error details.
 
         """
-        try:
-            result = subprocess.run(
-                list(cmd),
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-                check=False,
+        raw_result = self.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
+        if raw_result.is_failure:
+            return r[im.CommandOutput].fail(
+                raw_result.error or "command execution error"
             )
-            output = im.CommandOutput(
-                stdout=result.stdout or "",
-                stderr=result.stderr or "",
-                exit_code=result.returncode,
+
+        output = raw_result.value
+        if output.exit_code != 0:
+            cmd_str = shlex.join(list(cmd))
+            detail = (output.stderr or output.stdout).strip()
+            return r[im.CommandOutput].fail(
+                f"command failed ({output.exit_code}): {cmd_str}: {detail}",
             )
-            if result.returncode != 0:
-                cmd_str = shlex.join(list(cmd))
-                detail = (result.stderr or result.stdout).strip()
-                return r[im.CommandOutput].fail(
-                    f"command failed ({result.returncode}): {cmd_str}: {detail}",
-                )
-            return r[im.CommandOutput].ok(output)
-        except Exception as exc:
-            return r[im.CommandOutput].fail(f"command execution error: {exc}")
+        return r[im.CommandOutput].ok(output)
 
     def run_checked(
         self,
         cmd: Sequence[str],
         cwd: Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
     ) -> FlextResult[bool]:
         """Run a command and return success/failure status.
 
@@ -82,10 +110,40 @@ class CommandRunner:
             FlextResult[bool] with True on success, or failure with error.
 
         """
-        result = self.run(cmd, cwd=cwd)
+        result = self.run(cmd, cwd=cwd, timeout=timeout, env=env)
         if result.is_success:
             return r[bool].ok(True)
         return r[bool].fail(result.error or "command failed")
+
+    def run_to_file(
+        self,
+        cmd: Sequence[str],
+        output_file: Path,
+        cwd: Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
+    ) -> FlextResult[int]:
+        try:
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+            with output_file.open("w", encoding="utf-8") as handle:
+                result = subprocess.run(
+                    list(cmd),
+                    cwd=cwd,
+                    stdout=handle,
+                    stderr=subprocess.STDOUT,
+                    check=False,
+                    timeout=timeout,
+                    env=env,
+                )
+            return r[int].ok(result.returncode)
+        except subprocess.TimeoutExpired as exc:
+            cmd_str = shlex.join(list(cmd))
+            timeout_text = str(exc.timeout)
+            return r[int].fail(f"command timeout after {timeout_text}s: {cmd_str}")
+        except OSError as exc:
+            return r[int].fail(f"command file output error: {exc}")
+        except Exception as exc:
+            return r[int].fail(f"command execution error: {exc}")
 
     def capture(
         self,

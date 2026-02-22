@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_infra.core.__main__ import main
 from flext_infra.core.basemk_validator import BaseMkValidator
 from flext_infra.core.inventory import InventoryService
 from flext_infra.core.pytest_diag import PytestDiagExtractor
@@ -24,4 +25,5 @@ __all__ = [
     "SkillValidator",
     "StubSupplyChain",
     "TextPatternScanner",
+    "main",
 ]

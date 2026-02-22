@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
@@ -423,14 +422,13 @@ class ReleaseOrchestrator(FlextService[bool]):
     @staticmethod
     def _run_make(project_path: Path, verb: str) -> tuple[int, str]:
         """Execute a make command for a project and return (exit_code, output)."""
-        result = subprocess.run(
-            ["make", "-C", str(project_path), verb],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        output = (result.stdout + "\n" + result.stderr).strip()
-        return result.returncode, output
+        result = CommandRunner().run_raw(["make", "-C", str(project_path), verb])
+        if result.is_failure:
+            return 1, result.error or "make execution failed"
+
+        output_model = result.value
+        output = (output_model.stdout + "\n" + output_model.stderr).strip()
+        return output_model.exit_code, output
 
     def _generate_notes(
         self,

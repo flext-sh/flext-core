@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
 from enum import Enum
 from pathlib import Path
 from typing import override
@@ -17,6 +16,8 @@ from urllib.parse import urlparse
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
+
+from flext_infra.subprocess import CommandRunner
 
 
 class WorkspaceMode(str, Enum):
@@ -41,6 +42,10 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
 
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._runner = CommandRunner()
+
     @override
     def execute(self) -> r[WorkspaceMode]:
         """Not used; call detect() directly instead."""
@@ -64,14 +69,14 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
             if not git_marker.exists():
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
-            result = subprocess.run(
+            result_wrapper = self._runner.run_raw(
                 ["git", "-C", str(parent), "config", "--get", "remote.origin.url"],
-                check=False,
-                capture_output=True,
-                text=True,
             )
+            if result_wrapper.is_failure:
+                return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
+            result = result_wrapper.value
 
-            if result.returncode != 0:
+            if result.exit_code != 0:
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
             origin = result.stdout.strip()

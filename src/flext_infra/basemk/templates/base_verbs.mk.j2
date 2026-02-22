@@ -27,7 +27,7 @@ setup: ## Complete setup
 		go mod tidy; \
 		exit 0; \
 	fi
-	$(Q)python3 -m flext_infra.deps.sync_internal --project-root "$(CURDIR)"
+	$(Q)python -m flext_infra.deps.internal_sync
 	$(Q)$(POETRY) lock
 	$(Q)$(POETRY) install --all-extras --all-groups
 	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -106,7 +106,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		project_key="."; \
 	fi; \
 	$(POETRY) run python -m flext_infra.check.fix_pyrefly_config "$$project_key"; \
-	$(POETRY) run python -m flext_infra.check.workspace_check --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" "$$project_key"; \
+	$(POETRY) run python -m flext_infra.check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
 	exit $$?; \
 	if echo "$$gates" | grep -qw lint; then \
 		$(POETRY) run ruff check . --quiet || { echo "FAIL: lint"; exit 1; }; \

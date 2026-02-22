@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -19,6 +18,7 @@ from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
 
 from flext_infra.models import InfraModels
+from flext_infra.subprocess import CommandRunner
 
 _DEFAULT_ENCODING = "utf-8"
 _STATUS_OK = "OK"
@@ -44,6 +44,10 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
                 print(f"exit={output.exit_code} duration={output.duration}s")
 
     """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._runner = CommandRunner()
 
     @override
     def execute(self) -> r[list[InfraModels.CommandOutput]]:
@@ -142,26 +146,25 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         log_path = reports_dir / f"{project}.log"
         started = time.monotonic()
 
-        with log_path.open("w", encoding=_DEFAULT_ENCODING) as log_handle:
-            proc = subprocess.run(
-                ["make", "-C", project, verb, *make_args],  # noqa: S607
-                stdout=log_handle,
-                stderr=subprocess.STDOUT,
-                check=False,
-            )
+        proc_result = self._runner.run_to_file(
+            ["make", "-C", project, verb, *make_args],
+            log_path,
+        )
+        return_code = proc_result.value if proc_result.is_success else 1
+        stderr = "" if proc_result.is_success else (proc_result.error or "")
 
         elapsed = time.monotonic() - started
-        status = _STATUS_OK if proc.returncode == 0 else _STATUS_FAIL
+        status = _STATUS_OK if return_code == 0 else _STATUS_FAIL
         msg = (
             f"{index:02d} [{status}] {project} {verb}"
-            f" ({int(elapsed)}s) exit={proc.returncode} log={log_path}"
+            f" ({int(elapsed)}s) exit={return_code} log={log_path}"
         )
         print(msg)
 
         return InfraModels.CommandOutput(
             stdout=str(log_path),
-            stderr="",
-            exit_code=proc.returncode,
+            stderr=stderr,
+            exit_code=return_code,
             duration=round(elapsed, 2),
         )
 

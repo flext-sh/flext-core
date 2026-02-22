@@ -229,4 +229,34 @@ class SyncService(FlextService[im.SyncResult]):
             return r[bool].fail(f"atomic write failed: {exc}")
 
 
-__all__ = ["SyncService"]
+def main() -> int:
+    """CLI entry point for workspace sync."""
+    import argparse  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+
+    parser = argparse.ArgumentParser(description="Workspace base.mk sync")
+    _ = parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(),
+        help="Project root directory",
+    )
+    args = parser.parse_args()
+
+    service = SyncService()
+    result = service.sync(project_root=args.project_root)
+
+    if result.is_success:
+        print(f"files_changed={result.value.files_changed}")
+        return 0
+    print(f"Error: {result.error}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())
+
+
+__all__ = ["SyncService", "main"]
