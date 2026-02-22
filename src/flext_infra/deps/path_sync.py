@@ -11,7 +11,6 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.constants import ic
 from flext_infra.discovery import DiscoveryService
-from flext_infra.paths import PathResolver
 from flext_infra.toml_io import TomlService
 
 logger = structlog.get_logger(__name__)
@@ -21,13 +20,15 @@ FLEXT_DEPS_DIR = ".flext-deps"
 _PEP621_PATH_DEP_RE = re.compile(
     r"^(?P<name>[A-Za-z0-9_.-]+)\s*@\s*(?:file:)?(?P<path>.+)$"
 )
+_PEP621_NAME_RE = re.compile(r"^\s*(?P<name>[A-Za-z0-9_.-]+)")
 
 
 def _workspace_root() -> Path:
-    resolved = PathResolver().workspace_root_from_file(__file__)
-    if resolved.is_success:
-        return resolved.value
-    return Path(__file__).resolve().parents[4]
+    here = Path(__file__).resolve()
+    for candidate in here.parents:
+        if (candidate / ".gitmodules").exists():
+            return candidate
+    return here.parents[4]
 
 
 ROOT = _workspace_root()
@@ -53,7 +54,24 @@ def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
     return f"{FLEXT_DEPS_DIR}/{dep_name}"
 
 
-def _rewrite_pep621(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
+def _extract_requirement_name(entry: str) -> str | None:
+    if " @ " in entry:
+        match = _PEP621_PATH_DEP_RE.match(entry)
+        if match:
+            return match.group("name")
+    match = _PEP621_NAME_RE.match(entry)
+    if not match:
+        return None
+    return match.group("name")
+
+
+def _rewrite_pep621(
+    doc: TOMLDocument,
+    *,
+    is_root: bool,
+    mode: str,
+    internal_names: set[str],
+) -> list[str]:
     project = doc.get("project")
     if not project or not isinstance(project, dict):
         return []
@@ -63,17 +81,29 @@ def _rewrite_pep621(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]
 
     changes: list[str] = []
     for index, item in enumerate(deps):
-        if not isinstance(item, str) or " @ " not in item:
+        if not isinstance(item, str):
             continue
-        match = _PEP621_PATH_DEP_RE.match(item)
-        if not match:
+
+        marker = ""
+        requirement_part = item
+        if ";" in item:
+            requirement_part, marker_part = item.split(";", 1)
+            marker = f" ;{marker_part}"
+
+        dep_name = _extract_requirement_name(requirement_part)
+        if not dep_name or dep_name not in internal_names:
             continue
-        name = match.group("name")
-        raw_path = match.group("path").strip()
-        dep_name = extract_dep_name(raw_path)
+
+        if " @ " in requirement_part:
+            match = _PEP621_PATH_DEP_RE.match(requirement_part)
+            if not match:
+                continue
+            raw_path = match.group("path").strip()
+            dep_name = extract_dep_name(raw_path)
+
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
         path_prefix = "./" if is_root else ""
-        new_entry = f"{name} @ {path_prefix}{new_path}"
+        new_entry = f"{dep_name} @ {path_prefix}{new_path}{marker}"
         if deps[index] != new_entry:
             changes.append(f"  PEP621: {deps[index]} -> {new_entry}")
             deps[index] = new_entry
@@ -110,6 +140,7 @@ def rewrite_dep_paths(
     pyproject_path: Path,
     *,
     mode: str,
+    internal_names: set[str],
     is_root: bool = False,
     dry_run: bool = False,
 ) -> r[list[str]]:
@@ -119,7 +150,12 @@ def rewrite_dep_paths(
         return r[list[str]].fail(doc_result.error or "failed to read TOML document")
 
     doc = doc_result.value
-    changes = _rewrite_pep621(doc, is_root=is_root, mode=mode)
+    changes = _rewrite_pep621(
+        doc,
+        is_root=is_root,
+        mode=mode,
+        internal_names=internal_names,
+    )
     changes += _rewrite_poetry(doc, is_root=is_root, mode=mode)
 
     if changes and not dry_run:
@@ -160,13 +196,25 @@ def main() -> int:
         print(f"[sync-dep-paths] auto-detected mode: {mode}")
 
     total_changes = 0
+    toml_service = TomlService()
+
+    internal_names: set[str] = set()
+    root_pyproject = ROOT / ic.Files.PYPROJECT_FILENAME
+    if root_pyproject.exists():
+        root_data_result = toml_service.read(root_pyproject)
+        if root_data_result.is_success:
+            root_project = root_data_result.value.get("project")
+            if isinstance(root_project, dict):
+                root_name = root_project.get("name")
+                if isinstance(root_name, str) and root_name:
+                    internal_names.add(root_name)
 
     if not args.projects:
-        root_pyproject = ROOT / ic.Files.PYPROJECT_FILENAME
         if root_pyproject.exists():
             changes_result = rewrite_dep_paths(
                 root_pyproject,
                 mode=mode,
+                internal_names=internal_names,
                 is_root=True,
                 dry_run=args.dry_run,
             )
@@ -185,18 +233,48 @@ def main() -> int:
                     print(change)
                 total_changes += len(changes)
 
+    discover_result = DiscoveryService().discover_projects(ROOT)
+    if discover_result.is_failure:
+        logger.error(
+            "sync_dep_paths_discovery_failed",
+            root=str(ROOT),
+            error=discover_result.error,
+        )
+        return 1
+
+    all_project_dirs = [project.path for project in discover_result.value]
     if args.projects:
         project_dirs = [ROOT / project for project in args.projects]
     else:
-        discover_result = DiscoveryService().discover_projects(ROOT)
-        if discover_result.is_failure:
-            logger.error(
-                "sync_dep_paths_discovery_failed",
-                root=str(ROOT),
-                error=discover_result.error,
-            )
-            return 1
-        project_dirs = [project.path for project in discover_result.value]
+        project_dirs = all_project_dirs
+
+    for project_dir in all_project_dirs:
+        pyproject = project_dir / ic.Files.PYPROJECT_FILENAME
+        if not pyproject.exists():
+            continue
+        data_result = toml_service.read(pyproject)
+        if data_result.is_failure:
+            continue
+        project_obj = data_result.value.get("project")
+        if not isinstance(project_obj, dict):
+            continue
+        project_name = project_obj.get("name")
+        if isinstance(project_name, str) and project_name:
+            internal_names.add(project_name)
+
+    for project_dir in project_dirs:
+        pyproject = project_dir / ic.Files.PYPROJECT_FILENAME
+        if not pyproject.exists():
+            continue
+        data_result = toml_service.read(pyproject)
+        if data_result.is_failure:
+            continue
+        project_obj = data_result.value.get("project")
+        if not isinstance(project_obj, dict):
+            continue
+        project_name = project_obj.get("name")
+        if isinstance(project_name, str) and project_name:
+            internal_names.add(project_name)
 
     for project_dir in sorted(project_dirs):
         pyproject = project_dir / ic.Files.PYPROJECT_FILENAME
@@ -205,6 +283,7 @@ def main() -> int:
         changes_result = rewrite_dep_paths(
             pyproject,
             mode=mode,
+            internal_names=internal_names,
             is_root=False,
             dry_run=args.dry_run,
         )
