@@ -1,12 +1,12 @@
 """CLI entry point for core infrastructure services.
 
 Usage:
-    python -m flext_infra.core basemk-validate [--root PATH]
-    python -m flext_infra.core inventory [--root PATH] [--output-dir PATH]
-    python -m flext_infra.core pytest-diag --junit PATH --log PATH
-    python -m flext_infra.core scan --root PATH --pattern REGEX --include GLOB [--exclude GLOB] [--match present|absent]
-    python -m flext_infra.core skill-validate --skill NAME [--root PATH] [--mode baseline|strict]
-    python -m flext_infra.core stub-validate [--root PATH]
+    python -m flext_infra core basemk-validate [--root PATH]
+    python -m flext_infra core inventory [--root PATH] [--output-dir PATH]
+    python -m flext_infra core pytest-diag --junit PATH --log PATH
+    python -m flext_infra core scan --root PATH --pattern REGEX --include GLOB [--exclude GLOB] [--match present|absent]
+    python -m flext_infra core skill-validate --skill NAME [--root PATH] [--mode baseline|strict]
+    python -m flext_infra core stub-validate [--root PATH]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

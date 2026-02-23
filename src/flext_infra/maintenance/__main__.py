@@ -1,7 +1,7 @@
 """CLI entry point for maintenance services.
 
-Allows running maintenance services via:
-    python -m flext_infra.maintenance.python_version [--check] [--verbose]
+Usage:
+    python -m flext_infra maintenance [--check] [--verbose]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -1,9 +1,9 @@
 """CLI entry point for release orchestration.
 
 Usage:
-    python -m flext_infra.release --phase validate --dry-run --root .
-    python -m flext_infra.release --phase version --version 1.0.0 --root .
-    python -m flext_infra.release --phase all --version 1.0.0 --root . --dry-run
+    python -m flext_infra release --phase validate --dry-run --root .
+    python -m flext_infra release --phase version --version 1.0.0 --root .
+    python -m flext_infra release --phase all --version 1.0.0 --root . --dry-run
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

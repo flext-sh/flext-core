@@ -1,1 +1,0 @@
-"""Check scripts package."""

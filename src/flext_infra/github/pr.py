@@ -1,10 +1,9 @@
 """Pull request lifecycle management service.
 
-Wraps GitHub CLI (gh) PR operations with FlextResult error handling,
-replacing scripts/github/pr_manager.py with a service class.
+Wraps GitHub CLI (gh) PR operations with FlextResult error handling.
 
 Usage:
-    python -m flext_infra.github.pr --repo-root <path> --action status
+    python -m flext_infra github pr --repo-root <path> --action status
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

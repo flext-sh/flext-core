@@ -1,11 +1,11 @@
 """CLI entry point for documentation services.
 
 Usage:
-    python -m flext_infra.docs.auditor --root flext-core
-    python -m flext_infra.docs.fixer --root flext-core --apply
-    python -m flext_infra.docs.builder --root flext-core
-    python -m flext_infra.docs.generator --root flext-core --apply
-    python -m flext_infra.docs.validator --root flext-core
+    python -m flext_infra docs audit --root flext-core
+    python -m flext_infra docs fix --root flext-core --apply
+    python -m flext_infra docs build --root flext-core
+    python -m flext_infra docs generate --root flext-core --apply
+    python -m flext_infra docs validate --root flext-core
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

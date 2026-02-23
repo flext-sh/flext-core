@@ -9,10 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_infra.workspace.detector import WorkspaceDetector, WorkspaceMode
-from flext_infra.workspace.migrator import ProjectMigrator
-from flext_infra.workspace.orchestrator import OrchestratorService
-from flext_infra.workspace.sync import SyncService
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .detector import WorkspaceDetector, WorkspaceMode
+    from .migrator import ProjectMigrator
+    from .orchestrator import OrchestratorService
+    from .sync import SyncService
 
 __all__ = [
     "OrchestratorService",
@@ -21,3 +24,36 @@ __all__ = [
     "WorkspaceDetector",
     "WorkspaceMode",
 ]
+
+
+def __getattr__(name: str) -> object:
+    if name in {"WorkspaceDetector", "WorkspaceMode"}:
+        from .detector import (
+            WorkspaceDetector as _WorkspaceDetector,
+            WorkspaceMode as _WorkspaceMode,
+        )
+
+        exports: dict[str, object] = {
+            "WorkspaceDetector": _WorkspaceDetector,
+            "WorkspaceMode": _WorkspaceMode,
+        }
+        return exports[name]
+
+    if name == "ProjectMigrator":
+        from .migrator import ProjectMigrator as _ProjectMigrator
+
+        return _ProjectMigrator
+
+    if name == "OrchestratorService":
+        from .orchestrator import (
+            OrchestratorService as _OrchestratorService,
+        )
+
+        return _OrchestratorService
+
+    if name == "SyncService":
+        from .sync import SyncService as _SyncService
+
+        return _SyncService
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

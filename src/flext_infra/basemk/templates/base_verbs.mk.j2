@@ -27,7 +27,7 @@ setup: ## Complete setup
 		go mod tidy; \
 		exit 0; \
 	fi
-	$(Q)python -m flext_infra.deps.internal_sync
+	$(Q)python -m flext_infra deps internal-sync
 	$(Q)$(POETRY) lock
 	$(Q)$(POETRY) install --all-extras --all-groups
 	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -105,8 +105,8 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
-	$(POETRY) run python -m flext_infra.check.fix_pyrefly_config "$$project_key"; \
-	$(POETRY) run python -m flext_infra.check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
+	$(POETRY) run python -m flext_infra check fix-pyrefly-config "$$project_key"; \
+	$(POETRY) run python -m flext_infra check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
 	exit $$?; \
 	if echo "$$gates" | grep -qw lint; then \
 		$(POETRY) run ruff check . --quiet || { echo "FAIL: lint"; exit 1; }; \
@@ -207,15 +207,15 @@ docs: ## Build docs
 	fi; \
 	for phase in $$phases; do \
 		case "$$phase" in \
-			audit) module="flext_infra.docs.audit"; extra="--strict 1" ;; \
-			fix) module="flext_infra.docs.fix"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
-			build) module="flext_infra.docs.build"; extra="" ;; \
-			generate) module="flext_infra.docs.generate"; extra="--apply" ;; \
-			validate) module="flext_infra.docs.validate"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
+			audit) subcmd="docs audit"; extra="--strict 1" ;; \
+			fix) subcmd="docs fix"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
+			build) subcmd="docs build"; extra="" ;; \
+			generate) subcmd="docs generate"; extra="--apply" ;; \
+			validate) subcmd="docs validate"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
 			*) echo "ERROR: invalid DOCS_PHASE=$$phase"; exit 2 ;; \
 		esac; \
 		if [ "$$phase" = "fix" ] && [ "$$all_mode" = "1" ]; then extra="--apply"; fi; \
-		cmd="python -m $$module --root . --output-dir .reports/docs"; \
+		cmd="python -m flext_infra $$subcmd --root . --output-dir .reports/docs"; \
 		if [ -n "$$extra" ]; then cmd="$$cmd $$extra"; fi; \
 		eval $$cmd || exit $$?; \
 	done
@@ -272,8 +272,11 @@ test: ## Run pytest only
 		echo "duration_seconds=0" >> "$$summary_file"; \
 	fi; \
 	counts_file="$$report_dir/counts.env"; \
-	$(VENV_PYTHON) -m flext_infra.core.pytest_diag_extract \
-		"$$junit_file" "$$log_file" "$$failed_file" "$$errors_file" "$$warnings_file" "$$slowest_file" "$$skips_file" > "$$counts_file"; \
+	$(VENV_PYTHON) -m flext_infra core pytest-diag \
+		--junit "$$junit_file" --log "$$log_file" \
+		--failed "$$failed_file" --errors "$$errors_file" \
+		--warnings "$$warnings_file" --slowest "$$slowest_file" \
+		--skips "$$skips_file" > "$$counts_file"; \
 	. "$$counts_file"; \
 	if [ "$$rc" -eq 130 ] || [ "$$interrupted" = "1" ]; then run_state="INTERRUPTED"; else run_state="COMPLETED"; fi; \
 	echo "================================================" >&2; \

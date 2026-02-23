@@ -1,9 +1,9 @@
 """CLI entry point for workspace utilities.
 
 Usage:
-    python -m flext_infra.workspace detect [--project-root PATH]
-    python -m flext_infra.workspace sync [--project-root PATH]
-    python -m flext_infra.workspace orchestrate --verb <verb> [--fail-fast] [projects...]
+    python -m flext_infra workspace detect [--project-root PATH]
+    python -m flext_infra workspace sync [--project-root PATH]
+    python -m flext_infra workspace orchestrate --verb <verb> [--fail-fast] [projects...]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -112,9 +112,7 @@ def main() -> int:
     )
 
     # sync subcommand
-    sync_parser = subparsers.add_parser(
-        "sync", help="Sync base.mk to project root (no scripts/ sync)"
-    )
+    sync_parser = subparsers.add_parser("sync", help="Sync base.mk to project root")
     _ = sync_parser.add_argument(
         "--project-root",
         required=True,

@@ -1,5 +1,5 @@
 pr: ## Manage pull requests for this repository
-	$(Q)python3 -m flext_infra.github.pr_manager \
+	$(Q)python3 -m flext_infra github pr \
 		--repo-root "$(CURDIR)" \
 		--action "$(PR_ACTION)" \
 		--base "$(PR_BASE)" \

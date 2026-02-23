@@ -4,7 +4,7 @@ Audits documentation for broken links and forbidden terms,
 returning structured FlextResult reports.
 
 Usage:
-    python -m flext_infra.docs.auditor --root flext-core
+    python -m flext_infra docs audit --root flext-core
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

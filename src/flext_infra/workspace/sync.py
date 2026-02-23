@@ -1,8 +1,7 @@
 """Workspace sync service for base.mk generation and deployment.
 
 Generates base.mk from templates and deploys to project roots with
-SHA256-based idempotency and file locking. Explicitly does NOT sync
-the scripts/ tree — that responsibility is handled separately.
+SHA256-based idempotency and file locking.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -38,8 +37,6 @@ class SyncService(FlextService[im.SyncResult]):
     Generates a fresh base.mk via ``BaseMkGenerator``, compares its SHA256
     hash against the existing file, and writes only when content differs.
     All writes are protected by an ``fcntl`` file lock.
-
-    This service explicitly does NOT sync the scripts/ tree.
 
     """
 

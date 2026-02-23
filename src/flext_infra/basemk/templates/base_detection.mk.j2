@@ -5,7 +5,7 @@ PROJECT_ROOT := $(CURDIR)
 ifeq ($(FLEXT_STANDALONE),1)
 FLEXT_MODE := standalone
 else
-DETECTED_MODE := $(shell python -m flext_infra.workspace detect --project-root "$(PROJECT_ROOT)" 2>/dev/null || printf standalone)
+DETECTED_MODE := $(shell python -m flext_infra workspace detect --project-root "$(PROJECT_ROOT)" 2>/dev/null || printf standalone)
 FLEXT_MODE := $(DETECTED_MODE)
 endif
 

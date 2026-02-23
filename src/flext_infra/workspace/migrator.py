@@ -16,18 +16,39 @@ from flext_infra.discovery import DiscoveryService
 from flext_infra.models import im
 
 _MAKEFILE_REPLACEMENTS: tuple[tuple[str, str], ...] = (
-    ('[ -f "$(WORKSPACE_ROOT)/scripts/check/workspace_check.py" ] && ', ""),
+    # scripts/ path → unified CLI: detection
     (
-        'if [ -f "$(WORKSPACE_ROOT)/scripts/check/fix_pyrefly_config.py" ]; then \\\n+',
-        "if true; then \\\n+",
+        'python3 "$(BASE_MK_DIR)/scripts/mode.py"',
+        "python -m flext_infra workspace detect",
     ),
+    # scripts/ path → unified CLI: sync
+    (
+        'python3 "$(WORKSPACE_ROOT)/scripts/sync.py"',
+        "python -m flext_infra workspace sync",
+    ),
+    # scripts/ path → unified CLI: deps
+    (
+        'python3 "$(WORKSPACE_ROOT)/scripts/dependencies/sync_internal_deps.py"',
+        "python -m flext_infra deps internal-sync",
+    ),
+    # scripts/ path → unified CLI: check
     (
         'python "$(WORKSPACE_ROOT)/scripts/check/fix_pyrefly_config.py"',
-        "python -m flext_infra.check.fix_pyrefly_config",
+        "python -m flext_infra check fix-pyrefly-config",
     ),
     (
         'python "$(WORKSPACE_ROOT)/scripts/check/workspace_check.py"',
-        "python -m flext_infra.check.workspace_check",
+        "python -m flext_infra check run",
+    ),
+    # scripts/ path → unified CLI: pytest-diag
+    (
+        '$(VENV_PYTHON) "$(BASE_MK_DIR)/scripts/core/pytest_diag_extract.py"',
+        "$(VENV_PYTHON) -m flext_infra core pytest-diag",
+    ),
+    # scripts/ path → unified CLI: pr
+    (
+        'python3 "$(WORKSPACE_ROOT)/scripts/github/pr_manager.py"',
+        "python3 -m flext_infra github pr",
     ),
 )
 
