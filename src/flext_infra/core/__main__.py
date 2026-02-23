@@ -146,7 +146,11 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
 def _run_stub_validate(args: argparse.Namespace) -> int:
     """Execute stub supply chain validation."""
     chain = StubSupplyChain()
-    result = chain.validate(Path(args.root).resolve())
+    root = Path(args.root).resolve()
+    project_dirs: list[Path] | None = None
+    if hasattr(args, "project") and args.project:
+        project_dirs = [root / p for p in args.project]
+    result = chain.validate(root, project_dirs=project_dirs)
 
     if result.is_success:
         report = result.value
@@ -208,6 +212,8 @@ def main() -> int:
     # stub-validate
     stv = subparsers.add_parser("stub-validate", help="Validate stub supply chain")
     stv.add_argument("--root", default=".", help="Workspace root")
+    stv.add_argument("--project", action="append", help="Project to validate")
+    stv.add_argument("--all", action="store_true", help="Validate all projects")
 
     args = parser.parse_args()
 
