@@ -233,9 +233,8 @@ class FlextModelsConfig:
                 msg = f"Batch size cannot exceed {max_batch_size}"
                 raise ValueError(msg)
 
-            # Adjust max_workers to not exceed batch_size without triggering validation
             adjusted_workers = min(self.max_workers, self.batch_size)
-            self.max_workers = adjusted_workers
+            self.__dict__["max_workers"] = adjusted_workers
 
             return self
 

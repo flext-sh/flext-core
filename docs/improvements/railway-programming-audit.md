@@ -111,7 +111,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
 
 #### Collection Operations
 
-4. **sequence()** - Line 1126
+1. **sequence()** - Line 1126
 
    - **Purpose**: Convert list\[FlextResult[T]\] → FlextResult\[list[T]\]
    - **Missing From**: Railway guide
@@ -144,7 +144,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
 
 #### Advanced Composition
 
-8. **batch_process()** - Line 1167
+1. **batch_process()** - Line 1167
 
    - **Purpose**: Process items in batches with error handling
    - **Missing From**: Railway guide
@@ -255,7 +255,7 @@ ______________________________________________________________________
 
 ### Medium Priority
 
-5. **Verify Advanced Methods**
+1. **Verify Advanced Methods**
 
    - Check flow_through() existence
    - Verify lash(), alt(), with_resource()
@@ -270,7 +270,7 @@ ______________________________________________________________________
 
 ### Low Priority
 
-7. **Add Performance Section**
+1. **Add Performance Section**
 
    - Document parallel_map performance
    - Batch processing guidelines

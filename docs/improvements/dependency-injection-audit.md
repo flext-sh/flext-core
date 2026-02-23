@@ -271,13 +271,13 @@ ______________________________________________________________________
 
 ### Medium Priority
 
-4. Add performance considerations section
+1. Add performance considerations section
 1. Create v0.9.8 → v0.9.9 migration guide
 1. Expand testing patterns section
 
 ### Low Priority
 
-7. Add more real-world examples
+1. Add more real-world examples
 1. Create comparison table of all methods
 1. Add troubleshooting section
 

@@ -361,7 +361,7 @@ def test_initialize_di_components_second_type_error_branch(
         "flext_core.container.FlextRuntime.DependencyIntegration.create_layered_bridge",
         lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
     )
-    monkeypatch.setattr("flext_core.container.providers.Configuration", object)
+    monkeypatch.setattr("flext_core.container.di_providers.Configuration", object)
     with pytest.raises(TypeError, match="cannot be None"):
         c.initialize_di_components()
 

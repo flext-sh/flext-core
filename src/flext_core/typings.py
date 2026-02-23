@@ -345,6 +345,14 @@ class FlextTypes:
             ).root
             return len(root)
 
+        def __iter__(self) -> typing.Iterator[str]:
+            """Iterate over keys (dict semantics, not model fields)."""
+            root = typing.cast(
+                "FlextTypes._RootDictProtocol[DictValueT]",
+                self,
+            ).root
+            return iter(root)
+
         def __contains__(self, key: object) -> bool:
             """Check if key exists."""
             root = typing.cast(

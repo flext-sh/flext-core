@@ -758,7 +758,7 @@ from flext_core import u
 
 ### Your minimal example here
 
-4. **Expected vs Actual Behavior**
+1. **Expected vs Actual Behavior**
 
 - What you expected to happen
 - What actually happened
@@ -780,7 +780,7 @@ def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
 ```
 
-2. **Validate Input Early**
+1. **Validate Input Early**
 
    ```python
    def process_data(data: dict) -> FlextResult[dict]:

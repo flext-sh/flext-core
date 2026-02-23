@@ -16,8 +16,8 @@ import pytest
 import yaml
 from pydantic import BaseModel
 
-from flext import r
-from flext.typings import t
+from flext_core import FlextResult as r
+from flext_core import FlextTypes as t
 from flext_tests.files import FlextTestsFiles, tf
 from flext_tests.models import m
 from tests.test_utils import assertion_helpers
@@ -179,11 +179,7 @@ class TestFlextTestsFiles:
         """Test creating multiple files from dictionary."""
         files: dict[
             str,
-            str
-            | bytes
-            | t.ConfigurationMapping
-            | Sequence[Sequence[str]]
-            | BaseModel,
+            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
         ] = {
             "file1": "content1",
             "file2": "content2",
@@ -203,11 +199,7 @@ class TestFlextTestsFiles:
         """Test creating file set with custom extension."""
         files: dict[
             str,
-            str
-            | bytes
-            | t.ConfigurationMapping
-            | Sequence[Sequence[str]]
-            | BaseModel,
+            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         extension = ".md"
 
@@ -353,11 +345,7 @@ class TestFlextTestsFiles:
         """Test files classmethod context manager."""
         files: dict[
             str,
-            str
-            | bytes
-            | t.ConfigurationMapping
-            | Sequence[Sequence[str]]
-            | BaseModel,
+            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
         ] = {
             "file1": "content1",
             "file2": "content2",
@@ -378,11 +366,7 @@ class TestFlextTestsFiles:
         """Test files with custom extension."""
         files: dict[
             str,
-            str
-            | bytes
-            | t.ConfigurationMapping
-            | Sequence[Sequence[str]]
-            | BaseModel,
+            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
 
         with FlextTestsFiles.files(files, ext=".md") as created:
@@ -393,11 +377,7 @@ class TestFlextTestsFiles:
         nested_dir = tmp_path / "nested" / "subdir"
         files: dict[
             str,
-            str
-            | bytes
-            | t.ConfigurationMapping
-            | Sequence[Sequence[str]]
-            | BaseModel,
+            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
 
         with tf.files(files, directory=nested_dir) as created:

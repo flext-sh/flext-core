@@ -504,7 +504,7 @@ ______________________________________________________________________
 
 ### Medium Priority
 
-2. **Add Source Line References** (like other audited guides)
+1. **Add Source Line References** (like other audited guides)
 
    - Pattern 2: ConfigDict - config.py:178-200
    - Pattern 3: field_validator - config.py:427, 439, models.py:975+
@@ -520,7 +520,7 @@ ______________________________________________________________________
 
 ### Low Priority
 
-4. **Add Performance Notes**
+1. **Add Performance Notes**
 
    - Pydantic v2 is 5-50x faster than v1
    - Rust-based validation core

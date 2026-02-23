@@ -461,6 +461,7 @@ config = FlextNewlibSettings(new_setting="value")
 ### Common Issues
 
 1. **Import Errors**
+
    ```bash
    # Check PYTHONPATH
    export PYTHONPATH=src
@@ -481,7 +482,7 @@ config = FlextNewlibSettings(new_setting="value")
    pytest tests/unit/test_specific.py::test_function -v
 ````
 
-3. **Build Issues**
+1. **Build Issues**
 
    ```bash
    # Clean and rebuild

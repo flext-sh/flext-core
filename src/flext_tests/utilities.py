@@ -1330,7 +1330,7 @@ class FlextTestsUtilities(FlextUtilities):
                     TEntity: Created entity instance
 
                 """
-                entity = entity_class(name, value)
+                entity = entity_class(name=name, value=value)
                 if remove_id and hasattr(entity, "unique_id"):
                     delattr(entity, "unique_id")
                 return entity
@@ -1394,7 +1394,7 @@ class FlextTestsUtilities(FlextUtilities):
                     TValue: Created value object instance
 
                 """
-                return value_class(data, count)
+                return value_class(data=data, count=count)
 
             @staticmethod
             def create_test_value_objects_batch[TValue](
