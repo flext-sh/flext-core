@@ -70,27 +70,27 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
 
         if args.failed and data.get("failed_cases"):
             Path(args.failed).write_text(
-                "\n\n".join(cast(list[str], data["failed_cases"])) + "\n",
+                "\n\n".join(cast("list[str]", data["failed_cases"])) + "\n",
                 encoding="utf-8",
             )
         if args.errors and data.get("error_traces"):
             Path(args.errors).write_text(
-                "\n\n".join(cast(list[str], data["error_traces"])) + "\n",
+                "\n\n".join(cast("list[str]", data["error_traces"])) + "\n",
                 encoding="utf-8",
             )
         if args.warnings and data.get("warning_lines"):
             Path(args.warnings).write_text(
-                "\n".join(cast(list[str], data["warning_lines"])) + "\n",
+                "\n".join(cast("list[str]", data["warning_lines"])) + "\n",
                 encoding="utf-8",
             )
         if args.slowest and data.get("slow_entries"):
             Path(args.slowest).write_text(
-                "\n".join(cast(list[str], data["slow_entries"])) + "\n",
+                "\n".join(cast("list[str]", data["slow_entries"])) + "\n",
                 encoding="utf-8",
             )
         if args.skips and data.get("skip_cases"):
             Path(args.skips).write_text(
-                "\n".join(cast(list[str], data["skip_cases"])) + "\n", encoding="utf-8"
+                "\n".join(cast("list[str]", data["skip_cases"])) + "\n", encoding="utf-8"
             )
 
         print(f"failed_count={data.get('failed_count', 0)}")

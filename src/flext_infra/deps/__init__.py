@@ -111,16 +111,16 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    "DependencyDetectionModels",
-    "DependencyDetectionService",
-    "DependencyDetectorModels",
     "EXTRA_PATHS_ROOT",
     "FLEXT_DEPS_DIR",
-    "InternalDependencySyncService",
     "MYPY_BASE_PROJECT",
     "MYPY_BASE_ROOT",
     "PYRIGHT_BASE_PROJECT",
     "PYRIGHT_BASE_ROOT",
+    "DependencyDetectionModels",
+    "DependencyDetectionService",
+    "DependencyDetectorModels",
+    "InternalDependencySyncService",
     "PyprojectModernizer",
     "RepoUrls",
     "RuntimeDevDependencyDetector",

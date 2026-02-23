@@ -37,7 +37,7 @@ class DependencyDetectionModels(im):
 
     class ProjectDependencyReport(im.ArbitraryTypesModel):
         project: str = Field(min_length=1)
-        deptry: "DependencyDetectionModels.DeptryReport"
+        deptry: DependencyDetectionModels.DeptryReport
 
     class TypingsReport(im.ArbitraryTypesModel):
         required_packages: list[str] = Field(default_factory=list)

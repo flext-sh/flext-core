@@ -12,11 +12,11 @@ from pydantic import Field
 
 from flext_infra.constants import ic
 from flext_infra.deps.detection import DependencyDetectionService
+from flext_infra.json_io import JsonService
 from flext_infra.models import im
 from flext_infra.paths import PathResolver
 from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
-from flext_infra.json_io import JsonService
 
 logger = structlog.get_logger(__name__)
 

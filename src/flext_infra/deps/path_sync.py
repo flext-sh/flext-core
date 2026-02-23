@@ -104,8 +104,8 @@ def _rewrite_pep621(
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
         path_prefix = "./" if is_root else ""
         new_entry = f"{dep_name} @ {path_prefix}{new_path}{marker}"
-        if deps[index] != new_entry:
-            changes.append(f"  PEP621: {deps[index]} -> {new_entry}")
+        if item != new_entry:
+            changes.append(f"  PEP621: {item} -> {new_entry}")
             deps[index] = new_entry
     return changes
 
