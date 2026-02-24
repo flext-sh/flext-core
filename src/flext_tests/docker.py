@@ -23,7 +23,7 @@ import socket
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from docker.errors import NotFound
 from docker.models.containers import Container
@@ -64,10 +64,6 @@ class FlextTestsDocker:
         Does NOT inherit from ContainerCollection (which is untyped in docker SDK).
         Instead, implements the same interface via composition and protocol.
         """
-
-        def __init__(self) -> None:
-            """Initialize offline container collection stub."""
-            # No initialization needed for offline mode
 
         def get(self, container_id: str) -> Container:
             """Raise NotFound for any container lookup.
@@ -117,7 +113,7 @@ class FlextTestsDocker:
         self,
     ) -> Mapping[str, m.ConfigMap]:
         """Get shared container configurations."""
-        return c.Tests.Docker.SHARED_CONTAINERS
+        return cast("Mapping[str, m.ConfigMap]", c.Tests.Docker.SHARED_CONTAINERS)
 
     def get_client(self) -> DockerClient | FlextTestsDocker._OfflineDockerClient:
         """Get Docker client with lazy initialization.
@@ -127,7 +123,7 @@ class FlextTestsDocker:
         """
         if self._client is None:
             try:
-                self._client = docker.from_env()  # type: ignore[union-attr]
+                self._client = docker.from_env()
             except DockerException as error:
                 self.logger.exception(
                     "Failed to initialize Docker client",
@@ -221,7 +217,7 @@ class FlextTestsDocker:
         """Get container information."""
         try:
             client = self.get_client()
-            container = client.containers.get(container_name)  # type: ignore[union-attr]
+            container = client.containers.get(container_name)
             ports_raw = getattr(container, "ports", {}) or {}
             ports: dict[str, str] = {}
             for k, v in ports_raw.items():
@@ -260,7 +256,7 @@ class FlextTestsDocker:
         """Start an existing stopped container without recreating it."""
         try:
             client = self.get_client()
-            container = client.containers.get(name)  # type: ignore[union-attr]
+            container = client.containers.get(name)
             # Access Container attributes via getattr for type safety
             status_val = str(getattr(container, "status", "unknown"))
 

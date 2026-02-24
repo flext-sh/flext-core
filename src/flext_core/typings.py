@@ -27,8 +27,6 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
-from flext_core.constants import FlextConstants
-
 # LaxStr compatibility for external integrations (LDAP, etc.)
 
 # ============================================================================
@@ -238,10 +236,10 @@ class FlextTypes:
     # Conversion Mode Types
     # =========================================================================
     ConversionMode: TypeAlias = Literal[
-        FlextConstants.Utilities.ConversionMode.TO_STR,
-        FlextConstants.Utilities.ConversionMode.TO_STR_LIST,
-        FlextConstants.Utilities.ConversionMode.NORMALIZE,
-        FlextConstants.Utilities.ConversionMode.JOIN,
+        "to_str",
+        "to_str_list",
+        "normalize",
+        "join",
     ]
 
     # MetadataAttributeValue - fixed scalar/mapping/list (Mapping, no dict)

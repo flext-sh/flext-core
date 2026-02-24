@@ -217,6 +217,7 @@ class FlextModels:
     Options: TypeAlias = FlextModelsCollections.Options
     CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
     Categories: TypeAlias = FlextModelsCollections.Categories
+    Rules: TypeAlias = FlextModelsCollections.Rules
 
     # =========================================================================
     # CONTAINER MODELS - DI registry and service registration

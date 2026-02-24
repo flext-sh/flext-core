@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from datetime import datetime
 from types import ModuleType
 from typing import ClassVar
 
@@ -33,49 +34,10 @@ from flext_core.result import r
 from flext_core.typings import t
 from flext_core.utilities import u
 
-
-def _handler_type_to_literal(
-    handler_type: c.Cqrs.HandlerType,
-) -> c.Cqrs.HandlerTypeLiteral:
-    """Convert HandlerType StrEnum to HandlerTypeLiteral.
-
-    Business Rule: HandlerType StrEnum members are runtime-compatible with
-    HandlerTypeLiteral (which is Literal[HandlerType.COMMAND, ...]). After
-    validation that handler_type is one of the valid HandlerType values,
-    the type checker understands the compatibility, so cast is not needed.
-
-    Args:
-        handler_type: HandlerType StrEnum member (validated to be one of
-            HandlerType.COMMAND, HandlerType.QUERY, HandlerType.EVENT,
-            HandlerType.OPERATION, HandlerType.SAGA).
-
-    Returns:
-        HandlerTypeLiteral compatible value.
-
-    """
-    # Runtime: HandlerType members are directly assignable to HandlerTypeLiteral
-    # Use match to ensure type narrowing for both mypy and pyright
-    match handler_type:
-        case c.Cqrs.HandlerType.COMMAND:
-            return "command"
-        case c.Cqrs.HandlerType.QUERY:
-            return "query"
-        case c.Cqrs.HandlerType.EVENT:
-            return "event"
-        case c.Cqrs.HandlerType.OPERATION:
-            return "operation"
-        case c.Cqrs.HandlerType.SAGA:
-            return "saga"
-    msg = f"Unsupported handler type: {handler_type}"
-    raise ValueError(msg)
-
-
 # Import moved to top of file to avoid circular dependency
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    x.CQRS.MetricsTracker,
-    x.CQRS.ContextStack,
     x,
     ABC,
 ):
@@ -132,6 +94,25 @@ class FlextHandlers[MessageT_contra, ResultT](
     _expected_result_type: ClassVar[type | None] = None
     _config_model: m.Handler
 
+    @staticmethod
+    def _handler_type_to_literal(
+        handler_type: c.Cqrs.HandlerType,
+    ) -> c.Cqrs.HandlerTypeLiteral:
+        """Convert HandlerType StrEnum to HandlerTypeLiteral."""
+        match handler_type:
+            case c.Cqrs.HandlerType.COMMAND:
+                return "command"
+            case c.Cqrs.HandlerType.QUERY:
+                return "query"
+            case c.Cqrs.HandlerType.EVENT:
+                return "event"
+            case c.Cqrs.HandlerType.OPERATION:
+                return "operation"
+            case c.Cqrs.HandlerType.SAGA:
+                return "saga"
+        msg = f"Unsupported handler type: {handler_type}"
+        raise ValueError(msg)
+
     def __init__(
         self,
         *,
@@ -176,7 +157,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         # After validation, we know handler_type is one of the valid HandlerType values
         # Business Rule: HandlerType StrEnum members are runtime-compatible with HandlerTypeLiteral
         # Use helper function for type-safe conversion
-        handler_mode_literal = _handler_type_to_literal(handler_type)
+        handler_mode_literal = self._handler_type_to_literal(handler_type)
         self._execution_context = m.Handler.ExecutionContext.create_for_handler(
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
@@ -186,9 +167,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        # Metrics and context stack are now provided by FlextMixins.CQRS mixins
-        # MetricsTracker provides _metrics and record_metric()/get_metrics()
-        # ContextStack provides _stack and push_context()/pop_context()/current_context()
+        self._metrics: dict[str, t.ConfigMapValue] = {}
+        self._stack: list[m.Handler.ExecutionContext | m.ConfigMap] = []
 
     @property
     def handler_name(self) -> str:
@@ -265,7 +245,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 """Execute the wrapped callable."""
                 try:
                     result = self._handler_fn(message)
-                    if u.is_type(result, r):
+                    if isinstance(result, r):
                         return r[t.ScalarValue].ok(result.value)
                     return r[t.ScalarValue].ok(result)
                 except Exception as exc:
@@ -280,8 +260,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         resolved_type: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND
         if mode is not None:
             # Handle both HandlerType enum and string (HandlerType is StrEnum, so values are strings)
-            if u.is_type(mode, c.Cqrs.HandlerType):
-                resolved_type = c.Cqrs.HandlerType(mode.value)
+            if isinstance(mode, c.Cqrs.HandlerType):
+                resolved_type = mode
             elif mode not in u.values(c.Cqrs.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
@@ -359,12 +339,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
         validation = self.validate(message)
         if validation.is_failure:
-            return r[ResultT].fail(validation.error or "Validation failed")
+            return r.fail(validation.error or "Validation failed")
         return self.handle(message)
 
     def validate(
         self,
-        data: MessageT_contra | t.AcceptableMessageType,
+        data: MessageT_contra,
     ) -> r[bool]:
         """Validate input data using extensible validation pipeline.
 
@@ -402,7 +382,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def validate_command(
         self,
-        command: MessageT_contra | t.AcceptableMessageType,
+        command: MessageT_contra,
     ) -> r[bool]:
         """Validate command message with command-specific rules.
 
@@ -425,7 +405,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def validate_query(
         self,
-        query: MessageT_contra | t.AcceptableMessageType,
+        query: MessageT_contra,
     ) -> r[bool]:
         """Validate query message with query-specific rules.
 
@@ -447,7 +427,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def validate_message(
         self,
-        message: t.AcceptableMessageType,
+        message: MessageT_contra,
     ) -> r[bool]:
         """Validate message using type checking and validation rules.
 
@@ -516,10 +496,72 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         return self._config_model.handler_mode
 
-    # Metrics and context methods are now inherited from FlextMixins.CQRS mixins:
-    # - MetricsTracker: record_metric(), get_metrics()
-    # - ContextStack: push_context(), pop_context(), current_context()
-    # These methods are available via multiple inheritance from the mixin classes
+    def record_metric(self, name: str, value: t.ConfigMapValue) -> r[bool]:
+        """Record a metric value in the current handler state."""
+        self._metrics[name] = value
+        return r[bool].ok(value=True)
+
+    def get_metrics(self) -> r[m.ConfigMap]:
+        """Return a snapshot of collected handler metrics."""
+        return r[m.ConfigMap].ok(m.ConfigMap(root=dict(self._metrics.items())))
+
+    def push_context(
+        self,
+        ctx: m.Handler.ExecutionContext | dict[str, t.ConfigMapValue],
+    ) -> r[bool]:
+        """Push execution context onto the local handler stack."""
+        if isinstance(ctx, m.Handler.ExecutionContext | m.ConfigMap):
+            self._stack.append(ctx)
+            return r[bool].ok(value=True)
+
+        handler_name_raw = ctx.get("handler_name", "unknown")
+        handler_name = (
+            str(handler_name_raw) if handler_name_raw is not None else "unknown"
+        )
+        handler_mode_raw = ctx.get("handler_mode", "operation")
+        handler_mode_str = (
+            str(handler_mode_raw) if handler_mode_raw is not None else "operation"
+        )
+        handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
+            "command"
+            if handler_mode_str == "command"
+            else "query"
+            if handler_mode_str == "query"
+            else "event"
+            if handler_mode_str == "event"
+            else "saga"
+            if handler_mode_str == "saga"
+            else "operation"
+        )
+        execution_ctx = m.Handler.ExecutionContext.create_for_handler(
+            handler_name=handler_name,
+            handler_mode=handler_mode_literal,
+        )
+        self._stack.append(execution_ctx)
+        return r[bool].ok(value=True)
+
+    def pop_context(self) -> r[m.ConfigMap]:
+        """Pop execution context from the local handler stack."""
+        if not self._stack:
+            return r[m.ConfigMap].ok(m.ConfigMap())
+
+        popped = self._stack.pop()
+        if isinstance(popped, m.Handler.ExecutionContext):
+            context_dict: m.ConfigMap = m.ConfigMap(
+                root={
+                    "handler_name": popped.handler_name,
+                    "handler_mode": popped.handler_mode,
+                }
+            )
+            return r[m.ConfigMap].ok(context_dict)
+        return r[m.ConfigMap].ok(popped)
+
+    def current_context(self) -> m.Handler.ExecutionContext | None:
+        """Return current execution context when available."""
+        if not self._stack:
+            return None
+        top_item = self._stack[-1]
+        return top_item if isinstance(top_item, m.Handler.ExecutionContext) else None
 
     @staticmethod
     def _extract_message_id(message: t.ScalarValue) -> str | None:
@@ -535,7 +577,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             Message ID string or None if not available
 
         """
-        if u.is_type(message, dict):
+        if isinstance(message, dict):
             # Try command_id first, then message_id using extract
             cmd_id_result = u.extract(
                 message,
@@ -556,14 +598,12 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if msg_id_result.is_success and msg_id_result.value
                 else None
             )
-        # Use u.get() for concise attribute extraction
-        # Check if message is accessible data (BaseModel or dict)
-        if u.is_type(message, (dict, BaseModel)):
+        if isinstance(message, BaseModel):
             if hasattr(message, "command_id"):
-                cmd_id = u.get(message, "command_id", default="") or ""
+                cmd_id = getattr(message, "command_id", "") or ""
                 return str(cmd_id) if cmd_id else None
             if hasattr(message, "message_id"):
-                msg_id = u.get(message, "message_id", default="") or ""
+                msg_id = getattr(message, "message_id", "") or ""
                 return str(msg_id) if msg_id else None
         return None
 
@@ -626,14 +666,14 @@ class FlextHandlers[MessageT_contra, ResultT](
                 f"Handler with mode '{handler_mode}' "
                 f"cannot execute {operation} pipelines"
             )
-            return r[ResultT].fail(error_msg)
+            return r.fail(error_msg)
 
         # Check if handler can handle message type
         message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
-            return r[ResultT].fail(error_msg)
+            return r.fail(error_msg)
 
         # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
         # Validate message based on operation type
@@ -647,7 +687,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"
-            return r[ResultT].fail(error_msg)
+            return r.fail(error_msg)
 
         # Start execution timing
         self._execution_context.start_execution()
@@ -668,7 +708,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             # Record failure metrics
             self._record_execution_metrics(success=False, error=str(exc))
             error_msg = f"Critical handler failure: {exc}"
-            return r[ResultT].fail(error_msg)
+            return r.fail(error_msg)
         finally:
             # Pop execution context
             _ = self.pop_context()
@@ -680,10 +720,16 @@ class FlextHandlers[MessageT_contra, ResultT](
         error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
-        exec_time_value = self._execution_context.execution_time_ms
-        exec_time: float = (
-            exec_time_value if isinstance(exec_time_value, float) else 0.0
+        exec_time_value_attr = self._execution_context.execution_time_ms
+        exec_time_value = (
+            exec_time_value_attr()
+            if callable(exec_time_value_attr)
+            else exec_time_value_attr
         )
+        try:
+            exec_time = float(exec_time_value)
+        except (TypeError, ValueError):
+            exec_time = 0.0
         # Mixin record_metric() returns r[bool], assign to _ to indicate intentional
         _ = self.record_metric(
             "execution_time_ms",
@@ -758,8 +804,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                     command=command,
                     priority=priority,
                     timeout=timeout,
-                    middleware=middleware or [],
+                    middleware=[],
                 )
+                if middleware is not None:
+                    config = config.model_copy(update={"middleware": list(middleware)})
                 setattr(func, c.Discovery.HANDLER_ATTR, config)
             return func
 
@@ -865,33 +913,37 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if name.startswith("_"):
                     continue
                 func = getattr(module, name, None)
-                if u.is_handler_callable(func) and hasattr(
+                if not u.is_handler_callable(func):
+                    continue
+                if not hasattr(func, c.Discovery.HANDLER_ATTR):
+                    continue
+                if not callable(func):
+                    continue
+                config: m.Handler.DecoratorConfig = getattr(
                     func,
                     c.Discovery.HANDLER_ATTR,
-                ):
-                    config: m.Handler.DecoratorConfig = getattr(
-                        func,
-                        c.Discovery.HANDLER_ATTR,
-                    )
-                    # Type narrowing after guard check
-                    if callable(func):
-                        captured_fn = func
+                )
+                callable_func: Callable[..., object] = func
 
-                        def narrowed_func(
-                            message: t.ScalarValue,
-                            fn: Callable[[t.ScalarValue], t.ScalarValue] = captured_fn,
-                        ) -> t.ScalarValue:
-                            if callable(fn):
-                                return u.narrow_to_general_value_type(fn(message))
-                            return ""
+                def narrowed_func(
+                    message: t.ScalarValue,
+                    captured_callable: Callable[..., object] = callable_func,
+                ) -> t.ScalarValue:
+                    result = captured_callable(message)
+                    if (
+                        isinstance(result, str | int | float | bool | datetime)
+                        or result is None
+                    ):
+                        return result
+                    return ""
 
-                        setattr(
-                            narrowed_func,
-                            c.Discovery.HANDLER_ATTR,
-                            config,
-                        )
+                setattr(
+                    narrowed_func,
+                    c.Discovery.HANDLER_ATTR,
+                    config,
+                )
 
-                        handlers.append((name, narrowed_func, config))
+                handlers.append((name, narrowed_func, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

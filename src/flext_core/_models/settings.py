@@ -287,6 +287,12 @@ class FlextModelsConfig:
             description="Middleware-specific configuration",
         )
 
+    class DispatcherMiddlewareConfig(MiddlewareConfig):
+        """Internal configuration for dispatcher middleware."""
+
+        middleware_id: str
+        middleware_type: str
+
     class RateLimiterState(BaseModel):
         """State tracking for rate limiter functionality.
 

@@ -13,7 +13,18 @@ import inspect
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, TypeVar, cast, overload
+from typing import (
+    Annotated,
+    ClassVar,
+    Literal,
+    TypeGuard,
+    TypeIs,
+    TypeVar,
+    cast,
+    overload,
+)
+
+from pydantic import Field, TypeAdapter, ValidationError
 
 from flext_core.result import r
 from flext_core.typings import t
@@ -43,6 +54,9 @@ class FlextUtilitiesEnum:
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
+    _strict_str_adapter: ClassVar[TypeAdapter[Annotated[str, Field(strict=True)]]] = (
+        TypeAdapter(Annotated[str, Field(strict=True)])
+    )
 
     # ─────────────────────────────────────────────────────────────
     # PRIVATE HELPERS
@@ -64,6 +78,14 @@ class FlextUtilitiesEnum:
                     DeprecationWarning,
                     stacklevel=4,
                 )
+
+    @staticmethod
+    def _validate_str(value: t.ScalarValue | StrEnum) -> str | None:
+        """Validate strict string input for parsing paths."""
+        try:
+            return FlextUtilitiesEnum._strict_str_adapter.validate_python(value)
+        except ValidationError:
+            return None
 
     @staticmethod
     def _is_member_by_value[E: StrEnum](
@@ -578,9 +600,10 @@ class FlextUtilitiesEnum:
         FlextUtilitiesEnum._check_direct_access()
 
         if mode == "is_member":
-            if by_name and isinstance(value, str):
+            by_name_value = FlextUtilitiesEnum._validate_str(value)
+            if by_name and by_name_value is not None:
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
-                    value,
+                    by_name_value,
                     enum_cls,
                 )
                 return is_member_result
@@ -593,8 +616,9 @@ class FlextUtilitiesEnum:
             # We handle this by checking if it's already an enum instance
             if isinstance(value, enum_cls):
                 return FlextUtilitiesEnum._parse(enum_cls, value)
-            if isinstance(value, str):
-                return FlextUtilitiesEnum._parse(enum_cls, value)
+            validated_value = FlextUtilitiesEnum._validate_str(value)
+            if validated_value is not None:
+                return FlextUtilitiesEnum._parse(enum_cls, validated_value)
             # For other types, convert to string
             return FlextUtilitiesEnum._parse(enum_cls, str(value))
         if mode == "coerce":
@@ -605,9 +629,10 @@ class FlextUtilitiesEnum:
                 # Type narrowing: isinstance check ensures value is E
                 # Direct return after isinstance narrowing
                 return value
-            if isinstance(value, str):
+            validated_value = FlextUtilitiesEnum._validate_str(value)
+            if validated_value is not None:
                 # Type narrowing: isinstance check ensures value is str
-                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, value)
+                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, validated_value)
                 return coerced
             # For other types, convert to string
             # Type narrowing: str(value) is str, which is valid for coerce

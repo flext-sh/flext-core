@@ -203,7 +203,9 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}",
                 )
-            extracted = u.Mapper.extract(result_value, path_str)
+            extracted = u.Mapper.extract(
+                cast(t.ConfigMapValue | BaseModel, result_value), path_str
+            )
             if extracted.is_failure:
                 raise AssertionError(
                     params.msg
@@ -213,7 +215,7 @@ class FlextTestsMatchers:
                     ),
                 )
             # Reassign to extracted value - now type is t.Tests.PayloadValue
-            result_value = extracted.value
+            result_value = cast(t.Tests.PayloadValue, extracted.value)
 
         # Validate value with u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately

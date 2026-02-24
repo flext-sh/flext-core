@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeVar
+from typing import TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -61,9 +61,9 @@ class FlextUtilitiesModel:
             # model_validate returns M (the model type)
             instance = model_cls.model_validate(data, strict=strict)
             # Type narrowing: instance is M from model_validate return type
-            return r[M].ok(instance)
+            return cast("object", r.ok(instance))
         except Exception as e:
-            return r[M].fail(f"Model validation failed: {e}")
+            return cast("object", r.fail(f"Model validation failed: {e}"))
 
     @staticmethod
     def from_kwargs[M: BaseModel](
@@ -95,9 +95,9 @@ class FlextUtilitiesModel:
             # model_validate returns M (the model type)
             instance = model_cls.model_validate(kwargs)
             # Type narrowing: instance is M from model_validate return type
-            return r[M].ok(instance)
+            return cast("object", r.ok(instance))
         except Exception as e:
-            return r[M].fail(f"Model validation failed: {e}")
+            return cast("object", r.fail(f"Model validation failed: {e}"))
 
     @staticmethod
     def merge_defaults[M: BaseModel](
@@ -141,9 +141,9 @@ class FlextUtilitiesModel:
             # model_copy returns M (same type as instance)
             updated_instance = instance.model_copy(update=updates)
             # Type narrowing: updated_instance is M from model_copy return type
-            return r[M].ok(updated_instance)
+            return cast("object", r.ok(updated_instance))
         except Exception as e:
-            return r[M].fail(f"Model update failed: {e}")
+            return cast("object", r.fail(f"Model update failed: {e}"))
 
     @staticmethod
     def to_dict(
@@ -290,9 +290,9 @@ class FlextUtilitiesModel:
         """
         try:
             instance = model_cls.model_validate(data)
-            return r[T_Model].ok(instance)
+            return cast("object", r.ok(instance))
         except ValidationError as e:
-            return r[T_Model].fail(f"Model validation failed: {e}")
+            return cast("object", r.fail(f"Model validation failed: {e}"))
 
     @staticmethod
     def normalize_to_pydantic_dict(

@@ -9,14 +9,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Literal, cast, overload
+from typing import Literal, overload
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
 type StrictJsonScalar = str | int | float | bool | None
 type StrictJsonValue = (
     StrictJsonScalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
 )
+
+
+class _StrictJsonScalarModel(BaseModel):
+    """Strict scalar wrapper for narrow value validation."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    value: StrictJsonScalar
 
 
 class FlextUtilitiesConversion:
@@ -279,22 +286,9 @@ class FlextUtilitiesConversion:
         if value is None:
             return None
         try:
-            out = FlextUtilitiesConversion._strict_json_scalar_adapter.validate_python(
-                value,
-            )
-            return cast("StrictJsonScalar | None", out)
+            return _StrictJsonScalarModel.model_validate({"value": value}).value
         except ValidationError:
-            pass
-        # Check for simple sequences (not nested PayloadValue)
-        if isinstance(value, (list, tuple)) or (
-            hasattr(value, "__getitem__") and not isinstance(value, (str, bytes))
-        ):
-            return None  # Skip complex sequences for safety
-        if isinstance(value, dict):
-            return None  # Skip complex mappings for safety
-        if hasattr(value, "keys") and hasattr(value, "__getitem__"):
-            return None  # Mapping-like, skip for safety
-        return None
+            return None
 
     @staticmethod
     def to_str_list_safe(

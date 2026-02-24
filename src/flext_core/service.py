@@ -201,7 +201,9 @@ class FlextService[TDomainResult](
         runtime_config = config_cls.model_validate(config_overrides or {})
 
         # 2. Context creation with initial data
-        runtime_context_input = context
+        runtime_context_input = (
+            context if context is not None else FlextContext.create()
+        )
 
         # 3. Container creation with registrations
         # runtime_config is FlextSettings which implements "p.Config" structurally

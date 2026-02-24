@@ -1483,7 +1483,7 @@ class FlextExceptions:
             return error_class(
                 message,
                 error_code=error_code or c.Errors.UNKNOWN_ERROR,
-                context=error_context or None,
+                context=error_context if error_context is not None else None,
                 correlation_id=correlation_id,
             )
 

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Annotated
+from typing import Annotated, cast
 
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -651,10 +651,13 @@ class FlextModelsContext:
         ) -> Mapping[str, t.GuardInputValue]:
             """Validate scope data - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if FlextRuntime.is_dict_like(v):
+            if isinstance(v, t.Dict):
+                # RootModel - extract root dict
+                return v.root
+            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)
+                return dict(cast(Mapping[str, t.GuardInputValue], v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -670,10 +673,13 @@ class FlextModelsContext:
         ) -> Mapping[str, t.GuardInputValue]:
             """Validate scope metadata - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if FlextRuntime.is_dict_like(v):
+            if isinstance(v, t.Dict):
+                # RootModel - extract root dict
+                return v.root
+            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)
+                return dict(cast(Mapping[str, t.GuardInputValue], v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -741,10 +747,13 @@ class FlextModelsContext:
         ) -> Mapping[str, t.GuardInputValue]:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if FlextRuntime.is_dict_like(v):
+            if isinstance(v, t.Dict):
+                # RootModel - extract root dict
+                return v.root
+            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)
+                return dict(cast(Mapping[str, t.GuardInputValue], v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -849,10 +858,13 @@ class FlextModelsContext:
         ) -> Mapping[str, t.GuardInputValue]:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if FlextRuntime.is_dict_like(v):
+            if isinstance(v, t.Dict):
+                # RootModel - extract root dict
+                return v.root
+            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)
+                return dict(cast(Mapping[str, t.GuardInputValue], v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:

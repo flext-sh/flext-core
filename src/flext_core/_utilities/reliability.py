@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TypeGuard
+from typing import TypeGuard, cast
 
 from pydantic import BaseModel
 
@@ -39,7 +39,7 @@ class FlextUtilitiesReliability:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-        return FlextRuntime.get_logger(__name__)
+        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
 
     @staticmethod
     def with_timeout[TTimeout](
@@ -48,7 +48,7 @@ class FlextUtilitiesReliability:
     ) -> r[TTimeout]:
         """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= c.INITIAL_TIME:
-            return r[TTimeout].fail("Timeout must be positive")
+            return r.fail("Timeout must be positive")
 
         # Use proper typing for containers
         result_container: list[r[TTimeout] | None] = [None]
@@ -75,17 +75,17 @@ class FlextUtilitiesReliability:
 
         if thread.is_alive():
             # Thread is still running, timeout occurred
-            return r[TTimeout].fail(
+            return r.fail(
                 f"Operation timed out after {timeout_seconds} seconds",
             )
 
         if exception_container[0]:
-            return r[TTimeout].fail(
+            return r.fail(
                 f"Operation failed with exception: {exception_container[0]}",
             )
 
         if result_container[0] is None:
-            return r[TTimeout].fail(
+            return r.fail(
                 "Operation completed but returned no result",
             )
 
@@ -106,14 +106,12 @@ class FlextUtilitiesReliability:
         result_raw: r[TResult] | TResult,
     ) -> r[TResult]:
         """Convert operation result to RuntimeResult."""
-        # Check if result_raw is already a FlextResult (r in __mro__)
-        if r in result_raw.__class__.__mro__:
+        if isinstance(result_raw, r):
             return result_raw
 
         # result_raw is a plain value - wrap in successful Result
         # Safe to call ok() because at this point result_raw is TResult
-        value: TResult = result_raw  # Explicit type annotation for mypy
-        return r[TResult].ok(value)
+        return r.ok(result_raw)
 
     @staticmethod
     def retry[TResult](
@@ -161,7 +159,7 @@ class FlextUtilitiesReliability:
         )
 
         if max_attempts_value < c.Reliability.RETRY_COUNT_MIN:
-            return r[TResult].fail(
+            return r.fail(
                 f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}",
             )
 
@@ -191,9 +189,7 @@ class FlextUtilitiesReliability:
                         time.sleep(current_delay)
 
             except Exception as e:
-                if retry_on is not None and not any(
-                    t in e.__class__.__mro__ for t in retry_on
-                ):
+                if retry_on is not None and not isinstance(e, retry_on):
                     raise
 
                 last_error = str(e)
@@ -208,7 +204,7 @@ class FlextUtilitiesReliability:
                     if current_delay > 0:
                         time.sleep(current_delay)
 
-        return r[TResult].fail(
+        return r.fail(
             f"Operation failed after {max_attempts_value} attempts: {last_error}",
         )
 
@@ -239,22 +235,27 @@ class FlextUtilitiesReliability:
 
         initial_delay = (
             float(initial_delay_raw)
-            if initial_delay_raw.__class__ in {int, float}
+            if isinstance(initial_delay_raw, int | float)
+            and not isinstance(initial_delay_raw, bool)
             else 0.1
         )
         max_delay = (
-            float(max_delay_raw) if max_delay_raw.__class__ in {int, float} else 60.0
+            float(max_delay_raw)
+            if isinstance(max_delay_raw, int | float)
+            and not isinstance(max_delay_raw, bool)
+            else 60.0
         )
         exponential_backoff = (
             bool(exponential_backoff_raw)
-            if exponential_backoff_raw.__class__ is bool
+            if isinstance(exponential_backoff_raw, bool)
             else False
         )
         backoff_multiplier: float | None = None
-        if backoff_multiplier_raw is not None and backoff_multiplier_raw.__class__ in {
-            int,
-            float,
-        }:
+        if (
+            backoff_multiplier_raw is not None
+            and isinstance(backoff_multiplier_raw, int | float)
+            and not isinstance(backoff_multiplier_raw, bool)
+        ):
             backoff_multiplier = float(backoff_multiplier_raw)
 
         # Calculate base delay
@@ -312,12 +313,12 @@ class FlextUtilitiesReliability:
             except Exception as e:
                 # If operation throws exception, consider it a failure
                 if attempt >= max_attempts - 1:
-                    return r[TResult].fail(f"Operation failed: {e}")
+                    return r.fail(f"Operation failed: {e}")
 
                 if cleanup_func:
                     cleanup_func()
 
-        return r[TResult].fail("Max retries exceeded")
+        return r.fail("Max retries exceeded")
 
     # ========================================================================
     # Compose methods (pipe, chain, flow) - Functional composition patterns
@@ -326,9 +327,9 @@ class FlextUtilitiesReliability:
     @staticmethod
     def pipe(
         value: t.ConfigMapValue,
-        *operations: Callable[[object], object],
+        *operations: Callable[[t.ConfigMapValue], t.ConfigMapValue],
         on_error: str = "stop",
-    ) -> r[object]:
+    ) -> r[t.ConfigMapValue]:
         """Functional pipeline with railway-oriented error handling.
 
         Business Rule: Chains operations sequentially, unwrapping r
@@ -355,42 +356,40 @@ class FlextUtilitiesReliability:
 
         """
         if not operations:
-            return r[object].ok(value)
+            return r.ok(value)
 
         # Type annotation: current starts as object (value parameter)
         # Will be updated through pipeline operations
         current: t.ConfigMapValue = value
         for i, op in enumerate(operations):
             try:
-                result = op(current)
+                op_result = op(current)
 
-                # Unwrap FlextResult if returned (protocol: has is_success/value)
-                if hasattr(result, "is_success") and hasattr(result, "value"):
-                    if result.is_failure:
+                if FlextUtilitiesReliability._is_result_like(op_result):
+                    if op_result.is_failure:
                         if on_error == "stop":
-                            err_msg = result.error or "Unknown error"
-                            return r[object].fail(
+                            err_msg = op_result.error or "Unknown error"
+                            return r.fail(
                                 f"Pipeline step {i} failed: {err_msg}",
                             )
                         # on_error == "skip": continue with previous value
                         continue
                     # Extract value from successful Result
-                    current = result.value
+                    current = op_result.value
                 else:
-                    # result is plain object (not FlextResult)
-                    current = result
+                    current = op_result
 
             except Exception as e:
                 if on_error == "stop":
-                    return r[object].fail(f"Pipeline step {i} failed: {e}")
+                    return r.fail(f"Pipeline step {i} failed: {e}")
                 # on_error == "skip": continue with previous value
 
-        return r[object].ok(current)
+        return r.ok(current)
 
     @staticmethod
     def chain(
         value: t.ConfigMapValue,
-        *funcs: Callable[[object], object],
+        *funcs: Callable[[t.ConfigMapValue], t.ConfigMapValue],
     ) -> t.ConfigMapValue:
         """Chain operations (mnemonic: chain = pipeline).
 
@@ -449,8 +448,8 @@ class FlextUtilitiesReliability:
         """
         current: t.ConfigMapValue = value
         for op in ops:
-            if op.__class__ is dict:
-                op_dict: Mapping[str, t.ConfigMapValue] = op
+            if isinstance(op, Mapping):
+                op_dict = op
                 # Check if current is PayloadValue compatible
                 if FlextUtilitiesReliability._is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
@@ -467,22 +466,23 @@ class FlextUtilitiesReliability:
         """Check if value is compatible with PayloadValue."""
         if value is None:
             return True
-        if (
-            value.__class__ in {str, int, float, bool, datetime, Path}
-            or BaseModel in value.__class__.__mro__
-        ):
+        if isinstance(value, (str | int | float | bool | datetime | Path, BaseModel)):
             return True
-        if Mapping in value.__class__.__mro__:
+        if isinstance(value, Mapping):
             return True
-        if Sequence in value.__class__.__mro__ and value.__class__ not in {str, bytes}:
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             return True
         return bool(callable(value))
 
     @staticmethod
+    def _is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ConfigMapValue]]:
+        return isinstance(value, p.ResultLike)
+
+    @staticmethod
     def compose(
-        *funcs: Callable[[object], object],
+        *funcs: Callable[[t.ConfigMapValue], t.ConfigMapValue],
         mode: str = "pipe",
-    ) -> Callable[[object], object]:
+    ) -> Callable[[t.ConfigMapValue], t.ConfigMapValue | r[t.ConfigMapValue]]:
         """Compose multiple functions into a single function.
 
         Unifies pipe/chain/flow patterns into a single super-method.
@@ -505,12 +505,15 @@ class FlextUtilitiesReliability:
         """
         if mode == "pipe":
 
-            def piped(value: t.ConfigMapValue) -> t.ConfigMapValue:
+            def piped(
+                value: t.ConfigMapValue,
+            ) -> t.ConfigMapValue | r[t.ConfigMapValue]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-
-                if hasattr(result, "is_success") and hasattr(result, "is_failure"):
-                    return result.value if result.is_success else result
-                return result
+                return (
+                    result.value
+                    if result.is_success
+                    else cast("r[t.ConfigMapValue]", result)
+                )
 
             return piped
 
@@ -575,7 +578,7 @@ class FlextUtilitiesReliability:
 
         """
         if result.is_failure:
-            return r[U].fail(result.error or "Unknown error")
+            return r.fail(result.error or "Unknown error")
         return func(result.value)
 
     @staticmethod
@@ -669,8 +672,13 @@ class FlextUtilitiesReliability:
     @staticmethod
     def match(
         value: t.ConfigMapValue,
-        *cases: tuple[type | t.ConfigMapValue | Callable[[object], bool], object],
-        default: t.ConfigMapValue | None = None,
+        *cases: tuple[
+            type | t.ConfigMapValue | Callable[[t.ConfigMapValue], bool],
+            t.ConfigMapValue | Callable[[t.ConfigMapValue], t.ConfigMapValue],
+        ],
+        default: t.ConfigMapValue
+        | Callable[[t.ConfigMapValue], t.ConfigMapValue]
+        | None = None,
     ) -> t.ConfigMapValue:
         """Pattern match on a value with type, value, or predicate matching.
 
@@ -712,20 +720,36 @@ class FlextUtilitiesReliability:
 
         """
         for pattern, result in cases:
-            if isinstance(pattern, type) and pattern in value.__class__.__mro__:
-                return result(value) if callable(result) else result
+            if isinstance(pattern, type) and isinstance(value, pattern):
+                return (
+                    cast("t.ConfigMapValue", result(value))
+                    if callable(result)
+                    else result
+                )
             if pattern == value:
-                return result(value) if callable(result) else result
+                return (
+                    cast("t.ConfigMapValue", result(value))
+                    if callable(result)
+                    else result
+                )
             if callable(pattern) and not isinstance(pattern, type):
                 try:
                     pred_result = pattern(value)
                     if isinstance(pred_result, bool) and pred_result:
-                        return result(value) if callable(result) else result
+                        return (
+                            cast("t.ConfigMapValue", result(value))
+                            if callable(result)
+                            else result
+                        )
                 except (ValueError, TypeError, AttributeError):
                     pass
         # Default handling
         if default is not None:
-            return default(value) if callable(default) else default
+            return (
+                cast("t.ConfigMapValue", default(value))
+                if callable(default)
+                else default
+            )
         return None
 
     # Mnemonic alias

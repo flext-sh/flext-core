@@ -35,7 +35,6 @@ class FlextUtilitiesChecker:
         Uses same structure/config as FlextLogger but without circular import.
         """
         # get_logger returns StructlogLogger per runtime.pyi stub
-
         return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
 
     @classmethod

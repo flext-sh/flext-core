@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, Literal, TypeGuard
+from typing import Annotated, Literal, TypeGuard, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Discriminator, Field
 
@@ -46,7 +46,7 @@ class TypeCheckConfig(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies Config protocol."""
         return (
             hasattr(self.value, "app_name")
@@ -67,7 +67,7 @@ class TypeCheckContext(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies Context protocol."""
         return hasattr(self.value, "request_id") or hasattr(
             self.value, "correlation_id"
@@ -87,7 +87,7 @@ class TypeCheckContainer(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies DI protocol."""
         return hasattr(self.value, "register") and callable(
             getattr(self.value, "register", None)
@@ -107,7 +107,7 @@ class TypeCheckCommandBus(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies CommandBus protocol."""
         return hasattr(self.value, "dispatch") and callable(
             getattr(self.value, "dispatch", None)
@@ -127,7 +127,7 @@ class TypeCheckHandler(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies Handler protocol."""
         return hasattr(self.value, "handle") and callable(
             getattr(self.value, "handle", None)
@@ -147,7 +147,7 @@ class TypeCheckLogger(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies StructlogLogger protocol."""
         return (
             hasattr(self.value, "debug")
@@ -171,7 +171,7 @@ class TypeCheckResult(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies Result protocol."""
         return (
             hasattr(self.value, "is_success")
@@ -194,7 +194,7 @@ class TypeCheckService(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies Service protocol."""
         return hasattr(self.value, "run") and callable(getattr(self.value, "run", None))
 
@@ -212,7 +212,7 @@ class TypeCheckMiddleware(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    def validate(self) -> bool:
+    def matches(self) -> bool:
         """Validate if value satisfies Middleware protocol."""
         return hasattr(self.value, "before_dispatch") and callable(
             getattr(self.value, "before_dispatch", None),
@@ -232,6 +232,8 @@ TypeCheckSpec = Annotated[
     Discriminator("category"),
 ]
 
+MapValueT = TypeVar("MapValueT")
+
 
 class FlextUtilitiesGuards:
     """Runtime type checking utilities for FLEXT ecosystem.
@@ -248,7 +250,7 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
-    def is_string_non_empty(value: t.GuardInputValue) -> bool:
+    def is_string_non_empty(value: t.GuardInputValue) -> TypeGuard[str]:
         """Check if value is a non-empty string using duck typing.
 
         Validates that the provided value is a string type and contains
@@ -270,7 +272,7 @@ class FlextUtilitiesGuards:
             False
 
         """
-        return isinstance(value, str) and value and bool(value.strip())
+        return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
     def is_dict_non_empty(value: t.GuardInputValue) -> bool:
@@ -417,7 +419,7 @@ class FlextUtilitiesGuards:
     # These functions enable type narrowing without  - zero tolerance typing
 
     @staticmethod
-    def is_general_value_type(value: t.GuardInputValue) -> TypeGuard[t.GuardInputValue]:
+    def is_general_value_type(value: object) -> TypeGuard[t.GuardInputValue]:
         """Check if value is a valid t.GuardInputValue.
 
         t.GuardInputValue = ScalarValue | Sequence[t.GuardInputValue] | Mapping[str, t.GuardInputValue]
@@ -448,10 +450,10 @@ class FlextUtilitiesGuards:
                     return False
             return True
         # Check mapping types (structural)
-        if hasattr(value, "items") and hasattr(value, "keys") and callable(value.items):
+        if isinstance(value, Mapping):
             # Iterate with explicit type annotations to satisfy pyright
-            k: t.GuardInputValue
-            v: t.GuardInputValue
+            k: object
+            v: object
             for k, v in value.items():
                 if not isinstance(k, str):
                     return False
@@ -490,7 +492,7 @@ class FlextUtilitiesGuards:
         if callable(value):
             return True
         # Check if Mapping (handler mapping) - structural
-        if hasattr(value, "items") and hasattr(value, "keys") and callable(value.items):
+        if isinstance(value, Mapping):
             return True
         # Check if BaseModel instance or class
         if hasattr(value, "model_dump") and callable(
@@ -556,13 +558,11 @@ class FlextUtilitiesGuards:
 
         """
         # Check if it's a Mapping (structural)
-        if not (
-            hasattr(value, "items") and hasattr(value, "keys") and callable(value.items)
-        ):
+        if not isinstance(value, Mapping):
             return False
         # Check all keys are strings and values are ConfigMapValue
         # Iterate with explicit type annotations to satisfy pyright
-        k: t.GuardInputValue
+        k: object
         v: t.GuardInputValue
         for k, v in value.items():
             if not isinstance(k, str):
@@ -632,7 +632,7 @@ class FlextUtilitiesGuards:
                 ):
                     return False
             return True
-        if hasattr(value, "items") and callable(getattr(value, "items", None)):
+        if isinstance(value, Mapping):
             for k, v in value.items():
                 if not isinstance(k, str):
                     return False
@@ -834,7 +834,9 @@ class FlextUtilitiesGuards:
         return isinstance(value, (list, tuple, range)) and not isinstance(value, str)
 
     @staticmethod
-    def is_mapping(value: object) -> TypeGuard[m.ConfigMap]:
+    def is_mapping(
+        value: t.GuardInputValue,
+    ) -> TypeGuard[Mapping[str, MapValueT]]:
         """Check if value is ConfigurationMapping (Mapping[str, t.ConfigMapValue]).
 
         Type guard for mapping types used in FLEXT validation.
@@ -852,7 +854,9 @@ class FlextUtilitiesGuards:
             ...     for key, val in params.kv.items():
 
         """
-        return hasattr(value, "items") and callable(getattr(value, "items", None))
+        if not isinstance(value, Mapping):
+            return False
+        return all(isinstance(key, str) for key in value)
 
     @staticmethod
     def _is_callable_key_func(
@@ -942,7 +946,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def _is_mapping(
         value: t.GuardInputValue,
-    ) -> TypeGuard[Mapping[str, t.GuardInputValue]]:
+    ) -> TypeGuard[Mapping[str, MapValueT]]:
         """Check if value is a Mapping (dict-like).
 
         Type guard for Mapping types (dict, ChainMap, MappingProxyType, etc.).
@@ -959,7 +963,9 @@ class FlextUtilitiesGuards:
             ...     value = config.get("key")
 
         """
-        return hasattr(value, "items") and callable(getattr(value, "items", None))
+        if not isinstance(value, Mapping):
+            return False
+        return all(isinstance(key, str) for key in value)
 
     @staticmethod
     def _is_int(value: t.GuardInputValue) -> TypeGuard[int]:
@@ -1259,7 +1265,7 @@ class FlextUtilitiesGuards:
             return False
 
     @staticmethod
-    def _check_protocol_via_model(value: t.GuardInputValue, type_name: str) -> bool:
+    def _check_protocol_via_model(value: object, type_name: str) -> bool:
         """Check protocol via centralized Pydantic v2 model.
 
         Creates the appropriate TypeCheckSpec variant and validates the value.
@@ -1293,12 +1299,12 @@ class FlextUtilitiesGuards:
                 spec = TypeCheckService(value=value)
             elif category == "middleware":
                 spec = TypeCheckMiddleware(value=value)
-            return spec.validate() if spec else False
+            return spec.matches() if spec else False
         except Exception:
             return False
 
     @staticmethod
-    def _check_protocol_type(value: t.GuardInputValue, type_spec: type) -> bool:
+    def _check_protocol_type(value: object, type_spec: type) -> bool:
         """Check protocol by type via centralized models.
 
         Maps protocol types to appropriate TypeCheckSpec variants.
@@ -1331,7 +1337,7 @@ class FlextUtilitiesGuards:
                 spec = TypeCheckService(value=value)
             elif type_spec == p.Middleware:
                 spec = TypeCheckMiddleware(value=value)
-            return spec.validate() if spec else False
+            return spec.matches() if spec else False
         except Exception:
             return False
 
@@ -1407,7 +1413,7 @@ class FlextUtilitiesGuards:
             if callable(validator):
                 if validator(value):
                     return value if return_value else True
-            elif (validator is not None and isinstance(validator, tuple)) or (validator is not None and isinstance(validator, type)) or (validator is not None and isinstance(validator, tuple)) or (validator is not None and isinstance(validator, type)):
+            elif validator is not None and isinstance(validator, (type, tuple)):
                 if isinstance(value, validator):
                     return value if return_value else True
             # Default validation - check if value is truthy
@@ -1447,7 +1453,7 @@ class FlextUtilitiesGuards:
         """
         if items is None:
             return True
-        if hasattr(items, "__len__") and callable(getattr(items, "__len__", None)):
+        if FlextUtilitiesGuards._is_sized(items):
             return len(items) == 0
         return not bool(items)
 

@@ -57,7 +57,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard
+from typing import ClassVar, Self, TypeGuard, cast
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -1651,11 +1651,14 @@ class FlextRuntime:
             """
             _ = expected_type
             error_msg = error if error is not None else ""
-            return cls(
-                error=error_msg,
-                error_code=error_code,
-                error_data=error_data,
-                is_success=False,
+            return cast(
+                "FlextRuntime.RuntimeResult[U]",
+                cls(
+                    error=error_msg,
+                    error_code=error_code,
+                    error_data=error_data,
+                    is_success=False,
+                ),
             )
 
     # =========================================================================

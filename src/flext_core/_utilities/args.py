@@ -51,6 +51,16 @@ class FlextUtilitiesArgs:
 
     """
 
+    _enum_type_adapter: TypeAdapter[type[StrEnum]] = TypeAdapter(type[StrEnum])
+
+    @staticmethod
+    def _validate_enum_type(candidate: object) -> type[StrEnum] | None:
+        """Validate that candidate is a StrEnum subclass."""
+        try:
+            return FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate)
+        except ValidationError:
+            return None
+
     # ─────────────────────────────────────────────────────────────
     # METHOD 1: @validate_call from Pydantic (recommended)
     # ─────────────────────────────────────────────────────────────
@@ -211,14 +221,16 @@ class FlextUtilitiesArgs:
                 origin = get_origin(current_hint)
 
             # Check if it's a StrEnum
-            if isinstance(current_hint, type) and issubclass(current_hint, StrEnum):
-                enum_params[name] = current_hint
+            validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
+            if validated_hint is not None:
+                enum_params[name] = validated_hint
 
             # Check Union types (str | Status) - Python 3.10+ uses UnionType
             elif origin is UnionType:
                 for arg in get_args(current_hint):
-                    if isinstance(arg, type) and issubclass(arg, StrEnum):
-                        enum_params[name] = arg
+                    validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
+                    if validated_arg is not None:
+                        enum_params[name] = validated_arg
                         break
 
         return enum_params

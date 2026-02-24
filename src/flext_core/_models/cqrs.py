@@ -13,7 +13,14 @@ import sys
 from collections.abc import Mapping
 from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidationError,
+    field_validator,
+)
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
@@ -167,37 +174,31 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | t.Dict | Mapping[str, int | str] | None,
+            v: FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.ScalarValue] | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
-            if isinstance(v, FlextModelsCqrs.Pagination):
-                return v
+            adapter = TypeAdapter(
+                FlextModelsCqrs.Pagination
+                | t.Dict
+                | Mapping[str, t.ScalarValue]
+                | None,
+            )
+            parsed_input = adapter.validate_python(v)
+            if parsed_input is None:
+                return pagination_cls()
 
-            # Convert dict or t.Dict to Pagination
-            if isinstance(v, (t.Dict, Mapping)):
-                data = v.root if isinstance(v, t.Dict) else v
-                page_raw = data.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
-                size_raw = data.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
+            if parsed_input.__class__ is t.Dict:
+                payload = parsed_input.root
+            elif parsed_input.__class__ is FlextModelsCqrs.Pagination:
+                payload = parsed_input.model_dump()
+            else:
+                payload = parsed_input
 
-                page = (
-                    page_raw
-                    if isinstance(page_raw, int)
-                    else int(page_raw)
-                    if isinstance(page_raw, str) and page_raw.isdigit()
-                    else c.Pagination.DEFAULT_PAGE_NUMBER
-                )
-                size = (
-                    size_raw
-                    if isinstance(size_raw, int)
-                    else int(size_raw)
-                    if isinstance(size_raw, str) and size_raw.isdigit()
-                    else c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
-                )
-                return pagination_cls(page=page, size=size)
-
-            # Default empty Pagination
-            return pagination_cls()
+            try:
+                return pagination_cls.model_validate(payload)
+            except ValidationError:
+                return pagination_cls()
 
     class Bus(BaseModel):
         """Dispatcher configuration model for CQRS routing."""
@@ -349,6 +350,13 @@ class FlextModelsCqrs:
             def build(self) -> FlextModelsCqrs.Handler:
                 """Build and validate Handler instance."""
                 return FlextModelsCqrs.Handler.model_validate(self._data.root)
+
+    class HandlerBatchRegistrationResult(BaseModel):
+        """Result of batch handler registration."""
+
+        status: str
+        count: int
+        handlers: list[str]
 
 
 __all__ = ["FlextModelsCqrs"]

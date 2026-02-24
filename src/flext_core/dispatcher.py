@@ -20,7 +20,7 @@ from contextlib import contextmanager, suppress
 from datetime import datetime as dt
 from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, override
+from typing import Self, TypeGuard, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -42,22 +42,6 @@ from flext_core.runtime import FlextRuntime
 from flext_core.service import s
 from flext_core.typings import t
 from flext_core.utilities import u
-
-
-class DispatcherMiddlewareConfig(m.Config.MiddlewareConfig):
-    """Internal configuration for dispatcher middleware."""
-
-    middleware_id: str
-    middleware_type: str
-
-
-class HandlerBatchRegistrationResult(BaseModel):
-    """Result of batch handler registration."""
-
-    status: str
-    count: int
-    handlers: list[str]
-
 
 type DispatcherHandler = Callable[..., object] | BaseModel
 type HandlerRequestKey = str | type[object]
@@ -174,7 +158,7 @@ class FlextDispatcher(s[bool]):
 
         # Middleware pipeline (from FlextDispatcher)
         self._middleware_configs: list[
-            DispatcherMiddlewareConfig
+            m.Config.DispatcherMiddlewareConfig
         ] = []  # Config + ordering
         self._middleware_instances: MutableMapping[
             str,
@@ -472,7 +456,7 @@ class FlextDispatcher(s[bool]):
     ) -> r[bool]:
         """Validate that processor has required interface (callable or process method)."""
         return self._validate_interface(
-            processor,
+            cast("_RuntimeValue | None", processor),
             "process",
             processor_context,
             allow_callable=True,
@@ -485,7 +469,7 @@ class FlextDispatcher(s[bool]):
     ) -> r[bool]:
         """Validate handler registry protocol compliance (handle or execute method)."""
         return self._validate_interface(
-            handler,
+            cast("_RuntimeValue | None", handler),
             [c.Mixins.METHOD_HANDLE, c.Mixins.METHOD_EXECUTE],
             handler_context,
         )
@@ -930,7 +914,7 @@ class FlextDispatcher(s[bool]):
 
     @staticmethod
     def _get_middleware_order(
-        middleware_config: DispatcherMiddlewareConfig,
+        middleware_config: m.Config.DispatcherMiddlewareConfig,
     ) -> int:
         """Extract middleware execution order from config."""
         return middleware_config.order
@@ -939,7 +923,7 @@ class FlextDispatcher(s[bool]):
         self,
         command: _Payload,
         handler: DispatcherHandler,
-        middleware_config: DispatcherMiddlewareConfig,
+        middleware_config: m.Config.DispatcherMiddlewareConfig,
     ) -> r[bool]:
         """Process a single middleware instance."""
         middleware_id_str = middleware_config.middleware_id
@@ -1068,7 +1052,12 @@ class FlextDispatcher(s[bool]):
 
             # Extract command ID for logging - handle various command types
             command_id_value: str = "unknown"
-            if FlextRuntime.is_dict_like(command):
+            if isinstance(command, t.ConfigMap):
+                command_id_raw = command.root.get("command_id") or command.root.get(
+                    "id"
+                )
+                command_id_value = str(command_id_raw) if command_id_raw else "unknown"
+            elif isinstance(command, Mapping):
                 command_id_raw = command.get("command_id") or command.get("id")
                 command_id_value = str(command_id_raw) if command_id_raw else "unknown"
             elif hasattr(command, "command_id"):
@@ -1459,7 +1448,7 @@ class FlextDispatcher(s[bool]):
                     )
 
         # Resolve middleware_id safely
-        # config_model might be MiddlewareConfig (no middleware_id) or DispatcherMiddlewareConfig (has middleware_id)
+        # config_model might be MiddlewareConfig (no middleware_id) or m.Config.DispatcherMiddlewareConfig (has middleware_id)
         middleware_id_val: str | None = None
         if config_model and hasattr(config_model, "middleware_id"):
             middleware_id_val = str(getattr(config_model, "middleware_id"))
@@ -1473,7 +1462,7 @@ class FlextDispatcher(s[bool]):
         middleware_type_str = middleware.__class__.__name__
 
         # Create internal config wrapper
-        final_config = DispatcherMiddlewareConfig(
+        final_config = m.Config.DispatcherMiddlewareConfig(
             middleware_id=middleware_id,
             middleware_type=getattr(
                 config_model, "middleware_type", middleware_type_str
@@ -1661,13 +1650,29 @@ class FlextDispatcher(s[bool]):
             return None
         # Try mapping traversal first
         if FlextRuntime.is_dict_like(obj):
-            current_map: _RuntimeValue = obj
+            current_map: t.ConfigMap
+            if isinstance(obj, t.ConfigMap):
+                current_map = obj
+            elif isinstance(obj, Mapping):
+                current_map = t.ConfigMap.model_validate(dict(obj))
+            else:
+                return None
+
             for attr in path:
-                if not FlextRuntime.is_dict_like(current_map):
+                if attr not in current_map.root:
                     return None
-                if attr not in current_map:
+
+                next_value = current_map.root[attr]
+                if attr == path[-1]:
+                    return next_value
+
+                if isinstance(next_value, t.ConfigMap):
+                    current_map = next_value
+                elif isinstance(next_value, Mapping):
+                    current_map = t.ConfigMap.model_validate(dict(next_value))
+                else:
                     return None
-                current_map = current_map[attr]
+
             return current_map
         # Fall back to attribute access for objects
         current = obj
@@ -2063,7 +2068,7 @@ class FlextDispatcher(s[bool]):
     def register_handlers(
         self,
         handlers: Mapping[HandlerRequestKey, DispatcherHandler],
-    ) -> r[HandlerBatchRegistrationResult]:
+    ) -> r[m.Cqrs.HandlerBatchRegistrationResult]:
         """Register multiple handlers in batch.
 
         Args:
@@ -2106,12 +2111,12 @@ class FlextDispatcher(s[bool]):
 
         # Return summary result
         if errors:
-            return r[HandlerBatchRegistrationResult].fail(
+            return r[m.Cqrs.HandlerBatchRegistrationResult].fail(
                 f"Some handlers failed to register: {'; '.join(errors)}",
             )
 
-        return r[HandlerBatchRegistrationResult].ok(
-            HandlerBatchRegistrationResult(
+        return r[m.Cqrs.HandlerBatchRegistrationResult].ok(
+            m.Cqrs.HandlerBatchRegistrationResult(
                 status="registered",
                 count=len(registered),
                 handlers=registered,
@@ -3048,7 +3053,14 @@ class FlextDispatcher(s[bool]):
             )
 
         if FlextRuntime.is_dict_like(value):
-            mapping_value: Mapping[str, _Payload] = dict(value)
+            mapping_value: Mapping[str, object]
+            if isinstance(value, t.ConfigMap):
+                mapping_value = value.root
+            elif isinstance(value, Mapping):
+                mapping_value = value
+            else:
+                return False
+
             for key, nested in mapping_value.items():
                 if not isinstance(key, str):
                     return False

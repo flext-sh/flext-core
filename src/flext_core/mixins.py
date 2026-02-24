@@ -15,7 +15,7 @@ from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequenc
 from contextlib import contextmanager, suppress
 from functools import partial
 from types import ModuleType
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -77,7 +77,7 @@ class FlextMixins(FlextRuntime):
     @staticmethod
     def ok[T](value: T) -> r[T]:
         """Create successful result wrapping value."""
-        return r[T].ok(value)
+        return cast("r[T]", r.ok(value))
 
     @staticmethod
     def fail(
@@ -152,7 +152,7 @@ class FlextMixins(FlextRuntime):
             case r() as result:
                 return result
             case _:
-                return r[T].ok(value)
+                return r.ok(value)
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)

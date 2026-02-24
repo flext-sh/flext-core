@@ -132,21 +132,6 @@ class FlextModelsHandler:
                 raise ValueError(msg)
             return v
 
-        @field_validator("handler", mode="before")
-        @classmethod
-        def validate_handler_value(
-            cls,
-            v: object,
-        ) -> Callable[..., object] | BaseModel:
-            if isinstance(v, BaseModel):
-                return v
-            if callable(v):
-                return v  # type: ignore[return-value]
-            msg = (
-                f"Handler must be callable or handler instance, got {type(v).__name__}"
-            )
-            raise TypeError(msg)
-
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
 

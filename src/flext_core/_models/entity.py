@@ -198,14 +198,18 @@ class FlextModelsEntity:
 
             # Call event handler if defined
             # Use event_type from data if present, otherwise use argument
-            handler_event_type = data_map.get("event_type", event_type)
-            if isinstance(handler_event_type, str):
-                handler_name = f"_apply_{handler_event_type}"
-                handler = getattr(self, handler_name, None)
-                if handler is not None and callable(handler):
-                    # Swallow handler exceptions - event is still added
-                    with contextlib.suppress(Exception):
-                        handler(data_map.root)
+            handler_event_type_raw = data_map.get("event_type", event_type)
+            handler_event_type = (
+                handler_event_type_raw
+                if handler_event_type_raw.__class__ is str and handler_event_type_raw
+                else event_type
+            )
+            handler_name = f"_apply_{handler_event_type}"
+            handler = getattr(self, handler_name, None)
+            if handler is not None and callable(handler):
+                # Swallow handler exceptions - event is still added
+                with contextlib.suppress(Exception):
+                    handler(data_map.root)
 
             return r[FlextModelsEntity.DomainEvent].ok(event)
 

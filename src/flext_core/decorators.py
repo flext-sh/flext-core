@@ -30,65 +30,6 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 
 
-def deprecated(
-    message: str,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Decorator to mark functions/variables as deprecated.
-
-    Emits DeprecationWarning when decorated function is called.
-    Used during v0.10 → v0.11 refactoring for constants migration.
-
-    Architecture: Cross-Cutting Concern (Tier 3)
-    ============================================
-    Provides simple deprecation warnings for functions, methods, and constants
-    being replaced during the constants refactoring phase. Warnings guide users
-    to use new APIs before deprecated code is removed.
-
-    Args:
-        message: Deprecation message explaining what to use instead
-
-    Returns:
-        Decorator function that wraps the target callable
-
-    Example:
-        >>> @deprecated("Use FlextConstants.Errors.VALIDATION_ERROR instead")
-        ... def old_validation_error():
-        ...     return "validation_error"
-
-        >>> # When called:
-        >>> result = old_validation_error()  # DeprecationWarning emitted
-        >>> assert result == "validation_error"  # Still works
-
-    Note:
-        This decorator is intended for v0.10 → v0.11 transition period.
-        After deprecation cycle completes, remove decorator and aliases.
-        Part of comprehensive constants refactoring (PASSO 3-7).
-
-    """
-
-    def decorator(
-        func: Callable[P, R],
-    ) -> Callable[P, R]:
-        """Apply deprecation warning to callable."""
-
-        @wraps(func)
-        def wrapper(
-            *args: P.args,
-            **kwargs: P.kwargs,
-        ) -> R:
-            """Wrapper that emits warning before execution."""
-            warnings.warn(
-                message,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
 class FlextDecorators(FlextRuntime):
     """Automation decorators for infrastructure concerns.
 
@@ -362,9 +303,63 @@ class FlextDecorators(FlextRuntime):
     """
 
     @staticmethod
+    def deprecated(
+        message: str,
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+        """Decorator to mark functions/variables as deprecated.
+
+        Emits DeprecationWarning when decorated function is called.
+        Used during v0.10 → v0.11 refactoring for constants migration.
+
+        Architecture: Cross-Cutting Concern (Tier 3)
+        ============================================
+        Provides simple deprecation warnings for functions, methods, and constants
+        being replaced during the constants refactoring phase. Warnings guide users
+        to use new APIs before deprecated code is removed.
+
+        Args:
+            message: Deprecation message explaining what to use instead
+
+        Returns:
+            Decorator function that wraps the target callable
+
+        Example:
+            >>> @FlextDecorators.deprecated("Use new_constant instead")
+            ... def old_function():
+            ...     return "old"
+
+        Note:
+            This decorator is intended for v0.10 → v0.11 transition period.
+            After deprecation cycle completes, remove decorator and aliases.
+
+        """
+
+        def decorator(
+            func: Callable[..., R],
+        ) -> Callable[..., R]:
+            """Apply deprecation warning to callable."""
+
+            @wraps(func)
+            def wrapper(
+                *args: P.args,
+                **kwargs: P.kwargs,
+            ) -> R:
+                """Wrapper that emits warning before execution."""
+                warnings.warn(
+                    message,
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
+
+    @staticmethod
     def inject(
         **dependencies: str,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
         Automatically resolves and injects dependencies from the global
@@ -397,7 +392,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Get container from self if available, otherwise use global singleton
@@ -424,7 +419,7 @@ class FlextDecorators(FlextRuntime):
         operation_name: str | None = None,
         *,
         track_perf: bool = False,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to automatically log operation execution with structured logging.
 
         Automatically logs operation start, completion, and failures with
@@ -462,7 +457,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Fast fail: explicit default value instead of 'or' fallback
@@ -619,7 +614,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def track_performance(
         operation_name: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to automatically track operation performance metrics.
 
         Tracks operation duration and logs performance metrics with structured
@@ -649,7 +644,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Fast fail: explicit default value instead of 'or' fallback
@@ -741,7 +736,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def railway(
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
+    ) -> Callable[[Callable[..., T]], Callable[..., r[T]]]:
         """Decorator to automatically wrap function in railway pattern.
 
         Automatically converts exceptions to FlextResult failures and
@@ -781,7 +776,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, T]) -> Callable[P, r[T]]:
+        def decorator(func: Callable[..., T]) -> Callable[..., r[T]]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[T]:
                 try:
@@ -816,7 +811,7 @@ class FlextDecorators(FlextRuntime):
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
         Uses FlextConstants.Reliability for default values and
@@ -873,7 +868,7 @@ class FlextDecorators(FlextRuntime):
             else c.Reliability.DEFAULT_BACKOFF_STRATEGY
         )
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
@@ -916,7 +911,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def _resolve_logger(
         args: tuple[object, ...],
-        func: Callable[P, R],
+        func: Callable[..., R],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
@@ -1029,7 +1024,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def _handle_retry_exhaustion(
         last_exception: Exception,
-        func: Callable[P, R],
+        func: Callable[..., R],
         attempts: int,
         error_code: str | None,
         logger: FlextLogger,
@@ -1143,7 +1138,7 @@ class FlextDecorators(FlextRuntime):
     def timeout(
         timeout_seconds: float | None = None,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to enforce operation timeout.
 
         Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default
@@ -1182,7 +1177,7 @@ class FlextDecorators(FlextRuntime):
             else c.Reliability.DEFAULT_TIMEOUT_SECONDS
         )
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 start_time = time.perf_counter()
@@ -1247,7 +1242,7 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: Literal[False] = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]: ...
 
     @overload
     @staticmethod
@@ -1258,7 +1253,7 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: Literal[True],
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
+    ) -> Callable[[Callable[..., R]], Callable[..., r[R]]]: ...
 
     @staticmethod
     def combined(
@@ -1268,7 +1263,7 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, r[R]]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R] | Callable[..., r[R]]]:
         """Combined decorator applying multiple automation patterns at once.
 
         Combines @inject, @log_operation (with optional track_perf), and optionally
@@ -1283,8 +1278,8 @@ class FlextDecorators(FlextRuntime):
 
         Returns:
             Decorated function with all requested automations.
-            When use_railway=True, returns Callable[P, r[R]].
-            When use_railway=False, returns Callable[P, R].
+            When use_railway=True, returns Callable[..., r[R]].
+            When use_railway=False, returns Callable[..., R].
 
         Example:
             ```python
@@ -1321,7 +1316,7 @@ class FlextDecorators(FlextRuntime):
         # This separation ensures proper type inference by pyrefly
         if use_railway:
             # Railway path decorator
-            def railway_decorator(func: Callable[P, R]) -> Callable[P, r[R]]:
+            def railway_decorator(func: Callable[..., R]) -> Callable[..., r[R]]:
                 # Railway decorator changes return type from R to r[R]
                 result = FlextDecorators.railway(error_code=error_code)(func)
                 # Apply dependency injection to railway-wrapped function
@@ -1336,7 +1331,7 @@ class FlextDecorators(FlextRuntime):
             return railway_decorator
 
         # Non-railway path decorator
-        def standard_decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def standard_decorator(func: Callable[..., R]) -> Callable[..., R]:
             result = func
             if inject_deps:
                 result = FlextDecorators.inject(**inject_deps)(result)
@@ -1349,7 +1344,7 @@ class FlextDecorators(FlextRuntime):
         return standard_decorator
 
     @staticmethod
-    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def with_correlation() -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to ensure correlation ID exists for operation tracking.
 
         Automatically ensures a correlation ID is present in the context,
@@ -1378,7 +1373,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Ensure correlation ID exists
@@ -1393,7 +1388,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def with_context(
         **context_vars: str | int | bool | None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to manage context lifecycle for an operation.
 
         Automatically binds context variables for the operation duration and
@@ -1427,7 +1422,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
@@ -1471,7 +1466,7 @@ class FlextDecorators(FlextRuntime):
         operation_name: str | None = None,
         *,
         track_correlation: bool = True,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         """Decorator to track operation execution with FlextRuntime.Integration.
 
         Combines correlation ID management and structured logging using
@@ -1509,7 +1504,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(func: Callable[..., R]) -> Callable[..., R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Fast fail: explicit default value instead of 'or' fallback

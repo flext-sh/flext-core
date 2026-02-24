@@ -16,7 +16,7 @@ import re
 import uuid
 from collections.abc import Callable, Mapping, MutableMapping
 from datetime import UTC, datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, ClassVar, Literal, Self
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -27,6 +27,8 @@ from pydantic import (
     Discriminator,
     Field,
     PlainValidator,
+    TypeAdapter,
+    ValidationError,
     computed_field,
     field_serializer,
     field_validator,
@@ -44,6 +46,8 @@ class FlextModelFoundation:
     class Validators:
         """Pydantic v2 validators - single namespace for all field validators."""
 
+        tags_adapter: ClassVar[TypeAdapter[list[str]]] = TypeAdapter(list[str])
+
         @staticmethod
         def strip_whitespace(v: str) -> str:
             """Strip whitespace from string values."""
@@ -60,7 +64,7 @@ class FlextModelFoundation:
         def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
             """Normalize value to list format. Fixed types only."""
             if isinstance(v, list):
-                return list(v)
+                return v
             return [v]
 
         @staticmethod
@@ -131,15 +135,17 @@ class FlextModelFoundation:
         @staticmethod
         def validate_tags_list(v: t.GuardInputValue) -> list[str]:
             """Validate and normalize tags list."""
-            if not isinstance(v, list):
+            try:
+                raw_tags = FlextModelFoundation.Validators.tags_adapter.validate_python(
+                    v
+                )
+            except ValidationError as exc:
                 msg = "Tags must be a list"
-                raise TypeError(msg)
+                raise TypeError(msg) from exc
+
             normalized: list[str] = []
             seen: set[str] = set()
-            for tag in v:
-                if not isinstance(tag, str):
-                    msg = f"Tag must be string, got {type(tag).__name__}"
-                    raise TypeError(msg)
+            for tag in raw_tags:
                 clean_tag = tag.strip().lower()
                 if clean_tag and clean_tag not in seen:
                     normalized.append(clean_tag)
@@ -922,7 +928,7 @@ class FlextModelFoundation:
             """
             # Create new instance with all fields set correctly
             now = datetime.now(UTC)
-            current_data = self.model_dump()
+            current_data = dict(self.model_dump())
             current_data.update({
                 "is_deleted": True,
                 "deleted_at": now,

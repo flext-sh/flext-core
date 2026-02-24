@@ -27,7 +27,7 @@ type TomlValue = (
 )
 type TomlMap = MutableMapping[str, TomlValue]
 type TomlMutableMap = MutableMapping[str, TomlValue]
-_TableLike = Table | TomlMutableMap
+type _TableLike = Table | TomlMutableMap
 
 
 def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:

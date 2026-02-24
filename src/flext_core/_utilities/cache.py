@@ -228,7 +228,7 @@ class FlextUtilitiesCache:
         """
         if FlextRuntime.is_dict_like(data):
             # Type narrowing: data is now Mapping[str, t.GuardInputValue]
-            result = {}
+            result: dict[str, t.GuardInputValue] = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 # Handle None values - convert to empty dict for consistency

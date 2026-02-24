@@ -16,6 +16,7 @@ import time
 import uuid
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
+from typing import TypeGuard, assert_never
 
 from pydantic import BaseModel
 
@@ -111,8 +112,14 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC)
 
     @staticmethod
+    def _is_config_mapping(
+        value: t.ConfigMapValue,
+    ) -> TypeGuard[Mapping[str, t.ConfigMapValue]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
     def _normalize_context_to_dict(
-        context: Mapping[str, t.ConfigMapValue] | t.ConfigMapValue,
+        context: Mapping[str, t.ConfigMapValue] | BaseModel | None,
     ) -> Mapping[str, t.ConfigMapValue]:
         """Normalize context to dict - fast fail validation.
 
@@ -126,33 +133,27 @@ class FlextUtilitiesGenerators:
             TypeError: If context cannot be normalized
 
         """
-        if context.__class__ is dict:
-            return context
-        if hasattr(context, "keys") and hasattr(context, "__getitem__"):
-            try:
-                # Type narrowing: context is Mapping, convert to dict
-                return dict(context.items())
-            except (AttributeError, TypeError) as e:
-                msg = (
-                    f"Failed to convert Mapping {context.__class__.__name__} to dict: "
-                    f"{e.__class__.__name__}: {e}"
-                )
-                raise TypeError(msg) from e
-        if context.__class__ is not dict and BaseModel in context.__class__.__mro__:
-            try:
-                return context.model_dump()
-            except (AttributeError, TypeError) as e:
-                msg = (
-                    f"Failed to dump BaseModel {context.__class__.__name__}: "
-                    f"{e.__class__.__name__}: {e}"
-                )
-                raise TypeError(msg) from e
         if context is None:
             msg = (
                 "Context cannot be None. Use explicit empty dict {} "
                 "or handle None in calling code."
             )
             raise TypeError(msg)
+
+        if isinstance(context, Mapping):
+            return context
+
+        try:
+            model_data = FlextRuntime.normalize_to_general_value(context.model_dump())
+            if FlextUtilitiesGenerators._is_config_mapping(model_data):
+                return model_data
+        except (AttributeError, TypeError) as e:
+            msg = (
+                f"Failed to dump BaseModel {context.__class__.__name__}: "
+                f"{e.__class__.__name__}: {e}"
+            )
+            raise TypeError(msg) from e
+
         msg = f"Context must be dict, Mapping, or BaseModel, got {context.__class__.__name__}"
         raise TypeError(msg)
 
@@ -188,7 +189,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: Mapping[str, str] | t.ConfigMapValue,
+        context: Mapping[str, t.ConfigMapValue] | BaseModel | None,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -233,7 +234,7 @@ class FlextUtilitiesGenerators:
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
         # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
         context_dict: MutableMapping[str, str] = {
-            k: v if v.__class__ is str else str(v) for k, v in normalized_dict.items()
+            k: str(v) for k, v in normalized_dict.items()
         }
         FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
@@ -244,7 +245,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.ConfigMapValue,
+        value: Mapping[str, t.ConfigMapValue] | BaseModel | None,
         default: Mapping[str, t.ConfigMapValue] | None = None,
     ) -> Mapping[str, t.ConfigMapValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
@@ -287,21 +288,20 @@ class FlextUtilitiesGenerators:
 
         """
         # Strategy 1: Already a dict - return as-is
-        if value.__class__ is dict:
+        if isinstance(value, dict):
             return value
 
         # Strategy 2: Pydantic BaseModel - use model_dump()
-        if BaseModel in value.__class__.__mro__:
+        if isinstance(value, BaseModel):
             # BaseModel.model_dump() returns dict-like object, check with is_type guard
             result = value.model_dump()
-            if result.__class__ is dict:
-                normalized = FlextRuntime.normalize_to_general_value(result)
-                if normalized.__class__ is dict:
-                    return normalized
-                return {}
+            normalized = FlextRuntime.normalize_to_general_value(result)
+            if FlextUtilitiesGenerators._is_config_mapping(normalized):
+                return normalized
+            return {}
 
         # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
-        if hasattr(value, "keys") and hasattr(value, "__getitem__"):
+        if isinstance(value, Mapping):
             # Fast fail: Mapping.items() must succeed
             try:
                 return dict(value.items())
@@ -322,12 +322,7 @@ class FlextUtilitiesGenerators:
             )
             raise TypeError(msg)
 
-        # Strategy 5: Fast fail - unsupported type
-        msg = (
-            f"Cannot convert {value.__class__.__name__} to dict. "
-            "Supported types: dict, BaseModel, Mapping."
-        )
-        raise TypeError(msg)
+        assert_never(value)
 
     @staticmethod
     def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:

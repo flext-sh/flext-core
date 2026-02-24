@@ -128,6 +128,14 @@ optional-dependencies.dev = [
 urls = { Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core" }
 scripts = { "flext-basemk" = "flext_infra.basemk:main", "flext-check" = "flext_infra.check:main", "flext-modernize" = "flext_infra.deps.modernizer:main", "flext-sync" = "flext_infra.workspace.sync:main", "flext-validate" = "flext_infra.core:main" }
 
+# [CUSTOM] poetry - flext-core ships three namespace packages
+[tool.poetry]
+packages = [
+    { include = "flext_core", from = "src" },
+    { include = "flext_infra", from = "src" },
+    { include = "flext_tests", from = "src" },
+]
+
 # [MANAGED] deptry
 [tool.deptry]
 pep621_dev_dependency_groups = [
