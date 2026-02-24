@@ -517,10 +517,8 @@ class FlextUtilities:
 
 
 u = FlextUtilities
-u_core = FlextUtilities
 
 __all__ = [
     "FlextUtilities",
     "u",
-    "u_core",
 ]

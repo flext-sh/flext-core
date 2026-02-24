@@ -574,7 +574,6 @@ class FlextTypes:
         """Worker count (1-100)."""
 
 
-t_core = FlextTypes
 t = FlextTypes
 
 __all__ = [
@@ -595,5 +594,4 @@ __all__ = [
     "T_contra",
     "U",
     "t",
-    "t_core",
 ]

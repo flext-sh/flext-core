@@ -39,7 +39,7 @@ class FlextUtilitiesContext:
             StructlogProxyContextVar[str] instance
 
         Example:
-            >>> var = uContext.create_str_proxy("correlation_id")
+            >>> var = u.Context.create_str_proxy("correlation_id")
             >>> var.set("abc-123")
             >>> var.get()  # Returns "abc-123"
 
@@ -69,7 +69,7 @@ class FlextUtilitiesContext:
 
         Example:
             >>> from datetime import datetime
-            >>> var = uContext.create_datetime_proxy("start_time")
+            >>> var = u.Context.create_datetime_proxy("start_time")
             >>> var.set(datetime.now())
             >>> var.get()  # Returns datetime instance
 
@@ -101,7 +101,7 @@ class FlextUtilitiesContext:
             StructlogProxyContextVar[dict[str, t.ConfigMapValue]] instance
 
         Example:
-            >>> var = uContext.create_dict_proxy("metadata")
+            >>> var = u.Context.create_dict_proxy("metadata")
             >>> var.set({"key": "value"})
             >>> var.get()  # Returns dict
 

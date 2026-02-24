@@ -49,7 +49,7 @@ class FlextUtilitiesModel:
         """Create Pydantic model from dict with r.
 
         Example:
-             result = uModel.from_dict(
+             result = u.Model.from_dict(
                  UserModel,
                  {"status": "active", "name": "John"},
              )
@@ -78,7 +78,7 @@ class FlextUtilitiesModel:
         and field_validators defined in the model.
 
         Example:
-             result = uModel.from_kwargs(
+             result = u.Model.from_kwargs(
                  CreateParams,
                  content={"key": "value"},
                  name="file.json",
@@ -110,7 +110,7 @@ class FlextUtilitiesModel:
         Example:
              DEFAULTS = {"status": Status.PENDING, "retries": 3}
 
-             result = uModel.merge_defaults(
+             result = u.Model.merge_defaults(
                  ConfigModel,
                  defaults=DEFAULTS,
                  overrides={"status": "active"},  # Overrides
@@ -131,7 +131,7 @@ class FlextUtilitiesModel:
 
         Example:
              user = UserModel(status=Status.ACTIVE, name="John")
-             result = uModel.update(user, status="inactive")
+             result = u.Model.update(user, status="inactive")
              # result.value = UserModel with status=Status.INACTIVE
 
         """
@@ -156,7 +156,7 @@ class FlextUtilitiesModel:
 
         Example:
              user = UserModel(status=Status.ACTIVE, name="John")
-             data = uModel.to_dict(user)
+             data = u.Model.to_dict(user)
              # data = {"status": "active", "name": "John"}
 
         """
@@ -253,7 +253,7 @@ class FlextUtilitiesModel:
 
         Example:
             >>> user = UserModel(status=Status.ACTIVE, name="John")
-            >>> data = uModel.dump(user, exclude_none=True)
+            >>> data = u.Model.dump(user, exclude_none=True)
             >>> # {"status": "active", "name": "John"}
 
         """
@@ -283,7 +283,7 @@ class FlextUtilitiesModel:
             FlextResult containing model instance or error message.
 
         Example:
-            >>> result = uModel.load(UserModel, {"status": "active", "name": "John"})
+            >>> result = u.Model.load(UserModel, {"status": "active", "name": "John"})
             >>> if result.is_success:
             ...     user: UserModel = result.value
 

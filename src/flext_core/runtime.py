@@ -67,8 +67,6 @@ from structlog.typing import BindableLogger
 from flext_core.constants import c
 from flext_core.typings import T, t
 
-ConfigMap = t.ConfigMap
-
 
 class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
@@ -324,7 +322,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.ConfigMapValue,
-    ) -> TypeGuard[ConfigMap]:
+    ) -> TypeGuard[t.ConfigMap]:
         """Type guard to check if value is dict-like.
 
         Args:
@@ -752,7 +750,7 @@ class FlextRuntime:
         @classmethod
         def create_layered_bridge(
             cls,
-            config: ConfigMap | None = None,
+            config: t.ConfigMap | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -789,7 +787,7 @@ class FlextRuntime:
         def create_container(
             cls,
             *,
-            config: ConfigMap | None = None,
+            config: t.ConfigMap | None = None,
             services: Mapping[
                 str,
                 t.ConfigMapValue | BaseModel | Callable[..., t.ConfigMapValue],
@@ -879,7 +877,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            config: ConfigMap | None,
+            config: t.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -896,7 +894,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            config: ConfigMap | None,
+            config: t.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
@@ -1354,7 +1352,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: ConfigMap | None = None,
+            error_data: t.ConfigMap | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1422,7 +1420,7 @@ class FlextRuntime:
             return self._error_code
 
         @property
-        def error_data(self) -> ConfigMap | None:
+        def error_data(self) -> t.ConfigMap | None:
             """Get the error data."""
             return self._error_data
 
@@ -1652,7 +1650,7 @@ class FlextRuntime:
             cls,
             error: str | None,
             error_code: str | None = None,
-            error_data: ConfigMap | None = None,
+            error_data: t.ConfigMap | None = None,
             expected_type: type[U] | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
@@ -1758,7 +1756,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: ConfigMap | None = None,
+            event_data: t.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

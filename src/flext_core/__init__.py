@@ -1,7 +1,7 @@
 """Public API for flext-core.
 
-Provides access to core FLEXT components including dispatcher, models,
-utilities, and configuration for the FLEXT ecosystem.
+Canonical runtime aliases (use these at usage sites): c, m, r, t, u, p, d, e, h, s, x.
+Classes (FlextContainer, FlextModels, etc.) are for inheritance and type annotations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -45,7 +45,19 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextUtilities, u
 
+# Runtime aliases first (canonical public API)
 __all__ = [
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
     "BEARTYPE_CONF",
     "E",
     "FlextConstants",
@@ -79,15 +91,4 @@ __all__ = [
     "U",
     "__version__",
     "__version_info__",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
-    "x",
 ]

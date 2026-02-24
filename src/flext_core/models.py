@@ -28,7 +28,7 @@ from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.protocols import p
-from flext_core.typings import t_core
+from flext_core.typings import t
 
 
 class FlextModels:
@@ -101,16 +101,16 @@ class FlextModels:
         """Progress of conversion with errors/warnings (from Progress namespace)."""
 
     # GENERIC CONTAINERS - Replace dict aliases
-    class ConfigMap(t_core.ConfigMap):
+    class ConfigMap(t.ConfigMap):
         """Configuration map container (replaces ConfigurationDict)."""
 
-    class ServiceMap(t_core.ServiceMap):
+    class ServiceMap(t.ServiceMap):
         """Service registry map container."""
 
-    class ErrorMap(t_core.ErrorMap):
+    class ErrorMap(t.ErrorMap):
         """Error type mapping container."""
 
-    class Dict(t_core.Dict):
+    class Dict(t.Dict):
         """Generic dictionary container."""
 
     # Value class - inherits from ValueObject for type system compatibility
