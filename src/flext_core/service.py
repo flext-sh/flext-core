@@ -29,10 +29,10 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins as x
+from flext_core.mixins import x
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.settings import FlextSettings
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -501,4 +501,6 @@ class FlextService[TDomainResult](
         }
 
 
-__all__ = ["FlextService"]
+s = FlextService
+
+__all__ = ["FlextService", "s"]

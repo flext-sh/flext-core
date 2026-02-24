@@ -26,7 +26,7 @@ from structlog.typing import BindableLogger
 from flext_core.constants import c
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
 from flext_core.typings import t

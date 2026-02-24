@@ -54,6 +54,7 @@ dependencies = [
   "pyyaml>=6.0.2",
   "returns>=0.26",
   "structlog>=25.4",
+  "tomlkit>=0.13",
   "wrapt>=1.17,<2",
 ]
 # [MANAGED] consolidated development dependencies

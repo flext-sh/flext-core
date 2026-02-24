@@ -8,10 +8,10 @@ from pathlib import Path
 
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator
-from flext_infra.models import im
+from flext_infra.models import m
 
 
-def _build_config(project_name: str | None) -> im.BaseMkConfig | None:
+def _build_config(project_name: str | None) -> m.BaseMkConfig | None:
     if project_name is None:
         return None
     return TemplateEngine.default_config().model_copy(

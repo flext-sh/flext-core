@@ -98,7 +98,7 @@ class FlextValidatorTests:
 
         for node in ast.walk(tree):
             # Check function parameters for monkeypatch
-            if type(node) in (ast.FunctionDef, ast.AsyncFunctionDef):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for arg in node.args.args:
                     if arg.arg == "monkeypatch":
                         violation = u.Tests.Validator.create_violation(
@@ -114,8 +114,8 @@ class FlextValidatorTests:
 
             # Check for monkeypatch.setattr, monkeypatch.delattr, etc.
             elif (
-                type(node) is ast.Attribute
-                and type(node.value) is ast.Name
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name)
                 and node.value.id == "monkeypatch"
             ):
                 violation = u.Tests.Validator.create_violation(
@@ -146,7 +146,7 @@ class FlextValidatorTests:
 
         for node in ast.walk(tree):
             # Check imports
-            if type(node) is ast.ImportFrom:
+            if isinstance(node, ast.ImportFrom):
                 if node.module and "mock" in node.module.lower():
                     for alias in node.names:
                         if alias.name in mock_names:
@@ -161,8 +161,8 @@ class FlextValidatorTests:
 
             # Check calls to Mock(), MagicMock(), etc.
             elif (
-                type(node) is ast.Call
-                and type(node.func) is ast.Name
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
                 and node.func.id in mock_names
             ):
                 violation = u.Tests.Validator.create_violation(
@@ -191,10 +191,9 @@ class FlextValidatorTests:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if type(node) not in (
-                ast.FunctionDef,
-                ast.AsyncFunctionDef,
-                ast.ClassDef,
+            if not isinstance(
+                node,
+                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
             ):
                 continue
             for decorator in node.decorator_list:

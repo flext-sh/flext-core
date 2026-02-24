@@ -30,10 +30,7 @@ from flext_infra.deps.extra_paths import (
     sync_extra_paths,
     sync_one,
 )
-from flext_infra.deps.internal_sync import (
-    InternalDependencySyncService,
-    RepoUrls,
-)
+from flext_infra.deps.internal_sync import InternalDependencySyncService
 from flext_infra.deps.modernizer import PyprojectModernizer
 from flext_infra.deps.path_sync import (
     FLEXT_DEPS_DIR,
@@ -54,7 +51,6 @@ __all__ = [
     "DependencyDetectorModels",
     "InternalDependencySyncService",
     "PyprojectModernizer",
-    "RepoUrls",
     "RuntimeDevDependencyDetector",
     "ddm",
     "detect_mode",

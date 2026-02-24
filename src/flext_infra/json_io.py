@@ -13,12 +13,11 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
-from pydantic import BaseModel
-
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
+from pydantic import BaseModel
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 
 
 class JsonService:
@@ -42,9 +41,11 @@ class JsonService:
         if not path.exists():
             return r[Mapping[str, t.ConfigMapValue]].ok({})
         try:
-            loaded = json.loads(path.read_text(encoding=ic.Encoding.DEFAULT))
+            loaded = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
             if not isinstance(loaded, dict):
-                return r[Mapping[str, t.ConfigMapValue]].fail("JSON root must be object")
+                return r[Mapping[str, t.ConfigMapValue]].fail(
+                    "JSON root must be object"
+                )
             data: Mapping[str, t.ConfigMapValue] = loaded
             return r[Mapping[str, t.ConfigMapValue]].ok(data)
         except (json.JSONDecodeError, OSError) as exc:
@@ -83,7 +84,7 @@ class JsonService:
                 )
                 + "\n"
             )
-            _ = path.write_text(content, encoding=ic.Encoding.DEFAULT)
+            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
             return r[bool].ok(True)
         except (TypeError, OSError) as exc:
             return r[bool].fail(f"JSON write error: {exc}")

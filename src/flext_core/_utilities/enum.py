@@ -13,10 +13,12 @@ import inspect
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, TypeGuard, TypeIs, TypeVar, cast, overload
 
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.typings import t
+
+EnumT = TypeVar("EnumT", bound=StrEnum)
 
 
 class FlextUtilitiesEnum:
@@ -68,9 +70,9 @@ class FlextUtilitiesEnum:
         value: t.ScalarValue | E, enum_cls: type[E]
     ) -> TypeIs[E]:
         """Check membership by value (internal helper)."""
-        if value.__class__ is enum_cls:
+        if isinstance(value, enum_cls):
             return True
-        if value.__class__ is str:
+        if isinstance(value, str):
             value_map = getattr(enum_cls, "_value2member_map_", {})
             return value in value_map
         return False
@@ -81,23 +83,26 @@ class FlextUtilitiesEnum:
         return name in getattr(enum_cls, "__members__", {})
 
     @staticmethod
-    def _parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
+    def _parse(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
         """Parse string to enum (internal helper)."""
-        if value.__class__ is enum_cls:
-            return r[E].ok(value)
+        if isinstance(value, enum_cls):
+            return cast("r[EnumT]", r[StrEnum].ok(value))
         try:
-            return r[E].ok(enum_cls(value))
+            return cast("r[EnumT]", r[StrEnum].ok(enum_cls(value)))
         except ValueError:
             members_dict = getattr(enum_cls, "__members__", {})
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            return cast(
+                "r[EnumT]",
+                r[StrEnum].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}"),
+            )
 
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
         """Coerce value to enum - for Pydantic validators (internal helper)."""
-        if value.__class__ is enum_cls:
+        if isinstance(value, enum_cls):
             return value
         return enum_cls(value)
 
@@ -118,9 +123,9 @@ class FlextUtilitiesEnum:
                  process_status(value)
 
         """
-        if value.__class__ is enum_cls:
+        if isinstance(value, enum_cls):
             return True
-        if value.__class__ is str:
+        if isinstance(value, str):
             # Check if value is in enum's value-to-member mapping
             value_map = getattr(enum_cls, "_value2member_map_", {})
             return value in value_map
@@ -142,9 +147,9 @@ class FlextUtilitiesEnum:
                  process_active(value)
 
         """
-        if value.__class__ is enum_cls and value in valid_members:
+        if isinstance(value, enum_cls) and value in valid_members:
             return True
-        if value.__class__ is str:
+        if isinstance(value, str):
             try:
                 member = enum_cls(value)
                 return member in valid_members
@@ -157,7 +162,7 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
+    def parse(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
         """Convert string to StrEnum with r.
 
         Example:
@@ -166,10 +171,10 @@ class FlextUtilitiesEnum:
                  status: Status = result.value
 
         """
-        if value.__class__ is enum_cls:
-            return r[E].ok(value)
+        if isinstance(value, enum_cls):
+            return cast("r[EnumT]", r[StrEnum].ok(value))
         try:
-            return r[E].ok(enum_cls(value))
+            return cast("r[EnumT]", r[StrEnum].ok(enum_cls(value)))
         except ValueError:
             # enum_cls is a StrEnum type, access members via __members__
             # Access enum members via __members__ attribute
@@ -177,7 +182,10 @@ class FlextUtilitiesEnum:
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            return cast(
+                "r[EnumT]",
+                r[StrEnum].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}"),
+            )
 
     @staticmethod
     def parse_or_default[E: StrEnum](
@@ -195,7 +203,7 @@ class FlextUtilitiesEnum:
         """
         if value is None:
             return default
-        if value.__class__ is enum_cls:
+        if isinstance(value, enum_cls):
             return value
         try:
             return enum_cls(value)
@@ -230,9 +238,9 @@ class FlextUtilitiesEnum:
         """
 
         def _coerce(value: t.ScalarValue | E) -> E:
-            if value.__class__ is enum_cls:
+            if isinstance(value, enum_cls):
                 return value
-            if value.__class__ is str:
+            if isinstance(value, str):
                 try:
                     return enum_cls(value)
                 except ValueError:
@@ -263,14 +271,14 @@ class FlextUtilitiesEnum:
         """
 
         def _coerce(value: t.ScalarValue | E) -> E:
-            if value.__class__ is enum_cls:
+            if isinstance(value, enum_cls):
                 return value
-            if value.__class__ is str:
+            if isinstance(value, str):
                 # Try by name first
                 members_dict = getattr(enum_cls, "__members__", {})
                 if value in members_dict:
                     member = members_dict[value]
-                    if member.__class__ is enum_cls:
+                    if isinstance(member, enum_cls):
                         return member
                 # Then by value
                 try:
@@ -401,7 +409,7 @@ class FlextUtilitiesEnum:
             Mapping of discriminator values to enum classes
 
         """
-        union_map: Mapping[str, type[StrEnum]] = {}
+        union_map: dict[str, type[StrEnum]] = {}
         for enum_class in enum_classes:
             for member in enum_class.__members__.values():
                 union_map[member.value] = enum_class

@@ -19,7 +19,6 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.models import m
 from flext_core.runtime import FlextRuntime
@@ -132,8 +131,7 @@ class FlextUtilitiesGenerators:
         if hasattr(context, "keys") and hasattr(context, "__getitem__"):
             try:
                 # Type narrowing: context is Mapping, convert to dict
-                context_dict_mapping = dict(context.items())
-                return context_dict_mapping
+                return dict(context.items())
             except (AttributeError, TypeError) as e:
                 msg = (
                     f"Failed to convert Mapping {context.__class__.__name__} to dict: "

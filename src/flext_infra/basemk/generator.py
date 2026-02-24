@@ -7,18 +7,18 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, TextIO, override
 
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
 
 from flext_infra.basemk.engine import TemplateEngine
-from flext_infra.constants import ic
-from flext_infra.models import im
+from flext_infra.constants import c
+from flext_infra.models import m
 from flext_infra.subprocess import CommandRunner
 
 
 class _TemplateRenderer(Protocol):
-    def render_all(self, config: im.BaseMkConfig | None = None) -> r[str]: ...
+    def render_all(self, config: m.BaseMkConfig | None = None) -> r[str]: ...
 
 
 class BaseMkGenerator(FlextService[str]):
@@ -35,7 +35,7 @@ class BaseMkGenerator(FlextService[str]):
         return self.generate()
 
     def generate(
-        self, config: im.BaseMkConfig | Mapping[str, t.ScalarValue] | None = None
+        self, config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None = None
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
@@ -68,24 +68,24 @@ class BaseMkGenerator(FlextService[str]):
 
         try:
             output.parent.mkdir(parents=True, exist_ok=True)
-            _ = output.write_text(content, encoding=ic.Encoding.DEFAULT)
+            _ = output.write_text(content, encoding=c.Encoding.DEFAULT)
             return r[bool].ok(True)
         except OSError as exc:
             return r[bool].fail(f"base.mk write failed: {exc}")
 
     def _normalize_config(
         self,
-        config: im.BaseMkConfig | Mapping[str, t.ScalarValue] | None,
-    ) -> r[im.BaseMkConfig]:
+        config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None,
+    ) -> r[m.BaseMkConfig]:
         if config is None:
-            return r[im.BaseMkConfig].ok(TemplateEngine.default_config())
-        if isinstance(config, im.BaseMkConfig):
-            return r[im.BaseMkConfig].ok(config)
+            return r[m.BaseMkConfig].ok(TemplateEngine.default_config())
+        if isinstance(config, m.BaseMkConfig):
+            return r[m.BaseMkConfig].ok(config)
         try:
-            normalized = im.BaseMkConfig.model_validate(dict(config))
-            return r[im.BaseMkConfig].ok(normalized)
+            normalized = m.BaseMkConfig.model_validate(dict(config))
+            return r[m.BaseMkConfig].ok(normalized)
         except (TypeError, ValueError) as exc:
-            return r[im.BaseMkConfig].fail(
+            return r[m.BaseMkConfig].fail(
                 f"base.mk configuration validation failed: {exc}",
             )
 
@@ -95,12 +95,12 @@ class BaseMkGenerator(FlextService[str]):
             with tempfile.TemporaryDirectory(prefix="flext-basemk-") as temp_dir_name:
                 temp_dir = Path(temp_dir_name)
                 base_mk_path = temp_dir / "base.mk"
-                makefile_path = temp_dir / ic.Files.MAKEFILE_FILENAME
+                makefile_path = temp_dir / c.Files.MAKEFILE_FILENAME
 
-                _ = base_mk_path.write_text(content, encoding=ic.Encoding.DEFAULT)
+                _ = base_mk_path.write_text(content, encoding=c.Encoding.DEFAULT)
                 _ = makefile_path.write_text(
                     "include base.mk\n",
-                    encoding=ic.Encoding.DEFAULT,
+                    encoding=c.Encoding.DEFAULT,
                 )
 
                 process_result = self._runner.run(

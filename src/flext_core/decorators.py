@@ -15,11 +15,9 @@ import time
 import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
-from datetime import datetime
 from functools import wraps
 from typing import Literal, overload
 
-from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -27,21 +25,9 @@ from flext_core.exceptions import FlextExceptions as e
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
-
-# Concrete payload type for decorator extra dicts (metadata-compatible)
-type _Payload = t.MetadataAttributeValue
-type _LogExtraValue = (
-    str
-    | int
-    | float
-    | bool
-    | datetime
-    | None
-    | list[str | int | float | bool | datetime | None]
-)
 
 
 def deprecated(
@@ -1036,7 +1022,8 @@ class FlextDecorators(FlextRuntime):
 
         # Should never be None (loop always catches exceptions), but handle defensively
         if last_exception is None:
-            raise RuntimeError("Retry loop completed without success or exception")
+            msg = "Retry loop completed without success or exception"
+            raise RuntimeError(msg)
         raise last_exception
 
     @staticmethod
@@ -1608,6 +1595,6 @@ class FlextDecorators(FlextRuntime):
     # FactoryDecoratorsDiscovery lives in _decorators/; use it or d from facade.
 
 
-__all__ = [
-    "FlextDecorators",
-]
+d = FlextDecorators
+
+__all__ = ["FlextDecorators", "d"]

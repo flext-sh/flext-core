@@ -1055,7 +1055,8 @@ class FlextTestsConstants(FlextConstants):
                     }
 
 
-# Distinct alias to avoid shadowing core c
+# Runtime alias for project namespace; tc for internal use to avoid shadowing core c
 c = FlextTestsConstants
+tc = FlextTestsConstants
 
-__all__ = ["FlextTestsConstants", "c"]
+__all__ = ["FlextTestsConstants", "c", "tc"]

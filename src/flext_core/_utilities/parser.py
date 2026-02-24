@@ -25,7 +25,7 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.models import m
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.typings import t
 
 
@@ -64,7 +64,7 @@ class FlextUtilitiesParser:
     def _safe_text_length(text: t.ConfigMapValue) -> str | int:
         """Safely get text length for logging."""
         try:
-            if text.__class__ in (str, bytes):
+            if text.__class__ in {str, bytes}:
                 len_method = getattr(text, "__len__", None)
                 if callable(len_method):
                     return len_method()
@@ -1112,22 +1112,22 @@ class FlextUtilitiesParser:
 
         for k, v in items_method():
             key = str(k)
-            if v.__class__ in (str, int, float, bool, datetime, NoneType):
+            if v.__class__ in {str, int, float, bool, datetime, NoneType}:
                 value_dict_data.root[key] = v
                 continue
-            if v.__class__ in (list, tuple):
+            if v.__class__ in {list, tuple}:
                 value_dict_data.root[key] = str(v)
                 continue
             value_dict_data.root[key] = str(v)
         scalar_data: t.Dict = t.Dict({})
         for dict_key, dict_value in value_dict_data.root.items():
-            if dict_value is None or dict_value.__class__ in (
+            if dict_value is None or dict_value.__class__ in {
                 str,
                 int,
                 float,
                 bool,
                 datetime,
-            ):
+            }:
                 scalar_data.root[dict_key] = dict_value
             else:
                 scalar_data.root[dict_key] = str(dict_value)
@@ -1143,7 +1143,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_int(value: t.ConfigMapValue) -> r[int] | None:
         """Coerce value to int. Returns None if not coercible."""
-        if value.__class__ in (str, float):
+        if value.__class__ in {str, float}:
             try:
                 return r[int].ok(int(float(str(value))))
             except (ValueError, TypeError):
@@ -1153,7 +1153,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_float(value: t.ConfigMapValue) -> r[float] | None:
         """Coerce value to float. Returns None if not coercible."""
-        if value.__class__ in (str, int):
+        if value.__class__ in {str, int}:
             try:
                 return r[float].ok(float(str(value)))
             except (ValueError, TypeError):
@@ -1448,7 +1448,7 @@ class FlextUtilitiesParser:
             return model_result
 
         primitive_default: int | float | str | bool | None
-        if default is None or default.__class__ in (int, float, str, bool):
+        if default is None or default.__class__ in {int, float, str, bool}:
             primitive_default = default
         else:
             primitive_default = None
@@ -1581,7 +1581,7 @@ class FlextUtilitiesParser:
         """Convert value to float with fallback."""
         if value.__class__ is float:
             return value
-        if value.__class__ in (int, str):
+        if value.__class__ in {int, str}:
             try:
                 return float(value)
             except (ValueError, TypeError):
@@ -1608,7 +1608,7 @@ class FlextUtilitiesParser:
         if value.__class__ is str:
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
             return normalized in {"true", "1", "yes", "on"}
-        if value.__class__ in (int, float):
+        if value.__class__ in {int, float}:
             return bool(value)
         return default
 
@@ -1675,7 +1675,7 @@ class FlextUtilitiesParser:
             return [str(item) for item in value]
         if value.__class__ is str:
             return [value] if value else default
-        if value.__class__ in (tuple, set, frozenset):
+        if value.__class__ in {tuple, set, frozenset}:
             return [str(item) for item in value]
         return [str(value)]
 
@@ -1861,7 +1861,7 @@ class FlextUtilitiesParser:
             items_to_check,
             case=case or "lower",
         )
-        if normalized_result.__class__ in (list, set):
+        if normalized_result.__class__ in {list, set}:
             return normalized_value in normalized_result
         return normalized_value in normalized_result.values()
 

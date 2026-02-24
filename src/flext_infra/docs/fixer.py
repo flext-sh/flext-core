@@ -1,7 +1,7 @@
 """Documentation fixer service.
 
 Auto-fixes broken links and inserts/updates TOC in markdown files,
-returning structured FlextResult reports.
+returning structured r reports.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,21 +10,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import cast
 
 import structlog
-from flext_core.result import FlextResult, r
+from flext_core.result import r
+from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DocScope,
-    build_scopes,
-    iter_markdown_files,
-    write_json,
-    write_markdown,
+    FlextInfraDocsShared,
 )
-from flext_infra.patterns import InfraPatterns
+from flext_infra.patterns import FlextInfraPatterns
 from flext_infra.templates import TemplateEngine
 
 logger = structlog.get_logger(__name__)
@@ -53,7 +53,7 @@ class DocFixer:
     """Infrastructure service for documentation auto-fixing.
 
     Fixes broken markdown links and inserts/updates TOC blocks,
-    returning structured FlextResult reports.
+    returning structured r reports.
     """
 
     def fix(
@@ -64,7 +64,7 @@ class DocFixer:
         projects: str | None = None,
         output_dir: str = ".reports/docs",
         apply: bool = False,
-    ) -> FlextResult[list[FixReport]]:
+    ) -> r[list[FixReport]]:
         """Run documentation fixes across project scopes.
 
         Args:
@@ -75,10 +75,10 @@ class DocFixer:
             apply: Actually write changes (dry-run if False).
 
         Returns:
-            FlextResult with list of FixReport objects.
+            r with list of FixReport objects.
 
         """
-        scopes_result = build_scopes(
+        scopes_result = FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,
             projects=projects,
@@ -97,7 +97,7 @@ class DocFixer:
     def _fix_scope(self, scope: DocScope, *, apply: bool) -> FixReport:
         """Run link and TOC fixes across all markdown files in scope."""
         items: list[FixItem] = []
-        for md in iter_markdown_files(scope.path):
+        for md in FlextInfraDocsShared.iter_markdown_files(scope.path):
             item = self._process_file(md, apply=apply)
             if item.links or item.toc:
                 rel = md.relative_to(scope.path).as_posix()
@@ -111,7 +111,10 @@ class DocFixer:
             },
             "changes": [asdict(item) for item in items],
         }
-        _ = write_json(scope.report_dir / "fix-summary.json", payload)
+        _ = FlextInfraDocsShared.write_json(
+            scope.report_dir / "fix-summary.json",
+            cast("Mapping[str, t.ConfigMapValue]", payload),
+        )
         lines = [
             "# Docs Fix Report",
             "",
@@ -123,9 +126,11 @@ class DocFixer:
             "|---|---:|---:|",
             *[f"| {item.file} | {item.links} | {item.toc} |" for item in items],
         ]
-        _ = write_markdown(scope.report_dir / "fix-report.md", lines)
+        _ = FlextInfraDocsShared.write_markdown(
+            scope.report_dir / "fix-report.md", lines
+        )
 
-        status = ic.Status.OK if apply or not items else ic.Status.WARN
+        status = c.Status.OK if apply or not items else c.Status.WARN
         logger.info(
             "docs_fix_scope_completed",
             project=scope.name,
@@ -143,7 +148,7 @@ class DocFixer:
 
     def _process_file(self, md_file: Path, *, apply: bool) -> FixItem:
         """Fix links and TOC in a single markdown file."""
-        original = md_file.read_text(encoding=ic.Encoding.DEFAULT, errors="ignore")
+        original = md_file.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
         link_count = 0
 
         def replace_link(match: re.Match[str]) -> str:
@@ -155,10 +160,10 @@ class DocFixer:
             link_count += 1
             return f"[{text}]({fixed})"
 
-        updated = InfraPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
+        updated = FlextInfraPatterns.MARKDOWN_LINK_RE.sub(replace_link, original)
         updated, toc_changed = self._update_toc(updated)
         if apply and (link_count > 0 or toc_changed > 0) and updated != original:
-            _ = md_file.write_text(updated, encoding=ic.Encoding.DEFAULT)
+            _ = md_file.write_text(updated, encoding=c.Encoding.DEFAULT)
         return FixItem(file=md_file.as_posix(), links=link_count, toc=toc_changed)
 
     @staticmethod
@@ -189,7 +194,7 @@ class DocFixer:
     def _build_toc(self, content: str) -> str:
         """Generate a TOC block from ## and ### headings in content."""
         items: list[str] = []
-        for level, title in InfraPatterns.HEADING_H2_H3_RE.findall(content):
+        for level, title in FlextInfraPatterns.HEADING_H2_H3_RE.findall(content):
             anchor = self._anchorize(title)
             if not anchor:
                 continue

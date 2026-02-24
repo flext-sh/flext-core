@@ -16,12 +16,10 @@ from pathlib import Path
 import structlog
 from flext_core.result import FlextResult, r
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DocScope,
-    build_scopes,
-    write_json,
-    write_markdown,
+    FlextInfraDocsShared,
 )
 
 logger = structlog.get_logger(__name__)
@@ -69,7 +67,7 @@ class DocValidator:
             FlextResult with list of ValidateReport objects.
 
         """
-        scopes_result = build_scopes(
+        scopes_result = FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,
             projects=projects,
@@ -93,7 +91,7 @@ class DocValidator:
         apply_mode: bool,
     ) -> ValidateReport:
         """Run validation for a single project scope."""
-        status = ic.Status.OK
+        status = c.Status.OK
         message = "validation passed"
         missing_adr_skills: list[str] = []
 
@@ -104,12 +102,12 @@ class DocValidator:
             code, missing = self._run_adr_skill_check(scope.path)
             missing_adr_skills = missing
             if code != 0:
-                status = ic.Status.FAIL
+                status = c.Status.FAIL
                 message = f"missing adr references in skills: {', '.join(missing)}"
 
         wrote_todo = self._maybe_write_todo(scope, apply_mode=apply_mode)
 
-        _ = write_json(
+        _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "validate-summary.json",
             {
                 "summary": {
@@ -124,7 +122,7 @@ class DocValidator:
                 },
             },
         )
-        _ = write_markdown(
+        _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "validate-report.md",
             [
                 "# Docs Validate Report",
@@ -155,7 +153,7 @@ class DocValidator:
     def _has_adr_reference(skill_path: Path) -> bool:
         """Check whether a skill file contains an ADR reference."""
         text = skill_path.read_text(
-            encoding=ic.Encoding.DEFAULT, errors="ignore"
+            encoding=c.Encoding.DEFAULT, errors="ignore"
         ).lower()
         return "adr" in text
 
@@ -166,7 +164,7 @@ class DocValidator:
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
             payload = json.loads(
-                config.read_text(encoding=ic.Encoding.DEFAULT, errors="ignore")
+                config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
             )
             docs_validation = payload.get("docs_validation", {})
             configured = docs_validation.get("required_skills", [])
@@ -195,7 +193,7 @@ class DocValidator:
             "- [ ] Resolve documentation validation findings "
             "from `.reports/docs/validate-report.md`.\n"
         )
-        _ = path.write_text(content, encoding=ic.Encoding.DEFAULT)
+        _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
         return True
 
 

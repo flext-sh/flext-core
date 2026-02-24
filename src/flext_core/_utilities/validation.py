@@ -45,7 +45,6 @@ import re
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import ClassVar, TypeGuard
 
 import orjson
@@ -60,9 +59,10 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
 
 class FlextUtilitiesValidation:
     """Unified validation patterns using railway composition.
@@ -276,8 +276,7 @@ class FlextUtilitiesValidation:
             try:
                 dump_result = model_dump_attr()
                 if dump_result.__class__ is dict:
-                    dict_result = dump_result
-                    return dict_result
+                    return dump_result
                 return str(component)
             except Exception:
                 return str(component)
@@ -375,8 +374,10 @@ class FlextUtilitiesValidation:
                         value_raw: t.ConfigMapValue
                         key, value_raw = item
                         if key.__class__ is str:
-                            typed_value: t.ConfigMapValue = FlextUtilitiesConversion.to_general_value_type(
-                                value_raw,
+                            typed_value: t.ConfigMapValue = (
+                                FlextUtilitiesConversion.to_general_value_type(
+                                    value_raw,
+                                )
                             )
                             result_dict[key] = typed_value
                 return result_dict
@@ -470,8 +471,10 @@ class FlextUtilitiesValidation:
                     key, value_raw = item
                     if FlextUtilitiesGuards.is_type(key, str):
                         # Convert value to PayloadValue
-                        typed_value: t.ConfigMapValue = FlextUtilitiesConversion.to_general_value_type(
-                            value_raw,
+                        typed_value: t.ConfigMapValue = (
+                            FlextUtilitiesConversion.to_general_value_type(
+                                value_raw,
+                            )
                         )
                         result_dict[key] = typed_value
             return result_dict
@@ -646,7 +649,7 @@ class FlextUtilitiesValidation:
         result_set: set[t.ConfigMapValue] = set()
         for item in normalized_items:
             # Only add hashable items to set
-            if item is None or item.__class__ in (str, int, float, bool):
+            if item is None or item.__class__ in {str, int, float, bool}:
                 result_set.add(item)
             elif FlextUtilitiesGuards.is_type(item, tuple):
                 # Tuples are hashable if all elements are hashable
@@ -752,11 +755,11 @@ class FlextUtilitiesValidation:
             return (value.casefold(), value)
 
         # Determine type category for non-strings
-        if value.__class__ in (int, float):
+        if value.__class__ in {int, float}:
             type_cat = "num"
         elif FlextUtilitiesGuards.is_type(value, dict):
             type_cat = "dict"
-        elif value.__class__ in (list, tuple):
+        elif value.__class__ in {list, tuple}:
             type_cat = "seq"
         else:
             type_cat = "other"
@@ -794,7 +797,7 @@ class FlextUtilitiesValidation:
 
         """
         # Handle primitives (return as-is)
-        if value is None or value.__class__ in (bool, int, float, str):
+        if value is None or value.__class__ in {bool, int, float, str}:
             return (True, value)
 
         # Handle bytes (convert to dict with type marker)
@@ -1060,7 +1063,7 @@ class FlextUtilitiesValidation:
                 FlextUtilitiesValidation._sort_dict_keys(item)
                 for item in obj
                 if (
-                    item.__class__ in (str, int, float, bool)
+                    item.__class__ in {str, int, float, bool}
                     or item is None
                     or hasattr(item, "__iter__")
                     or hasattr(item, "items")
@@ -1070,14 +1073,14 @@ class FlextUtilitiesValidation:
             ]
             return (*tuple_items,)
         # Handle other Sequences (but not str, bytes, or tuple)
-        if obj.__class__ in (list, tuple):
+        if obj.__class__ in {list, tuple}:
             # obj is Sequence[t.ConfigMapValue] - use directly
             obj_list: Sequence[t.ConfigMapValue] = obj
             sorted_list: list[t.ConfigMapValue] = [
                 FlextUtilitiesValidation._sort_dict_keys(
                     item2
                     if (
-                        item2.__class__ in (str, int, float, bool)
+                        item2.__class__ in {str, int, float, bool}
                         or item2 is None
                         or hasattr(item2, "__iter__")
                         or hasattr(item2, "items")
@@ -1616,7 +1619,7 @@ class FlextUtilitiesValidation:
         for code in codes:
             try:
                 # Convert to int (handles both int and str)
-                if code.__class__ in (int, str):
+                if code.__class__ in {int, str}:
                     code_int = int(str(code))
                     # Validate range
                     if not min_code <= code_int <= max_code:
@@ -1804,7 +1807,7 @@ class FlextUtilitiesValidation:
         error_msg = str(exception) or exception.__class__.__name__
 
         if (
-            exception.__class__ in (TimeoutError, concurrent.futures.TimeoutError)
+            exception.__class__ in {TimeoutError, concurrent.futures.TimeoutError}
             and timeout_seconds
         ):
             error_msg = f"Operation timed out after {timeout_seconds} seconds"
@@ -2292,12 +2295,12 @@ class FlextUtilitiesValidation:
         error_msg: str | None,
     ) -> str | None:
         """Helper: Check type guard condition."""
-        _type_match = (
+        type_match = (
             value.__class__ is condition
             if condition.__class__ is type
             else any(value.__class__ is c for c in condition)
         )
-        if not _type_match:
+        if not type_match:
             if error_msg is None:
                 type_name = (
                     condition.__name__
@@ -2485,25 +2488,25 @@ class FlextUtilitiesValidation:
     ] = {
         # Numeric shortcuts
         "positive": (
-            lambda v: v.__class__ in (int, float) and v.__class__ is not bool and v > 0,
+            lambda v: v.__class__ in {int, float} and v.__class__ is not bool and v > 0,
             "positive number",
         ),
         "non_negative": (
             lambda v: (
-                v.__class__ in (int, float) and v.__class__ is not bool and v >= 0
+                v.__class__ in {int, float} and v.__class__ is not bool and v >= 0
             ),
             "non-negative number",
         ),
         # Type shortcuts - use type check instead of TypeGuard functions
         # to avoid argument type mismatch (object vs PayloadValue)
         "dict": (
-            lambda v: hasattr(v, "items") and v.__class__ not in (str, bytes),
+            lambda v: hasattr(v, "items") and v.__class__ not in {str, bytes},
             "dict-like",
         ),
         "list": (
             lambda v: (
                 hasattr(v, "__iter__")
-                and v.__class__ not in (str, bytes)
+                and v.__class__ not in {str, bytes}
                 and not hasattr(v, "items")
             ),
             "list-like",
@@ -2511,7 +2514,7 @@ class FlextUtilitiesValidation:
         "string": (lambda v: v.__class__ is str, "string"),
         "int": (lambda v: v.__class__ is int and v.__class__ is not bool, "int"),
         "float": (
-            lambda v: v.__class__ in (int, float) and v.__class__ is not bool,
+            lambda v: v.__class__ in {int, float} and v.__class__ is not bool,
             "float",
         ),
         "bool": (lambda v: v.__class__ is bool, "bool"),

@@ -13,7 +13,7 @@ from enum import StrEnum
 from typing import Protocol, TypeGuard, overload, runtime_checkable
 
 from flext_core._utilities.conversion import FlextUtilitiesConversion
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.typings import R, T, T_contra, U, t
 
 
@@ -222,7 +222,7 @@ class FlextUtilitiesCollection:
         Returns first item where predicate returns True, or None.
         """
         # Handle sequence types
-        if items.__class__ in (list, tuple):
+        if items.__class__ in {list, tuple}:
             sequence_items: list[T] | tuple[T, ...] = items
             for item in sequence_items:
                 result: bool = predicate(item)  # Explicit type for result

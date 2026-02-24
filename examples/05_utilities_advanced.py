@@ -20,16 +20,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from enum import StrEnum
 
 from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
-    t,
     m,
     s,
+    t,
     u,
 )
 from pydantic import Field
@@ -286,7 +286,11 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             and u.guard(mapping_value, Mapping, return_value=True) is not None
         ):
             # Type-safe dictionary creation from Mapping
-            _is_mapping = lambda x: type(x) is dict or (hasattr(x, "keys") and hasattr(x, "__getitem__"))
+            def _is_mapping(x: object) -> bool:
+                return isinstance(x, dict) or (
+                    hasattr(x, "keys") and hasattr(x, "__getitem__")
+                )
+
             source_dict: dict[str, t.ConfigMapValue] = (
                 {str(k): v for k, v in source_value.items()}
                 if _is_mapping(source_value)
@@ -405,7 +409,10 @@ def main() -> None:
         data = result.value
         utilities = data["utilities_demonstrated"]
         categories = data["utility_categories"]
-        if (type(utilities) in (list, tuple) or (hasattr(utilities, "__getitem__") and hasattr(utilities, "__len__"))) and type(categories) is int:
+        if (
+            isinstance(utilities, (list, tuple))
+            or (hasattr(utilities, "__getitem__") and hasattr(utilities, "__len__"))
+        ) and isinstance(categories, int):
             utilities_list = list(utilities)
             print(f"\n✅ Demonstrated {categories} utility categories")
             print(f"✅ Covered {len(utilities_list)} utility types")

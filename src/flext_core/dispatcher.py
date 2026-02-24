@@ -31,17 +31,15 @@ from flext_core._dispatcher import (
     RetryPolicy,
     TimeoutEnforcer,
 )
-
-# Use public aliases from m.* instead of private _models.* imports
 from flext_core.constants import c
 from flext_core.context import FlextContext
-from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins as x
+from flext_core.handlers import h
+from flext_core.mixins import x
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.service import FlextService
+from flext_core.service import s
 from flext_core.typings import t
 from flext_core.utilities import u
 
@@ -85,13 +83,13 @@ type _RuntimeValue = (
 )
 
 
-class FlextDispatcher(FlextService[bool]):
+class FlextDispatcher(s[bool]):
     """Application-level dispatcher that satisfies the command bus protocol.
 
     The dispatcher exposes CQRS routing, handler registration, and execution
     with layered reliability controls for message dispatching and handler execution.
 
-    This is a specialized CQRS service that extends FlextService for infrastructure
+    This is a specialized CQRS service that extends s for infrastructure
     integration while providing command/query routing capabilities.
     """
 
@@ -107,7 +105,7 @@ class FlextDispatcher(FlextService[bool]):
     ) -> None:
         """Initialize dispatcher with reliability managers.
 
-        FlextService handles infrastructure (container, config, context) automatically.
+        s handles infrastructure (container, config, context) automatically.
         This init only configures dispatcher-specific reliability components.
 
         Args:
@@ -119,13 +117,13 @@ class FlextDispatcher(FlextService[bool]):
                 resolved from container or created with defaults.
             retry_policy: Optional RetryPolicy. If not provided, will be
                 resolved from container or created with defaults.
-            **data: Additional data passed to FlextService.
+            **data: Additional data passed to s.
 
         """
-        # FlextService handles container, config, context, runtime
+        # s handles container, config, context, runtime
         super().__init__(**data)
 
-        # Access config from FlextService (already initialized)
+        # Access config from s (already initialized)
         config = self.config
 
         # Resolve or create circuit breaker manager
@@ -679,7 +677,7 @@ class FlextDispatcher(FlextService[bool]):
             command: The command/query object to find handler for
 
         Returns:
-            The handler instance (HandlerType or object for FlextHandlers) or None if not found
+            The handler instance (HandlerType or object for h) or None if not found
 
         """
         command_type = type(command)
@@ -799,7 +797,7 @@ class FlextDispatcher(FlextService[bool]):
     ) -> r[_Payload]:
         """Execute the handler using h pipeline when available.
 
-        Delegates to FlextHandlers._run_pipeline() for full CQRS support including
+        Delegates to h._run_pipeline() for full CQRS support including
         mode validation, can_handle check, message validation, context tracking,
         and metrics recording. Falls back to direct handle()/execute() for
         non-h instances.
@@ -824,9 +822,9 @@ class FlextDispatcher(FlextService[bool]):
             source="flext-core/src/flext_core/dispatcher.py",
         )
 
-        # Delegate to FlextHandlers.dispatch_message() for full CQRS support
+        # Delegate to h.dispatch_message() for full CQRS support
         match handler:
-            case FlextHandlers():
+            case h():
                 dispatch_method = getattr(handler, "dispatch_message", None)
                 if callable(dispatch_method):
                     raw_dispatch_result = dispatch_method(command, operation=operation)
@@ -1026,11 +1024,11 @@ class FlextDispatcher(FlextService[bool]):
 
         return r[bool].ok(value=True)
 
-    # ==================== FLEXTSERVICE CONTRACT ====================
+    # ==================== s CONTRACT ====================
 
     @override
     def execute(self) -> r[bool]:
-        """Execute service - satisfies FlextService abstract method.
+        """Execute service - satisfies s abstract method.
 
         For FlextDispatcher, this indicates successful initialization.
         Use dispatch() for CQRS command/query routing.
@@ -1179,7 +1177,8 @@ class FlextDispatcher(FlextService[bool]):
         - Two-arg: register_handler(MessageType, handler) - Explicit mapping
 
         Args:
-            *args: Handler instance or (message_type, handler) pair
+            request: Handler instance or message type (str or type).
+            handler: Optional handler; if None, request is treated as single handler.
 
         Returns:
             r: Success or failure result
@@ -1991,7 +1990,7 @@ class FlextDispatcher(FlextService[bool]):
 
         Args:
             request: Dict, Pydantic model, message_type string, or handler object
-                (FlextHandlers or any object that can act as handler)
+                (h or any object that can act as handler)
             handler: Handler instance (optional, for two-arg registration)
 
         Returns:
@@ -2124,7 +2123,7 @@ class FlextDispatcher(FlextService[bool]):
         handler: DispatcherHandler,
         mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> r[DispatcherHandler]:
-        """Ensure handler is a FlextHandlers instance, converting from callable if needed.
+        """Ensure handler is a h instance, converting from callable if needed.
 
         Private helper to eliminate duplication in handler registration.
 
@@ -2137,14 +2136,14 @@ class FlextDispatcher(FlextService[bool]):
 
         """
         del mode  # Was used for callable conversion, now handled upstream
-        # If already FlextHandlers, return success
-        if isinstance(handler, FlextHandlers):
+        # If already h, return success
+        if isinstance(handler, h):
             return r[DispatcherHandler].ok(handler)
 
         # Invalid handler type
         return r[DispatcherHandler].fail(
             (
-                f"Handler must be FlextHandlers instance or callable, got {handler.__class__.__name__}"
+                f"Handler must be h instance or callable, got {handler.__class__.__name__}"
             ),
         )
 
@@ -2631,7 +2630,7 @@ class FlextDispatcher(FlextService[bool]):
                 validated_metadata = None
             elif isinstance(metadata, m.Metadata):
                 validated_metadata = metadata
-            elif isinstance(metadata, Mapping) or isinstance(metadata, t.ConfigMap):
+            elif isinstance(metadata, (Mapping, t.ConfigMap)):
                 meta_map: Mapping[str, object]
                 if isinstance(metadata, t.ConfigMap):
                     meta_map = metadata.root
@@ -3019,9 +3018,8 @@ class FlextDispatcher(FlextService[bool]):
         # If mapping contains "attributes", use that. Otherwise, use mapping as attributes.
 
         attrs: Mapping[str, object]
-        if (
-            "attributes" in extracted_map
-            and isinstance(extracted_map["attributes"], Mapping)
+        if "attributes" in extracted_map and isinstance(
+            extracted_map["attributes"], Mapping
         ):
             attrs = extracted_map["attributes"]
         else:
@@ -3060,9 +3058,7 @@ class FlextDispatcher(FlextService[bool]):
                         for item in nested
                     ):
                         return False
-                elif not isinstance(
-                    nested, (str, int, float, bool, dt, type(None))
-                ):
+                elif not isinstance(nested, (str, int, float, bool, dt, type(None))):
                     return False
             return True
 
@@ -3171,7 +3167,7 @@ class FlextDispatcher(FlextService[bool]):
         Architecture principles where higher layers create their own instances.
 
         Auto-discovery of handlers discovers all functions marked with
-        @FlextHandlers.handler() decorator in the calling module and registers them
+        @h.handler() decorator in the calling module and registers them
         automatically. This enables zero-config handler registration for services.
 
         Args:
@@ -3197,7 +3193,7 @@ class FlextDispatcher(FlextService[bool]):
                     # Scan module for handler-decorated functions
                     handlers: list[
                         tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]
-                    ] = FlextHandlers.Discovery.scan_module(caller_module)
+                    ] = h.Discovery.scan_module(caller_module)
                     for handler_item in handlers:
                         # Unpack tuple with explicit type hints to help type inference
                         _handler_name: str = handler_item[0]

@@ -37,139 +37,114 @@ from flext_core.constants import c
 from flext_core.typings import t
 
 
-# Advanced Pydantic v2 Validators
-def strip_whitespace(v: str) -> str:
-    """Strip whitespace from string values."""
-    return v.strip()
-
-
-def ensure_utc_datetime(v: datetime | None) -> datetime | None:
-    """Ensure datetime is UTC timezone."""
-    if v is not None and v.tzinfo is None:
-        return v.replace(tzinfo=UTC)
-    return v
-
-
-def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
-    """Normalize value to list format. Fixed types only."""
-    if v.__class__ is list:
-        return [item for item in v]
-    return [v]
-
-
-def validate_positive_number(v: float) -> int | float:
-    """Validate that number is positive."""
-    if v <= 0:
-        msg = "Value must be positive"
-        raise ValueError(msg)
-    return v
-
-
-def validate_non_empty_string(v: str) -> str:
-    """Validate that string is not empty after stripping."""
-    stripped = v.strip()
-    if not stripped:
-        msg = "String cannot be empty or whitespace"
-        raise ValueError(msg)
-    return stripped
-
-
-# Custom field types using Pydantic v2 validators
-StrippedString = Annotated[str, AfterValidator(strip_whitespace)]
-ValidatedString = Annotated[str, AfterValidator(validate_non_empty_string)]
-UTCDatetime = Annotated[datetime, AfterValidator(ensure_utc_datetime)]
-PositiveInt = Annotated[int, AfterValidator(validate_positive_number)]
-PositiveFloat = Annotated[float, AfterValidator(validate_positive_number)]
-NormalizedList = Annotated[list[t.GuardInputValue], BeforeValidator(normalize_to_list)]
-
-
-# Advanced custom types with PlainValidator
-def validate_email(v: str) -> str:
-    """Validate email format using simple regex."""
-    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", v):
-        msg = "Invalid email format"
-        raise ValueError(msg)
-    return v
-
-
-def validate_url(v: str) -> str:
-    """Validate URL format."""
-    parsed = urlparse(v)
-    if not parsed.scheme or not parsed.netloc:
-        msg = "Invalid URL format"
-        raise ValueError(msg)
-    return v
-
-
-def validate_semver(v: str) -> str:
-    """Validate semantic version format."""
-    if not re.match(r"^\d+\.\d+\.\d+(-[\w\.\-]+)?(\+[\w\.\-]+)?$", v):
-        msg = "Invalid semantic version format"
-        raise ValueError(msg)
-    return v
-
-
-def validate_uuid_string(v: str) -> str:
-    """Validate UUID string format."""
-    try:
-        _ = uuid.UUID(v)
-        return v
-    except (ValueError, TypeError):
-        msg = "Invalid UUID format"
-        raise ValueError(msg) from None
-
-
-# Custom field types with PlainValidator
-EmailStr = Annotated[str, PlainValidator(validate_email)]
-UrlStr = Annotated[str, PlainValidator(validate_url)]
-SemVerStr = Annotated[str, PlainValidator(validate_semver)]
-UUIDStr = Annotated[str, PlainValidator(validate_uuid_string)]
-
-
-# Complex validators for nested structures
-def validate_config_dict(
-    v: Mapping[str, t.GuardInputValue],
-) -> Mapping[str, t.GuardInputValue]:
-    """Validate configuration dictionary structure. Returns dict for model storage."""
-    out = {}
-    for key in v:
-        if key.startswith("_"):
-            msg = f"Keys starting with '_' are reserved: {key}"
-            raise ValueError(msg)
-        out[key] = v[key]
-    return out
-
-
-def validate_tags_list(v: t.GuardInputValue) -> list[str]:
-    """Validate and normalize tags list."""
-    if v.__class__ is not list:
-        msg = "Tags must be a list"
-        raise TypeError(msg)
-
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for tag in v:
-        if tag.__class__ is not str:
-            msg = f"Tag must be string, got {tag.__class__.__name__}"
-            raise TypeError(msg)
-        clean_tag = tag.strip().lower()
-        if clean_tag and clean_tag not in seen:
-            normalized.append(clean_tag)
-            seen.add(clean_tag)
-
-    return normalized
-
-
-# Advanced custom types
-ValidatedConfigDict = Annotated[
-    Mapping[str, t.GuardInputValue], PlainValidator(validate_config_dict)
-]
-NormalizedTags = Annotated[list[str], PlainValidator(validate_tags_list)]
-
-
 # Renamed to FlextModelFoundation for better clarity
 class FlextModelFoundation:
     """Container for base model classes - Tier 0, 100% standalone."""
+
+    class Validators:
+        """Pydantic v2 validators - single namespace for all field validators."""
+
+        @staticmethod
+        def strip_whitespace(v: str) -> str:
+            """Strip whitespace from string values."""
+            return v.strip()
+
+        @staticmethod
+        def ensure_utc_datetime(v: datetime | None) -> datetime | None:
+            """Ensure datetime is UTC timezone."""
+            if v is not None and v.tzinfo is None:
+                return v.replace(tzinfo=UTC)
+            return v
+
+        @staticmethod
+        def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
+            """Normalize value to list format. Fixed types only."""
+            if isinstance(v, list):
+                return list(v)
+            return [v]
+
+        @staticmethod
+        def validate_positive_number(v: float) -> int | float:
+            """Validate that number is positive."""
+            if v <= 0:
+                msg = "Value must be positive"
+                raise ValueError(msg)
+            return v
+
+        @staticmethod
+        def validate_non_empty_string(v: str) -> str:
+            """Validate that string is not empty after stripping."""
+            stripped = v.strip()
+            if not stripped:
+                msg = "String cannot be empty or whitespace"
+                raise ValueError(msg)
+            return stripped
+
+        @staticmethod
+        def validate_email(v: str) -> str:
+            """Validate email format using simple regex."""
+            if not re.match(r"^[^@]+@[^@]+\.[^@]+$", v):
+                msg = "Invalid email format"
+                raise ValueError(msg)
+            return v
+
+        @staticmethod
+        def validate_url(v: str) -> str:
+            """Validate URL format."""
+            parsed = urlparse(v)
+            if not parsed.scheme or not parsed.netloc:
+                msg = "Invalid URL format"
+                raise ValueError(msg)
+            return v
+
+        @staticmethod
+        def validate_semver(v: str) -> str:
+            """Validate semantic version format."""
+            if not re.match(r"^\d+\.\d+\.\d+(-[\w\.\-]+)?(\+[\w\.\-]+)?$", v):
+                msg = "Invalid semantic version format"
+                raise ValueError(msg)
+            return v
+
+        @staticmethod
+        def validate_uuid_string(v: str) -> str:
+            """Validate UUID string format."""
+            try:
+                _ = uuid.UUID(v)
+                return v
+            except (ValueError, TypeError):
+                msg = "Invalid UUID format"
+                raise ValueError(msg) from None
+
+        @staticmethod
+        def validate_config_dict(
+            v: Mapping[str, t.GuardInputValue],
+        ) -> Mapping[str, t.GuardInputValue]:
+            """Validate configuration dictionary structure. Returns dict for model storage."""
+            out = {}
+            for key in v:
+                if key.startswith("_"):
+                    msg = f"Keys starting with '_' are reserved: {key}"
+                    raise ValueError(msg)
+                out[key] = v[key]
+            return out
+
+        @staticmethod
+        def validate_tags_list(v: t.GuardInputValue) -> list[str]:
+            """Validate and normalize tags list."""
+            if not isinstance(v, list):
+                msg = "Tags must be a list"
+                raise TypeError(msg)
+            normalized: list[str] = []
+            seen: set[str] = set()
+            for tag in v:
+                if not isinstance(tag, str):
+                    msg = f"Tag must be string, got {type(tag).__name__}"
+                    raise TypeError(msg)
+                clean_tag = tag.strip().lower()
+                if clean_tag and clean_tag not in seen:
+                    normalized.append(clean_tag)
+                    seen.add(clean_tag)
+            return normalized
 
     class ArbitraryTypesModel(BaseModel):
         """Base model with arbitrary types support."""
@@ -364,9 +339,9 @@ class FlextModelFoundation:
                 bool: True if models are equal by value, False otherwise.
 
             """
-            if other.__class__ is not self.__class__:
+            if not isinstance(other, type(self)):
                 return NotImplemented
-            return self.model_dump() == other.model_dump()
+            return bool(self.model_dump() == other.model_dump())
 
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts.
@@ -1399,5 +1374,43 @@ class FlextModelFoundation:
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""
 
+
+# Type aliases using Validators (single class per module)
+StrippedString = Annotated[
+    str, AfterValidator(FlextModelFoundation.Validators.strip_whitespace)
+]
+ValidatedString = Annotated[
+    str, AfterValidator(FlextModelFoundation.Validators.validate_non_empty_string)
+]
+UTCDatetime = Annotated[
+    datetime, AfterValidator(FlextModelFoundation.Validators.ensure_utc_datetime)
+]
+PositiveInt = Annotated[
+    int, AfterValidator(FlextModelFoundation.Validators.validate_positive_number)
+]
+PositiveFloat = Annotated[
+    float, AfterValidator(FlextModelFoundation.Validators.validate_positive_number)
+]
+NormalizedList = Annotated[
+    list[t.GuardInputValue],
+    BeforeValidator(FlextModelFoundation.Validators.normalize_to_list),
+]
+EmailStr = Annotated[
+    str, PlainValidator(FlextModelFoundation.Validators.validate_email)
+]
+UrlStr = Annotated[str, PlainValidator(FlextModelFoundation.Validators.validate_url)]
+SemVerStr = Annotated[
+    str, PlainValidator(FlextModelFoundation.Validators.validate_semver)
+]
+UUIDStr = Annotated[
+    str, PlainValidator(FlextModelFoundation.Validators.validate_uuid_string)
+]
+ValidatedConfigDict = Annotated[
+    Mapping[str, t.GuardInputValue],
+    PlainValidator(FlextModelFoundation.Validators.validate_config_dict),
+]
+NormalizedTags = Annotated[
+    list[str], PlainValidator(FlextModelFoundation.Validators.validate_tags_list)
+]
 
 __all__ = ["FlextModelFoundation"]

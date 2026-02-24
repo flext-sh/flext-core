@@ -65,7 +65,7 @@ from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core.constants import c
-from flext_core.typings import t, T
+from flext_core.typings import T, t
 
 
 class FlextRuntime:
@@ -657,18 +657,11 @@ class FlextRuntime:
 
             # Check __name__ for type aliases like StringList
             type_name = getattr(type_hint, "__name__", None)
-            if type_name is not None:
-                # Common sequence type aliases
-                if type_name in {
-                    "StringList",
-                    "IntList",
-                    "FloatList",
-                    "BoolList",
-                    "List",
-                }:
-                    return True
-
-            return False
+            return bool(
+                type_name is not None
+                and type_name
+                in {"StringList", "IntList", "FloatList", "BoolList", "List"}
+            )
         except (
             AttributeError,
             TypeError,

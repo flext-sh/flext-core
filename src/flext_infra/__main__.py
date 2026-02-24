@@ -78,7 +78,8 @@ def main() -> int:
     sys.argv = [f"flext-infra {group}"] + sys.argv[2:]
 
     module = importlib.import_module(_GROUPS[group])
-    return module.main()
+    exit_code = module.main()
+    return int(exit_code) if exit_code is not None else 0
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 from flext_core import (
     FlextContainer,
@@ -258,7 +258,10 @@ def main() -> None:
         data = result.value
         decorators = data["decorators_demonstrated"]
         categories = data["decorator_categories"]
-        if (type(decorators) in (list, tuple) or (hasattr(decorators, "__getitem__") and hasattr(decorators, "__len__"))) and type(categories) is int:
+        if (
+            isinstance(decorators, (list, tuple))
+            or (hasattr(decorators, "__getitem__") and hasattr(decorators, "__len__"))
+        ) and isinstance(categories, int):
             decorators_list = list(decorators)
             print(f"\n✅ Demonstrated {categories} decorator categories")
             print(f"✅ Covered {len(decorators_list)} decorator types")

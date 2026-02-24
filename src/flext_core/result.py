@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Self, overload
 
 from pydantic import BaseModel
+
 # from returns.io import IO, IOFailure, IOResult, IOSuccess
 # from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
@@ -20,6 +21,7 @@ from returns.result import Failure, Result, Success
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, U, t
+
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     """Type-safe result with monadic helpers for operation composition.
@@ -271,9 +273,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         except Exception as e:
             errors_fn = getattr(e, "errors", None)
             if callable(errors_fn):
-                _raw = errors_fn()
+                raw = errors_fn()
                 errors_list: Sequence[Mapping[str, str | list[str] | None]] = (
-                    list(_raw) if hasattr(_raw, "__iter__") else []
+                    list(raw) if hasattr(raw, "__iter__") else []
                 )
                 error_msg = "; ".join(
                     f"{err.get('loc', [])!s}: {err.get('msg', '')}"
@@ -626,13 +628,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         all_results = [func(item) for item in items]
         return cls.accumulate_errors(*all_results)
 
-
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection.
 
         Satisfies BaseProtocol requirement for ResultLike protocol.
         """
         return "FlextResult"
+
 
 r = FlextResult
 

@@ -12,16 +12,19 @@ from __future__ import annotations
 import tomllib
 from collections.abc import MutableMapping
 from pathlib import Path
+from typing import cast
 
 import tomlkit
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 from tomlkit.items import Table
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 
 type TomlScalar = str | int | float | bool | None
-type TomlValue = TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
+type TomlValue = (
+    TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
+)
 type TomlMap = MutableMapping[str, TomlValue]
 type TomlMutableMap = MutableMapping[str, TomlValue]
 _TableLike = Table | TomlMutableMap
@@ -29,9 +32,9 @@ _TableLike = Table | TomlMutableMap
 
 def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
     if isinstance(value, MutableMapping):
-        return value
+        return cast("TomlMutableMap", value)
     if isinstance(value, Table):
-        return value
+        return cast("TomlMutableMap", value)
     return None
 
 
@@ -56,7 +59,7 @@ class TomlService:
             return r[TomlMap].ok({})
         try:
             data = tomllib.loads(
-                path.read_text(encoding=ic.Encoding.DEFAULT),
+                path.read_text(encoding=c.Encoding.DEFAULT),
             )
             return r[TomlMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
@@ -72,7 +75,7 @@ class TomlService:
             FlextResult with parsed TOML data.
 
         """
-        target = path / ic.Files.PYPROJECT_FILENAME if path.is_dir() else path
+        target = path / c.Files.PYPROJECT_FILENAME if path.is_dir() else path
         return self.read(target)
 
     def read_document(self, path: Path) -> FlextResult[tomlkit.TOMLDocument]:
@@ -91,7 +94,7 @@ class TomlService:
             return r[tomlkit.TOMLDocument].fail(f"file not found: {path}")
         try:
             doc = tomlkit.parse(
-                path.read_text(encoding=ic.Encoding.DEFAULT),
+                path.read_text(encoding=c.Encoding.DEFAULT),
             )
             return r[tomlkit.TOMLDocument].ok(doc)
         except (tomllib.TOMLDecodeError, OSError) as exc:
@@ -117,7 +120,7 @@ class TomlService:
         try:
             _ = path.write_text(
                 tomlkit.dumps(doc),
-                encoding=ic.Encoding.DEFAULT,
+                encoding=c.Encoding.DEFAULT,
             )
             return r[bool].ok(True)
         except OSError as exc:
@@ -138,8 +141,8 @@ class TomlService:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
-            if isinstance(value, dict) or isinstance(value, Table):
-                table[key] = TomlService.build_table(value)
+            if isinstance(value, (dict, Table)):
+                table[key] = TomlService.build_table(cast("TomlMap", value))
             else:
                 table[key] = value
         return table
@@ -159,15 +162,15 @@ class TomlService:
         for key, expected in canonical.items():
             current = target.get(key)
             path = f"{prefix}.{key}" if prefix else key
-            if isinstance(expected, dict) or isinstance(expected, Table):
+            if isinstance(expected, (dict, Table)):
                 current_mapping = _as_toml_mapping(current)
                 if current_mapping is None:
-                    target[key] = self.build_table(expected)
+                    target[key] = self.build_table(cast("TomlMap", expected))
                     added.append(path)
                     continue
                 self.sync_mapping(
                     current_mapping,
-                    expected,
+                    cast("TomlMap", expected),
                     prune_extras=prune_extras,
                     prefix=path,
                     added=added,

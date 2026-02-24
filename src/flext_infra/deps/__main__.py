@@ -36,7 +36,9 @@ def main() -> int:
         _ = sys.stdout.write("Subcommands:\n")
         for name in sorted(_SUBCOMMANDS):
             _ = sys.stdout.write(f"  {name}\n")
-        return 0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+        return (
+            0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+        )
 
     subcommand = sys.argv[1]
     if subcommand not in _SUBCOMMANDS:
@@ -45,7 +47,8 @@ def main() -> int:
 
     sys.argv = [f"flext-infra deps {subcommand}"] + sys.argv[2:]
     module = importlib.import_module(_SUBCOMMANDS[subcommand])
-    return module.main()
+    exit_code = module.main()
+    return int(exit_code) if exit_code is not None else 0
 
 
 if __name__ == "__main__":

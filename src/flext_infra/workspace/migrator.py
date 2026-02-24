@@ -1,4 +1,5 @@
 """Migrate projects to unified FLEXT infrastructure."""
+
 from __future__ import annotations
 
 import hashlib
@@ -6,15 +7,15 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
 from flext_infra.basemk.generator import BaseMkGenerator
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
-from flext_infra.models import im
+from flext_infra.models import m
 
 _MAKEFILE_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     # scripts/ path → unified CLI: detection
@@ -68,10 +69,10 @@ _GITIGNORE_REQUIRED_PATTERNS: tuple[str, ...] = (
     "__pycache__/",
 )
 
-_PYPROJECT_FILE = ic.Files.PYPROJECT_FILENAME
+_PYPROJECT_FILE = c.Files.PYPROJECT_FILENAME
 
 
-class ProjectMigrator(FlextService[list[im.MigrationResult]]):
+class ProjectMigrator(FlextService[list[m.MigrationResult]]):
     """Migrate projects to standardized base.mk, Makefile, and pyproject structure."""
 
     def __init__(
@@ -86,25 +87,25 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         self._generator = generator or BaseMkGenerator()
 
     @override
-    def execute(self) -> r[list[im.MigrationResult]]:
-        return r[list[im.MigrationResult]].fail("Use migrate() method directly")
+    def execute(self) -> r[list[m.MigrationResult]]:
+        return r[list[m.MigrationResult]].fail("Use migrate() method directly")
 
     def migrate(
         self,
         *,
         workspace_root: Path,
         dry_run: bool = False,
-    ) -> r[list[im.MigrationResult]]:
+    ) -> r[list[m.MigrationResult]]:
         """Migrate all projects in workspace."""
         root = workspace_root.resolve()
         if not root.is_dir():
-            return r[list[im.MigrationResult]].fail(
+            return r[list[m.MigrationResult]].fail(
                 f"workspace root does not exist: {root}",
             )
 
         discovered = self._discovery.discover_projects(root)
         if discovered.is_failure:
-            return r[list[im.MigrationResult]].fail(
+            return r[list[m.MigrationResult]].fail(
                 discovered.error or "project discovery failed",
             )
 
@@ -115,36 +116,36 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         ):
             projects.append(workspace_project)
 
-        results: list[im.MigrationResult] = [
+        results: list[m.MigrationResult] = [
             self._migrate_project(project=project, dry_run=dry_run)
             for project in projects
         ]
 
-        return r[list[im.MigrationResult]].ok(results)
+        return r[list[m.MigrationResult]].ok(results)
 
     @staticmethod
-    def _workspace_root_project(workspace_root: Path) -> im.ProjectInfo | None:
+    def _workspace_root_project(workspace_root: Path) -> m.ProjectInfo | None:
         """Detect workspace root as a project if it has Makefile, pyproject.toml, and .git."""
-        has_makefile = (workspace_root / ic.Files.MAKEFILE_FILENAME).is_file()
+        has_makefile = (workspace_root / c.Files.MAKEFILE_FILENAME).is_file()
         has_pyproject = (workspace_root / _PYPROJECT_FILE).is_file()
         has_git = (workspace_root / ".git").exists()
         if not (has_makefile and has_pyproject and has_git):
             return None
 
-        return im.ProjectInfo(
-            name=workspace_root.name,
-            path=workspace_root,
-            stack="python/workspace",
-            has_tests=(workspace_root / "tests").is_dir(),
-            has_src=(workspace_root / ic.Paths.DEFAULT_SRC_DIR).is_dir(),
-        )
+        return m.ProjectInfo.model_validate({
+            "name": workspace_root.name,
+            "path": workspace_root,
+            "stack": "python/workspace",
+            "has_tests": (workspace_root / "tests").is_dir(),
+            "has_src": (workspace_root / c.Paths.DEFAULT_SRC_DIR).is_dir(),
+        })
 
     def _migrate_project(
         self,
         *,
-        project: im.ProjectInfo,
+        project: m.ProjectInfo,
         dry_run: bool,
-    ) -> im.MigrationResult:
+    ) -> m.MigrationResult:
         changes: list[str] = []
         errors: list[str] = []
 
@@ -176,7 +177,11 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         if not changes and not errors:
             changes.append("no changes needed")
 
-        return im.MigrationResult(project=project.name, changes=changes, errors=errors)
+        return m.MigrationResult.model_validate({
+            "project": project.name,
+            "changes": changes,
+            "errors": errors,
+        })
 
     @staticmethod
     def _append_result(
@@ -199,7 +204,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
 
         target = project_root / "base.mk"
         current = (
-            target.read_text(encoding=ic.Encoding.DEFAULT) if target.exists() else ""
+            target.read_text(encoding=c.Encoding.DEFAULT) if target.exists() else ""
         )
         if self._sha256_text(current) == self._sha256_text(generated.value):
             if dry_run:
@@ -210,7 +215,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
 
         if not dry_run:
             try:
-                _ = target.write_text(generated.value, encoding=ic.Encoding.DEFAULT)
+                _ = target.write_text(generated.value, encoding=c.Encoding.DEFAULT)
             except OSError as exc:
                 return r[str].fail(f"base.mk update failed: {exc}")
 
@@ -222,14 +227,14 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         )
 
     def _migrate_makefile(self, project_root: Path, *, dry_run: bool) -> r[str]:
-        makefile_path = project_root / ic.Files.MAKEFILE_FILENAME
+        makefile_path = project_root / c.Files.MAKEFILE_FILENAME
         if not makefile_path.exists():
             if dry_run:
                 return r[str].ok(self._action_text("Makefile not found", dry_run=True))
             return r[str].ok("")
 
         try:
-            original = makefile_path.read_text(encoding=ic.Encoding.DEFAULT)
+            original = makefile_path.read_text(encoding=c.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"Makefile read failed: {exc}")
 
@@ -246,7 +251,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
 
         if not dry_run:
             try:
-                _ = makefile_path.write_text(updated, encoding=ic.Encoding.DEFAULT)
+                _ = makefile_path.write_text(updated, encoding=c.Encoding.DEFAULT)
             except OSError as exc:
                 return r[str].fail(f"Makefile update failed: {exc}")
 
@@ -280,7 +285,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
 
         try:
             document = tomlkit.parse(
-                pyproject_path.read_text(encoding=ic.Encoding.DEFAULT)
+                pyproject_path.read_text(encoding=c.Encoding.DEFAULT)
             )
         except (ParseError, OSError) as exc:
             return r[str].fail(f"pyproject parse failed: {exc}")
@@ -308,7 +313,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
             try:
                 _ = pyproject_path.write_text(
                     tomlkit.dumps(document),
-                    encoding=ic.Encoding.DEFAULT,
+                    encoding=c.Encoding.DEFAULT,
                 )
             except OSError as exc:
                 return r[str].fail(f"pyproject update failed: {exc}")
@@ -324,7 +329,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         gitignore_path = project_root / ".gitignore"
         try:
             existing_lines = (
-                gitignore_path.read_text(encoding=ic.Encoding.DEFAULT).splitlines()
+                gitignore_path.read_text(encoding=c.Encoding.DEFAULT).splitlines()
                 if gitignore_path.exists()
                 else []
             )
@@ -363,7 +368,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         if not dry_run:
             body = "\n".join(next_lines).rstrip("\n") + "\n"
             try:
-                _ = gitignore_path.write_text(body, encoding=ic.Encoding.DEFAULT)
+                _ = gitignore_path.write_text(body, encoding=c.Encoding.DEFAULT)
             except OSError as exc:
                 return r[str].fail(f".gitignore update failed: {exc}")
 
@@ -380,7 +385,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
 
     @staticmethod
     def _sha256_text(value: str) -> str:
-        return hashlib.sha256(value.encode(ic.Encoding.DEFAULT)).hexdigest()
+        return hashlib.sha256(value.encode(c.Encoding.DEFAULT)).hexdigest()
 
     @staticmethod
     def _has_flext_core_dependency(document: tomlkit.TOMLDocument) -> bool:

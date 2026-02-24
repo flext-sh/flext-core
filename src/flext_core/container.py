@@ -27,7 +27,7 @@ from flext_core.constants import c
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
 from flext_core.typings import t
@@ -215,13 +215,18 @@ class FlextContainer(FlextRuntime, p.DI):
 
                             # Create wrapper that satisfies ServiceFactory signature
                             # The @factory() decorator validates return type at runtime
-                            # Bind func via default arg to avoid closure issue (B023)
-                            def factory_wrapper() -> t.RegisterableService:
-                                raw_result = factory_func_ref()
+                            # Bind via default args to avoid closure issue (B023)
+                            def factory_wrapper(
+                                _func: Callable[
+                                    [], t.RegisterableService
+                                ] = factory_func_ref,
+                                _name: str = factory_name,
+                            ) -> t.RegisterableService:
+                                raw_result = _func()
                                 if FlextContainer._is_registerable_service(raw_result):
                                     return raw_result
                                 msg = (
-                                    f"Factory '{factory_name}' returned unsupported type: "
+                                    f"Factory '{_name}' returned unsupported type: "
                                     f"{raw_result.__class__.__name__}"
                                 )
                                 raise TypeError(msg)
@@ -900,17 +905,17 @@ class FlextContainer(FlextRuntime, p.DI):
         # Use isinstance for proper type narrowing
         if isinstance(value, (str, int, float, bool, type(None))):
             return True
-        if isinstance(value, BaseModel) or isinstance(value, Path):
+        if isinstance(value, (BaseModel, Path)):
             return True
         if callable(value):
             return True
         if isinstance(value, Mapping):
             return True
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
             return True
-        if hasattr(value, "bind") and hasattr(value, "info"):
-            return True
-        return False
+        return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @override
     def get_typed[T](self, name: str, type_cls: type[T]) -> r[T]:

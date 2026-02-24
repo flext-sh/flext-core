@@ -131,12 +131,10 @@ class FlextMixins(FlextRuntime):
                     normalized_dict: m.ConfigMap = m.ConfigMap()
                     for k, v in obj.items():
                         key = str(k)
-                        normalized_dict[key] = (
-                            FlextRuntime.normalize_to_general_value(v)
+                        normalized_dict[key] = FlextRuntime.normalize_to_general_value(
+                            v
                         )
-                    process_result: r[m.ConfigMap] = r[m.ConfigMap].ok(
-                        normalized_dict
-                    )
+                    process_result: r[m.ConfigMap] = r[m.ConfigMap].ok(normalized_dict)
                 except Exception as e:
                     process_result = r[m.ConfigMap].fail(
                         f"Failed to normalize mapping: {e}",
@@ -365,8 +363,9 @@ class FlextMixins(FlextRuntime):
                 case BaseModel() as service_instance:
                     pass
                 case _:
+                    msg = f"Service '{service_name}' is not registerable: {self.__class__.__name__}"
                     raise TypeError(
-                        f"Service '{service_name}' is not registerable: {self.__class__.__name__}",
+                        msg,
                     )
 
             result = container.register(service_name, service_instance)
@@ -883,4 +882,6 @@ class FlextMixins(FlextRuntime):
             return r[bool].ok(value=True)
 
 
-__all__ = ["FlextMixins"]
+x = FlextMixins
+
+__all__ = ["FlextMixins", "x"]

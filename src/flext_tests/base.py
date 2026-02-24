@@ -84,8 +84,8 @@ class FlextTestsUtilityBase(FlextService[T]):
     - Generic type parameter support
     """
 
+
 s = FlextTestsServiceBase
 
 
 __all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s"]
-

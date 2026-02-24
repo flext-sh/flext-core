@@ -15,17 +15,17 @@ from pathlib import Path
 from typing import override
 
 import structlog
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
 
-from flext_infra.constants import ic
-from flext_infra.models import InfraModels
+from flext_infra.constants import c
+from flext_infra.models import m
 from flext_infra.subprocess import CommandRunner
 
 logger = structlog.get_logger(__name__)
 
 
-class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
+class OrchestratorService(FlextService[list[m.CommandOutput]]):
     """Infrastructure service for multi-project make orchestration.
 
     Executes a make verb across a list of projects sequentially, capturing
@@ -40,11 +40,9 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         self._runner = CommandRunner()
 
     @override
-    def execute(self) -> r[list[InfraModels.CommandOutput]]:
+    def execute(self) -> r[list[m.CommandOutput]]:
         """Not used; call orchestrate() directly instead."""
-        return r[list[InfraModels.CommandOutput]].fail(
-            "Use orchestrate() method directly"
-        )
+        return r[list[m.CommandOutput]].fail("Use orchestrate() method directly")
 
     def orchestrate(
         self,
@@ -53,7 +51,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         *,
         fail_fast: bool = False,
         make_args: Sequence[str] = (),
-    ) -> r[list[InfraModels.CommandOutput]]:
+    ) -> r[list[m.CommandOutput]]:
         """Execute make verb across projects with per-project logging.
 
         Args:
@@ -67,7 +65,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
 
         """
         try:
-            results: list[InfraModels.CommandOutput] = []
+            results: list[m.CommandOutput] = []
             total = len(projects)
             success = 0
             failed = 0
@@ -84,12 +82,12 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
                         exit_code=0,
                     )
                     results.append(
-                        InfraModels.CommandOutput(
-                            stdout="",
-                            stderr="",
-                            exit_code=0,
-                            duration=0.0,
-                        )
+                        m.CommandOutput.model_validate({
+                            "stdout": "",
+                            "stderr": "",
+                            "exit_code": 0,
+                            "duration": 0.0,
+                        }),
                     )
                     continue
 
@@ -102,12 +100,12 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
                 if output_result.is_failure:
                     failed += 1
                     results.append(
-                        InfraModels.CommandOutput(
-                            stdout="",
-                            stderr=output_result.error or "project execution failed",
-                            exit_code=1,
-                            duration=0.0,
-                        ),
+                        m.CommandOutput.model_validate({
+                            "stdout": "",
+                            "stderr": output_result.error or "project execution failed",
+                            "exit_code": 1,
+                            "duration": 0.0,
+                        }),
                     )
                     if fail_fast:
                         skipped = total - idx
@@ -130,12 +128,10 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
                 failed=failed,
                 skipped=skipped,
             )
-            return r[list[InfraModels.CommandOutput]].ok(results)
+            return r[list[m.CommandOutput]].ok(results)
 
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
-            return r[list[InfraModels.CommandOutput]].fail(
-                f"Orchestration failed: {exc}"
-            )
+            return r[list[m.CommandOutput]].fail(f"Orchestration failed: {exc}")
 
     def _run_project(
         self,
@@ -144,7 +140,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         index: int,
         *,
         make_args: list[str],
-    ) -> r[InfraModels.CommandOutput]:
+    ) -> r[m.CommandOutput]:
         """Execute make verb for a single project.
 
         Args:
@@ -159,7 +155,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         """
         reports_dir_result = self._ensure_report_dir(verb)
         if reports_dir_result.is_failure:
-            return r[InfraModels.CommandOutput].fail(
+            return r[m.CommandOutput].fail(
                 reports_dir_result.error or "failed to create report directory"
             )
         reports_dir = reports_dir_result.value
@@ -174,7 +170,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
         stderr = "" if proc_result.is_success else (proc_result.error or "")
 
         elapsed = time.monotonic() - started
-        status = ic.Status.OK if return_code == 0 else ic.Status.FAIL
+        status = c.Status.OK if return_code == 0 else c.Status.FAIL
         msg = (
             f"{index:02d} [{status}] {project} {verb}"
             f" ({int(elapsed)}s) exit={return_code} log={log_path}"
@@ -191,13 +187,13 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
             log_path=str(log_path),
         )
 
-        return r[InfraModels.CommandOutput].ok(
-            InfraModels.CommandOutput(
-                stdout=str(log_path),
-                stderr=stderr,
-                exit_code=return_code,
-                duration=round(elapsed, 2),
-            ),
+        return r[m.CommandOutput].ok(
+            m.CommandOutput.model_validate({
+                "stdout": str(log_path),
+                "stderr": stderr,
+                "exit_code": return_code,
+                "duration": round(elapsed, 2),
+            }),
         )
 
     @staticmethod

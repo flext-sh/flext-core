@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard
+from typing import TypeGuard, TypeVar
 
 from flext_core import r
 from pydantic import BaseModel
@@ -67,6 +67,16 @@ from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
 from flext_tests.utilities import u
+
+TK = TypeVar("TK")
+TV = TypeVar("TV")
+
+
+def _is_key_value_pair[TK, TV](
+    key_equals: TK | tuple[TK, TV] | Sequence[tuple[TK, TV]],
+) -> TypeGuard[tuple[TK, TV]]:
+    """Return True if key_equals is a single (key, value) tuple."""
+    return isinstance(key_equals, tuple) and len(key_equals) == 2
 
 
 class FlextTestsMatchers:
@@ -183,7 +193,10 @@ class FlextTestsMatchers:
             else:
                 path_str = ".".join(params.path)
             if not (
-                (hasattr(type(result_value), "__mro__") and BaseModel in type(result_value).__mro__)
+                (
+                    hasattr(type(result_value), "__mro__")
+                    and BaseModel in type(result_value).__mro__
+                )
                 or (hasattr(result_value, "keys") and hasattr(result_value, "items"))
             ):
                 raise AssertionError(
@@ -244,7 +257,13 @@ class FlextTestsMatchers:
         if (
             params.is_ is not None
             and isinstance(params.is_, tuple)
-            and not (type(result_value) in params.is_ or (hasattr(type(result_value), "__mro__") and any(t in type(result_value).__mro__ for t in params.is_)))
+            and not (
+                type(result_value) in params.is_
+                or (
+                    hasattr(type(result_value), "__mro__")
+                    and any(t in type(result_value).__mro__ for t in params.is_)
+                )
+            )
         ):
             raise AssertionError(
                 params.msg
@@ -259,7 +278,7 @@ class FlextTestsMatchers:
         # ContainmentSpec = object | Sequence[object]
         if params.has is not None:
             has_value: object | Sequence[object] = params.has
-            if type(has_value) in (list, tuple):
+            if type(has_value) in {list, tuple}:
                 has_items: Sequence[object] = has_value
             else:
                 has_item: object = has_value
@@ -276,7 +295,7 @@ class FlextTestsMatchers:
                     )
 
         if params.lacks is not None:
-            if type(params.lacks) in (list, tuple):
+            if type(params.lacks) in {list, tuple}:
                 lacks_items: Sequence[object] = params.lacks
             else:
                 lacks_item: object = params.lacks
@@ -299,8 +318,11 @@ class FlextTestsMatchers:
             # Type guard: result_value has __len__ if it passed validation
             # Type narrow for __len__
             if (
-                type(result_value) in (str, bytes)
-                or (hasattr(result_value, "__getitem__") and hasattr(result_value, "__len__"))
+                type(result_value) in {str, bytes}
+                or (
+                    hasattr(result_value, "__getitem__")
+                    and hasattr(result_value, "__len__")
+                )
                 or (hasattr(result_value, "keys") and hasattr(result_value, "items"))
             ):
                 actual_len = len(result_value)
@@ -327,7 +349,10 @@ class FlextTestsMatchers:
         if params.deep is not None:
             # Type narrow for DeepMatch.match
             if not (
-                (hasattr(type(result_value), "__mro__") and BaseModel in type(result_value).__mro__)
+                (
+                    hasattr(type(result_value), "__mro__")
+                    and BaseModel in type(result_value).__mro__
+                )
                 or (hasattr(result_value, "keys") and hasattr(result_value, "items"))
             ):
                 raise AssertionError(
@@ -699,7 +724,7 @@ class FlextTestsMatchers:
                 elif (
                     hasattr(params.has, "__getitem__")
                     and hasattr(params.has, "__len__")
-                    and type(params.has) not in (str, bytes)
+                    and type(params.has) not in {str, bytes}
                 ):
                     # Sequence - convert all items to strings
                     error_has_items = [str(x) for x in params.has]
@@ -813,7 +838,7 @@ class FlextTestsMatchers:
         # ContainmentSpec = object | Sequence[object]
         if params.has is not None:
             has_value: object | Sequence[object] = params.has
-            if type(has_value) in (list, tuple):
+            if type(has_value) in {list, tuple}:
                 has_items: Sequence[object] = has_value
             else:
                 has_item: object = has_value
@@ -833,7 +858,7 @@ class FlextTestsMatchers:
                     )
 
         if params.lacks is not None:
-            if type(params.lacks) in (list, tuple):
+            if type(params.lacks) in {list, tuple}:
                 lacks_items: Sequence[object] = params.lacks
             else:
                 lacks_item: object = params.lacks
@@ -862,7 +887,7 @@ class FlextTestsMatchers:
             # Type narrow for __len__
             # Type narrow for __len__
             if (
-                type(value) in (str, bytes)
+                type(value) in {str, bytes}
                 or (hasattr(value, "__getitem__") and hasattr(value, "__len__"))
                 or (hasattr(value, "keys") and hasattr(value, "items"))
             ):
@@ -887,7 +912,7 @@ class FlextTestsMatchers:
             )
 
         # Sequence assertions
-        if type(value) in (list, tuple):
+        if type(value) in {list, tuple}:
             seq_value: Sequence[object] = value
             if params.first is not None:
                 if not seq_value:
@@ -913,17 +938,26 @@ class FlextTestsMatchers:
 
             if params.all_ is not None:
                 if isinstance(params.all_, type):
+
                     def _all_match(t: type, seq: Sequence[object]) -> bool:
                         return all(
-                            isinstance(x, t) or (hasattr(type(x), "__mro__") and t in type(x).__mro__)
+                            isinstance(x, t)
+                            or (hasattr(type(x), "__mro__") and t in type(x).__mro__)
                             for x in seq
                         )
+
                     if not _all_match(params.all_, seq_value):
                         failed_idx = next(
                             (
                                 i
                                 for i, item in enumerate(list(seq_value))
-                                if not (isinstance(item, params.all_) or (hasattr(type(item), "__mro__") and params.all_ in type(item).__mro__))
+                                if not (
+                                    isinstance(item, params.all_)
+                                    or (
+                                        hasattr(type(item), "__mro__")
+                                        and params.all_ in type(item).__mro__
+                                    )
+                                )
                             ),
                             None,
                         )
@@ -954,7 +988,11 @@ class FlextTestsMatchers:
             if params.any_ is not None:
                 if type(params.any_) is type:
                     if not any(
-                        isinstance(item, params.any_) or (hasattr(type(item), "__mro__") and params.any_ in type(item).__mro__)
+                        isinstance(item, params.any_)
+                        or (
+                            hasattr(type(item), "__mro__")
+                            and params.any_ in type(item).__mro__
+                        )
                         for item in seq_value
                     ):
                         raise AssertionError(
@@ -1390,29 +1428,45 @@ class FlextTestsMatchers:
             stacklevel=2,
         )
         if has_key is not None:
-            _is_seq = hasattr(has_key, "__getitem__") and hasattr(has_key, "__len__") and type(has_key) not in (str, bytes)
-            keys_to_check = [has_key] if not _is_seq else list(has_key)
+            is_seq = (
+                hasattr(has_key, "__getitem__")
+                and hasattr(has_key, "__len__")
+                and type(has_key) not in {str, bytes}
+            )
+            keys_to_check = [has_key] if not is_seq else list(has_key)
             for key in keys_to_check:
                 if key not in data:
                     raise AssertionError(msg or f"Key {key!r} not found in dict")
 
         if not_has_key is not None:
-            _is_seq_n = hasattr(not_has_key, "__getitem__") and hasattr(not_has_key, "__len__") and type(not_has_key) not in (str, bytes)
-            keys_to_check = [not_has_key] if not _is_seq_n else list(not_has_key)
+            is_seq_n = (
+                hasattr(not_has_key, "__getitem__")
+                and hasattr(not_has_key, "__len__")
+                and type(not_has_key) not in {str, bytes}
+            )
+            keys_to_check = [not_has_key] if not is_seq_n else list(not_has_key)
             for key in keys_to_check:
                 if key in data:
                     raise AssertionError(msg or f"Key {key!r} should not be in dict")
 
         if has_value is not None:
-            _is_seq_v = hasattr(has_value, "__getitem__") and hasattr(has_value, "__len__") and type(has_value) not in (str, bytes)
-            values_to_check = [has_value] if not _is_seq_v else list(has_value)
+            is_seq_v = (
+                hasattr(has_value, "__getitem__")
+                and hasattr(has_value, "__len__")
+                and type(has_value) not in {str, bytes}
+            )
+            values_to_check = [has_value] if not is_seq_v else list(has_value)
             for val in values_to_check:
                 if val not in data.values():
                     raise AssertionError(msg or f"Value {val!r} not found in dict")
 
         if not_has_value is not None:
-            _is_seq_nv = hasattr(not_has_value, "__getitem__") and hasattr(not_has_value, "__len__") and type(not_has_value) not in (str, bytes)
-            values_to_check = [not_has_value] if not _is_seq_nv else list(not_has_value)
+            is_seq_nv = (
+                hasattr(not_has_value, "__getitem__")
+                and hasattr(not_has_value, "__len__")
+                and type(not_has_value) not in {str, bytes}
+            )
+            values_to_check = [not_has_value] if not is_seq_nv else list(not_has_value)
             for val in values_to_check:
                 if val in data.values():
                     raise AssertionError(msg or f"Value {val!r} should not be in dict")

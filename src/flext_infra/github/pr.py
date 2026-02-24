@@ -109,7 +109,9 @@ class PrManager:
         """
         pr_result = self.open_pr_for_head(repo_root, head)
         if pr_result.is_failure:
-            return r[Mapping[str, t.ScalarValue]].fail(pr_result.error or "status check failed")
+            return r[Mapping[str, t.ScalarValue]].fail(
+                pr_result.error or "status check failed"
+            )
 
         info: MutableMapping[str, t.ScalarValue] = {
             "repo": str(repo_root),
@@ -183,7 +185,9 @@ class PrManager:
 
         result = self._runner.capture(command, cwd=repo_root)
         if result.is_failure:
-            return r[Mapping[str, t.ScalarValue]].fail(result.error or "PR creation failed")
+            return r[Mapping[str, t.ScalarValue]].fail(
+                result.error or "PR creation failed"
+            )
         return r[Mapping[str, t.ScalarValue]].ok({
             "status": "created",
             "pr_url": result.value,
@@ -243,7 +247,7 @@ class PrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
+    ) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -290,12 +294,12 @@ class PrManager:
         if result.is_failure:
             return r[Mapping[str, t.ScalarValue]].fail(result.error or "merge failed")
 
-        info: MutableMapping[str, t.ScalarValue] = {"status": "merged"}
+        info: MutableMapping[str, t.ConfigMapValue] = {"status": "merged"}
         if release_on_merge:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
                 info["release"] = release_result.value
-        return r[Mapping[str, t.ScalarValue]].ok(info)
+        return r[Mapping[str, t.ConfigMapValue]].ok(info)
 
     def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
         """Close a PR.
@@ -350,7 +354,10 @@ class PrManager:
         )
         if dispatch_result.is_success:
             return r[Mapping[str, str]].ok({"status": "release-dispatched", "tag": tag})
-        return r[Mapping[str, str]].ok({"status": "release-dispatch-failed", "tag": tag})
+        return r[Mapping[str, str]].ok({
+            "status": "release-dispatch-failed",
+            "tag": tag,
+        })
 
 
 def _selector(pr_number: str, head: str) -> str:
@@ -440,7 +447,7 @@ def main() -> int:
         return 1
 
     if args.action == "merge":
-        result = manager.merge(
+        merge_result = manager.merge(
             repo_root,
             selector,
             head,
@@ -449,11 +456,11 @@ def main() -> int:
             delete_branch=args.delete_branch == 1,
             release_on_merge=args.release_on_merge == 1,
         )
-        if result.is_success:
-            for key, value in result.value.items():
-                _ = sys.stdout.write(f"{key}={value}\n")
+        if merge_result.is_success:
+            for key, val in merge_result.value.items():
+                _ = sys.stdout.write(f"{key}={val}\n")
             return 0
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        _ = sys.stderr.write(f"Error: {merge_result.error}\n")
         return 1
 
     if args.action == "close":

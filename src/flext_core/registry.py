@@ -22,7 +22,7 @@ from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -607,6 +607,7 @@ class FlextRegistry(FlextService[bool]):
 
         Returns:
             Success with plugin (RegisterableService) or failure if not found.
+
         """
         key = f"{category}::{name}"
         if key not in self._registered_keys:

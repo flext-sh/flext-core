@@ -13,16 +13,18 @@ from typing import Protocol, runtime_checkable
 
 from flext_core.result import FlextResult
 
-type InfraScalar = str | int | float | bool | None
-type InfraPayload = InfraScalar | Mapping[str, InfraScalar] | Sequence[InfraScalar]
-type InfraPayloadMap = Mapping[str, InfraPayload]
+type FlextInfraScalar = str | int | float | bool | None
+type FlextInfraPayload = (
+    FlextInfraScalar | Mapping[str, FlextInfraScalar] | Sequence[FlextInfraScalar]
+)
+type FlextInfraPayloadMap = Mapping[str, FlextInfraPayload]
 
 
-class InfraProtocols:
+class FlextInfraProtocols:
     """Structural contracts for flext-infra services and adapters."""
 
     @runtime_checkable
-    class ProjectInfo(Protocol):
+    class ProjectInfoProtocol(Protocol):
         """Minimal project descriptor used by orchestration services."""
 
         @property
@@ -36,7 +38,7 @@ class InfraProtocols:
             ...
 
     @runtime_checkable
-    class CommandOutput(Protocol):
+    class CommandOutputProtocol(Protocol):
         """Minimal command execution output contract."""
 
         @property
@@ -62,7 +64,7 @@ class InfraProtocols:
             self,
             project: str,
             gates: Sequence[str],
-        ) -> FlextResult[InfraPayloadMap]:
+        ) -> FlextResult[FlextInfraPayloadMap]:
             """Execute quality gates for a project."""
             ...
 
@@ -74,7 +76,7 @@ class InfraProtocols:
             self,
             source: Path,
             target: Path,
-        ) -> FlextResult[InfraPayloadMap]:
+        ) -> FlextResult[FlextInfraPayloadMap]:
             """Synchronize source and target paths."""
             ...
 
@@ -84,7 +86,7 @@ class InfraProtocols:
 
         def generate(
             self,
-            config: InfraPayloadMap,
+            config: FlextInfraPayloadMap,
         ) -> FlextResult[str]:
             """Generate text or artifacts from configuration."""
             ...
@@ -95,7 +97,7 @@ class InfraProtocols:
 
         def report(
             self,
-            results: Sequence[FlextResult[InfraPayloadMap]],
+            results: Sequence[FlextResult[FlextInfraPayloadMap]],
         ) -> FlextResult[Path]:
             """Write validation results to a report file."""
             ...
@@ -114,9 +116,9 @@ class InfraProtocols:
 
         def orchestrate(
             self,
-            projects: Sequence[InfraProtocols.ProjectInfo],
+            projects: Sequence[FlextInfraProtocols.ProjectInfoProtocol],
             verb: str,
-        ) -> FlextResult[InfraPayloadMap]:
+        ) -> FlextResult[FlextInfraPayloadMap]:
             """Orchestrate operations across multiple projects."""
             ...
 
@@ -127,7 +129,7 @@ class InfraProtocols:
         def discover(
             self,
             root: Path,
-        ) -> FlextResult[list[InfraProtocols.ProjectInfo]]:
+        ) -> FlextResult[list[FlextInfraProtocols.ProjectInfoProtocol]]:
             """Discover projects in a workspace root."""
             ...
 
@@ -139,17 +141,17 @@ class InfraProtocols:
             self,
             cmd: Sequence[str],
             cwd: Path | None = None,
-        ) -> FlextResult[InfraProtocols.CommandOutput]:
+        ) -> FlextResult[FlextInfraProtocols.CommandOutputProtocol]:
             """Execute a command and return output."""
             ...
 
 
-ip = InfraProtocols
-
-FlextInfraProtocols = InfraProtocols
+p = FlextInfraProtocols
 
 __all__ = [
+    "FlextInfraPayload",
+    "FlextInfraPayloadMap",
     "FlextInfraProtocols",
-    "InfraProtocols",
-    "ip",
+    "FlextInfraScalar",
+    "p",
 ]

@@ -18,8 +18,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from flext_core import (
     FlextDispatcher,
     FlextRegistry,
@@ -170,7 +168,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
-            if type(event_value) is UserCreatedEvent or UserCreatedEvent in type(event_value).__mro__:
+            if isinstance(event_value, UserCreatedEvent):
                 print(f"✅ Command dispatched: {event_value.aggregate_id}")
             else:
                 print("✅ Command dispatched successfully")
@@ -202,7 +200,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value
-            if type(user_data) is dict:
+            if isinstance(user_data, dict):
                 print(f"✅ Query dispatched: {user_data.get('name')}")
 
 
@@ -219,7 +217,9 @@ def main() -> None:
     if result.is_success:
         data = result.value
         patterns = data["patterns_demonstrated"]
-        if type(patterns) in (list, tuple) or (hasattr(patterns, "__getitem__") and hasattr(patterns, "__len__")):
+        if type(patterns) in {list, tuple} or (
+            hasattr(patterns, "__getitem__") and hasattr(patterns, "__len__")
+        ):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
     else:

@@ -14,8 +14,8 @@ from pathlib import Path
 
 from flext_core.result import FlextResult, r
 
-from flext_infra.constants import ic
-from flext_infra.models import im
+from flext_infra.constants import c
+from flext_infra.models import m
 
 
 class DiscoveryService:
@@ -27,7 +27,7 @@ class DiscoveryService:
     def discover_projects(
         self,
         workspace_root: Path,
-    ) -> FlextResult[list[im.ProjectInfo]]:
+    ) -> FlextResult[list[m.ProjectInfo]]:
         """Discover all subprojects in the workspace.
 
         Scans the workspace root for directories that are Git repositories
@@ -41,7 +41,7 @@ class DiscoveryService:
 
         """
         try:
-            projects: list[im.ProjectInfo] = []
+            projects: list[m.ProjectInfo] = []
             submodules = self._submodule_names(workspace_root)
 
             for entry in sorted(
@@ -56,11 +56,11 @@ class DiscoveryService:
                     continue
                 if not self._is_git_project(entry):
                     continue
-                if not (entry / ic.Files.MAKEFILE_FILENAME).exists():
+                if not (entry / c.Files.MAKEFILE_FILENAME).exists():
                     continue
 
-                has_pyproject = (entry / ic.Files.PYPROJECT_FILENAME).exists()
-                has_gomod = (entry / ic.Files.GO_MOD).exists()
+                has_pyproject = (entry / c.Files.PYPROJECT_FILENAME).exists()
+                has_gomod = (entry / c.Files.GO_MOD).exists()
                 if not has_pyproject and not has_gomod:
                     continue
 
@@ -68,25 +68,25 @@ class DiscoveryService:
                 kind = "submodule" if entry.name in submodules else "external"
 
                 projects.append(
-                    im.ProjectInfo(
-                        path=entry,
-                        name=entry.name,
-                        stack=f"{stack}/{kind}",
-                        has_tests=(entry / "tests").is_dir(),
-                        has_src=(entry / ic.Paths.DEFAULT_SRC_DIR).is_dir(),
-                    ),
+                    m.ProjectInfo.model_validate({
+                        "path": entry,
+                        "name": entry.name,
+                        "stack": f"{stack}/{kind}",
+                        "has_tests": (entry / "tests").is_dir(),
+                        "has_src": (entry / c.Paths.DEFAULT_SRC_DIR).is_dir(),
+                    }),
                 )
 
-            return r[list[im.ProjectInfo]].ok(projects)
+            return r[list[m.ProjectInfo]].ok(projects)
         except OSError as exc:
-            return r[list[im.ProjectInfo]].fail(
+            return r[list[m.ProjectInfo]].fail(
                 f"project discovery failed: {exc}",
             )
 
     def discover(
         self,
         root: Path | str,
-    ) -> FlextResult[list[im.ProjectInfo]]:
+    ) -> FlextResult[list[m.ProjectInfo]]:
         """Protocol-compliant discover method.
 
         Satisfies ``InfraProtocols.DiscoveryProtocol.discover``.
@@ -119,20 +119,20 @@ class DiscoveryService:
                 for p in project_paths:
                     target = (
                         p
-                        if p.name == ic.Files.PYPROJECT_FILENAME
-                        else p / ic.Files.PYPROJECT_FILENAME
+                        if p.name == c.Files.PYPROJECT_FILENAME
+                        else p / c.Files.PYPROJECT_FILENAME
                     )
                     if target.exists() and target.is_file():
                         selected.append(target)
                 return r[list[Path]].ok(sorted(set(selected)))
 
             effective_skip = (
-                skip_dirs if skip_dirs is not None else ic.Excluded.PYPROJECT_SKIP_DIRS
+                skip_dirs if skip_dirs is not None else c.Excluded.PYPROJECT_SKIP_DIRS
             )
             result = [
                 p
                 for p in sorted(
-                    workspace_root.rglob(ic.Files.PYPROJECT_FILENAME),
+                    workspace_root.rglob(c.Files.PYPROJECT_FILENAME),
                 )
                 if not any(skip in p.parts for skip in effective_skip)
             ]
@@ -154,7 +154,7 @@ class DiscoveryService:
         if not gitmodules.exists():
             return set()
         try:
-            content = gitmodules.read_text(encoding=ic.Encoding.DEFAULT)
+            content = gitmodules.read_text(encoding=c.Encoding.DEFAULT)
         except OSError:
             return set()
         return set(

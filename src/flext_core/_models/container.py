@@ -24,7 +24,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 _MetadataInput = (
-    None | FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue]
+    FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue] | None
 )
 
 

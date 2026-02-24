@@ -14,13 +14,14 @@ import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 import structlog
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
+from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.git import GitService
 from flext_infra.json_io import JsonService
 from flext_infra.reporting import ReportingService
@@ -30,7 +31,7 @@ from flext_infra.versioning import VersioningService
 
 _VALID_PHASES = frozenset({"validate", "version", "build", "publish"})
 _VERSION_RE = re.compile(r'^version\s*=\s*"(.+?)"', re.MULTILINE)
-_DEFAULT_ENCODING = ic.Encoding.DEFAULT
+_DEFAULT_ENCODING = c.Encoding.DEFAULT
 logger = structlog.get_logger(__name__)
 
 
@@ -265,7 +266,11 @@ class ReleaseOrchestrator(FlextService[bool]):
             "failures": failures,
             "records": records,
         }
-        JsonService().write(output_dir / "build-report.json", report, sort_keys=True)
+        JsonService().write(
+            output_dir / "build-report.json",
+            cast("Mapping[str, t.ConfigMapValue]", report),
+            sort_keys=True,
+        )
         logger.info(
             "release_phase_build_report",
             report=str(output_dir / "build-report.json"),
@@ -406,12 +411,12 @@ class ReleaseOrchestrator(FlextService[bool]):
         project_names: list[str],
     ) -> list[Path]:
         """Discover pyproject.toml files that need version updates."""
-        files: list[Path] = [root / ic.Files.PYPROJECT_FILENAME]
+        files: list[Path] = [root / c.Files.PYPROJECT_FILENAME]
         selector = ProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
-                pyproject = project.path / ic.Files.PYPROJECT_FILENAME
+                pyproject = project.path / c.Files.PYPROJECT_FILENAME
                 if pyproject.exists():
                     files.append(pyproject)
         return sorted({path.resolve() for path in files if path.exists()})

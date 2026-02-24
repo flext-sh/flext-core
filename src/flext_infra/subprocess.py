@@ -10,14 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shlex
-import subprocess
+import subprocess  # noqa: S404 - intentional infra command runner
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
 
-from flext_infra.constants import ic
-from flext_infra.models import im
+from flext_infra.constants import c
+from flext_infra.models import m
 
 
 class CommandRunner:
@@ -35,7 +35,7 @@ class CommandRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[im.CommandOutput]:
+    ) -> FlextResult[m.CommandOutput]:
         """Run a command without enforcing zero exit code.
 
         Args:
@@ -49,7 +49,7 @@ class CommandRunner:
 
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603 - cmd from trusted infra callers
                 list(cmd),
                 cwd=cwd,
                 capture_output=True,
@@ -58,20 +58,20 @@ class CommandRunner:
                 timeout=timeout,
                 env=env,
             )
-            output = im.CommandOutput(
-                stdout=result.stdout or "",
-                stderr=result.stderr or "",
-                exit_code=result.returncode,
-            )
-            return r[im.CommandOutput].ok(output)
+            output = m.CommandOutput.model_validate({
+                "stdout": result.stdout or "",
+                "stderr": result.stderr or "",
+                "exit_code": result.returncode,
+            })
+            return r[m.CommandOutput].ok(output)
         except subprocess.TimeoutExpired as exc:
             cmd_str = shlex.join(list(cmd))
             timeout_text = str(exc.timeout)
-            return r[im.CommandOutput].fail(
+            return r[m.CommandOutput].fail(
                 f"command timeout after {timeout_text}s: {cmd_str}",
             )
         except (OSError, ValueError) as exc:
-            return r[im.CommandOutput].fail(f"command execution error: {exc}")
+            return r[m.CommandOutput].fail(f"command execution error: {exc}")
 
     def run(
         self,
@@ -79,7 +79,7 @@ class CommandRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> FlextResult[im.CommandOutput]:
+    ) -> FlextResult[m.CommandOutput]:
         """Run a command and return structured output.
 
         Args:
@@ -93,7 +93,7 @@ class CommandRunner:
         """
         raw_result = self.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
         if raw_result.is_failure:
-            return r[im.CommandOutput].fail(
+            return r[m.CommandOutput].fail(
                 raw_result.error or "command execution error"
             )
 
@@ -101,10 +101,10 @@ class CommandRunner:
         if output.exit_code != 0:
             cmd_str = shlex.join(list(cmd))
             detail = (output.stderr or output.stdout).strip()
-            return r[im.CommandOutput].fail(
+            return r[m.CommandOutput].fail(
                 f"command failed ({output.exit_code}): {cmd_str}: {detail}",
             )
-        return r[im.CommandOutput].ok(output)
+        return r[m.CommandOutput].ok(output)
 
     def run_checked(
         self,
@@ -151,8 +151,8 @@ class CommandRunner:
         """
         try:
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            with output_file.open("w", encoding=ic.Encoding.DEFAULT) as handle:
-                result = subprocess.run(
+            with output_file.open("w", encoding=c.Encoding.DEFAULT) as handle:
+                result = subprocess.run(  # noqa: S603 - cmd from trusted infra callers
                     list(cmd),
                     cwd=cwd,
                     stdout=handle,

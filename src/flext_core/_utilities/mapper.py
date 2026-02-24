@@ -136,7 +136,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_to_sequence(value: t.ConfigMapValue) -> Sequence[t.ConfigMapValue]:
         """Safely narrow object to Sequence[t.ConfigMapValue]."""
-        if value.__class__ in (list, tuple):
+        if value.__class__ in {list, tuple}:
             # Explicit type annotation for narrowing items
             narrowed_items: list[t.ConfigMapValue] = []
             item: t.ConfigMapValue
@@ -455,12 +455,12 @@ class FlextUtilitiesMapper:
         """
         # Type narrowing: ensure value is PayloadValue (not plain object)
         narrowed_value: t.ConfigMapValue
-        if value.__class__ in (str, int, float, bool):
+        if value.__class__ in {str, int, float, bool}:
             narrowed_value = value
         elif value is None:
             narrowed_value = None
         elif (
-            value.__class__ in (dict, list)
+            value.__class__ in {dict, list}
             or value.__class__ is BaseModel
             or BaseModel in value.__class__.__mro__
             or value.__class__ is Path
@@ -487,9 +487,9 @@ class FlextUtilitiesMapper:
                 )
             return result_dict
         # Use isinstance for sequence type narrowing
-        if narrowed_value.__class__ in (list, tuple) or (
+        if narrowed_value.__class__ in {list, tuple} or (
             hasattr(narrowed_value, "__getitem__")
-            and narrowed_value.__class__ not in (str, bytes)
+            and narrowed_value.__class__ not in {str, bytes}
         ):
             # NOTE: Cannot use u.map() here due to circular import
             # (utilities.py -> mapper.py)
@@ -615,7 +615,7 @@ class FlextUtilitiesMapper:
             return default
         if value.__class__ is str:
             return [value]
-        if value.__class__ in (list, tuple, set):
+        if value.__class__ in {list, tuple, set}:
             # NOTE: Cannot use u.map() here due to circular import
             return [str(item) for item in value]
         return [str(value)]
@@ -698,7 +698,7 @@ class FlextUtilitiesMapper:
         array_match: str,
     ) -> tuple[t.ConfigMapValue | None, str | None]:
         """Helper: Handle array indexing with support for negative indices."""
-        if current.__class__ not in (list, tuple):
+        if current.__class__ not in {list, tuple}:
             return None, "Not a sequence"
         sequence: Sequence[t.ConfigMapValue] = FlextUtilitiesMapper._narrow_to_sequence(
             current
@@ -1061,7 +1061,6 @@ class FlextUtilitiesMapper:
     def take(
         data_or_items: Mapping[str, t.ConfigMapValue]
         | t.ConfigMapValue
-        | Mapping[str, t.ConfigMapValue]
         | list[t.ConfigMapValue]
         | tuple[t.ConfigMapValue, ...],
         key_or_n: str | int,
@@ -1140,7 +1139,7 @@ class FlextUtilitiesMapper:
             # Return dict with selected keys - type matches Mapping[str, T] via overload resolution
             return {k: data_or_items[k] for k in selected_keys}
         # Remaining cases: list or tuple
-        if data_or_items.__class__ in (list, tuple):
+        if data_or_items.__class__ in {list, tuple}:
             # Type narrowing: data_or_items is Sequence after isinstance check
             items_list: list[t.ConfigMapValue] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(item)
@@ -1237,8 +1236,7 @@ class FlextUtilitiesMapper:
         if target.__class__ is type and (
             value.__class__ is target
             or (
-                value.__class__ is not type
-                and value.__class__ is target
+                (value.__class__ is not type and value.__class__ is target)
                 or target in value.__class__.__mro__
             )
         ):
@@ -1248,10 +1246,10 @@ class FlextUtilitiesMapper:
         # Try coercion for basic types using proper type narrowing
         # When target is a specific type, we know T is that type, so conversions are type-safe
         try:
-            if target is int and value.__class__ in (str, float):
+            if target is int and value.__class__ in {str, float}:
                 # Type narrowing: target is int, so T is int, and int(value) is int
                 return int(value)
-            if target is float and value.__class__ in (str, int):
+            if target is float and value.__class__ in {str, int}:
                 # Type narrowing: target is float, so T is float, and float(value) is float
                 return float(value)
             if target is str:
@@ -1391,7 +1389,7 @@ class FlextUtilitiesMapper:
                 # Extract value using helper method for better type inference
                 val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
                 # Type narrowing: check if value is numeric
-                if val_raw.__class__ in (int, float):
+                if val_raw.__class__ in {int, float}:
                     numeric_values.append(val_raw)
 
         agg_fn: Callable[[list[int | float]], int | float] = (
@@ -1487,7 +1485,7 @@ class FlextUtilitiesMapper:
             return current
         # filter_pred returns PayloadValue, used as truthy check in filter context
         # Handle collections
-        if current.__class__ in (list, tuple):
+        if current.__class__ in {list, tuple}:
             # Type narrowing: current is Sequence[object], x is t.ConfigMapValue
             seq_current: Sequence[object] = current
             return [
@@ -1521,7 +1519,7 @@ class FlextUtilitiesMapper:
             return current
         # map_func accepts t.ConfigMapValue since we work with ConfigurationDict values
         map_func: Callable[[t.ConfigMapValue], t.ConfigMapValue] = map_func_raw
-        if current.__class__ in (list, tuple):
+        if current.__class__ in {list, tuple}:
             # Type narrowing: current is Sequence, items are t.ConfigMapValue
             seq_current: Sequence[object] = current
             return [
@@ -1550,7 +1548,7 @@ class FlextUtilitiesMapper:
         normalize_case = FlextUtilitiesMapper._get_str_from_dict(ops, "normalize", "")
         if current.__class__ is str:
             return current.lower() if normalize_case == "lower" else current.upper()
-        if current.__class__ in (list, tuple):
+        if current.__class__ in {list, tuple}:
             # Type narrowing: current is Sequence, items are t.ConfigMapValue
             seq_current: Sequence[object] = current
             result: list[t.ConfigMapValue] = []
@@ -1611,7 +1609,7 @@ class FlextUtilitiesMapper:
             except Exception:
                 return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
 
-        if current.__class__ in (list, tuple):
+        if current.__class__ in {list, tuple}:
             converted = [
                 _convert(FlextUtilitiesMapper.narrow_to_general_value_type(item))
                 for item in current
@@ -1863,7 +1861,7 @@ class FlextUtilitiesMapper:
         # process_func accepts t.ConfigMapValue since we work with ConfigurationDict values
         process_func: Callable[[t.ConfigMapValue], t.ConfigMapValue] = process_func_raw
         try:
-            if current.__class__ in (list, tuple):
+            if current.__class__ in {list, tuple}:
                 # Type narrowing: current is Sequence, items are t.ConfigMapValue
                 seq_current: Sequence[object] = current
                 return [
@@ -1894,7 +1892,7 @@ class FlextUtilitiesMapper:
         """Helper: Apply group operation."""
         if "group" not in ops:
             return current
-        if current.__class__ not in (list, tuple):
+        if current.__class__ not in {list, tuple}:
             return current
         group_spec = ops["group"]
         # Type narrowing: convert to list with proper type
@@ -1937,7 +1935,7 @@ class FlextUtilitiesMapper:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
             return current
-        if current.__class__ not in (list, tuple):
+        if current.__class__ not in {list, tuple}:
             return current
         sort_spec = ops["sort"]
         # Type narrowing: convert to list with proper type
@@ -1983,7 +1981,7 @@ class FlextUtilitiesMapper:
             comparable_items: list[t.ConfigMapValue] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
                     item
-                    if (item.__class__ in (str, int, float, bool) or item is None)
+                    if (item.__class__ in {str, int, float, bool} or item is None)
                     else str(item),
                 )
                 for item in current_list
@@ -2005,7 +2003,7 @@ class FlextUtilitiesMapper:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
             return current
-        if current.__class__ not in (list, tuple):
+        if current.__class__ not in {list, tuple}:
             return current
         # Type narrowing: convert to list with proper type
         current_list_unique: list[t.ConfigMapValue] = [
@@ -2016,7 +2014,7 @@ class FlextUtilitiesMapper:
         for item in current_list_unique:
             item_hashable: t.ConfigMapValue | str = (
                 item
-                if (item.__class__ in (str, int, float, bool) or item is None)
+                if (item.__class__ in {str, int, float, bool} or item is None)
                 else str(item)
             )
             if item_hashable not in seen:
@@ -2034,12 +2032,12 @@ class FlextUtilitiesMapper:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
             return current
-        if current.__class__ not in (list, tuple):
+        if current.__class__ not in {list, tuple}:
             return current
         slice_spec = ops["slice"]
         min_slice_length = 2
         if (
-            slice_spec.__class__ in (tuple, list)
+            slice_spec.__class__ in {tuple, list}
             and len(slice_spec) >= min_slice_length
         ):
             start_raw = slice_spec[0]
@@ -2067,7 +2065,7 @@ class FlextUtilitiesMapper:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
             return current
-        if current.__class__ not in (list, tuple):
+        if current.__class__ not in {list, tuple}:
             return current
         chunk_size = ops["chunk"]
         if chunk_size.__class__ is not int or chunk_size <= 0:

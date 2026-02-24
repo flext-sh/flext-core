@@ -298,7 +298,7 @@ class AutomationService(s[m.ConfigMap]):
             data: m.ConfigMap,
         ) -> r[m.ConfigMap]:
             task_type = data.get("task_type", "")
-            if type(task_type) is not str or not task_type:
+            if not isinstance(task_type, str) or not task_type:
                 return r[m.ConfigMap].fail("Task type required")
             return r[m.ConfigMap].ok(data)
 
@@ -393,7 +393,7 @@ class AutomationService(s[m.ConfigMap]):
         engine_id = str(engine.get("engine_id", "unknown"))
         worker_count_val = engine.get("worker_count", 0)
         worker_count = (
-            int(worker_count_val) if type(worker_count_val) in (int, float) else 0
+            int(worker_count_val) if type(worker_count_val) in {int, float} else 0
         )
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")

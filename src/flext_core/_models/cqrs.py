@@ -53,7 +53,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_command(cls, v: t.ScalarValue) -> str:
             """Auto-set command type from class name if empty."""
-            if v.__class__ is str:
+            if isinstance(v, str):
                 return v if v.strip() else cls.__name__
             if not v:
                 return cls.__name__
@@ -171,27 +171,30 @@ class FlextModelsCqrs:
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
-            if v is not None and v.__class__ is FlextModelsCqrs.Pagination:
+            if isinstance(v, FlextModelsCqrs.Pagination):
                 return v
 
             # Convert dict or t.Dict to Pagination
-            if v is not None:
-                data = v.root if v.__class__ is t.Dict else v
-                if FlextRuntime.is_dict_like(data):
-                    page_raw = data.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
-                    size_raw = data.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
-                    # Type-safe int conversion
-                    page: int = c.Pagination.DEFAULT_PAGE_NUMBER
-                    size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
-                    if page_raw.__class__ is int:
-                        page = page_raw
-                    elif page_raw.__class__ is str and page_raw.isdigit():
-                        page = int(page_raw)
-                    if size_raw.__class__ is int:
-                        size = size_raw
-                    elif size_raw.__class__ is str and size_raw.isdigit():
-                        size = int(size_raw)
-                    return pagination_cls(page=page, size=size)
+            if isinstance(v, (t.Dict, Mapping)):
+                data = v.root if isinstance(v, t.Dict) else v
+                page_raw = data.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
+                size_raw = data.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
+
+                page = (
+                    page_raw
+                    if isinstance(page_raw, int)
+                    else int(page_raw)
+                    if isinstance(page_raw, str) and page_raw.isdigit()
+                    else c.Pagination.DEFAULT_PAGE_NUMBER
+                )
+                size = (
+                    size_raw
+                    if isinstance(size_raw, int)
+                    else int(size_raw)
+                    if isinstance(size_raw, str) and size_raw.isdigit()
+                    else c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
+                )
+                return pagination_cls(page=page, size=size)
 
             # Default empty Pagination
             return pagination_cls()

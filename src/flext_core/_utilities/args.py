@@ -14,20 +14,23 @@ from functools import wraps
 from types import UnionType
 from typing import (
     Annotated,
+    ParamSpec,
     TypeVar,
     get_args,
     get_origin,
     get_type_hints,
 )
 
-from pydantic import ConfigDict, validate_call
+from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, t
+from flext_core.typings import t
 
 _ValidatedValueT = TypeVar("_ValidatedValueT")
+_ValidatedParams = ParamSpec("_ValidatedParams")
+_ValidatedReturn = TypeVar("_ValidatedReturn")
 
 
 class FlextUtilitiesArgs:
@@ -53,7 +56,9 @@ class FlextUtilitiesArgs:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def validated(func: Callable[P, R]) -> Callable[P, R]:
+    def validated(
+        func: Callable[_ValidatedParams, _ValidatedReturn],
+    ) -> Callable[_ValidatedParams, _ValidatedReturn]:
         """Decorator that uses @validate_call from Pydantic internally.
 
         ADVANTAGE:
@@ -90,8 +95,8 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated_with_result(
-        func: Callable[P, FlextRuntime.RuntimeResult[_ValidatedValueT]],
-    ) -> Callable[P, FlextRuntime.RuntimeResult[_ValidatedValueT]]:
+        func: Callable[_ValidatedParams, FlextRuntime.RuntimeResult[_ValidatedValueT]],
+    ) -> Callable[_ValidatedParams, FlextRuntime.RuntimeResult[_ValidatedValueT]]:
         """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
@@ -117,8 +122,8 @@ class FlextUtilitiesArgs:
 
         @wraps(func)
         def wrapper(
-            *args: P.args,
-            **kwargs: P.kwargs,
+            *args: _ValidatedParams.args,
+            **kwargs: _ValidatedParams.kwargs,
         ) -> FlextRuntime.RuntimeResult[_ValidatedValueT]:
             try:
                 return validated_func(*args, **kwargs)
@@ -155,14 +160,14 @@ class FlextUtilitiesArgs:
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]
-                if value.__class__ is str:
-                    try:
-                        parsed[field] = enum_cls(value)
-                    except ValueError:
-                        members_dict = getattr(enum_cls, "__members__", {})
-                        enum_members = list(members_dict.values())
-                        valid = ", ".join(m.value for m in enum_members)
-                        errors.append(f"{field}: '{value}' not in [{valid}]")
+                adapter = TypeAdapter(enum_cls)
+                try:
+                    parsed[field] = adapter.validate_python(value)
+                except ValidationError:
+                    members_dict = getattr(enum_cls, "__members__", {})
+                    enum_members = list(members_dict.values())
+                    valid = ", ".join(m.value for m in enum_members)
+                    errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
             return r[Mapping[str, t.GuardInputValue]].fail(

@@ -23,6 +23,9 @@ from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
+type ValidationSubject = t.ScalarValue | BaseModel
+type EventInput = BaseModel | Mapping[str, t.ConfigMapValue]
+
 
 class FlextModelsValidation:
     """Validation utility functions."""
@@ -61,28 +64,28 @@ class FlextModelsValidation:
 
     @staticmethod
     def _validate_with_validator_mapping(
-        subject: t.GuardInputValue,
+        subject: ValidationSubject,
         validators: t.FieldValidatorMap | t.EventValidatorMap,
         failure_message_prefix: str,
         failure_code: str,
         error_data_key: str,
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         validation_results = [validator(subject) for validator in validators.values()]
         errors = FlextModelsValidation._collect_result_errors(validation_results)
         if errors:
-            return r[t.GuardInputValue].fail(
+            return r[ValidationSubject].fail(
                 f"{failure_message_prefix}: {'; '.join(errors)}",
                 error_code=failure_code,
                 error_data=t.ConfigMap(root={error_data_key: errors}),
             )
-        return r[t.GuardInputValue].ok(subject)
+        return r[ValidationSubject].ok(subject)
 
     @staticmethod
     def _validate_model_with_validators(
-        model: t.GuardInputValue,
-        validators: Sequence[Callable[[t.GuardInputValue], r[t.GuardInputValue]]],
+        model: ValidationSubject,
+        validators: Sequence[Callable[[ValidationSubject], r[ValidationSubject]]],
         fallback_reason: str,
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         failure_result = FlextModelsValidation._first_validation_failure_result(
             model,
             validators,
@@ -92,14 +95,14 @@ class FlextModelsValidation:
                 failure_result.error,
                 fallback_reason,
             )
-            return r[t.GuardInputValue].fail(error_msg)
-        return r[t.GuardInputValue].ok(model)
+            return r[ValidationSubject].fail(error_msg)
+        return r[ValidationSubject].ok(model)
 
     @staticmethod
     def _first_validation_failure_result(
-        value: t.GuardInputValue,
-        validators: Sequence[Callable[[t.GuardInputValue], r[t.GuardInputValue]]],
-    ) -> r[t.GuardInputValue] | None:
+        value: ValidationSubject,
+        validators: Sequence[Callable[[ValidationSubject], r[ValidationSubject]]],
+    ) -> r[ValidationSubject] | None:
         for validator in validators:
             result = validator(value)
             if result.is_failure:
@@ -108,7 +111,7 @@ class FlextModelsValidation:
 
     @staticmethod
     def _required_event_string_error(
-        event: t.GuardInputValue,
+        event: EventInput,
         field_name: str,
     ) -> r[bool] | None:
         field_value = FlextModelsValidation._event_get(event, field_name, "")
@@ -120,12 +123,12 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_business_rules(
-        model: t.GuardInputValue,
+        model: ValidationSubject,
         *rules: Callable[
-            [t.GuardInputValue],
-            r[t.GuardInputValue],
+            [ValidationSubject],
+            r[ValidationSubject],
         ],
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         """Validate business-rule callables for a model."""
         return FlextModelsValidation._validate_model_with_validators(
             model,
@@ -135,9 +138,9 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_cross_fields(
-        model: t.GuardInputValue,
+        model: ValidationSubject,
         field_validators: t.FieldValidatorMap,
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         """Validate cross-field dependencies with mapped validators."""
         return FlextModelsValidation._validate_with_validator_mapping(
             model,
@@ -149,9 +152,9 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_performance(
-        model: t.GuardInputValue,
+        model: BaseModel,
         max_validation_time_ms: int | None = None,
-    ) -> r[t.GuardInputValue]:
+    ) -> r[BaseModel]:
         """Validate model execution time against a threshold."""
         timeout_ms = (
             max_validation_time_ms
@@ -161,9 +164,6 @@ class FlextModelsValidation:
         start_time = time.time()
 
         try:
-            if BaseModel not in model.__class__.__mro__:
-                return r[t.GuardInputValue].ok(model)
-
             dump = model.model_dump(
                 exclude={"is_initial_version", "is_modified"},
                 exclude_unset=True,
@@ -172,7 +172,7 @@ class FlextModelsValidation:
             validation_time = (time.time() - start_time) * c.MILLISECONDS_MULTIPLIER
 
             if validation_time > timeout_ms:
-                return r[t.GuardInputValue].fail(
+                return r[BaseModel].fail(
                     f"Validation too slow: {validation_time:.2f}ms > {timeout_ms}ms",
                     error_code="PERFORMANCE_VALIDATION_FAILED",
                     error_data=t.ConfigMap(
@@ -180,7 +180,7 @@ class FlextModelsValidation:
                     ),
                 )
 
-            return r[t.GuardInputValue].ok(validated_model)
+            return r[BaseModel].ok(validated_model)
         except (
             AttributeError,
             TypeError,
@@ -188,22 +188,22 @@ class FlextModelsValidation:
             RuntimeError,
             KeyError,
         ) as e:
-            return r[t.GuardInputValue].fail(
+            return r[BaseModel].fail(
                 f"Validation failed: {e}",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
     @staticmethod
     def validate_batch(
-        models: t.ObjectList,
+        models: Sequence[ValidationSubject],
         *validators: Callable[
-            [t.GuardInputValue],
-            r[t.GuardInputValue],
+            [ValidationSubject],
+            r[ValidationSubject],
         ],
         fail_fast: bool = True,
-    ) -> r[t.ObjectList]:
+    ) -> r[list[ValidationSubject]]:
         """Validate a model batch with optional fail-fast behavior."""
-        validated_models: list[t.GuardInputValue] = []
+        validated_models: list[ValidationSubject] = []
         all_errors: list[str] = []
         fallback_reason = (
             "item validation failed" if fail_fast else "model validation failed"
@@ -220,7 +220,7 @@ class FlextModelsValidation:
                 continue
 
             if fail_fast:
-                return r[t.ObjectList].fail(
+                return r[list[ValidationSubject]].fail(
                     FlextModelsValidation._validation_failure_message(
                         validation_result.error,
                         "item validation failed",
@@ -234,7 +234,7 @@ class FlextModelsValidation:
             all_errors.append(error_msg)
 
         if all_errors:
-            return r[t.ObjectList].fail(
+            return r[list[ValidationSubject]].fail(
                 f"Batch validation failed: {'; '.join(all_errors)}",
                 error_code="BATCH_VALIDATION_FAILED",
                 error_data=t.ConfigMap(
@@ -242,18 +242,18 @@ class FlextModelsValidation:
                 ),
             )
 
-        return r[t.ObjectList].ok(t.ObjectList(root=validated_models))
+        return r[list[ValidationSubject]].ok(validated_models)
 
     @staticmethod
     def validate_domain_invariants(
-        model: t.GuardInputValue,
+        model: ValidationSubject,
         invariants: list[
             Callable[
-                [t.GuardInputValue],
-                r[t.GuardInputValue],
+                [ValidationSubject],
+                r[ValidationSubject],
             ]
         ],
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         """Validate aggregate/domain invariants for a model."""
         failure_result = FlextModelsValidation._first_validation_failure_result(
             model,
@@ -261,18 +261,18 @@ class FlextModelsValidation:
         )
         if failure_result is not None:
             invariant_error = failure_result.error or "unknown"
-            return r[t.GuardInputValue].fail(
+            return r[ValidationSubject].fail(
                 f"Domain invariant violation: {invariant_error}",
                 error_code="DOMAIN_INVARIANT_VIOLATION",
                 error_data=t.ConfigMap(root={"invariant_error": invariant_error}),
             )
-        return r[t.GuardInputValue].ok(model)
+        return r[ValidationSubject].ok(model)
 
     @staticmethod
     def validate_aggregate_consistency_with_rules(
-        aggregate: t.GuardInputValue,
+        aggregate: ValidationSubject,
         consistency_rules: t.ConsistencyRuleMap,
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         """Validate aggregate consistency with named rule validators."""
         violations: list[str] = []
         for rule_name, validator in consistency_rules.items():
@@ -283,19 +283,19 @@ class FlextModelsValidation:
                 violations.append(f"{rule_name}: {error_msg}")
 
         if violations:
-            return r[t.GuardInputValue].fail(
+            return r[ValidationSubject].fail(
                 f"Aggregate consistency violations: {'; '.join(violations)}",
                 error_code="AGGREGATE_CONSISTENCY_VIOLATION",
                 error_data=t.ConfigMap(root={"violations": violations}),
             )
 
-        return r[t.GuardInputValue].ok(aggregate)
+        return r[ValidationSubject].ok(aggregate)
 
     @staticmethod
     def validate_event_sourcing(
-        event: t.GuardInputValue,
+        event: ValidationSubject,
         event_validators: t.EventValidatorMap,
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         """Validate event-sourcing constraints for a domain event."""
         return FlextModelsValidation._validate_with_validator_mapping(
             event,
@@ -307,22 +307,22 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_cqrs_patterns(
-        command_or_query: t.GuardInputValue,
+        command_or_query: ValidationSubject,
         pattern_type: str,
         validators: list[
             Callable[
-                [t.GuardInputValue],
-                r[t.GuardInputValue],
+                [ValidationSubject],
+                r[ValidationSubject],
             ]
         ],
-    ) -> r[t.GuardInputValue]:
+    ) -> r[ValidationSubject]:
         """Validate CQRS command/query payloads with pattern-specific validators."""
         valid_pattern_types = {
             c.Cqrs.HandlerType.COMMAND.value,
             c.Cqrs.HandlerType.QUERY.value,
         }
         if pattern_type not in valid_pattern_types:
-            return r[t.GuardInputValue].fail(
+            return r[ValidationSubject].fail(
                 f"Invalid pattern type: {pattern_type}. Must be '{c.Cqrs.HandlerType.COMMAND.value}' or '{c.Cqrs.HandlerType.QUERY.value}'",
                 error_code="INVALID_PATTERN_TYPE",
             )
@@ -333,7 +333,7 @@ class FlextModelsValidation:
         )
         if failure_result is not None:
             failure_error = failure_result.error
-            return r[t.GuardInputValue].fail(
+            return r[ValidationSubject].fail(
                 f"CQRS {pattern_type} validation failed: {failure_error}",
                 error_code=f"CQRS_{pattern_type.upper()}_VALIDATION_FAILED",
                 error_data=t.ConfigMap(
@@ -344,11 +344,11 @@ class FlextModelsValidation:
                 ),
             )
 
-        return r[t.GuardInputValue].ok(command_or_query)
+        return r[ValidationSubject].ok(command_or_query)
 
     @staticmethod
     def _validate_event_structure(
-        event: t.GuardInputValue,
+        event: EventInput,
     ) -> r[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
@@ -371,7 +371,7 @@ class FlextModelsValidation:
 
     @staticmethod
     def _validate_event_fields(
-        event: t.GuardInputValue,
+        event: EventInput,
     ) -> r[bool]:
         """Validate event field types and values."""
         for required_field in ("event_type", "aggregate_id"):
@@ -392,7 +392,7 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_domain_event(
-        event: t.GuardInputValue,
+        event: EventInput,
     ) -> r[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
@@ -417,39 +417,35 @@ class FlextModelsValidation:
 
     @staticmethod
     def _event_mapping(
-        event: t.GuardInputValue,
-    ) -> Mapping[str, t.GuardInputValue] | None:
-        return (
-            event
-            if event.__class__ is dict
-            or (hasattr(event, "keys") and hasattr(event, "__getitem__"))
-            else None
-        )
+        event: EventInput,
+    ) -> Mapping[str, t.ConfigMapValue]:
+        if isinstance(event, BaseModel):
+            return {
+                str(k): FlextRuntime.normalize_to_general_value(v)
+                for k, v in event.model_dump().items()
+            }
+        return event
 
     @staticmethod
-    def _event_has_attr(event: t.GuardInputValue, attr: str) -> bool:
-        if hasattr(event, attr):
+    def _event_has_attr(event: EventInput, attr: str) -> bool:
+        if isinstance(event, BaseModel) and hasattr(event, attr):
             return True
-        event_mapping = FlextModelsValidation._event_mapping(event)
-        if event_mapping is not None:
-            return attr in event_mapping
-        return False
+        return attr in FlextModelsValidation._event_mapping(event)
 
     @staticmethod
     def _event_get(
-        event: t.GuardInputValue,
+        event: EventInput,
         key: str,
-        default: t.GuardInputValue,
-    ) -> t.GuardInputValue:
-        event_mapping = FlextModelsValidation._event_mapping(event)
-        if event_mapping is not None:
-            return event_mapping.get(key, default)
-        return getattr(event, key, default)
+        default: t.ConfigMapValue,
+    ) -> t.ConfigMapValue:
+        if isinstance(event, BaseModel):
+            return getattr(event, key, default)
+        return event.get(key, default)
 
     @staticmethod
     def validate_aggregate_consistency(
-        aggregate: t.GuardInputValue | p.Validation.HasInvariants,
-    ) -> r[t.GuardInputValue | p.Validation.HasInvariants]:
+        aggregate: p.Validation.HasInvariants,
+    ) -> r[p.Validation.HasInvariants]:
         """Validate aggregate consistency and business invariants.
 
         Ensures aggregates maintain consistency boundaries and invariants
@@ -467,21 +463,18 @@ class FlextModelsValidation:
                 "Aggregate cannot be None",
             )
 
-        if hasattr(aggregate, "check_invariants") and callable(
-            getattr(aggregate, "check_invariants", None)
-        ):
-            try:
-                aggregate.check_invariants()
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as e:
-                return FlextModelsValidation._validation_error(
-                    f"Aggregate invariant violation: {e}",
-                )
+        try:
+            aggregate.check_invariants()
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ) as e:
+            return FlextModelsValidation._validation_error(
+                f"Aggregate invariant violation: {e}",
+            )
 
         if hasattr(aggregate, "domain_events"):
             events = getattr(aggregate, "domain_events", [])
@@ -496,12 +489,12 @@ class FlextModelsValidation:
                     error_msg,
                 )
 
-        return r[t.GuardInputValue | p.Validation.HasInvariants].ok(aggregate)
+        return r[p.Validation.HasInvariants].ok(aggregate)
 
     @staticmethod
     def validate_entity_relationships(
-        entity: t.GuardInputValue,
-    ) -> r[t.GuardInputValue]:
+        entity: BaseModel,
+    ) -> r[BaseModel]:
         """Validate entity relationships and references.
 
         Ensures entity references are valid and relationships are consistent.
@@ -534,7 +527,7 @@ class FlextModelsValidation:
                         f"Entity {timestamp_field} must be a datetime or None",
                     )
 
-        return r[t.GuardInputValue].ok(entity)
+        return r[BaseModel].ok(entity)
 
     @staticmethod
     def validate_uri(

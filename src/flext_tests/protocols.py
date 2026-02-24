@@ -12,10 +12,13 @@ from __future__ import annotations
 import builtins
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, r, t, T
+from flext_core import FlextProtocols, T, r
 from pydantic import BaseModel
+
+from flext_tests.typings import t
+
 
 class FlextTestsProtocols(FlextProtocols):
     """Protocol definitions for FLEXT tests - extends FlextProtocols.
@@ -339,10 +342,10 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose: Any
+                compose: object
                 """Compose API access (python-on-whales style)."""
 
-                client_config: Any
+                client_config: object
                 """Client configuration (python-on-whales style)."""
 
                 def up(
@@ -595,7 +598,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is success and return value."""
                     ...
 
-                def assert_fail(self, result: Any) -> str:
+                def assert_fail(self, result: object) -> str:
                     """Assert result is failure and return error."""
                     ...
 
@@ -617,7 +620,10 @@ class FlextTestsProtocols(FlextProtocols):
                 def match(
                     self,
                     obj: T,
-                    spec: Mapping[str, t.Tests.PayloadValue | Callable[[t.Tests.PayloadValue], bool]],
+                    spec: Mapping[
+                        str,
+                        t.Tests.PayloadValue | Callable[[t.Tests.PayloadValue], bool],
+                    ],
                     *,
                     path_sep: str = ".",
                 ) -> T:
@@ -643,7 +649,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def validate(
                     self,
-                    value: T,
+                    value: object,
                     spec: int | tuple[int, int],
                 ) -> bool:
                     """Validate length against spec.
@@ -665,7 +671,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that support chained assertions.
                 """
 
-                def ok(self, msg: str | None = None) -> T:
+                def ok(self, msg: str | None = None) -> object:
                     """Assert result is success."""
                     ...
 
@@ -673,23 +679,23 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     error: str | None = None,
                     msg: str | None = None,
-                ) -> T:
+                ) -> object:
                     """Assert result is failure."""
                     ...
 
-                def eq(self, expected: T, msg: str | None = None) -> T:
+                def eq(self, expected: object, msg: str | None = None) -> object:
                     """Assert value equals expected."""
                     ...
 
-                def has(self, item: T, msg: str | None = None) -> T:
+                def has(self, item: object, msg: str | None = None) -> object:
                     """Assert value/error contains item."""
                     ...
 
-                def len(self, expected: int, msg: str | None = None) -> T:
+                def len(self, expected: int, msg: str | None = None) -> object:
                     """Assert value has expected length."""
                     ...
 
-                def done(self) -> T:
+                def done(self) -> object:
                     """Finish chain and return value (for success)."""
                     ...
 
@@ -720,7 +726,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def exit_scope(self, scope: T) -> None:
+                def exit_scope(self, scope: object) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:
@@ -751,7 +757,7 @@ class FlextTestsProtocols(FlextProtocols):
                     content: t.Tests.PayloadValue,
                     name: str = ...,
                     directory: str | None = ...,
-                    **kwargs: Any,
+                    **kwargs: object,
                 ) -> FlextProtocols.Result[Path]:
                     """Create file with auto-detection.
 
@@ -766,7 +772,7 @@ class FlextTestsProtocols(FlextProtocols):
                     path: Path | str,
                     *,
                     model_cls: type[BaseModel] | None = ...,
-                    **kwargs: Any,
+                    **kwargs: object,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Read file with optional model deserialization.
 
@@ -782,7 +788,7 @@ class FlextTestsProtocols(FlextProtocols):
                     file2: Path | str,
                     *,
                     mode: str = ...,
-                    **kwargs: Any,
+                    **kwargs: object,
                 ) -> FlextProtocols.Result[bool]:
                     """Compare two files.
 
@@ -798,7 +804,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     compute_hash: bool = ...,
                     detect_fmt: bool = ...,
-                    **kwargs: Any,
+                    **kwargs: object,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Get comprehensive file information.
 
@@ -816,7 +822,7 @@ class FlextTestsProtocols(FlextProtocols):
                     operation: str = ...,
                     model: type[BaseModel] | None = ...,
                     on_error: str = ...,
-                    **kwargs: Any,
+                    **kwargs: object,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Batch file operations.
 
@@ -1049,11 +1055,11 @@ class FlextTestsProtocols(FlextProtocols):
 
                 """
 
-                def __lt__(self, other: Any, /) -> bool:
+                def __lt__(self, other: object, /) -> bool:
                     """Less-than comparison operator."""
                     ...
 
 
+p = FlextTestsProtocols
 
-
-__all__ = ["FlextTestsProtocols"]
+__all__ = ["FlextTestsProtocols", "p"]

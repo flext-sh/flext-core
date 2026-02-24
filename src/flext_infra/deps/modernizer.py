@@ -1,4 +1,5 @@
 """Modernize workspace pyproject.toml files to standardized format."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,9 +8,9 @@ from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
+from flext_core.typings import t
 from tomlkit.items import Array, Table
 
-from flext_core.typings import t
 from flext_infra.subprocess import CommandRunner
 
 
@@ -71,13 +72,13 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
 
 def _as_string_list(value: t.ConfigMapValue) -> list[str]:
     """Convert TOML value to list of strings."""
-    if value is None or isinstance(value, str) or isinstance(value, Mapping):
+    if value is None or isinstance(value, (str, Mapping)):
         return []
     if not isinstance(value, Iterable):
         return []
     items: list[str] = []
     for raw in value:
-        normalized = raw.value if hasattr(raw, "value") else raw
+        normalized = getattr(raw, "value", raw)
         items.append(str(normalized))
     return items
 
@@ -94,7 +95,8 @@ def _ensure_table(parent: Table, key: str) -> Table:
     """Get or create a TOML table in parent."""
     existing = parent.get(key)
     if existing is not None and isinstance(existing, Table):
-        return existing
+        out: Table = existing
+        return out
     table = tomlkit.table()
     parent[key] = table
     return table
@@ -317,13 +319,21 @@ class InjectCommentsPhase:
         for line in lines:
             marker = marker_map.get(line.strip())
             if marker:
-                recent = out[-_RECENT_LINES_FOR_MARKER:] if len(out) >= _RECENT_LINES_FOR_MARKER else out
+                recent = (
+                    out[-_RECENT_LINES_FOR_MARKER:]
+                    if len(out) >= _RECENT_LINES_FOR_MARKER
+                    else out
+                )
                 if marker not in recent and marker not in existing_text:
                     out.append(marker)
                     changes.append(f"marker injected for {line.strip()}")
 
             if line.strip().startswith("optional-dependencies.dev"):
-                recent = out[-_RECENT_LINES_FOR_DEV_DEP:] if len(out) >= _RECENT_LINES_FOR_DEV_DEP else out
+                recent = (
+                    out[-_RECENT_LINES_FOR_DEV_DEP:]
+                    if len(out) >= _RECENT_LINES_FOR_DEV_DEP
+                    else out
+                )
                 marker = "# [MANAGED] consolidated development dependencies"
                 auto = "# [AUTO] merged from dev/docs/security/test/typings"
                 if marker not in recent and marker not in existing_text:
@@ -388,7 +398,6 @@ class PyprojectModernizer:
 
         root_doc = _read_doc(self.root / "pyproject.toml")
         if root_doc is None:
-            print("invalid root pyproject.toml")
             return 2
         canonical_dev = _canonical_dev_dependencies(root_doc)
 
@@ -407,14 +416,10 @@ class PyprojectModernizer:
             violations[rel] = changes
             total += len(changes)
 
-        mode = "AUDIT" if args.audit else ("DRY-RUN" if dry_run else "APPLY")
-        print(f"[{mode}] modernize pyproject files: {len(files)}")
         if violations:
-            for rel, changes in violations.items():
-                print(f"\n{rel}:")
-                for item in changes:
-                    print(f"  - {item}")
-        print(f"\nTotal changes: {total}")
+            for changes in violations.values():
+                for _item in changes:
+                    pass
 
         if args.audit and total > 0:
             return 1

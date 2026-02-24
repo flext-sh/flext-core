@@ -26,10 +26,10 @@ from pydantic import BaseModel
 
 from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions as e
-from flext_core.mixins import FlextMixins as x
+from flext_core.mixins import x
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.typings import t
 from flext_core.utilities import u
 
@@ -925,4 +925,6 @@ class FlextHandlers[MessageT_contra, ResultT](
             )
 
 
-__all__ = ["FlextHandlers"]
+h = FlextHandlers
+
+__all__ = ["FlextHandlers", "h"]

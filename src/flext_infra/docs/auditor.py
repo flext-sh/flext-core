@@ -18,19 +18,18 @@ import sys
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import cast
 
 import structlog
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DocScope,
-    build_scopes,
-    iter_markdown_files,
-    write_json,
-    write_markdown,
+    FlextInfraDocsShared,
 )
-from flext_infra.patterns import InfraPatterns
+from flext_infra.patterns import FlextInfraPatterns
 
 logger = structlog.get_logger(__name__)
 
@@ -87,7 +86,7 @@ class DocAuditor:
             FlextResult with list of AuditReport objects.
 
         """
-        scopes_result = build_scopes(
+        scopes_result = FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,
             projects=projects,
@@ -138,11 +137,14 @@ class DocAuditor:
             "strict": strict,
             "report_dir": scope.report_dir.as_posix(),
         }
-        _ = write_json(
+        _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "audit-summary.json",
-            {"summary": summary, "issues": [asdict(i) for i in issues]},
+            cast(
+                "Mapping[str, t.ConfigMapValue]",
+                {"summary": summary, "issues": [asdict(i) for i in issues]},
+            ),
         )
-        _ = write_markdown(
+        _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "audit-report.md",
             self._to_markdown(scope, issues),
         )
@@ -155,7 +157,7 @@ class DocAuditor:
         else:
             passed = True
 
-        status = ic.Status.OK if passed else ic.Status.FAIL
+        status = c.Status.OK if passed else c.Status.FAIL
         reason = f"issues:{len(issues)}"
         logger.info(
             "docs_audit_scope_completed",
@@ -176,8 +178,8 @@ class DocAuditor:
     def _broken_link_issues(self, scope: DocScope) -> list[AuditIssue]:
         """Collect broken internal-link issues for markdown files in scope."""
         issues: list[AuditIssue] = []
-        for md_file in iter_markdown_files(scope.path):
-            content = md_file.read_text(encoding=ic.Encoding.DEFAULT, errors="ignore")
+        for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
+            content = md_file.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
             rel = md_file.relative_to(scope.path).as_posix()
             in_fenced_code = False
             for number, line in enumerate(content.splitlines(), start=1):
@@ -187,8 +189,8 @@ class DocAuditor:
                     continue
                 if in_fenced_code:
                     continue
-                clean_line = InfraPatterns.INLINE_CODE_RE.sub("", line)
-                for raw in InfraPatterns.MARKDOWN_LINK_URL_RE.findall(clean_line):
+                clean_line = FlextInfraPatterns.INLINE_CODE_RE.sub("", line)
+                for raw in FlextInfraPatterns.MARKDOWN_LINK_URL_RE.findall(clean_line):
                     target = self._normalize_link(raw)
                     if (
                         not target
@@ -214,7 +216,7 @@ class DocAuditor:
         """Collect forbidden-term issues for markdown files in scope."""
         issues: list[AuditIssue] = []
         terms: tuple[str, ...] = ()
-        for md_file in iter_markdown_files(scope.path):
+        for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
             rel = md_file.relative_to(scope.path).as_posix()
             rel_lower = rel.lower()
             if scope.name == "root":
@@ -223,7 +225,7 @@ class DocAuditor:
             elif not scope.name.startswith("flext-"):
                 continue
             content = md_file.read_text(
-                encoding=ic.Encoding.DEFAULT, errors="ignore"
+                encoding=c.Encoding.DEFAULT, errors="ignore"
             ).lower()
             issues.extend(
                 AuditIssue(
@@ -267,7 +269,7 @@ class DocAuditor:
             "# Docs Audit Report",
             "",
             f"Scope: {scope.name}",
-            f"Files scanned: {len(iter_markdown_files(scope.path))}",
+            f"Files scanned: {len(FlextInfraDocsShared.iter_markdown_files(scope.path))}",
             f"Issues: {len(issues)}",
             "",
             "| file | type | severity | message |",
@@ -291,7 +293,7 @@ class DocAuditor:
             return None, {}
 
         payload = json.loads(
-            config_path.read_text(encoding=ic.Encoding.DEFAULT, errors="ignore")
+            config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
         )
         docs_validation = payload.get("docs_validation", {})
         audit_gate = docs_validation.get("audit_gate", {})

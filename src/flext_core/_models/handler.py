@@ -87,7 +87,8 @@ class FlextModelsHandler:
         )
 
         def __getitem__(self, key: str) -> t.GuardInputValue:
-            return self.model_dump()[key]
+            dump = self.model_dump()
+            return dump[key]
 
     class RegistrationRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Request model for dynamic handler registration.
@@ -137,11 +138,13 @@ class FlextModelsHandler:
             cls,
             v: object,
         ) -> Callable[..., object] | BaseModel:
-            if BaseModel in v.__class__.__mro__:
-                return v  # type: ignore[return-value]
-            if callable(v):
+            if isinstance(v, BaseModel):
                 return v
-            msg = f"Handler must be callable or handler instance, got {v.__class__.__name__}"
+            if callable(v):
+                return v  # type: ignore[return-value]
+            msg = (
+                f"Handler must be callable or handler instance, got {type(v).__name__}"
+            )
             raise TypeError(msg)
 
     class RegistrationDetails(BaseModel):

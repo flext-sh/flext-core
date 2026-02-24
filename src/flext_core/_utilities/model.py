@@ -15,7 +15,7 @@ from pydantic import BaseModel, ValidationError
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.models import m
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -42,7 +42,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_dict[M: BaseModel](
         model_cls: type[M],
-        data: Mapping[str, t.ScalarValue],
+        data: Mapping[str, t.JsonValue],
         *,
         strict: bool = False,
     ) -> r[M]:
@@ -102,8 +102,8 @@ class FlextUtilitiesModel:
     @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
-        defaults: Mapping[str, t.ScalarValue],
-        overrides: Mapping[str, t.ScalarValue],
+        defaults: Mapping[str, t.JsonValue],
+        overrides: Mapping[str, t.JsonValue],
     ) -> r[M]:
         """Merge defaults with overrides and create model.
 
@@ -125,7 +125,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def update[M: BaseModel](
         instance: M,
-        **updates: t.ScalarValue,
+        **updates: t.JsonValue,
     ) -> r[M]:
         """Update existing model with new values.
 
@@ -348,14 +348,14 @@ class FlextUtilitiesModel:
             case list() as items:
                 return [
                     item
-                    if item.__class__ in (str, int, float, bool, None.__class__)
+                    if item.__class__ in {str, int, float, bool, None.__class__}
                     else str(item)
                     for item in items
                 ]
             case tuple() as items:
                 return [
                     item
-                    if item.__class__ in (str, int, float, bool, None.__class__)
+                    if item.__class__ in {str, int, float, bool, None.__class__}
                     else str(item)
                     for item in items
                 ]

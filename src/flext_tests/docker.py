@@ -48,9 +48,8 @@ class FlextTestsDocker:
     - Port readiness checking
     """
 
-    # ContainerStatus is StrEnum - cannot inherit, use direct reference
-    # Use imported alias to avoid mypy resolution issues with deeply nested classes
-    ContainerStatus: type[ContainerStatus] = ContainerStatus
+    # ContainerStatus is StrEnum - alias for type hints and runtime use
+    ContainerStatus: type = c.Tests.Docker.ContainerStatus
 
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
@@ -128,7 +127,7 @@ class FlextTestsDocker:
         """
         if self._client is None:
             try:
-                self._client = docker.from_env()
+                self._client = docker.from_env()  # type: ignore[union-attr]
             except DockerException as error:
                 self.logger.exception(
                     "Failed to initialize Docker client",
@@ -222,7 +221,7 @@ class FlextTestsDocker:
         """Get container information."""
         try:
             client = self.get_client()
-            container = client.containers.get(container_name)
+            container = client.containers.get(container_name)  # type: ignore[union-attr]
             ports_raw = getattr(container, "ports", {}) or {}
             ports: dict[str, str] = {}
             for k, v in ports_raw.items():
@@ -261,7 +260,7 @@ class FlextTestsDocker:
         """Start an existing stopped container without recreating it."""
         try:
             client = self.get_client()
-            container = client.containers.get(name)
+            container = client.containers.get(name)  # type: ignore[union-attr]
             # Access Container attributes via getattr for type safety
             status_val = str(getattr(container, "status", "unknown"))
 

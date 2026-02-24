@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from typing import cast
 
 from flext_core import (
@@ -260,7 +260,10 @@ def main() -> None:
         data = result.value
         components = data["components_integrated"]
         total = data["total_components"]
-        if (type(components) in (list, tuple) or (hasattr(components, "__getitem__") and hasattr(components, "__len__"))) and type(total) is int:
+        if (
+            isinstance(components, (list, tuple))
+            or (hasattr(components, "__getitem__") and hasattr(components, "__len__"))
+        ) and isinstance(total, int):
             components_list = list(components)
             print(f"\n✅ Integrated {total} components")
             print(f"✅ Demonstrated {len(components_list)} integration patterns")

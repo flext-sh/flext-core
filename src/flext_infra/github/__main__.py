@@ -151,7 +151,9 @@ def main() -> int:
         _ = sys.stdout.write("Subcommands:\n")
         for name in sorted(_SUBCOMMANDS):
             _ = sys.stdout.write(f"  {name}\n")
-        return 0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+        return (
+            0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+        )
 
     subcommand = sys.argv[1]
     handler = _SUBCOMMANDS.get(subcommand)

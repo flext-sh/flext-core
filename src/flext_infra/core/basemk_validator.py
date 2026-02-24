@@ -12,9 +12,9 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from flext_core.result import FlextResult, r
+from flext_core import r
 
-from flext_infra.models import im
+from flext_infra.models import m
 
 
 class BaseMkValidator:
@@ -29,25 +29,25 @@ class BaseMkValidator:
         """Compute SHA-256 hash of a file."""
         return hashlib.sha256(path.read_bytes()).hexdigest()
 
-    def validate(self, workspace_root: Path) -> FlextResult[im.ValidationReport]:
+    def validate(self, workspace_root: Path) -> r[m.ValidationReport]:
         """Validate that all vendored base.mk copies match root base.mk.
 
         Args:
             workspace_root: Root directory of the workspace.
 
         Returns:
-            FlextResult with ValidationReport indicating sync status.
+            r with ValidationReport indicating sync status.
 
         """
         try:
             source = workspace_root / "base.mk"
             if not source.exists():
-                return r[im.ValidationReport].ok(
-                    im.ValidationReport(
-                        passed=False,
-                        violations=["missing root base.mk"],
-                        summary="missing root base.mk",
-                    ),
+                return r[m.ValidationReport].ok(
+                    m.ValidationReport.model_validate({
+                        "passed": False,
+                        "violations": ["missing root base.mk"],
+                        "summary": "missing root base.mk",
+                    }),
                 )
 
             source_hash = self._sha256(source)
@@ -70,15 +70,15 @@ class BaseMkValidator:
                 else f"{len(mismatched)} base.mk files out of sync"
             )
 
-            return r[im.ValidationReport].ok(
-                im.ValidationReport(
-                    passed=passed,
-                    violations=mismatched,
-                    summary=summary,
-                ),
+            return r[m.ValidationReport].ok(
+                m.ValidationReport.model_validate({
+                    "passed": passed,
+                    "violations": mismatched,
+                    "summary": summary,
+                }),
             )
         except OSError as exc:
-            return r[im.ValidationReport].fail(
+            return r[m.ValidationReport].fail(
                 f"base.mk validation failed: {exc}",
             )
 

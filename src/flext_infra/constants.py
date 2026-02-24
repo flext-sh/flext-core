@@ -12,16 +12,16 @@ from __future__ import annotations
 from typing import Final
 
 
-class InfraConstants:
+class FlextInfraConstants:
     """Centralized constants for FLEXT infrastructure (Layer 0).
 
     Provides immutable, namespace-organized constants for infrastructure
     configuration, validation rules, check types, and workspace settings.
 
     Usage:
-        >>> from flext_infra.constants import ic
-        >>> # Access constants via ic.Status.PASS
-        >>> # Access paths via ic.Paths.VENV_BIN_REL
+        >>> from flext_infra.constants import c
+        >>> # Access constants via c.Status.PASS
+        >>> # Access paths via c.Paths.VENV_BIN_REL
     """
 
     class Paths:
@@ -144,7 +144,6 @@ class InfraConstants:
         """Default text encoding for file operations."""
 
 
-# Alias for convenience
-ic = InfraConstants
+c = FlextInfraConstants
 
-__all__ = ["InfraConstants", "ic"]
+__all__ = ["FlextInfraConstants", "c"]

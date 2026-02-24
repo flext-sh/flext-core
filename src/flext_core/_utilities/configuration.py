@@ -52,7 +52,7 @@ from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, t
 
@@ -784,7 +784,7 @@ class FlextUtilitiesConfiguration:
             model_fields_attr = getattr(model_class, "model_fields", {})
             if FlextRuntime.is_dict_like(model_fields_attr):
                 valid_field_names = {
-                    str(field_name) for field_name in model_fields_attr.keys()
+                    str(field_name) for field_name in model_fields_attr
                 }
             else:
                 valid_field_names = set()

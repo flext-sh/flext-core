@@ -12,15 +12,15 @@ from flext_core.result import FlextResult, r
 from flext_core.typings import t
 from pydantic import Field
 
-from flext_infra.constants import ic
-from flext_infra.models import im
-from flext_infra.patterns import InfraPatterns
+from flext_infra.constants import c
+from flext_infra.models import m
+from flext_infra.patterns import FlextInfraPatterns
 from flext_infra.selection import ProjectSelector
 from flext_infra.subprocess import CommandRunner
 from flext_infra.toml_io import TomlService
 
 type InfraValue = (
-    str | int | float | bool | None | list[InfraValue] | Mapping[str, InfraValue]
+    str | int | float | bool | list[InfraValue] | Mapping[str, InfraValue] | None
 )
 
 type IssueMap = Mapping[str, InfraValue]
@@ -48,10 +48,10 @@ def _to_infra_value(value: t.ConfigMapValue) -> InfraValue | None:
     return None
 
 
-class DependencyDetectionModels(im):
+class DependencyDetectionModels(m):
     """Pydantic models for dependency detection reports and analysis results."""
 
-    class DeptryIssueGroups(im.ArbitraryTypesModel):
+    class DeptryIssueGroups(m.ArbitraryTypesModel):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
         dep001: list[IssueMap] = Field(default_factory=list)
@@ -59,7 +59,7 @@ class DependencyDetectionModels(im):
         dep003: list[IssueMap] = Field(default_factory=list)
         dep004: list[IssueMap] = Field(default_factory=list)
 
-    class DeptryReport(im.ArbitraryTypesModel):
+    class DeptryReport(m.ArbitraryTypesModel):
         """Deptry analysis report with missing, unused, transitive, and dev-in-runtime issues."""
 
         missing: list[InfraValue] = Field(default_factory=list)
@@ -68,13 +68,13 @@ class DependencyDetectionModels(im):
         dev_in_runtime: list[InfraValue] = Field(default_factory=list)
         raw_count: int = Field(default=0, ge=0)
 
-    class ProjectDependencyReport(im.ArbitraryTypesModel):
+    class ProjectDependencyReport(m.ArbitraryTypesModel):
         """Project-level dependency report combining deptry results."""
 
         project: str = Field(min_length=1)
         deptry: DependencyDetectionModels.DeptryReport
 
-    class TypingsReport(im.ArbitraryTypesModel):
+    class TypingsReport(m.ArbitraryTypesModel):
         """Typing stubs analysis report with required, current, and delta packages."""
 
         required_packages: list[str] = Field(default_factory=list)
@@ -131,7 +131,7 @@ class DependencyDetectionService:
         projects = [
             project.path
             for project in result.value
-            if (project.path / ic.Files.PYPROJECT_FILENAME).exists()
+            if (project.path / c.Files.PYPROJECT_FILENAME).exists()
         ]
         return r[list[Path]].ok(sorted(projects))
 
@@ -145,7 +145,7 @@ class DependencyDetectionService:
         extend_exclude: list[str] | None = None,
     ) -> FlextResult[tuple[list[IssueMap], int]]:
         """Run deptry analysis on a project and parse JSON output."""
-        config = config_path or (project_path / ic.Files.PYPROJECT_FILENAME)
+        config = config_path or (project_path / c.Files.PYPROJECT_FILENAME)
         if not config.exists():
             return r[tuple[list[IssueMap], int]].ok(([], 0))
 
@@ -172,7 +172,7 @@ class DependencyDetectionService:
         issues: list[IssueMap] = []
         if out_file.exists():
             try:
-                raw = out_file.read_text(encoding=ic.Encoding.DEFAULT)
+                raw = out_file.read_text(encoding=c.Encoding.DEFAULT)
                 loaded = json.loads(raw) if raw.strip() else []
                 if isinstance(loaded, list):
                     issues = [
@@ -217,7 +217,7 @@ class DependencyDetectionService:
         issues: list[IssueMap],
     ) -> dm.DeptryIssueGroups:
         """Classify deptry issues by error code (DEP001-DEP004)."""
-        groups = dm.DeptryIssueGroups()
+        groups = dm.DeptryIssueGroups.model_validate({})
         for item in issues:
             error_obj = item.get("error")
             if not isinstance(error_obj, Mapping):
@@ -240,16 +240,16 @@ class DependencyDetectionService:
     ) -> dm.ProjectDependencyReport:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
-        return dm.ProjectDependencyReport(
-            project=project_name,
-            deptry=dm.DeptryReport(
-                missing=[item.get("module") for item in classified.dep001],
-                unused=[item.get("module") for item in classified.dep002],
-                transitive=[item.get("module") for item in classified.dep003],
-                dev_in_runtime=[item.get("module") for item in classified.dep004],
-                raw_count=len(deptry_issues),
-            ),
-        )
+        return dm.ProjectDependencyReport.model_validate({
+            "project": project_name,
+            "deptry": {
+                "missing": [item.get("module") for item in classified.dep001],
+                "unused": [item.get("module") for item in classified.dep002],
+                "transitive": [item.get("module") for item in classified.dep003],
+                "dev_in_runtime": [item.get("module") for item in classified.dep004],
+                "raw_count": len(deptry_issues),
+            },
+        })
 
     def load_dependency_limits(
         self,
@@ -307,12 +307,12 @@ class DependencyDetectionService:
         output = f"{result.value.stdout}\n{result.value.stderr}"
         hinted = {
             match.group(1).strip()
-            for match in InfraPatterns.MYPY_HINT_RE.finditer(output)
+            for match in FlextInfraPatterns.MYPY_HINT_RE.finditer(output)
             if match.group(1).strip()
         }
         missing = {
             match.group(1).strip()
-            for match in InfraPatterns.MYPY_STUB_RE.finditer(output)
+            for match in FlextInfraPatterns.MYPY_STUB_RE.finditer(output)
             if match.group(1).strip()
         }
         return r[tuple[list[str], list[str]]].ok((sorted(hinted), sorted(missing)))
@@ -321,16 +321,20 @@ class DependencyDetectionService:
         self,
         module_name: str,
         limits: Mapping[str, InfraValue],
-) -> str | None:
+    ) -> str | None:
         """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
-        if root.startswith(InfraPatterns.INTERNAL_PREFIXES):
+        if root.startswith(FlextInfraPatterns.INTERNAL_PREFIXES):
             return None
 
         typing_libraries = limits.get("typing_libraries")
         if typing_libraries is not None and isinstance(typing_libraries, Mapping):
             module_to_package = typing_libraries.get("module_to_package")
-            if module_to_package is not None and isinstance(module_to_package, Mapping) and root in module_to_package:
+            if (
+                module_to_package is not None
+                and isinstance(module_to_package, Mapping)
+                and root in module_to_package
+            ):
                 value = module_to_package[root]
                 return str(value)
 
@@ -338,7 +342,7 @@ class DependencyDetectionService:
 
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
         """Extract currently declared typing packages from project pyproject.toml."""
-        pyproject = project_path / ic.Files.PYPROJECT_FILENAME
+        pyproject = project_path / c.Files.PYPROJECT_FILENAME
         read_result = self._toml.read(pyproject)
         if read_result.is_failure:
             return []
@@ -416,20 +420,22 @@ class DependencyDetectionService:
         python_cfg = limits.get("python")
         python_version = (
             str(python_cfg.get("version"))
-            if python_cfg is not None and isinstance(python_cfg, Mapping) and python_cfg.get("version") is not None
+            if python_cfg is not None
+            and isinstance(python_cfg, Mapping)
+            and python_cfg.get("version") is not None
             else None
         )
 
-        report = dm.TypingsReport(
-            required_packages=sorted(required_set),
-            hinted=hinted,
-            missing_modules=missing_modules,
-            current=current,
-            to_add=sorted(required_set - current_set),
-            to_remove=sorted(current_set - required_set),
-            limits_applied=bool(limits),
-            python_version=python_version,
-        )
+        report = dm.TypingsReport.model_validate({
+            "required_packages": sorted(required_set),
+            "hinted": hinted,
+            "missing_modules": missing_modules,
+            "current": current,
+            "to_add": sorted(required_set - current_set),
+            "to_remove": sorted(current_set - required_set),
+            "limits_applied": bool(limits),
+            "python_version": python_version,
+        })
         return r[dm.TypingsReport].ok(report)
 
 

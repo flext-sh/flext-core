@@ -19,7 +19,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-
+from typing import Literal
 
 from pydantic import Field
 
@@ -809,7 +809,7 @@ class FlextGenericModels:
                     t.Dict: Monitoring compatible dictionary.
 
                 """
-                data = t.Dict(
+                return t.Dict(
                     root={
                         "healthy": self.healthy,
                         "status": "up" if self.healthy else "down",
@@ -826,7 +826,6 @@ class FlextGenericModels:
                         **self.metadata.root,
                     }
                 )
-                return data
 
             def with_additional_check(
                 self, name: str, status: bool, detail: t.GuardInputValue = None
@@ -1155,7 +1154,7 @@ class FlextGenericModels:
                     t.Dict: Progress report dictionary.
 
                 """
-                data = t.Dict(
+                return t.Dict(
                     root={
                         "operation": self.operation_name,
                         "total_processed": self.total_count,
@@ -1179,7 +1178,6 @@ class FlextGenericModels:
                         "has_warnings": self.has_warnings,
                     }
                 )
-                return data
 
         class Conversion(FlextModelFoundation.ArbitraryTypesModel):
             """Comprehensive conversion progress tracking with detailed error reporting.
@@ -1187,6 +1185,13 @@ class FlextGenericModels:
             Used by: flext-ldif conversion, data transformations, ETL processes
             Function: Accumulate results, track conversion metrics, and provide detailed error reporting
             """
+
+            class Metadata(FlextModelFoundation.ArbitraryTypesModel):
+                """Structured metadata for conversion diagnostics."""
+
+                failed_items: list[t.ConfigMapValue] = Field(default_factory=list)
+                warning_items: list[t.ConfigMapValue] = Field(default_factory=list)
+                skip_reasons: dict[str, str] = Field(default_factory=dict)
 
             converted: list[t.GuardInputValue] = Field(
                 default_factory=list,
@@ -1224,8 +1229,8 @@ class FlextGenericModels:
                 default=None,
                 description="Total number of input items",
             )
-            metadata: t.Dict = Field(
-                default_factory=t.Dict,
+            metadata: Metadata = Field(
+                default_factory=Metadata,
                 description="Conversion metadata",
             )
 
@@ -1417,29 +1422,19 @@ class FlextGenericModels:
 
             def _append_metadata_item(
                 self,
-                key: str,
-                item: t.GuardInputValue,
+                key: Literal["failed_items", "warning_items"],
+                item: t.ConfigMapValue,
             ) -> None:
-                existing_items = self.metadata.root.get(key)
-                if existing_items is not None and existing_items.__class__ is list:
-                    existing_items.append(item)
+                if key == "failed_items":
+                    self.metadata.failed_items.append(item)
                     return
-                self.metadata.root[key] = [item]
+                self.metadata.warning_items.append(item)
 
-            def _upsert_skip_reason(self, item: t.GuardInputValue, reason: str) -> None:
-                existing_reasons = self.metadata.root.get("skip_reasons")
-                if existing_reasons is not None and existing_reasons.__class__ is dict:
-                    self.metadata.root["skip_reasons"] = {
-                        **existing_reasons,
-                        str(item): reason,
-                    }
-                    # No need to update self.metadata as it's modified in place
-                    return
-                # If it doesn't exist or is not a dict, we must create it
-                self.metadata.root["skip_reasons"] = {str(item): reason}
+            def _upsert_skip_reason(self, item: t.ConfigMapValue, reason: str) -> None:
+                self.metadata.skip_reasons[str(item)] = reason
 
             def add_error(
-                self, error: str, item: t.GuardInputValue | None = None
+                self, error: str, item: t.ConfigMapValue | None = None
             ) -> None:
                 """Add an error message with optional failed item.
 
@@ -1453,7 +1448,7 @@ class FlextGenericModels:
                     self._append_metadata_item("failed_items", item)
 
             def add_warning(
-                self, warning: str, item: t.GuardInputValue | None = None
+                self, warning: str, item: t.ConfigMapValue | None = None
             ) -> None:
                 """Add a warning message with optional item.
 
@@ -1510,7 +1505,7 @@ class FlextGenericModels:
                     t.Dict: Conversion report dictionary.
 
                 """
-                data = t.Dict(
+                return t.Dict(
                     root={
                         "source_format": self.source_format,
                         "target_format": self.target_format,
@@ -1531,7 +1526,6 @@ class FlextGenericModels:
                         "conversion_summary": self.conversion_summary,
                     }
                 )
-                return data
 
     # ═══════════════════════════════════════════════════════════════════════════
     # GENERIC CONTAINERS (Moved to flext_core.typings.t)
@@ -1541,5 +1535,3 @@ class FlextGenericModels:
     # Containers moved to typings.py to avoid circular imports with utilities
 
     BatchResultDict = t.BatchResultDict
-
-

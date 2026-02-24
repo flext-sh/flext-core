@@ -13,10 +13,9 @@ from pathlib import Path
 
 import structlog
 from flext_core import r
-from pydantic import Field
 
-from flext_infra.constants import ic
-from flext_infra.models import im
+from flext_infra.constants import c
+from flext_infra.models import m
 from flext_infra.subprocess import CommandRunner
 from flext_infra.toml_io import TomlService
 
@@ -29,13 +28,6 @@ GITHUB_REPO_URL_RE = re.compile(
 _PEP621_PATH_RE = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
 
 
-class RepoUrls(im.ArbitraryTypesModel):
-    """Repository URL pair with SSH and HTTPS variants."""
-
-    ssh_url: str = Field(default="")
-    https_url: str = Field(default="")
-
-
 class InternalDependencySyncService:
     """Synchronize internal FLEXT dependencies via git clone or workspace symlinks."""
 
@@ -44,7 +36,7 @@ class InternalDependencySyncService:
         self._runner = CommandRunner()
         self._toml = TomlService()
 
-    def _run_git(self, args: list[str], cwd: Path) -> r[im.CommandOutput]:
+    def _run_git(self, args: list[str], cwd: Path) -> r[m.CommandOutput]:
         return self._runner.run_raw(["git", *args], cwd=cwd)
 
     @staticmethod
@@ -65,10 +57,10 @@ class InternalDependencySyncService:
             return f"https://github.com/{url.removeprefix('git@github.com:')}"
         return url
 
-    def _parse_gitmodules(self, path: Path) -> Mapping[str, RepoUrls]:
+    def _parse_gitmodules(self, path: Path) -> Mapping[str, m.RepoUrls]:
         parser = configparser.RawConfigParser()
         _ = parser.read(path)
-        mapping: MutableMapping[str, RepoUrls] = {}
+        mapping: MutableMapping[str, m.RepoUrls] = {}
         for section in parser.sections():
             if not section.startswith("submodule "):
                 continue
@@ -76,31 +68,34 @@ class InternalDependencySyncService:
             repo_url = parser.get(section, "url", fallback="").strip()
             if not repo_url:
                 continue
-            mapping[repo_name] = RepoUrls(
-                ssh_url=repo_url,
-                https_url=self._ssh_to_https(repo_url),
-            )
+            mapping[repo_name] = m.RepoUrls.model_validate({
+                "ssh_url": repo_url,
+                "https_url": self._ssh_to_https(repo_url),
+            })
         return mapping
 
-    def _parse_repo_map(self, path: Path) -> r[Mapping[str, RepoUrls]]:
+    def _parse_repo_map(self, path: Path) -> r[Mapping[str, m.RepoUrls]]:
         data_result = self._toml.read(path)
         if data_result.is_failure:
-            return r[Mapping[str, RepoUrls]].fail(
+            return r[Mapping[str, m.RepoUrls]].fail(
                 data_result.error or "failed to read repository map"
             )
         data = data_result.value
         repos_obj = data.get("repo", {})
         if not isinstance(repos_obj, dict):
-            return r[Mapping[str, RepoUrls]].ok({})
-        result: MutableMapping[str, RepoUrls] = {}
+            return r[Mapping[str, m.RepoUrls]].ok({})
+        result: MutableMapping[str, m.RepoUrls] = {}
         for repo_name, values in repos_obj.items():
             if not isinstance(values, dict):
                 continue
             ssh_url = str(values.get("ssh_url", ""))
             https_url = str(values.get("https_url", self._ssh_to_https(ssh_url)))
             if ssh_url:
-                result[repo_name] = RepoUrls(ssh_url=ssh_url, https_url=https_url)
-        return r[Mapping[str, RepoUrls]].ok(result)
+                result[repo_name] = m.RepoUrls.model_validate({
+                    "ssh_url": ssh_url,
+                    "https_url": https_url,
+                })
+        return r[Mapping[str, m.RepoUrls]].ok(result)
 
     def _resolve_ref(self, project_root: Path) -> str:
         if os.getenv("GITHUB_ACTIONS") == "true":
@@ -192,14 +187,14 @@ class InternalDependencySyncService:
         self,
         owner: str,
         repo_names: set[str],
-    ) -> Mapping[str, RepoUrls]:
-        result: MutableMapping[str, RepoUrls] = {}
+    ) -> Mapping[str, m.RepoUrls]:
+        result: MutableMapping[str, m.RepoUrls] = {}
         for repo_name in sorted(repo_names):
             ssh_url = f"git@github.com:{owner}/{repo_name}.git"
-            result[repo_name] = RepoUrls(
-                ssh_url=ssh_url,
-                https_url=self._ssh_to_https(ssh_url),
-            )
+            result[repo_name] = m.RepoUrls.model_validate({
+                "ssh_url": ssh_url,
+                "https_url": self._ssh_to_https(ssh_url),
+            })
         return result
 
     @staticmethod
@@ -281,7 +276,7 @@ class InternalDependencySyncService:
         return None
 
     def _collect_internal_deps(self, project_root: Path) -> r[Mapping[str, Path]]:
-        pyproject = project_root / ic.Files.PYPROJECT_FILENAME
+        pyproject = project_root / c.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             return r[Mapping[str, Path]].ok({})
 
@@ -341,7 +336,7 @@ class InternalDependencySyncService:
 
         workspace_mode, workspace_root = self._is_workspace_mode(project_root)
         map_file = project_root / "flext-repo-map.toml"
-        repo_map: Mapping[str, RepoUrls]
+        repo_map: Mapping[str, m.RepoUrls]
 
         if (
             workspace_mode
@@ -430,4 +425,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["InternalDependencySyncService", "RepoUrls", "main"]
+__all__ = ["InternalDependencySyncService", "main"]

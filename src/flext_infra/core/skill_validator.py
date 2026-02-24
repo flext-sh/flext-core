@@ -16,9 +16,9 @@ from pathlib import Path
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.json_io import JsonService
-from flext_infra.models import im
+from flext_infra.models import m
 from flext_infra.subprocess import CommandRunner
 from flext_infra.toml_io import TomlService
 
@@ -32,7 +32,7 @@ def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
     """Load YAML file safely, returning empty mapping on missing/invalid."""
     import yaml  # noqa: PLC0415
 
-    raw = path.read_text(encoding=ic.Encoding.DEFAULT)
+    raw = path.read_text(encoding=c.Encoding.DEFAULT)
     safe_load = getattr(yaml, "safe_load", None)
     if safe_load is None:
         msg = "PyYAML safe_load unavailable"
@@ -83,14 +83,13 @@ class SkillValidator:
         *,
         mode: str = "baseline",
         _project_filter: list[str] | None = None,
-    ) -> FlextResult[im.ValidationReport]:
+    ) -> FlextResult[m.ValidationReport]:
         """Validate a single skill across workspace projects.
 
         Args:
             workspace_root: Root directory of the workspace.
             skill_name: Name of the skill folder to validate.
             mode: Validation mode ("baseline" or "strict").
-            project_filter: Optional list of project names to limit scope.
 
         Returns:
             FlextResult with ValidationReport.
@@ -101,18 +100,18 @@ class SkillValidator:
             skills_dir = root / _SKILLS_DIR
             rules_path = skills_dir / skill_name / "rules.yml"
             if not rules_path.exists():
-                return r[im.ValidationReport].ok(
-                    im.ValidationReport(
-                        passed=False,
-                        violations=[f"rules.yml not found for skill '{skill_name}'"],
-                        summary=f"no rules.yml for {skill_name}",
-                    ),
+                return r[m.ValidationReport].ok(
+                    m.ValidationReport.model_validate({
+                        "passed": False,
+                        "violations": [f"rules.yml not found for skill '{skill_name}'"],
+                        "summary": f"no rules.yml for {skill_name}",
+                    }),
                 )
 
             rules = _safe_load_yaml(rules_path)
             scan_targets = rules.get("scan_targets", {}) or {}
             if not isinstance(scan_targets, dict):
-                return r[im.ValidationReport].fail(
+                return r[m.ValidationReport].fail(
                     f"scan_targets must be a mapping: {rules_path}",
                 )
 
@@ -127,7 +126,7 @@ class SkillValidator:
 
             rules_list = rules.get("rules", []) or []
             if not isinstance(rules_list, list):
-                return r[im.ValidationReport].fail("rules must be a list")
+                return r[m.ValidationReport].fail("rules must be a list")
 
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []
@@ -196,15 +195,15 @@ class SkillValidator:
             summary = (
                 f"{skill_name}: {total} violations, {'PASS' if passed else 'FAIL'}"
             )
-            return r[im.ValidationReport].ok(
-                im.ValidationReport(
-                    passed=passed,
-                    violations=violations,
-                    summary=summary,
-                ),
+            return r[m.ValidationReport].ok(
+                m.ValidationReport.model_validate({
+                    "passed": passed,
+                    "violations": violations,
+                    "summary": summary,
+                }),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
-            return r[im.ValidationReport].fail(
+            return r[m.ValidationReport].fail(
                 f"skill validation failed: {exc}",
             )
 
@@ -236,7 +235,7 @@ class SkillValidator:
 
     def _run_ast_grep_count(
         self,
-        rule: Mapping[str, t.ScalarValue],
+        rule: Mapping[str, t.ConfigMapValue],
         skill_dir: Path,
         project_path: Path,
         include_globs: list[str],
@@ -285,7 +284,7 @@ class SkillValidator:
 
     def _run_custom_count(
         self,
-        rule: Mapping[str, t.ScalarValue],
+        rule: Mapping[str, t.ConfigMapValue],
         skill_dir: Path,
         project_path: Path,
         mode: str,

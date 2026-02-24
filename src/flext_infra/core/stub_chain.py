@@ -17,8 +17,8 @@ from pathlib import Path
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
-from flext_infra.constants import ic
-from flext_infra.models import im
+from flext_infra.constants import c
+from flext_infra.models import m
 from flext_infra.subprocess import CommandRunner
 
 _MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
@@ -87,7 +87,7 @@ class StubSupplyChain:
         self,
         workspace_root: Path,
         project_dirs: list[Path] | None = None,
-    ) -> FlextResult[im.ValidationReport]:
+    ) -> FlextResult[m.ValidationReport]:
         """Validate stub supply chain across projects.
 
         Args:
@@ -122,15 +122,15 @@ class StubSupplyChain:
 
             passed = len(violations) == 0
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
-            return r[im.ValidationReport].ok(
-                im.ValidationReport(
-                    passed=passed,
-                    violations=violations,
-                    summary=summary,
-                ),
+            return r[m.ValidationReport].ok(
+                m.ValidationReport.model_validate({
+                    "passed": passed,
+                    "violations": violations,
+                    "summary": summary,
+                }),
             )
         except (OSError, TypeError, ValueError) as exc:
-            return r[im.ValidationReport].fail(
+            return r[m.ValidationReport].fail(
                 f"stub validation failed: {exc}",
             )
 
@@ -226,7 +226,7 @@ class StubSupplyChain:
         for entry in sorted(root.iterdir(), key=lambda v: v.name):
             if not entry.is_dir() or entry.name.startswith("."):
                 continue
-            if (entry / ic.Files.PYPROJECT_FILENAME).exists() and (
+            if (entry / c.Files.PYPROJECT_FILENAME).exists() and (
                 entry / "src"
             ).is_dir():
                 projects.append(entry)

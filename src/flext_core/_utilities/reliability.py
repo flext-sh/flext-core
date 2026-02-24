@@ -21,11 +21,10 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -240,11 +239,11 @@ class FlextUtilitiesReliability:
 
         initial_delay = (
             float(initial_delay_raw)
-            if initial_delay_raw.__class__ in (int, float)
+            if initial_delay_raw.__class__ in {int, float}
             else 0.1
         )
         max_delay = (
-            float(max_delay_raw) if max_delay_raw.__class__ in (int, float) else 60.0
+            float(max_delay_raw) if max_delay_raw.__class__ in {int, float} else 60.0
         )
         exponential_backoff = (
             bool(exponential_backoff_raw)
@@ -252,10 +251,10 @@ class FlextUtilitiesReliability:
             else False
         )
         backoff_multiplier: float | None = None
-        if backoff_multiplier_raw is not None and backoff_multiplier_raw.__class__ in (
+        if backoff_multiplier_raw is not None and backoff_multiplier_raw.__class__ in {
             int,
             float,
-        ):
+        }:
             backoff_multiplier = float(backoff_multiplier_raw)
 
         # Calculate base delay
@@ -469,13 +468,13 @@ class FlextUtilitiesReliability:
         if value is None:
             return True
         if (
-            value.__class__ in (str, int, float, bool, datetime, Path)
+            value.__class__ in {str, int, float, bool, datetime, Path}
             or BaseModel in value.__class__.__mro__
         ):
             return True
         if Mapping in value.__class__.__mro__:
             return True
-        if Sequence in value.__class__.__mro__ and value.__class__ not in (str, bytes):
+        if Sequence in value.__class__.__mro__ and value.__class__ not in {str, bytes}:
             return True
         return bool(callable(value))
 

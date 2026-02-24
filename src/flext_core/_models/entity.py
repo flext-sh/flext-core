@@ -13,12 +13,12 @@ import contextlib
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, override
 
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from structlog.typing import BindableLogger
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -35,7 +35,7 @@ def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
 
 
 class _ComparableConfigMap(t.ConfigMap):
-    def __eq__(self, other: t.GuardInputValue) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):
@@ -141,11 +141,10 @@ class FlextModelsEntity:
                 self.updated_at = FlextRuntime.generate_datetime_utc()
 
         @override
-        def __eq__(self, other: t.GuardInputValue) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
-            if not FlextRuntime.is_base_model(other):
+            if not isinstance(other, BaseModel):
                 return NotImplemented
-            # Type narrowed to BaseModel via TypeGuard (part of PayloadValue)
             return FlextRuntime.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
@@ -224,7 +223,7 @@ class FlextModelsEntity:
 
             """
             # Validate input is a valid sequence (list or tuple)
-            if events.__class__ not in (list, tuple):
+            if events.__class__ not in {list, tuple}:
                 return r[list[FlextModelsEntity.DomainEvent]].fail(
                     "Events must be a list or tuple",
                 )
@@ -277,11 +276,10 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other: t.GuardInputValue) -> bool:
+        def __eq__(self: Self, other: object) -> bool:
             """Compare by value."""
-            if not FlextRuntime.is_base_model(other):
+            if not isinstance(other, BaseModel):
                 return NotImplemented
-            # Type narrowed to BaseModel via TypeGuard (part of PayloadValue)
             return FlextRuntime.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:

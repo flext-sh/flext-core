@@ -14,10 +14,10 @@ from flext_core.result import FlextResult, r
 from flext_core.typings import t
 from pydantic import Field
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.deps.detection import DependencyDetectionService
 from flext_infra.json_io import JsonService
-from flext_infra.models import im
+from flext_infra.models import m
 from flext_infra.paths import PathResolver
 from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
@@ -25,26 +25,28 @@ from flext_infra.subprocess import CommandRunner
 logger = structlog.get_logger(__name__)
 
 
-class DependencyDetectorModels(im):
+class DependencyDetectorModels(m):
     """Pydantic models for dependency detector reports and configuration."""
 
-    class DependencyLimitsInfo(im.ArbitraryTypesModel):
+    class DependencyLimitsInfo(m.ArbitraryTypesModel):
         """Dependency limits configuration metadata."""
 
         python_version: str | None = None
         limits_path: str = Field(default="")
 
-    class PipCheckReport(im.ArbitraryTypesModel):
+    class PipCheckReport(m.ArbitraryTypesModel):
         """Pip check execution report with status and output lines."""
 
         ok: bool = True
         lines: list[str] = Field(default_factory=list)
 
-    class WorkspaceDependencyReport(im.ArbitraryTypesModel):
+    class WorkspaceDependencyReport(m.ArbitraryTypesModel):
         """Workspace-level dependency analysis report aggregating all projects."""
 
         workspace: str
-        projects: MutableMapping[str, MutableMapping[str, t.ScalarValue]] = Field(default_factory=dict)
+        projects: MutableMapping[str, MutableMapping[str, t.ConfigMapValue]] = Field(
+            default_factory=dict
+        )
         pip_check: MutableMapping[str, t.ScalarValue] | None = None
         dependency_limits: MutableMapping[str, t.ScalarValue] | None = None
 
@@ -149,7 +151,7 @@ class RuntimeDevDependencyDetector:
             return r[int].fail(root_result.error or "workspace root resolution failed")
         root = root_result.value
 
-        venv_bin = root / ic.Paths.VENV_BIN_REL
+        venv_bin = root / c.Paths.VENV_BIN_REL
         limits_default = Path(__file__).resolve().parent / "dependency_limits.toml"
         parser = self._parser(limits_default)
         args = parser.parse_args(argv)
@@ -173,13 +175,13 @@ class RuntimeDevDependencyDetector:
         do_typings = bool(getattr(args, "typings", False)) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
 
-        projects_report: MutableMapping[str, MutableMapping[str, t.ScalarValue]] = {}
-        report_model = ddm.WorkspaceDependencyReport(
-            workspace=str(root),
-            projects=projects_report,
-            pip_check=None,
-            dependency_limits=None,
-        )
+        projects_report: MutableMapping[str, MutableMapping[str, t.ConfigMapValue]] = {}
+        report_model = ddm.WorkspaceDependencyReport.model_validate({
+            "workspace": str(root),
+            "projects": projects_report,
+            "pip_check": None,
+            "dependency_limits": None,
+        })
 
         if do_typings:
             limits_data = self._deps.load_dependency_limits(limits_path)
@@ -191,10 +193,10 @@ class RuntimeDevDependencyDetector:
                     and python_cfg.get("version") is not None
                     else None
                 )
-                report_model.dependency_limits = ddm.DependencyLimitsInfo(
-                    python_version=python_version,
-                    limits_path=str(limits_path),
-                ).model_dump()
+                report_model.dependency_limits = ddm.DependencyLimitsInfo.model_validate({
+                    "python_version": python_version,
+                    "limits_path": str(limits_path),
+                }).model_dump()
 
         for project_path in projects:
             project_name = project_path.name
@@ -209,7 +211,7 @@ class RuntimeDevDependencyDetector:
             project_dict = project_payload.model_dump()
             projects_report[project_name] = project_dict
 
-            if do_typings and (project_path / ic.Paths.DEFAULT_SRC_DIR).is_dir():
+            if do_typings and (project_path / c.Paths.DEFAULT_SRC_DIR).is_dir():
                 if not args.quiet:
                     logger.info("deps_typings_detect_running", project=project_name)
                 typings_result = self._deps.get_required_typings(
@@ -255,9 +257,10 @@ class RuntimeDevDependencyDetector:
             if pip_result.is_failure:
                 return r[int].fail(pip_result.error or "pip check failed")
             pip_lines, pip_exit = pip_result.value
-            report_model.pip_check = ddm.PipCheckReport(
-                ok=pip_exit == 0, lines=pip_lines
-            ).model_dump()
+            report_model.pip_check = ddm.PipCheckReport.model_validate({
+                "ok": pip_exit == 0,
+                "lines": pip_lines,
+            }).model_dump()
 
         report_payload = report_model.model_dump()
 

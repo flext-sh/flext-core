@@ -185,8 +185,8 @@ class FlextTypes:
         ScalarValue
         | BaseModel
         | Path
-        | Sequence[ScalarValue | BaseModel]
-        | Mapping[str, ScalarValue | BaseModel]
+        | Sequence["GuardInputValue"]
+        | Mapping[str, "GuardInputValue"]
     )
 
     # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
@@ -283,6 +283,9 @@ class FlextTypes:
     JsonPrimitive: TypeAlias = JsonPrimitive
     JsonValue: TypeAlias = JsonValue
     JsonDict: TypeAlias = JsonDict
+
+    # General value type (alias for JsonValue) for handlers and config boundaries
+    GeneralValueType: TypeAlias = JsonValue
 
     # Single consolidated callable type for handlers and validators
     HandlerCallable: TypeAlias = Callable[[ScalarValue], ScalarValue]
@@ -585,7 +588,6 @@ __all__ = [
     "P",
     "R",
     "ResultT",
-    "ScalarAlias",
     "T",
     "T_Model",
     "T_Namespace",

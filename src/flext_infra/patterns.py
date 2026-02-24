@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 
 
-class InfraPatterns:
+class FlextInfraPatterns:
     """Centralized regex patterns for infrastructure operations.
 
     Consolidates tooling patterns (mypy, stubs) and documentation
@@ -67,4 +67,4 @@ class InfraPatterns:
     """Match inline code spans for stripping before analysis."""
 
 
-__all__ = ["InfraPatterns"]
+__all__ = ["FlextInfraPatterns"]

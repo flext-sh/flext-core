@@ -15,12 +15,10 @@ from pathlib import Path
 import structlog
 from flext_core.result import FlextResult, r
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DocScope,
-    build_scopes,
-    write_json,
-    write_markdown,
+    FlextInfraDocsShared,
 )
 from flext_infra.subprocess import CommandRunner
 
@@ -68,7 +66,7 @@ class DocBuilder:
             FlextResult with list of BuildReport objects.
 
         """
-        scopes_result = build_scopes(
+        scopes_result = FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,
             projects=projects,
@@ -123,7 +121,7 @@ class DocBuilder:
         if completed.is_failure:
             return BuildReport(
                 scope=scope.name,
-                result=ic.Status.FAIL,
+                result=c.Status.FAIL,
                 reason=completed.error or "mkdocs build failed",
                 site_dir=site_dir.as_posix(),
             )
@@ -132,7 +130,7 @@ class DocBuilder:
         if output.exit_code == 0:
             return BuildReport(
                 scope=scope.name,
-                result=ic.Status.OK,
+                result=c.Status.OK,
                 reason="build succeeded",
                 site_dir=site_dir.as_posix(),
             )
@@ -140,7 +138,7 @@ class DocBuilder:
         tail = reason[-1] if reason else f"mkdocs exited {output.exit_code}"
         return BuildReport(
             scope=scope.name,
-            result=ic.Status.FAIL,
+            result=c.Status.FAIL,
             reason=tail,
             site_dir=site_dir.as_posix(),
         )
@@ -148,11 +146,11 @@ class DocBuilder:
     @staticmethod
     def _write_reports(scope: DocScope, report: BuildReport) -> None:
         """Persist build JSON summary and markdown report."""
-        _ = write_json(
+        _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "build-summary.json",
             {"summary": asdict(report)},
         )
-        _ = write_markdown(
+        _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "build-report.md",
             [
                 "# Docs Build Report",

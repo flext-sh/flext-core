@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -32,8 +32,12 @@ class FlextUtilitiesConversion:
     - Reuses base types from flext_core.typings and constants from flext_core.constants
     """
 
-    _strict_json_list_adapter = TypeAdapter(list[StrictJsonValue])
-    _strict_json_scalar_adapter = TypeAdapter(StrictJsonScalar)
+    _strict_json_list_adapter: TypeAdapter[list[StrictJsonValue]] = TypeAdapter(
+        list[StrictJsonValue],
+    )
+    _strict_json_scalar_adapter: TypeAdapter[StrictJsonScalar] = TypeAdapter(
+        StrictJsonScalar,
+    )
     _float_adapter = TypeAdapter(float)
     _str_adapter = TypeAdapter(str)
     _str_list_adapter = TypeAdapter(list[str])
@@ -236,9 +240,9 @@ class FlextUtilitiesConversion:
                         value,
                     )
                 )
-            except ValidationError:
+            except ValidationError as err:
                 error_msg = "join mode requires Sequence"
-                raise TypeError(error_msg)
+                raise TypeError(error_msg) from err
             # Convert sequence items to strings for type safety
             # Strings are valid sequences (of characters)
             str_values: list[str] = [str(v) for v in raw_values]
@@ -275,22 +279,21 @@ class FlextUtilitiesConversion:
         if value is None:
             return None
         try:
-            return FlextUtilitiesConversion._strict_json_scalar_adapter.validate_python(
+            out = FlextUtilitiesConversion._strict_json_scalar_adapter.validate_python(
                 value,
             )
+            return cast("StrictJsonScalar | None", out)
         except ValidationError:
             pass
         # Check for simple sequences (not nested PayloadValue)
         if isinstance(value, (list, tuple)) or (
             hasattr(value, "__getitem__") and not isinstance(value, (str, bytes))
         ):
-            # Can't easily validate element types at runtime, assume compatible
             return None  # Skip complex sequences for safety
-        if isinstance(value, dict) or (
-            hasattr(value, "keys") and hasattr(value, "__getitem__")
-        ):
-            # Can't easily validate value types at runtime, assume compatible
+        if isinstance(value, dict):
             return None  # Skip complex mappings for safety
+        if hasattr(value, "keys") and hasattr(value, "__getitem__"):
+            return None  # Mapping-like, skip for safety
         return None
 
     @staticmethod
@@ -344,12 +347,12 @@ class FlextUtilitiesConversion:
                 for item in items
                 if item is not None
                 and not (
-                    item.__class__ in (list, tuple, set, frozenset)
+                    item.__class__ in {list, tuple, set, frozenset}
                     or (
-                        item.__class__ in (list, tuple)
+                        item.__class__ in {list, tuple}
                         or (
                             hasattr(item, "__getitem__")
-                            and item.__class__ not in (str, bytes)
+                            and item.__class__ not in {str, bytes}
                         )
                     )
                 )

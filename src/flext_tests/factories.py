@@ -22,21 +22,22 @@ from __future__ import annotations
 import builtins
 import warnings
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Never, TypeVar, BaseModel
+from typing import Never, TypeVar
 
 from flext_core import r
+from pydantic import BaseModel
 
 from flext_tests.base import s
-from flext_tests.constants import tc
-from flext_tests.models import tmo
-from flext_tests.typings import tty
-from flext_tests.utilities import tu
+from flext_tests.constants import c
+from flext_tests.models import m
+from flext_tests.typings import t
+from flext_tests.utilities import u
 
 TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")
 
 
-class FlextTestsFactories(s[tty.Tests.PayloadValue]):
+class FlextTestsFactories(s[t.Tests.PayloadValue]):
     """Comprehensive test data factories extending FlextService.
 
     Provides factory methods for creating test objects, services, and domain
@@ -66,15 +67,15 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     # ==========================================================================
     # GENERALIST FACTORY METHODS - Preferred API (use tt.method())
     # ==========================================================================
-    # Models: tmo.Tests.Factory namespace - NO local aliases
-    # Types: tty.Tests.Factory namespace (from flext_tests.typings)
+    # Models: m.Tests.Factory namespace - NO local aliases
+    # Types: t.Tests.Factory namespace (from flext_tests.typings)
 
     @classmethod
     def model(
         cls,
-        kind: tty.Tests.Factory.ModelKind = "user",
+        kind: t.Tests.Factory.ModelKind = "user",
         # All parameters via kwargs - will be validated by ModelFactoryParams
-        **kwargs: tty.Tests.TestResultValue,
+        **kwargs: t.Tests.TestResultValue,
     ) -> (
         BaseModel
         | builtins.list[BaseModel]
@@ -130,7 +131,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             user_result = tt.model("user", as_result=True)
 
             # Create with custom factory
-            user = tt.model("user", factory=lambda: tmo.Tests.Factory.User(id="1", name="Test", email="test@example.com"))
+            user = tt.model("user", factory=lambda: m.Tests.Factory.User(id="1", name="Test", email="test@example.com"))
 
             # Create with transform
             user = tt.model("user", transform=lambda u: u.model_copy(update={"name": "Modified"}))
@@ -141,132 +142,130 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         """
         # Validate and convert kwargs to ModelFactoryParams using FlextUtilities
         params_result = u.Model.from_kwargs(
-            tmo.Tests.Factory.ModelFactoryParams,
+            m.Tests.Factory.ModelFactoryParams,
             kind=kind,
             **kwargs,
         )
         if params_result.is_failure:
             # FactoryModel is BaseModel, so cast is redundant
-            return r[tty.Tests.Factory.FactoryModel].fail(
+            return r[t.Tests.Factory.FactoryModel].fail(
                 f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
         # Helper to create a single model instance
         def _create_single() -> (
-            tmo.Tests.Factory.User
-            | tmo.Tests.Factory.Config
-            | tmo.Tests.Factory.Service
-            | tmo.Tests.Factory.Entity
-            | tmo.Tests.Factory.ValueObject
+            m.Tests.Factory.User
+            | m.Tests.Factory.Config
+            | m.Tests.Factory.Service
+            | m.Tests.Factory.Entity
+            | m.Tests.Factory.ValueObject
         ):
             if params.factory:
                 factory_result = params.factory()
-                if tmo.Tests.Factory.User in type(factory_result).__mro__:
+                if m.Tests.Factory.User in type(factory_result).__mro__:
                     return factory_result
-                if tmo.Tests.Factory.Config in type(factory_result).__mro__:
+                if m.Tests.Factory.Config in type(factory_result).__mro__:
                     return factory_result
-                if tmo.Tests.Factory.Service in type(factory_result).__mro__:
+                if m.Tests.Factory.Service in type(factory_result).__mro__:
                     return factory_result
-                if tmo.Tests.Factory.Entity in type(factory_result).__mro__:
+                if m.Tests.Factory.Entity in type(factory_result).__mro__:
                     return factory_result
-                if tmo.Tests.Factory.ValueObject in type(factory_result).__mro__:
+                if m.Tests.Factory.ValueObject in type(factory_result).__mro__:
                     return factory_result
-                msg = (
-                    f"Factory returned unsupported type: {type(factory_result).__name__}"
-                )
+                msg = f"Factory returned unsupported type: {type(factory_result).__name__}"
                 raise TypeError(msg)
 
             if params.kind == "user":
-                user_data: MutableMapping[str, tty.Tests.PayloadValue] = {
-                    "id": params.model_id or tty.Tests.Factory.generate_id(),
-                    "name": params.name or tc.Tests.Factory.DEFAULT_USER_NAME,
+                user_data: MutableMapping[str, t.Tests.PayloadValue] = {
+                    "id": params.model_id or t.Tests.Factory.generate_id(),
+                    "name": params.name or c.Tests.Factory.DEFAULT_USER_NAME,
                     "email": params.email
-                    or tc.Tests.Factory.user_email(tty.Tests.Factory.generate_short_id(8)),
+                    or c.Tests.Factory.user_email(t.Tests.Factory.generate_short_id(8)),
                     "active": (
                         params.active
                         if params.active is not None
-                        else tc.Tests.Factory.DEFAULT_USER_ACTIVE
+                        else c.Tests.Factory.DEFAULT_USER_ACTIVE
                     ),
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
-                    user_overrides: MutableMapping[str, tty.Tests.PayloadValue] = dict(
+                    user_overrides: MutableMapping[str, t.Tests.PayloadValue] = dict(
                         params.overrides,
                     )
-                    merge_result = tty.merge(user_data, user_overrides, strategy="deep")
+                    merge_result = t.merge(user_data, user_overrides, strategy="deep")
                     if merge_result.is_success:
                         user_data = merge_result.value
-                return tmo.Tests.Factory.User.model_validate(user_data)
+                return m.Tests.Factory.User.model_validate(user_data)
 
             if params.kind == "config":
-                config_data: MutableMapping[str, tty.Tests.PayloadValue] = {
+                config_data: MutableMapping[str, t.Tests.PayloadValue] = {
                     "service_type": params.service_type
-                    or tc.Tests.Factory.DEFAULT_SERVICE_TYPE,
+                    or c.Tests.Factory.DEFAULT_SERVICE_TYPE,
                     "environment": params.environment
-                    or tc.Tests.Factory.DEFAULT_ENVIRONMENT,
+                    or c.Tests.Factory.DEFAULT_ENVIRONMENT,
                     "debug": params.debug
                     if params.debug is not None
-                    else tc.Tests.Factory.DEFAULT_DEBUG,
-                    "log_level": params.log_level or tc.Tests.Factory.DEFAULT_LOG_LEVEL,
+                    else c.Tests.Factory.DEFAULT_DEBUG,
+                    "log_level": params.log_level or c.Tests.Factory.DEFAULT_LOG_LEVEL,
                     "timeout": params.timeout
                     if params.timeout is not None
-                    else tc.Tests.Factory.DEFAULT_TIMEOUT,
+                    else c.Tests.Factory.DEFAULT_TIMEOUT,
                     "max_retries": params.max_retries
                     if params.max_retries is not None
-                    else tc.Tests.Factory.DEFAULT_MAX_RETRIES,
+                    else c.Tests.Factory.DEFAULT_MAX_RETRIES,
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
-                    config_overrides: MutableMapping[str, tty.Tests.PayloadValue] = dict(
+                    config_overrides: MutableMapping[str, t.Tests.PayloadValue] = dict(
                         params.overrides,
                     )
-                    merge_result = tty.merge(
+                    merge_result = t.merge(
                         config_data,
                         config_overrides,
                         strategy="deep",
                     )
                     if merge_result.is_success:
                         config_data = merge_result.value
-                # Create Config model - use tmo.Tests.Factory.Config which is a real Pydantic model
-                return tmo.Tests.Factory.Config.model_validate(config_data)
+                # Create Config model - use m.Tests.Factory.Config which is a real Pydantic model
+                return m.Tests.Factory.Config.model_validate(config_data)
 
             if params.kind == "service":
                 service_type_str = params.service_type or "api"
-                svc_data: MutableMapping[str, tty.Tests.TestResultValue] = {
-                    "id": params.model_id or tty.generate("uuid"),
+                svc_data: MutableMapping[str, t.Tests.TestResultValue] = {
+                    "id": params.model_id or t.generate("uuid"),
                     "type": service_type_str,
                     "name": params.name
-                    or tc.Tests.Factory.service_name(service_type_str),
+                    or c.Tests.Factory.service_name(service_type_str),
                     "status": params.status or "active",
                 }
                 # Convert overrides to compatible dict
                 if params.overrides:
-                    # Type narrowing: params.overrides is Mapping[str, tty.Tests.PayloadValue]
+                    # Type narrowing: params.overrides is Mapping[str, t.Tests.PayloadValue]
                     overrides_mapping = params.overrides
-                    overrides_dict: MutableMapping[str, tty.Tests.TestResultValue] = dict(
+                    overrides_dict: MutableMapping[str, t.Tests.TestResultValue] = dict(
                         overrides_mapping,
                     )
                     svc_data.update(overrides_dict)
                 # Create Service model using the proper test Service model
-                return tmo.Tests.Factory.Service.model_validate(svc_data)
+                return m.Tests.Factory.Service.model_validate(svc_data)
 
             if params.kind == "entity":
                 # Use DomainHelpers for entity creation
-                return tu.Tests.DomainHelpers.create_test_entity_instance(
-                    name=params.name or tc.Tests.Factory.DEFAULT_ENTITY_NAME,
+                return u.Tests.DomainHelpers.create_test_entity_instance(
+                    name=params.name or c.Tests.Factory.DEFAULT_ENTITY_NAME,
                     value=params.value,
-                    entity_class=tmo.Tests.Factory.Entity,
+                    entity_class=m.Tests.Factory.Entity,
                 )
 
             # params.kind == "value"
             # Use DomainHelpers for value object creation with proper ValueObject model
             value_data = params.data or "default_value"
             value_count = params.value_count or 1
-            return tu.Tests.DomainHelpers.create_test_value_object_instance(
+            return u.Tests.DomainHelpers.create_test_value_object_instance(
                 data=value_data,
                 count=value_count,
-                value_class=tmo.Tests.Factory.ValueObject,
+                value_class=m.Tests.Factory.ValueObject,
             )
 
         # Create single instance
@@ -279,8 +278,8 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         # Apply validation if provided
         if params.validate_fn and not params.validate_fn(instance):
             # FactoryModel is BaseModel, so cast is redundant
-            return r[tty.Tests.Factory.FactoryModel].fail(
-                tc.Tests.Factory.ERROR_VALIDATION,
+            return r[t.Tests.Factory.FactoryModel].fail(
+                c.Tests.Factory.ERROR_VALIDATION,
             )
 
         # Handle count > 1
@@ -295,13 +294,13 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                     new_instance_base: BaseModel = transformed
                     if params.validate_fn and not params.validate_fn(new_instance_base):
                         return r[list[BaseModel]].fail(
-                            tc.Tests.Factory.ERROR_VALIDATION,
+                            c.Tests.Factory.ERROR_VALIDATION,
                         )
                     instances.append(new_instance_base)
                 else:
                     if params.validate_fn and not params.validate_fn(new_instance):
                         return r[list[BaseModel]].fail(
-                            tc.Tests.Factory.ERROR_VALIDATION,
+                            c.Tests.Factory.ERROR_VALIDATION,
                         )
                     instances.append(new_instance)
 
@@ -317,7 +316,9 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                     )
                     result_dict[str(inst_id)] = inst
                 if params.as_result:
-                    dict_result: r[Mapping[str, BaseModel]] = r[Mapping[str, BaseModel]].ok(
+                    dict_result: r[Mapping[str, BaseModel]] = r[
+                        Mapping[str, BaseModel]
+                    ].ok(
                         result_dict,
                     )
                     return dict_result
@@ -382,11 +383,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     @classmethod
     def res(
         cls,
-        kind: tty.Tests.Factory.ResultKind = "ok",
-        value: tty.Tests.PayloadValue = None,
+        kind: t.Tests.Factory.ResultKind = "ok",
+        value: t.Tests.PayloadValue = None,
         # All parameters via kwargs - will be validated by ResultFactoryParams
-        **kwargs: tty.Tests.TestResultValue,
-    ) -> r[tty.Tests.PayloadValue] | builtins.list[r[tty.Tests.PayloadValue]]:
+        **kwargs: t.Tests.TestResultValue,
+    ) -> r[t.Tests.PayloadValue] | builtins.list[r[t.Tests.PayloadValue]]:
         """Unified result factory - creates r with full customization.
 
         This is the preferred way to create test results. Use tt.res() instead of
@@ -427,14 +428,14 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         # Validate and convert kwargs to ResultFactoryParams using FlextUtilities
         # Pass kind and value explicitly, then merge with kwargs
         params_result = u.Model.from_kwargs(
-            tmo.Tests.Factory.ResultFactoryParams,
+            m.Tests.Factory.ResultFactoryParams,
             kind=kind,
             value=value,
             **kwargs,
         )
         if params_result.is_failure:
             # Return validation error as r
-            return r[tty.Tests.PayloadValue].fail(
+            return r[t.Tests.PayloadValue].fail(
                 f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
@@ -443,7 +444,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         if params.mix_pattern is not None and (
             params.values is not None or params.errors is not None
         ):
-            result_list: builtins.list[r[tty.Tests.PayloadValue]] = []
+            result_list: builtins.list[r[t.Tests.PayloadValue]] = []
             val_idx = 0
             err_idx = 0
             for is_success in params.mix_pattern:
@@ -452,16 +453,16 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                         mix_val = params.values[val_idx]
                         if params.transform:
                             mix_val = params.transform(mix_val)
-                        result_list.append(r[tty.Tests.PayloadValue].ok(mix_val))
+                        result_list.append(r[t.Tests.PayloadValue].ok(mix_val))
                         val_idx += 1
                     elif params.value is not None:
-                        mix_val_single: tty.Tests.PayloadValue = params.value
+                        mix_val_single: t.Tests.PayloadValue = params.value
                         if params.transform:
                             mix_val_single = params.transform(mix_val_single)
-                        result_list.append(r[tty.Tests.PayloadValue].ok(mix_val_single))
+                        result_list.append(r[t.Tests.PayloadValue].ok(mix_val_single))
                 elif params.errors and err_idx < len(params.errors):
                     result_list.append(
-                        r[tty.Tests.PayloadValue].fail(
+                        r[t.Tests.PayloadValue].fail(
                             params.errors[err_idx],
                             error_code=params.error_code,
                         ),
@@ -469,7 +470,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                     err_idx += 1
                 else:
                     result_list.append(
-                        r[tty.Tests.PayloadValue].fail(
+                        r[t.Tests.PayloadValue].fail(
                             params.error,
                             error_code=params.error_code,
                         ),
@@ -481,15 +482,15 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             result_list = []
             if params.values:
                 for raw_val in params.values:
-                    # raw_val is tty.Tests.PayloadValue, transform if needed
+                    # raw_val is t.Tests.PayloadValue, transform if needed
                     batch_val = (
                         params.transform(raw_val) if params.transform else raw_val
                     )
-                    result_list.append(r[tty.Tests.PayloadValue].ok(batch_val))
+                    result_list.append(r[t.Tests.PayloadValue].ok(batch_val))
             if params.errors:
                 for err in params.errors:
                     result_list.append(
-                        r[tty.Tests.PayloadValue].fail(err, error_code=params.error_code),
+                        r[t.Tests.PayloadValue].fail(err, error_code=params.error_code),
                     )
             if params.count > 1 and not params.values and not params.errors:
                 # Create multiple results from single value
@@ -497,57 +498,57 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                     if params.value is None:
                         # None value always results in failure
                         error_msg = (
-                            params.error_on_none or tc.Tests.Factory.ERROR_VALUE_NONE
+                            params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE
                         )
-                        result_list.append(r[tty.Tests.PayloadValue].fail(error_msg))
+                        result_list.append(r[t.Tests.PayloadValue].fail(error_msg))
                     else:
-                        count_val: tty.Tests.PayloadValue = params.value
+                        count_val: t.Tests.PayloadValue = params.value
                         if params.transform:
                             count_val = params.transform(count_val)
-                        result_list.append(r[tty.Tests.PayloadValue].ok(count_val))
+                        result_list.append(r[t.Tests.PayloadValue].ok(count_val))
             if result_list:
                 return result_list
             # Empty list case
             if params.value is not None:
                 empty_case_val = params.value
-                return [r[tty.Tests.PayloadValue].ok(empty_case_val)]
-            return [r[tty.Tests.PayloadValue].fail(params.error_on_none or params.error)]
+                return [r[t.Tests.PayloadValue].ok(empty_case_val)]
+            return [r[t.Tests.PayloadValue].fail(params.error_on_none or params.error)]
 
         # Single result creation
         if params.kind == "ok":
             if params.value is None:
                 # None value with kind="ok" returns failure with meaningful message
-                return r[tty.Tests.PayloadValue].fail(
-                    params.error_on_none or tc.Tests.Factory.ERROR_VALUE_NONE,
+                return r[t.Tests.PayloadValue].fail(
+                    params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE,
                 )
             ok_raw = params.value
             ok_transformed = params.transform(ok_raw) if params.transform else ok_raw
-            return r[tty.Tests.PayloadValue].ok(ok_transformed)
+            return r[t.Tests.PayloadValue].ok(ok_transformed)
 
         if params.kind == "fail":
-            return r[tty.Tests.PayloadValue].fail(
+            return r[t.Tests.PayloadValue].fail(
                 params.error,
                 error_code=params.error_code,
             )
 
         # params.kind == "from_value"
         if params.value is None:
-            return r[tty.Tests.PayloadValue].fail(
-                params.error_on_none or tc.Tests.Factory.ERROR_VALUE_NONE,
+            return r[t.Tests.PayloadValue].fail(
+                params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE,
             )
         from_val_raw = params.value
         from_val_transformed = (
             params.transform(from_val_raw) if params.transform else from_val_raw
         )
-        return r[tty.Tests.PayloadValue].ok(from_val_transformed)
+        return r[t.Tests.PayloadValue].ok(from_val_transformed)
 
     @classmethod
     def op(
         cls,
-        kind: tty.Tests.Factory.OpKind = "simple",
+        kind: t.Tests.Factory.OpKind = "simple",
         *,
-        error_message: str = tc.Tests.Factory.ERROR_DEFAULT,
-        result_value: tty.Tests.TestResultValue = tc.Tests.Factory.SUCCESS_MESSAGE,
+        error_message: str = c.Tests.Factory.ERROR_DEFAULT,
+        result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
     ) -> object:
         """Unified operation factory - creates callable test operations.
 
@@ -586,17 +587,17 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         if kind == "simple":
 
             def simple_op() -> str:
-                return tc.Tests.Factory.SUCCESS_MESSAGE
+                return c.Tests.Factory.SUCCESS_MESSAGE
 
             return simple_op
 
         if kind == "add":
 
             def add_op(
-                a: tty.Tests.TestResultValue,
-                b: tty.Tests.TestResultValue,
-            ) -> tty.Tests.TestResultValue:
-                if type(a) in (int, float) and type(b) in (int, float):
+                a: t.Tests.TestResultValue,
+                b: t.Tests.TestResultValue,
+            ) -> t.Tests.TestResultValue:
+                if type(a) in {int, float} and type(b) in {int, float}:
                     return a + b
                 return str(a) + str(b)
 
@@ -625,33 +626,33 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         if kind == "result_ok":
 
-            def result_ok_op() -> r[tty.Tests.TestResultValue]:
-                return r[tty.Tests.TestResultValue].ok(result_value)
+            def result_ok_op() -> r[t.Tests.TestResultValue]:
+                return r[t.Tests.TestResultValue].ok(result_value)
 
             return result_ok_op
 
         # kind == "result_fail"
-        def result_fail_op() -> r[tty.Tests.TestResultValue]:
-            return r[tty.Tests.TestResultValue].fail(error_message)
+        def result_fail_op() -> r[t.Tests.TestResultValue]:
+            return r[t.Tests.TestResultValue].fail(error_message)
 
         return result_fail_op
 
     @classmethod
     def batch[TModel](
         cls,
-        kind: tty.Tests.Factory.ModelKind = "user",
-        count: int = tc.Tests.Factory.DEFAULT_BATCH_COUNT,
+        kind: t.Tests.Factory.ModelKind = "user",
+        count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
         *,
         # Batch-specific options
         names: Sequence[str] | None = None,
         environments: Sequence[str] | None = None,
         service_types: Sequence[str] | None = None,
         # Common customization
-        **common_overrides: tty.Tests.TestResultValue,
+        **common_overrides: t.Tests.TestResultValue,
     ) -> (
-        list[tmo.Tests.Factory.User]
-        | builtins.list[tmo.Tests.Factory.Config]
-        | builtins.list[tmo.Tests.Factory.Service]
+        list[m.Tests.Factory.User]
+        | builtins.list[m.Tests.Factory.Config]
+        | builtins.list[m.Tests.Factory.Service]
     ):
         """Unified batch factory - creates multiple model instances.
 
@@ -684,11 +685,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         _ = common_overrides  # Explicitly ignore to avoid unused warning
 
         if kind == "user":
-            result_users: builtins.list[tmo.Tests.Factory.User] = []
+            result_users: builtins.list[m.Tests.Factory.User] = []
             for i in range(count):
                 name = names[i % len(names)] if names else f"User {i}"
                 user_model = cls.model("user", name=name, email=f"user{i}@example.com")
-                if tmo.Tests.Factory.User in type(user_model).__mro__:
+                if m.Tests.Factory.User in type(user_model).__mro__:
                     result_users.append(user_model)
             return result_users
 
@@ -696,12 +697,12 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             envs = (
                 list(environments)
                 if environments
-                else list(tc.Tests.Factory.DEFAULT_BATCH_ENVIRONMENTS)
+                else list(c.Tests.Factory.DEFAULT_BATCH_ENVIRONMENTS)
             )
-            configs: builtins.list[tmo.Tests.Factory.Config] = []
+            configs: builtins.list[m.Tests.Factory.Config] = []
             for i in range(count):
                 config_model = cls.model("config", environment=envs[i % len(envs)])
-                if tmo.Tests.Factory.Config in type(config_model).__mro__:
+                if m.Tests.Factory.Config in type(config_model).__mro__:
                     configs.append(config_model)
             return configs
 
@@ -709,12 +710,12 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         types = (
             list(service_types)
             if service_types
-            else list(tc.Tests.Factory.DEFAULT_BATCH_SERVICE_TYPES)
+            else list(c.Tests.Factory.DEFAULT_BATCH_SERVICE_TYPES)
         )
-        services: builtins.list[tmo.Tests.Factory.Service] = []
+        services: builtins.list[m.Tests.Factory.Service] = []
         for i in range(count):
             service_model = cls.model("service", service_type=types[i % len(types)])
-            if tmo.Tests.Factory.Service in type(service_model).__mro__:
+            if m.Tests.Factory.Service in type(service_model).__mro__:
                 services.append(service_model)
         return services
 
@@ -772,13 +773,13 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     def list(
         cls,
         source: (
-            Sequence[tty.Tests.PayloadValue]
-            | Callable[[], tty.Tests.PayloadValue]
-            | tty.Tests.Factory.ModelKind
+            Sequence[t.Tests.PayloadValue]
+            | Callable[[], t.Tests.PayloadValue]
+            | t.Tests.Factory.ModelKind
         ) = "user",
         # All parameters via kwargs - will be validated by ListFactoryParams
-        **kwargs: tty.Tests.TestResultValue,
-    ) -> builtins.list[tty.Tests.PayloadValue] | r[builtins.list[tty.Tests.PayloadValue]]:
+        **kwargs: t.Tests.TestResultValue,
+    ) -> builtins.list[t.Tests.PayloadValue] | r[builtins.list[t.Tests.PayloadValue]]:
         """Create typed list from source.
 
         This is the preferred way to create lists of test data.
@@ -802,7 +803,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             # List from model kind
             users = tt.list("user", count=3)
             assert len(users) == 3
-            assert all(tmo.Tests.Factory.User in type(u).__mro__ for u in users)
+            assert all(m.Tests.Factory.User in type(u).__mro__ for u in users)
 
             # List from callable
             numbers = tt.list(lambda: 42, count=5)
@@ -825,28 +826,28 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         # Validate and convert kwargs to ListFactoryParams using FlextUtilities
         # Pass source explicitly, then merge with kwargs
         params_result = u.Model.from_kwargs(
-            tmo.Tests.Factory.ListFactoryParams,
+            m.Tests.Factory.ListFactoryParams,
             source=source,
             **kwargs,
         )
         if params_result.is_failure:
             # Return validation error as r
-            return r[builtins.list[tty.Tests.PayloadValue]].fail(
+            return r[builtins.list[t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
-        items: builtins.list[tty.Tests.PayloadValue] = []
+        items: builtins.list[t.Tests.PayloadValue] = []
 
-        # Handle different source types - use list[tty.Tests.PayloadValue] for intermediate storage
+        # Handle different source types - use list[t.Tests.PayloadValue] for intermediate storage
         # then convert to list[T] at the end for proper type inference
-        raw_items: builtins.list[tty.Tests.PayloadValue] = []
+        raw_items: builtins.list[t.Tests.PayloadValue] = []
 
         if isinstance(params.source, str):
             # ModelKind string - delegate to tt.model()
             model_kind_str = params.source
             # Use Literal mapping for type-safe conversion
-            kind_map: Mapping[str, tty.Tests.Factory.ModelKind] = {
+            kind_map: Mapping[str, t.Tests.Factory.ModelKind] = {
                 "user": "user",
                 "config": "config",
                 "service": "service",
@@ -857,14 +858,14 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                 "event": "event",
             }
             if model_kind_str not in kind_map:
-                return r[builtins.list[tty.Tests.PayloadValue]].fail(
+                return r[builtins.list[t.Tests.PayloadValue]].fail(
                     f"Invalid model kind: {model_kind_str}",
                 )
             model_kind = kind_map[model_kind_str]
             for _ in range(params.count):
                 model_result = cls.model(model_kind)
                 # Extract item from model result
-                raw_item: tty.Tests.PayloadValue
+                raw_item: t.Tests.PayloadValue
                 if isinstance(model_result, list) and model_result:
                     raw_item = model_result[0]
                 elif type(model_result).__mro__ and r in type(model_result).__mro__:
@@ -881,7 +882,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                     raw_items.append(raw_item)
 
         elif callable(params.source):
-            source_callable: Callable[[], tty.Tests.PayloadValue] = params.source
+            source_callable: Callable[[], t.Tests.PayloadValue] = params.source
             for _ in range(params.count):
                 raw_item = source_callable()
                 if params.transform:
@@ -891,9 +892,9 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         elif t.is_type(params.source, "sequence_not_str"):
             # Sequence - use items directly (exclude strings)
-            source_seq: Sequence[tty.Tests.PayloadValue] = params.source
+            source_seq: Sequence[t.Tests.PayloadValue] = params.source
             for source_item in source_seq:
-                final_item: tty.Tests.PayloadValue
+                final_item: t.Tests.PayloadValue
                 if params.transform:
                     final_item = params.transform(source_item)
                 else:
@@ -907,7 +908,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         # Ensure uniqueness if requested
         if params.unique and items:
             seen: set[object] = set()
-            unique_items: builtins.list[tty.Tests.PayloadValue] = []
+            unique_items: builtins.list[t.Tests.PayloadValue] = []
             for item in items:
                 item_hash = (
                     hash(item)
@@ -920,20 +921,20 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             items = unique_items
 
         if params.as_result:
-            return r[builtins.list[tty.Tests.PayloadValue]].ok(items)
+            return r[builtins.list[t.Tests.PayloadValue]].ok(items)
         return items
 
     @classmethod
     def dict_factory(
         cls,
         source: (
-            Mapping[str, tty.Tests.PayloadValue]
-            | Callable[[], tuple[str, tty.Tests.PayloadValue]]
-            | tty.Tests.Factory.ModelKind
+            Mapping[str, t.Tests.PayloadValue]
+            | Callable[[], tuple[str, t.Tests.PayloadValue]]
+            | t.Tests.Factory.ModelKind
         ) = "user",
         # All parameters via kwargs - will be validated by DictFactoryParams
-        **kwargs: tty.Tests.TestResultValue,
-    ) -> Mapping[str, tty.Tests.PayloadValue] | r[Mapping[str, tty.Tests.PayloadValue]]:
+        **kwargs: t.Tests.TestResultValue,
+    ) -> Mapping[str, t.Tests.PayloadValue] | r[Mapping[str, t.Tests.PayloadValue]]:
         """Create typed dict from source.
 
         This is the preferred way to create dicts of test data.
@@ -957,7 +958,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             # Dict from model kind
             users = tt.dict_factory("user", count=3)
             assert len(users) == 3
-            assert all(tmo.Tests.Factory.User in type(u).__mro__ for u in users.values())
+            assert all(m.Tests.Factory.User in type(u).__mro__ for u in users.values())
 
             # Dict from callable
             pairs = tt.dict_factory(lambda: (f"key_{i}", i), count=3)
@@ -985,24 +986,24 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         # Validate and convert kwargs to DictFactoryParams using FlextUtilities
         # Pass source explicitly, then merge with kwargs
         params_result = u.Model.from_kwargs(
-            tmo.Tests.Factory.DictFactoryParams,
+            m.Tests.Factory.DictFactoryParams,
             source=source,
             **kwargs,
         )
         if params_result.is_failure:
             # Return validation error as r
-            return r[Mapping[str, tty.Tests.PayloadValue]].fail(
+            return r[Mapping[str, t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
-        result_dict: MutableMapping[str, tty.Tests.PayloadValue] = {}
+        result_dict: MutableMapping[str, t.Tests.PayloadValue] = {}
 
         # Handle different source types
         if isinstance(params.source, str):
             # ModelKind - create models with auto keys
             # Use default "user" for type safety, actual source is validated at model()
-            model_kind: tty.Tests.Factory.ModelKind = "user"
+            model_kind: t.Tests.Factory.ModelKind = "user"
             # Override if source matches known kinds
             match params.source:
                 case "user":
@@ -1029,7 +1030,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                 # Create model instance
                 model_result = cls.model(model_kind, count=1)
                 # Extract value from model result
-                value: tty.Tests.PayloadValue
+                value: t.Tests.PayloadValue
                 if isinstance(model_result, list) and model_result:
                     value = model_result[0]
                 elif type(model_result).__mro__ and r in type(model_result).__mro__:
@@ -1074,7 +1075,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                 result_dict[str(k)] = v
 
         if params.as_result:
-            return r[Mapping[str, tty.Tests.PayloadValue]].ok(result_dict)
+            return r[Mapping[str, t.Tests.PayloadValue]].ok(result_dict)
         return result_dict
 
     @classmethod
@@ -1082,7 +1083,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         cls,
         type_: type[T],
         # All parameters via kwargs - will be validated by GenericFactoryParams
-        **kwargs: tty.Tests.TestResultValue,
+        **kwargs: t.Tests.TestResultValue,
     ) -> T | builtins.list[T] | r[T] | r[builtins.list[T]]:
         """Create instance(s) of any type with full type safety.
 
@@ -1128,7 +1129,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         # Validate and convert kwargs to GenericFactoryParams using FlextUtilities
         # Pass type_ explicitly, then merge with kwargs
         params_result = u.Model.from_kwargs(
-            tmo.Tests.Factory.GenericFactoryParams,
+            m.Tests.Factory.GenericFactoryParams,
             type_=type_,
             **kwargs,
         )
@@ -1184,7 +1185,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         kind: str = "test",
         *,
         _with_validation: bool = False,
-        **overrides: tty.Tests.TestResultValue,
+        **overrides: t.Tests.TestResultValue,
     ) -> type:
         """Create dynamic test service class.
 
@@ -1221,8 +1222,8 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         user_id: str | None = None,
         name: str | None = None,
         email: str | None = None,
-        **overrides: tty.Tests.TestResultValue,
-    ) -> tmo.Tests.Factory.User:
+        **overrides: t.Tests.TestResultValue,
+    ) -> m.Tests.Factory.User:
         """Create a test user.
 
         Args:
@@ -1235,26 +1236,26 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             User model instance
 
         """
-        user_data: MutableMapping[str, tty.Tests.PayloadValue] = {
-            "id": user_id or tty.Tests.Factory.generate_id(),
-            "name": name or tc.Tests.Factory.DEFAULT_USER_NAME,
+        user_data: MutableMapping[str, t.Tests.PayloadValue] = {
+            "id": user_id or t.Tests.Factory.generate_id(),
+            "name": name or c.Tests.Factory.DEFAULT_USER_NAME,
             "email": email
-            or tc.Tests.Factory.user_email(tty.Tests.Factory.generate_short_id(8)),
-            "active": tc.Tests.Factory.DEFAULT_USER_ACTIVE,
+            or c.Tests.Factory.user_email(t.Tests.Factory.generate_short_id(8)),
+            "active": c.Tests.Factory.DEFAULT_USER_ACTIVE,
         }
         # Convert overrides dict to ConfigurationDict
-        overrides_dict: MutableMapping[str, tty.Tests.PayloadValue] = dict(overrides)
-        merge_result = tty.merge(user_data, overrides_dict, strategy="deep")
+        overrides_dict: MutableMapping[str, t.Tests.PayloadValue] = dict(overrides)
+        merge_result = t.merge(user_data, overrides_dict, strategy="deep")
         if merge_result.is_success:
             user_data = merge_result.value
-        return tmo.Tests.Factory.User.model_validate(user_data)
+        return m.Tests.Factory.User.model_validate(user_data)
 
     @staticmethod
     def create_config(
-        service_type: str = tc.Tests.Factory.DEFAULT_SERVICE_TYPE,
-        environment: str = tc.Tests.Factory.DEFAULT_ENVIRONMENT,
-        **overrides: tty.Tests.TestResultValue,
-    ) -> tmo.Tests.Factory.Config:
+        service_type: str = c.Tests.Factory.DEFAULT_SERVICE_TYPE,
+        environment: str = c.Tests.Factory.DEFAULT_ENVIRONMENT,
+        **overrides: t.Tests.TestResultValue,
+    ) -> m.Tests.Factory.Config:
         """Create a test configuration.
 
         Args:
@@ -1267,27 +1268,27 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         """
         warnings.warn(
-            tc.Tests.Factory.DEPRECATION_CREATE_CONFIG,
+            c.Tests.Factory.DEPRECATION_CREATE_CONFIG,
             DeprecationWarning,
             stacklevel=2,
         )
-        config_data: MutableMapping[str, tty.Tests.PayloadValue] = {
+        config_data: MutableMapping[str, t.Tests.PayloadValue] = {
             "service_type": service_type,
             "environment": environment,
         }
         # Convert overrides dict to ConfigurationDict
-        overrides_dict: MutableMapping[str, tty.Tests.PayloadValue] = dict(overrides)
-        merge_result = tty.merge(config_data, overrides_dict, strategy="deep")
+        overrides_dict: MutableMapping[str, t.Tests.PayloadValue] = dict(overrides)
+        merge_result = t.merge(config_data, overrides_dict, strategy="deep")
         if merge_result.is_success:
             config_data = merge_result.value
-        return tmo.Tests.Factory.Config.model_validate(config_data)
+        return m.Tests.Factory.Config.model_validate(config_data)
 
     @staticmethod
     def create_service(
-        service_type: str = tc.Tests.Factory.DEFAULT_SERVICE_TYPE,
+        service_type: str = c.Tests.Factory.DEFAULT_SERVICE_TYPE,
         service_id: str | None = None,
-        **overrides: tty.Tests.TestResultValue,
-    ) -> tmo.Tests.Factory.Service:
+        **overrides: t.Tests.TestResultValue,
+    ) -> m.Tests.Factory.Service:
         """Create a test service.
 
         Args:
@@ -1300,25 +1301,25 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         """
         warnings.warn(
-            tc.Tests.Factory.DEPRECATION_CREATE_SERVICE,
+            c.Tests.Factory.DEPRECATION_CREATE_SERVICE,
             DeprecationWarning,
             stacklevel=2,
         )
-        service_data: MutableMapping[str, tty.Tests.TestResultValue] = {
-            "id": service_id or tty.generate("uuid"),
+        service_data: MutableMapping[str, t.Tests.TestResultValue] = {
+            "id": service_id or t.generate("uuid"),
             "type": service_type,
-            "status": tc.Tests.Factory.DEFAULT_SERVICE_STATUS,
+            "status": c.Tests.Factory.DEFAULT_SERVICE_STATUS,
         }
         if "name" not in overrides:
-            service_data["name"] = tc.Tests.Factory.service_name(service_type)
+            service_data["name"] = c.Tests.Factory.service_name(service_type)
         # Update with compatible types
         service_data.update(dict(overrides))
-        return tmo.Tests.Factory.Service.model_validate(service_data)
+        return m.Tests.Factory.Service.model_validate(service_data)
 
     @staticmethod
     def batch_users(
-        count: int = tc.Tests.Factory.DEFAULT_BATCH_COUNT,
-    ) -> builtins.list[tmo.Tests.Factory.User]:
+        count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
+    ) -> builtins.list[m.Tests.Factory.User]:
         """Create a batch of test users.
 
         Args:
@@ -1329,11 +1330,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         """
         warnings.warn(
-            tc.Tests.Factory.DEPRECATION_BATCH_USERS_FUNC,
+            c.Tests.Factory.DEPRECATION_BATCH_USERS_FUNC,
             DeprecationWarning,
             stacklevel=2,
         )
-        users: list[tmo.Tests.Factory.User] = []
+        users: list[m.Tests.Factory.User] = []
         for i in range(count):
             result = FlextTestsFactories.model(
                 "user",
@@ -1341,11 +1342,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                 email=f"user{i}@example.com",
             )
             # Extract user from the result
-            if tmo.Tests.Factory.User in type(result).__mro__:
+            if m.Tests.Factory.User in type(result).__mro__:
                 users.append(result)
             elif isinstance(result, list) and result:
                 first_item = result[0]
-                if tmo.Tests.Factory.User in type(first_item).__mro__:
+                if m.Tests.Factory.User in type(first_item).__mro__:
                     users.append(first_item)
         return users
 
@@ -1353,7 +1354,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     def create_test_operation(
         cls,
         operation_type: str = "simple",
-        **overrides: tty.Tests.TestResultValue,
+        **overrides: t.Tests.TestResultValue,
     ) -> object:
         """Create a test operation callable.
 
@@ -1366,7 +1367,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         """
         warnings.warn(
-            tc.Tests.Factory.DEPRECATION_CREATE_TEST_OPERATION,
+            c.Tests.Factory.DEPRECATION_CREATE_TEST_OPERATION,
             DeprecationWarning,
             stacklevel=2,
         )
@@ -1379,11 +1380,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
         )
 
         ops: Mapping[str, object] = {
-            "simple": tty.Tests.Factory.simple_operation,
-            "add": tty.Tests.Factory.add_operation,
-            "format": tty.Tests.Factory.format_operation,
-            "error": tty.Tests.Factory.create_error_operation(error_message),
-            "type_error": tty.Tests.Factory.create_type_error_operation(
+            "simple": t.Tests.Factory.simple_operation,
+            "add": t.Tests.Factory.add_operation,
+            "format": t.Tests.Factory.format_operation,
+            "error": t.Tests.Factory.create_error_operation(error_message),
+            "type_error": t.Tests.Factory.create_type_error_operation(
                 type_error_message,
             ),
         }
@@ -1404,7 +1405,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     @staticmethod
     def _create_test_service_impl(
         service_type: str = "test",
-        **overrides: tty.Tests.TestResultValue,
+        **overrides: t.Tests.TestResultValue,
     ) -> type:
         """Internal implementation for creating test service classes.
 
@@ -1421,9 +1422,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         """
         # Capture overrides in local variable for use in nested class
-        captured_overrides: MutableMapping[str, tty.Tests.TestResultValue] = dict(overrides)
+        captured_overrides: MutableMapping[str, t.Tests.TestResultValue] = dict(
+            overrides
+        )
 
-        class TestService(s[tty.Tests.PayloadValue]):
+        class TestService(s[t.Tests.PayloadValue]):
             """Generic test service."""
 
             name: str | None = None
@@ -1431,7 +1434,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             enabled: bool | None = None
             # Use class attribute (not PrivateAttr) to match FlextService pattern
             # Initialize as None to avoid ClassVar requirement (mutable default)
-            _overrides: MutableMapping[str, tty.Tests.TestResultValue] | None = None
+            _overrides: MutableMapping[str, t.Tests.TestResultValue] | None = None
 
             def __init__(
                 self,
@@ -1444,17 +1447,17 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                 # Separate service fields from overrides
                 # Service fields: name, amount, enabled (for complex service)
                 # Overrides: default, etc. (for execute methods)
-                override_fields: MutableMapping[str, tty.Tests.PayloadValue] = {}
+                override_fields: MutableMapping[str, t.Tests.PayloadValue] = {}
                 # Extract service fields directly to avoid mypy dict unpacking issues
                 # Build kwargs inline to match **kwargs signature
-                name_value: tty.Tests.PayloadValue | None = None
-                amount_value: tty.Tests.PayloadValue | None = None
-                enabled_value: tty.Tests.PayloadValue | None = None
+                name_value: t.Tests.PayloadValue | None = None
+                amount_value: t.Tests.PayloadValue | None = None
+                enabled_value: t.Tests.PayloadValue | None = None
 
                 # Use captured_overrides from outer scope (closure)
                 for key, value in {**captured_overrides, **data}.items():
-                    # value is already tty.Tests.PayloadValue from dict iteration
-                    gv: tty.Tests.PayloadValue = value
+                    # value is already t.Tests.PayloadValue from dict iteration
+                    gv: t.Tests.PayloadValue = value
                     if key == "name":
                         name_value = gv
                     elif key == "amount":
@@ -1464,11 +1467,11 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                     else:
                         override_fields[key] = gv
 
-                # Call parent with **data dict (FlextService.__init__ accepts **data: tty.Tests.PayloadValue)
+                # Call parent with **data dict (FlextService.__init__ accepts **data: t.Tests.PayloadValue)
                 # Build service data dict with only non-None values
-                # Type compatibility: tty.Tests.PayloadValue is compatible with tty.Tests.PayloadValue
+                # Type compatibility: t.Tests.PayloadValue is compatible with t.Tests.PayloadValue
                 # (both are from flext_core.typings, t is just an alias)
-                service_data: MutableMapping[str, tty.Tests.PayloadValue] = {}
+                service_data: MutableMapping[str, t.Tests.PayloadValue] = {}
                 if name_value is not None:
                     service_data["name"] = name_value
                 if amount_value is not None:
@@ -1476,12 +1479,12 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                 if enabled_value is not None:
                     service_data["enabled"] = enabled_value
                 # Call parent with **service_data unpacking
-                # BaseModel.__init__ accepts **data: tty.Tests.PayloadValue
+                # BaseModel.__init__ accepts **data: t.Tests.PayloadValue
                 super().__init__(**service_data)
                 # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
                 # Initialize mutable attribute in __init__ to avoid ClassVar requirement
-                # Type narrowing: override_fields is dict[str, tty.Tests.PayloadValue]
-                # but _overrides expects dict[str, tty.Tests.TestResultValue]
+                # Type narrowing: override_fields is dict[str, t.Tests.PayloadValue]
+                # but _overrides expects dict[str, t.Tests.TestResultValue]
                 # Convert to TestResultValue type
                 self._overrides = override_fields
 
@@ -1521,21 +1524,21 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
                         return result
                 return r[bool].ok(value=True)
 
-            def execute(self) -> r[tty.Tests.PayloadValue]:
+            def execute(self) -> r[t.Tests.PayloadValue]:
                 """Execute test operation."""
                 if service_type == "user":
                     # Merge instance overrides with class overrides
                     merged_overrides = {**overrides}
                     if self._overrides is not None:
                         merged_overrides.update(self._overrides)
-                    return tty.Tests.Factory.execute_user_service(
+                    return t.Tests.Factory.execute_user_service(
                         merged_overrides,
                     )
                 if service_type == "complex":
                     validation_result = self._validate_business_rules_complex()
                     # Use concrete r type instead of protocol
-                    return tty.Tests.Factory.execute_complex_service(validation_result)
-                return tty.Tests.Factory.execute_default_service(service_type)
+                    return t.Tests.Factory.execute_complex_service(validation_result)
+                return t.Tests.Factory.execute_default_service(service_type)
 
             def validate_business_rules(self) -> r[bool]:
                 """Validate business rules for complex service."""
@@ -1558,7 +1561,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     @staticmethod
     def create_test_service(
         service_type: str = "test",
-        **overrides: tty.Tests.TestResultValue,
+        **overrides: t.Tests.TestResultValue,
     ) -> type:
         """Create a test service class.
 
@@ -1574,7 +1577,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
 
         """
         warnings.warn(
-            tc.Tests.Factory.DEPRECATION_CREATE_TEST_SERVICE,
+            c.Tests.Factory.DEPRECATION_CREATE_TEST_SERVICE,
             DeprecationWarning,
             stacklevel=2,
         )
@@ -1584,7 +1587,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
     # FLEXTSERVICE INTERFACE IMPLEMENTATION
     # ==========================================================================
 
-    def execute(self) -> r[tty.Tests.PayloadValue]:
+    def execute(self) -> r[t.Tests.PayloadValue]:
         """Execute factory service operation.
 
         Returns default test data when invoked as a service.
@@ -1593,7 +1596,7 @@ class FlextTestsFactories(s[tty.Tests.PayloadValue]):
             r with factory name
 
         """
-        return r[tty.Tests.PayloadValue].ok("FlextTestsFactories")
+        return r[t.Tests.PayloadValue].ok("FlextTestsFactories")
 
 
 tt = FlextTestsFactories  # Preferred short alias

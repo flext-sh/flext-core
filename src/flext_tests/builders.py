@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, Self, TypeGuard, overload
 
-from flext_core import FlextResult as r
+from flext_core import r
 from pydantic import BaseModel
 
 from flext_tests.constants import c
@@ -158,9 +158,9 @@ class FlextTestsBuilders:
 
         if value is None:
             value_for_kwargs = None
-        elif type(value) in (str, int, float, bool) or BaseModel in type(value).__mro__:
+        elif type(value) in {str, int, float, bool} or BaseModel in type(value).__mro__:
             value_for_kwargs = value
-        elif type(value) in (list, tuple):
+        elif type(value) in {list, tuple}:
             value_for_kwargs = list(value)
         elif type(value) is dict:
             value_for_kwargs = dict(value)
@@ -235,9 +235,7 @@ class FlextTestsBuilders:
                 resolved_value = (
                     u.Tests.DomainHelpers.create_test_value_object_instance(
                         data=str(data_val) if data_val else "",
-                        count=int(count_val)
-                        if type(count_val) in (int, float)
-                        else 1,
+                        count=int(count_val) if type(count_val) in {int, float} else 1,
                         value_class=cls_type,
                     )
                 )
@@ -255,7 +253,7 @@ class FlextTestsBuilders:
                     instance = cls_type.__call__()
                 # Type narrow: dynamic class instantiation results are BuilderValue
                 if (
-                    type(instance) in (str, int, float, bool, type(None), list, dict)
+                    type(instance) in {str, int, float, bool, type(None), list, dict}
                     or BaseModel in type(instance).__mro__
                 ):
                     resolved_value = instance
@@ -303,9 +301,9 @@ class FlextTestsBuilders:
             # Filter data_dict to only TestResultValue types
             filtered_dict: dict[str, t.Tests.TestResultValue] = {}
             for dict_key, dict_value in data_dict.items():
-                if type(dict_value) in (str, int, float, bool, type(None)):
+                if type(dict_value) in {str, int, float, bool, type(None)}:
                     filtered_dict[dict_key] = dict_value
-                elif type(dict_value) in (list, tuple):
+                elif type(dict_value) in {list, tuple}:
                     filtered_dict[dict_key] = list(dict_value)
                 elif type(dict_value) is dict:
                     filtered_dict[dict_key] = dict_value
@@ -324,14 +322,14 @@ class FlextTestsBuilders:
             elif type(model_result).__mro__ and r in type(model_result).__mro__:
                 if model_result.is_success:
                     result_val = model_result.value
-                    if (
-                        BaseModel in type(result_val).__mro__
-                        or type(result_val) in (list, dict)
-                    ):
+                    if BaseModel in type(result_val).__mro__ or type(result_val) in {
+                        list,
+                        dict,
+                    }:
                         resolved_value = result_val
                 else:
                     resolved_value = None
-            elif type(model_result) in (list, dict):
+            elif type(model_result) in {list, dict}:
                 resolved_value = model_result
 
         # Priority 12: Config shortcuts
@@ -365,7 +363,7 @@ class FlextTestsBuilders:
 
         # Apply transformation if provided
         if params.transform is not None and resolved_value is not None:
-            if type(resolved_value) in (list, tuple):
+            if type(resolved_value) in {list, tuple}:
                 resolved_value = [params.transform(item) for item in resolved_value]
             else:
                 resolved_value = params.transform(resolved_value)
@@ -1552,7 +1550,7 @@ class FlextTestsBuilders:
                                 if v is None:
                                     value_dict[str(k)] = None
                                 elif (
-                                    type(v) in (str, bool, int, float, list, dict)
+                                    type(v) in {str, bool, int, float, list, dict}
                                     or BaseModel in type(v).__mro__
                                 ):
                                     value_dict[str(k)] = v

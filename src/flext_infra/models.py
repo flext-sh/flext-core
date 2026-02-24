@@ -16,7 +16,7 @@ from flext_core import FlextModels as _FlextModels
 from pydantic import Field
 
 
-class InfraModels(_FlextModels):
+class FlextInfraModels(_FlextModels):
     """Pydantic model namespace for infrastructure services."""
 
     class ProjectInfo(_FlextModels.ArbitraryTypesModel):
@@ -113,12 +113,17 @@ class InfraModels(_FlextModels):
         total: int = Field(ge=0, description="Total repositories processed")
         success: int = Field(ge=0, description="Successful executions")
         fail: int = Field(ge=0, description="Failed executions")
-        results: list[InfraModels.PrExecutionResult] = Field(
+        results: list[FlextInfraModels.PrExecutionResult] = Field(
             default_factory=list, description="Per-repository results"
         )
 
+    class RepoUrls(_FlextModels.ArbitraryTypesModel):
+        """Repository URL pair with SSH and HTTPS variants."""
 
-FlextInfraModels = InfraModels
-im = InfraModels
+        ssh_url: str = Field(default="", description="SSH clone URL")
+        https_url: str = Field(default="", description="HTTPS clone URL")
 
-__all__ = ["FlextInfraModels", "InfraModels", "im"]
+
+m = FlextInfraModels
+
+__all__ = ["FlextInfraModels", "m"]

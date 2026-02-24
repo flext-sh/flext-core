@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Mapping
-from typing import get_origin, get_type_hints
+from typing import cast, get_origin, get_type_hints
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -36,7 +36,7 @@ class FlextUtilitiesChecker:
         """
         # get_logger returns StructlogLogger per runtime.pyi stub
 
-        return FlextRuntime.get_logger(__name__)
+        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
 
     @classmethod
     def compute_accepted_message_types(
@@ -142,9 +142,9 @@ class FlextUtilitiesChecker:
             if hint is None:
                 return None
             # If hint is a string or a type, it's valid MessageTypeSpecifier
-            if hint.__class__ is str:
+            if isinstance(hint, str):
                 return hint
-            if hint.__class__ is type:
+            if isinstance(hint, type):
                 # Type narrowing: hint is type after type check
                 # Return the type directly - type is a valid MessageTypeSpecifier component
                 # The return value will be str (from annotation branch) or type object
@@ -157,9 +157,9 @@ class FlextUtilitiesChecker:
         if annotation is not inspect.Signature.empty:
             # Type narrowing: annotation exists and is not empty
             # Annotation could be str, type, or a generic alias
-            if annotation.__class__ is str:
+            if isinstance(annotation, str):
                 return annotation
-            if annotation.__class__ is type:
+            if isinstance(annotation, type):
                 return annotation
             # For generic aliases and other types, convert to string representation
             return str(annotation)
@@ -273,17 +273,17 @@ class FlextUtilitiesChecker:
         # If expected is dict-like, accept dict-derived message types.
         if origin_type is dict and (
             message_origin is dict
-            or (message_type.__class__ is type and dict in message_type.__mro__)
+            or (isinstance(message_type, type) and dict in message_type.__mro__)
         ):
             return True
 
         # If message is dict-like, and expected is also dict-like.
         if (
-            message_type.__class__ is type
+            isinstance(message_type, type)
             and dict in message_type.__mro__
             and (
                 origin_type is dict
-                or (expected_type.__class__ is type and dict in expected_type.__mro__)
+                or (isinstance(expected_type, type) and dict in expected_type.__mro__)
             )
         ):
             return True
@@ -360,7 +360,7 @@ class FlextUtilitiesChecker:
         try:
             if hasattr(message_type, "__origin__"):
                 return message_origin is origin_type
-            if message_type.__class__ is type and origin_type.__class__ is type:
+            if isinstance(message_type, type) and isinstance(origin_type, type):
                 return origin_type in message_type.__mro__
             return message_type is expected_type
         except TypeError:
@@ -383,9 +383,9 @@ class FlextUtilitiesChecker:
 
         """
         try:
-            if origin_type.__class__ is type:
-                return message_type.__class__ is origin_type or (
-                    message_type.__class__ is type
+            if isinstance(origin_type, type):
+                return isinstance(message_type, origin_type) or (
+                    isinstance(message_type, type)
                     and origin_type in message_type.__mro__
                 )
             return True

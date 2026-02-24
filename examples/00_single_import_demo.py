@@ -68,9 +68,9 @@ def validate_transform_user(
     email_value = data.get("email")
 
     # Validate and extract with fixed types
-    if type(name_value) is not str or not name_value:
+    if not isinstance(name_value, str) or not name_value:
         return r[UserProfile].fail("Name is required and must be a string")
-    if type(email_value) is not str or not email_value:
+    if not isinstance(email_value, str) or not email_value:
         return r[UserProfile].fail("Email is required and must be a string")
 
     name: str = name_value

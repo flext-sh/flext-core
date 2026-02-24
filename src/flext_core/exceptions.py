@@ -17,7 +17,7 @@ from typing import ClassVar
 from pydantic import ConfigDict, Field, ValidationError as PydanticValidationError
 
 from flext_core.constants import c
-from flext_core._models.base import FlextModelFoundation
+from flext_core.models import m
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -31,7 +31,7 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    class _ParamsModel(FlextModelFoundation.ArbitraryTypesModel):
+    class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
         model_config = ConfigDict(

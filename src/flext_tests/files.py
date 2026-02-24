@@ -33,10 +33,10 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Self, TypeVar, overload
+from typing import ClassVar, Literal, Self, TypeVar, overload
 
 import yaml
-from flext_core import r, FlextRuntime
+from flext_core import FlextRuntime, r
 from pydantic import BaseModel
 
 from flext_tests.base import s
@@ -47,6 +47,31 @@ from flext_tests.utilities import u
 
 # TypeVar for Pydantic model loading (after imports for proper BaseModel reference)
 TModel = TypeVar("TModel", bound=BaseModel)
+
+# Literal types for file operations (used in signatures)
+_FormatLiteral = Literal["auto", "text", "bin", "json", "yaml", "csv"]
+_CompareModeLiteral = Literal["full", "keys", "values", "lines"]
+_OperationLiteral = Literal["read", "write", "append", "create"]
+_ErrorModeLiteral = Literal["raise", "warn", "ignore"]
+# Alias for file content union (str, bytes, ConfigMap, etc.)
+TestsFileContent = t.Tests.FileContent
+
+
+def _is_batch_content(content_raw: object) -> bool:
+    """Return True if content_raw is valid batch file content (str, bytes, dict-like, sequence, or BaseModel)."""
+    if type(content_raw) in {str, bytes}:
+        return True
+    if hasattr(content_raw, "keys") and hasattr(content_raw, "items"):
+        return True
+    if (
+        hasattr(content_raw, "__getitem__")
+        and hasattr(content_raw, "__len__")
+        and type(content_raw) not in {str, bytes}
+    ):
+        return True
+    return (
+        hasattr(type(content_raw), "__mro__") and BaseModel in type(content_raw).__mro__
+    )
 
 
 class FlextTestsFiles(s[t.Tests.TestResultValue]):
@@ -411,20 +436,20 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content_for_detect: (
             str | bytes | Mapping[str, t.Tests.PayloadValue] | list[list[str]]
         )
-        if type(actual_content) in (str, bytes):
+        if type(actual_content) in {str, bytes}:
             content_for_detect = actual_content
         elif isinstance(actual_content, dict):
             content_for_detect = {
                 str(k): FlextRuntime.normalize_to_general_value(v)
                 if (
                     v is None
-                    or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
+                    or type(v) in {str, int, float, bool, bytes, list, tuple, dict}
                     or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
                     or (hasattr(v, "keys") and hasattr(v, "items"))
                     or (
                         hasattr(v, "__len__")
                         and hasattr(v, "__getitem__")
-                        and type(v) not in (str, bytes)
+                        and type(v) not in {str, bytes}
                     )
                 )
                 else str(v)
@@ -438,11 +463,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         elif BaseModel in type(actual_content).__mro__:
             content_for_detect = u.Model.dump(actual_content)
         elif isinstance(actual_content, list):
-            if actual_content and type(actual_content[0]) in (list, tuple):
+            if actual_content and type(actual_content[0]) in {list, tuple}:
                 content_for_detect = [
                     [str(cell) for cell in row]
                     for row in actual_content
-                    if type(row) in (list, tuple)
+                    if type(row) in {list, tuple}
                 ]
             else:
                 content_for_detect = str(actual_content)
@@ -467,7 +492,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         elif actual_fmt == c.Tests.Files.Format.JSON:
             # Convert Mapping to dict if needed using u.Mapper.to_dict()
             # Only call to_dict if it's a Mapping but not a dict
-            if (hasattr(actual_content, "keys") and hasattr(actual_content, "items")) and not isinstance(actual_content, dict):
+            if (
+                hasattr(actual_content, "keys") and hasattr(actual_content, "items")
+            ) and not isinstance(actual_content, dict):
                 data = u.Mapper.to_dict(actual_content)
             elif isinstance(actual_content, dict):
                 data = actual_content
@@ -478,7 +505,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 encoding=params.enc,
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
-            if (hasattr(actual_content, "keys") and hasattr(actual_content, "items")) and not isinstance(actual_content, dict):
+            if (
+                hasattr(actual_content, "keys") and hasattr(actual_content, "items")
+            ) and not isinstance(actual_content, dict):
                 data = u.Mapper.to_dict(actual_content)
             elif isinstance(actual_content, dict):
                 data = actual_content
@@ -492,9 +521,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         elif actual_fmt == c.Tests.Files.Format.CSV:
             # Convert Sequence[Sequence[str]] to list[list[str]] for write_csv
             csv_content: list[list[str]]
-            if u.is_type(actual_content, "sequence") and type(actual_content) not in (str, bytes):
+            if u.is_type(actual_content, "sequence") and type(actual_content) not in {
+                str,
+                bytes,
+            }:
                 if all(
-                    u.is_type(row, "sequence") and type(row) not in (str, bytes)
+                    u.is_type(row, "sequence") and type(row) not in {str, bytes}
                     for row in actual_content
                 ):
                     csv_content = [list(row) for row in actual_content]
@@ -877,7 +909,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content1: str,
         content2: str,
         fmt: str,
-    ) -> tuple[Mapping[str, t.Tests.PayloadValue], Mapping[str, t.Tests.PayloadValue]] | None:
+    ) -> (
+        tuple[Mapping[str, t.Tests.PayloadValue], Mapping[str, t.Tests.PayloadValue]]
+        | None
+    ):
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:
@@ -1138,19 +1173,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         files_dict: dict[str, TestsFileContent]
         if hasattr(params.files, "keys") and hasattr(params.files, "items"):
             files_dict = {str(k): v for k, v in params.files.items()}
-        elif hasattr(params.files, "__getitem__") and hasattr(params.files, "__len__") and not isinstance(params.files, str):
+        elif (
+            hasattr(params.files, "__getitem__")
+            and hasattr(params.files, "__len__")
+            and not isinstance(params.files, str)
+        ):
             files_dict = {}
             for item in params.files:
                 if isinstance(item, tuple) and len(item) == 2:
                     name, content_raw = item
                     if isinstance(name, str):
                         content: TestsFileContent
-                        if (
-                            type(content_raw) in (str, bytes)
-                            or (hasattr(content_raw, "keys") and hasattr(content_raw, "items"))
-                            or (hasattr(content_raw, "__getitem__") and hasattr(content_raw, "__len__") and type(content_raw) not in (str, bytes))
-                            or (hasattr(type(content_raw), "__mro__") and BaseModel in type(content_raw).__mro__)
-                        ):
+                        if _is_batch_content(content_raw):
                             content = content_raw
                             files_dict[name] = content
         else:
@@ -1176,10 +1210,27 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                                     str(k): FlextRuntime.normalize_to_general_value(v)
                                     if (
                                         v is None
-                                        or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
-                                        or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                                        or type(v)
+                                        in {
+                                            str,
+                                            int,
+                                            float,
+                                            bool,
+                                            bytes,
+                                            list,
+                                            tuple,
+                                            dict,
+                                        }
+                                        or (
+                                            hasattr(type(v), "__mro__")
+                                            and BaseModel in type(v).__mro__
+                                        )
                                         or (hasattr(v, "keys") and hasattr(v, "items"))
-                                        or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
+                                        or (
+                                            hasattr(v, "__len__")
+                                            and hasattr(v, "__getitem__")
+                                            and type(v) not in {str, bytes}
+                                        )
                                     )
                                     else str(v)
                                     for k, v in content.items()
@@ -1194,11 +1245,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         return r[Path].fail(f"Failed to create {name}: {e}")
                 case "read":
                     # For read, content should be Path or str - wrap in Path() for type safety
-                    path = (
-                        Path(content)
-                        if type(content) in (Path, str)
-                        else Path(name)
-                    )
+                    path = Path(content) if type(content) in {Path, str} else Path(name)
                     # Read file - we only care about success/failure, not the exact return type
                     # Use model_cls=None for simpler type handling - batch doesn't need model parsing
                     read_result = self.read(path, model_cls=None)
@@ -1208,11 +1255,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     return r[Path].fail(read_result.error or f"Failed to read {name}")
                 case "delete":
                     # For delete, content should be Path or str - wrap in Path() for type safety
-                    path = (
-                        Path(content)
-                        if type(content) in (Path, str)
-                        else Path(name)
-                    )
+                    path = Path(content) if type(content) in {Path, str} else Path(name)
                     try:
                         Path(path).unlink(missing_ok=True)
                         return r[Path].ok(Path(path))
@@ -1396,7 +1439,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 filename = name if "." in name else f"{name}{default_ext}"
                 # Determine if we need to adjust extension based on content type
                 if "." not in name and (
-                    u.is_type(data, "dict") or (hasattr(type(data), "__mro__") and BaseModel in type(data).__mro__)
+                    u.is_type(data, "dict")
+                    or (
+                        hasattr(type(data), "__mro__")
+                        and BaseModel in type(data).__mro__
+                    )
                 ):
                     filename = f"{name}.json"
                 else:
@@ -1406,12 +1453,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         "." not in name
                         and hasattr(data, "__getitem__")
                         and hasattr(data, "__len__")
-                        and type(data) not in (str, bytes)
+                        and type(data) not in {str, bytes}
                         and len(data) > 0
                         and all(
                             hasattr(row, "__getitem__")
                             and hasattr(row, "__len__")
-                            and type(row) not in (str, bytes)
+                            and type(row) not in {str, bytes}
                             for row in data
                         )
                     )
@@ -1624,7 +1671,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Extract value from result
             value = getattr(content, "value", content)
             # Return extracted value - must be one of the FileContent types
-            if type(value) in (str, bytes) or (hasattr(type(value), "__mro__") and (BaseModel in type(value).__mro__ or m.ConfigMap in type(value).__mro__)):
+            if type(value) in {str, bytes} or (
+                hasattr(type(value), "__mro__")
+                and (
+                    BaseModel in type(value).__mro__
+                    or m.ConfigMap in type(value).__mro__
+                )
+            ):
                 return value
             if hasattr(value, "keys") and hasattr(value, "items"):
                 return m.ConfigMap(
@@ -1632,19 +1685,33 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         str(k): FlextRuntime.normalize_to_general_value(v)
                         if (
                             v is None
-                            or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
-                            or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                            or type(v)
+                            in {str, int, float, bool, bytes, list, tuple, dict}
+                            or (
+                                hasattr(type(v), "__mro__")
+                                and BaseModel in type(v).__mro__
+                            )
                             or (hasattr(v, "keys") and hasattr(v, "items"))
-                            or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
+                            or (
+                                hasattr(v, "__len__")
+                                and hasattr(v, "__getitem__")
+                                and type(v) not in {str, bytes}
+                            )
                         )
                         else str(v)
                         for k, v in value.items()
                     }
                 )
-            if hasattr(value, "__getitem__") and hasattr(value, "__len__") and type(value) not in (str, bytes):
+            if (
+                hasattr(value, "__getitem__")
+                and hasattr(value, "__len__")
+                and type(value) not in {str, bytes}
+            ):
                 rows: list[list[str]] = []
                 for row in value:
-                    if not (hasattr(row, "__getitem__") and hasattr(row, "__len__")) or type(row) in (str, bytes):
+                    if not (
+                        hasattr(row, "__getitem__") and hasattr(row, "__len__")
+                    ) or type(row) in {str, bytes}:
                         rows = []
                         break
                     rows.append([str(cell) for cell in row])
@@ -1652,7 +1719,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     return rows
             return str(value)
         # Content is already a FileContent type (not wrapped in Result)
-        if type(content) in (str, bytes) or (hasattr(type(content), "__mro__") and (BaseModel in type(content).__mro__ or m.ConfigMap in type(content).__mro__)):
+        if type(content) in {str, bytes} or (
+            hasattr(type(content), "__mro__")
+            and (
+                BaseModel in type(content).__mro__
+                or m.ConfigMap in type(content).__mro__
+            )
+        ):
             return content
         if hasattr(content, "keys") and hasattr(content, "items"):
             return m.ConfigMap(
@@ -1660,19 +1733,31 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     str(k): FlextRuntime.normalize_to_general_value(v)
                     if (
                         v is None
-                        or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
-                        or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                        or type(v) in {str, int, float, bool, bytes, list, tuple, dict}
+                        or (
+                            hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__
+                        )
                         or (hasattr(v, "keys") and hasattr(v, "items"))
-                        or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
+                        or (
+                            hasattr(v, "__len__")
+                            and hasattr(v, "__getitem__")
+                            and type(v) not in {str, bytes}
+                        )
                     )
                     else str(v)
                     for k, v in content.items()
                 }
             )
-        if hasattr(content, "__getitem__") and hasattr(content, "__len__") and type(content) not in (str, bytes):
+        if (
+            hasattr(content, "__getitem__")
+            and hasattr(content, "__len__")
+            and type(content) not in {str, bytes}
+        ):
             content_rows: list[list[str]] = []
             for row in content:
-                if not (hasattr(row, "__getitem__") and hasattr(row, "__len__")) or type(row) in (str, bytes):
+                if not (
+                    hasattr(row, "__getitem__") and hasattr(row, "__len__")
+                ) or type(row) in {str, bytes}:
                     content_rows = []
                     break
                 content_rows.append([str(cell) for cell in row])
@@ -1728,10 +1813,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                             str(k): FlextRuntime.normalize_to_general_value(v)
                             if (
                                 v is None
-                                or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
-                                or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                                or type(v)
+                                in {str, int, float, bool, bytes, list, tuple, dict}
+                                or (
+                                    hasattr(type(v), "__mro__")
+                                    and BaseModel in type(v).__mro__
+                                )
                                 or (hasattr(v, "keys") and hasattr(v, "items"))
-                                or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
+                                or (
+                                    hasattr(v, "__len__")
+                                    and hasattr(v, "__getitem__")
+                                    and type(v) not in {str, bytes}
+                                )
                             )
                             else str(v)
                             for k, v in parsed_raw.items()

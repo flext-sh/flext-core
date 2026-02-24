@@ -1,6 +1,6 @@
 """Workspace-wide PR automation service.
 
-Wraps multi-repository PR operations with FlextResult error handling,
+Wraps multi-repository PR operations with r error handling,
 replacing scripts/github/pr_workspace.py with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,10 +13,9 @@ import time
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
+from flext_core import r, t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.git import GitService
 from flext_infra.reporting import ReportingService
 from flext_infra.selection import ProjectSelector
@@ -43,14 +42,14 @@ class PrWorkspaceManager:
         self._selector = selector or ProjectSelector()
         self._reporting = reporting or ReportingService()
 
-    def has_changes(self, repo_root: Path) -> FlextResult[bool]:
+    def has_changes(self, repo_root: Path) -> r[bool]:
         """Check if the repository has uncommitted changes.
 
         Args:
             repo_root: Repository root directory.
 
         Returns:
-            FlextResult[bool] with True if changes exist.
+            r[bool] with True if changes exist.
 
         """
         result = self._runner.capture(
@@ -65,7 +64,7 @@ class PrWorkspaceManager:
         self,
         repo_root: Path,
         branch: str,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Checkout or create a branch in the repository.
 
         Handles local changes, fetch from origin, and force-create scenarios.
@@ -75,7 +74,7 @@ class PrWorkspaceManager:
             branch: Branch name to checkout.
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         if not branch:
@@ -117,7 +116,7 @@ class PrWorkspaceManager:
         self,
         repo_root: Path,
         branch: str,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Commit and push pending changes.
 
         Args:
@@ -125,7 +124,7 @@ class PrWorkspaceManager:
             branch: Branch name for push target.
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         changes_result = self.has_changes(repo_root)
@@ -178,7 +177,7 @@ class PrWorkspaceManager:
         repo_root: Path,
         workspace_root: Path,
         pr_args: Mapping[str, str],
-    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
+    ) -> r[Mapping[str, t.ScalarValue]]:
         """Execute a PR operation on a single repository.
 
         Args:
@@ -187,7 +186,7 @@ class PrWorkspaceManager:
             pr_args: PR argument dictionary.
 
         Returns:
-            FlextResult with execution result info.
+            r with execution result info.
 
         """
         display = self._repo_display_name(repo_root, workspace_root)
@@ -208,22 +207,22 @@ class PrWorkspaceManager:
 
         started = time.monotonic()
         if log_path is not None:
-            execution = self._runner.run_to_file(command, log_path)
-            if execution.is_failure:
+            to_file_result = self._runner.run_to_file(command, log_path)
+            if to_file_result.is_failure:
                 return r[Mapping[str, t.ScalarValue]].fail(
-                    execution.error or "command execution error",
+                    to_file_result.error or "command execution error",
                 )
-            exit_code = execution.value
+            exit_code: int = to_file_result.value
         else:
-            execution = self._runner.run_raw(command)
-            if execution.is_failure:
+            raw_result = self._runner.run_raw(command)
+            if raw_result.is_failure:
                 return r[Mapping[str, t.ScalarValue]].fail(
-                    execution.error or "command execution error",
+                    raw_result.error or "command execution error",
                 )
-            exit_code = execution.value.exit_code
+            exit_code = raw_result.value.exit_code
 
         elapsed = int(time.monotonic() - started)
-        status = ic.Status.OK if exit_code == 0 else ic.Status.FAIL
+        status = c.Status.OK if exit_code == 0 else c.Status.FAIL
         return r[Mapping[str, t.ScalarValue]].ok({
             "display": display,
             "status": status,
@@ -242,7 +241,7 @@ class PrWorkspaceManager:
         checkpoint: bool = True,
         fail_fast: bool = False,
         pr_args: Mapping[str, str] | None = None,
-    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
+    ) -> r[dict[str, int | list[Mapping[str, t.ScalarValue]]]]:
         """Run PR operations across workspace repositories.
 
         Args:
@@ -255,7 +254,7 @@ class PrWorkspaceManager:
             pr_args: PR operation arguments.
 
         Returns:
-            FlextResult with orchestration summary.
+            r with orchestration summary.
 
         """
         projects_result = self._selector.resolve_projects(
@@ -263,7 +262,7 @@ class PrWorkspaceManager:
             projects or [],
         )
         if projects_result.is_failure:
-            return r[Mapping[str, t.ScalarValue]].fail(
+            return r[dict[str, int | list[Mapping[str, t.ScalarValue]]]].fail(
                 projects_result.error or "project resolution failed",
             )
 
@@ -293,7 +292,7 @@ class PrWorkspaceManager:
                     break
 
         total = len(repos)
-        return r[Mapping[str, t.ScalarValue]].ok({
+        return r[dict[str, int | list[Mapping[str, t.ScalarValue]]]].ok({
             "total": total,
             "success": total - failures,
             "fail": failures,

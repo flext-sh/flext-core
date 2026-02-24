@@ -41,12 +41,13 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from typing import cast
 
 from pydantic import BaseModel
 
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -85,7 +86,7 @@ class FlextUtilitiesCache:
             Structlog logger instance with all logging methods.
 
         """
-        return FlextRuntime.get_logger(__name__)
+        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
 
     @staticmethod
     def normalize_component(
@@ -135,7 +136,7 @@ class FlextUtilitiesCache:
                 for k, v in dict_component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
-        if component.__class__ in (str, int, float, bool, None.__class__):
+        if component.__class__ in {str, int, float, bool, None.__class__}:
             return component
         # Handle collections
         if component.__class__ is set:
@@ -147,9 +148,9 @@ class FlextUtilitiesCache:
                 FlextUtilitiesCache.normalize_component(item) for item in items_set
             ]
             return tuple(normalized_items)
-        if component.__class__ in (list, tuple) or (
+        if component.__class__ in {list, tuple} or (
             hasattr(component, "__getitem__")
-            and component.__class__ not in (str, bytes)
+            and component.__class__ not in {str, bytes}
         ):
             # Type narrowing: component is Sequence, so items are t.GuardInputValue
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
@@ -188,7 +189,7 @@ class FlextUtilitiesCache:
         """
         if key.__class__ is str:
             return (0, key.lower())
-        if key.__class__ in (int, float):
+        if key.__class__ in {int, float}:
             return (1, str(key))
         return (2, str(key))
 

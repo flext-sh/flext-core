@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flext_core.result import FlextResult, r
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.toml_io import TomlService
 
 _SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$")
@@ -127,7 +127,7 @@ class VersioningService:
             FlextResult[str] with the version string.
 
         """
-        pyproject = workspace_root / ic.Files.PYPROJECT_FILENAME
+        pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
         doc_result = self._toml.read_document(pyproject)
         if doc_result.is_failure:
             return r[str].fail(doc_result.error or "read failed")
@@ -155,7 +155,7 @@ class VersioningService:
             FlextResult[bool] with True on success.
 
         """
-        pyproject = project_path / ic.Files.PYPROJECT_FILENAME
+        pyproject = project_path / c.Files.PYPROJECT_FILENAME
         doc_result = self._toml.read_document(pyproject)
         if doc_result.is_failure:
             return r[bool].fail(doc_result.error or "read failed")

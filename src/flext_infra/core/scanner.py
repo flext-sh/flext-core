@@ -17,7 +17,7 @@ from pathlib import Path
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 
 
 class TextPatternScanner:
@@ -27,7 +27,7 @@ class TextPatternScanner:
     modes (present = matches are violations, absent = no matches is a violation).
     """
 
-    _ENCODING = ic.Encoding.DEFAULT
+    _ENCODING = c.Encoding.DEFAULT
 
     def scan(
         self,
@@ -58,7 +58,9 @@ class TextPatternScanner:
                     f"root directory does not exist: {root}",
                 )
             if not includes:
-                return r[Mapping[str, t.ScalarValue]].fail("at least one include glob required")
+                return r[Mapping[str, t.ScalarValue]].fail(
+                    "at least one include glob required"
+                )
             if match_mode not in {"present", "absent"}:
                 return r[Mapping[str, t.ScalarValue]].fail(
                     f"invalid match_mode: {match_mode}",
@@ -110,7 +112,7 @@ class TextPatternScanner:
         for file_path in files:
             try:
                 text = file_path.read_text(
-                    encoding=ic.Encoding.DEFAULT,
+                    encoding=c.Encoding.DEFAULT,
                     errors="ignore",
                 )
             except OSError:

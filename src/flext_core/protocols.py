@@ -12,12 +12,12 @@ from types import ModuleType, TracebackType
 from typing import (
     Protocol,
     Self,
-    _ProtocolMeta,  # noqa: PLC2701
+    _ProtocolMeta,
     runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC2701
+from pydantic._internal._model_construction import ModelMetaclass
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 

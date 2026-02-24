@@ -16,7 +16,7 @@ from pathlib import Path
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.json_io import JsonService
 from flext_infra.selection import ProjectSelector
 from flext_infra.templates import TemplateEngine
@@ -94,7 +94,7 @@ class WorkflowSyncer:
 
         """
         try:
-            body = template_path.read_text(encoding=ic.Encoding.DEFAULT)
+            body = template_path.read_text(encoding=c.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"failed to read template: {exc}")
 
@@ -133,12 +133,12 @@ class WorkflowSyncer:
 
         try:
             if destination.exists():
-                current = destination.read_text(encoding=ic.Encoding.DEFAULT)
+                current = destination.read_text(encoding=c.Encoding.DEFAULT)
                 if current != rendered_template:
                     if apply:
                         _ = destination.write_text(
                             rendered_template,
-                            encoding=ic.Encoding.DEFAULT,
+                            encoding=c.Encoding.DEFAULT,
                         )
                     operations.append(
                         SyncOperation(
@@ -162,7 +162,7 @@ class WorkflowSyncer:
                     workflows_dir.mkdir(parents=True, exist_ok=True)
                     _ = destination.write_text(
                         rendered_template,
-                        encoding=ic.Encoding.DEFAULT,
+                        encoding=c.Encoding.DEFAULT,
                     )
                 operations.append(
                     SyncOperation(
@@ -248,13 +248,14 @@ class WorkflowSyncer:
                 all_operations.extend(ops_result.value)
 
         if report_path is not None:
-            self._write_report(report_path, apply, all_operations)
+            self._write_report(report_path, apply=apply, operations=all_operations)
 
         return r[list[SyncOperation]].ok(all_operations)
 
     def _write_report(
         self,
         report_path: Path,
+        *,
         apply: bool,
         operations: list[SyncOperation],
     ) -> None:

@@ -14,12 +14,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core._utilities.conversion import FlextUtilitiesConversion
-from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T, t
+from flext_core.typings import t
 
 
 class FlextUtilitiesPagination:
@@ -106,14 +104,12 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def prepare_pagination_data(
-        data: Sequence[T] | None,
+        data: Sequence[t.ConfigMapValue] | None,
         total: int | None,
         *,
         page: int,
         page_size: int,
-    ) -> r[
-        Mapping[str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]]
-    ]:
+    ) -> r[Mapping[str, t.ConfigMapValue]]:
         """Prepare pagination data structure.
 
         Args:
@@ -135,31 +131,19 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r[
-                Mapping[
-                    str,
-                    t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
-                ]
-            ].fail(
+            return r[Mapping[str, t.ConfigMapValue]].fail(
                 f"Page {page} exceeds total pages {total_pages}",
             )
 
         has_next = page < total_pages
         has_prev = page > 1
 
-        # Convert Sequence[T] to t.ConfigMapValue-compatible list
-        # First convert T to PayloadValue, then normalize recursively
-        data_list: list[t.ScalarValue] = []
+        data_list: list[t.ConfigMapValue] = []
         for item in data:
-            general_value = FlextUtilitiesConversion.to_general_value_type(item)
-            normalized = FlextRuntime.normalize_to_general_value(general_value)
+            normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
 
-        return r[
-            Mapping[
-                str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
-            ]
-        ].ok({
+        return r[Mapping[str, t.ConfigMapValue]].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -173,14 +157,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: Mapping[
-            str,
-            t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
-        ],
+        pagination_data: Mapping[str, t.ConfigMapValue],
         message: str | None = None,
-    ) -> r[
-        Mapping[str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]]
-    ]:
+    ) -> r[Mapping[str, t.ConfigMapValue]]:
         """Build paginated response dictionary.
 
         Args:
@@ -195,55 +174,19 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r[
-                Mapping[
-                    str,
-                    t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
-                ]
-            ].fail(
+            return r[Mapping[str, t.ConfigMapValue]].fail(
                 "Invalid pagination data structure",
             )
 
-        data_typed: t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
-        pagination_typed: (
-            t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
-        )
-
-        # Validate types match t.ConfigMapValue (isinstance for type narrowing)
-        if isinstance(data, (str, int, float, bool, type(None))):
-            data_typed = data
-        elif isinstance(data, Sequence):
-            data_typed = data
-        elif isinstance(data, Mapping):
-            data_typed = data
-        else:
-            data_typed = str(data)
-
-        if isinstance(pagination, (str, int, float, bool, type(None))):
-            pagination_typed = pagination
-        elif isinstance(pagination, Sequence):
-            pagination_typed = pagination
-        elif isinstance(pagination, Mapping):
-            pagination_typed = pagination
-        else:
-            pagination_typed = str(pagination)
-
-        response: Mapping[
-            str,
-            t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
-        ] = {
-            "data": data_typed,
-            "pagination": pagination_typed,
+        response: Mapping[str, t.ConfigMapValue] = {
+            "data": data,
+            "pagination": pagination,
         }
 
         if message is not None:
             response = {**response, "message": message}
 
-        return r[
-            Mapping[
-                str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
-            ]
-        ].ok(response)
+        return r[Mapping[str, t.ConfigMapValue]].ok(response)
 
     @staticmethod
     def extract_pagination_config(

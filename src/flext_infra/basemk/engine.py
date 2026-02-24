@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, override
 
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
 from jinja2 import (
@@ -17,7 +17,7 @@ from jinja2 import (
     select_autoescape,
 )
 
-from flext_infra.models import im
+from flext_infra.models import m
 
 
 class TemplateEngine(FlextService[str]):
@@ -50,7 +50,7 @@ class TemplateEngine(FlextService[str]):
     def execute(self) -> r[str]:
         return self.render_all()
 
-    def render_all(self, config: im.BaseMkConfig | None = None) -> r[str]:
+    def render_all(self, config: m.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
         context: Mapping[str, t.ConfigMapValue] = {
@@ -70,21 +70,21 @@ class TemplateEngine(FlextService[str]):
             return r[str].fail(f"base.mk template render failed: {exc}")
 
     @staticmethod
-    def _default_config() -> im.BaseMkConfig:
+    def _default_config() -> m.BaseMkConfig:
         """Return the default base.mk configuration."""
-        return im.BaseMkConfig(
-            project_name="unnamed",
-            python_version="3.13",
-            core_stack="python",
-            package_manager="poetry",
-            source_dir="src",
-            tests_dir="tests",
-            lint_gates=["lint", "format", "pyrefly", "mypy", "pyright"],
-            test_command="pytest",
-        )
+        return m.BaseMkConfig.model_validate({
+            "project_name": "unnamed",
+            "python_version": "3.13",
+            "core_stack": "python",
+            "package_manager": "poetry",
+            "source_dir": "src",
+            "tests_dir": "tests",
+            "lint_gates": ["lint", "format", "pyrefly", "mypy", "pyright"],
+            "test_command": "pytest",
+        })
 
     @classmethod
-    def default_config(cls) -> im.BaseMkConfig:
+    def default_config(cls) -> m.BaseMkConfig:
         """Return the default base.mk configuration."""
         return cls._default_config()
 

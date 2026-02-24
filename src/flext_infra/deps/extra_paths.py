@@ -10,7 +10,7 @@ import tomlkit
 from flext_core import r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.deps.path_sync import extract_dep_name
 from flext_infra.paths import PathResolver
 from flext_infra.toml_io import TomlService
@@ -188,7 +188,7 @@ def sync_extra_paths(
     """Synchronize extraPaths and mypy_path across projects."""
     if project_dirs:
         for project_dir in project_dirs:
-            pyproject = project_dir / ic.Files.PYPROJECT_FILENAME
+            pyproject = project_dir / c.Files.PYPROJECT_FILENAME
             sync_result = sync_one(
                 pyproject, dry_run=dry_run, is_root=(project_dir == ROOT)
             )
@@ -198,7 +198,7 @@ def sync_extra_paths(
                 _ = sys.stdout.write(f"Updated {pyproject}\n")
         return r[int].ok(0)
 
-    pyproject = ROOT / ic.Files.PYPROJECT_FILENAME
+    pyproject = ROOT / c.Files.PYPROJECT_FILENAME
     if not pyproject.exists():
         return r[int].fail(f"Missing {pyproject}")
     sync_result = sync_one(pyproject, dry_run=dry_run, is_root=True)

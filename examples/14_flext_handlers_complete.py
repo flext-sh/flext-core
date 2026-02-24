@@ -17,8 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from flext_core import c, h, m, r, s, u
 
 
@@ -232,7 +230,12 @@ def main() -> None:
         data = result.value
         handlers = data.get("handlers_demonstrated", [])
         patterns = data.get("cqrs_patterns", [])
-        _is_seq = lambda x: type(x) in (list, tuple) or (hasattr(x, "__getitem__") and hasattr(x, "__len__"))
+
+        def _is_seq(x: object) -> bool:
+            return type(x) in {list, tuple} or (
+                hasattr(x, "__getitem__") and hasattr(x, "__len__")
+            )
+
         handler_count = len(handlers) if _is_seq(handlers) else 0
         pattern_count = len(patterns) if _is_seq(patterns) else 0
         print(f"\n✅ Demonstrated {handler_count} handler patterns")

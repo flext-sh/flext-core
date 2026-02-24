@@ -13,9 +13,9 @@ from pathlib import Path
 
 from flext_core.result import FlextResult, r
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
-from flext_infra.models import im
+from flext_infra.models import m
 
 
 class ProjectSelector:
@@ -33,9 +33,9 @@ class ProjectSelector:
 
     def filter_projects(
         self,
-        projects: list[im.ProjectInfo],
+        projects: list[m.ProjectInfo],
         kind: str,
-    ) -> FlextResult[list[im.ProjectInfo]]:
+    ) -> FlextResult[list[m.ProjectInfo]]:
         """Filter a list of projects by their kind.
 
         Kind is encoded in the ``stack`` field as ``{tech}/{kind}``.
@@ -49,15 +49,15 @@ class ProjectSelector:
 
         """
         if kind == "all":
-            return r[list[im.ProjectInfo]].ok(list(projects))
+            return r[list[m.ProjectInfo]].ok(list(projects))
         filtered = [p for p in projects if p.stack.endswith(f"/{kind}")]
-        return r[list[im.ProjectInfo]].ok(filtered)
+        return r[list[m.ProjectInfo]].ok(filtered)
 
     def resolve_projects(
         self,
         workspace_root: Path,
         names: list[str],
-    ) -> FlextResult[list[im.ProjectInfo]]:
+    ) -> FlextResult[list[m.ProjectInfo]]:
         """Resolve project names into ProjectInfo structures.
 
         Args:
@@ -70,13 +70,13 @@ class ProjectSelector:
         """
         discover_result = self._discovery.discover_projects(workspace_root)
         if discover_result.is_failure:
-            return r[list[im.ProjectInfo]].fail(
+            return r[list[m.ProjectInfo]].fail(
                 discover_result.error or "discovery failed",
             )
 
         projects = discover_result.value
         if not names:
-            return r[list[im.ProjectInfo]].ok(
+            return r[list[m.ProjectInfo]].ok(
                 sorted(projects, key=lambda p: p.name),
             )
 
@@ -84,12 +84,12 @@ class ProjectSelector:
         missing = [name for name in names if name not in by_name]
         if missing:
             missing_text = ", ".join(sorted(missing))
-            return r[list[im.ProjectInfo]].fail(
+            return r[list[m.ProjectInfo]].fail(
                 f"unknown projects: {missing_text}",
             )
 
         resolved = [by_name[name] for name in names]
-        return r[list[im.ProjectInfo]].ok(
+        return r[list[m.ProjectInfo]].ok(
             sorted(resolved, key=lambda p: p.name),
         )
 
@@ -97,7 +97,7 @@ class ProjectSelector:
         self,
         workspace_root: Path,
         names: list[str] | None = None,
-    ) -> FlextResult[list[im.ProjectInfo]]:
+    ) -> FlextResult[list[m.ProjectInfo]]:
         """Resolve projects that have pyproject.toml (Python only).
 
         Args:
@@ -113,9 +113,9 @@ class ProjectSelector:
             return result
 
         python_only = [
-            p for p in result.value if (p.path / ic.Files.PYPROJECT_FILENAME).exists()
+            p for p in result.value if (p.path / c.Files.PYPROJECT_FILENAME).exists()
         ]
-        return r[list[im.ProjectInfo]].ok(python_only)
+        return r[list[m.ProjectInfo]].ok(python_only)
 
 
 __all__ = ["ProjectSelector"]

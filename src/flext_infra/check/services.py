@@ -15,19 +15,19 @@ from pathlib import Path
 from typing import override
 
 import structlog
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 from flext_infra.json_io import JsonService
-from flext_infra.models import im
+from flext_infra.models import m
 from flext_infra.paths import PathResolver
 from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
 
-DEFAULT_GATES = ic.Gates.DEFAULT_CSV
+DEFAULT_GATES = c.Gates.DEFAULT_CSV
 _REQUIRED_EXCLUDES = ['"**/*_pb2*.py"', '"**/*_pb2_grpc*.py"']
 _RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
 _MARKDOWN_RE = re.compile(
@@ -53,7 +53,7 @@ class _CheckIssue:
 
 @dataclass
 class _GateExecution:
-    result: im.GateResult
+    result: m.GateResult
     issues: list[_CheckIssue] = field(default_factory=list)
     raw_output: str = ""
 
@@ -144,7 +144,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
 
         for index, project_name in enumerate(projects, 1):
             project_dir = self._workspace_root / project_name
-            pyproject_path = project_dir / ic.Files.PYPROJECT_FILENAME
+            pyproject_path = project_dir / c.Files.PYPROJECT_FILENAME
             if not project_dir.is_dir() or not pyproject_path.exists():
                 _ = sys.stdout.write(
                     f"[{index:2d}/{total:2d}] {project_name} ... skipped\n"
@@ -178,7 +178,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         md_path = report_base / "check-report.md"
         _ = md_path.write_text(
             self.generate_markdown_report(results, resolved_gates, timestamp),
-            encoding=ic.Encoding.DEFAULT,
+            encoding=c.Encoding.DEFAULT,
         )
 
         sarif_path = report_base / "check-report.sarif"
@@ -216,57 +216,57 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
 
         return r[list[_ProjectResult]].ok(results)
 
-    def lint(self, project_dir: Path) -> r[im.GateResult]:
+    def lint(self, project_dir: Path) -> r[m.GateResult]:
         """Run the Ruff lint gate for a project."""
-        return r[im.GateResult].ok(self._run_ruff_lint(project_dir).result)
+        return r[m.GateResult].ok(self._run_ruff_lint(project_dir).result)
 
-    def format(self, project_dir: Path) -> r[im.GateResult]:
+    def format(self, project_dir: Path) -> r[m.GateResult]:
         """Run the Ruff format check gate for a project."""
-        return r[im.GateResult].ok(self._run_ruff_format(project_dir).result)
+        return r[m.GateResult].ok(self._run_ruff_format(project_dir).result)
 
-    def pyrefly(self, project_dir: Path, reports_dir: Path) -> r[im.GateResult]:
+    def pyrefly(self, project_dir: Path, reports_dir: Path) -> r[m.GateResult]:
         """Run the Pyrefly type-checking gate for a project."""
-        return r[im.GateResult].ok(self._run_pyrefly(project_dir, reports_dir).result)
+        return r[m.GateResult].ok(self._run_pyrefly(project_dir, reports_dir).result)
 
-    def mypy(self, project_dir: Path) -> r[im.GateResult]:
+    def mypy(self, project_dir: Path) -> r[m.GateResult]:
         """Run the Mypy gate for a project."""
-        return r[im.GateResult].ok(self._run_mypy(project_dir).result)
+        return r[m.GateResult].ok(self._run_mypy(project_dir).result)
 
-    def pyright(self, project_dir: Path) -> r[im.GateResult]:
+    def pyright(self, project_dir: Path) -> r[m.GateResult]:
         """Run the Pyright gate for a project."""
-        return r[im.GateResult].ok(self._run_pyright(project_dir).result)
+        return r[m.GateResult].ok(self._run_pyright(project_dir).result)
 
-    def security(self, project_dir: Path) -> r[im.GateResult]:
+    def security(self, project_dir: Path) -> r[m.GateResult]:
         """Run the Bandit security gate for a project."""
-        return r[im.GateResult].ok(self._run_bandit(project_dir).result)
+        return r[m.GateResult].ok(self._run_bandit(project_dir).result)
 
-    def markdown(self, project_dir: Path) -> r[im.GateResult]:
+    def markdown(self, project_dir: Path) -> r[m.GateResult]:
         """Run the Markdown lint gate for a project."""
-        return r[im.GateResult].ok(self._run_markdown(project_dir).result)
+        return r[m.GateResult].ok(self._run_markdown(project_dir).result)
 
-    def go(self, project_dir: Path) -> r[im.GateResult]:
+    def go(self, project_dir: Path) -> r[m.GateResult]:
         """Run Go vet and gofmt checks for a Go project."""
-        return r[im.GateResult].ok(self._run_go(project_dir).result)
+        return r[m.GateResult].ok(self._run_go(project_dir).result)
 
     @staticmethod
     def resolve_gates(gates: Sequence[str]) -> r[list[str]]:
         """Validate and normalize user-provided gate names."""
         allowed = {
-            ic.Gates.LINT,
-            ic.Gates.FORMAT,
-            ic.Gates.PYREFLY,
-            ic.Gates.MYPY,
-            ic.Gates.PYRIGHT,
-            ic.Gates.SECURITY,
-            ic.Gates.MARKDOWN,
-            ic.Gates.GO,
+            c.Gates.LINT,
+            c.Gates.FORMAT,
+            c.Gates.PYREFLY,
+            c.Gates.MYPY,
+            c.Gates.PYRIGHT,
+            c.Gates.SECURITY,
+            c.Gates.MARKDOWN,
+            c.Gates.GO,
         }
         resolved: list[str] = []
         for gate in gates:
             name = gate.strip()
             if not name:
                 continue
-            mapped = ic.Gates.PYREFLY if name == ic.Gates.TYPE_ALIAS else name
+            mapped = c.Gates.PYREFLY if name == c.Gates.TYPE_ALIAS else name
             if mapped not in allowed:
                 return r[list[str]].fail(f"ERROR: unknown gate '{gate}'")
             if mapped not in resolved:
@@ -312,7 +312,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             for gate in gates:
                 gate_result = project.gates.get(gate)
                 row += f" {len(gate_result.issues) if gate_result else 0} |"
-            status = ic.Status.PASS if project.passed else f"**{ic.Status.FAIL}**"
+            status = c.Status.PASS if project.passed else f"**{c.Status.FAIL}**"
             if not project.passed:
                 failed_count += 1
             row += f" {project.total_errors} | {status} |"
@@ -343,9 +343,14 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     "",
                     "```",
                 ])
-                lines.extend(_format_issue(issue) for issue in gate_result.issues[:_MAX_DISPLAY_ISSUES])
+                lines.extend(
+                    _format_issue(issue)
+                    for issue in gate_result.issues[:_MAX_DISPLAY_ISSUES]
+                )
                 if len(gate_result.issues) > _MAX_DISPLAY_ISSUES:
-                    lines.append(f"... and {len(gate_result.issues) - _MAX_DISPLAY_ISSUES} more errors")
+                    lines.append(
+                        f"... and {len(gate_result.issues) - _MAX_DISPLAY_ISSUES} more errors"
+                    )
                 lines.extend(["```", ""])
 
         return "\n".join(lines)
@@ -357,20 +362,20 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     ) -> Mapping[str, t.ConfigMapValue]:
         """Render gate results as a SARIF 2.1.0 payload."""
         tool_info = {
-            ic.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
-            ic.Gates.FORMAT: (
+            c.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
+            c.Gates.FORMAT: (
                 "Ruff Formatter",
                 "https://docs.astral.sh/ruff/formatter/",
             ),
-            ic.Gates.PYREFLY: ("Pyrefly", "https://github.com/facebook/pyrefly"),
-            ic.Gates.MYPY: ("Mypy", "https://mypy.readthedocs.io/"),
-            ic.Gates.PYRIGHT: ("Pyright", "https://github.com/microsoft/pyright"),
-            ic.Gates.SECURITY: ("Bandit", "https://bandit.readthedocs.io/"),
-            ic.Gates.MARKDOWN: (
+            c.Gates.PYREFLY: ("Pyrefly", "https://github.com/facebook/pyrefly"),
+            c.Gates.MYPY: ("Mypy", "https://mypy.readthedocs.io/"),
+            c.Gates.PYRIGHT: ("Pyright", "https://github.com/microsoft/pyright"),
+            c.Gates.SECURITY: ("Bandit", "https://bandit.readthedocs.io/"),
+            c.Gates.MARKDOWN: (
                 "MarkdownLint",
                 "https://github.com/DavidAnson/markdownlint",
             ),
-            ic.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
+            c.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
         }
 
         runs: list[Mapping[str, t.ConfigMapValue]] = []
@@ -442,14 +447,14 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     ) -> _ProjectResult:
         result = _ProjectResult(project=project_dir.name)
         runners: Mapping[str, Callable[[], _GateExecution]] = {
-            ic.Gates.LINT: lambda: self._run_ruff_lint(project_dir),
-            ic.Gates.FORMAT: lambda: self._run_ruff_format(project_dir),
-            ic.Gates.PYREFLY: lambda: self._run_pyrefly(project_dir, reports_dir),
-            ic.Gates.MYPY: lambda: self._run_mypy(project_dir),
-            ic.Gates.PYRIGHT: lambda: self._run_pyright(project_dir),
-            ic.Gates.SECURITY: lambda: self._run_bandit(project_dir),
-            ic.Gates.MARKDOWN: lambda: self._run_markdown(project_dir),
-            ic.Gates.GO: lambda: self._run_go(project_dir),
+            c.Gates.LINT: lambda: self._run_ruff_lint(project_dir),
+            c.Gates.FORMAT: lambda: self._run_ruff_format(project_dir),
+            c.Gates.PYREFLY: lambda: self._run_pyrefly(project_dir, reports_dir),
+            c.Gates.MYPY: lambda: self._run_mypy(project_dir),
+            c.Gates.PYRIGHT: lambda: self._run_pyright(project_dir),
+            c.Gates.SECURITY: lambda: self._run_bandit(project_dir),
+            c.Gates.MARKDOWN: lambda: self._run_markdown(project_dir),
+            c.Gates.GO: lambda: self._run_go(project_dir),
         }
         for gate in gates:
             runner = runners.get(gate)
@@ -459,9 +464,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
 
     def _existing_check_dirs(self, project_dir: Path) -> list[str]:
         dirs = (
-            ic.Check.DEFAULT_CHECK_DIRS
+            c.Check.DEFAULT_CHECK_DIRS
             if project_dir.resolve() == self._workspace_root.resolve()
-            else ic.Check.CHECK_DIRS_SUBPROJECT
+            else c.Check.CHECK_DIRS_SUBPROJECT
         )
         return [directory for directory in dirs if (project_dir / directory).is_dir()]
 
@@ -513,13 +518,13 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         duration: float,
         raw_output: str,
     ) -> _GateExecution:
-        model = im.GateResult(
-            gate=gate,
-            project=project,
-            passed=passed,
-            errors=[_format_issue(issue) for issue in issues],
-            duration=round(duration, 3),
-        )
+        model = m.GateResult.model_validate({
+            "gate": gate,
+            "project": project,
+            "passed": passed,
+            "errors": [_format_issue(issue) for issue in issues],
+            "duration": round(duration, 3),
+        })
         return _GateExecution(result=model, issues=issues, raw_output=raw_output)
 
     def _run_ruff_lint(self, project_dir: Path) -> _GateExecution:
@@ -616,7 +621,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     def _run_pyrefly(self, project_dir: Path, reports_dir: Path) -> _GateExecution:
         started = time.monotonic()
         check_dirs = self._existing_check_dirs(project_dir)
-        targets = check_dirs or [ic.Paths.DEFAULT_SRC_DIR]
+        targets = check_dirs or [c.Paths.DEFAULT_SRC_DIR]
         json_file = reports_dir / f"{project_dir.name}-pyrefly.json"
         cmd = [
             sys.executable,
@@ -625,7 +630,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             "check",
             *targets,
             "--config",
-            ic.Files.PYPROJECT_FILENAME,
+            c.Files.PYPROJECT_FILENAME,
             "--output-format",
             "json",
             "-o",
@@ -636,7 +641,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         issues: list[_CheckIssue] = []
         if json_file.exists():
             try:
-                data = json.loads(json_file.read_text(encoding=ic.Encoding.DEFAULT))
+                data = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
                 raw_errors = data.get("errors", []) if isinstance(data, dict) else data
                 issues.extend(
                     _CheckIssue(
@@ -689,12 +694,12 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                 raw_output="",
             )
 
-        proj_py = project_dir / ic.Files.PYPROJECT_FILENAME
+        proj_py = project_dir / c.Files.PYPROJECT_FILENAME
         cfg = (
             proj_py
             if proj_py.exists()
-            and "[tool.mypy]" in proj_py.read_text(encoding=ic.Encoding.DEFAULT)
-            else self._workspace_root / ic.Files.PYPROJECT_FILENAME
+            and "[tool.mypy]" in proj_py.read_text(encoding=c.Encoding.DEFAULT)
+            else self._workspace_root / c.Files.PYPROJECT_FILENAME
         )
         typings_generated = self._workspace_root / "typings" / "generated"
         mypy_env = os.environ.copy()
@@ -797,7 +802,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
 
     def _run_bandit(self, project_dir: Path) -> _GateExecution:
         started = time.monotonic()
-        src_path = project_dir / ic.Paths.DEFAULT_SRC_DIR
+        src_path = project_dir / c.Paths.DEFAULT_SRC_DIR
         if not src_path.exists():
             return self._build_gate_result(
                 gate="security",
@@ -811,7 +816,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             [
                 "bandit",
                 "-r",
-                ic.Paths.DEFAULT_SRC_DIR,
+                c.Paths.DEFAULT_SRC_DIR,
                 "-f",
                 "json",
                 "-q",
@@ -847,7 +852,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     def _collect_markdown_files(self, project_dir: Path) -> list[Path]:
         files: list[Path] = []
         for path in project_dir.rglob("*.md"):
-            if any(part in ic.Excluded.CHECK_EXCLUDED_DIRS for part in path.parts):
+            if any(part in c.Excluded.CHECK_EXCLUDED_DIRS for part in path.parts):
                 continue
             files.append(path)
         return files
@@ -1070,7 +1075,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
     def process_file(self, path: Path, *, dry_run: bool = False) -> r[list[str]]:
         """Apply all pyrefly block fixes to a single pyproject.toml file."""
         try:
-            text = path.read_text(encoding=ic.Encoding.DEFAULT)
+            text = path.read_text(encoding=c.Encoding.DEFAULT)
         except OSError as exc:
             return r[list[str]].fail(f"failed to read {path}: {exc}")
 
@@ -1095,7 +1100,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
 
         if text != original and not dry_run:
             try:
-                _ = path.write_text(text, encoding=ic.Encoding.DEFAULT)
+                _ = path.write_text(text, encoding=c.Encoding.DEFAULT)
             except OSError as exc:
                 return r[list[str]].fail(f"failed to write {path}: {exc}")
 

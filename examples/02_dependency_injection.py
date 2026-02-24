@@ -64,11 +64,11 @@ class DatabaseService(m.ArbitraryTypesModel):
             return r[bool].ok(value=True)
 
         url = self.config.get("url", "")
-        if type(url) is not str or not url:
+        if not isinstance(url, str) or not url:
             return r[bool].fail(c.Errors.CONFIGURATION_ERROR)
 
         timeout = self.config.get("timeout", 0)
-        if type(timeout) is not int:
+        if not isinstance(timeout, int):
             return r[bool].fail(c.Errors.VALIDATION_ERROR)
 
         # Railway pattern with u validation (DRY)
@@ -151,7 +151,7 @@ class CacheService(m.ArbitraryTypesModel):
                         value,
                         max_length=c.Validation.MAX_NAME_LENGTH,
                     )
-                    if type(value) is str
+                    if isinstance(value, str)
                     else r[str].ok("")
                 ),
             )
@@ -296,11 +296,11 @@ class DependencyInjectionService(s[m.ConfigMap]):
             result: r[t.RegisterableService] = container.get(service_name)
             if result.is_success:
                 service = result.value
-                if service_name == "database" and (type(service) is DatabaseService or DatabaseService in type(service).__mro__):
+                if service_name == "database" and isinstance(service, DatabaseService):
                     test_result = test_database(service)
-                elif service_name == "cache" and (type(service) is CacheService or CacheService in type(service).__mro__):
+                elif service_name == "cache" and isinstance(service, CacheService):
                     test_result = test_cache(service)
-                elif service_name == "email" and (type(service) is EmailService or EmailService in type(service).__mro__):
+                elif service_name == "email" and isinstance(service, EmailService):
                     test_result = test_email(service)
                 else:
                     test_result = r[bool].fail("Service type mismatch")
@@ -334,7 +334,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
         db_result: r[t.RegisterableService] = container.get("database")
         if db_result.is_success:
             db_service = db_result.value
-            if type(db_service) is DatabaseService or DatabaseService in type(db_service).__mro__:
+            if isinstance(db_service, DatabaseService):
                 invalid_query = db_service.query("INVALID QUERY")
                 print(
                     f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",

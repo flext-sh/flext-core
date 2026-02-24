@@ -89,7 +89,9 @@ def _run_migrate(args: argparse.Namespace) -> int:
         if migration.errors:
             failed_projects += 1
 
-    _ = sys.stdout.write(f"summary total={len(result.value)} failed={failed_projects} dry_run={str(args.dry_run).lower()}\n")
+    _ = sys.stdout.write(
+        f"summary total={len(result.value)} failed={failed_projects} dry_run={str(args.dry_run).lower()}\n"
+    )
     return 1 if failed_projects else 0
 
 

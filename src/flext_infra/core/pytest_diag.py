@@ -17,7 +17,7 @@ from xml.etree import ElementTree as ET  # noqa: S405
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 
 
 class _DiagResult:
@@ -46,7 +46,7 @@ class PytestDiagExtractor:
     and uses regex-based log parsing when XML is unavailable.
     """
 
-    _ENCODING = ic.Encoding.DEFAULT
+    _ENCODING = c.Encoding.DEFAULT
 
     def extract(
         self,

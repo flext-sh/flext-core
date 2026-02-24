@@ -137,7 +137,7 @@ class FlextValidatorTypes:
 
         for node in ast.walk(tree):
             # Check function annotations
-            if type(node) in (ast.FunctionDef, ast.AsyncFunctionDef):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 # Check return annotation
                 if node.returns and u.Tests.Validator.is_any_type(node.returns):
                     violation = u.Tests.Validator.create_violation(
@@ -162,7 +162,7 @@ class FlextValidatorTypes:
                         violations.append(violation)
 
             # Check variable annotations
-            elif type(node) is ast.AnnAssign:
+            elif isinstance(node, ast.AnnAssign):
                 if node.annotation and u.Tests.Validator.is_any_type(node.annotation):
                     violation = u.Tests.Validator.create_violation(
                         file_path,

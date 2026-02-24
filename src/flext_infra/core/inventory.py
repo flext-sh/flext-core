@@ -12,11 +12,12 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.json_io import JsonService
 
 
@@ -69,7 +70,7 @@ class InventoryService:
             }
             wiring = {
                 "generated_at": now,
-                "root_makefile": [ic.Files.MAKEFILE_FILENAME],
+                "root_makefile": [c.Files.MAKEFILE_FILENAME],
                 "unwired_scripts": [],
             }
             external = {
@@ -87,7 +88,11 @@ class InventoryService:
 
             written: list[str] = []
             for path, payload in outputs.items():
-                write_result = self._json.write(path, payload, sort_keys=True)
+                write_result = self._json.write(
+                    path,
+                    cast("Mapping[str, t.ConfigMapValue]", payload),
+                    sort_keys=True,
+                )
                 if write_result.is_failure:
                     return r[Mapping[str, t.ConfigMapValue]].fail(
                         write_result.error or "write failed",

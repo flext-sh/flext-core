@@ -774,7 +774,9 @@ class FlextModelsConfig:
             description="Additional context for error",
         )
         metadata: (
-            FlextModelFoundation.Metadata | Mapping[str, t.MetadataAttributeValue] | None
+            FlextModelFoundation.Metadata
+            | Mapping[str, t.MetadataAttributeValue]
+            | None
         ) = Field(
             default=None,
             description="Metadata for error",

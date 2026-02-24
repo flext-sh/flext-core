@@ -32,7 +32,7 @@ from typing import override
 import structlog
 from flext_core import FlextService, r
 
-from flext_infra.constants import ic
+from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 
 logger = structlog.get_logger(__name__)
@@ -127,7 +127,7 @@ class PythonVersionEnforcer(FlextService[int]):
 
         # Walk up the directory tree
         for parent in [current] + list(current.parents):
-            markers = {".git", ic.Files.MAKEFILE_FILENAME, ic.Files.PYPROJECT_FILENAME}
+            markers = {".git", c.Files.MAKEFILE_FILENAME, c.Files.PYPROJECT_FILENAME}
             if all((parent / marker).exists() for marker in markers):
                 return parent
 
@@ -146,7 +146,7 @@ class PythonVersionEnforcer(FlextService[int]):
             int: Required Python minor version.
 
         """
-        pyproject = workspace_root / ic.Files.PYPROJECT_FILENAME
+        pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
         if not pyproject.is_file():
             return 13
         content = pyproject.read_text(encoding="utf-8")
@@ -172,7 +172,7 @@ class PythonVersionEnforcer(FlextService[int]):
         return [
             p.path
             for p in result.value
-            if (p.path / ic.Files.PYPROJECT_FILENAME).exists()
+            if (p.path / c.Files.PYPROJECT_FILENAME).exists()
         ]
 
     def _ensure_python_version_file(self, project: Path, required_minor: int) -> bool:
