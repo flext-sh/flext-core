@@ -193,10 +193,12 @@ class RuntimeDevDependencyDetector:
                     and python_cfg.get("version") is not None
                     else None
                 )
-                report_model.dependency_limits = ddm.DependencyLimitsInfo.model_validate({
-                    "python_version": python_version,
-                    "limits_path": str(limits_path),
-                }).model_dump()
+                report_model.dependency_limits = (
+                    ddm.DependencyLimitsInfo.model_validate({
+                        "python_version": python_version,
+                        "limits_path": str(limits_path),
+                    }).model_dump()
+                )
 
         for project_path in projects:
             project_name = project_path.name

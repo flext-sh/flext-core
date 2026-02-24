@@ -6,7 +6,7 @@ dependency handling, and build orchestration in the FLEXT ecosystem.
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
-# ruff: noqa: RUF067  # Re-exports and aliases for infra API
+# Re-exports and aliases for infra API
 
 from __future__ import annotations
 
