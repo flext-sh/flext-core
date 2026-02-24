@@ -1,3 +1,5 @@
+"""Dependency detection and analysis service for deptry, pip-check, and typing stubs."""
+
 from __future__ import annotations
 
 import contextlib
@@ -22,13 +24,19 @@ type IssueMap = dict[str, t.GeneralValueType]
 
 
 class DependencyDetectionModels(im):
+    """Pydantic models for dependency detection reports and analysis results."""
+
     class DeptryIssueGroups(im.ArbitraryTypesModel):
+        """Deptry issue grouping model by error code (DEP001-DEP004)."""
+
         dep001: list[IssueMap] = Field(default_factory=list)
         dep002: list[IssueMap] = Field(default_factory=list)
         dep003: list[IssueMap] = Field(default_factory=list)
         dep004: list[IssueMap] = Field(default_factory=list)
 
     class DeptryReport(im.ArbitraryTypesModel):
+        """Deptry analysis report with missing, unused, transitive, and dev-in-runtime issues."""
+
         missing: list[t.GeneralValueType] = Field(default_factory=list)
         unused: list[t.GeneralValueType] = Field(default_factory=list)
         transitive: list[t.GeneralValueType] = Field(default_factory=list)
@@ -36,10 +44,14 @@ class DependencyDetectionModels(im):
         raw_count: int = Field(default=0, ge=0)
 
     class ProjectDependencyReport(im.ArbitraryTypesModel):
+        """Project-level dependency report combining deptry results."""
+
         project: str = Field(min_length=1)
         deptry: DependencyDetectionModels.DeptryReport
 
     class TypingsReport(im.ArbitraryTypesModel):
+        """Typing stubs analysis report with required, current, and delta packages."""
+
         required_packages: list[str] = Field(default_factory=list)
         hinted: list[str] = Field(default_factory=list)
         missing_modules: list[str] = Field(default_factory=list)
@@ -54,6 +66,8 @@ dm = DependencyDetectionModels
 
 
 class DependencyDetectionService:
+    """Runtime vs dev dependency detector using deptry, pip-check, and mypy stub analysis."""
+
     DEFAULT_MODULE_TO_TYPES_PACKAGE: Mapping[str, str] = {
         "yaml": "types-pyyaml",
         "ldap3": "types-ldap3",
@@ -73,6 +87,7 @@ class DependencyDetectionService:
     }
 
     def __init__(self) -> None:
+        """Initialize the dependency detection service with selector, toml, and runner."""
         self._selector = ProjectSelector()
         self._toml = TomlService()
         self._runner = CommandRunner()
@@ -82,6 +97,7 @@ class DependencyDetectionService:
         workspace_root: Path,
         projects_filter: list[str] | None = None,
     ) -> FlextResult[list[Path]]:
+        """Discover projects with pyproject.toml in workspace."""
         names = projects_filter or []
         result = self._selector.resolve_projects(workspace_root, names)
         if result.is_failure:
@@ -103,6 +119,7 @@ class DependencyDetectionService:
         json_output_path: Path | None = None,
         extend_exclude: list[str] | None = None,
     ) -> FlextResult[tuple[list[IssueMap], int]]:
+        """Run deptry analysis on a project and parse JSON output."""
         config = config_path or (project_path / ic.Files.PYPROJECT_FILENAME)
         if not config.exists():
             return r[tuple[list[IssueMap], int]].ok(([], 0))
@@ -151,6 +168,7 @@ class DependencyDetectionService:
         workspace_root: Path,
         venv_bin: Path,
     ) -> FlextResult[tuple[list[str], int]]:
+        """Run pip check to detect dependency conflicts in workspace."""
         pip = venv_bin / "pip"
         if not pip.exists():
             return r[tuple[list[str], int]].ok(([], 0))
@@ -173,6 +191,7 @@ class DependencyDetectionService:
     def classify_issues(
         issues: list[IssueMap],
     ) -> dm.DeptryIssueGroups:
+        """Classify deptry issues by error code (DEP001-DEP004)."""
         groups = dm.DeptryIssueGroups()
         for item in issues:
             error_obj = item.get("error")
@@ -194,6 +213,7 @@ class DependencyDetectionService:
         project_name: str,
         deptry_issues: list[IssueMap],
     ) -> dm.ProjectDependencyReport:
+        """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
         return dm.ProjectDependencyReport(
             project=project_name,
@@ -210,6 +230,7 @@ class DependencyDetectionService:
         self,
         limits_path: Path | None = None,
     ) -> dict[str, t.GeneralValueType]:
+        """Load dependency limits configuration from TOML file."""
         path = limits_path or (
             Path(__file__).resolve().parent / "dependency_limits.toml"
         )
@@ -225,6 +246,7 @@ class DependencyDetectionService:
         *,
         timeout: int = 300,
     ) -> FlextResult[tuple[list[str], list[str]]]:
+        """Run mypy to detect missing type stubs and hinted packages."""
         mypy_bin = venv_bin / "mypy"
         if not mypy_bin.exists():
             return r[tuple[list[str], list[str]]].ok(([], []))
@@ -270,6 +292,7 @@ class DependencyDetectionService:
         module_name: str,
         limits: dict[str, t.GeneralValueType],
     ) -> str | None:
+        """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
         if root.startswith(InfraPatterns.INTERNAL_PREFIXES):
             return None
@@ -284,6 +307,7 @@ class DependencyDetectionService:
         return self.DEFAULT_MODULE_TO_TYPES_PACKAGE.get(root.lower())
 
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
+        """Extract currently declared typing packages from project pyproject.toml."""
         pyproject = project_path / ic.Files.PYPROJECT_FILENAME
         read_result = self._toml.read(pyproject)
         if read_result.is_failure:
@@ -330,6 +354,7 @@ class DependencyDetectionService:
         *,
         include_mypy: bool = True,
     ) -> FlextResult[dm.TypingsReport]:
+        """Analyze project and generate typing stubs requirements report."""
         limits = self.load_dependency_limits(limits_path)
         exclude_set: set[str] = set()
 
@@ -385,6 +410,7 @@ def discover_projects(
     workspace_root: Path,
     projects_filter: list[str] | None = None,
 ) -> FlextResult[list[Path]]:
+    """Discover projects with pyproject.toml in workspace."""
     return _service.discover_projects(workspace_root, projects_filter=projects_filter)
 
 
@@ -396,6 +422,7 @@ def run_deptry(
     json_output_path: Path | None = None,
     extend_exclude: list[str] | None = None,
 ) -> FlextResult[tuple[list[IssueMap], int]]:
+    """Run deptry analysis on a project and parse JSON output."""
     return _service.run_deptry(
         project_path,
         venv_bin,
@@ -409,10 +436,12 @@ def run_pip_check(
     workspace_root: Path,
     venv_bin: Path,
 ) -> FlextResult[tuple[list[str], int]]:
+    """Run pip check to detect dependency conflicts in workspace."""
     return _service.run_pip_check(workspace_root, venv_bin)
 
 
 def classify_issues(issues: list[IssueMap]) -> dm.DeptryIssueGroups:
+    """Classify deptry issues by error code (DEP001-DEP004)."""
     return _service.classify_issues(issues)
 
 
@@ -420,12 +449,14 @@ def build_project_report(
     project_name: str,
     deptry_issues: list[IssueMap],
 ) -> dm.ProjectDependencyReport:
+    """Build a project dependency report from classified deptry issues."""
     return _service.build_project_report(project_name, deptry_issues)
 
 
 def load_dependency_limits(
     limits_path: Path | None = None,
 ) -> dict[str, t.GeneralValueType]:
+    """Load dependency limits configuration from TOML file."""
     return _service.load_dependency_limits(limits_path)
 
 
@@ -435,6 +466,7 @@ def run_mypy_stub_hints(
     *,
     timeout: int = 300,
 ) -> FlextResult[tuple[list[str], list[str]]]:
+    """Run mypy to detect missing type stubs and hinted packages."""
     return _service.run_mypy_stub_hints(project_path, venv_bin, timeout=timeout)
 
 
@@ -442,10 +474,12 @@ def module_to_types_package(
     module_name: str,
     limits: dict[str, t.GeneralValueType],
 ) -> str | None:
+    """Map a module name to its corresponding types-* package."""
     return _service.module_to_types_package(module_name, limits)
 
 
 def get_current_typings_from_pyproject(project_path: Path) -> list[str]:
+    """Extract currently declared typing packages from project pyproject.toml."""
     return _service.get_current_typings_from_pyproject(project_path)
 
 
@@ -456,6 +490,7 @@ def get_required_typings(
     *,
     include_mypy: bool = True,
 ) -> FlextResult[dm.TypingsReport]:
+    """Analyze project and generate typing stubs requirements report."""
     return _service.get_required_typings(
         project_path,
         venv_bin,

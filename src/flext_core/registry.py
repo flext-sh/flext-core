@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, ClassVar, Self
 
 from pydantic import Field, PrivateAttr, computed_field
 
@@ -29,7 +29,7 @@ from flext_core.typings import t
 from flext_core.utilities import u
 
 # Use centralized version from utilities
-_to_general_value_type = u.Cast.to_general_value_type
+_to_general_value_type = u.Conversion.to_general_value_type
 
 
 class FlextRegistry(FlextService[bool]):
@@ -388,7 +388,7 @@ class FlextRegistry(FlextService[bool]):
         )
         if registration_result.is_success:
             # Convert model result to RegistrationDetails
-            reg_result = cast("m.HandlerRegistrationResult", registration_result.value)
+            reg_result = registration_result.value
             reg_details = self._create_registration_details(reg_result, key)
             if not reg_details:
                 # Fallback: create minimal registration details
@@ -538,12 +538,12 @@ class FlextRegistry(FlextService[bool]):
                 # We need to adapt it to Registry logic
                 reg_result = self._dispatcher.register_handler(
                     message_type,
-                    cast("t.GeneralValueType", handler),
+                    handler,
                 )
 
                 if reg_result.is_success:
                     # Convert dispatcher result to Registry details
-                    val = cast("m.HandlerRegistrationResult", reg_result.value)
+                    val = reg_result.value
                     details = self._create_registration_details(val, key)
                     self._add_successful_registration(key, details, summary)
                 else:

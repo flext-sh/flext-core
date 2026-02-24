@@ -16,12 +16,12 @@ from typing import Self
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.cast import FlextUtilitiesCast
+from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
-# Use centralized version from _utilities/cast.py
-_to_general_value_type = FlextUtilitiesCast.to_general_value_type
+# Use centralized version from _utilities/conversion.py
+_to_general_value_type = FlextUtilitiesConversion.to_general_value_type
 
 
 class FlextModelsCollections:

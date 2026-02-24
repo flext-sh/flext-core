@@ -29,6 +29,7 @@ class WorkflowLinter:
         runner: CommandRunner | None = None,
         json_io: JsonService | None = None,
     ) -> None:
+        """Initialize the workflow linter."""
         self._runner = runner or CommandRunner()
         self._json = json_io or JsonService()
 

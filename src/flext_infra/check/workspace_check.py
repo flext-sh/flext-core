@@ -1,3 +1,5 @@
+"""Workspace check CLI entry point."""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +10,7 @@ from flext_infra.check.services import DEFAULT_GATES, WorkspaceChecker
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Parse arguments and run workspace checks for specified projects."""
     parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
     _ = parser.add_argument("projects", nargs="*")
     _ = parser.add_argument("--gates", default=DEFAULT_GATES)

@@ -36,6 +36,7 @@ class PrManager:
         git: GitService | None = None,
         versioning: VersioningService | None = None,
     ) -> None:
+        """Initialize the PR manager."""
         self._runner = runner or CommandRunner()
         self._git = git or GitService(self._runner)
         self._versioning = versioning or VersioningService()

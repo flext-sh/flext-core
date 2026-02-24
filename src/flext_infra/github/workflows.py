@@ -46,6 +46,7 @@ class WorkflowSyncer:
         json_io: JsonService | None = None,
         templates: TemplateEngine | None = None,
     ) -> None:
+        """Initialize the workflow syncer."""
         self._selector = selector or ProjectSelector()
         self._json = json_io or JsonService()
         self._templates = templates or TemplateEngine()

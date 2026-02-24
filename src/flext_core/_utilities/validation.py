@@ -55,7 +55,7 @@ from pydantic import (
 )
 
 # Removed FlextRuntime import to prevent circular dependency
-from flext_core._utilities.cast import FlextUtilitiesCast
+from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
@@ -64,8 +64,8 @@ from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes as t
 
-# Use centralized version from cast.py
-_to_general_value_type = FlextUtilitiesCast.to_general_value_type
+# Use centralized version from conversion.py
+_to_general_value_type = FlextUtilitiesConversion.to_general_value_type
 
 
 # Use protocol from protocols module to avoid duplication and satisfy architecture rules

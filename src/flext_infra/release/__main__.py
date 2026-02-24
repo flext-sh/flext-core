@@ -67,7 +67,7 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     if args.interactive != 1:
         return current
 
-    print("Select version bump type: [major|minor|patch]")
+    _ = sys.stdout.write("Select version bump type: [major|minor|patch]\n")
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
         msg = "invalid bump type"
@@ -97,7 +97,7 @@ def main() -> int:
     resolver = PathResolver()
     root_result = resolver.workspace_root(args.root)
     if root_result.is_failure:
-        print(f"Error: {root_result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {root_result.error}\n")
         return 1
     root = root_result.value
 
@@ -112,7 +112,7 @@ def main() -> int:
         try:
             version = _resolve_version(args, root)
         except RuntimeError as exc:
-            print(f"Error: {exc}", file=sys.stderr)
+            _ = sys.stderr.write(f"Error: {exc}\n")
             return 1
     else:
         version = args.version or "0.0.0"
@@ -135,7 +135,7 @@ def main() -> int:
     )
 
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
     return 0
 

@@ -1,3 +1,4 @@
+"""Migrate projects to unified FLEXT infrastructure."""
 from __future__ import annotations
 
 import hashlib
@@ -71,12 +72,15 @@ _PYPROJECT_FILE = ic.Files.PYPROJECT_FILENAME
 
 
 class ProjectMigrator(FlextService[list[im.MigrationResult]]):
+    """Migrate projects to standardized base.mk, Makefile, and pyproject structure."""
+
     def __init__(
         self,
         *,
         discovery: DiscoveryService | None = None,
         generator: BaseMkGenerator | None = None,
     ) -> None:
+        """Initialize migrator with optional custom discovery and generator services."""
         super().__init__()
         self._discovery = discovery or DiscoveryService()
         self._generator = generator or BaseMkGenerator()
@@ -91,6 +95,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         workspace_root: Path,
         dry_run: bool = False,
     ) -> r[list[im.MigrationResult]]:
+        """Migrate all projects in workspace."""
         root = workspace_root.resolve()
         if not root.is_dir():
             return r[list[im.MigrationResult]].fail(
@@ -110,14 +115,16 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
         ):
             projects.append(workspace_project)
 
-        results: list[im.MigrationResult] = []
-        for project in projects:
-            results.append(self._migrate_project(project=project, dry_run=dry_run))
+        results: list[im.MigrationResult] = [
+            self._migrate_project(project=project, dry_run=dry_run)
+            for project in projects
+        ]
 
         return r[list[im.MigrationResult]].ok(results)
 
     @staticmethod
     def _workspace_root_project(workspace_root: Path) -> im.ProjectInfo | None:
+        """Detect workspace root as a project if it has Makefile, pyproject.toml, and .git."""
         has_makefile = (workspace_root / ic.Files.MAKEFILE_FILENAME).is_file()
         has_pyproject = (workspace_root / _PYPROJECT_FILE).is_file()
         has_git = (workspace_root / ".git").exists()

@@ -17,6 +17,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from flext_infra.constants import ic
 from flext_infra.docs.auditor import DocAuditor
 from flext_infra.docs.builder import DocBuilder
 from flext_infra.docs.fixer import DocFixer
@@ -70,7 +71,6 @@ def _run_build(args: argparse.Namespace) -> int:
     if result.is_failure:
         print(f"Error: {result.error}", file=sys.stderr)
         return 1
-    from flext_infra.constants import ic
 
     failures = sum(1 for report in result.value if report.result == ic.Status.FAIL)
     return 1 if failures else 0
@@ -106,7 +106,6 @@ def _run_validate(args: argparse.Namespace) -> int:
     if result.is_failure:
         print(f"Error: {result.error}", file=sys.stderr)
         return 1
-    from flext_infra.constants import ic
 
     failures = sum(1 for report in result.value if report.result == ic.Status.FAIL)
     return 1 if failures else 0

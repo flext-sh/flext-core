@@ -28,6 +28,7 @@ class ProjectSelector:
         self,
         discovery: DiscoveryService | None = None,
     ) -> None:
+        """Initialize the project selector."""
         self._discovery = discovery or DiscoveryService()
 
     def filter_projects(

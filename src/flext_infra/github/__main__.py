@@ -17,6 +17,13 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
+from flext_infra.github.linter import WorkflowLinter
+from flext_infra.github.pr import main as pr_main
+from flext_infra.github.pr_workspace import PrWorkspaceManager
+from flext_infra.github.workflows import WorkflowSyncer
+
+_MIN_ARGV = 2
+
 _Handler = Callable[[list[str]], int]
 
 
@@ -27,8 +34,6 @@ def _run_workflows(argv: list[str]) -> int:
     _ = parser.add_argument("--prune", action="store_true", default=False)
     _ = parser.add_argument("--report", type=Path, default=None)
     args = parser.parse_args(argv)
-
-    from flext_infra.github.workflows import WorkflowSyncer
 
     syncer = WorkflowSyncer()
     result = syncer.sync_workspace(
@@ -53,8 +58,6 @@ def _run_lint(argv: list[str]) -> int:
     _ = parser.add_argument("--strict", action="store_true", default=False)
     args = parser.parse_args(argv)
 
-    from flext_infra.github.linter import WorkflowLinter
-
     linter = WorkflowLinter()
     result = linter.lint(
         root=args.root.resolve(),
@@ -72,8 +75,6 @@ def _run_lint(argv: list[str]) -> int:
 
 def _run_pr(argv: list[str]) -> int:
     sys.argv = ["flext-infra github pr"] + argv
-    from flext_infra.github.pr import main as pr_main
-
     return pr_main()
 
 
@@ -98,8 +99,6 @@ def _run_pr_workspace(argv: list[str]) -> int:
     _ = parser.add_argument("--pr-checks-strict", type=int, default=0)
     _ = parser.add_argument("--pr-release-on-merge", type=int, default=1)
     args = parser.parse_args(argv)
-
-    from flext_infra.github.pr_workspace import PrWorkspaceManager
 
     pr_args: dict[str, str] = {
         "action": args.pr_action,
@@ -147,12 +146,12 @@ _SUBCOMMANDS: dict[str, _Handler] = {
 
 def main() -> int:
     """Dispatch to the appropriate github subcommand."""
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+    if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _ = sys.stdout.write("Usage: flext-infra github <subcommand> [args...]\n\n")
         _ = sys.stdout.write("Subcommands:\n")
         for name in sorted(_SUBCOMMANDS):
             _ = sys.stdout.write(f"  {name}\n")
-        return 0 if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help") else 1
+        return 0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
 
     subcommand = sys.argv[1]
     handler = _SUBCOMMANDS.get(subcommand)

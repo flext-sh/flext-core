@@ -14,7 +14,7 @@ import functools
 import pathlib
 import warnings
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core.typings import P, R, t
 
@@ -162,7 +162,7 @@ class FlextUtilitiesDeprecation:
                 *args: t.GeneralValueType,
                 **kwargs: t.GeneralValueType,
             ) -> None:
-                cls_name = cast("type[object]", cls).__name__
+        cls_name = cls.__name__
                 message_parts = [f"{cls_name} is deprecated"]
                 if version:
                     message_parts.append(f"since version {version}")

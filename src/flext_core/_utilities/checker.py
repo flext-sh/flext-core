@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import cast, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -34,7 +34,8 @@ class FlextUtilitiesChecker:
         Uses same structure/config as FlextLogger but without circular import.
         """
         # get_logger returns StructlogLogger per runtime.pyi stub
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+
+    return FlextRuntime.get_logger(__name__)
 
     @classmethod
     def compute_accepted_message_types(

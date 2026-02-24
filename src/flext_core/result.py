@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, Self, TypeIs, cast, overload, runtime_checkable
+from typing import Protocol, Self, TypeIs, overload, runtime_checkable
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -186,10 +186,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         # Use returns library Failure wrapper for railway-oriented programming
         result = Failure(error_msg)
-        return cast(
-            "FlextResult[U]",
-            FlextResult(result, error_code=error_code, error_data=error_data),
-        )
+        return FlextResult(result, error_code=error_code, error_data=error_data)
 
     @staticmethod
     def safe[T](
@@ -796,7 +793,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if isinstance(io_result, IOSuccess):
             unwrapped_io = io_result.unwrap()
             return FlextResult[T].ok(
-                unsafe_perform_io(cast("IO[T]", unwrapped_io)),
+                unsafe_perform_io(unwrapped_io),
             )
 
         return FlextResult[T].fail("Invalid IOResult structure")

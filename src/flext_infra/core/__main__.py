@@ -34,11 +34,11 @@ def _run_basemk_validate(args: argparse.Namespace) -> int:
 
     if result.is_success:
         report = result.value
-        print(report.summary)
+        _ = sys.stdout.write(f"{report.summary}\n")
         for v in report.violations:
-            print(f"  {v}")
+            _ = sys.stdout.write(f"  {v}\n")
         return 0 if report.passed else 1
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -50,13 +50,13 @@ def _run_inventory(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
-        print(f"total_scripts={data.get('total_scripts', 0)}")
+        _ = sys.stdout.write(f"total_scripts={data.get('total_scripts', 0)}\n")
         written = data.get("reports_written", [])
         if isinstance(written, list):
             for path in written:
-                print(f"Wrote: {path}")
+                _ = sys.stdout.write(f"Wrote: {path}\n")
         return 0
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -93,12 +93,12 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
                 "\n".join(cast("list[str]", data["skip_cases"])) + "\n", encoding="utf-8"
             )
 
-        print(f"failed_count={data.get('failed_count', 0)}")
-        print(f"error_count={data.get('error_count', 0)}")
-        print(f"warning_count={data.get('warning_count', 0)}")
-        print(f"skipped_count={data.get('skipped_count', 0)}")
+        _ = sys.stdout.write(f"failed_count={data.get('failed_count', 0)}\n")
+        _ = sys.stdout.write(f"error_count={data.get('error_count', 0)}\n")
+        _ = sys.stdout.write(f"warning_count={data.get('warning_count', 0)}\n")
+        _ = sys.stdout.write(f"skipped_count={data.get('skipped_count', 0)}\n")
         return 0
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -117,10 +117,10 @@ def _run_scan(args: argparse.Namespace) -> int:
         import json  # noqa: PLC0415
 
         data = result.value
-        print(json.dumps({"violation_count": data.get("violation_count", 0)}))
+        _ = sys.stdout.write(f"{json.dumps({'violation_count': data.get('violation_count', 0)})}\n")
         violation_count = data.get("violation_count", 0)
         return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -135,11 +135,11 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
 
     if result.is_success:
         report = result.value
-        print(report.summary)
+        _ = sys.stdout.write(f"{report.summary}\n")
         for v in report.violations:
-            print(f"  {v}")
+            _ = sys.stdout.write(f"  {v}\n")
         return 0 if report.passed else 1
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -154,11 +154,11 @@ def _run_stub_validate(args: argparse.Namespace) -> int:
 
     if result.is_success:
         report = result.value
-        print(report.summary)
+        _ = sys.stdout.write(f"{report.summary}\n")
         for v in report.violations:
-            print(f"  {v}")
+            _ = sys.stdout.write(f"  {v}\n")
         return 0 if report.passed else 1
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 

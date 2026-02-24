@@ -26,6 +26,7 @@ class InventoryService:
     """
 
     def __init__(self) -> None:
+        """Initialize the inventory service."""
         self._json = JsonService()
 
     def generate(

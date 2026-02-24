@@ -49,6 +49,8 @@ class InfraConstants:
         """Go module manifest filename."""
 
     class Gates:
+        """Quality gate identifiers."""
+
         LINT: Final[str] = "lint"
         FORMAT: Final[str] = "format"
         PYREFLY: Final[str] = "pyrefly"

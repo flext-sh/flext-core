@@ -13,7 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 import sys
+
+_MIN_ARGV = 2
 
 _SUBCOMMANDS: dict[str, str] = {
     "detect": "flext_infra.deps.detector",
@@ -26,19 +29,17 @@ _SUBCOMMANDS: dict[str, str] = {
 
 def main() -> int:
     """Dispatch to the appropriate deps subcommand."""
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+    if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _ = sys.stdout.write("Usage: flext-infra deps <subcommand> [args...]\n\n")
         _ = sys.stdout.write("Subcommands:\n")
         for name in sorted(_SUBCOMMANDS):
             _ = sys.stdout.write(f"  {name}\n")
-        return 0 if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help") else 1
+        return 0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
 
     subcommand = sys.argv[1]
     if subcommand not in _SUBCOMMANDS:
         _ = sys.stderr.write(f"flext-infra deps: unknown subcommand '{subcommand}'\n")
         return 1
-
-    import importlib
 
     sys.argv = [f"flext-infra deps {subcommand}"] + sys.argv[2:]
     module = importlib.import_module(_SUBCOMMANDS[subcommand])

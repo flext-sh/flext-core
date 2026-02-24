@@ -41,6 +41,7 @@ class SyncService(FlextService[im.SyncResult]):
     """
 
     def __init__(self, generator: BaseMkGenerator | None = None) -> None:
+        """Initialize the sync service."""
         super().__init__()
         self._generator = generator or BaseMkGenerator()
 
@@ -51,8 +52,8 @@ class SyncService(FlextService[im.SyncResult]):
 
     def sync(
         self,
-        source: object = None,
-        target: object = None,
+        _source: object = None,
+        _target: object = None,
         *,
         project_root: Path | None = None,
         config: im.BaseMkConfig | None = None,

@@ -1,3 +1,5 @@
+"""Synchronize pyright and mypy extraPaths from path dependencies."""
+
 from __future__ import annotations
 
 import argparse
@@ -37,6 +39,7 @@ MYPY_BASE_PROJECT = ["..", "../typings", "../typings/generated", "src"]
 
 
 def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
+    """Extract path dependency paths from PEP 621 project.dependencies."""
     project = doc.get("project")
     if not project or not isinstance(project, dict):
         return []
@@ -59,6 +62,7 @@ def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
 
 
 def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
+    """Extract path dependency paths from Poetry tool.poetry.dependencies."""
     tool = doc.get("tool")
     if not isinstance(tool, dict):
         return []
@@ -82,10 +86,12 @@ def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
 
 
 def _path_dep_paths(doc: TOMLDocument) -> list[str]:
+    """Combine PEP 621 and Poetry path dependencies."""
     return sorted(set(_path_dep_paths_pep621(doc) + _path_dep_paths_poetry(doc)))
 
 
 def get_dep_paths(doc: TOMLDocument, *, is_root: bool = False) -> list[str]:
+    """Resolve path dependencies to src directory paths."""
     raw_paths = _path_dep_paths(doc)
     resolved: list[str] = []
     for path_value in raw_paths:
@@ -105,6 +111,7 @@ def sync_one(
     dry_run: bool = False,
     is_root: bool = False,
 ) -> r[bool]:
+    """Synchronize pyright and mypy paths for single pyproject.toml."""
     if not pyproject_path.exists():
         return r[bool].ok(False)
 
@@ -178,6 +185,7 @@ def sync_extra_paths(
     dry_run: bool = False,
     project_dirs: list[Path] | None = None,
 ) -> r[int]:
+    """Synchronize extraPaths and mypy_path across projects."""
     if project_dirs:
         for project_dir in project_dirs:
             pyproject = project_dir / ic.Files.PYPROJECT_FILENAME
@@ -187,7 +195,7 @@ def sync_extra_paths(
             if sync_result.is_failure:
                 return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
             if sync_result.value and not dry_run:
-                print(f"Updated {pyproject}")
+                _ = sys.stdout.write(f"Updated {pyproject}\n")
         return r[int].ok(0)
 
     pyproject = ROOT / ic.Files.PYPROJECT_FILENAME
@@ -197,11 +205,14 @@ def sync_extra_paths(
     if sync_result.is_failure:
         return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
     if sync_result.value and not dry_run:
-        print("Updated extraPaths and mypy_path from path dependencies.")
+        _ = sys.stdout.write(
+            "Updated extraPaths and mypy_path from path dependencies.\n"
+        )
     return r[int].ok(0)
 
 
 def main() -> int:
+    """Execute extra paths synchronization from command line."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument(
         "--dry-run",

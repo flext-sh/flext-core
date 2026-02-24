@@ -40,7 +40,7 @@ def _safe_load_yaml(path: Path) -> dict[str, object]:
         return {}
     if not isinstance(parsed, dict):
         msg = f"rules.yml must be a mapping: {path}"
-        raise ValueError(msg)
+        raise TypeError(msg)
     return dict(parsed)
 
 
@@ -53,11 +53,11 @@ def _normalize_string_list(value: object, field: str) -> list[str]:
         for item in value:
             if not isinstance(item, str):
                 msg = f"{field} must be list[str]"
-                raise ValueError(msg)
+                raise TypeError(msg)
             out.append(item)
         return out
     msg = f"{field} must be list[str]"
-    raise ValueError(msg)
+    raise TypeError(msg)
 
 
 class SkillValidator:
@@ -68,6 +68,7 @@ class SkillValidator:
     """
 
     def __init__(self) -> None:
+        """Initialize the skill validator."""
         self._json = JsonService()
         self._runner = CommandRunner()
         self._toml = TomlService()
@@ -79,7 +80,7 @@ class SkillValidator:
         skill_name: str,
         *,
         mode: str = "baseline",
-        project_filter: list[str] | None = None,
+        _project_filter: list[str] | None = None,
     ) -> FlextResult[im.ValidationReport]:
         """Validate a single skill across workspace projects.
 

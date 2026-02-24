@@ -880,7 +880,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     else:
                         continue
                 else:
-                    raw_item = u.Cast.to_general_value_type(model_result)
+                    raw_item = u.Conversion.to_general_value_type(model_result)
                 # Apply transform and filter
                 if params.transform:
                     raw_item = params.transform(raw_item)
@@ -1046,7 +1046,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     else:
                         continue  # Skip failed results
                 else:
-                    value = u.Cast.to_general_value_type(model_result)
+                    value = u.Conversion.to_general_value_type(model_result)
 
                 if params.value_factory:
                     value = params.value_factory(key)

@@ -16,7 +16,7 @@ import re
 import uuid
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import Annotated, Literal, Self, cast
+from typing import Annotated, Literal, Self
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -55,7 +55,7 @@ def normalize_to_list(v: t.GeneralValueType) -> list[t.GeneralValueType]:
     if isinstance(v, list):
         return v
     if isinstance(v, (tuple, set)):
-        return cast("list[t.GeneralValueType]", list(v))
+        return list(v)
     return [v]
 
 

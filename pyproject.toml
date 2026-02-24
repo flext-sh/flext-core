@@ -124,24 +124,38 @@ optional-dependencies.dev = [
   "uv>=0.9.6",
   "vulture>=2.13",
 ]
-urls.Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
-urls.Homepage = "https://github.com/flext-sh/flext-core"
-urls.Repository = "https://github.com/flext-sh/flext-core"
-scripts.flext-basemk = "flext_infra.basemk:main"
-# [CUSTOM] CLI entry points for flext-infra tools
-scripts.flext-check = "flext_infra.check:main"
-scripts.flext-modernize = "flext_infra.deps.modernizer:main"
-scripts.flext-sync = "flext_infra.workspace.sync:main"
-scripts.flext-validate = "flext_infra.core:main"
-
-# [CUSTOM] poetry dev extensions
-[tool.poetry.group.dev.dependencies]
+urls = { Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core" }
+scripts = { "flext-basemk" = "flext_infra.basemk:main", "flext-check" = "flext_infra.check:main", "flext-modernize" = "flext_infra.deps.modernizer:main", "flext-sync" = "flext_infra.workspace.sync:main", "flext-validate" = "flext_infra.core:main" }
 
 # [MANAGED] deptry
 [tool.deptry]
 pep621_dev_dependency_groups = [
-  "dev",
+    "dev",
 ]
 
-[group.dev.dependencies]
+[tool.pytest.ini_options]
+minversion = "8.0"
+python_classes = [
+    "Test*",
+]
+python_files = [
+    "*_test.py",
+    "*_tests.py",
+    "test_*.py",
+]
+addopts = [
+    "--strict-markers",
+]
+markers = [
+    "unit: unit tests",
+    "integration: integration tests",
+    "performance: performance and benchmark tests",
+    "slow: slow-running tests",
+    "docker: tests requiring Docker",
+    "e2e: end-to-end integration tests",
+    "edge_cases: edge case tests",
+    "stress: stress tests",
+    "resilience: resilience tests",
+]
+
 # [MANAGED] ruff

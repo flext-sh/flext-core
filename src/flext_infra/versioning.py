@@ -31,6 +31,7 @@ class VersioningService:
     """
 
     def __init__(self, toml: TomlService | None = None) -> None:
+        """Initialize the versioning service."""
         self._toml = toml or TomlService()
 
     def parse_semver(

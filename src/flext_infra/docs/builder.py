@@ -45,6 +45,7 @@ class DocBuilder:
     """
 
     def __init__(self) -> None:
+        """Initialize the documentation builder."""
         self._runner = CommandRunner()
 
     def build(

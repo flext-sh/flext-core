@@ -1,3 +1,5 @@
+"""Runtime vs dev dependency detector CLI with deptry, pip-check, and typing analysis."""
+
 from __future__ import annotations
 
 import argparse
@@ -22,15 +24,23 @@ logger = structlog.get_logger(__name__)
 
 
 class DependencyDetectorModels(im):
+    """Pydantic models for dependency detector reports and configuration."""
+
     class DependencyLimitsInfo(im.ArbitraryTypesModel):
+        """Dependency limits configuration metadata."""
+
         python_version: str | None = None
         limits_path: str = Field(default="")
 
     class PipCheckReport(im.ArbitraryTypesModel):
+        """Pip check execution report with status and output lines."""
+
         ok: bool = True
         lines: list[str] = Field(default_factory=list)
 
     class WorkspaceDependencyReport(im.ArbitraryTypesModel):
+        """Workspace-level dependency analysis report aggregating all projects."""
+
         workspace: str
         projects: dict[str, dict[str, object]] = Field(default_factory=dict)
         pip_check: dict[str, object] | None = None
@@ -41,7 +51,10 @@ ddm = DependencyDetectorModels
 
 
 class RuntimeDevDependencyDetector:
+    """CLI tool for detecting runtime vs dev dependencies across workspace."""
+
     def __init__(self) -> None:
+        """Initialize the detector with path resolver, reporting, JSON, deps, and runner services."""
         self._paths = PathResolver()
         self._reporting = ReportingService()
         self._json = JsonService()
@@ -50,6 +63,7 @@ class RuntimeDevDependencyDetector:
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:
+        """Create argument parser for CLI with deptry, pip-check, and typing options."""
         parser = argparse.ArgumentParser(
             description="Detect runtime vs dev dependencies (deptry + pip check).",
         )
@@ -119,6 +133,7 @@ class RuntimeDevDependencyDetector:
 
     @staticmethod
     def _project_filter(args: argparse.Namespace) -> list[str] | None:
+        """Extract project filter list from parsed CLI arguments."""
         if args.project:
             return [args.project]
         if args.projects:
@@ -126,6 +141,7 @@ class RuntimeDevDependencyDetector:
         return None
 
     def run(self, argv: list[str] | None = None) -> FlextResult[int]:
+        """Execute dependency detection and generate workspace report."""
         root_result = self._paths.workspace_root_from_file(__file__)
         if root_result.is_failure:
             return r[int].fail(root_result.error or "workspace root resolution failed")
@@ -291,6 +307,7 @@ class RuntimeDevDependencyDetector:
 
 
 def main() -> int:
+    """Entry point for dependency detector CLI."""
     result = RuntimeDevDependencyDetector().run()
     if result.is_failure:
         logger.error("deps_detector_failed", error=result.error or "unknown error")

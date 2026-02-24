@@ -1,3 +1,5 @@
+"""Internal dependency synchronization service for managing FLEXT submodule dependencies."""
+
 from __future__ import annotations
 
 import argparse
@@ -27,12 +29,17 @@ _PEP621_PATH_RE = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
 
 
 class RepoUrls(im.ArbitraryTypesModel):
+    """Repository URL pair with SSH and HTTPS variants."""
+
     ssh_url: str = Field(default="")
     https_url: str = Field(default="")
 
 
 class InternalDependencySyncService:
+    """Synchronize internal FLEXT dependencies via git clone or workspace symlinks."""
+
     def __init__(self) -> None:
+        """Initialize the internal dependency sync service."""
         self._runner = CommandRunner()
         self._toml = TomlService()
 
@@ -298,7 +305,7 @@ class InternalDependencySyncService:
             candidate = normalized.removeprefix("../")
             if candidate and "/" not in candidate:
                 return candidate
-        if normalized and "/" not in normalized and normalized not in (".", ".."):
+        if normalized and "/" not in normalized and normalized not in {".", ".."}:
             return normalized
         return None
 
@@ -353,6 +360,7 @@ class InternalDependencySyncService:
         return r[dict[str, Path]].ok(result)
 
     def sync(self, project_root: Path) -> r[int]:
+        """Synchronize internal dependencies via git clone or workspace symlinks."""
         deps_result = self._collect_internal_deps(project_root)
         if deps_result.is_failure:
             return r[int].fail(deps_result.error or "dependency collection failed")
@@ -432,6 +440,7 @@ class InternalDependencySyncService:
 
 
 def main() -> int:
+    """Entry point for internal dependency synchronization CLI."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument("--project-root", type=Path, required=True)
     args = parser.parse_args()

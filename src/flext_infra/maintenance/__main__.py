@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if result.is_success:
         return result.value
-    print(f"Error: {result.error}")
+    _ = sys.stdout.write(f"Error: {result.error}\n")
     return 1
 
 

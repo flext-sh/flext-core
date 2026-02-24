@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Literal, cast, overload
+from typing import Literal, overload
 
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -340,7 +340,7 @@ class FlextUtilitiesConversion:
         elif isinstance(value, (list, tuple, set, frozenset)) or (
             isinstance(value, Sequence) and not isinstance(value, (str, bytes))
         ):
-            items = cast("list[t.GeneralValueType]", list(value))
+            items = list(value)
         else:
             items = [value]
 

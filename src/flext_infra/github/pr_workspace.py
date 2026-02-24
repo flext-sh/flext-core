@@ -35,6 +35,7 @@ class PrWorkspaceManager:
         selector: ProjectSelector | None = None,
         reporting: ReportingService | None = None,
     ) -> None:
+        """Initialize the workspace PR manager."""
         self._runner = runner or CommandRunner()
         self._git = git or GitService(self._runner)
         self._selector = selector or ProjectSelector()

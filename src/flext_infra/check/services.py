@@ -1,3 +1,5 @@
+"""Quality gate execution and workspace checking services."""
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +37,7 @@ _GO_VET_RE = re.compile(
     r"^(?P<file>[^:\n]+\.go):(?P<line>\d+)(?::(?P<col>\d+))?:\s*(?P<msg>.*)$",
 )
 logger = structlog.get_logger(__name__)
+_MAX_DISPLAY_ISSUES = 50
 
 
 @dataclass
@@ -339,10 +342,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     "",
                     "```",
                 ])
-                for issue in gate_result.issues[:50]:
-                    lines.append(_format_issue(issue))
-                if len(gate_result.issues) > 50:
-                    lines.append(f"... and {len(gate_result.issues) - 50} more errors")
+                lines.extend(_format_issue(issue) for issue in gate_result.issues[:_MAX_DISPLAY_ISSUES])
+                if len(gate_result.issues) > _MAX_DISPLAY_ISSUES:
+                    lines.append(f"... and {len(gate_result.issues) - _MAX_DISPLAY_ISSUES} more errors")
                 lines.extend(["```", ""])
 
         return "\n".join(lines)

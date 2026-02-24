@@ -19,7 +19,7 @@ from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from datetime import datetime as dt
 from types import ModuleType
-from typing import Self, cast, override
+from typing import Self, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -1100,7 +1100,7 @@ class FlextDispatcher(FlextService[bool]):
             handler_arg: object = args[0]
             # Type narrowing: isinstance/callable for mypy (HandlerType = HandlerCallable | BaseModel)
             if callable(handler_arg) or isinstance(handler_arg, BaseModel):
-                return self._register_single_handler(cast("t.HandlerType", handler_arg))
+                return self._register_single_handler(handler_arg)
             return r[bool].fail("Handler must be callable or BaseModel")
         if len(args) == c.Dispatcher.TWO_HANDLER_ARG_COUNT:
             # First arg is command type (string, class, or GeneralValueType)
@@ -1126,7 +1126,7 @@ class FlextDispatcher(FlextService[bool]):
                 command_type = str(command_type_arg)
             two_arg_handler: t.HandlerType
             if u.is_handler_type(second_handler_arg):
-                two_arg_handler = cast("t.HandlerType", second_handler_arg)
+                two_arg_handler = second_handler_arg
             else:
                 return r[bool].fail("Handler must be callable or BaseModel")
 
@@ -1708,7 +1708,7 @@ class FlextDispatcher(FlextService[bool]):
         if isinstance(handler_raw, BaseModel):
             handler_typed: t.HandlerType = handler_raw
         elif callable(handler_raw):
-            handler_typed = cast("t.HandlerCallable", handler_raw)
+            handler_typed = handler_raw
         else:
             return r[tuple[t.HandlerType, str]].fail(
                 "Handler must be callable, mapping, or BaseModel",
@@ -1981,7 +1981,7 @@ class FlextDispatcher(FlextService[bool]):
                 f"Invalid handler type: {type(request).__name__}",
             )
         # After callable() check, request is a callable handler
-        result = self._layer1_register_handler(cast("t.HandlerType", request))
+        result = self._layer1_register_handler(request)
         if result.is_failure:
             return r[m.HandlerRegistrationResult].fail(
                 result.error or "Registration failed",
@@ -2432,9 +2432,7 @@ class FlextDispatcher(FlextService[bool]):
                     attributes_dict = dict(processed_items)
 
             # attributes_dict is dict[str, str] which is assignable to dict[str, t.GeneralValueType]
-            return m.Metadata(
-                attributes=cast("dict[str, t.GeneralValueType]", dict(attributes_dict))
-            )
+            return m.Metadata(attributes=dict(attributes_dict))
         # Convert other types to Metadata via dict with string value
         return m.Metadata(attributes={"value": str(metadata)})
 
@@ -2996,9 +2994,7 @@ class FlextDispatcher(FlextService[bool]):
             if FlextDispatcher._is_metadata_attribute_compatible(v)
         }
 
-        return m.Metadata(
-            attributes=cast("dict[str, t.GeneralValueType]", dict(valid_attrs))
-        )
+        return m.Metadata(attributes=dict(valid_attrs))
 
     @staticmethod
     def _is_metadata_attribute_compatible(value: t.GeneralValueType) -> bool:

@@ -98,6 +98,25 @@ class InfraModels(_FlextModels):
         tag: str = Field(min_length=1, description="Git tag for release")
         bump_type: str = Field(min_length=1, description="Release bump type")
 
+    class PrExecutionResult(_FlextModels.ArbitraryTypesModel):
+        """Result of a single PR operation on a repository."""
+
+        display: str = Field(min_length=1, description="Repository display name")
+        status: str = Field(min_length=1, description="Execution status")
+        elapsed: int = Field(ge=0, description="Elapsed time in seconds")
+        exit_code: int = Field(description="Process exit code")
+        log_path: str | None = Field(default=None, description="Log file path")
+
+    class PrOrchestrationResult(_FlextModels.ArbitraryTypesModel):
+        """Aggregated result of workspace-wide PR orchestration."""
+
+        total: int = Field(ge=0, description="Total repositories processed")
+        success: int = Field(ge=0, description="Successful executions")
+        fail: int = Field(ge=0, description="Failed executions")
+        results: list[InfraModels.PrExecutionResult] = Field(
+            default_factory=list, description="Per-repository results"
+        )
+
 
 FlextInfraModels = InfraModels
 im = InfraModels

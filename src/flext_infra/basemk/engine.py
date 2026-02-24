@@ -1,3 +1,5 @@
+"""Jinja2-based template engine for rendering base.mk configuration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,12 +7,20 @@ from typing import ClassVar, override
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, TemplateError
+from jinja2 import (
+    Environment,
+    FileSystemLoader,
+    StrictUndefined,
+    TemplateError,
+    select_autoescape,
+)
 
 from flext_infra.models import im
 
 
 class TemplateEngine(FlextService[str]):
+    """Render base.mk templates with configuration context."""
+
     TEMPLATE_ORDER: ClassVar[tuple[str, ...]] = (
         "base_header.mk.j2",
         "base_detection.mk.j2",
@@ -22,6 +32,7 @@ class TemplateEngine(FlextService[str]):
     )
 
     def __init__(self) -> None:
+        """Initialize the template engine with Jinja2 environment."""
         super().__init__()
         template_root = Path(__file__).resolve().parent / "templates"
         self._environment = Environment(
@@ -30,7 +41,7 @@ class TemplateEngine(FlextService[str]):
             lstrip_blocks=False,
             keep_trailing_newline=True,
             undefined=StrictUndefined,
-            autoescape=False,
+            autoescape=select_autoescape(),
         )
 
     @override
@@ -38,6 +49,7 @@ class TemplateEngine(FlextService[str]):
         return self.render_all()
 
     def render_all(self, config: im.BaseMkConfig | None = None) -> r[str]:
+        """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
         context: dict[str, object] = {
             "config": active_config,
@@ -57,6 +69,7 @@ class TemplateEngine(FlextService[str]):
 
     @staticmethod
     def _default_config() -> im.BaseMkConfig:
+        """Return the default base.mk configuration."""
         return im.BaseMkConfig(
             project_name="unnamed",
             python_version="3.13",
@@ -70,6 +83,7 @@ class TemplateEngine(FlextService[str]):
 
     @classmethod
     def default_config(cls) -> im.BaseMkConfig:
+        """Return the default base.mk configuration."""
         return cls._default_config()
 
 

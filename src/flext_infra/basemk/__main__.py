@@ -1,3 +1,5 @@
+"""CLI entry point for base.mk generation utilities."""
+
 from __future__ import annotations
 
 import argparse
@@ -18,6 +20,7 @@ def _build_config(project_name: str | None) -> im.BaseMkConfig | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Generate base.mk content from templates and write to file or stdout."""
     parser = argparse.ArgumentParser(description="base.mk generation utilities")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -45,9 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     config = _build_config(args.project_name)
     generated_result = generator.generate(config)
     if generated_result.is_failure:
-        print(
-            f"Error: {generated_result.error or 'base.mk generation failed'}",
-            file=sys.stderr,
+        _ = sys.stderr.write(
+            f"Error: {generated_result.error or 'base.mk generation failed'}\n"
         )
         return 1
 
@@ -57,10 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         stream=sys.stdout,
     )
     if write_result.is_failure:
-        print(
-            f"Error: {write_result.error or 'base.mk write failed'}",
-            file=sys.stderr,
-        )
+        _ = sys.stderr.write(f"Error: {write_result.error or 'base.mk write failed'}\n")
         return 1
     return 0
 

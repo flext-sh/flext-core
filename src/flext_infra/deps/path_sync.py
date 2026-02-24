@@ -1,3 +1,5 @@
+"""Rewrite internal FLEXT dependency paths for workspace or standalone mode."""
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +37,7 @@ ROOT = _workspace_root()
 
 
 def detect_mode(project_root: Path) -> str:
+    """Detect workspace or standalone mode from project structure."""
     for candidate in (project_root, *project_root.parents):
         if (candidate / ".gitmodules").exists():
             return "workspace"
@@ -42,6 +45,7 @@ def detect_mode(project_root: Path) -> str:
 
 
 def extract_dep_name(raw_path: str) -> str:
+    """Extract dependency name from path string."""
     normalized = raw_path.strip().removeprefix("./")
     for prefix in (f"{FLEXT_DEPS_DIR}/", "../"):
         normalized = normalized.removeprefix(prefix)
@@ -49,12 +53,14 @@ def extract_dep_name(raw_path: str) -> str:
 
 
 def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
+    """Compute target path for dependency based on mode and location."""
     if mode == "workspace":
         return dep_name if is_root else f"../{dep_name}"
     return f"{FLEXT_DEPS_DIR}/{dep_name}"
 
 
 def _extract_requirement_name(entry: str) -> str | None:
+    """Extract requirement name from PEP 621 dependency entry."""
     if " @ " in entry:
         match = _PEP621_PATH_DEP_RE.match(entry)
         if match:
@@ -144,6 +150,7 @@ def rewrite_dep_paths(
     is_root: bool = False,
     dry_run: bool = False,
 ) -> r[list[str]]:
+    """Rewrite PEP 621 and Poetry dependency paths."""
     toml_service = TomlService()
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
@@ -167,6 +174,7 @@ def rewrite_dep_paths(
 
 
 def main() -> int:
+    """Execute dependency path rewriting from command line."""
     parser = argparse.ArgumentParser(
         description="Rewrite internal FLEXT dependency paths for workspace/standalone mode."
     )
@@ -193,7 +201,7 @@ def main() -> int:
     mode = args.mode
     if mode == "auto":
         mode = detect_mode(ROOT)
-        print(f"[sync-dep-paths] auto-detected mode: {mode}")
+        _ = sys.stdout.write(f"[sync-dep-paths] auto-detected mode: {mode}\n")
 
     total_changes = 0
     toml_service = TomlService()
@@ -209,29 +217,28 @@ def main() -> int:
                 if isinstance(root_name, str) and root_name:
                     internal_names.add(root_name)
 
-    if not args.projects:
-        if root_pyproject.exists():
-            changes_result = rewrite_dep_paths(
-                root_pyproject,
-                mode=mode,
-                internal_names=internal_names,
-                is_root=True,
-                dry_run=args.dry_run,
+    if not args.projects and root_pyproject.exists():
+        changes_result = rewrite_dep_paths(
+            root_pyproject,
+            mode=mode,
+            internal_names=internal_names,
+            is_root=True,
+            dry_run=args.dry_run,
+        )
+        if changes_result.is_failure:
+            logger.error(
+                "sync_dep_paths_root_failed",
+                pyproject=str(root_pyproject),
+                error=changes_result.error,
             )
-            if changes_result.is_failure:
-                logger.error(
-                    "sync_dep_paths_root_failed",
-                    pyproject=str(root_pyproject),
-                    error=changes_result.error,
-                )
-                return 1
-            changes = changes_result.value
-            if changes:
-                prefix = "[DRY-RUN] " if args.dry_run else ""
-                print(f"{prefix}{root_pyproject}:")
-                for change in changes:
-                    print(change)
-                total_changes += len(changes)
+            return 1
+        changes = changes_result.value
+        if changes:
+            prefix = "[DRY-RUN] " if args.dry_run else ""
+            _ = sys.stdout.write(f"{prefix}{root_pyproject}:\n")
+            for change in changes:
+                _ = sys.stdout.write(f"{change}\n")
+            total_changes += len(changes)
 
     discover_result = DiscoveryService().discover_projects(ROOT)
     if discover_result.is_failure:
@@ -297,18 +304,18 @@ def main() -> int:
         changes = changes_result.value
         if changes:
             prefix = "[DRY-RUN] " if args.dry_run else ""
-            print(f"{prefix}{pyproject}:")
+            _ = sys.stdout.write(f"{prefix}{pyproject}:\n")
             for change in changes:
-                print(change)
+                _ = sys.stdout.write(f"{change}\n")
             total_changes += len(changes)
 
     if total_changes == 0:
-        print(
-            "[sync-dep-paths] No changes needed - all paths already match target mode."
+        _ = sys.stdout.write(
+            "[sync-dep-paths] No changes needed - all paths already match target mode.\n"
         )
     else:
         action = "would change" if args.dry_run else "changed"
-        print(f"\n[sync-dep-paths] {action} {total_changes} path(s).")
+        _ = sys.stdout.write(f"\n[sync-dep-paths] {action} {total_changes} path(s).\n")
     return 0
 
 

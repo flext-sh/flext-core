@@ -27,9 +27,9 @@ def _run_detect(args: argparse.Namespace) -> int:
     result = detector.detect(args.project_root)
 
     if result.is_success:
-        print(result.value.value)
+        _ = sys.stdout.write(f"{result.value.value}\n")
         return 0
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -39,9 +39,9 @@ def _run_sync(args: argparse.Namespace) -> int:
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
-        print(f"files_changed={result.value.files_changed}")
+        _ = sys.stdout.write(f"files_changed={result.value.files_changed}\n")
         return 0
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -49,7 +49,7 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
     """Execute multi-project orchestration."""
     projects = [p for p in args.projects if p]
     if not projects:
-        print("Error: no projects specified", file=sys.stderr)
+        _ = sys.stderr.write("Error: no projects specified\n")
         return 1
 
     service = OrchestratorService()
@@ -64,7 +64,7 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
         outputs = result.value
         failures = [o for o in outputs if o.exit_code != 0]
         return max((o.exit_code for o in failures), default=0)
-    print(f"Error: {result.error}", file=sys.stderr)
+    _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 
 
@@ -76,22 +76,20 @@ def _run_migrate(args: argparse.Namespace) -> int:
     )
 
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        _ = sys.stderr.write(f"Error: {result.error}\n")
         return 1
 
     failed_projects = 0
     for migration in result.value:
-        print(f"project={migration.project}")
+        _ = sys.stdout.write(f"project={migration.project}\n")
         for change in migration.changes:
-            print(f"  - {change}")
+            _ = sys.stdout.write(f"  - {change}\n")
         for error in migration.errors:
-            print(f"  ! {error}")
+            _ = sys.stdout.write(f"  ! {error}\n")
         if migration.errors:
             failed_projects += 1
 
-    print(
-        f"summary total={len(result.value)} failed={failed_projects} dry_run={str(args.dry_run).lower()}"
-    )
+    _ = sys.stdout.write(f"summary total={len(result.value)} failed={failed_projects} dry_run={str(args.dry_run).lower()}\n")
     return 1 if failed_projects else 0
 
 

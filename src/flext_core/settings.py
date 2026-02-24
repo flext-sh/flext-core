@@ -293,9 +293,9 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         # Policy exception (CLAUDE.md): BaseSettings.__init__ expects fixed keyword types;
         # we pass dynamic config (e.g. from model_validate). Evidence: pydantic_settings
         # BaseSettings has strict keyword params; only cast to Any at this boundary.
-        from typing import Any, cast  # noqa: PLC0415
+        from typing import Any  # noqa: PLC0415
 
-        BaseSettings.__init__(self, **cast("dict[str, Any]", kwargs))
+        BaseSettings.__init__(self, **kwargs)
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as t.GeneralValueType to avoid direct dependency-injector import in this module

@@ -23,6 +23,7 @@ class GitService:
     """
 
     def __init__(self, runner: CommandRunner | None = None) -> None:
+        """Initialize the Git service."""
         self._runner = runner or CommandRunner()
 
     def current_branch(self, repo_root: Path) -> FlextResult[str]:

@@ -34,6 +34,7 @@ class StubSupplyChain:
     """
 
     def __init__(self) -> None:
+        """Initialize the stub supply chain."""
         self._runner = CommandRunner()
 
     def analyze(

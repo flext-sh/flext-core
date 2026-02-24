@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import override
 from urllib.parse import urlparse
@@ -20,7 +20,7 @@ from flext_core.service import FlextService
 from flext_infra.subprocess import CommandRunner
 
 
-class WorkspaceMode(str, Enum):
+class WorkspaceMode(StrEnum):
     """Workspace execution mode enumeration."""
 
     WORKSPACE = "workspace"
@@ -36,6 +36,7 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
     """
 
     def __init__(self) -> None:
+        """Initialize the workspace detector."""
         super().__init__()
         self._runner = CommandRunner()
 

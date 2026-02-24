@@ -16,7 +16,6 @@ from typing import overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.checker import FlextUtilitiesChecker
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
@@ -69,9 +68,6 @@ class FlextUtilities:
 
     class Cache(FlextUtilitiesCache):
         """Cache utility class - real inheritance."""
-
-    class Cast(FlextUtilitiesCast):
-        """Cast utility class - real inheritance."""
 
     class Checker(FlextUtilitiesChecker):
         """Checker utility class - real inheritance."""
@@ -157,9 +153,9 @@ class FlextUtilities:
     sort_key = staticmethod(FlextUtilitiesCache.sort_key)
 
     # Cast
-    cast_callable = staticmethod(FlextUtilitiesCast.callable)
-    cast_direct = staticmethod(FlextUtilitiesCast.direct)
-    cast_general_value = staticmethod(FlextUtilitiesCast.general_value)
+    cast_callable = staticmethod(FlextUtilitiesMapper.cast_generic)
+    cast_direct = staticmethod(FlextUtilitiesMapper.cast_generic)
+    cast_general_value = staticmethod(FlextUtilitiesConversion.to_general_value_type)
     cast_generic = staticmethod(FlextUtilitiesMapper.cast_generic)
 
     # Collection

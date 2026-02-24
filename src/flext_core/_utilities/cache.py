@@ -41,7 +41,6 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Sequence
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -86,7 +85,8 @@ class FlextUtilitiesCache:
             Structlog logger instance with all logging methods.
 
         """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+
+    return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def normalize_component(

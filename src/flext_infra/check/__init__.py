@@ -1,3 +1,5 @@
+"""Check services for quality gate execution."""
+
 from __future__ import annotations
 
 from .services import (

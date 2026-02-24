@@ -35,6 +35,7 @@ class OrchestratorService(FlextService[list[InfraModels.CommandOutput]]):
     """
 
     def __init__(self) -> None:
+        """Initialize the orchestrator service."""
         super().__init__()
         self._runner = CommandRunner()
 

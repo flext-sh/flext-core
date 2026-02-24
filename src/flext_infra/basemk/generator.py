@@ -1,3 +1,5 @@
+"""Generate and validate base.mk files from templates."""
+
 from __future__ import annotations
 
 import tempfile
@@ -19,7 +21,10 @@ class _TemplateRenderer(Protocol):
 
 
 class BaseMkGenerator(FlextService[str]):
+    """Generate base.mk content and write to file or stream."""
+
     def __init__(self, template_engine: _TemplateRenderer | None = None) -> None:
+        """Initialize the base.mk generator."""
         super().__init__()
         self._template_engine = template_engine or TemplateEngine()
         self._runner = CommandRunner()
@@ -31,6 +36,7 @@ class BaseMkGenerator(FlextService[str]):
     def generate(
         self, config: im.BaseMkConfig | Mapping[str, object] | None = None
     ) -> r[str]:
+        """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
         if config_result.is_failure:
             return r[str].fail(config_result.error or "invalid base.mk configuration")
@@ -48,6 +54,7 @@ class BaseMkGenerator(FlextService[str]):
         output: Path | None = None,
         stream: TextIO | None = None,
     ) -> r[bool]:
+        """Write generated content to file or stream."""
         if output is None:
             target_stream = stream
             if target_stream is None:
@@ -82,6 +89,7 @@ class BaseMkGenerator(FlextService[str]):
             )
 
     def _validate_generated_output(self, content: str) -> r[str]:
+        """Validate generated base.mk by running make --dry-run."""
         try:
             with tempfile.TemporaryDirectory(prefix="flext-basemk-") as temp_dir_name:
                 temp_dir = Path(temp_dir_name)

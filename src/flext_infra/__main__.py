@@ -23,6 +23,8 @@ from __future__ import annotations
 import importlib
 import sys
 
+_MIN_ARGV = 2
+
 _GROUPS: dict[str, str] = {
     "basemk": "flext_infra.basemk.__main__",
     "check": "flext_infra.check.__main__",
@@ -58,9 +60,11 @@ def _print_help() -> None:
 
 def main() -> int:
     """Dispatch to the appropriate group CLI."""
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+    if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _print_help()
-        return 0 if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help") else 1
+        return (
+            0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
+        )
 
     group = sys.argv[1]
     if group not in _GROUPS:

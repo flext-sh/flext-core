@@ -15,7 +15,7 @@ from typing import Protocol, TypeGuard, overload
 from pydantic import BaseModel
 
 from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.cast import FlextUtilitiesCast
+from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.models import m
 from flext_core.protocols import p
@@ -481,7 +481,7 @@ class FlextUtilitiesMapper:
             result_dict: dict[str, t.GeneralValueType] = {}
             for key, val in narrowed_value.items():
                 # Convert object to GeneralValueType before recursive call
-                val_typed = FlextUtilitiesCast.to_general_value_type(val)
+                val_typed = FlextUtilitiesConversion.to_general_value_type(val)
                 result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(
                     val_typed,
                 )
