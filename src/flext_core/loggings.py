@@ -23,14 +23,14 @@ from typing import ClassVar, Literal, Self, overload
 
 from structlog.typing import BindableLogger
 
-from flext_core.constants import FlextConstants as c
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.constants import c
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextLogger(FlextRuntime, p.Log.StructlogLogger):

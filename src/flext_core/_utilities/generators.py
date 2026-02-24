@@ -20,10 +20,10 @@ from datetime import UTC, datetime
 from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import FlextConstants as c
-from flext_core.models import FlextModels as m
+from flext_core.constants import c
+from flext_core.models import m
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextUtilitiesGenerators:

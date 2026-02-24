@@ -86,7 +86,7 @@ class PrManager:
         if not payload:
             return r[Mapping[str, t.ScalarValue]].ok({})
         first = payload[0]
-        if type(first) is not dict:
+        if not isinstance(first, dict):
             return r[Mapping[str, t.ScalarValue]].ok({})
         return r[Mapping[str, t.ScalarValue]].ok(first)
 

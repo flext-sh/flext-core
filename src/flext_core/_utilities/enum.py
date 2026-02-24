@@ -16,7 +16,7 @@ from enum import StrEnum
 from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
 from flext_core.result import FlextResult as r
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextUtilitiesEnum:
@@ -570,7 +570,7 @@ class FlextUtilitiesEnum:
         FlextUtilitiesEnum._check_direct_access()
 
         if mode == "is_member":
-            if by_name and value.__class__ is str:
+            if by_name and isinstance(value, str):
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
                     value,
                     enum_cls,
@@ -583,9 +583,9 @@ class FlextUtilitiesEnum:
         if mode == "parse":
             # Type narrowing: value is object, but parse accepts str | E
             # We handle this by checking if it's already an enum instance
-            if value.__class__ is enum_cls:
+            if isinstance(value, enum_cls):
                 return FlextUtilitiesEnum._parse(enum_cls, value)
-            if value.__class__ is str:
+            if isinstance(value, str):
                 return FlextUtilitiesEnum._parse(enum_cls, value)
             # For other types, convert to string
             return FlextUtilitiesEnum._parse(enum_cls, str(value))
@@ -593,11 +593,11 @@ class FlextUtilitiesEnum:
             # Type narrowing: value is object, but coerce accepts str | E
             # coerce always returns E (raises on failure)
             # Explicit type narrowing for type checker
-            if value.__class__ is enum_cls:
+            if isinstance(value, enum_cls):
                 # Type narrowing: isinstance check ensures value is E
                 # Direct return after isinstance narrowing
                 return value
-            if value.__class__ is str:
+            if isinstance(value, str):
                 # Type narrowing: isinstance check ensures value is str
                 coerced: E = FlextUtilitiesEnum._coerce(enum_cls, value)
                 return coerced
@@ -610,10 +610,6 @@ class FlextUtilitiesEnum:
         raise ValueError(error_msg)
 
 
-# Short alias for convenience
-enum = FlextUtilitiesEnum
-
 __all__ = [
     "FlextUtilitiesEnum",
-    "enum",
 ]

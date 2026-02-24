@@ -1,9 +1,13 @@
 """Public API for flext-core.
 
-Runtime aliases only (MRO protocol; no subdivision). Use at call sites:
-  from flext_core import c, m, r, t, u, p, d, e, h, s, x
-Subprojects: use project namespace only (e.g. from flext_cli import c, m, t, u, p, r, d, e, h, s, x).
-Runtime helpers via x: x.create_instance, x.is_dict_like, x.is_valid_json, x.ok, x.fail, etc. Direct methods only; no loose aliases.
+Runtime aliases: simple assignments only (c = FlextConstants, m = FlextModels, etc.).
+Never use FlextRuntime.Aliases or any alias registry for c, m, r, t, u, p, d, e, h, s, x.
+
+Access via project runtime alias only; no subdivision. Subprojects: nested classes
+for organization, then class-level aliases at facade root so call sites use m.Foo,
+m.Bar only (never m.ProjectName.Foo). MRO protocol only; direct methods.
+
+Use at call sites: from flext_core import c, m, r, t, u, p, d, e, h, s, x
 Classes (FlextContainer, FlextModels, etc.) are for inheritance and type annotations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -47,7 +51,7 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextUtilities
 
-# Runtime aliases only (MRO protocol; no subdivision)
+# Simple runtime aliases only (no FlextRuntime.Aliases.*)
 c = FlextConstants
 d = FlextDecorators
 e = FlextExceptions

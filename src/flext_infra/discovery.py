@@ -91,7 +91,7 @@ class DiscoveryService:
 
         Satisfies ``InfraProtocols.DiscoveryProtocol.discover``.
         """
-        if type(root) is not Path and Path not in type(root).__mro__:
+        if not isinstance(root, Path):
             root = Path(str(root))
         return self.discover_projects(root)
 

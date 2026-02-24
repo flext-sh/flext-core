@@ -111,11 +111,11 @@ class StubSupplyChain:
                 data = result.value
                 internal = data.get("internal_missing", [])
                 unresolved = data.get("unresolved_missing", [])
-                if type(internal) is list and internal:
+                if isinstance(internal, list) and internal:
                     violations.append(
                         f"{proj.name}: {len(internal)} internal missing imports",
                     )
-                if type(unresolved) is list and unresolved:
+                if isinstance(unresolved, list) and unresolved:
                     violations.append(
                         f"{proj.name}: {len(unresolved)} unresolved imports",
                     )

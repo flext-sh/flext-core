@@ -43,7 +43,7 @@ class JsonService:
             return r[Mapping[str, t.ConfigMapValue]].ok({})
         try:
             loaded = json.loads(path.read_text(encoding=ic.Encoding.DEFAULT))
-            if type(loaded) is not dict:
+            if not isinstance(loaded, dict):
                 return r[Mapping[str, t.ConfigMapValue]].fail("JSON root must be object")
             data: Mapping[str, t.ConfigMapValue] = loaded
             return r[Mapping[str, t.ConfigMapValue]].ok(data)

@@ -10,29 +10,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, TypeIs, overload
+from typing import Self, overload
 
 from pydantic import BaseModel
-from returns.io import IO, IOFailure, IOResult, IOSuccess
-from returns.maybe import Maybe, Nothing, Some
+# from returns.io import IO, IOFailure, IOResult, IOSuccess
+# from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
-from returns.unsafe import unsafe_perform_io
 
-from flext_core.exceptions import FlextExceptions as e
-from flext_core.protocols import FlextProtocols as p
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Model, U, FlextTypes as t
-
-
-def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
-    """Type guard that narrows to successful FlextResult."""
-    return result.is_success and result.value is not None
-
-
-def is_failure_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
-    """Type guard that narrows to failed FlextResult."""
-    return result.is_failure
-
+from flext_core.typings import T_Model, U, t
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     """Type-safe result with monadic helpers for operation composition.
@@ -639,84 +626,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         all_results = [func(item) for item in items]
         return cls.accumulate_errors(*all_results)
 
-    def to_io(self) -> IO[T_co]:
-        """Convert to returns.io.IO.
-
-        Returns IO wrapping the success value.
-        Raises ValidationError on failure.
-        """
-        if self.is_failure:
-            raise e.ValidationError(self.error or "Result is failure")
-        return IO(self.value)
-
-    def to_io_result(self) -> IOResult[T_co, str]:
-        """Convert to returns.io.IOResult.
-
-        Returns IOResult[T, str] - success wraps value, failure wraps error.
-        """
-        if self.is_success:
-            return IOSuccess(self.value)
-        return IOFailure(self.error or "Unknown error")
-
-    def to_maybe(self) -> Maybe[T_co]:
-        """Convert to returns.maybe.Maybe.
-
-        Returns Some(value) on success, Nothing on failure.
-        """
-        if self.is_success:
-            return Some(self.value)
-        return Nothing
-
-    @classmethod
-    def from_maybe[T](
-        cls,
-        maybe: Maybe[T],
-        error: str = "Value was Nothing",
-    ) -> FlextResult[T]:
-        """Create FlextResult from returns.maybe.Maybe.
-
-        Args:
-            maybe: Maybe value to convert
-            error: Error message if maybe is Nothing
-
-        Returns:
-            FlextResult[T]: Ok(value) if Some, Fail(error) if Nothing
-
-        """
-        if maybe.__class__ is Some:
-            return FlextResult[T].ok(maybe.unwrap())
-        return FlextResult[T].fail(error)
-
-    @classmethod
-    def from_io_result[T](
-        cls,
-        io_result: IOResult[T, str],
-    ) -> FlextResult[T]:
-        """Create FlextResult from returns.io.IOResult.
-
-        The returns library's IOResult has a nested structure:
-        - IOSuccess wraps Success(Success(value))
-        - IOFailure wraps Failure(error)
-
-        We need to unwrap the nested Success wrappers to get the actual value.
-
-        Args:
-            io_result: IOResult to convert
-
-        Returns:
-            FlextResult[T]: Ok(value) if IOSuccess, Fail(error) if IOFailure
-
-        """
-        if io_result.__class__ is IOFailure:
-            return FlextResult[T].fail(str(io_result.failure()))
-
-        if io_result.__class__ is IOSuccess:
-            unwrapped_io = io_result.unwrap()
-            return FlextResult[T].ok(
-                unsafe_perform_io(unwrapped_io),
-            )
-
-        return FlextResult[T].fail("Invalid IOResult structure")
 
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection.
@@ -725,8 +634,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         return "FlextResult"
 
-    # __enter__, __exit__, __repr__ are inherited from RuntimeResult
-
-
 r = FlextResult
+
 __all__ = ["FlextResult", "r"]

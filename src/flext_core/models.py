@@ -17,7 +17,7 @@ from typing import Annotated, TypeAlias
 
 from pydantic import Discriminator
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
@@ -69,15 +69,9 @@ class FlextModels:
     # =========================================================================
     # GENERIC MODELS BY BUSINESS FUNCTION - FLAT namespace (no intermediate levels)
     # =========================================================================
-    # CRITICAL: All generic models exposed directly on FlextModels for cleaner access:
-    # - m.Configuration (not m.Snapshot.Configuration)
-    # - m.Service (not m.Snapshot.Service)
-    # - m.Operation (not m.Progress.Operation)
-    # - m.OperationContext (not m.Value.OperationContext)
-    #
-    # This enables hierarchical inheritance in subprojects:
-    # - flext-cli: m.Cli.Configuration, m.Cli.Service (inherit from m.Configuration, m.Service)
-    # - flext-oud-mig: m.FlextOudMig.Configuration (inherit from parent project's namespace)
+    # CRITICAL: Flat namespace — models on FlextModels directly (m.Configuration, m.Service, etc.).
+    # Subprojects: inherit facade, add nested classes, then class-level aliases at root so usage
+    # is m.Foo (e.g. ExecuteResult = TargetOracle.ExecuteResult). MRO protocol only; no subdivision.
 
     # VALUE OBJECTS - Immutable data compared by value
     class OperationContext(FlextGenericModels.Value.OperationContext):
@@ -125,7 +119,7 @@ class FlextModels:
     # NAMESPACE CLASSES - Direct access for internal model classes
     # =========================================================================
 
-    Base = FlextModelsBase
+    Base = FlextModelFoundation
     Cqrs = FlextModelsCqrs
     EntityModels = FlextModelsEntity
     Entity_ns = FlextModelsEntity
@@ -187,7 +181,7 @@ class FlextModels:
     # SERVICE MODELS
     # =========================================================================
 
-    class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
+    class ServiceRuntime(FlextModelFoundation.ArbitraryTypesModel):
         """Runtime triple (config, context, container) for services.
 
         Represents the core service runtime with configuration, context,
@@ -272,13 +266,13 @@ class FlextModels:
     # BASE CLASSES - Direct access for common usage
     # =========================================================================
 
-    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
-    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
-    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
-    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
-    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
-    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
-    Metadata: TypeAlias = FlextModelsBase.Metadata
+    ArbitraryTypesModel: TypeAlias = FlextModelFoundation.ArbitraryTypesModel
+    FrozenStrictModel: TypeAlias = FlextModelFoundation.FrozenStrictModel
+    IdentifiableMixin: TypeAlias = FlextModelFoundation.IdentifiableMixin
+    TimestampableMixin: TypeAlias = FlextModelFoundation.TimestampableMixin
+    TimestampedModel: TypeAlias = FlextModelFoundation.TimestampedModel
+    VersionableMixin: TypeAlias = FlextModelFoundation.VersionableMixin
+    Metadata: TypeAlias = FlextModelFoundation.Metadata
 
     # =========================================================================
     # HANDLER MODELS - Direct access for common usage

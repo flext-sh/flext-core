@@ -51,7 +51,7 @@ def _run_inventory(args: argparse.Namespace) -> int:
         data = result.value
         _ = sys.stdout.write(f"total_scripts={data.get('total_scripts', 0)}\n")
         written = data.get("reports_written", [])
-        if type(written) is list:
+        if isinstance(written, list):
             for path in written:
                 _ = sys.stdout.write(f"Wrote: {path}\n")
         return 0
@@ -68,35 +68,35 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
         data = result.value
 
         failed_cases_raw = data.get("failed_cases")
-        if args.failed and type(failed_cases_raw) is list:
+        if args.failed and isinstance(failed_cases_raw, list):
             failed_cases = [str(item) for item in failed_cases_raw]
             Path(args.failed).write_text(
                 "\n\n".join(failed_cases) + "\n",
                 encoding="utf-8",
             )
         error_traces_raw = data.get("error_traces")
-        if args.errors and type(error_traces_raw) is list:
+        if args.errors and isinstance(error_traces_raw, list):
             error_traces = [str(item) for item in error_traces_raw]
             Path(args.errors).write_text(
                 "\n\n".join(error_traces) + "\n",
                 encoding="utf-8",
             )
         warning_lines_raw = data.get("warning_lines")
-        if args.warnings and type(warning_lines_raw) is list:
+        if args.warnings and isinstance(warning_lines_raw, list):
             warning_lines = [str(item) for item in warning_lines_raw]
             Path(args.warnings).write_text(
                 "\n".join(warning_lines) + "\n",
                 encoding="utf-8",
             )
         slow_entries_raw = data.get("slow_entries")
-        if args.slowest and type(slow_entries_raw) is list:
+        if args.slowest and isinstance(slow_entries_raw, list):
             slow_entries = [str(item) for item in slow_entries_raw]
             Path(args.slowest).write_text(
                 "\n".join(slow_entries) + "\n",
                 encoding="utf-8",
             )
         skip_cases_raw = data.get("skip_cases")
-        if args.skips and type(skip_cases_raw) is list:
+        if args.skips and isinstance(skip_cases_raw, list):
             skip_cases = [str(item) for item in skip_cases_raw]
             Path(args.skips).write_text("\n".join(skip_cases) + "\n", encoding="utf-8")
 
@@ -128,7 +128,7 @@ def _run_scan(args: argparse.Namespace) -> int:
             f"{json.dumps({'violation_count': data.get('violation_count', 0)})}\n"
         )
         violation_count = data.get("violation_count", 0)
-        return 1 if type(violation_count) is int and violation_count > 0 else 0
+        return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
     _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 

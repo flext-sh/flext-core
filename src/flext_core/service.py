@@ -24,22 +24,22 @@ from pydantic import (
     computed_field,
 )
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins as x
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.settings import FlextSettings
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextService[TDomainResult](
-    FlextModelsBase.ArbitraryTypesModel,
+    FlextModelFoundation.ArbitraryTypesModel,
     x,
     ABC,
 ):

@@ -14,7 +14,7 @@ from typing import Protocol, TypeGuard, overload, runtime_checkable
 
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.result import FlextResult as r
-from flext_core.typings import R, T, T_contra, U, FlextTypes as t
+from flext_core.typings import R, T, T_contra, U, t
 
 
 @runtime_checkable

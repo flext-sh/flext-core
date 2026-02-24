@@ -14,12 +14,12 @@ from typing import Annotated, Final, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
+from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextModelsConfig:
@@ -39,7 +39,7 @@ class FlextModelsConfig:
         """
         return FlextRuntime.get_log_level_from_config()
 
-    class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
+    class ProcessingRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
         model_config = ConfigDict(
@@ -86,7 +86,7 @@ class FlextModelsConfig:
                 include_timestamp=True,
             )
 
-    class RetryConfiguration(FlextModelsBase.ArbitraryTypesModel):
+    class RetryConfiguration(FlextModelFoundation.ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
@@ -165,7 +165,7 @@ class FlextModelsConfig:
                 raise ValueError(msg)
             return self
 
-    class ValidationConfiguration(FlextModelsBase.ArbitraryTypesModel):
+    class ValidationConfiguration(FlextModelFoundation.ArbitraryTypesModel):
         """Validation configuration."""
 
         enable_strict_mode: bool = Field(default=True)
@@ -442,7 +442,7 @@ class FlextModelsConfig:
         Groups optional dispatch context and overrides.
         """
 
-        metadata: FlextModelsBase.Metadata | None = Field(
+        metadata: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Optional execution context metadata (Pydantic model)",
         )
@@ -570,7 +570,7 @@ class FlextModelsConfig:
             default=None,
             description="Correlation ID for distributed tracing",
         )
-        metadata: FlextModelsBase.Metadata | None = Field(
+        metadata: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Additional metadata (Pydantic model)",
         )
@@ -601,7 +601,7 @@ class FlextModelsConfig:
             default=None,
             description="Error code for categorization",
         )
-        error_data: FlextModelsBase.Metadata | None = Field(
+        error_data: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Additional error data (Pydantic model)",
         )
@@ -774,7 +774,7 @@ class FlextModelsConfig:
             description="Additional context for error",
         )
         metadata: (
-            FlextModelsBase.Metadata | Mapping[str, t.MetadataAttributeValue] | None
+            FlextModelFoundation.Metadata | Mapping[str, t.MetadataAttributeValue] | None
         ) = Field(
             default=None,
             description="Metadata for error",
@@ -892,7 +892,7 @@ class FlextModelsConfig:
             description="Whether to track performance metrics",
         )
 
-    class RetryLoopConfig(FlextModelsBase.ArbitraryTypesModel):
+    class RetryLoopConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for retry loop execution (Pydantic v2).
 
         Reduces parameter count for _execute_retry_loop from 8 to 3 params.
@@ -934,7 +934,7 @@ class FlextModelsConfig:
             ),
         )
 
-    class DispatcherConfig(FlextModelsBase.ArbitraryTypesModel):
+    class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for message dispatcher.
 
         Replaces TypedDict DispatcherConfig from typings.py.

@@ -79,7 +79,7 @@ class BaseMkGenerator(FlextService[str]):
     ) -> r[im.BaseMkConfig]:
         if config is None:
             return r[im.BaseMkConfig].ok(TemplateEngine.default_config())
-        if type(config) is im.BaseMkConfig or (im.BaseMkConfig in type(config).__mro__):
+        if isinstance(config, im.BaseMkConfig):
             return r[im.BaseMkConfig].ok(config)
         try:
             normalized = im.BaseMkConfig.model_validate(dict(config))

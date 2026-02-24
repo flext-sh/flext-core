@@ -23,10 +23,10 @@ from pydantic import BaseModel
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core.constants import FlextConstants as c
-from flext_core.models import FlextModels as m
+from flext_core.constants import c
+from flext_core.models import m
 from flext_core.result import FlextResult as r
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextUtilitiesParser:
@@ -704,9 +704,9 @@ class FlextUtilitiesParser:
             has_name_attr=hasattr(obj, "__name__"),
         )
 
-        if obj.__class__ is str:
+        if isinstance(obj, str):
             key = obj
-        elif (dunder_name := getattr(obj, "__name__", None)).__class__ is str:
+        elif isinstance(dunder_name := getattr(obj, "__name__", None), str):
             key = dunder_name
         elif Mapping in obj.__class__.__mro__:
             # After isinstance, obj is Mapping - use directly
@@ -949,7 +949,7 @@ class FlextUtilitiesParser:
             # Use .value directly - FlextResult never returns None on success
             pattern, replacement, flags = pattern_result.value
 
-            # Apply the pattern using uModel
+            # Apply the pattern (u.from_kwargs at call sites)
             params_result = FlextUtilitiesModel.from_kwargs(
                 FlextModelsCollections.PatternApplicationParams,
                 text=result_text,

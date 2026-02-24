@@ -22,14 +22,14 @@ from pydantic import BaseModel
 
 # Direct imports for internal usage (mypy compatibility with nested class aliases)
 from flext_core._models.context import FlextModelsContext
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.loggings import FlextLogger
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core.typings import t
+from flext_core.utilities import u
 
 # Concrete value type for context storage
 type ContextValue = t.ConfigMapValue
@@ -477,7 +477,7 @@ class FlextContext(FlextRuntime):
         except (TypeError, Exception) as e:
             error_msg = (
                 str(e)
-                if e.__class__ is TypeError
+                if isinstance(e, TypeError)
                 else f"Failed to set context value: {e}"
             )
             return r[bool].fail(error_msg)
@@ -518,7 +518,7 @@ class FlextContext(FlextRuntime):
         except (TypeError, Exception) as e:
             error_msg = (
                 str(e)
-                if e.__class__ is TypeError
+                if isinstance(e, TypeError)
                 else f"Failed to set context values: {e}"
             )
             return r[bool].fail(error_msg)
@@ -1580,7 +1580,7 @@ class FlextContext(FlextRuntime):
 
             Example:
                 >>> result = FlextContext.Service.get_service("logger")
-                >>> if result.is_success and result.value.__class__ is FlextLogger:
+                >>> if result.is_success and isinstance(result.value, FlextLogger):
                 ...     result.value.info("Service retrieved")
 
             """

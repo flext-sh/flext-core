@@ -15,23 +15,23 @@ from typing import Annotated
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 def _normalize_metadata(
-    value: None | FlextModelsBase.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue],
-) -> FlextModelsBase.Metadata:
+    value: None | FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue],
+) -> FlextModelFoundation.Metadata:
     if value is None:
-        return FlextModelsBase.Metadata(attributes={})
-    if FlextModelsBase.Metadata in value.__class__.__mro__:
+        return FlextModelFoundation.Metadata(attributes={})
+    if isinstance(value, FlextModelFoundation.Metadata):
         return value
     if not FlextRuntime.is_dict_like(value):
         msg = (
-            f"metadata must be None, dict, or FlextModelsBase.Metadata, "
+            f"metadata must be None, dict, or FlextModelFoundation.Metadata, "
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
@@ -39,7 +39,7 @@ def _normalize_metadata(
     attributes: Mapping[str, t.MetadataAttributeValue] = {
         str(k): FlextRuntime.normalize_to_metadata_value(v) for k, v in raw.items()
     }
-    return FlextModelsBase.Metadata(attributes=attributes)
+    return FlextModelFoundation.Metadata(attributes=attributes)
 
 
 class FlextModelsContext:
@@ -62,7 +62,7 @@ class FlextModelsContext:
             str(k): FlextRuntime.normalize_to_metadata_value(v) for k, v in raw.items()
         }
 
-    class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
+    class ArbitraryTypesModel(FlextModelFoundation.ArbitraryTypesModel):
         """Base model with arbitrary types support - real inheritance."""
 
     class StructlogProxyToken(FlextModelsEntity.Value):
@@ -281,7 +281,7 @@ class FlextModelsContext:
             >>> from flext_core import FlextModels
             >>> context_data = FlextModelsContext.ContextData(
                 data={"user_id": "123", "correlation_id": "abc-xyz"},
-                metadata=FlextModelsBase.Metadata(
+                metadata=FlextModelFoundation.Metadata(
                     attributes={
                         "source": "api",
                         "created_at": "2025-01-01T00:00:00Z",
@@ -299,7 +299,7 @@ class FlextModelsContext:
             default_factory=t.Dict,
             description="Initial context data as key-value pairs",
         )
-        metadata: FlextModelsBase.Metadata | t.Dict | None = Field(
+        metadata: FlextModelFoundation.Metadata | t.Dict | None = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
@@ -346,7 +346,7 @@ class FlextModelsContext:
             path: str = "",
         ) -> None:
             """Recursively check if object is JSON-serializable."""
-            if obj is None or obj.__class__ in (str, int, float, bool):
+            if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
             # is_dict_like already checks for Mapping protocol compliance
             if FlextRuntime.is_dict_like(obj):
@@ -358,7 +358,7 @@ class FlextModelsContext:
                 return  # All dict items validated successfully
             # is_list_like already checks for Sequence protocol compliance
             # Exclude str/bytes which are also Sequence
-            if FlextRuntime.is_list_like(obj) and obj.__class__ not in (str, bytes):
+            if FlextRuntime.is_list_like(obj) and not isinstance(obj, (str, bytes)):
                 # Type narrowing: is_list_like ensures Sequence protocol
                 seq_obj: Sequence[t.GuardInputValue] = obj
                 for i, item in enumerate(seq_obj):
@@ -372,8 +372,8 @@ class FlextModelsContext:
         @classmethod
         def validate_metadata(
             cls,
-            v: t.GuardInputValue | FlextModelsBase.Metadata | None,
-        ) -> FlextModelsBase.Metadata:
+            v: t.GuardInputValue | FlextModelFoundation.Metadata | None,
+        ) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
@@ -389,7 +389,7 @@ class FlextModelsContext:
         ) -> Mapping[str, t.GuardInputValue]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
-            STRICT mode: Also accepts FlextModelsBase.Metadata and converts to dict.
+            STRICT mode: Also accepts FlextModelFoundation.Metadata and converts to dict.
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
@@ -397,8 +397,8 @@ class FlextModelsContext:
             # Convert various input types to dict
             working_value: MutableMapping[str, t.GuardInputValue]
 
-            # STRICT mode: Accept FlextModelsBase.Metadata and convert to dict
-            if v.__class__ is FlextModelsBase.Metadata:
+            # STRICT mode: Accept FlextModelFoundation.Metadata and convert to dict
+            if isinstance(v, FlextModelFoundation.Metadata):
                 # Convert MetadataAttributeDict to ConfigurationDict
                 # Use helper to normalize all values
                 working_value = {
@@ -426,7 +426,7 @@ class FlextModelsContext:
                     raise TypeError(msg)
             elif v is None:
                 return {}
-            elif v.__class__ is dict:
+            elif isinstance(v, dict):
                 # Normalize dict to ConfigurationDict
                 working_value = {
                     str(k): FlextRuntime.normalize_to_general_value(v[k]) for k in v
@@ -483,7 +483,7 @@ class FlextModelsContext:
             >>> from flext_core import FlextModels
             >>> export = FlextModelsContext.ContextExport(
                 data={"user_id": "123", "correlation_id": "abc-xyz"},
-                metadata=FlextModelsBase.Metadata(
+                metadata=FlextModelFoundation.Metadata(
                     attributes={"source": "api", "version": "1.0"}
                 ),
                 statistics={"sets": 5, "gets": 10, "removes": 2},
@@ -499,7 +499,7 @@ class FlextModelsContext:
             default_factory=dict,
             description="All context data from all scopes",
         )
-        metadata: FlextModelsBase.Metadata | t.Dict | None = Field(
+        metadata: FlextModelFoundation.Metadata | t.Dict | None = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
@@ -512,8 +512,8 @@ class FlextModelsContext:
         @classmethod
         def validate_metadata(
             cls,
-            v: t.GuardInputValue | FlextModelsBase.Metadata | None,
-        ) -> FlextModelsBase.Metadata:
+            v: t.GuardInputValue | FlextModelFoundation.Metadata | None,
+        ) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
@@ -528,7 +528,7 @@ class FlextModelsContext:
             path: str = "",
         ) -> None:
             """Recursively check if object is JSON-serializable."""
-            if obj is None or obj.__class__ in (str, int, float, bool):
+            if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
             # is_dict_like already checks for Mapping protocol compliance
             if FlextRuntime.is_dict_like(obj):
@@ -542,7 +542,7 @@ class FlextModelsContext:
                     )
             # is_list_like already checks for Sequence protocol compliance
             # Exclude str/bytes which are also Sequence
-            elif FlextRuntime.is_list_like(obj) and obj.__class__ not in (str, bytes):
+            elif FlextRuntime.is_list_like(obj) and not isinstance(obj, (str, bytes)):
                 # Type narrowing: is_list_like ensures Sequence protocol
                 seq_obj: Sequence[t.GuardInputValue] = obj
                 for i, item in enumerate(seq_obj):
@@ -573,7 +573,7 @@ class FlextModelsContext:
 
             # Handle m.Metadata specially - extract only attributes dict
             # (excludes datetime fields which aren't JSON-serializable)
-            if v.__class__ is FlextModelsBase.Metadata:
+            if isinstance(v, FlextModelFoundation.Metadata):
                 # Convert MetadataAttributeDict to ConfigurationDict
                 working_value = {
                     str(k): FlextRuntime.normalize_to_general_value(val)
@@ -600,7 +600,7 @@ class FlextModelsContext:
                     raise TypeError(msg)
             elif v is None:
                 return {}
-            elif v.__class__ is dict:
+            elif isinstance(v, dict):
                 # Normalize dict to ConfigurationDict
                 working_value = {
                     str(k): FlextRuntime.normalize_to_general_value(v[k]) for k in v
@@ -640,7 +640,7 @@ class FlextModelsContext:
                 return {}
             if FlextRuntime.is_dict_like(v):
                 return dict(v)
-            if BaseModel in v.__class__.__mro__:
+            if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
             raise TypeError(msg)
@@ -665,7 +665,7 @@ class FlextModelsContext:
             scope_name: Name of the scope (e.g., 'request', 'operation')
             scope_type: Type/category of scope
             data: Scope-specific data key-value pairs
-            metadata: FlextModelsBase.Metadata associated with this scope
+            metadata: FlextModelFoundation.Metadata associated with this scope
 
         Examples:
             >>> from flext_core import FlextModels
@@ -673,7 +673,7 @@ class FlextModelsContext:
                 scope_name="request",
                 scope_type="http",
                 data={"method": "POST", "path": "/api/orders"},
-                metadata=FlextModelsBase.Metadata(
+                metadata=FlextModelFoundation.Metadata(
                     attributes={"trace_id": "trace-123"}
                 ),
             )
@@ -710,7 +710,7 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in v.__class__.__mro__:
+            if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
@@ -729,7 +729,7 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in v.__class__.__mro__:
+            if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
@@ -800,7 +800,7 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in v.__class__.__mro__:
+            if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
@@ -908,7 +908,7 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in v.__class__.__mro__:
+            if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}

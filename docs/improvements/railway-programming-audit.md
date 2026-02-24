@@ -97,18 +97,6 @@ These **production-ready methods** exist in source but are **NOT documented**:
    - **Missing From**: All guides
    - **Impact**: HIGH - Alternative to from_callable
 
-1. **from_maybe()** - Line 1068
-
-   - **Purpose**: Convert returns.maybe.Maybe to FlextResult
-   - **Missing From**: Railway guide, API reference
-   - **Impact**: MEDIUM - Interoperability with returns library
-
-1. **from_io_result()** - Line 1689
-
-   - **Purpose**: Convert returns.io types to FlextResult
-   - **Missing From**: All guides
-   - **Impact**: MEDIUM - IO monad integration
-
 #### Collection Operations
 
 1. **sequence()** - Line 1126
@@ -231,7 +219,7 @@ ______________________________________________________________________
 
 1. **Add Missing Factory Methods Section**
 
-   - Document from_exception, from_maybe, from_io_result
+   - Document from_exception
    - Show when to use each
    - Provide examples
 
@@ -318,7 +306,6 @@ ______________________________________________________________________
    6.1 from_callable() ✅
    6.2 from_exception() ❌ MISSING
    6.3 safe_call() ❌ MISSING
-   6.4 from_maybe() / from_io_result() ❌ MISSING
 
 7. Collection Operations (NEW)
    7.1 sequence() ❌ MISSING
@@ -391,7 +378,6 @@ ______________________________________________________________________
 - flat_map() - Line 575
 - filter() - Line 996
 - from_exception() - Line 1014
-- from_maybe() - Line 1068
 - sequence() - Line 1126
 - collect_successes() - Line 1144
 - collect_failures() - Line 1151
@@ -403,7 +389,6 @@ ______________________________________________________________________
 - accumulate_errors() - Line 1327
 - parallel_map() - Line 1352
 - validate_all() - Line 1454
-- from_io_result() - Line 1689
 
 ### Verified Instance Methods ✅
 

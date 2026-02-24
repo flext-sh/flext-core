@@ -15,11 +15,11 @@ from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
 
-from flext_core._models.base import FlextModelsBase
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextModelsService:
@@ -33,14 +33,14 @@ class FlextModelsService:
     # SUPPORTING MODELS - Base classes for dynamic configuration
     # =========================================================================
 
-    class TraceContext(FlextModelsBase.FrozenStrictModel):
+    class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""
 
         trace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         span_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         parent_span_id: str | None = None
 
-    class RetryConfiguration(FlextModelsBase.FrozenStrictModel):
+    class RetryConfiguration(FlextModelFoundation.FrozenStrictModel):
         """Retry configuration for operations."""
 
         max_retries: int = Field(default=c.Reliability.DEFAULT_MAX_RETRIES, ge=0)
@@ -53,23 +53,23 @@ class FlextModelsService:
         )
         retry_on_timeout: bool = True
 
-    class ServiceParameters(FlextModelsBase.DynamicConfigModel):
+    class ServiceParameters(FlextModelFoundation.DynamicConfigModel):
         """Dynamic parameters for service methods - allows extra fields."""
 
-    class ServiceFilters(FlextModelsBase.DynamicConfigModel):
+    class ServiceFilters(FlextModelFoundation.DynamicConfigModel):
         """Filter criteria for queries - allows extra fields."""
 
-    class ServiceData(FlextModelsBase.DynamicConfigModel):
+    class ServiceData(FlextModelFoundation.DynamicConfigModel):
         """Operation data model - allows extra fields."""
 
-    class ServiceContext(FlextModelsBase.DynamicConfigModel):
+    class ServiceContext(FlextModelFoundation.DynamicConfigModel):
         """Service execution context - allows extra fields."""
 
     # =========================================================================
     # REQUEST/RESPONSE MODELS
     # =========================================================================
 
-    class DomainServiceExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
+    class DomainServiceExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
 
         service_name: str = Field(
@@ -113,7 +113,7 @@ class FlextModelsService:
                 raise ValueError(msg)
             return v
 
-    class BatchOperation(FlextModelsBase.ArbitraryTypesModel):
+    class BatchOperation(FlextModelFoundation.ArbitraryTypesModel):
         """Single operation in a batch."""
 
         operation_name: str = Field(min_length=1)
@@ -126,7 +126,7 @@ class FlextModelsService:
                 self.parameters = FlextModelsService.ServiceParameters()
             return self
 
-    class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
+    class DomainServiceBatchRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service batch request."""
 
         service_name: str
@@ -146,7 +146,7 @@ class FlextModelsService:
             description="Timeout per operation from FlextSettings",
         )
 
-    class DomainServiceMetricsRequest(FlextModelsBase.ArbitraryTypesModel):
+    class DomainServiceMetricsRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service metrics request."""
 
         service_name: str
@@ -173,7 +173,7 @@ class FlextModelsService:
                 self.filters = FlextModelsService.ServiceFilters()
             return self
 
-    class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
+    class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service resource request."""
 
         service_name: str = c.Dispatcher.DEFAULT_SERVICE_NAME
@@ -196,7 +196,7 @@ class FlextModelsService:
                 self.filters = FlextModelsService.ServiceFilters()
             return self
 
-    class AclResponse(FlextModelsBase.ArbitraryTypesModel):
+    class AclResponse(FlextModelFoundation.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
 
         resource: str = Field(description="Resource identifier")
@@ -220,7 +220,7 @@ class FlextModelsService:
                 self.context = FlextModelsService.ServiceContext()
             return self
 
-    class OperationExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
+    class OperationExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Operation execution request."""
 
         operation_name: str = Field(
@@ -272,6 +272,3 @@ class FlextModelsService:
                 msg = validation.error or "Operation callable must be callable"
                 raise TypeError(msg)
             return v
-
-
-RuntimeBootstrapOptions = p.RuntimeBootstrapOptions

@@ -58,19 +58,11 @@ from pydantic import (
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
+from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
-
-# Use centralized version from conversion.py
-_to_general_value_type = FlextUtilitiesConversion.to_general_value_type
-
-
-# Use protocol from protocols module to avoid duplication and satisfy architecture rules
-_Predicate = p.Validation.Predicate
-
+from flext_core.typings import t
 
 class FlextUtilitiesValidation:
     """Unified validation patterns using railway composition.
@@ -383,7 +375,7 @@ class FlextUtilitiesValidation:
                         value_raw: t.ConfigMapValue
                         key, value_raw = item
                         if key.__class__ is str:
-                            typed_value: t.ConfigMapValue = _to_general_value_type(
+                            typed_value: t.ConfigMapValue = FlextUtilitiesConversion.to_general_value_type(
                                 value_raw,
                             )
                             result_dict[key] = typed_value
@@ -410,7 +402,7 @@ class FlextUtilitiesValidation:
                 continue
             if k.__class__ is str:
                 # Convert v to PayloadValue first, then normalize
-                v_typed = _to_general_value_type(v)
+                v_typed = FlextUtilitiesConversion.to_general_value_type(v)
                 normalized_v: t.ConfigMapValue = (
                     FlextUtilitiesValidation._normalize_component(
                         v_typed,
@@ -478,7 +470,7 @@ class FlextUtilitiesValidation:
                     key, value_raw = item
                     if FlextUtilitiesGuards.is_type(key, str):
                         # Convert value to PayloadValue
-                        typed_value: t.ConfigMapValue = _to_general_value_type(
+                        typed_value: t.ConfigMapValue = FlextUtilitiesConversion.to_general_value_type(
                             value_raw,
                         )
                         result_dict[key] = typed_value
@@ -509,7 +501,7 @@ class FlextUtilitiesValidation:
                 continue
             if FlextUtilitiesGuards.is_type(k, str):
                 # Convert v to PayloadValue first, then normalize
-                v_typed = _to_general_value_type(v)
+                v_typed = FlextUtilitiesConversion.to_general_value_type(v)
                 normalized_v: t.ConfigMapValue = (
                     FlextUtilitiesValidation._normalize_component(
                         v_typed,
@@ -1044,7 +1036,7 @@ class FlextUtilitiesValidation:
         if FlextUtilitiesGuards.is_type(obj, "mapping") and hasattr(obj, "items"):
             # obj is Mapping[str, t.ConfigMapValue]
             dict_obj: Mapping[str, t.ConfigMapValue] = (
-                obj if obj.__class__ is dict else FlextUtilitiesMapper.to_dict(obj)
+                obj if isinstance(obj, dict) else FlextUtilitiesMapper.to_dict(obj)
             )
             # Convert items() view to list for sorting
             items_list: list[tuple[str, t.ConfigMapValue]] = list(
@@ -1061,7 +1053,7 @@ class FlextUtilitiesValidation:
             return sorted_dict
         # Type narrowing: obj can be Sequence (which is t.ConfigMapValue)
         # Handle tuple first (tuple is a Sequence but needs special handling)
-        if obj.__class__ is tuple:
+        if isinstance(obj, tuple):
             # obj is confirmed to be tuple, iterate directly
             # PayloadValue includes Sequence[PayloadValue], so tuple elements are GVT
             tuple_items: list[t.ConfigMapValue] = [

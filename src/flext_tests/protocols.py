@@ -12,18 +12,10 @@ from __future__ import annotations
 import builtins
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Protocol, Self, TypeVar, runtime_checkable
+from typing import Any, Protocol, Self, runtime_checkable
 
-T = TypeVar("T")
-
-from flext_core import FlextProtocols, r, t
+from flext_core import FlextProtocols, r, t, T
 from pydantic import BaseModel
-
-# Import base types from flext_core
-# FlextTestsTypes extends FlextTypes, so we can use base types directly
-# Test-specific types (t.Tests.*) are defined in flext_tests.typings
-# To avoid circular import, we import typings at end of module
-
 
 class FlextTestsProtocols(FlextProtocols):
     """Protocol definitions for FLEXT tests - extends FlextProtocols.
@@ -1062,7 +1054,6 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
 
-__all__ = ["FlextTestsProtocols", "p"]
 
-# Alias for simplified usage
-p = FlextTestsProtocols
+
+__all__ = ["FlextTestsProtocols"]

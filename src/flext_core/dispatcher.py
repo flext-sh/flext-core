@@ -19,7 +19,7 @@ from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequen
 from contextlib import contextmanager, suppress
 from datetime import datetime as dt
 from pathlib import Path
-from types import ModuleType, NoneType
+from types import ModuleType
 from typing import Self, TypeGuard, override
 
 from cachetools import LRUCache
@@ -27,24 +27,23 @@ from pydantic import BaseModel
 
 from flext_core._dispatcher import (
     CircuitBreakerManager,
-    DispatcherConfig,
     RateLimiterManager,
     RetryPolicy,
     TimeoutEnforcer,
 )
 
 # Use public aliases from m.* instead of private _models.* imports
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins as x
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class DispatcherMiddlewareConfig(m.Config.MiddlewareConfig):
@@ -353,13 +352,12 @@ class FlextDispatcher(FlextService[bool]):
         )
 
     @property
-    def dispatcher_config(self) -> DispatcherConfig:
+    def dispatcher_config(self) -> m.Config.DispatcherConfig:
         """Access the dispatcher configuration."""
         config_dict = self.config.model_dump()
         # model_dump() always returns dict, which implements Mapping
         # No need to check isinstance - dict always implements Mapping
-        # Construct DispatcherConfig TypedDict from config values
-        return DispatcherConfig(
+        return m.Config.DispatcherConfig(
             dispatcher_timeout_seconds=u.get(
                 config_dict,
                 "dispatcher_timeout_seconds",
@@ -2009,12 +2007,12 @@ class FlextDispatcher(FlextService[bool]):
                     f"Invalid handler type: {handler.__class__.__name__}",
                 )
             # Validate request is a valid command type (string or type)
-            if request.__class__ not in (str, type):
+            if not isinstance(request, (str, type)):
                 return r[m.HandlerRegistrationResult].fail(
-                    f"Invalid command type: {request.__class__.__name__}. Expected string or type.",
+                    f"Invalid command type: {type(request).__name__}. Expected string or type.",
                 )
             # Extract command name for registration
-            if request.__class__ is str:
+            if isinstance(request, str):
                 command_name = request
             else:
                 # request is callable (type or function) after validation above
@@ -2051,16 +2049,16 @@ class FlextDispatcher(FlextService[bool]):
                 )
             )
 
-        if BaseModel in request.__class__.__mro__:
+        if isinstance(request, BaseModel):
             return self._register_handler_with_request(request)
         # Check if request is a dict-like PayloadValue
-        if request.__class__ is dict:
+        if isinstance(request, dict):
             return self._register_handler_with_request(request)
-        if Mapping in request.__class__.__mro__:
+        if isinstance(request, Mapping):
             return self._register_handler_with_request(request)
 
         return r[m.HandlerRegistrationResult].fail(
-            f"Invalid registration request type: {request.__class__.__name__}",
+            f"Invalid registration request type: {type(request).__name__}",
         )
 
     def register_handlers(
@@ -2094,7 +2092,7 @@ class FlextDispatcher(FlextService[bool]):
 
         for command_type, handler in handlers.items():
             # Extract command type name for display
-            if command_type.__class__ is str:
+            if isinstance(command_type, str):
                 type_name = command_type
             else:
                 # command_type is callable (type or function)
@@ -2140,7 +2138,7 @@ class FlextDispatcher(FlextService[bool]):
         """
         del mode  # Was used for callable conversion, now handled upstream
         # If already FlextHandlers, return success
-        if handler.__class__ is FlextHandlers:
+        if isinstance(handler, FlextHandlers):
             return r[DispatcherHandler].ok(handler)
 
         # Invalid handler type
@@ -2365,7 +2363,7 @@ class FlextDispatcher(FlextService[bool]):
         # Detect API pattern - (type, data) vs (object)
         message: _Payload
         message_type_name_override: str | None = None
-        if data is not None or message_or_type.__class__ is str:
+        if data is not None or isinstance(message_or_type, str):
             # dispatch("type", data) pattern
             message_type_str = str(message_or_type)
             message_type_name_override = message_type_str
@@ -2435,33 +2433,33 @@ class FlextDispatcher(FlextService[bool]):
         """
         if metadata is None:
             return None
-        if metadata.__class__ is m.Metadata:
+        if isinstance(metadata, m.Metadata):
             return metadata
         # Use guard and process_dict for concise metadata conversion
-        if Mapping in metadata.__class__.__mro__:
+        if isinstance(metadata, Mapping):
             attributes_dict: m.ConfigMap = m.ConfigMap(root={})
 
             def convert_metadata_value(
                 v: _Payload,
             ) -> t.MetadataAttributeValue:
-                if v.__class__ in (str, int, float, bool, NoneType):
+                if isinstance(v, (str, int, float, bool, type(None))):
                     return v
-                if v.__class__ is list:
+                if isinstance(v, list):
                     # Use list comprehension for concise list conversion
                     return [
                         item
-                        if item.__class__ in (str, int, float, bool, NoneType)
+                        if isinstance(item, (str, int, float, bool, type(None)))
                         else str(item)
                         for item in v
                     ]
-                if Mapping in v.__class__.__mro__:
+                if isinstance(v, Mapping):
                     # Serialize nested dicts to JSON for Metadata.attributes compatibility.
                     # Metadata.attributes only accepts flat scalar values, not nested dicts.
                     return json.dumps({str(k): str(v2) for k, v2 in v.items()})
                 return str(v)
 
             # Convert metadata dict to items for processing
-            if metadata.__class__ is dict:
+            if isinstance(metadata, dict):
                 process_result = u.process(
                     list(metadata.items()),
                     lambda kv: (str(kv[0]), convert_metadata_value(kv[1])),
@@ -2540,7 +2538,7 @@ class FlextDispatcher(FlextService[bool]):
                     f"Handler for {message_type_key} is not callable",
                 )
             raw_handler_result = handler_raw(message)
-            if r in raw_handler_result.__class__.__mro__:
+            if isinstance(raw_handler_result, r):
                 if raw_handler_result.is_failure:
                     return r[_Payload].fail(
                         raw_handler_result.error or "Handler execution failed",
@@ -2631,14 +2629,11 @@ class FlextDispatcher(FlextService[bool]):
 
             if metadata is None:
                 validated_metadata = None
-            elif metadata.__class__ is m.Metadata:
+            elif isinstance(metadata, m.Metadata):
                 validated_metadata = metadata
-            elif (
-                Mapping in metadata.__class__.__mro__
-                or metadata.__class__ is t.ConfigMap
-            ):
+            elif isinstance(metadata, Mapping) or isinstance(metadata, t.ConfigMap):
                 meta_map: Mapping[str, object]
-                if metadata.__class__ is t.ConfigMap:
+                if isinstance(metadata, t.ConfigMap):
                     meta_map = metadata.root
                 else:
                     meta_map = metadata
@@ -2721,12 +2716,12 @@ class FlextDispatcher(FlextService[bool]):
     ) -> r[_Payload]:
         """Validate pre-dispatch conditions (circuit breaker + rate limiting)."""
         # Fast fail: context must be dict-like to access message_type
-        if Mapping not in context.__class__.__mro__:
+        if not isinstance(context, Mapping):
             msg = f"Context must be dict-like, got {context.__class__.__name__}"
             return r[_Payload].fail(msg)
         # Type narrowing: type check above narrows context to Mapping for mypy
         message_type_raw = context.get("message_type")
-        if message_type_raw.__class__ is not str:
+        if not isinstance(message_type_raw, str):
             msg = f"Invalid message_type in context: {message_type_raw.__class__.__name__}, expected str"
             return r[_Payload].fail(msg)
         message_type: str = message_type_raw
@@ -2750,13 +2745,13 @@ class FlextDispatcher(FlextService[bool]):
     ) -> r[_Payload]:
         """Execute dispatch with retry policy using u."""
         # Fast fail: context must be dict-like to access values
-        if Mapping not in context.__class__.__mro__:
+        if not isinstance(context, Mapping):
             msg = f"Context must be dict-like, got {context.__class__.__name__}"
             return r[_Payload].fail(msg)
         # Type narrowing: type check above narrows context to Mapping for mypy
         message = context.get("message")
         message_type_raw = context.get("message_type")
-        if message_type_raw.__class__ is not str:
+        if not isinstance(message_type_raw, str):
             msg = f"Invalid message_type in context: {message_type_raw.__class__.__name__}, expected str"
             return r[_Payload].fail(msg)
         message_type: str = message_type_raw
@@ -2771,14 +2766,14 @@ class FlextDispatcher(FlextService[bool]):
         correlation_id_raw = context.get("correlation_id")
         correlation_id: str | None = (
             correlation_id_raw
-            if correlation_id_raw.__class__ in (str, NoneType)
+            if isinstance(correlation_id_raw, (str, type(None)))
             else None
         )
 
         timeout_override_raw = context.get("timeout_override")
         timeout_override: int | None = (
             timeout_override_raw
-            if timeout_override_raw.__class__ in (int, NoneType)
+            if isinstance(timeout_override_raw, (int, type(None)))
             else None
         )
 
@@ -2823,7 +2818,7 @@ class FlextDispatcher(FlextService[bool]):
             raise TypeError(msg)
 
         # Fast fail: message cannot be string
-        if message.__class__ is str:
+        if isinstance(message, str):
             msg = (
                 "String message_type not supported. "
                 "Use dispatch(message_object), not dispatch('message_type', data)."
@@ -2991,14 +2986,14 @@ class FlextDispatcher(FlextService[bool]):
         metadata: _Payload,
     ) -> m.Metadata | None:
         """Extract metadata as m.Metadata from various types."""
-        if metadata.__class__ is m.Metadata:
+        if isinstance(metadata, m.Metadata):
             return metadata
 
         extracted_map: Mapping[str, object] | None = None
 
-        if Mapping in metadata.__class__.__mro__:
+        if isinstance(metadata, Mapping):
             extracted_map = metadata
-        elif BaseModel in metadata.__class__.__mro__:
+        elif isinstance(metadata, BaseModel):
             try:
                 dumped = metadata.model_dump()
                 if not FlextRuntime.is_dict_like(dumped):
@@ -3026,7 +3021,7 @@ class FlextDispatcher(FlextService[bool]):
         attrs: Mapping[str, object]
         if (
             "attributes" in extracted_map
-            and Mapping in extracted_map["attributes"].__class__.__mro__
+            and isinstance(extracted_map["attributes"], Mapping)
         ):
             attrs = extracted_map["attributes"]
         else:
@@ -3045,27 +3040,29 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _is_metadata_attribute_compatible(value: _Payload) -> bool:
-        if value.__class__ in (str, int, float, bool, dt, NoneType):
+        if isinstance(value, (str, int, float, bool, dt, type(None))):
             return True
 
-        if value.__class__ is list:
+        if isinstance(value, list):
             return all(
-                item.__class__ in (str, int, float, bool, dt, NoneType)
+                isinstance(item, (str, int, float, bool, dt, type(None)))
                 for item in value
             )
 
         if FlextRuntime.is_dict_like(value):
             mapping_value: Mapping[str, _Payload] = dict(value)
             for key, nested in mapping_value.items():
-                if key.__class__ is not str:
+                if not isinstance(key, str):
                     return False
-                if nested.__class__ is list:
+                if isinstance(nested, list):
                     if not all(
-                        item.__class__ in (str, int, float, bool, dt, NoneType)
+                        isinstance(item, (str, int, float, bool, dt, type(None)))
                         for item in nested
                     ):
                         return False
-                elif nested.__class__ not in (str, int, float, bool, dt, NoneType):
+                elif not isinstance(
+                    nested, (str, int, float, bool, dt, type(None))
+                ):
                     return False
             return True
 
@@ -3084,14 +3081,14 @@ class FlextDispatcher(FlextService[bool]):
     ) -> Mapping[str, object] | None:
         """Extract metadata mapping from object's attributes (internal helper)."""
         attributes_value = getattr(metadata, "attributes", None)
-        if Mapping in attributes_value.__class__.__mro__ and attributes_value:
+        if attributes_value is not None and isinstance(attributes_value, Mapping):
             return dict(attributes_value)
 
         model_dump = getattr(metadata, "model_dump", None)
         if callable(model_dump):
             with suppress(Exception):
                 dumped = model_dump()
-                if Mapping in dumped.__class__.__mro__:
+                if isinstance(dumped, Mapping):
                     return dict(dumped)
 
         return None
@@ -3120,7 +3117,7 @@ class FlextDispatcher(FlextService[bool]):
         # Store current context values for restoration
         current_parent_value = parent_var.get()
         current_parent: str | None = (
-            current_parent_value if current_parent_value.__class__ is str else None
+            current_parent_value if isinstance(current_parent_value, str) else None
         )
 
         # Set new correlation ID if provided
@@ -3131,12 +3128,12 @@ class FlextDispatcher(FlextService[bool]):
                 _ = parent_var.set(current_parent)
 
         # Set metadata if provided
-        if metadata is not None and metadata.__class__ is dict:
+        if metadata is not None and isinstance(metadata, dict):
             # Type narrowing: metadata is dict
             # mapping[str, PayloadValue] is compatible with ConfigurationDict
             metadata_dict: m.ConfigMap = m.ConfigMap.model_validate(metadata)
             _ = metadata_var.set(metadata_dict.root)
-        elif metadata is not None and Mapping in metadata.__class__.__mro__:
+        elif metadata is not None and isinstance(metadata, Mapping):
             # Convert Mapping to dict for context variable
             converted_dict: m.ConfigMap = m.ConfigMap.model_validate(dict(metadata))
             _ = metadata_var.set(converted_dict.root)

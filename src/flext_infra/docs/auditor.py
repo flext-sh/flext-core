@@ -300,9 +300,9 @@ class DocAuditor:
         by_scope = {
             str(name): int(value)
             for name, value in by_scope_raw.items()
-            if type(value) is int or type(value) is float
+            if isinstance(value, (int, float))
         }
-        if type(default_budget) is int or type(default_budget) is float:
+        if isinstance(default_budget, (int, float)):
             return int(default_budget), by_scope
         return None, by_scope
 

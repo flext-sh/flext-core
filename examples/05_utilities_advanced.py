@@ -27,7 +27,7 @@ from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
-    FlextTypes as t,
+    t,
     m,
     s,
     u,

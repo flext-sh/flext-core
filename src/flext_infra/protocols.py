@@ -147,11 +147,9 @@ class InfraProtocols:
 ip = InfraProtocols
 
 FlextInfraProtocols = InfraProtocols
-p = InfraProtocols
 
 __all__ = [
     "FlextInfraProtocols",
     "InfraProtocols",
     "ip",
-    "p",
 ]

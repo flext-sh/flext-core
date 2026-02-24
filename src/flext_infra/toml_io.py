@@ -28,9 +28,9 @@ _TableLike = Table | TomlMutableMap
 
 
 def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
-    if MutableMapping in type(value).__mro__:
+    if isinstance(value, MutableMapping):
         return value
-    if Table in type(value).__mro__:
+    if isinstance(value, Table):
         return value
     return None
 
@@ -129,7 +129,7 @@ class TomlService:
 
         Compares as strings for lists.
         """
-        if type(current) is list and type(expected) is list:
+        if isinstance(current, list) and isinstance(expected, list):
             return [str(x) for x in current] != [str(x) for x in expected]
         return str(current) != str(expected)
 
@@ -138,7 +138,7 @@ class TomlService:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
-            if type(value) is dict or Table in type(value).__mro__:
+            if isinstance(value, dict) or isinstance(value, Table):
                 table[key] = TomlService.build_table(value)
             else:
                 table[key] = value
@@ -159,7 +159,7 @@ class TomlService:
         for key, expected in canonical.items():
             current = target.get(key)
             path = f"{prefix}.{key}" if prefix else key
-            if type(expected) is dict or Table in type(expected).__mro__:
+            if isinstance(expected, dict) or isinstance(expected, Table):
                 current_mapping = _as_toml_mapping(current)
                 if current_mapping is None:
                     target[key] = self.build_table(expected)

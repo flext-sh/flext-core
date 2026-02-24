@@ -22,10 +22,10 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core._models.base import FlextModelsBase
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import FlextTypes as t
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModelsHandler:
@@ -35,7 +35,7 @@ class FlextModelsHandler:
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
 
-    class Registration(FlextModelsBase.ArbitraryTypesModel):
+    class Registration(FlextModelFoundation.ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
         name: str = Field(
@@ -61,7 +61,7 @@ class FlextModelsHandler:
                 raise TypeError(msg)
             return v
 
-    class RegistrationResult(FlextModelsBase.ArbitraryTypesModel):
+    class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of a handler registration operation.
 
         Provides structured feedback on the outcome of a handler registration,
@@ -89,7 +89,7 @@ class FlextModelsHandler:
         def __getitem__(self, key: str) -> t.GuardInputValue:
             return self.model_dump()[key]
 
-    class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
+    class RegistrationRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Request model for dynamic handler registration.
 
         Strictly typed model for handler registration parameters, replacing
@@ -428,7 +428,7 @@ class FlextModelsHandler:
             # Type narrowing: PrivateAttr type narrowing works directly
             return self._metrics_state is not None and bool(self._metrics_state)
 
-    class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
+    class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator.
 
         Used by handler discovery to auto-register handlers with FlextDispatcher.

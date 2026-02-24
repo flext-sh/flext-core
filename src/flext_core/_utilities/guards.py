@@ -22,10 +22,10 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextUtilitiesGuards:
@@ -223,13 +223,13 @@ class FlextUtilitiesGuards:
 
         """
         # Check scalar types first (most common case)
-        if value is None or value.__class__ in (str, int, float, bool, datetime):
+        if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
         # Check for bool before int (bool is subclass of int in Python)
         if value is True or value is False:
             return True
         # Check sequence types (list/tuple can never be str/bytes)
-        if value.__class__ in (list, tuple):
+        if isinstance(value, (list, tuple)):
             # Iterate with explicit type annotation to satisfy pyright
             item: t.GuardInputValue
             for item in value:
@@ -242,7 +242,7 @@ class FlextUtilitiesGuards:
             k: t.GuardInputValue
             v: t.GuardInputValue
             for k, v in value.items():
-                if k.__class__ is not str:
+                if not isinstance(k, str):
                     return False
                 if not FlextUtilitiesGuards.is_general_value_type(v):
                     return False
@@ -251,7 +251,7 @@ class FlextUtilitiesGuards:
         if callable(value):
             return True
         # Check BaseModel or Path instances (structural for BaseModel)
-        return hasattr(value, "model_dump") or value.__class__ is Path
+        return hasattr(value, "model_dump") or isinstance(value, Path)
 
     @staticmethod
     def is_handler_type(value: t.GuardInputValue) -> TypeGuard[t.HandlerType]:
@@ -286,7 +286,7 @@ class FlextUtilitiesGuards:
             getattr(value, "model_dump", None)
         ):
             return True
-        if value.__class__ is type:
+        if isinstance(value, type):
             try:
                 if BaseModel in value.__mro__:
                     return True
@@ -544,7 +544,7 @@ class FlextUtilitiesGuards:
         Enables type narrowing for result objects.
 
         Uses attribute-based checking instead of type check because
-        p.Result has optional methods (from_maybe, to_io, etc.) that
+        p.Result has optional methods that
         may not be implemented by all Result classes.
 
         Args:
@@ -924,9 +924,8 @@ class FlextUtilitiesGuards:
             TypeGuard[Sequence[t.GuardInputValue]]: True if value is Sequence and not str/bytes
 
         """
-        return value.__class__ in (list, tuple, range) and value.__class__ not in (
-            str,
-            bytes,
+        return isinstance(value, (list, tuple, range)) and not isinstance(
+            value, (str, bytes)
         )
 
     # =========================================================================
@@ -1067,11 +1066,11 @@ class FlextUtilitiesGuards:
                     return FlextUtilitiesGuards._is_middleware(value)
                 return False
             # Regular type check
-            return value.__class__ is type_spec
+            return isinstance(value, type_spec)
 
         # Fallback: type check for any other type specification
         try:
-            return value.__class__ is type_spec
+            return isinstance(value, type_spec)
         except TypeError:
             return False
 
@@ -1173,7 +1172,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def has(obj: t.GuardInputValue, key: str) -> bool:
         """Check if object has attribute/key."""
-        if obj.__class__ is dict:
+        if isinstance(obj, dict):
             return key in obj
         return hasattr(obj, key)
 
@@ -1270,11 +1269,11 @@ class FlextUtilitiesGuards:
         # Check if the type is a plain type (not generic) before using type check
         if is_ is not None:
             if is_.__class__ is type:
-                if value.__class__ is not is_:
+                if not isinstance(value, is_):
                     return False
         if not_ is not None:
             if not_.__class__ is type:
-                if value.__class__ is not_:
+                if isinstance(value, not_):
                     return False
 
         # Equality checks
@@ -1291,14 +1290,11 @@ class FlextUtilitiesGuards:
 
         # Length/numeric checks - use len() for sequences, direct for numbers
         check_val: int | float = 0
-        if value.__class__ in (int, float):
+        if isinstance(value, (int, float)):
             check_val = value
-        elif value.__class__ in (str, bytes) or value.__class__ in (
-            list,
-            tuple,
-            dict,
-            set,
-            frozenset,
+        elif isinstance(value, (str, bytes)) or isinstance(
+            value,
+            (list, tuple, dict, set, frozenset),
         ):
             check_val = len(value)
         elif hasattr(value, "__len__"):
@@ -1306,7 +1302,7 @@ class FlextUtilitiesGuards:
                 len_method = getattr(value, "__len__", None)
                 if callable(len_method):
                     length = len_method()
-                    if length.__class__ is int:
+                    if isinstance(length, int):
                         check_val = length
             except (TypeError, AttributeError):
                 check_val = 0
@@ -1327,7 +1323,7 @@ class FlextUtilitiesGuards:
             return False
 
         # String-specific checks
-        if value.__class__ is str:
+        if isinstance(value, str):
             if match is not None and not re.search(match, value):
                 return False
             if starts is not None and not value.startswith(starts):
@@ -1336,16 +1332,14 @@ class FlextUtilitiesGuards:
                 return False
             if (
                 contains is not None
-                and contains.__class__ is str
+                and isinstance(contains, str)
                 and contains not in value
             ):
                 return False
         elif contains is not None:
-            if value.__class__ is dict or value.__class__ in (
-                list,
-                tuple,
-                set,
-                frozenset,
+            if isinstance(value, dict) or isinstance(
+                value,
+                (list, tuple, set, frozenset),
             ):
                 if contains not in value:
                     return False

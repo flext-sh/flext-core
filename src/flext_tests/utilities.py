@@ -31,12 +31,12 @@ from flext_core import (
     r,
     t,
 )
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from pydantic import BaseModel
 
 from flext_tests.constants import c
 from flext_tests.models import m
-from flext_tests.typings import t as tt
+from flext_tests.typings import t
 
 
 class FlextTestsUtilities(FlextUtilities):
@@ -1077,7 +1077,7 @@ class FlextTestsUtilities(FlextUtilities):
                 handler_mode: c.Cqrs.HandlerType | None = None,
                 command_timeout: int | None = None,
                 max_command_retries: int | None = None,
-                metadata: FlextModelsBase.Metadata | None = None,
+                metadata: FlextModelFoundation.Metadata | None = None,
             ) -> m.Handler:
                 """Create a handler configuration model.
 
@@ -2223,6 +2223,7 @@ class FlextTestsUtilities(FlextUtilities):
                 return FlextUtilities.chk(actual_len, gte=min_len, lte=max_len)
 
 
+# Runtime aliases: u for project namespace, u distinct to avoid shadowing core u
 u = FlextTestsUtilities
 
 __all__ = ["FlextTestsUtilities", "u"]

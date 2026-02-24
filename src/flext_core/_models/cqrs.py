@@ -15,10 +15,10 @@ from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core._models.base import FlextModelsBase
-from flext_core.constants import FlextConstants as c
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextModelsCqrs:
@@ -30,9 +30,9 @@ class FlextModelsCqrs:
     """
 
     class Command(
-        FlextModelsBase.ArbitraryTypesModel,
-        FlextModelsBase.IdentifiableMixin,
-        FlextModelsBase.TimestampableMixin,
+        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelFoundation.IdentifiableMixin,
+        FlextModelFoundation.TimestampableMixin,
     ):
         """Base class for CQRS commands with validation."""
 
@@ -258,7 +258,7 @@ class FlextModelsCqrs:
             default=c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
             description="Maximum retry attempts from c (default). Models use Config values in initialization.",
         )
-        metadata: FlextModelsBase.Metadata | None = Field(
+        metadata: FlextModelFoundation.Metadata | None = Field(
             default=None,
             description="Handler metadata (Pydantic model)",
         )
@@ -330,7 +330,7 @@ class FlextModelsCqrs:
                 self._data.root["max_command_retries"] = max_retries
                 return self
 
-            def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
+            def with_metadata(self, metadata: FlextModelFoundation.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
                 self._data.root["metadata"] = metadata
                 return self

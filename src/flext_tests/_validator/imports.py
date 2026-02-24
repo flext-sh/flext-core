@@ -11,16 +11,13 @@ from __future__ import annotations
 import ast
 import re
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from flext_core.result import r
 
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextValidatorImports:
@@ -118,13 +115,12 @@ class FlextValidatorImports:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if type(node) in (ast.Import, ast.ImportFrom):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
                 # Check if import is inside a function or class
                 parent = u.Tests.Validator.get_parent(tree, node)
-                if type(parent) in (
-                    ast.FunctionDef,
-                    ast.AsyncFunctionDef,
-                    ast.ClassDef,
+                if isinstance(
+                    parent,
+                    (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
                 ):
                     violation = u.Tests.Validator.create_violation(
                         file_path,
@@ -254,7 +250,7 @@ class FlextValidatorImports:
         tech_imports = c.Tests.Validator.Approved.TECH_IMPORTS
 
         for node in ast.walk(tree):
-            if type(node) is ast.Import:
+            if isinstance(node, ast.Import):
                 for alias in node.names:
                     if alias.name.split(".")[0] in tech_imports:
                         violation = u.Tests.Validator.create_violation(
@@ -266,7 +262,7 @@ class FlextValidatorImports:
                         )
                         violations.append(violation)
             elif (
-                type(node) is ast.ImportFrom
+                isinstance(node, ast.ImportFrom)
                 and node.module
                 and node.module.split(".")[0] in tech_imports
             ):
@@ -315,7 +311,7 @@ class FlextValidatorImports:
         flext_packages = c.Tests.Validator.Approved.FLEXT_PACKAGES
 
         for node in ast.walk(tree):
-            if type(node) is ast.ImportFrom and node.module:
+            if isinstance(node, ast.ImportFrom) and node.module:
                 parts = node.module.split(".")
                 if len(parts) > 1 and parts[0] in flext_packages:
                     # Check if any part is internal (starts with _)

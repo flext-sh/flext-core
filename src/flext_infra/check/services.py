@@ -637,7 +637,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         if json_file.exists():
             try:
                 data = json.loads(json_file.read_text(encoding=ic.Encoding.DEFAULT))
-                raw_errors = data.get("errors", []) if type(data) is dict else data
+                raw_errors = data.get("errors", []) if isinstance(data, dict) else data
                 issues.extend(
                     _CheckIssue(
                         file=error.get("path", "?"),

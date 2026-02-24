@@ -90,11 +90,11 @@ class InternalDependencySyncService:
             )
         data = data_result.value
         repos_obj = data.get("repo", {})
-        if type(repos_obj) is not dict:
+        if not isinstance(repos_obj, dict):
             return r[Mapping[str, RepoUrls]].ok({})
         result: MutableMapping[str, RepoUrls] = {}
         for repo_name, values in repos_obj.items():
-            if type(values) is not dict:
+            if not isinstance(values, dict):
                 continue
             ssh_url = str(values.get("ssh_url", ""))
             https_url = str(values.get("https_url", self._ssh_to_https(ssh_url)))
@@ -293,17 +293,17 @@ class InternalDependencySyncService:
         data = data_result.value
 
         tool = data.get("tool")
-        poetry = tool.get("poetry") if type(tool) is dict else None
-        deps = poetry.get("dependencies") if type(poetry) is dict else {}
-        if type(deps) is not dict:
+        poetry = tool.get("poetry") if isinstance(tool, dict) else None
+        deps = poetry.get("dependencies") if isinstance(poetry, dict) else {}
+        if not isinstance(deps, dict):
             deps = {}
 
         result: MutableMapping[str, Path] = {}
         for dep_name, dep_value in deps.items():
-            if type(dep_value) is not dict:
+            if not isinstance(dep_value, dict):
                 continue
             dep_path = dep_value.get("path")
-            if type(dep_path) is not str:
+            if not isinstance(dep_path, str):
                 continue
             repo_name = self._is_internal_path_dep(dep_path)
             if repo_name is None:
@@ -312,13 +312,13 @@ class InternalDependencySyncService:
 
         project_obj = data.get("project")
         project_deps = (
-            project_obj.get("dependencies", []) if type(project_obj) is dict else []
+            project_obj.get("dependencies", []) if isinstance(project_obj, dict) else []
         )
-        if type(project_deps) is not list:
+        if not isinstance(project_deps, list):
             project_deps = []
 
         for dep in project_deps:
-            if type(dep) is not str or " @ " not in dep:
+            if not isinstance(dep, str) or " @ " not in dep:
                 continue
             match = _PEP621_PATH_RE.search(dep)
             if not match:

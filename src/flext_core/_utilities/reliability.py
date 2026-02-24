@@ -23,11 +23,11 @@ from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
+from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextUtilitiesReliability:
@@ -713,14 +713,14 @@ class FlextUtilitiesReliability:
 
         """
         for pattern, result in cases:
-            if pattern.__class__ is type and pattern in value.__class__.__mro__:
+            if isinstance(pattern, type) and pattern in value.__class__.__mro__:
                 return result(value) if callable(result) else result
             if pattern == value:
                 return result(value) if callable(result) else result
-            if callable(pattern) and pattern.__class__ is not type:
+            if callable(pattern) and not isinstance(pattern, type):
                 try:
                     pred_result = pattern(value)
-                    if pred_result.__class__ is bool and pred_result:
+                    if isinstance(pred_result, bool) and pred_result:
                         return result(value) if callable(result) else result
                 except (ValueError, TypeError, AttributeError):
                     pass

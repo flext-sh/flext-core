@@ -9,7 +9,7 @@ does NOT extend FlextService (Pydantic model) because pytest cannot collect
 Pydantic models as test classes.
 
 Utility classes (factories, builders, validators) should use
-FlextTestsUtilityBase (alias: su) which extends FlextService.
+FlextTestsUtilityBase (alias: s) which extends FlextService.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -84,9 +84,8 @@ class FlextTestsUtilityBase(FlextService[T]):
     - Generic type parameter support
     """
 
+s = FlextTestsServiceBase
 
-__all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s", "su"]
 
-# Aliases for simplified usage
-s = FlextTestsServiceBase  # For test classes
-su = FlextTestsUtilityBase  # For utility classes (factories, builders, validators)
+__all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s"]
+

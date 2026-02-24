@@ -22,10 +22,10 @@ from typing import (
 
 from pydantic import ConfigDict, validate_call
 
-from flext_core.protocols import FlextProtocols as p
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, FlextTypes as t
+from flext_core.typings import P, R, t
 
 _ValidatedValueT = TypeVar("_ValidatedValueT")
 
@@ -206,13 +206,13 @@ class FlextUtilitiesArgs:
                 origin = get_origin(current_hint)
 
             # Check if it's a StrEnum
-            if current_hint.__class__ is type and issubclass(current_hint, StrEnum):
+            if isinstance(current_hint, type) and issubclass(current_hint, StrEnum):
                 enum_params[name] = current_hint
 
             # Check Union types (str | Status) - Python 3.10+ uses UnionType
             elif origin is UnionType:
                 for arg in get_args(current_hint):
-                    if arg.__class__ is type and issubclass(arg, StrEnum):
+                    if isinstance(arg, type) and issubclass(arg, StrEnum):
                         enum_params[name] = arg
                         break
 

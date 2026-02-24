@@ -24,8 +24,8 @@ from datetime import UTC, datetime
 from pydantic import Field
 
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextGenericModels:
@@ -1543,5 +1543,3 @@ class FlextGenericModels:
     BatchResultDict = t.BatchResultDict
 
 
-# Short alias for internal use
-gm = FlextGenericModels

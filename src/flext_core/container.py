@@ -23,14 +23,14 @@ from dependency_injector import containers as di_containers, providers as di_pro
 from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.loggings import FlextLogger
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextContainer(FlextRuntime, p.DI):
@@ -845,7 +845,7 @@ class FlextContainer(FlextRuntime, p.DI):
             >>> container = FlextContainer()
             >>> container.register("logger", FlextLogger(__name__))
             >>> result = container.get("logger")
-            >>> if result.is_success and result.value.__class__ is FlextLogger:
+            >>> if result.is_success and isinstance(result.value, FlextLogger):
             ...     result.value.info("Resolved")
 
         """
@@ -891,29 +891,22 @@ class FlextContainer(FlextRuntime, p.DI):
     def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
         """Type guard to narrow object to specific type T.
 
-        Uses type identity for concrete types and MRO for base classes.
+        Uses isinstance for type narrowing with MRO support.
         """
-        # boundary guard
-        value_cls = value.__class__
-        return value_cls is type_cls or type_cls in value_cls.__mro__
+        return isinstance(value, type_cls) or type_cls in type(value).__mro__
 
     @staticmethod
     def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:
-        # boundary guard
-        value_cls = value.__class__
-        if value_cls in (str, int, float, bool, None.__class__):
+        # Use isinstance for proper type narrowing
+        if isinstance(value, (str, int, float, bool, type(None))):
             return True
-        if BaseModel in value_cls.__mro__ or Path in value_cls.__mro__:
+        if isinstance(value, BaseModel) or isinstance(value, Path):
             return True
         if callable(value):
             return True
-        if Mapping in value_cls.__mro__:
+        if isinstance(value, Mapping):
             return True
-        if Sequence in value_cls.__mro__ and value_cls not in (
-            str,
-            bytes,
-            bytearray,
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             return True
         if hasattr(value, "bind") and hasattr(value, "info"):
             return True

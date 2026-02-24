@@ -13,11 +13,11 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core._models.base import FlextModelsBase
-from flext_core.models import FlextModels as m
+from flext_core._models.base import FlextModelFoundation
+from flext_core.models import m
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 
@@ -167,9 +167,9 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_metadata(
-        value: t.ScalarValue | m.ConfigMap | FlextModelsBase.Metadata | None,
-    ) -> FlextModelsBase.Metadata:  # Returns m.Metadata at runtime
-        """Normalize any value to FlextModelsBase.Metadata.
+        value: t.ScalarValue | m.ConfigMap | FlextModelFoundation.Metadata | None,
+    ) -> FlextModelFoundation.Metadata:  # Returns m.Metadata at runtime
+        """Normalize any value to FlextModelFoundation.Metadata.
 
         Business Rule: Always returns Metadata, never None.
         Uses FlextRuntime guards and normalization methods for automatic
@@ -180,7 +180,7 @@ class FlextUtilitiesModel:
             value: None, dict, Mapping, Metadata, or any t.ConfigMapValue
 
         Returns:
-            FlextModelsBase.Metadata: Normalized metadata (empty attributes
+            FlextModelFoundation.Metadata: Normalized metadata (empty attributes
                 if input was None or empty dict)
 
         Raises:
@@ -197,10 +197,10 @@ class FlextUtilitiesModel:
         """
         # Handle None - return empty Metadata
         if value is None:
-            return FlextModelsBase.Metadata(attributes={})
+            return FlextModelFoundation.Metadata(attributes={})
 
         # Handle existing Metadata instance - return as-is
-        if value.__class__ is FlextModelsBase.Metadata:
+        if value.__class__ is FlextModelFoundation.Metadata:
             return value
 
         # Handle dict-like values (dict or m.ConfigMap)
@@ -209,11 +209,11 @@ class FlextUtilitiesModel:
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
 
-            return FlextModelsBase.Metadata(attributes=attributes)
+            return FlextModelFoundation.Metadata(attributes=attributes)
 
         # Invalid type - raise TypeError
         msg = (
-            f"metadata must be None, dict, or FlextModelsBase.Metadata, "
+            f"metadata must be None, dict, or FlextModelFoundation.Metadata, "
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
@@ -364,9 +364,6 @@ class FlextUtilitiesModel:
                 return str(value)
 
 
-uModel = FlextUtilitiesModel
-
 __all__ = [
     "FlextUtilitiesModel",
-    "uModel",
 ]

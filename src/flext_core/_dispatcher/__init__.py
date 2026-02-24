@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._dispatcher.config import DispatcherConfig
 from flext_core._dispatcher.reliability import (
     CircuitBreakerManager,
     RateLimiterManager,
@@ -22,7 +21,6 @@ from flext_core.typings import FlextTypes, t
 
 __all__ = [
     "CircuitBreakerManager",
-    "DispatcherConfig",
     "FlextTypes",
     "RateLimiterManager",
     "RetryPolicy",

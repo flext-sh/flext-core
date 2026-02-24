@@ -20,16 +20,16 @@ from functools import wraps
 from typing import Literal, overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.loggings import FlextLogger
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, T, FlextTypes as t
+from flext_core.typings import P, R, T, t
 
 # Concrete payload type for decorator extra dicts (metadata-compatible)
 type _Payload = t.MetadataAttributeValue

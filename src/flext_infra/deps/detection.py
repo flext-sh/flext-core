@@ -27,9 +27,9 @@ type IssueMap = Mapping[str, InfraValue]
 
 
 def _to_infra_value(value: t.ConfigMapValue) -> InfraValue | None:
-    if value is None or type(value) in (str, int, float, bool):
+    if value is None or isinstance(value, (str, int, float, bool)):
         return value
-    if type(value) is list:
+    if isinstance(value, list):
         converted: list[InfraValue] = []
         for item in value:
             converted_item = _to_infra_value(item)
@@ -37,7 +37,7 @@ def _to_infra_value(value: t.ConfigMapValue) -> InfraValue | None:
                 return None
             converted.append(converted_item)
         return converted
-    if Mapping in type(value).__mro__:
+    if isinstance(value, Mapping):
         converted_map: MutableMapping[str, InfraValue] = {}
         for key, item in value.items():
             converted_item = _to_infra_value(item)
@@ -174,11 +174,11 @@ class DependencyDetectionService:
             try:
                 raw = out_file.read_text(encoding=ic.Encoding.DEFAULT)
                 loaded = json.loads(raw) if raw.strip() else []
-                if type(loaded) is list:
+                if isinstance(loaded, list):
                     issues = [
                         {str(key): value for key, value in item.items()}
                         for item in loaded
-                        if type(item) is dict
+                        if isinstance(item, dict)
                     ]
             except (json.JSONDecodeError, OSError):
                 issues = []
@@ -220,7 +220,7 @@ class DependencyDetectionService:
         groups = dm.DeptryIssueGroups()
         for item in issues:
             error_obj = item.get("error")
-            if Mapping not in type(error_obj).__mro__:
+            if not isinstance(error_obj, Mapping):
                 continue
             code = error_obj.get("code")
             if code == "DEP001":
@@ -328,9 +328,9 @@ class DependencyDetectionService:
             return None
 
         typing_libraries = limits.get("typing_libraries")
-        if typing_libraries is not None and Mapping in type(typing_libraries).__mro__:
+        if typing_libraries is not None and isinstance(typing_libraries, Mapping):
             module_to_package = typing_libraries.get("module_to_package")
-            if module_to_package is not None and Mapping in type(module_to_package).__mro__ and root in module_to_package:
+            if module_to_package is not None and isinstance(module_to_package, Mapping) and root in module_to_package:
                 value = module_to_package[root]
                 return str(value)
 
@@ -349,29 +349,29 @@ class DependencyDetectionService:
         names: set[str] = set()
 
         tool = data.get("tool")
-        if tool is not None and Mapping in type(tool).__mro__:
+        if tool is not None and isinstance(tool, Mapping):
             poetry = tool.get("poetry")
-            if poetry is not None and Mapping in type(poetry).__mro__:
+            if poetry is not None and isinstance(poetry, Mapping):
                 group = poetry.get("group")
-                if group is not None and Mapping in type(group).__mro__:
+                if group is not None and isinstance(group, Mapping):
                     typings_group = group.get("typings")
-                    if typings_group is not None and Mapping in type(typings_group).__mro__:
+                    if typings_group is not None and isinstance(typings_group, Mapping):
                         deps = typings_group.get("dependencies")
-                        if deps is not None and Mapping in type(deps).__mro__:
+                        if deps is not None and isinstance(deps, Mapping):
                             names.update(str(key) for key in deps)
 
         project = data.get("project")
-        if project is not None and Mapping in type(project).__mro__:
+        if project is not None and isinstance(project, Mapping):
             optional = project.get("optional-dependencies")
-            if optional is not None and Mapping in type(optional).__mro__:
+            if optional is not None and isinstance(optional, Mapping):
                 typings = optional.get("typings")
-                if type(typings) is list:
+                if isinstance(typings, list):
                     for spec in typings:
-                        if type(spec) is str:
+                        if isinstance(spec, str):
                             names.add(
                                 spec.split("[")[0].split(">=")[0].split("==")[0].strip()
                             )
-                elif typings is not None and Mapping in type(typings).__mro__:
+                elif typings is not None and isinstance(typings, Mapping):
                     names.update(str(key) for key in typings)
 
         return sorted(names)
@@ -389,9 +389,9 @@ class DependencyDetectionService:
         exclude_set: set[str] = set()
 
         typing_libraries = limits.get("typing_libraries")
-        if typing_libraries is not None and Mapping in type(typing_libraries).__mro__:
+        if typing_libraries is not None and isinstance(typing_libraries, Mapping):
             excluded = typing_libraries.get("exclude")
-            if type(excluded) is list:
+            if isinstance(excluded, list):
                 exclude_set = {str(item) for item in excluded}
 
         hinted: list[str] = []
@@ -416,7 +416,7 @@ class DependencyDetectionService:
         python_cfg = limits.get("python")
         python_version = (
             str(python_cfg.get("version"))
-            if python_cfg is not None and Mapping in type(python_cfg).__mro__ and python_cfg.get("version") is not None
+            if python_cfg is not None and isinstance(python_cfg, Mapping) and python_cfg.get("version") is not None
             else None
         )
 

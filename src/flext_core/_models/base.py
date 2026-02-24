@@ -3,7 +3,7 @@
 TIER 0: Uses only stdlib, pydantic, and Tier 0 modules (constants, typings).
 
 This module provides the fundamental base classes for all Pydantic models
-in the FLEXT ecosystem. All classes are nested inside FlextModelsBase
+in the FLEXT ecosystem. All classes are nested inside FlextModelFoundation
 following the namespace pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -33,8 +33,8 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 # Advanced Pydantic v2 Validators
@@ -1400,9 +1400,4 @@ class FlextModelFoundation:
         """Model with timestamp fields."""
 
 
-# Alias for backward compatibility during transition
-# NOTE: Remove in v1.0.0, use FlextModelFoundation directly
-# Ref: https://github.com/flext-team/flext-core/issues/rename-base-class
-FlextModelsBase = FlextModelFoundation
-
-__all__ = ["FlextModelFoundation", "FlextModelsBase"]
+__all__ = ["FlextModelFoundation"]

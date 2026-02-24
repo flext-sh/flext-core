@@ -121,6 +121,4 @@ class InfraModels(_FlextModels):
 FlextInfraModels = InfraModels
 im = InfraModels
 
-m = InfraModels
-
-__all__ = ["FlextInfraModels", "InfraModels", "im", "m"]
+__all__ = ["FlextInfraModels", "InfraModels", "im"]

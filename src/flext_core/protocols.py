@@ -21,7 +21,7 @@ from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC27
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
-from flext_core.typings import P, T, FlextTypes as t
+from flext_core.typings import P, T, t
 
 # =============================================================================
 # PROTOCOL DETECTION AND VALIDATION HELPERS (Module-level)
@@ -78,8 +78,8 @@ def _validate_protocol_compliance(
     protocol_annotations = getattr(protocol, "__annotations__", {})
     raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
     protocol_methods: set[str] = (
-        {x for x in raw_attrs if x.__class__ is str}
-        if raw_attrs.__class__ is set
+        {x for x in raw_attrs if isinstance(x, str)}
+        if isinstance(raw_attrs, set)
         else set()
     )
 
@@ -180,8 +180,8 @@ def _check_implements_protocol(instance: t.GuardInputValue, protocol: type) -> b
     protocol_annotations = getattr(protocol, "__annotations__", {})
     raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
     protocol_methods: set[str] = (
-        {x for x in raw_attrs if x.__class__ is str}
-        if raw_attrs.__class__ is set
+        {x for x in raw_attrs if isinstance(x, str)}
+        if isinstance(raw_attrs, set)
         else set()
     )
     required_members: set[str] = set(protocol_annotations.keys())
@@ -402,38 +402,6 @@ class FlextProtocols:
             func: Callable[[str], FlextProtocols.Result[T]],
         ) -> Self:
             """Apply recovery function on failure."""
-            ...
-
-        def to_maybe(self) -> t.GuardInputValue:
-            """Convert to returns.maybe.Maybe."""
-            ...
-
-        def to_io(self) -> t.GuardInputValue:
-            """Convert to returns.io.IO."""
-            ...
-
-        def to_io_result(self) -> t.GuardInputValue:
-            """Convert to returns.io.IOResult.
-
-            Returns IOFlextProtocols.Result[T, str] - success wraps value, failure wraps error.
-            """
-            ...
-
-        @classmethod
-        def from_io_result(
-            cls,
-            io_result: t.GuardInputValue,
-        ) -> FlextProtocols.Result[t.GuardInputValue]:
-            """Create Result from returns.io.IOResult."""
-            ...
-
-        @classmethod
-        def from_maybe(
-            cls,
-            maybe: t.GuardInputValue,
-            error: str = "Value is Nothing",
-        ) -> FlextProtocols.Result[T]:
-            """Create Result from returns.maybe.Maybe."""
             ...
 
         @classmethod

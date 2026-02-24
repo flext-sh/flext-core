@@ -1,6 +1,6 @@
 """Type system foundation for FLEXT tests.
 
-Provides FlextTestsTypes, extending FlextTypes as t with test-specific type definitions
+Provides FlextTestsTypes, extending t with test-specific type definitions
 for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,37 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Literal, TypeGuard, TypeVar
+from typing import Literal, TypeGuard
 
 from flext_core import FlextTypes
 from flext_core.models import m
-from flext_core.result import FlextResult, r
+from flext_core.result import r
 from pydantic import BaseModel, InstanceOf
-
-# Note: p.Tests.* protocols are defined in flext_tests.protocols
-# Use forward reference strings "FlextTestsProtocols" in type hints if needed
-
-TTestResult = TypeVar("TTestResult")
-TTestModel = TypeVar("TTestModel")
-TTestService = TypeVar("TTestService")
-
-type TestPayloadScalar = str | int | float | bool | None
-type TestPayloadValue = (
-    TestPayloadScalar
-    | bytes
-    | BaseModel
-    | Sequence[TestPayloadValue]
-    | Mapping[str, TestPayloadValue]
-)
-
-# File content type for test operations
-type FileContent = (
-    str
-    | bytes
-    | Mapping[str, TestPayloadValue]
-    | Sequence[Sequence[str]]
-    | InstanceOf[BaseModel]
-)
 
 
 class FlextTestsTypes(FlextTypes):
@@ -60,6 +35,24 @@ class FlextTestsTypes(FlextTypes):
         All test-specific types organized under t.Tests.* pattern.
         Use specific types instead of TestPayloadValue where possible.
         """
+
+        type TestPayloadScalar = str | int | float | bool | None
+        type TestPayloadValue = (
+            TestPayloadScalar
+            | bytes
+            | BaseModel
+            | Sequence[TestPayloadValue]
+            | Mapping[str, TestPayloadValue]
+        )
+
+        # File content type for test operations
+        type FileContent = (
+            str
+            | bytes
+            | Mapping[str, TestPayloadValue]
+            | Sequence[Sequence[str]]
+            | InstanceOf[BaseModel]
+        )
 
         # Uses Mapping[str, str] directly - no alias needed
         type ContainerPortMapping = Mapping[str, str]
@@ -220,10 +213,10 @@ class FlextTestsTypes(FlextTypes):
 
             # Result types
             type FactoryResult[T] = r[T]
-            """FlextResult wrapper for factory operations."""
+            """r wrapper for factory operations."""
 
             type FactoryResultList[T] = list[r[T]]
-            """List of FlextResult instances."""
+            """List of r instances."""
 
             # Collection factory types
             type ListSource[T] = (
@@ -299,11 +292,11 @@ class FlextTestsTypes(FlextTypes):
 
             Uses TestPayloadValue as base since it already handles nested structures
             through Sequence payloads and Mapping payloads.
-            FlextResult types are added on top for builder-specific needs.
+            r types are added on top for builder-specific needs.
             """
 
 # Builder value only (builders build DATA, not results)
-            # FlextResult is returned by to_result(), not stored in builder
+            # r is returned by to_result(), not stored in builder
             type BuilderValue = TestPayloadValue
             """Type for values stored in builder."""
 
@@ -340,7 +333,7 @@ class FlextTestsTypes(FlextTypes):
             """Type for validation functions."""
 
             type ResultBuilder[T] = Callable[[], r[T]]
-            """Type for result builder functions that return FlextResult."""
+            """Type for result builder functions that return r."""
 
             type ResultTransform[T, U] = Callable[[T], r[U]]
             """Type for result transformation functions."""
@@ -609,8 +602,8 @@ class FlextTestsTypes(FlextTypes):
         def is_flext_result(
             value: TestPayloadValue,
         ) -> TypeGuard[r[TestPayloadValue]]:
-            """Check if value is a FlextResult."""
-            return FlextResult in type(value).__mro__
+            """Check if value is a r."""
+            return r in type(value).__mro__
 
         @staticmethod
         def is_general_value(
@@ -688,12 +681,9 @@ class FlextTestsTypes(FlextTypes):
             )
 
 
-t = FlextTestsTypes
-
 __all__ = [
     "FlextTestsTypes",
     "TTestModel",
     "TTestResult",
     "TTestService",
-    "t",
 ]

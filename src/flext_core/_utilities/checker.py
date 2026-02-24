@@ -14,10 +14,10 @@ import inspect
 from collections.abc import Mapping
 from typing import get_origin, get_type_hints
 
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
+from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextUtilitiesChecker:
@@ -326,7 +326,7 @@ class FlextUtilitiesChecker:
             return dict_check
 
         # Check type or origin
-        if message_type.__class__ is type or hasattr(message_type, "__origin__"):
+        if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
             return cls._handle_type_or_origin_check(
                 expected_type,
                 message_type,

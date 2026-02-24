@@ -24,14 +24,14 @@ from typing import ClassVar
 
 from pydantic import BaseModel
 
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.mixins import FlextMixins as x
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import FlextResult as r
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 def _handler_type_to_literal(
@@ -682,7 +682,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
         exec_time: float = (
-            exec_time_value if exec_time_value.__class__ is float else 0.0
+            exec_time_value if isinstance(exec_time_value, float) else 0.0
         )
         # Mixin record_metric() returns r[bool], assign to _ to indicate intentional
         _ = self.record_metric(

@@ -1,7 +1,7 @@
 """Entity and DDD patterns for FLEXT ecosystem.
 
 TIER 1: Uses base.py (Tier 0) + constants, typings, protocols, runtime only.
-Imports FlextModelsBase and adds only DDD-specific data classes.
+Imports FlextModelFoundation and adds only DDD-specific data classes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,11 +16,11 @@ from typing import ClassVar, Self, override
 from pydantic import Field, field_validator
 from structlog.typing import BindableLogger
 
-from flext_core._models.base import FlextModelsBase
-from flext_core.constants import FlextConstants as c
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
@@ -49,13 +49,13 @@ class FlextModelsEntity:
     """Entity and DDD pattern container class.
 
     This class acts as a namespace container for Entity and related DDD patterns.
-    Uses FlextModelsBase for all base classes (Tier 0).
+    Uses FlextModelFoundation for all base classes (Tier 0).
     """
 
     class DomainEvent(
-        FlextModelsBase.ArbitraryTypesModel,
-        FlextModelsBase.IdentifiableMixin,
-        FlextModelsBase.TimestampableMixin,
+        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelFoundation.IdentifiableMixin,
+        FlextModelFoundation.TimestampableMixin,
     ):
         """Base class for domain events."""
 
@@ -105,9 +105,9 @@ class FlextModelsEntity:
             return _ComparableConfigMap(root={})
 
     class Entry(
-        FlextModelsBase.TimestampedModel,
-        FlextModelsBase.IdentifiableMixin,
-        FlextModelsBase.VersionableMixin,
+        FlextModelFoundation.TimestampedModel,
+        FlextModelFoundation.IdentifiableMixin,
+        FlextModelFoundation.VersionableMixin,
     ):
         """Entity implementation - base class for domain entities with identity.
 
@@ -200,7 +200,7 @@ class FlextModelsEntity:
             # Call event handler if defined
             # Use event_type from data if present, otherwise use argument
             handler_event_type = data_map.get("event_type", event_type)
-            if handler_event_type.__class__ is str:
+            if isinstance(handler_event_type, str):
                 handler_name = f"_apply_{handler_event_type}"
                 handler = getattr(self, handler_name, None)
                 if handler is not None and callable(handler):
@@ -273,7 +273,7 @@ class FlextModelsEntity:
             self.domain_events.clear()
             return r[list[FlextModelsEntity.DomainEvent]].ok(events)
 
-    class Value(FlextModelsBase.FrozenStrictModel):
+    class Value(FlextModelFoundation.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""
 
         @override

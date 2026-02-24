@@ -187,7 +187,7 @@ class RuntimeDevDependencyDetector:
                 python_cfg = limits_data.get("python")
                 python_version = (
                     str(python_cfg.get("version"))
-                    if type(python_cfg) is dict
+                    if isinstance(python_cfg, dict)
                     and python_cfg.get("version") is not None
                     else None
                 )
@@ -225,7 +225,7 @@ class RuntimeDevDependencyDetector:
                 projects_report[project_name]["typings"] = typing_dict
 
                 to_add_obj = typing_dict.get("to_add")
-                to_add = to_add_obj if type(to_add_obj) is list else []
+                to_add = to_add_obj if isinstance(to_add_obj, list) else []
                 if apply_typings and to_add and not args.dry_run:
                     env = {
                         **os.environ,
@@ -233,7 +233,7 @@ class RuntimeDevDependencyDetector:
                         "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
                     }
                     for package in to_add:
-                        if type(package) is not str:
+                        if not isinstance(package, str):
                             continue
                         run = self._runner.run_raw(
                             ["poetry", "add", "--group", "typings", package],
@@ -286,13 +286,13 @@ class RuntimeDevDependencyDetector:
         total_issues = 0
         for payload in projects_report.values():
             deptry_obj = payload.get("deptry")
-            if type(deptry_obj) is dict:
+            if isinstance(deptry_obj, dict):
                 raw_count = deptry_obj.get("raw_count", 0)
-                if type(raw_count) is int:
+                if isinstance(raw_count, int):
                     total_issues += raw_count
 
         pip_ok = True
-        if type(report_model.pip_check) is dict:
+        if isinstance(report_model.pip_check, dict):
             pip_ok = bool(report_model.pip_check.get("ok", True))
 
         if not args.quiet:

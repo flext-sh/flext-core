@@ -25,16 +25,14 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar
 
-import docker
-from docker import DockerClient
-from docker.errors import DockerException, NotFound
+from docker.errors import NotFound
 from docker.models.containers import Container
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
-from python_on_whales import DockerClient as PowDockerClient, docker as pow_docker
-from python_on_whales.exceptions import DockerException as PowDockerException
+from python_on_whales import DockerClient, docker
+from python_on_whales.exceptions import DockerException
 
-from flext_tests.constants import ContainerStatus, c
+from flext_tests.constants import c
 from flext_tests.models import m
 
 logger: FlextLogger = FlextLogger(__name__)
@@ -296,7 +294,7 @@ class FlextTestsDocker:
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
 
-            docker_client: PowDockerClient = pow_docker
+            docker_client: DockerClient = docker
 
             original_files = docker_client.client_config.compose_files
             try:
@@ -317,7 +315,7 @@ class FlextTestsDocker:
 
             return r[str].ok("Compose up successful")
 
-        except (PowDockerException, OSError, ValueError) as exc:
+        except (DockerException, OSError, ValueError) as exc:
             self.logger.exception("Compose up failed")
             return r[str].fail(f"Compose up failed: {exc}")
 
@@ -328,7 +326,7 @@ class FlextTestsDocker:
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
 
-            docker_client: PowDockerClient = pow_docker
+            docker_client: DockerClient = docker
 
             original_files = docker_client.client_config.compose_files
             try:
@@ -339,7 +337,7 @@ class FlextTestsDocker:
 
             return r[str].ok("Compose down successful")
 
-        except (PowDockerException, OSError, ValueError) as exc:
+        except (DockerException, OSError, ValueError) as exc:
             self.logger.warning("Compose down failed", error=str(exc))
             return r[str].fail(f"Compose down failed: {exc}")
 

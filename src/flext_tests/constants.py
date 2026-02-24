@@ -1055,11 +1055,7 @@ class FlextTestsConstants(FlextConstants):
                     }
 
 
+# Distinct alias to avoid shadowing core c
 c = FlextTestsConstants
 
-# Type aliases for mypy resolution of deeply nested classes
-# These help mypy resolve nested class types correctly
-ContainerStatus = FlextTestsConstants.Tests.Docker.ContainerStatus
-"""Type alias for ContainerStatus enum to help mypy resolution."""
-
-__all__ = ["ContainerStatus", "FlextTestsConstants", "c"]
+__all__ = ["FlextTestsConstants", "c"]

@@ -15,15 +15,15 @@ from typing import Self
 
 from pydantic import ConfigDict, Field
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 class FlextModelsCollections:
     """Collection models container class."""
 
-    class Categories(FlextModelsBase.ArbitraryTypesModel):
+    class Categories(FlextModelFoundation.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
 
         Provides type-safe storage for items organized by category names.
@@ -217,7 +217,7 @@ class FlextModelsCollections:
                 result[key] = normalized_list
             return result
 
-    class Statistics(FlextModelsBase.FrozenValueModel):
+    class Statistics(FlextModelFoundation.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
@@ -344,7 +344,7 @@ class FlextModelsCollections:
                     normalized_result[key] = filtered
             return normalized_result
 
-    class Rules(FlextModelsBase.ArbitraryTypesModel):
+    class Rules(FlextModelFoundation.ArbitraryTypesModel):
         """Base for rules models (mutable)."""
 
         @classmethod
@@ -366,7 +366,7 @@ class FlextModelsCollections:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
 
-    class Results(FlextModelsBase.ArbitraryTypesModel):
+    class Results(FlextModelFoundation.ArbitraryTypesModel):
         """Base for results models (mutable)."""
 
         @classmethod
@@ -560,7 +560,7 @@ class FlextModelsCollections:
             # Return result directly - PayloadValue allows Mapping[str, PayloadValue]
             return result
 
-    class Options(FlextModelsBase.ArbitraryTypesModel):
+    class Options(FlextModelFoundation.ArbitraryTypesModel):
         """Base for options models (mutable)."""
 
         @classmethod
@@ -665,7 +665,7 @@ class FlextModelsCollections:
             # Create new instance from normalized dict
             return cls(**normalized_result)
 
-    class Config(FlextModelsBase.ArbitraryTypesModel):
+    class Config(FlextModelFoundation.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
 
         Pydantic v2 models are not hashable by default when not frozen.
@@ -806,7 +806,7 @@ class FlextModelsCollections:
                 return NotImplemented
             return self.model_dump() == other.model_dump()
 
-    class ParseOptions(FlextModelsBase.ArbitraryTypesModel):
+    class ParseOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for string parsing operations."""
 
         strip: bool = Field(
@@ -822,7 +822,7 @@ class FlextModelsCollections:
             description="Optional validator function for components",
         )
 
-    class PatternApplicationParams(FlextModelsBase.ArbitraryTypesModel):
+    class PatternApplicationParams(FlextModelFoundation.ArbitraryTypesModel):
         """Parameters for regex pattern application."""
 
         text: str = Field(description="Text to apply pattern to")

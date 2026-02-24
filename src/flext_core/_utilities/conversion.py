@@ -281,13 +281,12 @@ class FlextUtilitiesConversion:
         except ValidationError:
             pass
         # Check for simple sequences (not nested PayloadValue)
-        value_class = value.__class__
-        if value_class in (list, tuple) or (
-            hasattr(value, "__getitem__") and value_class not in (str, bytes)
+        if isinstance(value, (list, tuple)) or (
+            hasattr(value, "__getitem__") and not isinstance(value, (str, bytes))
         ):
             # Can't easily validate element types at runtime, assume compatible
             return None  # Skip complex sequences for safety
-        if value_class is dict or (
+        if isinstance(value, dict) or (
             hasattr(value, "keys") and hasattr(value, "__getitem__")
         ):
             # Can't easily validate value types at runtime, assume compatible

@@ -28,11 +28,11 @@ and provides type guards and serialization utilities.
 - NO imports from higher layers (result.py, container.py, etc.)
 - Pure Layer 0.5 implementation - safe from circular imports
 
-**Usage** (runtime aliases only; MRO protocol; no subdivision):
-- At call sites use project namespace: c, m, r, t, u, p, d, e, h, s, x from project __init__.
-- Facade resolution when needed: FlextRuntime.Aliases.* (staticmethod); subprojects register_aliases().
-- Runtime helpers via x (e.g. x.create_instance, x.is_dict_like); no FlextRuntime.* at call sites.
-- Direct methods only; aliases/namespaces via MRO registration protocol only.
+**Usage** (simple runtime aliases only; no alias registry):
+- Package __init__: c = FlextConstants, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases.
+- Facades (e.g. FlextUtilities) expose staticmethod aliases from external subclasses so call sites get one flat namespace (u.foo, u.bar), no subdivision (no u.Mapper.foo).
+- At call sites use project namespace only: c, m, r, t, u, p, d, e, h, s, x from project __init__. Subprojects: access only via that project's namespace; no cross-project alias subdivision. MRO protocol only; direct methods.
+- Runtime helpers via x (e.g. x.create_instance, x.is_dict_like).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -64,10 +64,8 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import T, FlextTypes as t
-
-_alias_registry: MutableMapping[str, type] = {}
+from flext_core.constants import c
+from flext_core.typings import t, T
 
 
 class FlextRuntime:
@@ -132,12 +130,10 @@ class FlextRuntime:
     10. **Zero Circular Imports** - Foundation + bridge layers only
 
 
-    **Usage** (runtime aliases; MRO only; no loose methods):
-    - Facade resolution: FlextRuntime.Aliases.* (staticmethod) only; subprojects register_aliases().
-    - At call sites use project namespace: c, m, t, u, p, r, d, e, h, s, x from project __init__.
-    - External subclasses use staticmethod aliases via MRO; x = project mixins class; no subdivision.
-    - Aliases/namespaces: MRO registration protocol only; no extra alias layers.
-    - Examples: x.create_instance(MyClass), x.is_dict_like(val), x.normalize_to_general_value(val).
+    **Usage** (simple runtime aliases only; no alias registry):
+    - Package __init__: c = FlextConstants, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases or any registry.
+    - Facades use staticmethod aliases from external subclasses so one flat namespace (no u.Mapper.foo); subprojects use project namespace only (from flext_cli import m, x; m.Foo, m.Bar).
+    - At call sites use runtime aliases from project __init__: c, m, r, t, u, p, d, e, h, s, x. Access via project runtime alias only; no subdivision. MRO only; direct methods. Examples: x.create_instance(MyClass), r[T].ok(value).
 
     **Design Principles**:
     - Circular import prevention through foundation + bridge layers only
@@ -149,146 +145,6 @@ class FlextRuntime:
     """
 
     _structlog_configured: ClassVar[bool] = False
-
-    @classmethod
-    def register_aliases(
-        cls,
-        *,
-        constants: type | None = None,
-        models: type | None = None,
-        typings: type | None = None,
-        protocols: type | None = None,
-        utilities: type | None = None,
-        result: type | None = None,
-        decorators: type | None = None,
-        exceptions: type | None = None,
-        handlers: type | None = None,
-        service_base: type | None = None,
-        mixins: type | None = None,
-    ) -> None:
-        """Register project facades so FlextRuntime.Aliases.* returns project namespace.
-
-        Subprojects call this at package load. Access is via project namespaces only
-        (no subdivision); MRO protocol—no extra alias layers.
-        """
-        if constants is not None:
-            _alias_registry["constants"] = constants
-        if models is not None:
-            _alias_registry["models"] = models
-        if typings is not None:
-            _alias_registry["typings"] = typings
-        if protocols is not None:
-            _alias_registry["protocols"] = protocols
-        if utilities is not None:
-            _alias_registry["utilities"] = utilities
-        if result is not None:
-            _alias_registry["result"] = result
-        if decorators is not None:
-            _alias_registry["decorators"] = decorators
-        if exceptions is not None:
-            _alias_registry["exceptions"] = exceptions
-        if handlers is not None:
-            _alias_registry["handlers"] = handlers
-        if service_base is not None:
-            _alias_registry["service_base"] = service_base
-        if mixins is not None:
-            _alias_registry["mixins"] = mixins
-
-    class Aliases:
-        """Registry lookup for facade classes (MRO protocol). Not for call-site usage.
-
-        Subprojects register external subclass facades via register_aliases().
-        At call sites use project namespace only (c, m, r, t, u, x from project __init__).
-        When unregistered, core facades are returned (lazy import).
-        """
-
-        @staticmethod
-        def constants() -> type:
-            if "constants" in _alias_registry:
-                return _alias_registry["constants"]
-            from flext_core.constants import FlextConstants
-
-            return FlextConstants
-
-        @staticmethod
-        def models() -> type:
-            if "models" in _alias_registry:
-                return _alias_registry["models"]
-            from flext_core.models import FlextModels
-
-            return FlextModels
-
-        @staticmethod
-        def typings() -> type:
-            if "typings" in _alias_registry:
-                return _alias_registry["typings"]
-            from flext_core.typings import FlextTypes
-
-            return FlextTypes
-
-        @staticmethod
-        def protocols() -> type:
-            if "protocols" in _alias_registry:
-                return _alias_registry["protocols"]
-            from flext_core.protocols import FlextProtocols
-
-            return FlextProtocols
-
-        @staticmethod
-        def utilities() -> type:
-            if "utilities" in _alias_registry:
-                return _alias_registry["utilities"]
-            from flext_core.utilities import FlextUtilities
-
-            return FlextUtilities
-
-        @staticmethod
-        def result() -> type:
-            if "result" in _alias_registry:
-                return _alias_registry["result"]
-            from flext_core.result import FlextResult
-
-            return FlextResult
-
-        @staticmethod
-        def decorators() -> type:
-            if "decorators" in _alias_registry:
-                return _alias_registry["decorators"]
-            from flext_core.decorators import FlextDecorators
-
-            return FlextDecorators
-
-        @staticmethod
-        def exceptions() -> type:
-            if "exceptions" in _alias_registry:
-                return _alias_registry["exceptions"]
-            from flext_core.exceptions import FlextExceptions
-
-            return FlextExceptions
-
-        @staticmethod
-        def handlers() -> type:
-            if "handlers" in _alias_registry:
-                return _alias_registry["handlers"]
-            from flext_core.handlers import FlextHandlers
-
-            return FlextHandlers
-
-        @staticmethod
-        def service_base() -> type:
-            if "service_base" in _alias_registry:
-                return _alias_registry["service_base"]
-            from flext_core.service import FlextService
-
-            return FlextService
-
-        @staticmethod
-        def mixins() -> type:
-            if "mixins" in _alias_registry:
-                return _alias_registry["mixins"]
-            from flext_core.mixins import FlextMixins
-
-            return FlextMixins
 
     class Metadata(BaseModel):
         """Minimal metadata model - implements p.Log.Metadata protocol.
@@ -459,78 +315,6 @@ class FlextRuntime:
         return object.__new__(class_type)
 
     # =========================================================================
-    # RUNTIME ALIASES (staticmethod lazy facade access - single namespace)
-    # =========================================================================
-    # Subprojects use project __init__ (e.g. from flext_cli import m). Lazy import avoids circular deps.
-    # =========================================================================
-
-    @staticmethod
-    def models():
-        """Return FlextModels facade (lazy). Use: m = FlextRuntime.models()."""
-        from flext_core.models import FlextModels
-        return FlextModels
-
-    @staticmethod
-    def constants():
-        """Return FlextConstants facade (lazy). Use: c = FlextRuntime.constants()."""
-        from flext_core.constants import FlextConstants
-        return FlextConstants
-
-    @staticmethod
-    def types():
-        """Return FlextTypes facade (lazy). Use: t = FlextRuntime.types()."""
-        from flext_core.typings import FlextTypes
-        return FlextTypes
-
-    @staticmethod
-    def result():
-        """Return FlextResult facade (lazy). Use: r = FlextRuntime.result()."""
-        from flext_core.result import FlextResult
-        return FlextResult
-
-    @staticmethod
-    def protocols():
-        """Return FlextProtocols facade (lazy). Use: p = FlextRuntime.protocols()."""
-        from flext_core.protocols import FlextProtocols
-        return FlextProtocols
-
-    @staticmethod
-    def utilities():
-        """Return FlextUtilities facade (lazy). Use: u = FlextRuntime.utilities()."""
-        from flext_core.utilities import FlextUtilities
-        return FlextUtilities
-
-    @staticmethod
-    def decorators():
-        """Return FlextDecorators facade (lazy). Use: d = FlextRuntime.decorators()."""
-        from flext_core.decorators import FlextDecorators
-        return FlextDecorators
-
-    @staticmethod
-    def exceptions():
-        """Return FlextExceptions facade (lazy). Use: e = FlextRuntime.exceptions()."""
-        from flext_core.exceptions import FlextExceptions
-        return FlextExceptions
-
-    @staticmethod
-    def handlers():
-        """Return FlextHandlers facade (lazy). Use: h = FlextRuntime.handlers()."""
-        from flext_core.handlers import FlextHandlers
-        return FlextHandlers
-
-    @staticmethod
-    def service():
-        """Return FlextService facade (lazy). Use: s = FlextRuntime.service()."""
-        from flext_core.service import FlextService
-        return FlextService
-
-    @staticmethod
-    def mixins():
-        """Return FlextMixins facade (lazy). Use: x = FlextRuntime.mixins()."""
-        from flext_core.mixins import FlextMixins
-        return FlextMixins
-
-    # =========================================================================
     # TYPE GUARD UTILITIES
     # =========================================================================
 
@@ -555,7 +339,7 @@ class FlextRuntime:
             case t.ConfigMap():
                 return True
             case Mapping() as mapping:
-                return all(key.__class__ is str for key in mapping)
+                return all(isinstance(key, str) for key in mapping)
             case _:
                 return False
 
@@ -572,7 +356,7 @@ class FlextRuntime:
             True if value is a list[t.ConfigMapValue] or list-like sequence, False otherwise
 
         """
-        return value.__class__ is list
+        return isinstance(value, list)
 
     @staticmethod
     def _is_scalar(
@@ -1218,8 +1002,6 @@ class FlextRuntime:
                 packages=None,  # packages parameter expects Iterable[Module], not Sequence[str]
                 container=container,
             )
-
-    # Facade access: use FlextRuntime.Aliases.* only (MRO registry; no loose methods).
 
     @staticmethod
     def level_based_context_filter(
@@ -2073,8 +1855,8 @@ class FlextRuntime:
             case _:
                 pass
         if (
-            entity_b.__class__ is not entity_a.__class__
-            and entity_a.__class__ not in entity_b.__class__.__mro__
+            not isinstance(entity_b, type(entity_a))
+            and type(entity_a) not in type(entity_b).__mro__
         ):
             return False
         id_a = getattr(entity_a, id_attr, None)
@@ -2111,8 +1893,8 @@ class FlextRuntime:
         if hasattr(obj_b, "__iter__") and not hasattr(obj_b, "model_dump"):
             return obj_a == obj_b
         if (
-            obj_b.__class__ is not obj_a.__class__
-            and obj_a.__class__ not in obj_b.__class__.__mro__
+            not isinstance(obj_b, type(obj_a))
+            and type(obj_a) not in type(obj_b).__mro__
         ):
             return False
         if FlextRuntime.is_base_model(obj_a) and FlextRuntime.is_base_model(obj_b):

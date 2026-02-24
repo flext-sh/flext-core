@@ -71,9 +71,9 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
 
 def _as_string_list(value: t.ConfigMapValue) -> list[str]:
     """Convert TOML value to list of strings."""
-    if value is None or type(value) is str or Mapping in type(value).__mro__:
+    if value is None or isinstance(value, str) or isinstance(value, Mapping):
         return []
-    if Iterable not in type(value).__mro__:
+    if not isinstance(value, Iterable):
         return []
     items: list[str] = []
     for raw in value:
@@ -93,7 +93,7 @@ def _array(items: list[str]) -> Array:
 def _ensure_table(parent: Table, key: str) -> Table:
     """Get or create a TOML table in parent."""
     existing = parent.get(key)
-    if existing is not None and Table in type(existing).__mro__:
+    if existing is not None and isinstance(existing, Table):
         return existing
     table = tomlkit.table()
     parent[key] = table
@@ -113,10 +113,10 @@ def _read_doc(path: Path) -> tomlkit.TOMLDocument | None:
 def _project_dev_groups(doc: tomlkit.TOMLDocument) -> Mapping[str, list[str]]:
     """Extract optional-dependencies groups from project table."""
     project = doc.get("project")
-    if project is None or Table not in type(project).__mro__:
+    if project is None or not isinstance(project, Table):
         return {}
     optional = project.get("optional-dependencies")
-    if optional is None or Table not in type(optional).__mro__:
+    if optional is None or not isinstance(optional, Table):
         return {}
     return {
         "dev": _as_string_list(optional.get("dev")),
@@ -152,12 +152,12 @@ class ConsolidateGroupsPhase:
         changes: list[str] = []
 
         project = doc.get("project")
-        if Table not in type(project).__mro__:
+        if not isinstance(project, Table):
             project = tomlkit.table()
             doc["project"] = project
 
         optional = project.get("optional-dependencies")
-        if Table not in type(optional).__mro__:
+        if not isinstance(optional, Table):
             optional = tomlkit.table()
             project["optional-dependencies"] = optional
 
@@ -181,7 +181,7 @@ class ConsolidateGroupsPhase:
                 changes.append(f"project.optional-dependencies.{old_key} removed")
 
         tool = doc.get("tool")
-        if Table not in type(tool).__mro__:
+        if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc["tool"] = tool
 
@@ -191,10 +191,10 @@ class ConsolidateGroupsPhase:
 
         for old_group in ("docs", "security", "test", "typings"):
             old_group_table = poetry_group.get(old_group)
-            if Table not in type(old_group_table).__mro__:
+            if not isinstance(old_group_table, Table):
                 continue
             old_deps = old_group_table.get("dependencies")
-            if Table in type(old_deps).__mro__:
+            if isinstance(old_deps, Table):
                 for dep_name, dep_value in old_deps.items():
                     if dep_name not in poetry_dev:
                         poetry_dev[dep_name] = dep_value
@@ -232,7 +232,7 @@ class EnsurePytestConfigPhase:
         changes: list[str] = []
 
         tool = doc.get("tool")
-        if Table not in type(tool).__mro__:
+        if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc["tool"] = tool
 

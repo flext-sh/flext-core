@@ -39,12 +39,12 @@ from flext_tests._validator import (
     FlextValidatorTests,
     FlextValidatorTypes,
 )
-from flext_tests.base import su
+from flext_tests.base import s
 from flext_tests.constants import c
 from flext_tests.models import m
 
 
-class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
+class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
     """FLEXT Architecture Validator - detects code violations.
 
     Provides methods to validate:

@@ -16,7 +16,6 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, Self, TypeGuard, overload
 
 from flext_core import FlextResult as r
-from flext_core._models.entity import FlextModelsEntity
 from pydantic import BaseModel
 
 from flext_tests.constants import c
@@ -210,15 +209,15 @@ class FlextTestsBuilders:
             # Type guards for Entity and Value classes
             def is_entity_class(
                 cls: type[object],
-            ) -> TypeGuard[type[FlextModelsEntity.Entry]]:
+            ) -> TypeGuard[type[m.Entry]]:
                 """Type guard to check if class is Entity subclass."""
-                return issubclass(cls, FlextModelsEntity.Entry)
+                return issubclass(cls, m.Entry)
 
             def is_value_class(
                 cls: type[object],
-            ) -> TypeGuard[type[FlextModelsEntity.Value]]:
+            ) -> TypeGuard[type[m.Value]]:
                 """Type guard to check if class is Value subclass."""
-                return issubclass(cls, FlextModelsEntity.Value)
+                return issubclass(cls, m.Value)
 
             # Type narrowing for Entity classes
             if is_entity_class(cls_type):
@@ -1622,7 +1621,7 @@ class FlextTestsBuilders:
                 )
 
             @staticmethod
-            def entity[T: FlextModelsEntity.Entry](
+            def entity[T: m.Entry](
                 entity_class: type[T],
                 name: str = "",
                 value: t.Tests.PayloadValue = "",
@@ -1635,7 +1634,7 @@ class FlextTestsBuilders:
                 )
 
             @staticmethod
-            def value_object[T: FlextModelsEntity.Value](
+            def value_object[T: m.Value](
                 value_class: type[T],
                 data: str = "",
                 count: int = 1,
@@ -1661,7 +1660,7 @@ class FlextTestsBuilders:
                 ]
 
             @staticmethod
-            def batch_entities[T: FlextModelsEntity.Entry](
+            def batch_entities[T: m.Entry](
                 entity_class: type[T],
                 names: Sequence[str],
                 values: Sequence[t.Tests.PayloadValue],

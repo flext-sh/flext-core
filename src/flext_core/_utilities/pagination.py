@@ -16,13 +16,10 @@ from collections.abc import Mapping, Sequence
 
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T, FlextTypes as t
-
-# Use centralized conversion from conversion.py
-_to_general_value = FlextUtilitiesConversion.to_general_value_type
+from flext_core.typings import T, t
 
 
 class FlextUtilitiesPagination:
@@ -154,7 +151,7 @@ class FlextUtilitiesPagination:
         # First convert T to PayloadValue, then normalize recursively
         data_list: list[t.ScalarValue] = []
         for item in data:
-            general_value = _to_general_value(item)
+            general_value = FlextUtilitiesConversion.to_general_value_type(item)
             normalized = FlextRuntime.normalize_to_general_value(general_value)
             data_list.append(normalized)
 
@@ -212,23 +209,21 @@ class FlextUtilitiesPagination:
             t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
         )
 
-        # Validate types match t.ConfigMapValue
-        data_class = data.__class__
-        if (
-            data_class in (str, int, float, bool, None.__class__)
-            or Sequence in data_class.__mro__
-            or Mapping in data_class.__mro__
-        ):
+        # Validate types match t.ConfigMapValue (isinstance for type narrowing)
+        if isinstance(data, (str, int, float, bool, type(None))):
+            data_typed = data
+        elif isinstance(data, Sequence):
+            data_typed = data
+        elif isinstance(data, Mapping):
             data_typed = data
         else:
             data_typed = str(data)
 
-        pagination_class = pagination.__class__
-        if (
-            pagination_class in (str, int, float, bool, None.__class__)
-            or Sequence in pagination_class.__mro__
-            or Mapping in pagination_class.__mro__
-        ):
+        if isinstance(pagination, (str, int, float, bool, type(None))):
+            pagination_typed = pagination
+        elif isinstance(pagination, Sequence):
+            pagination_typed = pagination
+        elif isinstance(pagination, Mapping):
             pagination_typed = pagination
         else:
             pagination_typed = str(pagination)

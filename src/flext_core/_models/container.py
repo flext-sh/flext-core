@@ -18,34 +18,34 @@ from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core._models.base import FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 _MetadataInput = (
-    None | FlextModelsBase.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue]
+    None | FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue]
 )
 
 
 def _is_metadata_instance(
     v: _MetadataInput,
-) -> TypeGuard[FlextModelsBase.Metadata]:
+) -> TypeGuard[FlextModelFoundation.Metadata]:
     return (
         v is not None
         and hasattr(v, "model_dump")
-        and FlextModelsBase.Metadata in v.__class__.__mro__
+        and FlextModelFoundation.Metadata in v.__class__.__mro__
     )
 
 
-def _normalize_metadata(value: _MetadataInput) -> FlextModelsBase.Metadata:
+def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
     if value is None:
-        return FlextModelsBase.Metadata(attributes={})
+        return FlextModelFoundation.Metadata(attributes={})
     if _is_metadata_instance(value):
         return value
     if not FlextRuntime.is_dict_like(value):
         msg = (
-            f"metadata must be None, dict, or FlextModelsBase.Metadata, "
+            f"metadata must be None, dict, or FlextModelFoundation.Metadata, "
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
@@ -54,7 +54,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelsBase.Metadata:
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in raw.items()
     }
-    return FlextModelsBase.Metadata(attributes=dict(attrs))
+    return FlextModelFoundation.Metadata(attributes=dict(attrs))
 
 
 class FlextModelsContainer:
@@ -94,7 +94,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.ConfigMap | None = Field(
+        metadata: FlextModelFoundation.Metadata | t.ConfigMap | None = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -109,7 +109,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: _MetadataInput) -> FlextModelsBase.Metadata:
+        def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
@@ -150,7 +150,7 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: FlextModelsBase.Metadata | t.ConfigMap | None = Field(
+        metadata: FlextModelFoundation.Metadata | t.ConfigMap | None = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -162,7 +162,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: _MetadataInput) -> FlextModelsBase.Metadata:
+        def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
@@ -192,14 +192,14 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.ConfigMap | None = Field(
+        metadata: FlextModelFoundation.Metadata | t.ConfigMap | None = Field(
             default=None,
             description="Additional resource metadata (JSON-serializable)",
         )
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: _MetadataInput) -> FlextModelsBase.Metadata:
+        def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
             """Normalize resource metadata to Metadata model."""
             return _normalize_metadata(v)
 
