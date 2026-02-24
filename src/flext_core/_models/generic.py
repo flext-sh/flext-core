@@ -19,7 +19,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import cast
+
 
 from pydantic import Field
 
@@ -1422,19 +1422,15 @@ class FlextGenericModels:
             ) -> None:
                 existing_items = self.metadata.root.get(key)
                 if existing_items is not None and existing_items.__class__ is list:
-                    item_list = cast("list[t.GuardInputValue]", existing_items)
-                    item_list.append(item)
+                    existing_items.append(item)
                     return
                 self.metadata.root[key] = [item]
 
             def _upsert_skip_reason(self, item: t.GuardInputValue, reason: str) -> None:
                 existing_reasons = self.metadata.root.get("skip_reasons")
                 if existing_reasons is not None and existing_reasons.__class__ is dict:
-                    reason_map = cast(
-                        "Mapping[str, t.GuardInputValue]", existing_reasons
-                    )
                     self.metadata.root["skip_reasons"] = {
-                        **reason_map,
+                        **existing_reasons,
                         str(item): reason,
                     }
                     # No need to update self.metadata as it's modified in place

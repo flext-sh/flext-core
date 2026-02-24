@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Annotated, Final, Self, cast
+from typing import Annotated, Final, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -134,10 +134,9 @@ class FlextModelsConfig:
             codes_for_validation: list[int] = []
             for x in v:
                 if x.__class__ is int:
-                    codes_for_validation.append(cast("int", x))
+                    codes_for_validation.append(x)  # type: ignore[arg-type]
                 elif x.__class__ is str:
-                    text_value = cast("str", x)
-                    codes_for_validation.append(int(text_value))
+                    codes_for_validation.append(int(x))
                 else:
                     msg = (
                         f"retry_on_status_codes item must be int or str, "

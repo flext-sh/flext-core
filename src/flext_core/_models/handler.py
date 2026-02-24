@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -138,7 +138,7 @@ class FlextModelsHandler:
             v: object,
         ) -> Callable[..., object] | BaseModel:
             if BaseModel in v.__class__.__mro__:
-                return cast("BaseModel", v)
+                return v  # type: ignore[return-value]
             if callable(v):
                 return v
             msg = f"Handler must be callable or handler instance, got {v.__class__.__name__}"
