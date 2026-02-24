@@ -654,10 +654,10 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
+            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(cast(Mapping[str, t.GuardInputValue], v))
+                return dict(cast("Mapping[str, t.GuardInputValue]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -676,10 +676,10 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
+            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(cast(Mapping[str, t.GuardInputValue], v))
+                return dict(cast("Mapping[str, t.GuardInputValue]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -750,10 +750,10 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
+            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(cast(Mapping[str, t.GuardInputValue], v))
+                return dict(cast("Mapping[str, t.GuardInputValue]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -861,10 +861,10 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast(t.ConfigMapValue, v)):
+            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(cast(Mapping[str, t.GuardInputValue], v))
+                return dict(cast("Mapping[str, t.GuardInputValue]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
