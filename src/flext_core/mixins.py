@@ -133,33 +133,31 @@ class FlextMixins(FlextRuntime):
                 if type(normalized) is dict or (
                     hasattr(normalized, "keys") and hasattr(normalized, "__getitem__")
                 ):
-                    result: dict[str, t.ConfigMapValue] = {}
+                    result: m.ConfigMap = m.ConfigMap()
                     for k, v in normalized.items():
                         key_str = str(k)
                         val_typed: t.ConfigMapValue = (
                             FlextRuntime.normalize_to_general_value(v)
                         )
                         result[key_str] = val_typed
-                    return m.ConfigMap(root=result)
+                    return result
                 return m.ConfigMap(
                     root={"value": FlextRuntime.normalize_to_general_value(normalized)}
                 )
             try:
-                normalized_dict: dict[str, t.ConfigMapValue] = {}
+                normalized_dict: m.ConfigMap = m.ConfigMap()
                 for k, v in obj.items():
                     key = str(k)
                     normalized_dict[key] = FlextRuntime.normalize_to_general_value(v)
-                process_result: r[dict[str, t.ConfigMapValue]] = r[
-                    dict[str, t.ConfigMapValue]
-                ].ok(normalized_dict)
+                process_result: r[m.ConfigMap] = r[m.ConfigMap].ok(normalized_dict)
             except Exception as e:
-                process_result = r[dict[str, t.ConfigMapValue]].fail(
+                process_result = r[m.ConfigMap].fail(
                     f"Failed to normalize mapping: {e}",
                 )
 
             if process_result.is_success:
-                result_value: dict[str, t.ConfigMapValue] = process_result.value
-                return m.ConfigMap(root=result_value)
+                result_value: m.ConfigMap = process_result.value
+                return result_value
             return m.ConfigMap(root={})
 
     # =========================================================================
@@ -194,7 +192,9 @@ class FlextMixins(FlextRuntime):
     _logger_cache: ClassVar[MutableMapping[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    def __init_subclass__(cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]) -> None:
+    def __init_subclass__(
+        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+    ) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
         # Container is lazily initialized on first access
@@ -307,17 +307,19 @@ class FlextMixins(FlextRuntime):
     def track(
         self,
         operation_name: str,
-    ) -> Iterator[dict[str, t.ConfigMapValue]]:
+    ) -> Iterator[m.ConfigMap]:
         """Track operation performance with timing and automatic context cleanup."""
         stats_attr = f"_stats_{operation_name}"
-        stats: dict[str, t.ConfigMapValue] = getattr(
+        stats: m.ConfigMap = getattr(
             self,
             stats_attr,
-            {
-                "operation_count": 0,
-                "error_count": 0,
-                "total_duration_ms": 0.0,
-            },
+            m.ConfigMap(
+                root={
+                    "operation_count": 0,
+                    "error_count": 0,
+                    "total_duration_ms": 0.0,
+                }
+            ),
         )
 
         op_count_raw = u.Mapper.get(stats, "operation_count", default=0)
@@ -325,18 +327,23 @@ class FlextMixins(FlextRuntime):
 
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
+                metrics_map: m.ConfigMap = m.ConfigMap(root=metrics)
                 # Add aggregated stats to metrics for visibility
-                metrics["operation_count"] = stats["operation_count"]
+                metrics_map["operation_count"] = stats["operation_count"]
                 try:
-                    yield metrics
+                    yield metrics_map
                     # Success - update stats
-                    if "duration_ms" in metrics:
+                    if "duration_ms" in metrics_map:
                         total_dur_raw = u.Mapper.get(
                             stats,
                             "total_duration_ms",
                             default=0.0,
                         )
-                        dur_ms_raw = u.Mapper.get(metrics, "duration_ms", default=0.0)
+                        dur_ms_raw = u.Mapper.get(
+                            metrics_map,
+                            "duration_ms",
+                            default=0.0,
+                        )
                         total_dur = float(total_dur_raw)
                         dur_ms = float(dur_ms_raw)
                         stats["total_duration_ms"] = total_dur + dur_ms
@@ -361,10 +368,10 @@ class FlextMixins(FlextRuntime):
                         total_dur_final = float(total_raw)
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     # Update metrics with final stats
-                    metrics["error_count"] = stats["error_count"]
-                    metrics["success_rate"] = stats["success_rate"]
+                    metrics_map["error_count"] = stats["error_count"]
+                    metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
-                        metrics["avg_duration_ms"] = stats["avg_duration_ms"]
+                        metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
                     # Store updated stats
                     setattr(self, stats_attr, stats)
         finally:
@@ -465,14 +472,21 @@ class FlextMixins(FlextRuntime):
         """Log message with automatic context data inclusion."""
         correlation_id = FlextContext.Correlation.get_correlation_id()
         operation_name = FlextContext.Request.get_operation_name()
-        context_data: dict[str, t.MetadataAttributeValue] = {
-            "correlation_id": FlextRuntime.normalize_to_general_value(correlation_id),
-            "operation": FlextRuntime.normalize_to_general_value(operation_name),
-            **{k: FlextRuntime.normalize_to_general_value(v) for k, v in extra.items()},
-        }
+        context_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "correlation_id": FlextRuntime.normalize_to_general_value(
+                    correlation_id
+                ),
+                "operation": FlextRuntime.normalize_to_general_value(operation_name),
+                **{
+                    k: FlextRuntime.normalize_to_general_value(v)
+                    for k, v in extra.items()
+                },
+            }
+        )
 
         log_method = getattr(self.logger, level, self.logger.info)
-        _ = log_method(message, extra=context_data)
+        _ = log_method(message, extra=context_data.root)
 
     # =========================================================================
     # SERVICE METHODS - Complete Infrastructure (inherited by x)
@@ -509,13 +523,19 @@ class FlextMixins(FlextRuntime):
         """Log service information ONCE at initialization (not bound to context)."""
         # Build service context for logging using correct types
         # Use dict for mutability
-        service_context: dict[str, t.ConfigMapValue] = {
-            "service_name": self.__class__.__name__,
-            "service_module": self.__class__.__module__,
-            **context_data,
-        }
+        service_context: m.ConfigMap = m.ConfigMap(
+            root={
+                "service_name": self.__class__.__name__,
+                "service_module": self.__class__.__module__,
+                **context_data,
+            }
+        )
         # Log service initialization ONCE instead of binding to all logs
-        self.logger.info("Service initialized", return_result=False, **service_context)
+        self.logger.info(
+            "Service initialized",
+            return_result=False,
+            **service_context.root,
+        )
 
     def _log_config_once(
         self,
@@ -525,9 +545,9 @@ class FlextMixins(FlextRuntime):
         """Log configuration ONCE without binding to context."""
         # Convert config to t.ConfigMapValue for logging
         # ConfigurationMapping is Mapping[str, t.ConfigMapValue], convert to dict
-        config_typed: dict[str, t.ConfigMapValue] = dict(config.items())
+        config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
         # Log configuration as single event, not bound to context
-        self.logger.info(message, config=config_typed)
+        self.logger.info(message, config=config_typed.root)
 
     @staticmethod
     def _with_operation_context(
@@ -552,36 +572,38 @@ class FlextMixins(FlextRuntime):
 
             # Separate data by level - preserve t.ConfigMapValue from operation_data
             # Use dict for mutability
-            debug_data: dict[str, t.ConfigMapValue] = {
-                k: v for k, v in operation_data.items() if k in debug_keys
-            }
-            error_data: dict[str, t.ConfigMapValue] = {
-                k: v for k, v in operation_data.items() if k in error_keys
-            }
-            normal_data: dict[str, t.ConfigMapValue] = {
-                k: v
-                for k, v in operation_data.items()
-                if k not in debug_keys and k not in error_keys
-            }
+            debug_data: m.ConfigMap = m.ConfigMap(
+                root={k: v for k, v in operation_data.items() if k in debug_keys}
+            )
+            error_data: m.ConfigMap = m.ConfigMap(
+                root={k: v for k, v in operation_data.items() if k in error_keys}
+            )
+            normal_data: m.ConfigMap = m.ConfigMap(
+                root={
+                    k: v
+                    for k, v in operation_data.items()
+                    if k not in debug_keys and k not in error_keys
+                }
+            )
 
             # Bind context using bind_global_context - no level-specific binding available
             # Combine all context data for global binding
-            all_context_data: dict[str, t.ConfigMapValue] = dict(normal_data)
+            all_context_data: m.ConfigMap = normal_data.model_copy()
             # Simple merge: deep strategy - new values override existing ones
             if debug_data:
-                merged_debug: dict[str, t.ConfigMapValue] = dict(all_context_data)
-                merged_debug.update(debug_data)
+                merged_debug: m.ConfigMap = all_context_data.model_copy()
+                merged_debug.update(debug_data.root)
                 all_context_data = merged_debug
             if error_data:
-                merged_error: dict[str, t.ConfigMapValue] = dict(all_context_data)
-                merged_error.update(error_data)
+                merged_error: m.ConfigMap = all_context_data.model_copy()
+                merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                _ = FlextLogger.bind_global_context(**all_context_data)
+                _ = FlextLogger.bind_global_context(**all_context_data.root)
             if normal_data:
                 _ = FlextLogger.bind_context(
                     c.Context.SCOPE_OPERATION,
-                    **normal_data,
+                    **normal_data.root,
                 )
 
     @staticmethod
@@ -634,25 +656,23 @@ class FlextMixins(FlextRuntime):
                 self._metrics[name] = value
                 return r[bool].ok(value=True)
 
-            def get_metrics(self) -> r[dict[str, t.ConfigMapValue]]:
+            def get_metrics(self) -> r[m.ConfigMap]:
                 """Get current metrics dictionary.
 
                 Returns:
-                    r[dict[str, t.ConfigMapValue]]: Success result with metrics collection
+                    r[m.ConfigMap]: Success result with metrics collection
 
                 """
                 # _metrics is initialized in __init__, but check for safety
                 if not hasattr(self, "_metrics"):
                     vars(self)["_metrics"] = {}
-                return r[dict[str, t.ConfigMapValue]].ok(self._metrics.copy())
+                return r[m.ConfigMap].ok(m.ConfigMap(root=dict(self._metrics.items())))
 
         class ContextStack:
             """Manages execution context stack."""
 
             # Type annotation for type checker
-            _stack: ClassVar[
-                list[m.Handler.ExecutionContext | dict[str, t.ConfigMapValue]]
-            ] = []
+            _stack: ClassVar[list[m.Handler.ExecutionContext | m.ConfigMap]] = []
 
             def __init__(
                 self,
@@ -712,15 +732,17 @@ class FlextMixins(FlextRuntime):
                         handler_mode=handler_mode_literal,
                     )
                     self._stack.append(execution_ctx)
-                else:
+                elif m.ConfigMap in type(ctx).__mro__:
                     self._stack.append(ctx)
+                else:
+                    self._stack.append(m.ConfigMap(root=dict(ctx.items())))
                 return r[bool].ok(value=True)
 
-            def pop_context(self) -> r[dict[str, t.ConfigMapValue]]:
+            def pop_context(self) -> r[m.ConfigMap]:
                 """Pop execution context from the stack.
 
                 Returns:
-                    r[dict[str, t.ConfigMapValue]]: Success result with popped context or empty dict
+                    r[m.ConfigMap]: Success result with popped context or empty dict
 
                 """
                 # _stack is initialized in __init__, but check for safety
@@ -729,16 +751,18 @@ class FlextMixins(FlextRuntime):
                 if self._stack:
                     popped = self._stack.pop()
                     if m.Handler.ExecutionContext in type(popped).__mro__:
-                        context_dict: dict[str, t.ConfigMapValue] = {
-                            "handler_name": popped.handler_name,
-                            "handler_mode": popped.handler_mode,
-                        }
-                        return r[dict[str, t.ConfigMapValue]].ok(context_dict)
+                        context_dict: m.ConfigMap = m.ConfigMap(
+                            root={
+                                "handler_name": popped.handler_name,
+                                "handler_mode": popped.handler_mode,
+                            }
+                        )
+                        return r[m.ConfigMap].ok(context_dict)
                     # If it's already a dict, return as-is
                     # Type is already narrowed to dict by the union type
-                    popped_dict: dict[str, t.ConfigMapValue] = popped
-                    return r[dict[str, t.ConfigMapValue]].ok(popped_dict)
-                return r[dict[str, t.ConfigMapValue]].ok({})
+                    popped_dict: m.ConfigMap = popped
+                    return r[m.ConfigMap].ok(popped_dict)
+                return r[m.ConfigMap].ok(m.ConfigMap())
 
             def current_context(self) -> m.Handler.ExecutionContext | None:
                 """Get current execution context without popping.
@@ -807,7 +831,12 @@ class FlextMixins(FlextRuntime):
             obj: t.ConfigMapValue,
         ) -> bool:
             """Check if object satisfies p.Handler protocol."""
-            return hasattr(obj, "handle") and hasattr(obj, "validate") and callable(getattr(obj, "handle", None)) and callable(getattr(obj, "validate", None))
+            return (
+                hasattr(obj, "handle")
+                and hasattr(obj, "validate")
+                and callable(getattr(obj, "handle", None))
+                and callable(getattr(obj, "validate", None))
+            )
 
         @staticmethod
         def is_service(

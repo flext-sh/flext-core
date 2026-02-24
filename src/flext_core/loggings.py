@@ -51,17 +51,21 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     # Scoped context tracking
     # Format: {scope_name: {context_key: context_value}}
-    _scoped_contexts: ClassVar[MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]] = {}
+    _scoped_contexts: ClassVar[
+        MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]
+    ] = {}
 
     # Level-based context tracking
     # Format: {log_level: {context_key: context_value}}
-    _level_contexts: ClassVar[MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]] = {}
+    _level_contexts: ClassVar[
+        MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]
+    ] = {}
 
     # Protocol compliance: BindableLogger._context property
     @property
-    def _context(self) -> dict[str, t.MetadataAttributeValue]:
+    def _context(self) -> m.ConfigMap:
         """Context mapping for BindableLogger protocol compliance."""
-        return {}
+        return m.ConfigMap()
 
     def __call__(self) -> FlextLogger:
         """Return self to support factory-style DI registration."""
@@ -131,11 +135,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
             return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.UNBIND:
-            keys_raw = u.Mapper.get(kwargs, "keys", default=[])
-            # Type narrowing: ensure keys is list[str] by converting each element
-            if type(keys_raw) is list:
-                keys: list[str] = [str(k) for k in keys_raw]
-                FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
+            keys_raw: list[str] = u.Mapper.get(kwargs, "keys", default=[])
+            keys: list[str] = [str(k) for k in keys_raw]
+            FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
             return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.CLEAR:
             FlextRuntime.structlog().contextvars.clear_contextvars()
@@ -252,11 +254,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # =========================================================================
 
     # Scoped context mapping for DRY binding
-    _SCOPE_BINDERS: ClassVar[dict[str, str]] = {
-        c.Context.SCOPE_APPLICATION: c.Context.SCOPE_APPLICATION,
-        c.Context.SCOPE_REQUEST: c.Context.SCOPE_REQUEST,
-        c.Context.SCOPE_OPERATION: c.Context.SCOPE_OPERATION,
-    }
+    _SCOPE_BINDERS: ClassVar[m.ConfigMap] = m.ConfigMap(
+        root={
+            c.Context.SCOPE_APPLICATION: c.Context.SCOPE_APPLICATION,
+            c.Context.SCOPE_REQUEST: c.Context.SCOPE_REQUEST,
+            c.Context.SCOPE_OPERATION: c.Context.SCOPE_OPERATION,
+        }
+    )
 
     @classmethod
     def bind_context(
@@ -323,7 +327,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 strategy="deep",
             )
             if merge_result.is_success:
-                # merge_result.value is dict[str, PayloadValue] which matches the expected type
+                # merge_result.value is compatible with m.ConfigMap payloads.
                 merged_context = dict(merge_result.value)
                 cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
@@ -590,6 +594,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def with_container_context(
         cls,
         container: p.DI,
+        level: c.Settings.LogLevel | str | None = None,
         **context: t.MetadataAttributeValue,
     ) -> Iterator[FlextLogger]:
         """Context manager for container-scoped logging.
@@ -611,19 +616,17 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             ...     logger.info("Processing task")
 
         """
-        level_raw = context.get("level")
-        level: str | None
-        if type(level_raw) is c.Settings.LogLevel or c.Settings.LogLevel in type(level_raw).__mro__:
-            level = level_raw.value
-        elif type(level_raw) is str:
-            level = level_raw
+        resolved_level: str | None
+        if level is None:
+            resolved_level = None
+        elif hasattr(level, "value"):
+            resolved_level = str(level.value)
         else:
-            level = None
+            resolved_level = level
 
-        container_context = {k: v for k, v in context.items() if k != "level"}
-        logger = cls.for_container(container, level=level)
-        if container_context:
-            _ = logger.bind_global_context(**container_context)
+        logger = cls.for_container(container, level=resolved_level)
+        if context:
+            _ = logger.bind_global_context(**context)
         try:
             yield logger
         finally:
@@ -755,7 +758,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def bind(self, **context: t.MetadataAttributeValue) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**context)
-        return type(self).create_bound_logger(self.name, bound_logger)
+        return self.__class__.create_bound_logger(self.name, bound_logger)
 
     def new(self, **context: t.MetadataAttributeValue) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
@@ -764,12 +767,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def unbind(self, *keys: str) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
         bound_logger = self.logger.unbind(*keys)
-        return type(self).create_bound_logger(self.name, bound_logger)
+        return self.__class__.create_bound_logger(self.name, bound_logger)
 
     def try_unbind(self, *keys: str) -> Self:
         """Try to unbind keys from logger - implements BindableLogger protocol."""
         bound_logger = self.logger.try_unbind(*keys)
-        return type(self).create_bound_logger(self.name, bound_logger)
+        return self.__class__.create_bound_logger(self.name, bound_logger)
 
     def with_result(self) -> FlextLogger.ResultAdapter:
         """Get a result-returning logger adapter.
@@ -941,9 +944,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
             # Use StrEnum directly - structlog accepts StrEnum values
             # Convert to lowercase string for method name lookup
-            level_str = (
-                _level.value if (type(_level) is c.Settings.LogLevel or c.Settings.LogLevel in type(_level).__mro__) else str(_level)
-            ).lower()
+            level_raw = _level.value if hasattr(_level, "value") else _level
+            level_str = str(level_raw).lower()
 
             # Dynamic method call using getattr mapping
             getattr(self.logger, level_str)(formatted_message, **context)
@@ -978,14 +980,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             _context: Optional context mapping
 
         """
-        context_dict: dict[str, t.MetadataAttributeValue] = dict(_context) if _context else {}
+        context_dict: m.ConfigMap = (
+            m.ConfigMap(root=dict(_context)) if _context else m.ConfigMap()
+        )
         # Convert level string to LogLevel enum if possible
         level_enum: c.Settings.LogLevel | str = level
         with suppress(ValueError, AttributeError):
             level_enum = c.Settings.LogLevel(level.upper())
 
         # Use _log to handle the actual logging
-        _ = self._log(level_enum, message, **context_dict)
+        _ = self._log(level_enum, message, **context_dict.root)
 
     def debug(
         self,
@@ -1098,8 +1102,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         *args: t.MetadataAttributeValue | Exception,
         **kw: t.MetadataAttributeValue | Exception,
     ) -> None:
-        message = msg if type(msg) is str else str(msg)
-        filtered_args = tuple(arg for arg in args if type(arg) is not BaseException and BaseException not in type(arg).__mro__)
+        message = str(msg)
+        filtered_args = tuple(
+            arg
+            for arg in args
+            # boundary: logging accepts arbitrary user args
+            if BaseException not in arg.__class__.__mro__
+        )
         self._log(level, message, *filtered_args, **kw)
 
     @staticmethod
@@ -1116,23 +1125,29 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         exception: Exception | None,
         exc_info: bool,
         context: Mapping[str, t.MetadataAttributeValue | Exception],
-    ) -> dict[str, t.MetadataAttributeValue]:
+    ) -> m.ConfigMap:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
-        context_dict: dict[str, t.MetadataAttributeValue] = {}
+        context_dict: m.ConfigMap = m.ConfigMap()
 
         if exception is not None:
-            exception_data: dict[str, t.MetadataAttributeValue] = {
-                "exception_type": type(exception).__name__,
-                "exception_message": str(exception),
-            }
-            merge_result = u.merge(context_dict, exception_data, strategy="deep")
+            exception_data: m.ConfigMap = m.ConfigMap(
+                root={
+                    "exception_type": exception.__class__.__name__,
+                    "exception_message": str(exception),
+                }
+            )
+            merge_result = u.merge(
+                dict(context_dict.root),
+                dict(exception_data.root),
+                strategy="deep",
+            )
             if merge_result.is_success:
-                context_dict = dict(merge_result.value)
+                context_dict = m.ConfigMap(root=dict(merge_result.value))
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
-                        type(exception),
+                        exception.__class__,
                         exception,
                         exception.__traceback__,
                     ),
@@ -1141,7 +1156,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_dict["stack_trace"] = traceback.format_exc()
 
         for key, value in context.items():
-            if type(value) is not BaseException and BaseException not in type(value).__mro__:
+            # boundary: logging accepts arbitrary user args
+            if BaseException not in value.__class__.__mro__:
                 context_dict[key] = value
 
         return context_dict
@@ -1150,6 +1166,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.MetadataAttributeValue,
         *args: t.MetadataAttributeValue,
+        exception: BaseException | None = None,
+        exc_info: bool = True,
         **kw: t.MetadataAttributeValue | Exception,
     ) -> None:
         """Log exception with conditional stack trace (DEBUG only).
@@ -1167,30 +1185,20 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         trail reconstruction and failure analysis.
         """
         # Convert msg to string if needed for internal processing
-        message = str(msg) if type(msg) is not str else msg
+        message = str(msg)
         # Filter out Exception types from args for format string interpolation
         filtered_args = tuple(
-            arg for arg in args
-            if type(arg) is not BaseException and BaseException not in type(arg).__mro__
+            arg
+            for arg in args
+            # boundary: logging accepts arbitrary user args
+            if BaseException not in arg.__class__.__mro__
         )
-
-        # Extract exception and exc_info from kw if provided
-        exception = None
-        exc_info = True
-
-        # Check if exception is passed in kw
-        if "exception" in kw:
-            exc_value = kw.pop("exception")
-            if type(exc_value) is BaseException or BaseException in type(exc_value).__mro__:
-                exception = exc_value
-        if "exc_info" in kw:
-            exc_info_value = kw.pop("exc_info")
-            if type(exc_info_value) is bool:
-                exc_info = exc_info_value
 
         try:
             resolved_exception: Exception | None = (
-                exception if (exception is not None and (type(exception) is Exception or Exception in type(exception).__mro__)) else None
+                exception
+                if exception is not None and Exception in exception.__class__.__mro__
+                else None
             )
 
             context_dict = self.build_exception_context(
@@ -1199,8 +1207,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context=kw,
             )
 
-            if hasattr(self.logger, "error") and callable(getattr(self.logger, "error")):
-                self.logger.error(message, *filtered_args, **context_dict)
+            if hasattr(self.logger, "error") and callable(
+                getattr(self.logger, "error")
+            ):
+                self.logger.error(message, *filtered_args, **context_dict.root)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # For exception logging, we don't propagate errors to avoid recursive issues
             pass
@@ -1240,11 +1250,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             status = "success" if is_success else "failed"
             log_method = self.logger.info if is_success else self.logger.error
 
-            context: dict[str, t.MetadataAttributeValue] = {
-                "duration_seconds": elapsed,
-                "operation": self._operation_name,
-                "status": status,
-            }
+            context: m.ConfigMap = m.ConfigMap(
+                root={
+                    "duration_seconds": elapsed,
+                    "operation": self._operation_name,
+                    "status": status,
+                }
+            )
 
             if not is_success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
@@ -1252,7 +1264,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
             _ = log_method(
                 f"{self._operation_name} {status}",
-                **context,
+                **context.root,
             )
 
     class ResultAdapter:
@@ -1275,7 +1287,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             *args: t.MetadataAttributeValue,
             **kwargs: t.MetadataAttributeValue,
         ) -> t.MetadataAttributeValue | None:
-            method: t.MetadataAttributeValue | None = getattr(self._base_logger, method_name, None)
+            method: t.MetadataAttributeValue | None = getattr(
+                self._base_logger, method_name, None
+            )
             if method is not None and callable(method):
                 result: t.MetadataAttributeValue = method(*args, **kwargs)
                 return result
@@ -1354,7 +1368,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             """Return self (idempotent)."""
             return self
 
-        def bind(self, **context: t.MetadataAttributeValue) -> FlextLogger.ResultAdapter:
+        def bind(
+            self, **context: t.MetadataAttributeValue
+        ) -> FlextLogger.ResultAdapter:
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
 
@@ -1427,13 +1443,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             is done by the base logger.
             """
             resolved_exception: Exception | None = (
-                exception if (exception is not None and (type(exception) is Exception or Exception in type(exception).__mro__)) else None
+                exception
+                if exception is not None and Exception in exception.__class__.__mro__
+                else None
             )
             context_kwargs = kwargs
-            if exception is not None and (type(exception) is not Exception and Exception not in type(exception).__mro__):
+            if exception is not None and (Exception not in exception.__class__.__mro__):
                 context_kwargs = {
                     **kwargs,
-                    "exception_type": type(exception).__name__,
+                    "exception_type": exception.__class__.__name__,
                     "exception_message": str(exception),
                 }
 

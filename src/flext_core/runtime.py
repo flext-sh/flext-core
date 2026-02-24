@@ -325,6 +325,10 @@ class FlextRuntime:
     ) -> TypeGuard[t.ConfigMap]:
         """Type guard to check if value is dict-like.
 
+        Note:
+            ``value`` remains broad because this guard is a boundary utility used
+            by normalization paths that accept full ``t.ConfigMapValue``.
+
         Args:
             value: Value to check
 
@@ -332,13 +336,18 @@ class FlextRuntime:
             True if value is a ConfigMap or dict-like object, False otherwise
 
         """
-        if type(value) is dict:
-            return all(type(key) is str for key in value)
-        if t.ConfigMap in type(value).__mro__:
-            return True
+        match value:
+            case t.ConfigMap():
+                return True
+            case dict() as mapping:
+                return all(key.__class__ is str for key in mapping)
+            case _:
+                pass
         if not hasattr(value, "keys") or not hasattr(value, "__getitem__"):
             return False
-        return all(type(key) is str for key in value)
+        with contextlib.suppress(TypeError):
+            return all(key.__class__ is str for key in value)
+        return False
 
     @staticmethod
     def is_list_like(
@@ -353,12 +362,18 @@ class FlextRuntime:
             True if value is a list[t.ConfigMapValue] or list-like sequence, False otherwise
 
         """
-        # #region agent log
-        # import json
-        # with open('.cursor/debug.log', 'a') as f:
-        #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "runtime.py:343", "message": "Entering is_list_like", "data": {"value": str(value)}, "timestamp": Date.now()}) + '\n')
-        # #endregion
-        return type(value) is list
+        return value.__class__ is list
+
+    @staticmethod
+    def _is_scalar(
+        value: t.ConfigMapValue,
+    ) -> TypeGuard[t.ScalarValue]:
+        """Check if value is a scalar type accepted by t.ScalarValue."""
+        match value:
+            case str() | int() | float() | bool() | datetime() | None:
+                return True
+            case _:
+                return False
 
     @staticmethod
     def normalize_to_general_value(
@@ -366,7 +381,7 @@ class FlextRuntime:
     ) -> t.ConfigMapValue:
         """Normalize any value to t.ConfigMapValue recursively.
 
-        Converts arbitrary objects, dict[str, t.ConfigMapValue], list[t.ConfigMapValue], and other types
+        Converts arbitrary objects, t.ConfigMap, list[t.ConfigMapValue], and other types
         to m.ConfigMap, Sequence[t.ConfigMapValue], etc.
         This is the central conversion function for type safety.
 
@@ -385,23 +400,20 @@ class FlextRuntime:
             [1, 2, {'a': 'b'}]
 
         """
-        # #region agent log
-        # import json
-        # with open('.cursor/debug.log', 'a') as f:
-        #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "runtime.py:366", "message": "Entering normalize_to_general_value", "data": {"val": str(val)}, "timestamp": Date.now()}) + '\n')
-        # #endregion
-        if type(val) in (str, int, float, bool, datetime, type(None)):
+        if FlextRuntime._is_scalar(val):
             return val
-        if BaseModel in type(val).__mro__:
-            return FlextRuntime.normalize_to_general_value(val.model_dump())
-        if type(val) is Path or Path in type(val).__mro__:
-            return val
+        match val:
+            case BaseModel() as model:
+                return FlextRuntime.normalize_to_general_value(model.model_dump())
+            case Path():
+                return val
+            case _:
+                pass
         if FlextRuntime.is_dict_like(val):
-            if t.ConfigMap in type(val).__mro__:
-                dict_v = val.root
-            else:
-                dict_v = val
-            result: dict[str, t.ConfigMapValue] = {}
+            dict_v: Mapping[str, t.ConfigMapValue] = (
+                val.root if hasattr(val, "root") else val
+            )
+            result = t.ConfigMap()
             for k, v in dict_v.items():
                 result[k] = FlextRuntime.normalize_to_general_value(v)
             return result
@@ -434,16 +446,13 @@ class FlextRuntime:
             [1, 2, 3]
 
         """
-        if type(val) in (str, int, float, bool, type(None)):
+        if FlextRuntime._is_scalar(val):
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
-        if type(val) is datetime:
-            return val
         if FlextRuntime.is_dict_like(val):
-            if t.ConfigMap in type(val).__mro__:
-                raw_mapping: Mapping[str, t.ConfigMapValue] = val.root
-            else:
-                raw_mapping = val
+            raw_mapping: Mapping[str, t.ConfigMapValue] = (
+                val.root if hasattr(val, "root") else val
+            )
             normalized_mapping: dict[
                 str,
                 str
@@ -456,7 +465,7 @@ class FlextRuntime:
             ] = {}
             for key, value in raw_mapping.items():
                 metadata_value = FlextRuntime.normalize_to_metadata_value(value)
-                if type(metadata_value) is dict:
+                if hasattr(metadata_value, "items"):
                     normalized_mapping[key] = json.dumps(metadata_value)
                 else:
                     normalized_mapping[key] = metadata_value
@@ -465,7 +474,7 @@ class FlextRuntime:
             # Convert to list of MetadataAttributeValue scalars (including datetime)
             result_list: list[str | int | float | bool | datetime | None] = []
             for item in val:
-                if type(item) in (str, int, float, bool, datetime, type(None)):
+                if FlextRuntime._is_scalar(item):
                     result_list.append(item)
                 else:
                     result_list.append(str(item))
@@ -478,7 +487,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_json(
-        value: t.ConfigMapValue,
+        value: str,
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
@@ -498,8 +507,6 @@ class FlextRuntime:
             True if value is a valid JSON string, False otherwise
 
         """
-        if type(value) is not str:
-            return False
         try:
             json.loads(value)
             return True
@@ -508,7 +515,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_identifier(
-        value: t.ConfigMapValue,
+        value: str,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier.
 
@@ -519,8 +526,6 @@ class FlextRuntime:
             True if value is a valid Python identifier, False otherwise
 
         """
-        if type(value) is not str:
-            return False
         return value.isidentifier()
 
     @staticmethod
@@ -530,7 +535,11 @@ class FlextRuntime:
         This allows isinstance checks to narrow types for FlextRuntime methods
         that accept PayloadValue (which includes BaseModel).
         """
-        return BaseModel in type(obj).__mro__
+        match obj:
+            case BaseModel():
+                return True
+            case _:
+                return False
 
     # =========================================================================
     # SERIALIZATION UTILITIES (No flext_core imports)
@@ -652,11 +661,15 @@ class FlextRuntime:
                 return Sequence in origin.__mro__
 
             # Check if the type itself is a sequence subclass (for type aliases)
-            if type(type_hint) is type and hasattr(type_hint, "__mro__") and Sequence in type_hint.__mro__:
+            if (
+                hasattr(type_hint, "__mro__")
+                and type_hint.__class__ is type
+                and Sequence in type_hint.__mro__
+            ):
                 return True
 
             # Check __name__ for type aliases like StringList
-            if type(type_hint) is type and hasattr(type_hint, "__name__"):
+            if type_hint.__class__ is type and hasattr(type_hint, "__name__"):
                 type_name: str = type_hint.__name__
                 # Common sequence type aliases
                 if type_name in {
@@ -1061,7 +1074,7 @@ class FlextRuntime:
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: dict[str, t.ConfigMapValue] = {}
+        filtered_dict = t.ConfigMap()
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -1852,11 +1865,24 @@ class FlextRuntime:
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by unique ID attribute."""
-        if type(entity_a) in (str, int, float, bool, type(None)) or Sequence in type(entity_a).__mro__ or Mapping in type(entity_a).__mro__:
+        if FlextRuntime._is_scalar(entity_a):
             return False
-        if type(entity_b) in (str, int, float, bool, type(None)) or Sequence in type(entity_b).__mro__ or Mapping in type(entity_b).__mro__:
+        match entity_a:
+            case Sequence() | Mapping():
+                return False
+            case _:
+                pass
+        if FlextRuntime._is_scalar(entity_b):
             return False
-        if type(entity_b) is not type(entity_a) and type(entity_a) not in type(entity_b).__mro__:
+        match entity_b:
+            case Sequence() | Mapping():
+                return False
+            case _:
+                pass
+        if (
+            entity_b.__class__ is not entity_a.__class__
+            and entity_a.__class__ not in entity_b.__class__.__mro__
+        ):
             return False
         id_a = getattr(entity_a, id_attr, None)
         id_b = getattr(entity_b, id_attr, None)
@@ -1868,7 +1894,7 @@ class FlextRuntime:
         id_attr: str = "unique_id",
     ) -> int:
         """Hash entity based on unique ID and type."""
-        if type(entity) in (str, int, float, bool, type(None)):
+        if FlextRuntime._is_scalar(entity):
             return hash(entity)
         # Now entity is a complex object with potential id_attr
         entity_id = getattr(entity, id_attr, None)
@@ -1883,15 +1909,20 @@ class FlextRuntime:
         obj_b: t.ConfigMapValue,
     ) -> bool:
         """Compare value objects by their values (all attributes)."""
-        if type(obj_a) in (str, int, float, bool, type(None)):
+        if FlextRuntime._is_scalar(obj_a):
             return obj_a == obj_b
-        if type(obj_b) in (str, int, float, bool, type(None)):
+        if FlextRuntime._is_scalar(obj_b):
             return False
-        if Sequence in type(obj_a).__mro__ or Mapping in type(obj_a).__mro__ or Sequence in type(obj_b).__mro__ or Mapping in type(obj_b).__mro__:
+        if hasattr(obj_a, "__iter__") and not hasattr(obj_a, "model_dump"):
             return obj_a == obj_b
-        if type(obj_b) is not type(obj_a) and type(obj_a) not in type(obj_b).__mro__:
+        if hasattr(obj_b, "__iter__") and not hasattr(obj_b, "model_dump"):
+            return obj_a == obj_b
+        if (
+            obj_b.__class__ is not obj_a.__class__
+            and obj_a.__class__ not in obj_b.__class__.__mro__
+        ):
             return False
-        if BaseModel in type(obj_a).__mro__ and BaseModel in type(obj_b).__mro__:
+        if FlextRuntime.is_base_model(obj_a) and FlextRuntime.is_base_model(obj_b):
             dump_a = obj_a.model_dump()
             dump_b = obj_b.model_dump()
             return dump_a == dump_b
@@ -1901,19 +1932,13 @@ class FlextRuntime:
     @staticmethod
     def hash_value_object_by_value(obj: t.ConfigMapValue) -> int:
         """Hash value object based on all attribute values."""
-        if type(obj) in (str, int, float, bool, type(None)):
+        if FlextRuntime._is_scalar(obj):
             return hash(obj)
-        if BaseModel in type(obj).__mro__:
+        if FlextRuntime.is_base_model(obj):
             data = obj.model_dump()
             # Ensure all values are hashable by converting to tuple
             return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
-        if type(obj) is dict:
-            return hash(repr(obj))
-        if type(obj) is list:
-            return hash(repr(obj))
-        if Mapping in type(obj).__mro__:
-            return hash(repr(obj))
-        if Sequence in type(obj).__mro__:
+        if hasattr(obj, "__iter__"):
             return hash(repr(obj))
         # For other objects (datetime, Path, custom objects), use repr
         return hash(repr(obj))
@@ -1979,39 +2004,44 @@ class FlextRuntime:
             dict[str, str]: Enriched context with trace fields
 
         """
-        if type(context) in (str, int, float, bool, type(None)):
-            context_dict: dict[str, t.ConfigMapValue] = {}
-        elif BaseModel in type(context).__mro__:
-            context_dict = context.model_dump()
-        elif type(context) is dict:
-            context_dict = {}
+        context_dict = t.ConfigMap()
+        if FlextRuntime._is_scalar(context):
+            context_dict = t.ConfigMap()
+        elif FlextRuntime.is_base_model(context):
+            context_dict.update(context.model_dump())
+        elif FlextRuntime.is_dict_like(context):
             try:
                 for k_obj, v_obj in context.items():
-                    key_str: str = str(k_obj)
-                    val_typed: t.ConfigMapValue
-                    if v_obj is None:
-                        val_typed = None
-                    elif type(v_obj) in (str, int, float, bool, datetime, type(None)) or BaseModel in type(v_obj).__mro__ or Path in type(v_obj).__mro__:
-                        val_typed = v_obj
-                    elif type(v_obj) in (list, tuple):
-                        val_typed = v_obj
-                    elif type(v_obj) is dict:
-                        val_typed = v_obj
-                    elif callable(v_obj):
-                        val_typed = str(v_obj)
-                    else:
-                        val_typed = str(v_obj)
+                    key_str = str(k_obj)
+                    match v_obj:
+                        case None:
+                            val_typed: t.ConfigMapValue = None
+                        case (
+                            str()
+                            | int()
+                            | float()
+                            | bool()
+                            | datetime()
+                            | BaseModel()
+                            | Path()
+                            | list()
+                            | tuple()
+                            | dict()
+                        ):
+                            val_typed = v_obj
+                        case _ if callable(v_obj):
+                            val_typed = str(v_obj)
+                        case _:
+                            val_typed = str(v_obj)
                     context_dict[key_str] = val_typed
             except Exception:
-                context_dict = {}
-        elif Mapping in type(context).__mro__:
-            context_dict = {}
-        else:
-            context_dict = {}
+                context_dict = t.ConfigMap()
+        elif hasattr(context, "items"):
+            context_dict = t.ConfigMap()
 
         # Convert all values to strings for trace context
         result: dict[str, str] = {
-            k: v if type(v) is str else str(v) for k, v in context_dict.items()
+            k: v if v.__class__ is str else str(v) for k, v in context_dict.items()
         }
 
         # Ensure trace fields
@@ -2052,18 +2082,19 @@ class FlextRuntime:
         validated_codes: list[int] = []
         for code in codes:
             try:
-                if type(code) in (int, str):
-                    code_int = int(str(code))
-                    if not min_val <= code_int <= max_val:
+                match code:
+                    case int() | str():
+                        code_int = int(str(code))
+                        if not min_val <= code_int <= max_val:
+                            return FlextRuntime.RuntimeResult[list[int]].fail(
+                                f"Invalid HTTP status code: {code} "
+                                f"(must be {min_val}-{max_val})",
+                            )
+                        validated_codes.append(code_int)
+                    case _:
                         return FlextRuntime.RuntimeResult[list[int]].fail(
-                            f"Invalid HTTP status code: {code} "
-                            f"(must be {min_val}-{max_val})",
+                            f"Invalid HTTP status code type: {code.__class__.__name__}",
                         )
-                    validated_codes.append(code_int)
-                else:
-                    return FlextRuntime.RuntimeResult[list[int]].fail(
-                        f"Invalid HTTP status code type: {type(code).__name__}",
-                    )
             except ValueError:
                 return FlextRuntime.RuntimeResult[list[int]].fail(
                     f"Cannot convert to integer: {code}",

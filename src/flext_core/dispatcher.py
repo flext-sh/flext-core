@@ -207,7 +207,7 @@ class FlextDispatcher(FlextService[bool]):
         ] = {}  # validation functions
 
         # Group 4: Pipeline (dispatcher-managed processing pipeline)
-        self._pipeline_steps: list[dict[str, _Payload]] = []  # Ordered pipeline steps
+        self._pipeline_steps: list[m.ConfigMap] = []  # Ordered pipeline steps
         self._pipeline_composition: MutableMapping[
             str,
             Callable[
@@ -220,7 +220,7 @@ class FlextDispatcher(FlextService[bool]):
             _Payload,
         ] = {}  # Memoization cache for pipeline
 
-        self._audit_log: list[dict[str, _Payload]] = []  # Operation audit trail
+        self._audit_log: list[m.ConfigMap] = []  # Operation audit trail
         self._performance_metrics: MutableMapping[
             str,
             _Payload,
@@ -246,8 +246,8 @@ class FlextDispatcher(FlextService[bool]):
 
         # Create with defaults from config
         # Use getattr to safely access attributes that may not exist in protocol
-        threshold_raw = getattr(config, "circuit_breaker_threshold", None)
-        threshold: int = threshold_raw if type(threshold_raw) is int else 5
+        threshold_raw = getattr(config, "circuit_breaker_threshold", 5)
+        threshold: int = threshold_raw if threshold_raw is not None else 5
         return CircuitBreakerManager(
             threshold=threshold,
             recovery_timeout=c.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
@@ -274,11 +274,11 @@ class FlextDispatcher(FlextService[bool]):
 
         # Create with defaults from config
         # Use getattr to safely access attributes that may not exist in protocol
-        max_requests_raw = getattr(config, "rate_limit_max_requests", None)
-        max_requests: int = max_requests_raw if type(max_requests_raw) is int else 100
-        window_seconds_raw = getattr(config, "rate_limit_window_seconds", None)
+        max_requests_raw = getattr(config, "rate_limit_max_requests", 100)
+        max_requests: int = max_requests_raw if max_requests_raw is not None else 100
+        window_seconds_raw = getattr(config, "rate_limit_window_seconds", 60.0)
         window_seconds: float = (
-            window_seconds_raw if type(window_seconds_raw) in (int, float) else 60.0
+            window_seconds_raw if window_seconds_raw is not None else 60.0
         )
         return RateLimiterManager(
             max_requests=max_requests,
@@ -306,9 +306,9 @@ class FlextDispatcher(FlextService[bool]):
         # Create with defaults from config
         # Use getattr to safely access attributes that may not exist in protocol
         use_timeout_executor = getattr(config, "enable_timeout_executor", False)
-        executor_workers_raw = getattr(config, "executor_workers", None)
+        executor_workers_raw = getattr(config, "executor_workers", 4)
         executor_workers: int = (
-            executor_workers_raw if type(executor_workers_raw) is int else 4
+            executor_workers_raw if executor_workers_raw is not None else 4
         )
         return TimeoutEnforcer(
             use_timeout_executor=use_timeout_executor,
@@ -335,12 +335,10 @@ class FlextDispatcher(FlextService[bool]):
 
         # Create with defaults from config
         # Use getattr to safely access attributes that may not exist in protocol
-        max_attempts_raw = getattr(config, "max_retry_attempts", None)
-        max_attempts: int = max_attempts_raw if type(max_attempts_raw) is int else 3
-        retry_delay_raw = getattr(config, "retry_delay", None)
-        retry_delay: float = (
-            retry_delay_raw if type(retry_delay_raw) in (int, float) else 1.0
-        )
+        max_attempts_raw = getattr(config, "max_retry_attempts", 3)
+        max_attempts: int = max_attempts_raw if max_attempts_raw is not None else 3
+        retry_delay_raw = getattr(config, "retry_delay", 1.0)
+        retry_delay: float = retry_delay_raw if retry_delay_raw is not None else 1.0
         return RetryPolicy(
             max_attempts=max_attempts,
             retry_delay=retry_delay,
@@ -449,11 +447,11 @@ class FlextDispatcher(FlextService[bool]):
 
         # method_names is list[str] | str, convert to list[str]
         methods: list[str]
-        if type(method_names) is list:
-            methods = [str(m) for m in method_names]
-        else:
-            # Type narrowing: if not list, must be str
-            methods = [method_names]
+        match method_names:
+            case str():
+                methods = [method_names]
+            case _:
+                methods = [str(m) for m in method_names]
         for method_name in methods:
             if hasattr(obj, method_name):
                 method = getattr(obj, method_name)
@@ -491,14 +489,14 @@ class FlextDispatcher(FlextService[bool]):
     # Note: Processor registry removed in dispatcher refactoring.
     # Processors should be registered as handlers using register_handler().
 
-    def get_audit_log(self) -> r[list[dict[str, _Payload]]]:
+    def get_audit_log(self) -> r[list[m.ConfigMap]]:
         """Retrieve operation audit trail.
 
         Returns:
             r[list[dict]]: Audit log entries with operation details
 
         """
-        return r[list[dict[str, _Payload]]].ok(
+        return r[list[m.ConfigMap]].ok(
             self._audit_log.copy(),
         )
 
@@ -559,17 +557,17 @@ class FlextDispatcher(FlextService[bool]):
         )
         # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
         # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
-        handler_type_members: dict[str, t.HandlerType] = dict(handler_type_members_raw)
+        handler_type_members: m.ConfigMap = m.ConfigMap.model_validate(
+            dict(handler_type_members_raw)
+        )
 
-        def extract_handler_mode(m: t.HandlerType) -> str:
+        def extract_handler_mode(mode_value: _Payload) -> str:
             """Extract string value from handler mode enum."""
-            if type(m) is c.Cqrs.HandlerType:
-                return m.value
-            return str(m)
+            return str(mode_value)
 
         valid_modes = list(
-            u.map(
-                list(handler_type_members.values()),
+            u.Collection.map(
+                list(handler_type_members.root.values()),
                 extract_handler_mode,
             ),
         )
@@ -582,63 +580,88 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _is_dispatcher_handler(value: object) -> TypeGuard[DispatcherHandler]:
-        return callable(value) or BaseModel in type(value).__mro__
+        return callable(value) or hasattr(value, "model_dump")
+
+    @staticmethod
+    def _is_text_buffer(value: object) -> bool:
+        match value:
+            case str() | bytes() | bytearray():
+                return True
+            case _:
+                return False
+
+    @staticmethod
+    def _is_metadata_primitive(value: object) -> bool:
+        match value:
+            case str() | int() | float() | bool() | dt() | None:
+                return True
+            case BaseModel():
+                return True
+            case _:
+                return False
 
     @staticmethod
     def _is_guard_input_value(value: _Payload) -> TypeGuard[t.GuardInputValue]:
-        if (
-            type(value) in (str, int, float, bool, dt, type(None))
-            or BaseModel in type(value).__mro__
-            or Path in type(value).__mro__
-        ):
-            return True
-        if Sequence in type(value).__mro__ and type(value) not in (
-            str,
-            bytes,
-            bytearray,
-        ):
-            return all(
-                type(item) in (str, int, float, bool, dt, type(None))
-                or BaseModel in type(item).__mro__
-                for item in value
-            )
-        if Mapping in type(value).__mro__:
-            return all(
-                type(key) is str
-                and (
-                    type(item) in (str, int, float, bool, dt, type(None))
-                    or BaseModel in type(item).__mro__
+        match value:
+            case str() | int() | float() | bool() | dt() | None:
+                return True
+            case Path():
+                return True
+            case BaseModel():
+                return True
+            case Sequence() if not FlextDispatcher._is_text_buffer(value):
+                return all(
+                    FlextDispatcher._is_metadata_primitive(item) for item in value
                 )
-                for key, item in value.items()
-            )
-        return False
+            case Mapping():
+                return all(
+                    (
+                        not FlextDispatcher._is_text_buffer(key)
+                        and str(key) == key
+                        and FlextDispatcher._is_metadata_primitive(item)
+                    )
+                    for key, item in value.items()
+                )
+            case _:
+                return False
 
     @staticmethod
     def _is_container_value(value: object) -> TypeGuard[_Payload]:
-        if (
-            type(value) in (str, int, float, bool, dt, type(None))
-            or BaseModel in type(value).__mro__
-            or Path in type(value).__mro__
-        ):
-            return True
-        if Sequence in type(value).__mro__ and type(value) not in (
-            str,
-            bytes,
-            bytearray,
-        ):
-            return all(FlextDispatcher._is_container_value(item) for item in value)
-        if Mapping in type(value).__mro__:
-            return all(
-                type(key) is str and FlextDispatcher._is_container_value(item)
-                for key, item in value.items()
-            )
-        return False
+        match value:
+            case str() | int() | float() | bool() | dt() | None:
+                return True
+            case Path():
+                return True
+            case BaseModel():
+                return True
+            case Sequence() if not FlextDispatcher._is_text_buffer(value):
+                return all(FlextDispatcher._is_container_value(item) for item in value)
+            case Mapping():
+                return all(
+                    (
+                        not FlextDispatcher._is_text_buffer(key)
+                        and str(key) == key
+                        and FlextDispatcher._is_container_value(item)
+                    )
+                    for key, item in value.items()
+                )
+            case _:
+                return False
 
     @staticmethod
     def _to_container_value(value: object) -> _Payload:
         if FlextDispatcher._is_container_value(value):
             return value
         return str(value)
+
+    @staticmethod
+    def _is_result_value(value: object) -> TypeGuard[r[_Payload]]:
+        return (
+            hasattr(value, "is_success")
+            and hasattr(value, "is_failure")
+            and hasattr(value, "error")
+            and hasattr(value, "value")
+        )
 
     def _route_to_handler(
         self,
@@ -796,23 +819,28 @@ class FlextDispatcher(FlextService[bool]):
         )
 
         # Delegate to FlextHandlers.dispatch_message() for full CQRS support
-        if type(handler) is FlextHandlers:
-            dispatch_method = getattr(handler, "dispatch_message", None)
-            if callable(dispatch_method):
-                raw_dispatch_result = dispatch_method(command, operation=operation)
-                if r in type(raw_dispatch_result).__mro__:
-                    if raw_dispatch_result.is_failure:
-                        return r[_Payload].fail(
-                            raw_dispatch_result.error or "Handler dispatch failed",
-                            error_code=raw_dispatch_result.error_code,
-                            error_data=raw_dispatch_result.error_data,
+        match handler:
+            case FlextHandlers():
+                dispatch_method = getattr(handler, "dispatch_message", None)
+                if callable(dispatch_method):
+                    raw_dispatch_result = dispatch_method(command, operation=operation)
+                    if FlextDispatcher._is_result_value(raw_dispatch_result):
+                        if raw_dispatch_result.is_failure:
+                            return r[_Payload].fail(
+                                raw_dispatch_result.error or "Handler dispatch failed",
+                                error_code=raw_dispatch_result.error_code,
+                                error_data=raw_dispatch_result.error_data,
+                            )
+                        return r[_Payload].ok(
+                            FlextDispatcher._to_container_value(
+                                raw_dispatch_result.value
+                            ),
                         )
                     return r[_Payload].ok(
-                        FlextDispatcher._to_container_value(raw_dispatch_result.value),
+                        FlextDispatcher._to_container_value(raw_dispatch_result),
                     )
-                return r[_Payload].ok(
-                    FlextDispatcher._to_container_value(raw_dispatch_result),
-                )
+            case _:
+                pass
 
         # Fallback for non-h: try handle() then execute()
         # Use hasattr + getattr for attribute access
@@ -964,7 +992,7 @@ class FlextDispatcher(FlextService[bool]):
         result_raw = process_method(command, handler)
 
         # Ensure result is _Payload or FlextResult
-        if r in type(result_raw).__mro__:
+        if FlextDispatcher._is_result_value(result_raw):
             result: _Payload | r[_Payload] = result_raw
         else:
             result = FlextDispatcher._to_container_value(result_raw)
@@ -976,7 +1004,7 @@ class FlextDispatcher(FlextService[bool]):
         middleware_type: _Payload,
     ) -> r[bool]:
         """Handle middleware execution result."""
-        if r in type(result).__mro__ and result.is_failure:
+        if FlextDispatcher._is_result_value(result) and result.is_failure:
             # Extract error directly from result.error property
             # result is r[_Payload] after type narrowing
             error_msg = result.error or "Unknown error"
@@ -1036,7 +1064,7 @@ class FlextDispatcher(FlextService[bool]):
 
             # Extract command ID for logging - handle various command types
             command_id_value: str = "unknown"
-            if type(command) is dict or Mapping in type(command).__mro__:
+            if FlextRuntime.is_dict_like(command):
                 command_id_raw = command.get("command_id") or command.get("id")
                 command_id_value = str(command_id_raw) if command_id_raw else "unknown"
             elif hasattr(command, "command_id"):
@@ -1067,7 +1095,7 @@ class FlextDispatcher(FlextService[bool]):
             handler = self._route_to_handler(command)
             if handler is None:
                 handler_names = list(
-                    u.map(
+                    u.Collection.map(
                         self._auto_handlers,
                         lambda h: h.__class__.__name__,
                     ),
@@ -1156,8 +1184,11 @@ class FlextDispatcher(FlextService[bool]):
                 return self._register_single_handler(request)
             return r[bool].fail("Handler must be callable or BaseModel")
 
-        if type(request) not in (str, type):
-            return r[bool].fail("Command type must be str or type")
+        match request:
+            case str() | type():
+                pass
+            case _:
+                return r[bool].fail("Command type must be str or type")
 
         return self._register_two_arg_handler(request, handler)
 
@@ -1301,8 +1332,11 @@ class FlextDispatcher(FlextService[bool]):
             r with success or error
 
         """
-        if type(command_type_obj) is str and not command_type_obj.strip():
-            return r[bool].fail("Command type cannot be empty")
+        match command_type_obj:
+            case str() if not command_type_obj.strip():
+                return r[bool].fail("Command type cannot be empty")
+            case _:
+                pass
 
         # handler is already HandlerType from method signature
         validation_result = self._validate_handler_interface(
@@ -1340,7 +1374,7 @@ class FlextDispatcher(FlextService[bool]):
                     """Factory function to create handler instance."""
                     instance = cls_ref()
                     # Handler instances are valid PayloadValue (BaseModel subclass)
-                    if BaseModel in type(instance).__mro__:
+                    if hasattr(instance, "model_dump"):
                         return instance
                     # For non-BaseModel handlers, convert to string representation
                     return str(instance)
@@ -1390,38 +1424,34 @@ class FlextDispatcher(FlextService[bool]):
         # Strict Model Enforcement: Convert dict to Model if needed
         config_model: m.Config.MiddlewareConfig | None = None
         if middleware_config is not None:
-            if (
-                type(middleware_config) is dict
-                or Mapping in type(middleware_config).__mro__
-            ):
-                # Convert dict to model
-                try:
-                    config_model = m.Config.MiddlewareConfig.model_validate(
-                        middleware_config
-                    )
-                except Exception as e:
+            match middleware_config:
+                case m.Config.MiddlewareConfig():
+                    config_model = middleware_config
+                case t.ConfigMap():
+                    try:
+                        config_model = m.Config.MiddlewareConfig.model_validate(
+                            middleware_config.model_dump()
+                        )
+                    except Exception as e:
+                        return r[bool].fail(
+                            f"Invalid middleware config from ConfigMap: {e}",
+                            error_code=c.Errors.CONFIGURATION_ERROR,
+                        )
+                case _ if FlextRuntime.is_dict_like(middleware_config):
+                    try:
+                        config_model = m.Config.MiddlewareConfig.model_validate(
+                            middleware_config
+                        )
+                    except Exception as e:
+                        return r[bool].fail(
+                            f"Invalid middleware config: {e}",
+                            error_code=c.Errors.CONFIGURATION_ERROR,
+                        )
+                case _:
                     return r[bool].fail(
-                        f"Invalid middleware config: {e}",
+                        "Middleware config must be dict, ConfigMap or MiddlewareConfig model",
                         error_code=c.Errors.CONFIGURATION_ERROR,
                     )
-            elif type(middleware_config) is m.Config.MiddlewareConfig:
-                config_model = middleware_config
-            elif type(middleware_config) is t.ConfigMap:
-                # Convert ConfigMap to MiddlewareConfig via validation
-                try:
-                    config_model = m.Config.MiddlewareConfig.model_validate(
-                        middleware_config.model_dump()
-                    )
-                except Exception as e:
-                    return r[bool].fail(
-                        f"Invalid middleware config from ConfigMap: {e}",
-                        error_code=c.Errors.CONFIGURATION_ERROR,
-                    )
-            else:
-                return r[bool].fail(
-                    "Middleware config must be dict, ConfigMap or MiddlewareConfig model",
-                    error_code=c.Errors.CONFIGURATION_ERROR,
-                )
 
         # Resolve middleware_id safely
         # config_model might be MiddlewareConfig (no middleware_id) or DispatcherMiddlewareConfig (has middleware_id)
@@ -1572,24 +1602,33 @@ class FlextDispatcher(FlextService[bool]):
 
         """
         # Handle named event with data
-        if type(event) is str and data is not None:
-            event_dict: dict[str, _Payload] = {
-                "event_name": event,
-                "data": data,
-                "timestamp": time.time(),
-            }
-            return self._publish_event(event_dict)
+        if data is not None:
+            match event:
+                case str():
+                    event_dict: m.ConfigMap = m.ConfigMap(
+                        root={
+                            "event_name": event,
+                            "data": data,
+                            "timestamp": time.time(),
+                        }
+                    )
+                    return self._publish_event(event_dict)
+                case _:
+                    pass
 
         # Handle batch events
-        if type(event) is list:
-            errors: list[str] = []
-            for evt in event:
-                result = self._publish_event(evt)
-                if result.is_failure:
-                    errors.append(result.error or "Unknown error")
-            if errors:
-                return r[bool].fail(f"Some events failed: {'; '.join(errors)}")
-            return r[bool].ok(value=True)
+        match event:
+            case list():
+                errors: list[str] = []
+                for evt in event:
+                    result = self._publish_event(evt)
+                    if result.is_failure:
+                        errors.append(result.error or "Unknown error")
+                if errors:
+                    return r[bool].fail(f"Some events failed: {'; '.join(errors)}")
+                return r[bool].ok(value=True)
+            case _:
+                pass
 
         # Handle single event
         return self._publish_event(event)
@@ -1616,10 +1655,10 @@ class FlextDispatcher(FlextService[bool]):
         if not path:
             return None
         # Try mapping traversal first
-        if Mapping in type(obj).__mro__:
+        if FlextRuntime.is_dict_like(obj):
             current_map: object = obj
             for attr in path:
-                if Mapping not in type(current_map).__mro__:
+                if not FlextRuntime.is_dict_like(current_map):
                     return None
                 if attr not in current_map:
                     return None
@@ -1680,11 +1719,14 @@ class FlextDispatcher(FlextService[bool]):
             r with validated HandlerRegistrationRequest or error
 
         """
-        if type(request) is m.HandlerRegistrationRequest:
-            return r[m.HandlerRegistrationRequest].ok(request)
+        match request:
+            case m.HandlerRegistrationRequest():
+                return r[m.HandlerRegistrationRequest].ok(request)
+            case _:
+                pass
 
         try:
-            if BaseModel in type(request).__mro__:
+            if hasattr(request, "model_dump"):
                 # Convert other models via dump-load to validate fields
                 # This handles field aliasing and conversion automatically
                 request_data = request.model_dump()
@@ -1692,7 +1734,7 @@ class FlextDispatcher(FlextService[bool]):
                     m.HandlerRegistrationRequest(**request_data)
                 )
 
-            if Mapping in type(request).__mro__:
+            if FlextRuntime.is_dict_like(request):
                 # Validate raw dictionary against model schema
                 # Pydantic v2 handles validation and type coercion
                 return r[m.HandlerRegistrationRequest].ok(
@@ -2724,7 +2766,7 @@ class FlextDispatcher(FlextService[bool]):
         )
 
         # Generate operation ID using u
-        operation_id = u.generate_operation_id(
+        operation_id = u.Generators.generate_operation_id(
             message_type,
             message,
         )

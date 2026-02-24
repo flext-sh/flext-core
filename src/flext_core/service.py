@@ -19,7 +19,6 @@ from types import ModuleType
 from typing import override
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     PrivateAttr,
     computed_field,
@@ -47,7 +46,7 @@ class FlextService[TDomainResult](
     """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return
-    ``FlextResult`` values. The base inherits :class:`FlextMixins` (which extends
+    ``r`` (FlextResult) values. The base inherits :class:`FlextMixins` (which extends
     :class:`FlextRuntime`) so services can reuse runtime automation for creating
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
@@ -111,11 +110,10 @@ class FlextService[TDomainResult](
 
         """
         runtime = self._create_initial_runtime()
-        # Type narrowing: runtime.context is FlextContext
-        if type(runtime.context) is not FlextContext:
-            msg = f"Expected FlextContext, got {type(runtime.context).__name__}"
+        if runtime.context.__class__ is not FlextContext:
+            msg = f"Expected FlextContext, got {runtime.context.__class__.__name__}"
             raise TypeError(msg)
-        context = runtime.context
+        context: FlextContext = runtime.context
 
         with context.Service.service_context(
             self.__class__.__name__,
@@ -124,11 +122,9 @@ class FlextService[TDomainResult](
             super().__init__(**data)
 
         # Set attributes directly - PrivateAttr allows assignment without validation
-        self._context = runtime.context
-        # Type narrowing: runtime.config is "p.Config", but we need FlextSettings
-        # All implementations of "p.Config" in FLEXT are FlextSettings or subclasses
-        if type(runtime.config) is not FlextSettings:
-            msg = f"Expected FlextSettings, got {type(runtime.config).__name__}"
+        self._context = context
+        if not issubclass(runtime.config.__class__, FlextSettings):
+            msg = f"Expected FlextSettings, got {runtime.config.__class__.__name__}"
             raise TypeError(msg)
         self._config = runtime.config
         self._container = runtime.container
@@ -212,14 +208,14 @@ class FlextService[TDomainResult](
         runtime_config = config_cls.model_validate(config_overrides or {})
 
         # 2. Context creation with initial data
-        # context parameter is p.ContextLike (minimal protocol)
-        # Use TypeGuard to narrow to "p.Context" (full protocol with set method)
         runtime_context_typed: p.Context
-        if context is not None and getattr(context, "set", None) is not None and getattr(context, "get", None) is not None:
-            # TypeGuard narrowed to "p.Context" - use directly
+        if (
+            context is not None
+            and getattr(context, "set", None) is not None
+            and getattr(context, "get", None) is not None
+        ):
             runtime_context_typed = context
         else:
-            # Minimal ContextLike or None - create full context
             runtime_context_typed = FlextContext.create()
 
         # 3. Container creation with registrations
@@ -267,7 +263,11 @@ class FlextService[TDomainResult](
             config_type_val = config_type
         context_val_raw = options.context
         context_val: p.Context | None = (
-            context_val_raw if context_val_raw is not None and getattr(context_val_raw, "set", None) is not None and getattr(context_val_raw, "get", None) is not None else None
+            context_val_raw
+            if context_val_raw is not None
+            and getattr(context_val_raw, "set", None) is not None
+            and getattr(context_val_raw, "get", None) is not None
+            else None
         )
 
         return cls._create_runtime(
@@ -303,30 +303,19 @@ class FlextService[TDomainResult](
         if services is None:
             return None
 
-        normalized: dict[str, t.RegisterableService] = {
-            name: service
-            for name, service in services.items()
-            if FlextService._is_scoped_service_candidate(service)
-        }
+        normalized = m.ServiceMap.model_validate(
+            {
+                name: service
+                for name, service in services.items()
+                if FlextService._is_scoped_service_candidate(service)
+            },
+        )
 
-        return normalized or None
+        return normalized.root or None
 
     @staticmethod
     def _is_scoped_service_candidate(service: t.RegisterableService) -> bool:
-        if type(service) in (str, int, float, bool, type(None)):
-            return True
-        if BaseModel in type(service).__mro__:
-            return True
-        protocol_types = (
-            p.Config,
-            p.Context,
-            p.DI,
-            p.Service,
-            p.Log,
-            p.Handler,
-            p.Registry,
-        )
-        return any(pt in type(service).__mro__ for pt in protocol_types) or callable(service)
+        return FlextContainer._is_registerable_service(service)
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:

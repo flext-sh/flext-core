@@ -15,6 +15,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, TypeGuard
 
 from flext_core.constants import c
+from flext_core.models import FlextModels
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -22,6 +23,7 @@ from flext_core.typings import t
 # Use FlextRuntime.Metadata to avoid importing from _models.base
 # This maintains proper architecture layering (exceptions.py is Tier 1)
 _Metadata = FlextRuntime.Metadata
+m = FlextModels
 
 
 def _is_metadata_protocol(
@@ -57,7 +59,7 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
-            context: Mapping[str, t.MetadataAttributeValue] | None = None,
+            context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None = None,
             metadata: p.Log.Metadata
             | Mapping[str, t.MetadataAttributeValue]
             | t.ScalarValue
@@ -67,7 +69,9 @@ class FlextExceptions:
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | None = None,
+            merged_kwargs: Mapping[str, t.MetadataAttributeValue]
+            | m.ConfigMap
+            | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize base error with message and optional metadata.
@@ -88,8 +92,10 @@ class FlextExceptions:
             self.error_code = error_code
 
             # Merge context and extra_kwargs into final_kwargs
-            final_kwargs: dict[str, t.MetadataAttributeValue] = (
-                dict(merged_kwargs) if merged_kwargs else {}
+            final_kwargs: m.ConfigMap = (
+                m.ConfigMap(root=dict(merged_kwargs))
+                if merged_kwargs
+                else m.ConfigMap()
             )
 
             # Merge context and normalize extra_kwargs using FlextRuntime
@@ -131,20 +137,22 @@ class FlextExceptions:
 
         def to_dict(
             self,
-        ) -> dict[str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]]:
+        ) -> m.ConfigMap:
             """Convert exception to dictionary representation.
 
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: dict[str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]] = {
-                "error_type": type(self).__name__,
-                "message": self.message,
-                "error_code": self.error_code,
-                "correlation_id": self.correlation_id,
-                "timestamp": self.timestamp,
-            }
+            result: m.ConfigMap = m.ConfigMap(
+                root={
+                    "error_type": type(self).__name__,
+                    "message": self.message,
+                    "error_code": self.error_code,
+                    "correlation_id": self.correlation_id,
+                    "timestamp": self.timestamp,
+                },
+            )
 
             # Add metadata attributes (only keys not in result)
             if self.metadata and self.metadata.attributes:
@@ -156,14 +164,12 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[
-                str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
-            ],
-            merged_kwargs: Mapping[str, t.MetadataAttributeValue],
+            metadata_dict: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
         ) -> _Metadata:
             """Normalize metadata from dict-like object."""
             # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
-            merged_attrs: dict[str, t.MetadataAttributeValue] = {}
+            merged_attrs = {}
 
             # Normalize metadata_dict values
             for k, v in metadata_dict.items():
@@ -174,7 +180,12 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-            return _Metadata(attributes=merged_attrs)
+            return _Metadata(
+                attributes={
+                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in merged_attrs.items()
+                },
+            )
 
         @staticmethod
         def _normalize_metadata(
@@ -184,7 +195,7 @@ class FlextExceptions:
             | m.ConfigMap
             | Sequence[t.ScalarValue]
             | None,
-            merged_kwargs: Mapping[str, t.MetadataAttributeValue],
+            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
         ) -> _Metadata:
             """Normalize metadata from various input types to _Metadata model.
 
@@ -209,12 +220,10 @@ class FlextExceptions:
                 if merged_kwargs:
                     existing_attrs = metadata.attributes
                     # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
-                    new_attrs: dict[str, t.MetadataAttributeValue] = {}
+                    new_attrs: m.ConfigMap = m.ConfigMap()
 
                     # Combine attributes - use ConfigurationDict for combining then normalize
-                    combined_attrs: dict[
-                        str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
-                    ] = dict(existing_attrs)
+                    combined_attrs: m.ConfigMap = m.ConfigMap(root=dict(existing_attrs))
                     # merged_kwargs values are MetadataAttributeValue (subset of PayloadValue)
                     # Add merged_kwargs with explicit type handling
                     combined_attrs.update(dict(merged_kwargs.items()))
@@ -224,11 +233,16 @@ class FlextExceptions:
                         new_attrs[k] = FlextRuntime.normalize_to_metadata_value(
                             v_combined,
                         )
-                    return _Metadata(attributes=new_attrs)
+                    return _Metadata(attributes=new_attrs.root)
                 return metadata
 
             # Check if it's a Mapping (covers both dict-like objects and protocol instances)
-            if Mapping in type(metadata).__mro__:
+            if type(metadata) is m.ConfigMap:
+                return e.BaseError._normalize_metadata_from_dict(
+                    metadata, merged_kwargs
+                )
+
+            if isinstance(metadata, Mapping):
                 # Convert to dict for type safety
                 metadata_dict = dict(metadata.items())
                 return e.BaseError._normalize_metadata_from_dict(
@@ -260,7 +274,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build validation context
-            validation_context: dict[str, t.MetadataAttributeValue] = {}
+            validation_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     validation_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -305,7 +319,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build config context
-            config_context: dict[str, t.MetadataAttributeValue] = {}
+            config_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     config_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -346,7 +360,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build connection context
-            conn_context: dict[str, t.MetadataAttributeValue] = {}
+            conn_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     conn_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -386,7 +400,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build timeout context
-            timeout_context: dict[str, t.MetadataAttributeValue] = {}
+            timeout_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     timeout_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -429,7 +443,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build auth context
-            auth_context: dict[str, t.MetadataAttributeValue] = {}
+            auth_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     auth_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -470,7 +484,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build authorization context
-            authz_context: dict[str, t.MetadataAttributeValue] = {}
+            authz_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     authz_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -509,9 +523,7 @@ class FlextExceptions:
                 return (None, None, False, False)
 
             corr_id = context.get("correlation_id")
-            correlation_id_val: str | None = (
-                corr_id if type(corr_id) is str else None
-            )
+            correlation_id_val: str | None = corr_id if type(corr_id) is str else None
 
             metadata_obj = context.get("metadata")
             # Use module-level TypeGuard for protocol compliance
@@ -520,9 +532,7 @@ class FlextExceptions:
             )
 
             auto_log_obj = context.get("auto_log")
-            auto_log_val: bool = (
-                auto_log_obj if type(auto_log_obj) is bool else False
-            )
+            auto_log_val: bool = auto_log_obj if type(auto_log_obj) is bool else False
 
             auto_corr_obj = context.get("auto_correlation")
             auto_correlation_val: bool = (
@@ -540,19 +550,21 @@ class FlextExceptions:
         def _build_notfound_kwargs(
             resource_type: str | None,
             resource_id: str | None,
-            extra_kwargs: Mapping[str, t.MetadataAttributeValue],
+            extra_kwargs: MutableMapping[str, t.MetadataAttributeValue],
             context: Mapping[str, t.MetadataAttributeValue] | None,
-        ) -> dict[str, t.MetadataAttributeValue]:
+        ) -> m.ConfigMap:
             """Build notfound-specific kwargs from fields and context.
 
             Returns:
                 Dictionary of notfound kwargs
 
             """
-            notfound_kwargs: dict[str, t.MetadataAttributeValue] = {
-                "resource_type": resource_type,
-                "resource_id": resource_id,
-            }
+            notfound_kwargs: m.ConfigMap = m.ConfigMap(
+                root={
+                    "resource_type": resource_type,
+                    "resource_id": resource_id,
+                },
+            )
 
             # Convert extra_kwargs to t.MetadataAttributeValue and normalize values
             for k, v in extra_kwargs.items():
@@ -604,10 +616,12 @@ class FlextExceptions:
             final_corr_id = correlation_id
 
             # Build notfound context
-            notfound_context: dict[str, t.MetadataAttributeValue] = {
-                "resource_type": resource_type,
-                "resource_id": resource_id,
-            }
+            notfound_context: m.ConfigMap = m.ConfigMap(
+                root={
+                    "resource_type": resource_type,
+                    "resource_id": resource_id,
+                },
+            )
 
             # Normalize extra_kwargs
             if extra_kwargs:
@@ -650,7 +664,7 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            conflict_context: dict[str, t.MetadataAttributeValue] = {}
+            conflict_context: m.ConfigMap = m.ConfigMap()
             if context is not None:
                 for k, v in context.items():
                     conflict_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -697,7 +711,7 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            rate_limit_context: dict[str, t.MetadataAttributeValue] = {}
+            rate_limit_context: m.ConfigMap = m.ConfigMap()
             if context is not None:
                 for k, v in context.items():
                     rate_limit_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -745,7 +759,7 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            cb_context: dict[str, t.MetadataAttributeValue] = {}
+            cb_context: m.ConfigMap = m.ConfigMap()
             if context is not None:
                 for k, v in context.items():
                     cb_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -775,9 +789,7 @@ class FlextExceptions:
             )
             reset_timeout_val = cb_context.get("reset_timeout")
             self.reset_timeout = (
-                reset_timeout_val
-                if type(reset_timeout_val) in (int, float)
-                else None
+                reset_timeout_val if type(reset_timeout_val) in (int, float) else None
             )
 
     class TypeError(BaseError):
@@ -802,7 +814,7 @@ class FlextExceptions:
         def _normalize_type(
             type_value: type | str | None,
             type_map: Mapping[str, type],
-            extra_kwargs: Mapping[str, t.MetadataAttributeValue],
+            extra_kwargs: MutableMapping[str, t.MetadataAttributeValue],
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
@@ -829,10 +841,10 @@ class FlextExceptions:
             actual_type: type | str | None,
             context: Mapping[str, t.MetadataAttributeValue] | None,
             extra_kwargs: Mapping[str, t.MetadataAttributeValue],
-        ) -> dict[str, t.MetadataAttributeValue]:
+        ) -> m.ConfigMap:
             """Build type context dictionary."""
             # Build context from context and extra_kwargs
-            type_context: dict[str, t.MetadataAttributeValue] = {}
+            type_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     type_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -931,7 +943,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build operation context
-            op_context: dict[str, t.MetadataAttributeValue] = {}
+            op_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     op_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -976,7 +988,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Build attribute context
-            attr_context: dict[str, t.MetadataAttributeValue] = {}
+            attr_context: m.ConfigMap = m.ConfigMap()
             if context:
                 for k, v in context.items():
                     attr_context[k] = FlextRuntime.normalize_to_metadata_value(v)
@@ -1003,7 +1015,7 @@ class FlextExceptions:
 
     @staticmethod
     def prepare_exception_kwargs(
-        kwargs: Mapping[str, t.MetadataAttributeValue],
+        kwargs: MutableMapping[str, t.MetadataAttributeValue],
         specific_params: Mapping[str, t.MetadataAttributeValue] | None = None,
     ) -> tuple[
         str | None,
@@ -1011,7 +1023,7 @@ class FlextExceptions:
         bool,
         bool,
         t.MetadataAttributeValue,
-        dict[str, t.MetadataAttributeValue],
+        m.ConfigMap,
     ]:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
@@ -1020,18 +1032,20 @@ class FlextExceptions:
                 k: v for k, v in specific_params.items() if v is not None
             }
             kwargs.update(filtered_params)
-        extra_kwargs = {
-            k: v
-            for k, v in kwargs.items()
-            if k
-            not in {
-                "correlation_id",
-                "metadata",
-                "auto_log",
-                "auto_correlation",
-                "config",
-            }
-        }
+        extra_kwargs: m.ConfigMap = m.ConfigMap(
+            root={
+                k: v
+                for k, v in kwargs.items()
+                if k
+                not in {
+                    "correlation_id",
+                    "metadata",
+                    "auto_log",
+                    "auto_correlation",
+                    "config",
+                }
+            },
+        )
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id: str | None = (
             str(correlation_id_raw)
@@ -1066,7 +1080,7 @@ class FlextExceptions:
         metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
         if metadata_raw is not None and _is_metadata_protocol(metadata_raw):
             metadata = metadata_raw
-        elif Mapping in type(metadata_raw).__mro__:
+        elif isinstance(metadata_raw, Mapping):
             metadata = dict(metadata_raw.items())
         return (correlation_id, metadata)
 
@@ -1149,13 +1163,13 @@ class FlextExceptions:
         error_type: str | None,
         message: str,
         error_code: str | None,
-        context: Mapping[str, t.MetadataAttributeValue] | None = None,
+        context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None = None,
     ) -> e.BaseError:
         """Create error by type using context dict."""
         # Build context with error_code
-        error_context: dict[str, t.MetadataAttributeValue] = {}
+        error_context: m.ConfigMap = m.ConfigMap()
         if context is not None:
-            error_context.update(context)
+            error_context.update({k: v for k, v in context.items()})
         if error_code is not None:
             error_context["error_code"] = error_code
 
@@ -1198,7 +1212,7 @@ class FlextExceptions:
 
     @staticmethod
     def _merge_metadata_into_context(
-        context: dict[str, t.MetadataAttributeValue],
+        context: m.ConfigMap,
         metadata_obj: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
     ) -> None:
         """Merge metadata object into context dictionary."""
@@ -1227,7 +1241,7 @@ class FlextExceptions:
                     FlextRuntime.normalize_to_metadata_value(v)
                 )
                 context[k] = normalized_dict
-        elif Mapping in type(metadata_obj).__mro__:
+        elif isinstance(metadata_obj, Mapping):
             # Mapping object - normalize and update
             for k, v in metadata_obj.items():
                 normalized_mapping: t.MetadataAttributeValue = (
@@ -1239,10 +1253,10 @@ class FlextExceptions:
     def _build_error_context(
         correlation_id: str | None,
         metadata_obj: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
-        kwargs: dict[str, t.MetadataAttributeValue],
-    ) -> dict[str, t.MetadataAttributeValue]:
+        kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+    ) -> m.ConfigMap:
         """Build error context dictionary."""
-        error_context: dict[str, t.MetadataAttributeValue] = {}
+        error_context: m.ConfigMap = m.ConfigMap()
         if correlation_id is not None:
             error_context["correlation_id"] = correlation_id
 
@@ -1285,7 +1299,7 @@ class FlextExceptions:
         cls._exception_counts[exception_type] += 1
 
     @classmethod
-    def get_metrics(cls) -> dict[str, str | int | dict[str, int]]:
+    def get_metrics(cls) -> m.ErrorMap:
         """Get exception metrics and statistics."""
         total = sum(cls._exception_counts.values(), 0)
         # Serialize exception counts as a single string for compatibility with ErrorTypeMapping
@@ -1296,7 +1310,7 @@ class FlextExceptions:
         exception_counts_str = ";".join(exception_counts_list)
         # Build exception_counts dict for test compatibility
         # Use type compatible with ErrorTypeMapping value type
-        exception_counts_dict: dict[str, int] = {}
+        exception_counts_dict = {}
         for exc_type, count in cls._exception_counts.items():
             exc_name = (
                 exc_type.__qualname__
@@ -1306,12 +1320,14 @@ class FlextExceptions:
             exception_counts_dict[exc_name] = count
         # Build result dict matching ErrorTypeMapping type
         # Values are int | str | dict[str, int] - all compatible with ErrorTypeMapping
-        result_dict: dict[str, str | int | dict[str, int]] = {
-            "total_exceptions": total,
-            "exception_counts": exception_counts_dict,
-            "exception_counts_summary": exception_counts_str,
-            "unique_exception_types": len(cls._exception_counts),
-        }
+        result_dict: m.ErrorMap = m.ErrorMap(
+            root={
+                "total_exceptions": total,
+                "exception_counts": exception_counts_dict,
+                "exception_counts_summary": exception_counts_str,
+                "unique_exception_types": len(cls._exception_counts),
+            },
+        )
         return result_dict
 
     @classmethod
@@ -1328,10 +1344,17 @@ class FlextExceptions:
         """Create exception by calling the class instance."""
         # Normalize ExceptionKwargsType to t.MetadataAttributeValue
         # normalize_to_metadata_value already returns t.MetadataAttributeValue
-        normalized_kwargs: dict[str, t.MetadataAttributeValue] = {}
+        normalized_kwargs: m.ConfigMap = m.ConfigMap()
         for k, v in kwargs.items():
             normalized_kwargs[k] = FlextRuntime.normalize_to_metadata_value(v)
-        return self.create(message, error_code, **normalized_kwargs)
+        return self.create(
+            message,
+            error_code,
+            **{
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in normalized_kwargs.items()
+            },
+        )
 
 
 e = FlextExceptions
