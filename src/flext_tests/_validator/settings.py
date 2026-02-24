@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
@@ -29,7 +30,7 @@ class FlextValidatorSettings:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan pyproject.toml files for config violations.
 
@@ -63,7 +64,7 @@ class FlextValidatorSettings:
     def validate(
         cls,
         pyproject_path: Path,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate a single pyproject.toml file.
 
@@ -81,7 +82,7 @@ class FlextValidatorSettings:
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single pyproject.toml for config violations."""
         violations: list[m.Tests.Validator.Violation] = []
@@ -130,23 +131,20 @@ class FlextValidatorSettings:
     def _check_mypy_settings(
         cls,
         file_path: Path,
-        data: dict[str, t.GeneralValueType],
+        data: Mapping[str, t.Tests.PayloadValue],
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Check mypy configuration for violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
-        # Type narrowing: dict.get() returns t.GeneralValueType, validate with isinstance
-        tool_data_raw: t.GeneralValueType = data.get("tool", {})
-        if not isinstance(tool_data_raw, dict):
+        tool_data_raw: t.Tests.PayloadValue = data.get("tool", {})
+        if type(tool_data_raw) is not dict:
             return violations
-        # isinstance narrows tool_data_raw to dict[str, t.GeneralValueType]
         tool_data = tool_data_raw
-        mypy_config_raw: t.GeneralValueType = tool_data.get("mypy", {})
-        if not isinstance(mypy_config_raw, dict):
+        mypy_config_raw: t.Tests.PayloadValue = tool_data.get("mypy", {})
+        if type(mypy_config_raw) is not dict:
             return violations
-        # isinstance narrows mypy_config_raw to dict[str, t.GeneralValueType]
         mypy_config = mypy_config_raw
 
         # Check global ignore_errors
@@ -167,15 +165,14 @@ class FlextValidatorSettings:
 
         # Check per-module overrides
         # Type annotations for .get() results to help pyright inference
-        overrides_raw: t.GeneralValueType = mypy_config.get("overrides", [])
-        if not isinstance(overrides_raw, list):
+        overrides_raw: t.Tests.PayloadValue = mypy_config.get("overrides", [])
+        if type(overrides_raw) is not list:
             return violations
-        overrides: list[t.GeneralValueType] = overrides_raw
+        overrides: list[t.Tests.PayloadValue] = overrides_raw
         for override in overrides:
-            if not isinstance(override, dict):
+            if type(override) is not dict:
                 continue
-            # Type narrowing: override is dict[str, t.GeneralValueType]
-            override_dict: dict[str, t.GeneralValueType] = override
+            override_dict: Mapping[str, t.Tests.PayloadValue] = override
             module_raw = override_dict.get("module", "unknown")
             module: str = str(module_raw) if module_raw is not None else "unknown"
             is_approved = u.Tests.Validator.is_approved(
@@ -240,9 +237,9 @@ class FlextValidatorSettings:
     def _check_ruff_settings(
         cls,
         file_path: Path,
-        data: dict[str, t.GeneralValueType],
+        data: Mapping[str, t.Tests.PayloadValue],
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Check ruff configuration for violations."""
         if u.Tests.Validator.is_approved("CONFIG-002", file_path, approved):
@@ -251,26 +248,21 @@ class FlextValidatorSettings:
         violations: list[m.Tests.Validator.Violation] = []
 
         tool_data = data.get("tool", {})
-        if not isinstance(tool_data, dict):
+        if type(tool_data) is not dict:
             return violations
-        # Type narrowing: dict.get() returns t.GeneralValueType, validate with isinstance
         ruff_config_raw = tool_data.get("ruff", {})
-        if not isinstance(ruff_config_raw, dict):
+        if type(ruff_config_raw) is not dict:
             return violations
-        # isinstance narrows ruff_config_raw to dict[str, t.GeneralValueType]
         ruff_config = ruff_config_raw
         lint_config_raw = ruff_config.get("lint", {})
-        if not isinstance(lint_config_raw, dict):
+        if type(lint_config_raw) is not dict:
             return violations
-        # isinstance narrows lint_config_raw to dict[str, t.GeneralValueType]
         lint_config = lint_config_raw
 
         # Check for custom ignores beyond approved list
         ignores_raw = lint_config.get("ignore", [])
-        if isinstance(ignores_raw, list):
-            # Type narrowing: isinstance narrows ignores_raw to list
+        if type(ignores_raw) is list:
             approved_ignores = c.Tests.Validator.Approved.RUFF_IGNORES
-            # isinstance check above narrows type to list
             ignores_list = ignores_raw
             for ignore_raw in ignores_list:
                 # Type narrowing: ignore_raw is object, convert to str for comparison
@@ -295,21 +287,19 @@ class FlextValidatorSettings:
     def _check_pyright_settings(
         cls,
         file_path: Path,
-        data: dict[str, t.GeneralValueType],
+        data: Mapping[str, t.Tests.PayloadValue],
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Check pyright configuration for violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
         tool_data = data.get("tool", {})
-        if not isinstance(tool_data, dict):
+        if type(tool_data) is not dict:
             return violations
-        # Type narrowing: dict.get() returns t.GeneralValueType, validate with isinstance
         pyright_config_raw = tool_data.get("pyright", {})
-        if not isinstance(pyright_config_raw, dict):
+        if type(pyright_config_raw) is not dict:
             return violations
-        # isinstance narrows pyright_config_raw to dict[str, t.GeneralValueType]
         pyright_config = pyright_config_raw
 
         # Check reportPrivateUsage

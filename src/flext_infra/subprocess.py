@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import shlex
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
@@ -34,7 +34,7 @@ class CommandRunner:
         cmd: Sequence[str],
         cwd: Path | None = None,
         timeout: int | None = None,
-        env: dict[str, str] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> FlextResult[im.CommandOutput]:
         """Run a command without enforcing zero exit code.
 
@@ -78,7 +78,7 @@ class CommandRunner:
         cmd: Sequence[str],
         cwd: Path | None = None,
         timeout: int | None = None,
-        env: dict[str, str] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> FlextResult[im.CommandOutput]:
         """Run a command and return structured output.
 
@@ -111,7 +111,7 @@ class CommandRunner:
         cmd: Sequence[str],
         cwd: Path | None = None,
         timeout: int | None = None,
-        env: dict[str, str] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> FlextResult[bool]:
         """Run a command and return success/failure status.
 
@@ -134,7 +134,7 @@ class CommandRunner:
         output_file: Path,
         cwd: Path | None = None,
         timeout: int | None = None,
-        env: dict[str, str] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> FlextResult[int]:
         """Run a command and stream combined output to a file.
 

@@ -60,10 +60,10 @@ class FlextUtilitiesParser:
         self.logger = structlog.get_logger(__name__)
 
     @staticmethod
-    def _safe_text_length(text: object) -> str | int:
+    def _safe_text_length(text: t.ConfigMapValue) -> str | int:
         """Safely get text length for logging."""
         try:
-            if isinstance(text, (str, bytes)):
+            if type(text) in (str, bytes):
                 return len(text)
             return "unknown"
         except (TypeError, AttributeError):
@@ -284,11 +284,8 @@ class FlextUtilitiesParser:
         """
         try:
             length = self._safe_text_length(text)
-            # Use isinstance for proper type narrowing - _safe_text_length returns str | int
-            if isinstance(length, int):
-                return length  # Type narrowing: isinstance narrows to int
-            # If _safe_text_length returns str, convert to int
-            # Type narrowing: length is str after isinstance check
+            if type(length) is int:
+                return length
             return int(length) if length != "unknown" else -1
         except (TypeError, AttributeError, ValueError):
             return -1  # Unknown length
@@ -610,14 +607,13 @@ class FlextUtilitiesParser:
         for key in ("name", "id"):
             if key in obj:
                 value = obj[key]
-                # Use isinstance for proper type narrowing
-                if isinstance(value, str):
-                    return value  # Type narrowing: isinstance narrows to str
+                if type(value) is str:
+                    return value
         return None
 
     @staticmethod
     def _extract_key_from_attributes(
-        obj: object,
+        obj: t.ConfigMapValue,
     ) -> str | None:
         """Extract key from object attributes (Strategy 3).
 
@@ -636,7 +632,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _extract_key_from_str_conversion(
-        obj: object,
+        obj: t.ConfigMapValue,
     ) -> str | None:
         """Extract key from string conversion (Strategy 5).
 
@@ -655,7 +651,7 @@ class FlextUtilitiesParser:
             pass
         return None
 
-    def get_object_key(self, obj: object) -> str:
+    def get_object_key(self, obj: t.ConfigMapValue) -> str:
         """Get comparable string key from object (generic helper).
 
         This generic helper consolidates object-to-key conversion logic from
@@ -692,7 +688,7 @@ class FlextUtilitiesParser:
             >>> # Instance
             >>> obj = object()
             >>> key = parser.get_object_key(obj)
-            >>> isinstance(key, str)
+            >>> type(key) is str
             True
 
         """
@@ -703,15 +699,11 @@ class FlextUtilitiesParser:
             has_name_attr=hasattr(obj, "__name__"),
         )
 
-        # Strategy 0: If obj is a string, return it directly
-        # Use isinstance for proper type narrowing
-        if isinstance(obj, str):
-            key: str = obj  # Type narrowing: isinstance narrows to str
-        # Strategy 1: Try __name__ attribute (for types, classes, functions)
-        elif isinstance(dunder_name := getattr(obj, "__name__", None), str):
+        if type(obj) is str:
+            key = obj
+        elif type(dunder_name := getattr(obj, "__name__", None)) is str:
             key = dunder_name
-        # Strategy 2: Try dict 'name' or 'id' key values (for dict-like objects)
-        elif isinstance(obj, Mapping):
+        elif Mapping in type(obj).__mro__:
             # After isinstance, obj is Mapping - use directly
             mapping_key = self._extract_key_from_mapping(obj)
             key = mapping_key if mapping_key is not None else obj.__class__.__name__
@@ -757,8 +749,7 @@ class FlextUtilitiesParser:
         flags_val: int = 0
 
         if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
-            # Two-element tuple: (pattern, replacement)
-            if not isinstance(elements[0], str) or not isinstance(elements[1], str):
+            if type(elements[0]) is not str or type(elements[1]) is not str:
                 return r[tuple[str, str, int]].fail(
                     "validation error: pattern and replacement must be strings",
                 )
@@ -766,16 +757,14 @@ class FlextUtilitiesParser:
             replacement_val = elements[1]
             flags_val = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-            # Three-element tuple - list conversion allows safe indexing
-            if not isinstance(elements[0], str) or not isinstance(elements[1], str):
+            if type(elements[0]) is not str or type(elements[1]) is not str:
                 return r[tuple[str, str, int]].fail(
                     "validation error: pattern and replacement must be strings",
                 )
             pattern_val = elements[0]
             replacement_val = elements[1]
-            # Safe int conversion: element can be str | int
             third_elem = elements[2]
-            if not isinstance(third_elem, int):
+            if type(third_elem) is not int:
                 return r[tuple[str, str, int]].fail(
                     "validation error: regex flags must be an integer",
                 )
@@ -940,7 +929,7 @@ class FlextUtilitiesParser:
                 b: str = str(items[1])
                 # Third element is int for 3-element tuple variant
                 c_raw = items[2] if len(items) > self.TUPLE_LENGTH_2 else 0
-                c: int = c_raw if isinstance(c_raw, int) else int(str(c_raw))
+                c: int = c_raw if type(c_raw) is int else int(str(c_raw))
                 # Call method with typed values
                 pattern_result = self._extract_pattern_components((a, b, c))
             else:
@@ -989,7 +978,7 @@ class FlextUtilitiesParser:
     # =========================================================================
 
     @staticmethod
-    def _parse_get_attr(obj: object, attr: str, default: object = None) -> object:
+    def _parse_get_attr(obj: t.ConfigMapValue, attr: str, default: t.ConfigMapValue = None) -> t.ConfigMapValue:
         """Get attribute safely (avoids circular import with u.get)."""
         return getattr(obj, attr, default)
 
@@ -1007,21 +996,17 @@ class FlextUtilitiesParser:
         return None
 
     @staticmethod
-    def _parse_normalize_compare(a: object, b: object) -> bool:
+    def _parse_normalize_compare(a: t.ConfigMapValue, b: t.ConfigMapValue) -> bool:
         """Case-insensitive string comparison (avoids circular import)."""
-        # Use isinstance for proper type narrowing
-        if not isinstance(a, str) or not isinstance(b, str):
+        if type(a) is not str or type(b) is not str:
             return False
-        # Type narrowing: isinstance narrows to str
         return a.lower() == b.lower()
 
     @staticmethod
-    def _parse_normalize_str(value: object, *, case: str = "lower") -> str:
+    def _parse_normalize_str(value: t.ConfigMapValue, *, case: str = "lower") -> str:
         """Normalize string value (avoids circular import with u.normalize)."""
-        # Use isinstance for proper type narrowing
-        if not isinstance(value, str):
+        if type(value) is not str:
             return str(value)
-        # Type narrowing: isinstance narrows to str
         value_str: str = value
         if case == "lower":
             return value_str.lower()
@@ -1057,8 +1042,8 @@ class FlextUtilitiesParser:
         case_insensitive: bool,
     ) -> r[T] | None:
         """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
-        # T is already bound to StrEnum, so target is guaranteed to be StrEnum subclass
-        # Get __members__ - returns MappingProxyType[str, T]
+        if StrEnum not in target.__mro__:
+            return None
         members_proxy = getattr(target, "__members__", {})
         # Convert to dict for easier iteration
         members: dict[str, T] = dict(members_proxy)
@@ -1098,39 +1083,36 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_model[T](
-        value: object,
+        value: t.ConfigMapValue,
         target: type[T],
         field_prefix: str,
         *,
         strict: bool,
     ) -> r[T] | None:
         """Parse Pydantic BaseModel. Returns None if not model."""
-        # Type narrowing: check if target is a BaseModel subclass
-        if not issubclass(target, BaseModel):
+        if BaseModel not in target.__mro__:
             return None
-        if not isinstance(value, Mapping):
+        if Mapping not in type(value).__mro__:
             return r[T].fail(
                 f"{field_prefix}Expected dict for model, got {type(value).__name__}",
             )
-        # Convert Mapping to dict - FlextUtilitiesModel.from_dict expects Mapping[str, FlexibleValue]
-        # After isinstance check, value is Mapping - convert keys to str for proper typing
-        value_dict_data: dict[str, t.FlexibleValue] = {}
+        value_dict_data: dict[str, t.ConfigMapValue] = {}
         for k, v in value.items():
             key = str(k)
-            if isinstance(v, (str, int, float, bool, datetime, type(None))):
+            if type(v) in (str, int, float, bool, datetime, type(None)):
                 value_dict_data[key] = v
                 continue
-            if isinstance(v, (list, tuple)):
+            if type(v) in (list, tuple):
                 normalized_seq: list[str | int | float | bool | datetime | None] = []
                 for item in v:
-                    if isinstance(item, (str, int, float, bool, datetime, type(None))):
+                    if type(item) in (str, int, float, bool, datetime, type(None)):
                         normalized_seq.append(item)
                     else:
                         normalized_seq.append(str(item))
                 value_dict_data[key] = normalized_seq
                 continue
             value_dict_data[key] = str(v)
-        value_dict: Mapping[str, t.FlexibleValue] = value_dict_data
+        value_dict: Mapping[str, t.ConfigMapValue] = value_dict_data
         result = FlextUtilitiesModel.from_dict(target, value_dict, strict=strict)
         if result.is_success:
             return r[T].ok(result.value)
@@ -1139,9 +1121,9 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_int(value: object) -> r[int] | None:
+    def _coerce_to_int(value: t.ConfigMapValue) -> r[int] | None:
         """Coerce value to int. Returns None if not coercible."""
-        if isinstance(value, (str, float)):
+        if type(value) in (str, float):
             try:
                 return r[int].ok(int(value))
             except (ValueError, TypeError):
@@ -1149,9 +1131,9 @@ class FlextUtilitiesParser:
         return None
 
     @staticmethod
-    def _coerce_to_float(value: object) -> r[float] | None:
+    def _coerce_to_float(value: t.ConfigMapValue) -> r[float] | None:
         """Coerce value to float. Returns None if not coercible."""
-        if isinstance(value, (str, int)):
+        if type(value) in (str, int):
             try:
                 return r[float].ok(float(value))
             except (ValueError, TypeError):
@@ -1159,7 +1141,7 @@ class FlextUtilitiesParser:
         return None
 
     @staticmethod
-    def _coerce_to_bool(value: object) -> r[bool] | None:
+    def _coerce_to_bool(value: t.ConfigMapValue) -> r[bool] | None:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.is_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -1174,13 +1156,13 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_str(value: object) -> r[str]:
+    def _coerce_to_str(value: t.ConfigMapValue) -> r[str]:
         """Coerce value to string - returns FlextResult[str]."""
         return r[str].ok(str(value))
 
     @staticmethod
     def _coerce_primitive(
-        value: object,
+        value: t.ConfigMapValue,
         target: type[int | float | str | bool],
     ) -> r[int] | r[float] | r[str] | r[bool] | None:
         """Coerce primitive types. Returns None if no coercion applied."""
@@ -1196,7 +1178,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_enum[T](
-        value: object,
+        value: t.ConfigMapValue,
         target: type[T],
         *,
         case_insensitive: bool,
@@ -1246,7 +1228,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_model[T](
-        value: object,
+        value: t.ConfigMapValue,
         target: type[T],
         field_prefix: str,
         *,
@@ -1272,13 +1254,13 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _is_primitive_type(target: type[object]) -> bool:
+    def _is_primitive_type(target: type) -> bool:
         """Check if target is a primitive type."""
         return target in {int, float, str, bool}
 
     @staticmethod
     def _try_coerce_to_primitive(
-        value: object,
+        value: t.ConfigMapValue,
         target: type[int | float | str | bool],
     ) -> r[int] | r[float] | r[str] | r[bool] | None:
         """Try to coerce value to primitive type."""
@@ -1294,7 +1276,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_primitive(
-        value: object,
+        value: t.ConfigMapValue,
         target: type,
         default: float | str | bool | None,
         default_factory: Callable[[], int | float | str | bool] | None,
@@ -1327,19 +1309,19 @@ class FlextUtilitiesParser:
                 "type",
             )
             # For error case, return failure wrapped in appropriate type
-            if target is int and isinstance(default, int):
+            if target is int and type(default) is int:
                 return r[int].fail(
                     f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
-            if target is float and isinstance(default, float):
+            if target is float and type(default) is float:
                 return r[float].fail(
                     f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
-            if target is str and isinstance(default, str):
+            if target is str and type(default) is str:
                 return r[str].fail(
                     f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
-            if target is bool and isinstance(default, bool):
+            if target is bool and type(default) is bool:
                 return r[bool].fail(
                     f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
@@ -1347,14 +1329,14 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_direct[T](
-        value: object,
+        value: t.ConfigMapValue,
         target: type[T],
         default: T | None,
         default_factory: Callable[[], T] | None,
         field_prefix: str,
     ) -> r[T]:
         """Helper: Try direct type call."""
-        # Guard: object type doesn't accept constructor arguments
+        # Guard: t.ConfigMapValue type doesn't accept constructor arguments
         if target is object:
             return FlextUtilitiesParser._parse_with_default(
                 default,
@@ -1378,7 +1360,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def parse[T](
-        value: object,
+        value: t.ConfigMapValue,
         target: type[T],
         *,
         strict: bool = False,
@@ -1420,7 +1402,7 @@ class FlextUtilitiesParser:
                 return r[T].ok(default_factory())
             return r[T].fail(field_prefix or "Value is None")
 
-        if isinstance(value, target):
+        if type(target) is type and target in type(value).__mro__:
             return r[T].ok(value)
 
         enum_result = FlextUtilitiesParser._parse_try_enum(
@@ -1446,7 +1428,7 @@ class FlextUtilitiesParser:
             return model_result
 
         primitive_default: int | float | str | bool | None
-        if isinstance(default, (int, float, str, bool)) or default is None:
+        if type(default) in (int, float, str, bool) or default is None:
             primitive_default = default
         else:
             primitive_default = None
@@ -1482,7 +1464,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: object,
+        value: t.ConfigMapValue,
         target_type: type[bool],
         default: bool,
     ) -> bool: ...
@@ -1490,7 +1472,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: object,
+        value: t.ConfigMapValue,
         target_type: type[int],
         default: int,
     ) -> int: ...
@@ -1498,7 +1480,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: object,
+        value: t.ConfigMapValue,
         target_type: type[float],
         default: float,
     ) -> float: ...
@@ -1506,7 +1488,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: object,
+        value: t.ConfigMapValue,
         target_type: type[str],
         default: str,
     ) -> str: ...
@@ -1515,10 +1497,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def convert(
-        value: object,
-        target_type: type[int | float | str | bool | object],
-        default: float | str | bool | object,
-    ) -> int | float | str | bool | object:
+        value: t.ConfigMapValue,
+        target_type: type[int | float | str | bool | t.ConfigMapValue],
+        default: float | str | bool | t.ConfigMapValue,
+    ) -> int | float | str | bool | t.ConfigMapValue:
         """Unified type conversion with safe fallback.
 
         Automatically handles common type conversions (int, str, float, bool) with
@@ -1546,42 +1528,40 @@ class FlextUtilitiesParser:
             # → 3.14
 
         """
-        # Already correct type - fast path
-        if isinstance(value, target_type):
+        if type(value) is target_type:
             return value
 
-        # Type dispatch for primitives
-        if target_type is int and isinstance(default, int):
+        if target_type is int and type(default) is int:
             return FlextUtilitiesParser._convert_to_int(value, default=default)
-        if target_type is float and isinstance(default, float):
+        if target_type is float and type(default) is float:
             return FlextUtilitiesParser._convert_to_float(value, default=default)
-        if target_type is str and isinstance(default, str):
+        if target_type is str and type(default) is str:
             return FlextUtilitiesParser._convert_to_str(value, default=default)
-        if target_type is bool and isinstance(default, bool):
+        if target_type is bool and type(default) is bool:
             return FlextUtilitiesParser._convert_to_bool(value, default=default)
         # Fallback for other types
         return default
 
     @staticmethod
-    def _convert_to_int(value: object, *, default: int) -> int:
+    def _convert_to_int(value: t.ConfigMapValue, *, default: int) -> int:
         """Convert value to int with fallback."""
-        if isinstance(value, int) and not isinstance(value, bool):
+        if type(value) is int:
             return value
-        if isinstance(value, str):
+        if type(value) is str:
             try:
                 return int(value)
             except ValueError:
                 return default
-        if isinstance(value, float):
+        if type(value) is float:
             return int(value)
         return default
 
     @staticmethod
-    def _convert_to_float(value: object, *, default: float) -> float:
+    def _convert_to_float(value: t.ConfigMapValue, *, default: float) -> float:
         """Convert value to float with fallback."""
-        if isinstance(value, float):
+        if type(value) is float:
             return value
-        if isinstance(value, (int, str)):
+        if type(value) in (int, str):
             try:
                 return float(value)
             except (ValueError, TypeError):
@@ -1589,9 +1569,9 @@ class FlextUtilitiesParser:
         return default
 
     @staticmethod
-    def _convert_to_str(value: object, *, default: str) -> str:
+    def _convert_to_str(value: t.ConfigMapValue, *, default: str) -> str:
         """Convert value to str with fallback."""
-        if isinstance(value, str):
+        if type(value) is str:
             return value
         if value is None:
             return default
@@ -1601,25 +1581,25 @@ class FlextUtilitiesParser:
             return default
 
     @staticmethod
-    def _convert_to_bool(value: object, *, default: bool) -> bool:
+    def _convert_to_bool(value: t.ConfigMapValue, *, default: bool) -> bool:
         """Convert value to bool with fallback."""
-        if isinstance(value, bool):
+        if type(value) is bool:
             return value
-        if isinstance(value, str):
+        if type(value) is str:
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
             return normalized in {"true", "1", "yes", "on"}
-        if isinstance(value, (int, float)):
+        if type(value) in (int, float):
             return bool(value)
         return default
 
     @staticmethod
     def _convert_fallback[T](
-        value: object,
+        value: t.ConfigMapValue,
         target_type: type[T],
         default: T,
     ) -> T:
         """Fallback: try direct type constructor."""
-        # Guard: object type doesn't accept constructor arguments
+        # Guard: t.ConfigMapValue type doesn't accept constructor arguments
         return default
 
     # =========================================================================
@@ -1627,7 +1607,7 @@ class FlextUtilitiesParser:
     # =========================================================================
 
     @staticmethod
-    def conv_str(value: object, *, default: str = "") -> str:
+    def conv_str(value: t.ConfigMapValue, *, default: str = "") -> str:
         """Convert to string (builder: conv().str()).
 
         Mnemonic: conv = convert, str = string
@@ -1642,7 +1622,7 @@ class FlextUtilitiesParser:
         """
         if value is None:
             return default
-        if isinstance(value, str):
+        if type(value) is str:
             return value
         try:
             return str(value)
@@ -1651,7 +1631,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list(
-        value: object,
+        value: t.ConfigMapValue,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -1671,18 +1651,16 @@ class FlextUtilitiesParser:
             default = []
         if value is None:
             return default
-        if isinstance(value, list):
-            # After isinstance, value is list - iterate directly
+        if type(value) is list:
             return [str(item) for item in value]
-        if isinstance(value, str):
+        if type(value) is str:
             return [value] if value else default
-        if isinstance(value, (tuple, set, frozenset)):
-            # After isinstance check, value is iterable - iterate directly
+        if type(value) in (tuple, set, frozenset):
             return [str(item) for item in value]
         return [str(value)]
 
     @staticmethod
-    def conv_int(value: object, *, default: int = 0) -> int:
+    def conv_int(value: t.ConfigMapValue, *, default: int = 0) -> int:
         """Convert to int (builder: conv().int()).
 
         Mnemonic: conv = convert, int = integer
@@ -1699,7 +1677,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list_truthy(
-        value: object | None,
+        value: t.ConfigMapValue | None,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -1719,7 +1697,7 @@ class FlextUtilitiesParser:
         return [item for item in result if item]
 
     @staticmethod
-    def conv_str_list_safe(value: object | None) -> list[str]:
+    def conv_str_list_safe(value: t.ConfigMapValue | None) -> list[str]:
         """Safe str_list conversion.
 
         Mnemonic: conv_str_list_safe = convert + safe mode
@@ -1741,7 +1719,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_str(
-        value: object,
+        value: t.ConfigMapValue,
         *,
         case: str | None = None,
         default: str = "",
@@ -1786,8 +1764,8 @@ class FlextUtilitiesParser:
             Normalized list/set/dict
 
         """
-        if isinstance(items, dict):
-            dict_items: dict[str, str] = items
+        if type(items) is dict:
+            dict_items = items
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
@@ -1848,15 +1826,12 @@ class FlextUtilitiesParser:
             bool: True if normalized value in normalized items
 
         """
-        # Type narrowing: items can be Mapping[str, object] | list[str]
         items_to_check: list[str]
-        if isinstance(items, Mapping):
-            # items is Mapping, convert keys to list
-            items_to_check = [str(k) for k in items]
-        elif isinstance(items, t.ConfigMap):
+        if Mapping in type(items).__mro__ and hasattr(items, "root"):
             items_to_check = [str(k) for k in items.root]
-        elif isinstance(items, list):
-            # items is list[str]
+        elif Mapping in type(items).__mro__:
+            items_to_check = [str(k) for k in items]
+        elif type(items) is list:
             items_to_check = items
         else:
             items_to_check = []
@@ -1866,7 +1841,7 @@ class FlextUtilitiesParser:
             items_to_check,
             case=case or "lower",
         )
-        if isinstance(normalized_result, (list, set)):
+        if type(normalized_result) in (list, set):
             return normalized_value in normalized_result
         return normalized_value in normalized_result.values()
 

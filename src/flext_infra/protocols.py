@@ -13,6 +13,10 @@ from typing import Protocol, runtime_checkable
 
 from flext_core.result import FlextResult
 
+type InfraScalar = str | int | float | bool | None
+type InfraPayload = InfraScalar | Mapping[str, InfraScalar] | Sequence[InfraScalar]
+type InfraPayloadMap = Mapping[str, InfraPayload]
+
 
 class InfraProtocols:
     """Structural contracts for flext-infra services and adapters."""
@@ -27,7 +31,7 @@ class InfraProtocols:
             ...
 
         @property
-        def root(self) -> object:
+        def root(self) -> Path:
             """Return the project root path."""
             ...
 
@@ -58,7 +62,7 @@ class InfraProtocols:
             self,
             project: str,
             gates: Sequence[str],
-        ) -> FlextResult[object]:
+        ) -> FlextResult[InfraPayloadMap]:
             """Execute quality gates for a project."""
             ...
 
@@ -68,10 +72,10 @@ class InfraProtocols:
 
         def sync(
             self,
-            source: object,
-            target: object,
-        ) -> FlextResult[object]:
-            """Synchronize source and target objects."""
+            source: Path,
+            target: Path,
+        ) -> FlextResult[InfraPayloadMap]:
+            """Synchronize source and target paths."""
             ...
 
     @runtime_checkable
@@ -80,7 +84,7 @@ class InfraProtocols:
 
         def generate(
             self,
-            config: Mapping[str, object],
+            config: InfraPayloadMap,
         ) -> FlextResult[str]:
             """Generate text or artifacts from configuration."""
             ...
@@ -91,7 +95,7 @@ class InfraProtocols:
 
         def report(
             self,
-            results: Sequence[FlextResult[object]],
+            results: Sequence[FlextResult[InfraPayloadMap]],
         ) -> FlextResult[Path]:
             """Write validation results to a report file."""
             ...
@@ -100,8 +104,8 @@ class InfraProtocols:
     class ValidatorProtocol(Protocol):
         """Contract for validation services."""
 
-        def validate(self, target: object) -> FlextResult[bool]:
-            """Validate a target object."""
+        def validate(self, target: Path) -> FlextResult[bool]:
+            """Validate a target path."""
             ...
 
     @runtime_checkable
@@ -112,7 +116,7 @@ class InfraProtocols:
             self,
             projects: Sequence[InfraProtocols.ProjectInfo],
             verb: str,
-        ) -> FlextResult[object]:
+        ) -> FlextResult[InfraPayloadMap]:
             """Orchestrate operations across multiple projects."""
             ...
 
@@ -122,7 +126,7 @@ class InfraProtocols:
 
         def discover(
             self,
-            root: object,
+            root: Path,
         ) -> FlextResult[list[InfraProtocols.ProjectInfo]]:
             """Discover projects in a workspace root."""
             ...

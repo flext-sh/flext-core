@@ -79,15 +79,15 @@ def _rewrite_pep621(
     internal_names: set[str],
 ) -> list[str]:
     project = doc.get("project")
-    if not project or not isinstance(project, dict):
+    if not project or type(project) is not dict:
         return []
     deps = project.get("dependencies")
-    if not isinstance(deps, list):
+    if type(deps) is not list:
         return []
 
     changes: list[str] = []
     for index, item in enumerate(deps):
-        if not isinstance(item, str):
+        if type(item) is not str:
             continue
 
         marker = ""
@@ -118,21 +118,21 @@ def _rewrite_pep621(
 
 def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
     tool = doc.get("tool")
-    if not isinstance(tool, dict):
+    if type(tool) is not dict:
         return []
     poetry = tool.get("poetry")
-    if not isinstance(poetry, dict):
+    if type(poetry) is not dict:
         return []
     deps = poetry.get("dependencies")
-    if not isinstance(deps, dict):
+    if type(deps) is not dict:
         return []
 
     changes: list[str] = []
     for dep_key, value in deps.items():
-        if not isinstance(value, dict) or "path" not in value:
+        if type(value) is not dict or "path" not in value:
             continue
         raw_path = value["path"]
-        if not isinstance(raw_path, str) or not raw_path.strip():
+        if type(raw_path) is not str or not raw_path.strip():
             continue
         dep_name = extract_dep_name(raw_path)
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
@@ -212,9 +212,9 @@ def main() -> int:
         root_data_result = toml_service.read(root_pyproject)
         if root_data_result.is_success:
             root_project = root_data_result.value.get("project")
-            if isinstance(root_project, dict):
+            if type(root_project) is dict:
                 root_name = root_project.get("name")
-                if isinstance(root_name, str) and root_name:
+                if type(root_name) is str and root_name:
                     internal_names.add(root_name)
 
     if not args.projects and root_pyproject.exists():
@@ -263,10 +263,10 @@ def main() -> int:
         if data_result.is_failure:
             continue
         project_obj = data_result.value.get("project")
-        if not isinstance(project_obj, dict):
+        if type(project_obj) is not dict:
             continue
         project_name = project_obj.get("name")
-        if isinstance(project_name, str) and project_name:
+        if type(project_name) is str and project_name:
             internal_names.add(project_name)
 
     for project_dir in project_dirs:
@@ -277,10 +277,10 @@ def main() -> int:
         if data_result.is_failure:
             continue
         project_obj = data_result.value.get("project")
-        if not isinstance(project_obj, dict):
+        if type(project_obj) is not dict:
             continue
         project_name = project_obj.get("name")
-        if isinstance(project_name, str) and project_name:
+        if type(project_name) is str and project_name:
             internal_names.add(project_name)
 
     for project_dir in sorted(project_dirs):

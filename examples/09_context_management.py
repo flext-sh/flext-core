@@ -317,8 +317,10 @@ def main() -> None:
         """Handle successful result with type narrowing."""
         patterns = metadata.get("patterns_demonstrated", ())
         features = metadata.get("context_features", ())
-        patterns_count = len(patterns) if isinstance(patterns, Sequence) else 0
-        features_count = len(features) if isinstance(features, Sequence) else 0
+        def _seq_len(x: object) -> int:
+            return len(x) if (type(x) in (list, tuple) or (hasattr(x, "__getitem__") and hasattr(x, "__len__"))) else 0
+        patterns_count = _seq_len(patterns)
+        features_count = _seq_len(features)
 
         logger.info(
             "Context demonstration completed",

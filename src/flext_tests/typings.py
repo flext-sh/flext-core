@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, TypeGuard, TypeVar
 
 from flext_core import FlextTypes
 from flext_core.models import m
-from flext_core.result import r
+from flext_core.result import FlextResult, r
 from pydantic import BaseModel, InstanceOf
 
 # Note: p.Tests.* protocols are defined in flext_tests.protocols
@@ -24,9 +24,22 @@ TTestResult = TypeVar("TTestResult")
 TTestModel = TypeVar("TTestModel")
 TTestService = TypeVar("TTestService")
 
+type TestPayloadScalar = str | int | float | bool | None
+type TestPayloadValue = (
+    TestPayloadScalar
+    | bytes
+    | BaseModel
+    | Sequence[TestPayloadValue]
+    | Mapping[str, TestPayloadValue]
+)
+
 # File content type for test operations
 type FileContent = (
-    str | bytes | Mapping[str, object] | Sequence[Sequence[str]] | InstanceOf[BaseModel]
+    str
+    | bytes
+    | Mapping[str, TestPayloadValue]
+    | Sequence[Sequence[str]]
+    | InstanceOf[BaseModel]
 )
 
 
@@ -35,7 +48,7 @@ class FlextTestsTypes(FlextTypes):
 
     Architecture: Extends FlextTypes with test-specific type aliases and definitions.
     All base types from FlextTypes are available through inheritance.
-    Uses specific, directed types instead of t.GeneralValueType where possible.
+    Uses specific, directed types instead of TestPayloadValue where possible.
 
     This class serves as a library of support and base for all tests in the FLEXT
     workspace projects, without being directed to any specific project.
@@ -45,7 +58,7 @@ class FlextTestsTypes(FlextTypes):
         """Test-specific type definitions namespace.
 
         All test-specific types organized under t.Tests.* pattern.
-        Use specific types instead of t.GeneralValueType where possible.
+        Use specific types instead of TestPayloadValue where possible.
         """
 
         # Uses Mapping[str, str] directly - no alias needed
@@ -72,8 +85,10 @@ class FlextTestsTypes(FlextTypes):
         type TestConfigMapping = m.ConfigMap
         """Mapping for test configuration with specific value types."""
 
-        # Reuse t.GeneralValueType from flext_core.typings - no duplication
-        type TestResultValue = t.GeneralValueType
+        type PayloadValue = TestPayloadValue
+        """Canonical payload value for test modules."""
+
+        type TestResultValue = TestPayloadValue
         """Type for test result values with specific constraints."""
 
         # Note: Generic callables can't use module TypeVars in type aliases
@@ -122,7 +137,7 @@ class FlextTestsTypes(FlextTypes):
             """Test case data structure with specific value types."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            # Note: Path is included in t.GeneralValueType via object compatibility
+            # Note: Path is included in TestPayloadValue via object compatibility
             type TestFixtureData = m.ConfigMap
             """Test fixture data structure with specific value types."""
 
@@ -197,7 +212,7 @@ class FlextTestsTypes(FlextTypes):
             type FactoryModelList = list[FlextTestsTypes.Tests.Factory.FactoryModel]
             """List of factory models."""
 
-            type FactoryModelDict = dict[
+            type FactoryModelDict = Mapping[
                 str,
                 FlextTestsTypes.Tests.Factory.FactoryModel,
             ]
@@ -227,7 +242,7 @@ class FlextTestsTypes(FlextTypes):
 
             # Generic factory types
             # Reuse types from flext_core.typings - no duplication
-            type GenericArgs = Sequence[t.GeneralValueType]
+            type GenericArgs = Sequence[TestPayloadValue]
             """Positional arguments for generic type instantiation."""
 
             type GenericKwargs = m.ConfigMap
@@ -248,8 +263,8 @@ class FlextTestsTypes(FlextTypes):
 
             type ReadResult[T] = (
                 T
-                | dict[str, t.GeneralValueType]
-                | list[str | dict[str, t.GeneralValueType]]
+                | Mapping[str, TestPayloadValue]
+                | list[str | Mapping[str, TestPayloadValue]]
             )
             """Result type for file read operations with generic support."""
 
@@ -282,29 +297,28 @@ class FlextTestsTypes(FlextTypes):
             Provides centralized types for FlextTestsBuilders following FLEXT patterns.
             Use t.Tests.Builders.* for access.
 
-            Uses t.GeneralValueType as base since it already handles nested structures
-            through Sequence[GeneralValueType] and Mapping[str, GeneralValueType].
+            Uses TestPayloadValue as base since it already handles nested structures
+            through Sequence payloads and Mapping payloads.
             FlextResult types are added on top for builder-specific needs.
             """
 
-            # Builder value - GeneralValueType only (builders build DATA, not results)
+# Builder value only (builders build DATA, not results)
             # FlextResult is returned by to_result(), not stored in builder
-            type BuilderValue = t.GeneralValueType
+            type BuilderValue = TestPayloadValue
             """Type for values stored in builder."""
 
-            # Builder dict - stores GeneralValueType values
-            type BuilderDict = dict[str, t.GeneralValueType]
+# Builder dict - stores payload values (mutable)
+            type BuilderDict = MutableMapping[str, TestPayloadValue]
             """Type for builder internal data structure."""
 
             # Builder output dict - result of _process_batch_results
-            # Inline definition: includes FlextResult for batch result conversion
-            type BuilderOutputDict = dict[
+            type BuilderOutputDict = Mapping[
                 str,
                 (
-                    t.GeneralValueType
-                    | r[t.GeneralValueType]
-                    | list[t.GeneralValueType | r[t.GeneralValueType]]
-                    | dict[str, t.GeneralValueType]
+                    TestPayloadValue
+                    | r[TestPayloadValue]
+                    | list[TestPayloadValue | r[TestPayloadValue]]
+                    | Mapping[str, TestPayloadValue]
                 ),
             ]
             """Type for builder output dict after batch result conversion."""
@@ -313,16 +327,16 @@ class FlextTestsTypes(FlextTypes):
             type BuilderMapping = m.ConfigMap
             """Type for builder mappings."""
 
-            type BuilderSequence = Sequence[t.GeneralValueType]
+            type BuilderSequence = Sequence[TestPayloadValue]
             """Type for builder sequences."""
 
-            type ParametrizedCase = tuple[str, dict[str, t.GeneralValueType]]
+            type ParametrizedCase = tuple[str, Mapping[str, TestPayloadValue]]
             """Type for parametrized test cases (test_id, data)."""
 
-            type TransformFunc = Callable[[t.GeneralValueType], t.GeneralValueType]
+            type TransformFunc = Callable[[TestPayloadValue], TestPayloadValue]
             """Type for transformation functions."""
 
-            type ValidateFunc = Callable[[t.GeneralValueType], bool]
+            type ValidateFunc = Callable[[TestPayloadValue], bool]
             """Type for validation functions."""
 
             type ResultBuilder[T] = Callable[[], r[T]]
@@ -358,7 +372,7 @@ class FlextTestsTypes(FlextTypes):
             # =====================================================================
 
             type DeepSpec = Mapping[
-                str, Callable[[t.GeneralValueType], bool] | t.GeneralValueType
+                str, Callable[[TestPayloadValue], bool] | TestPayloadValue
             ]
             """Deep structural matching specification: path -> value or predicate.
 
@@ -385,7 +399,7 @@ class FlextTestsTypes(FlextTypes):
             # Predicates and Validators
             # =====================================================================
 
-            type PredicateSpec = Callable[[object], bool]
+            type PredicateSpec = Callable[[TestPayloadValue], bool]
             """Custom predicate function for validation.
 
             Takes a value and returns True if validation passes.
@@ -395,7 +409,7 @@ class FlextTestsTypes(FlextTypes):
                 where=lambda u: u.age >= 18 and u.verified
             """
 
-            type ValueSpec = Callable[[object], bool] | t.GeneralValueType | object
+            type ValueSpec = Callable[[TestPayloadValue], bool] | TestPayloadValue
             """Value specification: direct value or predicate function.
 
             Used in deep matching and custom validation.
@@ -403,8 +417,8 @@ class FlextTestsTypes(FlextTypes):
             """
 
             type AssertionSpec = (
-                Mapping[str, t.GeneralValueType]
-                | Callable[[t.GeneralValueType], bool]
+                Mapping[str, TestPayloadValue]
+                | Callable[[TestPayloadValue], bool]
                 | type
                 | tuple[type, ...]
             )
@@ -421,7 +435,7 @@ class FlextTestsTypes(FlextTypes):
             # Containment Specifications
             # =====================================================================
 
-            type ContainmentSpec = t.GeneralValueType | Sequence[t.GeneralValueType]
+            type ContainmentSpec = TestPayloadValue | Sequence[TestPayloadValue]
             """Containment specification: single item or sequence of items.
 
             Used for has/lacks parameters that check if container contains item(s).
@@ -445,7 +459,7 @@ class FlextTestsTypes(FlextTypes):
             # Sequence Assertions
             # =====================================================================
 
-            type SequencePredicate = type | Callable[[t.GeneralValueType], bool]
+            type SequencePredicate = type | Callable[[TestPayloadValue], bool]
             """Sequence predicate: type check or custom predicate.
 
             Used for all_/any_ parameters that validate sequence items.
@@ -455,8 +469,8 @@ class FlextTestsTypes(FlextTypes):
                 all_=lambda x: x > 0        # All items pass predicate
             """
 
-            # Use t.GeneralValueType for runtime compatibility
-            type SortKey = bool | Callable[[t.GeneralValueType], t.GeneralValueType]
+            # Use TestPayloadValue for runtime compatibility
+            type SortKey = bool | Callable[[TestPayloadValue], TestPayloadValue]
             """Sort key specification: boolean or key function.
 
             Used for sorted parameter.
@@ -486,7 +500,7 @@ class FlextTestsTypes(FlextTypes):
             """
 
             type KeyValueSpec = (
-                tuple[str, t.GeneralValueType] | Mapping[str, t.GeneralValueType]
+                tuple[str, TestPayloadValue] | Mapping[str, TestPayloadValue]
             )
             """Key-value specification: single pair or mapping.
 
@@ -512,7 +526,7 @@ class FlextTestsTypes(FlextTypes):
             """
 
             type AttributeValueSpec = (
-                tuple[str, t.GeneralValueType] | Mapping[str, t.GeneralValueType]
+                tuple[str, TestPayloadValue] | Mapping[str, TestPayloadValue]
             )
             """Attribute-value specification: single pair or mapping.
 
@@ -571,82 +585,82 @@ class FlextTestsTypes(FlextTypes):
             """
 
     class Guards:
-        """TypeGuard functions for type narrowing without cast().
+        """TypeGuard functions for type narrowing.
 
         Provides static methods for safe type narrowing in test builders,
-        factories, and matchers. Use these instead of cast() for proper
+        factories, and matchers. Use these guards for proper
         type safety with Python 3.13+.
         """
 
         @staticmethod
         def is_builder_value(
-            value: object,
-        ) -> TypeGuard[t.GeneralValueType]:
-            """Check if value is a valid BuilderValue (GeneralValueType)."""
+            value: TestPayloadValue | type,
+        ) -> TypeGuard[TestPayloadValue]:
+            """Check if value is a valid BuilderValue."""
             if value is None:
                 return True
-            if isinstance(value, (str, int, float, bool, bytes)):
+            if type(value) in (str, int, float, bool, bytes):
                 return True
-            if isinstance(value, BaseModel):
+            if BaseModel in type(value).__mro__:
                 return True
-            return isinstance(value, (list, dict))
+            return type(value) is list or type(value) is dict
 
         @staticmethod
         def is_flext_result(
-            value: t.GeneralValueType,
-        ) -> TypeGuard[r[t.GeneralValueType]]:
+            value: TestPayloadValue,
+        ) -> TypeGuard[r[TestPayloadValue]]:
             """Check if value is a FlextResult."""
-            return isinstance(value, r)
+            return FlextResult in type(value).__mro__
 
         @staticmethod
         def is_general_value(
-            value: t.GeneralValueType,
-        ) -> TypeGuard[t.GeneralValueType]:
-            """Check if value is GeneralValueType."""
+            value: TestPayloadValue,
+        ) -> TypeGuard[TestPayloadValue]:
+            """Check if value is payload-compatible."""
             if value is None:
                 return True
-            if isinstance(value, (str, int, float, bool, bytes)):
+            if type(value) in (str, int, float, bool, bytes):
                 return True
-            if isinstance(value, BaseModel):
+            if BaseModel in type(value).__mro__:
                 return True
-            return isinstance(value, (list, dict))
+            return type(value) in (list, dict)
 
         @staticmethod
         def is_sequence(
-            value: t.GeneralValueType,
-        ) -> TypeGuard[Sequence[t.GeneralValueType]]:
-            """Check if value is a Sequence of GeneralValueType."""
-            return isinstance(value, (list, tuple)) and not isinstance(
-                value,
-                (str, bytes),
+            value: TestPayloadValue,
+        ) -> TypeGuard[Sequence[TestPayloadValue]]:
+            """Check if value is a payload sequence."""
+            return type(value) in (list, tuple) and type(value) not in (
+                str,
+                bytes,
             )
 
         @staticmethod
         def is_mapping(
-            value: t.GeneralValueType,
-        ) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
-            """Check if value is a Mapping of str to GeneralValueType."""
-            return isinstance(value, dict)
+            value: TestPayloadValue,
+        ) -> TypeGuard[Mapping[str, TestPayloadValue]]:
+            """Check if value is a payload mapping."""
+            return type(value) is dict
 
         @staticmethod
         def is_builder_dict(
-            value: t.GeneralValueType,
+            value: TestPayloadValue,
         ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
-            """Check if value is a BuilderDict."""
-            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+            """Check if value is a BuilderDict (dict with str keys)."""
+            return type(value) is dict and all(type(k) is str for k in value)
 
         @staticmethod
         def is_test_result_value(
-            value: t.GeneralValueType,
+            value: TestPayloadValue,
         ) -> TypeGuard[FlextTestsTypes.Tests.TestResultValue]:
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True
-            if isinstance(value, (str, int, float, bool)):
+            if type(value) in (str, int, float, bool):
                 return True
-            if isinstance(value, (list, tuple)):
+            if type(value) in (list, tuple):
                 return True
-            return isinstance(value, dict)
+            return type(value) is dict
 
         @staticmethod
         def is_model_kind(
@@ -657,17 +671,21 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_configuration_dict(
-            value: t.GeneralValueType,
-        ) -> TypeGuard[dict[str, t.GeneralValueType]]:
+            value: TestPayloadValue,
+        ) -> TypeGuard[Mapping[str, TestPayloadValue]]:
             """Check if value is a ConfigurationDict."""
-            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+            return type(value) is dict and all(type(k) is str for k in value)
 
         @staticmethod
         def is_configuration_mapping(
-            value: t.GeneralValueType,
+            value: TestPayloadValue,
         ) -> TypeGuard[m.ConfigMap]:
             """Check if value is a ConfigurationMapping."""
-            return isinstance(value, Mapping) and all(isinstance(k, str) for k in value)
+            return (
+                hasattr(value, "keys")
+                and hasattr(value, "items")
+                and all(type(k) is str for k in value)
+            )
 
 
 t = FlextTestsTypes

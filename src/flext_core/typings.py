@@ -25,6 +25,7 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from structlog.typing import BindableLogger
 
 from flext_core.constants import FlextConstants
 
@@ -96,10 +97,12 @@ Used in: config (settings configuration)."""
 
 
 # ============================================================================
-# Module-Level Recursive Types (PEP 695 required for Pydantic recursive compat)
+# Module-Level Types (PEP 695) - model-centric scalar/payload aliases
 # ============================================================================
 
-type GeneralValueType = (
+# Internal only: recursive container value for RootModel Dict/ConfigMap/ServiceMap.
+# Not exported. Public API uses m.ConfigMap, m.Dict, ScalarValue.
+type _ContainerValue = (
     str
     | int
     | float
@@ -108,29 +111,34 @@ type GeneralValueType = (
     | None
     | BaseModel
     | Path
-    | Sequence[GeneralValueType]
-    | dict[str, GeneralValueType]
-    | Mapping[str, GeneralValueType]
+    | Sequence[_ContainerValue]
+    | Mapping[str, _ContainerValue]
 )
 
 type JsonPrimitive = str | int | float | bool | None
 
 type JsonValue = (
-    JsonPrimitive | Sequence[GeneralValueType] | dict[str, GeneralValueType]
+    JsonPrimitive | Sequence[_ContainerValue] | Mapping[str, _ContainerValue]
 )
 
-type JsonDict = dict[str, JsonValue]
+type JsonDict = Mapping[str, JsonValue]
+
+# Scalar at module level for use in callable types (not exported)
+type _ScalarML = str | int | float | bool | datetime | None
+type ScalarValue = _ScalarML
+type PayloadValue = _ContainerValue | BaseModel | Path
+type RegisterableService = (
+    _ContainerValue | BindableLogger | Callable[..., _ContainerValue]
+)
 
 # ============================================================================
-# Core Callables & Instance Types (Module Level for scoping)
+# Core Callables - strict DI-compatible service types
 # ============================================================================
-type ServiceInstanceType = GeneralValueType
-type FactoryCallable = Callable[[], GeneralValueType]
-type ResourceCallable = Callable[[], GeneralValueType]
+type ServiceInstanceType = _ContainerValue
+type FactoryCallable = Callable[[], RegisterableService]
+type ResourceCallable = Callable[[], _ContainerValue]
 
-type FactoryRegistrationCallable = Callable[
-    [], FlextTypes.ScalarValue | Sequence[FlextTypes.ScalarValue]
-]
+type FactoryRegistrationCallable = Callable[[], _ScalarML | Sequence[_ScalarML]]
 
 
 class FlextTypes:
@@ -152,11 +160,12 @@ class FlextTypes:
     """LaxStr compatibility for ldap3 integration."""
 
     # =========================================================================
-    # ALIGNED TYPE HIERARCHY (Pydantic-safe, no 'object' types)
+    # ALIGNED TYPE HIERARCHY (Pydantic-safe, no dynamic top types)
     # =========================================================================
 
     # Tier 1: Scalar primitives (immutable, JSON-safe)
     ScalarValue: TypeAlias = str | int | float | bool | datetime | None
+    ScalarAlias: TypeAlias = ScalarValue
 
     # Tier 2: Pydantic-safe metadata values
     MetadataScalarValue: TypeAlias = str | int | float | bool | None
@@ -171,16 +180,31 @@ class FlextTypes:
     GeneralScalarValue: TypeAlias = str | int | float | bool | datetime | None
     GeneralListValue: TypeAlias = list[str | int | float | bool | datetime | None]
 
-    # =========================================================================
-    # GeneralValueType - Re-exported from module level (recursive)
-    # =========================================================================
-    GeneralValueType: TypeAlias = GeneralValueType
+    # Input type for guard functions (flat union, no recursion; prefer models at API)
+    GuardInputValue: TypeAlias = (
+        ScalarValue
+        | BaseModel
+        | Path
+        | Sequence[ScalarValue | BaseModel]
+        | Mapping[str, ScalarValue | BaseModel]
+    )
 
-    # RegisterableService - Type for services registerable in FlextContainer
-    RegisterableService: TypeAlias = object
+    # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
+    ConfigMapValue: TypeAlias = (
+        ScalarValue
+        | BaseModel
+        | Path
+        | Sequence["ConfigMapValue"]
+        | Mapping[str, "ConfigMapValue"]
+    )
 
-    # RegistrablePlugin - Type for plugins registerable in FlextRegistry
-    RegistrablePlugin: TypeAlias = GeneralValueType | Callable[..., GeneralValueType]
+    # RegisterableService - fixed types only
+    RegisterableService: TypeAlias = RegisterableService
+
+    # RegistrablePlugin - fixed types only
+    RegistrablePlugin: TypeAlias = (
+        ScalarValue | BaseModel | Callable[..., ScalarValue | BaseModel]
+    )
 
     # Constant value type - all possible constant types in FlextConstants
     ConstantValue: TypeAlias = (
@@ -192,25 +216,22 @@ class FlextTypes:
         | SettingsConfigDict
         | frozenset[str]
         | tuple[str, ...]
-        | dict[str, str | int]
+        | Mapping[str, str | int]
         | StrEnum
         | type[StrEnum]
         | Pattern[str]
         | type
     )
 
-    class ObjectList(RootModel[list[GeneralValueType]]):
-        """Sequence of general value types for batch operations.
+    class ObjectList(RootModel[list[_ContainerValue]]):
+        """Sequence of container values for batch operations. Use m.* models when possible."""
 
-        Replaces: Sequence[GeneralValueType]
-        """
-
-        root: list[GeneralValueType]
+        root: list[_ContainerValue]
 
     # File content type supporting all serializable formats
     FileContent: TypeAlias = str | bytes | BaseModel | Sequence[Sequence[str]]
 
-    # Sortable object type
+    # Sortable value type
     SortableObjectType: TypeAlias = str | int | float
 
     # =========================================================================
@@ -223,7 +244,7 @@ class FlextTypes:
         FlextConstants.Utilities.ConversionMode.JOIN,
     ]
 
-    # MetadataAttributeValue - ALIGNED with GeneralValueType primitive types
+    # MetadataAttributeValue - fixed scalar/mapping/list (Mapping, no dict)
     MetadataAttributeValue: TypeAlias = (
         str
         | int
@@ -231,7 +252,7 @@ class FlextTypes:
         | bool
         | datetime
         | None
-        | dict[
+        | Mapping[
             str,
             str
             | int
@@ -244,31 +265,18 @@ class FlextTypes:
         | list[str | int | float | bool | datetime | None]
     )
 
-    # Flexible value type for protocol methods
-    FlexibleValue: TypeAlias = (
-        str
-        | int
-        | float
-        | bool
-        | datetime
-        | None
-        | Sequence[str | int | float | bool | datetime | None]
-    )
-
     # Type hint specifier - used for type introspection
-    TypeHintSpecifier: TypeAlias = (
-        type | str | Callable[[GeneralValueType], GeneralValueType]
-    )
+    TypeHintSpecifier: TypeAlias = type | str | Callable[[ScalarValue], ScalarValue]
 
     # Generic type argument
-    GenericTypeArgument: TypeAlias = str | type[GeneralValueType]
+    GenericTypeArgument: TypeAlias = str | type[ScalarValue]
 
     # Message type specifier
     MessageTypeSpecifier: TypeAlias = str | type
 
     # Type origin specifier
     TypeOriginSpecifier: TypeAlias = (
-        str | type[GeneralValueType] | Callable[[GeneralValueType], GeneralValueType]
+        str | type[ScalarValue] | Callable[[ScalarValue], ScalarValue]
     )
 
     # JSON types - re-exported from module level
@@ -277,28 +285,20 @@ class FlextTypes:
     JsonDict: TypeAlias = JsonDict
 
     # Single consolidated callable type for handlers and validators
-    HandlerCallable: TypeAlias = Callable[[GeneralValueType], GeneralValueType]
+    HandlerCallable: TypeAlias = Callable[[ScalarValue], ScalarValue]
 
-    # Acceptable message types for handlers
-    AcceptableMessageType: TypeAlias = (
-        GeneralValueType | Sequence[GeneralValueType] | ScalarValue
-    )
+    # Acceptable message types for handlers - scalars and models only
+    AcceptableMessageType: TypeAlias = ScalarValue | BaseModel | Sequence[ScalarValue]
 
     # Conditional execution callable types
-    ConditionCallable: TypeAlias = Callable[[GeneralValueType], bool]
+    ConditionCallable: TypeAlias = Callable[[ScalarValue], bool]
 
     # Handler type union
     HandlerType: TypeAlias = HandlerCallable | BaseModel
 
     # =========================================================================
-    # Configuration mapping types (REMOVED - Use m.ConfigMap)
+    # GENERIC CONTAINERS (RootModels - use m.ConfigMap, m.Dict)
     # =========================================================================
-    # ConfigurationMapping: TypeAlias = Mapping[str, GeneralValueType]
-    # ConfigurationDict: TypeAlias = dict[str, GeneralValueType]
-    # PydanticConfigDict: TypeAlias = dict[str, GeneralValueType]
-
-    # =========================================================================
-    # GENERIC CONTAINERS (RootModels - Pydantic-validated dictionaries)
     # Replaces raw dict aliases with strict typed models
     # =========================================================================
 
@@ -335,7 +335,7 @@ class FlextTypes:
             """Iterate over keys (dict semantics, not model fields)."""
             return iter(self.root)
 
-        def __contains__(self, key: object) -> bool:
+        def __contains__(self, key: str) -> bool:
             """Check if key exists."""
             return key in self.root
 
@@ -375,38 +375,29 @@ class FlextTypes:
             """Set default value for key."""
             return self.root.setdefault(key, default)
 
-    class Dict(_DictMixin[GeneralValueType], RootModel[dict[str, GeneralValueType]]):
-        """Generic dictionary container.
+    class Dict(_DictMixin[_ContainerValue], RootModel[dict[str, _ContainerValue]]):
+        """Generic dictionary container. Prefer m.Dict in public API."""
 
-        Replaces: dict[str, Any], dict[str, GeneralValueType]
-        """
-
-        root: dict[str, GeneralValueType] = Field(default_factory=dict)
+        root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     class ConfigMap(
-        _DictMixin[GeneralValueType],
-        RootModel[dict[str, GeneralValueType]],
+        _DictMixin[_ContainerValue],
+        RootModel[dict[str, _ContainerValue]],
     ):
-        """Configuration map container.
+        """Configuration map container. Prefer m.ConfigMap in public API."""
 
-        Replaces: ConfigurationDict, ConfigurationMapping
-        """
-
-        root: dict[str, GeneralValueType] = Field(default_factory=dict)
+        root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     ConfigurationMapping: TypeAlias = ConfigMap
     ConfigurationDict: TypeAlias = ConfigMap
 
     class ServiceMap(
-        _DictMixin[GeneralValueType],
-        RootModel[dict[str, GeneralValueType]],
+        _DictMixin[_ContainerValue],
+        RootModel[dict[str, _ContainerValue]],
     ):
-        """Service registry map container.
+        """Service registry map container. Prefer m.ServiceMap in public API."""
 
-        Replaces: ServiceMapping
-        """
-
-        root: dict[str, GeneralValueType]
+        root: dict[str, _ContainerValue]
 
     class ErrorMap(
         _DictMixin[int | str | dict[str, int]],
@@ -419,12 +410,12 @@ class FlextTypes:
 
         root: dict[str, int | str | dict[str, int]]
 
-    IncEx: TypeAlias = set[str] | dict[str, set[str] | bool]
+    IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
 
     DecoratorType: TypeAlias = Callable[[HandlerCallable], HandlerCallable]
 
-    FactoryCallable: TypeAlias = FactoryCallable
-    ResourceCallable: TypeAlias = ResourceCallable
+    FactoryCallable: TypeAlias = Callable[[], RegisterableService]
+    ResourceCallable: TypeAlias = Callable[[], _ContainerValue]
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
     class FactoryMap(
@@ -452,55 +443,89 @@ class FlextTypes:
     # =========================================================================
     # Validation mapping types (used in _models/validation.py)
     # =========================================================================
-    class ValidatorCallable(RootModel[Callable[[GeneralValueType], GeneralValueType]]):
-        """Callable validator container."""
+    class ValidatorCallable(
+        RootModel[Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]],
+    ):
+        """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
-        root: Callable[[GeneralValueType], GeneralValueType]
+        root: Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
 
-        def __call__(self, value: GeneralValueType) -> GeneralValueType:
+        def __call__(self, value: _ScalarML | BaseModel) -> _ScalarML | BaseModel:
             """Execute validator."""
             return self.root(value)
 
     class _ValidatorMapMixin:
         """Shared API for validator map containers."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
+        root: dict[
+            str,
+            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+        ]
 
         def items(
             self,
-        ) -> typing.ItemsView[str, Callable[[GeneralValueType], GeneralValueType]]:
+        ) -> typing.ItemsView[
+            str,
+            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+        ]:
             """Get validator items."""
             return self.root.items()
 
         def values(
             self,
-        ) -> typing.ValuesView[Callable[[GeneralValueType], GeneralValueType]]:
+        ) -> typing.ValuesView[
+            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+        ]:
             """Get validator values."""
             return self.root.values()
 
     class FieldValidatorMap(
         _ValidatorMapMixin,
-        RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
+        RootModel[
+            dict[
+                str,
+                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+            ]
+        ],
     ):
         """Map of field validators."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
+        root: dict[
+            str,
+            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+        ]
 
     class ConsistencyRuleMap(
         _ValidatorMapMixin,
-        RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
+        RootModel[
+            dict[
+                str,
+                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+            ]
+        ],
     ):
         """Map of consistency rules."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
+        root: dict[
+            str,
+            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+        ]
 
     class EventValidatorMap(
         _ValidatorMapMixin,
-        RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
+        RootModel[
+            dict[
+                str,
+                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+            ]
+        ],
     ):
         """Map of event validators."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
+        root: dict[
+            str,
+            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+        ]
 
     # Error/Exception types (used in exceptions.py)
     # ErrorTypeMapping removed - Use m.ErrorMap
@@ -523,7 +548,7 @@ class FlextTypes:
             extra="forbid",
         )
 
-        results: list[GeneralValueType] = Field(default_factory=list)
+        results: list[_ScalarML] = Field(default_factory=list)
         errors: list[tuple[int, str]] = Field(default_factory=list)
         total: int = Field(default=0)
         success_count: int = Field(default=0)
@@ -552,10 +577,8 @@ class FlextTypes:
 t_core = FlextTypes
 t = FlextTypes
 
-
 __all__ = [
     "FlextTypes",
-    "GeneralValueType",
     "JsonDict",
     "JsonPrimitive",
     "JsonValue",
@@ -563,6 +586,7 @@ __all__ = [
     "P",
     "R",
     "ResultT",
+    "ScalarAlias",
     "T",
     "T_Model",
     "T_Namespace",

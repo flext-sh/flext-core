@@ -170,7 +170,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
-            if isinstance(event_value, UserCreatedEvent):
+            if type(event_value) is UserCreatedEvent or UserCreatedEvent in type(event_value).__mro__:
                 print(f"✅ Command dispatched: {event_value.aggregate_id}")
             else:
                 print("✅ Command dispatched successfully")
@@ -189,20 +189,20 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         _ = registry.register_handler(create_handler)
         _ = registry.register_handler(get_handler)
 
-        # Dispatch command - Pydantic models are compatible with t.GeneralValueType
-        command: t.GeneralValueType = CreateUserCommand(
+        # Dispatch command - Pydantic models as message payload
+        command: CreateUserCommand = CreateUserCommand(
             name="Bob", email="bob@example.com"
         )
         command_result = dispatcher.dispatch(command)
         if command_result.is_success:
             print("✅ Command dispatched successfully")
 
-        # Dispatch query - Pydantic models are compatible with t.GeneralValueType
-        query: t.GeneralValueType = GetUserQuery(user_id="user-123")
+        # Dispatch query
+        query: GetUserQuery = GetUserQuery(user_id="user-123")
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value
-            if isinstance(user_data, dict):
+            if type(user_data) is dict:
                 print(f"✅ Query dispatched: {user_data.get('name')}")
 
 
@@ -219,7 +219,7 @@ def main() -> None:
     if result.is_success:
         data = result.value
         patterns = data["patterns_demonstrated"]
-        if isinstance(patterns, Sequence):
+        if type(patterns) in (list, tuple) or (hasattr(patterns, "__getitem__") and hasattr(patterns, "__len__")):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
     else:

@@ -10,10 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
+
+from pydantic import BaseModel
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 
@@ -25,32 +28,32 @@ class JsonService:
     the bare functions from ``scripts/libs/json_io.py``.
     """
 
-    def read(self, path: Path) -> FlextResult[dict[str, object]]:
+    def read(self, path: Path) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
         """Read and parse a JSON file.
 
         Args:
             path: Source file path.
 
         Returns:
-            FlextResult with parsed JSON data. Returns empty dict
+            FlextResult with parsed JSON data. Returns empty mapping
             if the file does not exist.
 
         """
         if not path.exists():
-            return r[dict[str, object]].ok({})
+            return r[Mapping[str, t.ConfigMapValue]].ok({})
         try:
-            data = cast(
-                "dict[str, object]",
-                json.loads(path.read_text(encoding=ic.Encoding.DEFAULT)),
-            )
-            return r[dict[str, object]].ok(data)
+            loaded = json.loads(path.read_text(encoding=ic.Encoding.DEFAULT))
+            if type(loaded) is not dict:
+                return r[Mapping[str, t.ConfigMapValue]].fail("JSON root must be object")
+            data: Mapping[str, t.ConfigMapValue] = loaded
+            return r[Mapping[str, t.ConfigMapValue]].ok(data)
         except (json.JSONDecodeError, OSError) as exc:
-            return r[dict[str, object]].fail(f"JSON read error: {exc}")
+            return r[Mapping[str, t.ConfigMapValue]].fail(f"JSON read error: {exc}")
 
     def write(
         self,
         path: Path,
-        payload: object,
+        payload: BaseModel | Mapping[str, t.ConfigMapValue],
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,

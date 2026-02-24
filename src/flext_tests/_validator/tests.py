@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
@@ -26,7 +27,7 @@ class FlextValidatorTests:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for test violations.
 
@@ -57,7 +58,7 @@ class FlextValidatorTests:
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single file for test violations."""
         violations: list[m.Tests.Validator.Violation] = []
@@ -87,7 +88,7 @@ class FlextValidatorTests:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect monkeypatch usage in function parameters and calls."""
         if u.Tests.Validator.is_approved("TEST-001", file_path, approved):
@@ -97,7 +98,7 @@ class FlextValidatorTests:
 
         for node in ast.walk(tree):
             # Check function parameters for monkeypatch
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if type(node) in (ast.FunctionDef, ast.AsyncFunctionDef):
                 for arg in node.args.args:
                     if arg.arg == "monkeypatch":
                         violation = u.Tests.Validator.create_violation(
@@ -113,8 +114,8 @@ class FlextValidatorTests:
 
             # Check for monkeypatch.setattr, monkeypatch.delattr, etc.
             elif (
-                isinstance(node, ast.Attribute)
-                and isinstance(node.value, ast.Name)
+                type(node) is ast.Attribute
+                and type(node.value) is ast.Name
                 and node.value.id == "monkeypatch"
             ):
                 violation = u.Tests.Validator.create_violation(
@@ -134,7 +135,7 @@ class FlextValidatorTests:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect Mock and MagicMock usage."""
         if u.Tests.Validator.is_approved("TEST-002", file_path, approved):
@@ -145,7 +146,7 @@ class FlextValidatorTests:
 
         for node in ast.walk(tree):
             # Check imports
-            if isinstance(node, ast.ImportFrom):
+            if type(node) is ast.ImportFrom:
                 if node.module and "mock" in node.module.lower():
                     for alias in node.names:
                         if alias.name in mock_names:
@@ -160,8 +161,8 @@ class FlextValidatorTests:
 
             # Check calls to Mock(), MagicMock(), etc.
             elif (
-                isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Name)
+                type(node) is ast.Call
+                and type(node.func) is ast.Name
                 and node.func.id in mock_names
             ):
                 violation = u.Tests.Validator.create_violation(
@@ -181,7 +182,7 @@ class FlextValidatorTests:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect @patch decorator usage."""
         if u.Tests.Validator.is_approved("TEST-003", file_path, approved):
@@ -190,9 +191,10 @@ class FlextValidatorTests:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if not isinstance(
-                node,
-                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+            if type(node) not in (
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+                ast.ClassDef,
             ):
                 continue
             for decorator in node.decorator_list:
@@ -211,17 +213,17 @@ class FlextValidatorTests:
     def _is_patch_decorator(cls, decorator: ast.expr) -> bool:
         """Check if decorator is @patch or @patch.object, etc."""
         # @patch
-        if isinstance(decorator, ast.Name) and decorator.id == "patch":
+        if type(decorator) is ast.Name and decorator.id == "patch":
             return True
 
         # @patch(...)
-        if isinstance(decorator, ast.Call):
-            if isinstance(decorator.func, ast.Name) and decorator.func.id == "patch":
+        if type(decorator) is ast.Call:
+            if type(decorator.func) is ast.Name and decorator.func.id == "patch":
                 return True
             # @patch.object(...)
-            if isinstance(decorator.func, ast.Attribute):
+            if type(decorator.func) is ast.Attribute:
                 if (
-                    isinstance(decorator.func.value, ast.Name)
+                    type(decorator.func.value) is ast.Name
                     and decorator.func.value.id == "patch"
                 ):
                     return True
@@ -231,8 +233,8 @@ class FlextValidatorTests:
 
         # @patch.object
         return (
-            isinstance(decorator, ast.Attribute)
-            and isinstance(decorator.value, ast.Name)
+            type(decorator) is ast.Attribute
+            and type(decorator.value) is ast.Name
             and decorator.value.id == "patch"
         )
 

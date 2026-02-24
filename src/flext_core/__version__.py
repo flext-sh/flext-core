@@ -9,30 +9,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
+from collections.abc import Mapping
+from importlib.metadata import PackageMetadata, metadata
 
 
 class FlextVersion:
     """Package version and metadata information.
 
     Provides version information and package metadata using standard library
-    metadata extraction with graceful fallback handling.
+    metadata extraction.
     """
 
-    _metadata: PackageMetadata | dict[str, str]
-    try:
-        _metadata = metadata("flext-core")
-    except PackageNotFoundError:
-        # Create PackageMetadata-compatible dict for fallback
-        _metadata = {
-            "Version": "0.0.0-dev",
-            "Name": "flext-core",
-            "Summary": "FLEXT core (metadata fallback)",
-            "Author": "",
-            "Author-Email": "",
-            "License": "",
-            "Home-Page": "",
-        }
+    _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
 
     __version__ = _metadata["Version"]
     __version_info__ = tuple(
@@ -93,14 +81,14 @@ class FlextVersion:
         return cls.__version_info__ >= (major, minor, patch)
 
     @classmethod
-    def get_package_info(cls) -> dict[str, str]:
+    def get_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary.
 
         Returns all available package metadata in a structured dictionary
         format for programmatic access to package information.
 
         Returns:
-            dict[str, str]: Package metadata dictionary containing:
+            Mapping[str, str]: Package metadata dictionary containing:
                 - name: Package name
                 - version: Version string
                 - description: Package description

@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Annotated, TypeAlias
 
 from pydantic import Discriminator
@@ -159,7 +160,7 @@ class FlextModels:
         contact: str
         credential: str
         roles: list[str] | None = None
-        metadata: dict[str, str] | None = None
+        metadata: Mapping[str, str] | None = None
 
     class IdentityRequest(FlextModelsCqrs.Command):
         """Command for identity operations in auth domain."""
@@ -168,7 +169,7 @@ class FlextModels:
         contact: str
         credential: str
         roles: list[str] | None = None
-        metadata: dict[str, str] | None = None
+        metadata: Mapping[str, str] | None = None
 
     # =========================================================================
     # CONFIGURATION MODELS - Direct access for common usage

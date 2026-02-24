@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ast
 import re
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
@@ -29,7 +30,7 @@ class FlextValidatorBypass:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for bypass violations.
 
@@ -60,7 +61,7 @@ class FlextValidatorBypass:
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single file for bypass violations."""
         violations: list[m.Tests.Validator.Violation] = []
@@ -96,7 +97,7 @@ class FlextValidatorBypass:
         cls,
         file_path: Path,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect # noqa comments."""
         if u.Tests.Validator.is_approved("BYPASS-001", file_path, approved):
@@ -124,7 +125,7 @@ class FlextValidatorBypass:
         cls,
         file_path: Path,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect # pragma: no cover comments."""
         # Check both custom approved patterns and defaults
@@ -158,7 +159,7 @@ class FlextValidatorBypass:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect exception swallowing patterns (bare except or except with pass)."""
         if u.Tests.Validator.is_approved("BYPASS-003", file_path, approved):
@@ -167,7 +168,7 @@ class FlextValidatorBypass:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ExceptHandler):
+            if type(node) is ast.ExceptHandler:
                 # Check for bare except (no exception type)
                 if node.type is None:
                     violation = u.Tests.Validator.create_violation(

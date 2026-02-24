@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import fnmatch
 import re
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 
@@ -35,7 +37,7 @@ class TextPatternScanner:
         includes: list[str],
         excludes: list[str] | None = None,
         match_mode: str = "present",
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Scan files under root for regex matches.
 
         Args:
@@ -52,13 +54,13 @@ class TextPatternScanner:
         """
         try:
             if not root.exists() or not root.is_dir():
-                return r[dict[str, object]].fail(
+                return r[Mapping[str, t.ScalarValue]].fail(
                     f"root directory does not exist: {root}",
                 )
             if not includes:
-                return r[dict[str, object]].fail("at least one include glob required")
+                return r[Mapping[str, t.ScalarValue]].fail("at least one include glob required")
             if match_mode not in {"present", "absent"}:
-                return r[dict[str, object]].fail(
+                return r[Mapping[str, t.ScalarValue]].fail(
                     f"invalid match_mode: {match_mode}",
                 )
 
@@ -70,16 +72,16 @@ class TextPatternScanner:
                 matches if match_mode == "present" else (0 if matches > 0 else 1)
             )
 
-            result: dict[str, object] = {
+            result: MutableMapping[str, t.ScalarValue] = {
                 "violation_count": violation_count,
                 "match_count": matches,
                 "files_scanned": len(files),
             }
-            return r[dict[str, object]].ok(result)
+            return r[Mapping[str, t.ScalarValue]].ok(result)
         except re.error as exc:
-            return r[dict[str, object]].fail(f"invalid regex pattern: {exc}")
+            return r[Mapping[str, t.ScalarValue]].fail(f"invalid regex pattern: {exc}")
         except (OSError, ValueError, TypeError) as exc:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ScalarValue]].fail(
                 f"text pattern scan failed: {exc}",
             )
 

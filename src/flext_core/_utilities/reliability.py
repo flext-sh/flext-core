@@ -40,7 +40,6 @@ class FlextUtilitiesReliability:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
@@ -108,9 +107,8 @@ class FlextUtilitiesReliability:
         result_raw: r[TResult] | TResult,
     ) -> r[TResult]:
         """Convert operation result to RuntimeResult."""
-        # Check if result_raw is already a FlextResult
-        if isinstance(result_raw, r):
-            # result_raw is a FlextResult - return as-is
+        # Check if result_raw is already a FlextResult (r in __mro__)
+        if r in type(result_raw).__mro__:
             return result_raw
 
         # result_raw is a plain value - wrap in successful Result
@@ -194,9 +192,9 @@ class FlextUtilitiesReliability:
                         time.sleep(current_delay)
 
             except Exception as e:
-                # Check if this exception should be retried
-                if retry_on is not None and not isinstance(e, retry_on):
-                    # Exception not in retry_on list, propagate it
+                if retry_on is not None and not any(
+                    t in type(e).__mro__ for t in retry_on
+                ):
                     raise
 
                 last_error = str(e)
@@ -218,7 +216,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def calculate_delay(
         attempt: int,
-        config: dict[str, t.GeneralValueType] | None,
+        config: Mapping[str, t.ConfigMapValue] | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -231,7 +229,7 @@ class FlextUtilitiesReliability:
 
         """
         # Extract configuration values safely with proper type conversion
-        # config is dict[str, t.GeneralValueType] | None, use dict.get() instead of getattr()
+        # config is dict[str, t.ConfigMapValue] | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
         # Type narrowing: ensure values are numeric before conversion
@@ -240,24 +238,23 @@ class FlextUtilitiesReliability:
         exponential_backoff_raw = config.get("exponential_backoff", False)
         backoff_multiplier_raw = config.get("backoff_multiplier")
 
-        # Convert to float with type narrowing
         initial_delay = (
             float(initial_delay_raw)
-            if isinstance(initial_delay_raw, (int, float))
+            if type(initial_delay_raw) in (int, float)
             else 0.1
         )
         max_delay = (
-            float(max_delay_raw) if isinstance(max_delay_raw, (int, float)) else 60.0
+            float(max_delay_raw) if type(max_delay_raw) in (int, float) else 60.0
         )
         exponential_backoff = (
             bool(exponential_backoff_raw)
-            if FlextUtilitiesGuards.is_type(exponential_backoff_raw, bool)
+            if type(exponential_backoff_raw) is bool
             else False
         )
         backoff_multiplier: float | None = None
-        if backoff_multiplier_raw is not None and isinstance(
-            backoff_multiplier_raw,
-            (int, float),
+        if backoff_multiplier_raw is not None and type(backoff_multiplier_raw) in (
+            int,
+            float,
         ):
             backoff_multiplier = float(backoff_multiplier_raw)
 
@@ -329,7 +326,7 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def pipe(
-        value: object,
+        value: t.ConfigMapValue,
         *operations: Callable[[object], object],
         on_error: str = "stop",
     ) -> r[object]:
@@ -363,14 +360,13 @@ class FlextUtilitiesReliability:
 
         # Type annotation: current starts as object (value parameter)
         # Will be updated through pipeline operations
-        current: object = value
+        current: t.ConfigMapValue = value
         for i, op in enumerate(operations):
             try:
                 result = op(current)
 
-                # Unwrap FlextResult if returned - use isinstance for proper narrowing
-                if isinstance(result, r):
-                    # result is FlextResult - check for failure
+                # Unwrap FlextResult if returned (protocol: has is_success/value)
+                if hasattr(result, "is_success") and hasattr(result, "value"):
                     if result.is_failure:
                         if on_error == "stop":
                             err_msg = result.error or "Unknown error"
@@ -394,9 +390,9 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def chain(
-        value: object,
+        value: t.ConfigMapValue,
         *funcs: Callable[[object], object],
-    ) -> object:
+    ) -> t.ConfigMapValue:
         """Chain operations (mnemonic: chain = pipeline).
 
         Business Rule: Execute a sequence of functions in order, passing each
@@ -420,16 +416,16 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: object = value
+        current: t.ConfigMapValue = value
         for func in funcs:
             current = func(current)
         return current
 
     @staticmethod
     def flow(
-        value: object,
-        *ops: dict[str, t.GeneralValueType] | Callable[[object], object],
-    ) -> object:
+        value: t.ConfigMapValue,
+        *ops: Mapping[str, t.ConfigMapValue] | Callable[[t.ConfigMapValue], t.ConfigMapValue],
+    ) -> t.ConfigMapValue:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
         Generic replacement for: build() + chain() combinations
@@ -451,17 +447,15 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: object = value
+        current: t.ConfigMapValue = value
         for op in ops:
-            if isinstance(op, dict):
-                # Type narrowing: op is dict, isinstance provides type narrowing to ConfigurationDict
-                # build() expects GeneralValueType - check if current matches
-                op_dict: dict[str, t.GeneralValueType] = op
-                # Check if current is GeneralValueType compatible
+            if type(op) is dict:
+                op_dict: dict[str, t.ConfigMapValue] = op
+                # Check if current is PayloadValue compatible
                 if FlextUtilitiesReliability._is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
                 else:
-                    # For non-GeneralValueType, skip build and just pass through
+                    # For non-PayloadValue, skip build and just pass through
                     # This maintains backward compatibility for generic object pipelines
                     pass
             elif callable(op):
@@ -469,15 +463,15 @@ class FlextUtilitiesReliability:
         return current
 
     @staticmethod
-    def _is_general_value_type(value: object) -> TypeGuard[t.GeneralValueType]:
-        """Check if value is compatible with GeneralValueType."""
+    def _is_general_value_type(value: t.ConfigMapValue) -> TypeGuard[t.ConfigMapValue]:
+        """Check if value is compatible with PayloadValue."""
         if value is None:
             return True
-        if isinstance(value, (str, int, float, bool, datetime, Path, BaseModel)):
+        if type(value) in (str, int, float, bool, datetime, Path) or BaseModel in type(value).__mro__:
             return True
-        if isinstance(value, Mapping):
+        if Mapping in type(value).__mro__:
             return True
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        if Sequence in type(value).__mro__ and type(value) not in (str, bytes):
             return True
         return bool(callable(value))
 
@@ -508,7 +502,7 @@ class FlextUtilitiesReliability:
         """
         if mode == "pipe":
 
-            def piped(value: object) -> object:
+            def piped(value: t.ConfigMapValue) -> t.ConfigMapValue:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
 
                 if hasattr(result, "is_success") and hasattr(result, "is_failure"):
@@ -671,14 +665,14 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def match(
-        value: object,
-        *cases: tuple[type[object] | object | Callable[[object], bool], object],
-        default: object | None = None,
-    ) -> object:
+        value: t.ConfigMapValue,
+        *cases: tuple[type | t.ConfigMapValue | Callable[[object], bool], object],
+        default: t.ConfigMapValue | None = None,
+    ) -> t.ConfigMapValue:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:
-        1. Type matching: `(str, lambda s: s.upper())` - match if isinstance(value, str)
+         1. Type matching: `(str, lambda s: s.upper())` - match if type(value) is str
         2. Value matching: `("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD")` - match if value == "REDACTED_LDAP_BIND_PASSWORD"
         3. Predicate matching: `(lambda x: x > 10, "big")` - match if predicate returns True
 
@@ -715,17 +709,14 @@ class FlextUtilitiesReliability:
 
         """
         for pattern, result in cases:
-            # Type match - isinstance check
-            if isinstance(pattern, type) and isinstance(value, pattern):
+            if type(pattern) is type and pattern in type(value).__mro__:
                 return result(value) if callable(result) else result
-            # Value match - equality check
             if pattern == value:
                 return result(value) if callable(result) else result
-            # Predicate match - callable that returns bool (exclude types)
-            if callable(pattern) and not isinstance(pattern, type):
+            if callable(pattern) and type(pattern) is not type:
                 try:
                     pred_result = pattern(value)
-                    if isinstance(pred_result, bool) and pred_result:
+                    if type(pred_result) is bool and pred_result:
                         return result(value) if callable(result) else result
                 except (ValueError, TypeError, AttributeError):
                     pass

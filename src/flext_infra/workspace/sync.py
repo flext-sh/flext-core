@@ -52,8 +52,8 @@ class SyncService(FlextService[im.SyncResult]):
 
     def sync(
         self,
-        _source: object = None,
-        _target: object = None,
+        _source: str | None = None,
+        _target: str | None = None,
         *,
         project_root: Path | None = None,
         config: im.BaseMkConfig | None = None,
@@ -64,8 +64,8 @@ class SyncService(FlextService[im.SyncResult]):
         changed, and ensures required .gitignore entries exist.
 
         Args:
-            source: Unused, kept for SyncerProtocol compatibility.
-            target: Unused, kept for SyncerProtocol compatibility.
+            source: Sync source path (protocol signature).
+            target: Sync target path (protocol signature).
             project_root: Project root directory. Required.
             config: Optional base.mk generation configuration.
 
@@ -237,7 +237,7 @@ def main() -> int:
         "--canonical-root",
         type=Path,
         default=None,
-        help="Canonical workspace root (accepted for compatibility)",
+        help="Canonical workspace root",
     )
     args = parser.parse_args()
 

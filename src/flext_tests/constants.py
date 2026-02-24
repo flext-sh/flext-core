@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Final, Literal
 
@@ -43,7 +44,7 @@ class FlextTestsConstants(FlextConstants):
                 "mongodb",
                 "elasticsearch",
             )
-            SHARED_CONTAINERS: Final[dict[str, m.ConfigMap]] = {}
+            SHARED_CONTAINERS: Final[Mapping[str, m.ConfigMap]] = {}
 
             # Test-specific Docker constants
             DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
@@ -489,7 +490,7 @@ class FlextTestsConstants(FlextConstants):
             """Type-safe literal for error handling modes."""
 
             # Extension to format mapping
-            EXT_TO_FMT: Final[dict[str, str]] = {
+            EXT_TO_FMT: Final[Mapping[str, str]] = {
                 ".txt": "text",
                 ".log": "text",
                 ".md": "text",
@@ -1025,7 +1026,7 @@ class FlextTestsConstants(FlextConstants):
                 DECORATORS: Final[int] = 9
 
                 @classmethod
-                def as_dict(cls) -> dict[str, int]:
+                def as_dict(cls) -> Mapping[str, int]:
                     """Get layer hierarchy as dictionary.
 
                     Returns:

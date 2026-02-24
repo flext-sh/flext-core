@@ -121,7 +121,7 @@ def main() -> int:
         "--canonical-root",
         type=Path,
         default=None,
-        help="Canonical workspace root (accepted for compatibility)",
+        help="Canonical workspace root",
     )
 
     # orchestrate subcommand

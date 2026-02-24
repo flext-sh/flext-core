@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from types import ModuleType
 from typing import ClassVar
 
 from pydantic import BaseModel
@@ -121,7 +122,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         ...
         ...     def validate(self, data: t.AcceptableMessageType) -> r[bool]:
         ...         # Custom validation logic
-        ...         if not isinstance(data, UserCommand):
+        ...         if not (UserCommand in type(data).__mro__):
         ...             return r[bool].fail("Invalid message type")
         ...         return r[bool].ok(True)
     """
@@ -203,14 +204,14 @@ class FlextHandlers[MessageT_contra, ResultT](
     def create_from_callable(
         cls,
         handler_callable: Callable[
-            [t.GeneralValueType],
-            t.GeneralValueType,
+            [t.ScalarValue],
+            t.ScalarValue,
         ],
         handler_name: str | None = None,
         handler_type: c.Cqrs.HandlerType | None = None,
         mode: c.Cqrs.HandlerType | str | None = None,
         handler_config: m.Handler | None = None,
-    ) -> FlextHandlers[t.GeneralValueType, t.GeneralValueType]:
+    ) -> FlextHandlers[t.ScalarValue, t.ScalarValue]:
         """Create a handler instance from a callable function.
 
         Factory method that wraps a callable function in a h instance,
@@ -224,7 +225,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             handler_config: Optional m.Handler configuration
 
         Returns:
-            FlextHandlers[t.GeneralValueType, t.GeneralValueType]: Handler instance wrapping the callable
+            FlextHandlers[t.ConfigMapValue, t.ConfigMapValue]: Handler instance wrapping the callable
 
         Raises:
             e.ValidationError: If invalid mode is provided
@@ -239,20 +240,20 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         # Create a concrete handler class dynamically
         class CallableHandler(
-            FlextHandlers[t.GeneralValueType, t.GeneralValueType],
+            FlextHandlers[t.ScalarValue, t.ScalarValue],
         ):
             """Dynamic handler created from callable."""
 
             _handler_fn: Callable[
-                [t.GeneralValueType],
-                t.GeneralValueType,
+                [t.ScalarValue],
+                t.ScalarValue,
             ]
 
             def __init__(
                 self,
                 handler_fn: Callable[
-                    [t.GeneralValueType],
-                    t.GeneralValueType,
+                    [t.ScalarValue],
+                    t.ScalarValue,
                 ],
                 config: m.Handler | None = None,
             ) -> None:
@@ -260,30 +261,16 @@ class FlextHandlers[MessageT_contra, ResultT](
                 super().__init__(config=config)
                 self._handler_fn = handler_fn
 
-            def handle(self, message: object) -> r[t.GeneralValueType]:
+            def handle(self, message: t.ScalarValue) -> r[t.ScalarValue]:
                 """Execute the wrapped callable."""
                 try:
-                    # Use type assertion after validation
-                    if not u.is_general_value_type(message):
-                        return r[t.GeneralValueType].fail(
-                            "Message is not a valid GeneralValueType",
-                        )
-                    # Type guard already validated - use isinstance for narrowing
-                    if isinstance(
-                        message,
-                        (str, int, float, bool, type(None), dict, list, BaseModel),
-                    ):
-                        result = self._handler_fn(message)
-                    else:
-                        return r[t.GeneralValueType].fail(
-                            f"Unexpected message type: {type(message).__name__}",
-                        )
-                    if isinstance(result, r):
-                        return result
-                    return r[t.GeneralValueType].ok(result)
+                    result = self._handler_fn(message)
+                    if u.is_type(result, r):
+                        return r[t.ScalarValue].ok(result.value)
+                    return r[t.ScalarValue].ok(result)
                 except Exception as exc:
                     # Wrap exception in r
-                    return r[t.GeneralValueType].fail(str(exc))
+                    return r[t.ScalarValue].fail(str(exc))
 
         # Use handler_config if provided
         if handler_config is not None:
@@ -293,14 +280,14 @@ class FlextHandlers[MessageT_contra, ResultT](
         resolved_type: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND
         if mode is not None:
             # Handle both HandlerType enum and string (HandlerType is StrEnum, so values are strings)
-            if isinstance(mode, c.Cqrs.HandlerType):
-                resolved_type = mode
+            if u.is_type(mode, c.Cqrs.HandlerType):
+                resolved_type = c.Cqrs.HandlerType(mode.value)
             elif mode not in u.values(c.Cqrs.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
             else:
                 # Type narrowing: mode is valid string, HandlerType constructor accepts it
-                resolved_type = c.Cqrs.HandlerType(mode)
+                resolved_type = c.Cqrs.HandlerType(str(mode))
         elif handler_type is not None:
             resolved_type = handler_type
 
@@ -477,14 +464,14 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Check accepted message types if specified
         if self._accepted_message_types:
             message_type = type(message)
-            if not any(isinstance(message, t) for t in self._accepted_message_types):
+            if not any(type(message) is t or t in type(message).__mro__ for t in self._accepted_message_types):
                 msg = f"Message type {message_type.__name__} not in accepted types"
                 return r[bool].fail(msg)
 
         # Delegate to base validation
         return self.validate(message)
 
-    def can_handle(self, message_type: type[object]) -> bool:
+    def can_handle(self, message_type: type) -> bool:
         """Check if handler can handle the specified message type.
 
         Determines message type compatibility using duck typing and class hierarchy.
@@ -514,11 +501,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             # Flexible handler - accepts any message type
             return True
 
-        # Strict handler - check type compatibility
-        return issubclass(
-            message_type,
-            self._expected_message_type,
-        )
+        return self._expected_message_type in message_type.__mro__
 
     @property
     def mode(self) -> c.Cqrs.HandlerType:
@@ -536,7 +519,7 @@ class FlextHandlers[MessageT_contra, ResultT](
     # These methods are available via multiple inheritance from the mixin classes
 
     @staticmethod
-    def _extract_message_id(message: t.GeneralValueType) -> str | None:
+    def _extract_message_id(message: t.ScalarValue) -> str | None:
         """Extract message ID from message object without type narrowing.
 
         Helper method to avoid type narrowing issues when checking message
@@ -549,7 +532,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             Message ID string or None if not available
 
         """
-        if isinstance(message, dict):
+        if u.is_type(message, dict):
             # Try command_id first, then message_id using extract
             cmd_id_result = u.extract(
                 message,
@@ -572,7 +555,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             )
         # Use u.Mapper.get() for concise attribute extraction
         # Check if message is accessible data (BaseModel or dict)
-        if isinstance(message, (dict, BaseModel)):
+        if u.is_type(message, (dict, BaseModel)):
             if hasattr(message, "command_id"):
                 cmd_id = u.Mapper.get(message, "command_id", default="") or ""
                 return str(cmd_id) if cmd_id else None
@@ -696,7 +679,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
         exec_time: float = (
-            exec_time_value if isinstance(exec_time_value, float) else 0.0
+            exec_time_value if type(exec_time_value) is float else 0.0
         )
         # Mixin record_metric() returns r[bool], assign to _ to indicate intentional
         _ = self.record_metric(
@@ -732,7 +715,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     @staticmethod
     def handler(
-        command: type[object],
+        command: type,
         *,
         priority: int = c.Discovery.DEFAULT_PRIORITY,
         timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
@@ -853,7 +836,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         @staticmethod
         def scan_module(
-            module: object,
+            module: ModuleType,
         ) -> list[tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
@@ -892,9 +875,11 @@ class FlextHandlers[MessageT_contra, ResultT](
                         captured_fn = func
 
                         def narrowed_func(
-                            message: t.GeneralValueType,
-                            fn: object = captured_fn,
-                        ) -> t.GeneralValueType:
+                            message: t.ScalarValue,
+                            fn: Callable[
+                                [t.ScalarValue], t.ScalarValue
+                            ] = captured_fn,
+                        ) -> t.ScalarValue:
                             if callable(fn):
                                 return u.narrow_to_general_value_type(fn(message))
                             return ""
@@ -914,7 +899,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             )
 
         @staticmethod
-        def has_handlers_module(module: object) -> bool:
+        def has_handlers_module(module: ModuleType) -> bool:
             """Check if module has any handler-decorated functions.
 
             Efficiently checks if a module contains any functions marked with

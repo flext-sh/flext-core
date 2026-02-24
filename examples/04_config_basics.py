@@ -361,11 +361,11 @@ def main() -> FlextResult[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        patterns_count = len(patterns) if isinstance(patterns, Sequence) else 0
-        features_count = len(features) if isinstance(features, Sequence) else 0
-        advanced_count = (
-            len(advanced_features) if isinstance(advanced_features, Sequence) else 0
-        )
+        def _is_sequence(x: object) -> bool:
+            return type(x) in (list, tuple) or (hasattr(x, "__getitem__") and hasattr(x, "__len__"))
+        patterns_count = len(patterns) if _is_sequence(patterns) else 0
+        features_count = len(features) if _is_sequence(features) else 0
+        advanced_count = len(advanced_features) if _is_sequence(advanced_features) else 0
 
         print(f"\n✅ Demonstrated {patterns_count} configuration patterns")
         print(f"✅ Used {features_count} configuration features")

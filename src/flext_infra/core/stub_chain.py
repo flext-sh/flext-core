@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 from flext_infra.models import im
@@ -41,7 +43,7 @@ class StubSupplyChain:
         self,
         project_dir: Path,
         workspace_root: Path,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
         """Analyze a project for missing stubs and type packages.
 
         Runs mypy for hints and pyrefly for missing imports, then
@@ -68,16 +70,16 @@ class StubSupplyChain:
             ]
             unresolved = [m for m in external if not self._stub_exists(m, root)]
 
-            result: dict[str, object] = {
+            result: MutableMapping[str, t.ConfigMapValue] = {
                 "project": proj.name,
                 "mypy_hints": mypy_hints,
                 "internal_missing": internal,
                 "unresolved_missing": unresolved,
                 "total_missing": len(missing_imports),
             }
-            return r[dict[str, object]].ok(result)
+            return r[Mapping[str, t.ConfigMapValue]].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ConfigMapValue]].fail(
                 f"stub analysis failed for {project_dir.name}: {exc}",
             )
 
@@ -109,11 +111,11 @@ class StubSupplyChain:
                 data = result.value
                 internal = data.get("internal_missing", [])
                 unresolved = data.get("unresolved_missing", [])
-                if isinstance(internal, list) and internal:
+                if type(internal) is list and internal:
                     violations.append(
                         f"{proj.name}: {len(internal)} internal missing imports",
                     )
-                if isinstance(unresolved, list) and unresolved:
+                if type(unresolved) is list and unresolved:
                     violations.append(
                         f"{proj.name}: {len(unresolved)} unresolved imports",
                     )
@@ -132,7 +134,7 @@ class StubSupplyChain:
                 f"stub validation failed: {exc}",
             )
 
-    def snapshot_tree(self, root: Path) -> FlextResult[dict[str, str]]:
+    def snapshot_tree(self, root: Path) -> FlextResult[Mapping[str, str]]:
         """Snapshot stub tree files to SHA-256 digests.
 
         Args:
@@ -144,15 +146,15 @@ class StubSupplyChain:
         """
         try:
             if not root.exists():
-                return r[dict[str, str]].ok({})
-            snapshot: dict[str, str] = {}
+                return r[Mapping[str, str]].ok({})
+            snapshot: MutableMapping[str, str] = {}
             for path in sorted(root.rglob("*.pyi")):
                 rel = str(path.relative_to(root))
                 digest = hashlib.sha256(path.read_bytes()).hexdigest()
                 snapshot[rel] = digest
-            return r[dict[str, str]].ok(snapshot)
+            return r[Mapping[str, str]].ok(snapshot)
         except OSError as exc:
-            return r[dict[str, str]].fail(f"snapshot failed: {exc}")
+            return r[Mapping[str, str]].fail(f"snapshot failed: {exc}")
 
     def _run_mypy_hints(self, project_dir: Path) -> list[str]:
         """Run mypy and extract types-package hints."""

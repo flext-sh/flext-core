@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping, MutableMapping
 
 from flext_tests.factories import tt
 from flext_tests.typings import t
@@ -59,8 +60,8 @@ class FlextTestsDomains:
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **overrides: t.Tests.PayloadValue,
+    ) -> MutableMapping[str, t.Tests.PayloadValue]:
         """Create test configuration data using factories.
 
         Args:
@@ -78,8 +79,7 @@ class FlextTestsDomains:
             environment=environment,
         )
         # Extract attributes using getattr with defaults for type safety
-        # Use dict[str, t.GeneralValueType] directly instead of dict[str, t.GeneralValueType]
-        base_config: dict[str, t.GeneralValueType] = {
+        base_config: MutableMapping[str, t.Tests.PayloadValue] = {
             "service_type": getattr(config_result, "service_type", service_type),
             "environment": getattr(config_result, "environment", environment),
             "debug": getattr(config_result, "debug", False),
@@ -97,8 +97,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **custom_fields: t.Tests.PayloadValue,
+    ) -> MutableMapping[str, t.Tests.PayloadValue]:
         """Create test payload data.
 
         Args:
@@ -109,7 +109,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: dict[str, dict[str, t.GeneralValueType]] = {
+        payloads: MutableMapping[str, Mapping[str, t.Tests.PayloadValue]] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -140,8 +140,8 @@ class FlextTestsDomains:
         status: str = "success",
         *,
         include_data: bool | None = None,
-        **custom_fields: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **custom_fields: t.Tests.PayloadValue,
+    ) -> MutableMapping[str, t.Tests.PayloadValue]:
         """Create API response test data.
 
         Args:
@@ -153,7 +153,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: dict[str, t.GeneralValueType] = {
+        response: MutableMapping[str, t.Tests.PayloadValue] = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -192,8 +192,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+        **config: t.Tests.PayloadValue,
+    ) -> MutableMapping[str, t.Tests.PayloadValue]:
         """Create test service configuration.
 
         Args:
@@ -204,7 +204,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: dict[str, t.GeneralValueType] = {
+        base_service: MutableMapping[str, t.Tests.PayloadValue] = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,
@@ -214,7 +214,7 @@ class FlextTestsDomains:
         return base_service
 
     @staticmethod
-    def create_user(**overrides: str | bool) -> dict[str, str | bool]:
+    def create_user(**overrides: str | bool) -> MutableMapping[str, str | bool]:
         """Create test user data using factories.
 
         Args:
@@ -235,7 +235,7 @@ class FlextTestsDomains:
         )
         # Type narrowing: tt.model("user") returns m.Tests.Factory.User
         # Extract attributes safely using getattr
-        user: dict[str, str | bool] = {
+        user: MutableMapping[str, str | bool] = {
             "id": getattr(user_model_result, "id", ""),
             "username": str(overrides.get("username", "testuser")),
             "email": getattr(user_model_result, "email", email),
@@ -252,7 +252,7 @@ class FlextTestsDomains:
     def batch_users(
         count: int = 5,
         **user_overrides: str | bool,
-    ) -> list[dict[str, str | bool]]:
+    ) -> list[MutableMapping[str, str | bool]]:
         """Create a batch of test users.
 
         Args:

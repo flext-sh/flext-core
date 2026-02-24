@@ -44,12 +44,13 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.exceptions import e
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -197,9 +198,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: p.HasModelDump | object,
         parameter: str,
-    ) -> tuple[bool, t.GeneralValueType | None]:
+    ) -> tuple[bool, t.ScalarValue | m.ConfigMap | None]:
         """Try to get attribute value from object via hasattr/getattr.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -211,7 +212,7 @@ class FlextUtilitiesConfiguration:
 
         Type Safety:
         - Uses hasattr() before getattr() to avoid AttributeError
-        - Cast to t.GeneralValueType preserves union type safety
+        - Cast to t.ConfigMapValue preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
@@ -230,7 +231,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.GeneralValueType | None]:
+    ) -> tuple[bool, t.ScalarValue | m.ConfigMap | None]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -259,7 +260,7 @@ class FlextUtilitiesConfiguration:
         """
         try:
             obj_dict = obj.model_dump()
-            if FlextUtilitiesGuards.is_type(obj_dict, dict) and parameter in obj_dict:
+            if type(obj_dict) is dict and parameter in obj_dict:
                 return (True, obj_dict[parameter])
         except (AttributeError, TypeError, ValueError):
             pass
@@ -267,9 +268,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: t.GeneralValueType,
+        obj: m.ConfigMap | Mapping[str, t.ScalarValue],
         parameter: str,
-    ) -> tuple[bool, t.GeneralValueType | None]:
+    ) -> tuple[bool, t.ScalarValue | m.ConfigMap | None]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -302,55 +303,10 @@ class FlextUtilitiesConfiguration:
         return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
-    def _try_get_from_duck_model_dump(
-        obj: t.GeneralValueType | p.HasModelDump,
-        parameter: str,
-    ) -> tuple[bool, t.GeneralValueType | None]:
-        """Try to get parameter via duck-typed model_dump method.
-
-        Business Rule: Duck-Typed Pydantic Access (Tertiary Strategy)
-        =============================================================
-        This strategy handles objects that have model_dump() method but don't
-        formally implement the HasModelDump protocol. Use cases:
-        - Third-party Pydantic models not in our type system
-        - Proxy objects wrapping Pydantic models
-        - Objects mimicking Pydantic interface
-
-        Why Duck Typing?
-        - isinstance() check for HasModelDump might miss some valid objects
-        - Dynamic nature of Python allows model_dump without protocol
-        - Backwards compatibility with pre-protocol code
-
-        Safety Checks:
-        - getattr with None default (no AttributeError)
-        - callable() check prevents calling non-callables
-        - Exception handling for any runtime errors
-
-        Args:
-            obj: Object that might have model_dump() method
-            parameter: Field name to retrieve
-
-        Returns:
-            (True, value) if found via model_dump(), (False, None) otherwise
-
-        """
-        model_dump_fn = getattr(obj, "model_dump", None)
-        if model_dump_fn is None or not callable(model_dump_fn):
-            return FlextUtilitiesConfiguration._NOT_FOUND
-        try:
-            model_data = model_dump_fn()
-            if isinstance(model_data, dict) and parameter in model_data:
-                # isinstance narrows to dict, direct access works
-                return (True, model_data[parameter])
-        except (AttributeError, TypeError, ValueError, RuntimeError):
-            pass
-        return FlextUtilitiesConfiguration._NOT_FOUND
-
-    @staticmethod
     def get_parameter(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: p.HasModelDump | m.ConfigMap | Mapping[str, t.ScalarValue],
         parameter: str,
-    ) -> t.GeneralValueType:
+    ) -> t.ScalarValue | m.ConfigMap:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -396,39 +352,26 @@ class FlextUtilitiesConfiguration:
 
         """
         # Strategy 1: HasModelDump protocol
-        if isinstance(obj, p.HasModelDump):
+        if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump", None)):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
                 obj,
                 parameter,
             )
-            if found:
-                # Type narrowing: when found is True, value is t.GeneralValueType (not None)
+            if found and value is not None:
                 return value
 
-        # Strategy 2: Dict-like t.GeneralValueType
-        if isinstance(obj, (str, int, float, bool, type(None), Sequence, Mapping)):
-            obj_general = obj
+        # Strategy 2: Dict-like (Mapping / m.ConfigMap)
+        if (type(obj) is dict) or (hasattr(obj, "keys") and hasattr(obj, "__getitem__")):
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                obj_general,
+                obj,
                 parameter,
             )
-            if found:
-                # Type narrowing: when found is True, value is t.GeneralValueType (not None)
+            if found and value is not None:
                 return value
 
-        # Strategy 3: Object with model_dump method (duck typing)
-        found, value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            obj,
-            parameter,
-        )
-        if found:
-            # Type narrowing: when found is True, value is t.GeneralValueType (not None)
-            return value
-
-        # Strategy 4: Direct attribute access (final fallback)
+        # Strategy 3: Direct attribute access (final fallback)
         found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
-        if found:
-            # Type narrowing: when found is True, attr_val is t.GeneralValueType (not None)
+        if found and attr_val is not None:
             return attr_val
 
         class_name = getattr(type(obj), "__name__", "unknown")
@@ -437,9 +380,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: p.HasModelDump | object,
         parameter: str,
-        value: t.GeneralValueType,
+        value: t.ScalarValue | m.ConfigMap,
     ) -> bool:
         """Set parameter value on a configuration object with validation.
 
@@ -486,7 +429,7 @@ class FlextUtilitiesConfiguration:
             if hasattr(obj_class, "model_fields"):
                 model_fields_dict = getattr(obj_class, "model_fields", {})
                 if (
-                    not FlextUtilitiesGuards.is_type(model_fields_dict, dict)
+                    type(model_fields_dict) is not dict
                     or parameter not in model_fields_dict
                 ):
                     return False
@@ -503,7 +446,7 @@ class FlextUtilitiesConfiguration:
     def get_singleton(
         singleton_class: type,
         parameter: str,
-    ) -> t.GeneralValueType:
+    ) -> t.ScalarValue | m.ConfigMap:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)
@@ -571,7 +514,7 @@ class FlextUtilitiesConfiguration:
     def set_singleton(
         singleton_class: type,
         parameter: str,
-        value: t.GeneralValueType,
+        value: t.ScalarValue | m.ConfigMap,
     ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -638,7 +581,7 @@ class FlextUtilitiesConfiguration:
         )
 
     @staticmethod
-    def validate_config_class(config_class: type[object]) -> tuple[bool, str | None]:
+    def validate_config_class(config_class: type) -> tuple[bool, str | None]:
         """Validate that a configuration class is properly configured.
 
         Business Rule: Pydantic v2 Configuration Class Validation
@@ -651,7 +594,7 @@ class FlextUtilitiesConfiguration:
           This is MANDATORY for all FLEXT configuration classes
 
         Validation Steps:
-        1. Type check implicit (config_class: type[object] in signature)
+        1. Type check implicit (config_class: type in signature)
         2. Check model_config attribute exists
         3. Attempt instantiation to verify default values work
 
@@ -676,8 +619,8 @@ class FlextUtilitiesConfiguration:
 
         """
         try:
-            # config_class: type[object] already guarantees it's a type
-            # No need to check isinstance(config_class, type)
+            # config_class: type already guarantees it's a type
+            # No need to check type(config_class) is type
 
             # Check model_config existence
             class_name = getattr(config_class, "__name__", "UnknownClass")
@@ -697,7 +640,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> dict[str, t.ScalarValue]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -747,7 +690,7 @@ class FlextUtilitiesConfiguration:
         model_class: type[T_Model],
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ScalarValue,
     ) -> FlextRuntime.RuntimeResult[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
@@ -789,7 +732,7 @@ class FlextUtilitiesConfiguration:
                 self,
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
-                **format_kwargs: t.GeneralValueType,
+                **format_kwargs: t.ConfigMapValue,
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)
                 def get_ldif_config_default() -> WriteFormatOptions:
@@ -841,15 +784,15 @@ class FlextUtilitiesConfiguration:
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
-            model_fields: dict[str, t.GeneralValueType] = (
+            model_fields: dict[str, t.ScalarValue] = (
                 model_fields_attr
-                if FlextUtilitiesGuards.is_type(model_fields_attr, dict)
+                if type(model_fields_attr) is dict
                 else {}
             )
             valid_field_names = set(model_fields.keys())
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs: dict[str, t.GeneralValueType] = {}
+            valid_kwargs: dict[str, t.ScalarValue] = {}
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():
@@ -906,7 +849,7 @@ class FlextUtilitiesConfiguration:
     def register_singleton(
         container: p.DI,
         name: str,
-        instance: t.GeneralValueType,
+        instance: t.ScalarValue | m.ConfigMap | m.Dict,
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -933,7 +876,7 @@ class FlextUtilitiesConfiguration:
     def register_factory(
         container: p.DI,
         name: str,
-        factory: Callable[[], t.GeneralValueType],
+        factory: Callable[[], t.ScalarValue | m.ConfigMap | m.Dict],
         *,
         _cache: bool = False,
     ) -> r[bool]:
@@ -965,7 +908,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def bulk_register(
         container: p.DI,
-        registrations: Mapping[str, t.GeneralValueType],
+        registrations: Mapping[str, t.ScalarValue | m.ConfigMap | m.Dict],
     ) -> r[int]:
         """Register multiple services at once.
 

@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
@@ -28,7 +26,6 @@ class FlextUtilitiesDomain:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
@@ -56,7 +53,7 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if not isinstance(entity_b, entity_a.__class__):
+        if type(entity_b) is not type(entity_a):
             return False
 
         id_a = getattr(entity_a, id_attr, None)
@@ -94,8 +91,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.GeneralValueType,
-        obj_b: t.GeneralValueType,
+        obj_a: t.ConfigMapValue,
+        obj_b: t.ConfigMapValue,
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -115,7 +112,7 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if not isinstance(obj_b, obj_a.__class__):
+        if type(obj_b) is not type(obj_a):
             return False
 
         # Try __dict__ comparison
@@ -126,7 +123,7 @@ class FlextUtilitiesDomain:
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.GeneralValueType) -> int:
+    def hash_value_object_by_value(obj: t.ConfigMapValue) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -146,12 +143,12 @@ class FlextUtilitiesDomain:
         try:
             obj_dict = obj.__dict__
             # Filter out non-hashable values and convert to tuple
-            hashable_items: list[tuple[str, t.GeneralValueType]] = []
+            hashable_items: list[tuple[str, t.ConfigMapValue]] = []
             for key, value in sorted(obj_dict.items()):
-                # Check for types that are both Hashable and GeneralValueType
-                if isinstance(value, (str, int, float, bool, type(None))):
+                # Check for types that are both Hashable and PayloadValue
+                if type(value) in (str, int, float, bool, type(None)):
                     hashable_items.append((key, value))
-                elif isinstance(value, Hashable):
+                elif hasattr(value, "__hash__") and type(value) in (str, int, float, bool, tuple, frozenset):
                     # Other hashables get converted to repr string
                     hashable_items.append((key, repr(value)))
                 else:
@@ -165,7 +162,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: t.GeneralValueType,
+        entity: t.ConfigMapValue,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Validate that entity has a non-None unique ID.
@@ -182,7 +179,7 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: t.GeneralValueType) -> bool:
+    def validate_value_object_immutable(obj: t.ConfigMapValue) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:

@@ -260,7 +260,7 @@ def main() -> None:
         data = result.value
         components = data["components_integrated"]
         total = data["total_components"]
-        if isinstance(components, Sequence) and isinstance(total, int):
+        if (type(components) in (list, tuple) or (hasattr(components, "__getitem__") and hasattr(components, "__len__"))) and type(total) is int:
             components_list = list(components)
             print(f"\n✅ Integrated {total} components")
             print(f"✅ Demonstrated {len(components_list)} integration patterns")

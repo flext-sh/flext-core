@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, MutableMapping
 from datetime import UTC, datetime
 from typing import Annotated, Literal, Self
 from urllib.parse import urlparse
@@ -50,11 +50,11 @@ def ensure_utc_datetime(v: datetime | None) -> datetime | None:
     return v
 
 
-def normalize_to_list(v: t.GeneralValueType) -> list[t.GeneralValueType]:
-    """Normalize value to list format."""
-    if isinstance(v, list):
+def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
+    """Normalize value to list format. Fixed types only."""
+    if type(v) is list:
         return v
-    if isinstance(v, (tuple, set)):
+    if type(v) in (tuple, set):
         return list(v)
     return [v]
 
@@ -82,7 +82,9 @@ ValidatedString = Annotated[str, AfterValidator(validate_non_empty_string)]
 UTCDatetime = Annotated[datetime, AfterValidator(ensure_utc_datetime)]
 PositiveInt = Annotated[int, AfterValidator(validate_positive_number)]
 PositiveFloat = Annotated[float, AfterValidator(validate_positive_number)]
-NormalizedList = Annotated[list[t.GeneralValueType], BeforeValidator(normalize_to_list)]
+NormalizedList = Annotated[
+    list[t.GuardInputValue], BeforeValidator(normalize_to_list)
+]
 
 
 # Advanced custom types with PlainValidator
@@ -129,31 +131,29 @@ UUIDStr = Annotated[str, PlainValidator(validate_uuid_string)]
 
 
 # Complex validators for nested structures
-def validate_config_dict(v: object) -> dict[str, t.GeneralValueType]:
-    """Validate configuration dictionary structure."""
-    if not isinstance(v, dict):
-        msg = "Configuration must be a dictionary"
-        raise TypeError(msg)
-
-    # Check for reserved keys
+def validate_config_dict(
+    v: Mapping[str, t.GuardInputValue],
+) -> Mapping[str, t.GuardInputValue]:
+    """Validate configuration dictionary structure. Returns dict for model storage."""
+    out: dict[str, t.GuardInputValue] = {}
     for key in v:
         if key.startswith("_"):
             msg = f"Keys starting with '_' are reserved: {key}"
             raise ValueError(msg)
+        out[key] = v[key]
+    return out
 
-    return v
 
-
-def validate_tags_list(v: object) -> list[str]:
+def validate_tags_list(v: t.GuardInputValue) -> list[str]:
     """Validate and normalize tags list."""
-    if not isinstance(v, list):
+    if type(v) is not list:
         msg = "Tags must be a list"
         raise TypeError(msg)
 
     normalized: list[str] = []
     seen: set[str] = set()
     for tag in v:
-        if not isinstance(tag, str):
+        if type(tag) is not str:
             msg = f"Tag must be string, got {type(tag)}"
             raise TypeError(msg)
         clean_tag = tag.strip().lower()
@@ -166,7 +166,7 @@ def validate_tags_list(v: object) -> list[str]:
 
 # Advanced custom types
 ValidatedConfigDict = Annotated[
-    dict[str, t.GeneralValueType], PlainValidator(validate_config_dict)
+    Mapping[str, t.GuardInputValue], PlainValidator(validate_config_dict)
 ]
 NormalizedTags = Annotated[list[str], PlainValidator(validate_tags_list)]
 
@@ -211,33 +211,24 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
 
         @field_validator("attributes", mode="before")
         @classmethod
         def _validate_attributes(
             cls,
-            value: t.GeneralValueType | t.Dict | None,
-        ) -> dict[str, t.GeneralValueType]:
+            value: Mapping[str, t.MetadataAttributeValue] | None,
+        ) -> Mapping[str, t.MetadataAttributeValue]:
             if value is None:
                 return {}
-            if isinstance(value, BaseModel):
-                dumped = value.model_dump()
-                if isinstance(dumped, Mapping):
-                    return validate_config_dict({str(k): v for k, v in dumped.items()})
-                msg = (
-                    "attributes BaseModel must dump to mapping, "
-                    f"got {type(dumped).__name__}"
-                )
-                raise TypeError(msg)
-            if isinstance(value, t.Dict):
-                return validate_config_dict({str(k): v for k, v in value.items()})
-            if isinstance(value, Mapping):
-                return validate_config_dict({str(k): v for k, v in value.items()})
-            msg = (
-                f"attributes must be dict-like or BaseModel, got {type(value).__name__}"
-            )
-            raise TypeError(msg)
+            result: dict[str, t.MetadataAttributeValue] = {
+                str(k): v for k, v in value.items()
+            }
+            for key in result:
+                if key.startswith("_"):
+                    msg = f"Keys starting with '_' are reserved: {key}"
+                    raise ValueError(msg)
+            return result
 
     # Command message type
     class CommandMessage(BaseModel):
@@ -279,7 +270,7 @@ class FlextModelFoundation:
         """Success result for discriminated union."""
 
         result_type: Literal["success"] = "success"
-        value: t.GeneralValueType
+        value: t.GuardInputValue
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )
@@ -298,7 +289,7 @@ class FlextModelFoundation:
         """Partial result for discriminated union."""
 
         result_type: Literal["partial"] = "partial"
-        value: t.GeneralValueType
+        value: t.GuardInputValue
         warnings: list[str] = Field(default_factory=list)
         partial_success_rate: float
 
@@ -312,7 +303,7 @@ class FlextModelFoundation:
         """Valid validation outcome."""
 
         outcome_type: Literal["valid"] = "valid"
-        validated_data: t.GeneralValueType
+        validated_data: t.GuardInputValue
         validation_time_ms: float
 
     # Invalid outcome type
@@ -328,7 +319,7 @@ class FlextModelFoundation:
         """Warning validation outcome."""
 
         outcome_type: Literal["warning"] = "warning"
-        validated_data: t.GeneralValueType
+        validated_data: t.GuardInputValue
         warnings: list[str]
         validation_time_ms: float
 
@@ -379,7 +370,7 @@ class FlextModelFoundation:
                 bool: True if models are equal by value, False otherwise.
 
             """
-            if not isinstance(other, self.__class__):
+            if type(other) is not type(self):
                 return NotImplemented
             return self.model_dump() == other.model_dump()
 
@@ -1012,7 +1003,7 @@ class FlextModelFoundation:
             default_factory=list,
             description="List of categories for this record",
         )
-        labels: dict[str, str] = Field(
+        labels: MutableMapping[str, str] = Field(
             default_factory=dict,
             description="Key-value labels for flexible categorization",
         )
@@ -1033,9 +1024,9 @@ class FlextModelFoundation:
 
         @field_validator("labels")
         @classmethod
-        def validate_labels(cls, v: dict[str, str]) -> dict[str, str]:
+        def validate_labels(cls, v: Mapping[str, str]) -> Mapping[str, str]:
             """Validate labels dictionary."""
-            cleaned = {}
+            cleaned: dict[str, str] = {}
             for key, value in v.items():
                 cleaned_key = key.strip()
                 cleaned_value = value.strip()
@@ -1248,7 +1239,7 @@ class FlextModelFoundation:
 
         def to_dict(
             self, *, exclude_none: bool = True, exclude_unset: bool = False
-        ) -> dict[str, t.GeneralValueType]:
+        ) -> Mapping[str, t.GuardInputValue]:
             """Convert to dictionary with advanced options."""
             return self.model_dump(
                 exclude_none=exclude_none,
@@ -1260,7 +1251,7 @@ class FlextModelFoundation:
             return self.model_dump_json(indent=indent)
 
         @classmethod
-        def from_dict(cls, data: dict[str, t.GeneralValueType]) -> Self:
+        def from_dict(cls, data: Mapping[str, t.GuardInputValue]) -> Self:
             """Create instance from dictionary."""
             return cls.model_validate(data)
 
@@ -1288,11 +1279,11 @@ class FlextModelFoundation:
             return value.isoformat()
 
         @field_serializer("metadata", when_used="json")
-        def serialize_metadata_clean(self, value: t.Dict) -> dict[str, str]:
+        def serialize_metadata_clean(self, value: t.Dict) -> Mapping[str, str]:
             """Serialize metadata with string conversion."""
             return {k: str(v) for k, v in value.root.items()}
 
-        def to_json_multiple_formats(self) -> dict[str, str]:
+        def to_json_multiple_formats(self) -> Mapping[str, str]:
             """Export in multiple JSON formats."""
             return {
                 "iso_timestamps": self.model_dump_json(),
@@ -1340,27 +1331,27 @@ class FlextModelFoundation:
 
             return new_model
 
-        def add_runtime_field(self, name: str, value: t.GeneralValueType) -> None:
+        def add_runtime_field(self, name: str, value: t.GuardInputValue) -> None:
             """Add a field at runtime (stored in __dict__)."""
             setattr(self, name, value)
 
         def get_runtime_field(
-            self, name: str, default: t.GeneralValueType = None
-        ) -> t.GeneralValueType:
+            self, name: str, default: t.GuardInputValue = None
+        ) -> t.GuardInputValue:
             """Get a runtime field value."""
             return getattr(self, name, default)
 
         @classmethod
         def rebuild_with_validator(
-            cls, validator_func: Callable[[t.GeneralValueType], t.GeneralValueType]
+            cls, validator_func: Callable[[t.GuardInputValue], t.GuardInputValue]
         ) -> type[FlextModelFoundation.DynamicRebuildModel]:
             """Rebuild model with additional validator."""
 
             # Create validator function (without decorators)
             def custom_validator(
                 _cls: type,
-                v: t.GeneralValueType,
-            ) -> t.GeneralValueType:
+                v: t.GuardInputValue,
+            ) -> t.GuardInputValue:
                 """Apply custom validator to value field."""
                 return validator_func(v)
 
@@ -1384,16 +1375,16 @@ class FlextModelFoundation:
         )
 
         name: str
-        fields: t.Dict = Field(default_factory=t.Dict)
+        fields: Mapping[str, t.GuardInputValue] = Field(default_factory=dict)
 
         @classmethod
-        def create_dynamic(cls, name: str, **fields: t.GeneralValueType) -> Self:
+        def create_dynamic(cls, name: str, **fields: t.GuardInputValue) -> Self:
             """Create a dynamic model instance using model_construct."""
-            return cls.model_construct(name=name, fields=t.Dict(root=fields))
+            return cls(name=name, fields=fields)
 
-        def add_field(self, key: str, value: t.GeneralValueType) -> None:
+        def add_field(self, key: str, value: t.GuardInputValue) -> None:
             """Add a field dynamically."""
-            self.fields.root[key] = value
+            self.fields[key] = value
 
         def rebuild_with_validation(self) -> Self:
             """Rebuild model with full validation using model_validate."""

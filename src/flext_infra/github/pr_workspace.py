@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 from flext_infra.git import GitService
@@ -175,8 +177,8 @@ class PrWorkspaceManager:
         self,
         repo_root: Path,
         workspace_root: Path,
-        pr_args: dict[str, str],
-    ) -> FlextResult[dict[str, object]]:
+        pr_args: Mapping[str, str],
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Execute a PR operation on a single repository.
 
         Args:
@@ -208,21 +210,21 @@ class PrWorkspaceManager:
         if log_path is not None:
             execution = self._runner.run_to_file(command, log_path)
             if execution.is_failure:
-                return r[dict[str, object]].fail(
+                return r[Mapping[str, t.ScalarValue]].fail(
                     execution.error or "command execution error",
                 )
             exit_code = execution.value
         else:
             execution = self._runner.run_raw(command)
             if execution.is_failure:
-                return r[dict[str, object]].fail(
+                return r[Mapping[str, t.ScalarValue]].fail(
                     execution.error or "command execution error",
                 )
             exit_code = execution.value.exit_code
 
         elapsed = int(time.monotonic() - started)
         status = ic.Status.OK if exit_code == 0 else ic.Status.FAIL
-        return r[dict[str, object]].ok({
+        return r[Mapping[str, t.ScalarValue]].ok({
             "display": display,
             "status": status,
             "elapsed": elapsed,
@@ -239,8 +241,8 @@ class PrWorkspaceManager:
         branch: str = "",
         checkpoint: bool = True,
         fail_fast: bool = False,
-        pr_args: dict[str, str] | None = None,
-    ) -> FlextResult[dict[str, object]]:
+        pr_args: Mapping[str, str] | None = None,
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Run PR operations across workspace repositories.
 
         Args:
@@ -261,7 +263,7 @@ class PrWorkspaceManager:
             projects or [],
         )
         if projects_result.is_failure:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ScalarValue]].fail(
                 projects_result.error or "project resolution failed",
             )
 
@@ -271,7 +273,7 @@ class PrWorkspaceManager:
 
         effective_args = pr_args or {"action": "status", "base": "main"}
         failures = 0
-        results: list[dict[str, object]] = []
+        results: list[Mapping[str, t.ScalarValue]] = []
 
         for repo_root in repos:
             self.checkout_branch(repo_root, branch)
@@ -291,7 +293,7 @@ class PrWorkspaceManager:
                     break
 
         total = len(repos)
-        return r[dict[str, object]].ok({
+        return r[Mapping[str, t.ScalarValue]].ok({
             "total": total,
             "success": total - failures,
             "fail": failures,
@@ -305,7 +307,7 @@ class PrWorkspaceManager:
     @staticmethod
     def _build_root_command(
         repo_root: Path,
-        pr_args: dict[str, str],
+        pr_args: Mapping[str, str],
     ) -> list[str]:
         command = [
             "python",
@@ -339,7 +341,7 @@ class PrWorkspaceManager:
     @staticmethod
     def _build_subproject_command(
         repo_root: Path,
-        pr_args: dict[str, str],
+        pr_args: Mapping[str, str],
     ) -> list[str]:
         command = [
             "make",

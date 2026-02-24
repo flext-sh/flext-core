@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Literal
@@ -55,7 +56,7 @@ class BiMapping[K, V]:
 
     __slots__ = ("_forward", "_inverse")
 
-    def __init__(self, data: dict[K, V]) -> None:
+    def __init__(self, data: Mapping[K, V]) -> None:
         """Initialize bidirectional mapping.
 
         Args:

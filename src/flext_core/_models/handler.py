@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import Annotated, Self
 
 from pydantic import (
@@ -53,8 +54,8 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: object,
-        ) -> object:
+            v: t.GuardInputValue,
+        ) -> t.GuardInputValue:
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
@@ -85,7 +86,7 @@ class FlextModelsHandler:
             description="Message type bound (for explicit mode)",
         )
 
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str) -> t.GuardInputValue:
             return self.model_dump()[key]
 
     class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
@@ -95,10 +96,10 @@ class FlextModelsHandler:
         legacy dictionary-based configuration.
         """
 
-        handler: object = Field(
+        handler: Callable[..., object] | BaseModel = Field(
             description="Handler instance (callable, object, or FlextHandlers)",
         )
-        message_type: t.GeneralValueType | str | type | None = Field(
+        message_type: str | type[object] | None = Field(
             default=None,
             description="Message type to handle (required for explicit mode)",
         )
@@ -123,19 +124,25 @@ class FlextModelsHandler:
                 c.Cqrs.HandlerType.EVENT,
             }
             if v not in allowed:
-                # Allow it to pass if it matches the string value but maybe not the enum constant?
-                # Actually, strictly enforcing enum values is better.
-                # But Cqrs.HandlerTypeLiteral is a literal of strings.
-                return v
+                msg = (
+                    f"Invalid handler_mode '{v}'. "
+                    f"Expected one of: {', '.join(sorted(allowed))}"
+                )
+                raise ValueError(msg)
             return v
 
         @field_validator("handler", mode="before")
         @classmethod
-        def validate_handler_value(cls, v: object) -> object:
-            if not callable(v) and not isinstance(v, BaseModel):
-                msg = f"Handler must be callable or handler instance, got {type(v).__name__}"
-                raise TypeError(msg)
-            return v
+        def validate_handler_value(
+            cls,
+            v: object,
+        ) -> Callable[..., object] | BaseModel:
+            if BaseModel in type(v).__mro__:
+                return v
+            if callable(v):
+                return v
+            msg = f"Handler must be callable or handler instance, got {type(v).__name__}"
+            raise TypeError(msg)
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
@@ -299,7 +306,7 @@ class FlextModelsHandler:
                 >>> context.start_execution()
                 >>> # ... handler executes ...
                 >>> elapsed = context.execution_time_ms
-                >>> isinstance(elapsed, float)
+                >>> type(elapsed) is float
                 True
 
             """
@@ -450,7 +457,7 @@ class FlextModelsHandler:
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
         command: Annotated[
-            type[object],
+            type,
             Field(
                 description="Command type this handler processes",
             ),

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, override
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
+from flext_core.typings import t
 from jinja2 import (
     Environment,
     FileSystemLoader,
@@ -51,7 +53,7 @@ class TemplateEngine(FlextService[str]):
     def render_all(self, config: im.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
-        context: dict[str, object] = {
+        context: Mapping[str, t.ConfigMapValue] = {
             "config": active_config,
             "lint_gates_csv": ",".join(active_config.lint_gates),
         }

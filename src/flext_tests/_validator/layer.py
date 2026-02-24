@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
@@ -28,8 +29,8 @@ class FlextValidatorLayer:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
-        layer_hierarchy: dict[str, int] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
+        layer_hierarchy: Mapping[str, int] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for layer violations.
 
@@ -62,8 +63,8 @@ class FlextValidatorLayer:
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
-        hierarchy: dict[str, int],
+        approved: Mapping[str, list[str]],
+        hierarchy: Mapping[str, int],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single file for layer violations."""
         if u.Tests.Validator.is_approved("LAYER-001", file_path, approved):
@@ -89,7 +90,7 @@ class FlextValidatorLayer:
 
         # Check all imports
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
+            if type(node) is ast.ImportFrom and node.module:
                 imported_module = cls._extract_module_name(node.module)
                 imported_layer = hierarchy.get(imported_module)
 

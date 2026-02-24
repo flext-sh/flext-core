@@ -22,10 +22,12 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Mapping
+from types import MappingProxyType
 
 _MIN_ARGV = 2
 
-_GROUPS: dict[str, str] = {
+_GROUPS: Mapping[str, str] = MappingProxyType({
     "basemk": "flext_infra.basemk.__main__",
     "check": "flext_infra.check.__main__",
     "core": "flext_infra.core.__main__",
@@ -35,7 +37,7 @@ _GROUPS: dict[str, str] = {
     "maintenance": "flext_infra.maintenance.__main__",
     "release": "flext_infra.release.__main__",
     "workspace": "flext_infra.workspace.__main__",
-}
+})
 
 
 def _print_help() -> None:
@@ -43,7 +45,7 @@ def _print_help() -> None:
         "Usage: python -m flext_infra <group> [subcommand] [args...]\n\n"
     )
     _ = sys.stdout.write("Groups:\n")
-    descriptions: dict[str, str] = {
+    descriptions: Mapping[str, str] = {
         "basemk": "Base.mk template generation",
         "check": "Lint gates and pyrefly config management",
         "core": "Infrastructure validators and diagnostics",

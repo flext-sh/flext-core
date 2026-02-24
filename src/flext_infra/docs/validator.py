@@ -170,9 +170,9 @@ class DocValidator:
             )
             docs_validation = payload.get("docs_validation", {})
             configured = docs_validation.get("required_skills", [])
-            if isinstance(configured, list):
+            if type(configured) is list:
                 required = [
-                    item for item in configured if isinstance(item, str) and item
+                    item for item in configured if type(item) is str and item
                 ]
         if not required:
             required = ["rules-docs", "scripts-maintenance", "readme-standardization"]

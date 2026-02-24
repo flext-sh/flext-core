@@ -10,10 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from xml.etree import ElementTree as ET  # noqa: S405
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 
@@ -41,7 +43,7 @@ class PytestDiagExtractor:
     """Extracts pytest diagnostics from JUnit XML and log files.
 
     Parses JUnit XML for structured failure/error/skip/timing data
-    and falls back to regex-based log parsing when XML is unavailable.
+    and uses regex-based log parsing when XML is unavailable.
     """
 
     _ENCODING = ic.Encoding.DEFAULT
@@ -50,7 +52,7 @@ class PytestDiagExtractor:
         self,
         junit_path: Path,
         log_path: Path,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
         """Extract diagnostics from JUnit XML and pytest log.
 
         Args:
@@ -72,13 +74,13 @@ class PytestDiagExtractor:
 
             xml_parsed = self._parse_xml(junit_path, diag)
             if not xml_parsed:
-                self._parse_log_fallback(lines, diag)
+                self._parse_log_into_diag(lines, diag)
 
             self._extract_warnings(lines, diag)
             if not diag.slow_entries:
                 self._extract_slow_from_log(lines, diag)
 
-            result: dict[str, object] = {
+            result: MutableMapping[str, t.ConfigMapValue] = {
                 "failed_count": len(diag.failed_cases),
                 "error_count": len(diag.error_traces),
                 "warning_count": len(diag.warning_lines),
@@ -89,9 +91,9 @@ class PytestDiagExtractor:
                 "skip_cases": diag.skip_cases,
                 "slow_entries": diag.slow_entries,
             }
-            return r[dict[str, object]].ok(result)
+            return r[Mapping[str, t.ConfigMapValue]].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ConfigMapValue]].fail(
                 f"pytest diagnostics extraction failed: {exc}",
             )
 
@@ -155,7 +157,7 @@ class PytestDiagExtractor:
         return True
 
     @staticmethod
-    def _parse_log_fallback(lines: list[str], diag: _DiagResult) -> None:
+    def _parse_log_into_diag(lines: list[str], diag: _DiagResult) -> None:
         """Parse pytest log output for failures/skips when XML unavailable."""
         diag.failed_cases = [
             line for line in lines if re.search(r"(^FAILED |::.* FAILED( |$))", line)

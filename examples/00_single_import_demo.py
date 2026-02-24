@@ -33,6 +33,7 @@ from flext_core import (
     e,
     m,
     r,
+    t,
     u,
 )
 
@@ -66,10 +67,10 @@ def validate_transform_user(
     name_value = data.get("name")
     email_value = data.get("email")
 
-    # Validate and extract with type narrowing
-    if not isinstance(name_value, str) or not name_value:
+    # Validate and extract with fixed types
+    if type(name_value) is not str or not name_value:
         return r[UserProfile].fail("Name is required and must be a string")
-    if not isinstance(email_value, str) or not email_value:
+    if type(email_value) is not str or not email_value:
         return r[UserProfile].fail("Email is required and must be a string")
 
     name: str = name_value
@@ -210,7 +211,7 @@ def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     # Create test data and perform operations with railway pattern (DRY + SRP)
     correlation_id = u.generate("correlation")
-    test_obj: m.ConfigMap = {
+    test_obj: t.ConfigMap = {
         "unique_id": correlation_id,
         "test": True,
     }

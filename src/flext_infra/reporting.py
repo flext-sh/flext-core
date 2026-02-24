@@ -9,10 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 _REPORTS_DIR = ".reports"
 
@@ -59,7 +60,7 @@ class ReportingService:
 
     def report(
         self,
-        results: Sequence[FlextResult[object]],
+        results: Sequence[FlextResult[Mapping[str, t.ScalarValue]]],
     ) -> FlextResult[Path]:
         """Generate a report from a sequence of results.
 

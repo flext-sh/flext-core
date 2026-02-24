@@ -12,8 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, Self, TypeGuard, cast, overload
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from typing import Literal, Self, TypeGuard, overload
 
 from flext_core import FlextResult as r
 from flext_core._models.entity import FlextModelsEntity
@@ -73,7 +73,7 @@ class FlextTestsBuilders:
     # CRITICAL: Every instance __init__ MUST set _data to a dict
     _data: t.Tests.Builders.BuilderDict
 
-    def __init__(self, **data: t.GeneralValueType) -> None:
+    def __init__(self, **data: t.Tests.PayloadValue) -> None:
         """Initialize builder with optional initial data."""
         # Initialize without inheritance
         # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
@@ -105,7 +105,7 @@ class FlextTestsBuilders:
         self,
         key: str,
         value: t.Tests.Builders.BuilderValue | None = None,
-        **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by AddParams
+        **kwargs: t.Tests.PayloadValue,  # Accept payload values - validated by AddParams
     ) -> Self:
         """Add data to builder with smart type inference.
 
@@ -153,17 +153,17 @@ class FlextTestsBuilders:
 
         """
         # Convert kwargs to validated model using FlextUtilities
-        # Convert value to GeneralValueType for storage
+        # Convert value to payload value for storage
         # Builders store DATA only - use to_result() for FlextResult
-        value_for_kwargs: t.GeneralValueType = None
+        value_for_kwargs: t.Tests.PayloadValue = None
 
         if value is None:
             value_for_kwargs = None
-        elif isinstance(value, (str, int, float, bool, BaseModel)):
+        elif type(value) in (str, int, float, bool) or BaseModel in type(value).__mro__:
             value_for_kwargs = value
-        elif isinstance(value, (list, tuple)):
+        elif type(value) in (list, tuple):
             value_for_kwargs = list(value)
-        elif isinstance(value, dict):
+        elif type(value) is dict:
             value_for_kwargs = dict(value)
         else:
             # Other types: convert to string representation
@@ -180,7 +180,7 @@ class FlextTestsBuilders:
             raise ValueError(error_msg)
         params = params_result.value
 
-        resolved_value: t.GeneralValueType = None
+        resolved_value: t.Tests.PayloadValue = None
 
         # Priority 2: FlextResult success (result_ok)
         # Store as data with metadata - result wrapping happens at to_result() time
@@ -237,7 +237,7 @@ class FlextTestsBuilders:
                     u.Tests.DomainHelpers.create_test_value_object_instance(
                         data=str(data_val) if data_val else "",
                         count=int(count_val)
-                        if isinstance(count_val, (int, float))
+                        if type(count_val) in (int, float)
                         else 1,
                         value_class=cls_type,
                     )
@@ -255,10 +255,9 @@ class FlextTestsBuilders:
                 else:
                     instance = cls_type.__call__()
                 # Type narrow: dynamic class instantiation results are BuilderValue
-                # BaseModel subclasses, primitives, sequences all satisfy BuilderValue
-                if isinstance(
-                    instance,
-                    (str, int, float, bool, type(None), BaseModel, list, dict),
+                if (
+                    type(instance) in (str, int, float, bool, type(None), list, dict)
+                    or BaseModel in type(instance).__mro__
                 ):
                     resolved_value = instance
                 else:
@@ -278,7 +277,7 @@ class FlextTestsBuilders:
 
         # Priority 9: Entries with transformation/filtering
         elif params.entries is not None:
-            entries_processed: dict[str, t.GeneralValueType] = dict(params.entries)
+            entries_processed: dict[str, t.Tests.PayloadValue] = dict(params.entries)
             if params.entries_filter is not None:
                 entries_processed = {
                     k: v
@@ -305,14 +304,11 @@ class FlextTestsBuilders:
             # Filter data_dict to only TestResultValue types
             filtered_dict: dict[str, t.Tests.TestResultValue] = {}
             for dict_key, dict_value in data_dict.items():
-                if isinstance(dict_value, (str, int, float, bool, type(None))):
-                    # isinstance narrows type - direct assignment works
+                if type(dict_value) in (str, int, float, bool, type(None)):
                     filtered_dict[dict_key] = dict_value
-                elif isinstance(dict_value, (list, tuple)):
-                    # isinstance narrows to sequence - convert to list
+                elif type(dict_value) in (list, tuple):
                     filtered_dict[dict_key] = list(dict_value)
-                elif isinstance(dict_value, dict):
-                    # isinstance narrows to dict
+                elif type(dict_value) is dict:
                     filtered_dict[dict_key] = dict_value
             # model_kind_str is validated by _get_model_kind - use match for type safety
             model_kind: Literal["user", "config", "service", "entity", "value"]
@@ -324,17 +320,19 @@ class FlextTestsBuilders:
             # tt.model returns BaseModel which is compatible with BuilderValue
             model_result = tt.model(model_kind, **filtered_dict)
             # Type narrow - handle all return type variants
-            if isinstance(model_result, BaseModel):
+            if BaseModel in type(model_result).__mro__:
                 resolved_value = model_result
-            elif isinstance(model_result, r):
-                # FlextResult variant - extract value if success
+            elif type(model_result).__mro__ and r in type(model_result).__mro__:
                 if model_result.is_success:
                     result_val = model_result.value
-                    if isinstance(result_val, (BaseModel, list, dict)):
+                    if (
+                        BaseModel in type(result_val).__mro__
+                        or type(result_val) in (list, dict)
+                    ):
                         resolved_value = result_val
                 else:
                     resolved_value = None
-            elif isinstance(model_result, (list, dict)):
+            elif type(model_result) in (list, dict):
                 resolved_value = model_result
 
         # Priority 12: Config shortcuts
@@ -358,21 +356,18 @@ class FlextTestsBuilders:
 
         # Priority 15: Direct value
         elif params.value is not None:
-            # params.value is GeneralValueType which is subset of BuilderValue
+            # params.value is payload-compatible and subset of BuilderValue
             resolved_value = params.value
 
         # Priority 16: Default
         elif params.default is not None:
-            # params.default is GeneralValueType which is subset of BuilderValue
+            # params.default is payload-compatible and subset of BuilderValue
             resolved_value = params.default
 
         # Apply transformation if provided
         if params.transform is not None and resolved_value is not None:
-            if isinstance(resolved_value, (list, tuple)):
-                resolved_value = [
-                    params.transform(cast("t.GeneralValueType", item))
-                    for item in resolved_value
-                ]
+            if type(resolved_value) in (list, tuple):
+                resolved_value = [params.transform(item) for item in resolved_value]
             else:
                 resolved_value = params.transform(resolved_value)
 
@@ -394,16 +389,21 @@ class FlextTestsBuilders:
         builder_data: t.Tests.Builders.BuilderDict = self._data
         if params.merge and params.key in builder_data:
             existing = builder_data[params.key]
-            if isinstance(existing, Mapping) and isinstance(resolved_value, Mapping):
-                # Both are Mapping - convert to dict[str, GeneralValueType] for merge
+            if (
+                hasattr(existing, "keys")
+                and hasattr(existing, "items")
+                and hasattr(resolved_value, "keys")
+                and hasattr(resolved_value, "items")
+            ):
+                # Both are Mapping - convert to dict[str, payload value] for merge
                 # Filter out FlextResult values for merge compatibility
-                existing_dict: dict[str, t.GeneralValueType] = {}
+                existing_dict: dict[str, t.Tests.PayloadValue] = {}
                 for k, v in existing.items():
-                    if not isinstance(v, r):
+                    if not (type(v).__mro__ and r in type(v).__mro__):
                         existing_dict[str(k)] = v
-                resolved_dict: dict[str, t.GeneralValueType] = {}
+                resolved_dict: dict[str, t.Tests.PayloadValue] = {}
                 for k, v in resolved_value.items():
-                    if not isinstance(v, r):
+                    if not (type(v).__mro__ and r in type(v).__mro__):
                         resolved_dict[str(k)] = v
                 merge_result = u.merge(existing_dict, resolved_dict)
                 if merge_result.is_success:
@@ -423,7 +423,7 @@ class FlextTestsBuilders:
         value: t.Tests.Builders.BuilderValue | None = None,
         *,
         create_parents: bool = True,
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.Tests.PayloadValue,
     ) -> Self:
         """Set value at nested path using dot notation.
 
@@ -455,9 +455,8 @@ class FlextTestsBuilders:
         if kwargs:
             if value is None:
                 final_value = dict(kwargs)
-            elif isinstance(value, Mapping):
-                # isinstance narrows to Mapping - convert to dict and merge
-                merged: dict[str, t.GeneralValueType] = dict(value)
+            elif hasattr(value, "keys") and hasattr(value, "items"):
+                merged: dict[str, t.Tests.PayloadValue] = dict(value)
                 merged.update(kwargs)
                 final_value = merged
             else:
@@ -484,15 +483,14 @@ class FlextTestsBuilders:
                     error_msg = f"Path '{part}' not found in '{path}'"
                     raise KeyError(error_msg)
             next_val = current[part]
-            if not isinstance(next_val, dict):
+            if type(next_val) is not dict:
                 if create_parents:
                     current[part] = {}
                     next_val = current[part]
                 else:
                     error_msg = f"Path '{part}' is not a dict in '{path}'"
                     raise TypeError(error_msg)
-            # isinstance(next_val, dict) guarantees dict type
-            if isinstance(next_val, dict):
+            if type(next_val) is dict:
                 current = next_val
 
         # current is BuilderDict, which accepts BuilderValue
@@ -541,9 +539,8 @@ class FlextTestsBuilders:
         current: object = self._data
 
         for part in parts:
-            if not isinstance(current, Mapping):
+            if not (hasattr(current, "keys") and hasattr(current, "items")):
                 return default
-            # isinstance narrows to Mapping - direct key access
             if part not in current:
                 return default
             current = current[part]
@@ -551,9 +548,11 @@ class FlextTestsBuilders:
         # Return the value
         if current is None:
             return default
-        # For as_type, isinstance check provides type narrowing
+        # For as_type, type check provides narrowing
         if as_type is not None:
-            if isinstance(current, as_type):
+            if type(current) is as_type or (
+                hasattr(as_type, "__mro__") and as_type in type(current).__mro__
+            ):
                 return current
             return default
         # Type narrow current to BuilderValue using TypeGuard
@@ -564,7 +563,7 @@ class FlextTestsBuilders:
 
     def to_result(
         self,
-        **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by ToResultParams
+        **kwargs: t.Tests.PayloadValue,  # Accept payload values - validated by ToResultParams
     ) -> r[t.Tests.Builders.BuilderValue] | t.Tests.Builders.BuilderValue:
         """Build data wrapped in FlextResult.
 
@@ -599,7 +598,7 @@ class FlextTestsBuilders:
         params = params_result.value
 
         if params.error is not None:
-            return r[t.GeneralValueType].fail(
+            return r[t.Tests.PayloadValue].fail(
                 params.error,
                 error_code=params.error_code,
                 error_data=params.error_data,
@@ -611,7 +610,7 @@ class FlextTestsBuilders:
         data: t.Tests.Builders.BuilderDict = dict(self._data)
 
         if params.validate_func is not None and not params.validate_func(data):
-            return r[t.GeneralValueType].fail(
+            return r[t.Tests.PayloadValue].fail(
                 "Validation failed",
                 error_code=params.error_code,
                 error_data=params.error_data,
@@ -624,7 +623,7 @@ class FlextTestsBuilders:
                 if t.Guards.is_builder_value(transformed):
                     return transformed
                 return None
-            return r[t.GeneralValueType].ok(transformed)
+            return r[t.Tests.PayloadValue].ok(transformed)
 
         # Generic class instantiation
         if params.as_cls is not None:
@@ -636,10 +635,10 @@ class FlextTestsBuilders:
                         return instance
                     return None
                 if t.Guards.is_builder_value(instance):
-                    return r[t.GeneralValueType].ok(instance)
-                return r[t.GeneralValueType].ok(None)
+                    return r[t.Tests.PayloadValue].ok(instance)
+                return r[t.Tests.PayloadValue].ok(None)
             except Exception as exc:
-                return r[t.GeneralValueType].fail(
+                return r[t.Tests.PayloadValue].fail(
                     str(exc),
                     error_code=params.error_code,
                     error_data=params.error_data,
@@ -651,9 +650,9 @@ class FlextTestsBuilders:
                 model_instance = params.as_model(**data)
                 if params.unwrap:
                     return model_instance
-                return r[t.GeneralValueType].ok(model_instance)
+                return r[t.Tests.PayloadValue].ok(model_instance)
             except Exception as exc:
-                return r[t.GeneralValueType].fail(
+                return r[t.Tests.PayloadValue].fail(
                     str(exc),
                     error_code=params.error_code,
                     error_data=params.error_data,
@@ -661,21 +660,21 @@ class FlextTestsBuilders:
 
         # Batch result types
         if params.as_list_result:
-            values: list[t.GeneralValueType] = list(data.values())
+            values: list[t.Tests.PayloadValue] = list(data.values())
             if params.unwrap:
                 return values
-            return r[t.GeneralValueType].ok(values)
+            return r[t.Tests.PayloadValue].ok(values)
 
         if params.as_dict_result:
             if params.unwrap:
                 return data
-            # Widen dict to GeneralValueType for type compatibility
-            dict_as_value: t.GeneralValueType = data
-            return r[t.GeneralValueType].ok(dict_as_value)
+            # Widen dict to payload value for type compatibility
+            dict_as_value: t.Tests.PayloadValue = data
+            return r[t.Tests.PayloadValue].ok(dict_as_value)
 
         # Standard result
-        # Widen dict to GeneralValueType for type compatibility
-        data_as_value: t.GeneralValueType = data
+        # Widen dict to payload value for type compatibility
+        data_as_value: t.Tests.PayloadValue = data
         result: r[t.Tests.Builders.BuilderValue] = r[t.Tests.Builders.BuilderValue].ok(
             data_as_value,
         )
@@ -688,7 +687,7 @@ class FlextTestsBuilders:
 
     def build(
         self,
-        **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by BuildParams
+        **kwargs: t.Tests.PayloadValue,  # Accept payload values - validated by BuildParams
     ) -> object:
         """Build the dataset with output type control.
 
@@ -717,7 +716,7 @@ class FlextTestsBuilders:
 
         """
         # Convert kwargs to validated model using FlextUtilities
-        # Use from_kwargs for simple kwargs (all FlexibleValue compatible)
+        # Use from_kwargs for simple kwargs (all payload-compatible)
         params_result = u.Model.from_kwargs(m.Tests.Builders.BuildParams, **kwargs)
         if params_result.is_failure:
             error_msg = f"Invalid build() parameters: {params_result.error}"
@@ -744,7 +743,9 @@ class FlextTestsBuilders:
             data = dict(self._flatten_dict(flat_input))
 
         # Apply validation
-        data_for_hooks = cast("t.Tests.Builders.BuilderOutputDict", data)
+        data_for_hooks: t.Tests.Builders.BuilderOutputDict = {
+            str(key): value for key, value in data.items()
+        }
         if params.validate_with is not None and not params.validate_with(
             data_for_hooks
         ):
@@ -773,7 +774,7 @@ class FlextTestsBuilders:
             return [(test_id, data)]
 
         if params.as_model is not None:
-            model_kwargs: dict[str, object] = dict(data)
+            model_kwargs: dict[str, t.Tests.PayloadValue] = dict(data)
             return params.as_model(**model_kwargs)
 
         return data
@@ -808,7 +809,7 @@ class FlextTestsBuilders:
             assert len(data["users"]) == 3
 
         """
-        users: list[dict[str, t.GeneralValueType]] = [
+        users: list[dict[str, t.Tests.PayloadValue]] = [
             {
                 "id": f"user_{i}",
                 "name": f"User {i}",
@@ -835,7 +836,7 @@ class FlextTestsBuilders:
             assert data["configs"]["environment"] == "production"
 
         """
-        config: dict[str, t.GeneralValueType] = {
+        config: dict[str, t.Tests.PayloadValue] = {
             "environment": "production" if production else "development",
             "debug": not production,
             "service_type": "api",
@@ -859,7 +860,7 @@ class FlextTestsBuilders:
             assert len(data["validation_fields"]["valid_emails"]) == 3
 
         """
-        validation_fields: dict[str, t.GeneralValueType] = {
+        validation_fields: dict[str, t.Tests.PayloadValue] = {
             "valid_emails": [f"user{i}@example.com" for i in range(count)],
             "invalid_emails": ["invalid", "no-at-sign.com", "@missing-local.com"],
             "valid_hostnames": ["example.com", c.Platform.DEFAULT_HOST],
@@ -895,7 +896,7 @@ class FlextTestsBuilders:
         new_builder._data = dict(self._data)
         return new_builder
 
-    def fork(self, **updates: t.GeneralValueType) -> Self:
+    def fork(self, **updates: t.Tests.PayloadValue) -> Self:
         """Copy and immediately add updates.
 
         Uses Pydantic 2 models for parameter validation.
@@ -918,7 +919,7 @@ class FlextTestsBuilders:
         new_builder = self.copy_builder()
         # Add each update using add() method for validation
         # add() uses u.Model.from_kwargs() internally for validation
-        # GeneralValueType is compatible with BuilderValue (it's a subset)
+        # Payload value is compatible with BuilderValue (it's a subset)
         for key, value in updates.items():
             _ = new_builder.add(key, value=value)
         return new_builder
@@ -953,7 +954,7 @@ class FlextTestsBuilders:
 
         """
         # Convert kwargs to validated model using FlextUtilities
-        # Convert frozenset to list for GeneralValueType compatibility
+        # Convert frozenset to list for payload compatibility
         # Pydantic 2 will coerce list back to frozenset in the model
         params_result = u.Model.from_kwargs(
             m.Tests.Builders.MergeFromParams,
@@ -979,10 +980,10 @@ class FlextTestsBuilders:
 
         # Convert BuilderDict to ConfigurationDict for merge
         # Use TypeGuard t.Guards.is_general_value for proper type narrowing
-        self_dict: dict[str, t.GeneralValueType] = {
+        self_dict: dict[str, t.Tests.PayloadValue] = {
             k: v for k, v in self._data.items() if t.Guards.is_general_value(v)
         }
-        other_dict: dict[str, t.GeneralValueType] = {
+        other_dict: dict[str, t.Tests.PayloadValue] = {
             k: v for k, v in other_data.items() if t.Guards.is_general_value(v)
         }
         merge_result = u.merge(self_dict, other_dict, strategy=params.strategy)
@@ -1000,8 +1001,8 @@ class FlextTestsBuilders:
     def batch(
         self,
         key: str,
-        scenarios: Sequence[tuple[str, t.GeneralValueType]],
-        **kwargs: t.GeneralValueType,
+        scenarios: Sequence[tuple[str, t.Tests.PayloadValue]],
+        **kwargs: t.Tests.PayloadValue,
     ) -> Self:
         """Build batch of test scenarios.
 
@@ -1052,7 +1053,7 @@ class FlextTestsBuilders:
         assert self._data is not None, "_data must be initialized"
         builder_data: t.Tests.Builders.BuilderDict = self._data
         # Builders store DATA only - as_results wrapping happens when accessed
-        batch_data: list[t.GeneralValueType] = []
+        batch_data: list[t.Tests.PayloadValue] = []
         for scenario_id, scenario_data in params.scenarios:
             # Store as dict with id and data - results wrapped later
             if params.as_results:
@@ -1077,7 +1078,7 @@ class FlextTestsBuilders:
                     },
                 )
 
-        # list[GeneralValueType] is compatible with BuilderValue
+        # list[payload value] is compatible with BuilderValue
         builder_data[params.key] = batch_data
         # Update instance attribute after local modifications
         self._data = builder_data
@@ -1085,7 +1086,7 @@ class FlextTestsBuilders:
 
     def scenarios(
         self,
-        *cases: tuple[str, dict[str, t.Tests.Builders.BuilderValue]],
+        *cases: tuple[str, Mapping[str, t.Tests.Builders.BuilderValue]],
     ) -> list[t.Tests.Builders.ParametrizedCase]:
         """Build pytest.mark.parametrize compatible scenarios.
 
@@ -1140,7 +1141,8 @@ class FlextTestsBuilders:
             return "entity"
         if "value" in model_name:
             return "value"
-        return "user"  # Default fallback
+        msg = f"Unknown model kind for {model.__name__}"
+        raise ValueError(msg)
 
     def _generate_from_factory(
         self,
@@ -1160,7 +1162,7 @@ class FlextTestsBuilders:
         if factory == "users":
             # tt.batch returns list of models - extract fields with list comprehension
             batch_result = tt.batch("user", count=count)
-            users_data: list[dict[str, t.GeneralValueType]] = [
+            users_data: list[dict[str, t.Tests.PayloadValue]] = [
                 {
                     c.Tests.Builders.KEY_ID: item.id,
                     c.Tests.Builders.KEY_NAME: item.name,
@@ -1168,7 +1170,7 @@ class FlextTestsBuilders:
                     c.Tests.Builders.KEY_ACTIVE: item.active,
                 }
                 for item in batch_result
-                if isinstance(item, m.Tests.Factory.User)
+                if m.Tests.Factory.User in type(item).__mro__
             ]
             return users_data
 
@@ -1230,29 +1232,27 @@ class FlextTestsBuilders:
             debug=debug,
             timeout=c.Tests.Factory.DEFAULT_TIMEOUT,
         )
-        # Type narrowing: tt.model() returns union type, extract BaseModel
-        # Extract BaseModel from union type (single model case)
+        # Single path: extract BaseModel from tt.model() result
         config: BaseModel
-        if isinstance(config_result, r):
+        if type(config_result).__mro__ and r in type(config_result).__mro__:
             config_unwrapped = config_result.value
-            if isinstance(config_unwrapped, BaseModel):
+            if BaseModel in type(config_unwrapped).__mro__:
                 config = config_unwrapped
             else:
                 msg = f"Expected BaseModel from result, got {type(config_unwrapped)}"
                 raise TypeError(msg)
-        elif isinstance(config_result, BaseModel):
+        elif BaseModel in type(config_result).__mro__:
             config = config_result
-        elif isinstance(config_result, list):
-            # Single model case shouldn't return list, but handle gracefully
-            if len(config_result) == 1 and isinstance(config_result[0], BaseModel):
+        elif type(config_result) is list:
+            if len(config_result) == 1 and BaseModel in type(config_result[0]).__mro__:
                 config = config_result[0]
             else:
                 msg = f"Expected single BaseModel, got list with {len(config_result)} items"
                 raise TypeError(msg)
-        elif isinstance(config_result, dict):
+        elif type(config_result) is dict:
             if len(config_result) == 1:
                 config_value = next(iter(config_result.values()))
-                if isinstance(config_value, BaseModel):
+                if BaseModel in type(config_value).__mro__:
                     config = config_value
                 else:
                     msg = f"Expected BaseModel in dict result, got {type(config_value)}"
@@ -1263,32 +1263,20 @@ class FlextTestsBuilders:
         else:
             msg = f"Expected BaseModel from config_result, got {type(config_result)}"
             raise TypeError(msg)
-        # Type narrowing: use isinstance for proper type narrowing
         b = c.Tests.Builders
-        config_data: dict[str, t.GeneralValueType]
-        if isinstance(config, m.Tests.Factory.Config):
-            config_data = {
-                b.KEY_SERVICE_TYPE: config.service_type,
-                b.KEY_ENVIRONMENT: config.environment,
-                b.KEY_DEBUG: config.debug,
-                b.KEY_LOG_LEVEL: config.log_level,
-                b.KEY_TIMEOUT: config.timeout,
-                b.KEY_MAX_RETRIES: config.max_retries,
-                b.KEY_DATABASE_URL: b.DEFAULT_DATABASE_URL,
-                b.KEY_MAX_CONNECTIONS: b.DEFAULT_MAX_CONNECTIONS,
-            }
-        else:
-            # Fallback: use getattr for attribute access on BaseModel
-            config_data = {
-                b.KEY_SERVICE_TYPE: getattr(config, "service_type", ""),
-                b.KEY_ENVIRONMENT: getattr(config, "environment", ""),
-                b.KEY_DEBUG: getattr(config, "debug", False),
-                b.KEY_LOG_LEVEL: getattr(config, "log_level", "INFO"),
-                b.KEY_TIMEOUT: getattr(config, "timeout", 30),
-                b.KEY_MAX_RETRIES: getattr(config, "max_retries", 3),
-                b.KEY_DATABASE_URL: b.DEFAULT_DATABASE_URL,
-                b.KEY_MAX_CONNECTIONS: b.DEFAULT_MAX_CONNECTIONS,
-            }
+        if m.Tests.Factory.Config not in type(config).__mro__:
+            msg = f"Expected Config model, got {type(config).__name__}"
+            raise TypeError(msg)
+        config_data: dict[str, t.Tests.PayloadValue] = {
+            b.KEY_SERVICE_TYPE: config.service_type,
+            b.KEY_ENVIRONMENT: config.environment,
+            b.KEY_DEBUG: config.debug,
+            b.KEY_LOG_LEVEL: config.log_level,
+            b.KEY_TIMEOUT: config.timeout,
+            b.KEY_MAX_RETRIES: config.max_retries,
+            b.KEY_DATABASE_URL: b.DEFAULT_DATABASE_URL,
+            b.KEY_MAX_CONNECTIONS: b.DEFAULT_MAX_CONNECTIONS,
+        }
         return config_data
 
     def _process_batch_results(
@@ -1309,32 +1297,33 @@ class FlextTestsBuilders:
         """
         processed: t.Tests.Builders.BuilderOutputDict = {}
         for key, value in data.items():
-            if isinstance(value, list):
-                # Check if this is a batch result list
-                converted_items: list[t.GeneralValueType | r[t.GeneralValueType]] = []
+            if type(value) is list:
+                converted_items: list[
+                    t.Tests.PayloadValue | r[t.Tests.PayloadValue]
+                ] = []
                 for item in value:
-                    if isinstance(item, dict) and item.get("_is_result_marker"):
+                    if type(item) is dict and item.get("_is_result_marker"):
                         if "_result_ok" in item:
                             converted_items.append(
-                                r[t.GeneralValueType].ok(item["_result_ok"]),
+                                r[t.Tests.PayloadValue].ok(item["_result_ok"]),
                             )
                         elif "_result_fail" in item:
                             error_msg = str(item["_result_fail"])
                             converted_items.append(
-                                r[t.GeneralValueType].fail(error_msg),
+                                r[t.Tests.PayloadValue].fail(error_msg),
                             )
                         else:
                             converted_items.append(item)
                     else:
                         converted_items.append(item)
                 processed[key] = converted_items
-            elif isinstance(value, dict) and value.get("_is_result_marker"):
+            elif type(value) is dict and value.get("_is_result_marker"):
                 # Handle add() with result_ok or result_fail
                 if "_result_ok" in value:
-                    processed[key] = r[t.GeneralValueType].ok(value["_result_ok"])
+                    processed[key] = r[t.Tests.PayloadValue].ok(value["_result_ok"])
                 elif "_result_fail" in value:
                     error_msg = str(value.get("_result_fail", "Unknown error"))
-                    processed[key] = r[t.GeneralValueType].fail(error_msg)
+                    processed[key] = r[t.Tests.PayloadValue].fail(error_msg)
                 else:
                     processed[key] = value
             else:
@@ -1362,8 +1351,7 @@ class FlextTestsBuilders:
         for key, value in data.items():
             new_key = f"{parent_key}{sep}{key}" if parent_key else key
             # Check if value is a dict (not BaseModel)
-            if isinstance(value, dict):
-                # Recursively flatten nested dict
+            if type(value) is dict:
                 items.extend(
                     self._flatten_dict(value, new_key, sep).items(),
                 )
@@ -1448,7 +1436,7 @@ class FlextTestsBuilders:
                 return u.Tests.Result.assert_success(result)
 
             @staticmethod
-            def assert_failure(result: r[t.GeneralValueType]) -> str:
+            def assert_failure(result: r[t.Tests.PayloadValue]) -> str:
                 """Assert failure - r[T] satisfies protocol p.Result[T]."""
                 return u.Tests.Result.assert_failure(result)
 
@@ -1467,16 +1455,16 @@ class FlextTestsBuilders:
 
             @staticmethod
             def from_dict[T](
-                mapping: dict[str, T],
+                mapping: Mapping[str, T],
             ) -> list[tuple[str, T]]:
                 """Convert dict to parametrized cases."""
                 return list(mapping.items())
 
             @staticmethod
             def parametrized(
-                success_values: Sequence[t.GeneralValueType],
+                success_values: Sequence[t.Tests.PayloadValue],
                 failure_errors: Sequence[str],
-            ) -> list[tuple[str, dict[str, t.GeneralValueType]]]:
+            ) -> list[tuple[str, Mapping[str, t.Tests.PayloadValue]]]:
                 """Create parametrized cases - DELEGATES to u.Tests.GenericHelpers."""
                 cases = u.Tests.GenericHelpers.create_parametrized_cases(
                     success_values=list(success_values),
@@ -1484,11 +1472,11 @@ class FlextTestsBuilders:
                 )
                 # Convert to (test_id, data) format
                 # Store result as metadata dict, not FlextResult directly
-                parametrized: list[tuple[str, dict[str, t.GeneralValueType]]] = []
+                parametrized: list[tuple[str, dict[str, t.Tests.PayloadValue]]] = []
                 for i, (_res, is_success, value, error) in enumerate(cases):
                     test_id = f"case_{i}"
                     # Store result metadata - FlextResult stored as its components
-                    data: dict[str, t.GeneralValueType] = {
+                    data: dict[str, t.Tests.PayloadValue] = {
                         "result_is_success": is_success,
                         "result_value": value,
                         "result_error": error,
@@ -1503,9 +1491,9 @@ class FlextTestsBuilders:
             def test_cases(
                 operation: str,
                 descriptions: Sequence[str],
-                inputs: Sequence[dict[str, t.GeneralValueType]],
-                expected: Sequence[t.GeneralValueType],
-            ) -> list[dict[str, t.GeneralValueType]]:
+                inputs: Sequence[Mapping[str, t.Tests.PayloadValue]],
+                expected: Sequence[t.Tests.PayloadValue],
+            ) -> list[Mapping[str, t.Tests.PayloadValue]]:
                 """Create batch test cases - DELEGATES to u.Tests.TestCaseHelpers."""
                 return u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
                     operation=operation,
@@ -1521,16 +1509,18 @@ class FlextTestsBuilders:
             """
 
             @staticmethod
-            def typed(**kwargs: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
-                """Create typed dictionary - Uses dict[str, t.GeneralValueType] type."""
+            def typed(
+                **kwargs: t.Tests.PayloadValue,
+            ) -> Mapping[str, t.Tests.PayloadValue]:
+                """Create typed dictionary - returns Mapping[str, t.Tests.PayloadValue]."""
                 return dict(kwargs)
 
             @staticmethod
             def merged(
-                *dicts: Mapping[str, t.GeneralValueType],
-            ) -> dict[str, t.GeneralValueType]:
+                *dicts: Mapping[str, t.Tests.PayloadValue],
+            ) -> Mapping[str, t.Tests.PayloadValue]:
                 """Merge dictionaries - DELEGATES to u.merge()."""
-                result: dict[str, t.GeneralValueType] = {}
+                result: MutableMapping[str, t.Tests.PayloadValue] = {}
                 for d in dicts:
                     merge_result = u.merge(result, dict(d))
                     if merge_result.is_success:
@@ -1539,34 +1529,32 @@ class FlextTestsBuilders:
 
             @staticmethod
             def flatten(
-                nested: Mapping[str, t.GeneralValueType],
+                nested: Mapping[str, t.Tests.PayloadValue],
                 separator: str = ".",
-            ) -> dict[str, t.GeneralValueType]:
+            ) -> Mapping[str, t.Tests.PayloadValue]:
                 """Flatten nested dict - uses manual implementation."""
 
                 # Manual flatten since u.Collection.flatten may not exist
                 def _flatten(
-                    data: dict[str, t.GeneralValueType],
+                    data: Mapping[str, t.Tests.PayloadValue],
                     parent: str = "",
-                ) -> dict[str, t.GeneralValueType]:
-                    items: list[tuple[str, t.GeneralValueType]] = []
+                ) -> Mapping[str, t.Tests.PayloadValue]:
+                    items: list[tuple[str, t.Tests.PayloadValue]] = []
                     for key, value in data.items():
                         new_key = f"{parent}{separator}{key}" if parent else key
                         # Check if value is a Mapping but not a BaseModel
-                        if isinstance(value, Mapping) and not hasattr(
-                            value,
-                            "model_dump",
+                        if (
+                            hasattr(value, "keys")
+                            and hasattr(value, "items")
+                            and not hasattr(value, "model_dump")
                         ):
-                            # Convert Mapping to dict manually for type safety
-                            # After isinstance(value, Mapping), v is object, need type narrowing
-                            value_dict: dict[str, t.GeneralValueType] = {}
+                            value_dict: dict[str, t.Tests.PayloadValue] = {}
                             for k, v in value.items():
-                                # Narrow v to GeneralValueType compatible types
                                 if v is None:
                                     value_dict[str(k)] = None
-                                elif isinstance(
-                                    v,
-                                    (str, bool, int, float, BaseModel, list, dict),
+                                elif (
+                                    type(v) in (str, bool, int, float, list, dict)
+                                    or BaseModel in type(v).__mro__
                                 ):
                                     value_dict[str(k)] = v
                                 else:
@@ -1604,41 +1592,40 @@ class FlextTestsBuilders:
             """
 
             @staticmethod
-            def user(**overrides: t.GeneralValueType) -> m.Tests.Factory.User:
+            def user(**overrides: t.Tests.PayloadValue) -> m.Tests.Factory.User:
                 """Create user - DELEGATES to tt.model()."""
-                # tt.model with kind="user" returns User (or wrapped variant)
-                # Type narrowing via isinstance for proper return type
                 result = tt.model("user", **overrides)
-                if isinstance(result, m.Tests.Factory.User):
+                if m.Tests.Factory.User in type(result).__mro__:
                     return result
-                # Fallback: create default user if model returns different type
-                return tt.create_user()
+                raise TypeError(
+                    f"Expected User from tt.model('user'), got {type(result).__name__}",
+                )
 
             @staticmethod
-            def config(**overrides: t.GeneralValueType) -> m.Tests.Factory.Config:
+            def config(**overrides: t.Tests.PayloadValue) -> m.Tests.Factory.Config:
                 """Create config - DELEGATES to tt.model()."""
-                # tt.model with kind="config" returns Config (or wrapped variant)
                 result = tt.model("config", **overrides)
-                if isinstance(result, m.Tests.Factory.Config):
+                if m.Tests.Factory.Config in type(result).__mro__:
                     return result
-                # Fallback: create default config if model returns different type
-                return tt.create_config()
+                raise TypeError(
+                    f"Expected Config from tt.model('config'), got {type(result).__name__}",
+                )
 
             @staticmethod
-            def service(**overrides: t.GeneralValueType) -> m.Tests.Factory.Service:
+            def service(**overrides: t.Tests.PayloadValue) -> m.Tests.Factory.Service:
                 """Create service - DELEGATES to tt.model()."""
-                # tt.model with kind="service" returns Service (or wrapped variant)
                 result = tt.model("service", **overrides)
-                if isinstance(result, m.Tests.Factory.Service):
+                if m.Tests.Factory.Service in type(result).__mro__:
                     return result
-                # Fallback: create default service if model returns different type
-                return tt.create_service()
+                raise TypeError(
+                    f"Expected Service from tt.model('service'), got {type(result).__name__}",
+                )
 
             @staticmethod
             def entity[T: FlextModelsEntity.Entry](
                 entity_class: type[T],
                 name: str = "",
-                value: t.GeneralValueType = "",
+                value: t.Tests.PayloadValue = "",
             ) -> T:
                 """Create entity - DELEGATES to u.Tests.DomainHelpers."""
                 return u.Tests.DomainHelpers.create_test_entity_instance(
@@ -1670,14 +1657,14 @@ class FlextTestsBuilders:
                 return [
                     item
                     for item in batch_result
-                    if isinstance(item, m.Tests.Factory.User)
+                    if m.Tests.Factory.User in type(item).__mro__
                 ]
 
             @staticmethod
             def batch_entities[T: FlextModelsEntity.Entry](
                 entity_class: type[T],
                 names: Sequence[str],
-                values: Sequence[t.GeneralValueType],
+                values: Sequence[t.Tests.PayloadValue],
             ) -> list[T]:
                 """Create batch entities - DELEGATES to u.Tests.DomainHelpers."""
                 result = u.Tests.DomainHelpers.create_test_entities_batch(
@@ -1696,14 +1683,14 @@ class FlextTestsBuilders:
             """
 
             @staticmethod
-            def simple() -> Callable[[], t.GeneralValueType]:
+            def simple() -> Callable[[], t.Tests.PayloadValue]:
                 """Simple operation - DELEGATES to u.Tests.Factory."""
                 return u.Tests.Factory.simple_operation
 
             @staticmethod
             def add() -> Callable[
-                [t.GeneralValueType, t.GeneralValueType],
-                t.GeneralValueType,
+                [t.Tests.PayloadValue, t.Tests.PayloadValue],
+                t.Tests.PayloadValue,
             ]:
                 """Add operation - DELEGATES to u.Tests.Factory."""
                 return u.Tests.Factory.add_operation
@@ -1714,14 +1701,14 @@ class FlextTestsBuilders:
                 return u.Tests.Factory.format_operation
 
             @staticmethod
-            def error(message: str) -> Callable[[], t.GeneralValueType]:
+            def error(message: str) -> Callable[[], t.Tests.PayloadValue]:
                 """Error operation - DELEGATES to u.Tests.Factory."""
                 return u.Tests.Factory.create_error_operation(message)
 
             @staticmethod
             def execute_service(
-                overrides: dict[str, t.GeneralValueType] | None = None,
-            ) -> r[t.GeneralValueType]:
+                overrides: Mapping[str, t.Tests.PayloadValue] | None = None,
+            ) -> r[t.Tests.PayloadValue]:
                 """Execute service - DELEGATES to u.Tests.Factory."""
                 return u.Tests.Factory.execute_user_service(overrides or {})
 

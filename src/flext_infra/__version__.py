@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
 
 
@@ -16,18 +17,17 @@ class FlextInfraVersion:
     """Package version and metadata information.
 
     Provides version information and package metadata using standard library
-    metadata extraction with graceful fallback handling.
+    metadata extraction.
     """
 
-    _metadata: PackageMetadata | dict[str, str]
+    _metadata: PackageMetadata | Mapping[str, str]
     try:
         _metadata = metadata("flext-infra")
     except PackageNotFoundError:
-        # Create PackageMetadata-compatible dict for fallback
         _metadata = {
             "Version": "0.0.0-dev",
             "Name": "flext-infra",
-            "Summary": "FLEXT infrastructure (metadata fallback)",
+            "Summary": "FLEXT infrastructure",
             "Author": "",
             "Author-Email": "",
             "License": "",
@@ -78,8 +78,7 @@ class FlextInfraVersion:
         """Check if current version meets minimum version requirement.
 
         Performs version comparison to determine if the current package version
-        is at least the specified minimum version. Useful for feature gating
-        and compatibility checks.
+        is at least the specified minimum version.
 
         Args:
             major: Minimum major version number
@@ -93,14 +92,14 @@ class FlextInfraVersion:
         return cls.__version_info__ >= (major, minor, patch)
 
     @classmethod
-    def get_package_info(cls) -> dict[str, str]:
+    def get_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary.
 
-        Returns all available package metadata in a structured dictionary
+        Returns all available package metadata in a structured mapping
         format for programmatic access to package information.
 
         Returns:
-            dict[str, str]: Package metadata dictionary containing:
+            Mapping[str, str]: Package metadata containing:
                 - name: Package name
                 - version: Version string
                 - description: Package description

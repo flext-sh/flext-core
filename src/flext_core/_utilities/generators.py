@@ -48,7 +48,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.GeneralValueType,
+        *parts: t.ConfigMapValue,
         length: int = c.Utilities.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
@@ -113,28 +113,26 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: dict[str, t.GeneralValueType] | object,
-    ) -> dict[str, t.GeneralValueType]:
+        context: dict[str, t.ConfigMapValue] | t.ConfigMapValue,
+    ) -> dict[str, t.ConfigMapValue]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            dict[str, t.GeneralValueType]: Normalized context dict
+            dict[str, t.ConfigMapValue]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
 
         """
-        if isinstance(context, dict):
-            # Type narrowing: context is dict, isinstance provides type narrowing to ConfigurationDict
-            context_dict_result: dict[str, t.GeneralValueType] = context
-            return context_dict_result
-        if isinstance(context, Mapping):
+        if type(context) is dict:
+            return context
+        if hasattr(context, "keys") and hasattr(context, "__getitem__"):
             try:
                 # Type narrowing: context is Mapping, convert to dict
-                context_dict_mapping: dict[str, t.GeneralValueType] = dict(
+                context_dict_mapping: dict[str, t.ConfigMapValue] = dict(
                     context.items(),
                 )
                 return context_dict_mapping
@@ -144,7 +142,7 @@ class FlextUtilitiesGenerators:
                     f"{type(e).__name__}: {e}"
                 )
                 raise TypeError(msg) from e
-        if isinstance(context, BaseModel):
+        if type(context) is not dict and BaseModel in type(context).__mro__:
             try:
                 return context.model_dump()
             except (AttributeError, TypeError) as e:
@@ -196,7 +194,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: Mapping[str, str] | object,
+        context: Mapping[str, str] | t.ConfigMapValue,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -241,7 +239,7 @@ class FlextUtilitiesGenerators:
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
         # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
         context_dict: dict[str, str] = {
-            k: v if isinstance(v, str) else str(v) for k, v in normalized_dict.items()
+            k: v if type(v) is str else str(v) for k, v in normalized_dict.items()
         }
         FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
@@ -252,9 +250,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.GeneralValueType,
-        default: dict[str, t.GeneralValueType] | None = None,
-    ) -> dict[str, t.GeneralValueType]:
+        value: t.ConfigMapValue,
+        default: dict[str, t.ConfigMapValue] | None = None,
+    ) -> dict[str, t.ConfigMapValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -274,7 +272,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            dict[str, t.GeneralValueType]: Normalized dict or default
+            dict[str, t.ConfigMapValue]: Normalized dict or default
 
         Raises:
             TypeError: If value is None (and no default) or cannot be converted
@@ -295,26 +293,21 @@ class FlextUtilitiesGenerators:
 
         """
         # Strategy 1: Already a dict - return as-is
-        if isinstance(value, dict):
+        if type(value) is dict:
             return value
 
         # Strategy 2: Pydantic BaseModel - use model_dump()
-        if isinstance(value, BaseModel):
+        if BaseModel in type(value).__mro__:
             # BaseModel.model_dump() returns dict-like object, check with is_type guard
             result = value.model_dump()
-            if FlextUtilitiesGuards.is_type(result, dict):
-                # normalize_to_general_value preserves dict structure
-                # so normalized will be dict[str, t.GeneralValueType]
+            if type(result) is dict:
                 normalized = FlextRuntime.normalize_to_general_value(result)
-                # Type narrowing: isinstance narrows normalized to dict
-                if isinstance(normalized, dict):
-                    # Type narrowed: normalized is dict[str, t.GeneralValueType]
+                if type(normalized) is dict:
                     return normalized
-                # Fallback: if normalization changed type, return empty dict
                 return {}
 
         # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
-        if isinstance(value, Mapping):
+        if hasattr(value, "keys") and hasattr(value, "__getitem__"):
             # Fast fail: Mapping.items() must succeed
             try:
                 return dict(value.items())
@@ -392,7 +385,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.GeneralValueType, ...] | None = None,
+        parts: tuple[t.ConfigMapValue, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -434,7 +427,7 @@ class FlextUtilitiesGenerators:
         # Generate prefixed ID
         if actual_prefix is not None:
             # Build parts list
-            all_parts: list[t.GeneralValueType] = []
+            all_parts: list[t.ConfigMapValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
@@ -467,7 +460,7 @@ class FlextUtilitiesGenerators:
         return FlextUtilitiesGenerators._generate_id()
 
     @staticmethod
-    def generate_operation_id(message_type: str, message: t.GeneralValueType) -> str:
+    def generate_operation_id(message_type: str, message: t.ConfigMapValue) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:
@@ -486,7 +479,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: m.ConfigMap | dict[str, t.GeneralValueType],
+        attributes: m.ConfigMap | dict[str, t.ConfigMapValue],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -508,7 +501,7 @@ class FlextUtilitiesGenerators:
         # Type system ensures base_class is a type, so no runtime check needed
         # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
         # Convert to dict for type() call
-        attributes_dict: dict[str, t.GeneralValueType] = dict(attributes)
+        attributes_dict: dict[str, t.ConfigMapValue] = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
 

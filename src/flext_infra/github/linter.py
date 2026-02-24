@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shutil
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.json_io import JsonService
 from flext_infra.subprocess import CommandRunner
@@ -39,7 +41,7 @@ class WorkflowLinter:
         *,
         report_path: Path | None = None,
         strict: bool = False,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Run actionlint on the repository and return results.
 
         Args:
@@ -53,19 +55,19 @@ class WorkflowLinter:
         """
         actionlint = shutil.which("actionlint")
         if actionlint is None:
-            payload_skipped: dict[str, object] = {
+            payload_skipped: MutableMapping[str, t.ScalarValue] = {
                 "status": "skipped",
                 "reason": "actionlint not installed",
             }
             if report_path is not None:
                 self._json.write(report_path, payload_skipped, sort_keys=True)
-            return r[dict[str, object]].ok(payload_skipped)
+            return r[Mapping[str, t.ScalarValue]].ok(payload_skipped)
 
         result = self._runner.run([actionlint], cwd=root)
 
         if result.is_success:
             output = result.value
-            payload: dict[str, object] = {
+            payload: MutableMapping[str, t.ScalarValue] = {
                 "status": "ok",
                 "exit_code": output.exit_code,
                 "stdout": output.stdout,
@@ -84,11 +86,11 @@ class WorkflowLinter:
             self._json.write(report_path, payload, sort_keys=True)
 
         if payload.get("status") == "fail" and strict:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ScalarValue]].fail(
                 result.error or "actionlint found issues",
             )
 
-        return r[dict[str, object]].ok(payload)
+        return r[Mapping[str, t.ScalarValue]].ok(payload)
 
 
 __all__ = ["WorkflowLinter"]

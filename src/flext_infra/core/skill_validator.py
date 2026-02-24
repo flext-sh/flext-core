@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 from flext_infra.json_io import JsonService
@@ -26,8 +28,8 @@ _BASELINE_DEFAULT = ".claude/skills/{skill}/baseline.json"
 _CACHE_TTL_SECONDS = 300
 
 
-def _safe_load_yaml(path: Path) -> dict[str, object]:
-    """Load YAML file safely, returning empty dict on missing/invalid."""
+def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
+    """Load YAML file safely, returning empty mapping on missing/invalid."""
     import yaml  # noqa: PLC0415
 
     raw = path.read_text(encoding=ic.Encoding.DEFAULT)
@@ -38,20 +40,20 @@ def _safe_load_yaml(path: Path) -> dict[str, object]:
     parsed = safe_load(raw)
     if parsed is None:
         return {}
-    if not isinstance(parsed, dict):
+    if type(parsed) is not dict:
         msg = f"rules.yml must be a mapping: {path}"
         raise TypeError(msg)
     return dict(parsed)
 
 
-def _normalize_string_list(value: object, field: str) -> list[str]:
+def _normalize_string_list(value: t.ConfigMapValue, field: str) -> list[str]:
     """Validate and normalize a list[str] config field."""
     if value is None:
         return []
-    if isinstance(value, list):
+    if type(value) is list:
         out: list[str] = []
         for item in value:
-            if not isinstance(item, str):
+            if type(item) is not str:
                 msg = f"{field} must be list[str]"
                 raise TypeError(msg)
             out.append(item)
@@ -72,7 +74,7 @@ class SkillValidator:
         self._json = JsonService()
         self._runner = CommandRunner()
         self._toml = TomlService()
-        self._git_cache: dict[str, tuple[float, list[str]]] = {}
+        self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
     def validate(
         self,
@@ -109,7 +111,7 @@ class SkillValidator:
 
             rules = _safe_load_yaml(rules_path)
             scan_targets = rules.get("scan_targets", {}) or {}
-            if not isinstance(scan_targets, dict):
+            if type(scan_targets) is not dict:
                 return r[im.ValidationReport].fail(
                     f"scan_targets must be a mapping: {rules_path}",
                 )
@@ -124,14 +126,14 @@ class SkillValidator:
             )
 
             rules_list = rules.get("rules", []) or []
-            if not isinstance(rules_list, list):
+            if type(rules_list) is not list:
                 return r[im.ValidationReport].fail("rules must be a list")
 
-            counts: dict[str, int] = {}
+            counts: MutableMapping[str, int] = {}
             violations: list[str] = []
 
             for rule_obj in rules_list:
-                if not isinstance(rule_obj, dict):
+                if type(rule_obj) is not dict:
                     continue
                 rule_id = str(rule_obj.get("id", "")).strip()
                 rule_type = str(rule_obj.get("type", "")).strip()
@@ -165,7 +167,7 @@ class SkillValidator:
 
             if mode != "strict":
                 baseline_obj = rules.get("baseline", {}) or {}
-                if isinstance(baseline_obj, dict):
+                if type(baseline_obj) is dict:
                     strategy = str(baseline_obj.get("strategy", "total"))
                     baseline_path = self._render_template(
                         root,
@@ -177,11 +179,11 @@ class SkillValidator:
                         if bl_result.is_success:
                             bl_data = bl_result.value
                             bl_counts_raw = bl_data.get("counts", {})
-                            if isinstance(bl_counts_raw, dict):
+                            if type(bl_counts_raw) is dict:
                                 bl_counts = {
                                     str(k): int(v)
                                     for k, v in bl_counts_raw.items()
-                                    if isinstance(v, int)
+                                    if type(v) is int
                                 }
                                 if strategy == "total":
                                     passed = total <= sum(bl_counts.values())
@@ -234,7 +236,7 @@ class SkillValidator:
 
     def _run_ast_grep_count(
         self,
-        rule: dict[str, object],
+        rule: Mapping[str, t.ScalarValue],
         skill_dir: Path,
         project_path: Path,
         include_globs: list[str],
@@ -283,7 +285,7 @@ class SkillValidator:
 
     def _run_custom_count(
         self,
-        rule: dict[str, object],
+        rule: Mapping[str, t.ScalarValue],
         skill_dir: Path,
         project_path: Path,
         mode: str,
@@ -325,9 +327,9 @@ class SkillValidator:
                 payload = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if isinstance(payload, dict):
+            if type(payload) is dict:
                 maybe = payload.get("violation_count", payload.get("count", 0))
-                if isinstance(maybe, int):
+                if type(maybe) is int:
                     count += maybe
         if result.exit_code == 1:
             count = max(count, 1)

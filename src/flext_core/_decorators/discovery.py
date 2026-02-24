@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from types import ModuleType
 
 from flext_core._models.container import FlextModelsContainer
 from flext_core.constants import c
@@ -27,7 +28,7 @@ class FactoryDecoratorsDiscovery:
 
     @staticmethod
     def scan_module(
-        module: object,
+        module: ModuleType,
     ) -> list[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
         """Scan module for functions decorated with @factory().
 
@@ -63,7 +64,7 @@ class FactoryDecoratorsDiscovery:
         return sorted(factories, key=operator.itemgetter(0))
 
     @staticmethod
-    def has_factories(module: object) -> bool:
+    def has_factories(module: ModuleType) -> bool:
         """Check if module has any factory-decorated functions.
 
         Efficiently checks if a module contains any functions marked with

@@ -14,6 +14,7 @@ from typing import TypeVar
 from pydantic import BaseModel, ValidationError
 
 from flext_core._models.base import FlextModelsBase
+from flext_core.models import m
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -41,7 +42,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_dict[M: BaseModel](
         model_cls: type[M],
-        data: Mapping[str, t.FlexibleValue],
+        data: Mapping[str, t.ScalarValue],
         *,
         strict: bool = False,
     ) -> r[M]:
@@ -67,7 +68,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
-        **kwargs: object,
+        **kwargs: t.ScalarValue,
     ) -> r[M]:
         """Create Pydantic model from kwargs with r.
 
@@ -101,8 +102,8 @@ class FlextUtilitiesModel:
     @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
-        defaults: Mapping[str, t.FlexibleValue],
-        overrides: Mapping[str, t.FlexibleValue],
+        defaults: Mapping[str, t.ScalarValue],
+        overrides: Mapping[str, t.ScalarValue],
     ) -> r[M]:
         """Merge defaults with overrides and create model.
 
@@ -124,7 +125,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def update[M: BaseModel](
         instance: M,
-        **updates: t.FlexibleValue,
+        **updates: t.ScalarValue,
     ) -> r[M]:
         """Update existing model with new values.
 
@@ -150,7 +151,7 @@ class FlextUtilitiesModel:
         *,
         by_alias: bool = False,
         exclude_none: bool = False,
-    ) -> dict[str, t.FlexibleValue]:
+    ) -> dict[str, t.ScalarValue]:
         """Convert model to dict (simple wrapper).
 
         Example:
@@ -166,7 +167,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_metadata(
-        value: t.GeneralValueType | FlextModelsBase.Metadata | None,
+        value: t.ScalarValue | m.ConfigMap | FlextModelsBase.Metadata | None,
     ) -> FlextModelsBase.Metadata:  # Returns m.Metadata at runtime
         """Normalize any value to FlextModelsBase.Metadata.
 
@@ -176,7 +177,7 @@ class FlextUtilitiesModel:
         fallbacks by centralizing all metadata normalization logic.
 
         Args:
-            value: None, dict, Mapping, Metadata, or any t.GeneralValueType
+            value: None, dict, Mapping, Metadata, or any t.ConfigMapValue
 
         Returns:
             FlextModelsBase.Metadata: Normalized metadata (empty attributes
@@ -199,14 +200,12 @@ class FlextUtilitiesModel:
             return FlextModelsBase.Metadata(attributes={})
 
         # Handle existing Metadata instance - return as-is
-        if isinstance(value, FlextModelsBase.Metadata):
+        if type(value) is FlextModelsBase.Metadata:
             return value
 
-        # Handle dict-like values using FlextRuntime guards
-        # TypeGuard ensures value is m.ConfigMap after is_dict_like check
-        if FlextRuntime.is_dict_like(value) and isinstance(value, dict):
-            # Normalize each value using FlextRuntime.normalize_to_metadata_value
-            attributes: dict[str, t.GeneralValueType] = {}
+        # Handle dict-like values (dict or m.ConfigMap)
+        if FlextRuntime.is_dict_like(value):
+            attributes: dict[str, t.ScalarValue] = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
 
@@ -229,7 +228,7 @@ class FlextUtilitiesModel:
         exclude_defaults: bool = False,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> dict[str, t.ScalarValue]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -298,17 +297,17 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_pydantic_dict(
         data: t.ConfigMap | None,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> dict[str, t.ScalarValue]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
-        Normalizes GeneralValueType values to the restricted PydanticConfigValue type
+        Normalizes PayloadValue values to the restricted PydanticConfigValue type
         that Pydantic can generate schemas for without recursion issues.
 
         Args:
-            data: EventDataMapping (Mapping[str, GeneralValueType]) or None
+            data: EventDataMapping (Mapping[str, PayloadValue]) or None
 
         Returns:
-            dict[str, t.GeneralValueType]: Dict with Pydantic-safe values
+            dict[str, t.ConfigMapValue]: Dict with Pydantic-safe values
 
         Example:
             >>> u.Model.normalize_to_pydantic_dict(None)
@@ -321,21 +320,21 @@ class FlextUtilitiesModel:
         """
         if not data:
             return {}
-        result: dict[str, t.GeneralValueType] = {}
+        result: dict[str, t.ScalarValue] = {}
         for key, value in data.items():
             result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
         return result
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: t.GeneralValueType,
+        value: t.ScalarValue | m.ConfigMap,
     ) -> t.PydanticConfigValue:
-        """Normalize GeneralValueType to Pydantic-safe PydanticConfigValue.
+        """Normalize PayloadValue to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
 
         Args:
-            value: GeneralValueType value to normalize
+            value: PayloadValue value to normalize
 
         Returns:
             t.PydanticConfigValue: Pydantic-safe value
@@ -343,15 +342,14 @@ class FlextUtilitiesModel:
         """
         if value is None:
             return None
-        if isinstance(value, bool):  # Check bool before int (bool is subclass of int)
+        if type(value) is bool:
             return value
-        if isinstance(value, (int, float, str)):
+        if type(value) in (int, float, str):
             return value
-        if isinstance(value, (list, tuple)):
-            # Convert list items to primitives
+        if type(value) in (list, tuple):
             return [
                 item
-                if isinstance(item, (str, int, float, bool, type(None)))
+                if type(item) in (str, int, float, bool, type(None))
                 else str(item)
                 for item in value
             ]

@@ -8,13 +8,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from datetime import datetime
-from pathlib import Path
+from collections.abc import Sequence
 from typing import Literal, overload
 
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+type StrictJsonScalar = str | int | float | bool | None
+type StrictJsonValue = (
+    StrictJsonScalar | list[StrictJsonValue] | dict[str, StrictJsonValue]
+)
 
 
 class FlextUtilitiesConversion:
@@ -31,7 +31,7 @@ class FlextUtilitiesConversion:
     """
 
     @staticmethod
-    def to_str(value: t.GeneralValueType, *, default: str | None = None) -> str:
+    def to_str(value: StrictJsonValue, *, default: str | None = None) -> str:
         """Convert value to string.
 
         Args:
@@ -44,9 +44,9 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return default or ""
-        if isinstance(value, str):
+        if type(value) is str:
             return value
-        if isinstance(value, float):
+        if type(value) is float:
             # Format float to 2 decimal places if it's a decimal number
             if value.is_integer():
                 return str(int(value))
@@ -55,7 +55,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -71,18 +71,20 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return default or []
-        if isinstance(value, str):
+        if type(value) is str:
             return [value]
-        if isinstance(value, (list, tuple, set, frozenset)):
+        if type(value) in (list, tuple, set, frozenset):
             return [str(item) for item in value if item is not None]
         # For other sequences, check if list-like and iterable
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        if type(value) in (list, tuple) or (
+            hasattr(value, "__getitem__") and type(value) not in (str, bytes)
+        ):
             return [str(item) for item in value if item is not None]
         return [str(value)]
 
     @staticmethod
     def normalize(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         case: str | None = None,
     ) -> str:
@@ -133,7 +135,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         mode: Literal["to_str"] = "to_str",
         default: str | None = None,
@@ -143,7 +145,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         mode: Literal["to_str_list"],
         default: list[str] | None = None,
@@ -153,27 +155,16 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         mode: Literal["normalize"],
         default: str | None = None,
         case: str | None = None,
     ) -> str: ...
 
-    @overload
     @staticmethod
     def conversion(
-        value: Sequence[str],
-        *,
-        mode: Literal["join"],
-        default: str | None = None,
-        case: str | None = None,
-        separator: str = " ",
-    ) -> str: ...
-
-    @staticmethod
-    def conversion(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         mode: str = "to_str",
         default: str | list[str] | None = None,
@@ -200,19 +191,22 @@ class FlextUtilitiesConversion:
         if mode == "to_str":
             # Type narrowing: default should be str | None for to_str
             default_str: str | None = (
-                default if isinstance(default, (str, type(None))) else None
+                default if type(default) in (str, type(None)) else None
             )
             return FlextUtilitiesConversion.to_str(value, default=default_str)
         if mode == "to_str_list":
             # Type narrowing: default should be list[str] | None for to_str_list
             default_list: list[str] | None = (
-                default if isinstance(default, (list, type(None))) else None
+                default if type(default) in (list, type(None)) else None
             )
             return FlextUtilitiesConversion.to_str_list(value, default=default_list)
         if mode == "normalize":
             return FlextUtilitiesConversion.normalize(value, case=case)
         if mode == "join":
-            if not isinstance(value, Sequence):
+            if not (
+                type(value) in (list, tuple)
+                or (hasattr(value, "__getitem__") and type(value) not in (str, bytes))
+            ):
                 error_msg = "join mode requires Sequence"
                 raise TypeError(error_msg)
             # Convert sequence items to strings for type safety
@@ -227,88 +221,45 @@ class FlextUtilitiesConversion:
         raise ValueError(error_msg)
 
     @staticmethod
-    def to_general_value_type(value: object) -> t.GeneralValueType:
-        """Convert object to GeneralValueType with runtime check.
-
-        If value is already a GeneralValueType, return it.
-        Otherwise convert to string representation.
-
-        Args:
-            value: Object to convert
-
-        Returns:
-            GeneralValueType: Converted value
-
-        """
-        # Check known types that are part of GeneralValueType
-        if value is None:
-            return None
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if isinstance(value, datetime):
-            return value
-        if FlextRuntime.is_base_model(value):
-            return value
-        if isinstance(value, Path):
-            return value
-        if callable(value):
-            # Callables are not part of GeneralValueType - convert to string
-            return str(value)
-        if isinstance(value, list):
-            # list is Sequence[GeneralValueType] compatible
-            seq_result: Sequence[t.GeneralValueType] = value
-            return seq_result
-        if isinstance(value, tuple):
-            # tuple is Sequence[GeneralValueType] compatible
-            seq_tuple: Sequence[t.GeneralValueType] = value
-            return seq_tuple
-        if isinstance(value, dict):
-            # dict is Mapping[str, GeneralValueType] compatible
-            map_result: Mapping[str, t.GeneralValueType] = value
-            return map_result
-        # Fallback: convert to string
-        return str(value)
+    def to_general_value_type(value: StrictJsonValue) -> StrictJsonValue:
+        """Return strict value without compatibility coercion."""
+        return value
 
     @staticmethod
-    def to_flexible_value(value: t.GeneralValueType) -> t.FlexibleValue | None:
-        """Convert GeneralValueType to FlexibleValue if compatible.
+    def to_flexible_value(value: StrictJsonValue) -> StrictJsonScalar | None:
+        """Convert strict value to strict scalar if compatible.
 
-        FlexibleValue is a subset of GeneralValueType that excludes
+        Strict scalar is a subset of strict value that excludes
         BaseModel, Path, and Callable types.
 
         Args:
-            value: GeneralValueType to convert
+            value: strict value to convert
 
         Returns:
-            FlexibleValue or None if not compatible
+            strict scalar or None if not compatible
 
         """
-        # FlexibleValue = str | int | float | bool | datetime | None
+        # Strict scalar = str | int | float | bool | datetime | None
         #                | Sequence[scalar] | Mapping[str, scalar]
         # where scalar = str | int | float | bool | datetime | None
         if value is None:
             return None
-        if isinstance(value, (str, int, float, bool)):
+        if type(value) in (str, int, float, bool):
             return value
-        if isinstance(value, datetime):
-            return value
-        # Exclude BaseModel, Path, Callable - these are not FlexibleValue
-        if FlextRuntime.is_base_model(value):
-            return None
-        if isinstance(value, Path):
-            return None
-        # Check for simple sequences (not nested GeneralValueType)
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        # Check for simple sequences (not nested PayloadValue)
+        if type(value) in (list, tuple) or (
+            hasattr(value, "__getitem__") and type(value) not in (str, bytes)
+        ):
             # Can't easily validate element types at runtime, assume compatible
             return None  # Skip complex sequences for safety
-        if isinstance(value, Mapping):
+        if type(value) is dict or (hasattr(value, "keys") and hasattr(value, "__getitem__")):
             # Can't easily validate value types at runtime, assume compatible
             return None  # Skip complex mappings for safety
         return None
 
     @staticmethod
     def to_str_list_safe(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
         *,
         filter_list_like: bool = True,
     ) -> list[str]:
@@ -334,27 +285,27 @@ class FlextUtilitiesConversion:
         if value is None:
             return []
 
-        items: list[t.GeneralValueType] = []
-        if isinstance(value, str):
+        items: list[StrictJsonValue] = []
+        if type(value) is str:
             items = [value]
-        elif isinstance(value, (list, tuple, set, frozenset)) or (
-            isinstance(value, Sequence) and not isinstance(value, (str, bytes))
-        ):
+        elif type(value) is list:
             items = list(value)
+        elif type(value) is dict:
+            items = list(value.values())
         else:
             items = [value]
 
-        filtered_items: list[t.GeneralValueType]
+        filtered_items: list[StrictJsonValue]
         if filter_list_like:
             filtered_items = [
                 item
                 for item in items
                 if item is not None
                 and not (
-                    isinstance(item, (list, tuple, set, frozenset))
+                    type(item) in (list, tuple, set, frozenset)
                     or (
-                        isinstance(item, Sequence)
-                        and not isinstance(item, (str, bytes))
+                        type(item) in (list, tuple)
+                        or (hasattr(item, "__getitem__") and type(item) not in (str, bytes))
                     )
                 )
             ]
@@ -365,7 +316,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list_truthy(
-        value: t.GeneralValueType,
+        value: StrictJsonValue,
     ) -> list[str]:
         """Convert value to list[str] filtering out falsy values.
 

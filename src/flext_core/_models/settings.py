@@ -73,7 +73,7 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> dict[str, str]:
+        def validate_context(cls, v: t.GuardInputValue) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
             Returns dict[str, str] because ensure_trace_context generates
@@ -125,22 +125,24 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(
             cls,
-            v: list[int] | list[t.GeneralValueType],
+            v: list[int] | list[t.ScalarValue],
         ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             # Use default HTTP status code range (100-599) - domain-specific validation
             # removed from flext-core per domain violation rules
-            # Convert to list[GeneralValueType] for validation function
-            # Handle both int and string values (pydantic may pass strings from YAML/JSON)
-            codes_for_validation: list[t.GeneralValueType] = []
+            # Accept only int or str (e.g. from YAML/JSON); reject other types.
+            codes_for_validation: list[int] = []
             for x in v:
-                if isinstance(x, int):
+                if type(x) is int:
                     codes_for_validation.append(x)
-                elif isinstance(x, str):
+                elif type(x) is str:
                     codes_for_validation.append(int(x))
                 else:
-                    # Convert unknown types to string then int
-                    codes_for_validation.append(int(repr(x)))
+                    msg = (
+                        f"retry_on_status_codes item must be int or str, "
+                        f"got {type(x).__name__}"
+                    )
+                    raise TypeError(msg)
             result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
@@ -176,7 +178,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[t.GeneralValueType],
+            list[t.GuardInputValue],
             Field(
                 default_factory=list,
                 max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
@@ -188,12 +190,10 @@ class FlextModelsConfig:
         @classmethod
         def validate_additional_validators(
             cls,
-            v: list[t.GeneralValueType],
-        ) -> list[t.GeneralValueType]:
+            v: list[t.GuardInputValue],
+        ) -> list[t.GuardInputValue]:
             """Validate custom validators are callable."""
             for validator in v:
-                # Direct callable check - object can be any callable,
-                # not just t.GeneralValueType
                 if not callable(validator):
                     base_msg = "Validator must be callable"
                     error_msg = f"{base_msg}: got {type(validator).__name__}"
@@ -218,7 +218,7 @@ class FlextModelsConfig:
         )
         continue_on_error: bool = True
         data_items: Annotated[
-            list[t.GeneralValueType],
+            list[t.ConfigMapValue],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
@@ -398,7 +398,7 @@ class FlextModelsConfig:
             default=None,
             description="Custom wrapper factory for structlog",
         )
-        logger_factory: p.VariadicCallable[t.GeneralValueType] | None = Field(
+        logger_factory: p.VariadicCallable[t.ConfigMapValue] | None = Field(
             default=None,
             description="Custom logger factory for structlog",
         )
@@ -466,7 +466,7 @@ class FlextModelsConfig:
         message_type: str = Field(
             description="Message type name for routing and circuit breaker",
         )
-        metadata: t.GeneralValueType | None = Field(
+        metadata: t.ConfigMapValue | None = Field(
             default=None,
             description="Optional execution context metadata",
         )
@@ -490,7 +490,7 @@ class FlextModelsConfig:
         Groups runtime scope configuration parameters.
         """
 
-        config_overrides: Mapping[str, t.FlexibleValue] | None = Field(
+        config_overrides: Mapping[str, t.ConfigMapValue] | None = Field(
             default=None,
             description="Optional configuration overrides",
         )
@@ -502,19 +502,19 @@ class FlextModelsConfig:
             default=None,
             description="Optional subproject name",
         )
-        services: Mapping[str, t.FlexibleValue] | None = Field(
+        services: Mapping[str, t.ConfigMapValue] | None = Field(
             default=None,
             description="Optional container services mapping",
         )
-        factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = Field(
+        factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = Field(
             default=None,
             description="Optional container factories mapping",
         )
-        container_services: Mapping[str, t.FlexibleValue] | None = Field(
+        container_services: Mapping[str, t.ConfigMapValue] | None = Field(
             default=None,
             description="Optional container services (alias for services)",
         )
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = Field(
+        container_factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = Field(
             default=None,
             description="Optional container factories (alias for factories)",
         )
@@ -526,7 +526,7 @@ class FlextModelsConfig:
         Groups nested execution configuration parameters.
         """
 
-        config_overrides: Mapping[str, t.FlexibleValue] | None = Field(
+        config_overrides: Mapping[str, t.ConfigMapValue] | None = Field(
             default=None,
             description="Optional configuration overrides",
         )
@@ -542,11 +542,11 @@ class FlextModelsConfig:
             default=None,
             description="Optional correlation ID for tracing",
         )
-        container_services: Mapping[str, t.FlexibleValue] | None = Field(
+        container_services: Mapping[str, t.ConfigMapValue] | None = Field(
             default=None,
             description="Optional container services mapping",
         )
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = Field(
+        container_factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = Field(
             default=None,
             description="Optional container factories mapping",
         )
@@ -610,7 +610,7 @@ class FlextModelsConfig:
             default=None,
             description="Field name that failed validation",
         )
-        value: t.GeneralValueType | None = Field(
+        value: t.ConfigMapValue | None = Field(
             default=None,
             description="Value that failed validation",
         )
@@ -783,7 +783,7 @@ class FlextModelsConfig:
             default=None,
             description="Expected value description",
         )
-        actual_value: t.GeneralValueType | None = Field(
+        actual_value: t.ConfigMapValue | None = Field(
             default=None,
             description="Actual value that caused error",
         )
@@ -897,10 +897,10 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        func: p.VariadicCallable[t.GeneralValueType] = Field(
+        func: p.VariadicCallable[t.ConfigMapValue] = Field(
             description="Function to execute",
         )
-        args: tuple[t.GeneralValueType, ...] = Field(
+        args: tuple[t.ConfigMapValue, ...] = Field(
             default_factory=tuple,
             description="Positional arguments for function",
         )

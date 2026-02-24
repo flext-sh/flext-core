@@ -258,7 +258,7 @@ def main() -> None:
         data = result.value
         decorators = data["decorators_demonstrated"]
         categories = data["decorator_categories"]
-        if isinstance(decorators, Sequence) and isinstance(categories, int):
+        if (type(decorators) in (list, tuple) or (hasattr(decorators, "__getitem__") and hasattr(decorators, "__len__"))) and type(categories) is int:
             decorators_list = list(decorators)
             print(f"\n✅ Demonstrated {categories} decorator categories")
             print(f"✅ Covered {len(decorators_list)} decorator types")

@@ -134,9 +134,9 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.FlexibleValue],
+        kwargs: Mapping[str, t.GuardInputValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> r[dict[str, t.FlexibleValue]]:
+    ) -> r[dict[str, t.GuardInputValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -149,13 +149,13 @@ class FlextUtilitiesArgs:
 
         """
         # Convert Mapping to dict for mutability
-        parsed: dict[str, t.FlexibleValue] = dict(kwargs)
+        parsed: dict[str, t.GuardInputValue] = dict(kwargs)
         errors: list[str] = []
 
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]
-                if isinstance(value, str):
+                if type(value) is str:
                     try:
                         parsed[field] = enum_cls(value)
                     except ValueError:
@@ -165,10 +165,10 @@ class FlextUtilitiesArgs:
                         errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
-            return r[dict[str, t.FlexibleValue]].fail(
+            return r[dict[str, t.GuardInputValue]].fail(
                 f"Invalid values: {'; '.join(errors)}",
             )
-        return r[dict[str, t.FlexibleValue]].ok(parsed)
+        return r[dict[str, t.GuardInputValue]].ok(parsed)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing
@@ -206,13 +206,13 @@ class FlextUtilitiesArgs:
                 origin = get_origin(current_hint)
 
             # Check if it's a StrEnum
-            if isinstance(current_hint, type) and issubclass(current_hint, StrEnum):
+            if type(current_hint) is type and issubclass(current_hint, StrEnum):
                 enum_params[name] = current_hint
 
             # Check Union types (str | Status) - Python 3.10+ uses UnionType
             elif origin is UnionType:
                 for arg in get_args(current_hint):
-                    if isinstance(arg, type) and issubclass(arg, StrEnum):
+                    if type(arg) is type and issubclass(arg, StrEnum):
                         enum_params[name] = arg
                         break
 

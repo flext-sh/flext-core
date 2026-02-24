@@ -21,6 +21,7 @@ import contextlib
 import json
 import socket
 import time
+from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar
 
@@ -56,7 +57,7 @@ class FlextTestsDocker:
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
 
-    SHARED_CONTAINERS: ClassVar[dict[str, m.ConfigMap]] = (
+    SHARED_CONTAINERS: ClassVar[Mapping[str, m.ConfigMap]] = (
         c.Tests.Docker.SHARED_CONTAINERS
     )
 
@@ -117,7 +118,7 @@ class FlextTestsDocker:
     @property
     def shared_containers(
         self,
-    ) -> dict[str, m.ConfigMap]:
+    ) -> Mapping[str, m.ConfigMap]:
         """Get shared container configurations."""
         return c.Tests.Docker.SHARED_CONTAINERS
 

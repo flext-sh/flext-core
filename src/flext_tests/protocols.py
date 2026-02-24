@@ -11,7 +11,10 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Callable, Mapping, Sequence
-from typing import Protocol, Self, runtime_checkable
+from pathlib import Path
+from typing import Any, Protocol, Self, TypeVar, runtime_checkable
+
+T = TypeVar("T")
 
 from flext_core import FlextProtocols, r, t
 from pydantic import BaseModel
@@ -344,10 +347,10 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose: object
+                compose: Any
                 """Compose API access (python-on-whales style)."""
 
-                client_config: object
+                client_config: Any
                 """Client configuration (python-on-whales style)."""
 
                 def up(
@@ -425,14 +428,14 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     kind: str = ...,
                     # All parameters via kwargs - validated by ModelFactoryParams
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> (
-                    t.GeneralValueType
-                    | list[t.GeneralValueType]
-                    | dict[str, t.GeneralValueType]
-                    | r[t.GeneralValueType]
-                    | r[list[t.GeneralValueType]]
-                    | r[dict[str, t.GeneralValueType]]
+                    t.Tests.PayloadValue
+                    | list[t.Tests.PayloadValue]
+                    | Mapping[str, t.Tests.PayloadValue]
+                    | r[t.Tests.PayloadValue]
+                    | r[list[t.Tests.PayloadValue]]
+                    | r[Mapping[str, t.Tests.PayloadValue]]
                 ):
                     """Create model instance(s) with optional transformations.
 
@@ -469,7 +472,7 @@ class FlextTestsProtocols(FlextProtocols):
                     kind: str = "ok",
                     value: TValue | None = None,
                     # All parameters via kwargs - validated by ResultFactoryParams
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> (
                     FlextProtocols.Result[TValue] | list[FlextProtocols.Result[TValue]]
                 ):
@@ -505,9 +508,9 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def list[T](
                     self,
-                    source: t.GeneralValueType = "user",
+                    source: t.Tests.PayloadValue = "user",
                     # All parameters via kwargs - validated by ListFactoryParams
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> list[T] | r[list[T]]:
                     """Create typed list from source.
 
@@ -528,10 +531,10 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def dict[K, V](
                     self,
-                    source: (Mapping[K, V] | t.GeneralValueType) = "user",
+                    source: (Mapping[K, V] | t.Tests.PayloadValue) = "user",
                     # All parameters via kwargs - validated by DictFactoryParams
-                    **kwargs: t.GeneralValueType,
-                ) -> dict[K, V] | r[dict[K, V]]:
+                    **kwargs: t.Tests.PayloadValue,
+                ) -> Mapping[K, V] | r[Mapping[K, V]]:
                     """Create typed dict from source.
 
                     Args:
@@ -562,7 +565,7 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     type_: type[T],
                     # All parameters via kwargs - validated by GenericFactoryParams
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> T | list[T] | r[T] | r[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
@@ -596,18 +599,18 @@ class FlextTestsProtocols(FlextProtocols):
                 Used for validation and testing operations.
                 """
 
-                def assert_ok(self, result: object) -> object:
+                def assert_ok(self, result: T) -> T:
                     """Assert result is success and return value."""
                     ...
 
-                def assert_fail(self, result: object) -> str:
+                def assert_fail(self, result: Any) -> str:
                     """Assert result is failure and return error."""
                     ...
 
                 def assert_that(
                     self,
-                    value: object,
-                    **kwargs: object,
+                    value: T,
+                    **kwargs: T,
                 ) -> None:
                     """Assert value satisfies conditions."""
                     ...
@@ -621,11 +624,11 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def match(
                     self,
-                    obj: object,
-                    spec: Mapping[str, object | Callable[[object], bool]],
+                    obj: T,
+                    spec: Mapping[str, t.Tests.PayloadValue | Callable[[t.Tests.PayloadValue], bool]],
                     *,
                     path_sep: str = ".",
-                ) -> object:
+                ) -> T:
                     """Match object against deep specification.
 
                     Args:
@@ -648,7 +651,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def validate(
                     self,
-                    value: object,
+                    value: T,
                     spec: int | tuple[int, int],
                 ) -> bool:
                     """Validate length against spec.
@@ -670,7 +673,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that support chained assertions.
                 """
 
-                def ok(self, msg: str | None = None) -> object:
+                def ok(self, msg: str | None = None) -> T:
                     """Assert result is success."""
                     ...
 
@@ -678,23 +681,23 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     error: str | None = None,
                     msg: str | None = None,
-                ) -> object:
+                ) -> T:
                     """Assert result is failure."""
                     ...
 
-                def eq(self, expected: object, msg: str | None = None) -> object:
+                def eq(self, expected: T, msg: str | None = None) -> T:
                     """Assert value equals expected."""
                     ...
 
-                def has(self, item: object, msg: str | None = None) -> object:
+                def has(self, item: T, msg: str | None = None) -> T:
                     """Assert value/error contains item."""
                     ...
 
-                def len(self, expected: int, msg: str | None = None) -> object:
+                def len(self, expected: int, msg: str | None = None) -> T:
                     """Assert value has expected length."""
                     ...
 
-                def done(self) -> object:
+                def done(self) -> T:
                     """Finish chain and return value (for success)."""
                     ...
 
@@ -711,8 +714,8 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def scope(
                     self,
-                    **kwargs: object,
-                ) -> object:
+                    **kwargs: T,
+                ) -> T:
                     """Enter test execution scope with **kwargs pattern.
 
                     Args:
@@ -725,7 +728,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def exit_scope(self, scope: object) -> None:
+                def exit_scope(self, scope: T) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:
@@ -753,11 +756,11 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def create(
                     self,
-                    content: object,
+                    content: t.Tests.PayloadValue,
                     name: str = ...,
-                    directory: object = ...,
-                    **kwargs: object,
-                ) -> FlextProtocols.Result[object]:
+                    directory: str | None = ...,
+                    **kwargs: Any,
+                ) -> FlextProtocols.Result[Path]:
                     """Create file with auto-detection.
 
                     Returns:
@@ -768,11 +771,11 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def read(
                     self,
-                    path: object,
+                    path: Path | str,
                     *,
-                    model_cls: type[object] | None = ...,
-                    **kwargs: object,
-                ) -> FlextProtocols.Result[object]:
+                    model_cls: type[BaseModel] | None = ...,
+                    **kwargs: Any,
+                ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Read file with optional model deserialization.
 
                     Returns:
@@ -783,11 +786,11 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def compare(
                     self,
-                    file1: object,
-                    file2: object,
+                    file1: Path | str,
+                    file2: Path | str,
                     *,
                     mode: str = ...,
-                    **kwargs: object,
+                    **kwargs: Any,
                 ) -> FlextProtocols.Result[bool]:
                     """Compare two files.
 
@@ -799,12 +802,12 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def info(
                     self,
-                    path: object,
+                    path: Path | str,
                     *,
                     compute_hash: bool = ...,
                     detect_fmt: bool = ...,
-                    **kwargs: object,
-                ) -> FlextProtocols.Result[object]:
+                    **kwargs: Any,
+                ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Get comprehensive file information.
 
                     Returns:
@@ -815,14 +818,14 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def batch(
                     self,
-                    files: object,
+                    files: Sequence[tuple[str, str]] | Mapping[str, str],
                     *,
-                    directory: object = ...,
+                    directory: Path | str | None = ...,
                     operation: str = ...,
-                    model: type[object] | None = ...,
+                    model: type[BaseModel] | None = ...,
                     on_error: str = ...,
-                    **kwargs: object,
-                ) -> FlextProtocols.Result[object]:
+                    **kwargs: Any,
+                ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Batch file operations.
 
                     Returns:
@@ -849,8 +852,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def add(
                     self,
                     key: str,
-                    value: t.GeneralValueType | None = ...,
-                    **kwargs: t.GeneralValueType,
+                    value: t.Tests.PayloadValue | None = ...,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> Self:
                     """Add data to builder.
 
@@ -868,10 +871,10 @@ class FlextTestsProtocols(FlextProtocols):
                 def set(
                     self,
                     path: str,
-                    value: t.GeneralValueType | None = ...,
+                    value: t.Tests.PayloadValue | None = ...,
                     *,
                     create_parents: bool = ...,
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> Self:
                     """Set value at nested path.
 
@@ -909,14 +912,14 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def build(
                     self,
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> (
-                    dict[str, t.GeneralValueType]
+                    Mapping[str, t.Tests.PayloadValue]
                     | BaseModel
-                    | list[tuple[str, t.GeneralValueType]]
+                    | list[tuple[str, t.Tests.PayloadValue]]
                     | list[str]
-                    | list[t.GeneralValueType]
-                    | t.GeneralValueType
+                    | list[t.Tests.PayloadValue]
+                    | t.Tests.PayloadValue
                 ):
                     """Build the dataset with output type control.
 
@@ -931,13 +934,13 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def to_result[T](
                     self,
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> (
                     r[T]
-                    | r[dict[str, t.GeneralValueType]]
+                    | r[Mapping[str, t.Tests.PayloadValue]]
                     | r[BaseModel]
                     | r[list[T]]
-                    | r[dict[str, T]]
+                    | r[Mapping[str, T]]
                     | T
                 ):
                     """Build data wrapped in FlextResult.
@@ -960,7 +963,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def fork(self, **updates: t.GeneralValueType) -> Self:
+                def fork(self, **updates: t.Tests.PayloadValue) -> Self:
                     """Copy and immediately add updates.
 
                     Args:
@@ -995,8 +998,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def batch(
                     self,
                     key: str,
-                    scenarios: Sequence[tuple[str, t.GeneralValueType]],
-                    **kwargs: t.GeneralValueType,
+                    scenarios: Sequence[tuple[str, t.Tests.PayloadValue]],
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> Self:
                     """Build batch of test scenarios.
 
@@ -1013,8 +1016,8 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def scenarios(
                     self,
-                    *cases: tuple[str, dict[str, t.GeneralValueType]],
-                ) -> list[tuple[str, dict[str, t.GeneralValueType]]]:
+                    *cases: tuple[str, Mapping[str, t.Tests.PayloadValue]],
+                ) -> list[tuple[str, Mapping[str, t.Tests.PayloadValue]]]:
                     """Build pytest.mark.parametrize compatible scenarios.
 
                     Args:
@@ -1047,14 +1050,14 @@ class FlextTestsProtocols(FlextProtocols):
                 functions used with sorted().
 
                 Example:
-                    def get_id(obj: object) -> int:
+                    def get_id(obj: Any) -> int:
                         return obj.id  # int supports __lt__
 
                     sorted(items, key=get_id)  # OK - int satisfies SupportsLessThan
 
                 """
 
-                def __lt__(self, other: object, /) -> bool:
+                def __lt__(self, other: Any, /) -> bool:
                     """Less-than comparison operator."""
                     ...
 

@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from datetime import UTC, datetime
 
 from pydantic import Field
@@ -176,7 +177,7 @@ class FlextGenericModels:
                 return " | ".join(parts)
 
             def with_metadata(
-                self, **kwargs: t.GeneralValueType
+                self, **kwargs: t.GuardInputValue
             ) -> FlextGenericModels.Value.OperationContext:
                 """Create new context with additional metadata.
 
@@ -406,7 +407,7 @@ class FlextGenericModels:
 
                 return " | ".join(parts) if parts else "no metrics"
 
-            def to_health_check_format(self) -> dict[str, t.GeneralValueType]:
+            def to_health_check_format(self) -> Mapping[str, t.GuardInputValue]:
                 """Convert to standard health check format.
 
                 Returns:
@@ -547,8 +548,8 @@ class FlextGenericModels:
                 return self.captured_at.isoformat()
 
             def get(
-                self, key: str, default: t.GeneralValueType = None
-            ) -> t.GeneralValueType:
+                self, key: str, default: t.GuardInputValue = None
+            ) -> t.GuardInputValue:
                 """Get configuration value with optional default.
 
                 Args:
@@ -790,7 +791,7 @@ class FlextGenericModels:
                     return "warning"
                 return "critical"
 
-            def get_check_detail(self, check_name: str) -> t.GeneralValueType:
+            def get_check_detail(self, check_name: str) -> t.GuardInputValue:
                 """Get detailed information for a specific health check.
 
                 Args:
@@ -809,7 +810,7 @@ class FlextGenericModels:
                     t.Dict: Monitoring compatible dictionary.
 
                 """
-                data: dict[str, t.GeneralValueType] = {
+                data: dict[str, t.GuardInputValue] = {
                     "healthy": self.healthy,
                     "status": "up" if self.healthy else "down",
                     "checks": self.checks.root,
@@ -827,7 +828,7 @@ class FlextGenericModels:
                 return t.Dict(root=data)
 
             def with_additional_check(
-                self, name: str, status: bool, detail: t.GeneralValueType = None
+                self, name: str, status: bool, detail: t.GuardInputValue = None
             ) -> FlextGenericModels.Snapshot.Health:
                 """Create new health result with additional check.
 
@@ -1153,7 +1154,7 @@ class FlextGenericModels:
                     t.Dict: Progress report dictionary.
 
                 """
-                data: dict[str, t.GeneralValueType] = {
+                data: dict[str, t.GuardInputValue] = {
                     "operation": self.operation_name,
                     "total_processed": self.total_count,
                     "success": self.success_count,
@@ -1184,7 +1185,7 @@ class FlextGenericModels:
             Function: Accumulate results, track conversion metrics, and provide detailed error reporting
             """
 
-            converted: list[t.GeneralValueType] = Field(
+            converted: list[t.GuardInputValue] = Field(
                 default_factory=list,
                 description="Successfully converted items",
             )
@@ -1196,7 +1197,7 @@ class FlextGenericModels:
                 default_factory=list,
                 description="Conversion warning messages",
             )
-            skipped: list[t.GeneralValueType] = Field(
+            skipped: list[t.GuardInputValue] = Field(
                 default_factory=list,
                 description="Items that were skipped during conversion",
             )
@@ -1402,7 +1403,7 @@ class FlextGenericModels:
 
                 return "\n".join(lines)
 
-            def add_converted(self, item: t.GeneralValueType) -> None:
+            def add_converted(self, item: t.GuardInputValue) -> None:
                 """Add a successfully converted item.
 
                 Args:
@@ -1414,19 +1415,19 @@ class FlextGenericModels:
             def _append_metadata_item(
                 self,
                 key: str,
-                item: t.GeneralValueType,
+                item: t.GuardInputValue,
             ) -> None:
                 existing_items = self.metadata.root.get(key)
-                if isinstance(existing_items, list):
+                if type(existing_items) is list:
                     existing_items.append(item)
                     return
                 self.metadata.root[key] = [item]
 
             def _upsert_skip_reason(
-                self, item: t.GeneralValueType, reason: str
+                self, item: t.GuardInputValue, reason: str
             ) -> None:
                 existing_reasons = self.metadata.root.get("skip_reasons")
-                if isinstance(existing_reasons, dict):
+                if type(existing_reasons) is dict:
                     existing_reasons[str(item)] = reason
                     # No need to update self.metadata as it's modified in place
                     return
@@ -1434,7 +1435,7 @@ class FlextGenericModels:
                 self.metadata.root["skip_reasons"] = {str(item): reason}
 
             def add_error(
-                self, error: str, item: t.GeneralValueType | None = None
+                self, error: str, item: t.GuardInputValue | None = None
             ) -> None:
                 """Add an error message with optional failed item.
 
@@ -1448,7 +1449,7 @@ class FlextGenericModels:
                     self._append_metadata_item("failed_items", item)
 
             def add_warning(
-                self, warning: str, item: t.GeneralValueType | None = None
+                self, warning: str, item: t.GuardInputValue | None = None
             ) -> None:
                 """Add a warning message with optional item.
 
@@ -1462,7 +1463,7 @@ class FlextGenericModels:
                     self._append_metadata_item("warning_items", item)
 
             def add_skipped(
-                self, item: t.GeneralValueType, reason: str | None = None
+                self, item: t.GuardInputValue, reason: str | None = None
             ) -> None:
                 """Add a skipped item with optional reason.
 
@@ -1505,7 +1506,7 @@ class FlextGenericModels:
                     t.Dict: Conversion report dictionary.
 
                 """
-                data: dict[str, t.GeneralValueType] = {
+                data: dict[str, t.GuardInputValue] = {
                     "source_format": self.source_format,
                     "target_format": self.target_format,
                     "converted_count": self.converted_count,

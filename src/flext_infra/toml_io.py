@@ -12,15 +12,27 @@ from __future__ import annotations
 import tomllib
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import cast
 
 import tomlkit
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 from tomlkit.items import Table
 
 from flext_infra.constants import ic
 
-_TableLike = Table | MutableMapping[str, object]
+type TomlScalar = str | int | float | bool | None
+type TomlValue = TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
+type TomlMap = MutableMapping[str, TomlValue]
+type TomlMutableMap = MutableMapping[str, TomlValue]
+_TableLike = Table | TomlMutableMap
+
+
+def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
+    if MutableMapping in type(value).__mro__:
+        return value
+    if Table in type(value).__mro__:
+        return value
+    return None
 
 
 class TomlService:
@@ -30,7 +42,7 @@ class TomlService:
     the bare functions from ``scripts/libs/toml_io.py``.
     """
 
-    def read(self, path: Path) -> FlextResult[dict[str, object]]:
+    def read(self, path: Path) -> FlextResult[TomlMap]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
@@ -41,16 +53,16 @@ class TomlService:
 
         """
         if not path.exists():
-            return r[dict[str, object]].ok({})
+            return r[TomlMap].ok({})
         try:
             data = tomllib.loads(
                 path.read_text(encoding=ic.Encoding.DEFAULT),
             )
-            return r[dict[str, object]].ok(data)
+            return r[TomlMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[dict[str, object]].fail(f"TOML read error: {exc}")
+            return r[TomlMap].fail(f"TOML read error: {exc}")
 
-    def read_pyproject(self, path: Path) -> FlextResult[dict[str, object]]:
+    def read_pyproject(self, path: Path) -> FlextResult[TomlMap]:
         """Read and parse a pyproject.toml from a directory or file.
 
         Args:
@@ -112,21 +124,21 @@ class TomlService:
             return r[bool].fail(f"TOML write error: {exc}")
 
     @staticmethod
-    def value_differs(current: object, expected: object) -> bool:
+    def value_differs(current: TomlValue, expected: TomlValue) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.
         """
-        if isinstance(current, list) and isinstance(expected, list):
+        if type(current) is list and type(expected) is list:
             return [str(x) for x in current] != [str(x) for x in expected]
         return str(current) != str(expected)
 
     @staticmethod
-    def build_table(data: dict[str, object]) -> Table:
+    def build_table(data: TomlMap) -> Table:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
-            if isinstance(value, dict):
+            if type(value) is dict or Table in type(value).__mro__:
                 table[key] = TomlService.build_table(value)
             else:
                 table[key] = value
@@ -134,8 +146,8 @@ class TomlService:
 
     def sync_mapping(
         self,
-        target: MutableMapping[str, object],
-        canonical: dict[str, object],
+        target: TomlMutableMap,
+        canonical: TomlMap,
         *,
         prune_extras: bool,
         prefix: str,
@@ -147,13 +159,14 @@ class TomlService:
         for key, expected in canonical.items():
             current = target.get(key)
             path = f"{prefix}.{key}" if prefix else key
-            if isinstance(expected, dict):
-                if current is None or not hasattr(current, "keys"):
+            if type(expected) is dict or Table in type(expected).__mro__:
+                current_mapping = _as_toml_mapping(current)
+                if current_mapping is None:
                     target[key] = self.build_table(expected)
                     added.append(path)
                     continue
                 self.sync_mapping(
-                    cast("MutableMapping[str, object]", current),
+                    current_mapping,
                     expected,
                     prune_extras=prune_extras,
                     prefix=path,
@@ -182,7 +195,7 @@ class TomlService:
     def sync_section(
         self,
         target: _TableLike,
-        canonical: dict[str, object],
+        canonical: TomlMap,
         *,
         prune_extras: bool = True,
     ) -> tuple[list[str], list[str], list[str]]:
@@ -195,8 +208,11 @@ class TomlService:
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
+        target_mapping = _as_toml_mapping(target)
+        if target_mapping is None:
+            return added, updated, removed
         self.sync_mapping(
-            cast("MutableMapping[str, object]", target),
+            target_mapping,
             canonical,
             prune_extras=prune_extras,
             prefix="",

@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import argparse
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
-from tomlkit.items import Table
+from tomlkit.items import Array, Table
 
+from flext_core.typings import t
 from flext_infra.subprocess import CommandRunner
 
 
@@ -60,7 +61,7 @@ def _dep_name(spec: str) -> str:
 
 def _dedupe_specs(specs: Iterable[str]) -> list[str]:
     """Deduplicate dependency specifications by normalized name."""
-    seen: dict[str, str] = {}
+    seen: MutableMapping[str, str] = {}
     for spec in specs:
         key = _dep_name(spec)
         if key and key not in seen:
@@ -68,11 +69,11 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
     return [seen[k] for k in sorted(seen)]
 
 
-def _as_string_list(value: object) -> list[str]:
+def _as_string_list(value: t.ConfigMapValue) -> list[str]:
     """Convert TOML value to list of strings."""
-    if value is None or isinstance(value, str) or isinstance(value, Mapping):
+    if value is None or type(value) is str or Mapping in type(value).__mro__:
         return []
-    if not isinstance(value, Iterable):
+    if Iterable not in type(value).__mro__:
         return []
     items: list[str] = []
     for raw in value:
@@ -81,7 +82,7 @@ def _as_string_list(value: object) -> list[str]:
     return items
 
 
-def _array(items: list[str]) -> object:
+def _array(items: list[str]) -> Array:
     """Create multiline TOML array from string items."""
     arr = tomlkit.array()
     for item in items:
@@ -92,7 +93,7 @@ def _array(items: list[str]) -> object:
 def _ensure_table(parent: Table, key: str) -> Table:
     """Get or create a TOML table in parent."""
     existing = parent.get(key)
-    if isinstance(existing, Table):
+    if existing is not None and Table in type(existing).__mro__:
         return existing
     table = tomlkit.table()
     parent[key] = table
@@ -109,13 +110,13 @@ def _read_doc(path: Path) -> tomlkit.TOMLDocument | None:
         return None
 
 
-def _project_dev_groups(doc: tomlkit.TOMLDocument) -> dict[str, list[str]]:
+def _project_dev_groups(doc: tomlkit.TOMLDocument) -> Mapping[str, list[str]]:
     """Extract optional-dependencies groups from project table."""
     project = doc.get("project")
-    if not isinstance(project, Table):
+    if project is None or Table not in type(project).__mro__:
         return {}
     optional = project.get("optional-dependencies")
-    if not isinstance(optional, Table):
+    if optional is None or Table not in type(optional).__mro__:
         return {}
     return {
         "dev": _as_string_list(optional.get("dev")),
@@ -151,12 +152,12 @@ class ConsolidateGroupsPhase:
         changes: list[str] = []
 
         project = doc.get("project")
-        if not isinstance(project, Table):
+        if Table not in type(project).__mro__:
             project = tomlkit.table()
             doc["project"] = project
 
         optional = project.get("optional-dependencies")
-        if not isinstance(optional, Table):
+        if Table not in type(optional).__mro__:
             optional = tomlkit.table()
             project["optional-dependencies"] = optional
 
@@ -180,7 +181,7 @@ class ConsolidateGroupsPhase:
                 changes.append(f"project.optional-dependencies.{old_key} removed")
 
         tool = doc.get("tool")
-        if not isinstance(tool, Table):
+        if Table not in type(tool).__mro__:
             tool = tomlkit.table()
             doc["tool"] = tool
 
@@ -190,10 +191,10 @@ class ConsolidateGroupsPhase:
 
         for old_group in ("docs", "security", "test", "typings"):
             old_group_table = poetry_group.get(old_group)
-            if not isinstance(old_group_table, Table):
+            if Table not in type(old_group_table).__mro__:
                 continue
             old_deps = old_group_table.get("dependencies")
-            if isinstance(old_deps, Table):
+            if Table in type(old_deps).__mro__:
                 for dep_name, dep_value in old_deps.items():
                     if dep_name not in poetry_dev:
                         poetry_dev[dep_name] = dep_value
@@ -231,7 +232,7 @@ class EnsurePytestConfigPhase:
         changes: list[str] = []
 
         tool = doc.get("tool")
-        if not isinstance(tool, Table):
+        if Table not in type(tool).__mro__:
             tool = tomlkit.table()
             doc["tool"] = tool
 
@@ -391,7 +392,7 @@ class PyprojectModernizer:
             return 2
         canonical_dev = _canonical_dev_dependencies(root_doc)
 
-        violations: dict[str, list[str]] = {}
+        violations: MutableMapping[str, list[str]] = {}
         total = 0
         for file_path in files:
             changes = self.process_file(

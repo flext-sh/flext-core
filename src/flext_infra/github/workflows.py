@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 from flext_infra.json_io import JsonService
@@ -257,11 +259,11 @@ class WorkflowSyncer:
         operations: list[SyncOperation],
     ) -> None:
         """Write a JSON report of sync operations."""
-        by_action: dict[str, int] = {}
+        by_action: MutableMapping[str, int] = {}
         for op in operations:
             by_action[op.action] = by_action.get(op.action, 0) + 1
 
-        payload: dict[str, object] = {
+        payload: MutableMapping[str, t.ConfigMapValue] = {
             "mode": "apply" if apply else "dry-run",
             "summary": by_action,
             "operations": [

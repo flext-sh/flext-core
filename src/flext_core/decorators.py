@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from functools import wraps
 from typing import Literal, overload
@@ -30,6 +30,9 @@ from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
+
+# Concrete payload type for decorator extra dicts (replaces t.ConfigMapValue per LAW)
+type _Payload = t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
 
 
 def deprecated(
@@ -243,7 +246,7 @@ class FlextDecorators(FlextRuntime):
         ...     )
         ...     def call_external_api(
         ...         self, endpoint: str
-        ...     ) -> dict[str, t.GeneralValueType]:
+        ...     ) -> dict[str, _Payload]:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -315,7 +318,7 @@ class FlextDecorators(FlextRuntime):
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-        ... def business_operation() -> dict[str, t.GeneralValueType]:
+        ... def business_operation() -> dict[str, _Payload]:
         ...     # All exceptions become FlextResult.fail()
         ...     return process_business_logic()
         >>>
@@ -489,7 +492,7 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, t.GeneralValueType] = {
+                    start_extra: dict[str, _Payload] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -504,7 +507,7 @@ class FlextDecorators(FlextRuntime):
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, t.GeneralValueType] = {
+                    completion_extra: dict[str, _Payload] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -532,7 +535,7 @@ class FlextDecorators(FlextRuntime):
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, t.GeneralValueType] = {
+                    failure_extra: dict[str, _Payload] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -640,7 +643,7 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: dict[str, t.GeneralValueType] = {
+                    success_extra: dict[str, _Payload] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -662,7 +665,7 @@ class FlextDecorators(FlextRuntime):
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: dict[str, t.GeneralValueType] = {
+                    failure_extra: dict[str, _Payload] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -741,8 +744,8 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
 
                     # If already a FlextResult, return as-is
-                    # Type narrowing: isinstance(result, r) confirms result is r[T]
-                    if isinstance(result, r):
+                    # Type narrowing: r in type(result).__mro__ confirms result is r[T]
+                    if r in type(result).__mro__:
                         return result
 
                     # Wrap successful result
@@ -758,7 +761,7 @@ class FlextDecorators(FlextRuntime):
                     # Convert exception to FlextResult failure
                     # Fast fail: error_code must be str or None
                     effective_error_code: str = (
-                        error_code if isinstance(error_code, str) else "OPERATION_ERROR"
+                        error_code if type(error_code) is str else "OPERATION_ERROR"
                     )
                     return r[T].fail(
                         str(e),
@@ -805,7 +808,7 @@ class FlextDecorators(FlextRuntime):
                     delay_seconds=2.0,
                     backoff_strategy=c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
-                def unreliable_operation(self) -> dict[str, t.GeneralValueType]:
+                def unreliable_operation(self) -> dict[str, _Payload]:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -852,7 +855,7 @@ class FlextDecorators(FlextRuntime):
                     retry_config=retry_config,
                 )
                 # Check if we got a successful result or an exception
-                if isinstance(result_or_exception, Exception):
+                if Exception in type(result_or_exception).__mro__:
                     # All retries failed - handle exhaustion and raise
                     FlextDecorators._handle_retry_exhaustion(
                         result_or_exception,
@@ -886,11 +889,10 @@ class FlextDecorators(FlextRuntime):
 
         """
         first_arg = args[0] if args else None
-        potential_logger: object | None = (
+        potential_logger: _Payload | None = (
             getattr(first_arg, "logger", None) if first_arg is not None else None
         )
-        if potential_logger is not None and isinstance(potential_logger, FlextLogger):
-            # Type narrowing via isinstance check
+        if potential_logger is not None and type(potential_logger) is FlextLogger:
             return potential_logger
         # FlextLogger constructor returns FlextLogger
         return FlextLogger(func.__module__)
@@ -899,7 +901,7 @@ class FlextDecorators(FlextRuntime):
     def _execute_retry_loop[R](
         func: Callable[..., R],  # Variadic: called with pre-split args/kwargs
         args: tuple[object, ...],
-        kwargs: dict[str, object],
+        kwargs: Mapping[str, object],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -1025,7 +1027,7 @@ class FlextDecorators(FlextRuntime):
         msg = f"Operation {func.__name__} failed after {attempts} attempts"
         # Fast fail: error_code must be str or None
         effective_error_code: str = (
-            error_code if isinstance(error_code, str) else "RETRY_EXHAUSTED"
+            error_code if type(error_code) is str else "RETRY_EXHAUSTED"
         )
         raise e.TimeoutError(
             msg,
@@ -1110,9 +1112,9 @@ class FlextDecorators(FlextRuntime):
             fallback_kwargs = dict(kwargs)
             fallback_kwargs.setdefault("extra", {})
             extra_payload_raw = fallback_kwargs["extra"]
-            # Type narrowing: object to ConfigurationDict for is_dict_like
-            if isinstance(extra_payload_raw, dict):
-                extra_payload: dict[str, t.GeneralValueType] = extra_payload_raw
+            # Type narrowing: type check for dict
+            if type(extra_payload_raw) is dict:
+                extra_payload: dict[str, _Payload] = extra_payload_raw
             else:
                 extra_payload = {}
             if FlextRuntime.is_dict_like(extra_payload):
@@ -1151,7 +1153,7 @@ class FlextDecorators(FlextRuntime):
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> dict[str, t.GeneralValueType]:
+                def long_running_operation(self) -> dict[str, _Payload]:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```
@@ -1183,7 +1185,7 @@ class FlextDecorators(FlextRuntime):
                         # Fast fail: error_code must be str or None
                         effective_error_code: str = (
                             error_code
-                            if isinstance(error_code, str)
+                            if type(error_code) is str
                             else "OPERATION_TIMEOUT"
                         )
                         raise e.TimeoutError(

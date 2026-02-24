@@ -126,7 +126,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Port validation
         port_value = TEST_DATA["port"]
-        if isinstance(port_value, int):
+        if type(port_value) is int:
             port_result = u.validate_port_number(port_value)
             print(f"✅ Port validation: {port_value} -> {port_result.is_success}")
 
@@ -195,7 +195,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Sort dictionary keys for consistent cache keys (DRY)
         sorted_data = u.sort_dict_keys(TEST_DATA)
-        if isinstance(sorted_data, Mapping):
+        if type(sorted_data) is dict or (hasattr(sorted_data, "keys") and hasattr(sorted_data, "__getitem__")):
             print(f"✅ Sorted keys: {list(sorted_data.keys())}")
 
         # Clear object cache
@@ -304,7 +304,7 @@ def main() -> None:
         """Handle successful result."""
         categories = data.get("utility_categories", 0)
         utilities = data.get("utilities_demonstrated", [])
-        utilities_count = len(utilities) if isinstance(utilities, Sequence) else 0
+        utilities_count = len(utilities) if (type(utilities) in (list, tuple) or (hasattr(utilities, "__getitem__") and hasattr(utilities, "__len__"))) else 0
         print(f"\n✅ Demonstrated {categories} utility categories")
         print(f"✅ Covered {utilities_count} utility types")
 

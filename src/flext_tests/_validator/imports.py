@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ast
 import re
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from flext_core.result import r
@@ -32,7 +33,7 @@ class FlextValidatorImports:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for import violations.
 
@@ -63,7 +64,7 @@ class FlextValidatorImports:
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single file for import violations."""
         violations: list[m.Tests.Validator.Violation] = []
@@ -108,7 +109,7 @@ class FlextValidatorImports:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect imports not at module top level."""
         if u.Tests.Validator.is_approved("IMPORT-001", file_path, approved):
@@ -117,12 +118,13 @@ class FlextValidatorImports:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
+            if type(node) in (ast.Import, ast.ImportFrom):
                 # Check if import is inside a function or class
                 parent = u.Tests.Validator.get_parent(tree, node)
-                if isinstance(
-                    parent,
-                    (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+                if type(parent) in (
+                    ast.FunctionDef,
+                    ast.AsyncFunctionDef,
+                    ast.ClassDef,
                 ):
                     violation = u.Tests.Validator.create_violation(
                         file_path,
@@ -140,7 +142,7 @@ class FlextValidatorImports:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect TYPE_CHECKING blocks."""
         if u.Tests.Validator.is_approved("IMPORT-002", file_path, approved):
@@ -151,8 +153,8 @@ class FlextValidatorImports:
         for node in ast.walk(tree):
             # Check if condition is TYPE_CHECKING
             if (
-                isinstance(node, ast.If)
-                and isinstance(node.test, ast.Name)
+                type(node) is ast.If
+                and type(node.test) is ast.Name
                 and node.test.id == "TYPE_CHECKING"
             ):
                 violation = u.Tests.Validator.create_violation(
@@ -171,7 +173,7 @@ class FlextValidatorImports:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect try/except ImportError patterns."""
         if u.Tests.Validator.is_approved("IMPORT-003", file_path, approved):
@@ -180,7 +182,7 @@ class FlextValidatorImports:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Try):
+            if type(node) is not ast.Try:
                 continue
             # Check if any handler catches ImportError or ModuleNotFoundError
             for handler in node.handlers:
@@ -207,7 +209,7 @@ class FlextValidatorImports:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect sys.path manipulation."""
         if u.Tests.Validator.is_approved("IMPORT-004", file_path, approved):
@@ -218,14 +220,14 @@ class FlextValidatorImports:
         for node in ast.walk(tree):
             # Check for sys.path
             if (
-                isinstance(node, ast.Attribute)
-                and isinstance(node.value, ast.Name)
+                type(node) is ast.Attribute
+                and type(node.value) is ast.Name
                 and node.value.id == "sys"
                 and node.attr == "path"
             ):
                 # Check if it's being modified (append, insert, extend)
                 parent = u.Tests.Validator.get_parent(tree, node)
-                if isinstance(parent, ast.Call):
+                if type(parent) is ast.Call:
                     violation = u.Tests.Validator.create_violation(
                         file_path,
                         node.lineno,
@@ -242,7 +244,7 @@ class FlextValidatorImports:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect direct technology imports."""
         if u.Tests.Validator.is_approved("IMPORT-005", file_path, approved):
@@ -252,7 +254,7 @@ class FlextValidatorImports:
         tech_imports = c.Tests.Validator.Approved.TECH_IMPORTS
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
+            if type(node) is ast.Import:
                 for alias in node.names:
                     if alias.name.split(".")[0] in tech_imports:
                         violation = u.Tests.Validator.create_violation(
@@ -264,7 +266,7 @@ class FlextValidatorImports:
                         )
                         violations.append(violation)
             elif (
-                isinstance(node, ast.ImportFrom)
+                type(node) is ast.ImportFrom
                 and node.module
                 and node.module.split(".")[0] in tech_imports
             ):
@@ -285,7 +287,7 @@ class FlextValidatorImports:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect non-root imports from flext-* packages internal modules.
 
@@ -313,7 +315,7 @@ class FlextValidatorImports:
         flext_packages = c.Tests.Validator.Approved.FLEXT_PACKAGES
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
+            if type(node) is ast.ImportFrom and node.module:
                 parts = node.module.split(".")
                 if len(parts) > 1 and parts[0] in flext_packages:
                     # Check if any part is internal (starts with _)

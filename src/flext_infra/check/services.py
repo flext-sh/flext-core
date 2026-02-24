@@ -8,7 +8,7 @@ import os
 import re
 import sys
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,6 +17,7 @@ from typing import override
 import structlog
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 from flext_infra.discovery import DiscoveryService
@@ -60,7 +61,7 @@ class _GateExecution:
 @dataclass
 class _ProjectResult:
     project: str
-    gates: dict[str, _GateExecution] = field(default_factory=dict)
+    gates: MutableMapping[str, _GateExecution] = field(default_factory=dict)
 
     @property
     def total_errors(self) -> int:
@@ -114,7 +115,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self,
         project: str,
         gates: Sequence[str],
-    ) -> r[object]:
+    ) -> r[list[_ProjectResult]]:
         """Run selected gates for a single project."""
         return self.run_projects([project], list(gates)).map(lambda value: value)
 
@@ -353,7 +354,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     def generate_sarif_report(
         results: list[_ProjectResult],
         gates: list[str],
-    ) -> dict[str, object]:
+    ) -> Mapping[str, t.ConfigMapValue]:
         """Render gate results as a SARIF 2.1.0 payload."""
         tool_info = {
             ic.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
@@ -372,12 +373,12 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             ic.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
         }
 
-        runs: list[dict[str, object]] = []
+        runs: list[Mapping[str, t.ConfigMapValue]] = []
         for gate in gates:
             tool_name, tool_url = tool_info.get(gate, (gate, ""))
-            sarif_results: list[dict[str, object]] = []
+            sarif_results: list[Mapping[str, t.ConfigMapValue]] = []
             rules_seen: set[str] = set()
-            rules: list[dict[str, object]] = []
+            rules: list[Mapping[str, t.ConfigMapValue]] = []
 
             for project in results:
                 gate_result = project.gates.get(gate)
@@ -440,7 +441,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         reports_dir: Path,
     ) -> _ProjectResult:
         result = _ProjectResult(project=project_dir.name)
-        runners: dict[str, Callable[[], _GateExecution]] = {
+        runners: Mapping[str, Callable[[], _GateExecution]] = {
             ic.Gates.LINT: lambda: self._run_ruff_lint(project_dir),
             ic.Gates.FORMAT: lambda: self._run_ruff_format(project_dir),
             ic.Gates.PYREFLY: lambda: self._run_pyrefly(project_dir, reports_dir),
@@ -480,7 +481,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         cmd: list[str],
         cwd: Path,
         timeout: int = 300,
-        env: dict[str, str] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> _RunCommandResult:
         result = self._runner.run_raw(
             cmd,
@@ -636,7 +637,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         if json_file.exists():
             try:
                 data = json.loads(json_file.read_text(encoding=ic.Encoding.DEFAULT))
-                raw_errors = data.get("errors", []) if isinstance(data, dict) else data
+                raw_errors = data.get("errors", []) if type(data) is dict else data
                 issues.extend(
                     _CheckIssue(
                         file=error.get("path", "?"),

@@ -14,11 +14,11 @@ import csv
 import hashlib
 import os
 import re
-from collections.abc import Callable, Generator, Mapping, Sequence, Sized
+from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-from typing import cast
+from typing import TypeVar
 
 from flext_core import (
     FlextContext,
@@ -36,6 +36,7 @@ from pydantic import BaseModel
 
 from flext_tests.constants import c
 from flext_tests.models import m
+from flext_tests.typings import t as tt
 
 
 class FlextTestsUtilities(FlextUtilities):
@@ -210,7 +211,7 @@ class FlextTestsUtilities(FlextUtilities):
                 return r[T].ok(value)
 
             @staticmethod
-            def create_failure_result(error: str) -> r[object]:
+            def create_failure_result(error: str) -> r[str]:
                 """Create a failure result with the given error.
 
                 Args:
@@ -221,7 +222,7 @@ class FlextTestsUtilities(FlextUtilities):
                     FlextResult with failure and error message
 
                 """
-                return r[object].fail(error)
+                return r[str].fail(error)
 
         class TestContext:
             """Context managers for tests."""
@@ -229,9 +230,9 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: object,
+                target: T,
                 attribute: str,
-                value: t.GeneralValueType,
+                value: tt.Tests.PayloadValue,
             ) -> Generator[None]:
                 """Temporarily set attribute on target object.
 
@@ -285,8 +286,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_data(
-                **kwargs: t.GeneralValueType,
-            ) -> dict[str, t.GeneralValueType]:
+                **kwargs: tt.Tests.PayloadValue,
+            ) -> MutableMapping[str, tt.Tests.PayloadValue]:
                 """Create test data dictionary.
 
                 Args:
@@ -304,7 +305,7 @@ class FlextTestsUtilities(FlextUtilities):
             # =====================================================================
 
             @staticmethod
-            def simple_operation() -> t.GeneralValueType:
+            def simple_operation() -> tt.Tests.PayloadValue:
                 """Execute simple operation returning success message.
 
                 Returns:
@@ -316,9 +317,9 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def add_operation(
-                a: t.GeneralValueType,
-                b: t.GeneralValueType,
-            ) -> t.GeneralValueType:
+                a: tt.Tests.PayloadValue,
+                b: tt.Tests.PayloadValue,
+            ) -> tt.Tests.PayloadValue:
                 """Execute add operation for numeric or string values.
 
                 Args:
@@ -330,7 +331,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Sum if both numeric, concatenation otherwise.
 
                 """
-                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                if type(a) in (int, float) and type(b) in (int, float):
                     return a + b
                 return str(a) + str(b)
 
@@ -352,7 +353,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_error_operation(
                 error_message: str,
-            ) -> Callable[[], t.GeneralValueType]:
+            ) -> Callable[[], tt.Tests.PayloadValue]:
                 """Create callable that raises ValueError.
 
                 Args:
@@ -364,7 +365,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
 
-                def error_op() -> t.GeneralValueType:
+                def error_op() -> tt.Tests.PayloadValue:
                     raise ValueError(error_message)
 
                 return error_op
@@ -372,7 +373,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_type_error_operation(
                 error_message: str,
-            ) -> Callable[[], t.GeneralValueType]:
+            ) -> Callable[[], tt.Tests.PayloadValue]:
                 """Create callable that raises TypeError.
 
                 Args:
@@ -384,7 +385,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
 
-                def type_error_op() -> t.GeneralValueType:
+                def type_error_op() -> tt.Tests.PayloadValue:
                     raise TypeError(error_message)
 
                 return type_error_op
@@ -395,8 +396,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_user_service(
-                overrides: dict[str, t.GeneralValueType],
-            ) -> r[t.GeneralValueType]:
+                overrides: Mapping[str, tt.Tests.PayloadValue],
+            ) -> r[tt.Tests.PayloadValue]:
                 """Execute user service operation.
 
                 Args:
@@ -408,16 +409,16 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 user_id = "default_123" if overrides.get("default") else "test_123"
-                user_data: t.GeneralValueType = {
+                user_data: tt.Tests.PayloadValue = {
                     "user_id": user_id,
                     "email": "test@example.com",
                 }
-                return r[t.GeneralValueType].ok(user_data)
+                return r[tt.Tests.PayloadValue].ok(user_data)
 
             @staticmethod
             def execute_complex_service(
                 validation_result: r[bool],
-            ) -> r[t.GeneralValueType]:
+            ) -> r[tt.Tests.PayloadValue]:
                 """Execute complex service operation.
 
                 Args:
@@ -429,16 +430,16 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 if validation_result.is_failure:
-                    return r[t.GeneralValueType].fail(
+                    return r[tt.Tests.PayloadValue].fail(
                         validation_result.error or "Validation failed",
                     )
-                result_data: t.GeneralValueType = {"result": "success"}
-                return r[t.GeneralValueType].ok(result_data)
+                result_data: tt.Tests.PayloadValue = {"result": "success"}
+                return r[tt.Tests.PayloadValue].ok(result_data)
 
             @staticmethod
             def execute_default_service(
                 service_type: str,
-            ) -> r[t.GeneralValueType]:
+            ) -> r[tt.Tests.PayloadValue]:
                 """Execute default service operation.
 
                 Args:
@@ -449,8 +450,8 @@ class FlextTestsUtilities(FlextUtilities):
                     FlextResult with service type data.
 
                 """
-                service_data: t.GeneralValueType = {"service_type": service_type}
-                return r[t.GeneralValueType].ok(service_data)
+                service_data: tt.Tests.PayloadValue = {"service_type": service_type}
+                return r[tt.Tests.PayloadValue].ok(service_data)
 
             @staticmethod
             def generate_id() -> str:
@@ -513,7 +514,7 @@ class FlextTestsUtilities(FlextUtilities):
                 return r[T].ok(value)
 
             @staticmethod
-            def create_failure_result(error: str) -> r[object]:
+            def create_failure_result(error: str) -> r[str]:
                 """Create a failure result with the given error.
 
                 Args:
@@ -524,7 +525,7 @@ class FlextTestsUtilities(FlextUtilities):
                     FlextResult with failure and error
 
                 """
-                return r[object].fail(error)
+                return r[str].fail(error)
 
             @staticmethod
             def assert_success_with_value[T](
@@ -591,7 +592,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def assert_result_success_and_type[T](
                 result: r[T],
-                expected_type: str | type[object] | None = None,
+                expected_type: str | type[BaseModel] | None = None,
             ) -> T:
                 """Assert result is success and return unwrapped value (type-safe).
 
@@ -676,7 +677,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def validate_model_attributes(
-                model: object,
+                model: BaseModel,
                 required_attrs: list[str],
                 optional_attrs: list[str] | None = None,
             ) -> r[bool]:
@@ -699,15 +700,15 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_parametrized_cases(
-                success_values: list[t.GeneralValueType],
+                success_values: list[tt.Tests.PayloadValue],
                 failure_errors: list[str] | None = None,
                 *,
                 error_codes: list[str | None] | None = None,
             ) -> list[
                 tuple[
-                    r[t.GeneralValueType],
+                    r[tt.Tests.PayloadValue],
                     bool,
-                    t.GeneralValueType | None,
+                    tt.Tests.PayloadValue | None,
                     str | None,
                 ]
             ]:
@@ -725,16 +726,16 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 cases: list[
                     tuple[
-                        r[t.GeneralValueType],
+                        r[tt.Tests.PayloadValue],
                         bool,
-                        t.GeneralValueType | None,
+                        tt.Tests.PayloadValue | None,
                         str | None,
                     ]
                 ] = []
 
                 # Create success cases
                 for value in success_values:
-                    result = r[t.GeneralValueType].ok(value)
+                    result = r[tt.Tests.PayloadValue].ok(value)
                     cases.append((result, True, value, None))
 
                 # Create failure cases
@@ -742,7 +743,7 @@ class FlextTestsUtilities(FlextUtilities):
                     codes = error_codes or [None] * len(failure_errors)
                     for i, error in enumerate(failure_errors):
                         error_code = codes[i] if i < len(codes) else None
-                        result = r[t.GeneralValueType].fail(
+                        result = r[tt.Tests.PayloadValue].fail(
                             error,
                             error_code=error_code,
                         )
@@ -812,9 +813,9 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def normalize_dict_values_to_lists(
-                data: dict[str, str | list[str] | tuple[str, ...] | set[str] | None]
+                data: Mapping[str, str | list[str] | tuple[str, ...] | set[str] | None]
                 | None,
-            ) -> dict[str, list[str]]:
+            ) -> MutableMapping[str, list[str]]:
                 """Normalize dictionary values to lists.
 
                 Converts single values to single-element lists for LDAP attribute
@@ -831,18 +832,14 @@ class FlextTestsUtilities(FlextUtilities):
                 if data is None:
                     return {}
 
-                result: dict[str, list[str]] = {}
+                result: MutableMapping[str, list[str]] = {}
                 for key, value in data.items():
-                    # Type narrowing: value is from data.items(), which is dict[str, str | None]
-                    # But runtime checks may reveal other types (set, list, etc.), so check first
                     if value is None:
                         result[key] = []
-                    elif isinstance(value, (list, tuple)):
-                        # Type narrowing: value is list or tuple after isinstance check
+                    elif type(value) in (list, tuple):
                         value_seq: Sequence[str] = value
                         result[key] = [str(v) for v in value_seq]
-                    elif isinstance(value, set):
-                        # Type narrowing: value is set after isinstance check
+                    elif type(value) is set:
                         value_set: set[str] = value
                         result[key] = [str(v) for v in value_set]
                     else:
@@ -859,7 +856,7 @@ class FlextTestsUtilities(FlextUtilities):
             def assert_model_creation_success[TResult](
                 factory_method: Callable[..., TResult],
                 expected_attrs: m.ConfigMap,
-                **factory_kwargs: t.GeneralValueType,
+                **factory_kwargs: tt.Tests.PayloadValue,
             ) -> TResult:
                 """Assert successful model creation and validate attributes.
 
@@ -902,7 +899,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_config(
-                **kwargs: t.FlexibleValue,
+                **kwargs: tt.Tests.PayloadValue,
             ) -> FlextSettings:
                 """Create a test config instance.
 
@@ -938,7 +935,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def env_vars_context(
-                env_vars: dict[str, t.GeneralValueType],
+                env_vars: Mapping[str, tt.Tests.PayloadValue],
                 vars_to_clear: list[str] | None = None,
             ) -> Generator[None]:
                 """Context manager for temporary environment variable changes.
@@ -951,7 +948,7 @@ class FlextTestsUtilities(FlextUtilities):
                     None
 
                 """
-                original_values: dict[str, str | None] = {}
+                original_values: MutableMapping[str, str | None] = {}
 
                 # Save and clear specified vars
                 if vars_to_clear:
@@ -995,7 +992,7 @@ class FlextTestsUtilities(FlextUtilities):
             def assert_context_get_success(
                 context: FlextContext,
                 key: str,
-                expected_value: t.GeneralValueType,
+                expected_value: tt.Tests.PayloadValue,
             ) -> None:
                 """Assert context get returns expected value.
 
@@ -1118,7 +1115,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_dispatcher(
-                handlers: dict[str, t.HandlerType] | None = None,
+                handlers: Mapping[str, t.HandlerType] | None = None,
             ) -> FlextDispatcher:
                 """Create a test dispatcher instance with optional handlers.
 
@@ -1137,10 +1134,10 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_handler_result(
-                result: p.Result[t.GeneralValueType],
+                result: p.Result[tt.Tests.PayloadValue],
                 *,
                 expected_success: bool = True,
-                expected_value: t.GeneralValueType | None = None,
+                expected_value: tt.Tests.PayloadValue | None = None,
                 expected_error: str | None = None,
             ) -> None:
                 """Assert handler result matches expectations.
@@ -1177,8 +1174,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_and_assert_parser_result(
-                operation: Callable[[], r[t.GeneralValueType]],
-                expected_value: t.GeneralValueType | None = None,
+                operation: Callable[[], r[tt.Tests.PayloadValue]],
+                expected_value: tt.Tests.PayloadValue | None = None,
                 expected_error: str | None = None,
                 description: str = "",
             ) -> None:
@@ -1214,10 +1211,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_operation_test_case(
                 operation: str,
                 description: str,
-                input_data: dict[str, t.GeneralValueType],
-                expected_result: t.GeneralValueType,
-                **kwargs: t.GeneralValueType,
-            ) -> dict[str, t.GeneralValueType]:
+                input_data: Mapping[str, tt.Tests.PayloadValue],
+                expected_result: tt.Tests.PayloadValue,
+                **kwargs: tt.Tests.PayloadValue,
+            ) -> MutableMapping[str, tt.Tests.PayloadValue]:
                 """Create a test case dict for operation testing.
 
                 Args:
@@ -1232,7 +1229,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Test case dictionary
 
                 """
-                result: dict[str, t.GeneralValueType] = {
+                result: MutableMapping[str, tt.Tests.PayloadValue] = {
                     "operation": operation,
                     "description": description,
                     "input_data": input_data,
@@ -1245,10 +1242,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_batch_operation_test_cases(
                 operation: str,
                 descriptions: list[str],
-                input_data_list: list[dict[str, t.GeneralValueType]],
-                expected_results: list[t.GeneralValueType],
-                **common_kwargs: t.GeneralValueType,
-            ) -> list[dict[str, t.GeneralValueType]]:
+                input_data_list: list[Mapping[str, tt.Tests.PayloadValue]],
+                expected_results: list[tt.Tests.PayloadValue],
+                **common_kwargs: tt.Tests.PayloadValue,
+            ) -> list[MutableMapping[str, tt.Tests.PayloadValue]]:
                 """Create batch test cases for operation testing.
 
                 Args:
@@ -1263,7 +1260,7 @@ class FlextTestsUtilities(FlextUtilities):
                     List of test case dictionaries
 
                 """
-                cases: list[dict[str, t.GeneralValueType]] = []
+                cases: list[MutableMapping[str, tt.Tests.PayloadValue]] = []
                 for desc, data, expected in zip(
                     descriptions,
                     input_data_list,
@@ -1283,8 +1280,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_and_assert_operation_result(
-                operation: Callable[[], t.GeneralValueType],
-                test_case: dict[str, t.GeneralValueType],
+                operation: Callable[[], tt.Tests.PayloadValue],
+                test_case: Mapping[str, tt.Tests.PayloadValue],
             ) -> None:
                 """Execute operation and assert result.
 
@@ -1300,10 +1297,12 @@ class FlextTestsUtilities(FlextUtilities):
                 expected = test_case.get("expected_result")
 
                 # Handle type expectations (e.g., int, bool, str)
-                if isinstance(expected, type):
-                    expected_type = cast("type", expected)
+                if type(expected) is type:
+                    expected_type = expected
                     m = f"Want type {expected_type.__name__}, got {type(result).__name__}"
-                    assert isinstance(result, expected_type), m
+                    assert type(result) is expected_type or (
+                        hasattr(type(result), "__mro__") and expected_type in type(result).__mro__
+                    ), m
                 else:
                     assert result == expected, f"Expected {expected}, got {result}"
 
@@ -1313,7 +1312,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_test_entity_instance[TEntity](
                 name: str,
-                value: t.GeneralValueType,
+                value: tt.Tests.PayloadValue,
                 entity_class: Callable[..., TEntity],
                 *,
                 remove_id: bool = False,
@@ -1338,7 +1337,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_test_entities_batch[TEntity](
                 names: list[str],
-                values: list[t.GeneralValueType],
+                values: list[tt.Tests.PayloadValue],
                 entity_class: Callable[..., TEntity],
                 remove_ids: list[bool] | None = None,
             ) -> r[list[TEntity]]:
@@ -1426,9 +1425,9 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_domain_operation(
                 operation: str,
-                input_data: dict[str, t.GeneralValueType],
-                **kwargs: t.GeneralValueType,
-            ) -> object:
+                input_data: Mapping[str, tt.Tests.PayloadValue],
+                **kwargs: tt.Tests.PayloadValue,
+            ) -> tt.Tests.PayloadValue:
                 """Execute a domain utility operation.
 
                 Args:
@@ -1455,8 +1454,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_metadata_object(
-                attributes: dict[str, t.GeneralValueType],
-            ) -> dict[str, t.GeneralValueType]:
+                attributes: Mapping[str, tt.Tests.PayloadValue],
+            ) -> MutableMapping[str, tt.Tests.PayloadValue]:
                 """Create a metadata object for exceptions.
 
                 Args:
@@ -1475,9 +1474,9 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_mapper_operation(
                 operation: str,
-                input_data: dict[str, t.GeneralValueType],
-                **kwargs: t.GeneralValueType,
-            ) -> r[object]:
+                input_data: Mapping[str, tt.Tests.PayloadValue],
+                **kwargs: tt.Tests.PayloadValue,
+            ) -> r[tt.Tests.PayloadValue]:
                 """Execute a mapper utility operation.
 
                 Args:
@@ -1497,11 +1496,10 @@ class FlextTestsUtilities(FlextUtilities):
 
                 all_args = {**input_data, **kwargs}
                 result = op_method(**all_args)
-                # Type narrowing: op_method returns FlextResult
-                if isinstance(result, r):
+                if hasattr(type(result), "__mro__") and r in type(result).__mro__:
                     return result
                 # If operation returns a value directly, wrap it
-                return r[object].ok(result)
+                return r[tt.Tests.PayloadValue].ok(result)
 
         class BadObjects:
             """Factory for objects that cause errors during testing."""
@@ -1509,7 +1507,7 @@ class FlextTestsUtilities(FlextUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                def model_dump(self) -> dict[str, t.GeneralValueType]:
+                def model_dump(self) -> MutableMapping[str, tt.Tests.PayloadValue]:
                     """Raise error on model_dump."""
                     msg = "Bad model_dump"
                     raise RuntimeError(msg)
@@ -1517,11 +1515,11 @@ class FlextTestsUtilities(FlextUtilities):
             class BadConfig:
                 """Config object that raises on attribute access."""
 
-                def __getattribute__(self, name: str) -> t.GeneralValueType:
+                def __getattribute__(self, name: str) -> tt.Tests.PayloadValue:
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        result: t.GeneralValueType = super().__getattribute__(name)
+                        result: tt.Tests.PayloadValue = super().__getattribute__(name)
                         return result
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
@@ -1529,11 +1527,11 @@ class FlextTestsUtilities(FlextUtilities):
             class BadConfigTypeError:
                 """Config object that raises TypeError on attribute access."""
 
-                def __getattribute__(self, name: str) -> t.GeneralValueType:
+                def __getattribute__(self, name: str) -> tt.Tests.PayloadValue:
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        result: t.GeneralValueType = super().__getattribute__(name)
+                        result: tt.Tests.PayloadValue = super().__getattribute__(name)
                         return result
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
@@ -1542,7 +1540,7 @@ class FlextTestsUtilities(FlextUtilities):
             """Helpers for testing FlextConstants."""
 
             @staticmethod
-            def get_constant_by_path(path: str) -> object:
+            def get_constant_by_path(path: str) -> tt.Tests.PayloadValue:
                 """Get a constant value by dot-separated path.
 
                 Args:
@@ -1554,7 +1552,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = path.split(".")
-                current: object = c
+                current: tt.Tests.PayloadValue = c
                 for part in parts:
                     current = getattr(current, part)
                 return current
@@ -1572,7 +1570,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = pattern_attr.split(".")
-                current: object = c
+                current: tt.Tests.PayloadValue = c
                 for part in parts:
                     current = getattr(current, part)
                 pattern_str = str(current)
@@ -1652,7 +1650,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_matches_expected(
-                result: t.GeneralValueType,
+                result: tt.Tests.PayloadValue,
                 expected_type: type,
                 description: str = "",
             ) -> None:
@@ -1667,7 +1665,9 @@ class FlextTestsUtilities(FlextUtilities):
                     AssertionError: If result is not instance of expected_type
 
                 """
-                assert isinstance(result, expected_type), (
+                assert type(result) is expected_type or (
+                    hasattr(type(result), "__mro__") and expected_type in type(result).__mro__
+                ), (
                     f"Expected {expected_type.__name__}, got {type(result).__name__}"
                     f"{f' for {description}' if description else ''}"
                 )
@@ -1703,7 +1703,7 @@ class FlextTestsUtilities(FlextUtilities):
             def detect_format(
                 content: str
                 | bytes
-                | Mapping[str, t.GeneralValueType]
+                | Mapping[str, tt.Tests.PayloadValue]
                 | list[list[str]],
                 name: str,
                 fmt: str,
@@ -1724,7 +1724,7 @@ class FlextTestsUtilities(FlextUtilities):
                     return fmt
 
                 # Detect from content type
-                if isinstance(content, bytes):
+                if type(content) is bytes:
                     return c.Tests.Files.Format.BIN
                 if FlextUtilities.is_type(content, "mapping"):
                     # Check extension for yaml vs json
@@ -1763,7 +1763,7 @@ class FlextTestsUtilities(FlextUtilities):
                 path: Path,
                 content: str
                 | bytes
-                | Mapping[str, t.GeneralValueType]
+                | Mapping[str, tt.Tests.PayloadValue]
                 | list[list[str]],
                 headers: list[str] | None,
                 delimiter: str | None = None,
@@ -1785,9 +1785,9 @@ class FlextTestsUtilities(FlextUtilities):
                     writer = csv.writer(f, delimiter=delim)
                     if headers:
                         writer.writerow(headers)
-                    if isinstance(content, list):
+                    if type(content) is list:
                         for row in content:
-                            if isinstance(row, list):
+                            if type(row) is list:
                                 writer.writerow(row)
 
             @staticmethod
@@ -1863,7 +1863,7 @@ class FlextTestsUtilities(FlextUtilities):
             def is_approved(
                 rule_id: str,
                 file_path: Path,
-                approved: dict[str, list[str]],
+                approved: Mapping[str, list[str]],
             ) -> bool:
                 """Check if file is approved for this rule.
 
@@ -1947,11 +1947,11 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 names: set[str] = set()
-                if isinstance(exc_type, ast.Name):
+                if type(exc_type) is ast.Name:
                     names.add(exc_type.id)
-                elif isinstance(exc_type, ast.Tuple):
+                elif type(exc_type) is ast.Tuple:
                     for elt in exc_type.elts:
-                        if isinstance(elt, ast.Name):
+                        if type(elt) is ast.Name:
                             names.add(elt.id)
                 return names
 
@@ -1968,9 +1968,9 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 return (
-                    (isinstance(node, ast.Name) and node.id == "Any")
-                    or (isinstance(node, ast.Attribute) and node.attr == "Any")
-                    or (isinstance(node, ast.Constant) and node.value == "Any")
+                    (type(node) is ast.Name and node.id == "Any")
+                    or (type(node) is ast.Attribute and node.attr == "Any")
+                    or (type(node) is ast.Constant and node.value == "Any")
                 )
 
             @staticmethod
@@ -2007,12 +2007,11 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 if len(body) == 1:
                     stmt = body[0]
-                    if isinstance(stmt, ast.Pass):
+                    if type(stmt) is ast.Pass:
                         return True
-                    # Also check for ellipsis (...)
                     if (
-                        isinstance(stmt, ast.Expr)
-                        and isinstance(stmt.value, ast.Constant)
+                        type(stmt) is ast.Expr
+                        and type(stmt.value) is ast.Constant
                         and stmt.value.value is ...
                     ):
                         return True
@@ -2102,8 +2101,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def match(
-                obj: BaseModel | Mapping[str, t.GeneralValueType],
-                spec: Mapping[str, object | Callable[[object], bool]],
+                obj: BaseModel | Mapping[str, tt.Tests.PayloadValue],
+                spec: Mapping[str, tt.Tests.PayloadValue | Callable[[tt.Tests.PayloadValue], bool]],
                 *,
                 path_sep: str = ".",
             ) -> m.Tests.Matcher.DeepMatchResult:
@@ -2190,7 +2189,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def validate(
-                value: object,
+                value: tt.Tests.PayloadValue,
                 spec: int | tuple[int, int],
             ) -> bool:
                 """Validate length against spec.
@@ -2214,14 +2213,9 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 if not hasattr(value, "__len__"):
                     return False
-
-                # Type guard: value has __len__ so it's Sized
-                # isinstance check with Sized narrows type for len()
-                if not isinstance(value, Sized):
-                    return False
                 actual_len = len(value)
 
-                if isinstance(spec, int):
+                if type(spec) is int:
                     # Delegate to flext-core chk() - zero duplication
                     return FlextUtilities.chk(actual_len, eq=spec)
                 min_len, max_len = spec

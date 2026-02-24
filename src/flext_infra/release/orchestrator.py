@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
@@ -236,7 +237,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         output_dir = dir_result.value
 
         targets = self._build_targets(root, project_names)
-        records: list[dict[str, str | int]] = []
+        records: list[Mapping[str, str | int]] = []
         failures = 0
 
         for name, path in targets:

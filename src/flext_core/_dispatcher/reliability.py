@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import secrets
 import time
+from collections.abc import Mapping, MutableMapping
 
 from flext_core.constants import c
 from flext_core.result import r
@@ -42,16 +43,16 @@ class CircuitBreakerManager:
 
         """
         super().__init__()
-        self._failures: dict[str, int] = {}
-        self._states: dict[str, str] = {}
-        self._opened_at: dict[str, float] = {}
-        self._success_counts: dict[str, int] = {}
+        self._failures: MutableMapping[str, int] = {}
+        self._states: MutableMapping[str, str] = {}
+        self._opened_at: MutableMapping[str, float] = {}
+        self._success_counts: MutableMapping[str, int] = {}
         self._threshold = threshold
         self._recovery_timeout = recovery_timeout
         self._success_threshold = success_threshold
-        self._recovery_successes: dict[str, int] = {}
-        self._recovery_failures: dict[str, int] = {}
-        self._total_successes: dict[str, int] = {}
+        self._recovery_successes: MutableMapping[str, int] = {}
+        self._recovery_failures: MutableMapping[str, int] = {}
+        self._total_successes: MutableMapping[str, int] = {}
 
     def get_state(self, message_type: str) -> str:
         """Get current state for message type.
@@ -209,7 +210,7 @@ class CircuitBreakerManager:
         self._recovery_failures.clear()
         self._total_successes.clear()
 
-    def get_metrics(self) -> dict[str, t.GeneralValueType]:
+    def get_metrics(self) -> Mapping[str, t.ScalarValue]:
         """Collect circuit breaker metrics, including recovery statistics.
 
         Returns:
@@ -279,7 +280,7 @@ class RateLimiterManager:
         self._max_requests = max_requests
         self._window_seconds = window_seconds
         self._jitter_factor = max(0.0, min(jitter_factor, 1.0))
-        self._windows: dict[str, tuple[float, int]] = {}
+        self._windows: MutableMapping[str, tuple[float, int]] = {}
 
     def _apply_jitter(self, base_delay: float) -> float:
         """Apply jitter variance to a delay value.
@@ -367,7 +368,7 @@ class RetryPolicy:
         super().__init__()
         self._max_attempts = max(max_attempts, c.Reliability.RETRY_COUNT_MIN)
         self._base_delay = max(retry_delay, c.INITIAL_TIME)
-        self._attempts: dict[str, int] = {}
+        self._attempts: MutableMapping[str, int] = {}
         self._exponential_factor = 2.0
         self._max_delay = c.Reliability.DEFAULT_MAX_DELAY_SECONDS
 

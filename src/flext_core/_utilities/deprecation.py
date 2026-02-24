@@ -119,7 +119,7 @@ class FlextUtilitiesDeprecation:
         return decorator
 
     @staticmethod
-    def deprecated_class[TClass: type[object]](
+    def deprecated_class[TClass: type](
         replacement: str | None = None,
         version: str | None = None,
     ) -> Callable[[TClass], TClass]:
@@ -148,9 +148,9 @@ class FlextUtilitiesDeprecation:
             if original_init is None:
                 # If no __init__, create a no-op one
                 def noop_init(
-                    self: t.GeneralValueType,
-                    *args: t.GeneralValueType,
-                    **kwargs: t.GeneralValueType,
+                    self: t.ConfigMapValue,
+                    *args: t.ConfigMapValue,
+                    **kwargs: t.ConfigMapValue,
                 ) -> None:
                     pass
 
@@ -158,9 +158,9 @@ class FlextUtilitiesDeprecation:
 
             @functools.wraps(original_init)
             def new_init(
-                self: t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kwargs: t.GeneralValueType,
+                self: t.ConfigMapValue,
+                *args: t.ConfigMapValue,
+                **kwargs: t.ConfigMapValue,
             ) -> None:
                 cls_name = cls.__name__
                 message_parts = [f"{cls_name} is deprecated"]

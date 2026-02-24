@@ -76,12 +76,10 @@ def _validate_protocol_compliance(
     """
     # Get protocol annotations (required members)
     protocol_annotations = getattr(protocol, "__annotations__", {})
-    raw_attrs: object = getattr(protocol, "__protocol_attrs__", set())
-    protocol_methods: set[str] = {
-        x
-        for x in (raw_attrs if isinstance(raw_attrs, set) else set())
-        if isinstance(x, str)
-    }
+    raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
+    protocol_methods: set[str] = (
+        {x for x in raw_attrs if type(x) is str} if type(raw_attrs) is set else set()
+    )
 
     # Build set of required members
     required_members: set[str] = set(protocol_annotations.keys())
@@ -157,12 +155,12 @@ def _get_class_protocols(cls: type) -> tuple[type, ...]:
     return getattr(cls, "__protocols__", ())
 
 
-def _check_implements_protocol(instance: object, protocol: type) -> bool:
-    """Check if an instance's class implements a protocol.
+def _check_implements_protocol(instance: t.GuardInputValue, protocol: type) -> bool:
+    """Check if an instance implements a protocol.
 
     This function checks both:
     1. Explicit protocol registration via __protocols__
-    2. Structural typing compatibility via isinstance
+    2. Structural typing via hasattr for each required protocol member
 
     Args:
         instance: The object to check.
@@ -172,18 +170,24 @@ def _check_implements_protocol(instance: object, protocol: type) -> bool:
         True if the instance implements the protocol.
 
     """
-    # Check explicit registration
     cls = type(instance)
     registered_protocols = _get_class_protocols(cls)
     if protocol in registered_protocols:
         return True
 
-    # Check structural typing (for @runtime_checkable protocols)
-    if hasattr(protocol, "__protocol_attrs__"):
-        # Protocol has __protocol_attrs__ if @runtime_checkable
-        return isinstance(instance, protocol)
-
-    return False
+    protocol_annotations = getattr(protocol, "__annotations__", {})
+    raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
+    protocol_methods: set[str] = (
+        {x for x in raw_attrs if type(x) is str} if type(raw_attrs) is set else set()
+    )
+    required_members: set[str] = set(protocol_annotations.keys())
+    required_members.update(protocol_methods)
+    required_members = {
+        m for m in required_members if not m.startswith("_") or m.startswith("__")
+    }
+    if not required_members:
+        return False
+    return all(hasattr(instance, member) for member in required_members)
 
 
 # Define combined metaclasses inheriting from both Pydantic's ModelMetaclass and
@@ -247,9 +251,9 @@ class FlextProtocols:
         def set(
             self,
             key: str,
-            value: t.GeneralValueType,
+            value: t.GuardInputValue,
             scope: str = ...,
-        ) -> object:
+        ) -> FlextProtocols.ResultLike[bool]:
             """Set a context value. Returns Result-like object."""
             ...
 
@@ -257,7 +261,7 @@ class FlextProtocols:
             self,
             key: str,
             scope: str = ...,
-        ) -> object:
+        ) -> FlextProtocols.ResultLike[t.GuardInputValue]:
             """Get a context value. Returns Result-like object."""
             ...
 
@@ -266,20 +270,18 @@ class FlextProtocols:
 
         model_config = ConfigDict(
             validate_assignment=True,
-            extra="allow",
+            extra="forbid",
             arbitrary_types_allowed=True,
         )
 
-        config_type: type[BaseModel] | None = Field(default=None)
-        config_overrides: Mapping[str, t.FlexibleValue] | None = Field(default=None)
-        context: t.GeneralValueType | None = Field(default=None)
+        config_type: type[BaseSettings] | None = Field(default=None)
+        config_overrides: Mapping[str, t.ScalarValue] | None = Field(default=None)
+        context: FlextProtocols.Context | None = Field(default=None)
         subproject: str | None = Field(default=None)
-        services: Mapping[str, object] | None = Field(default=None)
-        factories: Mapping[str, t.FactoryRegistrationCallable] | None = Field(
-            default=None
-        )
+        services: Mapping[str, t.RegisterableService] | None = Field(default=None)
+        factories: Mapping[str, t.FactoryCallable] | None = Field(default=None)
         resources: Mapping[str, t.ResourceCallable] | None = Field(default=None)
-        container_overrides: Mapping[str, t.FlexibleValue] | None = Field(default=None)
+        container_overrides: Mapping[str, t.ScalarValue] | None = Field(default=None)
         wire_modules: Sequence[ModuleType] | None = Field(default=None)
         wire_packages: Sequence[str] | None = Field(default=None)
         wire_classes: Sequence[type] | None = Field(default=None)
@@ -336,7 +338,7 @@ class FlextProtocols:
             ...
 
         @property
-        def result(self) -> object:
+        def result(self) -> t.GuardInputValue:
             """Access internal Result for advanced operations."""
             ...
 
@@ -398,15 +400,15 @@ class FlextProtocols:
             """Apply recovery function on failure."""
             ...
 
-        def to_maybe(self) -> object:
+        def to_maybe(self) -> t.GuardInputValue:
             """Convert to returns.maybe.Maybe."""
             ...
 
-        def to_io(self) -> object:
+        def to_io(self) -> t.GuardInputValue:
             """Convert to returns.io.IO."""
             ...
 
-        def to_io_result(self) -> object:
+        def to_io_result(self) -> t.GuardInputValue:
             """Convert to returns.io.IOResult.
 
             Returns IOFlextProtocols.Result[T, str] - success wraps value, failure wraps error.
@@ -416,15 +418,15 @@ class FlextProtocols:
         @classmethod
         def from_io_result(
             cls,
-            io_result: object,
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+            io_result: t.GuardInputValue,
+        ) -> FlextProtocols.Result[t.GuardInputValue]:
             """Create Result from returns.io.IOResult."""
             ...
 
         @classmethod
         def from_maybe(
             cls,
-            maybe: object,
+            maybe: t.GuardInputValue,
             error: str = "Value is Nothing",
         ) -> FlextProtocols.Result[T]:
             """Create Result from returns.maybe.Maybe."""
@@ -453,8 +455,8 @@ class FlextProtocols:
         @classmethod
         def accumulate_errors(
             cls,
-            *results: FlextProtocols.Result[t.GeneralValueType],
-        ) -> FlextProtocols.Result[list[t.GeneralValueType]]:
+            *results: FlextProtocols.Result[t.GuardInputValue],
+        ) -> FlextProtocols.Result[list[t.GuardInputValue]]:
             """Collect all successes, fail if any failure."""
             ...
 
@@ -531,7 +533,7 @@ class FlextProtocols:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> Mapping[str, t.FlexibleValue]:
+        def model_dump(self) -> Mapping[str, t.ScalarValue]:
             """Dump model data to dictionary."""
             ...
 
@@ -544,7 +546,7 @@ class FlextProtocols:
         """
 
         @property
-        def model_fields(self) -> Mapping[str, t.FlexibleValue]:
+        def model_fields(self) -> Mapping[str, t.ScalarValue]:
             """Model fields mapping."""
             ...
 
@@ -567,7 +569,7 @@ class FlextProtocols:
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: Mapping[str, t.FlexibleValue]) -> None:
+        def configure(self, config: Mapping[str, t.ScalarValue]) -> None:
             """Configure component with settings."""
             ...
 
@@ -603,7 +605,7 @@ class FlextProtocols:
         def model_copy(
             self,
             *,
-            update: Mapping[str, t.FlexibleValue] | None = None,
+            update: Mapping[str, t.ScalarValue] | None = None,
             deep: bool = False,
         ) -> Self:
             """Clone configuration with optional updates (Pydantic standard method)."""
@@ -629,7 +631,7 @@ class FlextProtocols:
         def set(
             self,
             key: str,
-            value: t.GeneralValueType,
+            value: t.GuardInputValue,
             scope: str = ...,
         ) -> FlextProtocols.ResultLike[bool]:
             """Set a context value."""
@@ -639,7 +641,7 @@ class FlextProtocols:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocols.ResultLike[t.GeneralValueType]:
+        ) -> FlextProtocols.ResultLike[t.GuardInputValue]:
             """Get a context value."""
             ...
 
@@ -671,7 +673,7 @@ class FlextProtocols:
             config: FlextProtocols.Config | None = None,
             context: FlextProtocols.Context | None = None,
             subproject: str | None = None,
-            services: Mapping[str, t.GeneralValueType] | None = None,
+            services: Mapping[str, t.RegisterableService] | None = None,
             factories: Mapping[str, t.FactoryCallable] | None = None,
             resources: Mapping[str, t.ResourceCallable] | None = None,
         ) -> Self:
@@ -707,7 +709,7 @@ class FlextProtocols:
         def register_factory(
             self,
             name: str,
-            factory: FlextProtocols.ResourceFactory[t.RegisterableService],
+            factory: t.FactoryCallable,
         ) -> FlextProtocols.ResultLike[bool]:
             """Register a service factory returning RegisterableService."""
             ...
@@ -723,7 +725,7 @@ class FlextProtocols:
         def with_factory(
             self,
             name: str,
-            factory: FlextProtocols.ResourceFactory[t.RegisterableService],
+            factory: t.FactoryCallable,
         ) -> Self:
             """Fluent interface for factory registration."""
             ...
@@ -797,7 +799,7 @@ class FlextProtocols:
             """
             ...
 
-        def get_service_info(self) -> Mapping[str, t.FlexibleValue]:
+        def get_service_info(self) -> Mapping[str, t.ScalarValue]:
             """Get service metadata and configuration information.
 
             Reflects real implementations like FlextService which provide
@@ -847,7 +849,7 @@ class FlextProtocols:
             Supports any callable that accepts a value and returns bool.
             """
 
-            def __call__(self, value: t.GeneralValueType) -> bool:  # INTERFACE
+            def __call__(self, value: t.GuardInputValue) -> bool:  # INTERFACE
                 """Evaluate predicate on value."""
                 ...
 
@@ -882,8 +884,8 @@ class FlextProtocols:
 
         def handle(
             self,
-            message: t.FlexibleValue,
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+            message: t.ScalarValue,
+        ) -> FlextProtocols.Result[t.GuardInputValue]:
             """Handle message - core business logic method.
 
             Reflects real implementations like FlextHandlers.handle() which
@@ -893,7 +895,7 @@ class FlextProtocols:
 
         def validate(
             self,
-            data: t.FlexibleValue,
+            data: t.ScalarValue,
         ) -> FlextProtocols.Result[bool]:
             """Validate input data using extensible validation pipeline.
 
@@ -904,7 +906,7 @@ class FlextProtocols:
 
         def validate_command(
             self,
-            command: t.FlexibleValue,
+            command: t.ScalarValue,
         ) -> FlextProtocols.Result[bool]:
             """Validate command message with command-specific rules.
 
@@ -915,7 +917,7 @@ class FlextProtocols:
 
         def validate_query(
             self,
-            query: t.FlexibleValue,
+            query: t.ScalarValue,
         ) -> FlextProtocols.Result[bool]:
             """Validate query message with query-specific rules.
 
@@ -924,7 +926,7 @@ class FlextProtocols:
             """
             ...
 
-        def can_handle(self, message_type: type[object]) -> bool:
+        def can_handle(self, message_type: type) -> bool:
             """Check if handler can handle the specified message type.
 
             Reflects real implementations like FlextHandlers.can_handle() which
@@ -943,9 +945,19 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            request: t.HandlerType | t.GeneralValueType | BaseModel | object,
-            handler: t.GeneralValueType | None = None,
-        ) -> FlextProtocols.Result[t.ConfigMap]:
+            request: (
+                str
+                | type[object]
+                | BaseModel
+                | Mapping[str, object]
+                | FlextProtocols.Handler
+                | Callable[..., object]
+            ),
+            handler: FlextProtocols.Handler
+            | Callable[..., object]
+            | BaseModel
+            | None = None,
+        ) -> FlextProtocols.Result[BaseModel]:
             """Register handler dynamically.
 
             Reflects real implementations like FlextDispatcher that accept
@@ -959,17 +971,17 @@ class FlextProtocols:
         def register_command[TCommand, TResult](
             self,
             command_type: type[TCommand],
-            handler: t.GeneralValueType,
+            handler: FlextProtocols.Handler | Callable[..., object] | BaseModel,
             *,
-            handler_config: Mapping[str, t.FlexibleValue] | None = None,
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+            handler_config: Mapping[str, t.ScalarValue] | None = None,
+        ) -> FlextProtocols.Result[t.GuardInputValue]:
             """Register command handler."""
             ...
 
         @staticmethod
         def create_handler_from_function(
-            handler_func: Callable[P, t.GeneralValueType],
-            handler_config: Mapping[str, t.FlexibleValue] | None = None,
+            handler_func: Callable[P, t.GuardInputValue],
+            handler_config: Mapping[str, t.ScalarValue] | None = None,
             mode: str = ...,
         ) -> FlextProtocols.Result[FlextProtocols.Handler]:
             """Create handler from function (static method)."""
@@ -977,23 +989,23 @@ class FlextProtocols:
 
         def execute(
             self,
-            command: t.FlexibleValue,
+            command: t.ScalarValue,
         ) -> FlextProtocols.Result[
-            t.GeneralValueType
-        ]:  # Use t.GeneralValueType instead of T_co
+            t.GuardInputValue
+        ]:  # Use t.GuardInputValue instead of T_co
             """Execute command."""
             ...
 
         def dispatch(
             self,
-            message_or_type: t.GeneralValueType,
-            data: t.GeneralValueType | None = None,
+            message_or_type: t.GuardInputValue,
+            data: t.GuardInputValue | None = None,
             *,
-            config: t.GeneralValueType | None = None,
-            metadata: t.GeneralValueType | None = None,
+            config: t.GuardInputValue | None = None,
+            metadata: t.GuardInputValue | None = None,
             correlation_id: str | None = None,
             timeout_override: int | None = None,
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+        ) -> FlextProtocols.Result[t.GuardInputValue]:
             """Dispatch message (primary method for real implementations).
 
             Reflects real implementations like FlextDispatcher which provides
@@ -1012,8 +1024,8 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            handler: t.GeneralValueType | None,
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+            handler: FlextProtocols.Handler | Callable[..., object] | BaseModel,
+        ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
             Reflects real implementations like FlextRegistry.register_handler()
@@ -1023,8 +1035,10 @@ class FlextProtocols:
 
         def register_handlers(
             self,
-            handlers: Sequence[t.GeneralValueType],
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+            handlers: Sequence[
+                FlextProtocols.Handler | Callable[..., object] | BaseModel
+            ],
+        ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
 
             Reflects real implementations like FlextRegistry.register_handlers()
@@ -1034,8 +1048,11 @@ class FlextProtocols:
 
         def register_bindings(
             self,
-            bindings: Mapping[type[t.GeneralValueType], t.GeneralValueType],
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+            bindings: Mapping[
+                str | type[object],
+                FlextProtocols.Handler | Callable[..., object] | BaseModel,
+            ],
+        ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
 
             Reflects real implementations like FlextRegistry.register_bindings()
@@ -1063,9 +1080,9 @@ class FlextProtocols:
 
         def process[TResult](
             self,
-            command: t.FlexibleValue,
+            command: t.ScalarValue,
             next_handler: FlextProtocols.ResourceOperation[
-                t.FlexibleValue,
+                t.ScalarValue,
                 TResult,
             ],
         ) -> FlextProtocols.Result[TResult]:
@@ -1078,10 +1095,10 @@ class FlextProtocols:
 
         Processors can be objects with a process() method that takes data
         and returns a result (which will be normalized to Result).
-        Accepts t.GeneralValueType, BaseModel, or Result for processing.
+        Accepts t.GuardInputValue, BaseModel, or Result for processing.
 
         The return type is flexible to support:
-        - Direct values (t.GeneralValueType)
+        - Direct values (t.GuardInputValue)
         - BaseModel instances (Pydantic models)
         - Result instances (structural typing)
         - Objects with is_success/is_failure properties (FlextResult compatibility)
@@ -1090,15 +1107,13 @@ class FlextProtocols:
         def process(
             self,
             data: (
-                t.GeneralValueType
-                | BaseModel
-                | FlextProtocols.Result[t.GeneralValueType]
+                t.GuardInputValue | BaseModel | FlextProtocols.Result[t.GuardInputValue]
             ),
-        ) -> t.GeneralValueType | BaseModel | FlextProtocols.Result[t.GeneralValueType]:
+        ) -> t.GuardInputValue | BaseModel | FlextProtocols.Result[t.GuardInputValue]:
             """Process data and return result.
 
             Returns can be:
-            - Direct value (t.GeneralValueType)
+            - Direct value (t.GuardInputValue)
             - BaseModel instance (Pydantic model)
             - Result (structural typing compatible)
             """
@@ -1127,63 +1142,63 @@ class FlextProtocols:
 
             def debug(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType | Exception,
-                **kw: t.GeneralValueType | Exception,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue | Exception,
+                **kw: t.GuardInputValue | Exception,
             ) -> None:
                 """Log debug message."""
                 ...
 
             def info(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue,
+                **kw: t.GuardInputValue | Exception,
             ) -> None:
                 """Log info message."""
                 ...
 
             def warning(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue,
+                **kw: t.GuardInputValue | Exception,
             ) -> None:
                 """Log warning message."""
                 ...
 
             def warn(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue,
+                **kw: t.GuardInputValue,
             ) -> None:
                 """Log warning message (alias)."""
                 ...
 
             def error(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue,
+                **kw: t.GuardInputValue | Exception,
             ) -> None:
                 """Log error message."""
                 ...
 
             def critical(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue,
+                **kw: t.GuardInputValue | Exception,
             ) -> None:
                 """Log critical message."""
                 ...
 
             def exception(
                 self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
+                msg: str | t.GuardInputValue,
+                *args: t.GuardInputValue,
+                **kw: t.GuardInputValue | Exception,
             ) -> None:
                 """Log exception with traceback."""
                 ...
@@ -1245,8 +1260,8 @@ class FlextProtocols:
 
         def __call__(
             self,
-            *args: t.GeneralValueType,
-            **kwargs: t.GeneralValueType,
+            *args: t.ScalarValue,
+            **kwargs: t.ScalarValue,
         ) -> T_co:
             """Call the function with any arguments, returning T_co."""
             ...
@@ -1299,7 +1314,7 @@ class FlextProtocols:
 
         """
 
-        def __call__(self, value: object) -> bool:
+        def __call__(self, value: t.GuardInputValue) -> bool:
             """Validate value, return True if valid."""
             ...
 
@@ -1340,7 +1355,7 @@ class FlextProtocols:
             """Entry attributes as immutable mapping."""
             ...
 
-        def to_dict(self) -> Mapping[str, t.FlexibleValue]:
+        def to_dict(self) -> Mapping[str, t.ScalarValue]:
             """Convert to dictionary representation."""
             ...
 
@@ -1397,21 +1412,21 @@ class FlextProtocols:
     ):  # Cannot inherit BaseProtocol due to Python nested class limitations
         """Protocol for callables that support type hints introspection."""
 
-        __annotations__: dict[str, t.GeneralValueType]
+        __annotations__: dict[str, t.GuardInputValue]
 
     # =========================================================================
     # TYPE ALIASES FOR UTILITIES
     # =========================================================================
 
     # Type for data sources that get() can access
-    # Supports: ConfigurationDict (GeneralValueType), JsonValue dicts, and object dicts
+    # Supports: ConfigurationDict (PayloadValue), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        dict[str, t.GeneralValueType]
+        dict[str, t.GuardInputValue]
         | dict[str, t.JsonValue]
         | t.ConfigMap
         | Mapping[str, t.JsonValue]
-        | Mapping[str, t.GeneralValueType]
+        | Mapping[str, t.GuardInputValue]
         | BaseModel
         | "FlextProtocols.HasModelDump"
         | "FlextProtocols.ValidatorSpec"
@@ -1428,16 +1443,16 @@ class FlextProtocols:
     # This replaces object/dict usage in DI container methods.
     # Type for services registerable in FlextContainer.
     # Union of all protocol types that can be registered as DI services:
-    # - GeneralValueType: Primitives, BaseModel, sequences, mappings
+    # - PayloadValue: Primitives, BaseModel, sequences, mappings
     # - BindableLogger: Logger protocol
-    # - Callable: Factories that return GeneralValueType
-    RegisterableService = t.GeneralValueType | BindableLogger
+    # - Callable: Factories that return PayloadValue
+    RegisterableService = t.RegisterableService
 
     # ServiceFactory: Factory callable that returns RegisterableService
-    type ServiceFactory = FlextProtocols.ResourceFactory[t.GeneralValueType]
+    type ServiceFactory = t.FactoryCallable
     """Factory callable returning any registerable service type.
 
-    Broader than t.FactoryCallable (which returns GeneralValueType).
+    Broader than t.FactoryCallable (which returns PayloadValue).
     Supports factories that create protocols like Log,             ..., Config, etc.
 
     Usage:
@@ -1476,8 +1491,8 @@ class FlextProtocols:
             mcs,
             name: str,
             bases: tuple[type, ...],
-            namespace: dict[str, object],
-            **_kwargs: object,
+            namespace: Mapping[str, object],
+            **_kwargs: t.GuardInputValue,
         ) -> type:
             """Create a new class with protocol validation.
 
@@ -1659,7 +1674,7 @@ class FlextProtocols:
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
-                self: object,
+                self: t.GuardInputValue,
                 protocol: type,
             ) -> bool:
                 return _check_implements_protocol(self, protocol)
@@ -1691,7 +1706,7 @@ class FlextProtocols:
         return _is_protocol(target_cls)
 
     @staticmethod
-    def check_implements_protocol(instance: object, protocol: type) -> bool:
+    def check_implements_protocol(instance: t.GuardInputValue, protocol: type) -> bool:
         """Check if an instance's class implements a protocol.
 
         Args:

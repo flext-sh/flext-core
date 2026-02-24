@@ -85,13 +85,13 @@ class DiscoveryService:
 
     def discover(
         self,
-        root: object,
+        root: Path | str,
     ) -> FlextResult[list[im.ProjectInfo]]:
         """Protocol-compliant discover method.
 
         Satisfies ``InfraProtocols.DiscoveryProtocol.discover``.
         """
-        if not isinstance(root, Path):
+        if type(root) is not Path and Path not in type(root).__mro__:
             root = Path(str(root))
         return self.discover_projects(root)
 

@@ -6,10 +6,12 @@ import argparse
 import json
 import os
 import sys
+from collections.abc import MutableMapping
 from pathlib import Path
 
 import structlog
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 from pydantic import Field
 
 from flext_infra.constants import ic
@@ -42,9 +44,9 @@ class DependencyDetectorModels(im):
         """Workspace-level dependency analysis report aggregating all projects."""
 
         workspace: str
-        projects: dict[str, dict[str, object]] = Field(default_factory=dict)
-        pip_check: dict[str, object] | None = None
-        dependency_limits: dict[str, object] | None = None
+        projects: MutableMapping[str, MutableMapping[str, t.ScalarValue]] = Field(default_factory=dict)
+        pip_check: MutableMapping[str, t.ScalarValue] | None = None
+        dependency_limits: MutableMapping[str, t.ScalarValue] | None = None
 
 
 ddm = DependencyDetectorModels
@@ -171,7 +173,7 @@ class RuntimeDevDependencyDetector:
         do_typings = bool(getattr(args, "typings", False)) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
 
-        projects_report: dict[str, dict[str, object]] = {}
+        projects_report: MutableMapping[str, MutableMapping[str, t.ScalarValue]] = {}
         report_model = ddm.WorkspaceDependencyReport(
             workspace=str(root),
             projects=projects_report,
@@ -185,7 +187,7 @@ class RuntimeDevDependencyDetector:
                 python_cfg = limits_data.get("python")
                 python_version = (
                     str(python_cfg.get("version"))
-                    if isinstance(python_cfg, dict)
+                    if type(python_cfg) is dict
                     and python_cfg.get("version") is not None
                     else None
                 )
@@ -223,7 +225,7 @@ class RuntimeDevDependencyDetector:
                 projects_report[project_name]["typings"] = typing_dict
 
                 to_add_obj = typing_dict.get("to_add")
-                to_add = to_add_obj if isinstance(to_add_obj, list) else []
+                to_add = to_add_obj if type(to_add_obj) is list else []
                 if apply_typings and to_add and not args.dry_run:
                     env = {
                         **os.environ,
@@ -231,7 +233,7 @@ class RuntimeDevDependencyDetector:
                         "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
                     }
                     for package in to_add:
-                        if not isinstance(package, str):
+                        if type(package) is not str:
                             continue
                         run = self._runner.run_raw(
                             ["poetry", "add", "--group", "typings", package],
@@ -284,13 +286,13 @@ class RuntimeDevDependencyDetector:
         total_issues = 0
         for payload in projects_report.values():
             deptry_obj = payload.get("deptry")
-            if isinstance(deptry_obj, dict):
+            if type(deptry_obj) is dict:
                 raw_count = deptry_obj.get("raw_count", 0)
-                if isinstance(raw_count, int):
+                if type(raw_count) is int:
                     total_issues += raw_count
 
         pip_ok = True
-        if isinstance(report_model.pip_check, dict):
+        if type(report_model.pip_check) is dict:
             pip_ok = bool(report_model.pip_check.get("ok", True))
 
         if not args.quiet:

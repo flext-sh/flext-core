@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core._models.entity import FlextModelsEntity
@@ -99,7 +100,7 @@ class FlextValidatorModels(m):
         exclude_patterns: list[str] = Field(
             default_factory=lambda: list(c.Tests.Validator.Defaults.EXCLUDE_PATTERNS),
         )
-        approved_exceptions: dict[str, list[str]] = Field(default_factory=dict)
+        approved_exceptions: Mapping[str, list[str]] = Field(default_factory=dict)
 
 
 # Short alias

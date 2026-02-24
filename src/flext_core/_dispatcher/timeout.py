@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
+from collections.abc import Mapping
 
 from flext_core.constants import c
 from flext_core.typings import t
@@ -76,7 +77,7 @@ class TimeoutEnforcer:
             )
         return self._executor
 
-    def get_executor_status(self) -> dict[str, t.GeneralValueType]:
+    def get_executor_status(self) -> Mapping[str, t.ScalarValue]:
         """Return executor status metadata for diagnostics and metrics.
 
         Returns:

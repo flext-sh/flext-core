@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_infra.github.linter import WorkflowLinter
@@ -100,7 +100,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     _ = parser.add_argument("--pr-release-on-merge", type=int, default=1)
     args = parser.parse_args(argv)
 
-    pr_args: dict[str, str] = {
+    pr_args: Mapping[str, str] = {
         "action": args.pr_action,
         "base": args.pr_base,
         "head": args.pr_head,
@@ -136,7 +136,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     return 1 if data.get("fail", 0) else 0
 
 
-_SUBCOMMANDS: dict[str, _Handler] = {
+_SUBCOMMANDS: Mapping[str, _Handler] = {
     "lint": _run_lint,
     "pr": _run_pr,
     "pr-workspace": _run_pr_workspace,

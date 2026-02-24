@@ -25,6 +25,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import fnmatch
+from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar
 
@@ -76,7 +77,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
         cls,
         path: Path,
         exclude_patterns: list[str] | None = None,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate imports in Python files.
 
@@ -105,7 +106,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
         cls,
         path: Path,
         exclude_patterns: list[str] | None = None,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate type annotations in Python files.
 
@@ -131,7 +132,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
         cls,
         path: Path,
         exclude_patterns: list[str] | None = None,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate test patterns in Python files.
 
@@ -156,7 +157,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
     def validate_config(
         cls,
         pyproject_path: Path,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate pyproject.toml configuration.
 
@@ -182,7 +183,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
         cls,
         path: Path,
         exclude_patterns: list[str] | None = None,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate bypass patterns in Python files.
 
@@ -208,8 +209,8 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
         cls,
         path: Path,
         exclude_patterns: list[str] | None = None,
-        approved_exceptions: dict[str, list[str]] | None = None,
-        layer_hierarchy: dict[str, int] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
+        layer_hierarchy: Mapping[str, int] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Validate layer dependencies in Python files.
 
@@ -235,7 +236,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
         path: Path,
         pyproject_path: Path | None = None,
         exclude_patterns: list[str] | None = None,
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
         *,
         include_tests_validation: bool = False,
     ) -> r[m.Tests.Validator.ScanResult]:

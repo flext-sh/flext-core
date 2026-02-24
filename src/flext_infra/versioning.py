@@ -134,9 +134,9 @@ class VersioningService:
 
         doc = doc_result.value
         project = doc.get("project")
-        project_table = project if isinstance(project, MutableMapping) else None
+        project_table = project if MutableMapping in type(project).__mro__ else None
         version = project_table.get("version") if project_table is not None else None
-        if not isinstance(version, str) or not version.strip():
+        if type(version) is not str or not version.strip():
             return r[str].fail("version not found in pyproject.toml")
         return r[str].ok(version)
 
@@ -162,7 +162,7 @@ class VersioningService:
 
         doc = doc_result.value
         project = doc.get("project")
-        if not isinstance(project, MutableMapping):
+        if MutableMapping not in type(project).__mro__:
             return r[bool].fail(
                 f"missing [project] table in {pyproject}",
             )

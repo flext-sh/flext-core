@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.constants import ic
 from flext_infra.json_io import JsonService
@@ -34,7 +36,7 @@ class InventoryService:
         workspace_root: Path,
         *,
         output_dir: Path | None = None,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
         """Build and write scripts inventory reports.
 
         Args:
@@ -87,18 +89,18 @@ class InventoryService:
             for path, payload in outputs.items():
                 write_result = self._json.write(path, payload, sort_keys=True)
                 if write_result.is_failure:
-                    return r[dict[str, object]].fail(
+                    return r[Mapping[str, t.ConfigMapValue]].fail(
                         write_result.error or "write failed",
                     )
                 written.append(str(path))
 
-            result: dict[str, object] = {
+            result: MutableMapping[str, t.ConfigMapValue] = {
                 "total_scripts": len(scripts),
                 "reports_written": written,
             }
-            return r[dict[str, object]].ok(result)
+            return r[Mapping[str, t.ConfigMapValue]].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ConfigMapValue]].fail(
                 f"inventory generation failed: {exc}",
             )
 

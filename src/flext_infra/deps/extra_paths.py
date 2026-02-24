@@ -41,14 +41,14 @@ MYPY_BASE_PROJECT = ["..", "../typings", "../typings/generated", "src"]
 def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
     """Extract path dependency paths from PEP 621 project.dependencies."""
     project = doc.get("project")
-    if not project or not isinstance(project, dict):
+    if not project or type(project) is not dict:
         return []
     deps = project.get("dependencies")
-    if not isinstance(deps, list):
+    if type(deps) is not list:
         return []
     paths: list[str] = []
     for item in deps:
-        if not isinstance(item, str) or " @ " not in item:
+        if type(item) is not str or " @ " not in item:
             continue
         _name, path_part = item.split(" @ ", 1)
         path_part = path_part.strip()
@@ -64,19 +64,19 @@ def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
 def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
     """Extract path dependency paths from Poetry tool.poetry.dependencies."""
     tool = doc.get("tool")
-    if not isinstance(tool, dict):
+    if type(tool) is not dict:
         return []
     poetry = tool.get("poetry")
-    if not isinstance(poetry, dict):
+    if type(poetry) is not dict:
         return []
     deps = poetry.get("dependencies")
-    if not isinstance(deps, dict):
+    if type(deps) is not dict:
         return []
     paths: list[str] = []
     for val in deps.values():
-        if isinstance(val, dict) and "path" in val:
+        if type(val) is dict and "path" in val:
             dep_path = val["path"]
-            if isinstance(dep_path, str) and dep_path:
+            if type(dep_path) is str and dep_path:
                 dep_path = dep_path.strip()
                 if dep_path.startswith("./"):
                     dep_path = dep_path[2:].strip()
@@ -128,11 +128,11 @@ def sync_one(
     mypy_path = MYPY_BASE_ROOT + dep_paths if is_root else MYPY_BASE_PROJECT + dep_paths
 
     tool = doc.get("tool")
-    if not isinstance(tool, dict):
+    if type(tool) is not dict:
         return r[bool].ok(False)
     pyright = tool.get("pyright")
     mypy = tool.get("mypy")
-    if not isinstance(pyright, dict):
+    if type(pyright) is not dict:
         return r[bool].ok(False)
 
     changed = False
@@ -144,7 +144,7 @@ def sync_one(
         pyright["extraPaths"] = arr
         changed = True
 
-    if isinstance(mypy, dict):
+    if type(mypy) is dict:
         current_mypy = mypy.get("mypy_path", [])
         if list(current_mypy) != mypy_path:
             arr = tomlkit.array()
@@ -155,7 +155,7 @@ def sync_one(
 
     if not is_root:
         pyrefly = tool.get("pyrefly")
-        if isinstance(pyrefly, dict):
+        if type(pyrefly) is dict:
             base_search = [".."] + dep_paths
             current_search = list(pyrefly.get("search-path", []))
             seen = set(base_search)

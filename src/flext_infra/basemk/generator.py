@@ -9,6 +9,7 @@ from typing import Protocol, TextIO, override
 
 from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
+from flext_core.typings import t
 
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.constants import ic
@@ -34,7 +35,7 @@ class BaseMkGenerator(FlextService[str]):
         return self.generate()
 
     def generate(
-        self, config: im.BaseMkConfig | Mapping[str, object] | None = None
+        self, config: im.BaseMkConfig | Mapping[str, t.ScalarValue] | None = None
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
@@ -74,11 +75,11 @@ class BaseMkGenerator(FlextService[str]):
 
     def _normalize_config(
         self,
-        config: im.BaseMkConfig | Mapping[str, object] | None,
+        config: im.BaseMkConfig | Mapping[str, t.ScalarValue] | None,
     ) -> r[im.BaseMkConfig]:
         if config is None:
             return r[im.BaseMkConfig].ok(TemplateEngine.default_config())
-        if isinstance(config, im.BaseMkConfig):
+        if type(config) is im.BaseMkConfig or (im.BaseMkConfig in type(config).__mro__):
             return r[im.BaseMkConfig].ok(config)
         try:
             normalized = im.BaseMkConfig.model_validate(dict(config))

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager, suppress
 from functools import partial
 from types import ModuleType
@@ -96,13 +96,9 @@ class FlextMixins(FlextRuntime):
         error: str | None,
         error_code: str | None = None,
         error_data: m.ConfigMap | None = None,
-    ) -> r[t.GeneralValueType]:
-        """Create failed result with error message.
-
-        Returns a failed result with the error message. The type parameter
-        is t.GeneralValueType to allow flexible error handling.
-        """
-        return r[t.GeneralValueType].fail(
+    ) -> r[t.ConfigMapValue]:
+        """Create failed result with error message."""
+        return r[t.ConfigMapValue].fail(
             error,
             error_code=error_code,
             error_data=error_data,
@@ -120,7 +116,7 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def to_dict(
-            obj: (BaseModel | Mapping[str, t.GeneralValueType] | None),
+            obj: (BaseModel | Mapping[str, t.ConfigMapValue] | None),
         ) -> m.ConfigMap:
             """Convert BaseModel/dict to dict (None → empty dict).
 
@@ -129,47 +125,40 @@ class FlextMixins(FlextRuntime):
             """
             if obj is None:
                 return m.ConfigMap(root={})
-            if isinstance(obj, m.ConfigMap):
+            if type(obj) is m.ConfigMap or m.ConfigMap in type(obj).__mro__:
                 return obj
-            if isinstance(obj, BaseModel):
-                # BaseModel.model_dump() returns dict[str, t.GeneralValueType], normalize to t.GeneralValueType
+            if BaseModel in type(obj).__mro__:
                 dumped = obj.model_dump()
-                # Recursively normalize to ensure t.GeneralValueType compliance
                 normalized = FlextRuntime.normalize_to_general_value(dumped)
-                # Use isinstance for proper type narrowing (TypeGuard)
-                if isinstance(normalized, Mapping):
-                    # Type narrowing: Mapping is compatible with ContextMetadataMapping
-                    result: dict[str, t.GeneralValueType] = {}
+                if type(normalized) is dict or (
+                    hasattr(normalized, "keys") and hasattr(normalized, "__getitem__")
+                ):
+                    result: dict[str, t.ConfigMapValue] = {}
                     for k, v in normalized.items():
-                        key_str: str = str(k)
-                        val_typed: t.GeneralValueType = (
-                            v if u.is_general_value_type(v) else str(v)
+                        key_str = str(k)
+                        val_typed: t.ConfigMapValue = (
+                            FlextRuntime.normalize_to_general_value(v)
                         )
                         result[key_str] = val_typed
                     return m.ConfigMap(root=result)
-                # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return m.ConfigMap(
                     root={"value": FlextRuntime.normalize_to_general_value(normalized)}
                 )
-            # For Mapping, normalize each value
             try:
-                normalized_dict: dict[str, t.GeneralValueType] = {}
+                normalized_dict: dict[str, t.ConfigMapValue] = {}
                 for k, v in obj.items():
-                    key: str = str(k)
+                    key = str(k)
                     normalized_dict[key] = FlextRuntime.normalize_to_general_value(v)
-                process_result: r[dict[str, t.GeneralValueType]] = r[
-                    dict[str, t.GeneralValueType]
+                process_result: r[dict[str, t.ConfigMapValue]] = r[
+                    dict[str, t.ConfigMapValue]
                 ].ok(normalized_dict)
             except Exception as e:
-                process_result = r[dict[str, t.GeneralValueType]].fail(
+                process_result = r[dict[str, t.ConfigMapValue]].fail(
                     f"Failed to normalize mapping: {e}",
                 )
 
             if process_result.is_success:
-                # Type narrowing: ConfigurationDict is dict[str, t.GeneralValueType]
-                # ContextMetadataMapping is Mapping[str, t.GeneralValueType]
-                # Since dict is a subtype of Mapping, ConfigurationDict is compatible with ContextMetadataMapping
-                result_value: dict[str, t.GeneralValueType] = process_result.value
+                result_value: dict[str, t.ConfigMapValue] = process_result.value
                 return m.ConfigMap(root=result_value)
             return m.ConfigMap(root={})
 
@@ -191,9 +180,7 @@ class FlextMixins(FlextRuntime):
                 FlextResult[T]: The value wrapped in a result
 
             """
-            # Check if value is already a r
-            if isinstance(value, r):
-                # Already wrapped - return as-is
+            if r in type(value).__mro__:
                 return value
             # Wrap non-result value in r.ok()
             return r[T].ok(value)
@@ -204,10 +191,10 @@ class FlextMixins(FlextRuntime):
 
     # Class-level cache for loggers to avoid repeated DI lookups
     # Uses FlextLogger directly for proper type checking (overloaded methods)
-    _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
+    _logger_cache: ClassVar[MutableMapping[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    def __init_subclass__(cls, **kwargs: t.GeneralValueType) -> None:
+    def __init_subclass__(cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
         # Container is lazily initialized on first access
@@ -233,8 +220,8 @@ class FlextMixins(FlextRuntime):
         """Return the runtime configuration associated with this component.
 
         Returns p.Config protocol type for type safety. In practice, this is
-        FlextSettings - callers needing concrete attributes can use isinstance
-        checks for type narrowing.
+        FlextSettings - callers needing concrete attributes can use type
+        identity or MRO checks for type narrowing.
         """
         return self._get_runtime().config
 
@@ -255,151 +242,52 @@ class FlextMixins(FlextRuntime):
         # Check if _runtime is actually a ServiceRuntime instance
         runtime = getattr(self, "_runtime", None)
         # Verify it's actually a ServiceRuntime, not the PrivateAttr descriptor
-        if isinstance(runtime, m.ServiceRuntime):
+        if m.ServiceRuntime in type(runtime).__mro__:
             return runtime
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
-        # Call method and ensure result is p.RuntimeBootstrapOptions TypedDict
-        # _runtime_bootstrap_options returns p.RuntimeBootstrapOptions per class definition
-        options_raw: object = (
-            runtime_options_callable() if callable(runtime_options_callable) else {}
+        options_candidate: p.RuntimeBootstrapOptions = (
+            runtime_options_callable()
+            if callable(runtime_options_callable)
+            else p.RuntimeBootstrapOptions()
         )
-        # Type narrowing: isinstance check ensures options_raw is dict
-        # Use dict interface - TypedDict keys accessed via .get() at runtime
-        # p.RuntimeBootstrapOptions is TypedDict - use ConfigurationDict for type safety
-        # ConfigurationDict = dict[str, GeneralValueType] which is the proper FLEXT type
-        if isinstance(options_raw, dict):
-            # Narrow keys to str and values to GeneralValueType
-            items = u.extract_mapping_items(options_raw)
-            options: dict[str, t.GeneralValueType] = dict(items)
-        else:
-            options = {}
-        # Use factory methods directly - Clean Architecture pattern
-        # Each class knows how to instantiate itself
-        # u.Mapper.get() returns GeneralValueType, narrow to class type
-        config_type = (
-            u.Mapper.get(options, "config_type") if "config_type" in options else None
+        options: p.RuntimeBootstrapOptions = p.RuntimeBootstrapOptions.model_validate(
+            options_candidate,
         )
-        config_cls = config_type or FlextSettings
-        config_overrides_raw = u.Mapper.get(options, "config_overrides")
-        # TypeGuard-based narrowing - filter to FlexibleValue types for materialize
-        config_overrides_typed: Mapping[str, t.FlexibleValue] | None = None
-        if isinstance(config_overrides_raw, Mapping):
-            # Filter mapping to only include FlexibleValue-compatible types
-            items = u.extract_mapping_items(config_overrides_raw)
-            # Build dict with helper function for type narrowing
-            flexible_dict: dict[str, t.FlexibleValue] = {}
-            for k_str, v_typed in items:
-                narrowed = u.to_flexible_value(v_typed)
-                if narrowed is not None:
-                    flexible_dict[k_str] = narrowed
-            if flexible_dict:
-                config_overrides_typed = flexible_dict
-        # config_cls is FlextSettings or subclass - type narrowing via isinstance
+
         config_cls_typed: type[FlextSettings] = (
-            config_cls
-            if isinstance(config_cls, type) and issubclass(config_cls, FlextSettings)
+            options.config_type
+            if options.config_type is not None
+            and FlextSettings in options.config_type.__mro__
             else FlextSettings
         )
         runtime_config = config_cls_typed.materialize(
-            config_overrides=config_overrides_typed,
+            config_overrides=options.config_overrides,
         )
 
-        # u.Mapper.get() returns GeneralValueType, narrow to FlextContext
-        context_option = (
-            u.Mapper.get(options, "context") if "context" in options else None
-        )
-        # isinstance narrows to FlextContext (which implements p.Context)
-        runtime_context: FlextContext = (
-            context_option
-            if isinstance(context_option, FlextContext)
-            else FlextContext.create()
+        runtime_context: p.Context = (
+            options.context if options.context is not None else FlextContext.create()
         )
 
         # Use FlextSettings directly - it's guaranteed to be FlextSettings
         runtime_config_typed: FlextSettings = runtime_config
 
-        # u.Mapper.get() returns GeneralValueType, narrow to service mapping type
-        services_raw = (
-            u.Mapper.get(options, "services") if "services" in options else None
-        )
-        # TypeGuard-based narrowing for GeneralValueType services
-        services_typed: Mapping[str, t.GeneralValueType] | None = None
-        if isinstance(services_raw, Mapping):
-            # Build typed dict with GeneralValueType values
-            items = u.extract_mapping_items(services_raw)
-            typed_services: dict[str, t.GeneralValueType] = dict(items)
-            if typed_services:
-                services_typed = typed_services
-
-        # Use FlextContext directly - it's guaranteed to be non-None
-        context_typed: FlextContext = runtime_context
-        factories_raw = options.get("factories")
-
-        # Get subproject and narrow to str
-        subproject_raw = u.Mapper.get(options, "subproject")
-        subproject_typed: str | None = (
-            subproject_raw if isinstance(subproject_raw, str) else None
-        )
-
-        # Get resources and narrow to Mapping using isinstance
-        resources_raw = u.Mapper.get(options, "resources")
-        resources_typed: Mapping[str, Callable[[], t.GeneralValueType]] | None = None
-        if isinstance(resources_raw, Mapping):
-            # Build typed dict with callable resource factories
-            resource_factories = u.extract_callable_mapping(resources_raw)
-            if resource_factories:
-                resources_typed = resource_factories
-
-        # isinstance narrowing for factories mapping
-        # Validate values are callable for factory pattern
-        factories_typed: Mapping[str, Callable[[], t.GeneralValueType]] | None = None
-        if isinstance(factories_raw, Mapping):
-            # Build typed dict with only callable values
-            callable_factories = u.extract_callable_mapping(factories_raw)
-            if callable_factories:
-                factories_typed = callable_factories
-
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
-            context=context_typed,
-            subproject=subproject_typed,
-            services=services_typed,
-            factories=factories_typed,
-            resources=resources_typed,
+            context=runtime_context,
+            subproject=options.subproject,
+            services=options.services,
+            factories=options.factories,
+            resources=options.resources,
         )
 
-        container_overrides_raw = options.get("container_overrides")
-        if isinstance(container_overrides_raw, Mapping):
-            items = u.extract_mapping_items(container_overrides_raw)
-            overrides: dict[str, t.FlexibleValue] = {}
-            for k_str, v_typed in items:
-                narrowed = u.to_flexible_value(v_typed)
-                if narrowed is not None:
-                    overrides[k_str] = narrowed
-            if overrides:
-                runtime_container.configure(overrides)
+        if options.container_overrides:
+            runtime_container.configure(dict(options.container_overrides))
 
-        wire_packages_raw = options.get("wire_packages")
+        wire_modules: Sequence[ModuleType] | None = options.wire_modules
+        wire_packages: Sequence[str] | None = options.wire_packages
 
-        wire_modules: Sequence[ModuleType] | None = None
-
-        wire_packages: Sequence[str] | None = None
-        if isinstance(wire_packages_raw, Sequence) and not isinstance(
-            wire_packages_raw,
-            str,
-        ):
-            all_strings = True
-            packages_list: list[str] = []
-            for item in wire_packages_raw:
-                if isinstance(item, str):
-                    packages_list.append(item)
-                else:
-                    all_strings = False
-            if all_strings and len(packages_list) > 0:
-                wire_packages = packages_list
-
-        wire_classes: Sequence[type] | None = None
+        wire_classes: Sequence[type] | None = options.wire_classes
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(
                 modules=wire_modules,
@@ -419,13 +307,10 @@ class FlextMixins(FlextRuntime):
     def track(
         self,
         operation_name: str,
-    ) -> Iterator[dict[str, t.GeneralValueType]]:
+    ) -> Iterator[dict[str, t.ConfigMapValue]]:
         """Track operation performance with timing and automatic context cleanup."""
-        # Get or initialize stats storage for this operation
         stats_attr = f"_stats_{operation_name}"
-        # Use correct type - stats values are all t.GeneralValueType (int, float)
-        # Use dict for mutability (not Mapping)
-        stats: dict[str, t.GeneralValueType] = getattr(
+        stats: dict[str, t.ConfigMapValue] = getattr(
             self,
             stats_attr,
             {
@@ -435,7 +320,6 @@ class FlextMixins(FlextRuntime):
             },
         )
 
-        # Increment operation count - use cast for type safety
         op_count_raw = u.Mapper.get(stats, "operation_count", default=0)
         stats["operation_count"] = int(op_count_raw) + 1
 
@@ -477,7 +361,6 @@ class FlextMixins(FlextRuntime):
                         total_dur_final = float(total_raw)
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     # Update metrics with final stats
-                    # stats values are already t.GeneralValueType (int, float)
                     metrics["error_count"] = stats["error_count"]
                     metrics["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
@@ -496,16 +379,15 @@ class FlextMixins(FlextRuntime):
             """Register service in container."""
             # Get container with explicit type for registration
             container = self.container
-            # Type narrowing: if self is BaseModel, it fits GeneralValueType
-            if isinstance(self, BaseModel):
-                result = container.register(
-                    service_name,
-                    self,
-                )
+            service_instance: t.RegisterableService
+            if BaseModel in type(self).__mro__:
+                service_instance = self
             else:
-                # Fallback: wrap non-BaseModel service in dict
-                service_data: dict[str, str] = {"_service": str(type(self).__name__)}
-                result = container.register(service_name, service_data)
+                raise TypeError(
+                    f"Service '{service_name}' is not registerable: {type(self).__name__}",
+                )
+
+            result = container.register(service_name, service_instance)
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
                 error_msg = result.error or ""
@@ -554,18 +436,11 @@ class FlextMixins(FlextRuntime):
 
             # Logger not in container - create and register
             logger = FlextLogger(logger_name)
-            # FlextLogger is not BaseModel, so use register_factory to wrap it
+            # Register concrete logger instance directly
             container_impl: p.DI = container
-            # Register factory instead of instance (FlextLogger is not BaseModel or FlexibleValue)
-
-            def _logger_factory() -> t.GeneralValueType:
-                # Convert logger to dict-like representation for factory return
-                # FlextLogger is not t.GeneralValueType, so convert to dict
-                return {"logger": str(logger)}
-
             with suppress(ValueError, TypeError):
                 # Ignore if already registered (race condition)
-                _ = container_impl.register_factory(logger_key, _logger_factory)
+                _ = container_impl.register(logger_key, logger)
 
             # Cache the result
             with cls._cache_lock:
@@ -575,7 +450,6 @@ class FlextMixins(FlextRuntime):
             return logger
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # Fallback: create logger without DI if container unavailable
             logger = FlextLogger(logger_name)
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
@@ -586,13 +460,12 @@ class FlextMixins(FlextRuntime):
         self,
         level: str,
         message: str,
-        **extra: t.GeneralValueType,
+        **extra: t.MetadataAttributeValue,
     ) -> None:
         """Log message with automatic context data inclusion."""
-        # Normalize extra values to t.GeneralValueType for logging
         correlation_id = FlextContext.Correlation.get_correlation_id()
         operation_name = FlextContext.Request.get_operation_name()
-        context_data: dict[str, t.GeneralValueType] = {
+        context_data: dict[str, t.MetadataAttributeValue] = {
             "correlation_id": FlextRuntime.normalize_to_general_value(correlation_id),
             "operation": FlextRuntime.normalize_to_general_value(operation_name),
             **{k: FlextRuntime.normalize_to_general_value(v) for k, v in extra.items()},
@@ -632,11 +505,11 @@ class FlextMixins(FlextRuntime):
     # CONTEXT ENRICHMENT METHODS - Automatic Context Management
     # =========================================================================
 
-    def _enrich_context(self, **context_data: t.GeneralValueType) -> None:
+    def _enrich_context(self, **context_data: t.ConfigMapValue) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
         # Build service context for logging using correct types
         # Use dict for mutability
-        service_context: dict[str, t.GeneralValueType] = {
+        service_context: dict[str, t.ConfigMapValue] = {
             "service_name": self.__class__.__name__,
             "service_module": self.__class__.__module__,
             **context_data,
@@ -650,16 +523,16 @@ class FlextMixins(FlextRuntime):
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
-        # Convert config to t.GeneralValueType for logging
-        # ConfigurationMapping is Mapping[str, t.GeneralValueType], convert to dict
-        config_typed: dict[str, t.GeneralValueType] = dict(config.items())
+        # Convert config to t.ConfigMapValue for logging
+        # ConfigurationMapping is Mapping[str, t.ConfigMapValue], convert to dict
+        config_typed: dict[str, t.ConfigMapValue] = dict(config.items())
         # Log configuration as single event, not bound to context
         self.logger.info(message, config=config_typed)
 
     @staticmethod
     def _with_operation_context(
         operation_name: str,
-        **operation_data: t.GeneralValueType,
+        **operation_data: t.ConfigMapValue,
     ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         # Propagate context using inherited Context mixin method
@@ -677,15 +550,15 @@ class FlextMixins(FlextRuntime):
                 "error_details",
             }
 
-            # Separate data by level - preserve t.GeneralValueType from operation_data
+            # Separate data by level - preserve t.ConfigMapValue from operation_data
             # Use dict for mutability
-            debug_data: dict[str, t.GeneralValueType] = {
+            debug_data: dict[str, t.ConfigMapValue] = {
                 k: v for k, v in operation_data.items() if k in debug_keys
             }
-            error_data: dict[str, t.GeneralValueType] = {
+            error_data: dict[str, t.ConfigMapValue] = {
                 k: v for k, v in operation_data.items() if k in error_keys
             }
-            normal_data: dict[str, t.GeneralValueType] = {
+            normal_data: dict[str, t.ConfigMapValue] = {
                 k: v
                 for k, v in operation_data.items()
                 if k not in debug_keys and k not in error_keys
@@ -693,14 +566,14 @@ class FlextMixins(FlextRuntime):
 
             # Bind context using bind_global_context - no level-specific binding available
             # Combine all context data for global binding
-            all_context_data: dict[str, t.GeneralValueType] = dict(normal_data)
+            all_context_data: dict[str, t.ConfigMapValue] = dict(normal_data)
             # Simple merge: deep strategy - new values override existing ones
             if debug_data:
-                merged_debug: dict[str, t.GeneralValueType] = dict(all_context_data)
+                merged_debug: dict[str, t.ConfigMapValue] = dict(all_context_data)
                 merged_debug.update(debug_data)
                 all_context_data = merged_debug
             if error_data:
-                merged_error: dict[str, t.GeneralValueType] = dict(all_context_data)
+                merged_error: dict[str, t.ConfigMapValue] = dict(all_context_data)
                 merged_error.update(error_data)
                 all_context_data = merged_error
             if all_context_data:
@@ -727,12 +600,12 @@ class FlextMixins(FlextRuntime):
             """Tracks handler execution metrics."""
 
             # Type annotation for type checker
-            _metrics: ClassVar[dict[str, t.GeneralValueType]] = {}
+            _metrics: ClassVar[MutableMapping[str, t.ConfigMapValue]] = {}
 
             def __init__(
                 self,
-                *args: t.GeneralValueType,
-                **kwargs: t.GeneralValueType,
+                *args: t.ConfigMapValue,
+                **kwargs: t.ConfigMapValue,
             ) -> None:
                 """Initialize metrics tracker with empty metrics dict."""
                 super().__init__(*args, **kwargs)
@@ -743,7 +616,7 @@ class FlextMixins(FlextRuntime):
             def record_metric(
                 self,
                 name: str,
-                value: t.GeneralValueType,
+                value: t.ConfigMapValue,
             ) -> r[bool]:
                 """Record a metric value.
 
@@ -761,30 +634,30 @@ class FlextMixins(FlextRuntime):
                 self._metrics[name] = value
                 return r[bool].ok(value=True)
 
-            def get_metrics(self) -> r[dict[str, t.GeneralValueType]]:
+            def get_metrics(self) -> r[dict[str, t.ConfigMapValue]]:
                 """Get current metrics dictionary.
 
                 Returns:
-                    r[dict[str, t.GeneralValueType]]: Success result with metrics collection
+                    r[dict[str, t.ConfigMapValue]]: Success result with metrics collection
 
                 """
                 # _metrics is initialized in __init__, but check for safety
                 if not hasattr(self, "_metrics"):
                     vars(self)["_metrics"] = {}
-                return r[dict[str, t.GeneralValueType]].ok(self._metrics.copy())
+                return r[dict[str, t.ConfigMapValue]].ok(self._metrics.copy())
 
         class ContextStack:
             """Manages execution context stack."""
 
             # Type annotation for type checker
             _stack: ClassVar[
-                list[m.Handler.ExecutionContext | dict[str, t.GeneralValueType]]
+                list[m.Handler.ExecutionContext | dict[str, t.ConfigMapValue]]
             ] = []
 
             def __init__(
                 self,
-                *args: t.GeneralValueType,
-                **kwargs: t.GeneralValueType,
+                *args: t.ConfigMapValue,
+                **kwargs: t.ConfigMapValue,
             ) -> None:
                 """Initialize context stack with empty list."""
                 super().__init__(*args, **kwargs)
@@ -793,7 +666,7 @@ class FlextMixins(FlextRuntime):
 
             def push_context(
                 self,
-                ctx: m.Handler.ExecutionContext | dict[str, t.GeneralValueType],
+                ctx: m.Handler.ExecutionContext | Mapping[str, t.ConfigMapValue],
             ) -> r[bool]:
                 """Push execution context onto the stack.
 
@@ -807,8 +680,7 @@ class FlextMixins(FlextRuntime):
                 # _stack is initialized in __init__, but check for safety
                 if not hasattr(self, "_stack"):
                     vars(self)["_stack"] = []
-                # Convert dict to ExecutionContext if needed
-                if isinstance(ctx, dict):
+                if type(ctx) is dict:
                     # For backward compatibility, accept dict but convert to ExecutionContext
                     # Create ExecutionContext from dict data
                     handler_name_raw = ctx.get("handler_name", "unknown")
@@ -844,11 +716,11 @@ class FlextMixins(FlextRuntime):
                     self._stack.append(ctx)
                 return r[bool].ok(value=True)
 
-            def pop_context(self) -> r[dict[str, t.GeneralValueType]]:
+            def pop_context(self) -> r[dict[str, t.ConfigMapValue]]:
                 """Pop execution context from the stack.
 
                 Returns:
-                    r[dict[str, t.GeneralValueType]]: Success result with popped context or empty dict
+                    r[dict[str, t.ConfigMapValue]]: Success result with popped context or empty dict
 
                 """
                 # _stack is initialized in __init__, but check for safety
@@ -856,18 +728,17 @@ class FlextMixins(FlextRuntime):
                     vars(self)["_stack"] = []
                 if self._stack:
                     popped = self._stack.pop()
-                    # Convert ExecutionContext to dict for backward compatibility
-                    if isinstance(popped, m.Handler.ExecutionContext):
-                        context_dict: dict[str, t.GeneralValueType] = {
+                    if m.Handler.ExecutionContext in type(popped).__mro__:
+                        context_dict: dict[str, t.ConfigMapValue] = {
                             "handler_name": popped.handler_name,
                             "handler_mode": popped.handler_mode,
                         }
-                        return r[dict[str, t.GeneralValueType]].ok(context_dict)
+                        return r[dict[str, t.ConfigMapValue]].ok(context_dict)
                     # If it's already a dict, return as-is
                     # Type is already narrowed to dict by the union type
-                    popped_dict: dict[str, t.GeneralValueType] = popped
-                    return r[dict[str, t.GeneralValueType]].ok(popped_dict)
-                return r[dict[str, t.GeneralValueType]].ok({})
+                    popped_dict: dict[str, t.ConfigMapValue] = popped
+                    return r[dict[str, t.ConfigMapValue]].ok(popped_dict)
+                return r[dict[str, t.ConfigMapValue]].ok({})
 
             def current_context(self) -> m.Handler.ExecutionContext | None:
                 """Get current execution context without popping.
@@ -881,9 +752,7 @@ class FlextMixins(FlextRuntime):
                     vars(self)["_stack"] = []
                 if self._stack:
                     top_item = self._stack[-1]
-                    # Type narrowing: _stack contains ExecutionContext | ConfigurationDict
-                    # Return None if ConfigurationDict, otherwise ExecutionContext
-                    if isinstance(top_item, m.Handler.ExecutionContext):
+                    if m.Handler.ExecutionContext in type(top_item).__mro__:
                         return top_item
                     return None
                 return None
@@ -893,18 +762,18 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_with_result(
-            data: t.GeneralValueType,
-            validators: list[Callable[[t.GeneralValueType], r[bool]]],
-        ) -> r[t.GeneralValueType]:
+            data: t.ConfigMapValue,
+            validators: list[Callable[[t.ConfigMapValue], r[bool]]],
+        ) -> r[t.ConfigMapValue]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: r[t.GeneralValueType] = r[t.GeneralValueType].ok(data)
+            result: r[t.ConfigMapValue] = r[t.ConfigMapValue].ok(data)
 
             for validator in validators:
                 # Create helper function with proper closure to validate and preserve data
                 def validate_and_preserve(
-                    data: t.GeneralValueType,
-                    v: Callable[[t.GeneralValueType], r[bool]],
-                ) -> r[t.GeneralValueType]:
+                    data: t.ConfigMapValue,
+                    v: Callable[[t.ConfigMapValue], r[bool]],
+                ) -> r[t.ConfigMapValue]:
                     validation_result = v(data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -913,17 +782,17 @@ class FlextMixins(FlextRuntime):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        return r[t.GeneralValueType].fail(
+                        return r[t.ConfigMapValue].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=validation_result.error_data,
                         )
                     # Check that validation returned True
                     if validation_result.value is not True:
-                        return r[t.GeneralValueType].fail(
+                        return r[t.ConfigMapValue].fail(
                             f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}",
                         )
-                    return r[t.GeneralValueType].ok(data)
+                    return r[t.ConfigMapValue].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
                 result = result.flat_map(partial(validate_and_preserve, v=validator))
@@ -935,14 +804,14 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def is_handler(
-            obj: object,
+            obj: t.ConfigMapValue,
         ) -> bool:
             """Check if object satisfies p.Handler protocol."""
-            return isinstance(obj, p.Handler)
+            return hasattr(obj, "handle") and hasattr(obj, "validate") and callable(getattr(obj, "handle", None)) and callable(getattr(obj, "validate", None))
 
         @staticmethod
         def is_service(
-            _obj: p.Service[t.GeneralValueType],
+            _obj: p.Service[t.ConfigMapValue],
         ) -> bool:
             """Check if object satisfies p.Service protocol.
 
@@ -959,9 +828,9 @@ class FlextMixins(FlextRuntime):
         @staticmethod
         def validate_protocol_compliance(
             _obj: p.Handler
-            | p.Service[t.GeneralValueType]
+            | p.Service[t.ConfigMapValue]
             | p.CommandBus
-            | p.Repository[t.GeneralValueType]
+            | p.Repository[t.ConfigMapValue]
             | p.Configurable,
             protocol_name: str,
         ) -> r[bool]:

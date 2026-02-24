@@ -34,7 +34,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Self, TypeVar, cast, overload
+from typing import ClassVar, Self, TypeVar, overload
 
 import yaml
 from flext_core import r
@@ -94,7 +94,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     def __init__(
         self,
         base_dir: Path | None = None,
-        **data: t.GeneralValueType,
+        **data: t.Tests.PayloadValue,
     ) -> None:
         """Initialize file manager with optional base directory.
 
@@ -370,8 +370,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Extract from FlextResult BEFORE validation if extract_result=True
         # This ensures CreateParams receives the unwrapped content, not the FlextResult
         content_to_validate = content
-        if extract_result and isinstance(content, r):
-            # isinstance narrows type to FlextResult for pyrefly
+        if extract_result and type(content).__mro__ and r in type(content).__mro__:
             if content.is_failure:
                 error_msg = content.error or "FlextResult failure"
                 raise ValueError(
@@ -410,7 +409,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
         # Convert Pydantic model to dict using u.Model.to_dict()
         # Ensure actual_content is a BaseModel instance before calling to_dict
-        if isinstance(actual_content, BaseModel):
+        if BaseModel in type(actual_content).__mro__:
             actual_content = u.Model.to_dict(actual_content)
         # If it's already a dict, leave it as is - u.Model.to_dict expects BaseModel
         # If it's something else (str, bytes, list), it will be handled by auto-detection
@@ -418,54 +417,44 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Auto-detect format using utilities
         # Build content_for_detect with explicit type handling for pyrefly
         content_for_detect: (
-            str | bytes | Mapping[str, t.GeneralValueType] | list[list[str]]
+            str | bytes | Mapping[str, t.Tests.PayloadValue] | list[list[str]]
         )
-        if isinstance(actual_content, (str, bytes)):
+        if type(actual_content) in (str, bytes):
             content_for_detect = actual_content
-        elif isinstance(actual_content, dict):
+        elif type(actual_content) is dict:
             content_for_detect = {
                 str(k): FlextRuntime.normalize_to_general_value(v)
-                if isinstance(
-                    v,
-                    (
-                        str,
-                        int,
-                        float,
-                        bool,
-                        datetime,
-                        Path,
-                        BaseModel,
-                        Sequence,
-                        Mapping,
-                    ),
+                if (
+                    v is None
+                    or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
+                    or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                    or (hasattr(v, "keys") and hasattr(v, "items"))
+                    or (
+                        hasattr(v, "__len__")
+                        and hasattr(v, "__getitem__")
+                        and type(v) not in (str, bytes)
+                    )
                 )
-                or v is None
                 else str(v)
                 for k, v in actual_content.items()
             }
-        elif isinstance(actual_content, Mapping):
+        elif hasattr(actual_content, "keys") and hasattr(actual_content, "items"):
             content_for_detect = {
-                str(k): FlextRuntime.normalize_to_general_value(
-                    cast("t.GeneralValueType", v)
-                )
+                str(k): FlextRuntime.normalize_to_general_value(v)
                 for k, v in actual_content.items()
             }
-        elif isinstance(actual_content, BaseModel):
-            # BaseModel - convert to dict first for detection
+        elif BaseModel in type(actual_content).__mro__:
             content_for_detect = u.Model.dump(actual_content)
-        elif isinstance(actual_content, list):
-            # List - check if nested for CSV
-            if actual_content and isinstance(actual_content[0], (list, tuple)):
-                # Nested list/tuple of rows - convert each cell to str for CSV format
+        elif type(actual_content) is list:
+            if actual_content and type(actual_content[0]) in (list, tuple):
                 content_for_detect = [
                     [str(cell) for cell in row]
                     for row in actual_content
-                    if isinstance(row, (list, tuple))
+                    if type(row) in (list, tuple)
                 ]
             else:
-                # Flat list - convert to string representation
                 content_for_detect = str(actual_content)
-        elif isinstance(actual_content, tuple):
+        elif type(actual_content) is tuple:
             # Tuple - convert to string representation
             content_for_detect = str(actual_content)
         else:
@@ -479,56 +468,41 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
         # Create based on format using validated params
         if actual_fmt == c.Tests.Files.Format.BIN:
-            if isinstance(actual_content, bytes):
+            if type(actual_content) is bytes:
                 _ = file_path.write_bytes(actual_content)
             else:
                 _ = file_path.write_bytes(str(actual_content).encode(params.enc))
         elif actual_fmt == c.Tests.Files.Format.JSON:
             # Convert Mapping to dict if needed using u.Mapper.to_dict()
             # Only call to_dict if it's a Mapping but not a dict
-            if isinstance(actual_content, Mapping) and not isinstance(
-                actual_content,
-                dict,
-            ):
-                # Convert Mapping to dict using u.Mapper.to_dict()
+            if (hasattr(actual_content, "keys") and hasattr(actual_content, "items")) and type(actual_content) is not dict:
                 data = u.Mapper.to_dict(actual_content)
-            elif isinstance(actual_content, dict):
+            elif type(actual_content) is dict:
                 data = actual_content
             else:
-                # Fallback - convert to dict representation
                 data = {"value": actual_content} if actual_content else {}
             _ = file_path.write_text(
                 json.dumps(data, indent=params.indent, ensure_ascii=False),
                 encoding=params.enc,
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
-            # Convert Mapping to dict if needed using u.Mapper.to_dict()
-            # Only call to_dict if it's a Mapping but not a dict
-            if isinstance(actual_content, Mapping) and not isinstance(
-                actual_content,
-                dict,
-            ):
+            if (hasattr(actual_content, "keys") and hasattr(actual_content, "items")) and type(actual_content) is not dict:
                 data = u.Mapper.to_dict(actual_content)
-            elif isinstance(actual_content, dict):
+            elif type(actual_content) is dict:
                 data = actual_content
             else:
                 # Fallback - convert to dict representation
                 data = {"value": actual_content} if actual_content else {}
             yaml_result = yaml.dump(data, default_flow_style=False, allow_unicode=True)
             # yaml.dump returns str | bytes | None - write_text needs str
-            yaml_content: str = yaml_result if isinstance(yaml_result, str) else ""
+            yaml_content: str = yaml_result if type(yaml_result) is str else ""
             _ = file_path.write_text(yaml_content, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.CSV:
             # Convert Sequence[Sequence[str]] to list[list[str]] for write_csv
             csv_content: list[list[str]]
-            if u.is_type(actual_content, "sequence") and not isinstance(
-                actual_content,
-                (str, bytes),
-            ):
-                # Check if nested sequence and convert to list[list[str]]
-                # Runtime check needed to distinguish nested sequences from flat sequences
+            if u.is_type(actual_content, "sequence") and type(actual_content) not in (str, bytes):
                 if all(
-                    u.is_type(row, "sequence") and not isinstance(row, (str, bytes))
+                    u.is_type(row, "sequence") and type(row) not in (str, bytes)
                     for row in actual_content
                 ):
                     csv_content = [list(row) for row in actual_content]
@@ -694,9 +668,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         f"Cannot load model from non-dict content: {type(content)}",
                     )
                 # Convert to dict if needed
-                if isinstance(content, dict):
+                if type(content) is dict:
                     content_dict = content
-                elif isinstance(content, Mapping):
+                elif hasattr(content, "keys") and hasattr(content, "items"):
                     # Type-safe conversion from Mapping to dict
                     content_dict = u.Mapper.to_dict(content)
                 else:
@@ -911,7 +885,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         content1: str,
         content2: str,
         fmt: str,
-    ) -> tuple[dict[str, t.GeneralValueType], dict[str, t.GeneralValueType]] | None:
+    ) -> tuple[Mapping[str, t.Tests.PayloadValue], Mapping[str, t.Tests.PayloadValue]] | None:
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:
@@ -931,11 +905,11 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
     def _apply_key_filtering(
         self,
-        dict1: dict[str, t.GeneralValueType],
-        dict2: dict[str, t.GeneralValueType],
+        dict1: Mapping[str, t.Tests.PayloadValue],
+        dict2: Mapping[str, t.Tests.PayloadValue],
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[dict[str, t.GeneralValueType], dict[str, t.GeneralValueType]]:
+    ) -> tuple[Mapping[str, t.Tests.PayloadValue], Mapping[str, t.Tests.PayloadValue]]:
         """Apply key filtering to both dicts if specified."""
         if keys is None and exclude_keys is None:
             return dict1, dict2
@@ -1170,22 +1144,20 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
         # Convert BatchFiles to dict - BatchFiles can be Mapping or Sequence
         files_dict: dict[str, TestsFileContent]
-        if isinstance(params.files, Mapping):
+        if hasattr(params.files, "keys") and hasattr(params.files, "items"):
             files_dict = {str(k): v for k, v in params.files.items()}
-        elif isinstance(params.files, Sequence):
-            # BatchFiles is Sequence[tuple[str, FileContent]] - convert to dict
-            # params.files is already Sequence, iterate and convert each item
+        elif hasattr(params.files, "__getitem__") and hasattr(params.files, "__len__") and type(params.files) is not str:
             files_dict = {}
             for item in params.files:
-                # Each item should be tuple[str, FileContent] from BatchFiles type
-                if isinstance(item, tuple) and len(item) == 2:
+                if type(item) is tuple and len(item) == 2:
                     name, content_raw = item
-                    if isinstance(name, str):
-                        # Narrow content to FileContent type
+                    if type(name) is str:
                         content: TestsFileContent
-                        if isinstance(
-                            content_raw,
-                            (str, bytes, Mapping, Sequence, BaseModel),
+                        if (
+                            type(content_raw) in (str, bytes)
+                            or (hasattr(content_raw, "keys") and hasattr(content_raw, "items"))
+                            or (hasattr(content_raw, "__getitem__") and hasattr(content_raw, "__len__") and type(content_raw) not in (str, bytes))
+                            or (hasattr(type(content_raw), "__mro__") and BaseModel in type(content_raw).__mro__)
                         ):
                             content = content_raw
                             files_dict[name] = content
@@ -1210,26 +1182,18 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                             m.ConfigMap(
                                 root={
                                     str(k): FlextRuntime.normalize_to_general_value(v)
-                                    if isinstance(
-                                        v,
-                                        (
-                                            str,
-                                            int,
-                                            float,
-                                            bool,
-                                            datetime,
-                                            Path,
-                                            BaseModel,
-                                            Sequence,
-                                            Mapping,
-                                        ),
+                                    if (
+                                        v is None
+                                        or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
+                                        or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                                        or (hasattr(v, "keys") and hasattr(v, "items"))
+                                        or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
                                     )
-                                    or v is None
                                     else str(v)
                                     for k, v in content.items()
                                 }
                             )
-                            if isinstance(content, Mapping)
+                            if (hasattr(content, "keys") and hasattr(content, "items"))
                             else content
                         )
                         path = self.create(content_for_create, name, params.directory)
@@ -1240,7 +1204,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                     # For read, content should be Path or str - wrap in Path() for type safety
                     path = (
                         Path(content)
-                        if isinstance(content, (Path, str))
+                        if type(content) in (Path, str)
                         else Path(name)
                     )
                     # Read file - we only care about success/failure, not the exact return type
@@ -1254,7 +1218,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                     # For delete, content should be Path or str - wrap in Path() for type safety
                     path = (
                         Path(content)
-                        if isinstance(content, (Path, str))
+                        if type(content) in (Path, str)
                         else Path(name)
                     )
                     try:
@@ -1302,28 +1266,28 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Convert results to dict and errors to dict
         # u.Collection.batch() returns results as list of (index, result) tuples
         # We need to map them back to file names
-        results_dict: dict[str, r[object]] = {}
+        results_dict: dict[str, r[Path | t.Tests.PayloadValue]] = {}
         failed_dict: dict[str, str] = {}
 
         # Process successful results - map by index to file name
         for idx, result in enumerate(results):
             if idx < len(items_list):
                 name, _ = items_list[idx]
-                if isinstance(result, Path):
-                    results_dict[name] = r[object].ok(result)
+                if type(result) is Path:
+                    results_dict[name] = r[Path | t.Tests.PayloadValue].ok(result)
                 elif u.is_type(result, "result"):
                     # Duck-typed access to FlextResult attributes
                     is_success = getattr(result, "is_success", False)
                     if is_success:
                         value = getattr(result, "value", None)
-                        results_dict[name] = r[object].ok(value)
+                        results_dict[name] = r[Path | t.Tests.PayloadValue].ok(value)
                     else:
                         error = (
                             getattr(result, "error", "Unknown error") or "Unknown error"
                         )
                         failed_dict[name] = error
                 else:
-                    results_dict[name] = r[object].ok(result)
+                    results_dict[name] = r[Path | t.Tests.PayloadValue].ok(result)
 
         # Process errors from batch result (indexed errors)
         for idx, error_msg in errors:
@@ -1387,7 +1351,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     @contextmanager
     def files(
         cls,
-        content: dict[
+        content: Mapping[
             str,
             str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ],
@@ -1395,8 +1359,8 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         directory: Path | None = None,
         ext: str | None = None,
         extract_result: bool = True,
-        **kwargs: t.GeneralValueType,
-    ) -> Generator[dict[str, Path]]:
+        **kwargs: t.Tests.PayloadValue,
+    ) -> Generator[Mapping[str, Path]]:
         """Create temporary files with auto-cleanup.
 
         Supports Pydantic models, dicts, lists, and raw content.
@@ -1440,20 +1404,22 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 filename = name if "." in name else f"{name}{default_ext}"
                 # Determine if we need to adjust extension based on content type
                 if "." not in name and (
-                    u.is_type(data, "dict") or isinstance(data, BaseModel)
+                    u.is_type(data, "dict") or (hasattr(type(data), "__mro__") and BaseModel in type(data).__mro__)
                 ):
                     filename = f"{name}.json"
                 else:
                     # Check if data is a nested sequence (CSV format)
-                    # Use isinstance with Sequence for type-safe length check
+                    # Type-safe nested sequence check
                     is_nested_sequence = (
                         "." not in name
-                        and isinstance(data, Sequence)
-                        and not isinstance(data, (str, bytes))
+                        and hasattr(data, "__getitem__")
+                        and hasattr(data, "__len__")
+                        and type(data) not in (str, bytes)
                         and len(data) > 0
                         and all(
-                            isinstance(row, Sequence)
-                            and not isinstance(row, (str, bytes))
+                            hasattr(row, "__getitem__")
+                            and hasattr(row, "__len__")
+                            and type(row) not in (str, bytes)
                             for row in data
                         )
                     )
@@ -1578,9 +1544,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     @contextmanager
     def temporary_files(
         cls,
-        files: dict[str, str],
+        files: Mapping[str, str],
         extension: str = c.Tests.Files.DEFAULT_EXTENSION,
-    ) -> Generator[dict[str, Path]]:
+    ) -> Generator[Mapping[str, Path]]:
         """Create temporary files. DEPRECATED: Use tf.files() instead."""
         warnings.warn(
             c.Tests.Files.DEPRECATION_TEMPORARY_FILES,
@@ -1666,72 +1632,55 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             # Extract value from result
             value = getattr(content, "value", content)
             # Return extracted value - must be one of the FileContent types
-            if isinstance(value, (str, bytes, BaseModel, m.ConfigMap)):
+            if type(value) in (str, bytes) or (hasattr(type(value), "__mro__") and (BaseModel in type(value).__mro__ or m.ConfigMap in type(value).__mro__)):
                 return value
-            if isinstance(value, Mapping):
+            if hasattr(value, "keys") and hasattr(value, "items"):
                 return m.ConfigMap(
                     root={
                         str(k): FlextRuntime.normalize_to_general_value(v)
-                        if isinstance(
-                            v,
-                            (
-                                str,
-                                int,
-                                float,
-                                bool,
-                                datetime,
-                                Path,
-                                BaseModel,
-                                Sequence,
-                                Mapping,
-                            ),
+                        if (
+                            v is None
+                            or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
+                            or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                            or (hasattr(v, "keys") and hasattr(v, "items"))
+                            or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
                         )
-                        or v is None
                         else str(v)
                         for k, v in value.items()
                     }
                 )
-            if isinstance(value, Sequence):
+            if hasattr(value, "__getitem__") and hasattr(value, "__len__") and type(value) not in (str, bytes):
                 rows: list[list[str]] = []
                 for row in value:
-                    if not isinstance(row, Sequence) or isinstance(row, (str, bytes)):
+                    if not (hasattr(row, "__getitem__") and hasattr(row, "__len__")) or type(row) in (str, bytes):
                         rows = []
                         break
                     rows.append([str(cell) for cell in row])
                 if rows:
                     return rows
-            # Fallback - return as string
             return str(value)
         # Content is already a FileContent type (not wrapped in Result)
-        if isinstance(content, (str, bytes, BaseModel, m.ConfigMap)):
+        if type(content) in (str, bytes) or (hasattr(type(content), "__mro__") and (BaseModel in type(content).__mro__ or m.ConfigMap in type(content).__mro__)):
             return content
-        if isinstance(content, Mapping):
+        if hasattr(content, "keys") and hasattr(content, "items"):
             return m.ConfigMap(
                 root={
                     str(k): FlextRuntime.normalize_to_general_value(v)
-                    if isinstance(
-                        v,
-                        (
-                            str,
-                            int,
-                            float,
-                            bool,
-                            datetime,
-                            Path,
-                            BaseModel,
-                            Sequence,
-                            Mapping,
-                        ),
+                    if (
+                        v is None
+                        or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
+                        or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                        or (hasattr(v, "keys") and hasattr(v, "items"))
+                        or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
                     )
-                    or v is None
                     else str(v)
                     for k, v in content.items()
                 }
             )
-        if isinstance(content, Sequence):
+        if hasattr(content, "__getitem__") and hasattr(content, "__len__") and type(content) not in (str, bytes):
             content_rows: list[list[str]] = []
             for row in content:
-                if not isinstance(row, Sequence) or isinstance(row, (str, bytes)):
+                if not (hasattr(row, "__getitem__") and hasattr(row, "__len__")) or type(row) in (str, bytes):
                     content_rows = []
                     break
                 content_rows.append([str(cell) for cell in row])
@@ -1770,7 +1719,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         model_name: str | None = None
 
         # Parse based on format
-        parsed_content: m.ConfigMap | list[t.GeneralValueType] | None = None
+        parsed_content: m.ConfigMap | list[t.Tests.PayloadValue] | None = None
 
         if fmt in {"json", "yaml"}:
             try:
@@ -1780,32 +1729,24 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                     # YAML parsing
                     parsed_raw = yaml.safe_load(text) if text.strip() else {}
 
-                # Type narrowing and assignment using isinstance for proper narrowing
-                if isinstance(parsed_raw, dict):
+                # Type narrowing using type() for proper narrowing
+                if type(parsed_raw) is dict:
                     parsed_content = m.ConfigMap(
                         root={
                             str(k): FlextRuntime.normalize_to_general_value(v)
-                            if isinstance(
-                                v,
-                                (
-                                    str,
-                                    int,
-                                    float,
-                                    bool,
-                                    datetime,
-                                    Path,
-                                    BaseModel,
-                                    Sequence,
-                                    Mapping,
-                                ),
+                            if (
+                                v is None
+                                or type(v) in (str, int, float, bool, bytes, list, tuple, dict)
+                                or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
+                                or (hasattr(v, "keys") and hasattr(v, "items"))
+                                or (hasattr(v, "__len__") and hasattr(v, "__getitem__") and type(v) not in (str, bytes))
                             )
-                            or v is None
                             else str(v)
                             for k, v in parsed_raw.items()
                         }
                     )
                     key_count = len(parsed_raw)
-                elif isinstance(parsed_raw, list):
+                elif type(parsed_raw) is list:
                     parsed_content = parsed_raw
                     item_count = len(parsed_content)
             except (json.JSONDecodeError, yaml.YAMLError):
@@ -1826,17 +1767,16 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Model validation if requested
         if validate_model is not None:
             model_name = validate_model.__name__
-            if parsed_content is not None and not isinstance(parsed_content, list):
+            if parsed_content is not None and type(parsed_content) is not list:
                 # Use u.Model.load() for Pydantic validation
-                # Convert to dict if needed
                 content_dict = (
                     parsed_content
-                    if isinstance(parsed_content, dict)
+                    if type(parsed_content) is dict
                     else dict(parsed_content)
                 )
                 validation_result = u.Model.load(
                     validate_model,
-                    cast("t.ConfigMap", content_dict),
+                    m.ConfigMap.model_validate(content_dict),
                 )
                 model_valid = validation_result.is_success
             elif fmt in {"json", "yaml"} and text.strip():

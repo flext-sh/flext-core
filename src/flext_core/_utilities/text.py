@@ -29,7 +29,6 @@ class FlextUtilitiesText:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod

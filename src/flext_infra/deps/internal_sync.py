@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import sys
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 import structlog
@@ -64,10 +65,10 @@ class InternalDependencySyncService:
             return f"https://github.com/{url.removeprefix('git@github.com:')}"
         return url
 
-    def _parse_gitmodules(self, path: Path) -> dict[str, RepoUrls]:
+    def _parse_gitmodules(self, path: Path) -> Mapping[str, RepoUrls]:
         parser = configparser.RawConfigParser()
         _ = parser.read(path)
-        mapping: dict[str, RepoUrls] = {}
+        mapping: MutableMapping[str, RepoUrls] = {}
         for section in parser.sections():
             if not section.startswith("submodule "):
                 continue
@@ -81,25 +82,25 @@ class InternalDependencySyncService:
             )
         return mapping
 
-    def _parse_repo_map(self, path: Path) -> r[dict[str, RepoUrls]]:
+    def _parse_repo_map(self, path: Path) -> r[Mapping[str, RepoUrls]]:
         data_result = self._toml.read(path)
         if data_result.is_failure:
-            return r[dict[str, RepoUrls]].fail(
+            return r[Mapping[str, RepoUrls]].fail(
                 data_result.error or "failed to read repository map"
             )
         data = data_result.value
         repos_obj = data.get("repo", {})
-        if not isinstance(repos_obj, dict):
-            return r[dict[str, RepoUrls]].ok({})
-        result: dict[str, RepoUrls] = {}
+        if type(repos_obj) is not dict:
+            return r[Mapping[str, RepoUrls]].ok({})
+        result: MutableMapping[str, RepoUrls] = {}
         for repo_name, values in repos_obj.items():
-            if not isinstance(values, dict):
+            if type(values) is not dict:
                 continue
             ssh_url = str(values.get("ssh_url", ""))
             https_url = str(values.get("https_url", self._ssh_to_https(ssh_url)))
             if ssh_url:
                 result[repo_name] = RepoUrls(ssh_url=ssh_url, https_url=https_url)
-        return r[dict[str, RepoUrls]].ok(result)
+        return r[Mapping[str, RepoUrls]].ok(result)
 
     def _resolve_ref(self, project_root: Path) -> str:
         if os.getenv("GITHUB_ACTIONS") == "true":
@@ -191,8 +192,8 @@ class InternalDependencySyncService:
         self,
         owner: str,
         repo_names: set[str],
-    ) -> dict[str, RepoUrls]:
-        result: dict[str, RepoUrls] = {}
+    ) -> Mapping[str, RepoUrls]:
+        result: MutableMapping[str, RepoUrls] = {}
         for repo_name in sorted(repo_names):
             ssh_url = f"git@github.com:{owner}/{repo_name}.git"
             result[repo_name] = RepoUrls(
@@ -249,28 +250,9 @@ class InternalDependencySyncService:
                 safe_repo_url,
                 str(dep_path),
             ])
-            if cloned.is_success and cloned.value.exit_code == 0:
-                return r[bool].ok(True)
-
-            fallback = self._runner.run_raw([
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                "main",
-                safe_repo_url,
-                str(dep_path),
-            ])
-            if fallback.is_failure or fallback.value.exit_code != 0:
-                stderr = fallback.value.stderr.strip() if fallback.is_success else ""
+            if cloned.is_failure or cloned.value.exit_code != 0:
+                stderr = cloned.value.stderr.strip() if cloned.is_success else ""
                 return r[bool].fail(f"clone failed for {dep_path.name}: {stderr}")
-            logger.warning(
-                "sync_deps_missing_ref_clone_fallback",
-                dependency=dep_path.name,
-                ref=safe_ref_name,
-                fallback_ref="main",
-            )
             return r[bool].ok(True)
 
         fetch = self._run_git(["fetch", "origin", "--tags"], dep_path)
@@ -279,21 +261,10 @@ class InternalDependencySyncService:
             return r[bool].fail(f"fetch failed for {dep_path.name}: {stderr}")
 
         checkout = self._run_git(["checkout", safe_ref_name], dep_path)
-        if checkout.is_success and checkout.value.exit_code == 0:
-            _ = self._run_git(["pull", "--ff-only", "origin", safe_ref_name], dep_path)
-            return r[bool].ok(True)
-
-        fallback_checkout = self._run_git(["checkout", "main"], dep_path)
-        if fallback_checkout.is_failure or fallback_checkout.value.exit_code != 0:
+        if checkout.is_failure or checkout.value.exit_code != 0:
             stderr = checkout.value.stderr.strip() if checkout.is_success else ""
             return r[bool].fail(f"checkout failed for {dep_path.name}: {stderr}")
-        _ = self._run_git(["pull", "--ff-only", "origin", "main"], dep_path)
-        logger.warning(
-            "sync_deps_missing_ref_checkout_fallback",
-            dependency=dep_path.name,
-            ref=safe_ref_name,
-            fallback_ref="main",
-        )
+        _ = self._run_git(["pull", "--ff-only", "origin", safe_ref_name], dep_path)
         return r[bool].ok(True)
 
     @staticmethod
@@ -309,30 +280,30 @@ class InternalDependencySyncService:
             return normalized
         return None
 
-    def _collect_internal_deps(self, project_root: Path) -> r[dict[str, Path]]:
+    def _collect_internal_deps(self, project_root: Path) -> r[Mapping[str, Path]]:
         pyproject = project_root / ic.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
-            return r[dict[str, Path]].ok({})
+            return r[Mapping[str, Path]].ok({})
 
         data_result = self._toml.read(pyproject)
         if data_result.is_failure:
-            return r[dict[str, Path]].fail(
+            return r[Mapping[str, Path]].fail(
                 data_result.error or f"failed to read {pyproject}"
             )
         data = data_result.value
 
         tool = data.get("tool")
-        poetry = tool.get("poetry") if isinstance(tool, dict) else None
-        deps = poetry.get("dependencies") if isinstance(poetry, dict) else {}
-        if not isinstance(deps, dict):
+        poetry = tool.get("poetry") if type(tool) is dict else None
+        deps = poetry.get("dependencies") if type(poetry) is dict else {}
+        if type(deps) is not dict:
             deps = {}
 
-        result: dict[str, Path] = {}
+        result: MutableMapping[str, Path] = {}
         for dep_name, dep_value in deps.items():
-            if not isinstance(dep_value, dict):
+            if type(dep_value) is not dict:
                 continue
             dep_path = dep_value.get("path")
-            if not isinstance(dep_path, str):
+            if type(dep_path) is not str:
                 continue
             repo_name = self._is_internal_path_dep(dep_path)
             if repo_name is None:
@@ -341,13 +312,13 @@ class InternalDependencySyncService:
 
         project_obj = data.get("project")
         project_deps = (
-            project_obj.get("dependencies", []) if isinstance(project_obj, dict) else []
+            project_obj.get("dependencies", []) if type(project_obj) is dict else []
         )
-        if not isinstance(project_deps, list):
+        if type(project_deps) is not list:
             project_deps = []
 
         for dep in project_deps:
-            if not isinstance(dep, str) or " @ " not in dep:
+            if type(dep) is not str or " @ " not in dep:
                 continue
             match = _PEP621_PATH_RE.search(dep)
             if not match:
@@ -357,7 +328,7 @@ class InternalDependencySyncService:
                 continue
             _ = result.setdefault(repo_name, project_root / ".flext-deps" / repo_name)
 
-        return r[dict[str, Path]].ok(result)
+        return r[Mapping[str, Path]].ok(result)
 
     def sync(self, project_root: Path) -> r[int]:
         """Synchronize internal dependencies via git clone or workspace symlinks."""
@@ -370,7 +341,7 @@ class InternalDependencySyncService:
 
         workspace_mode, workspace_root = self._is_workspace_mode(project_root)
         map_file = project_root / "flext-repo-map.toml"
-        repo_map: dict[str, RepoUrls]
+        repo_map: Mapping[str, RepoUrls]
 
         if (
             workspace_mode

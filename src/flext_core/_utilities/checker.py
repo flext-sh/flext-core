@@ -88,7 +88,7 @@ class FlextUtilitiesChecker:
             if origin and origin.__name__ in {"h", "FlextHandlers"}:
                 # Use FlextRuntime.extract_generic_args() from Layer 0.5 (defined in runtime.pyi stub)
                 args = FlextRuntime.extract_generic_args(base)
-                # Accept all type forms: plain types, generic aliases (e.g., dict[str, t.GeneralValueType]),
+                # Accept all type forms: plain types, generic aliases (e.g., dict[str, t.GuardInputValue]),
                 # and string type references. The _evaluate_type_compatibility method
                 # handles all these forms correctly.
                 # args[0] is never None - extract_generic_args returns tuple of types/strings
@@ -114,7 +114,7 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: t.HandlerCallable,
         handler_class: type,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> dict[str, t.GuardInputValue]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -129,22 +129,22 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: dict[str, t.GeneralValueType],
+        type_hints: dict[str, t.GuardInputValue],
         param_name: str,
     ) -> t.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
         if param_name in type_hints:
             # Return the type hint directly (plain types, generic aliases, etc.)
             hint = type_hints[param_name]
-            # Type narrowing: MessageTypeSpecifier = str | type[t.GeneralValueType]
+            # Type narrowing: MessageTypeSpecifier = str | type[t.GuardInputValue]
             # Check what hint is and return appropriately
             if hint is None:
                 return None
             # If hint is a string or a type, it's valid MessageTypeSpecifier
-            if isinstance(hint, str):
+            if type(hint) is str:
                 return hint
-            if isinstance(hint, type):
-                # Type narrowing: hint is type after isinstance check
+            if type(hint) is type:
+                # Type narrowing: hint is type after type check
                 # Return the type directly - type is a valid MessageTypeSpecifier component
                 # The return value will be str (from annotation branch) or type object
                 return hint
@@ -156,9 +156,9 @@ class FlextUtilitiesChecker:
         if annotation is not inspect.Signature.empty:
             # Type narrowing: annotation exists and is not empty
             # Annotation could be str, type, or a generic alias
-            if isinstance(annotation, str):
+            if type(annotation) is str:
                 return annotation
-            if isinstance(annotation, type):
+            if type(annotation) is type:
                 return annotation
             # For generic aliases and other types, convert to string representation
             return str(annotation)
@@ -268,21 +268,21 @@ class FlextUtilitiesChecker:
             True if dict compatible, None if not dict types
 
         """
-        # Handle dict/dict[str, t.GeneralValueType] compatibility
-        # If expected is dict or dict[str, t.GeneralValueType], accept dict instances
+        # Handle dict/dict[str, t.GuardInputValue] compatibility
+        # If expected is dict or dict[str, t.GuardInputValue], accept dict instances
         if origin_type is dict and (
             message_origin is dict
-            or (isinstance(message_type, type) and issubclass(message_type, dict))
+            or (type(message_type) is type and dict in message_type.__mro__)
         ):
             return True
 
-        # If message is dict or dict[str, t.GeneralValueType], and expected is also dict-like
+        # If message is dict or dict[str, t.GuardInputValue], and expected is also dict-like
         if (
-            isinstance(message_type, type)
-            and issubclass(message_type, dict)
+            type(message_type) is type
+            and dict in message_type.__mro__
             and (
                 origin_type is dict
-                or (isinstance(expected_type, type) and issubclass(expected_type, dict))
+                or (type(expected_type) is type and dict in expected_type.__mro__)
             )
         ):
             return True
@@ -325,7 +325,7 @@ class FlextUtilitiesChecker:
             return dict_check
 
         # Check type or origin
-        if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
+        if type(message_type) is type or hasattr(message_type, "__origin__"):
             return cls._handle_type_or_origin_check(
                 expected_type,
                 message_type,
@@ -359,8 +359,8 @@ class FlextUtilitiesChecker:
         try:
             if hasattr(message_type, "__origin__"):
                 return message_origin is origin_type
-            if isinstance(message_type, type) and isinstance(origin_type, type):
-                return issubclass(message_type, origin_type)
+            if type(message_type) is type and type(origin_type) is type:
+                return origin_type in message_type.__mro__
             return message_type is expected_type
         except TypeError:
             return message_type is expected_type
@@ -382,8 +382,11 @@ class FlextUtilitiesChecker:
 
         """
         try:
-            if isinstance(origin_type, type):
-                return isinstance(message_type, origin_type)
+            if type(origin_type) is type:
+                return type(message_type) is origin_type or (
+                    type(message_type) is type
+                    and origin_type in message_type.__mro__
+                )
             return True
         except TypeError:
             return True

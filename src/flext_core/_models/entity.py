@@ -35,8 +35,8 @@ def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
 
 
 class _ComparableConfigMap(t.ConfigMap):
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Mapping):
+    def __eq__(self, other: t.GuardInputValue) -> bool:
+        if type(other) is dict or (Mapping in type(other).__mro__):
             return self.root == dict(other.items())
         return super().__eq__(other)
 
@@ -78,14 +78,14 @@ class FlextModelsEntity:
         @classmethod
         def normalize_event_data(
             cls,
-            value: t.GeneralValueType,
+            value: t.GuardInputValue,
         ) -> _ComparableConfigMap:
-            if isinstance(value, _ComparableConfigMap):
+            if _ComparableConfigMap in type(value).__mro__:
                 return value
-            if isinstance(value, t.ConfigMap):
+            if t.ConfigMap in type(value).__mro__:
                 return _ComparableConfigMap(root=dict(value.items()))
-            if isinstance(value, Mapping):
-                normalized: dict[str, t.GeneralValueType] = {
+            if type(value) is dict or (Mapping in type(value).__mro__):
+                normalized: dict[str, t.GuardInputValue] = {
                     str(k): FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in value.items()
                 }
@@ -123,17 +123,17 @@ class FlextModelsEntity:
             return FlextRuntime.get_logger(__name__)
 
         @override
-        def model_post_init(self, __context: object, /) -> None:
+        def model_post_init(self, __context: t.GuardInputValue, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.GuardInputValue) -> bool:
             """Identity-based equality for entities."""
             if not FlextRuntime.is_base_model(other):
                 return NotImplemented
-            # Type narrowed to BaseModel via TypeGuard (part of GeneralValueType)
+            # Type narrowed to BaseModel via TypeGuard (part of PayloadValue)
             return FlextRuntime.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
@@ -188,7 +188,7 @@ class FlextModelsEntity:
             # Call event handler if defined
             # Use event_type from data if present, otherwise use argument
             handler_event_type = data_map.get("event_type", event_type)
-            if isinstance(handler_event_type, str):
+            if type(handler_event_type) is str:
                 handler_name = f"_apply_{handler_event_type}"
                 handler = getattr(self, handler_name, None)
                 if handler is not None and callable(handler):
@@ -212,7 +212,7 @@ class FlextModelsEntity:
 
             """
             # Validate input is a valid sequence (list or tuple)
-            if not isinstance(events, (list, tuple)):
+            if type(events) not in (list, tuple):
                 return r[list[FlextModelsEntity.DomainEvent]].fail(
                     "Events must be a list or tuple",
                 )
@@ -265,11 +265,11 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other: object) -> bool:
+        def __eq__(self: Self, other: t.GuardInputValue) -> bool:
             """Compare by value."""
             if not FlextRuntime.is_base_model(other):
                 return NotImplemented
-            # Type narrowed to BaseModel via TypeGuard (part of GeneralValueType)
+            # Type narrowed to BaseModel via TypeGuard (part of PayloadValue)
             return FlextRuntime.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:
@@ -289,7 +289,7 @@ class FlextModelsEntity:
                     raise ValueError(msg)
 
         @override
-        def model_post_init(self, __context: object, /) -> None:
+        def model_post_init(self, __context: t.GuardInputValue, /) -> None:
             """Post-init hook to check invariants."""
             super().model_post_init(__context)
             self.check_invariants()

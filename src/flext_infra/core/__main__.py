@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import cast
 
 from flext_infra.core.basemk_validator import BaseMkValidator
 from flext_infra.core.inventory import InventoryService
@@ -52,7 +51,7 @@ def _run_inventory(args: argparse.Namespace) -> int:
         data = result.value
         _ = sys.stdout.write(f"total_scripts={data.get('total_scripts', 0)}\n")
         written = data.get("reports_written", [])
-        if isinstance(written, list):
+        if type(written) is list:
             for path in written:
                 _ = sys.stdout.write(f"Wrote: {path}\n")
         return 0
@@ -68,30 +67,38 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
     if result.is_success:
         data = result.value
 
-        if args.failed and data.get("failed_cases"):
+        failed_cases_raw = data.get("failed_cases")
+        if args.failed and type(failed_cases_raw) is list:
+            failed_cases = [str(item) for item in failed_cases_raw]
             Path(args.failed).write_text(
-                "\n\n".join(cast("list[str]", data["failed_cases"])) + "\n",
+                "\n\n".join(failed_cases) + "\n",
                 encoding="utf-8",
             )
-        if args.errors and data.get("error_traces"):
+        error_traces_raw = data.get("error_traces")
+        if args.errors and type(error_traces_raw) is list:
+            error_traces = [str(item) for item in error_traces_raw]
             Path(args.errors).write_text(
-                "\n\n".join(cast("list[str]", data["error_traces"])) + "\n",
+                "\n\n".join(error_traces) + "\n",
                 encoding="utf-8",
             )
-        if args.warnings and data.get("warning_lines"):
+        warning_lines_raw = data.get("warning_lines")
+        if args.warnings and type(warning_lines_raw) is list:
+            warning_lines = [str(item) for item in warning_lines_raw]
             Path(args.warnings).write_text(
-                "\n".join(cast("list[str]", data["warning_lines"])) + "\n",
+                "\n".join(warning_lines) + "\n",
                 encoding="utf-8",
             )
-        if args.slowest and data.get("slow_entries"):
+        slow_entries_raw = data.get("slow_entries")
+        if args.slowest and type(slow_entries_raw) is list:
+            slow_entries = [str(item) for item in slow_entries_raw]
             Path(args.slowest).write_text(
-                "\n".join(cast("list[str]", data["slow_entries"])) + "\n",
+                "\n".join(slow_entries) + "\n",
                 encoding="utf-8",
             )
-        if args.skips and data.get("skip_cases"):
-            Path(args.skips).write_text(
-                "\n".join(cast("list[str]", data["skip_cases"])) + "\n", encoding="utf-8"
-            )
+        skip_cases_raw = data.get("skip_cases")
+        if args.skips and type(skip_cases_raw) is list:
+            skip_cases = [str(item) for item in skip_cases_raw]
+            Path(args.skips).write_text("\n".join(skip_cases) + "\n", encoding="utf-8")
 
         _ = sys.stdout.write(f"failed_count={data.get('failed_count', 0)}\n")
         _ = sys.stdout.write(f"error_count={data.get('error_count', 0)}\n")
@@ -117,9 +124,11 @@ def _run_scan(args: argparse.Namespace) -> int:
         import json  # noqa: PLC0415
 
         data = result.value
-        _ = sys.stdout.write(f"{json.dumps({'violation_count': data.get('violation_count', 0)})}\n")
+        _ = sys.stdout.write(
+            f"{json.dumps({'violation_count': data.get('violation_count', 0)})}\n"
+        )
         violation_count = data.get("violation_count", 0)
-        return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
+        return 1 if type(violation_count) is int and violation_count > 0 else 0
     _ = sys.stderr.write(f"Error: {result.error}\n")
     return 1
 

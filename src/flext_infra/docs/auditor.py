@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -116,7 +117,7 @@ class DocAuditor:
         check: str,
         strict: bool,
         max_issues_default: int | None,
-        max_issues_by_scope: dict[str, int],
+        max_issues_by_scope: Mapping[str, int],
     ) -> AuditReport:
         """Run configured audit checks on a single scope."""
         checks = {part.strip() for part in check.split(",") if part.strip()}
@@ -278,7 +279,7 @@ class DocAuditor:
         ]
 
     @staticmethod
-    def _load_audit_budgets(root: Path) -> tuple[int | None, dict[str, int]]:
+    def _load_audit_budgets(root: Path) -> tuple[int | None, Mapping[str, int]]:
         """Load audit issue budgets from architecture config."""
         config_path: Path | None = None
         for candidate in [root, *root.parents]:
@@ -299,9 +300,9 @@ class DocAuditor:
         by_scope = {
             str(name): int(value)
             for name, value in by_scope_raw.items()
-            if isinstance(value, int | float)
+            if type(value) is int or type(value) is float
         }
-        if isinstance(default_budget, int | float):
+        if type(default_budget) is int or type(default_budget) is float:
             return int(default_budget), by_scope
         return None, by_scope
 

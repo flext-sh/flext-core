@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import ic
@@ -122,7 +124,10 @@ def iter_markdown_files(root: Path) -> list[Path]:
     )
 
 
-def write_json(path: Path, payload: object) -> FlextResult[bool]:
+def write_json(
+    path: Path,
+    payload: BaseModel | Mapping[str, t.ConfigMapValue],
+) -> FlextResult[bool]:
     """Write JSON payload to path.
 
     Args:

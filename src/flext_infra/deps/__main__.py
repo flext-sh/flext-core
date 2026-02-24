@@ -15,16 +15,18 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Mapping
+from types import MappingProxyType
 
 _MIN_ARGV = 2
 
-_SUBCOMMANDS: dict[str, str] = {
+_SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
     "detect": "flext_infra.deps.detector",
     "extra-paths": "flext_infra.deps.extra_paths",
     "internal-sync": "flext_infra.deps.internal_sync",
     "modernize": "flext_infra.deps.modernizer",
     "path-sync": "flext_infra.deps.path_sync",
-}
+})
 
 
 def main() -> int:

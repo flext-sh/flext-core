@@ -278,22 +278,22 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: FlextResult[dict[str, t.GeneralValueType]] = FlextResult[
-            dict[str, t.GeneralValueType]
+        map_result: FlextResult[dict[str, t.ConfigMapValue]] = FlextResult[
+            dict[str, t.ConfigMapValue]
         ].fail("Invalid data types")
         if (
             u.guard(source_value, Mapping, return_value=True) is not None
             and u.guard(mapping_value, Mapping, return_value=True) is not None
         ):
             # Type-safe dictionary creation from Mapping
-            source_dict: dict[str, t.GeneralValueType] = (
+            _is_mapping = lambda x: type(x) is dict or (hasattr(x, "keys") and hasattr(x, "__getitem__"))
+            source_dict: dict[str, t.ConfigMapValue] = (
                 {str(k): v for k, v in source_value.items()}
-                if isinstance(source_value, Mapping)
+                if _is_mapping(source_value)
                 else {}
             )
-            # u.map expects dict/Mapping, ensure proper type
-            if isinstance(mapping_value, Mapping):
-                mapping_dict: dict[str, t.GeneralValueType] = {
+            if _is_mapping(mapping_value):
+                mapping_dict: dict[str, t.ConfigMapValue] = {
                     str(k): v for k, v in mapping_value.items()
                 }
                 mapped_dict = u.transform_values(mapping_dict, str)
@@ -405,7 +405,7 @@ def main() -> None:
         data = result.value
         utilities = data["utilities_demonstrated"]
         categories = data["utility_categories"]
-        if isinstance(utilities, Sequence) and isinstance(categories, int):
+        if (type(utilities) in (list, tuple) or (hasattr(utilities, "__getitem__") and hasattr(utilities, "__len__"))) and type(categories) is int:
             utilities_list = list(utilities)
             print(f"\n✅ Demonstrated {categories} utility categories")
             print(f"✅ Covered {len(utilities_list)} utility types")

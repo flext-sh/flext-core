@@ -5,9 +5,8 @@ from __future__ import annotations
 import contextlib
 import json
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from typing import cast
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
@@ -20,7 +19,33 @@ from flext_infra.selection import ProjectSelector
 from flext_infra.subprocess import CommandRunner
 from flext_infra.toml_io import TomlService
 
-type IssueMap = dict[str, t.GeneralValueType]
+type InfraValue = (
+    str | int | float | bool | None | list[InfraValue] | Mapping[str, InfraValue]
+)
+
+type IssueMap = Mapping[str, InfraValue]
+
+
+def _to_infra_value(value: t.ConfigMapValue) -> InfraValue | None:
+    if value is None or type(value) in (str, int, float, bool):
+        return value
+    if type(value) is list:
+        converted: list[InfraValue] = []
+        for item in value:
+            converted_item = _to_infra_value(item)
+            if converted_item is None and item is not None:
+                return None
+            converted.append(converted_item)
+        return converted
+    if Mapping in type(value).__mro__:
+        converted_map: MutableMapping[str, InfraValue] = {}
+        for key, item in value.items():
+            converted_item = _to_infra_value(item)
+            if converted_item is None and item is not None:
+                return None
+            converted_map[str(key)] = converted_item
+        return converted_map
+    return None
 
 
 class DependencyDetectionModels(im):
@@ -37,10 +62,10 @@ class DependencyDetectionModels(im):
     class DeptryReport(im.ArbitraryTypesModel):
         """Deptry analysis report with missing, unused, transitive, and dev-in-runtime issues."""
 
-        missing: list[t.GeneralValueType] = Field(default_factory=list)
-        unused: list[t.GeneralValueType] = Field(default_factory=list)
-        transitive: list[t.GeneralValueType] = Field(default_factory=list)
-        dev_in_runtime: list[t.GeneralValueType] = Field(default_factory=list)
+        missing: list[InfraValue] = Field(default_factory=list)
+        unused: list[InfraValue] = Field(default_factory=list)
+        transitive: list[InfraValue] = Field(default_factory=list)
+        dev_in_runtime: list[InfraValue] = Field(default_factory=list)
         raw_count: int = Field(default=0, ge=0)
 
     class ProjectDependencyReport(im.ArbitraryTypesModel):
@@ -149,11 +174,11 @@ class DependencyDetectionService:
             try:
                 raw = out_file.read_text(encoding=ic.Encoding.DEFAULT)
                 loaded = json.loads(raw) if raw.strip() else []
-                if isinstance(loaded, list):
+                if type(loaded) is list:
                     issues = [
-                        cast("IssueMap", item)
+                        {str(key): value for key, value in item.items()}
                         for item in loaded
-                        if isinstance(item, dict)
+                        if type(item) is dict
                     ]
             except (json.JSONDecodeError, OSError):
                 issues = []
@@ -195,7 +220,7 @@ class DependencyDetectionService:
         groups = dm.DeptryIssueGroups()
         for item in issues:
             error_obj = item.get("error")
-            if not isinstance(error_obj, Mapping):
+            if Mapping not in type(error_obj).__mro__:
                 continue
             code = error_obj.get("code")
             if code == "DEP001":
@@ -229,7 +254,7 @@ class DependencyDetectionService:
     def load_dependency_limits(
         self,
         limits_path: Path | None = None,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> Mapping[str, InfraValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or (
             Path(__file__).resolve().parent / "dependency_limits.toml"
@@ -237,7 +262,12 @@ class DependencyDetectionService:
         result = self._toml.read(path)
         if result.is_failure:
             return {}
-        return cast("dict[str, t.GeneralValueType]", result.value)
+        limits: MutableMapping[str, InfraValue] = {}
+        for key, value in result.value.items():
+            converted = _to_infra_value(value)
+            if converted is not None or value is None:
+                limits[str(key)] = converted
+        return limits
 
     def run_mypy_stub_hints(
         self,
@@ -290,17 +320,17 @@ class DependencyDetectionService:
     def module_to_types_package(
         self,
         module_name: str,
-        limits: dict[str, t.GeneralValueType],
-    ) -> str | None:
+        limits: Mapping[str, InfraValue],
+) -> str | None:
         """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
         if root.startswith(InfraPatterns.INTERNAL_PREFIXES):
             return None
 
         typing_libraries = limits.get("typing_libraries")
-        if isinstance(typing_libraries, Mapping):
+        if typing_libraries is not None and Mapping in type(typing_libraries).__mro__:
             module_to_package = typing_libraries.get("module_to_package")
-            if isinstance(module_to_package, Mapping) and root in module_to_package:
+            if module_to_package is not None and Mapping in type(module_to_package).__mro__ and root in module_to_package:
                 value = module_to_package[root]
                 return str(value)
 
@@ -319,29 +349,29 @@ class DependencyDetectionService:
         names: set[str] = set()
 
         tool = data.get("tool")
-        if isinstance(tool, Mapping):
+        if tool is not None and Mapping in type(tool).__mro__:
             poetry = tool.get("poetry")
-            if isinstance(poetry, Mapping):
+            if poetry is not None and Mapping in type(poetry).__mro__:
                 group = poetry.get("group")
-                if isinstance(group, Mapping):
+                if group is not None and Mapping in type(group).__mro__:
                     typings_group = group.get("typings")
-                    if isinstance(typings_group, Mapping):
+                    if typings_group is not None and Mapping in type(typings_group).__mro__:
                         deps = typings_group.get("dependencies")
-                        if isinstance(deps, Mapping):
+                        if deps is not None and Mapping in type(deps).__mro__:
                             names.update(str(key) for key in deps)
 
         project = data.get("project")
-        if isinstance(project, Mapping):
+        if project is not None and Mapping in type(project).__mro__:
             optional = project.get("optional-dependencies")
-            if isinstance(optional, Mapping):
+            if optional is not None and Mapping in type(optional).__mro__:
                 typings = optional.get("typings")
-                if isinstance(typings, list):
+                if type(typings) is list:
                     for spec in typings:
-                        if isinstance(spec, str):
+                        if type(spec) is str:
                             names.add(
                                 spec.split("[")[0].split(">=")[0].split("==")[0].strip()
                             )
-                elif isinstance(typings, Mapping):
+                elif typings is not None and Mapping in type(typings).__mro__:
                     names.update(str(key) for key in typings)
 
         return sorted(names)
@@ -359,9 +389,9 @@ class DependencyDetectionService:
         exclude_set: set[str] = set()
 
         typing_libraries = limits.get("typing_libraries")
-        if isinstance(typing_libraries, Mapping):
+        if typing_libraries is not None and Mapping in type(typing_libraries).__mro__:
             excluded = typing_libraries.get("exclude")
-            if isinstance(excluded, list):
+            if type(excluded) is list:
                 exclude_set = {str(item) for item in excluded}
 
         hinted: list[str] = []
@@ -386,7 +416,7 @@ class DependencyDetectionService:
         python_cfg = limits.get("python")
         python_version = (
             str(python_cfg.get("version"))
-            if isinstance(python_cfg, Mapping) and python_cfg.get("version") is not None
+            if python_cfg is not None and Mapping in type(python_cfg).__mro__ and python_cfg.get("version") is not None
             else None
         )
 
@@ -455,7 +485,7 @@ def build_project_report(
 
 def load_dependency_limits(
     limits_path: Path | None = None,
-) -> dict[str, t.GeneralValueType]:
+) -> Mapping[str, InfraValue]:
     """Load dependency limits configuration from TOML file."""
     return _service.load_dependency_limits(limits_path)
 
@@ -472,7 +502,7 @@ def run_mypy_stub_hints(
 
 def module_to_types_package(
     module_name: str,
-    limits: dict[str, t.GeneralValueType],
+    limits: Mapping[str, InfraValue],
 ) -> str | None:
     """Map a module name to its corresponding types-* package."""
     return _service.module_to_types_package(module_name, limits)

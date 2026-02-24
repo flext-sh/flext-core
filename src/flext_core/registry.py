@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
-from pydantic import Field, PrivateAttr, computed_field
+from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
@@ -30,6 +31,9 @@ from flext_core.utilities import u
 
 # Use centralized version from utilities
 _to_general_value_type = u.Conversion.to_general_value_type
+
+type RegistryHandler = Callable[..., object] | BaseModel
+type RegistryBindingKey = str | type[object]
 
 
 class FlextRegistry(FlextService[bool]):
@@ -134,10 +138,10 @@ class FlextRegistry(FlextService[bool]):
     # per-subclass isolation (FlextApiRegistry, FlextAuthRegistry, FlextLdifServer
     # each get their own storage, not inherited from parent)
     # Uses t.RegistrablePlugin for type-safe plugin storage (includes callables)
-    _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
+    _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    def __init_subclass__(cls, **kwargs: t.GeneralValueType) -> None:
+    def __init_subclass__(cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]) -> None:
         """Auto-create per-subclass class-level storage.
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
@@ -154,7 +158,7 @@ class FlextRegistry(FlextService[bool]):
     def __init__(
         self,
         dispatcher: p.CommandBus | FlextDispatcher | None = None,
-        **data: t.GeneralValueType,
+        **data: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
@@ -239,9 +243,9 @@ class FlextRegistry(FlextService[bool]):
 
     @staticmethod
     def _safe_get_handler_mode(
-        value: t.GeneralValueType,
+        value: t.ScalarValue | BaseModel,
     ) -> c.Cqrs.HandlerType:
-        """Safely extract and validate handler mode from t.GeneralValueType value."""
+        """Safely extract and validate handler mode from value."""
         # Use u.parse() for cleaner enum parsing
         parse_result = u.parse(
             value,
@@ -257,9 +261,9 @@ class FlextRegistry(FlextService[bool]):
 
     @staticmethod
     def _safe_get_status(
-        value: t.GeneralValueType,
+        value: c.Cqrs.RegistrationStatus | str,
     ) -> c.Cqrs.CommonStatus:
-        """Safely extract and validate status from t.GeneralValueType value."""
+        """Safely extract and validate status from c.Cqrs.RegistrationStatus value."""
         # Handle special case: RegistrationStatus.ACTIVE -> CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.ACTIVE:
             return c.Cqrs.CommonStatus.RUNNING
@@ -318,9 +322,7 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType]
-        | t.HandlerType
-        | None,
+        handler: RegistryHandler,
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -342,18 +344,6 @@ class FlextRegistry(FlextService[bool]):
             handler_name=handler_name,
             handler_type=type(handler).__name__ if handler else "None",
         )
-
-        # Validate handler is not None
-        if handler is None:
-            self.logger.error(
-                "FAILED: Handler is None - REGISTRATION ABORTED",
-                operation="register_handler",
-                consequence="Cannot register None handler",
-                resolution_hint="Provide a valid handler instance",
-            )
-            return r[m.HandlerRegistrationDetails].fail(
-                "Handler cannot be None",
-            )
 
         key = FlextRegistry._resolve_handler_key(handler)
         if key in self._registered_keys:
@@ -381,17 +371,20 @@ class FlextRegistry(FlextService[bool]):
             handler_key=key,
         )
         # register_handler returns r[m.HandlerRegistrationResult]
-        # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
-        # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
+        # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
+        # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
         registration_result = self._dispatcher.register_handler(
             handler,
         )
         if registration_result.is_success:
             # Convert model result to RegistrationDetails
             reg_result = registration_result.value
+            if m.HandlerRegistrationResult not in type(reg_result).__mro__:
+                return r[m.HandlerRegistrationDetails].fail(
+                    "Dispatcher returned invalid registration payload",
+                )
             reg_details = self._create_registration_details(reg_result, key)
             if not reg_details:
-                # Fallback: create minimal registration details
                 reg_details = m.HandlerRegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
@@ -468,9 +461,7 @@ class FlextRegistry(FlextService[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[
-            FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType
-        ],
+        handlers: Sequence[RegistryHandler],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -503,10 +494,7 @@ class FlextRegistry(FlextService[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[
-            type[t.GeneralValueType],
-            FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType,
-        ],
+        bindings: Mapping[RegistryBindingKey, RegistryHandler],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
 
@@ -528,7 +516,10 @@ class FlextRegistry(FlextService[bool]):
         # def register_handler(self, request: ..., handler: ... = None)
 
         for message_type, handler in bindings.items():
-            key = f"binding::{message_type.__name__}::{handler.__class__.__name__}"
+            message_type_name = (
+                message_type if type(message_type) is str else message_type.__name__
+            )
+            key = f"binding::{message_type_name}::{handler.__class__.__name__}"
 
             # We use the dispatcher directly because registry's register_handler
             # currently only supports single-argument (self-describing) handlers
@@ -544,6 +535,13 @@ class FlextRegistry(FlextService[bool]):
                 if reg_result.is_success:
                     # Convert dispatcher result to Registry details
                     val = reg_result.value
+                    if m.HandlerRegistrationResult not in type(val).__mro__:
+                        self._add_registration_error(
+                            key,
+                            "Dispatcher returned invalid registration payload",
+                            summary,
+                        )
+                        continue
                     details = self._create_registration_details(val, key)
                     self._add_successful_registration(key, details, summary)
                 else:
@@ -562,9 +560,9 @@ class FlextRegistry(FlextService[bool]):
         self,
         category: str,
         name: str,
-        plugin: t.GeneralValueType,
+        plugin: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
         *,
-        validate: Callable[[t.GeneralValueType], r[bool]] | None = None,
+        validate: Callable[[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool]] | None = None,
     ) -> r[bool]:
         """Register a plugin with optional validation.
 
@@ -605,23 +603,17 @@ class FlextRegistry(FlextService[bool]):
             return r[bool].ok(value=True)
 
         # Store plugin in container for retrieval
-        # plugin is already t.GeneralValueType from method signature
+        # plugin is from method signature
         self.container.register(key, plugin)
         self._registered_keys.add(key)
         self.logger.info("Registered %s: %s", category, name)
         return r[bool].ok(value=True)
 
-    def get_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
+    def get_plugin(self, category: str, name: str) -> r[t.RegisterableService]:
         """Get a registered plugin by category and name.
 
-        Args:
-            category: Plugin category
-            name: Plugin name
-
         Returns:
-            r[t.GeneralValueType]: Success with plugin or failure if not found.
-                Caller should validate/narrow the type as needed.
-
+            Success with plugin (RegisterableService) or failure if not found.
         """
         key = f"{category}::{name}"
         if key not in self._registered_keys:
@@ -630,20 +622,37 @@ class FlextRegistry(FlextService[bool]):
                 for k in self._registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.GeneralValueType].fail(
+            return r[t.RegisterableService].fail(
                 f"{category} '{name}' not found. Available: {available}",
             )
 
         raw_result = self.container.get(key)
         if raw_result.is_failure:
-            return r[t.GeneralValueType].fail(
+            return r[t.RegisterableService].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
-        # container.get() returns r[p.RegisterableService]
-        # Convert value to GeneralValueType using helper function
         plugin_value = raw_result.value
-        general_value: t.GeneralValueType = _to_general_value_type(plugin_value)
-        return r[t.GeneralValueType].ok(general_value)
+        _mro = getattr(type(plugin_value), "__mro__", ())
+        if type(plugin_value) in (str, int, float, bool, type(None)) or BaseModel in _mro or type(plugin_value) is Path:
+            return r[t.RegisterableService].ok(plugin_value)
+        if type(plugin_value) is dict:
+            return r[t.RegisterableService].ok(
+                FlextRuntime.normalize_to_general_value(plugin_value),
+            )
+        _items = getattr(plugin_value, "items", None)
+        if callable(_items):
+            view = _items()
+            built: dict[str, t.ConfigMapValue] = {str(k): v for k, v in view}
+            return r[t.RegisterableService].ok(
+                FlextRuntime.normalize_to_general_value(built),
+            )
+        if (type(plugin_value) in (list, tuple) or (hasattr(plugin_value, "__getitem__") and hasattr(plugin_value, "__len__"))) and type(plugin_value) not in (str, bytes, bytearray):
+            return r[t.RegisterableService].ok(
+                FlextRuntime.normalize_to_general_value(list(plugin_value)),
+            )
+        return r[t.RegisterableService].fail(
+            f"{category} '{name}' is not a registerable value",
+        )
 
     def list_plugins(self, category: str) -> r[list[str]]:
         """List all plugins in a category.
@@ -799,21 +808,21 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType,
+        handler: RegistryHandler,
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = getattr(handler, "handler_id", None)
         return (
             handler_id
-            if handler_id and u.is_type(handler_id, str)
+            if type(handler_id) is str and handler_id
             else handler.__class__.__name__
         )
 
     def register(
         self,
         name: str,
-        service: t.GeneralValueType,
-        metadata: t.GeneralValueType | m.Metadata | None = None,
+        service: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
+        metadata: Mapping[str, t.ConfigMapValue] | m.Metadata | None = None,
     ) -> r[bool]:
         """Register a service component with optional metadata.
 
@@ -830,45 +839,42 @@ class FlextRegistry(FlextService[bool]):
 
         """
         # Normalize metadata to dict for internal use
-        validated_metadata: t.GeneralValueType | None = None
+        validated_metadata: Mapping[str, t.ConfigMapValue] | dict[str, t.ConfigMapValue] | None = None
         if metadata is not None:
-            # Handle Metadata model first
-            if isinstance(metadata, m.Metadata):
-                validated_metadata = metadata.attributes
+            meta = metadata
+            if type(meta) is m.Metadata:
+                attrs = meta.attributes
+                validated_metadata = {str(k): v for k, v in attrs.items()} if attrs else None
+            elif type(meta) is dict:
+                validated_metadata = meta
             else:
-                # Cast to t.GeneralValueType for is_dict_like check
-                metadata_as_general = metadata
-                if FlextRuntime.is_dict_like(metadata_as_general):
-                    # Type guard ensures metadata_as_general is m.ConfigMap
-                    # Type narrowing: metadata_as_general is dict-like, assign as ConfigurationMapping
-                    metadata_mapping = metadata_as_general
-                    validated_metadata = dict(metadata_mapping)
+                _items = getattr(meta, "items", None)
+                if callable(_items):
+                    validated_metadata = dict(_items())
                 else:
                     return r[bool].fail(
                         f"metadata must be dict or m.Metadata, got {type(metadata).__name__}",
                     )
 
         # Store metadata if provided (for future use)
-        if isinstance(validated_metadata, Mapping):
-            # Type narrowing: validated_metadata is Mapping after isinstance check
-            # Log metadata with service name for observability
-            # Convert Mapping to dict for logging
-            metadata_dict: dict[str, t.GeneralValueType] = dict(
-                validated_metadata.items(),
-            )
-            metadata_keys: list[str] = list(metadata_dict.keys())
+        if validated_metadata is not None and (
+            type(validated_metadata) is dict
+            or (hasattr(validated_metadata, "keys") and hasattr(validated_metadata, "__getitem__"))
+        ):
+            metadata_dict: dict[str, t.ConfigMapValue] = dict(validated_metadata.items())
+            metadata_keys_str: str = ",".join(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",
                 operation="with_service",
                 service_name=name,
                 has_metadata=True,
-                metadata_keys=metadata_keys,
+                metadata_keys=metadata_keys_str,
             )
 
         # Delegate to container (x.container returns FlextContainer)
         # Use with_service for fluent API compatibility (returns Self)
         try:
-            # service is already t.GeneralValueType (from method signature)
+            # service is already valid registerable type (from method signature)
             # with_service returns Self for fluent chaining, but we don't need the return value
             _ = self.container.with_service(name, service)
             return r[bool].ok(value=True)
@@ -883,18 +889,22 @@ class FlextRegistry(FlextService[bool]):
     def register_item(
         self,
         name: str,
-        item: t.GeneralValueType,
+        item: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
     ) -> r[bool]:
         """Register item (RegistrationTracker protocol)."""
         # Direct implementation without try/except - use FlextResult for error handling
         return self.register(name, item)
 
-    def get_item(self, name: str) -> r[t.GeneralValueType]:
+    def get_item(self, name: str) -> r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel]:
         """Get registered item (RegistrationTracker protocol)."""
         try:
-            return r[t.GeneralValueType].ok(getattr(self, name))
+            return r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel].ok(
+                getattr(self, name),
+            )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[t.GeneralValueType].fail(str(e))
+            return r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel].fail(
+                str(e),
+            )
 
     def list_items(self) -> r[list[str]]:
         """List registered items (RegistrationTracker protocol)."""

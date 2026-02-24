@@ -297,7 +297,7 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
 
         project_table = self._ensure_table(document, "project")
         dependencies = project_table.get("dependencies")
-        if not isinstance(dependencies, list):
+        if type(dependencies) is not list:
             dependencies = tomlkit.array()
             _ = dependencies.multiline(True)
             project_table["dependencies"] = dependencies
@@ -385,28 +385,28 @@ class ProjectMigrator(FlextService[list[im.MigrationResult]]):
     @staticmethod
     def _has_flext_core_dependency(document: tomlkit.TOMLDocument) -> bool:
         project = document.get("project")
-        if isinstance(project, Table):
+        if Table in type(project).__mro__:
             deps = project.get("dependencies")
-            if isinstance(deps, list):
+            if type(deps) is list:
                 for dep in deps:
                     if str(dep).strip().startswith("flext-core"):
                         return True
 
         tool = document.get("tool")
-        if not isinstance(tool, Table):
+        if Table not in type(tool).__mro__:
             return False
         poetry = tool.get("poetry")
-        if not isinstance(poetry, Table):
+        if Table not in type(poetry).__mro__:
             return False
         poetry_deps = poetry.get("dependencies")
-        if not isinstance(poetry_deps, Table):
+        if Table not in type(poetry_deps).__mro__:
             return False
         return "flext-core" in poetry_deps
 
     @staticmethod
     def _ensure_table(document: tomlkit.TOMLDocument, key: str) -> Table:
         current = document.get(key)
-        if isinstance(current, Table):
+        if Table in type(current).__mro__:
             return current
         created = tomlkit.table()
         document[key] = created

@@ -14,11 +14,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import override
 
 from pydantic import (
+    BaseModel,
     ConfigDict,
     PrivateAttr,
     computed_field,
@@ -93,7 +94,7 @@ class FlextService[TDomainResult](
     @override
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Initialize service with configuration data.
 
@@ -111,8 +112,7 @@ class FlextService[TDomainResult](
         """
         runtime = self._create_initial_runtime()
         # Type narrowing: runtime.context is FlextContext
-        # Use isinstance check for type narrowing since FlextContext is concrete class
-        if not isinstance(runtime.context, FlextContext):
+        if type(runtime.context) is not FlextContext:
             msg = f"Expected FlextContext, got {type(runtime.context).__name__}"
             raise TypeError(msg)
         context = runtime.context
@@ -127,8 +127,7 @@ class FlextService[TDomainResult](
         self._context = runtime.context
         # Type narrowing: runtime.config is "p.Config", but we need FlextSettings
         # All implementations of "p.Config" in FLEXT are FlextSettings or subclasses
-        # Use isinstance check for type narrowing since FlextSettings is concrete class
-        if not isinstance(runtime.config, FlextSettings):
+        if type(runtime.config) is not FlextSettings:
             msg = f"Expected FlextSettings, got {type(runtime.config).__name__}"
             raise TypeError(msg)
         self._config = runtime.config
@@ -173,13 +172,13 @@ class FlextService[TDomainResult](
         cls,
         *,
         config_type: type[FlextSettings] | None = None,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        config_overrides: Mapping[str, t.ScalarValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.RegisterableService] | None = None,
-        factories: Mapping[str, t.FactoryRegistrationCallable] | None = None,
+        factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
-        container_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        container_overrides: Mapping[str, t.ScalarValue] | None = None,
         wire_modules: Sequence[ModuleType] | None = None,
         wire_packages: Sequence[str] | None = None,
         wire_classes: Sequence[type] | None = None,
@@ -216,7 +215,7 @@ class FlextService[TDomainResult](
         # context parameter is p.ContextLike (minimal protocol)
         # Use TypeGuard to narrow to "p.Context" (full protocol with set method)
         runtime_context_typed: p.Context
-        if context is not None and u.is_context(context):
+        if context is not None and getattr(context, "set", None) is not None and getattr(context, "get", None) is not None:
             # TypeGuard narrowed to "p.Context" - use directly
             runtime_context_typed = context
         else:
@@ -268,7 +267,7 @@ class FlextService[TDomainResult](
             config_type_val = config_type
         context_val_raw = options.context
         context_val: p.Context | None = (
-            context_val_raw if isinstance(context_val_raw, p.Context) else None
+            context_val_raw if context_val_raw is not None and getattr(context_val_raw, "set", None) is not None and getattr(context_val_raw, "get", None) is not None else None
         )
 
         return cls._create_runtime(
@@ -290,14 +289,10 @@ class FlextService[TDomainResult](
     @classmethod
     def _normalize_runtime_bootstrap_options(
         cls,
-        options_raw: p.RuntimeBootstrapOptions | Mapping[str, t.FlexibleValue],
+        options_raw: p.RuntimeBootstrapOptions,
     ) -> p.RuntimeBootstrapOptions:
         del cls
-        if isinstance(options_raw, p.RuntimeBootstrapOptions):
-            return options_raw
-        return p.RuntimeBootstrapOptions.model_validate(
-            {k: v for k, v in options_raw.items() if isinstance(k, str)},
-        )
+        return p.RuntimeBootstrapOptions.model_validate(options_raw)
 
     @classmethod
     def _normalize_scoped_services(
@@ -318,7 +313,9 @@ class FlextService[TDomainResult](
 
     @staticmethod
     def _is_scoped_service_candidate(service: t.RegisterableService) -> bool:
-        if u.is_general_value_type(service):
+        if type(service) in (str, int, float, bool, type(None)):
+            return True
+        if BaseModel in type(service).__mro__:
             return True
         protocol_types = (
             p.Config,
@@ -329,7 +326,7 @@ class FlextService[TDomainResult](
             p.Handler,
             p.Registry,
         )
-        return isinstance(service, protocol_types) or callable(service)
+        return any(pt in type(service).__mro__ for pt in protocol_types) or callable(service)
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
@@ -337,9 +334,9 @@ class FlextService[TDomainResult](
 
         Override to customize:
         - config_overrides: Dict of config values to override
-        - services: dict[str, object] to register as singletons
-        - factories: dict[str, Callable] to register as factories
-        - resources: dict[str, Callable] to register as resources
+        - services: Mapping[str, t.RegisterableService] to register as singletons
+        - factories: Mapping[str, Callable[..., t.ConfigMapValue]] to register as factories
+        - resources: Mapping[str, Callable[[], t.ConfigMapValue]] to register as resources
         - wire_modules: List of modules to wire for @inject
         - wire_packages: List of packages to wire
         - wire_classes: List of classes to wire
@@ -363,11 +360,11 @@ class FlextService[TDomainResult](
     def _clone_runtime(
         self,
         *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        config_overrides: Mapping[str, t.ScalarValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
-        container_services: Mapping[str, t.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+        container_services: Mapping[str, t.RegisterableService] | None = None,
+        container_factories: Mapping[str, t.FactoryCallable] | None = None,
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
         config: FlextSettings = u.require_initialized(self._config, "Config")
@@ -507,7 +504,7 @@ class FlextService[TDomainResult](
             # Validation failed due to exception - consider invalid
             return False
 
-    def get_service_info(self) -> Mapping[str, t.FlexibleValue]:
+    def get_service_info(self) -> Mapping[str, t.ScalarValue]:
         """Get service metadata and configuration information.
 
         Returns comprehensive metadata about the service instance including
@@ -515,7 +512,7 @@ class FlextService[TDomainResult](
         Used by monitoring, logging, and debugging infrastructure.
 
         Returns:
-            Mapping[str, t.FlexibleValue]: Service metadata dictionary containing:
+            Mapping[str, t.ScalarValue]: Service metadata dictionary containing:
                 - service_type: Class name of the service
                 - Additional metadata can be added by subclasses
 

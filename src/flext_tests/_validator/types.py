@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ast
 import re
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from flext_core.result import r
@@ -32,7 +33,7 @@ class FlextValidatorTypes:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: Mapping[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for type violations.
 
@@ -63,7 +64,7 @@ class FlextValidatorTypes:
     def _scan_file(
         cls,
         file_path: Path,
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Scan a single file for type violations."""
         violations: list[m.Tests.Validator.Violation] = []
@@ -97,7 +98,7 @@ class FlextValidatorTypes:
         cls,
         file_path: Path,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect type: ignore comments in code (not in strings/docstrings)."""
         if u.Tests.Validator.is_approved("TYPE-001", file_path, approved):
@@ -126,7 +127,7 @@ class FlextValidatorTypes:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect Any type annotations."""
         if u.Tests.Validator.is_approved("TYPE-002", file_path, approved):
@@ -136,7 +137,7 @@ class FlextValidatorTypes:
 
         for node in ast.walk(tree):
             # Check function annotations
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if type(node) in (ast.FunctionDef, ast.AsyncFunctionDef):
                 # Check return annotation
                 if node.returns and u.Tests.Validator.is_any_type(node.returns):
                     violation = u.Tests.Validator.create_violation(
@@ -161,7 +162,7 @@ class FlextValidatorTypes:
                         violations.append(violation)
 
             # Check variable annotations
-            elif isinstance(node, ast.AnnAssign):
+            elif type(node) is ast.AnnAssign:
                 if node.annotation and u.Tests.Validator.is_any_type(node.annotation):
                     violation = u.Tests.Validator.create_violation(
                         file_path,
@@ -180,7 +181,7 @@ class FlextValidatorTypes:
         file_path: Path,
         tree: ast.AST,
         lines: list[str],
-        approved: dict[str, list[str]],
+        approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Detect unapproved  usage."""
         # Check both custom approved patterns and defaults
@@ -194,14 +195,14 @@ class FlextValidatorTypes:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
+            if type(node) is not ast.Call:
                 continue
-            # Check for  call
-            is_cast_name = isinstance(node.func, ast.Name) and node.func.id == "cast"
+            # Check for cast call
+            is_cast_name = type(node.func) is ast.Name and node.func.id == "cast"
             is_cast_typing = (
-                isinstance(node.func, ast.Attribute)
+                type(node.func) is ast.Attribute
                 and node.func.attr == "cast"
-                and isinstance(node.func.value, ast.Name)
+                and type(node.func.value) is ast.Name
                 and node.func.value.id == "typing"
             )
             if is_cast_name or is_cast_typing:

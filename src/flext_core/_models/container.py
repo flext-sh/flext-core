@@ -12,9 +12,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -23,13 +23,25 @@ from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
+_MetadataInput = (
+    None | FlextModelsBase.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue]
+)
 
-def _normalize_metadata(
-    value: t.GeneralValueType,
-) -> FlextModelsBase.Metadata:
+
+def _is_metadata_instance(
+    v: _MetadataInput,
+) -> TypeGuard[FlextModelsBase.Metadata]:
+    return (
+        v is not None
+        and hasattr(v, "model_dump")
+        and FlextModelsBase.Metadata in type(v).__mro__
+    )
+
+
+def _normalize_metadata(value: _MetadataInput) -> FlextModelsBase.Metadata:
     if value is None:
         return FlextModelsBase.Metadata(attributes={})
-    if isinstance(value, FlextModelsBase.Metadata):
+    if _is_metadata_instance(value):
         return value
     if not FlextRuntime.is_dict_like(value):
         msg = (
@@ -37,11 +49,12 @@ def _normalize_metadata(
             f"got {type(value).__name__}"
         )
         raise TypeError(msg)
-    attributes: dict[str, t.GeneralValueType] = {
+    raw = getattr(value, "root", value)
+    attrs: Mapping[str, t.MetadataAttributeValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
-        for key, raw_value in dict(value).items()
+        for key, raw_value in raw.items()
     }
-    return FlextModelsBase.Metadata(attributes=attributes)
+    return FlextModelsBase.Metadata(attributes=dict(attrs))
 
 
 class FlextModelsContainer:
@@ -55,7 +68,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: dict[str, t.GeneralValueType] for service tracking.
+        Replaces: dict[str, t.GuardInputValue] for service tracking.
         """
 
         model_config = ConfigDict(
@@ -73,7 +86,7 @@ class FlextModelsContainer:
         # ARCHITECTURAL NOTE: DI containers accept any registerable service.
         # SkipValidation needed because Protocol types can't be validated by Pydantic.
         # Type safety is enforced at container API level via get_typed().
-        service: Annotated[object, SkipValidation] = Field(
+        service: Annotated[t.RegisterableService, SkipValidation] = Field(
             ...,
             description="Service instance (protocols, models, callables)",
         )
@@ -96,19 +109,15 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode).
-
-            Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
-            """
+        def validate_metadata(cls, v: _MetadataInput) -> FlextModelsBase.Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: dict[str, t.GeneralValueType] for factory tracking.
+        Replaces: dict[str, t.GuardInputValue] for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -123,7 +132,7 @@ class FlextModelsContainer:
             description="Factory identifier/name",
         )
         # Factory returns RegisterableService for type-safe factory resolution
-        # Supports all registerable types: GeneralValueType, protocols, callables
+        # Supports all registerable types: PayloadValue, protocols, callables
         # SkipValidation needed because Pydantic can't validate callable types
         factory: Annotated[t.FactoryCallable, SkipValidation] = Field(
             ...,
@@ -137,7 +146,7 @@ class FlextModelsContainer:
             default=False,
             description="Whether factory creates singleton instances",
         )
-        cached_instance: t.GeneralValueType | BaseModel | None = Field(
+        cached_instance: t.RegisterableService | None = Field(
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
@@ -153,12 +162,8 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode).
-
-            Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
-            """
+        def validate_metadata(cls, v: _MetadataInput) -> FlextModelsBase.Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
     class ResourceRegistration(BaseModel):
@@ -179,8 +184,7 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Resource identifier/name",
         )
-        # Factory returns GeneralValueType for type-safe resource resolution
-        factory: Callable[[], t.GeneralValueType] = Field(
+        factory: Annotated[t.ResourceCallable, SkipValidation] = Field(
             ...,
             description="Factory returning the lifecycle-managed resource",
         )
@@ -195,14 +199,14 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
+        def validate_metadata(cls, v: _MetadataInput) -> FlextModelsBase.Metadata:
             """Normalize resource metadata to Metadata model."""
             return _normalize_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: dict[str, t.GeneralValueType] for container configuration storage.
+        Replaces: dict[str, t.GuardInputValue] for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

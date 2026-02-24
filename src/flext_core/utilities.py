@@ -305,7 +305,7 @@ class FlextUtilities:
     is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
     is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)
     is_type = staticmethod(FlextUtilitiesGuards.is_type)
-    is_flexible_value = staticmethod(FlextUtilitiesGuards.is_flexible_value)
+    is_config_value = staticmethod(FlextUtilitiesGuards.is_config_value)
     is_mapping = staticmethod(FlextUtilitiesGuards.is_mapping)
     none_ = staticmethod(FlextUtilitiesGuards.none_)
     normalize_to_metadata_value = staticmethod(
@@ -339,7 +339,7 @@ class FlextUtilities:
     def get(
         data: p.AccessibleData,
         key: str,
-    ) -> t.GeneralValueType | None: ...
+    ) -> t.ConfigMapValue | None: ...
 
     @staticmethod
     @overload
@@ -383,16 +383,16 @@ class FlextUtilities:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.GeneralValueType | None,
-    ) -> t.GeneralValueType | None: ...
+        default: t.ConfigMapValue | None,
+    ) -> t.ConfigMapValue | None: ...
 
     @staticmethod
     def get(
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.GeneralValueType | None = None,
-    ) -> t.GeneralValueType | None:
+        default: t.ConfigMapValue | None = None,
+    ) -> t.ConfigMapValue | None:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)
 

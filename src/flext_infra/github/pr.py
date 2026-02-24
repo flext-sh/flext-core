@@ -14,9 +14,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 from flext_infra.git import GitService
 from flext_infra.subprocess import CommandRunner
@@ -45,7 +47,7 @@ class PrManager:
         self,
         repo_root: Path,
         head: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Find an open PR for the given head branch.
 
         Args:
@@ -73,27 +75,27 @@ class PrManager:
             cwd=repo_root,
         )
         if result.is_failure:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ScalarValue]].fail(
                 result.error or "failed to list PRs",
             )
         try:
             payload = json.loads(result.value)
         except json.JSONDecodeError as exc:
-            return r[dict[str, object]].fail(f"invalid JSON: {exc}")
+            return r[Mapping[str, t.ScalarValue]].fail(f"invalid JSON: {exc}")
 
         if not payload:
-            return r[dict[str, object]].ok({})
+            return r[Mapping[str, t.ScalarValue]].ok({})
         first = payload[0]
-        if not isinstance(first, dict):
-            return r[dict[str, object]].ok({})
-        return r[dict[str, object]].ok(first)
+        if type(first) is not dict:
+            return r[Mapping[str, t.ScalarValue]].ok({})
+        return r[Mapping[str, t.ScalarValue]].ok(first)
 
     def status(
         self,
         repo_root: Path,
         base: str,
         head: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Get PR status for the given head branch.
 
         Args:
@@ -107,9 +109,9 @@ class PrManager:
         """
         pr_result = self.open_pr_for_head(repo_root, head)
         if pr_result.is_failure:
-            return r[dict[str, object]].fail(pr_result.error or "status check failed")
+            return r[Mapping[str, t.ScalarValue]].fail(pr_result.error or "status check failed")
 
-        info: dict[str, object] = {
+        info: MutableMapping[str, t.ScalarValue] = {
             "repo": str(repo_root),
             "base": base,
             "head": head,
@@ -124,7 +126,7 @@ class PrManager:
             info["pr_url"] = pr.get("url")
             info["pr_state"] = pr.get("state")
             info["pr_draft"] = pr.get("isDraft")
-        return r[dict[str, object]].ok(info)
+        return r[Mapping[str, t.ScalarValue]].ok(info)
 
     def create(
         self,
@@ -135,7 +137,7 @@ class PrManager:
         body: str,
         *,
         draft: bool = False,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Create a new PR or report existing one.
 
         Args:
@@ -152,13 +154,13 @@ class PrManager:
         """
         existing_result = self.open_pr_for_head(repo_root, head)
         if existing_result.is_failure:
-            return r[dict[str, object]].fail(
+            return r[Mapping[str, t.ScalarValue]].fail(
                 existing_result.error or "failed to check existing PRs",
             )
 
         existing = existing_result.value
         if existing:
-            return r[dict[str, object]].ok({
+            return r[Mapping[str, t.ScalarValue]].ok({
                 "status": "already-open",
                 "pr_url": existing.get("url"),
             })
@@ -181,8 +183,8 @@ class PrManager:
 
         result = self._runner.capture(command, cwd=repo_root)
         if result.is_failure:
-            return r[dict[str, object]].fail(result.error or "PR creation failed")
-        return r[dict[str, object]].ok({
+            return r[Mapping[str, t.ScalarValue]].fail(result.error or "PR creation failed")
+        return r[Mapping[str, t.ScalarValue]].ok({
             "status": "created",
             "pr_url": result.value,
         })
@@ -209,7 +211,7 @@ class PrManager:
         selector: str,
         *,
         strict: bool = False,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Run PR checks.
 
         Args:
@@ -226,10 +228,10 @@ class PrManager:
             cwd=repo_root,
         )
         if result.is_success:
-            return r[dict[str, object]].ok({"status": "checks-passed"})
+            return r[Mapping[str, t.ScalarValue]].ok({"status": "checks-passed"})
         if not strict:
-            return r[dict[str, object]].ok({"status": "checks-nonblocking"})
-        return r[dict[str, object]].fail(result.error or "checks failed")
+            return r[Mapping[str, t.ScalarValue]].ok({"status": "checks-nonblocking"})
+        return r[Mapping[str, t.ScalarValue]].fail(result.error or "checks failed")
 
     def merge(
         self,
@@ -241,7 +243,7 @@ class PrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -260,7 +262,7 @@ class PrManager:
         if selector == head:
             pr_result = self.open_pr_for_head(repo_root, head)
             if pr_result.is_success and not pr_result.value:
-                return r[dict[str, object]].ok({"status": "no-open-pr"})
+                return r[Mapping[str, t.ScalarValue]].ok({"status": "no-open-pr"})
 
         merge_flag = {
             "merge": "--merge",
@@ -286,14 +288,14 @@ class PrManager:
                     result = self._runner.run(command, cwd=repo_root)
 
         if result.is_failure:
-            return r[dict[str, object]].fail(result.error or "merge failed")
+            return r[Mapping[str, t.ScalarValue]].fail(result.error or "merge failed")
 
-        info: dict[str, object] = {"status": "merged"}
+        info: MutableMapping[str, t.ScalarValue] = {"status": "merged"}
         if release_on_merge:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
                 info["release"] = release_result.value
-        return r[dict[str, object]].ok(info)
+        return r[Mapping[str, t.ScalarValue]].ok(info)
 
     def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
         """Close a PR.
@@ -315,7 +317,7 @@ class PrManager:
         self,
         repo_root: Path,
         head: str,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextResult[Mapping[str, str]]:
         """Trigger release workflow if repo supports it.
 
         Args:
@@ -328,11 +330,11 @@ class PrManager:
         """
         release_yml = repo_root / ".github" / "workflows" / "release.yml"
         if not release_yml.exists():
-            return r[dict[str, str]].ok({"status": "no-release-workflow"})
+            return r[Mapping[str, str]].ok({"status": "no-release-workflow"})
 
         tag_result = self._versioning.release_tag_from_branch(head)
         if tag_result.is_failure:
-            return r[dict[str, str]].ok({"status": "no-release-tag"})
+            return r[Mapping[str, str]].ok({"status": "no-release-tag"})
 
         tag = tag_result.value
         view_result = self._runner.run(
@@ -340,15 +342,15 @@ class PrManager:
             cwd=repo_root,
         )
         if view_result.is_success:
-            return r[dict[str, str]].ok({"status": "release-exists", "tag": tag})
+            return r[Mapping[str, str]].ok({"status": "release-exists", "tag": tag})
 
         dispatch_result = self._runner.run(
             ["gh", "workflow", "run", "release.yml", "-f", f"tag={tag}"],
             cwd=repo_root,
         )
         if dispatch_result.is_success:
-            return r[dict[str, str]].ok({"status": "release-dispatched", "tag": tag})
-        return r[dict[str, str]].ok({"status": "release-dispatch-failed", "tag": tag})
+            return r[Mapping[str, str]].ok({"status": "release-dispatched", "tag": tag})
+        return r[Mapping[str, str]].ok({"status": "release-dispatch-failed", "tag": tag})
 
 
 def _selector(pr_number: str, head: str) -> str:
