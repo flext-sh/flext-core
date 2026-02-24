@@ -233,7 +233,7 @@ class FlextExceptions:
             attrs_raw = dumped_map.get("attributes")
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
-                attrs: dict[str, t.MetadataAttributeValue] = {
+                attrs = {
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in attrs_map.items()
                 }
@@ -243,7 +243,7 @@ class FlextExceptions:
 
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
-            attrs: dict[str, t.MetadataAttributeValue] = {
+            attrs = {
                 k: FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in attrs_map.items()
             }
@@ -303,7 +303,10 @@ class FlextExceptions:
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None = None,
-            metadata: FlextRuntime.Metadata | m.ConfigMap | t.MetadataAttributeValue | None = None,
+            metadata: FlextRuntime.Metadata
+            | m.ConfigMap
+            | t.MetadataAttributeValue
+            | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
@@ -418,7 +421,10 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: FlextRuntime.Metadata | m.ConfigMap | t.MetadataAttributeValue | None,
+            metadata: FlextRuntime.Metadata
+            | m.ConfigMap
+            | t.MetadataAttributeValue
+            | None,
             merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
         ) -> FlextRuntime.Metadata:
             """Normalize metadata from various input types to FlextRuntime.Metadata model.
@@ -445,7 +451,7 @@ class FlextExceptions:
                 if not merged_kwargs:
                     return metadata_model
 
-                merged_attrs: dict[str, t.MetadataAttributeValue] = {
+                merged_attrs = {
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in metadata_model.attributes.items()
                 }
@@ -852,7 +858,10 @@ class FlextExceptions:
             resource_id: str | None = None,
             error_code: str = c.Errors.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
-            metadata: FlextRuntime.Metadata | m.ConfigMap | t.MetadataAttributeValue | None = None,
+            metadata: FlextRuntime.Metadata
+            | m.ConfigMap
+            | t.MetadataAttributeValue
+            | None = None,
             correlation_id: str | None = None,
             params: e.NotFoundErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
@@ -1054,7 +1063,7 @@ class FlextExceptions:
         """Exception raised for type mismatch errors."""
 
         @staticmethod
-        def _get_type_map() -> dict[str, type]:
+        def _get_type_map() -> Mapping[str, type]:
             """Get mapping of type names to actual types."""
             return {
                 "str": str,
@@ -1360,7 +1369,7 @@ class FlextExceptions:
     @staticmethod
     def create_error(error_type: str, message: str) -> e.BaseError:
         """Create an exception instance based on error type."""
-        error_classes: dict[str, type[e.BaseError]] = {
+        error_classes = {
             "ValidationError": e.ValidationError,
             "ConfigurationError": e.ConfigurationError,
             "ConnectionError": e.ConnectionError,
@@ -1449,7 +1458,7 @@ class FlextExceptions:
             error_context["error_code"] = error_code
 
         # Create appropriate error class based on type
-        error_classes: dict[str, type[e.BaseError]] = {
+        error_classes = {
             "validation": e.ValidationError,
             "configuration": e.ConfigurationError,
             "connection": e.ConnectionError,

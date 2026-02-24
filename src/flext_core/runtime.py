@@ -53,7 +53,7 @@ import sys
 import threading
 import typing
 import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
@@ -67,7 +67,7 @@ from structlog.typing import BindableLogger
 from flext_core.constants import FlextConstants as c
 from flext_core.typings import T, FlextTypes as t
 
-_alias_registry: dict[str, type] = {}
+_alias_registry: MutableMapping[str, type] = {}
 
 
 class FlextRuntime:
@@ -207,6 +207,7 @@ class FlextRuntime:
             if "constants" in _alias_registry:
                 return _alias_registry["constants"]
             from flext_core.constants import FlextConstants
+
             return FlextConstants
 
         @staticmethod
@@ -214,6 +215,7 @@ class FlextRuntime:
             if "models" in _alias_registry:
                 return _alias_registry["models"]
             from flext_core.models import FlextModels
+
             return FlextModels
 
         @staticmethod
@@ -221,6 +223,7 @@ class FlextRuntime:
             if "typings" in _alias_registry:
                 return _alias_registry["typings"]
             from flext_core.typings import FlextTypes
+
             return FlextTypes
 
         @staticmethod
@@ -228,6 +231,7 @@ class FlextRuntime:
             if "protocols" in _alias_registry:
                 return _alias_registry["protocols"]
             from flext_core.protocols import FlextProtocols
+
             return FlextProtocols
 
         @staticmethod
@@ -235,6 +239,7 @@ class FlextRuntime:
             if "utilities" in _alias_registry:
                 return _alias_registry["utilities"]
             from flext_core.utilities import FlextUtilities
+
             return FlextUtilities
 
         @staticmethod
@@ -242,6 +247,7 @@ class FlextRuntime:
             if "result" in _alias_registry:
                 return _alias_registry["result"]
             from flext_core.result import FlextResult
+
             return FlextResult
 
         @staticmethod
@@ -249,6 +255,7 @@ class FlextRuntime:
             if "decorators" in _alias_registry:
                 return _alias_registry["decorators"]
             from flext_core.decorators import FlextDecorators
+
             return FlextDecorators
 
         @staticmethod
@@ -256,6 +263,7 @@ class FlextRuntime:
             if "exceptions" in _alias_registry:
                 return _alias_registry["exceptions"]
             from flext_core.exceptions import FlextExceptions
+
             return FlextExceptions
 
         @staticmethod
@@ -263,6 +271,7 @@ class FlextRuntime:
             if "handlers" in _alias_registry:
                 return _alias_registry["handlers"]
             from flext_core.handlers import FlextHandlers
+
             return FlextHandlers
 
         @staticmethod
@@ -270,6 +279,7 @@ class FlextRuntime:
             if "service_base" in _alias_registry:
                 return _alias_registry["service_base"]
             from flext_core.service import FlextService
+
             return FlextService
 
         @staticmethod
@@ -277,6 +287,7 @@ class FlextRuntime:
             if "mixins" in _alias_registry:
                 return _alias_registry["mixins"]
             from flext_core.mixins import FlextMixins
+
             return FlextMixins
 
     class Metadata(BaseModel):
@@ -1396,9 +1407,9 @@ class FlextRuntime:
 
         Example:
             ```python
-            # CLI override: User passed --debug flag
+            # CLI override: User passed --debug flag (use runtime aliases)
+            from flext_core import c
             from flext_core.runtime import FlextRuntime
-            from flext_core.constants import c
 
             FlextRuntime.reconfigure_structlog(
                 log_level=c.Settings.LogLevel.DEBUG.value,
@@ -2074,7 +2085,7 @@ class FlextRuntime:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> dict[str, str]:
+    ) -> Mapping[str, str]:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:
@@ -2083,7 +2094,7 @@ class FlextRuntime:
             include_timestamp: If True, ensure timestamp exists
 
         Returns:
-            dict[str, str]: Enriched context with trace fields
+            Mapping[str, str]: Enriched context with trace fields
 
         """
         context_dict = t.ConfigMap()
@@ -2122,7 +2133,7 @@ class FlextRuntime:
             context_dict = t.ConfigMap()
 
         # Convert all values to strings for trace context
-        result: dict[str, str] = {}
+        result: MutableMapping[str, str] = {}
         for key, value in context_dict.items():
             result[key] = str(value)
 

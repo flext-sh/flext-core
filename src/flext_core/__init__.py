@@ -1,6 +1,9 @@
 """Public API for flext-core.
 
-Canonical runtime aliases (use these at usage sites): c, m, r, t, u, p, d, e, h, s, x.
+Canonical runtime aliases (single namespace - use at usage sites):
+  from flext_core import c, m, r, t, u, p, d, e, h, s, x
+  or FlextRuntime.models(), FlextRuntime.constants(), etc. (lazy, for subprojects).
+Subprojects: use project __init__ (e.g. from flext_cli import m).
 Classes (FlextContainer, FlextModels, etc.) are for inheritance and type annotations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,8 +14,8 @@ from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
 from flext_core._beartype_conf import BEARTYPE_CONF
-from flext_core.constants import FlextConstants, c
-from flext_core.result import FlextResult, r
+from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.decorators import FlextDecorators, d

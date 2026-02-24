@@ -501,7 +501,7 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, _LogExtraValue] = {
+                    start_extra = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -516,7 +516,7 @@ class FlextDecorators(FlextRuntime):
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, _LogExtraValue] = {
+                    completion_extra = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -544,7 +544,7 @@ class FlextDecorators(FlextRuntime):
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, _LogExtraValue] = {
+                    failure_extra = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -687,7 +687,7 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: dict[str, _LogExtraValue] = {
+                    success_extra = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -706,7 +706,7 @@ class FlextDecorators(FlextRuntime):
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: dict[str, _LogExtraValue] = {
+                    failure_extra = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
