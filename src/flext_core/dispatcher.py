@@ -207,9 +207,7 @@ class FlextDispatcher(FlextService[bool]):
         ] = {}  # validation functions
 
         # Group 4: Pipeline (dispatcher-managed processing pipeline)
-        self._pipeline_steps: list[
-            dict[str, _Payload]
-        ] = []  # Ordered pipeline steps
+        self._pipeline_steps: list[dict[str, _Payload]] = []  # Ordered pipeline steps
         self._pipeline_composition: MutableMapping[
             str,
             Callable[
@@ -277,9 +275,7 @@ class FlextDispatcher(FlextService[bool]):
         # Create with defaults from config
         # Use getattr to safely access attributes that may not exist in protocol
         max_requests_raw = getattr(config, "rate_limit_max_requests", None)
-        max_requests: int = (
-            max_requests_raw if type(max_requests_raw) is int else 100
-        )
+        max_requests: int = max_requests_raw if type(max_requests_raw) is int else 100
         window_seconds_raw = getattr(config, "rate_limit_window_seconds", None)
         window_seconds: float = (
             window_seconds_raw if type(window_seconds_raw) in (int, float) else 60.0
@@ -469,9 +465,7 @@ class FlextDispatcher(FlextService[bool]):
 
     def _validate_processor_interface(
         self,
-        processor: t.HandlerCallable
-        | p.VariadicCallable[_Payload]
-        | p.Processor,
+        processor: t.HandlerCallable | p.VariadicCallable[_Payload] | p.Processor,
         processor_context: str = "processor",
     ) -> r[bool]:
         """Validate that processor has required interface (callable or process method)."""
@@ -592,11 +586,20 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _is_guard_input_value(value: _Payload) -> TypeGuard[t.GuardInputValue]:
-        if type(value) in (str, int, float, bool, dt, type(None)) or BaseModel in type(value).__mro__ or Path in type(value).__mro__:
+        if (
+            type(value) in (str, int, float, bool, dt, type(None))
+            or BaseModel in type(value).__mro__
+            or Path in type(value).__mro__
+        ):
             return True
-        if Sequence in type(value).__mro__ and type(value) not in (str, bytes, bytearray):
+        if Sequence in type(value).__mro__ and type(value) not in (
+            str,
+            bytes,
+            bytearray,
+        ):
             return all(
-                type(item) in (str, int, float, bool, dt, type(None)) or BaseModel in type(item).__mro__
+                type(item) in (str, int, float, bool, dt, type(None))
+                or BaseModel in type(item).__mro__
                 for item in value
             )
         if Mapping in type(value).__mro__:
@@ -612,9 +615,17 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _is_container_value(value: object) -> TypeGuard[_Payload]:
-        if type(value) in (str, int, float, bool, dt, type(None)) or BaseModel in type(value).__mro__ or Path in type(value).__mro__:
+        if (
+            type(value) in (str, int, float, bool, dt, type(None))
+            or BaseModel in type(value).__mro__
+            or Path in type(value).__mro__
+        ):
             return True
-        if Sequence in type(value).__mro__ and type(value) not in (str, bytes, bytearray):
+        if Sequence in type(value).__mro__ and type(value) not in (
+            str,
+            bytes,
+            bytearray,
+        ):
             return all(FlextDispatcher._is_container_value(item) for item in value)
         if Mapping in type(value).__mro__:
             return all(
@@ -1379,7 +1390,10 @@ class FlextDispatcher(FlextService[bool]):
         # Strict Model Enforcement: Convert dict to Model if needed
         config_model: m.Config.MiddlewareConfig | None = None
         if middleware_config is not None:
-            if type(middleware_config) is dict or Mapping in type(middleware_config).__mro__:
+            if (
+                type(middleware_config) is dict
+                or Mapping in type(middleware_config).__mro__
+            ):
                 # Convert dict to model
                 try:
                     config_model = m.Config.MiddlewareConfig.model_validate(
@@ -2848,7 +2862,10 @@ class FlextDispatcher(FlextService[bool]):
         """Execute a single dispatch attempt with timeout."""
         try:
             # Create structured request
-            if options.metadata is not None and Mapping in type(options.metadata).__mro__:
+            if (
+                options.metadata is not None
+                and Mapping in type(options.metadata).__mro__
+            ):
                 # options.metadata narrowed to Mapping
                 metadata_map: Mapping[str, _Payload] = options.metadata
                 metadata_attrs: dict[str, t.MetadataAttributeValue] = {}
@@ -2946,7 +2963,10 @@ class FlextDispatcher(FlextService[bool]):
         # If mapping contains "attributes", use that. Otherwise, use mapping as attributes.
 
         attrs: Mapping[str, object]
-        if "attributes" in extracted_map and Mapping in type(extracted_map["attributes"]).__mro__:
+        if (
+            "attributes" in extracted_map
+            and Mapping in type(extracted_map["attributes"]).__mro__
+        ):
             attrs = extracted_map["attributes"]
         else:
             attrs = {str(k): v for k, v in extracted_map.items()}
@@ -2969,8 +2989,7 @@ class FlextDispatcher(FlextService[bool]):
 
         if type(value) is list:
             return all(
-                type(item) in (str, int, float, bool, dt, type(None))
-                for item in value
+                type(item) in (str, int, float, bool, dt, type(None)) for item in value
             )
 
         if FlextRuntime.is_dict_like(value):

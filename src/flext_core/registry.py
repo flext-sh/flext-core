@@ -141,7 +141,9 @@ class FlextRegistry(FlextService[bool]):
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    def __init_subclass__(cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]) -> None:
+    def __init_subclass__(
+        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+    ) -> None:
         """Auto-create per-subclass class-level storage.
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
@@ -562,7 +564,10 @@ class FlextRegistry(FlextService[bool]):
         name: str,
         plugin: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
         *,
-        validate: Callable[[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool]] | None = None,
+        validate: Callable[
+            [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool]
+        ]
+        | None = None,
     ) -> r[bool]:
         """Register a plugin with optional validation.
 
@@ -633,7 +638,11 @@ class FlextRegistry(FlextService[bool]):
             )
         plugin_value = raw_result.value
         _mro = getattr(type(plugin_value), "__mro__", ())
-        if type(plugin_value) in (str, int, float, bool, type(None)) or BaseModel in _mro or type(plugin_value) is Path:
+        if (
+            type(plugin_value) in (str, int, float, bool, type(None))
+            or BaseModel in _mro
+            or type(plugin_value) is Path
+        ):
             return r[t.RegisterableService].ok(plugin_value)
         if type(plugin_value) is dict:
             return r[t.RegisterableService].ok(
@@ -646,7 +655,13 @@ class FlextRegistry(FlextService[bool]):
             return r[t.RegisterableService].ok(
                 FlextRuntime.normalize_to_general_value(built),
             )
-        if (type(plugin_value) in (list, tuple) or (hasattr(plugin_value, "__getitem__") and hasattr(plugin_value, "__len__"))) and type(plugin_value) not in (str, bytes, bytearray):
+        if (
+            type(plugin_value) in (list, tuple)
+            or (
+                hasattr(plugin_value, "__getitem__")
+                and hasattr(plugin_value, "__len__")
+            )
+        ) and type(plugin_value) not in (str, bytes, bytearray):
             return r[t.RegisterableService].ok(
                 FlextRuntime.normalize_to_general_value(list(plugin_value)),
             )
@@ -839,12 +854,16 @@ class FlextRegistry(FlextService[bool]):
 
         """
         # Normalize metadata to dict for internal use
-        validated_metadata: Mapping[str, t.ConfigMapValue] | dict[str, t.ConfigMapValue] | None = None
+        validated_metadata: (
+            Mapping[str, t.ConfigMapValue] | dict[str, t.ConfigMapValue] | None
+        ) = None
         if metadata is not None:
             meta = metadata
             if type(meta) is m.Metadata:
                 attrs = meta.attributes
-                validated_metadata = {str(k): v for k, v in attrs.items()} if attrs else None
+                validated_metadata = (
+                    {str(k): v for k, v in attrs.items()} if attrs else None
+                )
             elif type(meta) is dict:
                 validated_metadata = meta
             else:
@@ -859,9 +878,14 @@ class FlextRegistry(FlextService[bool]):
         # Store metadata if provided (for future use)
         if validated_metadata is not None and (
             type(validated_metadata) is dict
-            or (hasattr(validated_metadata, "keys") and hasattr(validated_metadata, "__getitem__"))
+            or (
+                hasattr(validated_metadata, "keys")
+                and hasattr(validated_metadata, "__getitem__")
+            )
         ):
-            metadata_dict: dict[str, t.ConfigMapValue] = dict(validated_metadata.items())
+            metadata_dict: dict[str, t.ConfigMapValue] = dict(
+                validated_metadata.items()
+            )
             metadata_keys_str: str = ",".join(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",
@@ -895,14 +919,20 @@ class FlextRegistry(FlextService[bool]):
         # Direct implementation without try/except - use FlextResult for error handling
         return self.register(name, item)
 
-    def get_item(self, name: str) -> r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel]:
+    def get_item(
+        self, name: str
+    ) -> r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel]:
         """Get registered item (RegistrationTracker protocol)."""
         try:
-            return r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel].ok(
+            return r[
+                t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel
+            ].ok(
                 getattr(self, name),
             )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel].fail(
+            return r[
+                t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel
+            ].fail(
                 str(e),
             )
 
