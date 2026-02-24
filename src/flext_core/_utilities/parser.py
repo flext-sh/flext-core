@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from types import NoneType
-from typing import cast, overload
+from pathlib import Path
+from typing import overload
 
 import structlog
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -64,13 +64,26 @@ class FlextUtilitiesParser:
     def _safe_text_length(text: t.ConfigMapValue) -> str | int:
         """Safely get text length for logging."""
         try:
-            if text.__class__ in {str, bytes}:
-                len_method = getattr(text, "__len__", None)
-                if callable(len_method):
-                    return cast("int", len_method())
+            text_value: str | bytes = TypeAdapter(str | bytes).validate_python(text)
+            return len(text_value)
+        except ValidationError:
             return "unknown"
         except (TypeError, AttributeError):
             return "unknown"
+
+    @staticmethod
+    def _to_json_value(value: t.ConfigMapValue) -> t.JsonValue:
+        if value is None or isinstance(value, str | int | float | bool):
+            return value
+        if isinstance(value, list | tuple):
+            return str(value)
+        if isinstance(value, Mapping):
+            return str(value)
+        if isinstance(value, (BaseModel, Path, datetime)):
+            return str(value)
+        if isinstance(value, Sequence):
+            return str(value)
+        return str(value)
 
     def _process_components(
         self,
@@ -606,7 +619,7 @@ class FlextUtilitiesParser:
 
         """
         try:
-            mapping_data = TypeAdapter(
+            mapping_data: Mapping[str, t.ConfigMapValue] = TypeAdapter(
                 Mapping[str, t.ConfigMapValue],
             ).validate_python(obj)
         except ValidationError:
@@ -963,7 +976,9 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_get_attr(
-        obj: t.ConfigMapValue, attr: str, default: t.ConfigMapValue = None
+        obj: object,
+        attr: str,
+        default: t.ConfigMapValue = None,
     ) -> t.ConfigMapValue:
         """Get attribute safely (avoids circular import with u.get)."""
         return getattr(obj, attr, default)
@@ -1068,18 +1083,16 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _parse_model(
+    def _parse_model[TModel: BaseModel](
         value: t.ConfigMapValue,
-        target: type[BaseModel],
+        target: type[TModel],
         field_prefix: str,
         *,
         strict: bool,
-    ) -> r[BaseModel] | None:
+    ) -> r[TModel]:
         """Parse Pydantic BaseModel. Returns None if not model."""
-        if BaseModel not in target.__mro__:
-            return None
         try:
-            mapping_value = TypeAdapter(
+            mapping_value: Mapping[str, t.ConfigMapValue] = TypeAdapter(
                 Mapping[str, t.ConfigMapValue],
             ).validate_python(value)
         except ValidationError:
@@ -1087,31 +1100,23 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )
 
-        value_dict_data: t.Dict = t.Dict({})
+        value_dict_data: dict[str, t.JsonValue] = {}
         for k, v in mapping_value.items():
             key = str(k)
-            if v.__class__ in {str, int, float, bool, datetime, NoneType}:
-                value_dict_data.root[key] = v
-                continue
-            if v.__class__ in {list, tuple}:
-                value_dict_data.root[key] = str(v)
-                continue
-            value_dict_data.root[key] = str(v)
-        scalar_data: t.Dict = t.Dict({})
-        for dict_key, dict_value in value_dict_data.root.items():
+            value_dict_data[key] = FlextUtilitiesParser._to_json_value(v)
+        scalar_data: dict[str, t.JsonValue] = {}
+        for dict_key, dict_value in value_dict_data.items():
             if dict_value is None or dict_value.__class__ in {
                 str,
                 int,
                 float,
                 bool,
-                datetime,
             }:
-                scalar_data.root[dict_key] = dict_value
+                scalar_data[dict_key] = dict_value
             else:
-                scalar_data.root[dict_key] = str(dict_value)
+                scalar_data[dict_key] = str(dict_value)
 
-        value_dict = cast("Mapping[str, t.JsonValue]", scalar_data.root)
-        result = FlextUtilitiesModel.from_dict(target, value_dict, strict=strict)
+        result = FlextUtilitiesModel.from_dict(target, scalar_data, strict=strict)
         if result.is_success:
             return r.ok(result.value)
         return r.fail(
@@ -1239,15 +1244,11 @@ class FlextUtilitiesParser:
             return None
 
         model_result = FlextUtilitiesParser._parse_model(
-            value,
-            cast("type[BaseModel]", target),
-            field_prefix,
-            strict=strict,
+            value, target, field_prefix, strict=strict
         )
-        if model_result is None:
-            return None
         if model_result.is_success:
-            return r.ok(cast("T", model_result.value))
+            validated_model = TypeAdapter(target).validate_python(model_result.value)
+            return r.ok(validated_model)
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
@@ -1305,9 +1306,7 @@ class FlextUtilitiesParser:
                     return bool_result
         except (ValueError, TypeError) as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
-                cast("t.ConfigMapValue", target),
-                "__name__",
-                "type",
+                target, "__name__", "type"
             )
             # For error case, return failure wrapped in appropriate type
             if target is int and default.__class__ is int:
@@ -1329,13 +1328,13 @@ class FlextUtilitiesParser:
         return None
 
     @staticmethod
-    def _parse_try_direct(
+    def _parse_try_direct[T](
         value: t.ConfigMapValue,
-        target: object,
-        default: t.GeneralValueType | None,
-        default_factory: Callable[[], t.GeneralValueType] | None,
+        target: type[T],
+        default: T | None,
+        default_factory: Callable[[], T] | None,
         field_prefix: str,
-    ) -> r[t.GeneralValueType]:
+    ) -> r[T]:
         """Helper: Try direct type call."""
         # Guard: t.ConfigMapValue type doesn't accept constructor arguments
         if target is object:
@@ -1345,11 +1344,8 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Cannot construct 'object' type directly",
             )
         try:
-            constructor = cast(
-                "Callable[[t.ConfigMapValue], t.GeneralValueType]",
-                target,
-            )
-            return r.ok(constructor(value))
+            parsed_value = TypeAdapter(target).validate_python(value)
+            return r.ok(parsed_value)
         except Exception as e:
             target_name = getattr(target, "__name__", "type")
             return FlextUtilitiesParser._parse_with_default(
@@ -1435,18 +1431,24 @@ class FlextUtilitiesParser:
             field_prefix=field_prefix,
         )
         if primitive_result is not None:
-            return cast("r[T]", primitive_result)
+            if primitive_result.is_success:
+                validated_primitive = TypeAdapter(target).validate_python(
+                    primitive_result.value,
+                )
+                return r.ok(validated_primitive)
+            return FlextUtilitiesParser._parse_with_default(
+                default,
+                default_factory,
+                primitive_result.error or f"{field_prefix}Primitive coercion failed",
+            )
 
         # Let _parse_try_direct handle all cases including primitives
-        return cast(
-            "r[T]",
-            FlextUtilitiesParser._parse_try_direct(
-                value,
-                target,
-                cast("t.GeneralValueType | None", default),
-                cast("Callable[[], t.GeneralValueType] | None", default_factory),
-                field_prefix,
-            ),
+        return FlextUtilitiesParser._parse_try_direct(
+            value,
+            target,
+            default,
+            default_factory,
+            field_prefix,
         )
 
     # =========================================================================
@@ -1762,7 +1764,7 @@ class FlextUtilitiesParser:
 
         """
         if isinstance(items, t.ConfigMap):
-            dict_items = cast("Mapping[str, t.GeneralValueType]", items.root)
+            dict_items: Mapping[str, t.ConfigMapValue] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return t.ConfigMap({

@@ -93,6 +93,10 @@ class FlextUtilities:
     class Mapper(FlextUtilitiesMapper):
         """Mapper utility class - real inheritance."""
 
+    @staticmethod
+    def mapper() -> type[FlextUtilitiesMapper]:
+        """Return the Mapper class for backward-compatible u.mapper().get(...) calls."""
+        return FlextUtilitiesMapper
     class Model(FlextUtilitiesModel):
         """Model utility class - real inheritance."""
 

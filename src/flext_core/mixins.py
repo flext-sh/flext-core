@@ -15,9 +15,9 @@ from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequenc
 from contextlib import contextmanager, suppress
 from functools import partial
 from types import ModuleType
-from typing import ClassVar, cast
+from typing import ClassVar
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core.constants import c
 from flext_core.container import FlextContainer
@@ -25,7 +25,7 @@ from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
 from flext_core.typings import t
@@ -77,7 +77,7 @@ class FlextMixins(FlextRuntime):
     @staticmethod
     def ok[T](value: T) -> r[T]:
         """Create successful result wrapping value."""
-        return cast("r[T]", r.ok(value))
+        return r[T].ok(value)
 
     @staticmethod
     def fail(
@@ -97,62 +97,43 @@ class FlextMixins(FlextRuntime):
 
     @staticmethod
     def to_dict(
-        obj: (BaseModel | Mapping[str, t.ConfigMapValue] | None),
+        obj: object | None,
     ) -> m.ConfigMap:
         """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
-        match obj:
-            case None:
-                return m.ConfigMap(root={})
-            case m.ConfigMap() as config_map:
-                return config_map
-            case BaseModel() as model:
-                dumped = model.model_dump()
-                normalized = FlextRuntime.normalize_to_general_value(dumped)
-                match normalized:
-                    case Mapping() as normalized_map:
-                        result: m.ConfigMap = m.ConfigMap()
-                        for k, v in normalized_map.items():
-                            key_str = str(k)
-                            val_typed: t.ConfigMapValue = (
-                                FlextRuntime.normalize_to_general_value(v)
-                            )
-                            result[key_str] = val_typed
-                        return result
-                    case _:
-                        return m.ConfigMap(
-                            root={
-                                "value": FlextRuntime.normalize_to_general_value(
-                                    normalized
-                                )
-                            }
-                        )
-            case _:
-                try:
-                    normalized_dict: m.ConfigMap = m.ConfigMap()
-                    for k, v in obj.items():
-                        key = str(k)
-                        normalized_dict[key] = FlextRuntime.normalize_to_general_value(
-                            v
-                        )
-                    process_result: r[m.ConfigMap] = r[m.ConfigMap].ok(normalized_dict)
-                except Exception as e:
-                    process_result = r[m.ConfigMap].fail(
-                        f"Failed to normalize mapping: {e}",
-                    )
+        if obj is None:
+            return m.ConfigMap()
 
-                if process_result.is_success:
-                    result_value: m.ConfigMap = process_result.value
-                    return result_value
-                return m.ConfigMap(root={})
+        model_dump_callable = getattr(obj, "model_dump", None)
+        if callable(model_dump_callable):
+            model_dump_result = model_dump_callable()
+            try:
+                return m.ConfigMap.model_validate(model_dump_result)
+            except Exception:
+                return m.ConfigMap(root={"value": str(model_dump_result)})
+
+        try:
+            return m.ConfigMap.model_validate(obj)
+        except Exception:
+            return m.ConfigMap()
 
     @staticmethod
     def ensure_result[T](value: T | r[T]) -> r[T]:
         """Wrap value in r if not already wrapped. Use x.ensure_result at call sites."""
-        match value:
-            case r() as result:
-                return result
-            case _:
-                return r.ok(value)
+        if isinstance(value, FlextResult):
+            return value
+        return r[T].ok(value)
+
+    class ModelConversion:
+        @staticmethod
+        def to_dict(
+            obj: object | None,
+        ) -> m.ConfigMap:
+            return x.to_dict(obj)
+
+    class ResultHandling:
+        @staticmethod
+        def ensure_result[T](value: T | r[T]) -> r[T]:
+            return x.ensure_result(value)
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
@@ -280,7 +261,7 @@ class FlextMixins(FlextRuntime):
     def track(
         self,
         operation_name: str,
-    ) -> Iterator[m.ConfigMap]:
+    ) -> Iterator[dict[str, t.ConfigMapValue]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats_attr = f"_stats_{operation_name}"
         stats: m.ConfigMap = getattr(
@@ -300,7 +281,9 @@ class FlextMixins(FlextRuntime):
 
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: m.ConfigMap = m.ConfigMap(root=metrics)
+                metrics_map: dict[str, t.ConfigMapValue] = (
+                    dict(metrics.items()) if hasattr(metrics, "items") else {}
+                )
                 # Add aggregated stats to metrics for visibility
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
@@ -359,15 +342,7 @@ class FlextMixins(FlextRuntime):
             """Register service in container."""
             # Get container with explicit type for registration
             container = self.container
-            match self:
-                case BaseModel() as service_instance:
-                    pass
-                case _:
-                    msg = f"Service '{service_name}' is not registerable: {self.__class__.__name__}"
-                    raise TypeError(
-                        msg,
-                    )
-
+            service_instance: t.RegisterableService = service_name
             result = container.register(service_name, service_instance)
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
@@ -573,11 +548,19 @@ class FlextMixins(FlextRuntime):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                _ = FlextLogger.bind_global_context(**all_context_data.root)
+                metadata_context: dict[str, t.MetadataAttributeValue] = {
+                    key: FlextRuntime.normalize_to_metadata_value(value)
+                    for key, value in all_context_data.root.items()
+                }
+                _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
+                normal_metadata_context: dict[str, t.MetadataAttributeValue] = {
+                    key: FlextRuntime.normalize_to_metadata_value(value)
+                    for key, value in normal_data.root.items()
+                }
                 _ = FlextLogger.bind_context(
                     c.Context.SCOPE_OPERATION,
-                    **normal_data.root,
+                    **normal_metadata_context,
                 )
 
     @staticmethod

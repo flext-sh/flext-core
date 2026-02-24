@@ -24,6 +24,7 @@ from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
+from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
@@ -213,20 +214,21 @@ class FlextContainer(FlextRuntime, p.DI):
                             # Create wrapper with explicitly typed callable - bind reference
                             factory_func_ref = factory_func_raw
 
-                            # Create wrapper that satisfies ServiceFactory signature
-                            # The @factory() decorator validates return type at runtime
-                            # Bind via default args to avoid closure issue (B023)
                             def factory_wrapper(
-                                _func: Callable[
-                                    [], t.RegisterableService
-                                ] = factory_func_ref,
-                                _name: str = factory_name,
+                                *_args: object,
+                                **kwargs: object,
                             ) -> t.RegisterableService:
-                                raw_result = _func()
+                                fn_override = kwargs.get("fn")
+                                if fn_override is not None:
+                                    if not callable(fn_override):
+                                        return ""
+                                    raw_result = fn_override()
+                                else:
+                                    raw_result = factory_func_ref()
                                 if FlextContainer._is_registerable_service(raw_result):
                                     return raw_result
                                 msg = (
-                                    f"Factory '{_name}' returned unsupported type: "
+                                    f"Factory '{factory_name}' returned unsupported type: "
                                     f"{raw_result.__class__.__name__}"
                                 )
                                 raise TypeError(msg)
@@ -355,17 +357,20 @@ class FlextContainer(FlextRuntime, p.DI):
         # The bridge is created by dependency-injector and has dynamic attributes
         # We access it without strict type checking for this internal setup
         config_attr = "config"
+        if not hasattr(bridge, config_attr):
+            error_msg = "Bridge must have config provider"
+            raise TypeError(error_msg)
         config_provider_obj = getattr(bridge, config_attr, None)
-        if config_provider_obj is None or not self._is_instance_of(
+        if config_provider_obj is None:
+            error_msg = "Bridge config provider cannot be None"
+            raise TypeError(error_msg)
+        if not self._is_instance_of(
             config_provider_obj,
             di_providers.Configuration,
         ):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
         config_provider = config_provider_obj
-        if config_provider is None:
-            error_msg = "Bridge config provider cannot be None"
-            raise TypeError(error_msg)
         base_config_provider = di_providers.Configuration()
         user_config_provider = di_providers.Configuration()
         self._base_config_provider = base_config_provider
@@ -495,13 +500,11 @@ class FlextContainer(FlextRuntime, p.DI):
                 """Factory for creating namespace config instance."""
                 get_namespace = getattr(self._config, "get_namespace", None)
                 if get_namespace is None:
-                    msg = "Config must provide get_namespace"
-                    raise RuntimeError(msg)
+                    return config_cls()
                 result = get_namespace(ns, config_cls)
-                if not FlextContainer._is_instance_of(result, BaseModel):
-                    msg = "get_namespace must return BaseModel"
-                    raise TypeError(msg)
-                return result
+                if FlextContainer._is_instance_of(result, BaseModel):
+                    return result
+                return config_cls()
 
             # Only register if not already registered
             if not self.has_service(factory_name):
@@ -780,6 +783,8 @@ class FlextContainer(FlextRuntime, p.DI):
         try:
             if hasattr(self._di_services, name):
                 return r[bool].fail(f"Factory '{name}' already registered")
+            if not callable(factory):
+                return r[bool].fail(f"Factory '{name}' must be callable")
 
             def normalized_factory() -> t.RegisterableService:
                 raw_result = factory()
@@ -916,6 +921,20 @@ class FlextContainer(FlextRuntime, p.DI):
         ):
             return True
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
+
+    @staticmethod
+    def _is_config_protocol(value: object) -> TypeGuard[p.Config]:
+        return bool(
+            hasattr(value, "app_name")
+            and hasattr(value, "version")
+            and hasattr(value, "model_copy")
+        )
+
+    @staticmethod
+    def _is_context_protocol(value: object) -> TypeGuard[p.Context]:
+        return bool(
+            hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get")
+        )
 
     @override
     def get_typed[T](self, name: str, type_cls: type[T]) -> r[T]:
@@ -1137,9 +1156,25 @@ class FlextContainer(FlextRuntime, p.DI):
         base_config: p.Config
         if config is None:
             config_instance = self.config
-            base_config = config_instance.model_copy(deep=True)
+            config_copy_method = getattr(config_instance, "model_copy", None)
+            if callable(config_copy_method):
+                candidate_config = config_copy_method(deep=True)
+                if self._is_config_protocol(candidate_config):
+                    base_config = candidate_config
+                else:
+                    base_config = self._get_default_config().model_copy(deep=True)
+            else:
+                base_config = self._get_default_config().model_copy(deep=True)
         else:
-            base_config = config.model_copy(deep=True)
+            config_copy_method = getattr(config, "model_copy", None)
+            if callable(config_copy_method):
+                candidate_config = config_copy_method(deep=True)
+                if self._is_config_protocol(candidate_config):
+                    base_config = candidate_config
+                else:
+                    base_config = self.config.model_copy(deep=True)
+            else:
+                base_config = self.config.model_copy(deep=True)
 
         # Apply subproject suffix to app_name only when config is None
         # If config was explicitly provided, respect it (don't modify)
@@ -1155,9 +1190,25 @@ class FlextContainer(FlextRuntime, p.DI):
         scoped_context: p.Context
         if context is None:
             ctx_instance = self.context
-            scoped_context = ctx_instance.clone()
+            clone_method = getattr(ctx_instance, "clone", None)
+            if callable(clone_method):
+                candidate_context = clone_method()
+                if self._is_context_protocol(candidate_context):
+                    scoped_context = candidate_context
+                else:
+                    scoped_context = FlextContext()
+            else:
+                scoped_context = FlextContext()
         else:
-            scoped_context = context.clone()
+            context_clone_method = getattr(context, "clone", None)
+            if callable(context_clone_method):
+                candidate_context = context_clone_method()
+                if self._is_context_protocol(candidate_context):
+                    scoped_context = candidate_context
+                else:
+                    scoped_context = self.context.clone()
+            else:
+                scoped_context = self.context.clone()
 
         if subproject:
             # Ctx.set returns None per protocol definition

@@ -9,9 +9,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeVar, cast
+from typing import ClassVar, TypeVar, cast
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.models import m
@@ -39,6 +39,10 @@ class FlextUtilitiesModel:
 
     """
 
+    _pydantic_scalar_adapter: ClassVar[TypeAdapter[str | int | float | bool | None]] = (
+        TypeAdapter(str | int | float | bool | None)
+    )
+
     @staticmethod
     def from_dict[M: BaseModel](
         model_cls: type[M],
@@ -61,9 +65,9 @@ class FlextUtilitiesModel:
             # model_validate returns M (the model type)
             instance = model_cls.model_validate(data, strict=strict)
             # Type narrowing: instance is M from model_validate return type
-            return cast("object", r.ok(instance))
+            return cast("r[M]", r.ok(instance))
         except Exception as e:
-            return cast("object", r.fail(f"Model validation failed: {e}"))
+            return cast("r[M]", r.fail(f"Model validation failed: {e}"))
 
     @staticmethod
     def from_kwargs[M: BaseModel](
@@ -95,9 +99,9 @@ class FlextUtilitiesModel:
             # model_validate returns M (the model type)
             instance = model_cls.model_validate(kwargs)
             # Type narrowing: instance is M from model_validate return type
-            return cast("object", r.ok(instance))
+            return cast("r[M]", r.ok(instance))
         except Exception as e:
-            return cast("object", r.fail(f"Model validation failed: {e}"))
+            return cast("r[M]", r.fail(f"Model validation failed: {e}"))
 
     @staticmethod
     def merge_defaults[M: BaseModel](
@@ -141,9 +145,9 @@ class FlextUtilitiesModel:
             # model_copy returns M (same type as instance)
             updated_instance = instance.model_copy(update=updates)
             # Type narrowing: updated_instance is M from model_copy return type
-            return cast("object", r.ok(updated_instance))
+            return cast("r[M]", r.ok(updated_instance))
         except Exception as e:
-            return cast("object", r.fail(f"Model update failed: {e}"))
+            return cast("r[M]", r.fail(f"Model update failed: {e}"))
 
     @staticmethod
     def to_dict(
@@ -200,7 +204,7 @@ class FlextUtilitiesModel:
             return FlextModelFoundation.Metadata(attributes={})
 
         # Handle existing Metadata instance - return as-is
-        if value.__class__ is FlextModelFoundation.Metadata:
+        if isinstance(value, FlextModelFoundation.Metadata):
             return value
 
         # Handle dict-like values (dict or m.ConfigMap)
@@ -290,9 +294,9 @@ class FlextUtilitiesModel:
         """
         try:
             instance = model_cls.model_validate(data)
-            return cast("object", r.ok(instance))
+            return cast("r[T_Model]", r.ok(instance))
         except ValidationError as e:
-            return cast("object", r.fail(f"Model validation failed: {e}"))
+            return cast("r[T_Model]", r.fail(f"Model validation failed: {e}"))
 
     @staticmethod
     def normalize_to_pydantic_dict(
@@ -346,19 +350,29 @@ class FlextUtilitiesModel:
             case bool() | int() | float() | str():
                 return value
             case list() as items:
-                return [
-                    item
-                    if item.__class__ in {str, int, float, bool, None.__class__}
-                    else str(item)
-                    for item in items
-                ]
+                normalized_items: list[str | int | float | bool | None] = []
+                for item in items:
+                    try:
+                        normalized_items.append(
+                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                                item
+                            )
+                        )
+                    except ValidationError:
+                        normalized_items.append(str(item))
+                return normalized_items
             case tuple() as items:
-                return [
-                    item
-                    if item.__class__ in {str, int, float, bool, None.__class__}
-                    else str(item)
-                    for item in items
-                ]
+                normalized_tuple_items: list[str | int | float | bool | None] = []
+                for item in items:
+                    try:
+                        normalized_tuple_items.append(
+                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                                item
+                            )
+                        )
+                    except ValidationError:
+                        normalized_tuple_items.append(str(item))
+                return normalized_tuple_items
             case _:
                 # Convert any other type to string representation
                 return str(value)

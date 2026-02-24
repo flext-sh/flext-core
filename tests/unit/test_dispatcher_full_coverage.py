@@ -13,7 +13,9 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import c, m, r, t, u
-from flext_core.dispatcher import DispatcherMiddlewareConfig, FlextDispatcher
+from flext_core.dispatcher import FlextDispatcher
+
+DispatcherMiddlewareConfig = m.Config.DispatcherMiddlewareConfig
 from flext_core.handlers import FlextHandlers
 
 

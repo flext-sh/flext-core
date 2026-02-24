@@ -25,11 +25,12 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, cast
 
+from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import NotFound
 from docker.models.containers import Container
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
-from python_on_whales import DockerClient, docker
+from python_on_whales import DockerClient as WhalesDockerClient, docker
 from python_on_whales.exceptions import DockerException
 
 from flext_tests.constants import c
@@ -97,7 +98,9 @@ class FlextTestsDocker:
     ) -> None:
         """Initialize Docker client with dirty state tracking."""
         super().__init__()
-        self._client: DockerClient | FlextTestsDocker._OfflineDockerClient | None = None
+        self._client: DockerSDKClient | FlextTestsDocker._OfflineDockerClient | None = (
+            None
+        )
         self.logger: FlextLogger = FlextLogger(__name__)
         self.workspace_root = workspace_root or Path.cwd()
         self.worker_id = worker_id or "master"
@@ -115,7 +118,7 @@ class FlextTestsDocker:
         """Get shared container configurations."""
         return cast("Mapping[str, m.ConfigMap]", c.Tests.Docker.SHARED_CONTAINERS)
 
-    def get_client(self) -> DockerClient | FlextTestsDocker._OfflineDockerClient:
+    def get_client(self) -> DockerSDKClient | FlextTestsDocker._OfflineDockerClient:
         """Get Docker client with lazy initialization.
 
         Returns either a real DockerClient connected to daemon, or an offline stub
@@ -123,7 +126,7 @@ class FlextTestsDocker:
         """
         if self._client is None:
             try:
-                self._client = docker.from_env()
+                self._client = docker_from_env()
             except DockerException as error:
                 self.logger.exception(
                     "Failed to initialize Docker client",
@@ -289,7 +292,7 @@ class FlextTestsDocker:
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
 
-            docker_client: DockerClient = docker
+            docker_client: WhalesDockerClient = docker
 
             original_files = docker_client.client_config.compose_files
             try:
@@ -321,7 +324,7 @@ class FlextTestsDocker:
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
 
-            docker_client: DockerClient = docker
+            docker_client: WhalesDockerClient = docker
 
             original_files = docker_client.client_config.compose_files
             try:

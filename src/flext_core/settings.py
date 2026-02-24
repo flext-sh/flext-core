@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -227,7 +227,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: t.ScalarValue) -> Self:
+    def __new__(cls, **_kwargs: object) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -245,7 +245,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         if raw_type is not cls and not issubclass(raw_type, cls):
             msg = f"Singleton instance is not of expected type {cls.__name__}"
             raise TypeError(msg)
-        return raw_instance
+        return cast("Self", raw_instance)
 
     @classmethod
     def _reset_instance(cls) -> None:
@@ -265,7 +265,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    def __init__(self, **kwargs: t.ScalarValue) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -279,18 +279,14 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
             if kwargs:
                 for key, value in kwargs.items():
                     if key in self.__class__.model_fields:
-                        self.__dict__[key] = value
+                        object.__setattr__(self, key, value)
             return
 
-        # First initialization - pass kwargs to BaseSettings.__init__() so that
-        # Pydantic field validators run during initialization. BaseSettings will load
-        # values from environment variables and .env files, then apply explicit kwargs.
-        # Field validators (e.g., validate_ldif_encoding) will run during initialization.
-        # Call BaseSettings.__init__ directly to avoid mypy type mismatch with
-        # ProtocolSettings intermediate __init__ signature.
-        # BaseSettings.__init__ expects fixed keyword types and accepts runtime values.
-
-        BaseSettings.__init__(self, **kwargs)
+        super().__init__()
+        if kwargs:
+            for key, value in kwargs.items():
+                if key in self.__class__.model_fields:
+                    setattr(self, key, value)
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         self._di_provider: t.ScalarValue | None = None

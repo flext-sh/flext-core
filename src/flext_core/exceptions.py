@@ -12,9 +12,14 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar
+from typing import ClassVar, Protocol
 
-from pydantic import ConfigDict, Field, ValidationError as PydanticValidationError
+from pydantic import (
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidationError as PydanticValidationError,
+)
 
 from flext_core.constants import c
 from flext_core.models import m
@@ -24,12 +29,20 @@ from flext_core.typings import t
 # FlextRuntime.Metadata used directly (no alias) per runtime-alias-only policy
 
 
+class MetadataProtocol(Protocol):
+    attributes: Mapping[str, t.MetadataAttributeValue]
+
+
 class FlextExceptions:
     """Exception types with correlation metadata.
 
     Provides structured exceptions with error codes and correlation tracking
     for consistent error handling and logging.
     """
+
+    _metadata_map_adapter: ClassVar[
+        TypeAdapter[dict[str, t.MetadataAttributeValue]]
+    ] = TypeAdapter(dict[str, t.MetadataAttributeValue])
 
     class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
@@ -189,43 +202,45 @@ class FlextExceptions:
 
     @staticmethod
     def _safe_config_map(
-        value: FlextRuntime.Metadata
+        value: MetadataProtocol
+        | FlextRuntime.Metadata
         | Mapping[str, t.ConfigMapValue]
         | m.ConfigMap
         | t.ConfigMapValue
         | None,
-    ) -> m.ConfigMap | None:
+    ) -> Mapping[str, t.MetadataAttributeValue] | None:
         """Extract ConfigMap when value is mapping-compatible."""
         if value is None:
             return None
         try:
-            return m.ConfigMap.model_validate(value)
+            return e._metadata_map_adapter.validate_python(value)
         except PydanticValidationError:
             return None
 
     @staticmethod
     def _safe_metadata(
-        value: FlextRuntime.Metadata
+        value: MetadataProtocol
+        | FlextRuntime.Metadata
         | Mapping[str, t.ConfigMapValue]
         | m.ConfigMap
         | t.ConfigMapValue
         | None,
-    ) -> FlextRuntime.Metadata | None:
+    ) -> MetadataProtocol | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         if value is None:
             return None
 
         try:
-            return FlextRuntime.Metadata.model_validate(value)
+            return m.Metadata.model_validate(value)
         except PydanticValidationError:
             pass
 
-        dumped_map: m.ConfigMap | None = None
+        dumped_map: Mapping[str, t.MetadataAttributeValue] | None = None
         model_dump = getattr(value, "model_dump", None)
         if callable(model_dump):
             dumped_candidate = model_dump()
             try:
-                dumped_map = m.ConfigMap.model_validate(dumped_candidate)
+                dumped_map = e._metadata_map_adapter.validate_python(dumped_candidate)
             except PydanticValidationError:
                 dumped_map = None
 
@@ -237,7 +252,7 @@ class FlextExceptions:
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in attrs_map.items()
                 }
-                return FlextRuntime.Metadata(
+                return m.Metadata(
                     attributes=attrs,
                 )
 
@@ -247,7 +262,7 @@ class FlextExceptions:
                 k: FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in attrs_map.items()
             }
-            return FlextRuntime.Metadata(
+            return m.Metadata(
                 attributes=attrs,
             )
 
@@ -304,6 +319,7 @@ class FlextExceptions:
             error_code: str = c.Errors.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None = None,
             metadata: FlextRuntime.Metadata
+            | MetadataProtocol
             | m.ConfigMap
             | t.MetadataAttributeValue
             | None = None,
@@ -369,22 +385,20 @@ class FlextExceptions:
 
         def to_dict(
             self,
-        ) -> m.ConfigMap:
+        ) -> dict[str, t.MetadataAttributeValue]:
             """Convert exception to dictionary representation.
 
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: m.ConfigMap = m.ConfigMap(
-                root={
-                    "error_type": type(self).__name__,
-                    "message": self.message,
-                    "error_code": self.error_code,
-                    "correlation_id": self.correlation_id,
-                    "timestamp": self.timestamp,
-                },
-            )
+            result: dict[str, t.MetadataAttributeValue] = {
+                "error_type": type(self).__name__,
+                "message": self.message,
+                "error_code": self.error_code,
+                "correlation_id": self.correlation_id,
+                "timestamp": self.timestamp,
+            }
 
             # Add metadata attributes (only keys not in result)
             if self.metadata and self.metadata.attributes:
@@ -398,7 +412,7 @@ class FlextExceptions:
         def _normalize_metadata_from_dict(
             metadata_dict: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
             merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
-        ) -> FlextRuntime.Metadata:
+        ) -> MetadataProtocol:
             """Normalize metadata from dict-like object."""
             # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
             merged_attrs = {}
@@ -412,7 +426,7 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-            return FlextRuntime.Metadata(
+            return m.Metadata(
                 attributes={
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in merged_attrs.items()
@@ -422,11 +436,12 @@ class FlextExceptions:
         @staticmethod
         def _normalize_metadata(
             metadata: FlextRuntime.Metadata
+            | MetadataProtocol
             | m.ConfigMap
             | t.MetadataAttributeValue
             | None,
             merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
-        ) -> FlextRuntime.Metadata:
+        ) -> MetadataProtocol:
             """Normalize metadata from various input types to FlextRuntime.Metadata model.
 
             Args:
@@ -443,8 +458,8 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata_value(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return FlextRuntime.Metadata(attributes=normalized_attrs)
-                return FlextRuntime.Metadata(attributes={})
+                    return m.Metadata(attributes=normalized_attrs)
+                return m.Metadata(attributes={})
 
             metadata_model = e._safe_metadata(metadata)
             if metadata_model is not None:
@@ -457,7 +472,7 @@ class FlextExceptions:
                 }
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
-                return FlextRuntime.Metadata(attributes=merged_attrs)
+                return m.Metadata(attributes=merged_attrs)
 
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
@@ -467,7 +482,7 @@ class FlextExceptions:
                 )
 
             # Fallback: convert to FlextRuntime.Metadata with string value
-            return FlextRuntime.Metadata(attributes={"value": str(metadata)})
+            return m.Metadata(attributes={"value": str(metadata)})
 
     # Specific exception classes with minimal code
     class ValidationError(BaseError):
@@ -780,7 +795,12 @@ class FlextExceptions:
         @staticmethod
         def _extract_context_values(
             context: Mapping[str, t.MetadataAttributeValue] | None,
-        ) -> tuple[str | None, FlextRuntime.Metadata | None, bool, bool]:
+        ) -> tuple[
+            str | None,
+            MetadataProtocol | None,
+            bool,
+            bool,
+        ]:
             """Extract context values from mapping.
 
             Returns:
@@ -859,6 +879,7 @@ class FlextExceptions:
             error_code: str = c.Errors.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             metadata: FlextRuntime.Metadata
+            | MetadataProtocol
             | m.ConfigMap
             | t.MetadataAttributeValue
             | None = None,
@@ -1313,7 +1334,7 @@ class FlextExceptions:
         bool,
         bool,
         t.MetadataAttributeValue,
-        m.ConfigMap,
+        dict[str, t.MetadataAttributeValue],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
@@ -1322,20 +1343,18 @@ class FlextExceptions:
                 k: v for k, v in specific_params.items() if v is not None
             }
             kwargs.update(filtered_params)
-        extra_kwargs: m.ConfigMap = m.ConfigMap(
-            root={
-                k: v
-                for k, v in kwargs.items()
-                if k
-                not in {
-                    "correlation_id",
-                    "metadata",
-                    "auto_log",
-                    "auto_correlation",
-                    "config",
-                }
-            },
-        )
+        extra_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k
+            not in {
+                "correlation_id",
+                "metadata",
+                "auto_log",
+                "auto_correlation",
+                "config",
+            }
+        }
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id = e._safe_optional_str(correlation_id_raw)
         return (
@@ -1352,7 +1371,7 @@ class FlextExceptions:
         kwargs: Mapping[str, t.MetadataAttributeValue],
     ) -> tuple[
         str | None,
-        FlextRuntime.Metadata | m.ConfigMap | None,
+        MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None,
     ]:
         """Extract correlation_id and metadata from kwargs.
 
@@ -1361,7 +1380,12 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id = e._safe_optional_str(correlation_id_raw)
         metadata_raw = kwargs.get("metadata")
-        metadata = e._safe_metadata(metadata_raw)
+        metadata: MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None = (
+            None
+        )
+        model_dump = getattr(metadata_raw, "model_dump", None)
+        if callable(model_dump):
+            metadata = e._safe_metadata(metadata_raw)
         if metadata is None:
             metadata = e._safe_config_map(metadata_raw)
         return (correlation_id, metadata)
@@ -1426,12 +1450,12 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_metadata_value(
-        meta: FlextRuntime.Metadata | None,
-    ) -> m.ConfigMap | None:
+        meta: MetadataProtocol | None,
+    ) -> dict[str, t.MetadataAttributeValue] | None:
         """Prepare metadata value for error creation."""
         if meta is None:
             return None
-        return m.ConfigMap.model_validate(meta.attributes)
+        return dict(meta.attributes)
 
     @staticmethod
     def _get_str_from_kwargs(
@@ -1478,26 +1502,35 @@ class FlextExceptions:
             # and they look for 'correlation_id' in extra_kwargs
             correlation_id = str(error_context["correlation_id"])
 
+        context_payload: Mapping[str, t.MetadataAttributeValue] | None = None
+        if error_context:
+            context_payload = {
+                key: FlextRuntime.normalize_to_metadata_value(value)
+                for key, value in error_context.items()
+            }
+
         if error_class is not None:
             # Type narrowing: error_class is type[e.BaseError] after None check
             return error_class(
                 message,
                 error_code=error_code or c.Errors.UNKNOWN_ERROR,
-                context=error_context if error_context is not None else None,
+                context=context_payload,
                 correlation_id=correlation_id,
             )
 
         return e.BaseError(
             message,
             error_code=error_code or c.Errors.UNKNOWN_ERROR,
-            context=error_context or None,
+            context=context_payload,
             correlation_id=correlation_id,
         )
 
     @staticmethod
     def _merge_metadata_into_context(
         context: m.ConfigMap,
-        metadata_obj: FlextRuntime.Metadata | m.ConfigMap | None,
+        metadata_obj: (
+            MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None
+        ),
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
@@ -1511,13 +1544,15 @@ class FlextExceptions:
 
         metadata_map = e._safe_config_map(metadata_obj)
         if metadata_map is not None:
-            for k, v in metadata_map.items():
-                context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            for k, metadata_value in metadata_map.items():
+                context[k] = FlextRuntime.normalize_to_metadata_value(metadata_value)
 
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: FlextRuntime.Metadata | m.ConfigMap | None,
+        metadata_obj: (
+            MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None
+        ),
         kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""

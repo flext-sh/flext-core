@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -178,7 +178,9 @@ class FlextModelsCqrs:
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
-            adapter = TypeAdapter(
+            adapter: TypeAdapter[
+                FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.ScalarValue] | None
+            ] = TypeAdapter(
                 FlextModelsCqrs.Pagination
                 | t.Dict
                 | Mapping[str, t.ScalarValue]
@@ -188,12 +190,13 @@ class FlextModelsCqrs:
             if parsed_input is None:
                 return pagination_cls()
 
-            if parsed_input.__class__ is t.Dict:
-                payload = parsed_input.root
-            elif parsed_input.__class__ is FlextModelsCqrs.Pagination:
-                payload = parsed_input.model_dump()
+            payload: object
+            if isinstance(parsed_input, t.Dict):
+                payload = cast("t.Dict", parsed_input).root
+            elif isinstance(parsed_input, FlextModelsCqrs.Pagination):
+                payload = cast("FlextModelsCqrs.Pagination", parsed_input).model_dump()
             else:
-                payload = parsed_input
+                payload = dict(parsed_input)
 
             try:
                 return pagination_cls.model_validate(payload)

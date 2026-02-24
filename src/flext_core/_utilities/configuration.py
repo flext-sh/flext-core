@@ -46,8 +46,8 @@ import logging
 import os
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import cast
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.models import m
@@ -231,7 +231,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.ScalarValue | m.ConfigMap | None]:
+    ) -> tuple[bool, t.ConfigMapValue | None]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -268,9 +268,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: m.ConfigMap | Mapping[str, t.ScalarValue],
+        obj: Mapping[str, t.ConfigMapValue],
         parameter: str,
-    ) -> tuple[bool, t.ScalarValue | m.ConfigMap | None]:
+    ) -> tuple[bool, t.ConfigMapValue | None]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -304,9 +304,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: p.HasModelDump | m.ConfigMap | Mapping[str, t.ScalarValue],
+        obj: p.HasModelDump | Mapping[str, t.ConfigMapValue],
         parameter: str,
-    ) -> t.ScalarValue | m.ConfigMap:
+    ) -> t.ConfigMapValue:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -352,7 +352,7 @@ class FlextUtilitiesConfiguration:
 
         """
         # Strategy 1: HasModelDump protocol
-        if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump", None)):
+        if isinstance(obj, p.HasModelDump):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
                 obj,
                 parameter,
@@ -361,7 +361,7 @@ class FlextUtilitiesConfiguration:
                 return value
 
         # Strategy 2: Dict-like (Mapping / m.ConfigMap)
-        if FlextRuntime.is_dict_like(obj):
+        if isinstance(obj, Mapping):
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
                 obj,
                 parameter,
@@ -445,7 +445,7 @@ class FlextUtilitiesConfiguration:
     def get_singleton(
         singleton_class: type,
         parameter: str,
-    ) -> t.ScalarValue | m.ConfigMap:
+    ) -> t.ConfigMapValue:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)
@@ -495,9 +495,11 @@ class FlextUtilitiesConfiguration:
             ):
                 # callable() check ensures this is callable - call directly
                 instance = get_global_instance_attr()
-                if FlextUtilitiesGuards.is_pydantic_model(instance):
+                if hasattr(instance, "model_dump") and callable(
+                    getattr(instance, "model_dump", None)
+                ):
                     # Type narrowing: instance implements model_dump()
-                    has_model_dump_instance: p.HasModelDump = instance
+                    has_model_dump_instance = cast("p.HasModelDump", instance)
                     return FlextUtilitiesConfiguration.get_parameter(
                         has_model_dump_instance,
                         parameter,
@@ -561,13 +563,16 @@ class FlextUtilitiesConfiguration:
 
         # callable() check above ensures this is callable - call directly
         instance = get_global_instance_attr()
-        if not FlextUtilitiesGuards.is_pydantic_model(instance):
+        if not (
+            hasattr(instance, "model_dump")
+            and callable(getattr(instance, "model_dump", None))
+        ):
             return r[bool].fail(
                 "Instance does not implement model_dump() method",
             )
 
         # Type narrowing: instance is HasModelDump
-        has_model_dump_instance: p.HasModelDump = instance
+        has_model_dump_instance = cast("p.HasModelDump", instance)
         success = FlextUtilitiesConfiguration.set_parameter(
             has_model_dump_instance,
             parameter,

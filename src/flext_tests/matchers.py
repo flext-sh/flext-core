@@ -55,12 +55,13 @@ from __future__ import annotations
 
 import os
 import warnings
-from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeGuard, TypeVar
 
 from flext_core import r
+from flext_core.typings import t as core_t
 from pydantic import BaseModel
 
 from flext_tests.constants import c
@@ -72,11 +73,43 @@ TK = TypeVar("TK")
 TV = TypeVar("TV")
 
 
-def _is_key_value_pair[TK, TV](
-    key_equals: TK | tuple[TK, TV] | Sequence[tuple[TK, TV]],
+def _is_key_value_pair(
+    key_equals: tuple[TK, TV] | Sequence[tuple[TK, TV]] | None,
 ) -> TypeGuard[tuple[TK, TV]]:
     """Return True if key_equals is a single (key, value) tuple."""
     return isinstance(key_equals, tuple) and len(key_equals) == 2
+
+
+def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[object]]:
+    return isinstance(value, Sequence) and not isinstance(value, str | bytes)
+
+
+def _to_test_payload(value: object) -> t.Tests.PayloadValue:
+    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
+        return value
+    if isinstance(value, Mapping):
+        return {str(k): _to_test_payload(v) for k, v in value.items()}
+    if _is_non_string_sequence(value):
+        payload_items: list[t.Tests.PayloadValue] = []
+        for seq_item in value:
+            payload_items.append(_to_test_payload(seq_item))
+        return payload_items
+    return str(value)
+
+
+def _as_guard_input(value: object) -> core_t.GuardInputValue:
+    if isinstance(value, BaseModel | str | int | float | bool | Path):
+        return value
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        return {str(k): _as_guard_input(v) for k, v in value.items()}
+    if _is_non_string_sequence(value):
+        guard_items: list[core_t.GuardInputValue] = []
+        for seq_item in value:
+            guard_items.append(_as_guard_input(seq_item))
+        return guard_items
+    return str(value)
 
 
 class FlextTestsMatchers:
@@ -170,12 +203,10 @@ class FlextTestsMatchers:
             ValueError: If parameter validation fails (via Pydantic model)
 
         """
-        # Convert kwargs to validated model using FlextUtilities
-        # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
-        params_result = u.Model.from_kwargs(m.Tests.Matcher.OkParams, **kwargs)
-        if params_result.is_failure:
-            raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.value
+        try:
+            params = m.Tests.Matcher.OkParams.model_validate(kwargs)
+        except Exception as exc:
+            raise ValueError(f"Parameter validation failed: {exc}") from exc
 
         if not result.is_success:
             raise AssertionError(
@@ -203,9 +234,19 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}",
                 )
-            extracted = u.Mapper.extract(
-                cast(t.ConfigMapValue | BaseModel, result_value), path_str
-            )
+            extract_source: BaseModel | core_t.ConfigMapValue
+            if isinstance(result_value, BaseModel):
+                extract_source = result_value
+            elif isinstance(result_value, Mapping):
+                extract_source = {
+                    str(k): _as_guard_input(v) for k, v in result_value.items()
+                }
+            else:
+                raise AssertionError(
+                    params.msg
+                    or f"Path extraction requires dict or model, got {type(result_value).__name__}",
+                )
+            extracted = u.Mapper.extract(extract_source, path_str)
             if extracted.is_failure:
                 raise AssertionError(
                     params.msg
@@ -214,15 +255,13 @@ class FlextTestsMatchers:
                         error=extracted.error,
                     ),
                 )
-            # Reassign to extracted value - now type is t.Tests.PayloadValue
-            result_value = cast(t.Tests.PayloadValue, extracted.value)
+            result_value = _to_test_payload(extracted.value)
 
         # Validate value with u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately
         has_validation = (
             params.eq is not None
             or params.ne is not None
-            or (params.is_ is not None and not isinstance(params.is_, tuple))
             or params.none is not None
             or params.empty is not None
             or params.gt is not None
@@ -237,9 +276,9 @@ class FlextTestsMatchers:
             # u.chk() only accepts single type, not tuple
             is_type = params.is_ if not isinstance(params.is_, tuple) else None
             if not u.chk(
-                result_value,
-                eq=params.eq,
-                ne=params.ne,
+                _as_guard_input(result_value),
+                eq=_as_guard_input(params.eq) if params.eq is not None else None,
+                ne=_as_guard_input(params.ne) if params.ne is not None else None,
                 is_=is_type,
                 none=params.none,
                 empty=params.empty,
@@ -280,14 +319,17 @@ class FlextTestsMatchers:
         # ContainmentSpec = object | Sequence[object]
         if params.has is not None:
             has_value: object | Sequence[object] = params.has
-            if type(has_value) in {list, tuple}:
+            if _is_non_string_sequence(has_value):
                 has_items: Sequence[object] = has_value
             else:
-                has_item: object = has_value
-                has_items = [has_item]
+                single_has_item: object = has_value
+                has_items = [single_has_item]
             for item in has_items:
                 item_typed: object = item
-                if not u.chk(result_value, contains=item_typed):
+                if not u.chk(
+                    _as_guard_input(result_value),
+                    contains=_as_guard_input(item_typed),
+                ):
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -303,7 +345,10 @@ class FlextTestsMatchers:
                 lacks_item: object = params.lacks
                 lacks_items = [lacks_item]
             for item in lacks_items:
-                if u.chk(result_value, contains=item):
+                if u.chk(
+                    _as_guard_input(result_value),
+                    contains=_as_guard_input(item),
+                ):
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
@@ -313,20 +358,13 @@ class FlextTestsMatchers:
                     )
 
         # Length validation (delegate to u.Tests.Length)
+        result_payload = _to_test_payload(result_value)
         if params.len is not None and not u.Tests.Length.validate(
-            result_value,
-            params.len,
+            result_payload, params.len
         ):
             # Type guard: result_value has __len__ if it passed validation
             # Type narrow for __len__
-            if (
-                type(result_value) in {str, bytes}
-                or (
-                    hasattr(result_value, "__getitem__")
-                    and hasattr(result_value, "__len__")
-                )
-                or (hasattr(result_value, "keys") and hasattr(result_value, "items"))
-            ):
+            if isinstance(result_value, Sized):
                 actual_len = len(result_value)
             else:
                 actual_len = 0
@@ -350,18 +388,24 @@ class FlextTestsMatchers:
         # Deep matching (delegate to u.Tests.DeepMatch)
         if params.deep is not None:
             # Type narrow for DeepMatch.match
-            if not (
-                (
-                    hasattr(type(result_value), "__mro__")
-                    and BaseModel in type(result_value).__mro__
-                )
-                or (hasattr(result_value, "keys") and hasattr(result_value, "items"))
-            ):
+            if not isinstance(result_value, BaseModel | Mapping):
                 raise AssertionError(
                     params.msg
                     or f"Deep matching requires dict or model, got {type(result_value).__name__}",
                 )
-            match_result = u.Tests.DeepMatch.match(result_value, params.deep)
+            deep_input: BaseModel | Mapping[str, t.Tests.PayloadValue]
+            if isinstance(result_value, BaseModel):
+                deep_input = result_value
+            elif isinstance(result_value, Mapping):
+                deep_input = {
+                    str(k): _to_test_payload(v) for k, v in result_value.items()
+                }
+            else:
+                raise AssertionError(
+                    params.msg
+                    or f"Deep matching requires dict or model, got {type(result_value).__name__}",
+                )
+            match_result = u.Tests.DeepMatch.match(deep_input, params.deep)
             if not match_result.matched:
                 raise AssertionError(
                     params.msg
@@ -372,7 +416,9 @@ class FlextTestsMatchers:
                 )
 
         # Custom predicate
-        if params.where is not None and not params.where(result_value):
+        if params.where is not None and not params.where(
+            _to_test_payload(result_value)
+        ):
             raise AssertionError(
                 params.msg
                 or c.Tests.Matcher.ERR_PREDICATE_FAILED.format(value=result_value),
@@ -454,10 +500,10 @@ class FlextTestsMatchers:
         # Convert kwargs to validated model using FlextUtilities
         # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
         # Legacy 'error' parameter is handled by FailParams model validator
-        params_result = u.Model.from_kwargs(m.Tests.Matcher.FailParams, **kwargs)
-        if params_result.is_failure:
-            raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.value
+        try:
+            params = m.Tests.Matcher.FailParams.model_validate(kwargs)
+        except Exception as exc:
+            raise ValueError(f"Parameter validation failed: {exc}") from exc
 
         if result.is_success:
             raise AssertionError(
@@ -569,11 +615,13 @@ class FlextTestsMatchers:
         # Error data validation
         if params.data is not None:
             actual_raw = result.error_data
-            actual_data: MutableMapping[str, t.Tests.PayloadValue] = (
-                dict(actual_raw)
-                if (hasattr(actual_raw, "keys") and hasattr(actual_raw, "items"))
-                else {}
-            )
+            actual_data: MutableMapping[str, t.Tests.PayloadValue] = {}
+            if actual_raw is not None:
+                root_value = getattr(actual_raw, "root", actual_raw)
+                if isinstance(root_value, Mapping):
+                    actual_data = {
+                        str(k): _to_test_payload(v) for k, v in root_value.items()
+                    }
             for key, expected_value in params.data.items():
                 if key not in actual_data:
                     raise AssertionError(
@@ -675,25 +723,39 @@ class FlextTestsMatchers:
             ValueError: If parameter validation fails (via Pydantic model)
 
         """
+        raw_eq = kwargs.get("eq") if "eq" in kwargs else None
+        raw_ne = kwargs.get("ne") if "ne" in kwargs else None
+
         # Convert kwargs to validated model using FlextUtilities
         # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
-        params_result = u.Model.from_kwargs(m.Tests.Matcher.ThatParams, **kwargs)
-        if params_result.is_failure:
-            raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.value
+        try:
+            params = m.Tests.Matcher.ThatParams.model_validate(kwargs)
+        except Exception as exc:
+            filtered_kwargs = {
+                key: val for key, val in kwargs.items() if key not in {"eq", "ne"}
+            }
+            if filtered_kwargs == kwargs:
+                raise ValueError(f"Parameter validation failed: {exc}") from exc
+            try:
+                params = m.Tests.Matcher.ThatParams.model_validate(filtered_kwargs)
+            except Exception as filtered_exc:
+                raise ValueError(
+                    f"Parameter validation failed: {filtered_exc}"
+                ) from filtered_exc
 
         # FlextResult auto-detection and handling
-        if hasattr(type(value), "__mro__") and r in type(value).__mro__:
+        if isinstance(value, r):
+            result_obj: r[t.Tests.PayloadValue] = value
             if params.ok is not None:
-                if params.ok and not value.is_success:
+                if params.ok and not result_obj.is_success:
                     raise AssertionError(
                         params.msg
-                        or c.Tests.Matcher.ERR_OK_FAILED.format(error=value.error),
+                        or c.Tests.Matcher.ERR_OK_FAILED.format(error=result_obj.error),
                     )
-                if not params.ok and value.is_success:
+                if not params.ok and result_obj.is_success:
                     # Type narrowing: value.is_success is True, so .value returns the actual value
                     # Convert to string for format() - no cast needed, str() accepts any object
-                    unwrapped_value_error = value.value
+                    unwrapped_value_error = result_obj.value
                     value_str: str = str(unwrapped_value_error)
                     raise AssertionError(
                         params.msg
@@ -706,16 +768,16 @@ class FlextTestsMatchers:
             # Unwrap FlextResult for further validation
             # value is r[TResult], we need to extract the actual value for validation
             actual_value: t.Tests.PayloadValue | str
-            if value.is_success:
+            if result_obj.is_success:
                 # Type narrowing: .value property returns the actual value
                 # No cast needed - value.value is already the correct type
-                unwrapped_value: t.Tests.PayloadValue = value.value
+                unwrapped_value: t.Tests.PayloadValue = result_obj.value
                 actual_value = unwrapped_value
             # If result is failure, check if we're validating the error
             # params.has (converted from error) means we want to validate the error message
             elif params.has is not None:
                 # Validate error message using has parameter
-                err = value.error or ""
+                err = result_obj.error or ""
                 # params.has is t.Tests.Matcher.ContainmentSpec | None
                 # ContainmentSpec = object | Sequence[object]
                 # For error validation, convert to list of strings for checking
@@ -723,13 +785,11 @@ class FlextTestsMatchers:
                 error_has_items: list[str]
                 if isinstance(params.has, str):
                     error_has_items = [params.has]
-                elif (
-                    hasattr(params.has, "__getitem__")
-                    and hasattr(params.has, "__len__")
-                    and type(params.has) not in {str, bytes}
-                ):
+                elif _is_non_string_sequence(params.has):
                     # Sequence - convert all items to strings
-                    error_has_items = [str(x) for x in params.has]
+                    error_has_items = []
+                    for error_item in params.has:
+                        error_has_items.append(str(error_item))
                 else:
                     # Convert single object to string
                     error_has_items = [str(params.has)]
@@ -748,11 +808,11 @@ class FlextTestsMatchers:
                 # If result is failure and no ok/error checks, fail
                 raise AssertionError(
                     params.msg
-                    or c.Tests.Matcher.ERR_OK_FAILED.format(error=value.error),
+                    or c.Tests.Matcher.ERR_OK_FAILED.format(error=result_obj.error),
                 )
             else:
                 # params.ok is False, which means we expect failure - continue validation
-                actual_value = value.error or ""
+                actual_value = result_obj.error or ""
 
             # Use actual_value for all further validations
             value = actual_value
@@ -760,10 +820,10 @@ class FlextTestsMatchers:
         # Apply basic validations via u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately
         has_validation = (
-            params.eq is not None
+            (raw_eq is not None)
+            or (raw_ne is not None)
+            or params.eq is not None
             or params.ne is not None
-            or (params.is_ is not None and not isinstance(params.is_, tuple))
-            or (params.not_ is not None and not isinstance(params.not_, tuple))
             or params.gt is not None
             or params.gte is not None
             or params.lt is not None
@@ -775,19 +835,18 @@ class FlextTestsMatchers:
             or params.match is not None
         )
         if has_validation:
-            # u.chk() only accepts single type, not tuple
-            is_type = params.is_ if not isinstance(params.is_, tuple) else None
-            not_type = params.not_ if not isinstance(params.not_, tuple) else None
+            eq_value = raw_eq if "eq" in kwargs else params.eq
+            ne_value = raw_ne if "ne" in kwargs else params.ne
             if not u.chk(
-                value,
-                eq=params.eq,
-                ne=params.ne,
+                _as_guard_input(value),
+                eq=_as_guard_input(eq_value) if eq_value is not None else None,
+                ne=_as_guard_input(ne_value) if ne_value is not None else None,
                 gt=params.gt,
                 gte=params.gte,
                 lt=params.lt,
                 lte=params.lte,
-                is_=is_type,
-                not_=not_type,
+                is_=None,
+                not_=None,
                 none=params.none,
                 empty=params.empty,
                 starts=params.starts,
@@ -799,6 +858,24 @@ class FlextTestsMatchers:
                     or f"Assertion failed: {value!r} did not satisfy constraints"
                 )
                 raise AssertionError(error_msg)
+        if params.is_ is not None and not isinstance(params.is_, tuple):
+            if not isinstance(value, params.is_):
+                raise AssertionError(
+                    params.msg
+                    or c.Tests.Matcher.ERR_TYPE_FAILED.format(
+                        expected=params.is_,
+                        actual=type(value).__name__,
+                    ),
+                )
+        if params.not_ is not None and not isinstance(params.not_, tuple):
+            if isinstance(value, params.not_):
+                raise AssertionError(
+                    params.msg
+                    or c.Tests.Matcher.ERR_TYPE_FAILED.format(
+                        expected=f"not {params.not_}",
+                        actual=type(value).__name__,
+                    ),
+                )
         # Handle tuple types separately
         if (
             params.is_ is not None
@@ -840,7 +917,7 @@ class FlextTestsMatchers:
         # ContainmentSpec = object | Sequence[object]
         if params.has is not None:
             has_value: object | Sequence[object] = params.has
-            if type(has_value) in {list, tuple}:
+            if _is_non_string_sequence(has_value):
                 has_items: Sequence[object] = has_value
             else:
                 has_item: object = has_value
@@ -848,7 +925,10 @@ class FlextTestsMatchers:
             for has_item_obj in has_items:
                 # Type narrowing: has_item_obj is object from Sequence[object]
                 has_item_val: object = has_item_obj
-                if not u.chk(value, contains=has_item_val):
+                if not u.chk(
+                    _as_guard_input(value),
+                    contains=_as_guard_input(has_item_val),
+                ):
                     # str() already returns str
                     item_str: str = str(has_item_val)
                     raise AssertionError(
@@ -860,14 +940,17 @@ class FlextTestsMatchers:
                     )
 
         if params.lacks is not None:
-            if type(params.lacks) in {list, tuple}:
+            if _is_non_string_sequence(params.lacks):
                 lacks_items: Sequence[object] = params.lacks
             else:
                 lacks_item: object = params.lacks
                 lacks_items = [lacks_item]
             for lacks_item_obj in lacks_items:
                 lacks_item_val: object = lacks_item_obj
-                if u.chk(value, contains=lacks_item_val):
+                if u.chk(
+                    _as_guard_input(value),
+                    contains=_as_guard_input(lacks_item_val),
+                ):
                     # str() already returns str, so cast is redundant
                     lacks_item_str: str = str(lacks_item_val)
                     raise AssertionError(
@@ -884,15 +967,14 @@ class FlextTestsMatchers:
 
         # Length validation (delegate to u.Tests.Length)
         # model_validator already converts legacy length_* params to unified len
-        if params.len is not None and not u.Tests.Length.validate(value, params.len):
+        value_payload = _to_test_payload(value)
+        if params.len is not None and not u.Tests.Length.validate(
+            value_payload, params.len
+        ):
             # Type guard: value has __len__ if it passed validation
             # Type narrow for __len__
             # Type narrow for __len__
-            if (
-                type(value) in {str, bytes}
-                or (hasattr(value, "__getitem__") and hasattr(value, "__len__"))
-                or (hasattr(value, "keys") and hasattr(value, "items"))
-            ):
+            if isinstance(value, Sized):
                 actual_len = len(value)
             else:
                 actual_len = 0
@@ -914,7 +996,7 @@ class FlextTestsMatchers:
             )
 
         # Sequence assertions
-        if type(value) in {list, tuple}:
+        if isinstance(value, (list, tuple)):
             seq_value: Sequence[object] = value
             if params.first is not None:
                 if not seq_value:
@@ -970,13 +1052,13 @@ class FlextTestsMatchers:
                             ),
                         )
                 elif callable(params.all_) and not all(
-                    params.all_(item) for item in seq_value
+                    params.all_(_to_test_payload(item)) for item in seq_value
                 ):
                     failed_idx = next(
                         (
                             i
                             for i, item in enumerate(list(seq_value))
-                            if not params.all_(item)
+                            if not params.all_(_to_test_payload(item))
                         ),
                         None,
                     )
@@ -988,12 +1070,13 @@ class FlextTestsMatchers:
                     )
 
             if params.any_ is not None:
-                if type(params.any_) is type:
+                if isinstance(params.any_, type):
+                    any_type = params.any_
                     if not any(
-                        isinstance(item, params.any_)
+                        isinstance(item, any_type)
                         or (
                             hasattr(type(item), "__mro__")
-                            and params.any_ in type(item).__mro__
+                            and any_type in type(item).__mro__
                         )
                         for item in seq_value
                     ):
@@ -1001,7 +1084,7 @@ class FlextTestsMatchers:
                             params.msg or c.Tests.Matcher.ERR_ANY_ITEMS_FAILED,
                         )
                 elif callable(params.any_) and not any(
-                    params.any_(item) for item in seq_value
+                    params.any_(_to_test_payload(item)) for item in seq_value
                 ):
                     raise AssertionError(
                         params.msg or c.Tests.Matcher.ERR_ANY_ITEMS_FAILED,
@@ -1026,8 +1109,9 @@ class FlextTestsMatchers:
 
                     def comparable_key(x: object) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
-                        result = user_key_fn(x)
-                        return (type(result).__name__, str(result))
+                        result = user_key_fn(_to_test_payload(x))
+                        type_name = getattr(type(result), "__name__", "unknown")
+                        return (str(type_name), str(result))
 
                     sorted_list = sorted(value_list, key=comparable_key)
                     if value_list != sorted_list:
@@ -1045,8 +1129,8 @@ class FlextTestsMatchers:
                     )
 
         # Mapping assertions
-        if hasattr(value, "keys") and hasattr(value, "items"):
-            mapping_value: Mapping[object, object] = value
+        if isinstance(value, Mapping):
+            mapping_value = value
             if params.keys is not None:
                 key_set: set[object] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
@@ -1163,7 +1247,16 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Deep matching requires dict or model, got {type(value).__name__}",
                 )
-            deep_value: BaseModel | Mapping[str, t.Tests.PayloadValue] = value
+            deep_value: BaseModel | Mapping[str, t.Tests.PayloadValue]
+            if isinstance(value, BaseModel):
+                deep_value = value
+            elif isinstance(value, Mapping):
+                deep_value = {str(k): _to_test_payload(v) for k, v in value.items()}
+            else:
+                raise AssertionError(
+                    params.msg
+                    or f"Deep matching requires dict or model, got {type(value).__name__}",
+                )
             match_result = u.Tests.DeepMatch.match(deep_value, params.deep)
             if not match_result.matched:
                 raise AssertionError(
@@ -1175,7 +1268,7 @@ class FlextTestsMatchers:
                 )
 
         # Custom predicate
-        if params.where is not None and not params.where(value):
+        if params.where is not None and not params.where(_to_test_payload(value)):
             raise AssertionError(
                 params.msg or c.Tests.Matcher.ERR_PREDICATE_FAILED.format(value=value),
             )
@@ -1319,10 +1412,10 @@ class FlextTestsMatchers:
         """
         # Create and validate parameters using Pydantic 2 model
         # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
-        params_result = u.Model.from_kwargs(m.Tests.Matcher.ScopeParams, **kwargs)
-        if params_result.is_failure:
-            raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.value
+        try:
+            params = m.Tests.Matcher.ScopeParams.model_validate(kwargs)
+        except Exception as exc:
+            raise ValueError(f"Parameter validation failed: {exc}") from exc
 
         # Save original environment and working directory
         original_env: dict[str, str | None] = {}
@@ -1430,48 +1523,44 @@ class FlextTestsMatchers:
             stacklevel=2,
         )
         if has_key is not None:
-            is_seq = (
-                hasattr(has_key, "__getitem__")
-                and hasattr(has_key, "__len__")
-                and type(has_key) not in {str, bytes}
-            )
-            keys_to_check = [has_key] if not is_seq else list(has_key)
-            for key in keys_to_check:
-                if key not in data:
-                    raise AssertionError(msg or f"Key {key!r} not found in dict")
+            if _is_non_string_sequence(has_key):
+                for key in has_key:
+                    if key not in data:
+                        raise AssertionError(msg or f"Key {key!r} not found in dict")
+            elif has_key not in data:
+                raise AssertionError(msg or f"Key {has_key!r} not found in dict")
 
         if not_has_key is not None:
-            is_seq_n = (
-                hasattr(not_has_key, "__getitem__")
-                and hasattr(not_has_key, "__len__")
-                and type(not_has_key) not in {str, bytes}
-            )
-            keys_to_check = [not_has_key] if not is_seq_n else list(not_has_key)
-            for key in keys_to_check:
-                if key in data:
-                    raise AssertionError(msg or f"Key {key!r} should not be in dict")
+            if _is_non_string_sequence(not_has_key):
+                for key in not_has_key:
+                    if key in data:
+                        raise AssertionError(
+                            msg or f"Key {key!r} should not be in dict"
+                        )
+            elif not_has_key in data:
+                raise AssertionError(
+                    msg or f"Key {not_has_key!r} should not be in dict"
+                )
 
         if has_value is not None:
-            is_seq_v = (
-                hasattr(has_value, "__getitem__")
-                and hasattr(has_value, "__len__")
-                and type(has_value) not in {str, bytes}
-            )
-            values_to_check = [has_value] if not is_seq_v else list(has_value)
-            for val in values_to_check:
-                if val not in data.values():
-                    raise AssertionError(msg or f"Value {val!r} not found in dict")
+            if _is_non_string_sequence(has_value):
+                for val in has_value:
+                    if val not in data.values():
+                        raise AssertionError(msg or f"Value {val!r} not found in dict")
+            elif has_value not in data.values():
+                raise AssertionError(msg or f"Value {has_value!r} not found in dict")
 
         if not_has_value is not None:
-            is_seq_nv = (
-                hasattr(not_has_value, "__getitem__")
-                and hasattr(not_has_value, "__len__")
-                and type(not_has_value) not in {str, bytes}
-            )
-            values_to_check = [not_has_value] if not is_seq_nv else list(not_has_value)
-            for val in values_to_check:
-                if val in data.values():
-                    raise AssertionError(msg or f"Value {val!r} should not be in dict")
+            if _is_non_string_sequence(not_has_value):
+                for val in not_has_value:
+                    if val in data.values():
+                        raise AssertionError(
+                            msg or f"Value {val!r} should not be in dict"
+                        )
+            elif not_has_value in data.values():
+                raise AssertionError(
+                    msg or f"Value {not_has_value!r} should not be in dict"
+                )
 
         if key_equals is not None:
             # key_equals is tuple[TK, TV] | Sequence[tuple[TK, TV]]

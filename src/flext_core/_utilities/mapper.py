@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Protocol, TypeGuard, cast, overload
+from typing import Protocol, TypeGuard, overload
 
 from pydantic import BaseModel
 
@@ -51,23 +51,21 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _is_configuration_dict(
-        value: t.ConfigMapValue,
+        value: object,
     ) -> TypeGuard[Mapping[str, t.ConfigMapValue]]:
         """Type guard for ConfigurationDict (dict with str keys and t.ConfigMapValue values)."""
-        if not isinstance(value, Mapping):
+        if not FlextUtilitiesGuards.is_general_value_type(value):
             return False
-        # Check all keys are strings
-        return all(isinstance(key, str) for key in value)
+        return FlextUtilitiesGuards.is_configuration_dict(value)
 
     @staticmethod
     def _is_configuration_mapping(
-        value: t.ConfigMapValue,
+        value: object,
     ) -> TypeGuard[m.ConfigMap]:
         """Type guard for ConfigurationMapping."""
-        if not isinstance(value, Mapping):
+        if not FlextUtilitiesGuards.is_general_value_type(value):
             return False
-        # Check all keys are strings
-        return all(isinstance(key, str) for key in value)
+        return FlextUtilitiesGuards.is_configuration_mapping(value)
 
     @staticmethod
     def _narrow_to_configuration_dict(
@@ -159,6 +157,12 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
+    def _to_general_value_from_object(value: object) -> t.ConfigMapValue:
+        if FlextUtilitiesGuards.is_general_value_type(value):
+            return value
+        return str(value)
+
+    @staticmethod
     def _get_str_from_dict(
         ops: Mapping[str, t.ConfigMapValue],
         key: str,
@@ -174,13 +178,7 @@ class FlextUtilitiesMapper:
     def _get_callable_from_dict(
         ops: Mapping[str, t.ConfigMapValue],
         key: str,
-    ) -> t.HandlerCallable | None:
-        """Safely extract Callable from ConfigurationDict.
-
-        Returns callable from ConfigurationDict or None if not callable.
-        Uses t.HandlerCallable (Callable[[PayloadValue], PayloadValue])
-        since we can only verify the value is callable at runtime.
-        """
+    ) -> Callable[..., object] | None:
         value = ops.get(key)
         if callable(value):
             return value
@@ -193,7 +191,11 @@ class FlextUtilitiesMapper:
         Returns structlog logger instance (Logger protocol).
         Type annotation omitted to avoid importing structlog.typing here.
         """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+        logger = FlextRuntime.get_logger(__name__)
+        if isinstance(logger, p.Log.StructlogLogger):
+            return logger
+        msg = f"Unexpected logger type: {logger.__class__.__name__}"
+        raise TypeError(msg)
 
     @staticmethod
     def map_dict_keys(
@@ -667,19 +669,25 @@ class FlextUtilitiesMapper:
         # Handle object attributes (dataclasses, plain objects, etc.)
         if hasattr(current, key_part):
             attr_val = getattr(current, key_part)
-            # Return raw value - caller decides if narrowing is needed
-            return attr_val, True
+            if FlextUtilitiesGuards.is_general_value_type(attr_val):
+                return attr_val, True
+            return str(attr_val), True
 
         # Handle Pydantic model_dump fallback
         if hasattr(current, "model_dump"):
             model_dump_attr = getattr(current, "model_dump", None)
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
-                if model_dict.__class__ is dict and key_part in model_dict:
-                    model_dict_typed: Mapping[str, t.ConfigMapValue] = (
-                        FlextUtilitiesMapper._narrow_to_configuration_dict(model_dict)
+                if FlextUtilitiesGuards.is_general_value_type(
+                    model_dict,
+                ) and isinstance(model_dict, Mapping):
+                    model_dict_typed = (
+                        FlextUtilitiesMapper._narrow_to_configuration_dict(
+                            model_dict,
+                        )
                     )
-                    return model_dict_typed[key_part], True
+                    if key_part in model_dict_typed:
+                        return model_dict_typed[key_part], True
 
         return None, False
 
@@ -1103,12 +1111,7 @@ class FlextUtilitiesMapper:
             value = FlextUtilitiesMapper.get(data, key, default=default)
             if value is None:
                 return default
-            if (
-                as_type is not None
-                and as_type.__class__ is type
-                and value.__class__ is not as_type
-                and as_type not in value.__class__.__mro__
-            ):
+            if as_type is not None and not isinstance(value, as_type):
                 return default
             return value
 
@@ -1213,7 +1216,7 @@ class FlextUtilitiesMapper:
         """
         try:
             if isinstance(value, target):
-                return value
+                return FlextUtilitiesMapper._to_general_value_from_object(value)
         except TypeError:
             if strict:
                 return default
@@ -1464,10 +1467,10 @@ class FlextUtilitiesMapper:
         filter_pred_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "filter")
         if filter_pred_raw is None:
             return current
-        filter_pred: Callable[[t.ConfigMapValue], bool] = cast(
-            "Callable[[t.ConfigMapValue], bool]",
-            filter_pred_raw,
-        )
+
+        def filter_pred(value: t.ConfigMapValue) -> bool:
+            return bool(filter_pred_raw(value))
+
         # filter_pred returns PayloadValue, used as truthy check in filter context
         # Handle collections
         if isinstance(current, list | tuple):
@@ -1502,16 +1505,17 @@ class FlextUtilitiesMapper:
         map_func_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "map")
         if map_func_raw is None:
             return current
-        # map_func accepts t.ConfigMapValue since we work with ConfigurationDict values
-        map_func: Callable[[t.ConfigMapValue], t.ConfigMapValue] = cast(
-            "Callable[[t.ConfigMapValue], t.ConfigMapValue]",
-            map_func_raw,
-        )
+
+        def map_func(value: t.ConfigMapValue) -> t.ConfigMapValue:
+            return FlextUtilitiesMapper._to_general_value_from_object(
+                map_func_raw(value)
+            )
+
         if isinstance(current, list | tuple):
             # Type narrowing: current is Sequence, items are t.ConfigMapValue
             seq_current: Sequence[t.ConfigMapValue] = current
             return [
-                map_func(FlextUtilitiesMapper.narrow_to_general_value_type(x))
+                map_func(FlextUtilitiesMapper._to_general_value_from_object(x))
                 for x in seq_current
             ]
         if isinstance(current, Mapping):
@@ -1541,7 +1545,7 @@ class FlextUtilitiesMapper:
             seq_current: Sequence[t.ConfigMapValue] = current
             result: list[t.ConfigMapValue] = []
             for x in seq_current:
-                x_general = FlextUtilitiesMapper.narrow_to_general_value_type(x)
+                x_general = FlextUtilitiesMapper._to_general_value_from_object(x)
                 if isinstance(x_general, str):
                     result.append(
                         x_general.lower()
@@ -1567,10 +1571,12 @@ class FlextUtilitiesMapper:
 
         convert_default = ops.get("convert_default")
         fallback = convert_default
-        convert_callable: Callable[[t.ConfigMapValue], t.ConfigMapValue] = cast(
-            "Callable[[t.ConfigMapValue], t.ConfigMapValue]",
-            convert_func,
-        )
+
+        def convert_callable(value: t.ConfigMapValue) -> t.ConfigMapValue:
+            return FlextUtilitiesMapper._to_general_value_from_object(
+                convert_func(value)
+            )
+
         converter_name = getattr(convert_func, "__name__", "")
         if fallback is None:
             if converter_name == "int":
@@ -1582,9 +1588,11 @@ class FlextUtilitiesMapper:
             elif converter_name == "bool":
                 fallback = False
             elif converter_name == "list":
-                fallback = []
+                fallback_list: list[t.ConfigMapValue] = []
+                fallback = fallback_list
             elif converter_name == "dict":
-                fallback = {}
+                fallback_dict: dict[str, t.ConfigMapValue] = {}
+                fallback = fallback_dict
             elif converter_name == "tuple":
                 fallback = ()
             elif converter_name == "set":
@@ -1641,13 +1649,13 @@ class FlextUtilitiesMapper:
             map_keys_dict = {str(k): str(v) for k, v in map_keys_val.items()}
         filter_keys_val = transform_opts.get("filter_keys")
         filter_keys_set: set[str] | None = (
-            cast("set[str]", filter_keys_val)
+            {str(key) for key in filter_keys_val}
             if isinstance(filter_keys_val, set)
             else None
         )
         exclude_keys_val = transform_opts.get("exclude_keys")
         exclude_keys_set: set[str] | None = (
-            cast("set[str]", exclude_keys_val)
+            {str(key) for key in exclude_keys_val}
             if isinstance(exclude_keys_val, set)
             else None
         )
@@ -1692,13 +1700,12 @@ class FlextUtilitiesMapper:
             mapped = FlextUtilitiesMapper.map_dict_keys(result, map_keys)
             if mapped.is_success:
                 mapped_value = mapped.value
-                if isinstance(mapped_value, Mapping):
-                    return {
-                        str(key): FlextUtilitiesMapper.narrow_to_general_value_type(
-                            value,
-                        )
-                        for key, value in mapped_value.items()
-                    }
+                return {
+                    str(key): FlextUtilitiesMapper.narrow_to_general_value_type(
+                        value,
+                    )
+                    for key, value in mapped_value.items()
+                }
         return result
 
     @staticmethod
@@ -1815,11 +1822,11 @@ class FlextUtilitiesMapper:
         ):
             return current
         transform_opts_raw: t.ConfigMapValue = ops["transform"]
-        if transform_opts_raw.__class__ is not dict:
+        if not isinstance(transform_opts_raw, Mapping):
             return current
-        # transform_opts_raw is dict after type check
-        # Type narrowing: transform_opts_raw is Mapping[str, t.ConfigMapValue]
-        transform_opts: Mapping[str, t.ConfigMapValue] = transform_opts_raw
+        transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
+            FlextUtilitiesMapper.narrow_to_general_value_type(transform_opts_raw),
+        )
         # Extract transform options
         (
             normalize_bool,
@@ -1868,17 +1875,21 @@ class FlextUtilitiesMapper:
         process_func_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "process")
         if process_func_raw is None:
             return current
-        # process_func accepts t.ConfigMapValue since we work with ConfigurationDict values
-        process_func: Callable[[t.ConfigMapValue], t.ConfigMapValue] = process_func_raw
+
+        def process_func(value: t.ConfigMapValue) -> t.ConfigMapValue:
+            return FlextUtilitiesMapper._to_general_value_from_object(
+                process_func_raw(value),
+            )
+
         try:
-            if current.__class__ in {list, tuple}:
+            if isinstance(current, list | tuple):
                 # Type narrowing: current is Sequence, items are t.ConfigMapValue
-                seq_current: Sequence[object] = current
+                seq_current: Sequence[t.ConfigMapValue] = current
                 return [
-                    process_func(FlextUtilitiesMapper.narrow_to_general_value_type(x))
+                    process_func(FlextUtilitiesMapper._to_general_value_from_object(x))
                     for x in seq_current
                 ]
-            if current.__class__ is dict:
+            if isinstance(current, Mapping):
                 # Type narrowing: current is dict, use ConfigurationDict
                 current_dict: Mapping[str, t.ConfigMapValue] = (
                     FlextUtilitiesMapper._narrow_to_configuration_dict(current)
@@ -1902,22 +1913,24 @@ class FlextUtilitiesMapper:
         """Helper: Apply group operation."""
         if "group" not in ops:
             return current
-        if current.__class__ not in {list, tuple}:
+        if not isinstance(current, (list, tuple)):
             return current
-        group_spec = ops["group"]
-        # Type narrowing: convert to list with proper type
+        group_spec_raw = ops["group"]
+        current_items: Sequence[t.ConfigMapValue] = current
         current_list: list[t.ConfigMapValue] = [
-            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item)
+            for item in current_items
         ]
         # Group by field name (str) or key function (callable)
         # Returns grouped mapping compatible with ConfigMapValue containers
-        if group_spec.__class__ is str:
+        if isinstance(group_spec_raw, str):
+            group_spec = group_spec_raw
             grouped: dict[str, list[t.ConfigMapValue]] = {}
             for item in current_list:
-                if (item.__class__ is Mapping or Mapping in item.__class__.__mro__) or (
-                    item.__class__ is BaseModel or BaseModel in item.__class__.__mro__
-                ):
-                    key_raw = FlextUtilitiesMapper.get(item, group_spec)
+                if isinstance(item, Mapping):
+                    key_raw = item.get(group_spec)
+                elif isinstance(item, BaseModel):
+                    key_raw = getattr(item, group_spec, None)
                 else:
                     continue
                 if key_raw is None:
@@ -1927,10 +1940,10 @@ class FlextUtilitiesMapper:
                     grouped[key] = []
                 grouped[key].append(item)
             return grouped
-        if callable(group_spec):
+        if callable(group_spec_raw):
             grouped_callable: dict[str, list[t.ConfigMapValue]] = {}
             for item in current_list:
-                key = str(group_spec(item))
+                key = str(group_spec_raw(item))
                 if key not in grouped_callable:
                     grouped_callable[key] = []
                 grouped_callable[key].append(item)
@@ -1945,23 +1958,23 @@ class FlextUtilitiesMapper:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
             return current
-        if current.__class__ not in {list, tuple}:
+        if not isinstance(current, (list, tuple)):
             return current
-        sort_spec = ops["sort"]
-        # Type narrowing: convert to list with proper type
+        sort_spec_raw = ops["sort"]
+        current_items: Sequence[t.ConfigMapValue] = current
         current_list: list[t.ConfigMapValue] = [
-            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item)
+            for item in current_items
         ]
-        if sort_spec.__class__ is str:
-            field_name: str = sort_spec
+        if isinstance(sort_spec_raw, str):
+            field_name: str = sort_spec_raw
 
             def key_func(item: t.ConfigMapValue) -> str:
                 # Only call .get() on accessible data types (mappings/models)
-                if (item.__class__ is Mapping or Mapping in item.__class__.__mro__) or (
-                    item.__class__ is BaseModel or BaseModel in item.__class__.__mro__
-                ):
-                    result = FlextUtilitiesMapper.get(item, field_name, default="")
-                    return str(result)
+                if isinstance(item, Mapping):
+                    return str(item.get(field_name, ""))
+                if isinstance(item, BaseModel):
+                    return str(getattr(item, field_name, ""))
                 # For scalar values, use str representation
                 return ""
 
@@ -1971,23 +1984,27 @@ class FlextUtilitiesMapper:
             )
             return (
                 list(sorted_list_key)
-                if current.__class__ is list
+                if isinstance(current, list)
                 else tuple(sorted_list_key)
             )
-        if callable(sort_spec):
+        if callable(sort_spec_raw):
+
+            def sort_key(item: t.ConfigMapValue) -> str:
+                return str(sort_spec_raw(item))
+
             try:
                 sorted_callable: list[t.ConfigMapValue] = sorted(
                     current_list,
-                    key=sort_spec,
+                    key=sort_key,
                 )
                 return (
                     list(sorted_callable)
-                    if current.__class__ is list
+                    if isinstance(current, list)
                     else tuple(sorted_callable)
                 )
             except Exception:
                 return current
-        if sort_spec is True:
+        if sort_spec_raw is True:
             comparable_items: list[t.ConfigMapValue] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
                     item
@@ -2000,7 +2017,7 @@ class FlextUtilitiesMapper:
                 comparable_items,
                 key=str,
             )
-            if current.__class__ is list:
+            if isinstance(current, list):
                 return sorted_comparable
             return tuple(sorted_comparable)
         return current
@@ -2013,11 +2030,12 @@ class FlextUtilitiesMapper:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
             return current
-        if current.__class__ not in {list, tuple}:
+        if not isinstance(current, (list, tuple)):
             return current
-        # Type narrowing: convert to list with proper type
+        current_items: Sequence[t.ConfigMapValue] = current
         current_list_unique: list[t.ConfigMapValue] = [
-            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item)
+            for item in current_items
         ]
         seen: set[t.ConfigMapValue | str] = set()
         unique_list: list[t.ConfigMapValue] = []
@@ -2030,7 +2048,7 @@ class FlextUtilitiesMapper:
             if item_hashable not in seen:
                 seen.add(item_hashable)
                 unique_list.append(item)
-        if current.__class__ is list:
+        if isinstance(current, list):
             return unique_list
         return tuple(unique_list)
 
@@ -2042,27 +2060,25 @@ class FlextUtilitiesMapper:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
             return current
-        if current.__class__ not in {list, tuple}:
+        if not isinstance(current, (list, tuple)):
             return current
+        current_items: Sequence[t.ConfigMapValue] = current
         slice_spec = ops["slice"]
         min_slice_length = 2
-        if (
-            slice_spec.__class__ in {tuple, list}
-            and len(slice_spec) >= min_slice_length
-        ):
+        if isinstance(slice_spec, list | tuple) and len(slice_spec) >= min_slice_length:
             start_raw = slice_spec[0]
             end_raw = slice_spec[1]
-            start: int | None = start_raw if start_raw.__class__ is int else None
-            end: int | None = end_raw if end_raw.__class__ is int else None
-            if current.__class__ is list:
+            start: int | None = start_raw if isinstance(start_raw, int) else None
+            end: int | None = end_raw if isinstance(end_raw, int) else None
+            if isinstance(current, list):
                 sliced_list: list[t.ConfigMapValue] = [
                     FlextUtilitiesMapper.narrow_to_general_value_type(item)
-                    for item in current[start:end]
+                    for item in current_items[start:end]
                 ]
                 return sliced_list
             sliced_tuple: tuple[t.ConfigMapValue, ...] = tuple(
                 FlextUtilitiesMapper.narrow_to_general_value_type(item)
-                for item in current[start:end]
+                for item in current_items[start:end]
             )
             return sliced_tuple
         return current
@@ -2075,13 +2091,15 @@ class FlextUtilitiesMapper:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
             return current
-        if current.__class__ not in {list, tuple}:
+        if not isinstance(current, (list, tuple)):
             return current
         chunk_size = ops["chunk"]
-        if chunk_size.__class__ is not int or chunk_size <= 0:
+        if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
+        current_items: Sequence[t.ConfigMapValue] = current
         current_list: list[t.ConfigMapValue] = [
-            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item)
+            for item in current_items
         ]
         chunked: list[list[t.ConfigMapValue]] = []
         for i in range(0, len(current_list), chunk_size):
@@ -2281,10 +2299,13 @@ class FlextUtilitiesMapper:
             field_ops: t.ConfigMapValue | None
             field_required: bool
 
-            if field_spec.__class__ is dict:
+            if isinstance(field_spec, Mapping):
                 # Type annotations for .get() results to help pyright inference
                 # Type narrowing: type check provides type narrowing to ConfigurationDict
-                field_spec_dict: Mapping[str, t.ConfigMapValue] = field_spec
+                field_spec_dict: Mapping[str, t.ConfigMapValue] = {
+                    str(key): FlextUtilitiesMapper.narrow_to_general_value_type(value)
+                    for key, value in field_spec.items()
+                }
                 # Type inference: .get() returns t.ConfigMapValue | None
                 # Variables already declared above, just assign values
                 # Use dict.get() directly - field_spec_dict is ConfigurationDict (dict subclass)
@@ -2403,25 +2424,30 @@ class FlextUtilitiesMapper:
 
         for target_key, target_spec in spec.items():
             try:
+                target_spec_mapping: Mapping[str, t.ConfigMapValue] | None = None
                 # Literal value
-                if target_spec.__class__ is dict and "value" in target_spec:
-                    constructed[target_key] = target_spec["value"]
-                    continue
+                if isinstance(target_spec, Mapping):
+                    target_spec_mapping = (
+                        FlextUtilitiesMapper._narrow_to_configuration_dict(target_spec)
+                    )
+                    if "value" in target_spec_mapping:
+                        constructed[target_key] = target_spec_mapping["value"]
+                        continue
 
                 # Field mapping
-                if target_spec.__class__ is str:
+                if isinstance(target_spec, str):
                     source_field = target_spec
                     field_default = None
                     field_ops = None
-                elif target_spec.__class__ is dict:
-                    source_field_raw = target_spec.get("field", target_key)
+                elif target_spec_mapping is not None:
+                    source_field_raw = target_spec_mapping.get("field", target_key)
                     source_field = (
                         str(source_field_raw)
                         if source_field_raw is not None
                         else target_key
                     )
-                    field_default = target_spec.get("default")
-                    field_ops = target_spec.get("ops")
+                    field_default = target_spec_mapping.get("default")
+                    field_ops = target_spec_mapping.get("ops")
                 else:
                     # After type checks, target_spec is t.ConfigMapValue
                     constructed[target_key] = target_spec
@@ -2610,18 +2636,32 @@ class FlextUtilitiesMapper:
                 return False
 
             # Nested dict comparison
-            if val_a.__class__ is dict and val_b.__class__ is dict:
-                if not FlextUtilitiesMapper.deep_eq(val_a, val_b):
+            if isinstance(val_a, Mapping) and isinstance(val_b, Mapping):
+                val_a_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(val_a)
+                val_b_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(val_b)
+                if not FlextUtilitiesMapper.deep_eq(val_a_dict, val_b_dict):
                     return False
                 continue
 
             # List comparison (order matters)
-            if val_a.__class__ is list and val_b.__class__ is list:
-                if len(val_a) != len(val_b):
+            if isinstance(val_a, list) and isinstance(val_b, list):
+                val_a_list = val_a
+                val_b_list = val_b
+                if len(val_a_list) != len(val_b_list):
                     return False
-                for item_a, item_b in zip(val_a, val_b, strict=True):
-                    if item_a.__class__ is dict and item_b.__class__ is dict:
-                        if not FlextUtilitiesMapper.deep_eq(item_a, item_b):
+                for item_a, item_b in zip(val_a_list, val_b_list, strict=True):
+                    if isinstance(item_a, Mapping) and isinstance(item_b, Mapping):
+                        item_a_dict = (
+                            FlextUtilitiesMapper._narrow_to_configuration_dict(
+                                item_a,
+                            )
+                        )
+                        item_b_dict = (
+                            FlextUtilitiesMapper._narrow_to_configuration_dict(
+                                item_b,
+                            )
+                        )
+                        if not FlextUtilitiesMapper.deep_eq(item_a_dict, item_b_dict):
                             return False
                     elif item_a != item_b:
                         return False
@@ -2878,7 +2918,16 @@ class FlextUtilitiesMapper:
             # [25, 30, 0]
 
         """
-        return [item.get(key, default) for item in items]
+        values: list[t.ConfigMapValue | None] = []
+        for item in items:
+            raw_value = item.get(key, default)
+            if raw_value is None:
+                values.append(None)
+            else:
+                values.append(
+                    FlextUtilitiesMapper._to_general_value_from_object(raw_value)
+                )
+        return values
 
     @staticmethod
     def key_by[T, K](

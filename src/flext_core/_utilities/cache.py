@@ -118,10 +118,11 @@ class FlextUtilitiesCache:
         - Safe for concurrent calls
         """
         # Handle BaseModel first - convert to dict
-        if BaseModel in component.__class__.__mro__:
+        if isinstance(component, BaseModel):
+            model_component = cast("BaseModel", component)
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
-                for k, v in component.model_dump().items()
+                for k, v in model_component.model_dump().items()
             }
         # component is already t.GuardInputValue (not BaseModel)
         # Check if dict-like
@@ -136,24 +137,26 @@ class FlextUtilitiesCache:
                 for k, v in dict_component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
-        if component.__class__ in {str, int, float, bool, None.__class__}:
+        if isinstance(component, str | int | float | bool) or component is None:
             return component
         # Handle collections
-        if component.__class__ is set:
+        if isinstance(component, set):
             # Type narrowing: component is set[t.GuardInputValue]
             # Explicit type annotation for set items
-            items_set: set[t.GuardInputValue] = component
+            items_set = cast("set[t.GuardInputValue]", component)
             # Convert set to tuple for hashability - normalize each item
             normalized_items: list[t.GuardInputValue] = [
                 FlextUtilitiesCache.normalize_component(item) for item in items_set
             ]
             return tuple(normalized_items)
-        if component.__class__ in {list, tuple} or (
-            hasattr(component, "__getitem__")
-            and component.__class__ not in {str, bytes}
+        if isinstance(component, list | tuple) and not isinstance(
+            component, str | bytes
         ):
             # Type narrowing: component is Sequence, so items are t.GuardInputValue
-            return [FlextUtilitiesCache.normalize_component(item) for item in component]
+            items_seq = cast(
+                "list[t.GuardInputValue] | tuple[t.GuardInputValue, ...]", component
+            )
+            return [FlextUtilitiesCache.normalize_component(item) for item in items_seq]
         # For other types, convert to string as fallback
         return str(component)
 
@@ -187,9 +190,10 @@ class FlextUtilitiesCache:
             Tuple for sorted() key function
 
         """
-        if key.__class__ is str:
-            return (0, key.lower())
-        if key.__class__ in {int, float}:
+        if isinstance(key, str):
+            str_key = cast("str", key)
+            return (0, str_key.lower())
+        if isinstance(key, int | float):
             return (1, str(key))
         return (2, str(key))
 

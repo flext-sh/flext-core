@@ -61,7 +61,7 @@ from typing import ClassVar, Self, TypeGuard, cast
 
 import structlog
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from structlog.typing import BindableLogger
 
 from flext_core.constants import c
@@ -154,28 +154,12 @@ class FlextRuntime:
         Tier 0.5 can be imported by Tier 1 modules like exceptions.py.
         """
 
-        model_config = {"extra": "forbid", "frozen": True, "validate_assignment": True}
+        model_config = ConfigDict(extra="forbid", frozen=True, validate_assignment=True)
 
-        created_at: datetime
-        updated_at: datetime
-        version: str = "1.0.0"
-        attributes: Mapping[str, t.MetadataAttributeValue]
-
-        def __init__(
-            self,
-            *,
-            created_at: datetime | None = None,
-            updated_at: datetime | None = None,
-            version: str = "1.0.0",
-            attributes: Mapping[str, t.MetadataAttributeValue] | None = None,
-        ) -> None:
-            """Initialize metadata with optional values."""
-            super().__init__(
-                created_at=created_at or datetime.now(UTC),
-                updated_at=updated_at or datetime.now(UTC),
-                version=version,
-                attributes=attributes if attributes is not None else {},
-            )
+        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        version: str = Field(default="1.0.0")
+        attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
 
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.
@@ -396,19 +380,21 @@ class FlextRuntime:
         """
         if FlextRuntime._is_scalar(val):
             return val
-        match val:
-            case BaseModel() as model:
-                return FlextRuntime.normalize_to_general_value(model.model_dump())
-            case Path():
-                return val
-            case _:
-                pass
+
+        model_dump = getattr(val, "model_dump", None)
+        if callable(model_dump):
+            dumped_value: t.ConfigMapValue = TypeAdapter(
+                t.ConfigMapValue
+            ).validate_python(model_dump())
+            return FlextRuntime.normalize_to_general_value(dumped_value)
+
         if FlextRuntime.is_dict_like(val):
-            dict_v = val.root
+            dict_v = val.root if hasattr(val, "root") else val
             result = t.ConfigMap()
             for k, v in dict_v.items():
                 result[k] = FlextRuntime.normalize_to_general_value(v)
             return result
+
         if FlextRuntime.is_list_like(val):
             return [FlextRuntime.normalize_to_general_value(item) for item in val]
         return val
@@ -441,8 +427,16 @@ class FlextRuntime:
         if FlextRuntime._is_scalar(val):
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
+
+        model_dump = getattr(val, "model_dump", None)
+        if callable(model_dump):
+            dumped_value: t.ConfigMapValue = TypeAdapter(
+                t.ConfigMapValue
+            ).validate_python(model_dump())
+            return FlextRuntime.normalize_to_metadata_value(dumped_value)
+
         if FlextRuntime.is_dict_like(val):
-            raw_mapping = val.root
+            raw_mapping = val.root if hasattr(val, "root") else val
             normalized_mapping: dict[
                 str,
                 str
@@ -456,10 +450,11 @@ class FlextRuntime:
             for key, value in raw_mapping.items():
                 metadata_value = FlextRuntime.normalize_to_metadata_value(value)
                 if hasattr(metadata_value, "items"):
-                    normalized_mapping[key] = json.dumps(metadata_value)
+                    normalized_mapping[str(key)] = json.dumps(metadata_value)
                 else:
-                    normalized_mapping[key] = str(metadata_value)
+                    normalized_mapping[str(key)] = str(metadata_value)
             return normalized_mapping
+
         if FlextRuntime.is_list_like(val):
             # Convert to list of MetadataAttributeValue scalars (including datetime)
             result_list: list[str | int | float | bool | datetime | None] = []
@@ -598,22 +593,22 @@ class FlextRuntime:
                 # GenericTypeArgument = str | type[t.ConfigMapValue]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
                 # since they represent type[T] where T is a scalar t.ConfigMapValue
-                type_mapping: Mapping[str, tuple[t.GenericTypeArgument, ...]] = {
-                    "StringList": (str,),
-                    "IntList": (int,),
-                    "FloatList": (float,),
-                    "BoolList": (bool,),
-                    "Dict": (str, str),
-                    "List": (str,),
-                    "StringDict": (str, str),
-                    "IntDict": (str, int),
-                    "FloatDict": (str, float),
-                    "BoolDict": (str, bool),
-                    # NestedDict: str key, nested value (recursive dict structure)
-                    "NestedDict": (str, dict),
-                }
-                if type_name in type_mapping:
-                    return type_mapping[type_name]
+                if type_name in {"StringList", "List"}:
+                    return (str,)
+                if type_name == "IntList":
+                    return (int,)
+                if type_name == "FloatList":
+                    return (float,)
+                if type_name == "BoolList":
+                    return (bool,)
+                if type_name in {"Dict", "StringDict", "NestedDict"}:
+                    return (str, str)
+                if type_name == "IntDict":
+                    return (str, int)
+                if type_name == "FloatDict":
+                    return (str, float)
+                if type_name == "BoolDict":
+                    return (str, bool)
 
             return ()
         except (
@@ -1189,7 +1184,7 @@ class FlextRuntime:
 
         # Determine logger factory (handle async buffering)
         # structlog accepts various factory types - we use object to accept all
-        factory_to_use: t.ConfigMapValue
+        factory_to_use: object
         if logger_factory is not None:
             # Use the provided factory directly (Callable[[], BindableLogger])
             factory_to_use = logger_factory

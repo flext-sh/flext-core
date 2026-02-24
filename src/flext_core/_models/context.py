@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Annotated, cast
+from typing import Annotated
 
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -340,8 +340,7 @@ class FlextModelsContext:
                     FlextModelsContext.ContextData.normalize_to_general_value(item)
                     for item in seq_val
                 ]
-            # For arbitrary objects, keep as is since t.GuardInputValue includes object
-            return val
+            return str(val)
 
         @classmethod
         def check_json_serializable(
@@ -412,20 +411,24 @@ class FlextModelsContext:
                     msg = f"Value must be a dictionary or BaseModel, got {type_name}"
                     raise TypeError(msg)
                 working_value = {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    str(k): FlextModelsContext.ContextData.normalize_to_general_value(
+                        val
+                    )
                     for k, val in dump_result.items()
                 }
             elif v is None:
                 return {}
-            elif isinstance(v, Mapping):
-                # Normalize dict to ConfigurationDict
+            elif hasattr(v, "items") and callable(getattr(v, "items", None)):
+                # Normalize dict-like to ConfigurationDict (duck-type; avoids redundant isinstance)
                 working_value = {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    str(k): FlextModelsContext.ContextData.normalize_to_general_value(
+                        val
+                    )
                     for k, val in v.items()
                 }
             else:
                 type_name = v.__class__.__name__
-                msg = f"Value must be a dictionary or BaseModel, got {type_name}"
+                msg = f"Value must be a dictionary or Pydantic model, got {type_name}"
                 raise TypeError(msg)
 
             # Validate JSON serializability
@@ -552,20 +555,24 @@ class FlextModelsContext:
                     msg = f"Value must be a dict or BaseModel, got {type_name}"
                     raise TypeError(msg)
                 working_value = {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    str(k): FlextModelsContext.ContextData.normalize_to_general_value(
+                        val
+                    )
                     for k, val in dump_result.items()
                 }
             elif v is None:
                 return {}
-            elif isinstance(v, Mapping):
-                # Normalize dict to ConfigurationDict
+            elif hasattr(v, "items") and callable(getattr(v, "items", None)):
+                # Normalize dict-like to ConfigurationDict (duck-type; avoids redundant isinstance)
                 working_value = {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    str(k): FlextModelsContext.ContextData.normalize_to_general_value(
+                        val
+                    )
                     for k, val in v.items()
                 }
             else:
                 type_name = v.__class__.__name__
-                msg = f"Value must be a dict or BaseModel, got {type_name}"
+                msg = f"Value must be a dict or Pydantic model, got {type_name}"
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
@@ -654,10 +661,11 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
-                # is_dict_like() confirms v is Mapping - dict() accepts it
-                # Convert to dict explicitly for type safety
-                return dict(cast("Mapping[str, t.GuardInputValue]", v))
+            if isinstance(v, Mapping):
+                return {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in v.items()
+                }
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -676,10 +684,11 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
-                # is_dict_like() confirms v is Mapping - dict() accepts it
-                # Convert to dict explicitly for type safety
-                return dict(cast("Mapping[str, t.GuardInputValue]", v))
+            if isinstance(v, Mapping):
+                return {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in v.items()
+                }
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -750,10 +759,11 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
-                # is_dict_like() confirms v is Mapping - dict() accepts it
-                # Convert to dict explicitly for type safety
-                return dict(cast("Mapping[str, t.GuardInputValue]", v))
+            if isinstance(v, Mapping):
+                return {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in v.items()
+                }
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -861,10 +871,11 @@ class FlextModelsContext:
             if isinstance(v, t.Dict):
                 # RootModel - extract root dict
                 return v.root
-            if FlextRuntime.is_dict_like(cast("t.ConfigMapValue", v)):
-                # is_dict_like() confirms v is Mapping - dict() accepts it
-                # Convert to dict explicitly for type safety
-                return dict(cast("Mapping[str, t.GuardInputValue]", v))
+            if isinstance(v, Mapping):
+                return {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in v.items()
+                }
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:

@@ -14,7 +14,14 @@ import csv
 import hashlib
 import os
 import re
-from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    Sized,
+)
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
@@ -28,6 +35,7 @@ from flext_core import (
     T,
     r,
 )
+from flext_core.typings import t as core_t
 from pydantic import BaseModel
 
 from flext_tests.constants import c
@@ -833,16 +841,18 @@ class FlextTestsUtilities(FlextUtilities):
                 for key, value in data.items():
                     if value is None:
                         result[key] = []
-                    elif type(value) in {list, tuple}:
+                    elif isinstance(value, (list, tuple)):
                         value_seq: Sequence[str] = value
                         result[key] = [str(v) for v in value_seq]
-                    elif type(value) is set:
+                    elif isinstance(value, set):
                         value_set: set[str] = value
                         result[key] = [str(v) for v in value_set]
-                    else:
+                    elif isinstance(value, str):
                         # value is str (after None and iterable checks above)
-                        value_str: str = value
+                        value_str = value
                         result[key] = [value_str]
+                    else:
+                        result[key] = [str(value)]
 
                 return result
 
@@ -907,7 +917,12 @@ class FlextTestsUtilities(FlextUtilities):
                     New FlextSettings instance
 
                 """
-                return FlextSettings.materialize(config_overrides=kwargs)
+                scalar_overrides: dict[str, core_t.ScalarValue] = {
+                    str(key): _to_scalar(value) for key, value in kwargs.items()
+                }
+                return FlextSettings.materialize(
+                    config_overrides=scalar_overrides,
+                )
 
             @staticmethod
             def assert_config_fields(
@@ -1550,10 +1565,10 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = path.split(".")
-                current: t.Tests.PayloadValue = c
+                current: object = c
                 for part in parts:
                     current = getattr(current, part)
-                return current
+                return _to_payload(current)
 
             @staticmethod
             def compile_pattern(pattern_attr: str) -> Pattern[str]:
@@ -1568,7 +1583,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = pattern_attr.split(".")
-                current: t.Tests.PayloadValue = c
+                current: object = c
                 for part in parts:
                     current = getattr(current, part)
                 pattern_str = str(current)
@@ -2134,9 +2149,17 @@ class FlextTestsUtilities(FlextUtilities):
                         raise AssertionError(f"Failed at {result.path}: {result.reason}")
 
                 """
+                if isinstance(obj, BaseModel):
+                    source_obj: core_t.ConfigMapValue = obj
+                else:
+                    source_obj = core_t.ConfigMap({
+                        str(key): _to_config_map_value(value)
+                        for key, value in obj.items()
+                    })
+
                 for path, expected in spec.items():
                     result = FlextUtilities.Mapper.extract(
-                        obj,
+                        source_obj,
                         path,
                         separator=path_sep,
                     )
@@ -2151,27 +2174,29 @@ class FlextTestsUtilities(FlextUtilities):
 
                     actual = result.value
                     if callable(expected):
-                        if not expected(actual):
+                        actual_payload = _to_payload(actual)
+                        if not expected(actual_payload):
                             return m.Tests.Matcher.DeepMatchResult(
                                 path=path,
                                 expected="<predicate>",
-                                actual=actual,
+                                actual=actual_payload,
                                 matched=False,
                                 reason="Predicate failed",
                             )
                     elif actual != expected:
+                        actual_payload = _to_payload(actual)
                         return m.Tests.Matcher.DeepMatchResult(
                             path=path,
                             expected=expected,
-                            actual=actual,
+                            actual=actual_payload,
                             matched=False,
                             reason="Value mismatch",
                         )
 
                 return m.Tests.Matcher.DeepMatchResult(
                     path="",
-                    expected=spec,
-                    actual=obj,
+                    expected=_to_payload(obj),
+                    actual=_to_payload(obj),
                     matched=True,
                 )
 
@@ -2212,11 +2237,14 @@ class FlextTestsUtilities(FlextUtilities):
                     u.Tests.Length.validate("hi", 5)              # Exact: False
 
                 """
-                if not hasattr(value, "__len__"):
+                try:
+                    if not isinstance(value, Sized):
+                        return False
+                    actual_len = len(value)
+                except TypeError:
                     return False
-                actual_len = len(value)
 
-                if type(spec) is int:
+                if isinstance(spec, int):
                     # Delegate to flext-core chk() - zero duplication
                     return FlextUtilities.chk(actual_len, eq=spec)
                 min_len, max_len = spec
@@ -2228,3 +2256,31 @@ class FlextTestsUtilities(FlextUtilities):
 u = FlextTestsUtilities
 
 __all__ = ["FlextTestsUtilities", "u"]
+
+
+def _to_payload(value: object) -> t.Tests.PayloadValue:
+    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
+        return value
+    if isinstance(value, Mapping):
+        return {str(k): _to_payload(v) for k, v in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+        return [_to_payload(item) for item in value]
+    return str(value)
+
+
+def _to_scalar(value: t.Tests.PayloadValue) -> core_t.ScalarValue:
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    return str(value)
+
+
+def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
+    if value is None or isinstance(value, str | int | float | bool | BaseModel):
+        return value
+    if isinstance(value, bytes):
+        return value.decode(errors="ignore")
+    if isinstance(value, Mapping):
+        return {str(k): _to_config_map_value(v) for k, v in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+        return [_to_config_map_value(item) for item in value]
+    return str(value)

@@ -9,7 +9,7 @@ from typing import Any, cast
 import pytest
 
 from flext_core import FlextContext, d, e, m, r, t, c, u
-from flext_core.decorators import deprecated
+deprecated = d.deprecated
 
 
 class _ResultLogger:

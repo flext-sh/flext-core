@@ -50,28 +50,24 @@ TModel = TypeVar("TModel", bound=BaseModel)
 
 # Literal types for file operations (used in signatures)
 _FormatLiteral = Literal["auto", "text", "bin", "json", "yaml", "csv"]
-_CompareModeLiteral = Literal["full", "keys", "values", "lines"]
-_OperationLiteral = Literal["read", "write", "append", "create"]
-_ErrorModeLiteral = Literal["raise", "warn", "ignore"]
+_CompareModeLiteral = Literal["content", "size", "hash", "lines"]
+_OperationLiteral = Literal["create", "read", "delete"]
+_ErrorModeLiteral = Literal["stop", "skip", "collect"]
 # Alias for file content union (str, bytes, ConfigMap, etc.)
 TestsFileContent = t.Tests.FileContent
 
 
 def _is_batch_content(content_raw: object) -> bool:
-    """Return True if content_raw is valid batch file content (str, bytes, dict-like, sequence, or BaseModel)."""
-    if type(content_raw) in {str, bytes}:
+    try:
+        _ = m.Tests.Files.CreateParams.model_validate(
+            {
+                "content": content_raw,
+                "name": c.Tests.Files.DEFAULT_FILENAME,
+            },
+        )
         return True
-    if hasattr(content_raw, "keys") and hasattr(content_raw, "items"):
-        return True
-    if (
-        hasattr(content_raw, "__getitem__")
-        and hasattr(content_raw, "__len__")
-        and type(content_raw) not in {str, bytes}
-    ):
-        return True
-    return (
-        hasattr(type(content_raw), "__mro__") and BaseModel in type(content_raw).__mro__
-    )
+    except Exception:
+        return False
 
 
 class FlextTestsFiles(s[t.Tests.TestResultValue]):
@@ -386,35 +382,24 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         """
         # Extract from FlextResult BEFORE validation if extract_result=True
         # This ensures CreateParams receives the unwrapped content, not the FlextResult
-        content_to_validate = content
-        if extract_result and type(content).__mro__ and r in type(content).__mro__:
-            if content.is_failure:
-                error_msg = content.error or "FlextResult failure"
-                raise ValueError(
-                    f"Cannot create file from failed FlextResult: {error_msg}",
-                )
-            content_to_validate = content.value
-
-        # Validate and compute parameters using CreateParams model with u.Model.from_kwargs()
-        # All parameters validated via Pydantic 2 Field constraints (ge, min_length, max_length) - no manual validation
-        # Pydantic 2 field_validators handle type conversions automatically (str → Path, etc.)
-        params_result = u.Model.from_kwargs(
-            m.Tests.Files.CreateParams,
-            content=content_to_validate,
-            name=name,
-            directory=directory,
-            fmt=fmt,
-            enc=enc,
-            indent=indent,
-            delim=delim,
-            headers=headers,
-            readonly=readonly,
-            extract_result=extract_result,
-        )
-        if params_result.is_failure:
-            error_msg = f"Invalid parameters for file creation: {params_result.error}"
-            raise ValueError(error_msg) from None
-        params = params_result.value
+        content_to_validate = self._extract_content(content, extract_result)
+        try:
+            params = m.Tests.Files.CreateParams.model_validate(
+                {
+                    "content": content_to_validate,
+                    "name": name,
+                    "directory": directory,
+                    "fmt": fmt,
+                    "enc": enc,
+                    "indent": indent,
+                    "delim": delim,
+                    "headers": headers,
+                    "readonly": readonly,
+                    "extract_result": extract_result,
+                },
+            )
+        except Exception as exc:
+            raise ValueError(f"Invalid parameters for file creation: {exc}") from None
 
         target_dir = self._resolve_directory(params.directory)
         # params.name is str (never None) - default is DEFAULT_FILENAME
@@ -422,12 +407,19 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         file_path: Path = target_dir / name_str
 
         # Content already extracted if needed - use validated content
-        actual_content = params.content
+        actual_content: (
+            str
+            | bytes
+            | m.ConfigMap
+            | Sequence[Sequence[str]]
+            | BaseModel
+            | Mapping[str, t.Tests.PayloadValue]
+        ) = self._coerce_file_content(params.content)
 
         # Convert Pydantic model to dict using u.Model.to_dict()
         # Ensure actual_content is a BaseModel instance before calling to_dict
-        if BaseModel in type(actual_content).__mro__:
-            actual_content = u.Model.to_dict(actual_content)
+        if isinstance(actual_content, BaseModel):
+            actual_content = self._mapping_to_payload(u.Model.to_dict(actual_content))
         # If it's already a dict, leave it as is - u.Model.to_dict expects BaseModel
         # If it's something else (str, bytes, list), it will be handled by auto-detection
 
@@ -436,38 +428,16 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content_for_detect: (
             str | bytes | Mapping[str, t.Tests.PayloadValue] | list[list[str]]
         )
-        if type(actual_content) in {str, bytes}:
+        if isinstance(actual_content, str | bytes):
             content_for_detect = actual_content
-        elif isinstance(actual_content, dict):
-            content_for_detect = {
-                str(k): FlextRuntime.normalize_to_general_value(v)
-                if (
-                    v is None
-                    or type(v) in {str, int, float, bool, bytes, list, tuple, dict}
-                    or (hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__)
-                    or (hasattr(v, "keys") and hasattr(v, "items"))
-                    or (
-                        hasattr(v, "__len__")
-                        and hasattr(v, "__getitem__")
-                        and type(v) not in {str, bytes}
-                    )
-                )
-                else str(v)
-                for k, v in actual_content.items()
-            }
-        elif hasattr(actual_content, "keys") and hasattr(actual_content, "items"):
-            content_for_detect = {
-                str(k): FlextRuntime.normalize_to_general_value(v)
-                for k, v in actual_content.items()
-            }
-        elif BaseModel in type(actual_content).__mro__:
-            content_for_detect = u.Model.dump(actual_content)
+        elif isinstance(actual_content, Mapping):
+            content_for_detect = self._mapping_to_payload(actual_content)
         elif isinstance(actual_content, list):
-            if actual_content and type(actual_content[0]) in {list, tuple}:
+            if self._is_nested_rows(actual_content):
                 content_for_detect = [
                     [str(cell) for cell in row]
                     for row in actual_content
-                    if type(row) in {list, tuple}
+                    if isinstance(row, list | tuple)
                 ]
             else:
                 content_for_detect = str(actual_content)
@@ -492,9 +462,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         elif actual_fmt == c.Tests.Files.Format.JSON:
             # Convert Mapping to dict if needed using u.Mapper.to_dict()
             # Only call to_dict if it's a Mapping but not a dict
-            if (
-                hasattr(actual_content, "keys") and hasattr(actual_content, "items")
-            ) and not isinstance(actual_content, dict):
+            if isinstance(actual_content, Mapping) and not isinstance(
+                actual_content, dict
+            ):
                 data = u.Mapper.to_dict(actual_content)
             elif isinstance(actual_content, dict):
                 data = actual_content
@@ -505,9 +475,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 encoding=params.enc,
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
-            if (
-                hasattr(actual_content, "keys") and hasattr(actual_content, "items")
-            ) and not isinstance(actual_content, dict):
+            if isinstance(actual_content, Mapping) and not isinstance(
+                actual_content, dict
+            ):
                 data = u.Mapper.to_dict(actual_content)
             elif isinstance(actual_content, dict):
                 data = actual_content
@@ -521,15 +491,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         elif actual_fmt == c.Tests.Files.Format.CSV:
             # Convert Sequence[Sequence[str]] to list[list[str]] for write_csv
             csv_content: list[list[str]]
-            if u.is_type(actual_content, "sequence") and type(actual_content) not in {
-                str,
-                bytes,
-            }:
-                if all(
-                    u.is_type(row, "sequence") and type(row) not in {str, bytes}
-                    for row in actual_content
-                ):
-                    csv_content = [list(row) for row in actual_content]
+            if isinstance(actual_content, Sequence) and not isinstance(
+                actual_content,
+                str | bytes,
+            ):
+                if self._is_nested_rows(actual_content):
+                    csv_content = [
+                        [str(cell) for cell in row]
+                        for row in actual_content
+                        if isinstance(row, Sequence)
+                        and not isinstance(row, str | bytes)
+                    ]
                 else:
                     # Not a nested sequence - wrap in list (single column CSV)
                     csv_content = [[str(item)] for item in actual_content]
@@ -632,23 +604,24 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # All parameters validated via Pydantic 2 Field constraints - no manual validation needed
         # Pydantic 2 field_validators handle type conversions automatically (str → Path, etc.)
         # Pass all parameters as kwargs to avoid "already assigned" error
-        params_result = u.Model.from_kwargs(
-            m.Tests.Files.ReadParams,
-            path=path,
-            fmt=fmt,
-            enc=enc,
-            delim=delim,
-            has_headers=has_headers,
-            **({"model_cls": model_cls} if model_cls is not None else {}),
-        )
-        if params_result.is_failure:
-            error_msg = f"Invalid parameters for file read: {params_result.error}"
+        try:
+            params = m.Tests.Files.ReadParams.model_validate(
+                {
+                    "path": path,
+                    "fmt": fmt,
+                    "enc": enc,
+                    "delim": delim,
+                    "has_headers": has_headers,
+                    "model_cls": model_cls,
+                },
+            )
+        except Exception as exc:
+            error_msg = f"Invalid parameters for file read: {exc}"
             if model_cls is not None:
                 return r[TModel].fail(error_msg)
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 error_msg,
             )
-        params = params_result.value
 
         if not params.path.exists():
             if model_cls is not None:
@@ -686,27 +659,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Use original model_cls parameter (type[TModel]) instead of params.model_cls
             # (type[BaseModel]) to preserve TModel type for pyrefly
             if model_cls is not None:
-                # Type narrowing: check if content is dict/mapping
-                if not (u.is_type(content, "dict") or u.is_type(content, "mapping")):
-                    return r[TModel].fail(
-                        f"Cannot load model from non-dict content: {type(content)}",
-                    )
-                # Convert to dict if needed
-                if isinstance(content, dict):
-                    content_dict = content
-                elif hasattr(content, "keys") and hasattr(content, "items"):
-                    # Type-safe conversion from Mapping to dict
-                    content_dict = u.Mapper.to_dict(content)
-                else:
-                    # Should not reach here due to check above, but satisfy type checker
-                    return r[TModel].fail(
-                        f"Cannot convert content to dict: {type(content)}",
-                    )
-                # Use model_validate with original model_cls for proper TModel inference
                 try:
-                    model_instance: TModel = model_cls.model_validate(content_dict)
-                    result: r[TModel] = r[TModel].ok(model_instance)
-                    return result
+                    model_instance: TModel = model_cls.model_validate(content)
+                    return r[TModel].ok(model_instance)
                 except Exception as ex:
                     return r[TModel].fail(f"Failed to validate model: {ex}")
 
@@ -785,23 +740,24 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # Validate and compute parameters using CompareParams model with u.Model.from_kwargs()
         # All parameters validated via Pydantic 2 Field constraints - no manual validation needed
         # Pydantic 2 field_validators handle type conversions automatically (str → Path, etc.)
-        params_result = u.Model.from_kwargs(
-            m.Tests.Files.CompareParams,
-            file1=file1,
-            file2=file2,
-            mode=mode,
-            ignore_ws=ignore_ws,
-            ignore_case=ignore_case,
-            pattern=pattern,
-            deep=deep,
-            keys=keys,
-            exclude_keys=exclude_keys,
-        )
-        if params_result.is_failure:
-            return r[bool].fail(
-                f"Invalid parameters for file comparison: {params_result.error}",
+        try:
+            params = m.Tests.Files.CompareParams.model_validate(
+                {
+                    "file1": file1,
+                    "file2": file2,
+                    "mode": mode,
+                    "ignore_ws": ignore_ws,
+                    "ignore_case": ignore_case,
+                    "pattern": pattern,
+                    "deep": deep,
+                    "keys": keys,
+                    "exclude_keys": exclude_keys,
+                },
             )
-        params = params_result.value
+        except Exception as exc:
+            return r[bool].fail(
+                f"Invalid parameters for file comparison: {exc}",
+            )
 
         if not params.file1.exists():
             return r[bool].fail(
@@ -909,10 +865,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content1: str,
         content2: str,
         fmt: str,
-    ) -> (
-        tuple[Mapping[str, t.Tests.PayloadValue], Mapping[str, t.Tests.PayloadValue]]
-        | None
-    ):
+    ) -> tuple[Mapping[str, t.ConfigMapValue], Mapping[str, t.ConfigMapValue]] | None:
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:
@@ -932,11 +885,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _apply_key_filtering(
         self,
-        dict1: Mapping[str, t.Tests.PayloadValue],
-        dict2: Mapping[str, t.Tests.PayloadValue],
+        dict1: Mapping[str, t.ConfigMapValue],
+        dict2: Mapping[str, t.ConfigMapValue],
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[Mapping[str, t.Tests.PayloadValue], Mapping[str, t.Tests.PayloadValue]]:
+    ) -> tuple[Mapping[str, t.ConfigMapValue], Mapping[str, t.ConfigMapValue]]:
         """Apply key filtering to both dicts if specified."""
         if keys is None and exclude_keys is None:
             return dict1, dict2
@@ -1001,19 +954,20 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # Validate and compute parameters using InfoParams model with u.Model.from_kwargs()
         # All parameters validated via Pydantic 2 Field constraints - no manual validation needed
         # Pydantic 2 field_validators handle type conversions automatically (str → Path, etc.)
-        params_result = u.Model.from_kwargs(
-            m.Tests.Files.InfoParams,
-            path=path,
-            compute_hash=compute_hash,
-            detect_fmt=detect_fmt,
-            parse_content=parse_content,
-            validate_model=validate_model,
-        )
-        if params_result.is_failure:
-            return r[m.Tests.Files.FileInfo].fail(
-                f"Invalid parameters for file info: {params_result.error}",
+        try:
+            params = m.Tests.Files.InfoParams.model_validate(
+                {
+                    "path": path,
+                    "compute_hash": compute_hash,
+                    "detect_fmt": detect_fmt,
+                    "parse_content": parse_content,
+                    "validate_model": validate_model,
+                },
             )
-        params = params_result.value
+        except Exception as exc:
+            return r[m.Tests.Files.FileInfo].fail(
+                f"Invalid parameters for file info: {exc}",
+            )
 
         if not params.path.exists():
             return r[m.Tests.Files.FileInfo].ok(
@@ -1045,7 +999,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 encoding = c.Tests.Files.DEFAULT_BINARY_ENCODING
 
             # Format detection with type-safe narrowing
-            fmt: _FormatLiteral = "unknown"
+            fmt: str = "unknown"
             if params.detect_fmt:
                 detected = u.Tests.Files.detect_format_from_path(params.path, "auto")
                 # Use match for exhaustive type narrowing to FormatLiteral
@@ -1154,39 +1108,36 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # Validate and compute parameters using BatchParams model with u.Model.from_kwargs()
         # All parameters validated via Pydantic 2 Field constraints - no manual validation needed
         # Pydantic 2 field_validators handle type conversions automatically (str → Path, etc.)
-        params_result = u.Model.from_kwargs(
-            m.Tests.Files.BatchParams,
-            files=files,
-            directory=directory,
-            operation=operation,
-            model=model,
-            on_error=on_error,
-            parallel=parallel,
-        )
-        if params_result.is_failure:
-            return r[m.Tests.Files.BatchResult].fail(
-                f"Invalid parameters for batch operation: {params_result.error}",
+        try:
+            params = m.Tests.Files.BatchParams.model_validate(
+                {
+                    "files": files,
+                    "directory": directory,
+                    "operation": operation,
+                    "model": model,
+                    "on_error": on_error,
+                    "parallel": parallel,
+                },
             )
-        params = params_result.value
+        except Exception as exc:
+            return r[m.Tests.Files.BatchResult].fail(
+                f"Invalid parameters for batch operation: {exc}",
+            )
 
         # Convert BatchFiles to dict - BatchFiles can be Mapping or Sequence
-        files_dict: dict[str, TestsFileContent]
-        if hasattr(params.files, "keys") and hasattr(params.files, "items"):
+        files_dict: dict[str, t.Tests.PayloadValue]
+        if isinstance(params.files, Mapping):
             files_dict = {str(k): v for k, v in params.files.items()}
-        elif (
-            hasattr(params.files, "__getitem__")
-            and hasattr(params.files, "__len__")
-            and not isinstance(params.files, str)
-        ):
+        elif not isinstance(params.files, str):
             files_dict = {}
             for item in params.files:
-                if isinstance(item, tuple) and len(item) == 2:
-                    name, content_raw = item
-                    if isinstance(name, str):
-                        content: TestsFileContent
-                        if _is_batch_content(content_raw):
-                            content = content_raw
-                            files_dict[name] = content
+                if (
+                    isinstance(item, tuple)
+                    and len(item) == 2
+                    and _is_batch_content(item[1])
+                ):
+                    name = str(item[0])
+                    files_dict[name] = item[1]
         else:
             # Invalid type - should not happen due to BatchParams validation
             return r[m.Tests.Files.BatchResult].fail(
@@ -1197,8 +1148,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
 
         def process_one(
-            name_and_content: tuple[str, TestsFileContent],
-        ) -> r[Path]:
+            name_and_content: tuple[str, t.Tests.PayloadValue],
+        ) -> r[t.GuardInputValue]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
@@ -1207,7 +1158,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         content_for_create = (
                             m.ConfigMap(
                                 root={
-                                    str(k): FlextRuntime.normalize_to_general_value(v)
+                                    str(k): FlextRuntime.normalize_to_general_value(
+                                        self._to_config_map_value(v)
+                                    )
                                     if (
                                         v is None
                                         or type(v)
@@ -1236,33 +1189,46 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                                     for k, v in content.items()
                                 }
                             )
-                            if (hasattr(content, "keys") and hasattr(content, "items"))
+                            if isinstance(content, Mapping)
                             else content
                         )
-                        path = self.create(content_for_create, name, params.directory)
-                        return r[Path].ok(path)
+                        normalized_content = self._coerce_file_content(
+                            content_for_create
+                        )
+                        path = self.create(normalized_content, name, params.directory)
+                        return r[t.GuardInputValue].ok(path)
                     except Exception as e:
-                        return r[Path].fail(f"Failed to create {name}: {e}")
+                        return r[t.GuardInputValue].fail(
+                            f"Failed to create {name}: {e}"
+                        )
                 case "read":
                     # For read, content should be Path or str - wrap in Path() for type safety
-                    path = Path(content) if type(content) in {Path, str} else Path(name)
+                    path = (
+                        Path(content) if isinstance(content, Path | str) else Path(name)
+                    )
                     # Read file - we only care about success/failure, not the exact return type
                     # Use model_cls=None for simpler type handling - batch doesn't need model parsing
                     read_result = self.read(path, model_cls=None)
                     if read_result.is_success:
                         # Return the path, not the content (BatchResult expects Path)
-                        return r[Path].ok(path)
+                        return r[t.GuardInputValue].ok(path)
                     return r[Path].fail(read_result.error or f"Failed to read {name}")
                 case "delete":
                     # For delete, content should be Path or str - wrap in Path() for type safety
-                    path = Path(content) if type(content) in {Path, str} else Path(name)
+                    path = (
+                        Path(content) if isinstance(content, Path | str) else Path(name)
+                    )
                     try:
                         Path(path).unlink(missing_ok=True)
-                        return r[Path].ok(Path(path))
+                        return r[t.GuardInputValue].ok(Path(path))
                     except Exception as e:
-                        return r[Path].fail(f"Failed to delete {name}: {e}")
+                        return r[t.GuardInputValue].fail(
+                            f"Failed to delete {name}: {e}"
+                        )
                 case _:
-                    return r[Path].fail(f"Unknown operation: {params.operation}")
+                    return r[t.GuardInputValue].fail(
+                        f"Unknown operation: {params.operation}"
+                    )
 
         # Use u.Collection.batch() for batch processing
         # u.Collection.batch() handles Result unwrapping automatically
@@ -1270,8 +1236,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         items_list = list(files_dict.items())
         # Explicit type annotation helps mypy infer the generic R parameter
         operation_fn: Callable[
-            [tuple[str, TestsFileContent]],
-            Path | r[Path],
+            [tuple[str, t.Tests.PayloadValue]], t.GuardInputValue | r[t.GuardInputValue]
         ] = process_one
         batch_result_dict = u.Collection.batch(
             items_list,
@@ -1315,14 +1280,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     is_success = getattr(result, "is_success", False)
                     if is_success:
                         value = getattr(result, "value", None)
-                        results_dict[name] = r[Path | t.Tests.PayloadValue].ok(value)
+                        results_dict[name] = r[Path | t.Tests.PayloadValue].ok(
+                            self._to_payload_value(value)
+                        )
                     else:
                         error = (
                             getattr(result, "error", "Unknown error") or "Unknown error"
                         )
                         failed_dict[name] = error
                 else:
-                    results_dict[name] = r[Path | t.Tests.PayloadValue].ok(result)
+                    results_dict[name] = r[Path | t.Tests.PayloadValue].ok(
+                        self._to_payload_value(result)
+                    )
 
         # Process errors from batch result (indexed errors)
         for idx, error_msg in errors:
@@ -1447,37 +1416,24 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 ):
                     filename = f"{name}.json"
                 else:
-                    # Check if data is a nested sequence (CSV format)
-                    # Type-safe nested sequence check
-                    is_nested_sequence = (
-                        "." not in name
-                        and hasattr(data, "__getitem__")
-                        and hasattr(data, "__len__")
-                        and type(data) not in {str, bytes}
-                        and len(data) > 0
-                        and all(
-                            hasattr(row, "__getitem__")
-                            and hasattr(row, "__len__")
-                            and type(row) not in {str, bytes}
-                            for row in data
-                        )
+                    is_nested_sequence = "." not in name and manager._is_nested_rows(
+                        data
                     )
                     if is_nested_sequence:
                         filename = f"{name}.csv"
                 # Validate kwargs using CreateKwargsParams model before passing to create()
                 # This ensures type safety and follows FLEXT patterns (Pydantic validation)
                 # Always validate - if validation fails, use defaults from CreateKwargsParams
-                kwargs_result = u.Model.from_kwargs(
-                    m.Tests.Files.CreateKwargsParams,
-                    **kwargs,
+                kwargs_result = r[m.Tests.Files.CreateKwargsParams].ok(
+                    m.Tests.Files.CreateKwargsParams.model_validate(kwargs),
                 )
                 # Use validated parameters or defaults
                 if kwargs_result.is_success:
                     validated_kwargs = kwargs_result.value
                 else:
                     # If validation fails, use default values (CreateKwargsParams has defaults)
-                    default_result = u.Model.from_kwargs(
-                        m.Tests.Files.CreateKwargsParams,
+                    default_result = r[m.Tests.Files.CreateKwargsParams].ok(
+                        m.Tests.Files.CreateKwargsParams.model_validate({}),
                     )
                     if default_result.is_success:
                         validated_kwargs = default_result.value
@@ -1493,7 +1449,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     data,
                     filename,
                     directory=validated_kwargs.directory,
-                    fmt=validated_kwargs.fmt,
+                    fmt=manager._normalize_create_format(validated_kwargs.fmt),
                     enc=validated_kwargs.enc,
                     indent=validated_kwargs.indent,
                     delim=validated_kwargs.delim,
@@ -1625,6 +1581,101 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         self._created_dirs.append(temp_dir)
         return temp_dir
 
+    def _normalize_create_format(self, fmt: str) -> _FormatLiteral:
+        if fmt in {"txt", "md"}:
+            return "text"
+        match fmt:
+            case "auto":
+                return "auto"
+            case "text":
+                return "text"
+            case "bin":
+                return "bin"
+            case "json":
+                return "json"
+            case "yaml":
+                return "yaml"
+            case "csv":
+                return "csv"
+        return "auto"
+
+    def _is_nested_rows(self, value: object) -> bool:
+        if not isinstance(value, Sequence) or isinstance(value, str | bytes):
+            return False
+        if len(value) == 0:
+            return False
+        return all(
+            isinstance(row, Sequence) and not isinstance(row, str | bytes)
+            for row in value
+        )
+
+    def _mapping_to_payload(
+        self,
+        mapping: Mapping[str, object],
+    ) -> dict[str, t.Tests.PayloadValue]:
+        payload: dict[str, t.Tests.PayloadValue] = {}
+        for key, value in mapping.items():
+            payload[str(key)] = self._to_payload_value(value)
+        return payload
+
+    def _to_payload_value(self, value: object) -> t.Tests.PayloadValue:
+        if value is None or isinstance(
+            value, str | int | float | bool | bytes | BaseModel
+        ):
+            return value
+        if isinstance(value, Path | datetime):
+            return str(value)
+        if isinstance(value, Mapping):
+            return self._mapping_to_payload(value)
+        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
+            return [self._to_payload_value(item) for item in value]
+        return str(value)
+
+    def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ConfigMapValue:
+        if value is None or isinstance(
+            value, str | int | float | bool | BaseModel | Path
+        ):
+            return value
+        if isinstance(value, bytes):
+            return value.decode(c.Tests.Files.DEFAULT_ENCODING, errors="replace")
+        if isinstance(value, Mapping):
+            return {
+                str(k): self._to_config_map_value(self._to_payload_value(v))
+                for k, v in value.items()
+            }
+        if isinstance(value, Sequence):
+            return [
+                self._to_config_map_value(self._to_payload_value(item))
+                for item in value
+            ]
+        return str(value)
+
+    def _coerce_file_content(
+        self,
+        value: object,
+    ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
+        if isinstance(value, str | bytes):
+            return value
+        if isinstance(value, BaseModel):
+            return value
+        if isinstance(value, Mapping):
+            return m.ConfigMap(
+                root={
+                    str(k): FlextRuntime.normalize_to_general_value(
+                        self._to_config_map_value(self._to_payload_value(v))
+                    )
+                    for k, v in value.items()
+                }
+            )
+        if self._is_nested_rows(value):
+            rows: list[list[str]] = []
+            if isinstance(value, Sequence):
+                for row in value:
+                    if isinstance(row, Sequence) and not isinstance(row, str | bytes):
+                        rows.append([str(cell) for cell in row])
+            return rows
+        return str(value)
+
     def _extract_content(
         self,
         content: (
@@ -1656,121 +1707,20 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ValueError: If FlextResult is failure and extraction is enabled
 
         """
-        # Use u.is_type() for type-safe checking with proper type narrowing
-        if extract_result and u.is_type(content, "result"):
-            # Duck-typed access to FlextResult attributes
-            is_failure = getattr(content, "is_failure", False)
-            if is_failure:
-                error_msg = (
-                    getattr(content, "error", "FlextResult failure")
-                    or "FlextResult failure"
-                )
+        if extract_result and isinstance(content, r):
+            if content.is_failure:
+                error_msg = content.error or "FlextResult failure"
                 raise ValueError(
-                    f"Cannot create file from failed FlextResult: {error_msg}",
+                    f"Cannot create file from failed FlextResult: {error_msg}"
                 )
-            # Extract value from result
-            value = getattr(content, "value", content)
-            # Return extracted value - must be one of the FileContent types
-            if type(value) in {str, bytes} or (
-                hasattr(type(value), "__mro__")
-                and (
-                    BaseModel in type(value).__mro__
-                    or m.ConfigMap in type(value).__mro__
-                )
-            ):
-                return value
-            if hasattr(value, "keys") and hasattr(value, "items"):
-                return m.ConfigMap(
-                    root={
-                        str(k): FlextRuntime.normalize_to_general_value(v)
-                        if (
-                            v is None
-                            or type(v)
-                            in {str, int, float, bool, bytes, list, tuple, dict}
-                            or (
-                                hasattr(type(v), "__mro__")
-                                and BaseModel in type(v).__mro__
-                            )
-                            or (hasattr(v, "keys") and hasattr(v, "items"))
-                            or (
-                                hasattr(v, "__len__")
-                                and hasattr(v, "__getitem__")
-                                and type(v) not in {str, bytes}
-                            )
-                        )
-                        else str(v)
-                        for k, v in value.items()
-                    }
-                )
-            if (
-                hasattr(value, "__getitem__")
-                and hasattr(value, "__len__")
-                and type(value) not in {str, bytes}
-            ):
-                rows: list[list[str]] = []
-                for row in value:
-                    if not (
-                        hasattr(row, "__getitem__") and hasattr(row, "__len__")
-                    ) or type(row) in {str, bytes}:
-                        rows = []
-                        break
-                    rows.append([str(cell) for cell in row])
-                if rows:
-                    return rows
-            return str(value)
-        # Content is already a FileContent type (not wrapped in Result)
-        if type(content) in {str, bytes} or (
-            hasattr(type(content), "__mro__")
-            and (
-                BaseModel in type(content).__mro__
-                or m.ConfigMap in type(content).__mro__
-            )
-        ):
-            return content
-        if hasattr(content, "keys") and hasattr(content, "items"):
-            return m.ConfigMap(
-                root={
-                    str(k): FlextRuntime.normalize_to_general_value(v)
-                    if (
-                        v is None
-                        or type(v) in {str, int, float, bool, bytes, list, tuple, dict}
-                        or (
-                            hasattr(type(v), "__mro__") and BaseModel in type(v).__mro__
-                        )
-                        or (hasattr(v, "keys") and hasattr(v, "items"))
-                        or (
-                            hasattr(v, "__len__")
-                            and hasattr(v, "__getitem__")
-                            and type(v) not in {str, bytes}
-                        )
-                    )
-                    else str(v)
-                    for k, v in content.items()
-                }
-            )
-        if (
-            hasattr(content, "__getitem__")
-            and hasattr(content, "__len__")
-            and type(content) not in {str, bytes}
-        ):
-            content_rows: list[list[str]] = []
-            for row in content:
-                if not (
-                    hasattr(row, "__getitem__") and hasattr(row, "__len__")
-                ) or type(row) in {str, bytes}:
-                    content_rows = []
-                    break
-                content_rows.append([str(cell) for cell in row])
-            if content_rows:
-                return content_rows
-        # Fallback for unexpected types
-        return str(content)
+            return self._coerce_file_content(content.value)
+        return self._coerce_file_content(content)
 
     def _parse_content_metadata(
         self,
         path: Path,
         text: str,
-        fmt: _FormatLiteral,
+        fmt: str,
         validate_model: type[BaseModel] | None = None,
     ) -> m.Tests.Files.ContentMeta:
         """Parse file content and extract metadata.
@@ -1806,27 +1756,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     # YAML parsing
                     parsed_raw = yaml.safe_load(text) if text.strip() else {}
 
-                # Type narrowing using type() for proper narrowing
                 if isinstance(parsed_raw, dict):
                     parsed_content = m.ConfigMap(
                         root={
-                            str(k): FlextRuntime.normalize_to_general_value(v)
-                            if (
-                                v is None
-                                or type(v)
-                                in {str, int, float, bool, bytes, list, tuple, dict}
-                                or (
-                                    hasattr(type(v), "__mro__")
-                                    and BaseModel in type(v).__mro__
-                                )
-                                or (hasattr(v, "keys") and hasattr(v, "items"))
-                                or (
-                                    hasattr(v, "__len__")
-                                    and hasattr(v, "__getitem__")
-                                    and type(v) not in {str, bytes}
-                                )
+                            str(k): FlextRuntime.normalize_to_general_value(
+                                self._to_config_map_value(self._to_payload_value(v)),
                             )
-                            else str(v)
                             for k, v in parsed_raw.items()
                         }
                     )

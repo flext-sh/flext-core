@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeGuard, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
@@ -479,6 +479,33 @@ class FlextUtilitiesReliability:
         return isinstance(value, p.ResultLike)
 
     @staticmethod
+    def _is_match_predicate(
+        value: type | t.ConfigMapValue | Callable[[t.ConfigMapValue], bool],
+    ) -> TypeGuard[Callable[[t.ConfigMapValue], bool]]:
+        return callable(value) and not isinstance(value, type)
+
+    @staticmethod
+    def _is_match_mapper(
+        value: t.ConfigMapValue | Callable[[t.ConfigMapValue], t.ConfigMapValue],
+    ) -> TypeGuard[Callable[[t.ConfigMapValue], t.ConfigMapValue]]:
+        return callable(value)
+
+    @staticmethod
+    def _resolve_match_output(
+        candidate: t.ConfigMapValue | Callable[[t.ConfigMapValue], t.ConfigMapValue],
+        value: t.ConfigMapValue,
+    ) -> t.ConfigMapValue:
+        resolved: t.ConfigMapValue | object
+        if FlextUtilitiesReliability._is_match_mapper(candidate):
+            resolved = candidate(value)
+        else:
+            resolved = candidate
+        try:
+            return TypeAdapter(t.ConfigMapValue).validate_python(resolved)
+        except ValidationError:
+            return str(resolved)
+
+    @staticmethod
     def compose(
         *funcs: Callable[[t.ConfigMapValue], t.ConfigMapValue],
         mode: str = "pipe",
@@ -509,11 +536,7 @@ class FlextUtilitiesReliability:
                 value: t.ConfigMapValue,
             ) -> t.ConfigMapValue | r[t.ConfigMapValue]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                return (
-                    result.value
-                    if result.is_success
-                    else cast("r[t.ConfigMapValue]", result)
-                )
+                return result.value if result.is_success else result
 
             return piped
 
@@ -719,37 +742,27 @@ class FlextUtilitiesReliability:
             'big'
 
         """
+        input_value: t.ConfigMapValue = value
         for pattern, result in cases:
-            if isinstance(pattern, type) and isinstance(value, pattern):
-                return (
-                    cast("t.ConfigMapValue", result(value))
-                    if callable(result)
-                    else result
+            if isinstance(pattern, type) and isinstance(input_value, pattern):
+                return FlextUtilitiesReliability._resolve_match_output(result, value)
+            if pattern == input_value:
+                return FlextUtilitiesReliability._resolve_match_output(
+                    result, input_value
                 )
-            if pattern == value:
-                return (
-                    cast("t.ConfigMapValue", result(value))
-                    if callable(result)
-                    else result
-                )
-            if callable(pattern) and not isinstance(pattern, type):
+            if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
-                    pred_result = pattern(value)
+                    pred_result = pattern(input_value)
                     if isinstance(pred_result, bool) and pred_result:
-                        return (
-                            cast("t.ConfigMapValue", result(value))
-                            if callable(result)
-                            else result
+                        return FlextUtilitiesReliability._resolve_match_output(
+                            result,
+                            input_value,
                         )
                 except (ValueError, TypeError, AttributeError):
                     pass
         # Default handling
         if default is not None:
-            return (
-                cast("t.ConfigMapValue", default(value))
-                if callable(default)
-                else default
-            )
+            return FlextUtilitiesReliability._resolve_match_output(default, input_value)
         return None
 
     # Mnemonic alias

@@ -16,7 +16,7 @@ import time
 import uuid
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
-from typing import TypeGuard, assert_never
+from typing import TypeGuard
 
 from pydantic import BaseModel
 
@@ -245,7 +245,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: Mapping[str, t.ConfigMapValue] | BaseModel | None,
+        value: t.GeneralValueType | None,
         default: Mapping[str, t.ConfigMapValue] | None = None,
     ) -> Mapping[str, t.ConfigMapValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
@@ -256,11 +256,10 @@ class FlextUtilitiesGenerators:
 
         Conversion Strategy:
             1. None + default provided → return default
-            2. Already dict → return as-is
-            3. Pydantic BaseModel → call model_dump()
-            4. Dict-like (has .items()) → convert via dict()
-            5. None (no default) → fast fail (raises TypeError)
-            6. Other → fast fail (raises TypeError)
+            2. None (no default) → return {}
+            3. Pydantic model-like value → model_dump() then validate as ConfigMap
+            4. Mapping-like value → validate as ConfigMap
+            5. Scalar/other value → wrap as {"value": value}
 
         Args:
             value: Value to normalize (dict, BaseModel, or dict-like)
@@ -268,9 +267,6 @@ class FlextUtilitiesGenerators:
 
         Returns:
             Mapping[str, t.ConfigMapValue]: Normalized dict or default
-
-        Raises:
-            TypeError: If value is None (and no default) or cannot be converted
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -287,42 +283,20 @@ class FlextUtilitiesGenerators:
             {'field': 'value'}
 
         """
-        # Strategy 1: Already a dict - return as-is
-        if isinstance(value, dict):
-            return value
-
-        # Strategy 2: Pydantic BaseModel - use model_dump()
-        if isinstance(value, BaseModel):
-            # BaseModel.model_dump() returns dict-like object, check with is_type guard
-            result = value.model_dump()
-            normalized = FlextRuntime.normalize_to_general_value(result)
-            if FlextUtilitiesGenerators._is_config_mapping(normalized):
-                return normalized
-            return {}
-
-        # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
-        if isinstance(value, Mapping):
-            # Fast fail: Mapping.items() must succeed
-            try:
-                return dict(value.items())
-            except (AttributeError, TypeError) as e:
-                msg = (
-                    f"Failed to convert Mapping {value.__class__.__name__} to dict: "
-                    f"{e.__class__.__name__}: {e}"
-                )
-                raise TypeError(msg) from e
-
-        # Strategy 4: None - use default or fast fail
         if value is None:
             if default is not None:
                 return default
-            msg = (
-                "Value cannot be None. Use explicit empty dict {} "
-                "or pass default={} parameter."
-            )
-            raise TypeError(msg)
+            return {}
 
-        assert_never(value)
+        normalized = FlextRuntime.normalize_to_general_value(value)
+        try:
+            return t.ConfigMap.model_validate(normalized).root
+        except Exception:
+            wrapped = FlextRuntime.normalize_to_general_value({"value": normalized})
+            try:
+                return t.ConfigMap.model_validate(wrapped).root
+            except Exception:
+                return {}
 
     @staticmethod
     def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:

@@ -13,6 +13,7 @@ import datetime
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
+from typing import TypeAliasType
 
 from flext_core import FlextModels, r, u
 from flext_core._models.base import FlextModelFoundation
@@ -491,7 +492,7 @@ class FlextTestsModels(FlextModels):
                     default=None,
                     description="Target directory (uses base_dir or temp if None).",
                 )
-                fmt: t.Tests.Files.FormatLiteral = Field(
+                fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
                 )
@@ -528,7 +529,7 @@ class FlextTestsModels(FlextModels):
                 @classmethod
                 def normalize_name(cls, value: t.Tests.PayloadValue) -> str:
                     """Normalize filename by stripping whitespace."""
-                    if type(value) is str:
+                    if isinstance(value, str):
                         return value.strip()
                     return str(value)
 
@@ -542,7 +543,7 @@ class FlextTestsModels(FlextModels):
                     default=None,
                     description="Optional Pydantic model class to deserialize into.",
                 )
-                fmt: t.Tests.Files.FormatLiteral = Field(
+                fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="Format override.",
                 )
@@ -651,7 +652,7 @@ class FlextTestsModels(FlextModels):
                     default=None,
                     description="Directory to create file in.",
                 )
-                fmt: t.Tests.Files.FormatLiteral = Field(
+                fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
                 )
@@ -1313,13 +1314,35 @@ class FlextTestsModels(FlextModels):
 
                 model_config = ConfigDict(populate_by_name=True)
 
-                eq: t.Tests.PayloadValue | None = Field(
+                eq: (
+                    Mapping[str, t.Tests.PayloadValue]
+                    | Sequence[t.Tests.PayloadValue]
+                    | bytes
+                    | str
+                    | int
+                    | float
+                    | bool
+                    | TypeAliasType
+                    | None
+                ) = Field(
                     default=None,
                     description="Expected value (equality check)",
+                    union_mode="left_to_right",
                 )
-                ne: t.Tests.PayloadValue | None = Field(
+                ne: (
+                    Mapping[str, t.Tests.PayloadValue]
+                    | Sequence[t.Tests.PayloadValue]
+                    | bytes
+                    | str
+                    | int
+                    | float
+                    | bool
+                    | TypeAliasType
+                    | None
+                ) = Field(
                     default=None,
                     description="Value must not equal",
+                    union_mode="left_to_right",
                 )
                 is_: type | tuple[type, ...] | None = Field(
                     default=None,

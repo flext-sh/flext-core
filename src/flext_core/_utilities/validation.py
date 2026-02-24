@@ -274,7 +274,9 @@ class FlextUtilitiesValidation:
             try:
                 dump_result = model_dump_attr()
                 if isinstance(dump_result, Mapping):
-                    return cast("t.ConfigMapValue", dump_result)
+                    return FlextUtilitiesValidation._normalize_object_mapping(
+                        dump_result
+                    )
                 return str(component)
             except Exception:
                 return str(component)
@@ -283,7 +285,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _ensure_general_value_type(
-        component: t.ConfigMapValue | type,
+        component: object,
     ) -> t.ConfigMapValue:
         """Ensure component is valid t.ConfigMapValue.
 
@@ -302,10 +304,29 @@ class FlextUtilitiesValidation:
         if isinstance(component, type):
             return str(component)
         if isinstance(component, Sequence) and not isinstance(component, str | bytes):
-            return cast("Sequence[t.ConfigMapValue]", component)
+            normalized_sequence: list[t.ConfigMapValue] = [
+                FlextUtilitiesValidation._ensure_general_value_type(item)
+                for item in component
+            ]
+            if isinstance(component, tuple):
+                return tuple(normalized_sequence)
+            return normalized_sequence
         if isinstance(component, Mapping):
-            return cast("Mapping[str, t.ConfigMapValue]", component)
+            return FlextUtilitiesValidation._normalize_object_mapping(component)
         return str(component)
+
+    @staticmethod
+    def _normalize_object_mapping(
+        value: Mapping[str, t.ConfigMapValue] | Mapping[object, object],
+    ) -> dict[str, t.ConfigMapValue]:
+        normalized_dict: dict[str, t.ConfigMapValue] = {}
+        for raw_key, raw_value in value.items():
+            normalized_dict[str(raw_key)] = (
+                FlextUtilitiesValidation._ensure_general_value_type(
+                    raw_value,
+                )
+            )
+        return normalized_dict
 
     @staticmethod
     def _normalize_by_type(
@@ -366,15 +387,13 @@ class FlextUtilitiesValidation:
                 if not isinstance(key_raw, str):
                     continue
                 typed_value = FlextUtilitiesValidation._ensure_general_value_type(
-                    cast("t.ConfigMapValue | type", value_raw),
+                    value_raw,
                 )
                 result_dict[key_raw] = typed_value
             return result_dict
 
         if isinstance(items_result, Mapping):
-            return FlextUtilitiesMapper.to_dict(
-                cast("Mapping[str, t.ConfigMapValue]", items_result),
-            )
+            return FlextUtilitiesValidation._normalize_object_mapping(items_result)
 
         if not isinstance(items_result, Iterable):
             msg = f"items() returned non-iterable: {items_result.__class__}"
@@ -391,7 +410,7 @@ class FlextUtilitiesValidation:
             if isinstance(k, str):
                 normalized_v = FlextUtilitiesValidation._normalize_component(
                     FlextUtilitiesValidation._ensure_general_value_type(
-                        cast("t.ConfigMapValue | type", v),
+                        v,
                     ),
                     visited=None,
                 )
@@ -448,15 +467,13 @@ class FlextUtilitiesValidation:
                 value_raw = item[1]
                 if isinstance(key, str):
                     typed_value = FlextUtilitiesValidation._ensure_general_value_type(
-                        cast("t.ConfigMapValue | type", value_raw),
+                        value_raw,
                     )
                     result_dict[key] = typed_value
             return result_dict
 
         if isinstance(items_result, Mapping):
-            return FlextUtilitiesMapper.to_dict(
-                cast("Mapping[str, t.ConfigMapValue]", items_result),
-            )
+            return FlextUtilitiesValidation._normalize_object_mapping(items_result)
 
         if not isinstance(items_result, Iterable):
             result_type = items_result.__class__
@@ -474,7 +491,7 @@ class FlextUtilitiesValidation:
             if isinstance(k, str):
                 normalized_v = FlextUtilitiesValidation._normalize_component(
                     FlextUtilitiesValidation._ensure_general_value_type(
-                        cast("t.ConfigMapValue | type", v),
+                        v,
                     ),
                     visited=None,
                 )
@@ -572,9 +589,7 @@ class FlextUtilitiesValidation:
         if isinstance(value, list):
             return tuple(value)
         if isinstance(value, Mapping):
-            return FlextUtilitiesMapper.to_dict(
-                cast("Mapping[str, t.ConfigMapValue]", value),
-            )
+            return FlextUtilitiesValidation._normalize_object_mapping(value)
         msg = f"Unsupported type for normalization: {value.__class__.__name__}"
         raise TypeError(msg)
 
@@ -630,9 +645,7 @@ class FlextUtilitiesValidation:
     ) -> t.ConfigMapValue:
         """Sort dict keys for consistent representation (internal recursive)."""
         if isinstance(data, Mapping):
-            data_dict = FlextUtilitiesMapper.to_dict(
-                cast("Mapping[str, t.ConfigMapValue]", data),
-            )
+            data_dict = FlextUtilitiesValidation._normalize_object_mapping(data)
             sorted_result: Mapping[str, t.ConfigMapValue] = {
                 str(k): FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
                 for k in sorted(
@@ -991,9 +1004,7 @@ class FlextUtilitiesValidation:
 
         """
         if isinstance(obj, Mapping):
-            dict_obj = FlextUtilitiesMapper.to_dict(
-                cast("Mapping[str, t.ConfigMapValue]", obj),
-            )
+            dict_obj = FlextUtilitiesValidation._normalize_object_mapping(obj)
             items_list: list[tuple[str, t.ConfigMapValue]] = list(dict_obj.items())
             sorted_items: list[tuple[str, t.ConfigMapValue]] = sorted(
                 items_list,
@@ -1354,8 +1365,7 @@ class FlextUtilitiesValidation:
         if not predicate(value):
             return cast("r[T]", r.fail(f"{context} {error_msg}, got {value}"))
 
-        success_result: r[int | float] = r.ok(value)
-        return cast("r[T]", success_result)
+        return cast("r[T]", r.ok(value))
 
     @staticmethod
     def validate_non_negative(
@@ -2237,7 +2247,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _guard_check_type(
-        value: t.ConfigMapValue,
+        value: object,
         condition: type | tuple[type, ...],
         context_name: str,
         error_msg: str | None,
@@ -2258,6 +2268,12 @@ class FlextUtilitiesValidation:
                 return f"{context_name} must be {type_name}, got {value.__class__.__name__}"
             return error_msg
         return None
+
+    @staticmethod
+    def _is_type_tuple(value: object) -> TypeGuard[tuple[type, ...]]:
+        return isinstance(value, tuple) and all(
+            isinstance(item, type) for item in value
+        )
 
     @staticmethod
     def _guard_check_validator(
@@ -2336,27 +2352,27 @@ class FlextUtilitiesValidation:
         # Type guard: type check
         if isinstance(condition, type):
             return FlextUtilitiesValidation._guard_check_type(
-                cast("t.ConfigMapValue", value),
+                value,
                 condition,
                 context_name,
                 error_msg,
             )
         # Type narrowing: condition is tuple of types
-        if isinstance(condition, tuple) and all(
-            isinstance(item, type) for item in condition
-        ):
+        if FlextUtilitiesValidation._is_type_tuple(condition):
             return FlextUtilitiesValidation._guard_check_type(
-                cast("t.ConfigMapValue", value),
-                cast("tuple[type, ...]", condition),
+                value,
+                condition,
                 context_name,
                 error_msg,
             )
 
+        typed_value = FlextUtilitiesValidation._ensure_general_value_type(value)
+
         # p.ValidatorSpec: Validator DSL (has __and__ method for composition)
-        if hasattr(condition, "description") and callable(condition):
+        if isinstance(condition, p.ValidatorSpec):
             return FlextUtilitiesValidation._guard_check_validator(
-                cast("t.ConfigMapValue", value),
-                cast("p.ValidatorSpec", condition),
+                typed_value,
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2364,7 +2380,7 @@ class FlextUtilitiesValidation:
         # String shortcuts
         if isinstance(condition, str):
             return FlextUtilitiesValidation._guard_check_string_shortcut(
-                cast("t.ConfigMapValue", value),
+                typed_value,
                 condition,
                 context_name,
                 error_msg,
@@ -2376,7 +2392,7 @@ class FlextUtilitiesValidation:
         if callable(condition):
             return FlextUtilitiesValidation._guard_check_predicate(
                 value,
-                cast("Callable[[T], bool]", condition),
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2968,6 +2984,7 @@ class FlextUtilitiesValidation:
             items: list[t.ConfigMapValue]
             | tuple[object, ...]
             | set[object]
+            | Mapping[object, object]
             | t.ConfigMap,
         ) -> bool:
             """Check if value is in items (mnemonic: in_ = membership).
@@ -2988,7 +3005,9 @@ class FlextUtilitiesValidation:
                 return value in items.root
             if isinstance(items, list | tuple | set):
                 return value in items
-            return value in cast("Mapping[object, object]", items)
+            if isinstance(items, Mapping):
+                return value in items
+            return False
 
         @staticmethod
         def flat[T](
@@ -3120,7 +3139,7 @@ class FlextUtilitiesValidation:
         if value is None:
             return default if default is not None else []
         if isinstance(value, list):
-            return cast("list[t.ConfigMapValue]", value)
+            return value
         # For all other types (including str), wrap in list
         single_item_list: list[t.ConfigMapValue] = [value]
         return single_item_list
@@ -3133,8 +3152,8 @@ class FlextUtilitiesValidation:
         """Helper: Convert value to dict."""
         if value is None:
             return default if default is not None else {}
-        if isinstance(value, dict):
-            return cast("Mapping[str, t.ConfigMapValue]", value)
+        if isinstance(value, Mapping):
+            return FlextUtilitiesValidation._normalize_object_mapping(value)
         # Wrap non-dict value in dict
         wrapped_dict: Mapping[str, t.ConfigMapValue] = {"value": value}
         return wrapped_dict
@@ -3200,7 +3219,7 @@ class FlextUtilitiesValidation:
             return FlextUtilitiesValidation._ensure_to_dict(value, dict_default)
 
         if target_type == "auto" and isinstance(value, Mapping):
-            return cast("Mapping[str, t.ConfigMapValue]", value)
+            return FlextUtilitiesValidation._normalize_object_mapping(value)
 
         # Handle list or fallback
         list_default: list[t.ConfigMapValue] | None = (

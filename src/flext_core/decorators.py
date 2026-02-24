@@ -305,7 +305,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def deprecated(
         message: str,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to mark functions/variables as deprecated.
 
         Emits DeprecationWarning when decorated function is called.
@@ -335,8 +335,8 @@ class FlextDecorators(FlextRuntime):
         """
 
         def decorator(
-            func: Callable[..., R],
-        ) -> Callable[..., R]:
+            func: Callable[P, R],
+        ) -> Callable[P, R]:
             """Apply deprecation warning to callable."""
 
             @wraps(func)
@@ -359,7 +359,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def inject(
         **dependencies: str,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
         Automatically resolves and injects dependencies from the global
@@ -392,7 +392,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Get container from self if available, otherwise use global singleton
@@ -419,7 +419,7 @@ class FlextDecorators(FlextRuntime):
         operation_name: str | None = None,
         *,
         track_perf: bool = False,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
         Automatically logs operation start, completion, and failures with
@@ -457,7 +457,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Fast fail: explicit default value instead of 'or' fallback
@@ -482,7 +482,7 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra = {
+                    start_extra: dict[str, t.MetadataAttributeValue] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -497,7 +497,7 @@ class FlextDecorators(FlextRuntime):
 
                     result = func(*args, **kwargs)
 
-                    completion_extra = {
+                    completion_extra: dict[str, t.MetadataAttributeValue] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -525,7 +525,7 @@ class FlextDecorators(FlextRuntime):
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra = {
+                    failure_extra: dict[str, t.MetadataAttributeValue] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -614,7 +614,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def track_performance(
         operation_name: str | None = None,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically track operation performance metrics.
 
         Tracks operation duration and logs performance metrics with structured
@@ -644,7 +644,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Fast fail: explicit default value instead of 'or' fallback
@@ -668,7 +668,7 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra = {
+                    success_extra: dict[str, t.MetadataAttributeValue] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -687,7 +687,7 @@ class FlextDecorators(FlextRuntime):
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra = {
+                    failure_extra: dict[str, t.MetadataAttributeValue] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -736,7 +736,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def railway(
         error_code: str | None = None,
-    ) -> Callable[[Callable[..., T]], Callable[..., r[T]]]:
+    ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
         """Decorator to automatically wrap function in railway pattern.
 
         Automatically converts exceptions to FlextResult failures and
@@ -776,7 +776,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., T]) -> Callable[..., r[T]]:
+        def decorator(func: Callable[P, T]) -> Callable[P, r[T]]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[T]:
                 try:
@@ -811,7 +811,7 @@ class FlextDecorators(FlextRuntime):
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
         Uses FlextConstants.Reliability for default values and
@@ -868,7 +868,7 @@ class FlextDecorators(FlextRuntime):
             else c.Reliability.DEFAULT_BACKOFF_STRATEGY
         )
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
@@ -1118,7 +1118,7 @@ class FlextDecorators(FlextRuntime):
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
             fallback_kwargs = m.ConfigMap(root=dict(kwargs.root))
-            fallback_kwargs.setdefault("extra", {})
+            _ = fallback_kwargs.setdefault("extra", {})
             extra_payload_raw = fallback_kwargs["extra"]
             extra_payload = (
                 m.ConfigMap(root=dict(extra_payload_raw))
@@ -1138,7 +1138,7 @@ class FlextDecorators(FlextRuntime):
     def timeout(
         timeout_seconds: float | None = None,
         error_code: str | None = None,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
         Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default
@@ -1177,7 +1177,7 @@ class FlextDecorators(FlextRuntime):
             else c.Reliability.DEFAULT_TIMEOUT_SECONDS
         )
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 start_time = time.perf_counter()
@@ -1344,7 +1344,7 @@ class FlextDecorators(FlextRuntime):
         return standard_decorator
 
     @staticmethod
-    def with_correlation() -> Callable[[Callable[..., R]], Callable[..., R]]:
+    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to ensure correlation ID exists for operation tracking.
 
         Automatically ensures a correlation ID is present in the context,
@@ -1373,7 +1373,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Ensure correlation ID exists
@@ -1388,7 +1388,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def with_context(
         **context_vars: str | int | bool | None,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to manage context lifecycle for an operation.
 
         Automatically binds context variables for the operation duration and
@@ -1422,7 +1422,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
@@ -1466,7 +1466,7 @@ class FlextDecorators(FlextRuntime):
         operation_name: str | None = None,
         *,
         track_correlation: bool = True,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to track operation execution with FlextRuntime.Integration.
 
         Combines correlation ID management and structured logging using
@@ -1504,7 +1504,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Fast fail: explicit default value instead of 'or' fallback

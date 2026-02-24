@@ -179,21 +179,21 @@ class FlextTypes:
     GeneralListValue: TypeAlias = list[str | int | float | bool | datetime | None]
 
     # Input type for guard functions (flat union, no recursion; prefer models at API)
-    GuardInputValue: TypeAlias = (
+    type GuardInputValue = (
         ScalarValue
         | BaseModel
         | Path
-        | Sequence["GuardInputValue"]
-        | Mapping[str, "GuardInputValue"]
+        | Sequence[GuardInputValue]
+        | Mapping[str, GuardInputValue]
     )
 
     # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
-    ConfigMapValue: TypeAlias = (
+    type ConfigMapValue = (
         ScalarValue
         | BaseModel
         | Path
-        | Sequence["ConfigMapValue"]
-        | Mapping[str, "ConfigMapValue"]
+        | Sequence[ConfigMapValue]
+        | Mapping[str, ConfigMapValue]
     )
 
     # RegisterableService - fixed types only
@@ -332,10 +332,6 @@ class FlextTypes:
             """Get length."""
             return len(self.root)
 
-        def __iter__(self) -> typing.Iterator[str]:
-            """Iterate over keys (dict semantics, not model fields)."""
-            return iter(self.root)
-
         def __contains__(self, key: str) -> bool:
             """Check if key exists."""
             return key in self.root
@@ -376,14 +372,14 @@ class FlextTypes:
             """Set default value for key."""
             return self.root.setdefault(key, default)
 
-    class Dict(_DictMixin[_ContainerValue], RootModel[dict[str, _ContainerValue]]):
+    class Dict(RootModel[dict[str, _ContainerValue]], _DictMixin[_ContainerValue]):
         """Generic dictionary container. Prefer m.Dict in public API."""
 
         root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     class ConfigMap(
-        _DictMixin[_ContainerValue],
         RootModel[dict[str, _ContainerValue]],
+        _DictMixin[_ContainerValue],
     ):
         """Configuration map container. Prefer m.ConfigMap in public API."""
 
@@ -393,23 +389,23 @@ class FlextTypes:
     ConfigurationDict: TypeAlias = ConfigMap
 
     class ServiceMap(
-        _DictMixin[_ContainerValue],
         RootModel[dict[str, _ContainerValue]],
+        _DictMixin[_ContainerValue],
     ):
         """Service registry map container. Prefer m.ServiceMap in public API."""
 
-        root: dict[str, _ContainerValue]
+        root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     class ErrorMap(
-        _DictMixin[int | str | dict[str, int]],
         RootModel[dict[str, int | str | dict[str, int]]],
+        _DictMixin[int | str | dict[str, int]],
     ):
         """Error type mapping container.
 
         Replaces: ErrorTypeMapping
         """
 
-        root: dict[str, int | str | dict[str, int]]
+        root: dict[str, int | str | dict[str, int]] = Field(default_factory=dict)
 
     IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
 
@@ -420,26 +416,26 @@ class FlextTypes:
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
     class FactoryMap(
-        _DictMixin[FactoryRegistrationCallable],
         RootModel[dict[str, FactoryRegistrationCallable]],
+        _DictMixin[FactoryRegistrationCallable],
     ):
         """Map of factory registration callables.
 
         Replaces: Mapping[str, FactoryRegistrationCallable]
         """
 
-        root: dict[str, FactoryRegistrationCallable]
+        root: dict[str, FactoryRegistrationCallable] = Field(default_factory=dict)
 
     class ResourceMap(
-        _DictMixin[ResourceCallable],
         RootModel[dict[str, ResourceCallable]],
+        _DictMixin[ResourceCallable],
     ):
         """Map of resource callables.
 
         Replaces: Mapping[str, ResourceCallable]
         """
 
-        root: dict[str, ResourceCallable]
+        root: dict[str, ResourceCallable] = Field(default_factory=dict)
 
     # =========================================================================
     # Validation mapping types (used in _models/validation.py)
@@ -491,11 +487,6 @@ class FlextTypes:
     ):
         """Map of field validators."""
 
-        root: dict[
-            str,
-            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-        ]
-
     class ConsistencyRuleMap(
         _ValidatorMapMixin,
         RootModel[
@@ -507,11 +498,6 @@ class FlextTypes:
     ):
         """Map of consistency rules."""
 
-        root: dict[
-            str,
-            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-        ]
-
     class EventValidatorMap(
         _ValidatorMapMixin,
         RootModel[
@@ -522,11 +508,6 @@ class FlextTypes:
         ],
     ):
         """Map of event validators."""
-
-        root: dict[
-            str,
-            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-        ]
 
     # Error/Exception types (used in exceptions.py)
     # ErrorTypeMapping removed - Use m.ErrorMap

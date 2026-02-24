@@ -9,14 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import Self, overload
 
 from pydantic import BaseModel
-
-# from returns.io import IO, IOFailure, IOResult, IOSuccess
-# from returns.maybe import Maybe, Nothing, Some
+from returns.io import IO, IOFailure, IOResult, IOSuccess
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
+from returns.unsafe import unsafe_perform_io
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
@@ -34,6 +34,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     def __init__(
         self,
+        source: Result[T_co, str] | None = None,
         error_code: str | None = None,
         error_data: t.ConfigMap | None = None,
         *,
@@ -42,7 +43,27 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         is_success: bool = True,
     ) -> None:
         """Initialize FlextResult from value/error/is_success only (direct typing, no Result unwrap)."""
-        self._result = None
+        if source is not None and value is None and error is None:
+            self._result = source
+            try:
+                failure_value = source.failure()
+            except Exception:
+                super().__init__(
+                    value=source.unwrap(),
+                    error_code=error_code,
+                    error_data=error_data,
+                    is_success=True,
+                )
+                return
+            super().__init__(
+                error_code=error_code,
+                error_data=error_data,
+                error=str(failure_value),
+                is_success=False,
+            )
+            return
+
+        self._result = source
         super().__init__(
             value=value,
             error=error,
@@ -79,8 +100,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if value is None:
             msg = "Cannot create success result with None value"
             raise ValueError(msg)
-
-        return FlextResult[T](value=value, is_success=True)
+        result = FlextResult[T](value=value, is_success=True)
+        result._result = Success(value)
+        return result
 
     @classmethod
     def fail[U](
@@ -116,12 +138,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         _ = expected_type
         error_msg = error if error is not None else ""
-        return FlextResult[U](
+        result = FlextResult[U](
             error_code=error_code,
             error_data=error_data,
             error=error_msg,
             is_success=False,
         )
+        result._result = Failure(error_msg)
+        return result
 
     @staticmethod
     def safe[T](
@@ -164,6 +188,46 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             else:
                 self._result = Failure(self.error or "")
         return self._result
+
+    def to_maybe(self) -> Maybe[T_co]:
+        if self.is_success:
+            return Some(self.value)
+        return Nothing
+
+    @classmethod
+    def from_maybe[U](
+        cls,
+        maybe: Maybe[U],
+        error_message: str = "No value",
+    ) -> FlextResult[U]:
+        if maybe is Nothing:
+            return cls.fail(error_message)
+        return cls.ok(maybe.unwrap())
+
+    def to_io(self) -> IO[T_co]:
+        if self.is_failure:
+            exception_module = __import__("flext_core.exceptions", fromlist=["e"])
+            raise exception_module.e.ValidationError(
+                self.error or "Cannot convert failure to IO"
+            )
+        return IO(self.value)
+
+    def to_io_result(self) -> IOResult[T_co, str]:
+        if self.is_success:
+            return IOSuccess(self.value)
+        return IOFailure(self.error or "")
+
+    @classmethod
+    def from_io_result[U](
+        cls,
+        io_result: IOResult[U, str],
+    ) -> FlextResult[U]:
+        try:
+            io_value = io_result.unwrap()
+            return cls.ok(unsafe_perform_io(io_value))
+        except Exception:
+            io_error = io_result.failure()
+            return cls.fail(str(unsafe_perform_io(io_error)))
 
     # error_code and error_data properties are inherited from RuntimeResult
 
@@ -274,13 +338,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             errors_fn = getattr(e, "errors", None)
             if callable(errors_fn):
                 raw = errors_fn()
-                errors_list: Sequence[Mapping[str, str | list[str] | None]] = (
-                    list(raw) if hasattr(raw, "__iter__") else []
-                )
-                error_msg = "; ".join(
-                    f"{err.get('loc', [])!s}: {err.get('msg', '')}"
-                    for err in errors_list
-                )
+                error_msg = str(raw)
             else:
                 error_msg = str(e)
             return FlextResult[T_Model].fail(f"Validation failed: {error_msg}")

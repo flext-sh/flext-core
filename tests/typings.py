@@ -19,9 +19,6 @@ from typing import TypedDict
 from flext_core.typings import T, T_co, T_contra, t
 from flext_tests.typings import (
     FlextTestsTypes,
-    TTestModel,
-    TTestResult,
-    TTestService,
 )
 
 
@@ -247,9 +244,6 @@ class TestsFlextTypes(FlextTestsTypes):
 
 __all__ = [
     "T",
-    "TTestModel",
-    "TTestResult",
-    "TTestService",
     "T_co",
     "T_contra",
     "TestsFlextTypes",

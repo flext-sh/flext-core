@@ -11,7 +11,9 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import Protocol, TypeGuard, TypeVar, cast, overload, runtime_checkable
+from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
+
+from pydantic import TypeAdapter, ValidationError
 
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
@@ -40,6 +42,30 @@ class _BatchResultCompat(t.BatchResultDict):
 
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
+
+    @staticmethod
+    def _to_batch_scalar(
+        value: t.GuardInputValue,
+    ) -> str | int | float | bool | datetime | None:
+        if value is None or isinstance(value, str | int | float | bool | datetime):
+            return value
+        return str(value)
+
+    @staticmethod
+    def _to_batch_scalars(
+        values: Sequence[t.GuardInputValue],
+    ) -> list[str | int | float | bool | datetime | None]:
+        return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
+
+    @staticmethod
+    def _coerce_guard_value(value: object) -> t.GuardInputValue:
+        guard_value_adapter: TypeAdapter[t.GuardInputValue] = TypeAdapter(
+            t.GuardInputValue,
+        )
+        try:
+            return guard_value_adapter.validate_python(value)
+        except ValidationError:
+            return str(value)
 
     # =========================================================================
     # Type Guards for Runtime Type Narrowing
@@ -386,27 +412,22 @@ class FlextUtilitiesCollection:
                 continue
 
             try:
-                result = operation(item)
+                result_raw = operation(item)
                 # Handle both direct returns and FlextResult returns
-                has_result_attrs = hasattr(result, "is_success") and hasattr(
-                    result,
-                    "value",
-                )
-                if has_result_attrs:
-                    # It's a FlextResult - use getattr for safe access
-                    is_success = getattr(result, "is_success", False)
-                    if is_success:
-                        value_raw: t.GuardInputValue = getattr(result, "value", None)
-                        # Convert to PayloadValue using conversion utility
-                        value: t.GuardInputValue = value_raw
-                        if do_flatten and isinstance(value, list):
-                            # Extend results with all items from the list
-                            # Convert each item to PayloadValue
-                            results.extend(cast("list[t.GuardInputValue]", value))
+                if isinstance(result_raw, r):
+                    if result_raw.is_success:
+                        value = FlextUtilitiesCollection._coerce_guard_value(
+                            result_raw.value,
+                        )
+                        if (
+                            do_flatten
+                            and FlextUtilitiesCollection._is_general_value_list(value)
+                        ):
+                            results.extend(value)
                         else:
                             results.append(value)
                     else:
-                        error_msg = getattr(result, "error", "Unknown error")
+                        error_msg = result_raw.error or "Unknown error"
                         if error_mode == "fail":
                             return r[t.BatchResultDict].fail(
                                 f"Batch processing failed: {error_msg}",
@@ -415,14 +436,22 @@ class FlextUtilitiesCollection:
                             # Store as (index, error_message) tuple
                             errors.append((processed - 1, str(error_msg)))
                         # skip mode - don't add to errors
-                # It's a direct return - convert to PayloadValue
-                elif do_flatten and isinstance(result, list):
+                    continue
+
+                try:
+                    direct_result = FlextUtilitiesCollection._coerce_guard_value(
+                        result_raw,
+                    )
+                except Exception:
+                    direct_result = str(result_raw)
+                if do_flatten and FlextUtilitiesCollection._is_general_value_list(
+                    direct_result
+                ):
                     # Extend results with all items from the list
                     # Convert each item to PayloadValue
-                    results.extend(cast("list[t.GuardInputValue]", result))
+                    results.extend(direct_result)
                 else:
-                    typed_result: t.GuardInputValue = cast("t.GuardInputValue", result)
-                    results.append(typed_result)
+                    results.append(direct_result)
             except Exception as e:
                 if error_mode == "fail":
                     return r[t.BatchResultDict].fail(
@@ -438,7 +467,7 @@ class FlextUtilitiesCollection:
                 progress(processed, total)
 
         result_dict = _BatchResultCompat(
-            results=cast("list[str | int | float | bool | datetime | None]", results),
+            results=FlextUtilitiesCollection._to_batch_scalars(results),
             total=total,
             success_count=len(results),
             error_count=len(errors),
@@ -622,7 +651,7 @@ class FlextUtilitiesCollection:
             for k, v in data.items():
                 if isinstance(v, enum_type):
                     result[k] = v
-                elif v.__class__ is str:
+                elif isinstance(v, str):
                     result[k] = enum_type(v)
                 else:
                     msg = (
@@ -680,7 +709,7 @@ class FlextUtilitiesCollection:
             for v in data:
                 if isinstance(v, enum_type):
                     result.append(v)
-                elif v.__class__ is str:
+                elif isinstance(v, str):
                     result.append(enum_type(v))
                 else:
                     msg = (
@@ -884,7 +913,7 @@ class FlextUtilitiesCollection:
                 # Check value type with isinstance to narrow
                 if isinstance(v_raw, enum_cls):
                     result[k] = v_raw
-                elif v_raw.__class__ is str:
+                elif isinstance(v_raw, str):
                     try:
                         result[k] = enum_cls(v_raw)
                     except ValueError:
@@ -925,7 +954,7 @@ class FlextUtilitiesCollection:
             for v_raw in data:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
-                elif v_raw.__class__ is str:
+                elif isinstance(v_raw, str):
                     try:
                         result.append(enum_cls(v_raw))
                     except ValueError:
@@ -1059,7 +1088,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_mapping_items[K, V](
-        mapping: Mapping[K, V],
+        mapping: Mapping[K, t.GuardInputValue],
     ) -> list[tuple[str, t.GuardInputValue]]:
         """Extract mapping items as typed list for iteration.
 
@@ -1079,13 +1108,12 @@ class FlextUtilitiesCollection:
             key_obj = item_tuple[0]
             value_raw = item_tuple[1]
             key_str: str = str(key_obj)
-            value_typed: t.GuardInputValue = cast("t.GuardInputValue", value_raw)
-            result.append((key_str, value_typed))
+            result.append((key_str, value_raw))
         return result
 
     @staticmethod
-    def extract_callable_mapping[K, V](
-        mapping: Mapping[K, V],
+    def extract_callable_mapping[K](
+        mapping: Mapping[K, Callable[[], t.GuardInputValue]],
     ) -> dict[str, Callable[[], t.GuardInputValue]]:
         """Extract mapping of callables for resources/factories.
 
@@ -1104,25 +1132,8 @@ class FlextUtilitiesCollection:
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
             value_raw = item_tuple[1]
-            if callable(value_raw):
-                key_str: str = str(key_obj)
-                # Create wrapper function with explicit return type
-                # This ensures type safety - container validates at runtime
-                # Type narrow: callable() narrows value_raw to a callable value
-                captured_fn = cast("Callable[[], object]", value_raw)
-
-                def _wrap_callable(
-                    fn: Callable[[], object] = captured_fn,
-                ) -> Callable[[], t.GuardInputValue]:
-                    """Wrap callable with proper return type signature."""
-
-                    def _wrapped() -> t.GuardInputValue:
-                        # fn is callable (checked before capture) - call and convert
-                        return cast("t.GuardInputValue", fn())
-
-                    return _wrapped
-
-                result[key_str] = _wrap_callable()
+            key_str: str = str(key_obj)
+            result[key_str] = value_raw
         return result
 
 
