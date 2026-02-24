@@ -14,10 +14,10 @@ from typing import TypeVar
 from pydantic import BaseModel, ValidationError
 
 from flext_core._models.base import FlextModelsBase
-from flext_core.models import m
-from flext_core.result import r
+from flext_core.models import FlextModels as m
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 
@@ -151,7 +151,7 @@ class FlextUtilitiesModel:
         *,
         by_alias: bool = False,
         exclude_none: bool = False,
-    ) -> dict[str, t.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue]:
         """Convert model to dict (simple wrapper).
 
         Example:
@@ -200,12 +200,12 @@ class FlextUtilitiesModel:
             return FlextModelsBase.Metadata(attributes={})
 
         # Handle existing Metadata instance - return as-is
-        if type(value) is FlextModelsBase.Metadata:
+        if value.__class__ is FlextModelsBase.Metadata:
             return value
 
         # Handle dict-like values (dict or m.ConfigMap)
         if FlextRuntime.is_dict_like(value):
-            attributes: dict[str, t.ScalarValue] = {}
+            attributes = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
 
@@ -214,7 +214,7 @@ class FlextUtilitiesModel:
         # Invalid type - raise TypeError
         msg = (
             f"metadata must be None, dict, or FlextModelsBase.Metadata, "
-            f"got {type(value).__name__}"
+            f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
 
@@ -228,7 +228,7 @@ class FlextUtilitiesModel:
         exclude_defaults: bool = False,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
-    ) -> dict[str, t.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -297,7 +297,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_pydantic_dict(
         data: t.ConfigMap | None,
-    ) -> dict[str, t.ScalarValue]:
+    ) -> Mapping[str, t.PydanticConfigValue]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
         Normalizes PayloadValue values to the restricted PydanticConfigValue type
@@ -307,7 +307,7 @@ class FlextUtilitiesModel:
             data: EventDataMapping (Mapping[str, PayloadValue]) or None
 
         Returns:
-            dict[str, t.ConfigMapValue]: Dict with Pydantic-safe values
+            Mapping[str, t.ConfigMapValue]: Mapping with Pydantic-safe values
 
         Example:
             >>> u.Model.normalize_to_pydantic_dict(None)
@@ -320,14 +320,14 @@ class FlextUtilitiesModel:
         """
         if not data:
             return {}
-        result: dict[str, t.ScalarValue] = {}
+        result = {}
         for key, value in data.items():
             result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
         return result
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: t.ScalarValue | m.ConfigMap,
+        value: t.ConfigMapValue,
     ) -> t.PydanticConfigValue:
         """Normalize PayloadValue to Pydantic-safe PydanticConfigValue.
 
@@ -340,21 +340,28 @@ class FlextUtilitiesModel:
             t.PydanticConfigValue: Pydantic-safe value
 
         """
-        if value is None:
-            return None
-        if type(value) is bool:
-            return value
-        if type(value) in (int, float, str):
-            return value
-        if type(value) in (list, tuple):
-            return [
-                item
-                if type(item) in (str, int, float, bool, type(None))
-                else str(item)
-                for item in value
-            ]
-        # Convert any other type to string representation
-        return str(value)
+        match value:
+            case None:
+                return None
+            case bool() | int() | float() | str():
+                return value
+            case list() as items:
+                return [
+                    item
+                    if item.__class__ in (str, int, float, bool, None.__class__)
+                    else str(item)
+                    for item in items
+                ]
+            case tuple() as items:
+                return [
+                    item
+                    if item.__class__ in (str, int, float, bool, None.__class__)
+                    else str(item)
+                    for item in items
+                ]
+            case _:
+                # Convert any other type to string representation
+                return str(value)
 
 
 uModel = FlextUtilitiesModel

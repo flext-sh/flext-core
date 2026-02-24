@@ -23,14 +23,14 @@ from typing import ClassVar, Literal, Self, overload
 
 from structlog.typing import BindableLogger
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.constants import FlextConstants as c
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 
 class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
@@ -133,11 +133,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         # Compare with StrEnum values directly - StrEnum comparison works with strings
         if operation == c.Logging.ContextOperation.BIND:
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
-            return r[bool].ok(value=True)
-        if operation == c.Logging.ContextOperation.UNBIND:
-            keys_raw: list[str] = u.Mapper.get(kwargs, "keys", default=[])
-            keys: list[str] = [str(k) for k in keys_raw]
-            FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
             return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.CLEAR:
             FlextRuntime.structlog().contextvars.clear_contextvars()
@@ -242,7 +237,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             >>> # Only 'user_id' and 'session_id' removed from global context
 
         """
-        return cls._context_operation("unbind", keys=list(keys))
+        try:
+            unbind_keys: list[str] = [str(key) for key in keys]
+            FlextRuntime.structlog().contextvars.unbind_contextvars(*unbind_keys)
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to unbind global context: {exc}")
 
     @classmethod
     def _get_global_context(cls) -> m.ConfigMap:
@@ -617,12 +617,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         """
         resolved_level: str | None
-        if level is None:
-            resolved_level = None
-        elif hasattr(level, "value"):
-            resolved_level = str(level.value)
-        else:
-            resolved_level = level
+        match level:
+            case c.Settings.LogLevel() as enum_level:
+                resolved_level = enum_level.value
+            case None:
+                resolved_level = None
+            case _:
+                resolved_level = level
 
         logger = cls.for_container(container, level=resolved_level)
         if context:
@@ -944,8 +945,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
             # Use StrEnum directly - structlog accepts StrEnum values
             # Convert to lowercase string for method name lookup
-            level_raw = _level.value if hasattr(_level, "value") else _level
-            level_str = str(level_raw).lower()
+            match _level:
+                case c.Settings.LogLevel() as enum_level:
+                    level_raw: str = enum_level.value
+                case _:
+                    level_raw = str(_level)
+            level_str = level_raw.lower()
 
             # Dynamic method call using getattr mapping
             getattr(self.logger, level_str)(formatted_message, **context)
@@ -1195,11 +1200,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         )
 
         try:
-            resolved_exception: Exception | None = (
-                exception
-                if exception is not None and Exception in exception.__class__.__mro__
-                else None
-            )
+            match exception:
+                case Exception() as exc:
+                    resolved_exception: Exception | None = exc
+                case _:
+                    resolved_exception = None
 
             context_dict = self.build_exception_context(
                 exception=resolved_exception,
@@ -1207,10 +1212,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context=kw,
             )
 
-            if hasattr(self.logger, "error") and callable(
-                getattr(self.logger, "error")
-            ):
-                self.logger.error(message, *filtered_args, **context_dict.root)
+            error_method = getattr(self.logger, "error", None)
+            if callable(error_method):
+                error_method(message, *filtered_args, **context_dict.root)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # For exception logging, we don't propagate errors to avoid recursive issues
             pass
@@ -1442,18 +1446,22 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             is typically used in adapter context where direct exception handling
             is done by the base logger.
             """
-            resolved_exception: Exception | None = (
-                exception
-                if exception is not None and Exception in exception.__class__.__mro__
-                else None
-            )
+            match exception:
+                case Exception() as exc:
+                    resolved_exception: Exception | None = exc
+                case _:
+                    resolved_exception = None
             context_kwargs = kwargs
-            if exception is not None and (Exception not in exception.__class__.__mro__):
-                context_kwargs = {
-                    **kwargs,
-                    "exception_type": exception.__class__.__name__,
-                    "exception_message": str(exception),
-                }
+            match exception:
+                case BaseException() as non_standard_exception:
+                    if resolved_exception is None:
+                        context_kwargs = {
+                            **kwargs,
+                            "exception_type": non_standard_exception.__class__.__name__,
+                            "exception_message": str(non_standard_exception),
+                        }
+                case _:
+                    pass
 
             context = self._base_logger.build_exception_context(
                 exception=resolved_exception,

@@ -22,10 +22,10 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core.models import m
-from flext_core.protocols import p
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGuards:
@@ -65,7 +65,7 @@ class FlextUtilitiesGuards:
             False
 
         """
-        return type(value) is str and bool(value.strip())
+        return value.__class__ is str and bool(value.strip())
 
     @staticmethod
     def is_dict_non_empty(value: t.GuardInputValue) -> bool:
@@ -142,7 +142,7 @@ class FlextUtilitiesGuards:
             [1, 2, 3]
 
         """
-        if val is None or type(val) in (str, int, float, bool):
+        if val is None or val.__class__ in (str, int, float, bool):
             return val
         if FlextRuntime.is_dict_like(val):
             # Convert to flat dict with ScalarValue values
@@ -166,7 +166,13 @@ class FlextUtilitiesGuards:
                 # Explicit type annotations for loop variables
                 key: str = k
                 value: t.GuardInputValue = v
-                if value is None or type(value) in (str, int, float, bool, datetime):
+                if value is None or value.__class__ in (
+                    str,
+                    int,
+                    float,
+                    bool,
+                    datetime,
+                ):
                     result_dict[key] = value
                 else:
                     result_dict[key] = str(value)
@@ -178,11 +184,16 @@ class FlextUtilitiesGuards:
             result_list: t.GeneralListValue = []
             # TypeGuard already narrows to Sequence - no extra check needed
             # Exclude str/bytes from iteration
-            if type(val_sequence) not in (str, bytes):
+            if val_sequence.__class__ not in (str, bytes):
                 for item in val_sequence:
                     # Explicit type annotation for loop variable
                     list_item: t.GuardInputValue = item
-                    if list_item is None or type(list_item) in (str, int, float, bool):
+                    if list_item is None or list_item.__class__ in (
+                        str,
+                        int,
+                        float,
+                        bool,
+                    ):
                         result_list.append(list_item)
                     else:
                         result_list.append(str(list_item))
@@ -212,13 +223,13 @@ class FlextUtilitiesGuards:
 
         """
         # Check scalar types first (most common case)
-        if value is None or type(value) in (str, int, float, bool, datetime):
+        if value is None or value.__class__ in (str, int, float, bool, datetime):
             return True
         # Check for bool before int (bool is subclass of int in Python)
         if value is True or value is False:
             return True
         # Check sequence types (list/tuple can never be str/bytes)
-        if type(value) in (list, tuple):
+        if value.__class__ in (list, tuple):
             # Iterate with explicit type annotation to satisfy pyright
             item: t.GuardInputValue
             for item in value:
@@ -231,7 +242,7 @@ class FlextUtilitiesGuards:
             k: t.GuardInputValue
             v: t.GuardInputValue
             for k, v in value.items():
-                if type(k) is not str:
+                if k.__class__ is not str:
                     return False
                 if not FlextUtilitiesGuards.is_general_value_type(v):
                     return False
@@ -240,7 +251,7 @@ class FlextUtilitiesGuards:
         if callable(value):
             return True
         # Check BaseModel or Path instances (structural for BaseModel)
-        return hasattr(value, "model_dump") or type(value) is Path
+        return hasattr(value, "model_dump") or value.__class__ is Path
 
     @staticmethod
     def is_handler_type(value: t.GuardInputValue) -> TypeGuard[t.HandlerType]:
@@ -271,9 +282,11 @@ class FlextUtilitiesGuards:
         if hasattr(value, "items") and hasattr(value, "keys") and callable(value.items):
             return True
         # Check if BaseModel instance or class
-        if hasattr(value, "model_dump") and callable(getattr(value, "model_dump", None)):
+        if hasattr(value, "model_dump") and callable(
+            getattr(value, "model_dump", None)
+        ):
             return True
-        if type(value) is type:
+        if value.__class__ is type:
             try:
                 if BaseModel in value.__mro__:
                     return True
@@ -332,14 +345,16 @@ class FlextUtilitiesGuards:
 
         """
         # Check if it's a Mapping (structural)
-        if not (hasattr(value, "items") and hasattr(value, "keys") and callable(value.items)):
+        if not (
+            hasattr(value, "items") and hasattr(value, "keys") and callable(value.items)
+        ):
             return False
         # Check all keys are strings and values are ConfigMapValue
         # Iterate with explicit type annotations to satisfy pyright
         k: t.GuardInputValue
         v: t.GuardInputValue
         for k, v in value.items():
-            if type(k) is not str:
+            if k.__class__ is not str:
                 return False
             if not FlextUtilitiesGuards.is_general_value_type(v):
                 return False
@@ -349,30 +364,30 @@ class FlextUtilitiesGuards:
     def is_configuration_dict(
         value: t.GuardInputValue,
     ) -> TypeGuard[m.Dict]:
-        """Check if value is a valid m.Dict (dict[str, t.GuardInputValue]).
+        """Check if value is a valid m.Dict mapping.
 
-        This TypeGuard enables explicit narrowing for dict[str, t.GuardInputValue].
+        This TypeGuard enables explicit narrowing for m.Dict values.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[dict[str, t.GuardInputValue]]: True if value matches ConfigurationDict structure
+            TypeGuard[m.Dict]: True if value matches ConfigurationDict structure
 
         Example:
             >>> from flext_core.utilities import u
             >>> if u.Guards.is_configuration_dict(config):
-            ...     # config is now typed as dict[str, t.GuardInputValue]
+            ...     # config is now typed as m.Dict
             ...     config["key"] = "value"
 
         """
-        if type(value) is not dict:
+        if value.__class__ is not dict:
             return False
         k: t.GuardInputValue
         v: t.GuardInputValue
         for k, v in value.items():
-            if type(k) is not str:
+            if k.__class__ is not str:
                 return False
             if not FlextUtilitiesGuards.is_general_value_type(v):
                 return False
@@ -396,21 +411,21 @@ class FlextUtilitiesGuards:
         """
         if value is None:
             return True
-        if type(value) in (str, int, float, bool, datetime):
+        if value.__class__ in (str, int, float, bool, datetime):
             return True
-        if type(value) in (list, tuple):
+        if value.__class__ in (list, tuple):
             item: t.GuardInputValue
             for item in value:
                 if not (
-                    item is None or type(item) in (str, int, float, bool, datetime)
+                    item is None or item.__class__ in (str, int, float, bool, datetime)
                 ):
                     return False
             return True
         if hasattr(value, "items") and callable(getattr(value, "items", None)):
             for k, v in value.items():
-                if type(k) is not str:
+                if k.__class__ is not str:
                     return False
-                if not (v is None or type(v) in (str, int, float, bool, datetime)):
+                if not (v is None or v.__class__ in (str, int, float, bool, datetime)):
                     return False
             return True
         return False
@@ -605,7 +620,7 @@ class FlextUtilitiesGuards:
         # Runtime check needed: type checker sees str | Sequence[T] as Sequence[Unknown]
         # but runtime can be either str or Sequence[str]
         # Type check is necessary for runtime type distinction
-        return type(value) in (list, tuple, range) and type(value) is not str
+        return value.__class__ in (list, tuple, range) and value.__class__ is not str
 
     @staticmethod
     def is_mapping(value: t.GuardInputValue) -> TypeGuard[m.ConfigMap]:
@@ -671,7 +686,7 @@ class FlextUtilitiesGuards:
             ...     pairs = list(key_equals)
 
         """
-        return type(value) in (list, tuple, range)
+        return value.__class__ in (list, tuple, range)
 
     @staticmethod
     def _is_str(value: t.GuardInputValue) -> TypeGuard[str]:
@@ -691,11 +706,11 @@ class FlextUtilitiesGuards:
             ...     parts = path.split(".")
 
         """
-        return type(value) is str
+        return value.__class__ is str
 
     @staticmethod
-    def _is_dict(value: t.GuardInputValue) -> TypeGuard[dict[str, t.GuardInputValue]]:
-        """Check if value is dict[str, t.GuardInputValue].
+    def _is_dict(value: t.GuardInputValue) -> TypeGuard[m.Dict]:
+        """Check if value is a dict-like mapping.
 
         Type guard for dictionary types. Returns ConfigurationDict for type safety.
 
@@ -711,10 +726,12 @@ class FlextUtilitiesGuards:
             ...     value = items.get("key")
 
         """
-        return type(value) is dict
+        return value.__class__ is dict
 
     @staticmethod
-    def _is_mapping(value: t.GuardInputValue) -> TypeGuard[Mapping[str, t.GuardInputValue]]:
+    def _is_mapping(
+        value: t.GuardInputValue,
+    ) -> TypeGuard[Mapping[str, t.GuardInputValue]]:
         """Check if value is a Mapping (dict-like).
 
         Type guard for Mapping types (dict, ChainMap, MappingProxyType, etc.).
@@ -751,7 +768,7 @@ class FlextUtilitiesGuards:
             ...     value = items[index]
 
         """
-        return type(value) is int
+        return value.__class__ is int
 
     @staticmethod
     def _is_list_or_tuple(
@@ -773,7 +790,7 @@ class FlextUtilitiesGuards:
             ...     value = items[0]
 
         """
-        return type(value) in (list, tuple)
+        return value.__class__ in (list, tuple)
 
     @staticmethod
     def _is_sized(value: t.GuardInputValue) -> TypeGuard[Sized]:
@@ -793,7 +810,7 @@ class FlextUtilitiesGuards:
             ...     length = len(value)
 
         """
-        return type(value) in (str, bytes, list, tuple, dict) or (
+        return value.__class__ in (str, bytes, list, tuple, dict) or (
             hasattr(value, "__len__") and callable(getattr(value, "__len__", None))
         )
 
@@ -815,7 +832,7 @@ class FlextUtilitiesGuards:
             ...     first = value[0]
 
         """
-        return type(value) is list
+        return value.__class__ is list
 
     @staticmethod
     def _is_float(value: t.GuardInputValue) -> TypeGuard[float]:
@@ -830,7 +847,7 @@ class FlextUtilitiesGuards:
             TypeGuard[float]: True if value is float
 
         """
-        return type(value) is float
+        return value.__class__ is float
 
     @staticmethod
     def _is_bool(value: t.GuardInputValue) -> TypeGuard[bool]:
@@ -845,7 +862,7 @@ class FlextUtilitiesGuards:
             TypeGuard[bool]: True if value is bool
 
         """
-        return type(value) is bool
+        return value.__class__ is bool
 
     @staticmethod
     def _is_none(value: t.GuardInputValue) -> TypeGuard[None]:
@@ -875,7 +892,7 @@ class FlextUtilitiesGuards:
             TypeGuard[tuple[t.GuardInputValue, ...]]: True if value is tuple
 
         """
-        return type(value) is tuple
+        return value.__class__ is tuple
 
     @staticmethod
     def _is_bytes(value: t.GuardInputValue) -> TypeGuard[bytes]:
@@ -890,7 +907,7 @@ class FlextUtilitiesGuards:
             TypeGuard[bytes]: True if value is bytes
 
         """
-        return type(value) is bytes
+        return value.__class__ is bytes
 
     @staticmethod
     def _is_sequence_not_str_bytes(
@@ -907,14 +924,19 @@ class FlextUtilitiesGuards:
             TypeGuard[Sequence[t.GuardInputValue]]: True if value is Sequence and not str/bytes
 
         """
-        return type(value) in (list, tuple, range) and type(value) not in (str, bytes)
+        return value.__class__ in (list, tuple, range) and value.__class__ not in (
+            str,
+            bytes,
+        )
 
     # =========================================================================
     # Generic is_type() Function - Unified Type Checking
     # =========================================================================
 
     @staticmethod
-    def is_type(value: t.GuardInputValue, type_spec: str | type | tuple[type, ...]) -> bool:
+    def is_type(
+        value: t.GuardInputValue, type_spec: str | type | tuple[type, ...]
+    ) -> bool:
         """Generic type checking function that unifies all guard checks.
 
         Provides a single entry point for all type checking operations,
@@ -957,10 +979,10 @@ class FlextUtilitiesGuards:
 
         """
         # String-based type names (delegate to specific guard functions)
-        if type(type_spec) is str:
+        if type_spec.__class__ is str:
             type_name = type_spec.lower()
             # Map string names to private method names
-            method_map: dict[str, str] = {
+            method_map: Mapping[str, str] = {
                 # Protocol checks
                 "config": "_is_config",
                 "context": "_is_context",
@@ -1014,14 +1036,14 @@ class FlextUtilitiesGuards:
             return False
 
         # Tuple of types check
-        if type(type_spec) is tuple:
-            return type(value) in type_spec
+        if type_spec.__class__ is tuple:
+            return value.__class__ in type_spec
 
         # Direct type/class checks
-        if type(type_spec) is type:
+        if type_spec.__class__ is type:
             # Check if it's a protocol first
-            # Use type() to get class safely without accessing __class__
-            type_class = type(type_spec)
+            # Use class metadata to avoid runtime type() narrowing calls
+            type_class = type_spec.__class__
             if hasattr(type_spec, "__protocol_attrs__") or (
                 hasattr(type_spec, "__module__") and "Protocol" in str(type_class)
             ):
@@ -1045,11 +1067,11 @@ class FlextUtilitiesGuards:
                     return FlextUtilitiesGuards._is_middleware(value)
                 return False
             # Regular type check
-            return type(value) is type_spec
+            return value.__class__ is type_spec
 
         # Fallback: type check for any other type specification
         try:
-            return type(value) is type_spec
+            return value.__class__ is type_spec
         except TypeError:
             return False
 
@@ -1085,7 +1107,10 @@ class FlextUtilitiesGuards:
             The value as ConfigurationMapping if it's a Mapping, None otherwise
 
         """
-        if (type(value) is dict or (hasattr(value, "keys") and hasattr(value, "__getitem__"))) and FlextUtilitiesGuards.is_configuration_mapping(
+        if (
+            value.__class__ is dict
+            or (hasattr(value, "keys") and hasattr(value, "__getitem__"))
+        ) and FlextUtilitiesGuards.is_configuration_mapping(
             value,
         ):
             return value
@@ -1098,7 +1123,10 @@ class FlextUtilitiesGuards:
     @staticmethod
     def guard(
         value: t.GuardInputValue,
-        validator: Callable[[t.GuardInputValue], bool] | type | tuple[type, ...] | None = None,
+        validator: Callable[[t.GuardInputValue], bool]
+        | type
+        | tuple[type, ...]
+        | None = None,
         *,
         default: t.GuardInputValue | None = None,
         return_value: bool = False,
@@ -1119,11 +1147,11 @@ class FlextUtilitiesGuards:
             if callable(validator):
                 if validator(value):
                     return value if return_value else True
-            elif type(validator) is tuple:
-                if type(value) in validator:
+            elif validator is not None and validator.__class__ is tuple:
+                if value.__class__ in validator:
                     return value if return_value else True
-            elif type(validator) is type:
-                if type(value) is validator:
+            elif validator is not None and validator.__class__ is type:
+                if value.__class__ is validator:
                     return value if return_value else True
             # Default validation - check if value is truthy
             elif value:
@@ -1135,7 +1163,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def in_(value: t.GuardInputValue, container: t.GuardInputValue) -> bool:
         """Check if value is in container."""
-        if type(container) in (list, tuple, set, dict):
+        if container.__class__ in (list, tuple, set, dict):
             try:
                 return value in container
             except TypeError:
@@ -1145,7 +1173,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def has(obj: t.GuardInputValue, key: str) -> bool:
         """Check if object has attribute/key."""
-        if type(obj) is dict:
+        if obj.__class__ is dict:
             return key in obj
         return hasattr(obj, key)
 
@@ -1195,8 +1223,8 @@ class FlextUtilitiesGuards:
         lte: float | None = None,
         is_: type | None = None,
         not_: type | None = None,
-        in_: Sequence[object] | None = None,
-        not_in: Sequence[object] | None = None,
+        in_: Sequence[t.GuardInputValue] | None = None,
+        not_in: Sequence[t.GuardInputValue] | None = None,
         none: bool | None = None,
         empty: bool | None = None,
         match: str | None = None,
@@ -1241,12 +1269,12 @@ class FlextUtilitiesGuards:
         # is_ and not_ are type[ConfigMapValue] which can be generic
         # Check if the type is a plain type (not generic) before using type check
         if is_ is not None:
-            if type(is_) is type:
-                if type(value) is not is_:
+            if is_.__class__ is type:
+                if value.__class__ is not is_:
                     return False
         if not_ is not None:
-            if type(not_) is type:
-                if type(value) is not_:
+            if not_.__class__ is type:
+                if value.__class__ is not_:
                     return False
 
         # Equality checks
@@ -1263,16 +1291,22 @@ class FlextUtilitiesGuards:
 
         # Length/numeric checks - use len() for sequences, direct for numbers
         check_val: int | float = 0
-        if type(value) in (int, float):
+        if value.__class__ in (int, float):
             check_val = value
-        elif type(value) in (str, bytes) or type(value) in (list, tuple, dict, set, frozenset):
+        elif value.__class__ in (str, bytes) or value.__class__ in (
+            list,
+            tuple,
+            dict,
+            set,
+            frozenset,
+        ):
             check_val = len(value)
         elif hasattr(value, "__len__"):
             try:
                 len_method = getattr(value, "__len__", None)
                 if callable(len_method):
                     length = len_method()
-                    if type(length) is int:
+                    if length.__class__ is int:
                         check_val = length
             except (TypeError, AttributeError):
                 check_val = 0
@@ -1293,7 +1327,7 @@ class FlextUtilitiesGuards:
             return False
 
         # String-specific checks
-        if type(value) is str:
+        if value.__class__ is str:
             if match is not None and not re.search(match, value):
                 return False
             if starts is not None and not value.startswith(starts):
@@ -1302,12 +1336,17 @@ class FlextUtilitiesGuards:
                 return False
             if (
                 contains is not None
-                and type(contains) is str
+                and contains.__class__ is str
                 and contains not in value
             ):
                 return False
         elif contains is not None:
-            if type(value) is dict or type(value) in (list, tuple, set, frozenset):
+            if value.__class__ is dict or value.__class__ in (
+                list,
+                tuple,
+                set,
+                frozenset,
+            ):
                 if contains not in value:
                     return False
             # Other types - use hasattr/getattr with explicit type narrowing

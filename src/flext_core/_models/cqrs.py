@@ -16,9 +16,9 @@ from typing import Annotated, Self
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core.constants import c
+from flext_core.constants import FlextConstants as c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsCqrs:
@@ -53,7 +53,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_command(cls, v: t.ScalarValue) -> str:
             """Auto-set command type from class name if empty."""
-            if type(v) is str:
+            if v.__class__ is str:
                 return v if v.strip() else cls.__name__
             if not v:
                 return cls.__name__
@@ -155,7 +155,7 @@ class FlextModelsCqrs:
                 pagination_cls_attr = getattr(obj, "Pagination", None)
                 if (
                     pagination_cls_attr is not None
-                    and type(pagination_cls_attr) is type
+                    and pagination_cls_attr.__class__ is type
                     and FlextModelsCqrs.Pagination in pagination_cls_attr.__mro__
                 ):
                     # Type-safe narrowing: pagination_cls_attr is confirmed as subclass
@@ -167,32 +167,29 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination
-            | t.Dict
-            | Mapping[str, int | str]
-            | None,
+            v: FlextModelsCqrs.Pagination | t.Dict | Mapping[str, int | str] | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
-            if type(v) is FlextModelsCqrs.Pagination:
+            if v is not None and v.__class__ is FlextModelsCqrs.Pagination:
                 return v
 
             # Convert dict or t.Dict to Pagination
             if v is not None:
-                data = v.root if type(v) is t.Dict else v
+                data = v.root if v.__class__ is t.Dict else v
                 if FlextRuntime.is_dict_like(data):
                     page_raw = data.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
                     size_raw = data.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
                     # Type-safe int conversion
                     page: int = c.Pagination.DEFAULT_PAGE_NUMBER
                     size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
-                    if type(page_raw) is int:
+                    if page_raw.__class__ is int:
                         page = page_raw
-                    elif type(page_raw) is str and page_raw.isdigit():
+                    elif page_raw.__class__ is str and page_raw.isdigit():
                         page = int(page_raw)
-                    if type(size_raw) is int:
+                    if size_raw.__class__ is int:
                         size = size_raw
-                    elif type(size_raw) is str and size_raw.isdigit():
+                    elif size_raw.__class__ is str and size_raw.isdigit():
                         size = int(size_raw)
                     return pagination_cls(page=page, size=size)
 

@@ -48,13 +48,13 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.constants import FlextConstants as c
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Model, t
+from flext_core.typings import T_Model, FlextTypes as t
 
 
 class FlextUtilitiesConfiguration:
@@ -260,7 +260,7 @@ class FlextUtilitiesConfiguration:
         """
         try:
             obj_dict = obj.model_dump()
-            if type(obj_dict) is dict and parameter in obj_dict:
+            if FlextRuntime.is_dict_like(obj_dict) and parameter in obj_dict:
                 return (True, obj_dict[parameter])
         except (AttributeError, TypeError, ValueError):
             pass
@@ -361,7 +361,7 @@ class FlextUtilitiesConfiguration:
                 return value
 
         # Strategy 2: Dict-like (Mapping / m.ConfigMap)
-        if (type(obj) is dict) or (hasattr(obj, "keys") and hasattr(obj, "__getitem__")):
+        if FlextRuntime.is_dict_like(obj):
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
                 obj,
                 parameter,
@@ -374,7 +374,7 @@ class FlextUtilitiesConfiguration:
         if found and attr_val is not None:
             return attr_val
 
-        class_name = getattr(type(obj), "__name__", "unknown")
+        class_name = obj.__class__.__name__
         msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 
@@ -397,7 +397,7 @@ class FlextUtilitiesConfiguration:
 
         Pydantic v2.11+ Compatibility:
         - model_fields is a CLASS attribute, not instance attribute
-        - Uses getattr(type(obj), "model_fields", {}) for correct access
+        - Uses getattr(obj.__class__, "model_fields", {}) for correct access
         - This avoids deprecation warnings in newer Pydantic versions
 
         Validation Flow:
@@ -425,13 +425,12 @@ class FlextUtilitiesConfiguration:
         try:
             # Check if parameter exists in model fields for Pydantic objects
             # Access model_fields from class directly (Pydantic 2.11+ compatibility)
-            obj_class = type(obj)
+            obj_class = obj.__class__
             if hasattr(obj_class, "model_fields"):
                 model_fields_dict = getattr(obj_class, "model_fields", {})
-                if (
-                    type(model_fields_dict) is not dict
-                    or parameter not in model_fields_dict
-                ):
+                if not FlextRuntime.is_dict_like(model_fields_dict):
+                    return False
+                if parameter not in model_fields_dict:
                     return False
 
             # Use setattr which triggers Pydantic validation if applicable
@@ -619,8 +618,7 @@ class FlextUtilitiesConfiguration:
 
         """
         try:
-            # config_class: type already guarantees it's a type
-            # No need to check type(config_class) is type
+            # config_class annotation already guarantees class input
 
             # Check model_config existence
             class_name = getattr(config_class, "__name__", "UnknownClass")
@@ -640,7 +638,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> dict[str, t.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -784,15 +782,15 @@ class FlextUtilitiesConfiguration:
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
-            model_fields: dict[str, t.ScalarValue] = (
-                model_fields_attr
-                if type(model_fields_attr) is dict
-                else {}
-            )
-            valid_field_names = set(model_fields.keys())
+            if FlextRuntime.is_dict_like(model_fields_attr):
+                valid_field_names = {
+                    str(field_name) for field_name in model_fields_attr.keys()
+                }
+            else:
+                valid_field_names = set()
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs: dict[str, t.ScalarValue] = {}
+            valid_kwargs = t.ConfigMap(root={})
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():

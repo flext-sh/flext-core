@@ -21,7 +21,7 @@ from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC27
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
-from flext_core.typings import P, T, t
+from flext_core.typings import P, T, FlextTypes as t
 
 # =============================================================================
 # PROTOCOL DETECTION AND VALIDATION HELPERS (Module-level)
@@ -78,7 +78,9 @@ def _validate_protocol_compliance(
     protocol_annotations = getattr(protocol, "__annotations__", {})
     raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
     protocol_methods: set[str] = (
-        {x for x in raw_attrs if type(x) is str} if type(raw_attrs) is set else set()
+        {x for x in raw_attrs if x.__class__ is str}
+        if raw_attrs.__class__ is set
+        else set()
     )
 
     # Build set of required members
@@ -170,7 +172,7 @@ def _check_implements_protocol(instance: t.GuardInputValue, protocol: type) -> b
         True if the instance implements the protocol.
 
     """
-    cls = type(instance)
+    cls = instance.__class__
     registered_protocols = _get_class_protocols(cls)
     if protocol in registered_protocols:
         return True
@@ -178,7 +180,9 @@ def _check_implements_protocol(instance: t.GuardInputValue, protocol: type) -> b
     protocol_annotations = getattr(protocol, "__annotations__", {})
     raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
     protocol_methods: set[str] = (
-        {x for x in raw_attrs if type(x) is str} if type(raw_attrs) is set else set()
+        {x for x in raw_attrs if x.__class__ is str}
+        if raw_attrs.__class__ is set
+        else set()
     )
     required_members: set[str] = set(protocol_annotations.keys())
     required_members.update(protocol_methods)
@@ -1412,7 +1416,7 @@ class FlextProtocols:
     ):  # Cannot inherit BaseProtocol due to Python nested class limitations
         """Protocol for callables that support type hints introspection."""
 
-        __annotations__: dict[str, t.GuardInputValue]
+        __annotations__: Mapping[str, t.GuardInputValue]
 
     # =========================================================================
     # TYPE ALIASES FOR UTILITIES
@@ -1422,9 +1426,7 @@ class FlextProtocols:
     # Supports: ConfigurationDict (PayloadValue), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        dict[str, t.GuardInputValue]
-        | dict[str, t.JsonValue]
-        | t.ConfigMap
+        t.ConfigMap
         | Mapping[str, t.JsonValue]
         | Mapping[str, t.GuardInputValue]
         | BaseModel
@@ -1579,7 +1581,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return type(self).__name__
+            return self.__class__.__name__
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
@@ -1627,7 +1629,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return type(self).__name__
+            return self.__class__.__name__
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
@@ -1723,9 +1725,4 @@ class FlextProtocols:
     implements_protocol = check_implements_protocol
 
 
-p = FlextProtocols
-
-__all__ = [
-    "FlextProtocols",
-    "p",
-]
+__all__ = ["FlextProtocols"]

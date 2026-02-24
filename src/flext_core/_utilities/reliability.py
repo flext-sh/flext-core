@@ -23,11 +23,11 @@ from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesReliability:
@@ -108,7 +108,7 @@ class FlextUtilitiesReliability:
     ) -> r[TResult]:
         """Convert operation result to RuntimeResult."""
         # Check if result_raw is already a FlextResult (r in __mro__)
-        if r in type(result_raw).__mro__:
+        if r in result_raw.__class__.__mro__:
             return result_raw
 
         # result_raw is a plain value - wrap in successful Result
@@ -193,7 +193,7 @@ class FlextUtilitiesReliability:
 
             except Exception as e:
                 if retry_on is not None and not any(
-                    t in type(e).__mro__ for t in retry_on
+                    t in e.__class__.__mro__ for t in retry_on
                 ):
                     raise
 
@@ -229,7 +229,7 @@ class FlextUtilitiesReliability:
 
         """
         # Extract configuration values safely with proper type conversion
-        # config is dict[str, t.ConfigMapValue] | None, use dict.get() instead of getattr()
+        # config is Mapping[str, t.ConfigMapValue] | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
         # Type narrowing: ensure values are numeric before conversion
@@ -240,19 +240,19 @@ class FlextUtilitiesReliability:
 
         initial_delay = (
             float(initial_delay_raw)
-            if type(initial_delay_raw) in (int, float)
+            if initial_delay_raw.__class__ in (int, float)
             else 0.1
         )
         max_delay = (
-            float(max_delay_raw) if type(max_delay_raw) in (int, float) else 60.0
+            float(max_delay_raw) if max_delay_raw.__class__ in (int, float) else 60.0
         )
         exponential_backoff = (
             bool(exponential_backoff_raw)
-            if type(exponential_backoff_raw) is bool
+            if exponential_backoff_raw.__class__ is bool
             else False
         )
         backoff_multiplier: float | None = None
-        if backoff_multiplier_raw is not None and type(backoff_multiplier_raw) in (
+        if backoff_multiplier_raw is not None and backoff_multiplier_raw.__class__ in (
             int,
             float,
         ):
@@ -424,7 +424,8 @@ class FlextUtilitiesReliability:
     @staticmethod
     def flow(
         value: t.ConfigMapValue,
-        *ops: Mapping[str, t.ConfigMapValue] | Callable[[t.ConfigMapValue], t.ConfigMapValue],
+        *ops: Mapping[str, t.ConfigMapValue]
+        | Callable[[t.ConfigMapValue], t.ConfigMapValue],
     ) -> t.ConfigMapValue:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
@@ -449,8 +450,8 @@ class FlextUtilitiesReliability:
         """
         current: t.ConfigMapValue = value
         for op in ops:
-            if type(op) is dict:
-                op_dict: dict[str, t.ConfigMapValue] = op
+            if op.__class__ is dict:
+                op_dict: Mapping[str, t.ConfigMapValue] = op
                 # Check if current is PayloadValue compatible
                 if FlextUtilitiesReliability._is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
@@ -467,11 +468,14 @@ class FlextUtilitiesReliability:
         """Check if value is compatible with PayloadValue."""
         if value is None:
             return True
-        if type(value) in (str, int, float, bool, datetime, Path) or BaseModel in type(value).__mro__:
+        if (
+            value.__class__ in (str, int, float, bool, datetime, Path)
+            or BaseModel in value.__class__.__mro__
+        ):
             return True
-        if Mapping in type(value).__mro__:
+        if Mapping in value.__class__.__mro__:
             return True
-        if Sequence in type(value).__mro__ and type(value) not in (str, bytes):
+        if Sequence in value.__class__.__mro__ and value.__class__ not in (str, bytes):
             return True
         return bool(callable(value))
 
@@ -672,7 +676,7 @@ class FlextUtilitiesReliability:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:
-         1. Type matching: `(str, lambda s: s.upper())` - match if type(value) is str
+         1. Type matching: `(str, lambda s: s.upper())` - match by class
         2. Value matching: `("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD")` - match if value == "REDACTED_LDAP_BIND_PASSWORD"
         3. Predicate matching: `(lambda x: x > 10, "big")` - match if predicate returns True
 
@@ -709,14 +713,14 @@ class FlextUtilitiesReliability:
 
         """
         for pattern, result in cases:
-            if type(pattern) is type and pattern in type(value).__mro__:
+            if pattern.__class__ is type and pattern in value.__class__.__mro__:
                 return result(value) if callable(result) else result
             if pattern == value:
                 return result(value) if callable(result) else result
-            if callable(pattern) and type(pattern) is not type:
+            if callable(pattern) and pattern.__class__ is not type:
                 try:
                     pred_result = pattern(value)
-                    if type(pred_result) is bool and pred_result:
+                    if pred_result.__class__ is bool and pred_result:
                         return result(value) if callable(result) else result
                 except (ValueError, TypeError, AttributeError):
                     pass

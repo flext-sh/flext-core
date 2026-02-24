@@ -21,11 +21,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
-from flext_core.constants import c
-from flext_core.protocols import p
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Namespace, T_Settings, t
-from flext_core.utilities import u
+from flext_core.typings import T_Namespace, T_Settings, FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 
 class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
@@ -241,7 +241,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
                     instance = super().__new__(cls)
                     cls._instances[base_class] = instance
         raw_instance = cls._instances[base_class]
-        raw_type = type(raw_instance)
+        raw_type = raw_instance.__class__
         if raw_type is not cls and not issubclass(raw_type, cls):
             msg = f"Singleton instance is not of expected type {cls.__name__}"
             raise TypeError(msg)
@@ -455,7 +455,9 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
     # auto-registration pattern. Used by @auto_register decorator to map namespace
     # strings to configuration classes.
     _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
-    _context_overrides: ClassVar[MutableMapping[str, MutableMapping[str, t.ScalarValue]]] = {}
+    _context_overrides: ClassVar[
+        MutableMapping[str, MutableMapping[str, t.ScalarValue]]
+    ] = {}
 
     @staticmethod
     def auto_register(

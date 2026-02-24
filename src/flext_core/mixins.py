@@ -64,19 +64,8 @@ class FlextMixins(FlextRuntime):
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
 
-    # =========================================================================
-    # RUNTIME VALIDATION UTILITIES (Delegated from FlextRuntime)
-    # =========================================================================
-    # All classes inheriting FlextMixins automatically have access to
-    # runtime validation utilities without explicit FlextRuntime import
-
-    # Type guard utilities - access via FlextRuntime directly
-    # These are inherited from FlextRuntime, no need to redeclare
-
-    # Type introspection utilities
-    is_sequence_type = staticmethod(FlextRuntime.is_sequence_type)
-    safe_get_attribute = staticmethod(FlextRuntime.safe_get_attribute)
-    extract_generic_args = staticmethod(FlextRuntime.extract_generic_args)
+    # Runtime helpers (create_instance, is_valid_*, normalize_*, etc.) inherited from
+    # FlextRuntime via MRO; subprojects use x.* only (no FlextRuntime.* at call sites).
 
     # =========================================================================
     # RESULT FACTORY UTILITIES (Delegated from FlextResult)
@@ -107,81 +96,66 @@ class FlextMixins(FlextRuntime):
     traverse = staticmethod(r.traverse)
     accumulate_errors = staticmethod(r.accumulate_errors)
 
-    # =========================================================================
-    # MODEL CONVERSION UTILITIES (New in Phase 0 - Consolidation)
-    # =========================================================================
-
-    class ModelConversion:
-        """BaseModel/dict conversion utilities (eliminates 32+ repetitive patterns)."""
-
-        @staticmethod
-        def to_dict(
-            obj: (BaseModel | Mapping[str, t.ConfigMapValue] | None),
-        ) -> m.ConfigMap:
-            """Convert BaseModel/dict to dict (None → empty dict).
-
-            Accepts BaseModel, dict with nested structures, or None.
-            Nested Mapping/Sequence are preserved as-is in the output.
-            """
-            if obj is None:
+    @staticmethod
+    def to_dict(
+        obj: (BaseModel | Mapping[str, t.ConfigMapValue] | None),
+    ) -> m.ConfigMap:
+        """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
+        match obj:
+            case None:
                 return m.ConfigMap(root={})
-            if type(obj) is m.ConfigMap or m.ConfigMap in type(obj).__mro__:
-                return obj
-            if BaseModel in type(obj).__mro__:
-                dumped = obj.model_dump()
+            case m.ConfigMap() as config_map:
+                return config_map
+            case BaseModel() as model:
+                dumped = model.model_dump()
                 normalized = FlextRuntime.normalize_to_general_value(dumped)
-                if type(normalized) is dict or (
-                    hasattr(normalized, "keys") and hasattr(normalized, "__getitem__")
-                ):
-                    result: m.ConfigMap = m.ConfigMap()
-                    for k, v in normalized.items():
-                        key_str = str(k)
-                        val_typed: t.ConfigMapValue = (
+                match normalized:
+                    case Mapping() as normalized_map:
+                        result: m.ConfigMap = m.ConfigMap()
+                        for k, v in normalized_map.items():
+                            key_str = str(k)
+                            val_typed: t.ConfigMapValue = (
+                                FlextRuntime.normalize_to_general_value(v)
+                            )
+                            result[key_str] = val_typed
+                        return result
+                    case _:
+                        return m.ConfigMap(
+                            root={
+                                "value": FlextRuntime.normalize_to_general_value(
+                                    normalized
+                                )
+                            }
+                        )
+            case _:
+                try:
+                    normalized_dict: m.ConfigMap = m.ConfigMap()
+                    for k, v in obj.items():
+                        key = str(k)
+                        normalized_dict[key] = (
                             FlextRuntime.normalize_to_general_value(v)
                         )
-                        result[key_str] = val_typed
-                    return result
-                return m.ConfigMap(
-                    root={"value": FlextRuntime.normalize_to_general_value(normalized)}
-                )
-            try:
-                normalized_dict: m.ConfigMap = m.ConfigMap()
-                for k, v in obj.items():
-                    key = str(k)
-                    normalized_dict[key] = FlextRuntime.normalize_to_general_value(v)
-                process_result: r[m.ConfigMap] = r[m.ConfigMap].ok(normalized_dict)
-            except Exception as e:
-                process_result = r[m.ConfigMap].fail(
-                    f"Failed to normalize mapping: {e}",
-                )
+                    process_result: r[m.ConfigMap] = r[m.ConfigMap].ok(
+                        normalized_dict
+                    )
+                except Exception as e:
+                    process_result = r[m.ConfigMap].fail(
+                        f"Failed to normalize mapping: {e}",
+                    )
 
-            if process_result.is_success:
-                result_value: m.ConfigMap = process_result.value
-                return result_value
-            return m.ConfigMap(root={})
+                if process_result.is_success:
+                    result_value: m.ConfigMap = process_result.value
+                    return result_value
+                return m.ConfigMap(root={})
 
-    # =========================================================================
-    # RESULT HANDLING UTILITIES (New in Phase 0 - Consolidation)
-    # =========================================================================
-
-    class ResultHandling:
-        """r wrapping utilities (eliminates 209+ repetitive patterns)."""
-
-        @staticmethod
-        def ensure_result[T](value: T | r[T]) -> r[T]:
-            """Wrap value in r if not already wrapped.
-
-            Args:
-                value: Either a raw value of type T or a FlextResult[T]
-
-            Returns:
-                FlextResult[T]: The value wrapped in a result
-
-            """
-            if r in type(value).__mro__:
-                return value
-            # Wrap non-result value in r.ok()
-            return r[T].ok(value)
+    @staticmethod
+    def ensure_result[T](value: T | r[T]) -> r[T]:
+        """Wrap value in r if not already wrapped. Use x.ensure_result at call sites."""
+        match value:
+            case r() as result:
+                return result
+            case _:
+                return r[T].ok(value)
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
@@ -241,12 +215,14 @@ class FlextMixins(FlextRuntime):
         # PrivateAttr may return the descriptor object if not initialized
         # Check if _runtime is actually a ServiceRuntime instance
         runtime = getattr(self, "_runtime", None)
-        # Verify it's actually a ServiceRuntime, not the PrivateAttr descriptor
-        if m.ServiceRuntime in type(runtime).__mro__:
-            return runtime
+        match runtime:
+            case m.ServiceRuntime() as service_runtime:
+                return service_runtime
+            case _:
+                pass
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
-        options_candidate: p.RuntimeBootstrapOptions = (
+        options_candidate = (
             runtime_options_callable()
             if callable(runtime_options_callable)
             else p.RuntimeBootstrapOptions()
@@ -255,12 +231,12 @@ class FlextMixins(FlextRuntime):
             options_candidate,
         )
 
-        config_cls_typed: type[FlextSettings] = (
-            options.config_type
-            if options.config_type is not None
-            and FlextSettings in options.config_type.__mro__
-            else FlextSettings
-        )
+        config_type_raw = options.config_type
+        config_cls_typed: type[FlextSettings]
+        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
+            config_cls_typed = config_type_raw
+        else:
+            config_cls_typed = FlextSettings
         runtime_config = config_cls_typed.materialize(
             config_overrides=options.config_overrides,
         )
@@ -322,7 +298,7 @@ class FlextMixins(FlextRuntime):
             ),
         )
 
-        op_count_raw = u.Mapper.get(stats, "operation_count", default=0)
+        op_count_raw = u.get(stats, "operation_count", default=0)
         stats["operation_count"] = int(op_count_raw) + 1
 
         try:
@@ -334,12 +310,12 @@ class FlextMixins(FlextRuntime):
                     yield metrics_map
                     # Success - update stats
                     if "duration_ms" in metrics_map:
-                        total_dur_raw = u.Mapper.get(
+                        total_dur_raw = u.get(
                             stats,
                             "total_duration_ms",
                             default=0.0,
                         )
-                        dur_ms_raw = u.Mapper.get(
+                        dur_ms_raw = u.get(
                             metrics_map,
                             "duration_ms",
                             default=0.0,
@@ -349,18 +325,18 @@ class FlextMixins(FlextRuntime):
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except Exception:
                     # Failure - increment error count
-                    err_raw = u.Mapper.get(stats, "error_count", default=0)
+                    err_raw = u.get(stats, "error_count", default=0)
                     stats["error_count"] = int(err_raw) + 1
                     raise
                 finally:
                     # Calculate success rate
-                    op_raw = u.Mapper.get(stats, "operation_count", default=1)
-                    err_raw2 = u.Mapper.get(stats, "error_count", default=0)
+                    op_raw = u.get(stats, "operation_count", default=1)
+                    err_raw2 = u.get(stats, "error_count", default=0)
                     op_count = int(op_raw)
                     err_count = int(err_raw2)
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
-                        total_raw = u.Mapper.get(
+                        total_raw = u.get(
                             stats,
                             "total_duration_ms",
                             default=0.0,
@@ -386,13 +362,13 @@ class FlextMixins(FlextRuntime):
             """Register service in container."""
             # Get container with explicit type for registration
             container = self.container
-            service_instance: t.RegisterableService
-            if BaseModel in type(self).__mro__:
-                service_instance = self
-            else:
-                raise TypeError(
-                    f"Service '{service_name}' is not registerable: {type(self).__name__}",
-                )
+            match self:
+                case BaseModel() as service_instance:
+                    pass
+                case _:
+                    raise TypeError(
+                        f"Service '{service_name}' is not registerable: {self.__class__.__name__}",
+                    )
 
             result = container.register(service_name, service_instance)
             # Use u.when() for conditional error handling (DSL pattern)
@@ -700,42 +676,43 @@ class FlextMixins(FlextRuntime):
                 # _stack is initialized in __init__, but check for safety
                 if not hasattr(self, "_stack"):
                     vars(self)["_stack"] = []
-                if type(ctx) is dict:
-                    # For backward compatibility, accept dict but convert to ExecutionContext
-                    # Create ExecutionContext from dict data
-                    handler_name_raw = ctx.get("handler_name", "unknown")
-                    handler_name: str = (
-                        str(handler_name_raw)
-                        if handler_name_raw is not None
-                        else "unknown"
-                    )
-                    handler_mode_raw = ctx.get("handler_mode", "operation")
-                    handler_mode_str: str = (
-                        str(handler_mode_raw)
-                        if handler_mode_raw is not None
-                        else "operation"
-                    )
-                    # Match statement for Literal type narrowing (no cast needed)
-                    handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
-                        "command"
-                        if handler_mode_str == "command"
-                        else "query"
-                        if handler_mode_str == "query"
-                        else "event"
-                        if handler_mode_str == "event"
-                        else "saga"
-                        if handler_mode_str == "saga"
-                        else "operation"
-                    )
-                    execution_ctx = m.Handler.ExecutionContext.create_for_handler(
-                        handler_name=handler_name,
-                        handler_mode=handler_mode_literal,
-                    )
-                    self._stack.append(execution_ctx)
-                elif m.ConfigMap in type(ctx).__mro__:
-                    self._stack.append(ctx)
-                else:
-                    self._stack.append(m.ConfigMap(root=dict(ctx.items())))
+                match ctx:
+                    case m.Handler.ExecutionContext() as execution_ctx:
+                        self._stack.append(execution_ctx)
+                    case m.ConfigMap() as config_map:
+                        self._stack.append(config_map)
+                    case _:
+                        # For backward compatibility, accept dict but convert to ExecutionContext
+                        # Create ExecutionContext from dict data
+                        handler_name_raw = ctx.get("handler_name", "unknown")
+                        handler_name: str = (
+                            str(handler_name_raw)
+                            if handler_name_raw is not None
+                            else "unknown"
+                        )
+                        handler_mode_raw = ctx.get("handler_mode", "operation")
+                        handler_mode_str: str = (
+                            str(handler_mode_raw)
+                            if handler_mode_raw is not None
+                            else "operation"
+                        )
+                        # Match statement for Literal type narrowing (no cast needed)
+                        handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
+                            "command"
+                            if handler_mode_str == "command"
+                            else "query"
+                            if handler_mode_str == "query"
+                            else "event"
+                            if handler_mode_str == "event"
+                            else "saga"
+                            if handler_mode_str == "saga"
+                            else "operation"
+                        )
+                        execution_ctx = m.Handler.ExecutionContext.create_for_handler(
+                            handler_name=handler_name,
+                            handler_mode=handler_mode_literal,
+                        )
+                        self._stack.append(execution_ctx)
                 return r[bool].ok(value=True)
 
             def pop_context(self) -> r[m.ConfigMap]:
@@ -750,18 +727,17 @@ class FlextMixins(FlextRuntime):
                     vars(self)["_stack"] = []
                 if self._stack:
                     popped = self._stack.pop()
-                    if m.Handler.ExecutionContext in type(popped).__mro__:
-                        context_dict: m.ConfigMap = m.ConfigMap(
-                            root={
-                                "handler_name": popped.handler_name,
-                                "handler_mode": popped.handler_mode,
-                            }
-                        )
-                        return r[m.ConfigMap].ok(context_dict)
-                    # If it's already a dict, return as-is
-                    # Type is already narrowed to dict by the union type
-                    popped_dict: m.ConfigMap = popped
-                    return r[m.ConfigMap].ok(popped_dict)
+                    match popped:
+                        case m.Handler.ExecutionContext() as execution_ctx:
+                            context_dict: m.ConfigMap = m.ConfigMap(
+                                root={
+                                    "handler_name": execution_ctx.handler_name,
+                                    "handler_mode": execution_ctx.handler_mode,
+                                }
+                            )
+                            return r[m.ConfigMap].ok(context_dict)
+                        case m.ConfigMap() as popped_dict:
+                            return r[m.ConfigMap].ok(popped_dict)
                 return r[m.ConfigMap].ok(m.ConfigMap())
 
             def current_context(self) -> m.Handler.ExecutionContext | None:
@@ -776,9 +752,11 @@ class FlextMixins(FlextRuntime):
                     vars(self)["_stack"] = []
                 if self._stack:
                     top_item = self._stack[-1]
-                    if m.Handler.ExecutionContext in type(top_item).__mro__:
-                        return top_item
-                    return None
+                    match top_item:
+                        case m.Handler.ExecutionContext() as execution_ctx:
+                            return execution_ctx
+                        case _:
+                            return None
                 return None
 
     class Validation:
@@ -893,23 +871,17 @@ class FlextMixins(FlextRuntime):
                 if not hasattr(obj, method_name):
                     methods_str = ", ".join(required_methods)
                     error_msg = (
-                        f"Processor {type(obj).__name__} missing required "
+                        f"Processor {obj.__class__.__name__} missing required "
                         f"method '{method_name}()'. "
                         f"Processors must implement: {methods_str}"
                     )
                     return r[bool].fail(error_msg)
-                if not callable(u.Mapper.get(obj, method_name, default=None)):
+                if not callable(u.get(obj, method_name, default=None)):
                     return r[bool].fail(
-                        f"Processor {type(obj).__name__}.{method_name} is not callable",
+                        f"Processor {obj.__class__.__name__}.{method_name} is not callable",
                     )
 
             return r[bool].ok(value=True)
 
 
-# Alias for runtime compatibility
-x = FlextMixins
-
-__all__ = [
-    "FlextMixins",
-    "x",
-]
+__all__ = ["FlextMixins"]

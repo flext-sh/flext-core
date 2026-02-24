@@ -19,14 +19,13 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import cast
 
 from pydantic import Field
 
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
-
-# Removed FlextRuntime import to prevent circular dependency
-from flext_core.typings import t
+from flext_core.constants import FlextConstants as c
+from flext_core.typings import FlextTypes as t
 
 
 class FlextGenericModels:
@@ -574,7 +573,7 @@ class FlextGenericModels:
                 """
                 return key in self.config.root
 
-            def to_environment_variables(self, prefix: str = "") -> dict[str, str]:
+            def to_environment_variables(self, prefix: str = "") -> t.ConfigMap:
                 """Convert configuration to environment variable format.
 
                 Args:
@@ -584,10 +583,10 @@ class FlextGenericModels:
                     dict: Environment variable name-value pairs.
 
                 """
-                env_vars = {}
+                env_vars = t.ConfigMap(root={})
                 for key, value in self.config.root.items():
                     env_key = f"{prefix}{key.upper()}" if prefix else key.upper()
-                    env_vars[env_key] = str(value)
+                    env_vars.root[env_key] = str(value)
                 return env_vars
 
             def validate_required_keys(self, required_keys: list[str]) -> list[str]:
@@ -810,22 +809,24 @@ class FlextGenericModels:
                     t.Dict: Monitoring compatible dictionary.
 
                 """
-                data: dict[str, t.GuardInputValue] = {
-                    "healthy": self.healthy,
-                    "status": "up" if self.healthy else "down",
-                    "checks": self.checks.root,
-                    "total_checks": self.total_checks,
-                    "healthy_count": self.healthy_checks_count,
-                    "unhealthy_count": self.unhealthy_checks_count,
-                    "health_percentage": self.health_percentage,
-                    "severity": self.severity_level,
-                    "checked_at": self.formatted_checked_at,
-                    "service": self.service_name,
-                    "version": self.service_version,
-                    "duration_ms": self.duration_ms,
-                    **self.metadata.root,
-                }
-                return t.Dict(root=data)
+                data = t.Dict(
+                    root={
+                        "healthy": self.healthy,
+                        "status": "up" if self.healthy else "down",
+                        "checks": self.checks.root,
+                        "total_checks": self.total_checks,
+                        "healthy_count": self.healthy_checks_count,
+                        "unhealthy_count": self.unhealthy_checks_count,
+                        "health_percentage": self.health_percentage,
+                        "severity": self.severity_level,
+                        "checked_at": self.formatted_checked_at,
+                        "service": self.service_name,
+                        "version": self.service_version,
+                        "duration_ms": self.duration_ms,
+                        **self.metadata.root,
+                    }
+                )
+                return data
 
             def with_additional_check(
                 self, name: str, status: bool, detail: t.GuardInputValue = None
@@ -1154,29 +1155,31 @@ class FlextGenericModels:
                     t.Dict: Progress report dictionary.
 
                 """
-                data: dict[str, t.GuardInputValue] = {
-                    "operation": self.operation_name,
-                    "total_processed": self.total_count,
-                    "success": self.success_count,
-                    "failed": self.failure_count,
-                    "skipped": self.skipped_count,
-                    "warnings": self.warning_count,
-                    "success_rate": f"{self.success_rate:.3f}",
-                    "completion_percentage": f"{self.completion_percentage:.1f}",
-                    "estimated_remaining": self.remaining_count,
-                    "current_item": self.current_item,
-                    "duration_seconds": self.duration_seconds,
-                    "items_per_second": f"{self.items_per_second:.2f}"
-                    if self.items_per_second
-                    else None,
-                    "estimated_time_remaining": f"{self.estimated_time_remaining_seconds:.0f}"
-                    if self.estimated_time_remaining_seconds
-                    else None,
-                    "is_complete": self.is_complete,
-                    "has_errors": self.has_errors,
-                    "has_warnings": self.has_warnings,
-                }
-                return t.Dict(root=data)
+                data = t.Dict(
+                    root={
+                        "operation": self.operation_name,
+                        "total_processed": self.total_count,
+                        "success": self.success_count,
+                        "failed": self.failure_count,
+                        "skipped": self.skipped_count,
+                        "warnings": self.warning_count,
+                        "success_rate": f"{self.success_rate:.3f}",
+                        "completion_percentage": f"{self.completion_percentage:.1f}",
+                        "estimated_remaining": self.remaining_count,
+                        "current_item": self.current_item,
+                        "duration_seconds": self.duration_seconds,
+                        "items_per_second": f"{self.items_per_second:.2f}"
+                        if self.items_per_second
+                        else None,
+                        "estimated_time_remaining": f"{self.estimated_time_remaining_seconds:.0f}"
+                        if self.estimated_time_remaining_seconds
+                        else None,
+                        "is_complete": self.is_complete,
+                        "has_errors": self.has_errors,
+                        "has_warnings": self.has_warnings,
+                    }
+                )
+                return data
 
         class Conversion(FlextModelFoundation.ArbitraryTypesModel):
             """Comprehensive conversion progress tracking with detailed error reporting.
@@ -1418,17 +1421,22 @@ class FlextGenericModels:
                 item: t.GuardInputValue,
             ) -> None:
                 existing_items = self.metadata.root.get(key)
-                if type(existing_items) is list:
-                    existing_items.append(item)
+                if existing_items is not None and existing_items.__class__ is list:
+                    item_list = cast("list[t.GuardInputValue]", existing_items)
+                    item_list.append(item)
                     return
                 self.metadata.root[key] = [item]
 
-            def _upsert_skip_reason(
-                self, item: t.GuardInputValue, reason: str
-            ) -> None:
+            def _upsert_skip_reason(self, item: t.GuardInputValue, reason: str) -> None:
                 existing_reasons = self.metadata.root.get("skip_reasons")
-                if type(existing_reasons) is dict:
-                    existing_reasons[str(item)] = reason
+                if existing_reasons is not None and existing_reasons.__class__ is dict:
+                    reason_map = cast(
+                        "Mapping[str, t.GuardInputValue]", existing_reasons
+                    )
+                    self.metadata.root["skip_reasons"] = {
+                        **reason_map,
+                        str(item): reason,
+                    }
                     # No need to update self.metadata as it's modified in place
                     return
                 # If it doesn't exist or is not a dict, we must create it
@@ -1506,26 +1514,28 @@ class FlextGenericModels:
                     t.Dict: Conversion report dictionary.
 
                 """
-                data: dict[str, t.GuardInputValue] = {
-                    "source_format": self.source_format,
-                    "target_format": self.target_format,
-                    "converted_count": self.converted_count,
-                    "error_count": self.error_count,
-                    "warning_count": self.warning_count,
-                    "skipped_count": self.skipped_count,
-                    "success_rate": f"{self.success_rate:.3f}",
-                    "completion_percentage": f"{self.completion_percentage:.1f}",
-                    "duration_seconds": self.duration_seconds,
-                    "items_per_second": f"{self.items_per_second:.1f}"
-                    if self.items_per_second
-                    else None,
-                    "is_complete": self.is_complete,
-                    "has_errors": self.has_errors,
-                    "has_warnings": self.has_warnings,
-                    "status_summary": self.status_summary,
-                    "conversion_summary": self.conversion_summary,
-                }
-                return t.Dict(root=data)
+                data = t.Dict(
+                    root={
+                        "source_format": self.source_format,
+                        "target_format": self.target_format,
+                        "converted_count": self.converted_count,
+                        "error_count": self.error_count,
+                        "warning_count": self.warning_count,
+                        "skipped_count": self.skipped_count,
+                        "success_rate": f"{self.success_rate:.3f}",
+                        "completion_percentage": f"{self.completion_percentage:.1f}",
+                        "duration_seconds": self.duration_seconds,
+                        "items_per_second": f"{self.items_per_second:.1f}"
+                        if self.items_per_second
+                        else None,
+                        "is_complete": self.is_complete,
+                        "has_errors": self.has_errors,
+                        "has_warnings": self.has_warnings,
+                        "status_summary": self.status_summary,
+                        "conversion_summary": self.conversion_summary,
+                    }
+                )
+                return data
 
     # ═══════════════════════════════════════════════════════════════════════════
     # GENERIC CONTAINERS (Moved to flext_core.typings.t)

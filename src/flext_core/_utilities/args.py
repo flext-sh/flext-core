@@ -22,10 +22,10 @@ from typing import (
 
 from pydantic import ConfigDict, validate_call
 
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, t
+from flext_core.typings import P, R, FlextTypes as t
 
 _ValidatedValueT = TypeVar("_ValidatedValueT")
 
@@ -136,7 +136,7 @@ class FlextUtilitiesArgs:
     def parse_kwargs[E: StrEnum](
         kwargs: Mapping[str, t.GuardInputValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> r[dict[str, t.GuardInputValue]]:
+    ) -> r[Mapping[str, t.GuardInputValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -149,13 +149,13 @@ class FlextUtilitiesArgs:
 
         """
         # Convert Mapping to dict for mutability
-        parsed: dict[str, t.GuardInputValue] = dict(kwargs)
+        parsed = dict(kwargs)
         errors: list[str] = []
 
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]
-                if type(value) is str:
+                if value.__class__ is str:
                     try:
                         parsed[field] = enum_cls(value)
                     except ValueError:
@@ -165,10 +165,10 @@ class FlextUtilitiesArgs:
                         errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
-            return r[dict[str, t.GuardInputValue]].fail(
+            return r[Mapping[str, t.GuardInputValue]].fail(
                 f"Invalid values: {'; '.join(errors)}",
             )
-        return r[dict[str, t.GuardInputValue]].ok(parsed)
+        return r[Mapping[str, t.GuardInputValue]].ok(parsed)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing
@@ -177,7 +177,7 @@ class FlextUtilitiesArgs:
     @staticmethod
     def get_enum_params(
         func: p.CallableWithHints,
-    ) -> dict[str, type[StrEnum]]:
+    ) -> Mapping[str, type[StrEnum]]:
         """Extract parameters that are StrEnum from function signature.
 
         Example:
@@ -192,7 +192,7 @@ class FlextUtilitiesArgs:
         except Exception:
             return {}
 
-        enum_params: dict[str, type[StrEnum]] = {}
+        enum_params = {}
 
         for name, hint in hints.items():
             if name == "return":
@@ -206,13 +206,13 @@ class FlextUtilitiesArgs:
                 origin = get_origin(current_hint)
 
             # Check if it's a StrEnum
-            if type(current_hint) is type and issubclass(current_hint, StrEnum):
+            if current_hint.__class__ is type and issubclass(current_hint, StrEnum):
                 enum_params[name] = current_hint
 
             # Check Union types (str | Status) - Python 3.10+ uses UnionType
             elif origin is UnionType:
                 for arg in get_args(current_hint):
-                    if type(arg) is type and issubclass(arg, StrEnum):
+                    if arg.__class__ is type and issubclass(arg, StrEnum):
                         enum_params[name] = arg
                         break
 

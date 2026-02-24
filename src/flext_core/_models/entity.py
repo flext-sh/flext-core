@@ -36,7 +36,7 @@ def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
 
 class _ComparableConfigMap(t.ConfigMap):
     def __eq__(self, other: t.GuardInputValue) -> bool:
-        if type(other) is dict or (Mapping in type(other).__mro__):
+        if other.__class__ is dict or (Mapping in other.__class__.__mro__):
             return self.root == dict(other.items())
         return super().__eq__(other)
 
@@ -80,16 +80,18 @@ class FlextModelsEntity:
             cls,
             value: t.GuardInputValue,
         ) -> _ComparableConfigMap:
-            if _ComparableConfigMap in type(value).__mro__:
+            if _ComparableConfigMap in value.__class__.__mro__:
                 return value
-            if t.ConfigMap in type(value).__mro__:
+            if t.ConfigMap in value.__class__.__mro__:
                 return _ComparableConfigMap(root=dict(value.items()))
-            if type(value) is dict or (Mapping in type(value).__mro__):
-                normalized: dict[str, t.GuardInputValue] = {
-                    str(k): FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in value.items()
-                }
-                return _ComparableConfigMap(root=normalized)
+            if value.__class__ is dict or (Mapping in value.__class__.__mro__):
+                normalized: t.ConfigMap = t.ConfigMap(
+                    root={
+                        str(k): FlextRuntime.normalize_to_metadata_value(v)
+                        for k, v in value.items()
+                    }
+                )
+                return _ComparableConfigMap(root=normalized.root)
             return _ComparableConfigMap(root={})
 
     class Entry(
@@ -188,7 +190,7 @@ class FlextModelsEntity:
             # Call event handler if defined
             # Use event_type from data if present, otherwise use argument
             handler_event_type = data_map.get("event_type", event_type)
-            if type(handler_event_type) is str:
+            if handler_event_type.__class__ is str:
                 handler_name = f"_apply_{handler_event_type}"
                 handler = getattr(self, handler_name, None)
                 if handler is not None and callable(handler):
@@ -212,7 +214,7 @@ class FlextModelsEntity:
 
             """
             # Validate input is a valid sequence (list or tuple)
-            if type(events) not in (list, tuple):
+            if events.__class__ not in (list, tuple):
                 return r[list[FlextModelsEntity.DomainEvent]].fail(
                     "Events must be a list or tuple",
                 )

@@ -14,8 +14,8 @@ from collections.abc import Mapping
 from datetime import datetime
 
 from flext_core._models.context import FlextModelsContext
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesContext:
@@ -86,8 +86,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: dict[str, t.ConfigMapValue] | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[dict[str, t.ConfigMapValue]]:
+        default: t.ConfigMap | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[t.ConfigMap]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -98,7 +98,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[dict[str, t.ConfigMapValue]] instance
+            StructlogProxyContextVar[t.ConfigMap] instance
 
         Example:
             >>> var = u.Context.create_dict_proxy("metadata")
@@ -107,11 +107,11 @@ class FlextUtilitiesContext:
 
         """
         # Explicit instantiation with full type
-        proxy: FlextModelsContext.StructlogProxyContextVar[
-            dict[str, t.ConfigMapValue]
-        ] = FlextModelsContext.StructlogProxyContextVar[dict[str, t.ConfigMapValue]](
-            key,
-            default=default,
+        proxy: FlextModelsContext.StructlogProxyContextVar[t.ConfigMap] = (
+            FlextModelsContext.StructlogProxyContextVar[t.ConfigMap](
+                key,
+                default=default,
+            )
         )
         return proxy
 
@@ -120,7 +120,7 @@ class FlextUtilitiesContext:
         runtime: T,
         *,
         context: p.Context | None = None,
-        config_overrides: dict[str, t.ConfigMapValue] | None = None,
+        config_overrides: t.ConfigMap | None = None,
     ) -> T:
         """Clone runtime with optional overrides.
 

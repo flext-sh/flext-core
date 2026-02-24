@@ -18,10 +18,10 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 from returns.unsafe import unsafe_perform_io
 
-from flext_core.exceptions import e
-from flext_core.protocols import p
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.protocols import FlextProtocols as p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Model, U, t
+from flext_core.typings import T_Model, U, FlextTypes as t
 
 
 def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
@@ -218,25 +218,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return FlextResult[U].ok(inner_result.value)
             return FlextResult[U].fail(inner_result.error or "")
         return FlextResult[U].fail(self.error or "")
-
-    def and_then[U](
-        self,
-        func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
-    ) -> FlextResult[U]:
-        """RFC-compliant alias for flat_map.
-
-        This method provides an RFC-compliant name for flat_map, making the
-        composition pattern more explicit and aligned with functional programming
-        conventions.
-
-        Args:
-            func: Function that takes the success value and returns a RuntimeResult.
-
-        Returns:
-            FlextResult[U]: New result from the function application.
-
-        """
-        return self.flat_map(func)
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure with fallback value.
@@ -517,7 +498,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             result.filter(lambda entry: entry.has_attribute("cn"))
 
             # Chain with map for type narrowing
-            result.filter(lambda v: User in type(v).__mro__).map(process_user)
+            result.filter(lambda v: User in v.__class__.__mro__).map(process_user)
 
         """
         if self.is_success and self.value is not None:
@@ -702,7 +683,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             FlextResult[T]: Ok(value) if Some, Fail(error) if Nothing
 
         """
-        if type(maybe) is Some:
+        if maybe.__class__ is Some:
             return FlextResult[T].ok(maybe.unwrap())
         return FlextResult[T].fail(error)
 
@@ -726,10 +707,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             FlextResult[T]: Ok(value) if IOSuccess, Fail(error) if IOFailure
 
         """
-        if type(io_result) is IOFailure:
+        if io_result.__class__ is IOFailure:
             return FlextResult[T].fail(str(io_result.failure()))
 
-        if type(io_result) is IOSuccess:
+        if io_result.__class__ is IOSuccess:
             unwrapped_io = io_result.unwrap()
             return FlextResult[T].ok(
                 unsafe_perform_io(unwrapped_io),
@@ -747,8 +728,4 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     # __enter__, __exit__, __repr__ are inherited from RuntimeResult
 
 
-# Short alias for FlextResult - assignment for runtime compatibility
-# mypy handles generic class aliases correctly with this pattern
-r = FlextResult
-
-__all__ = ["FlextResult", "r"]
+__all__ = ["FlextResult"]

@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.constants import c
-from flext_core.protocols import p
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesDomain:
@@ -53,7 +53,7 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if type(entity_b) is not type(entity_a):
+        if entity_b.__class__ is not entity_a.__class__:
             return False
 
         id_a = getattr(entity_a, id_attr, None)
@@ -112,7 +112,7 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if type(obj_b) is not type(obj_a):
+        if obj_b.__class__ is not obj_a.__class__:
             return False
 
         # Try __dict__ comparison
@@ -146,9 +146,16 @@ class FlextUtilitiesDomain:
             hashable_items: list[tuple[str, t.ConfigMapValue]] = []
             for key, value in sorted(obj_dict.items()):
                 # Check for types that are both Hashable and PayloadValue
-                if type(value) in (str, int, float, bool, type(None)):
+                if value.__class__ in (str, int, float, bool, None.__class__):
                     hashable_items.append((key, value))
-                elif hasattr(value, "__hash__") and type(value) in (str, int, float, bool, tuple, frozenset):
+                elif hasattr(value, "__hash__") and value.__class__ in (
+                    str,
+                    int,
+                    float,
+                    bool,
+                    tuple,
+                    frozenset,
+                ):
                     # Other hashables get converted to repr string
                     hashable_items.append((key, repr(value)))
                 else:
@@ -202,7 +209,7 @@ class FlextUtilitiesDomain:
         if hasattr(obj, "__setattr__"):
             # If __setattr__ is from object class, it's mutable
             # Custom __setattr__ might enforce immutability
-            setattr_method = getattr(type(obj), "__setattr__", None)
+            setattr_method = getattr(obj.__class__, "__setattr__", None)
             return setattr_method is not object.__setattr__
 
         return False

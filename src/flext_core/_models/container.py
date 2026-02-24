@@ -34,7 +34,7 @@ def _is_metadata_instance(
     return (
         v is not None
         and hasattr(v, "model_dump")
-        and FlextModelsBase.Metadata in type(v).__mro__
+        and FlextModelsBase.Metadata in v.__class__.__mro__
     )
 
 
@@ -46,7 +46,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelsBase.Metadata:
     if not FlextRuntime.is_dict_like(value):
         msg = (
             f"metadata must be None, dict, or FlextModelsBase.Metadata, "
-            f"got {type(value).__name__}"
+            f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
     raw = getattr(value, "root", value)
@@ -68,7 +68,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: dict[str, t.GuardInputValue] for service tracking.
+        Replaces: t.ConfigMap for service tracking.
         """
 
         model_config = ConfigDict(
@@ -117,7 +117,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: dict[str, t.GuardInputValue] for factory tracking.
+        Replaces: t.ConfigMap for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -206,7 +206,7 @@ class FlextModelsContainer:
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: dict[str, t.GuardInputValue] for container configuration storage.
+        Replaces: t.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

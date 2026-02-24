@@ -112,7 +112,7 @@ class FlextModelsValidation:
         field_name: str,
     ) -> r[bool] | None:
         field_value = FlextModelsValidation._event_get(event, field_name, "")
-        if field_value and type(field_value) is str:
+        if field_value and field_value.__class__ is str:
             return None
         return FlextModelsValidation._validation_error(
             f"Domain event {field_name} must be a non-empty string",
@@ -161,7 +161,7 @@ class FlextModelsValidation:
         start_time = time.time()
 
         try:
-            if BaseModel not in type(model).__mro__:
+            if BaseModel not in model.__class__.__mro__:
                 return r[t.GuardInputValue].ok(model)
 
             dump = model.model_dump(
@@ -421,7 +421,7 @@ class FlextModelsValidation:
     ) -> Mapping[str, t.GuardInputValue] | None:
         return (
             event
-            if type(event) is dict
+            if event.__class__ is dict
             or (hasattr(event, "keys") and hasattr(event, "__getitem__"))
             else None
         )
@@ -521,7 +521,7 @@ class FlextModelsValidation:
 
         if hasattr(entity, "version"):
             version = getattr(entity, "version", 0)
-            if type(version) is not int or version < 0:
+            if version.__class__ is not int or version < 0:
                 return FlextModelsValidation._validation_error(
                     "Entity version must be a non-negative integer",
                 )
@@ -529,7 +529,7 @@ class FlextModelsValidation:
         for timestamp_field in ["created_at", "updated_at"]:
             if hasattr(entity, timestamp_field):
                 timestamp = getattr(entity, timestamp_field)
-                if timestamp is not None and type(timestamp) is not datetime:
+                if timestamp is not None and timestamp.__class__ is not datetime:
                     return FlextModelsValidation._validation_error(
                         f"Entity {timestamp_field} must be a datetime or None",
                     )
@@ -601,7 +601,7 @@ class FlextModelsValidation:
         case_sensitive: bool = False,
     ) -> r[str]:
         choices_set = (
-            set(valid_choices) if type(valid_choices) is list else valid_choices
+            set(valid_choices) if valid_choices.__class__ is list else valid_choices
         )
 
         if not valid_choices:

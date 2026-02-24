@@ -40,14 +40,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesCache:
@@ -116,7 +117,7 @@ class FlextUtilitiesCache:
         - Safe for concurrent calls
         """
         # Handle BaseModel first - convert to dict
-        if BaseModel in type(component).__mro__:
+        if BaseModel in component.__class__.__mro__:
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.model_dump().items()
@@ -126,18 +127,18 @@ class FlextUtilitiesCache:
         if FlextRuntime.is_dict_like(component):
             # Type narrowing: component is now Mapping[str, t.GuardInputValue]
             # Convert to dict for consistent iteration
-            dict_component: dict[str, t.GuardInputValue] = dict(component.items())
-            # Type narrowing: dict_component is dict[str, t.GuardInputValue]
+            dict_component: Mapping[str, t.GuardInputValue] = dict(component.items())
+            # dict_component has mapping semantics for normalized iteration
             # so v is t.GuardInputValue
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
-        if type(component) in (str, int, float, bool, type(None)):
+        if component.__class__ in (str, int, float, bool, None.__class__):
             return component
         # Handle collections
-        if type(component) is set:
+        if component.__class__ is set:
             # Type narrowing: component is set[t.GuardInputValue]
             # Explicit type annotation for set items
             items_set: set[t.GuardInputValue] = component
@@ -146,8 +147,9 @@ class FlextUtilitiesCache:
                 FlextUtilitiesCache.normalize_component(item) for item in items_set
             ]
             return tuple(normalized_items)
-        if type(component) in (list, tuple) or (
-            hasattr(component, "__getitem__") and type(component) not in (str, bytes)
+        if component.__class__ in (list, tuple) or (
+            hasattr(component, "__getitem__")
+            and component.__class__ not in (str, bytes)
         ):
             # Type narrowing: component is Sequence, so items are t.GuardInputValue
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
@@ -184,9 +186,9 @@ class FlextUtilitiesCache:
             Tuple for sorted() key function
 
         """
-        if type(key) is str:
+        if key.__class__ is str:
             return (0, key.lower())
-        if type(key) in (int, float):
+        if key.__class__ in (int, float):
             return (1, str(key))
         return (2, str(key))
 
@@ -225,7 +227,7 @@ class FlextUtilitiesCache:
         """
         if FlextRuntime.is_dict_like(data):
             # Type narrowing: data is now Mapping[str, t.GuardInputValue]
-            result: dict[str, t.GuardInputValue] = {}
+            result = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 # Handle None values - convert to empty dict for consistency
@@ -284,7 +286,7 @@ class FlextUtilitiesCache:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear dict[str, t.GuardInputValue]-like caches
+                        # Clear mapping-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):

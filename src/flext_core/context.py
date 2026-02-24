@@ -22,14 +22,14 @@ from pydantic import BaseModel
 
 # Direct imports for internal usage (mypy compatibility with nested class aliases)
 from flext_core._models.context import FlextModelsContext
-from flext_core.constants import c
+from flext_core.constants import FlextConstants as c
 from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 # Concrete value type for context storage
 type ContextValue = t.ConfigMapValue
@@ -221,9 +221,7 @@ class FlextContext(FlextRuntime):
         data_map = (
             initial_data.model_copy() if initial_data is not None else m.ConfigMap()
         )
-        if auto_correlation_id and not u.Mapper.get(
-            data_map, c.Context.KEY_OPERATION_ID
-        ):
+        if auto_correlation_id and not u.get(data_map, c.Context.KEY_OPERATION_ID):
             # Convert initial_data to dict if needed
             initial_data_dict_new: m.ConfigMap = data_map.model_copy()
             # Add auto-generated correlation_id
@@ -322,7 +320,7 @@ class FlextContext(FlextRuntime):
         if operation in self._statistics.operations:
             value: ContextValue = self._statistics.operations[operation]
             # Direct increment if value is int
-            if u.Guards.guard(value, int, return_value=True) is not None:
+            if u.guard(value, int, return_value=True) is not None:
                 self._statistics.operations[operation] = value + 1
 
     def _add_hook(
@@ -426,7 +424,7 @@ class FlextContext(FlextRuntime):
         if value is None:
             return r[bool].fail("Value cannot be None")
         if (
-            u.Guards.guard(
+            u.guard(
                 value,
                 (str, int, float, bool, list, m.ConfigMap),
                 return_value=True,
@@ -478,7 +476,9 @@ class FlextContext(FlextRuntime):
             return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
             error_msg = (
-                str(e) if type(e) is TypeError else f"Failed to set context value: {e}"
+                str(e)
+                if e.__class__ is TypeError
+                else f"Failed to set context value: {e}"
             )
             return r[bool].fail(error_msg)
 
@@ -517,7 +517,9 @@ class FlextContext(FlextRuntime):
             return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
             error_msg = (
-                str(e) if type(e) is TypeError else f"Failed to set context values: {e}"
+                str(e)
+                if e.__class__ is TypeError
+                else f"Failed to set context values: {e}"
             )
             return r[bool].fail(error_msg)
 
@@ -651,7 +653,7 @@ class FlextContext(FlextRuntime):
             clear_value: ContextValue = self._statistics.operations[
                 c.Context.OPERATION_CLEAR
             ]
-            if u.Guards.guard(clear_value, int, return_value=True) is not None:
+            if u.guard(clear_value, int, return_value=True) is not None:
                 self._statistics.operations[c.Context.OPERATION_CLEAR] = clear_value + 1
 
     def keys(self) -> list[str]:
@@ -730,7 +732,7 @@ class FlextContext(FlextRuntime):
             A new FlextContext with the same data
 
         """
-        cloned: Self = type(self)()
+        cloned: Self = self.__class__()
         # Clone all scope data using public API
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -838,8 +840,8 @@ class FlextContext(FlextRuntime):
         """
         try:
             data = json.loads(json_str)
-            if u.Guards.guard(data, dict, return_value=True) is None:
-                msg = f"JSON must represent a dict, got {type(data).__name__}"
+            if u.guard(data, dict, return_value=True) is None:
+                msg = f"JSON must represent a dict, got {data.__class__.__name__}"
                 raise TypeError(msg)
             # Use u.map to normalize each value in dict to ensure ContextValue compatibility
 
@@ -1578,7 +1580,7 @@ class FlextContext(FlextRuntime):
 
             Example:
                 >>> result = FlextContext.Service.get_service("logger")
-                >>> if result.is_success and type(result.value) is FlextLogger:
+                >>> if result.is_success and result.value.__class__ is FlextLogger:
                 ...     result.value.info("Service retrieved")
 
             """
@@ -1592,7 +1594,7 @@ class FlextContext(FlextRuntime):
                 # Service value might be RegisterableService
                 service_value = service_result.value
                 # Use TypeGuard to narrow to PayloadValue
-                if u.Guards.is_general_value_type(service_value):
+                if u.is_general_value_type(service_value):
                     return r[ContextValue].ok(
                         FlextRuntime.normalize_to_general_value(service_value)
                     )

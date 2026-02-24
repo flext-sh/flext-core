@@ -64,8 +64,10 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
-from flext_core.constants import c
-from flext_core.typings import T, t
+from flext_core.constants import FlextConstants as c
+from flext_core.typings import T, FlextTypes as t
+
+_alias_registry: dict[str, type] = {}
 
 
 class FlextRuntime:
@@ -130,11 +132,12 @@ class FlextRuntime:
     10. **Zero Circular Imports** - Foundation + bridge layers only
 
 
-    **Usage Patterns**:
-    1. **Type Validation**: `if FlextRuntime.is_valid_phone(value): ...`
-    4. **Logging Setup**: `FlextRuntime.configure_structlog(console_renderer=True)`
-    5. **Service Tracking**: `FlextRuntime.Integration.track_service_resolution(name)`
-    6. **Event Logging**: `FlextRuntime.Integration.track_domain_event(event_name)`
+    **Usage** (runtime aliases; MRO only; no loose methods):
+    - Facade resolution: FlextRuntime.Aliases.* (staticmethod) only; subprojects register_aliases().
+    - At call sites use project namespace: c, m, t, u, p, r, d, e, h, s, x from project __init__.
+    - External subclasses use staticmethod aliases via MRO; x = project mixins class; no subdivision.
+    - Aliases/namespaces: MRO registration protocol only; no extra alias layers.
+    - Examples: x.create_instance(MyClass), x.is_dict_like(val), x.normalize_to_general_value(val).
 
     **Design Principles**:
     - Circular import prevention through foundation + bridge layers only
@@ -146,6 +149,135 @@ class FlextRuntime:
     """
 
     _structlog_configured: ClassVar[bool] = False
+
+    @classmethod
+    def register_aliases(
+        cls,
+        *,
+        constants: type | None = None,
+        models: type | None = None,
+        typings: type | None = None,
+        protocols: type | None = None,
+        utilities: type | None = None,
+        result: type | None = None,
+        decorators: type | None = None,
+        exceptions: type | None = None,
+        handlers: type | None = None,
+        service_base: type | None = None,
+        mixins: type | None = None,
+    ) -> None:
+        """Register project facades so FlextRuntime.Aliases.* returns project namespace.
+
+        Subprojects call this at package load. Access is via project namespaces only
+        (no subdivision); MRO protocol—no extra alias layers.
+        """
+        if constants is not None:
+            _alias_registry["constants"] = constants
+        if models is not None:
+            _alias_registry["models"] = models
+        if typings is not None:
+            _alias_registry["typings"] = typings
+        if protocols is not None:
+            _alias_registry["protocols"] = protocols
+        if utilities is not None:
+            _alias_registry["utilities"] = utilities
+        if result is not None:
+            _alias_registry["result"] = result
+        if decorators is not None:
+            _alias_registry["decorators"] = decorators
+        if exceptions is not None:
+            _alias_registry["exceptions"] = exceptions
+        if handlers is not None:
+            _alias_registry["handlers"] = handlers
+        if service_base is not None:
+            _alias_registry["service_base"] = service_base
+        if mixins is not None:
+            _alias_registry["mixins"] = mixins
+
+    class Aliases:
+        """Registry lookup for facade classes (MRO protocol). Not for call-site usage.
+
+        Subprojects register external subclass facades via register_aliases().
+        At call sites use project namespace only (c, m, r, t, u, x from project __init__).
+        When unregistered, core facades are returned (lazy import).
+        """
+
+        @staticmethod
+        def constants() -> type:
+            if "constants" in _alias_registry:
+                return _alias_registry["constants"]
+            from flext_core.constants import FlextConstants
+            return FlextConstants
+
+        @staticmethod
+        def models() -> type:
+            if "models" in _alias_registry:
+                return _alias_registry["models"]
+            from flext_core.models import FlextModels
+            return FlextModels
+
+        @staticmethod
+        def typings() -> type:
+            if "typings" in _alias_registry:
+                return _alias_registry["typings"]
+            from flext_core.typings import FlextTypes
+            return FlextTypes
+
+        @staticmethod
+        def protocols() -> type:
+            if "protocols" in _alias_registry:
+                return _alias_registry["protocols"]
+            from flext_core.protocols import FlextProtocols
+            return FlextProtocols
+
+        @staticmethod
+        def utilities() -> type:
+            if "utilities" in _alias_registry:
+                return _alias_registry["utilities"]
+            from flext_core.utilities import FlextUtilities
+            return FlextUtilities
+
+        @staticmethod
+        def result() -> type:
+            if "result" in _alias_registry:
+                return _alias_registry["result"]
+            from flext_core.result import FlextResult
+            return FlextResult
+
+        @staticmethod
+        def decorators() -> type:
+            if "decorators" in _alias_registry:
+                return _alias_registry["decorators"]
+            from flext_core.decorators import FlextDecorators
+            return FlextDecorators
+
+        @staticmethod
+        def exceptions() -> type:
+            if "exceptions" in _alias_registry:
+                return _alias_registry["exceptions"]
+            from flext_core.exceptions import FlextExceptions
+            return FlextExceptions
+
+        @staticmethod
+        def handlers() -> type:
+            if "handlers" in _alias_registry:
+                return _alias_registry["handlers"]
+            from flext_core.handlers import FlextHandlers
+            return FlextHandlers
+
+        @staticmethod
+        def service_base() -> type:
+            if "service_base" in _alias_registry:
+                return _alias_registry["service_base"]
+            from flext_core.service import FlextService
+            return FlextService
+
+        @staticmethod
+        def mixins() -> type:
+            if "mixins" in _alias_registry:
+                return _alias_registry["mixins"]
+            from flext_core.mixins import FlextMixins
+            return FlextMixins
 
     class Metadata(BaseModel):
         """Minimal metadata model - implements p.Log.Metadata protocol.
@@ -339,15 +471,10 @@ class FlextRuntime:
         match value:
             case t.ConfigMap():
                 return True
-            case dict() as mapping:
+            case Mapping() as mapping:
                 return all(key.__class__ is str for key in mapping)
             case _:
-                pass
-        if not hasattr(value, "keys") or not hasattr(value, "__getitem__"):
-            return False
-        with contextlib.suppress(TypeError):
-            return all(key.__class__ is str for key in value)
-        return False
+                return False
 
     @staticmethod
     def is_list_like(
@@ -410,9 +537,7 @@ class FlextRuntime:
             case _:
                 pass
         if FlextRuntime.is_dict_like(val):
-            dict_v: Mapping[str, t.ConfigMapValue] = (
-                val.root if hasattr(val, "root") else val
-            )
+            dict_v = val.root
             result = t.ConfigMap()
             for k, v in dict_v.items():
                 result[k] = FlextRuntime.normalize_to_general_value(v)
@@ -450,9 +575,7 @@ class FlextRuntime:
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
         if FlextRuntime.is_dict_like(val):
-            raw_mapping: Mapping[str, t.ConfigMapValue] = (
-                val.root if hasattr(val, "root") else val
-            )
+            raw_mapping = val.root
             normalized_mapping: dict[
                 str,
                 str
@@ -468,7 +591,7 @@ class FlextRuntime:
                 if hasattr(metadata_value, "items"):
                     normalized_mapping[key] = json.dumps(metadata_value)
                 else:
-                    normalized_mapping[key] = metadata_value
+                    normalized_mapping[key] = str(metadata_value)
             return normalized_mapping
         if FlextRuntime.is_list_like(val):
             # Convert to list of MetadataAttributeValue scalars (including datetime)
@@ -661,16 +784,13 @@ class FlextRuntime:
                 return Sequence in origin.__mro__
 
             # Check if the type itself is a sequence subclass (for type aliases)
-            if (
-                hasattr(type_hint, "__mro__")
-                and type_hint.__class__ is type
-                and Sequence in type_hint.__mro__
-            ):
+            hint_mro = getattr(type_hint, "__mro__", None)
+            if hint_mro is not None and Sequence in hint_mro:
                 return True
 
             # Check __name__ for type aliases like StringList
-            if type_hint.__class__ is type and hasattr(type_hint, "__name__"):
-                type_name: str = type_hint.__name__
+            type_name = getattr(type_hint, "__name__", None)
+            if type_name is not None:
                 # Common sequence type aliases
                 if type_name in {
                     "StringList",
@@ -1016,6 +1136,8 @@ class FlextRuntime:
                 container=container,
             )
 
+    # Facade access: use FlextRuntime.Aliases.* only (MRO registry; no loose methods).
+
     @staticmethod
     def level_based_context_filter(
         _logger: t.ConfigMapValue,
@@ -1074,7 +1196,7 @@ class FlextRuntime:
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict = t.ConfigMap()
+        filtered_dict = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -1399,11 +1521,6 @@ class FlextRuntime:
             return self._value
 
         @property
-        def data(self) -> T:
-            """Alias for value - backward compatibility with older API."""
-            return self.value
-
-        @property
         def result(self) -> Self:
             """Access internal result for protocol compatibility.
 
@@ -1486,13 +1603,6 @@ class FlextRuntime:
                 error_data=self._error_data,
                 is_success=False,
             )
-
-        def and_then[U](
-            self,
-            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
-        ) -> FlextRuntime.RuntimeResult[U]:
-            """RFC-compliant alias for flat_map."""
-            return self.flat_map(func)
 
         def fold[U](
             self,
@@ -1943,34 +2053,6 @@ class FlextRuntime:
         # For other objects (datetime, Path, custom objects), use repr
         return hash(repr(obj))
 
-    class Bootstrap:
-        """Bootstrap utility for creating instances via object.__new__.
-
-        Provides convenient access to FlextRuntime.create_instance() method
-        for type-safe instance creation without calling __init__.
-        """
-
-        @staticmethod
-        def create_instance[T](class_type: type[T]) -> T:
-            """Type-safe factory for creating instances via object.__new__.
-
-            Args:
-                class_type: The class to instantiate
-
-            Returns:
-                An instance of type T
-
-            Raises:
-                TypeError: If object.__new__() does not return instance of
-                    expected type
-
-            Example:
-                >>> instance = FlextRuntime.Bootstrap.create_instance(MyClass)
-                >>> # instance is properly typed as MyClass
-
-            """
-            return FlextRuntime.create_instance(class_type)
-
     # =========================================================================
     # Configuration Bridge Methods (for _models)
     # =========================================================================
@@ -2040,9 +2122,9 @@ class FlextRuntime:
             context_dict = t.ConfigMap()
 
         # Convert all values to strings for trace context
-        result: dict[str, str] = {
-            k: v if v.__class__ is str else str(v) for k, v in context_dict.items()
-        }
+        result: dict[str, str] = {}
+        for key, value in context_dict.items():
+            result[key] = str(value)
 
         # Ensure trace fields
         if "trace_id" not in result:

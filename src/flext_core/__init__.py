@@ -12,6 +12,7 @@ from __future__ import annotations
 from flext_core.__version__ import __version__, __version_info__
 from flext_core._beartype_conf import BEARTYPE_CONF
 from flext_core.constants import FlextConstants, c
+from flext_core.result import FlextResult, r
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.decorators import FlextDecorators, d
@@ -23,7 +24,6 @@ from flext_core.mixins import FlextMixins, x
 from flext_core.models import FlextModels, m
 from flext_core.protocols import FlextProtocols, p
 from flext_core.registry import FlextRegistry
-from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService, s
 from flext_core.settings import FlextSettings

@@ -10,16 +10,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Annotated, Final, Self
+from typing import Annotated, Final, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.constants import c
-from flext_core.protocols import p
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsConfig:
@@ -76,7 +76,7 @@ class FlextModelsConfig:
         def validate_context(cls, v: t.GuardInputValue) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
-            Returns dict[str, str] because ensure_trace_context generates
+            Returns Mapping[str, str] because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
@@ -133,14 +133,15 @@ class FlextModelsConfig:
             # Accept only int or str (e.g. from YAML/JSON); reject other types.
             codes_for_validation: list[int] = []
             for x in v:
-                if type(x) is int:
-                    codes_for_validation.append(x)
-                elif type(x) is str:
-                    codes_for_validation.append(int(x))
+                if x.__class__ is int:
+                    codes_for_validation.append(cast("int", x))
+                elif x.__class__ is str:
+                    text_value = cast("str", x)
+                    codes_for_validation.append(int(text_value))
                 else:
                     msg = (
                         f"retry_on_status_codes item must be int or str, "
-                        f"got {type(x).__name__}"
+                        f"got {x.__class__.__name__}"
                     )
                     raise TypeError(msg)
             result = FlextRuntime.validate_http_status_codes(codes_for_validation)
@@ -196,7 +197,7 @@ class FlextModelsConfig:
             for validator in v:
                 if not callable(validator):
                     base_msg = "Validator must be callable"
-                    error_msg = f"{base_msg}: got {type(validator).__name__}"
+                    error_msg = f"{base_msg}: got {validator.__class__.__name__}"
                     raise TypeError(error_msg)
             return v
 
@@ -514,9 +515,11 @@ class FlextModelsConfig:
             default=None,
             description="Optional container services (alias for services)",
         )
-        container_factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = Field(
-            default=None,
-            description="Optional container factories (alias for factories)",
+        container_factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = (
+            Field(
+                default=None,
+                description="Optional container factories (alias for factories)",
+            )
         )
 
     class NestedExecutionOptions(FlextModelsCollections.Config):
@@ -546,9 +549,11 @@ class FlextModelsConfig:
             default=None,
             description="Optional container services mapping",
         )
-        container_factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = Field(
-            default=None,
-            description="Optional container factories mapping",
+        container_factories: Mapping[str, Callable[[], t.ConfigMapValue]] | None = (
+            Field(
+                default=None,
+                description="Optional container factories mapping",
+            )
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):

@@ -24,14 +24,14 @@ from typing import ClassVar
 
 from pydantic import BaseModel
 
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.mixins import x
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core.constants import FlextConstants as c
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 
 def _handler_type_to_literal(
@@ -122,7 +122,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         ...
         ...     def validate(self, data: t.AcceptableMessageType) -> r[bool]:
         ...         # Custom validation logic
-        ...         if not (UserCommand in type(data).__mro__):
+        ...         if not (UserCommand in data.__class__.__mro__):
         ...             return r[bool].fail("Invalid message type")
         ...         return r[bool].ok(True)
     """
@@ -463,8 +463,11 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         # Check accepted message types if specified
         if self._accepted_message_types:
-            message_type = type(message)
-            if not any(type(message) is t or t in type(message).__mro__ for t in self._accepted_message_types):
+            message_type = message.__class__
+            if not any(
+                message_type is accepted_type or accepted_type in message_type.__mro__
+                for accepted_type in self._accepted_message_types
+            ):
                 msg = f"Message type {message_type.__name__} not in accepted types"
                 return r[bool].fail(msg)
 
@@ -553,14 +556,14 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if msg_id_result.is_success and msg_id_result.value
                 else None
             )
-        # Use u.Mapper.get() for concise attribute extraction
+        # Use u.get() for concise attribute extraction
         # Check if message is accessible data (BaseModel or dict)
         if u.is_type(message, (dict, BaseModel)):
             if hasattr(message, "command_id"):
-                cmd_id = u.Mapper.get(message, "command_id", default="") or ""
+                cmd_id = u.get(message, "command_id", default="") or ""
                 return str(cmd_id) if cmd_id else None
             if hasattr(message, "message_id"):
-                msg_id = u.Mapper.get(message, "message_id", default="") or ""
+                msg_id = u.get(message, "message_id", default="") or ""
                 return str(msg_id) if msg_id else None
         return None
 
@@ -626,7 +629,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             return r[ResultT].fail(error_msg)
 
         # Check if handler can handle message type
-        message_type = type(message)
+        message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
@@ -679,7 +682,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
         exec_time: float = (
-            exec_time_value if type(exec_time_value) is float else 0.0
+            exec_time_value if exec_time_value.__class__ is float else 0.0
         )
         # Mixin record_metric() returns r[bool], assign to _ to indicate intentional
         _ = self.record_metric(
@@ -876,9 +879,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
                         def narrowed_func(
                             message: t.ScalarValue,
-                            fn: Callable[
-                                [t.ScalarValue], t.ScalarValue
-                            ] = captured_fn,
+                            fn: Callable[[t.ScalarValue], t.ScalarValue] = captured_fn,
                         ) -> t.ScalarValue:
                             if callable(fn):
                                 return u.narrow_to_general_value_type(fn(message))
@@ -924,10 +925,4 @@ class FlextHandlers[MessageT_contra, ResultT](
             )
 
 
-# Alias for simplified usage
-h = FlextHandlers
-
-__all__ = [
-    "FlextHandlers",
-    "h",
-]
+__all__ = ["FlextHandlers"]

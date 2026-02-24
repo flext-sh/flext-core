@@ -8,12 +8,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Literal, overload
+
+from pydantic import TypeAdapter, ValidationError
 
 type StrictJsonScalar = str | int | float | bool | None
 type StrictJsonValue = (
-    StrictJsonScalar | list[StrictJsonValue] | dict[str, StrictJsonValue]
+    StrictJsonScalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
 )
 
 
@@ -30,6 +32,12 @@ class FlextUtilitiesConversion:
     - Reuses base types from flext_core.typings and constants from flext_core.constants
     """
 
+    _strict_json_list_adapter = TypeAdapter(list[StrictJsonValue])
+    _strict_json_scalar_adapter = TypeAdapter(StrictJsonScalar)
+    _float_adapter = TypeAdapter(float)
+    _str_adapter = TypeAdapter(str)
+    _str_list_adapter = TypeAdapter(list[str])
+
     @staticmethod
     def to_str(value: StrictJsonValue, *, default: str | None = None) -> str:
         """Convert value to string.
@@ -44,13 +52,16 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return default or ""
-        if type(value) is str:
-            return value
-        if type(value) is float:
+        if value.__class__ is str:
+            return str(value)
+        try:
+            float_value = FlextUtilitiesConversion._float_adapter.validate_python(value)
             # Format float to 2 decimal places if it's a decimal number
-            if value.is_integer():
-                return str(int(value))
-            return f"{value:.2f}"
+            if float_value.is_integer():
+                return str(int(float_value))
+            return f"{float_value:.2f}"
+        except ValidationError:
+            pass
         return str(value)
 
     @staticmethod
@@ -71,15 +82,18 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return default or []
-        if type(value) is str:
-            return [value]
-        if type(value) in (list, tuple, set, frozenset):
-            return [str(item) for item in value if item is not None]
-        # For other sequences, check if list-like and iterable
-        if type(value) in (list, tuple) or (
-            hasattr(value, "__getitem__") and type(value) not in (str, bytes)
-        ):
-            return [str(item) for item in value if item is not None]
+        value_class = value.__class__
+        if value_class is str:
+            return [str(value)]
+        try:
+            list_value = (
+                FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
+                    value,
+                )
+            )
+            return [str(item) for item in list_value if item is not None]
+        except ValidationError:
+            pass
         return [str(value)]
 
     @staticmethod
@@ -190,28 +204,44 @@ class FlextUtilitiesConversion:
         """
         if mode == "to_str":
             # Type narrowing: default should be str | None for to_str
-            default_str: str | None = (
-                default if type(default) in (str, type(None)) else None
-            )
+            default_str: str | None = None
+            if default is not None:
+                try:
+                    default_str = FlextUtilitiesConversion._str_adapter.validate_python(
+                        default,
+                    )
+                except ValidationError:
+                    default_str = None
             return FlextUtilitiesConversion.to_str(value, default=default_str)
         if mode == "to_str_list":
             # Type narrowing: default should be list[str] | None for to_str_list
-            default_list: list[str] | None = (
-                default if type(default) in (list, type(None)) else None
-            )
+            default_list: list[str] | None = None
+            if default is not None:
+                try:
+                    default_list = (
+                        FlextUtilitiesConversion._str_list_adapter.validate_python(
+                            default
+                        )
+                    )
+                except ValidationError:
+                    default_list = None
             return FlextUtilitiesConversion.to_str_list(value, default=default_list)
         if mode == "normalize":
             return FlextUtilitiesConversion.normalize(value, case=case)
         if mode == "join":
-            if not (
-                type(value) in (list, tuple)
-                or (hasattr(value, "__getitem__") and type(value) not in (str, bytes))
-            ):
+            raw_values: list[StrictJsonValue]
+            try:
+                raw_values = (
+                    FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
+                        value,
+                    )
+                )
+            except ValidationError:
                 error_msg = "join mode requires Sequence"
                 raise TypeError(error_msg)
             # Convert sequence items to strings for type safety
             # Strings are valid sequences (of characters)
-            str_values: list[str] = [str(v) for v in value]
+            str_values: list[str] = [str(v) for v in raw_values]
             return FlextUtilitiesConversion.join(
                 str_values,
                 separator=separator,
@@ -244,15 +274,22 @@ class FlextUtilitiesConversion:
         # where scalar = str | int | float | bool | datetime | None
         if value is None:
             return None
-        if type(value) in (str, int, float, bool):
-            return value
+        try:
+            return FlextUtilitiesConversion._strict_json_scalar_adapter.validate_python(
+                value,
+            )
+        except ValidationError:
+            pass
         # Check for simple sequences (not nested PayloadValue)
-        if type(value) in (list, tuple) or (
-            hasattr(value, "__getitem__") and type(value) not in (str, bytes)
+        value_class = value.__class__
+        if value_class in (list, tuple) or (
+            hasattr(value, "__getitem__") and value_class not in (str, bytes)
         ):
             # Can't easily validate element types at runtime, assume compatible
             return None  # Skip complex sequences for safety
-        if type(value) is dict or (hasattr(value, "keys") and hasattr(value, "__getitem__")):
+        if value_class is dict or (
+            hasattr(value, "keys") and hasattr(value, "__getitem__")
+        ):
             # Can't easily validate value types at runtime, assume compatible
             return None  # Skip complex mappings for safety
         return None
@@ -286,12 +323,18 @@ class FlextUtilitiesConversion:
             return []
 
         items: list[StrictJsonValue] = []
-        if type(value) is str:
+        value_class = value.__class__
+        if value_class is str:
             items = [value]
-        elif type(value) is list:
-            items = list(value)
-        elif type(value) is dict:
-            items = list(value.values())
+        elif value_class is list:
+            try:
+                items = (
+                    FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
+                        value,
+                    )
+                )
+            except ValidationError:
+                items = []
         else:
             items = [value]
 
@@ -302,10 +345,13 @@ class FlextUtilitiesConversion:
                 for item in items
                 if item is not None
                 and not (
-                    type(item) in (list, tuple, set, frozenset)
+                    item.__class__ in (list, tuple, set, frozenset)
                     or (
-                        type(item) in (list, tuple)
-                        or (hasattr(item, "__getitem__") and type(item) not in (str, bytes))
+                        item.__class__ in (list, tuple)
+                        or (
+                            hasattr(item, "__getitem__")
+                            and item.__class__ not in (str, bytes)
+                        )
                     )
                 )
             ]

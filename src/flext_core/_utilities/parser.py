@@ -14,6 +14,7 @@ import re
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
+from types import NoneType
 from typing import overload
 
 import structlog
@@ -22,10 +23,10 @@ from pydantic import BaseModel
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core.constants import FlextConstants as c
+from flext_core.models import FlextModels as m
+from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesParser:
@@ -63,8 +64,10 @@ class FlextUtilitiesParser:
     def _safe_text_length(text: t.ConfigMapValue) -> str | int:
         """Safely get text length for logging."""
         try:
-            if type(text) in (str, bytes):
-                return len(text)
+            if text.__class__ in (str, bytes):
+                len_method = getattr(text, "__len__", None)
+                if callable(len_method):
+                    return len_method()
             return "unknown"
         except (TypeError, AttributeError):
             return "unknown"
@@ -108,7 +111,7 @@ class FlextUtilitiesParser:
                         "Component filtered out by validator",
                         operation="parse_delimited",
                         invalid_component=comp,
-                        validator_type=type(validator).__name__,
+                        validator_type=validator.__class__.__name__,
                     )
             components = valid_components
 
@@ -240,7 +243,7 @@ class FlextUtilitiesParser:
                 "FATAL ERROR during delimited parsing - PARSING ABORTED",
                 operation="parse_delimited",
                 error=str(e),
-                error_type=type(e).__name__,
+                error_type=e.__class__.__name__,
                 text_length=text_len,
                 delimiter=delimiter,
                 consequence="Cannot parse delimited string - invalid input or internal error",
@@ -284,7 +287,7 @@ class FlextUtilitiesParser:
         """
         try:
             length = self._safe_text_length(text)
-            if type(length) is int:
+            if length.__class__ is int:
                 return length
             return int(length) if length != "unknown" else -1
         except (TypeError, AttributeError, ValueError):
@@ -350,7 +353,7 @@ class FlextUtilitiesParser:
                 "FATAL ERROR during escape-aware splitting - SPLITTING ABORTED",
                 operation="split_on_char_with_escape",
                 error=str(e),
-                error_type=type(e).__name__,
+                error_type=e.__class__.__name__,
                 text_length=text_len,
                 split_char=split_char,
                 escape_char=escape_char,
@@ -485,7 +488,7 @@ class FlextUtilitiesParser:
                 "FATAL ERROR during whitespace normalization - NORMALIZATION ABORTED",
                 operation="normalize_whitespace",
                 error=str(e),
-                error_type=type(e).__name__,
+                error_type=e.__class__.__name__,
                 pattern=pattern,
                 replacement=replacement,
                 consequence="Cannot normalize whitespace - invalid pattern or internal error",
@@ -584,7 +587,7 @@ class FlextUtilitiesParser:
                 "FATAL ERROR during regex pipeline application - PIPELINE ABORTED",
                 operation="apply_regex_pipeline",
                 error=str(e),
-                error_type=type(e).__name__,
+                error_type=e.__class__.__name__,
                 patterns_count=len(patterns),
                 text_length=text_len,
                 consequence="Cannot apply regex transformations - invalid pattern or internal error",
@@ -592,9 +595,7 @@ class FlextUtilitiesParser:
             return r[str].fail(f"Failed to apply regex pipeline: {e}")
 
     @staticmethod
-    def _extract_key_from_mapping(
-        obj: Mapping[str, object],
-    ) -> str | None:
+    def _extract_key_from_mapping(obj: t.ConfigMapValue) -> str | None:
         """Extract key from mapping object (Strategy 2).
 
         Args:
@@ -604,10 +605,14 @@ class FlextUtilitiesParser:
             String key if found, None otherwise.
 
         """
+        items_method = getattr(obj, "items", None)
+        if not callable(items_method):
+            return None
+        mapping_data: Mapping[str, t.ConfigMapValue] = dict(items_method())
         for key in ("name", "id"):
-            if key in obj:
-                value = obj[key]
-                if type(value) is str:
+            if key in mapping_data:
+                value = mapping_data[key]
+                if value.__class__ is str:
                     return value
         return None
 
@@ -645,7 +650,7 @@ class FlextUtilitiesParser:
         """
         try:
             str_repr = str(obj)
-            if str_repr and str_repr != f"<{type(obj).__name__} object>":
+            if str_repr and str_repr != f"<{obj.__class__.__name__} object>":
                 return str_repr
         except (TypeError, ValueError):
             pass
@@ -688,22 +693,22 @@ class FlextUtilitiesParser:
             >>> # Instance
             >>> obj = object()
             >>> key = parser.get_object_key(obj)
-            >>> type(key) is str
+            >>> key.__class__ is str
             True
 
         """
         self.logger.debug(
             "Starting object key extraction",
             operation="get_object_key",
-            obj_type=type(obj).__name__,
+            obj_type=obj.__class__.__name__,
             has_name_attr=hasattr(obj, "__name__"),
         )
 
-        if type(obj) is str:
+        if obj.__class__ is str:
             key = obj
-        elif type(dunder_name := getattr(obj, "__name__", None)) is str:
+        elif (dunder_name := getattr(obj, "__name__", None)).__class__ is str:
             key = dunder_name
-        elif Mapping in type(obj).__mro__:
+        elif Mapping in obj.__class__.__mro__:
             # After isinstance, obj is Mapping - use directly
             mapping_key = self._extract_key_from_mapping(obj)
             key = mapping_key if mapping_key is not None else obj.__class__.__name__
@@ -718,7 +723,7 @@ class FlextUtilitiesParser:
             key = str_key
         # Final fallback: type name
         else:
-            key = type(obj).__name__
+            key = obj.__class__.__name__
 
         return key
 
@@ -749,7 +754,7 @@ class FlextUtilitiesParser:
         flags_val: int = 0
 
         if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
-            if type(elements[0]) is not str or type(elements[1]) is not str:
+            if elements[0].__class__ is not str or elements[1].__class__ is not str:
                 return r[tuple[str, str, int]].fail(
                     "validation error: pattern and replacement must be strings",
                 )
@@ -757,14 +762,14 @@ class FlextUtilitiesParser:
             replacement_val = elements[1]
             flags_val = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-            if type(elements[0]) is not str or type(elements[1]) is not str:
+            if elements[0].__class__ is not str or elements[1].__class__ is not str:
                 return r[tuple[str, str, int]].fail(
                     "validation error: pattern and replacement must be strings",
                 )
             pattern_val = elements[0]
             replacement_val = elements[1]
             third_elem = elements[2]
-            if type(third_elem) is not int:
+            if third_elem.__class__ is not int:
                 return r[tuple[str, str, int]].fail(
                     "validation error: regex flags must be an integer",
                 )
@@ -929,7 +934,7 @@ class FlextUtilitiesParser:
                 b: str = str(items[1])
                 # Third element is int for 3-element tuple variant
                 c_raw = items[2] if len(items) > self.TUPLE_LENGTH_2 else 0
-                c: int = c_raw if type(c_raw) is int else int(str(c_raw))
+                c: int = c_raw if c_raw.__class__ is int else int(str(c_raw))
                 # Call method with typed values
                 pattern_result = self._extract_pattern_components((a, b, c))
             else:
@@ -978,7 +983,9 @@ class FlextUtilitiesParser:
     # =========================================================================
 
     @staticmethod
-    def _parse_get_attr(obj: t.ConfigMapValue, attr: str, default: t.ConfigMapValue = None) -> t.ConfigMapValue:
+    def _parse_get_attr(
+        obj: t.ConfigMapValue, attr: str, default: t.ConfigMapValue = None
+    ) -> t.ConfigMapValue:
         """Get attribute safely (avoids circular import with u.get)."""
         return getattr(obj, attr, default)
 
@@ -998,14 +1005,14 @@ class FlextUtilitiesParser:
     @staticmethod
     def _parse_normalize_compare(a: t.ConfigMapValue, b: t.ConfigMapValue) -> bool:
         """Case-insensitive string comparison (avoids circular import)."""
-        if type(a) is not str or type(b) is not str:
+        if a.__class__ is not str or b.__class__ is not str:
             return False
         return a.lower() == b.lower()
 
     @staticmethod
     def _parse_normalize_str(value: t.ConfigMapValue, *, case: str = "lower") -> str:
         """Normalize string value (avoids circular import with u.normalize)."""
-        if type(value) is not str:
+        if value.__class__ is not str:
             return str(value)
         value_str: str = value
         if case == "lower":
@@ -1046,7 +1053,7 @@ class FlextUtilitiesParser:
             return None
         members_proxy = getattr(target, "__members__", {})
         # Convert to dict for easier iteration
-        members: dict[str, T] = dict(members_proxy)
+        members: Mapping[str, T] = dict(members_proxy)
 
         # Case-insensitive matching using members lookup
         if case_insensitive:
@@ -1082,7 +1089,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _parse_model[T](
+    def _parse_model[T: BaseModel](
         value: t.ConfigMapValue,
         target: type[T],
         field_prefix: str,
@@ -1092,27 +1099,40 @@ class FlextUtilitiesParser:
         """Parse Pydantic BaseModel. Returns None if not model."""
         if BaseModel not in target.__mro__:
             return None
-        if Mapping not in type(value).__mro__:
+        if Mapping not in value.__class__.__mro__:
             return r[T].fail(
-                f"{field_prefix}Expected dict for model, got {type(value).__name__}",
+                f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )
-        value_dict_data: dict[str, t.ConfigMapValue] = {}
-        for k, v in value.items():
+        value_dict_data: t.Dict = t.Dict({})
+        items_method = getattr(value, "items", None)
+        if not callable(items_method):
+            return r[T].fail(
+                f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
+            )
+
+        for k, v in items_method():
             key = str(k)
-            if type(v) in (str, int, float, bool, datetime, type(None)):
-                value_dict_data[key] = v
+            if v.__class__ in (str, int, float, bool, datetime, NoneType):
+                value_dict_data.root[key] = v
                 continue
-            if type(v) in (list, tuple):
-                normalized_seq: list[str | int | float | bool | datetime | None] = []
-                for item in v:
-                    if type(item) in (str, int, float, bool, datetime, type(None)):
-                        normalized_seq.append(item)
-                    else:
-                        normalized_seq.append(str(item))
-                value_dict_data[key] = normalized_seq
+            if v.__class__ in (list, tuple):
+                value_dict_data.root[key] = str(v)
                 continue
-            value_dict_data[key] = str(v)
-        value_dict: Mapping[str, t.ConfigMapValue] = value_dict_data
+            value_dict_data.root[key] = str(v)
+        scalar_data: t.Dict = t.Dict({})
+        for dict_key, dict_value in value_dict_data.root.items():
+            if dict_value is None or dict_value.__class__ in (
+                str,
+                int,
+                float,
+                bool,
+                datetime,
+            ):
+                scalar_data.root[dict_key] = dict_value
+            else:
+                scalar_data.root[dict_key] = str(dict_value)
+
+        value_dict: Mapping[str, t.ScalarValue] = scalar_data.root
         result = FlextUtilitiesModel.from_dict(target, value_dict, strict=strict)
         if result.is_success:
             return r[T].ok(result.value)
@@ -1123,9 +1143,9 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_int(value: t.ConfigMapValue) -> r[int] | None:
         """Coerce value to int. Returns None if not coercible."""
-        if type(value) in (str, float):
+        if value.__class__ in (str, float):
             try:
-                return r[int].ok(int(value))
+                return r[int].ok(int(float(str(value))))
             except (ValueError, TypeError):
                 return None
         return None
@@ -1133,9 +1153,9 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_float(value: t.ConfigMapValue) -> r[float] | None:
         """Coerce value to float. Returns None if not coercible."""
-        if type(value) in (str, int):
+        if value.__class__ in (str, int):
             try:
-                return r[float].ok(float(value))
+                return r[float].ok(float(str(value)))
             except (ValueError, TypeError):
                 return None
         return None
@@ -1193,7 +1213,7 @@ class FlextUtilitiesParser:
         # Get members - returns MappingProxyType[str, T]
         members_proxy = getattr(target, "__members__", {})
         # Convert to dict for easier iteration
-        members: dict[str, T] = dict(members_proxy)
+        members: Mapping[str, T] = dict(members_proxy)
         value_str = str(value)
 
         # Case-insensitive matching
@@ -1227,7 +1247,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _parse_try_model[T](
+    def _parse_try_model[T: BaseModel](
         value: t.ConfigMapValue,
         target: type[T],
         field_prefix: str,
@@ -1309,21 +1329,21 @@ class FlextUtilitiesParser:
                 "type",
             )
             # For error case, return failure wrapped in appropriate type
-            if target is int and type(default) is int:
+            if target is int and default.__class__ is int:
                 return r[int].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-            if target is float and type(default) is float:
+            if target is float and default.__class__ is float:
                 return r[float].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-            if target is str and type(default) is str:
+            if target is str and default.__class__ is str:
                 return r[str].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-            if target is bool and type(default) is bool:
+            if target is bool and default.__class__ is bool:
                 return r[bool].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
         return None
 
@@ -1355,7 +1375,7 @@ class FlextUtilitiesParser:
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,
-                f"{field_prefix}Cannot parse {type(value).__name__} to {target_name}: {e}",
+                f"{field_prefix}Cannot parse {value.__class__.__name__} to {target_name}: {e}",
             )
 
     @staticmethod
@@ -1402,7 +1422,7 @@ class FlextUtilitiesParser:
                 return r[T].ok(default_factory())
             return r[T].fail(field_prefix or "Value is None")
 
-        if type(target) is type and target in type(value).__mro__:
+        if target.__class__ is type and target in value.__class__.__mro__:
             return r[T].ok(value)
 
         enum_result = FlextUtilitiesParser._parse_try_enum(
@@ -1428,7 +1448,7 @@ class FlextUtilitiesParser:
             return model_result
 
         primitive_default: int | float | str | bool | None
-        if type(default) in (int, float, str, bool) or default is None:
+        if default is None or default.__class__ in (int, float, str, bool):
             primitive_default = default
         else:
             primitive_default = None
@@ -1528,16 +1548,16 @@ class FlextUtilitiesParser:
             # → 3.14
 
         """
-        if type(value) is target_type:
+        if value.__class__ is target_type:
             return value
 
-        if target_type is int and type(default) is int:
+        if target_type is int and default.__class__ is int:
             return FlextUtilitiesParser._convert_to_int(value, default=default)
-        if target_type is float and type(default) is float:
+        if target_type is float and default.__class__ is float:
             return FlextUtilitiesParser._convert_to_float(value, default=default)
-        if target_type is str and type(default) is str:
+        if target_type is str and default.__class__ is str:
             return FlextUtilitiesParser._convert_to_str(value, default=default)
-        if target_type is bool and type(default) is bool:
+        if target_type is bool and default.__class__ is bool:
             return FlextUtilitiesParser._convert_to_bool(value, default=default)
         # Fallback for other types
         return default
@@ -1545,23 +1565,23 @@ class FlextUtilitiesParser:
     @staticmethod
     def _convert_to_int(value: t.ConfigMapValue, *, default: int) -> int:
         """Convert value to int with fallback."""
-        if type(value) is int:
+        if value.__class__ is int:
             return value
-        if type(value) is str:
+        if value.__class__ is str:
             try:
                 return int(value)
             except ValueError:
                 return default
-        if type(value) is float:
+        if value.__class__ is float:
             return int(value)
         return default
 
     @staticmethod
     def _convert_to_float(value: t.ConfigMapValue, *, default: float) -> float:
         """Convert value to float with fallback."""
-        if type(value) is float:
+        if value.__class__ is float:
             return value
-        if type(value) in (int, str):
+        if value.__class__ in (int, str):
             try:
                 return float(value)
             except (ValueError, TypeError):
@@ -1571,7 +1591,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _convert_to_str(value: t.ConfigMapValue, *, default: str) -> str:
         """Convert value to str with fallback."""
-        if type(value) is str:
+        if value.__class__ is str:
             return value
         if value is None:
             return default
@@ -1583,12 +1603,12 @@ class FlextUtilitiesParser:
     @staticmethod
     def _convert_to_bool(value: t.ConfigMapValue, *, default: bool) -> bool:
         """Convert value to bool with fallback."""
-        if type(value) is bool:
+        if value.__class__ is bool:
             return value
-        if type(value) is str:
+        if value.__class__ is str:
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
             return normalized in {"true", "1", "yes", "on"}
-        if type(value) in (int, float):
+        if value.__class__ in (int, float):
             return bool(value)
         return default
 
@@ -1622,7 +1642,7 @@ class FlextUtilitiesParser:
         """
         if value is None:
             return default
-        if type(value) is str:
+        if value.__class__ is str:
             return value
         try:
             return str(value)
@@ -1651,11 +1671,11 @@ class FlextUtilitiesParser:
             default = []
         if value is None:
             return default
-        if type(value) is list:
+        if value.__class__ is list:
             return [str(item) for item in value]
-        if type(value) is str:
+        if value.__class__ is str:
             return [value] if value else default
-        if type(value) in (tuple, set, frozenset):
+        if value.__class__ in (tuple, set, frozenset):
             return [str(item) for item in value]
         return [str(value)]
 
@@ -1744,12 +1764,12 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | dict[str, str],
+        items: list[str] | t.ConfigMap,
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | dict[str, str]:
+    ) -> list[str] | set[str] | t.ConfigMap:
         """Normalize list/dict (builder: norm().list()).
 
         Mnemonic: norm = normalize, list = list[str]
@@ -1764,14 +1784,14 @@ class FlextUtilitiesParser:
             Normalized list/set/dict
 
         """
-        if type(items) is dict:
-            dict_items = items
+        if items.__class__ is dict:
+            dict_items: Mapping[str, str] = items
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
-            return {
+            return t.ConfigMap({
                 k: FlextUtilitiesParser.norm_str(v, case=case)
                 for k, v in dict_items.items()
-            }
+            })
 
         # items is list[str] here
         list_items = items
@@ -1827,11 +1847,11 @@ class FlextUtilitiesParser:
 
         """
         items_to_check: list[str]
-        if Mapping in type(items).__mro__ and hasattr(items, "root"):
+        if Mapping in items.__class__.__mro__ and hasattr(items, "root"):
             items_to_check = [str(k) for k in items.root]
-        elif Mapping in type(items).__mro__:
+        elif Mapping in items.__class__.__mro__:
             items_to_check = [str(k) for k in items]
-        elif type(items) is list:
+        elif items.__class__ is list:
             items_to_check = items
         else:
             items_to_check = []
@@ -1841,7 +1861,7 @@ class FlextUtilitiesParser:
             items_to_check,
             case=case or "lower",
         )
-        if type(normalized_result) in (list, set):
+        if normalized_result.__class__ in (list, set):
             return normalized_value in normalized_result
         return normalized_value in normalized_result.values()
 

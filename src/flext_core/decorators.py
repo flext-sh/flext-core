@@ -13,24 +13,23 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from typing import Literal, overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
-from flext_core.constants import c
+from flext_core.constants import FlextConstants as c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.exceptions import e
+from flext_core.exceptions import FlextExceptions as e
 from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, T, t
-from flext_core.utilities import u
+from flext_core.typings import P, R, T, FlextTypes as t
 
 # Concrete payload type for decorator extra dicts (metadata-compatible)
 type _Payload = t.MetadataAttributeValue
@@ -509,10 +508,10 @@ class FlextDecorators(FlextRuntime):
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
 
-                    result_logger.debug(
+                    _ = result_logger.debug(
                         "%s_started",
                         op_name,
-                        extra=start_extra,
+                        **start_extra,
                     )
 
                     result = func(*args, **kwargs)
@@ -532,10 +531,10 @@ class FlextDecorators(FlextRuntime):
                         )
                         completion_extra["duration_seconds"] = duration
 
-                    result_logger.debug(
+                    _ = result_logger.debug(
                         "%s_completed",
                         op_name,
-                        extra=completion_extra,
+                        **completion_extra,
                     )
                     return result
                 except (
@@ -555,32 +554,67 @@ class FlextDecorators(FlextRuntime):
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
 
+                    tracked_duration = (
+                        time.perf_counter() - start_time if track_perf else 0.0
+                    )
                     # Add timing metrics if tracking performance
                     if track_perf:
-                        duration = time.perf_counter() - start_time
                         failure_extra["duration_ms"] = (
-                            duration * c.MILLISECONDS_MULTIPLIER
+                            tracked_duration * c.MILLISECONDS_MULTIPLIER
                         )
-                        failure_extra["duration_seconds"] = duration
+                        failure_extra["duration_seconds"] = tracked_duration
 
-                    # Log with exception details
-                    # Type narrowing: exception method accepts exc_info: bool,
-                    # extract it from kwargs
-                    failure_extra_copy = dict(failure_extra)
-                    exc_info_raw = failure_extra_copy.pop("exc_info", None)
-                    exc_info_value: bool = (
-                        bool(exc_info_raw) if exc_info_raw is not None else True
-                    )
-                    # Remove 'exception' key from kwargs if present to avoid duplicate
-                    # This ensures exception=exc doesn't conflict with **kwargs
-                    failure_extra_copy.pop("exception", None)
-                    # Pass exception as keyword argument, not in **kwargs
-                    result_logger.exception(
-                        op_name,
-                        exception=exc,
-                        exc_info=exc_info_value,
-                        **failure_extra_copy,
-                    )
+                    exc_info_value = True
+                    if correlation_id is not None and track_perf:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                            correlation_id=correlation_id,
+                            duration_ms=tracked_duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_seconds=tracked_duration,
+                        )
+                    elif correlation_id is not None:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                            correlation_id=correlation_id,
+                        )
+                    elif track_perf:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                            duration_ms=tracked_duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_seconds=tracked_duration,
+                        )
+                    else:
+                        _ = result_logger.exception(
+                            op_name,
+                            exception=exc,
+                            exc_info=exc_info_value,
+                            function=func.__name__,
+                            success=False,
+                            error=str(exc),
+                            error_type=exc.__class__.__name__,
+                            operation=op_name,
+                        )
                     raise
                 finally:
                     # CRITICAL: Clear operation context (defensive cleanup)
@@ -661,10 +695,7 @@ class FlextDecorators(FlextRuntime):
                     }
                     if correlation_id is not None:
                         success_extra["correlation_id"] = correlation_id
-                    logger.info(
-                        "operation_completed",
-                        extra=success_extra,
-                    )
+                    logger.info("operation_completed", **success_extra)
                     return result
                 except (
                     AttributeError,
@@ -685,10 +716,27 @@ class FlextDecorators(FlextRuntime):
                     }
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
-                    logger.exception(
-                        "operation_failed",
-                        extra=failure_extra,
-                    )
+                    if correlation_id is not None:
+                        logger.exception(
+                            "operation_failed",
+                            operation=op_name,
+                            duration_ms=duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_seconds=duration,
+                            success=False,
+                            error=str(e),
+                            error_type=e.__class__.__name__,
+                            correlation_id=correlation_id,
+                        )
+                    else:
+                        logger.exception(
+                            "operation_failed",
+                            operation=op_name,
+                            duration_ms=duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_seconds=duration,
+                            success=False,
+                            error=str(e),
+                            error_type=e.__class__.__name__,
+                        )
                     raise
                 finally:
                     # CRITICAL: Clear operation context (defensive cleanup)
@@ -1001,26 +1049,15 @@ class FlextDecorators(FlextRuntime):
     ) -> None:
         """Handle retry exhaustion and raise appropriate exception."""
         # All retries exhausted
-        if last_exception:
-            logger.error(
-                "operation_failed_all_retries_exhausted",
-                extra={
-                    "function": func.__name__,
-                    "attempts": attempts,
-                    "error": str(last_exception),
-                    "error_type": type(last_exception).__name__,
-                },
-            )
-        else:
-            logger.error(
-                "operation_failed_all_retries_exhausted",
-                extra={
-                    "function": func.__name__,
-                    "attempts": attempts,
-                    "error": "Unknown error",
-                },
-            )
-
+        logger.error(
+            "operation_failed_all_retries_exhausted",
+            extra={
+                "function": func.__name__,
+                "attempts": attempts,
+                "error": str(last_exception),
+                "error_type": last_exception.__class__.__name__,
+            },
+        )
         _ = error_code
 
     @staticmethod
@@ -1415,12 +1452,10 @@ class FlextDecorators(FlextRuntime):
                         if bind_result.is_failure:
                             logger.warning(
                                 "global_context_binding_failed",
-                                extra={
-                                    "function": func.__name__,
-                                    "error": bind_result.error,
-                                    "error_code": bind_result.error_code,
-                                    "bound_keys": list(context_vars.keys()),
-                                },
+                                function=func.__name__,
+                                error=bind_result.error,
+                                error_code=bind_result.error_code,
+                                bound_keys=list(context_vars.keys()),
                             )
 
                     return func(*args, **kwargs)
@@ -1434,12 +1469,10 @@ class FlextDecorators(FlextRuntime):
                         if unbind_result.is_failure:
                             logger.warning(
                                 "global_context_unbind_failed",
-                                extra={
-                                    "function": func.__name__,
-                                    "error": unbind_result.error,
-                                    "error_code": unbind_result.error_code,
-                                    "bound_keys": list(context_vars.keys()),
-                                },
+                                function=func.__name__,
+                                error=unbind_result.error,
+                                error_code=unbind_result.error_code,
+                                bound_keys=list(context_vars.keys()),
                             )
 
             return wrapper
@@ -1577,9 +1610,6 @@ class FlextDecorators(FlextRuntime):
     FactoryDiscovery = FactoryDecoratorsDiscovery
 
 
-d = FlextDecorators
-
 __all__ = [
     "FlextDecorators",
-    "d",
 ]

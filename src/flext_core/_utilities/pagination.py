@@ -16,13 +16,13 @@ from collections.abc import Mapping, Sequence
 
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import c
-from flext_core.result import r
+from flext_core.constants import FlextConstants as c
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T, t
+from flext_core.typings import T, FlextTypes as t
 
-# Use centralized version from conversion.py
-_to_general_value_type = FlextUtilitiesConversion.to_general_value_type
+# Use centralized conversion from conversion.py
+_to_general_value = FlextUtilitiesConversion.to_general_value_type
 
 
 class FlextUtilitiesPagination:
@@ -35,7 +35,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_page_params(
-        query_params: dict[str, str],
+        query_params: Mapping[str, str],
         *,
         default_page: int = 1,
         default_page_size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
@@ -83,7 +83,7 @@ class FlextUtilitiesPagination:
         page: int,
         page_size: int | None,
         max_page_size: int,
-    ) -> r[dict[str, int]]:
+    ) -> r[Mapping[str, int]]:
         """Validate pagination parameters.
 
         Args:
@@ -96,16 +96,16 @@ class FlextUtilitiesPagination:
 
         """
         if page < 1:
-            return r[dict[str, int]].fail("Page must be >= 1")
+            return r[Mapping[str, int]].fail("Page must be >= 1")
 
         effective_page_size = page_size if page_size is not None else 20
 
         if effective_page_size < 1:
-            return r[dict[str, int]].fail("Page size must be >= 1")
+            return r[Mapping[str, int]].fail("Page size must be >= 1")
         if effective_page_size > max_page_size:
-            return r[dict[str, int]].fail(f"Page size must be <= {max_page_size}")
+            return r[Mapping[str, int]].fail(f"Page size must be <= {max_page_size}")
 
-        return r[dict[str, int]].ok({"page": page, "page_size": effective_page_size})
+        return r[Mapping[str, int]].ok({"page": page, "page_size": effective_page_size})
 
     @staticmethod
     def prepare_pagination_data(
@@ -114,7 +114,9 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]]]:
+    ) -> r[
+        Mapping[str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]]
+    ]:
         """Prepare pagination data structure.
 
         Args:
@@ -136,7 +138,12 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r[dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]]].fail(
+            return r[
+                Mapping[
+                    str,
+                    t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
+                ]
+            ].fail(
                 f"Page {page} exceeds total pages {total_pages}",
             )
 
@@ -147,11 +154,15 @@ class FlextUtilitiesPagination:
         # First convert T to PayloadValue, then normalize recursively
         data_list: list[t.ScalarValue] = []
         for item in data:
-            general_value = _to_general_value_type(item)
+            general_value = _to_general_value(item)
             normalized = FlextRuntime.normalize_to_general_value(general_value)
             data_list.append(normalized)
 
-        return r[dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]]].ok({
+        return r[
+            Mapping[
+                str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
+            ]
+        ].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -165,9 +176,14 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: Mapping[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]],
+        pagination_data: Mapping[
+            str,
+            t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
+        ],
         message: str | None = None,
-    ) -> r[dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]]]:
+    ) -> r[
+        Mapping[str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]]
+    ]:
         """Build paginated response dictionary.
 
         Args:
@@ -182,46 +198,62 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r[dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]]].fail(
+            return r[
+                Mapping[
+                    str,
+                    t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
+                ]
+            ].fail(
                 "Invalid pagination data structure",
             )
 
-        data_typed: t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]
-        pagination_typed: t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]
+        data_typed: t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
+        pagination_typed: (
+            t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
+        )
 
         # Validate types match t.ConfigMapValue
+        data_class = data.__class__
         if (
-            type(data) in (str, int, float, bool, type(None))
-            or Sequence in type(data).__mro__
-            or Mapping in type(data).__mro__
+            data_class in (str, int, float, bool, None.__class__)
+            or Sequence in data_class.__mro__
+            or Mapping in data_class.__mro__
         ):
             data_typed = data
         else:
             data_typed = str(data)
 
+        pagination_class = pagination.__class__
         if (
-            type(pagination) in (str, int, float, bool, type(None))
-            or Sequence in type(pagination).__mro__
-            or Mapping in type(pagination).__mro__
+            pagination_class in (str, int, float, bool, None.__class__)
+            or Sequence in pagination_class.__mro__
+            or Mapping in pagination_class.__mro__
         ):
             pagination_typed = pagination
         else:
             pagination_typed = str(pagination)
 
-        response: dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]] = {
+        response: Mapping[
+            str,
+            t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue],
+        ] = {
             "data": data_typed,
             "pagination": pagination_typed,
         }
 
         if message is not None:
-            response["message"] = message
+            response = {**response, "message": message}
 
-        return r[dict[str, t.ScalarValue | list[t.ScalarValue] | dict[str, t.ScalarValue]]].ok(response)
+        return r[
+            Mapping[
+                str, t.ScalarValue | list[t.ScalarValue] | Mapping[str, t.ScalarValue]
+            ]
+        ].ok(response)
 
     @staticmethod
     def extract_pagination_config(
         config: object | None,
-    ) -> dict[str, int]:
+    ) -> Mapping[str, int]:
         """Extract pagination configuration values - no fallbacks.
 
         Args:
@@ -238,20 +270,14 @@ class FlextUtilitiesPagination:
         if config is not None:
             # Use getattr to safely access attributes without type narrowing issues
             default_page_size_attr = getattr(config, "default_page_size", None)
-            if (
-                default_page_size_attr is not None
-                and FlextUtilitiesGuards.is_type(default_page_size_attr, int)
-                and default_page_size_attr > 0
-            ):
-                default_page_size = default_page_size_attr
+            match default_page_size_attr:
+                case int() as page_size if page_size > 0:
+                    default_page_size = page_size
 
             max_page_size_attr = getattr(config, "max_page_size", None)
-            if (
-                max_page_size_attr is not None
-                and FlextUtilitiesGuards.is_type(max_page_size_attr, int)
-                and max_page_size_attr > 0
-            ):
-                max_page_size = max_page_size_attr
+            match max_page_size_attr:
+                case int() as page_size if page_size > 0:
+                    max_page_size = page_size
 
         return {
             "default_page_size": default_page_size,

@@ -16,10 +16,10 @@ from typing import Annotated
 from pydantic import Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 
 class FlextModelsService:
@@ -262,9 +262,11 @@ class FlextModelsService:
             v: t.ConfigMapValue,
         ) -> t.ConfigMapValue:
             """Validate operation is callable."""
-            validation = u.Validation.validate_callable(
+            validation = u.validate_callable(
                 v,
-                error_message=f"Operation callable must be callable, got {type(v).__name__}",
+                error_message=(
+                    f"Operation callable must be callable, got {v.__class__.__name__}"
+                ),
             )
             if validation.is_failure:
                 msg = validation.error or "Operation callable must be callable"

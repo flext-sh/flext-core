@@ -29,13 +29,13 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.mixins import x
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.settings import FlextSettings
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 
 class FlextService[TDomainResult](
@@ -110,23 +110,16 @@ class FlextService[TDomainResult](
 
         """
         runtime = self._create_initial_runtime()
-        if runtime.context.__class__ is not FlextContext:
-            msg = f"Expected FlextContext, got {runtime.context.__class__.__name__}"
-            raise TypeError(msg)
-        context: FlextContext = runtime.context
 
-        with context.Service.service_context(
+        with FlextContext.create().Service.service_context(
             self.__class__.__name__,
             runtime.config.version,
         ):
             super().__init__(**data)
 
         # Set attributes directly - PrivateAttr allows assignment without validation
-        self._context = context
-        if not issubclass(runtime.config.__class__, FlextSettings):
-            msg = f"Expected FlextSettings, got {runtime.config.__class__.__name__}"
-            raise TypeError(msg)
-        self._config = runtime.config
+        self._context = runtime.context
+        self._config = FlextSettings.model_validate(runtime.config.model_dump())
         self._container = runtime.container
         self._runtime = runtime
 
@@ -208,15 +201,7 @@ class FlextService[TDomainResult](
         runtime_config = config_cls.model_validate(config_overrides or {})
 
         # 2. Context creation with initial data
-        runtime_context_typed: p.Context
-        if (
-            context is not None
-            and getattr(context, "set", None) is not None
-            and getattr(context, "get", None) is not None
-        ):
-            runtime_context_typed = context
-        else:
-            runtime_context_typed = FlextContext.create()
+        runtime_context_input = context
 
         # 3. Container creation with registrations
         # runtime_config is FlextSettings which implements "p.Config" structurally
@@ -224,7 +209,7 @@ class FlextService[TDomainResult](
         runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
-            context=runtime_context_typed,
+            context=runtime_context_input,
             subproject=subproject,
             services=services,
             factories=factories,
@@ -243,7 +228,7 @@ class FlextService[TDomainResult](
 
         return m.ServiceRuntime.model_construct(
             config=runtime_config,
-            context=runtime_context_typed,
+            context=runtime_container.context,
             container=runtime_container,
         )
 
@@ -516,6 +501,4 @@ class FlextService[TDomainResult](
         }
 
 
-s = FlextService
-
-__all__ = ["FlextService", "s"]
+__all__ = ["FlextService"]

@@ -23,14 +23,14 @@ from dependency_injector import containers as di_containers, providers as di_pro
 from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
-from flext_core.constants import c
+from flext_core.constants import FlextConstants as c
 from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextContainer(FlextRuntime, p.DI):
@@ -222,7 +222,7 @@ class FlextContainer(FlextRuntime, p.DI):
                                     return raw_result
                                 msg = (
                                     f"Factory '{factory_name}' returned unsupported type: "
-                                    f"{type(raw_result).__name__}"
+                                    f"{raw_result.__class__.__name__}"
                                 )
                                 raise TypeError(msg)
 
@@ -467,7 +467,7 @@ class FlextContainer(FlextRuntime, p.DI):
         # Note: Namespace registry is accessed via FlextSettings class, not ContainerConfig
         # Use getattr to safely access registry if it exists
         namespace_registry = getattr(
-            type(self._config),
+            self._config.__class__,
             "_namespace_registry",
             {},
         )
@@ -737,7 +737,7 @@ class FlextContainer(FlextRuntime, p.DI):
             registration = m.Container.ServiceRegistration(
                 name=name,
                 service=service,
-                service_type=type(service).__name__,
+                service_type=service.__class__.__name__,
             )
             self._services[name] = registration
             provider = FlextRuntime.DependencyIntegration.register_object(
@@ -845,7 +845,7 @@ class FlextContainer(FlextRuntime, p.DI):
             >>> container = FlextContainer()
             >>> container.register("logger", FlextLogger(__name__))
             >>> result = container.get("logger")
-            >>> if result.is_success and type(result.value) is FlextLogger:
+            >>> if result.is_success and result.value.__class__ is FlextLogger:
             ...     result.value.info("Resolved")
 
         """
@@ -894,20 +894,22 @@ class FlextContainer(FlextRuntime, p.DI):
         Uses type identity for concrete types and MRO for base classes.
         """
         # boundary guard
-        return type(value) is type_cls or type_cls in type(value).__mro__
+        value_cls = value.__class__
+        return value_cls is type_cls or type_cls in value_cls.__mro__
 
     @staticmethod
     def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:
         # boundary guard
-        if type(value) in (str, int, float, bool, type(None)):
+        value_cls = value.__class__
+        if value_cls in (str, int, float, bool, None.__class__):
             return True
-        if BaseModel in type(value).__mro__ or Path in type(value).__mro__:
+        if BaseModel in value_cls.__mro__ or Path in value_cls.__mro__:
             return True
         if callable(value):
             return True
-        if Mapping in type(value).__mro__:
+        if Mapping in value_cls.__mro__:
             return True
-        if Sequence in type(value).__mro__ and type(value) not in (
+        if Sequence in value_cls.__mro__ and value_cls not in (
             str,
             bytes,
             bytearray,
@@ -1188,7 +1190,7 @@ class FlextContainer(FlextRuntime, p.DI):
             cloned_services[name] = m.Container.ServiceRegistration(
                 name=name,
                 service=service,
-                service_type=type(service).__name__,
+                service_type=service.__class__.__name__,
             )
         for name, factory in (factories or {}).items():
             cloned_factories[name] = m.Container.FactoryRegistration(

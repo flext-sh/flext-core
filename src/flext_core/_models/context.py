@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Annotated
 
 import structlog.contextvars
@@ -17,31 +17,27 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import c
+from flext_core.constants import FlextConstants as c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 def _normalize_metadata(
-    value: None
-    | FlextModelsBase.Metadata
-    | t.ConfigMap
-    | Mapping[str, t.ScalarValue],
+    value: None | FlextModelsBase.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue],
 ) -> FlextModelsBase.Metadata:
     if value is None:
         return FlextModelsBase.Metadata(attributes={})
-    if FlextModelsBase.Metadata in type(value).__mro__:
+    if FlextModelsBase.Metadata in value.__class__.__mro__:
         return value
     if not FlextRuntime.is_dict_like(value):
         msg = (
             f"metadata must be None, dict, or FlextModelsBase.Metadata, "
-            f"got {type(value).__name__}"
+            f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
     raw = getattr(value, "root", value)
-    attributes: dict[str, t.MetadataAttributeValue] = {
-        str(k): FlextRuntime.normalize_to_metadata_value(v)
-        for k, v in raw.items()
+    attributes: Mapping[str, t.MetadataAttributeValue] = {
+        str(k): FlextRuntime.normalize_to_metadata_value(v) for k, v in raw.items()
     }
     return FlextModelsBase.Metadata(attributes=attributes)
 
@@ -58,13 +54,12 @@ class FlextModelsContext:
     def _to_general_value_dict(
         value: t.ConfigMap | Mapping[str, t.ScalarValue],
     ) -> Mapping[str, t.MetadataAttributeValue]:
-        """Convert dict-like value to dict[str, t.MetadataAttributeValue] for Metadata."""
+        """Convert dict-like value to metadata mapping for Metadata."""
         if not FlextRuntime.is_dict_like(value):
             return {}
         raw = getattr(value, "root", value)
         return {
-            str(k): FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in raw.items()
+            str(k): FlextRuntime.normalize_to_metadata_value(v) for k, v in raw.items()
         }
 
     class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
@@ -129,8 +124,8 @@ class FlextModelsContext:
 
         Type Safety Note:
             structlog.contextvars.get_contextvars() has incomplete type hints:
-            it returns dict[str, t.GuardInputValue] but we control the values (always
-            t.GuardInputValue). We cast to dict[str, t.GuardInputValue]
+            it returns mapping[str, t.GuardInputValue] but we control the values (always
+            t.GuardInputValue). We cast to mapping[str, t.GuardInputValue]
             to recover proper type information. This is NECESSARY to enable
             type inference of T through the proxy.
 
@@ -317,10 +312,10 @@ class FlextModelsContext:
             val: t.GuardInputValue,
         ) -> t.GuardInputValue:
             """Normalize any value to t.GuardInputValue recursively."""
-            if type(val) in (str, int, float, bool) or val is None:
+            if val is None or val.__class__ in (str, int, float, bool):
                 return val
             if FlextRuntime.is_dict_like(val):
-                result: dict[str, t.GuardInputValue] = {}
+                result: MutableMapping[str, t.GuardInputValue] = {}
                 dict_v = getattr(val, "root", val)
                 if hasattr(dict_v, "items"):
                     dict_v = dict(dict_v)
@@ -329,7 +324,11 @@ class FlextModelsContext:
                         FlextModelsContext.ContextData.normalize_to_general_value(v)
                     )
                 return result
-            if FlextRuntime.is_list_like(val) and type(val) is not str and type(val) is not bytes:
+            if (
+                FlextRuntime.is_list_like(val)
+                and val.__class__ is not str
+                and val.__class__ is not bytes
+            ):
                 # Type narrowing: is_list_like ensures Sequence protocol
                 # Convert to list[t.GuardInputValue] recursively
                 seq_val: Sequence[t.GuardInputValue] = val
@@ -347,26 +346,26 @@ class FlextModelsContext:
             path: str = "",
         ) -> None:
             """Recursively check if object is JSON-serializable."""
-            if obj is None or type(obj) in (str, int, float, bool):
+            if obj is None or obj.__class__ in (str, int, float, bool):
                 return
             # is_dict_like already checks for Mapping protocol compliance
             if FlextRuntime.is_dict_like(obj):
                 # Type narrowing: is_dict_like ensures Mapping protocol
-                dict_obj: dict[str, t.GuardInputValue] = dict(obj)
+                dict_obj: Mapping[str, t.GuardInputValue] = dict(obj)
                 for key, val in dict_obj.items():
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return  # All dict items validated successfully
             # is_list_like already checks for Sequence protocol compliance
             # Exclude str/bytes which are also Sequence
-            if FlextRuntime.is_list_like(obj) and type(obj) not in (str, bytes):
+            if FlextRuntime.is_list_like(obj) and obj.__class__ not in (str, bytes):
                 # Type narrowing: is_list_like ensures Sequence protocol
                 seq_obj: Sequence[t.GuardInputValue] = obj
                 for i, item in enumerate(seq_obj):
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(item, f"{path}[{i}]")
                 return  # All list items validated successfully
-            msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+            msg = f"Non-JSON-serializable type {obj.__class__.__name__} at {path}"
             raise TypeError(msg)
 
         @field_validator("metadata", mode="before")
@@ -396,10 +395,10 @@ class FlextModelsContext:
             None.
             """
             # Convert various input types to dict
-            working_value: dict[str, t.GuardInputValue]
+            working_value: MutableMapping[str, t.GuardInputValue]
 
             # STRICT mode: Accept FlextModelsBase.Metadata and convert to dict
-            if type(v) is FlextModelsBase.Metadata:
+            if v.__class__ is FlextModelsBase.Metadata:
                 # Convert MetadataAttributeDict to ConfigurationDict
                 # Use helper to normalize all values
                 working_value = {
@@ -410,24 +409,24 @@ class FlextModelsContext:
                 # Call model_dump on Pydantic model (safely via callable check)
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict[str, t.GuardInputValue] - normalize to ConfigurationDict
+                    # model_dump() returns mapping[str, t.GuardInputValue] - normalize to ConfigurationDict
                     dump_result = model_dump_method()
-                    if type(dump_result) is not dict:
-                        type_name = type(v).__name__
+                    if dump_result.__class__ is not dict:
+                        type_name = v.__class__.__name__
                         msg = f"Value must be a dictionary or Metadata, got {type_name}"
                         raise TypeError(msg)
-                    # Normalize dict[str, t.GuardInputValue] to ConfigurationDict
+                    # Normalize mapping[str, t.GuardInputValue] to ConfigurationDict
                     working_value = {
                         str(k): FlextRuntime.normalize_to_general_value(dump_result[k])
                         for k in dump_result
                     }
                 else:
-                    type_name = type(v).__name__
+                    type_name = v.__class__.__name__
                     msg = f"Value must be a dictionary or Metadata, got {type_name}"
                     raise TypeError(msg)
             elif v is None:
                 return {}
-            elif type(v) is dict:
+            elif v.__class__ is dict:
                 # Normalize dict to ConfigurationDict
                 working_value = {
                     str(k): FlextRuntime.normalize_to_general_value(v[k]) for k in v
@@ -435,7 +434,7 @@ class FlextModelsContext:
             else:
                 # Last resort - must be dict-like
                 if not FlextRuntime.is_dict_like(v):
-                    type_name = type(v).__name__
+                    type_name = v.__class__.__name__
                     msg = f"Value must be a dictionary or Metadata, got {type_name}"
                     raise TypeError(msg)
                 # Normalize Mapping to ConfigurationDict using .items()
@@ -446,7 +445,7 @@ class FlextModelsContext:
                 }
 
             if not FlextRuntime.is_dict_like(working_value):
-                type_name = type(working_value).__name__
+                type_name = working_value.__class__.__name__
                 msg = f"Value must be a dictionary or Metadata, got {type_name}"
                 raise TypeError(msg)
 
@@ -458,11 +457,11 @@ class FlextModelsContext:
                 working_value,
             )
 
-            # Type guard for return type - ConfigurationDict is dict[str, PayloadValue]
-            if type(normalized) is dict:
+            # Type guard for return type - ConfigurationDict is mapping[str, PayloadValue]
+            if normalized.__class__ is dict:
                 return normalized
 
-            msg = f"Normalized value must be dict, got {type(normalized).__name__}"
+            msg = f"Normalized value must be dict, got {normalized.__class__.__name__}"
             raise TypeError(msg)
 
     class ContextExport(FlextModelsEntity.Value):
@@ -529,12 +528,12 @@ class FlextModelsContext:
             path: str = "",
         ) -> None:
             """Recursively check if object is JSON-serializable."""
-            if obj is None or type(obj) in (str, int, float, bool):
+            if obj is None or obj.__class__ in (str, int, float, bool):
                 return
             # is_dict_like already checks for Mapping protocol compliance
             if FlextRuntime.is_dict_like(obj):
                 # Type narrowing: is_dict_like ensures Mapping protocol
-                dict_obj: dict[str, t.GuardInputValue] = dict(obj)
+                dict_obj: Mapping[str, t.GuardInputValue] = dict(obj)
                 for key, val in dict_obj.items():
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(
@@ -543,7 +542,7 @@ class FlextModelsContext:
                     )
             # is_list_like already checks for Sequence protocol compliance
             # Exclude str/bytes which are also Sequence
-            elif FlextRuntime.is_list_like(obj) and type(obj) not in (str, bytes):
+            elif FlextRuntime.is_list_like(obj) and obj.__class__ not in (str, bytes):
                 # Type narrowing: is_list_like ensures Sequence protocol
                 seq_obj: Sequence[t.GuardInputValue] = obj
                 for i, item in enumerate(seq_obj):
@@ -553,7 +552,7 @@ class FlextModelsContext:
                         f"{path}[{i}]",
                     )
             else:
-                msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+                msg = f"Non-JSON-serializable type {obj.__class__.__name__} at {path}"
                 raise TypeError(msg)
 
         @field_validator("data", mode="before")
@@ -570,11 +569,11 @@ class FlextModelsContext:
             None.
             """
             # Convert various input types to dict
-            working_value: dict[str, t.GuardInputValue]
+            working_value: MutableMapping[str, t.GuardInputValue]
 
             # Handle m.Metadata specially - extract only attributes dict
             # (excludes datetime fields which aren't JSON-serializable)
-            if type(v) is FlextModelsBase.Metadata:
+            if v.__class__ is FlextModelsBase.Metadata:
                 # Convert MetadataAttributeDict to ConfigurationDict
                 working_value = {
                     str(k): FlextRuntime.normalize_to_general_value(val)
@@ -584,24 +583,24 @@ class FlextModelsContext:
                 # Accept other Pydantic models - convert to dict
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict[str, t.GuardInputValue] - normalize to ConfigurationDict
+                    # model_dump() returns mapping[str, t.GuardInputValue] - normalize to ConfigurationDict
                     dump_result = model_dump_method()
-                    if type(dump_result) is not dict:
-                        type_name = type(v).__name__
+                    if dump_result.__class__ is not dict:
+                        type_name = v.__class__.__name__
                         msg = f"Value must be a dict or Pydantic model, got {type_name}"
                         raise TypeError(msg)
-                    # Normalize dict[str, t.GuardInputValue] to ConfigurationDict
+                    # Normalize mapping[str, t.GuardInputValue] to ConfigurationDict
                     working_value = {
                         str(k): FlextRuntime.normalize_to_general_value(dump_result[k])
                         for k in dump_result
                     }
                 else:
-                    type_name = type(v).__name__
+                    type_name = v.__class__.__name__
                     msg = f"Value must be a dict or Pydantic model, got {type_name}"
                     raise TypeError(msg)
             elif v is None:
                 return {}
-            elif type(v) is dict:
+            elif v.__class__ is dict:
                 # Normalize dict to ConfigurationDict
                 working_value = {
                     str(k): FlextRuntime.normalize_to_general_value(v[k]) for k in v
@@ -609,7 +608,7 @@ class FlextModelsContext:
             else:
                 # Last resort - must be dict-like
                 if not FlextRuntime.is_dict_like(v):
-                    type_name = type(v).__name__
+                    type_name = v.__class__.__name__
                     msg = f"Value must be a dict or Pydantic model, got {type_name}"
                     raise TypeError(msg)
                 # Normalize Mapping to ConfigurationDict using .items()
@@ -620,7 +619,7 @@ class FlextModelsContext:
                 }
 
             if not FlextRuntime.is_dict_like(working_value):
-                type_name = type(working_value).__name__
+                type_name = working_value.__class__.__name__
                 msg = f"Value must be a dict or Pydantic model, got {type_name}"
                 raise TypeError(msg)
 
@@ -628,7 +627,7 @@ class FlextModelsContext:
             FlextModelsContext.ContextExport.check_json_serializable(working_value)
 
             # working_value is always dict from comprehensions above;
-            # explicit dict() satisfies return type dict[str, PayloadValue]
+            # explicit dict() satisfies return mapping[str, PayloadValue]
             return dict(working_value)
 
         @field_validator("statistics", mode="before")
@@ -641,9 +640,9 @@ class FlextModelsContext:
                 return {}
             if FlextRuntime.is_dict_like(v):
                 return dict(v)
-            if BaseModel in type(v).__mro__:
+            if BaseModel in v.__class__.__mro__:
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
-            msg = f"statistics must be dict or BaseModel, got {type(v).__name__}"
+            msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
             raise TypeError(msg)
 
         @computed_field
@@ -711,11 +710,11 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in type(v).__mro__:
+            if BaseModel in v.__class__.__mro__:
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
-            msg = f"data must be dict or BaseModel, got {type(v).__name__}"
+            msg = f"data must be dict or BaseModel, got {v.__class__.__name__}"
             raise TypeError(msg)
 
         @field_validator("metadata", mode="before")
@@ -730,17 +729,17 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in type(v).__mro__:
+            if BaseModel in v.__class__.__mro__:
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
-            msg = f"metadata must be dict or BaseModel, got {type(v).__name__}"
+            msg = f"metadata must be dict or BaseModel, got {v.__class__.__name__}"
             raise TypeError(msg)
 
     class ContextStatistics(BaseModel):
         """Statistics tracking for context operations and metrics.
 
-        Enhanced to replace dict[str, float] metrics storage across
+        Enhanced to replace dict-based metrics storage across
         handlers.py and loggings.py modules for structured metrics
         tracking and performance monitoring.
 
@@ -801,11 +800,11 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in type(v).__mro__:
+            if BaseModel in v.__class__.__mro__:
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
-            msg = f"operations must be dict or BaseModel, got {type(v).__name__}"
+            msg = f"operations must be dict or BaseModel, got {v.__class__.__name__}"
             raise TypeError(msg)
 
     class ContextMetadata(BaseModel):
@@ -909,11 +908,11 @@ class FlextModelsContext:
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
                 return dict(v)
-            if BaseModel in type(v).__mro__:
+            if BaseModel in v.__class__.__mro__:
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
-            msg = f"custom_fields must be dict or BaseModel, got {type(v).__name__}"
+            msg = f"custom_fields must be dict or BaseModel, got {v.__class__.__name__}"
             raise TypeError(msg)
 
     class ContextDomainData(BaseModel):

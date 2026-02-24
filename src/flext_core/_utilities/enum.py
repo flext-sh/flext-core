@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import inspect
 import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesEnum:
@@ -39,10 +38,9 @@ class FlextUtilitiesEnum:
     })
 
     # Cache for metadata methods (manual cache since types aren't hashable for lru_cache)
-    # Note: members_cache uses object to avoid type variance issues with generic E
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
-    _members_cache: ClassVar[dict[type[StrEnum], object]] = {}
+    _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
 
     # ─────────────────────────────────────────────────────────────
     # PRIVATE HELPERS
@@ -66,11 +64,13 @@ class FlextUtilitiesEnum:
                 )
 
     @staticmethod
-    def _is_member_by_value[E: StrEnum](value: t.ScalarValue | E, enum_cls: type[E]) -> TypeIs[E]:
+    def _is_member_by_value[E: StrEnum](
+        value: t.ScalarValue | E, enum_cls: type[E]
+    ) -> TypeIs[E]:
         """Check membership by value (internal helper)."""
-        if type(value) is enum_cls:
+        if value.__class__ is enum_cls:
             return True
-        if FlextUtilitiesGuards.is_type(value, str):
+        if value.__class__ is str:
             value_map = getattr(enum_cls, "_value2member_map_", {})
             return value in value_map
         return False
@@ -83,7 +83,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def _parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
         """Parse string to enum (internal helper)."""
-        if type(value) is enum_cls:
+        if value.__class__ is enum_cls:
             return r[E].ok(value)
         try:
             return r[E].ok(enum_cls(value))
@@ -97,7 +97,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
         """Coerce value to enum - for Pydantic validators (internal helper)."""
-        if type(value) is enum_cls:
+        if value.__class__ is enum_cls:
             return value
         return enum_cls(value)
 
@@ -118,9 +118,9 @@ class FlextUtilitiesEnum:
                  process_status(value)
 
         """
-        if type(value) is enum_cls:
+        if value.__class__ is enum_cls:
             return True
-        if FlextUtilitiesGuards.is_type(value, str):
+        if value.__class__ is str:
             # Check if value is in enum's value-to-member mapping
             value_map = getattr(enum_cls, "_value2member_map_", {})
             return value in value_map
@@ -142,9 +142,9 @@ class FlextUtilitiesEnum:
                  process_active(value)
 
         """
-        if type(value) is enum_cls and value in valid_members:
+        if value.__class__ is enum_cls and value in valid_members:
             return True
-        if type(value) is str:
+        if value.__class__ is str:
             try:
                 member = enum_cls(value)
                 return member in valid_members
@@ -166,7 +166,7 @@ class FlextUtilitiesEnum:
                  status: Status = result.value
 
         """
-        if type(value) is enum_cls:
+        if value.__class__ is enum_cls:
             return r[E].ok(value)
         try:
             return r[E].ok(enum_cls(value))
@@ -195,7 +195,7 @@ class FlextUtilitiesEnum:
         """
         if value is None:
             return default
-        if type(value) is enum_cls:
+        if value.__class__ is enum_cls:
             return value
         try:
             return enum_cls(value)
@@ -230,9 +230,9 @@ class FlextUtilitiesEnum:
         """
 
         def _coerce(value: t.ScalarValue | E) -> E:
-            if type(value) is enum_cls:
+            if value.__class__ is enum_cls:
                 return value
-            if type(value) is str:
+            if value.__class__ is str:
                 try:
                     return enum_cls(value)
                 except ValueError:
@@ -263,14 +263,14 @@ class FlextUtilitiesEnum:
         """
 
         def _coerce(value: t.ScalarValue | E) -> E:
-            if type(value) is enum_cls:
+            if value.__class__ is enum_cls:
                 return value
-            if type(value) is str:
+            if value.__class__ is str:
                 # Try by name first
                 members_dict = getattr(enum_cls, "__members__", {})
                 if value in members_dict:
                     member = members_dict[value]
-                    if type(member) is enum_cls:
+                    if member.__class__ is enum_cls:
                         return member
                 # Then by value
                 try:
@@ -304,7 +304,7 @@ class FlextUtilitiesEnum:
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
+        members_dict: Mapping[str, E] = getattr(enum_cls, "__members__", {})
         result = frozenset(m.value for m in members_dict.values())
 
         # Cache result
@@ -326,7 +326,7 @@ class FlextUtilitiesEnum:
             return FlextUtilitiesEnum._names_cache[enum_cls]
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
+        members_dict: Mapping[str, E] = getattr(enum_cls, "__members__", {})
         result = frozenset(members_dict.keys())
 
         # Cache result
@@ -346,12 +346,12 @@ class FlextUtilitiesEnum:
         # Check cache first - retrieve cached members for this enum class
         # Cache is keyed by enum_cls, so if we find it, it's the correct type
         cached = FlextUtilitiesEnum._members_cache.get(enum_cls)
-        if cached is not None and type(cached) is frozenset:
+        if cached is not None and cached.__class__ is frozenset:
             # isinstance narrows to frozenset, key guarantees correct element type
-            return frozenset(cached)
+            return frozenset(enum_cls(member.value) for member in cached)
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
+        members_dict: Mapping[str, E] = getattr(enum_cls, "__members__", {})
         result: frozenset[E] = frozenset(members_dict.values())
 
         # Cache result - store in dictionary for all future calls with same enum_cls
@@ -383,7 +383,7 @@ class FlextUtilitiesEnum:
     def create_discriminated_union(
         _discriminator_field: str,
         *enum_classes: type[StrEnum],
-    ) -> dict[str, type[StrEnum]]:
+    ) -> Mapping[str, type[StrEnum]]:
         """Create discriminated union mapping for Pydantic models.
 
         Advanced pattern for discriminated unions with multiple enums.
@@ -401,7 +401,7 @@ class FlextUtilitiesEnum:
             Mapping of discriminator values to enum classes
 
         """
-        union_map: dict[str, type[StrEnum]] = {}
+        union_map: Mapping[str, type[StrEnum]] = {}
         for enum_class in enum_classes:
             for member in enum_class.__members__.values():
                 union_map[member.value] = enum_class
@@ -452,7 +452,7 @@ class FlextUtilitiesEnum:
         return forward, inverse
 
     @staticmethod
-    def create_enum(name: str, values: dict[str, str]) -> type[StrEnum]:
+    def create_enum(name: str, values: Mapping[str, str]) -> type[StrEnum]:
         """Create StrEnum dynamically from values dict.
 
         Factory method for reducing StrEnum boilerplate during constants refactoring.
@@ -472,7 +472,7 @@ class FlextUtilitiesEnum:
             ...     "OutputFormat", {"JSON": "json", "YAML": "yaml", "CSV": "csv"}
             ... )
             >>> assert OutputFormat.JSON.value == "json"
-            >>> assert StrEnum in type(OutputFormat.JSON).__mro__
+            >>> assert StrEnum in OutputFormat.JSON.__class__.__mro__
 
         Note:
             This method is used during v0.10 → v0.11 constants refactoring
@@ -570,7 +570,7 @@ class FlextUtilitiesEnum:
         FlextUtilitiesEnum._check_direct_access()
 
         if mode == "is_member":
-            if by_name and type(value) is str:
+            if by_name and value.__class__ is str:
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
                     value,
                     enum_cls,
@@ -583,9 +583,9 @@ class FlextUtilitiesEnum:
         if mode == "parse":
             # Type narrowing: value is object, but parse accepts str | E
             # We handle this by checking if it's already an enum instance
-            if type(value) is enum_cls:
+            if value.__class__ is enum_cls:
                 return FlextUtilitiesEnum._parse(enum_cls, value)
-            if type(value) is str:
+            if value.__class__ is str:
                 return FlextUtilitiesEnum._parse(enum_cls, value)
             # For other types, convert to string
             return FlextUtilitiesEnum._parse(enum_cls, str(value))
@@ -593,11 +593,11 @@ class FlextUtilitiesEnum:
             # Type narrowing: value is object, but coerce accepts str | E
             # coerce always returns E (raises on failure)
             # Explicit type narrowing for type checker
-            if type(value) is enum_cls:
+            if value.__class__ is enum_cls:
                 # Type narrowing: isinstance check ensures value is E
                 # Direct return after isinstance narrowing
                 return value
-            if type(value) is str:
+            if value.__class__ is str:
                 # Type narrowing: isinstance check ensures value is str
                 coerced: E = FlextUtilitiesEnum._coerce(enum_cls, value)
                 return coerced

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -23,9 +23,9 @@ from pydantic import (
 )
 
 from flext_core._models.base import FlextModelsBase
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsHandler:
@@ -57,7 +57,7 @@ class FlextModelsHandler:
             v: t.GuardInputValue,
         ) -> t.GuardInputValue:
             if not callable(v):
-                msg = f"Handler must be callable, got {type(v).__name__}"
+                msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
             return v
 
@@ -137,11 +137,11 @@ class FlextModelsHandler:
             cls,
             v: object,
         ) -> Callable[..., object] | BaseModel:
-            if BaseModel in type(v).__mro__:
-                return v
+            if BaseModel in v.__class__.__mro__:
+                return cast("BaseModel", v)
             if callable(v):
                 return v
-            msg = f"Handler must be callable or handler instance, got {type(v).__name__}"
+            msg = f"Handler must be callable or handler instance, got {v.__class__.__name__}"
             raise TypeError(msg)
 
     class RegistrationDetails(BaseModel):
@@ -306,7 +306,7 @@ class FlextModelsHandler:
                 >>> context.start_execution()
                 >>> # ... handler executes ...
                 >>> elapsed = context.execution_time_ms
-                >>> type(elapsed) is float
+                >>> elapsed.__class__ is float
                 True
 
             """

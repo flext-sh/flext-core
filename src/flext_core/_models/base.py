@@ -33,8 +33,8 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core.constants import FlextConstants as c
+from flext_core.typings import FlextTypes as t
 
 
 # Advanced Pydantic v2 Validators
@@ -52,10 +52,8 @@ def ensure_utc_datetime(v: datetime | None) -> datetime | None:
 
 def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
     """Normalize value to list format. Fixed types only."""
-    if type(v) is list:
-        return v
-    if type(v) in (tuple, set):
-        return list(v)
+    if v.__class__ is list:
+        return [item for item in v]
     return [v]
 
 
@@ -82,9 +80,7 @@ ValidatedString = Annotated[str, AfterValidator(validate_non_empty_string)]
 UTCDatetime = Annotated[datetime, AfterValidator(ensure_utc_datetime)]
 PositiveInt = Annotated[int, AfterValidator(validate_positive_number)]
 PositiveFloat = Annotated[float, AfterValidator(validate_positive_number)]
-NormalizedList = Annotated[
-    list[t.GuardInputValue], BeforeValidator(normalize_to_list)
-]
+NormalizedList = Annotated[list[t.GuardInputValue], BeforeValidator(normalize_to_list)]
 
 
 # Advanced custom types with PlainValidator
@@ -135,7 +131,7 @@ def validate_config_dict(
     v: Mapping[str, t.GuardInputValue],
 ) -> Mapping[str, t.GuardInputValue]:
     """Validate configuration dictionary structure. Returns dict for model storage."""
-    out: dict[str, t.GuardInputValue] = {}
+    out = {}
     for key in v:
         if key.startswith("_"):
             msg = f"Keys starting with '_' are reserved: {key}"
@@ -146,15 +142,15 @@ def validate_config_dict(
 
 def validate_tags_list(v: t.GuardInputValue) -> list[str]:
     """Validate and normalize tags list."""
-    if type(v) is not list:
+    if v.__class__ is not list:
         msg = "Tags must be a list"
         raise TypeError(msg)
 
     normalized: list[str] = []
     seen: set[str] = set()
     for tag in v:
-        if type(tag) is not str:
-            msg = f"Tag must be string, got {type(tag)}"
+        if tag.__class__ is not str:
+            msg = f"Tag must be string, got {tag.__class__.__name__}"
             raise TypeError(msg)
         clean_tag = tag.strip().lower()
         if clean_tag and clean_tag not in seen:
@@ -221,9 +217,7 @@ class FlextModelFoundation:
         ) -> Mapping[str, t.MetadataAttributeValue]:
             if value is None:
                 return {}
-            result: dict[str, t.MetadataAttributeValue] = {
-                str(k): v for k, v in value.items()
-            }
+            result = {str(k): v for k, v in value.items()}
             for key in result:
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -370,7 +364,7 @@ class FlextModelFoundation:
                 bool: True if models are equal by value, False otherwise.
 
             """
-            if type(other) is not type(self):
+            if other.__class__ is not self.__class__:
                 return NotImplemented
             return self.model_dump() == other.model_dump()
 
@@ -1026,7 +1020,7 @@ class FlextModelFoundation:
         @classmethod
         def validate_labels(cls, v: Mapping[str, str]) -> Mapping[str, str]:
             """Validate labels dictionary."""
-            cleaned: dict[str, str] = {}
+            cleaned = {}
             for key, value in v.items():
                 cleaned_key = key.strip()
                 cleaned_value = value.strip()
@@ -1384,7 +1378,9 @@ class FlextModelFoundation:
 
         def add_field(self, key: str, value: t.GuardInputValue) -> None:
             """Add a field dynamically."""
-            self.fields[key] = value
+            updated_fields = dict(self.fields)
+            updated_fields[key] = value
+            self.fields = updated_fields
 
         def rebuild_with_validation(self) -> Self:
             """Rebuild model with full validation using model_validate."""

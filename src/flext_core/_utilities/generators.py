@@ -14,16 +14,16 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import c
-from flext_core.models import m
+from flext_core.constants import FlextConstants as c
+from flext_core.models import FlextModels as m
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGenerators:
@@ -113,42 +113,40 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: dict[str, t.ConfigMapValue] | t.ConfigMapValue,
-    ) -> dict[str, t.ConfigMapValue]:
+        context: Mapping[str, t.ConfigMapValue] | t.ConfigMapValue,
+    ) -> Mapping[str, t.ConfigMapValue]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            dict[str, t.ConfigMapValue]: Normalized context dict
+            Mapping[str, t.ConfigMapValue]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
 
         """
-        if type(context) is dict:
+        if context.__class__ is dict:
             return context
         if hasattr(context, "keys") and hasattr(context, "__getitem__"):
             try:
                 # Type narrowing: context is Mapping, convert to dict
-                context_dict_mapping: dict[str, t.ConfigMapValue] = dict(
-                    context.items(),
-                )
+                context_dict_mapping = dict(context.items())
                 return context_dict_mapping
             except (AttributeError, TypeError) as e:
                 msg = (
-                    f"Failed to convert Mapping {type(context).__name__} to dict: "
-                    f"{type(e).__name__}: {e}"
+                    f"Failed to convert Mapping {context.__class__.__name__} to dict: "
+                    f"{e.__class__.__name__}: {e}"
                 )
                 raise TypeError(msg) from e
-        if type(context) is not dict and BaseModel in type(context).__mro__:
+        if context.__class__ is not dict and BaseModel in context.__class__.__mro__:
             try:
                 return context.model_dump()
             except (AttributeError, TypeError) as e:
                 msg = (
-                    f"Failed to dump BaseModel {type(context).__name__}: "
-                    f"{type(e).__name__}: {e}"
+                    f"Failed to dump BaseModel {context.__class__.__name__}: "
+                    f"{e.__class__.__name__}: {e}"
                 )
                 raise TypeError(msg) from e
         if context is None:
@@ -157,14 +155,12 @@ class FlextUtilitiesGenerators:
                 "or handle None in calling code."
             )
             raise TypeError(msg)
-        msg = (
-            f"Context must be dict, Mapping, or BaseModel, got {type(context).__name__}"
-        )
+        msg = f"Context must be dict, Mapping, or BaseModel, got {context.__class__.__name__}"
         raise TypeError(msg)
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: dict[str, str],
+        context_dict: MutableMapping[str, str],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -198,7 +194,7 @@ class FlextUtilitiesGenerators:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> dict[str, str]:
+    ) -> Mapping[str, str]:
         """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
 
         This generic helper consolidates duplicate context enrichment logic
@@ -214,7 +210,7 @@ class FlextUtilitiesGenerators:
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            dict[str, str]: Enriched context with requested fields (all string values)
+            Mapping[str, str]: Enriched context with requested fields (all string values)
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -238,8 +234,8 @@ class FlextUtilitiesGenerators:
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
         # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
-        context_dict: dict[str, str] = {
-            k: v if type(v) is str else str(v) for k, v in normalized_dict.items()
+        context_dict: MutableMapping[str, str] = {
+            k: v if v.__class__ is str else str(v) for k, v in normalized_dict.items()
         }
         FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
@@ -251,8 +247,8 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def ensure_dict(
         value: t.ConfigMapValue,
-        default: dict[str, t.ConfigMapValue] | None = None,
-    ) -> dict[str, t.ConfigMapValue]:
+        default: Mapping[str, t.ConfigMapValue] | None = None,
+    ) -> Mapping[str, t.ConfigMapValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -272,7 +268,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            dict[str, t.ConfigMapValue]: Normalized dict or default
+            Mapping[str, t.ConfigMapValue]: Normalized dict or default
 
         Raises:
             TypeError: If value is None (and no default) or cannot be converted
@@ -293,16 +289,16 @@ class FlextUtilitiesGenerators:
 
         """
         # Strategy 1: Already a dict - return as-is
-        if type(value) is dict:
+        if value.__class__ is dict:
             return value
 
         # Strategy 2: Pydantic BaseModel - use model_dump()
-        if BaseModel in type(value).__mro__:
+        if BaseModel in value.__class__.__mro__:
             # BaseModel.model_dump() returns dict-like object, check with is_type guard
             result = value.model_dump()
-            if type(result) is dict:
+            if result.__class__ is dict:
                 normalized = FlextRuntime.normalize_to_general_value(result)
-                if type(normalized) is dict:
+                if normalized.__class__ is dict:
                     return normalized
                 return {}
 
@@ -313,8 +309,8 @@ class FlextUtilitiesGenerators:
                 return dict(value.items())
             except (AttributeError, TypeError) as e:
                 msg = (
-                    f"Failed to convert Mapping {type(value).__name__} to dict: "
-                    f"{type(e).__name__}: {e}"
+                    f"Failed to convert Mapping {value.__class__.__name__} to dict: "
+                    f"{e.__class__.__name__}: {e}"
                 )
                 raise TypeError(msg) from e
 
@@ -330,7 +326,7 @@ class FlextUtilitiesGenerators:
 
         # Strategy 5: Fast fail - unsupported type
         msg = (
-            f"Cannot convert {type(value).__name__} to dict. "
+            f"Cannot convert {value.__class__.__name__} to dict. "
             "Supported types: dict, BaseModel, Mapping."
         )
         raise TypeError(msg)
@@ -353,7 +349,7 @@ class FlextUtilitiesGenerators:
         if kind is None:
             return None
 
-        kind_prefix_map: dict[str, str] = {
+        kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
             "entity": "ent",
             "batch": c.Cqrs.ProcessingMode.BATCH,
@@ -479,7 +475,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: m.ConfigMap | dict[str, t.ConfigMapValue],
+        attributes: m.ConfigMap | Mapping[str, t.ConfigMapValue],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -501,7 +497,7 @@ class FlextUtilitiesGenerators:
         # Type system ensures base_class is a type, so no runtime check needed
         # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
         # Convert to dict for type() call
-        attributes_dict: dict[str, t.ConfigMapValue] = dict(attributes)
+        attributes_dict = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
 

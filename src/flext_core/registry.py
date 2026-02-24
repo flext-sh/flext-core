@@ -17,15 +17,15 @@ from typing import Annotated, ClassVar, Self
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import c
+from flext_core.constants import FlextConstants as c
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
 from flext_core.service import FlextService
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 # Use centralized version from utilities
 _to_general_value_type = u.Conversion.to_general_value_type
@@ -246,8 +246,8 @@ class FlextRegistry(FlextService[bool]):
         value: t.ScalarValue | BaseModel,
     ) -> c.Cqrs.HandlerType:
         """Safely extract and validate handler mode from value."""
-        # Use u.Parser.parse() for cleaner enum parsing
-        parse_result = u.Parser.parse(
+        # Use u.parse() for enum parsing (runtime alias flat namespace)
+        parse_result = u.parse(
             value,
             c.Cqrs.HandlerType,
             default=c.Cqrs.HandlerType.COMMAND,
@@ -269,8 +269,8 @@ class FlextRegistry(FlextService[bool]):
             return c.Cqrs.CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.INACTIVE:
             return c.Cqrs.CommonStatus.FAILED
-        # Use u.Parser.parse() for cleaner enum parsing
-        parse_result = u.Parser.parse(
+        # Use u.parse() for enum parsing (runtime alias flat namespace)
+        parse_result = u.parse(
             value,
             c.Cqrs.CommonStatus,
             default=c.Cqrs.CommonStatus.RUNNING,
@@ -813,13 +813,9 @@ class FlextRegistry(FlextService[bool]):
         # Normalize metadata to dict for internal use
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
-            metadata_items = getattr(metadata, "items", None)
-            if callable(metadata_items):
-                metadata_source = {str(k): v for k, v in metadata_items()}
-            else:
-                metadata_attributes = getattr(metadata, "attributes", {})
-                metadata_source = {str(k): v for k, v in metadata_attributes.items()}
-            validated_metadata = m.ConfigMap.model_validate(metadata_source)
+            validated_metadata = m.ConfigMap.model_validate(
+                getattr(metadata, "attributes", metadata),
+            )
 
         # Store metadata if provided (for future use)
         if validated_metadata is not None:

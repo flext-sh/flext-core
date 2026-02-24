@@ -11,33 +11,17 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Mapping, MutableMapping, Sequence
-from typing import ClassVar, TypeGuard
+from collections.abc import Mapping, MutableMapping
+from typing import ClassVar
+
+from pydantic import ConfigDict, Field, ValidationError as PydanticValidationError
 
 from flext_core.constants import c
-from flext_core.models import FlextModels
-from flext_core.protocols import p
+from flext_core._models.base import FlextModelsBase
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
-# Use FlextRuntime.Metadata to avoid importing from _models.base
-# This maintains proper architecture layering (exceptions.py is Tier 1)
-_Metadata = FlextRuntime.Metadata
-m = FlextModels
-
-
-def _is_metadata_protocol(
-    obj: t.ScalarValue
-    | Mapping[str, t.MetadataAttributeValue]
-    | Sequence[t.ScalarValue],
-) -> TypeGuard[p.Log.Metadata]:
-    """TypeGuard to check if object implements the Metadata protocol."""
-    return (
-        hasattr(obj, "created_at")
-        and hasattr(obj, "updated_at")
-        and hasattr(obj, "version")
-        and hasattr(obj, "attributes")
-    )
+# FlextRuntime.Metadata used directly (no alias) per runtime-alias-only policy
 
 
 class FlextExceptions:
@@ -46,6 +30,265 @@ class FlextExceptions:
     Provides structured exceptions with error codes and correlation tracking
     for consistent error handling and logging.
     """
+
+    class _ParamsModel(FlextModelsBase.ArbitraryTypesModel):
+        """Shared strict params model for exception helpers."""
+
+        model_config = ConfigDict(
+            extra=c.ModelConfig.EXTRA_FORBID,
+            strict=True,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+            use_enum_values=True,
+        )
+
+    class _StrictStringValue(_ParamsModel):
+        """Strict string extractor for kwargs/context parsing."""
+
+        value: str = Field(strict=True)
+
+    class _StrictBooleanValue(_ParamsModel):
+        """Strict boolean extractor for kwargs/context parsing."""
+
+        value: bool = Field(strict=True)
+
+    class _StrictIntValue(_ParamsModel):
+        """Strict integer extractor for kwargs/context parsing."""
+
+        value: int = Field(strict=True)
+
+    class _StrictNumberValue(_ParamsModel):
+        """Strict numeric extractor for kwargs/context parsing."""
+
+        value: int | float = Field()
+
+    class ValidationErrorParams(_ParamsModel):
+        """Validated params for ValidationError."""
+
+        field: str | None = Field(default=None, strict=True)
+        value: t.MetadataAttributeValue | None = None
+
+    class ConfigurationErrorParams(_ParamsModel):
+        """Validated params for ConfigurationError."""
+
+        config_key: str | None = Field(default=None, strict=True)
+        config_source: str | None = Field(default=None, strict=True)
+
+    class ConnectionErrorParams(_ParamsModel):
+        """Validated params for ConnectionError."""
+
+        host: str | None = Field(default=None, strict=True)
+        port: int | None = Field(default=None, strict=True)
+        timeout: int | float | None = Field(default=None)
+
+    class TimeoutErrorParams(_ParamsModel):
+        """Validated params for TimeoutError."""
+
+        timeout_seconds: int | float | None = Field(default=None)
+        operation: str | None = Field(default=None, strict=True)
+
+    class AuthenticationErrorParams(_ParamsModel):
+        """Validated params for AuthenticationError."""
+
+        auth_method: str | None = Field(default=None, strict=True)
+        user_id: str | None = Field(default=None, strict=True)
+
+    class AuthorizationErrorParams(_ParamsModel):
+        """Validated params for AuthorizationError."""
+
+        user_id: str | None = Field(default=None, strict=True)
+        resource: str | None = Field(default=None, strict=True)
+        permission: str | None = Field(default=None, strict=True)
+
+    class NotFoundErrorParams(_ParamsModel):
+        """Validated params for NotFoundError."""
+
+        resource_type: str | None = Field(default=None, strict=True)
+        resource_id: str | None = Field(default=None, strict=True)
+
+    class ConflictErrorParams(_ParamsModel):
+        """Validated params for ConflictError."""
+
+        resource_type: str | None = Field(default=None, strict=True)
+        resource_id: str | None = Field(default=None, strict=True)
+        conflict_reason: str | None = Field(default=None, strict=True)
+
+    class RateLimitErrorParams(_ParamsModel):
+        """Validated params for RateLimitError."""
+
+        limit: int | None = Field(default=None, strict=True)
+        window_seconds: int | None = Field(default=None, strict=True)
+        retry_after: int | float | None = Field(default=None)
+
+    class CircuitBreakerErrorParams(_ParamsModel):
+        """Validated params for CircuitBreakerError."""
+
+        service_name: str | None = Field(default=None, strict=True)
+        failure_count: int | None = Field(default=None, strict=True)
+        reset_timeout: int | float | None = Field(default=None)
+
+    class TypeErrorParams(_ParamsModel):
+        """Validated params for TypeError."""
+
+        expected_type: str | None = Field(default=None, strict=True)
+        actual_type: str | None = Field(default=None, strict=True)
+
+    class OperationErrorParams(_ParamsModel):
+        """Validated params for OperationError."""
+
+        operation: str | None = Field(default=None, strict=True)
+        reason: str | None = Field(default=None, strict=True)
+
+    class AttributeAccessErrorParams(_ParamsModel):
+        """Validated params for AttributeAccessError."""
+
+        attribute_name: str | None = Field(default=None, strict=True)
+        attribute_context: str | None = Field(default=None, strict=True)
+
+    @staticmethod
+    def _safe_optional_str(
+        value: t.MetadataAttributeValue | type | None,
+    ) -> str | None:
+        """Extract optional strict string from dynamic values."""
+        if value is None:
+            return None
+        try:
+            return e._StrictStringValue.model_validate({"value": value}).value
+        except PydanticValidationError:
+            return None
+
+    @staticmethod
+    def _safe_bool(value: t.MetadataAttributeValue | None, *, default: bool) -> bool:
+        """Extract strict bool from dynamic values with default fallback."""
+        if value is None:
+            return default
+        try:
+            return e._StrictBooleanValue.model_validate({"value": value}).value
+        except PydanticValidationError:
+            return default
+
+    @staticmethod
+    def _safe_int(value: t.MetadataAttributeValue | None) -> int | None:
+        """Extract optional strict integer from dynamic values."""
+        if value is None:
+            return None
+        try:
+            return e._StrictIntValue.model_validate({"value": value}).value
+        except PydanticValidationError:
+            return None
+
+    @staticmethod
+    def _safe_number(value: t.MetadataAttributeValue | None) -> int | float | None:
+        """Extract optional strict numeric value from dynamic values."""
+        if value is None:
+            return None
+        try:
+            return e._StrictNumberValue.model_validate({"value": value}).value
+        except PydanticValidationError:
+            return None
+
+    @staticmethod
+    def _safe_config_map(
+        value: FlextRuntime.Metadata
+        | Mapping[str, t.ConfigMapValue]
+        | m.ConfigMap
+        | t.ConfigMapValue
+        | None,
+    ) -> m.ConfigMap | None:
+        """Extract ConfigMap when value is mapping-compatible."""
+        if value is None:
+            return None
+        try:
+            return m.ConfigMap.model_validate(value)
+        except PydanticValidationError:
+            return None
+
+    @staticmethod
+    def _safe_metadata(
+        value: FlextRuntime.Metadata
+        | Mapping[str, t.ConfigMapValue]
+        | m.ConfigMap
+        | t.ConfigMapValue
+        | None,
+    ) -> FlextRuntime.Metadata | None:
+        """Normalize supported metadata inputs to runtime metadata model."""
+        if value is None:
+            return None
+
+        try:
+            return FlextRuntime.Metadata.model_validate(value)
+        except PydanticValidationError:
+            pass
+
+        dumped_map: m.ConfigMap | None = None
+        model_dump = getattr(value, "model_dump", None)
+        if callable(model_dump):
+            dumped_candidate = model_dump()
+            try:
+                dumped_map = m.ConfigMap.model_validate(dumped_candidate)
+            except PydanticValidationError:
+                dumped_map = None
+
+        if dumped_map is not None:
+            attrs_raw = dumped_map.get("attributes")
+            attrs_map = e._safe_config_map(attrs_raw)
+            if attrs_map is not None:
+                attrs: dict[str, t.MetadataAttributeValue] = {
+                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in attrs_map.items()
+                }
+                return FlextRuntime.Metadata(
+                    attributes=attrs,
+                )
+
+        attrs_map = e._safe_config_map(value)
+        if attrs_map is not None:
+            attrs: dict[str, t.MetadataAttributeValue] = {
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in attrs_map.items()
+            }
+            return FlextRuntime.Metadata(
+                attributes=attrs,
+            )
+
+        return None
+
+    @staticmethod
+    def _build_context_map(
+        context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None,
+        extra_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+        excluded_keys: set[str] | frozenset[str] | None = None,
+    ) -> m.ConfigMap:
+        """Build normalized context map from context and kwargs."""
+        excluded = excluded_keys or frozenset()
+        context_map: m.ConfigMap = m.ConfigMap()
+        if context:
+            context_map.update({
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in context.items()
+                if k not in excluded
+            })
+        if extra_kwargs:
+            context_map.update({
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in extra_kwargs.items()
+                if k not in excluded
+            })
+        return context_map
+
+    @staticmethod
+    def _build_param_map(
+        context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None,
+        extra_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+        keys: set[str] | frozenset[str],
+    ) -> m.ConfigMap:
+        """Build unnormalized parameter map for strict params validation."""
+        param_map: m.ConfigMap = m.ConfigMap()
+        if context:
+            param_map.update({k: v for k, v in context.items() if k in keys})
+        if extra_kwargs:
+            param_map.update({k: v for k, v in extra_kwargs.items() if k in keys})
+        return param_map
 
     class BaseError(Exception):
         """Base exception with correlation metadata and error codes.
@@ -60,12 +303,7 @@ class FlextExceptions:
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None = None,
-            metadata: p.Log.Metadata
-            | Mapping[str, t.MetadataAttributeValue]
-            | t.ScalarValue
-            | m.ConfigMap
-            | Sequence[t.ScalarValue]
-            | None = None,
+            metadata: FlextRuntime.Metadata | m.ConfigMap | t.MetadataAttributeValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
@@ -80,7 +318,7 @@ class FlextExceptions:
                 message: Error message
                 error_code: Optional error code
                 context: Optional context mapping
-                metadata: Optional metadata (_Metadata, dict, or payload types)
+                metadata: Optional metadata (FlextRuntime.Metadata, dict, or payload types)
                 correlation_id: Optional correlation ID
                 auto_correlation: Auto-generate correlation ID if not provided
                 auto_log: Auto-log error on creation
@@ -113,17 +351,8 @@ class FlextExceptions:
                 if auto_correlation and not correlation_id
                 else correlation_id
             )
-            # Convert metadata to proper type for _normalize_metadata
-            metadata_for_normalize: (
-                p.Log.Metadata
-                | Mapping[str, t.MetadataAttributeValue]
-                | t.ScalarValue
-                | m.ConfigMap
-                | Sequence[t.ScalarValue]
-                | None
-            ) = metadata
             self.metadata = e.BaseError._normalize_metadata(
-                metadata_for_normalize,
+                metadata,
                 final_kwargs,
             )
             self.timestamp = time.time()
@@ -166,7 +395,7 @@ class FlextExceptions:
         def _normalize_metadata_from_dict(
             metadata_dict: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
             merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
-        ) -> _Metadata:
+        ) -> FlextRuntime.Metadata:
             """Normalize metadata from dict-like object."""
             # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
             merged_attrs = {}
@@ -180,7 +409,7 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-            return _Metadata(
+            return FlextRuntime.Metadata(
                 attributes={
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in merged_attrs.items()
@@ -189,22 +418,17 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: p.Log.Metadata
-            | Mapping[str, t.MetadataAttributeValue]
-            | t.ScalarValue
-            | m.ConfigMap
-            | Sequence[t.ScalarValue]
-            | None,
+            metadata: FlextRuntime.Metadata | m.ConfigMap | t.MetadataAttributeValue | None,
             merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
-        ) -> _Metadata:
-            """Normalize metadata from various input types to _Metadata model.
+        ) -> FlextRuntime.Metadata:
+            """Normalize metadata from various input types to FlextRuntime.Metadata model.
 
             Args:
-                metadata: _Metadata instance, dict-like object, or None
+                metadata: FlextRuntime.Metadata instance, dict-like object, or None
                 merged_kwargs: Additional attributes to merge
 
             Returns:
-                Normalized _Metadata instance
+                Normalized FlextRuntime.Metadata instance
 
             """
             if metadata is None:
@@ -213,45 +437,31 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata_value(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return _Metadata(attributes=normalized_attrs)
-                return _Metadata(attributes={})
+                    return FlextRuntime.Metadata(attributes=normalized_attrs)
+                return FlextRuntime.Metadata(attributes={})
 
-            if type(metadata) is _Metadata:
-                if merged_kwargs:
-                    existing_attrs = metadata.attributes
-                    # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
-                    new_attrs: m.ConfigMap = m.ConfigMap()
+            metadata_model = e._safe_metadata(metadata)
+            if metadata_model is not None:
+                if not merged_kwargs:
+                    return metadata_model
 
-                    # Combine attributes - use ConfigurationDict for combining then normalize
-                    combined_attrs: m.ConfigMap = m.ConfigMap(root=dict(existing_attrs))
-                    # merged_kwargs values are MetadataAttributeValue (subset of PayloadValue)
-                    # Add merged_kwargs with explicit type handling
-                    combined_attrs.update(dict(merged_kwargs.items()))
-                    # Normalize all values - result is MetadataAttributeValue
-                    for k, v_combined in combined_attrs.items():
-                        # normalize_to_metadata_value returns MetadataAttributeValue
-                        new_attrs[k] = FlextRuntime.normalize_to_metadata_value(
-                            v_combined,
-                        )
-                    return _Metadata(attributes=new_attrs.root)
-                return metadata
+                merged_attrs: dict[str, t.MetadataAttributeValue] = {
+                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in metadata_model.attributes.items()
+                }
+                for k, v in merged_kwargs.items():
+                    merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
+                return FlextRuntime.Metadata(attributes=merged_attrs)
 
-            # Check if it's a Mapping (covers both dict-like objects and protocol instances)
-            if type(metadata) is m.ConfigMap:
-                return e.BaseError._normalize_metadata_from_dict(
-                    metadata, merged_kwargs
-                )
-
-            if isinstance(metadata, Mapping):
-                # Convert to dict for type safety
-                metadata_dict = dict(metadata.items())
+            metadata_dict = e._safe_config_map(metadata)
+            if metadata_dict is not None:
                 return e.BaseError._normalize_metadata_from_dict(
                     metadata_dict,
                     merged_kwargs,
                 )
 
-            # Fallback: convert to _Metadata with string value
-            return _Metadata(attributes={"value": str(metadata)})
+            # Fallback: convert to FlextRuntime.Metadata with string value
+            return FlextRuntime.Metadata(attributes={"value": str(metadata)})
 
     # Specific exception classes with minimal code
     class ValidationError(BaseError):
@@ -266,6 +476,7 @@ class FlextExceptions:
             error_code: str = c.Errors.VALIDATION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             _correlation_id: str | None = None,
+            params: e.ValidationErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize validation error with field and value information."""
@@ -273,18 +484,27 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build validation context
-            validation_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    validation_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                validation_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"field", "value"},
+            )
             if field is not None:
-                validation_context["field"] = field
+                param_values["field"] = field
             if value is not None:
+                param_values["value"] = value
+            resolved_params = (
+                params
+                if params is not None
+                else e.ValidationErrorParams.model_validate(dict(param_values))
+            )
+
+            validation_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.field is not None:
+                validation_context["field"] = resolved_params.field
+            if resolved_params.value is not None:
                 validation_context["value"] = FlextRuntime.normalize_to_metadata_value(
-                    value,
+                    resolved_params.value,
                 )
 
             super().__init__(
@@ -292,12 +512,10 @@ class FlextExceptions:
                 error_code=error_code,
                 context=validation_context or None,
                 metadata=preserved_metadata,
-                correlation_id=str(preserved_corr_id)
-                if preserved_corr_id is not None
-                else None,
+                correlation_id=e._safe_optional_str(preserved_corr_id),
             )
-            self.field = field
-            self.value = value
+            self.field = resolved_params.field
+            self.value = resolved_params.value
 
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
@@ -311,6 +529,7 @@ class FlextExceptions:
             error_code: str = c.Errors.CONFIGURATION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             _correlation_id: str | None = None,
+            params: e.ConfigurationErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize configuration error with config context."""
@@ -318,29 +537,36 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build config context
-            config_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    config_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                config_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"config_key", "config_source"},
+            )
             if config_key is not None:
-                config_context["config_key"] = config_key
+                param_values["config_key"] = config_key
             if config_source is not None:
-                config_context["config_source"] = config_source
+                param_values["config_source"] = config_source
+            resolved_params = (
+                params
+                if params is not None
+                else e.ConfigurationErrorParams.model_validate(dict(param_values))
+            )
+
+            config_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.config_key is not None:
+                config_context["config_key"] = resolved_params.config_key
+            if resolved_params.config_source is not None:
+                config_context["config_source"] = resolved_params.config_source
 
             super().__init__(
                 message,
                 error_code=error_code,
                 context=config_context or None,
                 metadata=preserved_metadata,
-                correlation_id=str(preserved_corr_id)
-                if preserved_corr_id is not None
-                else None,
+                correlation_id=e._safe_optional_str(preserved_corr_id),
             )
-            self.config_key = config_key
-            self.config_source = config_source
+            self.config_key = resolved_params.config_key
+            self.config_source = resolved_params.config_source
 
     class ConnectionError(BaseError):
         """Exception raised for network and connection failures."""
@@ -352,6 +578,7 @@ class FlextExceptions:
             error_code: str = c.Errors.CONNECTION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             _correlation_id: str | None = None,
+            params: e.ConnectionErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize connection error with network context."""
@@ -359,26 +586,35 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build connection context
-            conn_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    conn_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                conn_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"host", "port", "timeout"},
+            )
+            resolved_params = (
+                params
+                if params is not None
+                else e.ConnectionErrorParams.model_validate(dict(param_values))
+            )
+
+            conn_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.host is not None:
+                conn_context["host"] = resolved_params.host
+            if resolved_params.port is not None:
+                conn_context["port"] = resolved_params.port
+            if resolved_params.timeout is not None:
+                conn_context["timeout"] = resolved_params.timeout
 
             super().__init__(
                 message,
                 error_code=error_code,
                 context=conn_context or None,
                 metadata=preserved_metadata,
-                correlation_id=str(preserved_corr_id)
-                if preserved_corr_id is not None
-                else None,
+                correlation_id=e._safe_optional_str(preserved_corr_id),
             )
-            self.host = conn_context.get("host") if conn_context else None
-            self.port = conn_context.get("port") if conn_context else None
-            self.timeout = conn_context.get("timeout") if conn_context else None
+            self.host = resolved_params.host
+            self.port = resolved_params.port
+            self.timeout = resolved_params.timeout
 
     class TimeoutError(BaseError):
         """Exception raised for operation timeout errors."""
@@ -392,6 +628,7 @@ class FlextExceptions:
             error_code: str = c.Errors.TIMEOUT_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             _correlation_id: str | None = None,
+            params: e.TimeoutErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize timeout error with timeout context."""
@@ -399,29 +636,36 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build timeout context
-            timeout_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    timeout_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                timeout_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"timeout_seconds", "operation"},
+            )
             if timeout_seconds is not None:
-                timeout_context["timeout_seconds"] = timeout_seconds
+                param_values["timeout_seconds"] = timeout_seconds
             if operation is not None:
-                timeout_context["operation"] = operation
+                param_values["operation"] = operation
+            resolved_params = (
+                params
+                if params is not None
+                else e.TimeoutErrorParams.model_validate(dict(param_values))
+            )
+
+            timeout_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.timeout_seconds is not None:
+                timeout_context["timeout_seconds"] = resolved_params.timeout_seconds
+            if resolved_params.operation is not None:
+                timeout_context["operation"] = resolved_params.operation
 
             super().__init__(
                 message,
                 error_code=error_code,
                 context=timeout_context or None,
                 metadata=preserved_metadata,
-                correlation_id=str(preserved_corr_id)
-                if preserved_corr_id is not None
-                else None,
+                correlation_id=e._safe_optional_str(preserved_corr_id),
             )
-            self.timeout_seconds = timeout_seconds
-            self.operation = operation
+            self.timeout_seconds = resolved_params.timeout_seconds
+            self.operation = resolved_params.operation
 
     class AuthenticationError(BaseError):
         """Exception raised for authentication failures."""
@@ -435,6 +679,7 @@ class FlextExceptions:
             error_code: str = c.Errors.AUTHENTICATION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             _correlation_id: str | None = None,
+            params: e.AuthenticationErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize authentication error with auth context."""
@@ -442,29 +687,36 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build auth context
-            auth_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    auth_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                auth_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"auth_method", "user_id"},
+            )
             if auth_method is not None:
-                auth_context["auth_method"] = auth_method
+                param_values["auth_method"] = auth_method
             if user_id is not None:
-                auth_context["user_id"] = user_id
+                param_values["user_id"] = user_id
+            resolved_params = (
+                params
+                if params is not None
+                else e.AuthenticationErrorParams.model_validate(dict(param_values))
+            )
+
+            auth_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.auth_method is not None:
+                auth_context["auth_method"] = resolved_params.auth_method
+            if resolved_params.user_id is not None:
+                auth_context["user_id"] = resolved_params.user_id
 
             super().__init__(
                 message,
                 error_code=error_code,
                 context=auth_context or None,
                 metadata=preserved_metadata,
-                correlation_id=str(preserved_corr_id)
-                if preserved_corr_id is not None
-                else None,
+                correlation_id=e._safe_optional_str(preserved_corr_id),
             )
-            self.auth_method = auth_method
-            self.user_id = user_id
+            self.auth_method = resolved_params.auth_method
+            self.user_id = resolved_params.user_id
 
     class AuthorizationError(BaseError):
         """Exception raised for permission and authorization failures."""
@@ -476,6 +728,7 @@ class FlextExceptions:
             error_code: str = c.Errors.AUTHORIZATION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.AuthorizationErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize authorization error with permission context."""
@@ -483,13 +736,24 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build authorization context
-            authz_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    authz_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                authz_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"user_id", "resource", "permission"},
+            )
+            resolved_params = (
+                params
+                if params is not None
+                else e.AuthorizationErrorParams.model_validate(dict(param_values))
+            )
+
+            authz_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.user_id is not None:
+                authz_context["user_id"] = resolved_params.user_id
+            if resolved_params.resource is not None:
+                authz_context["resource"] = resolved_params.resource
+            if resolved_params.permission is not None:
+                authz_context["permission"] = resolved_params.permission
 
             super().__init__(
                 message,
@@ -498,13 +762,11 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            self.user_id = authz_context.get("user_id") if authz_context else None
-            self.resource = authz_context.get("resource") if authz_context else None
-            self.permission = authz_context.get("permission") if authz_context else None
+            self.user_id = resolved_params.user_id
+            self.resource = resolved_params.resource
+            self.permission = resolved_params.permission
 
     class NotFoundError(BaseError):
         """Exception raised when a resource is not found."""
@@ -512,7 +774,7 @@ class FlextExceptions:
         @staticmethod
         def _extract_context_values(
             context: Mapping[str, t.MetadataAttributeValue] | None,
-        ) -> tuple[str | None, p.Log.Metadata | None, bool, bool]:
+        ) -> tuple[str | None, FlextRuntime.Metadata | None, bool, bool]:
             """Extract context values from mapping.
 
             Returns:
@@ -522,21 +784,12 @@ class FlextExceptions:
             if context is None:
                 return (None, None, False, False)
 
-            corr_id = context.get("correlation_id")
-            correlation_id_val: str | None = corr_id if type(corr_id) is str else None
-
-            metadata_obj = context.get("metadata")
-            # Use module-level TypeGuard for protocol compliance
-            metadata_val: p.Log.Metadata | None = (
-                metadata_obj if _is_metadata_protocol(metadata_obj) else None
-            )
-
-            auto_log_obj = context.get("auto_log")
-            auto_log_val: bool = auto_log_obj if type(auto_log_obj) is bool else False
-
-            auto_corr_obj = context.get("auto_correlation")
-            auto_correlation_val: bool = (
-                auto_corr_obj if type(auto_corr_obj) is bool else False
+            correlation_id_val = e._safe_optional_str(context.get("correlation_id"))
+            metadata_val = e._safe_metadata(context.get("metadata"))
+            auto_log_val = e._safe_bool(context.get("auto_log"), default=False)
+            auto_correlation_val = e._safe_bool(
+                context.get("auto_correlation"),
+                default=False,
             )
 
             return (
@@ -559,32 +812,35 @@ class FlextExceptions:
                 Dictionary of notfound kwargs
 
             """
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"resource_type", "resource_id"},
+            )
+            if resource_type is not None:
+                param_values["resource_type"] = resource_type
+            if resource_id is not None:
+                param_values["resource_id"] = resource_id
+
+            notfound_params = e.NotFoundErrorParams.model_validate(dict(param_values))
             notfound_kwargs: m.ConfigMap = m.ConfigMap(
-                root={
-                    "resource_type": resource_type,
-                    "resource_id": resource_id,
-                },
+                root=notfound_params.model_dump(exclude_none=True),
             )
 
-            # Convert extra_kwargs to t.MetadataAttributeValue and normalize values
-            for k, v in extra_kwargs.items():
-                if type(v) in (str, int, float, bool, type(None), list, dict):
-                    notfound_kwargs[k] = FlextRuntime.normalize_to_metadata_value(v)
-
-            # Add context items (excluding reserved keys)
-            if context is not None:
-                excluded_keys = {
-                    "correlation_id",
-                    "metadata",
-                    "auto_log",
-                    "auto_correlation",
-                }
-                notfound_kwargs.update({
-                    k: v
-                    for k, v in context.items()
-                    if k not in excluded_keys
-                    and type(v) in (str, int, float, bool, type(None), list, dict)
-                })
+            notfound_kwargs.update(
+                dict(
+                    e._build_context_map(
+                        context,
+                        extra_kwargs,
+                        excluded_keys={
+                            "correlation_id",
+                            "metadata",
+                            "auto_log",
+                            "auto_correlation",
+                        },
+                    ).items(),
+                ),
+            )
 
             return notfound_kwargs
 
@@ -596,56 +852,53 @@ class FlextExceptions:
             resource_id: str | None = None,
             error_code: str = c.Errors.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
-            metadata: p.Log.Metadata
-            | Mapping[str, t.MetadataAttributeValue]
-            | t.ScalarValue
-            | m.ConfigMap
-            | Sequence[t.ScalarValue]
-            | None = None,
+            metadata: FlextRuntime.Metadata | m.ConfigMap | t.MetadataAttributeValue | None = None,
             correlation_id: str | None = None,
+            params: e.NotFoundErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize not found error with resource context."""
             # Preserve metadata from extra_kwargs (correlation_id is
             # consumed by the explicit parameter and never reaches **extra_kwargs)
             preserved_metadata = extra_kwargs.pop("metadata", None)
-            extra_kwargs.pop("correlation_id", None)
+            _ = extra_kwargs.pop("correlation_id", None)
 
-            # Use explicit params or preserved from extra_kwargs
-            final_metadata = metadata if metadata is not None else preserved_metadata
-            final_corr_id = correlation_id
-
-            # Build notfound context
-            notfound_context: m.ConfigMap = m.ConfigMap(
-                root={
-                    "resource_type": resource_type,
-                    "resource_id": resource_id,
-                },
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"resource_type", "resource_id"},
+            )
+            if resource_type is not None:
+                param_values["resource_type"] = resource_type
+            if resource_id is not None:
+                param_values["resource_id"] = resource_id
+            resolved_params = (
+                params
+                if params is not None
+                else e.NotFoundErrorParams.model_validate(dict(param_values))
             )
 
-            # Normalize extra_kwargs
-            if extra_kwargs:
-                for k, v in extra_kwargs.items():
-                    notfound_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            notfound_context = e._build_context_map(
+                context,
+                extra_kwargs,
+                excluded_keys={"correlation_id", "metadata"},
+            )
+            if resolved_params.resource_type is not None:
+                notfound_context["resource_type"] = resolved_params.resource_type
+            if resolved_params.resource_id is not None:
+                notfound_context["resource_id"] = resolved_params.resource_id
 
-            # Add context items (excluding reserved keys)
-            if context is not None:
-                excluded_keys = {"correlation_id", "metadata"}
-                for k, v in context.items():
-                    if k not in excluded_keys:
-                        notfound_context[k] = FlextRuntime.normalize_to_metadata_value(
-                            v,
-                        )
+            metadata_input = metadata if metadata is not None else preserved_metadata
 
             super().__init__(
                 message,
                 error_code=error_code,
                 context=notfound_context,
-                metadata=final_metadata,
-                correlation_id=final_corr_id,
+                metadata=metadata_input,
+                correlation_id=correlation_id,
             )
-            self.resource_type = resource_type
-            self.resource_id = resource_id
+            self.resource_type = resolved_params.resource_type
+            self.resource_id = resolved_params.resource_id
 
     class ConflictError(BaseError):
         """Exception raised for resource conflicts."""
@@ -657,6 +910,7 @@ class FlextExceptions:
             error_code: str = c.Errors.ALREADY_EXISTS,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.ConflictErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize conflict error with resource context."""
@@ -664,14 +918,24 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            conflict_context: m.ConfigMap = m.ConfigMap()
-            if context is not None:
-                for k, v in context.items():
-                    conflict_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            # Normalize extra_kwargs
-            if extra_kwargs:
-                for k, v in extra_kwargs.items():
-                    conflict_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"resource_type", "resource_id", "conflict_reason"},
+            )
+            resolved_params = (
+                params
+                if params is not None
+                else e.ConflictErrorParams.model_validate(dict(param_values))
+            )
+
+            conflict_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.resource_type is not None:
+                conflict_context["resource_type"] = resolved_params.resource_type
+            if resolved_params.resource_id is not None:
+                conflict_context["resource_id"] = resolved_params.resource_id
+            if resolved_params.conflict_reason is not None:
+                conflict_context["conflict_reason"] = resolved_params.conflict_reason
 
             super().__init__(
                 message,
@@ -680,19 +944,11 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            self.resource_type = (
-                conflict_context.get("resource_type") if conflict_context else None
-            )
-            self.resource_id = (
-                conflict_context.get("resource_id") if conflict_context else None
-            )
-            self.conflict_reason = (
-                conflict_context.get("conflict_reason") if conflict_context else None
-            )
+            self.resource_type = resolved_params.resource_type
+            self.resource_id = resolved_params.resource_id
+            self.conflict_reason = resolved_params.conflict_reason
 
     class RateLimitError(BaseError):
         """Exception raised when rate limits are exceeded."""
@@ -704,6 +960,7 @@ class FlextExceptions:
             error_code: str = c.Errors.OPERATION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.RateLimitErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize rate limit error with limit context."""
@@ -711,14 +968,24 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            rate_limit_context: m.ConfigMap = m.ConfigMap()
-            if context is not None:
-                for k, v in context.items():
-                    rate_limit_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            # Normalize extra_kwargs
-            if extra_kwargs:
-                for k, v in extra_kwargs.items():
-                    rate_limit_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"limit", "window_seconds", "retry_after"},
+            )
+            resolved_params = (
+                params
+                if params is not None
+                else e.RateLimitErrorParams.model_validate(dict(param_values))
+            )
+
+            rate_limit_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.limit is not None:
+                rate_limit_context["limit"] = resolved_params.limit
+            if resolved_params.window_seconds is not None:
+                rate_limit_context["window_seconds"] = resolved_params.window_seconds
+            if resolved_params.retry_after is not None:
+                rate_limit_context["retry_after"] = resolved_params.retry_after
 
             super().__init__(
                 message,
@@ -727,20 +994,11 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            limit_val = rate_limit_context.get("limit")
-            self.limit = limit_val if type(limit_val) is int else None
-            window_seconds_val = rate_limit_context.get("window_seconds")
-            self.window_seconds = (
-                window_seconds_val if type(window_seconds_val) is int else None
-            )
-            retry_after_val = rate_limit_context.get("retry_after")
-            self.retry_after = (
-                retry_after_val if type(retry_after_val) in (int, float) else None
-            )
+            self.limit = resolved_params.limit
+            self.window_seconds = resolved_params.window_seconds
+            self.retry_after = resolved_params.retry_after
 
     class CircuitBreakerError(BaseError):
         """Exception raised when circuit breaker is open."""
@@ -752,6 +1010,7 @@ class FlextExceptions:
             error_code: str = c.Errors.EXTERNAL_SERVICE_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.CircuitBreakerErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize circuit breaker error with service context."""
@@ -759,14 +1018,24 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            cb_context: m.ConfigMap = m.ConfigMap()
-            if context is not None:
-                for k, v in context.items():
-                    cb_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            # Normalize extra_kwargs
-            if extra_kwargs:
-                for k, v in extra_kwargs.items():
-                    cb_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"service_name", "failure_count", "reset_timeout"},
+            )
+            resolved_params = (
+                params
+                if params is not None
+                else e.CircuitBreakerErrorParams.model_validate(dict(param_values))
+            )
+
+            cb_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.service_name is not None:
+                cb_context["service_name"] = resolved_params.service_name
+            if resolved_params.failure_count is not None:
+                cb_context["failure_count"] = resolved_params.failure_count
+            if resolved_params.reset_timeout is not None:
+                cb_context["reset_timeout"] = resolved_params.reset_timeout
 
             super().__init__(
                 message,
@@ -775,22 +1044,11 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            service_name_val = cb_context.get("service_name")
-            self.service_name = (
-                service_name_val if type(service_name_val) is str else None
-            )
-            failure_count_val = cb_context.get("failure_count")
-            self.failure_count = (
-                failure_count_val if type(failure_count_val) is int else None
-            )
-            reset_timeout_val = cb_context.get("reset_timeout")
-            self.reset_timeout = (
-                reset_timeout_val if type(reset_timeout_val) in (int, float) else None
-            )
+            self.service_name = resolved_params.service_name
+            self.failure_count = resolved_params.failure_count
+            self.reset_timeout = resolved_params.reset_timeout
 
     class TypeError(BaseError):
         """Exception raised for type mismatch errors."""
@@ -818,21 +1076,29 @@ class FlextExceptions:
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
-            # Extract from extra_kwargs if not provided as named arg
-            if type_value is None and key in extra_kwargs:
-                type_raw = extra_kwargs.pop(key)
-                if type(type_raw) is str:
-                    # Use dict.get directly for type-safe lookup
-                    return type_map.get(type_raw)
-                if type(type_raw) is type:
-                    return type_raw
-            # Handle case where type is passed as string in named arg
-            if type(type_value) is str:
-                # Use dict.get directly for type-safe lookup
-                return type_map.get(type_value)
-            # type_value is already type | None at this point (str case handled above)
-            if type(type_value) is type:
-                return type_value
+            source_value: type | str | t.MetadataAttributeValue | None = type_value
+            if source_value is None and key in extra_kwargs:
+                source_value = extra_kwargs.pop(key)
+
+            type_name = e.TypeError._resolve_type_name(source_value)
+            if type_name is None:
+                return None
+            return type_map.get(type_name)
+
+        @staticmethod
+        def _resolve_type_name(
+            type_value: type | str | t.MetadataAttributeValue | None,
+        ) -> str | None:
+            """Resolve type-like input to canonical string name."""
+            if type_value is None:
+                return None
+
+            string_value = e._safe_optional_str(type_value)
+            if string_value is not None:
+                return string_value
+
+            qualname_value = getattr(type_value, "__qualname__", None)
+            return e._safe_optional_str(qualname_value)
             return None
 
         @staticmethod
@@ -843,29 +1109,11 @@ class FlextExceptions:
             extra_kwargs: Mapping[str, t.MetadataAttributeValue],
         ) -> m.ConfigMap:
             """Build type context dictionary."""
-            # Build context from context and extra_kwargs
-            type_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    type_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                type_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-
-            # Handle both type objects and string representations
-            if expected_type is not None:
-                if type(expected_type) is str:
-                    type_context["expected_type"] = expected_type
-                else:
-                    type_context["expected_type"] = expected_type.__qualname__
-            else:
-                type_context["expected_type"] = None
-            if actual_type is not None:
-                if type(actual_type) is str:
-                    type_context["actual_type"] = actual_type
-                else:
-                    type_context["actual_type"] = actual_type.__qualname__
-            else:
-                type_context["actual_type"] = None
+            type_context = e._build_context_map(context, extra_kwargs)
+            type_context["expected_type"] = e.TypeError._resolve_type_name(
+                expected_type
+            )
+            type_context["actual_type"] = e.TypeError._resolve_type_name(actual_type)
 
             return type_context
 
@@ -874,10 +1122,11 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.TYPE_ERROR,
-            expected_type: type | None = None,
-            actual_type: type | None = None,
+            expected_type: type | str | None = None,
+            actual_type: type | str | None = None,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.TypeErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize type error with type information."""
@@ -888,23 +1137,41 @@ class FlextExceptions:
             type_map = self._get_type_map()
 
             # Normalize types from various sources
-            expected_type = self._normalize_type(
+            normalized_expected_type = self._normalize_type(
                 expected_type,
                 type_map,
                 extra_kwargs,
                 "expected_type",
             )
-            actual_type = self._normalize_type(
+            normalized_actual_type = self._normalize_type(
                 actual_type,
                 type_map,
                 extra_kwargs,
                 "actual_type",
             )
 
+            param_values = {
+                "expected_type": (
+                    normalized_expected_type.__qualname__
+                    if normalized_expected_type is not None
+                    else None
+                ),
+                "actual_type": (
+                    normalized_actual_type.__qualname__
+                    if normalized_actual_type is not None
+                    else None
+                ),
+            }
+            resolved_params = (
+                params
+                if params is not None
+                else e.TypeErrorParams.model_validate(param_values)
+            )
+
             # Build type context
             type_context = self._build_type_context(
-                expected_type,
-                actual_type,
+                resolved_params.expected_type,
+                resolved_params.actual_type,
                 context,
                 extra_kwargs,
             )
@@ -916,12 +1183,10 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            self.expected_type = expected_type
-            self.actual_type = actual_type
+            self.expected_type = normalized_expected_type
+            self.actual_type = normalized_actual_type
 
     class OperationError(BaseError):
         """Exception raised for general operation failures."""
@@ -935,6 +1200,7 @@ class FlextExceptions:
             error_code: str = c.Errors.OPERATION_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.OperationErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize operation error with operation context."""
@@ -942,17 +1208,26 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build operation context
-            op_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    op_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                op_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"operation", "reason"},
+            )
             if operation is not None:
-                op_context["operation"] = operation
+                param_values["operation"] = operation
             if reason is not None:
-                op_context["reason"] = reason
+                param_values["reason"] = reason
+            resolved_params = (
+                params
+                if params is not None
+                else e.OperationErrorParams.model_validate(dict(param_values))
+            )
+
+            op_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.operation is not None:
+                op_context["operation"] = resolved_params.operation
+            if resolved_params.reason is not None:
+                op_context["reason"] = resolved_params.reason
 
             super().__init__(
                 message,
@@ -961,12 +1236,10 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            self.operation = operation
-            self.reason = reason
+            self.operation = resolved_params.operation
+            self.reason = resolved_params.reason
 
     class AttributeAccessError(BaseError):
         """Exception raised for attribute access errors."""
@@ -980,6 +1253,7 @@ class FlextExceptions:
             error_code: str = c.Errors.ATTRIBUTE_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
             correlation_id: str | None = None,
+            params: e.AttributeAccessErrorParams | None = None,
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize attribute access error with attribute context."""
@@ -987,17 +1261,26 @@ class FlextExceptions:
             preserved_metadata = extra_kwargs.pop("metadata", None)
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
-            # Build attribute context
-            attr_context: m.ConfigMap = m.ConfigMap()
-            if context:
-                for k, v in context.items():
-                    attr_context[k] = FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in extra_kwargs.items():
-                attr_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            param_values = e._build_param_map(
+                context,
+                extra_kwargs,
+                keys={"attribute_name", "attribute_context"},
+            )
             if attribute_name is not None:
-                attr_context["attribute_name"] = attribute_name
+                param_values["attribute_name"] = attribute_name
             if attribute_context is not None:
-                attr_context["attribute_context"] = attribute_context
+                param_values["attribute_context"] = attribute_context
+            resolved_params = (
+                params
+                if params is not None
+                else e.AttributeAccessErrorParams.model_validate(dict(param_values))
+            )
+
+            attr_context = e._build_context_map(context, extra_kwargs)
+            if resolved_params.attribute_name is not None:
+                attr_context["attribute_name"] = resolved_params.attribute_name
+            if resolved_params.attribute_context is not None:
+                attr_context["attribute_context"] = resolved_params.attribute_context
 
             super().__init__(
                 message,
@@ -1006,12 +1289,10 @@ class FlextExceptions:
                 metadata=preserved_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else (
-                    str(preserved_corr_id) if preserved_corr_id is not None else None
-                ),
+                else e._safe_optional_str(preserved_corr_id),
             )
-            self.attribute_name = attribute_name
-            self.attribute_context = attribute_context
+            self.attribute_name = resolved_params.attribute_name
+            self.attribute_context = resolved_params.attribute_context
 
     @staticmethod
     def prepare_exception_kwargs(
@@ -1047,16 +1328,12 @@ class FlextExceptions:
             },
         )
         correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id: str | None = (
-            str(correlation_id_raw)
-            if correlation_id_raw is not None and type(correlation_id_raw) is str
-            else None
-        )
+        correlation_id = e._safe_optional_str(correlation_id_raw)
         return (
             correlation_id,
             kwargs.get("metadata"),
-            bool(kwargs.get("auto_log")),
-            bool(kwargs.get("auto_correlation")),
+            e._safe_bool(kwargs.get("auto_log"), default=False),
+            e._safe_bool(kwargs.get("auto_correlation"), default=False),
             kwargs.get("config"),
             extra_kwargs,
         )
@@ -1066,22 +1343,18 @@ class FlextExceptions:
         kwargs: Mapping[str, t.MetadataAttributeValue],
     ) -> tuple[
         str | None,
-        p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
+        FlextRuntime.Metadata | m.ConfigMap | None,
     ]:
         """Extract correlation_id and metadata from kwargs.
 
-        Returns typed values: correlation_id as str | None, metadata as _Metadata | Mapping | None.
+        Returns typed values: correlation_id as str | None, metadata as FlextRuntime.Metadata | Mapping | None.
         """
         correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id: str | None = (
-            correlation_id_raw if type(correlation_id_raw) is str else None
-        )
+        correlation_id = e._safe_optional_str(correlation_id_raw)
         metadata_raw = kwargs.get("metadata")
-        metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
-        if metadata_raw is not None and _is_metadata_protocol(metadata_raw):
-            metadata = metadata_raw
-        elif isinstance(metadata_raw, Mapping):
-            metadata = dict(metadata_raw.items())
+        metadata = e._safe_metadata(metadata_raw)
+        if metadata is None:
+            metadata = e._safe_config_map(metadata_raw)
         return (correlation_id, metadata)
 
     @staticmethod
@@ -1144,10 +1417,12 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_metadata_value(
-        meta: p.Log.Metadata | None,
-    ) -> t.ConfigMap | None:
+        meta: FlextRuntime.Metadata | None,
+    ) -> m.ConfigMap | None:
         """Prepare metadata value for error creation."""
-        return meta.attributes if meta is not None else None
+        if meta is None:
+            return None
+        return m.ConfigMap.model_validate(meta.attributes)
 
     @staticmethod
     def _get_str_from_kwargs(
@@ -1169,7 +1444,7 @@ class FlextExceptions:
         # Build context with error_code
         error_context: m.ConfigMap = m.ConfigMap()
         if context is not None:
-            error_context.update({k: v for k, v in context.items()})
+            error_context.update(dict(context.items()))
         if error_code is not None:
             error_context["error_code"] = error_code
 
@@ -1213,46 +1488,27 @@ class FlextExceptions:
     @staticmethod
     def _merge_metadata_into_context(
         context: m.ConfigMap,
-        metadata_obj: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
+        metadata_obj: FlextRuntime.Metadata | m.ConfigMap | None,
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
             return
 
-        if type(metadata_obj) is _Metadata:
-            # Extract attributes from _Metadata model
-            attrs = metadata_obj.attributes
-            if type(attrs) is t.ConfigMap:
-                for k, v in attrs.root.items():
-                    normalized: t.MetadataAttributeValue = (
-                        FlextRuntime.normalize_to_metadata_value(v)
-                    )
-                    context[k] = normalized
-            elif Mapping in type(attrs).__mro__:
-                for k, v in attrs.items():
-                    normalized_mapping_attr: t.MetadataAttributeValue = (
-                        FlextRuntime.normalize_to_metadata_value(v)
-                    )
-                    context[k] = normalized_mapping_attr
-        elif type(metadata_obj) is dict:
-            # Direct dict - normalize values and update
-            for k, v in metadata_obj.items():
-                normalized_dict: t.MetadataAttributeValue = (
-                    FlextRuntime.normalize_to_metadata_value(v)
-                )
-                context[k] = normalized_dict
-        elif isinstance(metadata_obj, Mapping):
-            # Mapping object - normalize and update
-            for k, v in metadata_obj.items():
-                normalized_mapping: t.MetadataAttributeValue = (
-                    FlextRuntime.normalize_to_metadata_value(v)
-                )
-                context[k] = normalized_mapping
+        metadata_model = e._safe_metadata(metadata_obj)
+        if metadata_model is not None:
+            for k, v in metadata_model.attributes.items():
+                context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            return
+
+        metadata_map = e._safe_config_map(metadata_obj)
+        if metadata_map is not None:
+            for k, v in metadata_map.items():
+                context[k] = FlextRuntime.normalize_to_metadata_value(v)
 
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
+        metadata_obj: FlextRuntime.Metadata | m.ConfigMap | None,
         kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""
