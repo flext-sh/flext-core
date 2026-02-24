@@ -30,7 +30,7 @@ class FlextUtilitiesText:
         Uses same structure/config as FlextLogger but without circular import.
         """
 
-    return FlextRuntime.get_logger(__name__)
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def clean_text(text: str) -> str:

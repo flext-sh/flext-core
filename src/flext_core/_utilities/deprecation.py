@@ -162,7 +162,7 @@ class FlextUtilitiesDeprecation:
                 *args: t.GeneralValueType,
                 **kwargs: t.GeneralValueType,
             ) -> None:
-        cls_name = cls.__name__
+                cls_name = cls.__name__
                 message_parts = [f"{cls_name} is deprecated"]
                 if version:
                     message_parts.append(f"since version {version}")

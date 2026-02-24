@@ -35,7 +35,7 @@ class FlextUtilitiesChecker:
         """
         # get_logger returns StructlogLogger per runtime.pyi stub
 
-    return FlextRuntime.get_logger(__name__)
+        return FlextRuntime.get_logger(__name__)
 
     @classmethod
     def compute_accepted_message_types(

@@ -86,7 +86,7 @@ class FlextUtilitiesCache:
 
         """
 
-    return FlextRuntime.get_logger(__name__)
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def normalize_component(
