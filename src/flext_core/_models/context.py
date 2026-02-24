@@ -318,13 +318,19 @@ class FlextModelsContext:
             """Normalize any value to t.GuardInputValue recursively."""
             if val is None or val.__class__ in {str, int, float, bool}:
                 return val
-            if FlextRuntime.is_dict_like(val):
+            if isinstance(val, t.Dict):
                 result: MutableMapping[str, t.GuardInputValue] = {}
-                dict_v = getattr(val, "root", val)
-                if hasattr(dict_v, "items"):
-                    dict_v = dict(dict_v)
+                dict_v = val.root
                 for k, v in dict_v.items():
-                    result[k] = (
+                    result[str(k)] = (
+                        FlextModelsContext.ContextData.normalize_to_general_value(v)
+                    )
+                return result
+            if isinstance(val, Mapping):
+                result = {}
+                dict_v = dict(val)
+                for k, v in dict_v.items():
+                    result[str(k)] = (
                         FlextModelsContext.ContextData.normalize_to_general_value(v)
                     )
                 return result
@@ -341,6 +347,25 @@ class FlextModelsContext:
                     for item in seq_val
                 ]
             return val
+
+        @classmethod
+        def normalize_to_serializable_value(
+            cls,
+            val: t.GuardInputValue,
+        ) -> t.GuardInputValue:
+            normalized = cls.normalize_to_general_value(val)
+            if normalized is None or isinstance(normalized, (str, int, float, bool)):
+                return normalized
+            if isinstance(normalized, Mapping):
+                return {
+                    str(k): cls.normalize_to_serializable_value(v)
+                    for k, v in normalized.items()
+                }
+            if FlextRuntime.is_list_like(normalized):
+                return [
+                    cls.normalize_to_serializable_value(item) for item in normalized
+                ]
+            return str(normalized)
 
         @classmethod
         def check_json_serializable(
@@ -417,10 +442,19 @@ class FlextModelsContext:
                     type_name = v.__class__.__name__
                     msg = f"Value must be a dictionary or Metadata, got {type_name}"
                     raise TypeError(msg)
+                dump_dict = dict(dump_result)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    dump_result,
+                    dump_dict,
                 )
             elif FlextRuntime.is_dict_like(v):
+                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
+                    v
+                )
+            elif isinstance(v, Mapping):
+                if all(isinstance(key, str) for key in v):
+                    type_name = v.__class__.__name__
+                    msg = f"Value must be a dictionary or Metadata, got {type_name}"
+                    raise TypeError(msg)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
                     v
                 )
@@ -429,13 +463,15 @@ class FlextModelsContext:
                 msg = f"Value must be a dictionary or Metadata, got {type_name}"
                 raise TypeError(msg)
 
-            if not FlextRuntime.is_dict_like(normalized):
+            if not isinstance(normalized, Mapping):
                 msg = "Normalized value must be dict"
                 raise TypeError(msg)
 
             working_value = {
-                str(k): FlextRuntime.normalize_to_general_value(val)
-                for k, val in dict(normalized).items()
+                str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
+                    val
+                )
+                for k, val in normalized.items()
             }
 
             # Validate JSON serializability
@@ -568,10 +604,19 @@ class FlextModelsContext:
                     type_name = v.__class__.__name__
                     msg = f"Value must be a dict or Pydantic model, got {type_name}"
                     raise TypeError(msg)
+                dump_dict = dict(dump_result)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    dump_result,
+                    dump_dict,
                 )
             elif FlextRuntime.is_dict_like(v):
+                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
+                    v
+                )
+            elif isinstance(v, Mapping):
+                if all(isinstance(key, str) for key in v):
+                    type_name = v.__class__.__name__
+                    msg = f"Value must be a dict or Pydantic model, got {type_name}"
+                    raise TypeError(msg)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
                     v
                 )
@@ -580,13 +625,15 @@ class FlextModelsContext:
                 msg = f"Value must be a dict or Pydantic model, got {type_name}"
                 raise TypeError(msg)
 
-            if not FlextRuntime.is_dict_like(normalized):
+            if not isinstance(normalized, Mapping):
                 msg = "Normalized value must be dict"
                 raise TypeError(msg)
 
             working_value = {
-                str(k): FlextRuntime.normalize_to_general_value(val)
-                for k, val in dict(normalized).items()
+                str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
+                    val
+                )
+                for k, val in normalized.items()
             }
 
             # Recursively check all values are JSON-serializable

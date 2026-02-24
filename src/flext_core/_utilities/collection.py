@@ -430,9 +430,12 @@ class FlextUtilitiesCollection:
                 result_raw = operation(item)
                 # Handle both direct returns and FlextResult returns
                 if FlextUtilitiesCollection._is_result_like(result_raw):
-                    if result_raw.is_success:
+                    is_success = bool(getattr(result_raw, "is_success", False))
+                    result_value = getattr(result_raw, "value", None)
+                    result_error = getattr(result_raw, "error", None)
+                    if is_success:
                         value = FlextUtilitiesCollection._coerce_guard_value(
-                            result_raw.value,
+                            result_value,
                         )
                         if (
                             do_flatten
@@ -442,7 +445,7 @@ class FlextUtilitiesCollection:
                         else:
                             results.append(value)
                     else:
-                        error_msg = result_raw.error or "Unknown error"
+                        error_msg = result_error or "Unknown error"
                         if error_mode == "fail":
                             return r[t.BatchResultDict].fail(
                                 f"Batch processing failed: {error_msg}",

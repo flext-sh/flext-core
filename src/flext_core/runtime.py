@@ -57,7 +57,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard, cast
+from typing import ClassVar, Self, TypeGuard
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -1665,7 +1665,7 @@ class FlextRuntime:
 
         @classmethod
         def fail[U](
-            cls,
+            cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
             error_data: t.ConfigMap | None = None,
@@ -1688,14 +1688,11 @@ class FlextRuntime:
             """
             _ = expected_type
             error_msg = error if error is not None else ""
-            return cast(
-                "FlextRuntime.RuntimeResult[U]",
-                cls(
-                    error=error_msg,
-                    error_code=error_code,
-                    error_data=error_data,
-                    is_success=False,
-                ),
+            return cls(
+                error=error_msg,
+                error_code=error_code,
+                error_data=error_data,
+                is_success=False,
             )
 
     # =========================================================================

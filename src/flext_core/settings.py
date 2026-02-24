@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -57,7 +57,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
     # Audit Implication: This registry tracks all configuration instances for
     # singleton pattern. Thread-safe access via _lock ensures no race conditions.
     # Used for configuration instance management across the FLEXT ecosystem.
-    _instances: ClassVar[MutableMapping[type[BaseSettings], BaseSettings]] = {}
+    _instances: ClassVar[MutableMapping[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     # Note: implements_protocol() and _protocol_name() are inherited from
@@ -245,7 +245,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         if raw_type is not cls and not issubclass(raw_type, cls):
             msg = f"Singleton instance is not of expected type {cls.__name__}"
             raise TypeError(msg)
-        return cast("Self", raw_instance)
+        return raw_instance
 
     @classmethod
     def _reset_instance(cls) -> None:

@@ -126,7 +126,7 @@ class FlextService[TDomainResult](
 
         # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
-        self._config = FlextSettings.model_validate(runtime.config.model_dump())
+        self._config = runtime.config
         self._container = runtime.container
         self._runtime = runtime
 

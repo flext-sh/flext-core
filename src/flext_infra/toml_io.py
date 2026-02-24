@@ -12,7 +12,6 @@ from __future__ import annotations
 import tomllib
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import cast
 
 import tomlkit
 from flext_core.result import FlextResult, r
@@ -25,16 +24,14 @@ type TomlScalar = str | int | float | bool | None
 type TomlValue = (
     TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
 )
-type TomlMap = MutableMapping[str, TomlValue]
-type TomlMutableMap = MutableMapping[str, TomlValue]
+type TomlMap = MutableMapping[str, t.ConfigMapValue]
+type TomlMutableMap = MutableMapping[str, t.ConfigMapValue]
 type _TableLike = Table | TomlMutableMap
 
 
 def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
-    if isinstance(value, MutableMapping):
-        return cast("TomlMutableMap", value)
-    if isinstance(value, Table):
-        return cast("TomlMutableMap", value)
+    if isinstance(value, MutableMapping) and all(isinstance(key, str) for key in value):
+        return value
     return None
 
 
@@ -127,7 +124,7 @@ class TomlService:
             return r[bool].fail(f"TOML write error: {exc}")
 
     @staticmethod
-    def value_differs(current: TomlValue, expected: TomlValue) -> bool:
+    def value_differs(current: t.ConfigMapValue, expected: t.ConfigMapValue) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.
@@ -141,8 +138,9 @@ class TomlService:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
-            if isinstance(value, (dict, Table)):
-                table[key] = TomlService.build_table(cast("TomlMap", value))
+            nested_mapping = _as_toml_mapping(value)
+            if nested_mapping is not None:
+                table[key] = TomlService.build_table(nested_mapping)
             else:
                 table[key] = value
         return table
@@ -162,15 +160,16 @@ class TomlService:
         for key, expected in canonical.items():
             current = target.get(key)
             path = f"{prefix}.{key}" if prefix else key
-            if isinstance(expected, (dict, Table)):
+            expected_mapping = _as_toml_mapping(expected)
+            if expected_mapping is not None:
                 current_mapping = _as_toml_mapping(current)
                 if current_mapping is None:
-                    target[key] = self.build_table(cast("TomlMap", expected))
+                    target[key] = self.build_table(expected_mapping)
                     added.append(path)
                     continue
                 self.sync_mapping(
                     current_mapping,
-                    cast("TomlMap", expected),
+                    expected_mapping,
                     prune_extras=prune_extras,
                     prefix=path,
                     added=added,

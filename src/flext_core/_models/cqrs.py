@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -192,9 +192,9 @@ class FlextModelsCqrs:
 
             payload: object
             if isinstance(parsed_input, t.Dict):
-                payload = cast("t.Dict", parsed_input).root
+                payload = parsed_input.root
             elif isinstance(parsed_input, FlextModelsCqrs.Pagination):
-                payload = cast("FlextModelsCqrs.Pagination", parsed_input).model_dump()
+                payload = parsed_input.model_dump()
             else:
                 payload = dict(parsed_input)
 

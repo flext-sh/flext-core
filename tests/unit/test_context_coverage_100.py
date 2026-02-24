@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict as UserDictBase
-from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -18,7 +17,6 @@ from pydantic import BaseModel
 from flext_core import (
     FlextConstants,
     FlextContext,
-    FlextResult,
     m,
     r,
 )
@@ -119,18 +117,14 @@ class TestContext100Coverage:
 
         # Verify cloned has same data
         result = cloned.get("key1")
-        u.Tests.Result.assert_success_with_value(
-            cast("r[str]", result),
-            "value1",
-        )
+        u.Tests.Result.assert_result_success(result)
+        assert result.value == "value1"
 
         # Modify original - clone should be independent
         context1.set("key1", "modified").value
         cloned_result = cloned.get("key1")
-        u.Tests.Result.assert_success_with_value(
-            cast("r[str]", cloned_result),
-            "value1",
-        )  # Clone unchanged
+        u.Tests.Result.assert_result_success(cloned_result)
+        assert cloned_result.value == "value1"  # Clone unchanged
 
     def test_validate_success(self) -> None:
         """Test validate with valid context."""
@@ -197,7 +191,10 @@ class TestContext100Coverage:
         """Test import_data loads dictionary."""
         context = FlextContext()
 
-        import_data: dict[str, t.GeneralValueType] = {"key1": "value1", "key2": "value2"}
+        import_data: dict[str, t.GeneralValueType] = {
+            "key1": "value1",
+            "key2": "value2",
+        }
         # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
@@ -559,9 +556,7 @@ class TestContext100Coverage:
 
         # Get nonexistent key and use unwrap_or for default
         result = context.get("nonexistent")
-        # Cast to FlextResult to access unwrap_or (ResultProtocol doesn't have it)
-
-        result_typed = cast("FlextResult[t.GeneralValueType]", result)
+        result_typed = result
         value = result_typed.unwrap_or("default_value")
         assert value == "default_value"
 
@@ -637,7 +632,9 @@ class TestContext100Coverage:
         """
         # Test with dict containing non-serializable value (e.g., set)
         # Sets are converted to string representation (e.g., "{1, 2, 3}")
-        bad_dict: dict[str, t.GeneralValueType] = {"key": {1, 2, 3}}  # set becomes string
+        bad_dict: dict[str, t.GeneralValueType] = {
+            "key": {1, 2, 3}
+        }  # set becomes string
         result = m.ContextData(data=bad_dict)
         # Set was normalized to string representation
         assert isinstance(result.data["key"], str)

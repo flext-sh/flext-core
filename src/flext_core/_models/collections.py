@@ -721,7 +721,10 @@ class FlextModelsCollections:
                 ConfigurationMapping: Mapping representation
 
             """
-            return t.ConfigMap.model_validate(self.model_dump())
+            normalized: dict[str, t.ConfigMapValue] = {}
+            for key, value in self.model_dump().items():
+                normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
+            return t.ConfigMap(root=normalized)
 
         @classmethod
         def from_dict(

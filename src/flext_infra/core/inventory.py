@@ -12,7 +12,6 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
@@ -62,24 +61,24 @@ class InventoryService:
                 )
 
             now = datetime.now(UTC).isoformat()
-            inventory = {
+            inventory: Mapping[str, t.ConfigMapValue] = {
                 "generated_at": now,
                 "repo_root": str(root),
                 "total_scripts": len(scripts),
                 "scripts": scripts,
             }
-            wiring = {
+            wiring: Mapping[str, t.ConfigMapValue] = {
                 "generated_at": now,
                 "root_makefile": [c.Files.MAKEFILE_FILENAME],
                 "unwired_scripts": [],
             }
-            external = {
+            external: Mapping[str, t.ConfigMapValue] = {
                 "generated_at": now,
                 "candidates": [],
             }
 
             reports_dir = output_dir or (root / ".reports")
-            outputs = {
+            outputs: Mapping[Path, Mapping[str, t.ConfigMapValue]] = {
                 reports_dir / "scripts-infra--json--scripts-inventory.json": inventory,
                 reports_dir / "scripts-infra--json--scripts-wiring.json": wiring,
                 reports_dir
@@ -90,7 +89,7 @@ class InventoryService:
             for path, payload in outputs.items():
                 write_result = self._json.write(
                     path,
-                    cast("Mapping[str, t.ConfigMapValue]", payload),
+                    payload,
                     sort_keys=True,
                 )
                 if write_result.is_failure:

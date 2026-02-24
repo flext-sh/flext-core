@@ -20,7 +20,7 @@ from contextlib import contextmanager, suppress
 from datetime import datetime as dt
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Self, TypeGuard, cast, override
+from typing import Self, TypeGuard, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -459,7 +459,7 @@ class FlextDispatcher(s[bool]):
     ) -> r[bool]:
         """Validate that processor has required interface (callable or process method)."""
         return self._validate_interface(
-            cast("_RuntimeValue | None", processor),
+            processor,
             "process",
             processor_context,
             allow_callable=True,
@@ -472,7 +472,7 @@ class FlextDispatcher(s[bool]):
     ) -> r[bool]:
         """Validate handler registry protocol compliance (handle or execute method)."""
         return self._validate_interface(
-            cast("_RuntimeValue | None", handler),
+            handler,
             [c.Mixins.METHOD_HANDLE, c.Mixins.METHOD_EXECUTE],
             handler_context,
         )
@@ -1653,20 +1653,14 @@ class FlextDispatcher(s[bool]):
 
                 if isinstance(next_value, t.ConfigMap):
                     current_map = next_value
-                elif hasattr(next_value, "items") and callable(
-                    getattr(next_value, "items", None)
-                ):
-                    current_map = t.ConfigMap.model_validate(
-                        dict(cast("Mapping[str, Any]", next_value))
-                    )
+                elif isinstance(next_value, Mapping):
+                    current_map = t.ConfigMap.model_validate(dict(next_value))
                 else:
                     return None
 
             return current_map
-        if hasattr(obj, "items") and callable(getattr(obj, "items", None)):
-            current_map = t.ConfigMap.model_validate(
-                dict(cast("Mapping[str, Any]", obj))
-            )
+        if isinstance(obj, Mapping):
+            current_map = t.ConfigMap.model_validate(dict(obj))
             for attr in path:
                 if attr not in current_map.root:
                     return None
@@ -1677,12 +1671,8 @@ class FlextDispatcher(s[bool]):
 
                 if isinstance(next_value, t.ConfigMap):
                     current_map = next_value
-                elif hasattr(next_value, "items") and callable(
-                    getattr(next_value, "items", None)
-                ):
-                    current_map = t.ConfigMap.model_validate(
-                        dict(cast("Mapping[str, Any]", next_value))
-                    )
+                elif isinstance(next_value, Mapping):
+                    current_map = t.ConfigMap.model_validate(dict(next_value))
                 else:
                     return None
 

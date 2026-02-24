@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 import structlog
 from flext_core.result import r
@@ -103,17 +102,25 @@ class DocFixer:
                 rel = md.relative_to(scope.path).as_posix()
                 items.append(FixItem(file=rel, links=item.links, toc=item.toc))
 
-        payload = {
+        changes_payload: list[Mapping[str, t.ConfigMapValue]] = [
+            {
+                "file": item.file,
+                "links": item.links,
+                "toc": item.toc,
+            }
+            for item in items
+        ]
+        payload: Mapping[str, t.ConfigMapValue] = {
             "summary": {
                 "scope": scope.name,
                 "changed_files": len(items),
                 "apply": apply,
             },
-            "changes": [asdict(item) for item in items],
+            "changes": changes_payload,
         }
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "fix-summary.json",
-            cast("Mapping[str, t.ConfigMapValue]", payload),
+            payload,
         )
         lines = [
             "# Docs Fix Report",

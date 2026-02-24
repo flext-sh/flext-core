@@ -46,7 +46,8 @@ import logging
 import os
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import cast
+
+from pydantic import BaseModel
 
 from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions as e
@@ -260,7 +261,7 @@ class FlextUtilitiesConfiguration:
         """
         try:
             obj_dict = obj.model_dump()
-            if isinstance(obj_dict, Mapping) and parameter in obj_dict:
+            if parameter in obj_dict:
                 return (True, obj_dict[parameter])
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
@@ -277,7 +278,12 @@ class FlextUtilitiesConfiguration:
                 return FlextUtilitiesConfiguration._NOT_FOUND
             obj_dict = model_dump_attr()
             if isinstance(obj_dict, Mapping) and parameter in obj_dict:
-                return (True, obj_dict[parameter])
+                raw_value = obj_dict[parameter]
+                if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
+                    return (True, raw_value)
+                if isinstance(raw_value, BaseModel):
+                    return (True, raw_value)
+                return (True, str(raw_value))
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND
@@ -517,15 +523,22 @@ class FlextUtilitiesConfiguration:
             ):
                 # callable() check ensures this is callable - call directly
                 instance = get_global_instance_attr()
-                if hasattr(instance, "model_dump") and callable(
-                    getattr(instance, "model_dump", None)
-                ):
-                    # Type narrowing: instance implements model_dump()
-                    has_model_dump_instance = cast("p.HasModelDump", instance)
-                    return FlextUtilitiesConfiguration.get_parameter(
-                        has_model_dump_instance,
+                found, value = (
+                    FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+                        instance,
                         parameter,
                     )
+                )
+                if found:
+                    return value
+                found, value = FlextUtilitiesConfiguration._try_get_attr(
+                    instance,
+                    parameter,
+                )
+                if found:
+                    return value
+                msg = f"Parameter '{parameter}' is not defined"
+                raise e.NotFoundError(msg)
 
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
@@ -577,7 +590,11 @@ class FlextUtilitiesConfiguration:
             )
 
         # Use getattr to help pyright infer types correctly
-        get_global_instance_attr = getattr(singleton_class, "get_global_instance", None)
+        get_global_instance_attr = getattr(
+            singleton_class,
+            "get_global_instance",
+            None,
+        )
         if get_global_instance_attr is None or not callable(get_global_instance_attr):
             return r[bool].fail(
                 f"get_global_instance is not callable on {singleton_class.__name__}",
@@ -585,18 +602,14 @@ class FlextUtilitiesConfiguration:
 
         # callable() check above ensures this is callable - call directly
         instance = get_global_instance_attr()
-        if not (
-            hasattr(instance, "model_dump")
-            and callable(getattr(instance, "model_dump", None))
-        ):
+        model_dump_attr = getattr(instance, "model_dump", None)
+        if model_dump_attr is None or not callable(model_dump_attr):
             return r[bool].fail(
                 "Instance does not implement model_dump() method",
             )
 
-        # Type narrowing: instance is HasModelDump
-        has_model_dump_instance = cast("p.HasModelDump", instance)
         success = FlextUtilitiesConfiguration.set_parameter(
-            has_model_dump_instance,
+            instance,
             parameter,
             value,
         )

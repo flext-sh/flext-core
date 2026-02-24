@@ -14,7 +14,6 @@ from typing import overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.checker import FlextUtilitiesChecker
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
@@ -63,9 +62,6 @@ class FlextUtilities:
 
     class Checker(FlextUtilitiesChecker):
         """Checker utility class - real inheritance."""
-
-    class Cast(FlextUtilitiesCast):
-        """Cast utility class - real inheritance."""
 
     class Collection(FlextUtilitiesCollection):
         """Collection utility class - real inheritance."""

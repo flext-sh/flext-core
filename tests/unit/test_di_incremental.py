@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import ModuleType
-from typing import cast
 
 from flext_core import (
     FlextContainer,
@@ -80,9 +79,7 @@ class TestDIBridgeRealExecution:
         assert register_result.is_success
 
         # Resolve the service
-        resolved_raw: object = container.get("test_service")
-        # Type narrowing: container.get returns r[T], cast for type safety
-        resolved: r[str] = cast("r[str]", resolved_raw)
+        resolved = container.get("test_service")
         u.Tests.Result.assert_success_with_value(resolved, "test_value")
 
     def test_create_layered_bridge_with_config(self) -> None:
@@ -240,11 +237,9 @@ class TestDependencyIntegrationRealExecution:
 
         try:
             # Execute wired function - use getattr for dynamic ModuleType attributes
-            api_call_attr = getattr(module, "api_call")
-            # Type assertion: api_call_attr is the function we just assigned
-            api_call_func: Callable[[], dict[str, str | int]] = cast(
-                "Callable[[], dict[str, str | int]]",
-                api_call_attr,
+            api_call_func: Callable[[], dict[str, str | int]] = getattr(
+                module,
+                "api_call",
             )
             result = api_call_func()
             assert result == {"key": "secret123", "timeout": 30}
@@ -280,12 +275,7 @@ class TestContainerDIRealExecution:
 
         try:
             # Execute wired function - use getattr for dynamic ModuleType attributes
-            log_message_attr = module.log_message
-            # Type assertion: log_message_attr is the function we just assigned
-            log_func: Callable[[], dict[str, str]] = cast(
-                "Callable[[], dict[str, str]]",
-                log_message_attr,
-            )
+            log_func: Callable[[], dict[str, str]] = module.log_message
             result = log_func()
             assert result == {"logger": "test_logger", "level": "INFO"}
         finally:
@@ -308,9 +298,7 @@ class TestContainerDIRealExecution:
         scoped = container.scoped(resources={"db": resource_factory})
 
         # Get resource from scoped container
-        result_raw: object = scoped.get("db")
-        # Type narrowing: scoped.get returns r[T], cast for type safety
-        result: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result_raw)
+        result = scoped.get("db")
         resource_value = u.Tests.Result.assert_success(result)
         assert resource_value == {"connected": True}
         assert lifecycle["created"] is True
@@ -329,20 +317,12 @@ class TestContainerDIRealExecution:
         )
 
         # Get service
-        service_result_raw: object = scoped.get("api_key")
-        service_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            service_result_raw,
-        )
+        service_result = scoped.get("api_key")
         assert service_result.is_success
         assert service_result.value == "secret_key"
 
         # Get factory (should be called)
-        factory_result_raw: object = scoped.get("token_gen")
-        factory_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            factory_result_raw,
-        )
+        factory_result = scoped.get("token_gen")
         assert factory_result.is_success
         assert isinstance(factory_result.value, dict)
         assert factory_result.value["token"] == "abc123"
@@ -384,8 +364,7 @@ class TestServiceBootstrapWithDI:
         assert runtime.context is not None
 
         # Verify resource is accessible
-        db_result_raw: object = runtime.container.get("database")
-        db_result: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", db_result_raw)
+        db_result = runtime.container.get("database")
         assert db_result.is_success
         assert db_result.value == {"connected": True}
         assert lifecycle["created"] is True
@@ -399,8 +378,8 @@ class TestServiceBootstrapWithDI:
 
         # Verify runtime has wired modules
         assert runtime.container is not None
-        # Access private attribute via cast for testing
-        container_instance = cast("FlextContainer", runtime.container)
+        container_instance = runtime.container
+        assert isinstance(container_instance, FlextContainer)
         assert hasattr(container_instance, "_di_container")
 
     def test_service_with_runtime_bootstrap_options(self) -> None:
@@ -427,22 +406,14 @@ class TestServiceBootstrapWithDI:
         assert service.runtime is not None
 
         # Verify custom services are registered
-        custom_result_raw: object = service.container.get("custom_service")
-        custom_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            custom_result_raw,
-        )
-        custom_value = u.Tests.Result.assert_result_success(custom_result)
-        assert custom_value == "custom_value"
+        custom_result = service.container.get("custom_service")
+        assert custom_result.is_success
+        assert custom_result.value == "custom_value"
 
         # Verify custom factory works
-        factory_result_raw: object = service.container.get("custom_factory")
-        factory_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            factory_result_raw,
-        )
-        factory_value = u.Tests.Result.assert_result_success(factory_result)
-        assert factory_value == {"custom": "data"}
+        factory_result = service.container.get("custom_factory")
+        assert factory_result.is_success
+        assert factory_result.value == {"custom": "data"}
 
 
 class TestRealWiringScenarios:
@@ -473,11 +444,8 @@ class TestRealWiringScenarios:
 
         try:
             # Execute handler - use getattr for dynamic ModuleType attributes
-            process_request_attr = handler_module.process_request
-            # Type assertion: process_request_attr is the function we just assigned
-            process_func: Callable[[], dict[str, str | int]] = cast(
-                "Callable[[], dict[str, str | int]]",
-                process_request_attr,
+            process_func: Callable[[], dict[str, str | int]] = (
+                handler_module.process_request
             )
             result = process_func()
             assert result == {"logger": "test_logger", "pool_size": 10}
@@ -508,11 +476,8 @@ class TestRealWiringScenarios:
 
         try:
             # Use getattr for dynamic ModuleType attributes
-            func1_attr = getattr(module, "func1")
-            func2_attr = getattr(module, "func2")
-            # Type assertions: func1_attr and func2_attr are the functions we just assigned
-            func1_wired: Callable[[], str] = cast("Callable[[], str]", func1_attr)
-            func2_wired: Callable[[], bool] = cast("Callable[[], bool]", func2_attr)
+            func1_wired: Callable[[], str] = getattr(module, "func1")
+            func2_wired: Callable[[], bool] = getattr(module, "func2")
             assert func1_wired() == "test"
             assert func2_wired() is True
         finally:
@@ -557,12 +522,7 @@ class TestRealWiringScenarios:
 
         try:
             # Use getattr for dynamic ModuleType attributes
-            api_call_attr = getattr(module, "api_call")
-            # Type assertion: api_call_attr is the function we just assigned
-            api_call_func: Callable[[], dict[str, str]] = cast(
-                "Callable[[], dict[str, str]]",
-                api_call_attr,
-            )
+            api_call_func: Callable[[], dict[str, str]] = getattr(module, "api_call")
             result = api_call_func()
             assert "url" in result
             assert "base" in result
@@ -590,9 +550,7 @@ class TestRealWiringScenarios:
 
         try:
             # Execute function - use getattr for dynamic ModuleType attributes
-            test_func_attr = getattr(test_module, "test_func")
-            # Type assertion: test_func_attr is the function we just assigned
-            func: Callable[[], str] = cast("Callable[[], str]", test_func_attr)
+            func: Callable[[], str] = getattr(test_module, "test_func")
             result = func()
             assert result == "wired_value"
         finally:
@@ -609,18 +567,10 @@ class TestRealWiringScenarios:
         scoped = container.scoped(services={"scoped_service": "scoped_value"})
 
         # Both global and scoped services should be accessible
-        global_result_raw: object = scoped.get("global_service")
-        global_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            global_result_raw,
-        )
+        global_result = scoped.get("global_service")
         assert global_result.is_success
 
-        scoped_result_raw: object = scoped.get("scoped_service")
-        scoped_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            scoped_result_raw,
-        )
+        scoped_result = scoped.get("scoped_service")
         assert scoped_result.is_success
         assert scoped_result.value == "scoped_value"
 
@@ -646,29 +596,17 @@ class TestRealWiringScenarios:
         assert runtime.config.app_name == "test_app"
 
         # Verify services
-        static_result_raw: object = runtime.container.get("static_service")
-        static_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            static_result_raw,
-        )
+        static_result = runtime.container.get("static_service")
         assert static_result.is_success
         assert static_result.value == "static_value"
 
         # Verify factories
-        factory_result_raw: object = runtime.container.get("token_factory")
-        factory_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            factory_result_raw,
-        )
+        factory_result = runtime.container.get("token_factory")
         assert factory_result.is_success
         assert factory_result.value == {"token": "generated_token"}
 
         # Verify resources
-        resource_result_raw: object = runtime.container.get("connection")
-        resource_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            resource_result_raw,
-        )
+        resource_result = runtime.container.get("connection")
         assert resource_result.is_success
         assert resource_result.value == {"connected": True}
 
@@ -711,11 +649,9 @@ class TestRealWiringScenarios:
         try:
             # Execution should fail gracefully or handle missing dependency
             # This tests that wiring doesn't validate dependencies at wire time
-            func_with_missing_attr = getattr(module, "func_with_missing")
-            # Type assertion: func_with_missing_attr is the function we just assigned
-            func_with_missing_wired: Callable[[], str] = cast(
-                "Callable[[], str]",
-                func_with_missing_attr,
+            func_with_missing_wired: Callable[[], str] = getattr(
+                module,
+                "func_with_missing",
             )
             # Function exists but dependency may be missing - this is expected
             assert callable(func_with_missing_wired)
@@ -736,8 +672,7 @@ class TestRealWiringScenarios:
         scoped = container.scoped(resources={"test_resource": resource_factory})
 
         # Get resource
-        result_raw: object = scoped.get("test_resource")
-        result: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result_raw)
+        result = scoped.get("test_resource")
         assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, dict)
         assert result.value == {"resource": True}
@@ -755,15 +690,13 @@ class TestRealWiringScenarios:
         scoped2 = container.scoped(services={"service": "value2"})
 
         # Verify isolation
-        result1_raw: object = scoped1.get("service")
-        result1: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result1_raw)
-        result2_raw: object = scoped2.get("service")
-        result2: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result2_raw)
+        result1 = scoped1.get("service")
+        result2 = scoped2.get("service")
 
-        value1_raw = u.Tests.Result.assert_result_success(result1)
-        value1: str = cast("str", value1_raw)
-        value2_raw = u.Tests.Result.assert_result_success(result2)
-        value2: str = cast("str", value2_raw)
+        value1 = u.Tests.Result.assert_result_success(result1)
+        value2 = u.Tests.Result.assert_result_success(result2)
+        assert isinstance(value1, str)
+        assert isinstance(value2, str)
         assert value1 == "value1"
         assert value2 == "value2"
         assert value1 != value2

@@ -17,8 +17,7 @@ from functools import partial
 from types import ModuleType
 from typing import ClassVar
 
-from pydantic import BaseModel
-from pydantic import PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 
 from flext_core.constants import c
 from flext_core.container import FlextContainer
@@ -123,7 +122,7 @@ class FlextMixins(FlextRuntime):
                             else str(value)
                         )
                         normalized_model_dump[str(key)] = normalized_value
-                return m.ConfigMap.model_validate(normalized_model_dump)
+                return m.ConfigMap(root=normalized_model_dump)
             except Exception:
                 return m.ConfigMap(root={"value": str(model_dump_result)})
 
@@ -131,7 +130,7 @@ class FlextMixins(FlextRuntime):
             if isinstance(obj, Mapping):
                 normalized_mapping: dict[str, t.ConfigMapValue] = {}
                 for key, value in obj.items():
-                    normalized_value: t.ConfigMapValue = (
+                    normalized_mapping_value: t.ConfigMapValue = (
                         FlextRuntime.normalize_to_general_value(value)
                         if isinstance(
                             value,
@@ -139,7 +138,7 @@ class FlextMixins(FlextRuntime):
                         )
                         else str(value)
                     )
-                    normalized_mapping[str(key)] = normalized_value
+                    normalized_mapping[str(key)] = normalized_mapping_value
                 return m.ConfigMap.model_validate(normalized_mapping)
             return m.ConfigMap.model_validate(obj)
         except Exception:

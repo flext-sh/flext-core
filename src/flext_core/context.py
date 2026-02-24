@@ -16,9 +16,9 @@ import json
 from collections.abc import Generator, Mapping, MutableMapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self, cast, overload
+from typing import Final, Self, overload
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from flext_core._models.context import FlextModelsContext
 from flext_core.constants import c
@@ -896,7 +896,7 @@ class FlextContext(FlextRuntime):
 
         """
         try:
-            data_obj = cast("object", json.loads(json_str))
+            data_obj = json.loads(json_str)
             if not isinstance(data_obj, dict):
                 msg = f"JSON must represent a dict, got {data_obj.__class__.__name__}"
                 raise TypeError(msg)
@@ -906,9 +906,11 @@ class FlextContext(FlextRuntime):
                 """Normalize value to ContextValue."""
                 return FlextRuntime.normalize_to_general_value(value)
 
-            data_map = cast("dict[str, ContextValue]", data_obj)
             normalized_data_for_json: Mapping[str, ContextValue] = {
-                str(key): normalize_value(value) for key, value in data_map.items()
+                str(key): normalize_value(
+                    TypeAdapter(t.ConfigMapValue).validate_python(value),
+                )
+                for key, value in data_obj.items()
             }
             context_data_for_json: m.ContextData = m.ContextData(
                 data=t.Dict(root=dict(normalized_data_for_json.items())),

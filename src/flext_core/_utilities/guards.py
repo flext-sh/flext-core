@@ -389,7 +389,7 @@ class FlextUtilitiesGuards:
                 else:
                     result_dict[key] = str(value)
             return result_dict
-        if isinstance(val, Sequence) and not isinstance(val, str | bytes):
+        if isinstance(val, list):
             # Convert to list[t.MetadataAttributeValue]
             # Type narrowing: is_list_like returns TypeGuard[Sequence[t.GuardInputValue]]
             val_sequence = val  # type narrowing via TypeGuard

@@ -119,10 +119,9 @@ class FlextUtilitiesCache:
         """
         # Handle BaseModel first - convert to dict
         if isinstance(component, BaseModel):
-            model_component = cast("BaseModel", component)
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
-                for k, v in model_component.model_dump().items()
+                for k, v in component.model_dump().items()
             }
         # component is already t.GuardInputValue (not BaseModel)
         # Check if dict-like
@@ -142,21 +141,16 @@ class FlextUtilitiesCache:
         # Handle collections
         if isinstance(component, set):
             # Type narrowing: component is set[t.GuardInputValue]
-            # Explicit type annotation for set items
-            items_set = cast("set[t.GuardInputValue]", component)
             # Convert set to tuple for hashability - normalize each item
             normalized_items: list[t.GuardInputValue] = [
-                FlextUtilitiesCache.normalize_component(item) for item in items_set
+                FlextUtilitiesCache.normalize_component(item) for item in component
             ]
             return tuple(normalized_items)
         if isinstance(component, list | tuple) and not isinstance(
             component, str | bytes
         ):
             # Type narrowing: component is Sequence, so items are t.GuardInputValue
-            items_seq = cast(
-                "list[t.GuardInputValue] | tuple[t.GuardInputValue, ...]", component
-            )
-            return [FlextUtilitiesCache.normalize_component(item) for item in items_seq]
+            return [FlextUtilitiesCache.normalize_component(item) for item in component]
         # For other types, convert to string as fallback
         return str(component)
 
@@ -191,8 +185,7 @@ class FlextUtilitiesCache:
 
         """
         if isinstance(key, str):
-            str_key = cast("str", key)
-            return (0, str_key.lower())
+            return (0, key.lower())
         if isinstance(key, int | float):
             return (1, str(key))
         return (2, str(key))

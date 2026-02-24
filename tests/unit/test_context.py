@@ -25,12 +25,12 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 
 from flext_core import FlextContainer, FlextContext, m, t
-from flext_tests import FlextTestsUtilities, u
+from flext_tests import FlextTestsUtilities, t as tests_t, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +46,9 @@ class ContextOperationScenario:
 class ContextScenarios:
     """Centralized context test scenarios using FlextConstants."""
 
-    SET_GET_CASES: ClassVar[list[tuple[str, object, object]]] = [
+    SET_GET_CASES: ClassVar[
+        list[tuple[str, tests_t.Tests.PayloadValue, tests_t.Tests.PayloadValue]]
+    ] = [
         ("string_key", "string_value", "string_value"),
         ("int_key", 42, 42),
         ("bool_key", True, True),
@@ -115,8 +117,8 @@ class TestFlextContext:
         self,
         test_context: FlextContext,
         key: str,
-        value: object,
-        expected: object,
+        value: tests_t.Tests.PayloadValue,
+        expected: tests_t.Tests.PayloadValue,
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
@@ -129,7 +131,7 @@ class TestFlextContext:
         set_result = context.set(key, converted_value)
         u.Tests.Result.assert_result_success(set_result)
         # Convert expected to t.GeneralValueType for assert_context_get_success
-        expected_value: t.GeneralValueType = cast("t.GeneralValueType", expected)
+        expected_value = expected
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
             key,

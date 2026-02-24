@@ -24,7 +24,7 @@ from flext_core.typings import t
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 
@@ -234,13 +234,7 @@ class TestServiceDomain:
         test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
-        # Type narrowing: assert_result_success accepts r[TResult], protocol Result is compatible
-        # Cast to r[t.GeneralValueType] for type compatibility
-        result_typed: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]",
-            result,
-        )
-        u.Tests.Result.assert_result_success(result_typed)
+        u.Tests.Result.assert_result_success(result)
         assert result.value is test_service_obj
 
     def test_register_service(self) -> None:
@@ -395,7 +389,9 @@ class TestPerformanceDomain:
         assert "duration_seconds" in metadata
 
         # Validate duration calculation
-        duration = cast("float", metadata["duration_seconds"])
+        duration_value = metadata["duration_seconds"]
+        assert isinstance(duration_value, float)
+        duration = duration_value
         assert duration >= 0.01, f"Duration {duration} should be >= 0.01s"
         assert duration < 0.1, (
             f"Duration {duration} should be < 0.1s (reasonable overhead)"

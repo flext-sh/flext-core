@@ -16,9 +16,8 @@ import argparse
 import json
 import sys
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 import structlog
 from flext_core.result import FlextResult, r
@@ -130,19 +129,29 @@ class DocAuditor:
             issues.extend(self._forbidden_term_issues(scope))
 
         # Write reports
-        summary = {
+        summary: Mapping[str, t.ConfigMapValue] = {
             "scope": scope.name,
             "issues": len(issues),
             "checks": sorted(checks),
             "strict": strict,
             "report_dir": scope.report_dir.as_posix(),
         }
+        issues_payload: list[Mapping[str, t.ConfigMapValue]] = [
+            {
+                "file": issue.file,
+                "issue_type": issue.issue_type,
+                "severity": issue.severity,
+                "message": issue.message,
+            }
+            for issue in issues
+        ]
+        summary_payload: Mapping[str, t.ConfigMapValue] = {
+            "summary": summary,
+            "issues": issues_payload,
+        }
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "audit-summary.json",
-            cast(
-                "Mapping[str, t.ConfigMapValue]",
-                {"summary": summary, "issues": [asdict(i) for i in issues]},
-            ),
+            summary_payload,
         )
         _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "audit-report.md",

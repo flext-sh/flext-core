@@ -1199,11 +1199,10 @@ class FlextContainer(FlextRuntime, p.DI):
                     scoped_context = FlextContext()
             else:
                 scoped_context = FlextContext()
+        elif self._is_context_protocol(context):
+            scoped_context = context
         else:
-            if self._is_context_protocol(context):
-                scoped_context = context
-            else:
-                scoped_context = self.context.clone()
+            scoped_context = self.context.clone()
 
         if subproject:
             # Ctx.set returns None per protocol definition

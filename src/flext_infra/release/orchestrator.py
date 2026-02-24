@@ -14,7 +14,7 @@ import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 import structlog
 from flext_core.result import r
@@ -260,7 +260,7 @@ class ReleaseOrchestrator(FlextService[bool]):
             })
             logger.info("release_phase_build_project", project=name, exit_code=code)
 
-        report = {
+        report: Mapping[str, t.ConfigMapValue] = {
             "version": version,
             "total": len(records),
             "failures": failures,
@@ -268,7 +268,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         }
         JsonService().write(
             output_dir / "build-report.json",
-            cast("Mapping[str, t.ConfigMapValue]", report),
+            report,
             sort_keys=True,
         )
         logger.info(
