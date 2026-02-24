@@ -148,7 +148,7 @@ class FlextModelsCqrs:
             models_module = sys.modules.get("flext_core.models")
             # Use constant value directly - attribute is on Pagination class,
             # not on type
-            if not models_module or len(parts) < c.MIN_QUALNAME_PARTS_FOR_WRAPPER:
+            if not models_module or len(parts) < 2:
                 return FlextModelsCqrs.Pagination
             obj: t.GuardInputValue | None = getattr(
                 models_module,
@@ -162,7 +162,7 @@ class FlextModelsCqrs:
                 pagination_cls_attr = getattr(obj, "Pagination", None)
                 if (
                     pagination_cls_attr is not None
-                    and pagination_cls_attr.__class__ is type
+                    and isinstance(pagination_cls_attr, type)
                     and FlextModelsCqrs.Pagination in pagination_cls_attr.__mro__
                 ):
                     # Type-safe narrowing: pagination_cls_attr is confirmed as subclass

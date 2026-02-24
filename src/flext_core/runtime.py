@@ -295,8 +295,16 @@ class FlextRuntime:
             >>> # instance is properly typed as MyClass
 
         """
-        # object.__new__(class_type) returns an instance of class_type (Python guarantee).
-        return object.__new__(class_type)
+        instance = object.__new__(class_type)
+        if not isinstance(instance, class_type):
+            msg = f"object.__new__ did not return instance of {class_type.__name__}"
+            raise TypeError(msg)
+        return instance
+
+    class Bootstrap:
+        @staticmethod
+        def create_instance[T](class_type: type[T]) -> T:
+            return FlextRuntime.create_instance(class_type)
 
     # =========================================================================
     # TYPE GUARD UTILITIES
@@ -325,7 +333,26 @@ class FlextRuntime:
             case Mapping() as mapping:
                 return all(isinstance(key, str) for key in mapping)
             case _:
-                return False
+                keys = getattr(value, "keys", None)
+                items = getattr(value, "items", None)
+                get = getattr(value, "get", None)
+                if not (callable(keys) and callable(items) and callable(get)):
+                    return False
+                try:
+                    keys_values = keys()
+                    item_values = items()
+                    if not isinstance(keys_values, Sequence):
+                        return False
+                    if not isinstance(item_values, Sequence):
+                        return False
+                    if not all(isinstance(key, str) for key in keys_values):
+                        return False
+                    for entry in item_values:
+                        if not (isinstance(entry, tuple) and len(entry) == 2):
+                            return False
+                    return True
+                except (AttributeError, TypeError):
+                    return False
 
     @staticmethod
     def is_list_like(
@@ -381,6 +408,9 @@ class FlextRuntime:
         if FlextRuntime._is_scalar(val):
             return val
 
+        if isinstance(val, Path):
+            return str(val)
+
         model_dump = getattr(val, "model_dump", None)
         if callable(model_dump):
             dumped_value: t.ConfigMapValue = TypeAdapter(
@@ -390,9 +420,9 @@ class FlextRuntime:
 
         if FlextRuntime.is_dict_like(val):
             dict_v = val.root if hasattr(val, "root") else val
-            result = t.ConfigMap()
+            result: dict[str, t.ConfigMapValue] = {}
             for k, v in dict_v.items():
-                result[k] = FlextRuntime.normalize_to_general_value(v)
+                result[str(k)] = FlextRuntime.normalize_to_general_value(v)
             return result
 
         if FlextRuntime.is_list_like(val):
@@ -437,23 +467,12 @@ class FlextRuntime:
 
         if FlextRuntime.is_dict_like(val):
             raw_mapping = val.root if hasattr(val, "root") else val
-            normalized_mapping: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | datetime
-                | list[str | int | float | bool | datetime | None]
-                | None,
-            ] = {}
+            normalized_mapping: dict[str, t.ConfigMapValue] = {}
             for key, value in raw_mapping.items():
-                metadata_value = FlextRuntime.normalize_to_metadata_value(value)
-                if hasattr(metadata_value, "items"):
-                    normalized_mapping[str(key)] = json.dumps(metadata_value)
-                else:
-                    normalized_mapping[str(key)] = str(metadata_value)
-            return normalized_mapping
+                normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
+                    value
+                )
+            return json.dumps(normalized_mapping)
 
         if FlextRuntime.is_list_like(val):
             # Convert to list of MetadataAttributeValue scalars (including datetime)
@@ -472,7 +491,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_json(
-        value: str,
+        value: t.GeneralValueType,
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
@@ -492,15 +511,17 @@ class FlextRuntime:
             True if value is a valid JSON string, False otherwise
 
         """
+        if not isinstance(value, str):
+            return False
         try:
             json.loads(value)
             return True
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, TypeError, ValueError):
             return False
 
     @staticmethod
     def is_valid_identifier(
-        value: str,
+        value: t.GeneralValueType,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier.
 
@@ -511,7 +532,7 @@ class FlextRuntime:
             True if value is a valid Python identifier, False otherwise
 
         """
-        return value.isidentifier()
+        return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
     def is_base_model(obj: t.ConfigMapValue) -> TypeGuard[BaseModel]:
@@ -561,7 +582,7 @@ class FlextRuntime:
     @staticmethod
     def extract_generic_args(
         type_hint: t.TypeHintSpecifier,
-    ) -> tuple[t.GenericTypeArgument, ...]:
+    ) -> tuple[t.GenericTypeArgument | type[dict[str, t.ConfigMapValue]], ...]:
         """Extract generic type arguments from a type hint.
 
         Business Rule: Extracts generic type arguments from type hints using
@@ -601,8 +622,10 @@ class FlextRuntime:
                     return (float,)
                 if type_name == "BoolList":
                     return (bool,)
-                if type_name in {"Dict", "StringDict", "NestedDict"}:
+                if type_name in {"Dict", "StringDict"}:
                     return (str, str)
+                if type_name == "NestedDict":
+                    return (str, dict)
                 if type_name == "IntDict":
                     return (str, int)
                 if type_name == "FloatDict":
@@ -643,7 +666,12 @@ class FlextRuntime:
         try:
             origin = typing.get_origin(type_hint)
             if origin is not None and hasattr(origin, "__mro__"):
+                if origin in (list, tuple):
+                    return True
                 return Sequence in origin.__mro__
+
+            if type_hint in (list, tuple, str):
+                return True
 
             # Check if the type itself is a sequence subclass (for type aliases)
             hint_mro = getattr(type_hint, "__mro__", None)
@@ -1306,6 +1334,10 @@ class FlextRuntime:
         structlog.reset_defaults()
         cls._structlog_configured = False
 
+    @staticmethod
+    def enable_runtime_checking() -> bool:
+        return True
+
     # =========================================================================
     # RESULT FACTORY METHODS (Core implementation - NO FlextResult import)
     # =========================================================================
@@ -1393,6 +1425,10 @@ class FlextRuntime:
             return not self._is_success
 
         @property
+        def data(self) -> T:
+            return self.value
+
+        @property
         def error(self) -> str | None:
             """Get the error message."""
             return self._error
@@ -1456,6 +1492,12 @@ class FlextRuntime:
                 error_data=self._error_data,
                 is_success=False,
             )
+
+        def and_then[U](
+            self,
+            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
+        ) -> FlextRuntime.RuntimeResult[U]:
+            return self.flat_map(func)
 
         def fold[U](
             self,

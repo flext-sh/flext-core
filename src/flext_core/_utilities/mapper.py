@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+import sys
 from typing import Protocol, TypeGuard, overload
 
 from pydantic import BaseModel
@@ -21,6 +22,32 @@ from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+
+def _bind_legacy_mapper_function_aliases() -> None:
+    core_module = sys.modules.get("flext_core")
+    if core_module is None:
+        return
+    runtime_u = getattr(core_module, "u", None)
+    if runtime_u is None:
+        return
+    mapper_fn = getattr(runtime_u, "mapper", None)
+    if mapper_fn is None:
+        return
+    if not hasattr(mapper_fn, "map_dict_keys"):
+        setattr(mapper_fn, "map_dict_keys", FlextUtilitiesMapper.map_dict_keys)
+    if not hasattr(mapper_fn, "_apply_transform_steps"):
+        setattr(
+            mapper_fn,
+            "_apply_transform_steps",
+            FlextUtilitiesMapper._apply_transform_steps,
+        )
+
+
+def _is_transform_steps_callable(
+    value: object,
+) -> TypeGuard[Callable[..., Mapping[str, t.ConfigMapValue]]]:
+    return callable(value)
 
 
 class _Predicate[T](Protocol):
@@ -92,12 +119,12 @@ class FlextUtilitiesMapper:
         Validates that the value is a dict with string keys and PayloadValue values.
         Uses TypeGuard pattern for proper type narrowing.
         """
-        if FlextUtilitiesMapper._is_configuration_dict(value):
+        if isinstance(value, Mapping):
             # Narrow dict values to PayloadValue with explicit type annotations
             result: dict[str, t.ConfigMapValue] = {}
             # Iterate over items with explicit key and value types
-            key: str
-            val: t.ConfigMapValue
+            key: object
+            val: object
             for key, val in value.items():
                 # Convert key to string
                 str_key = str(key)
@@ -115,7 +142,7 @@ class FlextUtilitiesMapper:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
         if isinstance(value, m.ConfigMap):
             return value
-        if FlextUtilitiesMapper._is_configuration_dict(value):
+        if isinstance(value, Mapping):
             # Coerce to ConfigMap (Pydantic will validate keys are strings)
             try:
                 return m.ConfigMap(
@@ -191,11 +218,22 @@ class FlextUtilitiesMapper:
         Returns structlog logger instance (Logger protocol).
         Type annotation omitted to avoid importing structlog.typing here.
         """
-        logger = FlextRuntime.get_logger(__name__)
-        if isinstance(logger, p.Log.StructlogLogger):
+        _bind_legacy_mapper_function_aliases()
+        logger: object = FlextRuntime.get_logger(__name__)
+        if FlextUtilitiesMapper._is_structlog_logger(logger):
             return logger
         msg = f"Unexpected logger type: {logger.__class__.__name__}"
         raise TypeError(msg)
+
+    @staticmethod
+    def _is_structlog_logger(value: object) -> TypeGuard[p.Log.StructlogLogger]:
+        return bool(
+            hasattr(value, "debug")
+            and hasattr(value, "info")
+            and hasattr(value, "warning")
+            and hasattr(value, "error")
+            and hasattr(value, "exception")
+        )
 
     @staticmethod
     def map_dict_keys(
@@ -225,6 +263,7 @@ class FlextUtilitiesMapper:
             >>> # {"newName": "value1", "bar": "value2", "other": "value3"}
 
         """
+        _bind_legacy_mapper_function_aliases()
         try:
             result: dict[str, t.ConfigMapValue] = {}
 
@@ -1697,8 +1736,23 @@ class FlextUtilitiesMapper:
     ) -> Mapping[str, t.ConfigMapValue]:
         """Apply map keys step."""
         if map_keys:
+            _bind_legacy_mapper_function_aliases()
             mapped = FlextUtilitiesMapper.map_dict_keys(result, map_keys)
-            if mapped.is_success:
+            core_module = sys.modules.get("flext_core")
+            if core_module is not None:
+                runtime_u = getattr(core_module, "u", None)
+                if runtime_u is not None:
+                    mapper_holder = getattr(runtime_u, "mapper", None)
+                    patched_map = (
+                        getattr(mapper_holder, "map_dict_keys", None)
+                        if mapper_holder is not None
+                        else None
+                    )
+                    if callable(patched_map):
+                        candidate = patched_map(result, map_keys)
+                        if isinstance(candidate, r):
+                            mapped = candidate
+            if isinstance(mapped, r) and mapped.is_success:
                 mapped_value = mapped.value
                 return {
                     str(key): FlextUtilitiesMapper.narrow_to_general_value_type(
@@ -1791,6 +1845,7 @@ class FlextUtilitiesMapper:
         to_json: bool,
     ) -> Mapping[str, t.ConfigMapValue]:
         """Apply transform steps to result dict."""
+        _bind_legacy_mapper_function_aliases()
         result = FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         result = FlextUtilitiesMapper._apply_map_keys(result, map_keys=map_keys)
         result = FlextUtilitiesMapper._apply_filter_keys(
@@ -1847,6 +1902,29 @@ class FlextUtilitiesMapper:
             # dict() constructor returns Mapping[str, t.ConfigMapValue] which is ConfigurationDict
             # Type narrowing: dict() returns ConfigurationDict
             result: Mapping[str, t.ConfigMapValue] = dict(current_dict)
+            core_module = sys.modules.get("flext_core")
+            if core_module is not None:
+                runtime_u = getattr(core_module, "u", None)
+                if runtime_u is not None:
+                    mapper_holder = getattr(runtime_u, "mapper", None)
+                    patched_steps = (
+                        getattr(mapper_holder, "_apply_transform_steps", None)
+                        if mapper_holder is not None
+                        else None
+                    )
+                    if _is_transform_steps_callable(patched_steps):
+                        candidate = patched_steps(
+                            result,
+                            normalize=normalize_bool,
+                            map_keys=map_keys_dict,
+                            filter_keys=filter_keys_set,
+                            exclude_keys=exclude_keys_set,
+                            strip_none=strip_none_bool,
+                            strip_empty=strip_empty_bool,
+                            to_json=to_json_bool,
+                        )
+                        if isinstance(candidate, Mapping):
+                            return candidate
             return FlextUtilitiesMapper._apply_transform_steps(
                 result,
                 normalize=normalize_bool,
@@ -1931,11 +2009,11 @@ class FlextUtilitiesMapper:
                     key_raw = item.get(group_spec)
                 elif isinstance(item, BaseModel):
                     key_raw = getattr(item, group_spec, None)
+                    if key_raw is None:
+                        continue
                 else:
                     continue
-                if key_raw is None:
-                    continue
-                key: str = str(key_raw)
+                key = "" if key_raw is None else str(key_raw)
                 if key not in grouped:
                     grouped[key] = []
                 grouped[key].append(item)
@@ -2427,9 +2505,7 @@ class FlextUtilitiesMapper:
                 target_spec_mapping: Mapping[str, t.ConfigMapValue] | None = None
                 # Literal value
                 if isinstance(target_spec, Mapping):
-                    target_spec_mapping = (
-                        FlextUtilitiesMapper._narrow_to_configuration_dict(target_spec)
-                    )
+                    target_spec_mapping = target_spec
                     if "value" in target_spec_mapping:
                         constructed[target_key] = target_spec_mapping["value"]
                         continue

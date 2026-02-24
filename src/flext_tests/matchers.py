@@ -862,10 +862,7 @@ class FlextTestsMatchers:
             if not isinstance(value, params.is_):
                 raise AssertionError(
                     params.msg
-                    or c.Tests.Matcher.ERR_TYPE_FAILED.format(
-                        expected=params.is_,
-                        actual=type(value).__name__,
-                    ),
+                    or f"Assertion failed: {c.Tests.Matcher.ERR_TYPE_FAILED.format(expected=params.is_, actual=type(value).__name__)}",
                 )
         if params.not_ is not None and not isinstance(params.not_, tuple):
             if isinstance(value, params.not_):
@@ -890,10 +887,7 @@ class FlextTestsMatchers:
         ):
             raise AssertionError(
                 params.msg
-                or c.Tests.Matcher.ERR_TYPE_FAILED.format(
-                    expected=params.is_,
-                    actual=type(value).__name__,
-                ),
+                or f"Assertion failed: {c.Tests.Matcher.ERR_TYPE_FAILED.format(expected=params.is_, actual=type(value).__name__)}",
             )
         if (
             params.not_ is not None
@@ -906,9 +900,9 @@ class FlextTestsMatchers:
                 )
             )
         ):
-            error_msg = params.msg or c.Tests.Matcher.ERR_TYPE_FAILED.format(
-                expected=f"not {params.not_}",
-                actual=type(value).__name__,
+            error_msg = (
+                params.msg
+                or f"Assertion failed: {c.Tests.Matcher.ERR_TYPE_FAILED.format(expected=f'not {params.not_}', actual=type(value).__name__)}"
             )
             raise AssertionError(error_msg)
 

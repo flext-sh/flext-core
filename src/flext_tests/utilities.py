@@ -2150,12 +2150,16 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 if isinstance(obj, BaseModel):
-                    source_obj: core_t.ConfigMapValue = obj
+                    dumped = obj.model_dump(mode="python")
+                    source_obj = {
+                        str(key): _to_config_map_value(_to_payload(value))
+                        for key, value in dumped.items()
+                    }
                 else:
-                    source_obj = core_t.ConfigMap({
+                    source_obj = {
                         str(key): _to_config_map_value(value)
                         for key, value in obj.items()
-                    })
+                    }
 
                 for path, expected in spec.items():
                     result = FlextUtilities.Mapper.extract(

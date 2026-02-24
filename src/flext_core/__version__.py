@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib.metadata import PackageMetadata, metadata
+from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
 
 
 class FlextVersion:
@@ -20,7 +20,18 @@ class FlextVersion:
     metadata extraction.
     """
 
-    _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
+    try:
+        _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
+    except PackageNotFoundError:
+        _metadata = {
+            "Version": "0.0.0-dev",
+            "Name": "flext-core",
+            "Summary": "",
+            "Author": "",
+            "Author-Email": "",
+            "License": "",
+            "Home-Page": "",
+        }
 
     __version__ = _metadata["Version"]
     __version_info__ = tuple(

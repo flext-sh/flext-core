@@ -197,7 +197,7 @@ class FlextGenericModels:
                     tenant_id=self.tenant_id,
                     environment=self.environment,
                     version=self.version,
-                    metadata=t.Dict(root=new_metadata),
+                    metadata=t.Dict.model_validate(new_metadata),
                 )
 
             def for_child_operation(
@@ -573,7 +573,7 @@ class FlextGenericModels:
                 """
                 return key in self.config.root
 
-            def to_environment_variables(self, prefix: str = "") -> t.ConfigMap:
+            def to_environment_variables(self, prefix: str = "") -> dict[str, str]:
                 """Convert configuration to environment variable format.
 
                 Args:
@@ -583,10 +583,10 @@ class FlextGenericModels:
                     dict: Environment variable name-value pairs.
 
                 """
-                env_vars = t.ConfigMap(root={})
+                env_vars: dict[str, str] = {}
                 for key, value in self.config.root.items():
                     env_key = f"{prefix}{key.upper()}" if prefix else key.upper()
-                    env_vars.root[env_key] = str(value)
+                    env_vars[env_key] = str(value)
                 return env_vars
 
             def validate_required_keys(self, required_keys: list[str]) -> list[str]:
@@ -1229,8 +1229,8 @@ class FlextGenericModels:
                 default=None,
                 description="Total number of input items",
             )
-            metadata: Metadata = Field(
-                default_factory=Metadata,
+            metadata: t.Dict = Field(
+                default_factory=t.Dict,
                 description="Conversion metadata",
             )
 
@@ -1425,13 +1425,24 @@ class FlextGenericModels:
                 key: Literal["failed_items", "warning_items"],
                 item: t.ConfigMapValue,
             ) -> None:
+                if key not in self.metadata.root:
+                    self.metadata.root[key] = []
+                raw_items = self.metadata.root.get(key, [])
+                items = raw_items if isinstance(raw_items, list) else []
                 if key == "failed_items":
-                    self.metadata.failed_items.append(item)
+                    items.append(item)
+                    self.metadata.root[key] = items
                     return
-                self.metadata.warning_items.append(item)
+                items.append(item)
+                self.metadata.root[key] = items
 
             def _upsert_skip_reason(self, item: t.ConfigMapValue, reason: str) -> None:
-                self.metadata.skip_reasons[str(item)] = reason
+                raw_reasons = self.metadata.root.get("skip_reasons", {})
+                reasons: dict[str, str] = {}
+                if isinstance(raw_reasons, Mapping):
+                    reasons = {str(k): str(v) for k, v in raw_reasons.items()}
+                reasons[str(item)] = reason
+                self.metadata.root["skip_reasons"] = reasons
 
             def add_error(
                 self, error: str, item: t.ConfigMapValue | None = None

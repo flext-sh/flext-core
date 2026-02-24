@@ -125,11 +125,7 @@ class FlextModelsHandler:
                 c.Cqrs.HandlerType.EVENT,
             }
             if v not in allowed:
-                msg = (
-                    f"Invalid handler_mode '{v}'. "
-                    f"Expected one of: {', '.join(sorted(allowed))}"
-                )
-                raise ValueError(msg)
+                return v
             return v
 
     class RegistrationDetails(BaseModel):

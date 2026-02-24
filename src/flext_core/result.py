@@ -180,6 +180,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     @property
+    def data(self) -> T_co:
+        return self.value
+
+    @property
     def returns_result(self) -> Result[T_co, str]:
         """Access the internal returns library Result[T_co, str] for advanced operations."""
         if self._result is None:
@@ -222,6 +226,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         io_result: IOResult[U, str],
     ) -> FlextResult[U]:
+        if not hasattr(io_result, "unwrap") or not hasattr(io_result, "failure"):
+            return cls.fail("Invalid IOResult structure")
         try:
             io_value = io_result.unwrap()
             return cls.ok(unsafe_perform_io(io_value))
@@ -271,6 +277,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return FlextResult[U].ok(inner_result.value)
             return FlextResult[U].fail(inner_result.error or "")
         return FlextResult[U].fail(self.error or "")
+
+    def and_then[U](
+        self,
+        func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
+    ) -> FlextResult[U]:
+        return self.flat_map(func)
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure with fallback value.
@@ -696,4 +708,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
 r = FlextResult
 
-__all__ = ["FlextResult", "r"]
+
+def is_success_result(value: object) -> bool:
+    return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
+
+
+def is_failure_result(value: object) -> bool:
+    return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
+
+
+__all__ = ["FlextResult", "is_failure_result", "is_success_result", "r"]

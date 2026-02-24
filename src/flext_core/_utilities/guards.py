@@ -351,7 +351,7 @@ class FlextUtilitiesGuards:
         """
         if val is None or isinstance(val, (str, int, float, bool)):
             return val
-        if FlextRuntime.is_dict_like(val):
+        if isinstance(val, Mapping):
             # Convert to flat dict with ScalarValue values
             # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
             # ConfigurationMapping is Mapping[str, t.GuardInputValue]
@@ -370,6 +370,8 @@ class FlextUtilitiesGuards:
             # TypeGuard already narrows to Mapping - no extra check needed
             dict_v = dict(val_mapping.items())
             for k, v in dict_v.items():
+                if not isinstance(k, str):
+                    continue
                 # Explicit type annotations for loop variables
                 key: str = k
                 value: t.GuardInputValue = v
@@ -387,7 +389,7 @@ class FlextUtilitiesGuards:
                 else:
                     result_dict[key] = str(value)
             return result_dict
-        if FlextRuntime.is_list_like(val):
+        if isinstance(val, Sequence) and not isinstance(val, str | bytes):
             # Convert to list[t.MetadataAttributeValue]
             # Type narrowing: is_list_like returns TypeGuard[Sequence[t.GuardInputValue]]
             val_sequence = val  # type narrowing via TypeGuard
@@ -412,6 +414,30 @@ class FlextUtilitiesGuards:
                         result_list.append(str(list_item))
             return result_list
         return str(val)
+
+    @staticmethod
+    def is_flexible_value(value: object) -> bool:
+        if value is None or isinstance(value, str | int | float | bool | datetime):
+            return True
+        if isinstance(value, list | tuple):
+            for item in value:
+                if item is not None and not isinstance(
+                    item,
+                    str | int | float | bool | datetime,
+                ):
+                    return False
+            return True
+        if isinstance(value, Mapping):
+            for key, item in value.items():
+                if not isinstance(key, str):
+                    return False
+                if item is not None and not isinstance(
+                    item,
+                    str | int | float | bool | datetime,
+                ):
+                    return False
+            return True
+        return False
 
     # =========================================================================
     # TypeGuard Functions for FLEXT Core Types
@@ -663,7 +689,7 @@ class FlextUtilitiesGuards:
         return hasattr(obj, "app_name") and getattr(obj, "app_name", None) is not None
 
     @staticmethod
-    def is_context(obj: t.GuardInputValue) -> TypeGuard[p.Context]:
+    def is_context(obj: object) -> TypeGuard[p.Context]:
         """Check if object satisfies the Context protocol.
 
         Enables type narrowing for context objects without .
@@ -675,10 +701,17 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Context]: True if obj satisfies Ctx protocol
 
         """
-        return hasattr(obj, "request_id") or hasattr(obj, "correlation_id")
+        return (
+            hasattr(obj, "clone")
+            and callable(getattr(obj, "clone", None))
+            and hasattr(obj, "set")
+            and callable(getattr(obj, "set", None))
+            and hasattr(obj, "get")
+            and callable(getattr(obj, "get", None))
+        )
 
     @staticmethod
-    def _is_context(obj: t.GuardInputValue) -> TypeGuard[p.Context]:
+    def _is_context(obj: object) -> TypeGuard[p.Context]:
         """Private version of is_context for internal protocol checks."""
         return hasattr(obj, "request_id") or hasattr(obj, "correlation_id")
 
@@ -1284,7 +1317,7 @@ class FlextUtilitiesGuards:
             if category == "config":
                 spec = TypeCheckConfig(value=value)
             elif category == "context":
-                spec = TypeCheckContext(value=value)
+                return FlextUtilitiesGuards.is_context(value)
             elif category == "container":
                 spec = TypeCheckContainer(value=value)
             elif category == "command_bus":

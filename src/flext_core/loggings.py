@@ -133,6 +133,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         if operation == c.Logging.ContextOperation.BIND:
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
             return r[bool].ok(value=True)
+        if operation == c.Logging.ContextOperation.UNBIND:
+            keys_value = kwargs.get("keys")
+            if isinstance(keys_value, str):
+                unbind_keys = [keys_value]
+            elif isinstance(keys_value, list | tuple):
+                unbind_keys = [str(key) for key in keys_value]
+            else:
+                return r[bool].ok(value=True)
+
+            if unbind_keys:
+                FlextRuntime.structlog().contextvars.unbind_contextvars(*unbind_keys)
+            return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.CLEAR:
             FlextRuntime.structlog().contextvars.clear_contextvars()
             return r[bool].ok(value=True)

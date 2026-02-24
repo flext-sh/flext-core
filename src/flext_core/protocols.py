@@ -61,7 +61,9 @@ class _ProtocolIntrospection:
             required_members.update(protocol_methods)
 
         required_members = {
-            m for m in required_members if not m.startswith("_") or m.startswith("__")
+            m
+            for m in required_members
+            if (not m.startswith("_") or m.startswith("__") or m == "_protocol_name")
         }
 
         all_annotations: set[str] = set()
@@ -127,7 +129,9 @@ class _ProtocolIntrospection:
         required_members: set[str] = set(protocol_annotations.keys())
         required_members.update(protocol_methods)
         required_members = {
-            m for m in required_members if not m.startswith("_") or m.startswith("__")
+            m
+            for m in required_members
+            if (not m.startswith("_") or m.startswith("__") or m == "_protocol_name")
         }
         if not required_members:
             return False

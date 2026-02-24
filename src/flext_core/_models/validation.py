@@ -430,6 +430,8 @@ class FlextModelsValidation:
     def _event_has_attr(event: EventInput, attr: str) -> bool:
         if isinstance(event, BaseModel) and hasattr(event, attr):
             return True
+        if not FlextRuntime.is_dict_like(event):
+            return False
         return attr in FlextModelsValidation._event_mapping(event)
 
     @staticmethod

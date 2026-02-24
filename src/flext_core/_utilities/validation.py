@@ -281,7 +281,7 @@ class FlextUtilitiesValidation:
             except Exception:
                 return str(component)
 
-        return FlextUtilitiesValidation._ensure_general_value_type(component)
+        return component
 
     @staticmethod
     def _ensure_general_value_type(
@@ -590,6 +590,9 @@ class FlextUtilitiesValidation:
             return tuple(value)
         if isinstance(value, Mapping):
             return FlextUtilitiesValidation._normalize_object_mapping(value)
+        if FlextUtilitiesGuards.is_type(value, "mapping"):
+            text_value = str(value)
+            return {text_value: text_value}
         msg = f"Unsupported type for normalization: {value.__class__.__name__}"
         raise TypeError(msg)
 

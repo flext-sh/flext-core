@@ -332,6 +332,9 @@ class FlextTypes:
             """Get length."""
             return len(self.root)
 
+        def __iter__(self):
+            return iter(self.root)
+
         def __contains__(self, key: str) -> bool:
             """Check if key exists."""
             return key in self.root
@@ -372,14 +375,14 @@ class FlextTypes:
             """Set default value for key."""
             return self.root.setdefault(key, default)
 
-    class Dict(RootModel[dict[str, _ContainerValue]], _DictMixin[_ContainerValue]):
+    class Dict(_DictMixin[_ContainerValue], RootModel[dict[str, _ContainerValue]]):
         """Generic dictionary container. Prefer m.Dict in public API."""
 
         root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     class ConfigMap(
-        RootModel[dict[str, _ContainerValue]],
         _DictMixin[_ContainerValue],
+        RootModel[dict[str, _ContainerValue]],
     ):
         """Configuration map container. Prefer m.ConfigMap in public API."""
 

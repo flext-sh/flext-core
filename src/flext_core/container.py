@@ -601,12 +601,8 @@ class FlextContainer(FlextRuntime, p.DI):
         # Register context if not already registered
         # ServiceRegistration uses SkipValidation - can register any service type
         if not self.has_service("context") and self._context is not None:
-            context_payload: object = self._context
-            to_json = getattr(self._context, "to_json", None)
-            if callable(to_json):
-                context_payload = to_json()
-            if self._is_registerable_service(context_payload):
-                _ = self.register("context", context_payload)
+            if self._is_registerable_service(self._context):
+                _ = self.register("context", self._context)
 
     @override
     def configure(
@@ -920,6 +916,10 @@ class FlextContainer(FlextRuntime, p.DI):
             value, (str, bytes, bytearray)
         ):
             return True
+        if FlextContainer._is_context_protocol(value):
+            return True
+        if hasattr(value, "__dict__"):
+            return True
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
@@ -1200,13 +1200,8 @@ class FlextContainer(FlextRuntime, p.DI):
             else:
                 scoped_context = FlextContext()
         else:
-            context_clone_method = getattr(context, "clone", None)
-            if callable(context_clone_method):
-                candidate_context = context_clone_method()
-                if self._is_context_protocol(candidate_context):
-                    scoped_context = candidate_context
-                else:
-                    scoped_context = self.context.clone()
+            if self._is_context_protocol(context):
+                scoped_context = context
             else:
                 scoped_context = self.context.clone()
 

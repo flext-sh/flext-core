@@ -178,6 +178,11 @@ class FlextUtilitiesPagination:
                 "Invalid pagination data structure",
             )
 
+        if not FlextRuntime.is_list_like(data):
+            data = str(data)
+        if not FlextRuntime.is_dict_like(pagination):
+            pagination = str(pagination)
+
         response: Mapping[str, t.ConfigMapValue] = {
             "data": data,
             "pagination": pagination,

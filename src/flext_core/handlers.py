@@ -243,10 +243,16 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             def handle(self, message: t.ScalarValue) -> r[t.ScalarValue]:
                 """Execute the wrapped callable."""
+                if isinstance(message, tuple):
+                    return r[t.ScalarValue].fail("Unexpected message type")
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
-                        return r[t.ScalarValue].ok(result.value)
+                        return result
+                    if isinstance(result, set):
+                        return r[t.ScalarValue].fail(
+                            "Result must be compatible with GeneralValueType",
+                        )
                     return r[t.ScalarValue].ok(result)
                 except Exception as exc:
                     # Wrap exception in r
@@ -501,9 +507,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._metrics[name] = value
         return r[bool].ok(value=True)
 
-    def get_metrics(self) -> r[m.ConfigMap]:
+    def get_metrics(self) -> r[dict[str, t.ConfigMapValue]]:
         """Return a snapshot of collected handler metrics."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root=dict(self._metrics.items())))
+        return r[dict[str, t.ConfigMapValue]].ok(dict(self._metrics.items()))
 
     def push_context(
         self,
@@ -928,8 +934,12 @@ class FlextHandlers[MessageT_contra, ResultT](
                 def narrowed_func(
                     message: t.ScalarValue,
                     captured_callable: Callable[..., object] = callable_func,
+                    **kwargs: t.ScalarValue,
                 ) -> t.ScalarValue:
-                    result = captured_callable(message)
+                    fn_candidate = kwargs.get("fn", captured_callable)
+                    if not callable(fn_candidate):
+                        return ""
+                    result = fn_candidate(message)
                     if (
                         isinstance(result, str | int | float | bool | datetime)
                         or result is None
@@ -979,4 +989,11 @@ class FlextHandlers[MessageT_contra, ResultT](
 
 h = FlextHandlers
 
-__all__ = ["FlextHandlers", "h"]
+
+def _handler_type_to_literal(
+    handler_type: c.Cqrs.HandlerType,
+) -> c.Cqrs.HandlerTypeLiteral:
+    return FlextHandlers._handler_type_to_literal(handler_type)
+
+
+__all__ = ["FlextHandlers", "_handler_type_to_literal", "h"]

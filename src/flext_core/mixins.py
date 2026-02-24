@@ -17,6 +17,7 @@ from functools import partial
 from types import ModuleType
 from typing import ClassVar
 
+from pydantic import BaseModel
 from pydantic import PrivateAttr
 
 from flext_core.constants import c
@@ -103,15 +104,43 @@ class FlextMixins(FlextRuntime):
         if obj is None:
             return m.ConfigMap()
 
+        if isinstance(obj, m.ConfigMap):
+            return obj
+
         model_dump_callable = getattr(obj, "model_dump", None)
         if callable(model_dump_callable):
             model_dump_result = model_dump_callable()
             try:
-                return m.ConfigMap.model_validate(model_dump_result)
+                normalized_model_dump: dict[str, t.ConfigMapValue] = {}
+                if isinstance(model_dump_result, Mapping):
+                    for key, value in model_dump_result.items():
+                        normalized_value: t.ConfigMapValue = (
+                            FlextRuntime.normalize_to_general_value(value)
+                            if isinstance(
+                                value,
+                                str | int | float | bool | type(None) | BaseModel,
+                            )
+                            else str(value)
+                        )
+                        normalized_model_dump[str(key)] = normalized_value
+                return m.ConfigMap.model_validate(normalized_model_dump)
             except Exception:
                 return m.ConfigMap(root={"value": str(model_dump_result)})
 
         try:
+            if isinstance(obj, Mapping):
+                normalized_mapping: dict[str, t.ConfigMapValue] = {}
+                for key, value in obj.items():
+                    normalized_value: t.ConfigMapValue = (
+                        FlextRuntime.normalize_to_general_value(value)
+                        if isinstance(
+                            value,
+                            str | int | float | bool | type(None) | BaseModel,
+                        )
+                        else str(value)
+                    )
+                    normalized_mapping[str(key)] = normalized_value
+                return m.ConfigMap.model_validate(normalized_mapping)
             return m.ConfigMap.model_validate(obj)
         except Exception:
             return m.ConfigMap()
@@ -205,9 +234,14 @@ class FlextMixins(FlextRuntime):
             if callable(runtime_options_callable)
             else p.RuntimeBootstrapOptions()
         )
-        options: p.RuntimeBootstrapOptions = p.RuntimeBootstrapOptions.model_validate(
-            options_candidate,
-        )
+        try:
+            options: p.RuntimeBootstrapOptions = (
+                p.RuntimeBootstrapOptions.model_validate(
+                    options_candidate,
+                )
+            )
+        except Exception:
+            options = p.RuntimeBootstrapOptions()
 
         config_type_raw = options.config_type
         config_cls_typed: type[FlextSettings]
@@ -342,8 +376,10 @@ class FlextMixins(FlextRuntime):
             """Register service in container."""
             # Get container with explicit type for registration
             container = self.container
-            service_instance: t.RegisterableService = service_name
-            result = container.register(service_name, service_instance)
+            if isinstance(self, BaseModel):
+                result = container.register(service_name, self)
+            else:
+                result = container.register(service_name, service_name)
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
                 error_msg = result.error or ""
@@ -396,7 +432,17 @@ class FlextMixins(FlextRuntime):
             container_impl: p.DI = container
             with suppress(ValueError, TypeError):
                 # Ignore if already registered (race condition)
-                _ = container_impl.register(logger_key, logger)
+                if hasattr(container_impl, "register_factory"):
+
+                    def logger_factory() -> t.RegisterableService:
+                        return {"logger": logger_name}
+
+                    _ = container_impl.register_factory(
+                        logger_key,
+                        logger_factory,
+                    )
+                else:
+                    _ = container_impl.register(logger_key, logger)
 
             # Cache the result
             with cls._cache_lock:
@@ -696,7 +742,7 @@ class FlextMixins(FlextRuntime):
                         self._stack.append(execution_ctx)
                 return r[bool].ok(value=True)
 
-            def pop_context(self) -> r[m.ConfigMap]:
+            def pop_context(self) -> r[dict[str, t.ConfigMapValue]]:
                 """Pop execution context from the stack.
 
                 Returns:
@@ -716,10 +762,14 @@ class FlextMixins(FlextRuntime):
                                     "handler_mode": execution_ctx.handler_mode,
                                 }
                             )
-                            return r[m.ConfigMap].ok(context_dict)
+                            return r[dict[str, t.ConfigMapValue]].ok(context_dict.root)
                         case m.ConfigMap() as popped_dict:
-                            return r[m.ConfigMap].ok(popped_dict)
-                return r[m.ConfigMap].ok(m.ConfigMap())
+                            return r[dict[str, t.ConfigMapValue]].ok(popped_dict.root)
+                        case dict() as popped_plain:
+                            return r[dict[str, t.ConfigMapValue]].ok(
+                                dict(popped_plain),
+                            )
+                return r[dict[str, t.ConfigMapValue]].ok({})
 
             def current_context(self) -> m.Handler.ExecutionContext | None:
                 """Get current execution context without popping.

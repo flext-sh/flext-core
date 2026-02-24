@@ -28,6 +28,13 @@ class _Predicate(Protocol[_PredicateT_contra]):
     def __call__(self, value: _PredicateT_contra) -> bool: ...
 
 
+@runtime_checkable
+class _ResultLike(Protocol):
+    is_success: bool
+    value: object
+    error: object
+
+
 class _BatchResultCompat(t.BatchResultDict):
     def __getitem__(self, key: str) -> t.GuardInputValue:
         values: Mapping[str, t.GuardInputValue] = {
@@ -66,6 +73,14 @@ class FlextUtilitiesCollection:
             return guard_value_adapter.validate_python(value)
         except ValidationError:
             return str(value)
+
+    @staticmethod
+    def _is_result_like(value: object) -> TypeGuard[_ResultLike]:
+        return (
+            hasattr(value, "is_success")
+            and hasattr(value, "value")
+            and hasattr(value, "error")
+        )
 
     # =========================================================================
     # Type Guards for Runtime Type Narrowing
@@ -414,7 +429,7 @@ class FlextUtilitiesCollection:
             try:
                 result_raw = operation(item)
                 # Handle both direct returns and FlextResult returns
-                if isinstance(result_raw, r):
+                if FlextUtilitiesCollection._is_result_like(result_raw):
                     if result_raw.is_success:
                         value = FlextUtilitiesCollection._coerce_guard_value(
                             result_raw.value,

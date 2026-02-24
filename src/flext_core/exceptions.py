@@ -156,7 +156,7 @@ class FlextExceptions:
         """Validated params for AttributeAccessError."""
 
         attribute_name: str | None = Field(default=None, strict=True)
-        attribute_context: str | None = Field(default=None, strict=True)
+        attribute_context: t.MetadataAttributeValue | None = Field(default=None)
 
     @staticmethod
     def _safe_optional_str(
@@ -1659,4 +1659,6 @@ class FlextExceptions:
 
 e = FlextExceptions
 
-__all__ = ["FlextExceptions", "e"]
+_Metadata = m.Metadata
+
+__all__ = ["FlextExceptions", "_Metadata", "e"]

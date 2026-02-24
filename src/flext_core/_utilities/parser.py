@@ -63,6 +63,11 @@ class FlextUtilitiesParser:
     @staticmethod
     def _safe_text_length(text: t.ConfigMapValue) -> str | int:
         """Safely get text length for logging."""
+        if isinstance(text, str | bytes):
+            try:
+                return len(text)
+            except (TypeError, AttributeError):
+                return "unknown"
         try:
             text_value: str | bytes = TypeAdapter(str | bytes).validate_python(text)
             return len(text_value)
@@ -723,7 +728,7 @@ class FlextUtilitiesParser:
             key = obj
         elif (dunder_name := getattr(obj, "__name__", None)).__class__ is str:
             key = dunder_name
-        elif Mapping in obj.__class__.__mro__:
+        elif isinstance(obj, Mapping):
             # After isinstance, obj is Mapping - use directly
             mapping_key = self._extract_key_from_mapping(obj)
             key = mapping_key if mapping_key is not None else obj.__class__.__name__
@@ -1743,12 +1748,12 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | t.ConfigMap,
+        items: list[str] | t.ConfigMap | Mapping[str, t.ConfigMapValue],
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | t.ConfigMap:
+    ) -> list[str] | set[str] | t.ConfigMap | dict[str, str]:
         """Normalize list/dict (builder: norm().list()).
 
         Mnemonic: norm = normalize, list = list[str]
@@ -1763,14 +1768,18 @@ class FlextUtilitiesParser:
             Normalized list/set/dict
 
         """
-        if isinstance(items, t.ConfigMap):
-            dict_items: Mapping[str, t.ConfigMapValue] = items.root
+        if isinstance(items, t.ConfigMap | Mapping):
+            dict_items: Mapping[str, t.ConfigMapValue]
+            if isinstance(items, t.ConfigMap):
+                dict_items = items.root
+            else:
+                dict_items = items
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
-            return t.ConfigMap({
+            return {
                 k: FlextUtilitiesParser.norm_str(v, case=case)
                 for k, v in dict_items.items()
-            })
+            }
 
         # items is list[str] here
         list_items = items
@@ -1808,7 +1817,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: list[str] | m.ConfigMap,
+        items: list[str] | m.ConfigMap | Mapping[str, t.ConfigMapValue],
         *,
         case: str | None = None,
     ) -> bool:
@@ -1828,6 +1837,8 @@ class FlextUtilitiesParser:
         items_to_check: list[str]
         if isinstance(items, m.ConfigMap):
             items_to_check = [str(k) for k in items.root]
+        elif isinstance(items, Mapping):
+            items_to_check = [str(k) for k in items]
         elif isinstance(items, list):
             items_to_check = items
         else:
@@ -1842,6 +1853,8 @@ class FlextUtilitiesParser:
             return normalized_value in normalized_result
         if isinstance(normalized_result, t.ConfigMap):
             return normalized_value in normalized_result.root.values()
+        if isinstance(normalized_result, Mapping):
+            return normalized_value in normalized_result.values()
         return False
 
 

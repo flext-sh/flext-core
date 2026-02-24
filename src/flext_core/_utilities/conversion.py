@@ -264,7 +264,13 @@ class FlextUtilitiesConversion:
     @staticmethod
     def to_general_value_type(value: StrictJsonValue) -> StrictJsonValue:
         """Return strict value without compatibility coercion."""
-        return value
+        if value is None or isinstance(
+            value, str | int | float | bool | list | Mapping
+        ):
+            return value
+        if isinstance(value, BaseModel):
+            return value
+        return str(value)
 
     @staticmethod
     def to_flexible_value(value: StrictJsonValue) -> StrictJsonScalar | None:
@@ -285,10 +291,16 @@ class FlextUtilitiesConversion:
         # where scalar = str | int | float | bool | datetime | None
         if value is None:
             return None
+        if isinstance(value, BaseModel | Mapping | list | tuple | set | frozenset):
+            return None
+        if callable(value):
+            return None
+        if hasattr(value, "isoformat") and callable(getattr(value, "isoformat", None)):
+            return str(value)
         try:
             return _StrictJsonScalarModel.model_validate({"value": value}).value
         except ValidationError:
-            return None
+            return str(value)
 
     @staticmethod
     def to_str_list_safe(

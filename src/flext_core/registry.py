@@ -331,6 +331,9 @@ class FlextRegistry(FlextService[bool]):
             r[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
         """
+        if handler is None:
+            return r[m.HandlerRegistrationDetails].fail("Handler cannot be None")
+
         # Propagate context for distributed tracing
         handler_name = handler.__class__.__name__ if handler else "unknown"
         self._propagate_context(f"register_handler_{handler_name}")

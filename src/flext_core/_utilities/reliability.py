@@ -536,7 +536,9 @@ class FlextUtilitiesReliability:
                 value: t.ConfigMapValue,
             ) -> t.ConfigMapValue | r[t.ConfigMapValue]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                return result.value if result.is_success else result
+                if isinstance(result, r):
+                    return result.value if result.is_success else result
+                return result
 
             return piped
 

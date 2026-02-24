@@ -27,7 +27,7 @@ from typing import Never, TypeVar
 from flext_core import r
 from pydantic import BaseModel
 
-from flext_tests.base import s
+from flext_tests.base import FlextTestsUtilityBase as s
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
@@ -1170,9 +1170,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             # Type annotation - params.type_ is validated to be type[T]
             type_cls: type[T] = params.type_
             instance = type_cls(*args, **kwargs_dict)
-            if params.validate_fn and not params.validate_fn(
-                _to_payload_value(instance)
-            ):
+            if params.validate_fn and not params.validate_fn(instance):
                 type_name = getattr(type_cls, "__name__", "Unknown")
                 raise ValueError(f"Validation failed for {type_name}")
             return instance

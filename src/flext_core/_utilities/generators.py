@@ -141,12 +141,20 @@ class FlextUtilitiesGenerators:
             raise TypeError(msg)
 
         if isinstance(context, Mapping):
-            return context
+            try:
+                return dict(context.items())
+            except (TypeError, ValueError, AttributeError) as e:
+                msg = f"Failed to convert Mapping {context.__class__.__name__}: {e}"
+                raise TypeError(msg) from e
+
+        if not isinstance(context, BaseModel):
+            msg = f"Context must be dict, Mapping, or BaseModel, got {context.__class__.__name__}"
+            raise TypeError(msg)
 
         try:
             model_data = FlextRuntime.normalize_to_general_value(context.model_dump())
             if FlextUtilitiesGenerators._is_config_mapping(model_data):
-                return model_data
+                return dict(model_data.items())
         except (AttributeError, TypeError) as e:
             msg = (
                 f"Failed to dump BaseModel {context.__class__.__name__}: "
@@ -286,17 +294,30 @@ class FlextUtilitiesGenerators:
         if value is None:
             if default is not None:
                 return default
+            msg = "Value cannot be None"
+            raise TypeError(msg)
+
+        if isinstance(value, dict):
+            return value
+
+        if isinstance(value, Mapping):
+            try:
+                return dict(value.items())
+            except (TypeError, ValueError, AttributeError) as e:
+                msg = f"Failed to convert Mapping {value.__class__.__name__}: {e}"
+                raise TypeError(msg) from e
+
+        if isinstance(value, BaseModel):
+            normalized = FlextRuntime.normalize_to_general_value(value)
+            if isinstance(normalized, Mapping):
+                try:
+                    return dict(normalized.items())
+                except (TypeError, ValueError, AttributeError):
+                    return {}
             return {}
 
-        normalized = FlextRuntime.normalize_to_general_value(value)
-        try:
-            return t.ConfigMap.model_validate(normalized).root
-        except Exception:
-            wrapped = FlextRuntime.normalize_to_general_value({"value": normalized})
-            try:
-                return t.ConfigMap.model_validate(wrapped).root
-            except Exception:
-                return {}
+        msg = f"Cannot convert {value.__class__.__name__} to dict"
+        raise TypeError(msg)
 
     @staticmethod
     def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:

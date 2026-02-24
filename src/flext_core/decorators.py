@@ -482,22 +482,36 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, t.MetadataAttributeValue] = {
+                    start_extra: dict[str, t.MetadataScalarValue] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
 
-                    _ = result_logger.debug(
-                        "%s_started",
-                        op_name,
-                        **start_extra,
-                    )
+                    if correlation_id is not None:
+                        _ = result_logger.debug(
+                            "%s_started",
+                            op_name,
+                            extra={
+                                "function": func.__name__,
+                                "func_module": func.__module__,
+                                "correlation_id": correlation_id,
+                            },
+                        )
+                    else:
+                        _ = result_logger.debug(
+                            "%s_started",
+                            op_name,
+                            extra={
+                                "function": func.__name__,
+                                "func_module": func.__module__,
+                            },
+                        )
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, t.MetadataAttributeValue] = {
+                    completion_extra: dict[str, t.MetadataScalarValue] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -515,7 +529,7 @@ class FlextDecorators(FlextRuntime):
                     _ = result_logger.debug(
                         "%s_completed",
                         op_name,
-                        **completion_extra,
+                        extra=dict(completion_extra),
                     )
                     return result
                 except (
@@ -881,13 +895,37 @@ class FlextDecorators(FlextRuntime):
                     ),
                 )
                 try:
-                    return FlextDecorators._execute_retry_loop(
+                    retry_result = FlextDecorators._execute_retry_loop(
                         func,
                         args,
                         kwargs,
                         logger,
                         retry_config=retry_config,
                     )
+                    if isinstance(retry_result, Exception):
+                        try:
+                            FlextDecorators._handle_retry_exhaustion(
+                                retry_result,
+                                func,
+                                attempts,
+                                error_code,
+                                logger,
+                            )
+                        except Exception:
+                            raise
+                        retry_error_code = (
+                            error_code
+                            if error_code is not None
+                            else "OPERATION_TIMEOUT"
+                        )
+                        raise e.TimeoutError(
+                            f"Operation {func.__name__} failed after {attempts} attempts",
+                            error_code=retry_error_code,
+                            operation=func.__name__,
+                            attempts=attempts,
+                            original_error=str(retry_result),
+                        )
+                    return retry_result
                 except (
                     AttributeError,
                     TypeError,
@@ -936,7 +974,7 @@ class FlextDecorators(FlextRuntime):
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
-    ) -> R:
+    ) -> R | Exception:
         """Execute retry loop and return last exception.
 
         Uses RetryConfiguration model to reduce parameter count from 8 to 5.
@@ -1018,8 +1056,8 @@ class FlextDecorators(FlextRuntime):
         # Should never be None (loop always catches exceptions), but handle defensively
         if last_exception is None:
             msg = "Retry loop completed without success or exception"
-            raise RuntimeError(msg)
-        raise last_exception
+            return RuntimeError(msg)
+        return last_exception
 
     @staticmethod
     def _handle_retry_exhaustion(
@@ -1040,7 +1078,16 @@ class FlextDecorators(FlextRuntime):
                 "error_type": last_exception.__class__.__name__,
             },
         )
-        _ = error_code
+        if last_exception:
+            raise last_exception
+        retry_error_code = error_code if error_code is not None else "OPERATION_TIMEOUT"
+        raise e.TimeoutError(
+            f"Operation {func.__name__} failed after {attempts} attempts",
+            error_code=retry_error_code,
+            operation=func.__name__,
+            attempts=attempts,
+            original_error=str(last_exception),
+        )
 
     @staticmethod
     def _bind_operation_context(

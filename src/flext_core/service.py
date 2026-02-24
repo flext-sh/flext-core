@@ -117,6 +117,13 @@ class FlextService[TDomainResult](
         ):
             super().__init__(**data)
 
+        if not isinstance(runtime.context, FlextContext):
+            msg = "Expected FlextContext"
+            raise TypeError(msg)
+        if not isinstance(runtime.config, FlextSettings):
+            msg = "Expected FlextSettings"
+            raise TypeError(msg)
+
         # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
         self._config = FlextSettings.model_validate(runtime.config.model_dump())
@@ -279,6 +286,20 @@ class FlextService[TDomainResult](
         options_raw: p.RuntimeBootstrapOptions,
     ) -> p.RuntimeBootstrapOptions:
         del cls
+        if isinstance(options_raw, Mapping):
+            raw_services = options_raw.get("services")
+            if isinstance(raw_services, Mapping):
+                filtered_services: dict[str, t.RegisterableService] = {}
+                for name, service in raw_services.items():
+                    if FlextContainer._is_registerable_service(service):
+                        filtered_services[str(name)] = service
+            else:
+                filtered_services = {}
+            validation_input = {
+                key: value for key, value in options_raw.items() if key != "services"
+            }
+            validated = p.RuntimeBootstrapOptions.model_validate(validation_input)
+            return validated.model_copy(update={"services": filtered_services or None})
         return p.RuntimeBootstrapOptions.model_validate(options_raw)
 
     @classmethod
@@ -289,19 +310,15 @@ class FlextService[TDomainResult](
         del cls
         if services is None:
             return None
-
-        normalized = m.ServiceMap.model_validate(
-            {
-                name: service
-                for name, service in services.items()
-                if FlextService._is_scoped_service_candidate(service)
-            },
-        )
-
-        return normalized.root or None
+        normalized = {
+            str(name): service
+            for name, service in services.items()
+            if FlextService._is_scoped_service_candidate(service)
+        }
+        return normalized or None
 
     @staticmethod
-    def _is_scoped_service_candidate(service: t.RegisterableService) -> bool:
+    def _is_scoped_service_candidate(service: object) -> bool:
         return FlextContainer._is_registerable_service(service)
 
     @classmethod

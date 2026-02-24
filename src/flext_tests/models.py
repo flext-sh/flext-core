@@ -398,7 +398,7 @@ class FlextTestsModels(FlextModels):
                     default=False,
                     description="Wrap result in FlextResult",
                 )
-                validate_fn: Callable[[t.Tests.PayloadValue], bool] | None = Field(
+                validate_fn: Callable[[object], bool] | None = Field(
                     default=None,
                     alias="validate",
                     description="Validation predicate (must return True for success)",
@@ -435,8 +435,14 @@ class FlextTestsModels(FlextModels):
             class Entity(FlextModels.Entity):
                 """Factory entity class for tests."""
 
+                name: str = ""
+                value: t.Tests.PayloadValue = None
+
             class ValueObject(FlextModels.ValueObject):
                 """Factory value object class for tests."""
+
+                data: str = ""
+                count: int = 0
 
         class Files:
             """File-related models for test infrastructure."""

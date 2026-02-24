@@ -16,7 +16,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    TypeAdapter,
     field_validator,
     model_validator,
 )
@@ -135,24 +134,19 @@ class FlextModelsConfig:
             v: list[int] | list[t.ScalarValue],
         ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
-            # Use default HTTP status code range (100-599) - domain-specific validation
-            # removed from flext-core per domain violation rules
-            # Accept only int or str (e.g. from YAML/JSON); reject other types.
-            try:
-                normalized_items = TypeAdapter(list[int | str]).validate_python(v)
-            except Exception as exc:
-                msg = f"retry_on_status_codes item must be int or str: {exc}"
-                raise TypeError(msg) from exc
-
             codes_for_validation: list[int] = []
-            for item in normalized_items:
+            for item in v:
                 if isinstance(item, bool):
                     msg = "retry_on_status_codes item must be int or str, got bool"
                     raise TypeError(msg)
                 if isinstance(item, int):
                     codes_for_validation.append(item)
                 else:
-                    codes_for_validation.append(int(item))
+                    try:
+                        codes_for_validation.append(int(str(item)))
+                    except (TypeError, ValueError) as exc:
+                        msg = f"retry_on_status_codes item must be int or str: {exc}"
+                        raise TypeError(msg) from exc
             result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
@@ -244,7 +238,7 @@ class FlextModelsConfig:
                 raise ValueError(msg)
 
             adjusted_workers = min(self.max_workers, self.batch_size)
-            self.max_workers = adjusted_workers
+            object.__setattr__(self, "max_workers", adjusted_workers)
 
             return self
 

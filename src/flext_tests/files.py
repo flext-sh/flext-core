@@ -1788,17 +1788,16 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if validate_model is not None:
             model_name = validate_model.__name__
             if parsed_content is not None and not isinstance(parsed_content, list):
-                # Use u.Model.load() for Pydantic validation
                 content_dict = (
                     parsed_content
                     if isinstance(parsed_content, dict)
                     else dict(parsed_content)
                 )
-                validation_result = u.Model.load(
-                    validate_model,
-                    m.ConfigMap.model_validate(content_dict),
-                )
-                model_valid = validation_result.is_success
+                try:
+                    _ = validate_model.model_validate(content_dict)
+                    model_valid = True
+                except Exception:
+                    model_valid = False
             elif fmt in {"json", "yaml"} and text.strip():
                 # Content exists but couldn't be parsed or isn't dict
                 model_valid = False

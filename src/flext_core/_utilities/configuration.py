@@ -260,9 +260,25 @@ class FlextUtilitiesConfiguration:
         """
         try:
             obj_dict = obj.model_dump()
-            if FlextRuntime.is_dict_like(obj_dict) and parameter in obj_dict:
+            if isinstance(obj_dict, Mapping) and parameter in obj_dict:
                 return (True, obj_dict[parameter])
-        except (AttributeError, TypeError, ValueError):
+        except (AttributeError, TypeError, ValueError, RuntimeError):
+            pass
+        return FlextUtilitiesConfiguration._NOT_FOUND
+
+    @staticmethod
+    def _try_get_from_duck_model_dump(
+        obj: object,
+        parameter: str,
+    ) -> tuple[bool, t.ConfigMapValue | None]:
+        try:
+            model_dump_attr = getattr(obj, "model_dump", None)
+            if model_dump_attr is None or not callable(model_dump_attr):
+                return FlextUtilitiesConfiguration._NOT_FOUND
+            obj_dict = model_dump_attr()
+            if isinstance(obj_dict, Mapping) and parameter in obj_dict:
+                return (True, obj_dict[parameter])
+        except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND
 
@@ -357,7 +373,7 @@ class FlextUtilitiesConfiguration:
                 obj,
                 parameter,
             )
-            if found and value is not None:
+            if found:
                 return value
 
         # Strategy 2: Dict-like (Mapping / m.ConfigMap)
@@ -366,12 +382,18 @@ class FlextUtilitiesConfiguration:
                 obj,
                 parameter,
             )
-            if found and value is not None:
+            if found:
                 return value
 
-        # Strategy 3: Direct attribute access (final fallback)
+        found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            obj,
+            parameter,
+        )
+        if found:
+            return duck_value
+
         found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
-        if found and attr_val is not None:
+        if found:
             return attr_val
 
         class_name = obj.__class__.__name__
