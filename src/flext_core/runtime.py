@@ -28,11 +28,11 @@ and provides type guards and serialization utilities.
 - NO imports from higher layers (result.py, container.py, etc.)
 - Pure Layer 0.5 implementation - safe from circular imports
 
-**Usage Patterns**:
-1. **Type Guards**: Use is_valid_phone(), is_valid_json() for pattern validation
-4. **Structured Logging**: Use configure_structlog() once at startup
-5. **Service Integration**: Use FlextRuntime.Integration.track_service_resolution()
-6. **Domain Events**: Use FlextRuntime.Integration.track_domain_event()
+**Usage** (runtime aliases only; MRO protocol; no subdivision):
+- At call sites use project namespace: c, m, r, t, u, p, d, e, h, s, x from project __init__.
+- Facade resolution when needed: FlextRuntime.Aliases.* (staticmethod); subprojects register_aliases().
+- Runtime helpers via x (e.g. x.create_instance, x.is_dict_like); no FlextRuntime.* at call sites.
+- Direct methods only; aliases/namespaces via MRO registration protocol only.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -457,6 +457,78 @@ class FlextRuntime:
         """
         # object.__new__(class_type) returns an instance of class_type (Python guarantee).
         return object.__new__(class_type)
+
+    # =========================================================================
+    # RUNTIME ALIASES (staticmethod lazy facade access - single namespace)
+    # =========================================================================
+    # Subprojects use project __init__ (e.g. from flext_cli import m). Lazy import avoids circular deps.
+    # =========================================================================
+
+    @staticmethod
+    def models():
+        """Return FlextModels facade (lazy). Use: m = FlextRuntime.models()."""
+        from flext_core.models import FlextModels
+        return FlextModels
+
+    @staticmethod
+    def constants():
+        """Return FlextConstants facade (lazy). Use: c = FlextRuntime.constants()."""
+        from flext_core.constants import FlextConstants
+        return FlextConstants
+
+    @staticmethod
+    def types():
+        """Return FlextTypes facade (lazy). Use: t = FlextRuntime.types()."""
+        from flext_core.typings import FlextTypes
+        return FlextTypes
+
+    @staticmethod
+    def result():
+        """Return FlextResult facade (lazy). Use: r = FlextRuntime.result()."""
+        from flext_core.result import FlextResult
+        return FlextResult
+
+    @staticmethod
+    def protocols():
+        """Return FlextProtocols facade (lazy). Use: p = FlextRuntime.protocols()."""
+        from flext_core.protocols import FlextProtocols
+        return FlextProtocols
+
+    @staticmethod
+    def utilities():
+        """Return FlextUtilities facade (lazy). Use: u = FlextRuntime.utilities()."""
+        from flext_core.utilities import FlextUtilities
+        return FlextUtilities
+
+    @staticmethod
+    def decorators():
+        """Return FlextDecorators facade (lazy). Use: d = FlextRuntime.decorators()."""
+        from flext_core.decorators import FlextDecorators
+        return FlextDecorators
+
+    @staticmethod
+    def exceptions():
+        """Return FlextExceptions facade (lazy). Use: e = FlextRuntime.exceptions()."""
+        from flext_core.exceptions import FlextExceptions
+        return FlextExceptions
+
+    @staticmethod
+    def handlers():
+        """Return FlextHandlers facade (lazy). Use: h = FlextRuntime.handlers()."""
+        from flext_core.handlers import FlextHandlers
+        return FlextHandlers
+
+    @staticmethod
+    def service():
+        """Return FlextService facade (lazy). Use: s = FlextRuntime.service()."""
+        from flext_core.service import FlextService
+        return FlextService
+
+    @staticmethod
+    def mixins():
+        """Return FlextMixins facade (lazy). Use: x = FlextRuntime.mixins()."""
+        from flext_core.mixins import FlextMixins
+        return FlextMixins
 
     # =========================================================================
     # TYPE GUARD UTILITIES

@@ -1605,9 +1605,7 @@ class FlextDecorators(FlextRuntime):
 
         return decorator
 
-    # Re-export FactoryDecoratorsDiscovery for backward compatibility
-    # FactoryDecoratorsDiscovery is now in _decorators/ to break circular dependencies
-    FactoryDiscovery = FactoryDecoratorsDiscovery
+    # FactoryDecoratorsDiscovery lives in _decorators/; use it or d from facade.
 
 
 __all__ = [

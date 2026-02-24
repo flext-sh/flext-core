@@ -20,10 +20,6 @@ from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes as t
 
-# Use centralized version from _utilities/conversion.py
-_to_general_value_type = FlextUtilitiesConversion.to_general_value_type
-
-
 class FlextModelsCollections:
     """Collection models container class."""
 
@@ -214,7 +210,7 @@ class FlextModelsCollections:
                 normalized_list: list[t.GuardInputValue] = []
                 for item in value_list:
                     # Convert T to PayloadValue first
-                    general_value = _to_general_value_type(item)
+                    general_value = FlextUtilitiesConversion.to_general_value_type(item)
                     # Then normalize recursively
                     normalized = FlextRuntime.normalize_to_general_value(general_value)
                     normalized_list.append(normalized)

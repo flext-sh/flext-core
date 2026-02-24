@@ -17,10 +17,10 @@ from pydantic import Field, field_validator
 from structlog.typing import BindableLogger
 
 from flext_core._models.base import FlextModelsBase
-from flext_core.constants import c
-from flext_core.result import r
+from flext_core.constants import FlextConstants as c
+from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 
 def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
@@ -36,7 +36,9 @@ def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
 
 class _ComparableConfigMap(t.ConfigMap):
     def __eq__(self, other: t.GuardInputValue) -> bool:
-        if other.__class__ is dict or (Mapping in other.__class__.__mro__):
+        if isinstance(other, dict):
+            return self.root == other
+        if isinstance(other, Mapping):
             return self.root == dict(other.items())
         return super().__eq__(other)
 
@@ -80,12 +82,20 @@ class FlextModelsEntity:
             cls,
             value: t.GuardInputValue,
         ) -> _ComparableConfigMap:
-            if _ComparableConfigMap in value.__class__.__mro__:
+            if isinstance(value, _ComparableConfigMap):
                 return value
-            if t.ConfigMap in value.__class__.__mro__:
+            if isinstance(value, t.ConfigMap):
                 return _ComparableConfigMap(root=dict(value.items()))
-            if value.__class__ is dict or (Mapping in value.__class__.__mro__):
+            if isinstance(value, dict):
                 normalized: t.ConfigMap = t.ConfigMap(
+                    root={
+                        str(k): FlextRuntime.normalize_to_metadata_value(v)
+                        for k, v in value.items()
+                    }
+                )
+                return _ComparableConfigMap(root=normalized.root)
+            if isinstance(value, Mapping):
+                normalized = t.ConfigMap(
                     root={
                         str(k): FlextRuntime.normalize_to_metadata_value(v)
                         for k, v in value.items()

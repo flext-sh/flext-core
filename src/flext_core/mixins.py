@@ -64,8 +64,7 @@ class FlextMixins(FlextRuntime):
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
 
-    # Runtime helpers (create_instance, is_valid_*, normalize_*, etc.) inherited from
-    # FlextRuntime via MRO; subprojects use x.* only (no FlextRuntime.* at call sites).
+    # Runtime helpers inherited from FlextRuntime via MRO; use runtime aliases (c, m, r, t, x, ...) at call sites; MRO protocol only.
 
     # =========================================================================
     # RESULT FACTORY UTILITIES (Delegated from FlextResult)

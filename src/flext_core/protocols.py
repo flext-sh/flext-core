@@ -1725,4 +1725,5 @@ class FlextProtocols:
     implements_protocol = check_implements_protocol
 
 
-__all__ = ["FlextProtocols"]
+p = FlextProtocols
+__all__ = ["FlextProtocols", "p"]

@@ -1,10 +1,8 @@
 """FlextUtilities - Pure Facade for FLEXT Utility Classes.
 
-This module provides a unified entry point to all FLEXT utility functionality.
-All methods are delegated to specialized classes in _utilities/ submodules.
-
-IMPORTANT: This file contains ONLY aliases - NO local method implementations.
-All implementations are in _utilities/*.py modules.
+Runtime alias u: flat namespace via staticmethod aliases from _utilities/* subclasses.
+Use u.get, u.parse, u.map, etc. (no u.Mapper.*). Subprojects use their project u.
+Aliases/namespaces: MRO registration protocol only. No local implementations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -42,23 +40,16 @@ from flext_core.typings import t
 class FlextUtilities:
     """Unified facade for all FLEXT utility functionality.
 
-    This class provides access to specialized utility classes through
-    class attributes. All functionality is delegated to the appropriate
-    specialized class.
-
-    IMPORTANT: This file contains ONLY aliases - NO local method implementations.
+    Runtime alias u exposes a flat namespace (staticmethod aliases from subclasses).
+    Use direct methods only: u.get, u.parse, u.map, u.from_kwargs, u.batch, u.extract,
+    u.warn_once, etc. No subdivided namespaces (no u.Mapper.* at call sites).
+    Subprojects use their project u. Aliases/namespaces: MRO registration protocol only.
 
     Usage:
-        from flext_core import FlextUtilities
-
-        # Access via facade attributes
-        result = FlextUtilities.Parser.parse(value, int)
-        result = FlextUtilities.Collection.map(items, fn)
-        result = FlextUtilities.Mapper.get(data, "key")
-
-        # Or use short alias
-        from flext_core.utilities import u
+        from flext_core import u
         result = u.parse(value, int)
+        value = u.get(data, "key")
+        mapped = u.map(items, fn)
     """
 
     # === FACADE CLASSES - Real inheritance ===
@@ -152,10 +143,7 @@ class FlextUtilities:
     sort_dict_keys = staticmethod(FlextUtilitiesCache.sort_dict_keys)
     sort_key = staticmethod(FlextUtilitiesCache.sort_key)
 
-    # Cast
-    cast_callable = staticmethod(FlextUtilitiesMapper.cast_generic)
-    cast_direct = staticmethod(FlextUtilitiesMapper.cast_generic)
-    cast_general_value = staticmethod(FlextUtilitiesConversion.to_general_value_type)
+    # Cast (use u.cast_generic or u.Mapper.cast_generic at call sites)
     cast_generic = staticmethod(FlextUtilitiesMapper.cast_generic)
 
     # Collection
@@ -511,9 +499,6 @@ class FlextUtilities:
     vals = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals)
     vals_sequence = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals_sequence)
     require_initialized = staticmethod(FlextUtilitiesValidation.require_initialized)
-
-    # Mapper reference
-    mapper = FlextUtilitiesMapper
 
 
 u = FlextUtilities

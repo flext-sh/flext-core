@@ -10,6 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
-from flext_core.models import m
+from flext_core.models import FlextModels as m
 
 __all__ = ["FactoryDecoratorsDiscovery", "m"]

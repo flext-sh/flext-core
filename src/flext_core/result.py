@@ -728,4 +728,5 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     # __enter__, __exit__, __repr__ are inherited from RuntimeResult
 
 
-__all__ = ["FlextResult"]
+r = FlextResult
+__all__ = ["FlextResult", "r"]
