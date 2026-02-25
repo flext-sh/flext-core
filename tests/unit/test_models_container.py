@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 import pytest
 from pydantic import ValidationError
@@ -159,7 +159,7 @@ class TestFlextModelsContainer:
         registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
-            metadata={"key1": "value1", "key2": 42, "key3": True},
+            metadata=m.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
         )
         # registration.metadata is m.Metadata (from _normalize_to_metadata)
         # Check that it's a Metadata instance (not necessarily m.Metadata subclass)
@@ -175,7 +175,7 @@ class TestFlextModelsContainer:
         registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
-            metadata=nested_dict,
+            metadata=m.ConfigMap(root=cast(dict[str, t.GeneralValueType], nested_dict)),
         )
         assert isinstance(registration.metadata, m.Metadata)
         # Nested dicts are converted to t.GeneralValueType
@@ -272,7 +272,7 @@ class TestFlextModelsContainer:
         registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
-            metadata={"factory_type": "test", "priority": 1},
+            metadata=m.ConfigMap(root={"factory_type": "test", "priority": 1}),
         )
         # registration.metadata is m.Metadata (from _normalize_to_metadata)
         assert isinstance(registration.metadata, m.Metadata)
@@ -396,7 +396,7 @@ class TestFlextModelsContainer:
         registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
-            metadata={},
+            metadata=m.ConfigMap(root={}),
         )
         assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
@@ -410,7 +410,7 @@ class TestFlextModelsContainer:
         registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
-            metadata={},
+            metadata=m.ConfigMap(root={}),
         )
         assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
@@ -427,18 +427,22 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
-        result = u.Model.normalize_to_metadata({})
+        result = u.Model.normalize_to_metadata(m.ConfigMap(root={}))
         # result is m.Metadata (from normalize_to_metadata)
         assert isinstance(result, m.Metadata)
         assert result.attributes == {}
 
     def test_normalize_to_metadata_with_values(self) -> None:
         """Test normalize_to_metadata with dict containing values."""
-        result = u.Model.normalize_to_metadata({
-            "key1": "value1",
-            "key2": 42,
-            "key3": True,
-        })
+        result = u.Model.normalize_to_metadata(
+            m.ConfigMap(
+                root={
+                    "key1": "value1",
+                    "key2": 42,
+                    "key3": True,
+                }
+            )
+        )
         assert isinstance(result, m.Metadata)
         assert result.attributes["key1"] == "value1"
         assert result.attributes["key2"] == 42
@@ -453,9 +457,13 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_nested_dict(self) -> None:
         """Test normalize_to_metadata with nested dict values."""
-        result = u.Model.normalize_to_metadata({
-            "nested": {"level1": {"level2": "value"}},
-        })
+        result = u.Model.normalize_to_metadata(
+            m.ConfigMap(
+                root={
+                    "nested": cast(t.GeneralValueType, {"level1": {"level2": "value"}}),
+                }
+            )
+        )
         assert isinstance(result, m.Metadata)
         # Nested dicts are normalized to t.GeneralValueType
         assert "nested" in result.attributes
@@ -466,19 +474,19 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata("invalid_string")
+            u.Model.normalize_to_metadata(cast(Any, "invalid_string"))
 
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(123)
+            u.Model.normalize_to_metadata(cast(Any, 123))
 
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata([1, 2, 3])
+            u.Model.normalize_to_metadata(cast(Any, [1, 2, 3]))
 
     def test_service_registration_metadata_non_mapping_dict_like(self) -> None:
         """Test ServiceRegistration metadata with non-Mapping dict-like object."""
@@ -501,7 +509,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
-            metadata={"key": "value"},
+            metadata=m.ConfigMap(root={"key": "value"}),
         )
         assert isinstance(registration.metadata, m.Metadata)
 
@@ -518,6 +526,6 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
-            metadata={"key": "value"},
+            metadata=m.ConfigMap(root={"key": "value"}),
         )
         assert isinstance(registration.metadata, m.Metadata)
