@@ -79,11 +79,15 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
         message: GetUserQuery,
     ) -> r[m.ConfigMap]:
         """Handle get user query."""
-        return r[m.ConfigMap].ok({
-            "user_id": message.user_id,
-            "name": "Demo User",
-            "email": "demo@example.com",
-        })
+        return r[m.ConfigMap].ok(
+            t.ConfigMap(
+                root={
+                    "user_id": message.user_id,
+                    "name": "Demo User",
+                    "email": "demo@example.com",
+                }
+            )
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -105,25 +109,29 @@ class RegistryDispatcherService(s[m.ConfigMap]):
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
 
-            return r[m.ConfigMap].ok({
-                "patterns_demonstrated": [
-                    "handler_registration",
-                    "batch_registration",
-                    "command_dispatch",
-                    "query_dispatch",
-                    "registry_integration",
-                ],
-                "handler_types": [
-                    c.Cqrs.HandlerType.COMMAND.value,
-                    c.Cqrs.HandlerType.QUERY.value,
-                ],
-                "features": [
-                    "idempotent_registration",
-                    "batch_operations",
-                    "dispatcher_integration",
-                    "cqrs_patterns",
-                ],
-            })
+            return r[m.ConfigMap].ok(
+                t.ConfigMap(
+                    root={
+                        "patterns_demonstrated": [
+                            "handler_registration",
+                            "batch_registration",
+                            "command_dispatch",
+                            "query_dispatch",
+                            "registry_integration",
+                        ],
+                        "handler_types": [
+                            c.Cqrs.HandlerType.COMMAND.value,
+                            c.Cqrs.HandlerType.QUERY.value,
+                        ],
+                        "features": [
+                            "idempotent_registration",
+                            "batch_operations",
+                            "dispatcher_integration",
+                            "cqrs_patterns",
+                        ],
+                    }
+                )
+            )
 
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
@@ -137,7 +145,9 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry()
 
         # Register single handler - Protocol-based handler registration
-        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = CreateUserHandler()
+        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = (
+            CreateUserHandler()
+        )
         register_result = registry.register_handler(create_handler)
         if register_result.is_success:
             print("✅ Handler registered successfully")
@@ -158,7 +168,9 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = CreateUserHandler()
+        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = (
+            CreateUserHandler()
+        )
         _ = registry.register_handler(create_handler)
 
         # Dispatch command - Pydantic models are compatible with t.GeneralValueType
@@ -182,7 +194,9 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = CreateUserHandler()
+        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = (
+            CreateUserHandler()
+        )
         get_handler: p.Handler[GetUserQuery, m.ConfigMap] = GetUserHandler()
         _ = registry.register_handler(create_handler)
         _ = registry.register_handler(get_handler)

@@ -22,7 +22,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Sequence
 
-from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
+from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, t, u
 
 
 class ContextManagementService(
@@ -67,11 +67,13 @@ class ContextManagementService(
                 + u.generate("correlation")[: c.Context.CORRELATION_ID_LENGTH]
             )
 
-            context_data: m.ConfigMap = {
-                c.Mixins.FIELD_NAME: "context_demo",
-                "correlation_id": correlation_id,
-                "scope": c.Context.SCOPE_REQUEST,
-            }
+            context_data: m.ConfigMap = t.ConfigMap(
+                root={
+                    c.Mixins.FIELD_NAME: "context_demo",
+                    "correlation_id": correlation_id,
+                    "scope": c.Context.SCOPE_REQUEST,
+                }
+            )
 
             print(f"✅ Context data: {context_data}")
             print("✅ Thread-local storage for isolation")
@@ -95,10 +97,12 @@ class ContextManagementService(
             FlextContext.Request.request_context(
                 operation_name=operation_name,
                 request_id=request_id,
-                metadata={
-                    "endpoint": "/api/demo",
-                    "method": "GET",
-                },
+                metadata=t.ConfigMap(
+                    root={
+                        "endpoint": "/api/demo",
+                        "method": "GET",
+                    }
+                ),
             ),
             FlextContext.Performance.timed_operation(
                 operation_name=operation_name,
@@ -108,12 +112,14 @@ class ContextManagementService(
             user_id = FlextContext.Request.get_user_id() or "anonymous"
             operation = FlextContext.Request.get_operation_name() or "unknown"
 
-            request_data: m.ConfigMap = {
-                "user_id": user_id,
-                "request_id": request_id,
-                "operation": operation,
-                "timing": timing_metadata,
-            }
+            request_data: m.ConfigMap = t.ConfigMap(
+                root={
+                    "user_id": user_id,
+                    "request_id": request_id,
+                    "operation": operation,
+                    "timing": timing_metadata,
+                }
+            )
 
             print(f"✅ Request data: {request_data}")
             print("✅ Request lifecycle management")
@@ -160,11 +166,13 @@ class ContextManagementService(
         # Use traverse for multiple results (DRY - no manual loops)
         thread_results = r.traverse(results, lambda r: r)
 
-        threading_data: m.ConfigMap = {
-            "active_threads": thread_count,
-            "thread_names": list(active_threads),
-            "isolated_contexts": len(results),
-        }
+        threading_data: m.ConfigMap = t.ConfigMap(
+            root={
+                "active_threads": thread_count,
+                "thread_names": list(active_threads),
+                "isolated_contexts": len(results),
+            }
+        )
 
         print(f"✅ Thread safety: {thread_count} active threads")
         print("✅ Context isolation per thread")
@@ -189,12 +197,14 @@ class ContextManagementService(
             start_time = FlextContext.Performance.get_operation_start_time()
             operation_metadata = FlextContext.Performance.get_operation_metadata() or {}
 
-            performance_data: m.ConfigMap = {
-                "operation": operation_name,
-                "start_time": (start_time.isoformat() if start_time else "unknown"),
-                "metadata": operation_metadata,
-                "timing": timing_metadata,
-            }
+            performance_data: m.ConfigMap = t.ConfigMap(
+                root={
+                    "operation": operation_name,
+                    "start_time": (start_time.isoformat() if start_time else "unknown"),
+                    "metadata": operation_metadata,
+                    "timing": timing_metadata,
+                }
+            )
 
             print(f"✅ Operation: {operation_name}")
             print(f"✅ Start time: {performance_data['start_time']}")
@@ -222,11 +232,13 @@ class ContextManagementService(
                 or correlation_id
             )
 
-            correlation_data: m.ConfigMap = {
-                "correlation_id": context_correlation,
-                "prefix": c.Context.CORRELATION_ID_PREFIX,
-                "length": c.Context.CORRELATION_ID_LENGTH,
-            }
+            correlation_data: m.ConfigMap = t.ConfigMap(
+                root={
+                    "correlation_id": context_correlation,
+                    "prefix": c.Context.CORRELATION_ID_PREFIX,
+                    "length": c.Context.CORRELATION_ID_LENGTH,
+                }
+            )
 
             print(f"✅ Correlation ID: {context_correlation}")
             print("✅ Cross-service tracing support")
@@ -257,21 +269,23 @@ class ContextManagementService(
             }
         )
 
-        return {
-            "patterns_demonstrated": filtered_patterns,
-            "context_features": (
-                "thread_safety",
-                "variable_isolation",
-                "performance_tracking",
-                "correlation_tracking",
-            ),
-            "architecture": "context_per_thread",
-            "scope_types": (
-                c.Context.SCOPE_GLOBAL,
-                c.Context.SCOPE_REQUEST,
-                c.Context.SCOPE_SESSION,
-            ),
-        }
+        return t.ConfigMap(
+            root={
+                "patterns_demonstrated": filtered_patterns,
+                "context_features": (
+                    "thread_safety",
+                    "variable_isolation",
+                    "performance_tracking",
+                    "correlation_tracking",
+                ),
+                "architecture": "context_per_thread",
+                "scope_types": (
+                    c.Context.SCOPE_GLOBAL,
+                    c.Context.SCOPE_REQUEST,
+                    c.Context.SCOPE_SESSION,
+                ),
+            }
+        )
 
 
 def demonstrate_context_features() -> None:

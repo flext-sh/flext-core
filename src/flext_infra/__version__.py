@@ -25,7 +25,7 @@ class FlextInfraVersion:
         _metadata = metadata("flext-infra")
     except PackageNotFoundError:
         _metadata = {
-            "Version": "0.0.0-dev",
+            "Version": "0.12.0-dev",
             "Name": "flext-infra",
             "Summary": "FLEXT infrastructure",
             "Author": "",

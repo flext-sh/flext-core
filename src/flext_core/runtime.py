@@ -655,7 +655,7 @@ class FlextRuntime:
             ValueError,
             RuntimeError,
             KeyError,
-        ):  # pragma: no cover
+        ):
             # Defensive: typing module failures are extremely rare
             return ()
 
@@ -706,7 +706,7 @@ class FlextRuntime:
             ValueError,
             RuntimeError,
             KeyError,
-        ):  # pragma: no cover
+        ):
             # Defensive: typing/issubclass failures are extremely rare
             return False
 
@@ -1212,7 +1212,7 @@ class FlextRuntime:
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
-        else:  # pragma: no cover
+        else:
             # Tested but not covered: structlog configures once per process
             processors.append(JSONRenderer())
 

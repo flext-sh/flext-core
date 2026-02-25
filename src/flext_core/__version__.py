@@ -24,7 +24,7 @@ class FlextVersion:
         _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
     except PackageNotFoundError:
         _metadata = {
-            "Version": "0.0.0-dev",
+            "Version": "0.12.0-dev",
             "Name": "flext-core",
             "Summary": "",
             "Author": "",
