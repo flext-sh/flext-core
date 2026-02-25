@@ -22,9 +22,9 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from pydantic import BaseModel, ValidationError
-
 from flext_core import c, m, r, t, u
+from flext_core._models.base import FlextModelFoundation
+from pydantic import BaseModel
 
 
 class _Simple(BaseModel):
@@ -54,7 +54,7 @@ def test_strip_whitespace_returns_empty_on_spaces() -> None:
 
 
 def test_ensure_utc_datetime_adds_tzinfo_when_naive() -> None:
-    naive = datetime(2025, 1, 1, 12, 0, 0)
+    naive = datetime(2025, 1, 1, 12, 0, 0, tzinfo=None)  # noqa: DTZ001
     result = m.Validation.ensure_utc_datetime(naive)
     assert result is not None
     assert result.tzinfo is UTC
@@ -147,7 +147,7 @@ def test_validate_semver_passes() -> None:
 
 
 def test_validate_semver_raises_on_invalid() -> None:
-    with pytest.raises(ValueError, match="semver"):
+    with pytest.raises(ValueError, match="semantic version"):
         m.Validation.validate_semver("abc")
 
 
@@ -202,8 +202,6 @@ def test_validate_tags_list_from_string() -> None:
 
 def test_facade_binding_is_correct() -> None:
     """m.Validation IS FlextModelFoundation.Validators."""
-    from flext_core._models.base import FlextModelFoundation
-
     assert m.Validation is FlextModelFoundation.Validators
 
 
@@ -217,29 +215,29 @@ def test_basic_imports_work() -> None:
 
 
 __all__ = [
-    "test_strip_whitespace_trims_leading_trailing",
-    "test_strip_whitespace_preserves_clean",
-    "test_strip_whitespace_returns_empty_on_spaces",
+    "test_basic_imports_work",
     "test_ensure_utc_datetime_adds_tzinfo_when_naive",
     "test_ensure_utc_datetime_preserves_aware",
     "test_ensure_utc_datetime_returns_none_on_none",
-    "test_normalize_to_list_wraps_scalar",
+    "test_facade_binding_is_correct",
     "test_normalize_to_list_passes_list_through",
     "test_normalize_to_list_wraps_int",
+    "test_normalize_to_list_wraps_scalar",
+    "test_strip_whitespace_preserves_clean",
+    "test_strip_whitespace_returns_empty_on_spaces",
+    "test_strip_whitespace_trims_leading_trailing",
+    "test_validate_config_dict_normalizes_dict",
+    "test_validate_email_passes",
+    "test_validate_email_raises_on_invalid",
     "test_validate_non_empty_string_passes",
     "test_validate_non_empty_string_raises_on_empty",
     "test_validate_non_empty_string_raises_on_whitespace",
-    "test_validate_email_passes",
-    "test_validate_email_raises_on_invalid",
-    "test_validate_url_passes",
-    "test_validate_url_raises_on_invalid",
     "test_validate_semver_passes",
     "test_validate_semver_raises_on_invalid",
+    "test_validate_tags_list_from_string",
+    "test_validate_tags_list_normalizes",
+    "test_validate_url_passes",
+    "test_validate_url_raises_on_invalid",
     "test_validate_uuid_string_passes",
     "test_validate_uuid_string_raises_on_invalid",
-    "test_validate_config_dict_normalizes_dict",
-    "test_validate_tags_list_normalizes",
-    "test_validate_tags_list_from_string",
-    "test_facade_binding_is_correct",
-    "test_basic_imports_work",
 ]

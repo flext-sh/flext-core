@@ -104,7 +104,7 @@ class FlextMixins(FlextRuntime):
     ) -> m.ConfigMap:
         """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
         if obj is None:
-            return m.ConfigMap()
+            return m.ConfigMap(root={})
 
         if isinstance(obj, m.ConfigMap):
             return obj
@@ -152,7 +152,7 @@ class FlextMixins(FlextRuntime):
             _module_logger.debug(
                 "Object-to-config-map normalization failed", exc_info=exc
             )
-            return m.ConfigMap()
+            return m.ConfigMap(root={})
 
     @staticmethod
     def ensure_result[T](value: T | r[T]) -> r[T]:

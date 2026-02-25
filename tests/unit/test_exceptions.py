@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, Literal, cast
@@ -387,7 +387,7 @@ class Teste:
             })
             error = e.BaseError(
                 "Test error",
-                metadata=cast("p.Log.Metadata", cast(object, metadata)),
+                metadata=FlextRuntime.Metadata(attributes=dict(metadata)),
             )
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
@@ -592,14 +592,12 @@ class Teste:
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
-            metadata=cast(
-                "p.Log.Metadata",
-                cast(
-                    object,
+            metadata=FlextRuntime.Metadata(
+                attributes=dict(
                     u.Tests.ExceptionHelpers.create_metadata_object({
                         "test": "data",
-                    }),
-                ),
+                    })
+                )
             ),
         )
         assert "test" in exc.metadata.attributes
@@ -632,7 +630,7 @@ class Teste:
         })
         error = e.BaseError(
             "Test error",
-            metadata=cast("p.Log.Metadata", cast(object, metadata)),
+            metadata=FlextRuntime.Metadata(attributes=dict(metadata)),
             new_field="new_value",
         )
         assert error.metadata.attributes["existing"] == "value"
@@ -707,7 +705,8 @@ class Teste:
         self, error_class: type[e.BaseError], msg: str, custom_attr: str
     ) -> None:
         """Test exception classes with extra_kwargs merging."""
-        error = error_class(msg, **{custom_attr: "custom_value"})
+        error_ctor = cast("Callable[..., e.BaseError]", error_class)
+        error = error_ctor(msg, **{custom_attr: "custom_value"})
         assert error.metadata is not None
         assert custom_attr in error.metadata.attributes
 
@@ -909,7 +908,7 @@ class Teste:
         # Convert to t.MetadataAttributeDict
         # normalize_to_metadata_value converts object() to string, so it won't be filtered
         # The test expectation is wrong - object() gets normalized to string, not filtered
-        extra_kwargs: t.MetadataAttributeDict = {
+        extra_kwargs: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 cast(
                     "t.GeneralValueType",
@@ -923,7 +922,7 @@ class Teste:
         context_raw = {"key1": "value1"}
         # Convert to t.MetadataAttributeDict
         # All values need to be t.GeneralValueType for normalize_to_metadata_value
-        context: t.MetadataAttributeDict = {
+        context: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
             for k, v in context_raw.items()
         }
@@ -950,7 +949,7 @@ class Teste:
         }
         # Convert to t.MetadataAttributeDict
         # All values need to be t.GeneralValueType for normalize_to_metadata_value
-        context: t.MetadataAttributeDict = {
+        context: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
             for k, v in context_raw.items()
         }
@@ -1061,7 +1060,7 @@ class Teste:
         # Convert to t.MetadataAttributeDict
         # _normalize_type accepts t.MetadataAttributeDict but at runtime can handle type objects
         # Mypy limitation: type objects not in MetadataAttributeValue union, but method handles them
-        extra_kwargs: t.MetadataAttributeDict = {
+        extra_kwargs: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v)  # str is ScalarValue
             for k, v in extra_kwargs_raw.items()
         }
@@ -1080,7 +1079,7 @@ class Teste:
         # Type objects need special handling - _normalize_type accepts t.MetadataAttributeDict
         # but at runtime can handle type objects (defensive programming)
         # Mypy limitation: type objects not in MetadataAttributeValue union
-        extra_kwargs_type: t.MetadataAttributeDict = cast(
+        extra_kwargs_type: dict[str, t.MetadataAttributeValue] = cast(
             "t.MetadataAttributeDict",
             extra_kwargs_type_raw,
         )
@@ -1397,7 +1396,7 @@ class Teste:
         """Test prepare_exception_kwargs - tests lines 945-970."""
         specific_params_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        specific_params: t.MetadataAttributeDict = {
+        specific_params: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
@@ -1411,7 +1410,7 @@ class Teste:
             "custom": "value",
         }
         # Convert to t.MetadataAttributeDict
-        kwargs: t.MetadataAttributeDict = {}
+        kwargs: dict[str, t.MetadataAttributeValue] = {}
         for k, v in kwargs_raw.items():
             if isinstance(v, m.Metadata):
                 # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
@@ -1450,7 +1449,7 @@ class Teste:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""
         kwargs_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        kwargs: t.MetadataAttributeDict = {
+        kwargs: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, {})
@@ -1462,11 +1461,11 @@ class Teste:
         """Test prepare_exception_kwargs setdefault behavior - tests line 948."""
         specific_params_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        specific_params: t.MetadataAttributeDict = {
+        specific_params: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
-        kwargs: t.MetadataAttributeDict = {}  # field not in kwargs
+        kwargs: dict[str, t.MetadataAttributeValue] = {}  # field not in kwargs
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
         assert "field" in extra
@@ -1476,13 +1475,13 @@ class Teste:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
         specific_params_raw = {"field": None}  # None value should not override
         # Convert to t.MetadataAttributeDict (None is valid MetadataAttributeValue)
-        specific_params: t.MetadataAttributeDict = {
+        specific_params: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
         kwargs_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        kwargs: t.MetadataAttributeDict = {
+        kwargs: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)

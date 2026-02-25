@@ -460,7 +460,9 @@ class TestFlextUtilitiesArgs:
             class BadFunction:
                 __annotations__ = {"invalid": object()}
 
-            params = u.Args.get_enum_params(cast("p.CallableWithHints", BadFunction))
+            params = u.Args.get_enum_params(
+                cast("p.CallableWithHints", cast("object", BadFunction)),
+            )
             assert params == {}
 
         @staticmethod

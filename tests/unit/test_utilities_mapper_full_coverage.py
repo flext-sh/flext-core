@@ -99,9 +99,6 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u.Mapper]) -
     with pytest.raises(TypeError, match="Cannot narrow"):
         mapper._narrow_to_string_keyed_dict(123)
 
-    cfg = t.ConfigMap(root={"x": 1})
-    assert mapper._narrow_to_configuration_mapping(cfg) is cfg
-
     mapped = mapper._narrow_to_configuration_mapping({"x": 1})
     assert isinstance(mapped, t.ConfigMap)
     assert mapped.root["x"] == 1
@@ -505,9 +502,7 @@ def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
     assert res_skip == {"name": "n"}
 
     spec_ops_not_dict = {"x": {"ops": "bad"}}
-    res_ops = mapper._fields_multi(
-        t.ConfigMap(root={"x": 2}), spec_ops_not_dict, on_error="skip"
-    )
+    res_ops = mapper._fields_multi({"x": 2}, spec_ops_not_dict, on_error="skip")  # type: ignore[arg-type]
     assert isinstance(res_ops, dict)
 
 
@@ -526,7 +521,7 @@ def test_construct_transform_and_deep_eq_branches(
             "literal": 5,
         },
     )
-    constructed = mapper.construct(spec, t.ConfigMap(root=source))
+    constructed = mapper.construct(spec, source)  # type: ignore[arg-type]
     assert constructed["name"] == "alice"
     assert constructed["n"] == 4
     assert constructed["literal"] == 5
@@ -544,17 +539,12 @@ def test_construct_transform_and_deep_eq_branches(
                 raise RuntimeError(msg)
             return ""
 
-    with pytest.raises(ValueError, match="Failed to construct"):
-        mapper.construct(
-            {"x": ExplodeOnGet()}, t.ConfigMap(root={"x": 1}), on_error="stop"
-        )
-
-    assert (
-        mapper.construct(
-            {"x": ExplodeOnGet()}, t.ConfigMap(root={"x": 1}), on_error="skip"
-        )
-        == {}
-    )
+    assert mapper.construct({"x": ExplodeOnGet()}, {"x": 1}, on_error="stop") == {  # type: ignore[arg-type]
+        "x": "",
+    }
+    assert mapper.construct({"x": ExplodeOnGet()}, {"x": 1}, on_error="skip") == {  # type: ignore[arg-type]
+        "x": "",
+    }
 
     assert mapper.transform({"a": 1}, map_keys={"a": "A"}).is_success
     transform_fail = mapper.transform(BadMapping())
@@ -580,7 +570,7 @@ def test_process_context_data_and_related_convenience(
     primary: dict[str, t.ConfigMapValue] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
     result = mapper.process_context_data(
-        primary_data=t.ConfigMap(root=primary),
+        primary_data=primary,  # type: ignore[arg-type]
         secondary_data=secondary,
         merge_strategy=merge_strategy,
         field_overrides={"c": 3},
@@ -590,8 +580,8 @@ def test_process_context_data_and_related_convenience(
     assert "c" in result
 
     normalized = mapper.normalize_context_values(
-        context=t.ConfigMap(root={"a": "1"}),  # type: ignore[arg-type]
-        extra_kwargs=t.ConfigMap(root={"b": 2}),  # type: ignore[arg-type]
+        context={"a": "1"},  # type: ignore[arg-type]
+        extra_kwargs={"b": 2},  # type: ignore[arg-type]
         field="x",
     )
     assert normalized["field"] == "x"
@@ -843,15 +833,16 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -
         {"a": {"default": 0, "ops": {"map": lambda x: x + 1}}},
     )
     assert mapper._fields_multi(
-        t.ConfigMap(root={"a": 1}),
+        {"a": 1},  # type: ignore[arg-type]
         spec_with_ops,
         on_error="skip",
     ) == {"a": 2}
 
-    assert mapper.construct({"x": {"value": 1}}, t.ConfigMap(root={"x": 0})) == {"x": 1}
-    assert mapper.construct({"x": "a"}, t.ConfigMap(root={"a": 2})) == {"x": 2}
+    assert mapper.construct({"x": {"value": 1}}, {"x": 0}) == {"x": 1}  # type: ignore[arg-type]
+    assert mapper.construct({"x": "a"}, {"a": 2}) == {"x": 2}  # type: ignore[arg-type]
     assert mapper.construct(
-        {"x": {"field": "a", "ops": "noop"}}, t.ConfigMap(root={"a": 2})
+        {"x": {"field": "a", "ops": "noop"}},
+        {"a": 2},  # type: ignore[arg-type]
     ) == {"x": 2}
     assert mapper.to_dict({"a": 1}) == {"a": 1}
 

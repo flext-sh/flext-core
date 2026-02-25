@@ -19,6 +19,8 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+# mypy: disable-error-code=arg-type
 from flext_core.typings import t
 
 from collections import UserDict as BaseUserDict
@@ -30,6 +32,14 @@ from flext_core import FlextResult, h, t, u
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")
+
+
+def _type_origin(value: object) -> t.TypeOriginSpecifier:
+    return cast("t.TypeOriginSpecifier", cast("object", value))
+
+
+def _message_type(value: object) -> t.MessageTypeSpecifier:
+    return cast("t.MessageTypeSpecifier", cast("object", value))
 
 
 # Test handler classes
@@ -171,9 +181,7 @@ class TestuTypeChecker:
     def test_can_handle_message_type_dict_compatibility(self) -> None:
         """Test can_handle_message_type with dict type compatibility."""
         # Business Rule: MessageTypeSpecifier accepts built-in types like dict
-        accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            cast("t.MessageTypeSpecifier", dict),
-        )
+        accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
         assert u.Checker.can_handle_message_type(accepted, str) is False
         assert u.Checker.can_handle_message_type(accepted, dict) is True
         # dict[str, t.GeneralValueType] should be compatible with dict
@@ -188,9 +196,9 @@ class TestuTypeChecker:
     def test_can_handle_message_type_multiple_accepted(self) -> None:
         """Test can_handle_message_type with multiple accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            cast("t.MessageTypeSpecifier", str),
-            cast("t.MessageTypeSpecifier", int),
-            cast("t.MessageTypeSpecifier", dict),
+            _message_type(str),
+            _message_type(int),
+            _message_type(dict),
         )
         assert u.Checker.can_handle_message_type(accepted, str) is True
         assert u.Checker.can_handle_message_type(accepted, int) is True
@@ -219,10 +227,13 @@ class TestuTypeChecker:
 
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
-        assert u.Checker._evaluate_type_compatibility(dict, dict) is True
+        assert u.Checker._evaluate_type_compatibility(_type_origin(dict), dict) is True
         # dict[str, t.GeneralValueType] should be compatible with dict
         dict_type: type[dict[str, t.GeneralValueType]] = dict
-        assert u.Checker._evaluate_type_compatibility(dict, dict_type) is True
+        assert (
+            u.Checker._evaluate_type_compatibility(_type_origin(dict), dict_type)
+            is True
+        )
 
     def test_evaluate_type_compatibility_subclass(self) -> None:
         """Test _evaluate_type_compatibility with subclass relationship."""
@@ -262,7 +273,12 @@ class TestuTypeChecker:
 
     def test_check_dict_compatibility_both_dict(self) -> None:
         """Test _check_dict_compatibility with both types being dict."""
-        result = u.Checker._check_dict_compatibility(dict, dict, dict, dict)
+        result = u.Checker._check_dict_compatibility(
+            _type_origin(dict),
+            dict,
+            _type_origin(dict),
+            _type_origin(dict),
+        )
         assert result is True
 
     def test_check_dict_compatibility_dict_subclass(self) -> None:
@@ -273,10 +289,10 @@ class TestuTypeChecker:
             """Custom dict subclass."""
 
         result = u.Checker._check_dict_compatibility(
-            dict,
+            _type_origin(dict),
             CustomDict,
-            dict,
-            dict,
+            _type_origin(dict),
+            _type_origin(dict),
         )
         assert result is True
 
@@ -398,10 +414,10 @@ class TestuTypeChecker:
         origin = get_origin(dict_type) or dict_type
 
         result = u.Checker._handle_type_or_origin_check(
-            dict,
-            dict_type,
-            dict,
-            origin,
+            _type_origin(dict),
+            _type_origin(dict_type),
+            _type_origin(dict),
+            _type_origin(origin),
         )
         # Should handle origin comparison
         assert isinstance(result, bool)

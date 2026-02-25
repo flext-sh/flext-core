@@ -1029,7 +1029,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         """
         context_dict: m.ConfigMap = (
-            m.ConfigMap(root=dict(_context)) if _context else m.ConfigMap()
+            m.ConfigMap(root=dict(_context)) if _context else m.ConfigMap(root={})
         )
         # Convert level string to LogLevel enum if possible
         level_enum: c.Settings.LogLevel | str = level
@@ -1180,7 +1180,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     ) -> m.ConfigMap:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
-        context_dict: m.ConfigMap = m.ConfigMap()
+        context_dict: m.ConfigMap = m.ConfigMap(root={})
 
         if exception is not None:
             exception_data: m.ConfigMap = m.ConfigMap(

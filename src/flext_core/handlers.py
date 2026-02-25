@@ -558,7 +558,7 @@ class FlextHandlers[MessageT_contra, ResultT](
     def pop_context(self) -> r[m.ConfigMap]:
         """Pop execution context from the local handler stack."""
         if not self._stack:
-            return r[m.ConfigMap].ok(m.ConfigMap())
+            return r[m.ConfigMap].ok(m.ConfigMap(root={}))
 
         popped = self._stack.pop()
         if isinstance(popped, m.Handler.ExecutionContext):

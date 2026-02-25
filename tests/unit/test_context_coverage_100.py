@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# mypy: disable-error-code=valid-type
+
 from collections import UserDict as UserDictBase
 
 import pytest
@@ -202,7 +204,7 @@ class TestContext100Coverage:
             else str(v)
             for k, v in import_data.items()
         }
-        context._import_data(converted_data)
+        context._import_data(m.ConfigMap(root=converted_data))
 
         # Verify imported data
         result1 = context.get("key1")
@@ -215,7 +217,7 @@ class TestContext100Coverage:
         context = FlextContext()
         context.set("existing", "value").value
 
-        context._import_data({})
+        context._import_data(m.ConfigMap(root={}))
 
         # Existing data should remain
         result = context.get("existing")
@@ -230,9 +232,10 @@ class TestContext100Coverage:
 
         # Manually set None in contextvar to test None handling
         scope_var = context._scope_vars[FlextConstants.Context.SCOPE_GLOBAL]
-        current = scope_var.get() or {}
-        current["none_key"] = None
-        scope_var.set(current)
+        current: m.ConfigMap | None = scope_var.get()
+        current_data = dict(current.root) if current is not None else {}
+        current_data["none_key"] = None
+        scope_var.set(m.ConfigMap(root=current_data))
 
         # Get None value should return failure
         result = context.get("none_key")
@@ -332,7 +335,7 @@ class TestContext100Coverage:
         context._destroy()  # Deactivates context
 
         # Import should not raise
-        context._import_data({"key": "value"})  # Should not raise
+        context._import_data(m.ConfigMap(root={"key": "value"}))  # Should not raise
 
     def test_get_with_different_scope(self) -> None:
         """Test get with different scope."""
@@ -498,7 +501,7 @@ class TestContext100Coverage:
                     else str(v)
                     for k, v in global_data.items()
                 }
-                context2._import_data(converted_global)
+                context2._import_data(m.ConfigMap(root=converted_global))
 
         # Verify data
         result1 = context2.get("key1")
@@ -583,7 +586,7 @@ class TestContext100Coverage:
                     else str(v)
                     for k, v in global_data.items()
                 }
-                context2._import_data(converted_global)
+                context2._import_data(m.ConfigMap(root=converted_global))
 
         # Verify
         result1 = context2.get("key1")
@@ -599,7 +602,7 @@ class TestContext100Coverage:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            m.ContextData(metadata=invalid_metadata)
+            m.ContextData(metadata=invalid_metadata)  # type: ignore[arg-type]
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextData.validate_dict_serializable with non-string key.
@@ -617,7 +620,7 @@ class TestContext100Coverage:
 
         int_key_dict: object = IntKeyDict()
         # Key normalization converts int key to string
-        result = m.ContextData(data=int_key_dict)
+        result = m.ContextData(data=int_key_dict)  # type: ignore[arg-type]
         assert "123" in result.data
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
@@ -632,10 +635,8 @@ class TestContext100Coverage:
         """
         # Test with dict containing non-serializable value (e.g., set)
         # Sets are converted to string representation (e.g., "{1, 2, 3}")
-        bad_dict: dict[str, t.GeneralValueType] = {
-            "key": {1, 2, 3}
-        }  # set becomes string
-        result = m.ContextData(data=bad_dict)
+        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set becomes string
+        result = m.ContextData(data=bad_dict)  # type: ignore[arg-type]
         # Set was normalized to string representation
         assert isinstance(result.data["key"], str)
 
@@ -647,7 +648,7 @@ class TestContext100Coverage:
 
         # Test with Pydantic model (should convert via model_dump)
         model: TestModel = TestModel()
-        export = m.ContextExport(data=model)
+        export = m.ContextExport(data=model)  # type: ignore[arg-type]
         assert isinstance(export.data, dict)
         assert "field" in export.data
 
@@ -659,7 +660,7 @@ class TestContext100Coverage:
             TypeError,
             match=r".*must be a dict or Pydantic model.*",
         ):
-            m.ContextExport(data=invalid_data)
+            m.ContextExport(data=invalid_data)  # type: ignore[arg-type]
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key.
@@ -669,7 +670,7 @@ class TestContext100Coverage:
         """
         # Create dict with non-string key (will be converted to string)
         data: dict[object, str] = {123: "value"}  # Non-string key → "123"
-        result = m.ContextExport(data=data)
+        result = m.ContextExport(data=data)  # type: ignore[arg-type]
         # Key was normalized to string
         assert "123" in result.data
 
@@ -683,8 +684,8 @@ class TestContext100Coverage:
         """
         # Test with dict containing non-serializable value (e.g., set)
         # Sets are converted to string representation
-        data: dict[str, t.GeneralValueType] = {"key": {1, 2, 3}}  # set becomes string
-        result = m.ContextExport(data=data)
+        data: dict[str, object] = {"key": {1, 2, 3}}  # set becomes string
+        result = m.ContextExport(data=data)  # type: ignore[arg-type]
         # Set was normalized to string representation
         assert isinstance(result.data["key"], str)
 
@@ -726,7 +727,7 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = m.ContextScopeData(data=model)
+        scope_data = m.ContextScopeData(data=model)  # type: ignore[arg-type]
         assert isinstance(scope_data.data, dict)
         assert "field" in scope_data.data
 
@@ -745,7 +746,7 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = m.ContextScopeData(metadata=model)
+        scope_data = m.ContextScopeData(metadata=model)  # type: ignore[arg-type]
         assert isinstance(scope_data.metadata, dict)
         assert "field" in scope_data.metadata
 
@@ -764,7 +765,7 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        stats = m.ContextStatistics(operations=model)
+        stats = m.ContextStatistics(operations=model)  # type: ignore[arg-type]
         assert isinstance(stats.operations, dict)
         assert "field" in stats.operations
 
@@ -772,7 +773,7 @@ class TestContext100Coverage:
         """Test ContextStatistics._validate_operations with None."""
         # Create instance with None - validator will convert to {}
         none_operations: object | None = None
-        stats = m.ContextStatistics(operations=none_operations)
+        stats = m.ContextStatistics(operations=none_operations)  # type: ignore[arg-type]
         assert isinstance(stats.operations, dict)
         assert stats.operations == {}
 
@@ -784,7 +785,7 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        metadata = m.ContextMetadata(custom_fields=model)
+        metadata = m.ContextMetadata(custom_fields=model)  # type: ignore[arg-type]
         assert isinstance(metadata.custom_fields, dict)
         assert "field" in metadata.custom_fields
 
@@ -792,6 +793,6 @@ class TestContext100Coverage:
         """Test ContextMetadata._validate_custom_fields with None."""
         # Create instance with None - validator will convert to {}
         none_custom_fields: object | None = None
-        metadata = m.ContextMetadata(custom_fields=none_custom_fields)
+        metadata = m.ContextMetadata(custom_fields=none_custom_fields)  # type: ignore[arg-type]
         assert isinstance(metadata.custom_fields, dict)
         assert metadata.custom_fields == {}

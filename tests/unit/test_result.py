@@ -439,7 +439,7 @@ class Testr:
         error_codes: list[str | None] = ["CODE1", None]
 
         cases = FlextTestsUtilities.Tests.GenericHelpers.create_parametrized_cases(
-            cast("list[object]", success_values),
+            cast("list", success_values),
             failure_errors,
             error_codes=error_codes,
         )

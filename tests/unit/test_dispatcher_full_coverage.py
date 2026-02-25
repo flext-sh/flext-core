@@ -1,3 +1,4 @@
+# ruff: noqa: E402,SIM210,PLC0415,RUF069,ANN204,E731,ANN001,EM101,RUF012
 """Targeted full-coverage tests for flext_core.dispatcher missed branches."""
 
 from __future__ import annotations
@@ -1438,7 +1439,7 @@ def test_remaining_branches_group_b(
         "correlation_id": "cid",
         "timeout_override": 1,
     }
-    assert dispatcher._execute_with_retry_policy(retry_context).is_success
+    assert dispatcher._execute_with_retry_policy(retry_context).is_success  # type: ignore[arg-type]
 
     monkeypatch.setattr(
         dispatcher, "_dispatch_command", lambda _msg: r[t.GeneralValueType].ok("ok")

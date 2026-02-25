@@ -276,7 +276,7 @@ class FlextExceptions:
     ) -> m.ConfigMap:
         """Build normalized context map from context and kwargs."""
         excluded = excluded_keys or frozenset()
-        context_map: m.ConfigMap = m.ConfigMap()
+        context_map: m.ConfigMap = m.ConfigMap(root={})
         if context:
             context_map.update({
                 k: FlextRuntime.normalize_to_metadata_value(v)
@@ -298,7 +298,7 @@ class FlextExceptions:
         keys: set[str] | frozenset[str],
     ) -> m.ConfigMap:
         """Build unnormalized parameter map for strict params validation."""
-        param_map: m.ConfigMap = m.ConfigMap()
+        param_map: m.ConfigMap = m.ConfigMap(root={})
         if context:
             param_map.update({k: v for k, v in context.items() if k in keys})
         if extra_kwargs:
@@ -352,7 +352,7 @@ class FlextExceptions:
             final_kwargs: m.ConfigMap = (
                 m.ConfigMap(root=dict(merged_kwargs))
                 if merged_kwargs
-                else m.ConfigMap()
+                else m.ConfigMap(root={})
             )
 
             # Merge context and normalize extra_kwargs using FlextRuntime
@@ -1475,7 +1475,7 @@ class FlextExceptions:
     ) -> e.BaseError:
         """Create error by type using context dict."""
         # Build context with error_code
-        error_context: m.ConfigMap = m.ConfigMap()
+        error_context: m.ConfigMap = m.ConfigMap(root={})
         if context is not None:
             error_context.update(dict(context.items()))
         if error_code is not None:
@@ -1556,7 +1556,7 @@ class FlextExceptions:
         kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""
-        error_context: m.ConfigMap = m.ConfigMap()
+        error_context: m.ConfigMap = m.ConfigMap(root={})
         if correlation_id is not None:
             error_context["correlation_id"] = correlation_id
 
@@ -1644,7 +1644,7 @@ class FlextExceptions:
         """Create exception by calling the class instance."""
         # Normalize ExceptionKwargsType to t.MetadataAttributeValue
         # normalize_to_metadata_value already returns t.MetadataAttributeValue
-        normalized_kwargs: m.ConfigMap = m.ConfigMap()
+        normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
         for k, v in kwargs.items():
             normalized_kwargs[k] = FlextRuntime.normalize_to_metadata_value(v)
         return self.create(

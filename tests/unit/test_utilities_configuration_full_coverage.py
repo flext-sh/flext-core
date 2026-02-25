@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# mypy: disable-error-code=arg-type
+
 import importlib
 import logging
 from pathlib import Path

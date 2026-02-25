@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# mypy: disable-error-code=func-returns-value,assignment,method-assign,misc,arg-type,truthy-function
+
 import types
 from collections.abc import Callable
 from typing import Any, cast

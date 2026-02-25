@@ -12,7 +12,7 @@ import tempfile
 import threading
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import pytest
 from flext_core import (
@@ -520,7 +520,7 @@ def _reset_global_container() -> Generator[None]:
     """
     yield  # Run the test
     # After the test completes, reset the global instances
-    FlextContainer._global_instance = None
+    FlextContainer._global_instance = cast("FlextContainer | None", None)
     FlextSettings.reset_global_instance()
 
 

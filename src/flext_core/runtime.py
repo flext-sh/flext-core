@@ -2014,9 +2014,9 @@ class FlextRuntime:
             Mapping[str, str]: Enriched context with trace fields
 
         """
-        context_dict = t.ConfigMap()
+        context_dict = t.ConfigMap(root={})
         if FlextRuntime._is_scalar(context):
-            context_dict = t.ConfigMap()
+            context_dict = t.ConfigMap(root={})
         elif FlextRuntime.is_base_model(context):
             context_dict.update(context.model_dump())
         elif FlextRuntime.is_dict_like(context):
@@ -2049,9 +2049,9 @@ class FlextRuntime:
                     "Failed to normalize mapping context fields",
                     exc_info=exc,
                 )
-                context_dict = t.ConfigMap()
+                context_dict = t.ConfigMap(root={})
         elif hasattr(context, "items"):
-            context_dict = t.ConfigMap()
+            context_dict = t.ConfigMap(root={})
 
         # Convert all values to strings for trace context
         result: MutableMapping[str, str] = {}

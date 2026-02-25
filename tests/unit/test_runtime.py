@@ -31,7 +31,7 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, s, t
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, p, r, s, t
 from flext_core.mixins import FlextMixins
 
 
@@ -635,7 +635,10 @@ class TestFlextRuntime:
 
             test_obj = TestObj()
             # Type narrowing: TestObj is compatible with t.GeneralValueType
-            test_obj_cast: t.GeneralValueType = cast("t.GeneralValueType", test_obj)
+            test_obj_cast: t.GeneralValueType = cast(
+                "t.GeneralValueType",
+                cast("object", test_obj),
+            )
             result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
             assert result == "value"
         elif (
@@ -650,7 +653,7 @@ class TestFlextRuntime:
             # Type narrowing: TestObjDefault is compatible with t.GeneralValueType
             test_obj_default_cast: t.GeneralValueType = cast(
                 "t.GeneralValueType",
-                test_obj_default_obj,
+                cast("object", test_obj_default_obj),
             )
             result = FlextRuntime.safe_get_attribute(
                 test_obj_default_cast,
@@ -668,7 +671,10 @@ class TestFlextRuntime:
 
             # Business Rule: TestObjNoDefault instances are compatible with t.GeneralValueType at runtime
             # Cast to t.GeneralValueType for type compatibility
-            test_obj_no_default = cast("t.GeneralValueType", TestObjNoDefault())
+            test_obj_no_default = cast(
+                "t.GeneralValueType",
+                cast("object", TestObjNoDefault()),
+            )
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
             assert result is None
 
@@ -733,7 +739,7 @@ class TestFlextRuntime:
             di_container = FlextRuntime.DependencyIntegration.create_container()
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
                 di_container,
-                {"database": {"dsn": "sqlite://"}},
+                t.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
             )
             assert isinstance(config_provider, providers.Configuration)
             # Type narrowing: di_container.config is providers.Configuration
@@ -760,7 +766,7 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has read_config attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                read_func = getattr(module, "read_config")
+                read_func = cast("Callable[[], str]", getattr(module, "read_config"))
                 assert callable(read_func)
                 result = read_func()
                 assert result == "sqlite://"
@@ -801,7 +807,10 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")
+                consume_func = cast(
+                    "Callable[[], tuple[dict[str, str], int]]",
+                    getattr(module, "consume"),
+                )
                 assert callable(consume_func)
                 tokens, value = consume_func()
                 assert tokens == {"token": "abc123"}
@@ -838,7 +847,7 @@ class TestFlextRuntime:
             setattr(module, "consume", consume_automation)
 
             di_container = FlextRuntime.DependencyIntegration.create_container(
-                config={"flags": {"enabled": True}},
+                config=t.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
                 factories={"token_factory": token_factory},
                 resources={"api_client": lambda: {"connected": True}},
@@ -849,7 +858,10 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")
+                consume_func = cast(
+                    "Callable[[], tuple[int, dict[str, int], bool, dict[str, bool]]]",
+                    getattr(module, "consume"),
+                )
                 assert callable(consume_func)
                 first_static, first_token, config_enabled, resource_value = (
                     consume_func()
@@ -900,7 +912,10 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")
+                consume_func = cast(
+                    "Callable[[], tuple[bool, dict[str, int], dict[str, bool]]]",
+                    getattr(module, "consume"),
+                )
                 assert callable(consume_func)
                 feature_flag, first_token, resource = consume_func()
                 _, second_token, _ = consume_func()
@@ -919,7 +934,7 @@ class TestFlextRuntime:
 
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
-                def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
+                def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                     # factories should be Mapping[str, Callable[[], ScalarValue | Sequence | Mapping]]
                     # RuntimeBootstrapOptions["factories"] has the correct type
                     def counter_factory() -> t.GeneralValueType:
@@ -951,11 +966,11 @@ class TestFlextRuntime:
                     ] = {
                         "counter": counter_factory_typed,
                     }
-                    return {
-                        "config_overrides": {"app_name": "runtime-aware"},
-                        "services": {"preseed": {"enabled": True}},
-                        "factories": factories_dict,
-                    }
+                    return p.RuntimeBootstrapOptions(
+                        config_overrides={"app_name": "runtime-aware"},
+                        services={"preseed": {"enabled": True}},
+                        factories=factories_dict,
+                    )
 
             component = RuntimeAwareComponent()
 
@@ -1085,7 +1100,7 @@ class TestFlextRuntime:
             FlextRuntime.Integration.track_domain_event(
                 "UserCreated",
                 aggregate_id="user-123",
-                event_data={"email": "test@example.com"},
+                event_data=t.ConfigMap(root={"email": "test@example.com"}),
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -1096,7 +1111,7 @@ class TestFlextRuntime:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_domain_event(
                 "SystemInitialized",
-                event_data={"timestamp": "2025-01-01T00:00:00Z"},
+                event_data=t.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (

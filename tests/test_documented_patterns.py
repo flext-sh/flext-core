@@ -20,6 +20,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# mypy: disable-error-code=assignment,list-item,arg-type
+
 import operator
 from dataclasses import dataclass, field
 
@@ -91,7 +93,9 @@ class RailwayTestCase:
             return FlextResult.fail("No user IDs provided")
 
         # Start with first user - explicit type annotation for union type
-        user_result: FlextResult[User] = GetUserService(user_id=self.user_ids[0]).execute()
+        user_result: FlextResult[User] = GetUserService(
+            user_id=self.user_ids[0]
+        ).execute()
         result: FlextResult[User | str | EmailResponse] = user_result
 
         # Apply operations if specified
@@ -111,9 +115,11 @@ class RailwayTestCase:
                 result = email_result
             elif op == "get_status":
                 result = result.map(
-                    lambda response: response.status
-                    if isinstance(response, EmailResponse)
-                    else str(response),
+                    lambda response: (
+                        response.status
+                        if isinstance(response, EmailResponse)
+                        else str(response)
+                    ),
                 )
 
         return result

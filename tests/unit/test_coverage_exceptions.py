@@ -15,8 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# mypy: disable-error-code=dict-item,arg-type,var-annotated
+
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import Callable, ClassVar, cast
 
 import pytest
 
@@ -32,8 +34,8 @@ class ExceptionCreationScenario:
     name: str
     exception_type: type[FlextExceptions.BaseError]
     message: str
-    kwargs: dict[str, t.GeneralValueType]
-    expected_attrs: dict[str, t.GeneralValueType]
+    kwargs: dict[str, t.GeneralValueType | type]
+    expected_attrs: dict[str, t.GeneralValueType | type]
 
 
 class ExceptionScenarios:
@@ -93,7 +95,11 @@ class ExceptionScenarios:
             "authorization",
             FlextExceptions.AuthorizationError,
             "User lacks permission",
-            {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel", "permission": "read"},
+            {
+                "user_id": "user123",
+                "resource": "REDACTED_LDAP_BIND_PASSWORD_panel",
+                "permission": "read",
+            },
             {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel"},
         ),
         ExceptionCreationScenario(
@@ -228,7 +234,11 @@ class TestFlextExceptionsHierarchy:
                     metadata_kwargs[key] = type_value.__name__
             # Type narrowing: all values in metadata_kwargs are MetadataAttributeValue
             # Pass keyword arguments unpacked from metadata_kwargs
-            error = scenario.exception_type(scenario.message, **metadata_kwargs)
+            exception_ctor = cast(
+                "Callable[..., FlextExceptions.BaseError]",
+                scenario.exception_type,
+            )
+            error = exception_ctor(scenario.message, **metadata_kwargs)
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
@@ -473,7 +483,11 @@ class TestExceptionFactory:
             "dict[str, t.MetadataAttributeValue]",
             converted_kwargs,
         )
-        error = FlextExceptions.create(message, **kwargs_typed)
+        create_error = cast(
+            "Callable[..., FlextExceptions.BaseError]",
+            FlextExceptions.create,
+        )
+        error = create_error(message, **kwargs_typed)
         assert isinstance(error, expected_type)
 
 
