@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shlex
-import subprocess  # noqa: S404 - intentional infra command runner
+import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -49,7 +49,7 @@ class CommandRunner:
 
         """
         try:
-            result = subprocess.run(  # noqa: S603 - cmd from trusted infra callers
+            result = subprocess.run(
                 list(cmd),
                 cwd=cwd,
                 capture_output=True,
@@ -152,7 +152,7 @@ class CommandRunner:
         try:
             output_file.parent.mkdir(parents=True, exist_ok=True)
             with output_file.open("w", encoding=c.Encoding.DEFAULT) as handle:
-                result = subprocess.run(  # noqa: S603 - cmd from trusted infra callers
+                result = subprocess.run(
                     list(cmd),
                     cwd=cwd,
                     stdout=handle,

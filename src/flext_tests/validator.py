@@ -111,7 +111,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
         """Validate type annotations in Python files.
 
         Detects:
-        - TYPE-001: # type: ignore comments
+        - TYPE-001:
         - TYPE-002: Any type annotations
         - TYPE-003: Unapproved  usage
 

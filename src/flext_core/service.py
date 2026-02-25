@@ -74,7 +74,7 @@ class FlextService[TDomainResult](
         validate_assignment=True,
     )
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""

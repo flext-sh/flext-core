@@ -1,9 +1,5 @@
 """Targeted full-coverage tests for flext_core.dispatcher missed branches."""
 
-# ruff: noqa: E402,SIM210,PLC0415,RUF069,ANN204,E731,ANN001,EM101,RUF012
-# mypy: follow_imports=skip
-# mypy: disable-error-code="arg-type,assignment,dict-item,list-item,return-value,union-attr,valid-type"
-
 from __future__ import annotations
 
 from collections.abc import Mapping

@@ -22,6 +22,7 @@ import types
 from collections.abc import Callable
 from typing import ClassVar, cast
 
+import pytest
 from flext_core import (
     FlextService,
     c,

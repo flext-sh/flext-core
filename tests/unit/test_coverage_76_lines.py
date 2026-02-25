@@ -100,14 +100,14 @@ class TestResultTransformations:
 
     def test_result_lash_recovery(self) -> None:
         """Test lash recovers from failure."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         r2 = r.lash(lambda e: FlextResult[int].ok(42))
         assert r2.is_success
         assert r2.value == 42
 
     def test_result_unwrap_or_default(self) -> None:
         """Test unwrap_or returns default on failure."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         assert r.unwrap_or(999) == 999
 
     def test_result_unwrap_or_value(self) -> None:

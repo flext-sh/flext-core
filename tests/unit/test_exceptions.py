@@ -24,7 +24,7 @@ import time
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar, Literal, cast
 
 import pytest
 
@@ -385,7 +385,10 @@ class Teste:
                 "field": "email",
                 "value": "invalid",
             })
-            error = e.BaseError("Test error", metadata=metadata)
+            error = e.BaseError(
+                "Test error",
+                metadata=cast("p.Log.Metadata", cast(object, metadata)),
+            )
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
             error = e.BaseError(
@@ -589,9 +592,15 @@ class Teste:
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
-            metadata=u.Tests.ExceptionHelpers.create_metadata_object({
-                "test": "data",
-            }),
+            metadata=cast(
+                "p.Log.Metadata",
+                cast(
+                    object,
+                    u.Tests.ExceptionHelpers.create_metadata_object({
+                        "test": "data",
+                    }),
+                ),
+            ),
         )
         assert "test" in exc.metadata.attributes
         assert exc.metadata.attributes["test"] == "data"
@@ -623,7 +632,7 @@ class Teste:
         })
         error = e.BaseError(
             "Test error",
-            metadata=metadata,
+            metadata=cast("p.Log.Metadata", cast(object, metadata)),
             new_field="new_value",
         )
         assert error.metadata.attributes["existing"] == "value"
@@ -694,7 +703,9 @@ class Teste:
         ],
         ids=["validation_kwargs", "configuration_kwargs"],
     )
-    def test_exception_extra_kwargs(self, error_class: type[e.BaseError], msg: str, custom_attr: str) -> None:
+    def test_exception_extra_kwargs(
+        self, error_class: type[e.BaseError], msg: str, custom_attr: str
+    ) -> None:
         """Test exception classes with extra_kwargs merging."""
         error = error_class(msg, **{custom_attr: "custom_value"})
         assert error.metadata is not None
@@ -752,7 +763,9 @@ class Teste:
         ],
         ids=["config_context", "connection_context", "auth_context", "authz_context"],
     )
-    def test_exception_with_context(self, error_class: type[e.BaseError], msg: str, context_key: str) -> None:
+    def test_exception_with_context(
+        self, error_class: type[e.BaseError], msg: str, context_key: str
+    ) -> None:
         """Test exception classes with context metadata."""
         context = {context_key: "value1"}
         error = error_class(msg, context=context)
@@ -992,28 +1005,36 @@ class Teste:
     def test_rate_limit_error_with_context(self) -> None:
         """Test RateLimitError with context - tests line 624."""
         context = {"key1": "value1"}
-        error = e.RateLimitError("Rate limit", limit=100, window_seconds=60, context=context)
+        error = e.RateLimitError(
+            "Rate limit", limit=100, window_seconds=60, context=context
+        )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
     def test_circuit_breaker_error_with_context(self) -> None:
         """Test CircuitBreakerError with context - tests line 659."""
         context = {"key1": "value1"}
-        error = e.CircuitBreakerError("Circuit open", service="test_service", context=context)
+        error = e.CircuitBreakerError(
+            "Circuit open", service="test_service", context=context
+        )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
     def test_type_error_with_context(self) -> None:
         """Test TypeError with context - tests line 701."""
         context = {"key1": "value1"}
-        error = e.TypeError("Type error", expected_type=str, actual_type=int, context=context)
+        error = e.TypeError(
+            "Type error", expected_type=str, actual_type=int, context=context
+        )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
     def test_operation_error_with_context(self) -> None:
         """Test OperationError with context - tests lines 757-761."""
         context = {"key1": "value1"}
-        error = e.OperationError("Operation failed", operation="test_op", context=context)
+        error = e.OperationError(
+            "Operation failed", operation="test_op", context=context
+        )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 

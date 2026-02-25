@@ -12,12 +12,12 @@ from types import ModuleType, TracebackType
 from typing import (
     Protocol,
     Self,
-    _ProtocolMeta,  # noqa: PLC2701 - Required for combined metaclass with Pydantic
+    _ProtocolMeta,
     runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic._internal._model_construction import (  # noqa: PLC2701 - Required for combined metaclass
+from pydantic._internal._model_construction import (
     ModelMetaclass,
 )
 from pydantic_settings import BaseSettings
@@ -144,7 +144,7 @@ class _ProtocolIntrospection:
 # Note: BaseSettings uses the same ModelMetaclass as BaseModel.
 
 
-class _CombinedModelMeta(  # pyright: ignore[reportUnsafeMultipleInheritance]
+class _CombinedModelMeta(
     ModelMetaclass,
     _ProtocolMeta,
 ):

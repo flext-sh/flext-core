@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-# mypy: follow_imports=skip, disable-error-code=valid-type
-
-# pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
-import sys
 import importlib
+
+# mypy: follow_imports=skip, disable-error-code=valid-type
+# pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 import uuid
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
@@ -15,53 +14,53 @@ from typing import Any, cast
 import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-_base_module = cast(Any, importlib.import_module("flext_core._models.base"))
-FlextModelFoundation = cast(Any, _base_module.FlextModelFoundation)
+_base_module = cast("Any", importlib.import_module("flext_core._models.base"))
+FlextModelFoundation = cast("Any", _base_module.FlextModelFoundation)
 c = _base_module.c
 t = _base_module.t
-r = cast(Any, importlib.import_module("flext_core.result")).r
-u = cast(Any, importlib.import_module("flext_core.utilities")).u
+r = cast("Any", importlib.import_module("flext_core.result")).r
+u = cast("Any", importlib.import_module("flext_core.utilities")).u
 
 
-class _FrozenValue(FlextModelFoundation.FrozenValueModel):
+class _FrozenValue(FlextModelFoundation.FrozenValueModel):  # type: ignore[name-defined]
     name: str
     count: int
 
 
-class _Identifiable(FlextModelFoundation.IdentifiableMixin):
+class _Identifiable(FlextModelFoundation.IdentifiableMixin):  # type: ignore[name-defined]
     pass
 
 
-class _Timestampable(FlextModelFoundation.TimestampableMixin):
+class _Timestampable(FlextModelFoundation.TimestampableMixin):  # type: ignore[name-defined]
     pass
 
 
-class _Versionable(FlextModelFoundation.VersionableMixin):
+class _Versionable(FlextModelFoundation.VersionableMixin):  # type: ignore[name-defined]
     pass
 
 
-class _Auditable(FlextModelFoundation.AuditableMixin):
+class _Auditable(FlextModelFoundation.AuditableMixin):  # type: ignore[name-defined]
     pass
 
 
-class _SoftDelete(FlextModelFoundation.SoftDeletableMixin):
+class _SoftDelete(FlextModelFoundation.SoftDeletableMixin):  # type: ignore[name-defined]
     pass
 
 
-class _Taggable(FlextModelFoundation.TaggableMixin):
+class _Taggable(FlextModelFoundation.TaggableMixin):  # type: ignore[name-defined]
     pass
 
 
-class _Validatable(FlextModelFoundation.ValidatableMixin):
+class _Validatable(FlextModelFoundation.ValidatableMixin):  # type: ignore[name-defined]
     value: int = 1
 
 
-class _Serializable(FlextModelFoundation.SerializableMixin):
+class _Serializable(FlextModelFoundation.SerializableMixin):  # type: ignore[name-defined]
     value: str
     optional: str | None = None
 
 
-class _FailingValidatable(FlextModelFoundation.ValidatableMixin):
+class _FailingValidatable(FlextModelFoundation.ValidatableMixin):  # type: ignore[name-defined]
     def validate_self(self) -> _FailingValidatable:
         msg = "invalid"
         raise ValueError(msg)
@@ -157,8 +156,8 @@ def test_validate_tags_list_normalization_and_errors() -> None:
 
 
 def test_metadata_attributes_accepts_none() -> None:
-    attributes = cast("Mapping[str, t.MetadataAttributeValue]", cast("object", None))
-    model = m.Base.Metadata(attributes=attributes)
+    attributes = cast("Mapping[str, object]", cast("object", None))
+    model = FlextModelFoundation.Metadata(attributes=attributes)
     assert model.attributes == {}
 
 
@@ -166,18 +165,16 @@ def test_metadata_attributes_accepts_basemodel_mapping() -> None:
     class _Attrs(BaseModel):
         key: str
 
-    attributes = cast(
-        "Mapping[str, t.MetadataAttributeValue]", cast("object", _Attrs(key="value"))
-    )
-    model = m.Base.Metadata(attributes=attributes)
+    attributes = cast("Mapping[str, object]", cast("object", _Attrs(key="value")))
+    model = FlextModelFoundation.Metadata(attributes=attributes)
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping"):
-        m.Base.Metadata(
+        FlextModelFoundation.Metadata(
             attributes=cast(
-                "Mapping[str, t.MetadataAttributeValue]",
+                "Mapping[str, object]",
                 cast("object", _BrokenDumpModel()),
             )
         )
@@ -185,10 +182,10 @@ def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
     t_dict_attributes = cast(
-        "Mapping[str, t.MetadataAttributeValue]", cast("object", t.Dict(root={"a": 1}))
+        "Mapping[str, object]", cast("object", t.Dict(root={"a": 1}))
     )
-    model_from_t_dict = m.Base.Metadata(attributes=t_dict_attributes)
-    model_from_mapping = m.Base.Metadata(attributes={"b": 2})
+    model_from_t_dict = FlextModelFoundation.Metadata(attributes=t_dict_attributes)
+    model_from_mapping = FlextModelFoundation.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}
 
@@ -200,18 +197,14 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
         pass
 
     monkeypatch.setattr(_base_module, "BaseModel", _NotPydanticBase)
-    attributes = cast(
-        "Mapping[str, t.MetadataAttributeValue]", cast("object", t.Dict(root={"x": 1}))
-    )
-    assert m.Base.Metadata._validate_attributes(attributes) == {"x": 1}
+    attributes = cast("Mapping[str, object]", cast("object", t.Dict(root={"x": 1})))
+    assert FlextModelFoundation.Metadata._validate_attributes(attributes) == {"x": 1}
 
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like"):
-        m.Base.Metadata(
-            attributes=cast(
-                "Mapping[str, t.MetadataAttributeValue]", cast("object", 123)
-            )
+        FlextModelFoundation.Metadata(
+            attributes=cast("Mapping[str, object]", cast("object", 123))
         )
 
 
@@ -510,7 +503,7 @@ def test_serializable_mixin_methods() -> None:
 
 
 def test_advanced_serializable_methods() -> None:
-    model = m.Base.AdvancedSerializable(
+    model = FlextModelFoundation.AdvancedSerializable(
         name="sample",
         timestamp=datetime(2026, 1, 1, tzinfo=UTC),
         metadata=t.Dict(root={"n": 1}),
@@ -526,17 +519,19 @@ def test_advanced_serializable_methods() -> None:
 
 
 def test_dynamic_rebuild_model_methods() -> None:
-    model = m.Base.DynamicRebuildModel(name="x", value=5)
+    model = FlextModelFoundation.DynamicRebuildModel(name="x", value=5)
     assert model.doubled_value == 10
 
-    extra_cls = m.Base.DynamicRebuildModel.create_with_extra_field("extra", int)
+    extra_cls = FlextModelFoundation.DynamicRebuildModel.create_with_extra_field(
+        "extra", int
+    )
     assert "extra" in extra_cls.__annotations__
 
     with pytest.raises(ValueError, match="has no field"):
         model.add_runtime_field("runtime_key", "v")
     assert model.get_runtime_field("missing", "default") == "default"
 
-    plus_one_cls = m.Base.DynamicRebuildModel.rebuild_with_validator(
+    plus_one_cls = FlextModelFoundation.DynamicRebuildModel.rebuild_with_validator(
         lambda value: int(cast("str | int", value)) + 1
     )
     plus_one = plus_one_cls(name="x", value=2)
@@ -544,7 +539,7 @@ def test_dynamic_rebuild_model_methods() -> None:
 
 
 def test_dynamic_model_methods() -> None:
-    model = m.Base.DynamicModel.create_dynamic("dyn", a=1)
+    model = FlextModelFoundation.DynamicModel.create_dynamic("dyn", a=1)
     assert model.name == "dyn"
     assert model.dynamic_field_count == 1
     assert model.has_dynamic_fields is True
@@ -555,9 +550,9 @@ def test_dynamic_model_methods() -> None:
 
 
 def test_timestamped_model_and_alias_and_canonical_symbols() -> None:
-    model = m.Base.TimestampedModel()
+    model = FlextModelFoundation.TimestampedModel()
     assert model.created_at.tzinfo == UTC
-    assert m.Base is m.Base
+    assert hasattr(FlextModelFoundation, "TimestampedModel")
     assert r[str].ok("ok").value == "ok"
     assert c.Performance.DEFAULT_VERSION >= 1
     assert hasattr(u, "mapper")

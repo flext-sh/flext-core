@@ -22,6 +22,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# mypy: disable-error-code=valid-type
+
 import math
 from typing import cast
 

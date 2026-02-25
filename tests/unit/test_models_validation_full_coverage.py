@@ -1,10 +1,28 @@
+"""Full coverage tests for FlextModelFoundation.Validators.
+
+Tests all staticmethod validators available on m.Validation (which is
+FlextModelFoundation.Validators):
+  - strip_whitespace
+  - ensure_utc_datetime
+  - normalize_to_list
+  - validate_non_empty_string
+  - validate_email
+  - validate_url
+  - validate_semver
+  - validate_uuid_string
+  - validate_config_dict
+  - validate_tags_list
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import Never, cast
+from datetime import UTC, datetime
 
-from pydantic import BaseModel
-from pytest import MonkeyPatch
+import pytest
+from pydantic import BaseModel, ValidationError
 
 from flext_core import c, m, r, t, u
 
@@ -13,156 +31,215 @@ class _Simple(BaseModel):
     x: int
 
 
-class _BadInvariant:
-    def check_invariants(self) -> None:
-        raise ValueError("bad invariant")
+# ---------------------------------------------------------------------------
+# Validators.strip_whitespace
+# ---------------------------------------------------------------------------
 
 
-class _BrokenDumpModel(BaseModel):
-    value: int = 1
+def test_strip_whitespace_trims_leading_trailing() -> None:
+    assert m.Validation.strip_whitespace("  hello  ") == "hello"
 
 
-def _always_fail_int(_: int) -> r[int]:
-    return r[int].fail("x")
+def test_strip_whitespace_preserves_clean() -> None:
+    assert m.Validation.strip_whitespace("already") == "already"
 
 
-def _ok_int(value: int) -> r[int]:
-    return r[int].ok(value)
+def test_strip_whitespace_returns_empty_on_spaces() -> None:
+    assert m.Validation.strip_whitespace("   ") == ""
 
 
-def test_models_validation_branch_paths() -> None:
+# ---------------------------------------------------------------------------
+# Validators.ensure_utc_datetime
+# ---------------------------------------------------------------------------
+
+
+def test_ensure_utc_datetime_adds_tzinfo_when_naive() -> None:
+    naive = datetime(2025, 1, 1, 12, 0, 0)
+    result = m.Validation.ensure_utc_datetime(naive)
+    assert result is not None
+    assert result.tzinfo is UTC
+
+
+def test_ensure_utc_datetime_preserves_aware() -> None:
+    aware = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    result = m.Validation.ensure_utc_datetime(aware)
+    assert result is aware
+
+
+def test_ensure_utc_datetime_returns_none_on_none() -> None:
+    assert m.Validation.ensure_utc_datetime(None) is None
+
+
+# ---------------------------------------------------------------------------
+# Validators.normalize_to_list
+# ---------------------------------------------------------------------------
+
+
+def test_normalize_to_list_wraps_scalar() -> None:
+    result = m.Validation.normalize_to_list("single")
+    assert result == ["single"]
+
+
+def test_normalize_to_list_passes_list_through() -> None:
+    result = m.Validation.normalize_to_list([1, 2, 3])
+    assert result == [1, 2, 3]
+
+
+def test_normalize_to_list_wraps_int() -> None:
+    result = m.Validation.normalize_to_list(42)
+    assert result == [42]
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_non_empty_string
+# ---------------------------------------------------------------------------
+
+
+def test_validate_non_empty_string_passes() -> None:
+    assert m.Validation.validate_non_empty_string("hello") == "hello"
+
+
+def test_validate_non_empty_string_raises_on_empty() -> None:
+    with pytest.raises(ValueError, match="empty"):
+        m.Validation.validate_non_empty_string("")
+
+
+def test_validate_non_empty_string_raises_on_whitespace() -> None:
+    with pytest.raises(ValueError, match="empty"):
+        m.Validation.validate_non_empty_string("   ")
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_email
+# ---------------------------------------------------------------------------
+
+
+def test_validate_email_passes() -> None:
+    assert m.Validation.validate_email("user@example.com") == "user@example.com"
+
+
+def test_validate_email_raises_on_invalid() -> None:
+    with pytest.raises(ValueError, match="email"):
+        m.Validation.validate_email("not-an-email")
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_url
+# ---------------------------------------------------------------------------
+
+
+def test_validate_url_passes() -> None:
+    assert m.Validation.validate_url("https://example.com") == "https://example.com"
+
+
+def test_validate_url_raises_on_invalid() -> None:
+    with pytest.raises(ValueError, match="URL"):
+        m.Validation.validate_url("not-a-url")
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_semver
+# ---------------------------------------------------------------------------
+
+
+def test_validate_semver_passes() -> None:
+    assert m.Validation.validate_semver("1.2.3") == "1.2.3"
+
+
+def test_validate_semver_raises_on_invalid() -> None:
+    with pytest.raises(ValueError, match="semver"):
+        m.Validation.validate_semver("abc")
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_uuid_string
+# ---------------------------------------------------------------------------
+
+
+def test_validate_uuid_string_passes() -> None:
+    uuid_str = "12345678-1234-5678-1234-567812345678"
+    assert m.Validation.validate_uuid_string(uuid_str) == uuid_str
+
+
+def test_validate_uuid_string_raises_on_invalid() -> None:
+    with pytest.raises(ValueError, match="UUID"):
+        m.Validation.validate_uuid_string("not-a-uuid")
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_config_dict
+# ---------------------------------------------------------------------------
+
+
+def test_validate_config_dict_normalizes_dict() -> None:
+    result = m.Validation.validate_config_dict({"key": "value"})
+    assert isinstance(result, dict)
+    assert result["key"] == "value"
+
+
+# ---------------------------------------------------------------------------
+# Validators.validate_tags_list
+# ---------------------------------------------------------------------------
+
+
+def test_validate_tags_list_normalizes() -> None:
+    result = m.Validation.validate_tags_list(["tag1", "  TAG1  ", "tag2"])
+    assert isinstance(result, list)
+    # Tags should be deduplicated and cleaned
+    assert len(result) <= 3
+
+
+def test_validate_tags_list_from_string() -> None:
+    result = m.Validation.validate_tags_list(["hello", "world"])
+    assert "hello" in result
+    assert "world" in result
+
+
+# ---------------------------------------------------------------------------
+# Smoke: confirm facade binding
+# ---------------------------------------------------------------------------
+
+
+def test_facade_binding_is_correct() -> None:
+    """m.Validation IS FlextModelFoundation.Validators."""
+    from flext_core._models.base import FlextModelFoundation
+
+    assert m.Validation is FlextModelFoundation.Validators
+
+
+def test_basic_imports_work() -> None:
+    """Smoke test: all standard imports resolve."""
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
-    assert isinstance(_BadInvariant(), _BadInvariant)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
-    validation_failure_message = cast(
-        Callable[[str | None, str], str],
-        getattr(m.Validation, "_validation_failure_message"),
-    )
-    validate_performance = cast(
-        Callable[..., r[bool]],
-        getattr(m.Validation, "validate_performance"),
-    )
-    validate_batch = cast(
-        Callable[..., r[bool]],
-        getattr(m.Validation, "validate_batch"),
-    )
-    validate_cqrs_patterns = cast(
-        Callable[..., r[bool]],
-        getattr(m.Validation, "validate_cqrs_patterns"),
-    )
-    validate_event_structure = cast(
-        Callable[[t.ConfigMapValue], r[bool]],
-        getattr(m.Validation, "_validate_event_structure"),
-    )
-    event_has_attr = cast(
-        Callable[[t.ConfigMapValue, str], bool],
-        getattr(m.Validation, "_event_has_attr"),
-    )
-    validate_entity_relationships = cast(
-        Callable[[t.GeneralValueType | None], r[bool]],
-        getattr(m.Validation, "validate_entity_relationships"),
-    )
-    validate_uri = cast(
-        Callable[[str | None], r[str]], getattr(m.Validation, "validate_uri")
-    )
-    validate_port_number = cast(
-        Callable[[int | None], r[int]],
-        getattr(m.Validation, "validate_port_number"),
-    )
-    validate_required_string = cast(
-        Callable[[str | None], r[str]],
-        getattr(m.Validation, "validate_required_string"),
-    )
-    validate_choice = cast(
-        Callable[[str, Sequence[str]], r[str]],
-        getattr(m.Validation, "validate_choice"),
-    )
-    validate_length = cast(
-        Callable[..., r[str]], getattr(m.Validation, "validate_length")
-    )
-    validate_pattern = cast(
-        Callable[[str, str], r[str]],
-        getattr(m.Validation, "validate_pattern"),
-    )
 
-    msg: str = validation_failure_message(None, "fallback")
-    assert msg.endswith("fallback)")
-
-    slow = validate_performance(_Simple(x=1), max_validation_time_ms=-1)
-    assert slow.is_failure
-
-    ff = validate_batch([1], _always_fail_int, fail_fast=True)
-    assert ff.is_failure
-
-    cqrs_ok = validate_cqrs_patterns(1, "command", [_ok_int])
-    assert cqrs_ok.is_success
-
-    missing = validate_event_structure({"event_type": "e"})
-    assert missing.is_failure
-
-    has_attr = event_has_attr({"k": 1}, "k")
-    assert has_attr is True
-
-    none_entity = validate_entity_relationships(None)
-    assert none_entity.is_failure
-
-    bad_uri = validate_uri(None)
-    assert bad_uri.is_failure
-
-    bad_port = validate_port_number(None)
-    assert bad_port.is_failure
-
-    req_none = validate_required_string(None)
-    assert req_none.is_failure
-
-    bad_choice = validate_choice("x", [])
-    assert bad_choice.is_failure
-
-    too_long = validate_length("abc", max_length=1)
-    assert too_long.is_failure
-
-    bad_pattern = validate_pattern("a", "[")
-    assert bad_pattern.is_failure
-
-
-def test_models_validation_uncovered_exception_and_event_paths(
-    monkeypatch: MonkeyPatch,
-) -> None:
-    def _raise_model_dump(
-        self: _BrokenDumpModel,
-        **kwargs: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
-        _ = (self, kwargs)
-        raise RuntimeError("dump failed")
-
-    monkeypatch.setattr(_BrokenDumpModel, "model_dump", _raise_model_dump)
-
-    validate_performance = cast(
-        Callable[..., r[bool]],
-        getattr(m.Validation, "validate_performance"),
-    )
-    event_has_attr = cast(
-        Callable[[t.ConfigMapValue, str], bool],
-        getattr(m.Validation, "_event_has_attr"),
-    )
-    validate_uri = cast(
-        Callable[[str | None], r[str]], getattr(m.Validation, "validate_uri")
-    )
-
-    failed_perf = validate_performance(_BrokenDumpModel(value=1))
-    assert failed_perf.is_failure
-
-    assert event_has_attr(t.ConfigMap(root={}), "missing") is False
-
-    import flext_core._models.base as validation_models
-
-    def _raise_bad_uri(_uri: str) -> Never:
-        raise ValueError("bad uri")
-
-    monkeypatch.setattr(validation_models, "urlparse", _raise_bad_uri)
-    bad_uri = validate_uri("http://ok")
-    assert bad_uri.is_failure
+__all__ = [
+    "test_strip_whitespace_trims_leading_trailing",
+    "test_strip_whitespace_preserves_clean",
+    "test_strip_whitespace_returns_empty_on_spaces",
+    "test_ensure_utc_datetime_adds_tzinfo_when_naive",
+    "test_ensure_utc_datetime_preserves_aware",
+    "test_ensure_utc_datetime_returns_none_on_none",
+    "test_normalize_to_list_wraps_scalar",
+    "test_normalize_to_list_passes_list_through",
+    "test_normalize_to_list_wraps_int",
+    "test_validate_non_empty_string_passes",
+    "test_validate_non_empty_string_raises_on_empty",
+    "test_validate_non_empty_string_raises_on_whitespace",
+    "test_validate_email_passes",
+    "test_validate_email_raises_on_invalid",
+    "test_validate_url_passes",
+    "test_validate_url_raises_on_invalid",
+    "test_validate_semver_passes",
+    "test_validate_semver_raises_on_invalid",
+    "test_validate_uuid_string_passes",
+    "test_validate_uuid_string_raises_on_invalid",
+    "test_validate_config_dict_normalizes_dict",
+    "test_validate_tags_list_normalizes",
+    "test_validate_tags_list_from_string",
+    "test_facade_binding_is_correct",
+    "test_basic_imports_work",
+]

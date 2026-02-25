@@ -222,7 +222,7 @@ class SyncService(FlextService[m.SyncResult]):
 
 def main() -> int:
     """CLI entry point for workspace sync."""
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="Workspace base.mk sync")
     _ = parser.add_argument(

@@ -121,7 +121,7 @@ def _run_scan(args: argparse.Namespace) -> int:
     )
 
     if result.is_success:
-        import json  # noqa: PLC0415
+        import json
 
         data = result.value
         _ = sys.stdout.write(

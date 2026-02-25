@@ -30,7 +30,7 @@ _CACHE_TTL_SECONDS = 300
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
     """Load YAML file safely, returning empty mapping on missing/invalid."""
-    import yaml  # noqa: PLC0415
+    import yaml
 
     raw = path.read_text(encoding=c.Encoding.DEFAULT)
     safe_load = getattr(yaml, "safe_load", None)
@@ -290,7 +290,7 @@ class SkillValidator:
         mode: str,
     ) -> int:
         """Run a custom rule script and return violation count."""
-        import sys  # noqa: PLC0415
+        import sys
 
         script_raw = str(rule.get("script", "")).strip()
         if not script_raw:
