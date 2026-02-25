@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, cast, overload
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
@@ -317,9 +317,22 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+    @overload
+    def register_handler(
+        self,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
+    ) -> r[m.HandlerRegistrationDetails]: ...
+
+    @overload
     def register_handler(
         self,
         handler: RegistryHandler,
+    ) -> r[m.HandlerRegistrationDetails]: ...
+
+
+    def register_handler(
+        self,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -373,8 +386,10 @@ class FlextRegistry(FlextService[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
+        # Cast handler to RegistryHandler for dispatcher compatibility
+        handler_for_dispatch: RegistryHandler = cast(RegistryHandler, handler)
         registration_result = self._dispatcher.register_handler(
-            handler,
+            handler_for_dispatch,
         )
         if registration_result.is_success:
             # Convert model result to RegistrationDetails
@@ -460,7 +475,7 @@ class FlextRegistry(FlextService[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[RegistryHandler],
+        handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -493,7 +508,7 @@ class FlextRegistry(FlextService[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[RegistryBindingKey, RegistryHandler],
+        bindings: Mapping[RegistryBindingKey, p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
 
@@ -524,9 +539,11 @@ class FlextRegistry(FlextService[bool]):
             try:
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
+                # Cast handler to RegistryHandler for dispatcher compatibility
+                handler_for_dispatch: RegistryHandler = cast(RegistryHandler, handler)
                 reg_result = self._dispatcher.register_handler(
                     message_type,
-                    handler,
+                    handler_for_dispatch,
                 )
 
                 if reg_result.is_success:
@@ -785,7 +802,7 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: RegistryHandler,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = getattr(handler, "handler_id", None)
