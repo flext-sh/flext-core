@@ -80,7 +80,7 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
     ) -> r[m.ConfigMap]:
         """Handle get user query."""
         return r[m.ConfigMap].ok(
-            t.ConfigMap(
+            m.ConfigMap(
                 root={
                     "user_id": message.user_id,
                     "name": "Demo User",
@@ -110,7 +110,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
             self._demonstrate_integration()
 
             return r[m.ConfigMap].ok(
-                t.ConfigMap(
+                m.ConfigMap(
                     root={
                         "patterns_demonstrated": [
                             "handler_registration",

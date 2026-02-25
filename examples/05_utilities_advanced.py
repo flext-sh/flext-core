@@ -96,7 +96,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             self._demonstrate_configuration()
 
             return FlextResult[m.ConfigMap].ok(
-                t.ConfigMap(
+                m.ConfigMap(
                     root={
                         "utilities_demonstrated": [
                             "args_validation",
@@ -265,7 +265,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print("✅ String non-empty guard: 'hello' is valid")
 
         # Dict non-empty guard
-        test_dict: t.ConfigMap = t.ConfigMap(root={"key": "value"})
+        test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value"})
         if u.is_type(test_dict, "dict_non_empty"):
             print("✅ Dict non-empty guard: dict is valid")
 
@@ -282,7 +282,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: FlextResult[t.ConfigMap] = FlextResult[t.ConfigMap].fail(
+        map_result: FlextResult[m.ConfigMap] = FlextResult[m.ConfigMap].fail(
             "Invalid data types"
         )
         if (
@@ -295,17 +295,17 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
                     hasattr(x, "keys") and hasattr(x, "__getitem__")
                 )
 
-            source_dict: t.ConfigMap = (
-                t.ConfigMap(root={str(k): v for k, v in source_value.items()})
+            source_dict: m.ConfigMap = (
+                m.ConfigMap(root={str(k): v for k, v in source_value.items()})
                 if _is_mapping(source_value)
-                else t.ConfigMap(root={})
+                else m.ConfigMap(root={})
             )
             if _is_mapping(mapping_value):
-                mapping_dict: t.ConfigMap = t.ConfigMap(
+                mapping_dict: m.ConfigMap = m.ConfigMap(
                     root={str(k): v for k, v in mapping_value.items()}
                 )
                 mapped_dict = u.transform_values(mapping_dict, str)
-                key_mapping: t.ConfigMap = t.ConfigMap(
+                key_mapping: m.ConfigMap = m.ConfigMap(
                     root={str(k): str(v) for k, v in mapped_dict.items()}
                 )
                 map_result = u.map_dict_keys(source_dict, key_mapping)
@@ -321,7 +321,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
 
         # Build flags dict
         flags: list[str] = ["read", "write"]
-        flag_mapping: t.ConfigMap = t.ConfigMap(
+        flag_mapping: m.ConfigMap = m.ConfigMap(
             root={
                 "read": "can_read",
                 "write": "can_write",
@@ -355,7 +355,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Pagination ===")
 
         # Extract page params
-        query_params: t.ConfigMap = t.ConfigMap(root={"page": "2", "page_size": "10"})
+        query_params: m.ConfigMap = m.ConfigMap(root={"page": "2", "page_size": "10"})
         page_result = u.extract_page_params(
             query_params,
             default_page=1,
@@ -390,7 +390,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print(f"⚠️  Get parameter: {e}")
 
         # Get parameter from dict
-        config_dict: t.ConfigMap = t.ConfigMap(
+        config_dict: m.ConfigMap = m.ConfigMap(
             root={
                 "timeout": 30,
                 "retries": 3,

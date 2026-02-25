@@ -46,7 +46,7 @@ def demonstrate_enhanced_generic_models() -> None:
         user_id="user123",
         tenant_id="tenant456",
         environment="development",
-        metadata=t.ConfigMap(root={"session_id": "sess789", "request_id": "req101"}),
+        metadata=m.ConfigMap(root={"session_id": "sess789", "request_id": "req101"}),
     )
 
     print(f"📊 Context Summary: {context.context_summary}")
@@ -73,7 +73,7 @@ def demonstrate_enhanced_generic_models() -> None:
     # Enhanced Health check with detailed monitoring
     health = gm.Snapshot.Health(
         healthy=True,
-        checks=t.ConfigMap(
+        checks=m.ConfigMap(
             root={
                 "database": True,
                 "cache": True,

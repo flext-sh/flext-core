@@ -33,7 +33,6 @@ from flext_core import (
     e,
     m,
     r,
-    t,
     u,
 )
 
@@ -211,10 +210,12 @@ def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     # Create test data and perform operations with railway pattern (DRY + SRP)
     correlation_id = u.generate("correlation")
-    test_obj: t.ConfigMap = t.ConfigMap(root={
-        "unique_id": correlation_id,
-        "test": True,
-    })
+    test_obj: m.ConfigMap = m.ConfigMap(
+        root={
+            "unique_id": correlation_id,
+            "test": True,
+        }
+    )
 
     # Railway pattern with traverse for multiple operations (DRY - no manual loops)
     cache_result = u.clear_object_cache(test_obj)
@@ -377,10 +378,12 @@ def main() -> None:
         logger.info("Starting demonstration", extra={"correlation_id": correlation_id})
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
-        user_data: m.ConfigMap = m.ConfigMap(root={
-            "name": "Demo",
-            "email": "demo@example.com",
-        })
+        user_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "name": "Demo",
+                "email": "demo@example.com",
+            }
+        )
 
         # Service instance (DRY - single creation)
         service = UserService()

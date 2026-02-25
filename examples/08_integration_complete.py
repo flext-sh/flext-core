@@ -88,7 +88,7 @@ class IntegrationService(s[m.ConfigMap]):
             self._demonstrate_utilities_integration()
 
             return r[m.ConfigMap].ok(
-                t.ConfigMap(
+                m.ConfigMap(
                     root={
                         "components_integrated": [
                             "r",

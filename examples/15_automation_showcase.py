@@ -49,7 +49,7 @@ class UserService(s[m.ConfigMap]):
 
     def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
-        return r[m.ConfigMap].ok(t.ConfigMap(root={"status": "initialized"}))
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
 
     def create_user(
         self,
@@ -62,7 +62,7 @@ class UserService(s[m.ConfigMap]):
             self.logger.info("Creating user", username=username, email=email)
 
         # Business logic
-        user_data: m.ConfigMap = t.ConfigMap(
+        user_data: m.ConfigMap = m.ConfigMap(
             root={
                 "id": "usr_123",
                 "username": username,
@@ -87,7 +87,7 @@ class PaymentService(s[m.ConfigMap]):
 
     def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
-        return r[m.ConfigMap].ok(t.ConfigMap(root={"status": "initialized"}))
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
 
     def process_payment(
         self,
@@ -129,7 +129,7 @@ class PaymentService(s[m.ConfigMap]):
             )
 
         # Business logic
-        payment_data: m.ConfigMap = t.ConfigMap(
+        payment_data: m.ConfigMap = m.ConfigMap(
             root={
                 "payment_id": payment_id,
                 "amount": amount,
@@ -242,7 +242,7 @@ class AutomationService(s[m.ConfigMap]):
     ) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
         return r[m.ConfigMap].ok(
-            t.ConfigMap(
+            m.ConfigMap(
                 root={
                     "status": "automation_ready",
                 }
@@ -275,7 +275,7 @@ class AutomationService(s[m.ConfigMap]):
         print("\n=== 1. from_callable: Safe Automation Task Execution ===")
 
         def risky_automation_task() -> m.ConfigMap:
-            task_data: m.ConfigMap = t.ConfigMap(
+            task_data: m.ConfigMap = m.ConfigMap(
                 root={
                     "task_id": "AUTO-001",
                     "task_type": "data_sync",
@@ -315,7 +315,7 @@ class AutomationService(s[m.ConfigMap]):
         def enrich(
             data: m.ConfigMap,
         ) -> r[m.ConfigMap]:
-            enriched: m.ConfigMap = t.ConfigMap(
+            enriched: m.ConfigMap = m.ConfigMap(
                 root={
                     **data,
                     "automation_timestamp": "2025-01-01T12:00:00Z",
@@ -325,7 +325,7 @@ class AutomationService(s[m.ConfigMap]):
             )
             return r[m.ConfigMap].ok(enriched)
 
-        automation_input: m.ConfigMap = t.ConfigMap(
+        automation_input: m.ConfigMap = m.ConfigMap(
             root={
                 "task_type": c.Cqrs.ProcessingMode.BATCH.value,
                 "source": "database",
@@ -372,7 +372,7 @@ class AutomationService(s[m.ConfigMap]):
 
         def get_default() -> r[m.ConfigMap]:
             return r[m.ConfigMap].ok(
-                t.ConfigMap(
+                m.ConfigMap(
                     root={
                         "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
                         "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
@@ -398,7 +398,7 @@ class AutomationService(s[m.ConfigMap]):
 
         def create_engine() -> m.ConfigMap:
             print("   ⚙️  Initializing automation engine...")
-            return t.ConfigMap(
+            return m.ConfigMap(
                 root={
                     "engine_id": "AUTO-ENGINE-001",
                     "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
@@ -418,7 +418,7 @@ class AutomationService(s[m.ConfigMap]):
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")
 
-        existing: m.ConfigMap = t.ConfigMap(
+        existing: m.ConfigMap = m.ConfigMap(
             root={
                 "engine_id": "CACHED-ENGINE-001",
                 "worker_count": c.Container.DEFAULT_WORKERS,
@@ -447,15 +447,15 @@ class AutomationService(s[m.ConfigMap]):
 
         def extract() -> r[list[m.ConfigMap]]:
             return r[list[m.ConfigMap]].ok([
-                t.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
-                t.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
+                m.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
+                m.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
             ])
 
         def transform(
             data: list[m.ConfigMap],
         ) -> r[list[m.ConfigMap]]:
             transformed: list[m.ConfigMap] = [
-                t.ConfigMap(
+                m.ConfigMap(
                     root={
                         **item,
                         "processed": True,
@@ -510,7 +510,7 @@ class AutomationService(s[m.ConfigMap]):
             if not cache:
                 print("   📄 Loading configuration from file...")
                 cache.update(
-                    t.ConfigMap(
+                    m.ConfigMap(
                         root={
                             "database_url": "postgresql://localhost:5432/testdb",
                             "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
