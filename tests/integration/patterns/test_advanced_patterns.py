@@ -81,7 +81,11 @@ class GivenWhenThenBuilder:
         self._tags: list[str] = []
         self._priority = "normal"
 
-    def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def given(
+        self,
+        _description: str,
+        **kwargs: t.GeneralValueType,
+    ) -> GivenWhenThenBuilder:
         """Given method.
 
         Returns:
@@ -91,7 +95,11 @@ class GivenWhenThenBuilder:
         self._given.update(kwargs)
         return self
 
-    def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def when(
+        self,
+        _description: str,
+        **kwargs: t.GeneralValueType,
+    ) -> GivenWhenThenBuilder:
         """When method.
 
         Returns:
@@ -101,7 +109,11 @@ class GivenWhenThenBuilder:
         self._when.update(kwargs)
         return self
 
-    def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def then(
+        self,
+        _description: str,
+        **kwargs: t.GeneralValueType,
+    ) -> GivenWhenThenBuilder:
         """Then method.
 
         Returns:
@@ -150,8 +162,9 @@ class GivenWhenThenBuilder:
             return str(value)
 
         # Use mapper to transform dict values and convert keys to strings
-        given_converted: dict[str, str | int | bool] = u.mapper().transform_values(
-            u.mapper()
+        given_mapped = u.mapper().transform_values(
+            u
+            .mapper()
             .map_dict_keys(
                 self._given, {k: str(k) for k in self._given}, keep_unmapped=True
             )
@@ -160,8 +173,12 @@ class GivenWhenThenBuilder:
             else {},
             convert_dict_value,
         )
-        when_converted: dict[str, str | int | bool] = u.mapper().transform_values(
-            u.mapper()
+        given_converted: dict[str, str | int | bool] = {
+            key: convert_dict_value(value) for key, value in given_mapped.items()
+        }
+        when_mapped = u.mapper().transform_values(
+            u
+            .mapper()
             .map_dict_keys(
                 self._when, {k: str(k) for k in self._when}, keep_unmapped=True
             )
@@ -170,8 +187,12 @@ class GivenWhenThenBuilder:
             else {},
             convert_dict_value,
         )
-        then_converted: dict[str, str | int | bool] = u.mapper().transform_values(
-            u.mapper()
+        when_converted: dict[str, str | int | bool] = {
+            key: convert_dict_value(value) for key, value in when_mapped.items()
+        }
+        then_mapped = u.mapper().transform_values(
+            u
+            .mapper()
             .map_dict_keys(
                 self._then, {k: str(k) for k in self._then}, keep_unmapped=True
             )
@@ -180,6 +201,9 @@ class GivenWhenThenBuilder:
             else {},
             convert_dict_value,
         )
+        then_converted: dict[str, str | int | bool] = {
+            key: convert_dict_value(value) for key, value in then_mapped.items()
+        }
 
         scenario_data: MockScenarioData = {
             "given": given_converted,
@@ -220,7 +244,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: t.GeneralValueType) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -252,7 +276,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs: object) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs: t.GeneralValueType) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:
@@ -285,7 +309,9 @@ class ParameterizedTestBuilder:
         self._success_cases: list[FixtureCaseDict] = []
         self._failure_cases: list[FixtureCaseDict] = []
 
-    def add_case(self, **kwargs: str | int | bool | list[str]) -> ParameterizedTestBuilder:
+    def add_case(
+        self, **kwargs: str | int | bool | list[str]
+    ) -> ParameterizedTestBuilder:
         """add_case method.
 
         Returns:
@@ -366,11 +392,19 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...],
+        data: list[t.GeneralValueType]
+        | dict[str, t.GeneralValueType]
+        | str
+        | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...] = data
+        self.data: (
+            list[t.GeneralValueType]
+            | dict[str, t.GeneralValueType]
+            | str
+            | tuple[object, ...]
+        ) = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: object) -> AssertionBuilder:
@@ -426,7 +460,12 @@ class AssertionBuilder:
     def satisfies(
         self,
         condition: Callable[
-            [list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...]],
+            [
+                list[t.GeneralValueType]
+                | dict[str, t.GeneralValueType]
+                | str
+                | tuple[object, ...]
+            ],
             bool,
         ],
         description: str = "",

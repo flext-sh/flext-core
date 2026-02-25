@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 
 from flext_core import (
@@ -165,7 +165,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print(f"✅ Enum parsing: {status.value}")
 
         # Type guard for enum membership
-        test_value: t.GeneralValueType = "pending"
+        test_value: str = "pending"
         if u.is_member(StatusEnum, test_value):
             print(f"✅ Type guard: {test_value} is valid StatusEnum")
 
@@ -184,7 +184,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Model Utilities ===")
 
         # Create model from dict
-        user_data: Mapping[str, t.FlexibleValue] = {
+        user_data: Mapping[str, t.JsonValue] = {
             "name": "Alice",
             "status": "active",
             "age": 25,
@@ -216,11 +216,11 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
 
         # Merge defaults
-        defaults: Mapping[str, t.FlexibleValue] = {
+        defaults: Mapping[str, t.JsonValue] = {
             "status": StatusEnum.PENDING,
             "age": 0,
         }
-        overrides: Mapping[str, t.FlexibleValue] = {"name": "Charlie"}
+        overrides: Mapping[str, t.JsonValue] = {"name": "Charlie"}
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
             user = merge_result.value
@@ -282,33 +282,16 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: FlextResult[m.ConfigMap] = FlextResult[m.ConfigMap].fail(
-            "Invalid data types"
-        )
-        if (
-            u.guard(source_value, Mapping, return_value=True) is not None
-            and u.guard(mapping_value, Mapping, return_value=True) is not None
-        ):
-            # Type-safe dictionary creation from Mapping
-            def _is_mapping(x: object) -> bool:
-                return isinstance(x, dict) or (
-                    hasattr(x, "keys") and hasattr(x, "__getitem__")
-                )
-
-            source_dict: m.ConfigMap = (
-                m.ConfigMap(root={str(k): v for k, v in source_value.items()})
-                if _is_mapping(source_value)
-                else m.ConfigMap(root={})
-            )
-            if _is_mapping(mapping_value):
-                mapping_dict: m.ConfigMap = m.ConfigMap(
-                    root={str(k): v for k, v in mapping_value.items()}
-                )
-                mapped_dict = u.transform_values(mapping_dict, str)
-                key_mapping: m.ConfigMap = m.ConfigMap(
-                    root={str(k): str(v) for k, v in mapped_dict.items()}
-                )
-                map_result = u.map_dict_keys(source_dict, key_mapping)
+        map_result: FlextResult[Mapping[str, t.ConfigMapValue]] = FlextResult[
+            Mapping[str, t.ConfigMapValue]
+        ].fail("Invalid data types")
+        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
+            source_dict = {str(k): v for k, v in source_value.items()}
+            mapped_dict = u.transform_values(source_dict, str)
+            key_mapping_dict: dict[str, str] = {
+                str(k): str(v) for k, v in mapping_value.items()
+            }
+            map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
         if map_result.is_success:
             mapped = map_result.value
             print(f"✅ Key mapping: {list(mapped.keys())}")
@@ -321,12 +304,10 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
 
         # Build flags dict
         flags: list[str] = ["read", "write"]
-        flag_mapping: m.ConfigMap = m.ConfigMap(
-            root={
-                "read": "can_read",
-                "write": "can_write",
-            }
-        )
+        flag_mapping: dict[str, str] = {
+            "read": "can_read",
+            "write": "can_write",
+        }
         flags_result = u.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
             flags_dict = flags_result.value
@@ -355,7 +336,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Pagination ===")
 
         # Extract page params
-        query_params: m.ConfigMap = m.ConfigMap(root={"page": "2", "page_size": "10"})
+        query_params: dict[str, str] = {"page": "2", "page_size": "10"}
         page_result = u.extract_page_params(
             query_params,
             default_page=1,
@@ -384,7 +365,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Get parameter from model
         user = UserModel(name="Test", status=StatusEnum.ACTIVE, age=30)
         try:
-            name_param = u.get_parameter(user, "name")
+            name_param = u.get_parameter(user.model_dump(), "name")
             print(f"✅ Get parameter: name={name_param}")
         except Exception as e:
             print(f"⚠️  Get parameter: {e}")
@@ -397,7 +378,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             }
         )
         try:
-            timeout = u.get_parameter(config_dict, "timeout")
+            timeout = u.get_parameter(config_dict.root, "timeout")
             print(f"✅ Get from dict: timeout={timeout}")
         except Exception as e:
             print(f"⚠️  Get from dict: {e}")
@@ -418,9 +399,10 @@ def main() -> None:
         utilities = data["utilities_demonstrated"]
         categories = data["utility_categories"]
         if (
-            isinstance(utilities, (list, tuple))
-            or (hasattr(utilities, "__getitem__") and hasattr(utilities, "__len__"))
-        ) and isinstance(categories, int):
+            isinstance(utilities, Sequence)
+            and not isinstance(utilities, str | bytes | bytearray)
+            and isinstance(categories, int)
+        ):
             utilities_list = list(utilities)
             print(f"\n✅ Demonstrated {categories} utility categories")
             print(f"✅ Covered {len(utilities_list)} utility types")

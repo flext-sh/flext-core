@@ -7,7 +7,7 @@ import io
 from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Generator, cast
+from typing import Callable, Generator, cast
 
 import pytest
 from pydantic import BaseModel
@@ -232,9 +232,9 @@ def test_runtime_create_instance_failure_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeObject:
-        def __new__(cls) -> object:
+        def __new__(cls) -> FakeObject:
             _ = cls
-            return object()
+            return cast("FakeObject", object())
 
     monkeypatch.setattr(runtime_module, "object", FakeObject, raising=False)
 
@@ -371,7 +371,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class Config:
         log_level = logging.DEBUG
         console_renderer = True
-        additional_processors = [lambda *_args: {}]
+        additional_processors: list[Callable[..., object]] = [lambda *_args: {}]
         wrapper_class_factory = None
         logger_factory = staticmethod(lambda: object())
         cache_logger_on_first_use = True
@@ -445,7 +445,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
 
 def test_runtime_result_all_missed_branches() -> None:
     success = FlextRuntime.RuntimeResult.ok(1)
-    failure = FlextRuntime.RuntimeResult.fail(
+    failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult.fail(
         "e", error_code="E1", error_data=m.ConfigMap(root={"x": 1})
     )
 
@@ -507,7 +507,7 @@ def test_runtime_result_all_missed_branches() -> None:
     ):
         FlextRuntime.RuntimeResult.ok(None)
 
-    none_error = FlextRuntime.RuntimeResult.fail(None)
+    none_error: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult.fail(None)
     assert none_error.error == ""
 
     broken = FlextRuntime.RuntimeResult[int](value=None, is_success=True)
@@ -636,7 +636,8 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     trace_from_other = FlextRuntime.ensure_trace_context(Path("."))
     assert "trace_id" in trace_from_other
 
-    ok_result = FlextRuntime.validate_http_status_codes([200, "201"])
+    ok_statuses: list[t.GeneralValueType] = [200, "201"]
+    ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
     assert ok_result.is_success and ok_result.value == [200, 201]
 
     bad_range = FlextRuntime.validate_http_status_codes([99])
@@ -644,9 +645,8 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         bad_range.error or ""
     )
 
-    bad_type = FlextRuntime.validate_http_status_codes([
-        cast("t.GeneralValueType", object())
-    ])
+    invalid_statuses: list[t.GeneralValueType] = [cast("t.GeneralValueType", object())]
+    bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     assert bad_type.is_failure and "Invalid HTTP status code type" in (
         bad_type.error or ""
     )
@@ -804,7 +804,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
 
 def test_runtime_result_remaining_paths() -> None:
     success = FlextRuntime.RuntimeResult.ok(3)
-    failure = FlextRuntime.RuntimeResult.fail(
+    failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult.fail(
         "err",
         error_code="E2",
         error_data=m.ConfigMap(root={"k": "v"}),

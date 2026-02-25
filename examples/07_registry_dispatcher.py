@@ -18,13 +18,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_core import (
     FlextDispatcher,
     FlextRegistry,
     c,
     h,
     m,
-    p,
     r,
     s,
     t,
@@ -145,15 +146,13 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry()
 
         # Register single handler - Protocol-based handler registration
-        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = (
-            CreateUserHandler()
-        )
+        create_handler = CreateUserHandler()
         register_result = registry.register_handler(create_handler)
         if register_result.is_success:
             print("✅ Handler registered successfully")
 
         # Batch registration - Protocol-based handler registration
-        get_handler: p.Handler[GetUserQuery, m.ConfigMap] = GetUserHandler()
+        get_handler = GetUserHandler()
         batch_result = registry.register_handlers([get_handler])
         if batch_result.is_success:
             summary = batch_result.value
@@ -164,13 +163,11 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         """Show dispatcher operations."""
         print("\n=== Dispatcher Operations ===")
 
-        dispatcher: p.CommandBus = FlextDispatcher()
+        dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = (
-            CreateUserHandler()
-        )
+        create_handler = CreateUserHandler()
         _ = registry.register_handler(create_handler)
 
         # Dispatch command - Pydantic models are compatible with t.GeneralValueType
@@ -190,14 +187,12 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         """Show registry and dispatcher integration."""
         print("\n=== Registry/Dispatcher Integration ===")
 
-        dispatcher: p.CommandBus = FlextDispatcher()
+        dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = (
-            CreateUserHandler()
-        )
-        get_handler: p.Handler[GetUserQuery, m.ConfigMap] = GetUserHandler()
+        create_handler = CreateUserHandler()
+        get_handler = GetUserHandler()
         _ = registry.register_handler(create_handler)
         _ = registry.register_handler(get_handler)
 
@@ -231,8 +226,8 @@ def main() -> None:
     if result.is_success:
         data = result.value
         patterns = data["patterns_demonstrated"]
-        if type(patterns) in {list, tuple} or (
-            hasattr(patterns, "__getitem__") and hasattr(patterns, "__len__")
+        if isinstance(patterns, Sequence) and not isinstance(
+            patterns, str | bytes | bytearray
         ):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")

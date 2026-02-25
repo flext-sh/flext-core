@@ -657,7 +657,6 @@ class FlextUtilitiesGuards:
         if isinstance(value, (str, int, float, bool, datetime)):
             return True
         if isinstance(value, (list, tuple)):
-            item: t.GuardInputValue
             for item in value:
                 if not (
                     item is None or isinstance(item, (str, int, float, bool, datetime))

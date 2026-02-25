@@ -16,6 +16,7 @@ from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
 CommandPayloadDict = TestsFlextTypes.Fixtures.CommandPayloadDict
+UpdateFieldDict = TestsFlextTypes.Fixtures.UpdateFieldDict
 UpdatePayloadDict = TestsFlextTypes.Fixtures.UpdatePayloadDict
 UserPayloadDict = TestsFlextTypes.Fixtures.UserPayloadDict
 
@@ -66,9 +67,18 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
 
     def get_payload(self) -> UpdatePayloadDict:
         """Get command payload."""
+        typed_updates: dict[str, UpdateFieldDict] = {
+            key: {
+                "field_name": key,
+                "new_value": (
+                    value if isinstance(value, (str, int, bool)) else str(value)
+                ),
+            }
+            for key, value in self.updates.items()
+        }
         result: UpdatePayloadDict = {
             "target_user_id": self.target_user_id,
-            "updates": self.updates,
+            "updates": typed_updates,
         }
         return result
 
@@ -376,9 +386,9 @@ class TestFlextCommandHandler:
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, t.GeneralValueType]] = (
-            CreateUserCommandHandler()
-        )
+        handler: FlextCommandHandler[
+            CreateUserCommand, dict[str, t.GeneralValueType]
+        ] = CreateUserCommandHandler()
 
         if handler.can_handle(UpdateUserCommand):
             msg = f"Expected False, got {handler.can_handle(UpdateUserCommand)}"
@@ -388,9 +398,9 @@ class TestFlextCommandHandler:
 
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command object."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, t.GeneralValueType]] = (
-            CreateUserCommandHandler()
-        )
+        handler: FlextCommandHandler[
+            CreateUserCommand, dict[str, t.GeneralValueType]
+        ] = CreateUserCommandHandler()
 
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
@@ -400,9 +410,9 @@ class TestFlextCommandHandler:
 
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, t.GeneralValueType]] = (
-            CreateUserCommandHandler()
-        )
+        handler: FlextCommandHandler[
+            CreateUserCommand, dict[str, t.GeneralValueType]
+        ] = CreateUserCommandHandler()
         command: CreateUserCommand = CreateUserCommand(
             username="john",
             email="john@example.com",
@@ -443,9 +453,9 @@ class TestFlextCommandHandler:
 
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, t.GeneralValueType]] = (
-            CreateUserCommandHandler()
-        )
+        handler: FlextCommandHandler[
+            CreateUserCommand, dict[str, t.GeneralValueType]
+        ] = CreateUserCommandHandler()
         command: CreateUserCommand = CreateUserCommand(
             username="",
             email="invalid",
@@ -466,9 +476,9 @@ class TestFlextCommandHandler:
 
     def test_process_command_cannot_handle(self) -> None:
         """Test validation failure for wrong command type."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, t.GeneralValueType]] = (
-            CreateUserCommandHandler()
-        )
+        handler: FlextCommandHandler[
+            CreateUserCommand, dict[str, t.GeneralValueType]
+        ] = CreateUserCommandHandler()
         wrong_command: UpdateUserCommand = UpdateUserCommand(
             target_user_id="123",
             updates={"name": "test"},
@@ -476,7 +486,7 @@ class TestFlextCommandHandler:
 
         # Test that handler's validate method rejects wrong command type
         # validate() accepts object, so this is type-safe
-        result = handler.validate(wrong_command)
+        result = CreateUserCommandHandler().validate(wrong_command)
 
         if not (result.is_failure):
             msg = f"Expected True, got {result.is_failure}"
@@ -515,7 +525,7 @@ class TestFlextCommandResults:
         """Test creating failed command result."""
         error_message = "Command execution failed"
 
-        command_result = FlextResult[bool].fail(error_message)
+        command_result: FlextResult[bool] = FlextResult[bool].fail(error_message)
 
         if command_result.is_success:
             msg = f"Expected False, got {command_result.is_success}"

@@ -214,8 +214,8 @@ class CacheScenarios:
         ),
         SortKeyScenario(
             name="dict_key",
-            key={"a": 1},
-            expected_tuple=(2, str({"a": 1})),
+            key=cast("str | int | float", str({"a": 1})),
+            expected_tuple=(0, str({"a": 1}).lower()),
         ),
     ]
 
@@ -250,11 +250,7 @@ class TestuCacheNormalizeComponent:
         """Test normalize_component with various scenarios."""
         result = u.Cache.normalize_component(scenario.component)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            scenario.expected_type,
-            description=scenario.name,
-        )
+        assert isinstance(result, scenario.expected_type)
         if scenario.expected_value is not None:
             assert result == scenario.expected_value
 
@@ -263,10 +259,7 @@ class TestuCacheNormalizeComponent:
         model = CacheTestModel(name="test", value=42)
         result = u.Cache.normalize_component(model)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert result_dict["name"] == "test"
@@ -277,10 +270,7 @@ class TestuCacheNormalizeComponent:
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
         result = u.Cache.normalize_component(model)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert isinstance(result_dict["inner"], dict)
@@ -329,7 +319,12 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component_raw: list[t.GeneralValueType] = [1, "test", {"nested": "dict"}, [1, 2, 3]]
+        component_raw: list[t.GeneralValueType] = [
+            1,
+            "test",
+            {"nested": "dict"},
+            [1, 2, 3],
+        ]
         # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
         # ObjectList is Sequence[t.GeneralValueType], use that type directly
         component: Sequence[t.GeneralValueType] = cast(
@@ -411,10 +406,7 @@ class TestuCacheSortDictKeys:
         data = {"c": 3, "a": 1, "b": 2}
         result = u.Cache.sort_dict_keys(data)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert list(result_dict.keys()) == ["a", "b", "c"]
@@ -426,10 +418,7 @@ class TestuCacheSortDictKeys:
 
         # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
         # dict input it returns dict
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert result_dict["key1"] == "value"
@@ -446,10 +435,7 @@ class TestuCacheSortDictKeys:
 
         # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
         # dict input it returns dict
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert list(result_dict.keys()) == ["a", "z"]

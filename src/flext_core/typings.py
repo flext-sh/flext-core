@@ -10,13 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, ItemsView, KeysView, Mapping, Sequence, ValuesView
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
 from typing import (
     Annotated,
+    ClassVar,
     Literal,
     ParamSpec,
     TypeAlias,
@@ -297,105 +298,68 @@ class FlextTypes:
     class _RootDictProtocol[RootValueT](typing.Protocol):
         root: dict[str, RootValueT]
 
-    class _DictMixin(typing.Generic[DictValueT]):
-        """Shared dict-like API for all RootModel containers.
-
-        Provides standard dict interface methods delegating to ``self.root``.
-        Subclasses must define ``root: dict[str, V]`` via ``RootModel``.
-        """
+    class _RootDictModel[DictValueT](RootModel[dict[str, DictValueT]]):
+        root: dict[str, DictValueT] = Field(default_factory=dict)
 
         def __getitem__(self, key: str) -> DictValueT:
-            """Get item by key."""
             return self.root[key]
 
         def __setitem__(self, key: str, value: DictValueT) -> None:
-            """Set item by key."""
             self.root[key] = value
 
         def __delitem__(self, key: str) -> None:
-            """Delete item by key."""
             del self.root[key]
 
         def __len__(self) -> int:
-            """Get length."""
             return len(self.root)
 
-        root: dict[str, DictValueT] = Field(default_factory=dict)
-
         def __contains__(self, key: str) -> bool:
-            """Check if key exists."""
             return key in self.root
 
         def get(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
-            """Get item with default."""
             return self.root.get(key, default)
 
-        def items(self) -> typing.ItemsView[str, DictValueT]:
-            """Get items view."""
+        def items(self) -> ItemsView[str, DictValueT]:
             return self.root.items()
 
-        def keys(self) -> typing.KeysView[str]:
-            """Get keys view."""
+        def keys(self) -> KeysView[str]:
             return self.root.keys()
 
-        def values(self) -> typing.ValuesView[DictValueT]:
-            """Get values view."""
+        def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
         def update(self, other: Mapping[str, DictValueT]) -> None:
-            """Update with other mapping."""
             self.root.update(other)
 
         def clear(self) -> None:
-            """Clear all items."""
             self.root.clear()
 
         def pop(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
-            """Pop item by key."""
             return self.root.pop(key, default)
 
         def popitem(self) -> tuple[str, DictValueT]:
-            """Pop last item."""
             return self.root.popitem()
 
         def setdefault(self, key: str, default: DictValueT) -> DictValueT:
-            """Set default value for key."""
             return self.root.setdefault(key, default)
 
-    class Dict(_DictMixin[_ContainerValue], RootModel[dict[str, _ContainerValue]]):
+    class Dict(_RootDictModel[_ContainerValue]):
         """Generic dictionary container. Prefer m.Dict in public API."""
 
-        root: dict[str, _ContainerValue] = Field(default_factory=dict)
-
-    class ConfigMap(
-        _DictMixin[_ContainerValue],
-        RootModel[dict[str, _ContainerValue]],
-    ):
+    class ConfigMap(_RootDictModel[_ContainerValue]):
         """Configuration map container. Prefer m.ConfigMap in public API."""
-
-        root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     ConfigurationMapping: TypeAlias = ConfigMap
     ConfigurationDict: TypeAlias = ConfigMap
 
-    class ServiceMap(
-        _DictMixin[_ContainerValue],
-        RootModel[dict[str, _ContainerValue]],
-    ):
+    class ServiceMap(_RootDictModel[_ContainerValue]):
         """Service registry map container. Prefer m.ServiceMap in public API."""
 
-        root: dict[str, _ContainerValue] = Field(default_factory=dict)
-
-    class ErrorMap(
-        _DictMixin[int | str | dict[str, int]],
-        RootModel[dict[str, int | str | dict[str, int]]],
-    ):
+    class ErrorMap(_RootDictModel[int | str | dict[str, int]]):
         """Error type mapping container.
 
         Replaces: ErrorTypeMapping
         """
-
-        root: dict[str, int | str | dict[str, int]] = Field(default_factory=dict)
 
     IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
 
@@ -405,27 +369,17 @@ class FlextTypes:
     ResourceCallable: TypeAlias = Callable[[], _ContainerValue]
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
-    class FactoryMap(
-        _DictMixin[FactoryRegistrationCallable],
-        RootModel[dict[str, FactoryRegistrationCallable]],
-    ):
+    class FactoryMap(_RootDictModel[FactoryRegistrationCallable]):
         """Map of factory registration callables.
 
         Replaces: Mapping[str, FactoryRegistrationCallable]
         """
 
-        root: dict[str, FactoryRegistrationCallable] = Field(default_factory=dict)
-
-    class ResourceMap(
-        _DictMixin[ResourceCallable],
-        RootModel[dict[str, ResourceCallable]],
-    ):
+    class ResourceMap(_RootDictModel[ResourceCallable]):
         """Map of resource callables.
 
         Replaces: Mapping[str, ResourceCallable]
         """
-
-        root: dict[str, ResourceCallable] = Field(default_factory=dict)
 
     # =========================================================================
     # Validation mapping types (used in _models/validation.py)
@@ -441,7 +395,14 @@ class FlextTypes:
             """Execute validator."""
             return self.root(value)
 
-    class _ValidatorMapMixin:
+    class _RootValidatorMapModel(
+        RootModel[
+            dict[
+                str,
+                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
+            ]
+        ],
+    ):
         """Shared API for validator map containers."""
 
         root: dict[
@@ -451,7 +412,7 @@ class FlextTypes:
 
         def items(
             self,
-        ) -> typing.ItemsView[
+        ) -> ItemsView[
             str,
             Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
         ]:
@@ -463,46 +424,20 @@ class FlextTypes:
 
         def values(
             self,
-        ) -> typing.ValuesView[
-            Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-        ]:
+        ) -> ValuesView[Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],]:
             """Get validator values."""
             validated: dict[
                 str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.values()
 
-    class FieldValidatorMap(
-        _ValidatorMapMixin,
-        RootModel[
-            dict[
-                str,
-                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-            ]
-        ],
-    ):
+    class FieldValidatorMap(_RootValidatorMapModel):
         """Map of field validators."""
 
-    class ConsistencyRuleMap(
-        _ValidatorMapMixin,
-        RootModel[
-            dict[
-                str,
-                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-            ]
-        ],
-    ):
+    class ConsistencyRuleMap(_RootValidatorMapModel):
         """Map of consistency rules."""
 
-    class EventValidatorMap(
-        _ValidatorMapMixin,
-        RootModel[
-            dict[
-                str,
-                Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-            ]
-        ],
-    ):
+    class EventValidatorMap(_RootValidatorMapModel):
         """Map of event validators."""
 
     # Error/Exception types (used in exceptions.py)
@@ -521,7 +456,7 @@ class FlextTypes:
     class BatchResultDict(BaseModel):
         """Result payload model for batch operation outputs."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )

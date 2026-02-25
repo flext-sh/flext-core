@@ -15,13 +15,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, r, s, t
+from flext_core import c, m, r, s
 
 
-class DatabaseService(s[dict[str, t.GeneralValueType]]):
+class DatabaseService(s[m.ConfigMap]):
     """Example service showing config log-once pattern."""
 
-    db_config: dict[str, t.GeneralValueType]
+    db_config: m.ConfigMap
 
     def model_post_init(self, /, __context: object) -> None:
         """Post-initialization hook.
@@ -38,7 +38,7 @@ class DatabaseService(s[dict[str, t.GeneralValueType]]):
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
-    def execute(self, **_kwargs: object) -> r[dict[str, t.GeneralValueType]]:
+    def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
         """Execute database operations.
 
         Returns:
@@ -56,12 +56,12 @@ class DatabaseService(s[dict[str, t.GeneralValueType]]):
         self.logger.info("Executing database query")
 
         # Simulate query
-        results: dict[str, t.GeneralValueType] = {"users": [{"id": 1, "name": "Alice"}]}
+        results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
 
-        return r[dict[str, t.GeneralValueType]].ok(results)
+        return r[m.ConfigMap].ok(results)
 
 
-class MigrationService(s[dict[str, t.GeneralValueType]]):
+class MigrationService(s[m.ConfigMap]):
     """Example migration service with config log-once pattern."""
 
     def __init__(self, input_dir: str, output_dir: str, sync: bool) -> None:
@@ -76,18 +76,20 @@ class MigrationService(s[dict[str, t.GeneralValueType]]):
         super().__init__()
 
         # Build config dict
-        config: dict[str, t.GeneralValueType] = {
-            "input_dir": input_dir,
-            "output_dir": output_dir,
-            "sync": sync,
-            "batch_size": 100,
-            "max_workers": 4,
-        }
+        config = m.ConfigMap(
+            root={
+                "input_dir": input_dir,
+                "output_dir": output_dir,
+                "sync": sync,
+                "batch_size": 100,
+                "max_workers": 4,
+            }
+        )
 
         # ✅ CORRECT: Log config ONCE at initialization
         self._log_config_once(config, message="Migration configuration loaded")
 
-    def execute(self, **_kwargs: object) -> r[dict[str, t.GeneralValueType]]:
+    def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
         """Execute migration.
 
         Returns:
@@ -109,21 +111,20 @@ class MigrationService(s[dict[str, t.GeneralValueType]]):
         self.logger.info("Processing batch 2 of 10")
         # Config does NOT repeat in these logs!
 
-        return r[dict[str, t.GeneralValueType]].ok({
-            "migrated": 1000,
-            "failed": 0,
-        })
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:
     """Demonstrate config log-once pattern."""
     print("=== Example 1: Database Service ===")
-    db_config: dict[str, t.GeneralValueType] = {
-        "host": c.Network.LOCALHOST,
-        "port": 5432,
-        "database": "mydb",
-        "pool_size": 10,
-    }
+    db_config = m.ConfigMap(
+        root={
+            "host": c.Network.LOCALHOST,
+            "port": 5432,
+            "database": "mydb",
+            "pool_size": 10,
+        }
+    )
 
     db_service = DatabaseService(db_config=db_config)
     result = db_service.execute()

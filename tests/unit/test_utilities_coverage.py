@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.utilities import FlextUtilities
-
+from flext_core.models import FlextModels as m
 
 class TestUtilitiesCoverage:
     """Placeholder tests for utilities coverage - methods tested in dedicated coverage modules."""
@@ -31,7 +31,7 @@ __all__ = ["TestUtilitiesCoverage"]
 def test_utilities_get_method_coverage() -> None:
     """Test FlextUtilities.get() method for line 401 coverage."""
     u = FlextUtilities
-    test_data = {"key": "value", "other": 456}
+    test_data = m.ConfigMap(root={"key": "value", "other": 456})
 
     # Test direct key access
     result = u.get(test_data, "key")

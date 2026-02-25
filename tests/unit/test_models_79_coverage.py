@@ -14,6 +14,7 @@ from decimal import Decimal
 
 from flext_core import m, t
 from tests.test_utils import assertion_helpers
+from flext_core._models.entity import _ComparableConfigMap
 from flext_core.models import m
 
 
@@ -167,7 +168,9 @@ class TestFlextModelsAggregateRoot:
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
 
         # Add domain event
-        result = account.add_domain_event("MoneyDeposited", {"amount": 100})
+        result = account.add_domain_event(
+            "MoneyDeposited", m.ConfigMap(root={"amount": 100})
+        )
         assertion_helpers.assert_flext_result_success(result)
 
     def test_aggregate_root_domain_event_validation(self) -> None:
@@ -179,7 +182,7 @@ class TestFlextModelsAggregateRoot:
         order = Order(unique_id="order-1", total=Decimal("99.99"))
 
         # Add event with valid empty dict
-        result = order.add_domain_event("OrderPlaced", {})
+        result = order.add_domain_event("OrderPlaced", m.ConfigMap(root={}))
         assertion_helpers.assert_flext_result_success(result)
 
     def test_aggregate_root_uncommitted_events(self) -> None:
@@ -191,7 +194,9 @@ class TestFlextModelsAggregateRoot:
         order = Order(unique_id="order-1", status="pending")
 
         # Add event
-        result = order.add_domain_event("OrderCreated", {"timestamp": "2025-01-01"})
+        result = order.add_domain_event(
+            "OrderCreated", m.ConfigMap(root={"timestamp": "2025-01-01"})
+        )
         assertion_helpers.assert_flext_result_success(result)
         assert len(order.domain_events) > 0
 
@@ -204,7 +209,7 @@ class TestFlextModelsDomainEvent:
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="user-1",
-            data={"name": "Alice"},
+            data=_ComparableConfigMap(root={"name": "Alice"}),
         )
         assert event.event_type == "UserCreated"
         assert event.aggregate_id == "user-1"
@@ -215,7 +220,7 @@ class TestFlextModelsDomainEvent:
         event = m.DomainEvent(
             event_type="OrderPlaced",
             aggregate_id="order-1",
-            data={"amount": 100},
+            data=_ComparableConfigMap(root={"amount": 100}),
         )
         assert event.created_at is not None
 
@@ -224,7 +229,7 @@ class TestFlextModelsDomainEvent:
         event = m.DomainEvent(
             event_type="ProcessStarted",
             aggregate_id="proc-1",
-            data={},
+            data=_ComparableConfigMap(root={}),
         )
         assert event.data == {}
 
@@ -291,13 +296,13 @@ class TestFlextModelsEdgeCases:
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: m.ConfigMap = {
-            f"field_{i}": f"value_{i}" for i in range(100)
-        }
+        large_data: m.ConfigMap = m.ConfigMap(
+            root={f"field_{i}": f"value_{i}" for i in range(100)}
+        )
         event = m.DomainEvent(
             event_type="BulkDataImported",
             aggregate_id="import-1",
-            data=dict(large_data),
+            data=_ComparableConfigMap(root=large_data.root),
         )
         assert len(event.data) == 100
 
@@ -347,7 +352,9 @@ class TestFlextModelsIntegration:
         assert order.status == "new"
 
         # Add domain event
-        event_result = order.add_domain_event("ItemAdded", {"item_id": "item-1"})
+        event_result = order.add_domain_event(
+            "ItemAdded", m.ConfigMap(root={"item_id": "item-1"})
+        )
         assert event_result.is_success
 
         # Check domain events

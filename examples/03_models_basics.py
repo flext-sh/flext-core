@@ -25,6 +25,7 @@ from flext_core import (
     m,
     r,
     s,
+    t,
 )
 from flext_core._models.base import FlextModelFoundation as F
 from flext_core._models.generic import FlextGenericModels as gm
@@ -46,7 +47,7 @@ def demonstrate_enhanced_generic_models() -> None:
         user_id="user123",
         tenant_id="tenant456",
         environment="development",
-        metadata=m.ConfigMap(root={"session_id": "sess789", "request_id": "req101"}),
+        metadata=t.Dict(root={"session_id": "sess789", "request_id": "req101"}),
     )
 
     print(f"📊 Context Summary: {context.context_summary}")
@@ -73,7 +74,7 @@ def demonstrate_enhanced_generic_models() -> None:
     # Enhanced Health check with detailed monitoring
     health = gm.Snapshot.Health(
         healthy=True,
-        checks=m.ConfigMap(
+        checks=t.Dict(
             root={
                 "database": True,
                 "cache": True,
@@ -364,7 +365,9 @@ class Order(m.AggregateRoot):
         if not self.items:
             return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
         currency = self.items[0].price.currency
-        total_amount = Decimal(sum(item.total.amount for item in self.items))
+        total_amount = Decimal(
+            sum(item.price.amount * item.quantity for item in self.items)
+        )
         return Money(amount=total_amount, currency=currency)
 
 
@@ -437,13 +440,16 @@ class DomainModelService(s[m.ConfigMap]):
             user: User,
             order: Order,
         ) -> m.ConfigMap:
-            return {
-                "email": vo_tuple[0].address,
-                "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
-                "user_id": user.entity_id,
-                "order_total": float(order.total.amount),
-                "order_status": order.status,
-            }
+            order_total = sum(item.price.amount * item.quantity for item in order.items)
+            return m.ConfigMap(
+                root={
+                    "email": vo_tuple[0].address,
+                    "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
+                    "user_id": user.entity_id,
+                    "order_total": float(order_total),
+                    "order_status": order.status,
+                }
+            )
 
         def combine_with_user(
             vo_tuple: tuple[Email, Money],

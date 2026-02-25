@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
 
@@ -153,11 +153,13 @@ class ContextManagementService(
                     FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
                 )
                 return r[m.ConfigMap].ok(
-                    {
-                        "thread_id": thread_id,
-                        "correlation_id": correlation_id,
-                        "thread_name": threading.current_thread().name,
-                    },
+                    m.ConfigMap(
+                        root={
+                            "thread_id": thread_id,
+                            "correlation_id": correlation_id,
+                            "thread_name": threading.current_thread().name,
+                        }
+                    ),
                 )
 
         # Execute operations in sequence (thread-safe context isolation)
@@ -333,14 +335,11 @@ def main() -> None:
         features = metadata.get("context_features", ())
 
         def _seq_len(x: object) -> int:
-            return (
-                len(x)
-                if (
-                    type(x) in {list, tuple}
-                    or (hasattr(x, "__getitem__") and hasattr(x, "__len__"))
-                )
-                else 0
-            )
+            if isinstance(x, Sequence) and not isinstance(x, str | bytes | bytearray):
+                return len(x)
+            if isinstance(x, Mapping):
+                return len(x)
+            return 0
 
         patterns_count = _seq_len(patterns)
         features_count = _seq_len(features)

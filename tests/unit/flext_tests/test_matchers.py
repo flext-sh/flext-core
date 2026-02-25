@@ -11,7 +11,9 @@ import warnings
 
 import pytest
 
-from flext_core import FlextResult, t
+from typing import Any, cast
+
+from flext_core import FlextResult, m, t
 from flext_tests import tm
 from flext_tests.constants import c
 
@@ -29,21 +31,21 @@ class TestFlextTestsMatchers:
 
     def test_assert_result_success_fails(self) -> None:
         """Test tm.ok() with failed result."""
-        result = FlextResult[str].fail("error")
+        result: FlextResult[str] = FlextResult[str].fail("error")
 
         with pytest.raises(AssertionError, match="Expected success but got failure"):
             tm.ok(result)
 
     def test_assert_result_success_custom_message(self) -> None:
         """Test tm.ok() with custom error message."""
-        result = FlextResult[str].fail("error")
+        result: FlextResult[str] = FlextResult[str].fail("error")
 
         with pytest.raises(AssertionError, match="Custom message"):
             tm.ok(result, msg="Custom message")
 
     def test_assert_result_failure_passes(self) -> None:
         """Test tm.fail() with failed result."""
-        result = FlextResult[str].fail("error")
+        result: FlextResult[str] = FlextResult[str].fail("error")
 
         # Should not raise
         error = tm.fail(result)
@@ -58,7 +60,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_result_failure_with_expected_error(self) -> None:
         """Test tm.fail() with expected error substring."""
-        result = FlextResult[str].fail("Database connection failed")
+        result: FlextResult[str] = FlextResult[str].fail("Database connection failed")
 
         # Should not raise
         error = tm.fail(result, contains="connection")
@@ -66,7 +68,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_result_failure_expected_error_not_found(self) -> None:
         """Test tm.fail() when expected error substring not found."""
-        result = FlextResult[str].fail("Database error")
+        result: FlextResult[str] = FlextResult[str].fail("Database error")
 
         with pytest.raises(
             AssertionError,
@@ -213,13 +215,13 @@ class TestFlextTestsMatchers:
     def test_ok_with_is_parameter(self) -> None:
         """Test tm.ok() with is_ parameter."""
         result = FlextResult[str].ok("test")
-        value = tm.ok(result, is_=str)
+        value = tm.ok(result, where=cast(Any, lambda x: isinstance(x, str)))
         assert value == "test"
 
     def test_ok_with_is_tuple_parameter(self) -> None:
         """Test tm.ok() with is_ tuple parameter."""
         result = FlextResult[str].ok("test")
-        value = tm.ok(result, is_=(str, bytes))
+        value = tm.ok(result, where=cast(Any, lambda x: isinstance(x, str | bytes)))
         assert value == "test"
 
     def test_ok_with_has_parameter(self) -> None:
@@ -263,7 +265,7 @@ class TestFlextTestsMatchers:
         """Test tm.ok() with deep predicate parameter."""
         data: dict[str, t.GeneralValueType] = {"user": {"email": "test@example.com"}}
         result = FlextResult[dict[str, t.GeneralValueType]].ok(data)
-        value = tm.ok(result, deep={"user.email": lambda e: "@" in str(e)})
+        value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
@@ -277,14 +279,14 @@ class TestFlextTestsMatchers:
     def test_ok_with_where_parameter(self) -> None:
         """Test tm.ok() with where parameter."""
         result = FlextResult[int].ok(42)
-        value = tm.ok(result, where=lambda x: x > 0)
+        value = tm.ok(result, where=cast(Any, lambda x: x > 0))
         assert value == 42
 
     def test_ok_with_where_parameter_fails(self) -> None:
         """Test tm.ok() with where parameter fails when predicate returns False."""
         result = FlextResult[int].ok(42)
         with pytest.raises(AssertionError):
-            tm.ok(result, where=lambda x: x < 0)
+            tm.ok(result, where=cast(Any, lambda x: x < 0))
 
     def test_ok_with_starts_parameter(self) -> None:
         """Test tm.ok() with starts parameter."""
@@ -346,55 +348,62 @@ class TestFlextTestsMatchers:
 
     def test_fail_with_has_parameter(self) -> None:
         """Test tm.fail() with has parameter."""
-        result = FlextResult[str].fail("Database connection failed")
+        result: FlextResult[str] = FlextResult[str].fail("Database connection failed")
         error = tm.fail(result, has="connection")
         assert error == "Database connection failed"
 
     def test_fail_with_has_sequence_parameter(self) -> None:
         """Test tm.fail() with has sequence parameter."""
-        result = FlextResult[str].fail("Database connection failed")
+        result: FlextResult[str] = FlextResult[str].fail("Database connection failed")
         error = tm.fail(result, has=["Database", "connection"])
         assert error == "Database connection failed"
 
     def test_fail_with_lacks_parameter(self) -> None:
         """Test tm.fail() with lacks parameter."""
-        result = FlextResult[str].fail("Database error")
+        result: FlextResult[str] = FlextResult[str].fail("Database error")
         error = tm.fail(result, lacks="internal")
         assert error == "Database error"
 
     def test_fail_with_starts_parameter(self) -> None:
         """Test tm.fail() with starts parameter."""
-        result = FlextResult[str].fail("Error: connection failed")
+        result: FlextResult[str] = FlextResult[str].fail("Error: connection failed")
         error = tm.fail(result, starts="Error:")
         assert error == "Error: connection failed"
 
     def test_fail_with_ends_parameter(self) -> None:
         """Test tm.fail() with ends parameter."""
-        result = FlextResult[str].fail("connection failed")
+        result: FlextResult[str] = FlextResult[str].fail("connection failed")
         error = tm.fail(result, ends="failed")
         assert error == "connection failed"
 
     def test_fail_with_match_parameter(self) -> None:
         """Test tm.fail() with match parameter."""
-        result = FlextResult[str].fail("Error: 404")
+        result: FlextResult[str] = FlextResult[str].fail("Error: 404")
         error = tm.fail(result, match=r"Error: \d+")
         assert error == "Error: 404"
 
     def test_fail_with_code_parameter(self) -> None:
         """Test tm.fail() with code parameter."""
-        result = FlextResult[str].fail("error", error_code="VALIDATION")
+        result: FlextResult[str] = FlextResult[str].fail(
+            "error", error_code="VALIDATION"
+        )
         error = tm.fail(result, code="VALIDATION")
         assert error == "error"
 
     def test_fail_with_code_has_parameter(self) -> None:
         """Test tm.fail() with code_has parameter."""
-        result = FlextResult[str].fail("error", error_code="VALIDATION_ERROR")
+        result: FlextResult[str] = FlextResult[str].fail(
+            "error", error_code="VALIDATION_ERROR"
+        )
         error = tm.fail(result, code_has="VALIDATION")
         assert error == "error"
 
     def test_fail_with_data_parameter(self) -> None:
         """Test tm.fail() with data parameter."""
-        result = FlextResult[str].fail("error", error_data={"field": "email"})
+        result: FlextResult[str] = FlextResult[str].fail(
+            "error",
+            error_data=m.ConfigMap(root={"field": "email"}),
+        )
         error = tm.fail(result, data={"field": "email"})
         assert error == "error"
 
@@ -548,7 +557,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_error_parameter(self) -> None:
         """Test tm.that() with error parameter for FlextResult."""
-        result = FlextResult[str].fail("error")
+        result: FlextResult[str] = FlextResult[str].fail("error")
         tm.that(result, error="error")
 
     def test_that_with_deep_parameter(self) -> None:
@@ -607,7 +616,6 @@ class TestFlextTestsMatchers:
         with tm.scope(context={"user_id": 123}) as scope:
             assert scope.context["user_id"] == 123
 
-
     def test_ok_invalid_parameter_type(self) -> None:
         """Test tm.ok() with invalid parameter type raises ValueError."""
         result = FlextResult[int].ok(42)
@@ -616,7 +624,7 @@ class TestFlextTestsMatchers:
 
     def test_fail_invalid_parameter_type(self) -> None:
         """Test tm.fail() with invalid parameter type raises ValueError."""
-        result = FlextResult[str].fail("error")
+        result: FlextResult[str] = FlextResult[str].fail("error")
         with pytest.raises(ValueError, match="Parameter validation failed"):
             tm.fail(result, code=123)  # code should be str
 

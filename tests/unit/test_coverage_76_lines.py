@@ -10,6 +10,7 @@ from __future__ import annotations
 from flext_core import (
     FlextExceptions,
     FlextResult,
+    m,
 )
 
 
@@ -18,23 +19,23 @@ class TestResultBasics:
 
     def test_result_bool_true(self) -> None:
         """Test __bool__ returns True for success."""
-        r = FlextResult[int].ok(42)
+        r: FlextResult[int] = FlextResult[int].ok(42)
         assert bool(r) is True
 
     def test_result_bool_false(self) -> None:
         """Test __bool__ returns False for failure."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         assert bool(r) is False
 
     def test_result_or_operator(self) -> None:
         """Test __or__ operator for default value."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         result = r | 99
         assert result == 99
 
     def test_result_or_operator_success(self) -> None:
         """Test __or__ operator on success."""
-        r = FlextResult[int].ok(42)
+        r: FlextResult[int] = FlextResult[int].ok(42)
         result = r | 99
         assert result == 42
 
@@ -46,7 +47,7 @@ class TestResultBasics:
 
     def test_result_repr_failure(self) -> None:
         """Test __repr__ on failure."""
-        result = FlextResult[int].fail("error")
+        result: FlextResult[int] = FlextResult[int].fail("error")
         repr_str = repr(result)
         assert "error" in repr_str.lower() or "r.fail" in repr_str
 
@@ -62,7 +63,7 @@ class TestResultBasics:
 
     def test_result_is_failure_property(self) -> None:
         """Test .is_failure property."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         assert r.is_failure is True
 
     # Tests for FlextExceptions
@@ -111,7 +112,7 @@ class TestResultTransformations:
 
     def test_result_unwrap_or_value(self) -> None:
         """Test unwrap_or returns value on success."""
-        r = FlextResult[int].ok(42)
+        r: FlextResult[int] = FlextResult[int].ok(42)
         assert r.unwrap_or(999) == 42
 
     def test_result_map_transforms_type(self) -> None:
@@ -136,26 +137,29 @@ class TestResultTransformations:
 
     def test_result_error_property(self) -> None:
         """Test .error property."""
-        r = FlextResult[int].fail("error message")
+        r: FlextResult[int] = FlextResult[int].fail("error message")
         assert r.error == "error message"
 
     def test_result_error_code_property(self) -> None:
         """Test .error_code property."""
-        r = FlextResult[int].fail("error", error_code="E001")
+        r: FlextResult[int] = FlextResult[int].fail("error", error_code="E001")
         assert r.error_code == "E001"
 
     def test_result_error_code_none(self) -> None:
         """Test .error_code property when not provided."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         assert r.error_code is None
 
     def test_result_error_data_property(self) -> None:
         """Test .error_data property."""
         # Without error_data, it's None
-        r_no_data = FlextResult[int].fail("error")
+        r_no_data: FlextResult[int] = FlextResult[int].fail("error")
         assert r_no_data.error_data is None
         # With error_data, it's a dict
-        r_with_data = FlextResult[int].fail("error", error_data={"detail": "info"})
+        r_with_data: FlextResult[int] = FlextResult[int].fail(
+            "error",
+            error_data=m.ConfigMap(root={"detail": "info"}),
+        )
         assert isinstance(r_with_data.error_data, dict)
         assert r_with_data.error_data == {"detail": "info"}
 
@@ -166,12 +170,12 @@ class TestResultTransformations:
 
     def test_result_unwrap_or_on_failure(self) -> None:
         """Test .unwrap_or on failure."""
-        r = FlextResult[str].fail("error")
+        r: FlextResult[str] = FlextResult[str].fail("error")
         assert r.unwrap_or("default") == "default"
 
     def test_result_alt_on_failure(self) -> None:
         """Test .alt provides alternative on failure."""
-        r = FlextResult[int].fail("error")
+        r: FlextResult[int] = FlextResult[int].fail("error")
         r2 = r.alt(lambda _: "recovered")  # alt transforms error, not value
         assert r2.is_failure  # still failure but error is transformed
         assert r2.error == "recovered"

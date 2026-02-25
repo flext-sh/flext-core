@@ -19,7 +19,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 
 from flext_core import (
     FlextContainer,
@@ -29,9 +28,7 @@ from flext_core import (
     m,
     r,
     s,
-    t,
 )
-from pydantic import BaseModel
 
 # ═══════════════════════════════════════════════════════════════════
 # SERVICE IMPLEMENTATION
@@ -55,27 +52,31 @@ class DecoratorsService(s[m.ConfigMap]):
             self._demonstrate_retry_timeout()
             self._demonstrate_combined()
 
-            return r[m.ConfigMap].ok({
-                "decorators_demonstrated": [
-                    "inject",
-                    "log_operation",
-                    "railway",
-                    "with_context",
-                    "retry",
-                    "timeout",
-                    "combined",
-                ],
-                "decorator_categories": 7,
-                "features": [
-                    "dependency_injection",
-                    "structured_logging",
-                    "railway_pattern",
-                    "context_management",
-                    "retry_logic",
-                    "timeout_enforcement",
-                    "composition",
-                ],
-            })
+            return r[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "decorators_demonstrated": [
+                            "inject",
+                            "log_operation",
+                            "railway",
+                            "with_context",
+                            "retry",
+                            "timeout",
+                            "combined",
+                        ],
+                        "decorator_categories": 7,
+                        "features": [
+                            "dependency_injection",
+                            "structured_logging",
+                            "railway_pattern",
+                            "context_management",
+                            "retry_logic",
+                            "timeout_enforcement",
+                            "composition",
+                        ],
+                    }
+                )
+            )
 
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
@@ -89,13 +90,7 @@ class DecoratorsService(s[m.ConfigMap]):
         # Setup container
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        # Business Rule: Container accepts any object type including FlextLogger
-        # Cast to container.register() compatible type for type checker
-
-        logger_typed: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
-        ) = logger
-        container.register("logger", logger_typed)
+        container.register("logger", logger)
 
         @FlextDecorators.inject(logger="logger")
         def process_with_logger(message: str) -> str:
@@ -192,9 +187,9 @@ class DecoratorsService(s[m.ConfigMap]):
             time.sleep(0.1)  # Quick operation
             return r[str].ok("Operation completed")
 
-        result = fast_operation()
-        if result.is_success:
-            print(f"✅ Timeout protection: {result.value}")
+        timeout_result = fast_operation()
+        if timeout_result.is_success:
+            print(f"✅ Timeout protection: {timeout_result.value}")
 
         # Composition: Retry + Timeout + Railway
         @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
@@ -206,9 +201,9 @@ class DecoratorsService(s[m.ConfigMap]):
                 return r[int].fail("Value must be positive")
             return r[int].ok(value * 2)
 
-        result = robust_operation(5)
-        if result.is_success:
-            print(f"✅ Retry + Timeout composition: {result.value}")
+        robust_result = robust_operation(5)
+        if robust_result.is_success:
+            print(f"✅ Retry + Timeout composition: {robust_result.value}")
 
     @staticmethod
     def _demonstrate_combined() -> None:
@@ -218,13 +213,7 @@ class DecoratorsService(s[m.ConfigMap]):
         # Setup container for combined decorator
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        # Business Rule: Container accepts any object type including FlextLogger
-        # Cast to container.register() compatible type for type checker
-
-        logger_typed: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
-        ) = logger
-        container.register("logger", logger_typed)
+        container.register("logger", logger)
 
         @FlextDecorators.combined(
             inject_deps={"logger": "logger"},
@@ -256,12 +245,13 @@ def main() -> None:
 
     if result.is_success:
         data = result.value
-        decorators = data["decorators_demonstrated"]
-        categories = data["decorator_categories"]
+        decorators = data.get("decorators_demonstrated")
+        categories = data.get("decorator_categories")
         if (
-            isinstance(decorators, (list, tuple))
-            or (hasattr(decorators, "__getitem__") and hasattr(decorators, "__len__"))
-        ) and isinstance(categories, int):
+            decorators is not None
+            and categories is not None
+            and isinstance(decorators, (list, tuple))
+        ):
             decorators_list = list(decorators)
             print(f"\n✅ Demonstrated {categories} decorator categories")
             print(f"✅ Covered {len(decorators_list)} decorator types")

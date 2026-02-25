@@ -18,11 +18,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Annotated, Final
+from typing import Annotated, Final, cast
 
 import pytest
 
-from flext_core import r, t
+from flext_core import p, r, t
 from flext_tests import u
 from tests.test_utils import assertion_helpers
 
@@ -229,7 +229,10 @@ class TestFlextUtilitiesArgs:
             def process(status: TestFlextUtilitiesArgs.StatusEnum) -> r[str]:
                 return r.ok(status.value)
 
-            return process
+            return cast(
+                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]",
+                process,
+            )
 
     class TestValidated:
         """Tests for u.Args.validated decorator."""
@@ -340,7 +343,7 @@ class TestFlextUtilitiesArgs:
             )
             result = process(status_val)
             u.Tests.Result.assert_failure_with_error(
-                result,
+                cast("r[str]", result),
                 expected_error=errors.INTERNAL_ERROR,
             )
 
@@ -391,7 +394,7 @@ class TestFlextUtilitiesArgs:
             def process(status: TestFlextUtilitiesArgs.StatusEnum, name: str) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
             assert "name" not in params
@@ -407,7 +410,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert "status" in params
             assert "priority" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
@@ -423,7 +426,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
 
@@ -436,7 +439,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
 
@@ -447,7 +450,7 @@ class TestFlextUtilitiesArgs:
             def process(name: str, age: int) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert params == {}
 
         @staticmethod
@@ -457,7 +460,7 @@ class TestFlextUtilitiesArgs:
             class BadFunction:
                 __annotations__ = {"invalid": object()}
 
-            params = u.Args.get_enum_params(BadFunction)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", BadFunction))
             assert params == {}
 
         @staticmethod
@@ -472,7 +475,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
 
@@ -488,6 +491,6 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.Args.get_enum_params(process)
+            params = u.Args.get_enum_params(cast("p.CallableWithHints", process))
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum

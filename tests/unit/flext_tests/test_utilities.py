@@ -28,14 +28,14 @@ class TestFlextTestsUtilitiesResult:
 
     def test_assert_success_fails(self) -> None:
         """Test assert_success with failed result."""
-        result = FlextResult[str].fail("error")
+        result: r[str] = FlextResult[str].fail("error")
 
         with pytest.raises(AssertionError, match="Expected success but got failure"):
             FlextTestsUtilities.Tests.Result.assert_success(result)
 
     def test_assert_failure_passes(self) -> None:
         """Test assert_failure with failed result."""
-        result = FlextResult[str].fail("error message")
+        result: r[str] = FlextResult[str].fail("error message")
 
         # Should not raise and return error
         error = FlextTestsUtilities.Tests.Result.assert_failure(result)
@@ -50,7 +50,7 @@ class TestFlextTestsUtilitiesResult:
 
     def test_assert_failure_with_expected_error(self) -> None:
         """Test assert_failure with expected error substring."""
-        result = FlextResult[str].fail("validation error occurred")
+        result: r[str] = FlextResult[str].fail("validation error occurred")
 
         # Should not raise when substring matches
         error = FlextTestsUtilities.Tests.Result.assert_failure(result, "validation")
@@ -58,7 +58,7 @@ class TestFlextTestsUtilitiesResult:
 
     def test_assert_failure_with_expected_error_mismatch(self) -> None:
         """Test assert_failure when expected error doesn't match."""
-        result = FlextResult[str].fail("validation error occurred")
+        result: r[str] = FlextResult[str].fail("validation error occurred")
 
         with pytest.raises(AssertionError, match="Expected error containing"):
             FlextTestsUtilities.Tests.Result.assert_failure(result, "not found")
@@ -82,14 +82,14 @@ class TestFlextTestsUtilitiesResult:
 
     def test_assert_failure_with_error(self) -> None:
         """Test assert_failure_with_error with matching error."""
-        result = FlextResult[str].fail("test error")
+        result: r[str] = FlextResult[str].fail("test error")
 
         # Should not raise
         FlextTestsUtilities.Tests.Result.assert_failure_with_error(result, "test")
 
     def test_assert_failure_with_error_mismatch(self) -> None:
         """Test assert_failure_with_error with non-matching error."""
-        result = FlextResult[str].fail("actual error")
+        result: r[str] = FlextResult[str].fail("actual error")
 
         with pytest.raises(AssertionError):
             FlextTestsUtilities.Tests.Result.assert_failure_with_error(
@@ -216,14 +216,14 @@ class TestFlextTestsUtilitiesTestUtilitiesCompat:
 
     def test_assert_result_success_fails(self) -> None:
         """Test assert_result_success with failed result."""
-        result = FlextResult[str].fail("error")
+        result: r[str] = FlextResult[str].fail("error")
 
         with pytest.raises(AssertionError, match="Expected success but got failure"):
             FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_assert_result_failure_passes(self) -> None:
         """Test assert_result_failure with failed result."""
-        result = FlextResult[str].fail("error")
+        result: r[str] = FlextResult[str].fail("error")
 
         # Should not raise
         FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)

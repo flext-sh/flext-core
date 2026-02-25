@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator
+from collections.abc import ItemsView, Iterator, Mapping
 from typing import cast
 
 from flext_core import FlextTypes
@@ -37,7 +37,7 @@ class TestMapperMapDictKeys:
         )
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
 
-        result = FlextUtilities.mapper().map_dict_keys(source, mapping)
+        result = FlextUtilities.mapper().map_dict_keys(source.root, mapping)
 
         tm.ok(result, eq={mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2})
 
@@ -53,7 +53,7 @@ class TestMapperMapDictKeys:
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
 
         result = FlextUtilities.mapper().map_dict_keys(
-            source,
+            source.root,
             mapping,
             keep_unmapped=True,
         )
@@ -72,7 +72,7 @@ class TestMapperMapDictKeys:
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
 
         result = FlextUtilities.mapper().map_dict_keys(
-            source,
+            source.root,
             mapping,
             keep_unmapped=False,
         )
@@ -85,7 +85,7 @@ class TestMapperMapDictKeys:
         class BadDict(UserDict[str, FlextTypes.GeneralValueType]):
             """Dict that raises on items()."""
 
-            def items(self) -> object:
+            def items(self) -> ItemsView[str, FlextTypes.GeneralValueType]:
                 """Raise error on items attempt - test error handling."""
                 msg = "Bad dict items"
                 raise RuntimeError(msg)
@@ -96,7 +96,7 @@ class TestMapperMapDictKeys:
             "m.ConfigMap",
             bad_dict_instance,
         )
-        result = FlextUtilities.mapper().map_dict_keys(bad_dict_typed, {})
+        result = FlextUtilities.mapper().map_dict_keys(bad_dict_typed.root, {})
 
         tm.fail(result, contains="Failed to map dict keys")
 
@@ -197,16 +197,16 @@ class TestMapperCollectActiveKeys:
     def test_exception_handling(self) -> None:
         """Test exception handling with bad dict."""
 
-        class BadDictGet(UserDict[str, bool]):
+        class BadDictGet:
             """Dict that raises on get()."""
 
-            def get(self, key: str, default: bool | None = None) -> bool:
+            def get(self, key: str, default: object = None) -> bool:
                 """Raise error on get attempt - test error handling."""
                 msg = "Bad dict get"
                 raise RuntimeError(msg)
 
         result = FlextUtilities.mapper().collect_active_keys(
-            BadDictGet(),
+            cast("Mapping[str, bool]", BadDictGet()),
             {"key": "output"},
         )
 
@@ -228,7 +228,7 @@ class TestMapperTransformValues:
         )
 
         result = FlextUtilities.mapper().transform_values(
-            source,
+            source.root,
             lambda v: str(v).upper(),
         )
 
@@ -245,7 +245,7 @@ class TestMapperTransformValues:
         )
 
         result = FlextUtilities.mapper().transform_values(
-            source,
+            source.root,
             lambda v: v * 2 if isinstance(v, int) else v,
         )
 
@@ -266,7 +266,7 @@ class TestMapperFilterDict:
         )
 
         result = FlextUtilities.mapper().filter_dict(
-            source,
+            source.root,
             lambda k, v: isinstance(v, int) and v > mc.NUM_1,
         )
 

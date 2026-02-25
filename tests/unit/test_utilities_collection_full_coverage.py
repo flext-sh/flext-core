@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
+from typing import cast
 
 from flext_core import c, m, r, t, u
 
@@ -55,27 +56,38 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     )
     assert deep.is_failure
 
-    broken = u.Collection.merge(None, {"x": 1}, strategy="deep")  # type: ignore[arg-type]
+    broken = u.Collection.merge(
+        cast("dict[str, t.GeneralValueType]", None), {"x": 1}, strategy="deep"
+    )
     assert broken.is_failure
 
 
 def test_batch_fail_collect_flatten_and_progress() -> None:
     flattened = u.Collection.batch(
         [1],
-        lambda _item: r[list[int]].ok([1, 2]),
+        cast(
+            "t.BatchProcessCallable[int]",
+            (lambda _item: cast("r[Never]", r[list[int]].ok([1, 2]))),
+        ),
         flatten=True,
     )
     assert flattened.is_success
-    assert flattened.value["results"] == [1, 2]
+    flat_value = cast("dict[str, t.GeneralValueType]", flattened.value)
+    assert flat_value["results"] == [1, 2]
 
     collected = u.Collection.batch(
         [1],
-        lambda _item: r[int].fail("err"),
+        cast(
+            "t.BatchProcessCallable[int]",
+            (lambda _item: cast("r[Never]", r[int].fail("err"))),
+        ),
         on_error="collect",
     )
     assert collected.is_success
-    assert len(collected.value["errors"]) == 1
-    assert "err" in collected.value["errors"][0][1]
+    collected_value = cast("dict[str, t.GeneralValueType]", collected.value)
+    errors = cast("list[tuple[int, str]]", collected_value["errors"])
+    assert len(errors) == 1
+    assert "err" in errors[0][1]
 
     failed = u.Collection.batch([1], lambda _item: r[int].fail("hard"), on_error="fail")
     assert failed.is_failure
@@ -96,7 +108,10 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 
 def test_process_outer_exception_and_coercion_branches() -> None:
-    processed = u.Collection.process(_BadSequence(), lambda x: x)  # type: ignore[arg-type]
+    processed: r[list[object]] = u.Collection.process(
+        cast("list[object]", _BadSequence()),
+        lambda x: x,
+    )
     assert processed.is_failure
 
     assert u.Collection._coerce_value_to_float(1.5) == 1.5
@@ -113,7 +128,10 @@ def test_process_outer_exception_and_coercion_branches() -> None:
 
 
 def test_parse_mapping_outer_exception() -> None:
-    result = u.Collection.parse_mapping(_Color, _BadMapping())
+    result = u.Collection.parse_mapping(
+        _Color,
+        cast("dict[str, str | _Color]", _BadMapping()),
+    )
     assert result.is_failure
 
 
@@ -131,7 +149,9 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
         on_error="collect",
     )
     assert collected.is_success
-    assert collected.value["errors"][0][1] == "boom"
+    collected_value = cast("dict[str, t.GeneralValueType]", collected.value)
+    errors = cast("list[tuple[int, str]]", collected_value["errors"])
+    assert errors[0][1] == "boom"
 
     failed = u.Collection.batch([1], lambda _item: _FailureResult(), on_error="fail")
     assert failed.is_failure
@@ -143,8 +163,5 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     class _ExplodingEnum(metaclass=_ExplodingMeta):
         pass
 
-    parsed = u.Collection.parse_sequence(
-        _ExplodingEnum,  # type: ignore[arg-type]
-        ["x"],
-    )
+    parsed = u.Collection.parse_sequence(cast("type[_Color]", _ExplodingEnum), ["x"])
     assert parsed.is_failure

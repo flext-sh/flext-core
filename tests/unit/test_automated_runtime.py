@@ -7,6 +7,7 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 import pytest
+from collections.abc import Mapping
 
 from flext_core import t, r
 from tests.conftest import test_framework
@@ -134,16 +135,19 @@ class TestAutomatedFlextRuntime:
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: object = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextRuntime cleanup failed"
                 )
 
     def _execute_runtime_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.GeneralValueType],
+    ) -> r[bool]:
         """Execute a test operation on runtime instance.
 
         This method should be customized based on the actual runtime API.
@@ -151,13 +155,13 @@ class TestAutomatedFlextRuntime:
         """
         try:
             # Generic operation - return instance as success
-            if isinstance(instance, dict):
-                return r[t.GeneralValueType].ok(instance)
-            return r[t.GeneralValueType].ok(instance)
+            _ = instance
+            _ = input_data
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextRuntime operation failed: {e}")
+            return r[bool].fail(f"FlextRuntime operation failed: {e}")
 
     @pytest.fixture
-    def test_runtime_instance(self) -> t.GeneralValueType:
+    def test_runtime_instance(self) -> object:
         """Fixture for runtime test instance."""
         return fixture_factory.create_test_runtime_instance()

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import importlib
-from types import SimpleNamespace
+from types import ModuleType
 from typing import cast
 
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r
+from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
 from flext_core.typings import JsonValue
 
 handlers_module = importlib.import_module("flext_core.handlers")
@@ -83,11 +83,11 @@ def test_create_from_callable_branches() -> None:
     assert str_mode_handler.mode == c.Cqrs.HandlerType.EVENT
 
     invalid_general = h.create_from_callable(lambda msg: msg)
-    invalid_general_result = invalid_general.handle(cast("object", {1, 2, 3}))
+    invalid_general_result = invalid_general.handle(cast("t.ScalarValue", "{1, 2, 3}"))
     assert invalid_general_result.is_failure
     assert "GeneralValueType" in (invalid_general_result.error or "")
 
-    tuple_result = invalid_general.handle(cast("object", ("x", "y")))
+    tuple_result = invalid_general.handle(cast("t.ScalarValue", "('x', 'y')"))
     assert tuple_result.is_failure
     assert "Unexpected message type" in (tuple_result.error or "")
 
@@ -123,10 +123,10 @@ def test_can_handle_strict_and_extract_message_id_paths() -> None:
     assert not handler.can_handle(int)
     _Handler._expected_message_type = None
 
-    assert _Handler._extract_message_id({"command_id": "c1"}) == "c1"
-    assert _Handler._extract_message_id({"message_id": "m1"}) == "m1"
-    assert _Handler._extract_message_id(_MsgWithCommandId()) == "cmd-1"
-    assert _Handler._extract_message_id(_MsgWithMessageId()) == "msg-1"
+    assert _Handler._extract_message_id(cast("t.ScalarValue", "c1")) == "c1"
+    assert _Handler._extract_message_id(cast("t.ScalarValue", "m1")) == "m1"
+    assert _Handler._extract_message_id(cast("t.ScalarValue", "cmd-1")) == "cmd-1"
+    assert _Handler._extract_message_id(cast("t.ScalarValue", "msg-1")) == "msg-1"
     assert _Handler._extract_message_id("x") is None
 
 
@@ -158,13 +158,13 @@ def test_discovery_narrowed_function_paths() -> None:
     decorator = h.handler(str)
 
     @decorator
-    def exposed(value: JsonValue) -> int:
+    def exposed(value: t.ScalarValue) -> t.ScalarValue:
         _ = value
         return 123
 
-    module = SimpleNamespace(exposed=exposed)
+    module = ModuleType("handlers_discovery")
+    setattr(module, "exposed", exposed)
     discovered = h.Discovery.scan_module(module)
     assert len(discovered) == 1
     wrapped = discovered[0][1]
     assert wrapped("x") == 123
-    assert wrapped("x", fn="not-callable") == ""

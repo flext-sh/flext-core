@@ -15,7 +15,7 @@ from enum import StrEnum
 from itertools import count
 from typing import ClassVar
 
-from flext_core import FlextModels, FlextResult, FlextService
+from flext_core import FlextModels, FlextResult, FlextService, t
 from flext_core.models import m
 
 from tests.constants import TestsFlextConstants
@@ -556,18 +556,18 @@ class GenericModelFactory:
     @staticmethod
     def operation_context(
         source: str | None = None,
-    ) -> m.Value.OperationContext:
+    ) -> m.OperationContext:
         """Create OperationContext value object."""
-        return m.Value.OperationContext(source=source)
+        return m.OperationContext(source=source)
 
     @staticmethod
     def service_snapshot(
         name: str,
         version: str | None = None,
         status: str = "active",
-    ) -> m.Snapshot.Service:
+    ) -> m.Service:
         """Create ServiceSnapshot."""
-        return m.Snapshot.Service(
+        return m.Service(
             name=name,
             version=version,
             status=status,
@@ -575,13 +575,13 @@ class GenericModelFactory:
 
     @staticmethod
     def configuration_snapshot(
-        config: dict[str, object] | None = None,
+        config: dict[str, t.GeneralValueType] | None = None,
         source: str | None = None,
         environment: str | None = None,
-    ) -> m.Snapshot.Configuration:
+    ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
-        return m.Snapshot.Configuration(
-            config=config or {},
+        return m.Configuration(
+            config=m.Dict.model_validate(config or {}),
             source=source,
             environment=environment,
         )
@@ -591,11 +591,11 @@ class GenericModelFactory:
         *,
         healthy: bool = True,
         checks: dict[str, bool] | None = None,
-    ) -> m.Snapshot.Health:
+    ) -> m.Health:
         """Create HealthStatus."""
-        return m.Snapshot.Health(
+        return m.Health(
             healthy=healthy,
-            checks=checks or {},
+            checks=m.Dict.model_validate(checks or {}),
         )
 
     @staticmethod
@@ -603,18 +603,18 @@ class GenericModelFactory:
         success: int = 0,
         failure: int = 0,
         skipped: int = 0,
-    ) -> m.Progress.Operation:
+    ) -> m.Operation:
         """Create OperationProgress."""
-        return m.Progress.Operation(
+        return m.Operation(
             success_count=success,
             failure_count=failure,
             skipped_count=skipped,
         )
 
     @staticmethod
-    def conversion_progress() -> m.Progress.Conversion:
+    def conversion_progress() -> m.Conversion:
         """Create ConversionProgress."""
-        return m.Progress.Conversion()
+        return m.Conversion()
 
 
 # =========================================================================

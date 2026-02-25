@@ -1,59 +1,61 @@
+"""Full coverage tests for base model mixins and utilities."""
+
 from __future__ import annotations
 
-# pyright: reportMissingImports=false
-
+# pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 import sys
 import uuid
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import pytest
-from pydantic import BaseModel, ValidationError
-
 from flext_core import c, m, r, t, u
-
+from flext_core._models.base import FlextModelFoundation
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 _base_module = sys.modules[m.Base.Metadata.__module__]
 
 
-class _FrozenValue(m.Base.FrozenValueModel):
+class _FrozenValue(FlextModelFoundation.FrozenValueModel):
     name: str
     count: int
 
 
-class _Identifiable(m.Base.IdentifiableMixin):
+class _Identifiable(FlextModelFoundation.IdentifiableMixin):
     pass
 
 
-class _Timestampable(m.Base.TimestampableMixin):
+class _Timestampable(FlextModelFoundation.TimestampableMixin):
     pass
 
 
-class _Versionable(m.Base.VersionableMixin):
+class _Versionable(FlextModelFoundation.VersionableMixin):
     pass
 
 
-class _Auditable(m.Base.AuditableMixin):
+class _Auditable(FlextModelFoundation.AuditableMixin):
     pass
 
 
-class _SoftDelete(m.Base.SoftDeletableMixin):
+class _SoftDelete(FlextModelFoundation.SoftDeletableMixin):
     pass
 
 
-class _Taggable(m.Base.TaggableMixin):
+class _Taggable(FlextModelFoundation.TaggableMixin):
     pass
 
 
-class _Validatable(m.Base.ValidatableMixin):
+class _Validatable(FlextModelFoundation.ValidatableMixin):
     value: int = 1
 
 
-class _Serializable(m.Base.SerializableMixin):
+class _Serializable(FlextModelFoundation.SerializableMixin):
     value: str
     optional: str | None = None
 
 
-class _FailingValidatable(m.Base.ValidatableMixin):
+class _FailingValidatable(FlextModelFoundation.ValidatableMixin):
     def validate_self(self) -> _FailingValidatable:
         msg = "invalid"
         raise ValueError(msg)
@@ -80,7 +82,7 @@ def test_strip_whitespace(raw: str, expected: str) -> None:
 
 
 def test_ensure_utc_datetime_naive_and_none() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0)
+    naive = datetime(2026, 1, 1, 12, 0, 0)  # noqa: DTZ001
     assert _base_module.ensure_utc_datetime(naive).tzinfo == UTC
     assert _base_module.ensure_utc_datetime(None) is None
 
@@ -94,14 +96,13 @@ def test_normalize_to_list_branches() -> None:
 
 def test_validate_positive_number_via_field_constraint() -> None:
     """PositiveInt/PositiveFloat now use Field(gt=0) instead of custom validator."""
-    from pydantic import TypeAdapter
-
     adapter = TypeAdapter(_base_module.PositiveInt)
     assert adapter.validate_python(1) == 1
     with pytest.raises(ValidationError):
         adapter.validate_python(0)
     with pytest.raises(ValidationError):
         adapter.validate_python(-1)
+
 
 def test_validate_non_empty_string_success_and_error() -> None:
     assert _base_module.validate_non_empty_string("  data ") == "data"
@@ -150,7 +151,8 @@ def test_validate_tags_list_normalization_and_errors() -> None:
 
 
 def test_metadata_attributes_accepts_none() -> None:
-    model = m.Base.Metadata(attributes=None)
+    attributes = cast("Mapping[str, t.MetadataAttributeValue]", cast("object", None))
+    model = m.Base.Metadata(attributes=attributes)
     assert model.attributes == {}
 
 
@@ -158,17 +160,28 @@ def test_metadata_attributes_accepts_basemodel_mapping() -> None:
     class _Attrs(BaseModel):
         key: str
 
-    model = m.Base.Metadata(attributes=_Attrs(key="value"))
+    attributes = cast(
+        "Mapping[str, t.MetadataAttributeValue]", cast("object", _Attrs(key="value"))
+    )
+    model = m.Base.Metadata(attributes=attributes)
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping"):
-        m.Base.Metadata(attributes=_BrokenDumpModel())
+        m.Base.Metadata(
+            attributes=cast(
+                "Mapping[str, t.MetadataAttributeValue]",
+                cast("object", _BrokenDumpModel()),
+            )
+        )
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    model_from_t_dict = m.Base.Metadata(attributes=t.Dict(root={"a": 1}))
+    t_dict_attributes = cast(
+        "Mapping[str, t.MetadataAttributeValue]", cast("object", t.Dict(root={"a": 1}))
+    )
+    model_from_t_dict = m.Base.Metadata(attributes=t_dict_attributes)
     model_from_mapping = m.Base.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}
@@ -181,12 +194,19 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
         pass
 
     monkeypatch.setattr(_base_module, "BaseModel", _NotPydanticBase)
-    assert m.Base.Metadata._validate_attributes(t.Dict(root={"x": 1})) == {"x": 1}
+    attributes = cast(
+        "Mapping[str, t.MetadataAttributeValue]", cast("object", t.Dict(root={"x": 1}))
+    )
+    assert m.Base.Metadata._validate_attributes(attributes) == {"x": 1}
 
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like"):
-        m.Base.Metadata(attributes=123)
+        m.Base.Metadata(
+            attributes=cast(
+                "Mapping[str, t.MetadataAttributeValue]", cast("object", 123)
+            )
+        )
 
 
 def test_frozen_value_model_equality_and_hash() -> None:
@@ -216,18 +236,23 @@ def test_identifiable_uuid_format_true_and_regeneration() -> None:
     previous = model.unique_id
     model.regenerate_id()
     assert model.unique_id != previous
-    assert model.validate_id_consistency() is model
+    validate_id_consistency = cast(
+        "Callable[[], _Identifiable]", model.validate_id_consistency
+    )
+    assert validate_id_consistency() is model
     assert model.id_prefix == model.unique_id.split("-", 1)[0]
     assert model.is_uuid_format is True
 
 
 def test_identifiable_unique_id_empty_rejected() -> None:
-    with pytest.raises(ValidationError, match="String should have at least 1 character"):
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
         _Identifiable(unique_id="   ")
 
 
 def test_timestampable_timestamp_conversion_and_json_serializer() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0)
+    naive = datetime(2026, 1, 1, 12, 0, 0)  # noqa: DTZ001
     model = _Timestampable(created_at=naive, updated_at=naive)
     assert model.created_at.tzinfo == UTC
     dumped = model.model_dump(mode="json")
@@ -251,7 +276,7 @@ def test_timestampable_formatted_age_branches() -> None:
     model = _Timestampable(
         created_at=datetime.now(UTC) - timedelta(days=1, hours=2, minutes=3)
     )
-    formatted = model.time_since_creation_formatted
+    formatted = cast("str", model.time_since_creation_formatted)
     assert "d" in formatted
     assert "h" in formatted
     assert "m" in formatted
@@ -308,15 +333,18 @@ def test_versionable_validation_errors() -> None:
 def test_versionable_internal_validators_for_unreachable_branches() -> None:
     # validate_version field_validator removed; ge=MIN_VERSION handles it declaratively
     raw = _Versionable.model_construct(version=0)
+    validate_version_consistency = cast(
+        "Callable[[], _Versionable]", raw.validate_version_consistency
+    )
     with pytest.raises(ValueError, match="below minimum allowed"):
-        raw.validate_version_consistency()
+        validate_version_consistency()
 
 
 def test_auditable_user_and_timestamp_validators() -> None:
     model = _Auditable(
         created_by="  creator  ",
-        created_at=datetime(2026, 1, 1, 12, 0, 0),
-        updated_at=datetime(2026, 1, 1, 13, 0, 0),
+        created_at=datetime(2026, 1, 1, 12, 0, 0),  # noqa: DTZ001
+        updated_at=datetime(2026, 1, 1, 13, 0, 0),  # noqa: DTZ001
         updated_by=" updater ",
     )
     assert model.created_by == "creator"
@@ -338,11 +366,13 @@ def test_auditable_computed_fields_and_mutation_methods() -> None:
     assert model.updated_at is not None
     model.audit_update("dora")
     assert model.updated_by == "dora"
-    assert "updated by dora" in model.audit_summary
+    assert "updated by dora" in cast("str", model.audit_summary)
 
 
 def test_auditable_validation_errors() -> None:
-    with pytest.raises(ValidationError, match="String should have at least 1 character"):
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
         _Auditable(created_by="   ")
     with pytest.raises(ValidationError, match="updated_at set but updated_by is None"):
         _Auditable(created_by="x", updated_at=datetime.now(UTC))
@@ -353,7 +383,7 @@ def test_auditable_validation_errors() -> None:
 def test_soft_delete_validators_and_serializer() -> None:
     model = _SoftDelete(
         deleted_by=" user ",
-        deleted_at=datetime(2026, 1, 1, 12, 0, 0),
+        deleted_at=datetime(2026, 1, 1, 12, 0, 0),  # noqa: DTZ001
         is_deleted=True,
     )
     assert model.deleted_by == "user"
@@ -388,7 +418,9 @@ def test_soft_delete_states_and_restore_cycle() -> None:
 
 
 def test_soft_delete_validation_errors() -> None:
-    with pytest.raises(ValidationError, match="String should have at least 1 character"):
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
         _SoftDelete(deleted_by="   ")
     with pytest.raises(ValidationError, match="is_deleted=True but deleted_at is None"):
         _SoftDelete(is_deleted=True)
@@ -442,7 +474,10 @@ def test_taggable_overlap_validation_error() -> None:
 
 def test_validatable_default_behaviors() -> None:
     model = _Validatable()
-    assert model.validate_business_rules() is model
+    validate_business_rules = cast(
+        "Callable[[], _Validatable]", model.validate_business_rules
+    )
+    assert validate_business_rules() is model
     assert model.validate_self().value == 1
     assert model.is_valid() is True
     assert model.get_validation_errors() == []
@@ -496,7 +531,7 @@ def test_dynamic_rebuild_model_methods() -> None:
     assert model.get_runtime_field("missing", "default") == "default"
 
     plus_one_cls = m.Base.DynamicRebuildModel.rebuild_with_validator(
-        lambda value: int(value) + 1
+        lambda value: int(cast("str | int", value)) + 1
     )
     plus_one = plus_one_cls(name="x", value=2)
     assert plus_one.value == 3

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any
+from typing import cast
 
 from flext_core import c, m, r, t, u
 
@@ -16,14 +16,18 @@ class _UnknownHintHandler:
         return None
 
 
+class MissingType:
+    pass
+
+
 class _ExplodingSubclassMeta(type):
-    def __subclasscheck__(cls, subclass: Any) -> bool:
+    def __subclasscheck__(cls, subclass: type) -> bool:
         _ = subclass
         raise TypeError("no subclass check")
 
 
 class _ExplodingInstanceMeta(type):
-    def __instancecheck__(cls, instance: Any) -> bool:
+    def __instancecheck__(cls, instance: object) -> bool:
         _ = instance
         raise TypeError("no instance check")
 
@@ -47,7 +51,8 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     assert hasattr(logger, "info")
 
     hints = u.Checker._get_type_hints_safe(
-        _UnknownHintHandler.handle, _UnknownHintHandler
+        cast("t.HandlerCallable", _UnknownHintHandler.handle),
+        _UnknownHintHandler,
     )
     assert hints == {}
 
@@ -68,7 +73,9 @@ def test_extract_message_type_from_parameter_branches() -> None:
         == "abc"
     )
     assert u.Checker._extract_message_type_from_parameter(
-        param, {"message": list[int]}, "message"
+        param,
+        {"message": str(list[int])},
+        "message",
     ) == str(list[int])
 
 
@@ -80,26 +87,37 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
     class _FakeObjectName:
         __name__ = "object"
 
-    fake_object = _FakeObjectName()
+    fake_object = cast("t.TypeOriginSpecifier", _FakeObjectName())
     assert u.Checker._check_object_type_compatibility(fake_object) is True
 
-    class _DictChild(dict):
+    class _DictChild(dict[str, str]):
         pass
 
-    dict_match = u.Checker._check_dict_compatibility(dict, _DictChild, dict, _DictChild)
+    dict_match = u.Checker._check_dict_compatibility(
+        cast("t.TypeOriginSpecifier", dict),
+        _DictChild,
+        cast("t.TypeOriginSpecifier", dict),
+        cast("t.TypeOriginSpecifier", _DictChild),
+    )
     assert dict_match is True
 
     assert (
         u.Checker._handle_type_or_origin_check(
-            _ExplodingExpected,
-            type("Sub", (), {}),
-            _ExplodingExpected,
-            object,
+            cast("t.TypeOriginSpecifier", _ExplodingExpected),
+            cast("t.TypeOriginSpecifier", type("Sub", (), {})),
+            cast("t.TypeOriginSpecifier", _ExplodingExpected),
+            cast("t.TypeOriginSpecifier", object),
         )
         is False
     )
 
-    assert u.Checker._handle_instance_check(object(), _ExplodingOrigin) is True
+    assert (
+        u.Checker._handle_instance_check(
+            cast("t.TypeOriginSpecifier", object()),
+            cast("t.TypeOriginSpecifier", _ExplodingOrigin),
+        )
+        is True
+    )
 
 
 def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
@@ -141,18 +159,18 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         u.Checker._extract_message_type_from_parameter(param_type, {}, "message") is int
     )
 
-    class _ExpectedDict(dict):
+    class _ExpectedDict(dict[str, str]):
         pass
 
-    class _MessageDict(dict):
+    class _MessageDict(dict[str, str]):
         pass
 
     assert (
         u.Checker._check_dict_compatibility(
-            _ExpectedDict,
+            cast("t.TypeOriginSpecifier", _ExpectedDict),
             _MessageDict,
-            _ExpectedDict,
-            object,
+            cast("t.TypeOriginSpecifier", _ExpectedDict),
+            cast("t.TypeOriginSpecifier", object),
         )
         is True
     )

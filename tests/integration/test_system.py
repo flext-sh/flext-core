@@ -73,7 +73,8 @@ class TestCompleteFlextSystemIntegration:
 
         # Teste de encadeamento de operações (pipeline)
         pipeline_result = (
-            success_result.map(lambda x: x.upper())
+            success_result
+            .map(lambda x: x.upper())
             .map(lambda x: f"processado_{x}")
             .map(lambda x: str(x).replace("_", "-"))
         )
@@ -82,7 +83,9 @@ class TestCompleteFlextSystemIntegration:
         assert str(pipeline_result.value) == "processado-DADOS-INICIAIS"
 
         # Cenário de falha
-        failure_result = FlextResult[str].fail("erro_de_processamento")
+        failure_result: FlextResult[str] = FlextResult[str].fail(
+            "erro_de_processamento"
+        )
         assert failure_result.is_success is False
         assert failure_result.is_failure is True
         assert failure_result.error == "erro_de_processamento"
@@ -191,7 +194,7 @@ class TestCompleteFlextSystemIntegration:
         assert register_result is container  # Fluent interface returns Self is True
 
         # Recuperar serviço registrado
-        retrieved_service_result: FlextResult[t.GeneralValueType] = container.get(
+        retrieved_service_result = container.get(
             "test_service",
         )
         assert retrieved_service_result.is_success is True
@@ -199,7 +202,7 @@ class TestCompleteFlextSystemIntegration:
         assert retrieved_service == "test_value"
 
         # Teste de serviço não encontrado
-        not_found_result: FlextResult[t.GeneralValueType] = container.get(
+        not_found_result = container.get(
             "servico_inexistente",
         )
         assert not_found_result.is_success is False
@@ -267,7 +270,7 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
-        resultado_com_erro = FlextResult[str].fail("erro_original")
+        resultado_com_erro: FlextResult[str] = FlextResult[str].fail("erro_original")
         # Use lash for error recovery
         resultado_recuperado = resultado_com_erro.lash(
             lambda _error: FlextResult[str].ok("valor_recuperado"),

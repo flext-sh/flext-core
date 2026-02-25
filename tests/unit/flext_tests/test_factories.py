@@ -7,12 +7,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 from pydantic import BaseModel as _BaseModel
 
 from flext_core import FlextResult, r
 from flext_tests.factories import tt
 from flext_tests.models import m
+from flext_tests.typings import t as t_test
 from tests.test_utils import assertion_helpers
 
 # Access models from centralized m.Tests.Factory namespace
@@ -27,10 +31,10 @@ def _extract_model(
     result: (
         _BaseModel
         | list[_BaseModel]
-        | dict[str, _BaseModel]
+        | Mapping[str, _BaseModel]
         | FlextResult[_BaseModel]
         | FlextResult[list[_BaseModel]]
-        | FlextResult[dict[str, _BaseModel]]
+        | FlextResult[Mapping[str, _BaseModel]]
     ),
 ) -> _BaseModel:
     """Extract BaseModel from union type returned by tt.model().
@@ -49,12 +53,41 @@ def _extract_model(
         unwrapped = result.value
         if isinstance(unwrapped, _BaseModel):
             return unwrapped
+        if (
+            isinstance(unwrapped, list)
+            and unwrapped
+            and isinstance(unwrapped[0], _BaseModel)
+        ):
+            return unwrapped[0]
+        if isinstance(unwrapped, Mapping):
+            first_value = next(iter(unwrapped.values()), None)
+            if isinstance(first_value, _BaseModel):
+                return first_value
         msg = f"Expected BaseModel, got {type(unwrapped)}"
         raise AssertionError(msg)
     if isinstance(result, _BaseModel):
         return result
     msg = f"Expected BaseModel, got {type(result)}"
     raise AssertionError(msg)
+
+
+def _as_single_payload_result(
+    value: r[t_test.Tests.PayloadValue] | list[r[t_test.Tests.PayloadValue]],
+) -> r[t_test.Tests.PayloadValue]:
+    return value if isinstance(value, r) else value[0]
+
+
+def _as_payload_list(
+    value: list[t_test.Tests.PayloadValue] | r[list[t_test.Tests.PayloadValue]],
+) -> list[t_test.Tests.PayloadValue]:
+    return value if isinstance(value, list) else value.value
+
+
+def _as_payload_mapping(
+    value: Mapping[str, t_test.Tests.PayloadValue]
+    | r[Mapping[str, t_test.Tests.PayloadValue]],
+) -> Mapping[str, t_test.Tests.PayloadValue]:
+    return value if isinstance(value, Mapping) else value.value
 
 
 class TestUser:
@@ -162,18 +195,8 @@ class TestFlextTestsFactoriesModernAPI:
             name="Custom User",
             email="custom@test.com",
         )
-        # Type narrowing: tt.model() can return union, but for single model it's BaseModel
-        # Extract BaseModel from union or FlextResult
-        if isinstance(user_result, FlextResult):
-            user = user_result.value
-        else:
-            user = user_result
-        # Type narrowing: user is BaseModel, but we need to verify it's User
-        assert isinstance(user, _BaseModel)
-        # Access attributes after type narrowing
-        assert hasattr(user, "id")
-        assert hasattr(user, "name")
-        assert hasattr(user, "email")
+        user = _extract_model(user_result)
+        assert isinstance(user, User)
         assert user.id == "custom-123"
         assert user.name == "Custom User"
         assert user.email == "custom@test.com"
@@ -501,7 +524,8 @@ class TestsFlextTestsFactoriesModel:
         """Test model wrapped in FlextResult."""
         result = tt.model("user", as_result=True)
         assert isinstance(result, FlextResult)
-        assertion_helpers.assert_flext_result_success(result)
+        typed_result = cast(FlextResult[_BaseModel], cast(object, result))
+        assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, User)
 
     def test_model_as_dict(self) -> None:
@@ -541,11 +565,17 @@ class TestsFlextTestsFactoriesModel:
         user_result = tt.model(
             "user",
             name="Original",
-            transform=lambda u: User(
-                id=u.id,
-                name="Transformed",
-                email=u.email,
-                active=u.active,
+            transform=cast(
+                t_test.Tests.TestResultValue,
+                cast(
+                    object,
+                    lambda u: User(
+                        id=cast(User, u).id,
+                        name="Transformed",
+                        email=cast(User, u).email,
+                        active=cast(User, u).active,
+                    ),
+                ),
             ),
         )
         user = _extract_model(user_result)
@@ -554,7 +584,14 @@ class TestsFlextTestsFactoriesModel:
 
     def test_model_with_validate(self) -> None:
         """Test model creation with validation."""
-        user_result = tt.model("user", active=True, validate=lambda u: u.active)
+        user_result = tt.model(
+            "user",
+            active=True,
+            validate=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda u: cast(User, u).active),
+            ),
+        )
         user = _extract_model(user_result)
         assert isinstance(user, User)
         assert user.active is True
@@ -562,7 +599,10 @@ class TestsFlextTestsFactoriesModel:
         result_raw = tt.model(
             "user",
             active=False,
-            validate=lambda u: u.active,
+            validate=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda u: cast(User, u).active),
+            ),
             as_result=True,
         )
         if isinstance(result_raw, r):
@@ -582,67 +622,66 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_ok(self) -> None:
         """Test successful result creation."""
-        result_raw: r[int] | list[r[int]] = tt.res("ok", value=42)
-        # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
-        # For single result, it's r[TValue]
-        result: r[int] = result_raw if isinstance(result_raw, r) else result_raw[0]
+        result_raw = tt.res("ok", value=42)
+        result = cast(r[int], cast(object, _as_single_payload_result(result_raw)))
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_res_fail(self) -> None:
         """Test failed result creation."""
-        result_raw: r[object] | list[r[object]] = tt.res("fail", error="Error message")
-        # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
-        # For single result, it's r[TValue]
-        result: r[object] = result_raw if isinstance(result_raw, r) else result_raw[0]
+        result_raw = tt.res("fail", error="Error message")
+        result = cast(
+            r[t_test.Tests.PayloadValue], _as_single_payload_result(result_raw)
+        )
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
 
     def test_res_fail_with_code(self) -> None:
         """Test failed result creation with error code."""
-        result_raw: r[object] | list[r[object]] = tt.res(
+        result_raw = tt.res(
             "fail",
             error="Error message",
             error_code="ERR001",
         )
-        # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
-        # For single result, it's r[TValue]
-        result: r[object] = result_raw if isinstance(result_raw, r) else result_raw[0]
+        result = cast(
+            r[t_test.Tests.PayloadValue], _as_single_payload_result(result_raw)
+        )
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
         # Note: error_code may be stored in result metadata
 
     def test_res_from_value_success(self) -> None:
         """Test from_value with non-None value."""
-        result_raw: r[int] | list[r[int]] = tt.res("from_value", value=42)
-        # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
-        # For single result, it's r[TValue]
-        result: r[int] = result_raw if isinstance(result_raw, r) else result_raw[0]
+        result_raw = tt.res("from_value", value=42)
+        result = cast(r[int], cast(object, _as_single_payload_result(result_raw)))
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_res_from_value_none(self) -> None:
         """Test from_value with None value."""
-        result_raw: r[object] | list[r[object]] = tt.res(
+        result_raw = tt.res(
             "from_value",
             value=None,
             error_on_none="Value is required",
         )
-        # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
-        # For single result, it's r[TValue]
-        result: r[object] = result_raw if isinstance(result_raw, r) else result_raw[0]
+        result = cast(
+            r[t_test.Tests.PayloadValue], _as_single_payload_result(result_raw)
+        )
         assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error or ""
         assert "required" in error_msg.lower()
 
     def test_res_batch_values(self) -> None:
         """Test batch result creation from values."""
-        results_raw: r[int] | list[r[int]] = tt.res("ok", values=[1, 2, 3])
-        # Type narrowing: tt.res() with values returns list[r[TValue]]
-        results: list[r[int]] = (
-            results_raw if isinstance(results_raw, list) else [results_raw]
+        results_raw = tt.res("ok", values=[1, 2, 3])
+        results = cast(
+            list[r[int]],
+            cast(
+                object,
+                results_raw if isinstance(results_raw, list) else [results_raw],
+            ),
         )
         assert isinstance(results, list)
         assert len(results) == 3
@@ -651,13 +690,13 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_batch_errors(self) -> None:
         """Test batch result creation from errors."""
-        results_raw: r[object] | list[r[object]] = tt.res(
+        results_raw = tt.res(
             "fail",
             errors=["err1", "err2"],
         )
-        # Type narrowing: tt.res() with errors returns list[r[TValue]]
-        results: list[r[object]] = (
-            results_raw if isinstance(results_raw, list) else [results_raw]
+        results = cast(
+            list[r[t_test.Tests.PayloadValue]],
+            results_raw if isinstance(results_raw, list) else [results_raw],
         )
         assert isinstance(results, list)
         assert len(results) == 2
@@ -665,15 +704,18 @@ class TestsFlextTestsFactoriesRes:
 
     def test_res_mix_pattern(self) -> None:
         """Test batch result creation with mix pattern."""
-        results_raw: r[int] | list[r[int]] = tt.res(
+        results_raw = tt.res(
             "ok",
             values=[1, 2],
             errors=["e1", "e2"],
             mix_pattern=[True, False, True, False],
         )
-        # Type narrowing: tt.res() with mix_pattern returns list[r[TValue]]
-        results: list[r[int]] = (
-            results_raw if isinstance(results_raw, list) else [results_raw]
+        results = cast(
+            list[r[int]],
+            cast(
+                object,
+                results_raw if isinstance(results_raw, list) else [results_raw],
+            ),
         )
         assert len(results) == 4
         assert results[0].is_success and results[0].value == 1
@@ -685,14 +727,15 @@ class TestsFlextTestsFactoriesRes:
         """Test result creation with transform function."""
         # transform is a special kwarg processed by ResultFactoryParams
         # Type ignore needed because transform is Callable, not TestResultValue
-        result_raw: r[int] | list[r[int]] = tt.res(
+        result_raw = tt.res(
             "ok",
             value=5,
-            transform=lambda x: x * 2,
+            transform=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda x: cast(int, x) * 2),
+            ),
         )
-        # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
-        # For single result, it's r[TValue]
-        result: r[int] = result_raw if isinstance(result_raw, r) else result_raw[0]
+        result = cast(r[int], cast(object, _as_single_payload_result(result_raw)))
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 10
 
@@ -702,70 +745,63 @@ class TestsFlextTestsFactoriesList:
 
     def test_list_from_model(self) -> None:
         """Test list creation from model kind."""
-        users_raw: list[User] | r[list[User]] = tt.list("user", count=3)
-        # Type narrowing: tt.list() returns list[T] | r[list[T]]
-        # For as_result=False, it's list[T]
-        users: list[User] = (
-            users_raw if isinstance(users_raw, list) else users_raw.value
-        )
+        users_raw = tt.list("user", count=3)
+        users = cast(list[User], cast(object, _as_payload_list(users_raw)))
         assert isinstance(users, list)
         assert len(users) == 3
         assert all(isinstance(u, User) for u in users)
 
     def test_list_from_callable(self) -> None:
         """Test list creation from callable factory."""
-        numbers_raw: list[int] | r[list[int]] = tt.list(lambda: 42, count=5)
-        # Type narrowing: tt.list() returns list[T] | r[list[T]]
-        # For as_result=False, it's list[T]
-        numbers: list[int] = (
-            numbers_raw if isinstance(numbers_raw, list) else numbers_raw.value
-        )
+        numbers_raw = tt.list(lambda: 42, count=5)
+        numbers = cast(list[int], cast(object, _as_payload_list(numbers_raw)))
         assert numbers == [42, 42, 42, 42, 42]
 
     def test_list_from_sequence(self) -> None:
         """Test list creation from sequence."""
         # transform is a special kwarg processed by ListFactoryParams
         # Type ignore needed because transform is Callable, not TestResultValue
-        doubled_raw: list[int] | r[list[int]] = tt.list(
+        doubled_raw = tt.list(
             [1, 2, 3],
-            transform=lambda x: x * 2,
+            transform=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda x: cast(int, x) * 2),
+            ),
         )
-        # Type narrowing: extract list from union
-        doubled: list[int] = (
-            doubled_raw if isinstance(doubled_raw, list) else doubled_raw.value
-        )
+        doubled = cast(list[int], cast(object, _as_payload_list(doubled_raw)))
         assert doubled == [2, 4, 6]
 
     def test_list_with_filter(self) -> None:
         """Test list creation with filter."""
         # filter_ is a special kwarg processed by ListFactoryParams
         # Type ignore needed because filter_ is Callable, not TestResultValue
-        evens_raw: list[int] | r[list[int]] = tt.list(
+        evens_raw = tt.list(
             [1, 2, 3, 4, 5],
-            filter_=lambda x: x % 2 == 0,
+            filter_=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda x: cast(int, x) % 2 == 0),
+            ),
         )
-        # Type narrowing: extract list from union
-        evens: list[int] = evens_raw if isinstance(evens_raw, list) else evens_raw.value
+        evens = cast(list[int], cast(object, _as_payload_list(evens_raw)))
         assert evens == [2, 4]
 
     def test_list_with_unique(self) -> None:
         """Test list creation with uniqueness."""
         # Create list with duplicates
-        items_raw: list[int] | r[list[int]] = tt.list([1, 2, 2, 3, 3, 3], unique=True)
-        # Type narrowing: extract list from union
-        items: list[int] = items_raw if isinstance(items_raw, list) else items_raw.value
+        items_raw = tt.list([1, 2, 2, 3, 3, 3], unique=True)
+        items = cast(list[int], cast(object, _as_payload_list(items_raw)))
         assert len(items) == 3
         assert set(items) == {1, 2, 3}
 
     def test_list_as_result(self) -> None:
         """Test list creation wrapped in result."""
-        result_raw: list[User] | r[list[User]] = tt.list(
+        result_raw = tt.list(
             "user",
             count=3,
             as_result=True,
         )
         assert isinstance(result_raw, r)
-        result: r[list[User]] = result_raw
+        result = cast(r[list[User]], cast(object, result_raw))
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -776,15 +812,11 @@ class TestsFlextTestsFactoriesDict:
 
     def test_dict_from_model(self) -> None:
         """Test dict creation from model kind."""
-        users_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
+        users_raw = tt.dict_factory(
             "user",
             count=3,
         )
-        # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
-        # For as_result=False, it's dict[K, V]
-        users: dict[str, User] = (
-            users_raw if isinstance(users_raw, dict) else users_raw.value
-        )
+        users = cast(dict[str, User], cast(object, _as_payload_mapping(users_raw)))
         assert isinstance(users, dict)
         assert len(users) == 3
         assert all(isinstance(u, User) for u in users.values())
@@ -793,16 +825,15 @@ class TestsFlextTestsFactoriesDict:
         """Test dict creation with key factory."""
         # key_factory is a special kwarg processed by DictFactoryParams
         # Type ignore needed because key_factory is Callable, not TestResultValue
-        users_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
+        users_raw = tt.dict_factory(
             "user",
             count=3,
-            key_factory=lambda i: f"user_{i}",
+            key_factory=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda i: f"user_{cast(int, i)}"),
+            ),
         )
-        # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
-        # For as_result=False, it's dict[K, V]
-        users: dict[str, User] = (
-            users_raw if isinstance(users_raw, dict) else users_raw.value
-        )
+        users = cast(dict[str, User], cast(object, _as_payload_mapping(users_raw)))
         assert set(users.keys()) == {"user_0", "user_1", "user_2"}
 
     def test_dict_with_value_factory(self) -> None:
@@ -813,41 +844,36 @@ class TestsFlextTestsFactoriesDict:
 
         # value_factory is a special kwarg processed by DictFactoryParams
         # Type ignore needed because value_factory is Callable, not TestResultValue
-        users_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
+        users_raw = tt.dict_factory(
             "user",
             count=2,
-            value_factory=value_factory,
+            value_factory=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, value_factory),
+            ),
         )
-        # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
-        # For as_result=False, it's dict[K, V]
-        users: dict[str, User] = (
-            users_raw if isinstance(users_raw, dict) else users_raw.value
-        )
+        users = cast(dict[str, User], cast(object, _as_payload_mapping(users_raw)))
         assert len(users) == 2
 
     def test_dict_from_mapping(self) -> None:
         """Test dict creation from existing mapping."""
         existing = {"a": 1, "b": 2}
-        merged_raw: dict[str, int] | r[dict[str, int]] = tt.dict_factory(
+        merged_raw = tt.dict_factory(
             existing,
             merge_with={"c": 3},
         )
-        # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
-        # For as_result=False, it's dict[K, V]
-        merged: dict[str, int] = (
-            merged_raw if isinstance(merged_raw, dict) else merged_raw.value
-        )
+        merged = cast(dict[str, int], cast(object, _as_payload_mapping(merged_raw)))
         assert merged == {"a": 1, "b": 2, "c": 3}
 
     def test_dict_as_result(self) -> None:
         """Test dict creation wrapped in result."""
-        result_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
+        result_raw = tt.dict_factory(
             "user",
             count=3,
             as_result=True,
         )
         assert isinstance(result_raw, r)
-        result: r[dict[str, User]] = result_raw
+        result = cast(r[dict[str, User]], cast(object, result_raw))
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -911,7 +937,10 @@ class TestsFlextTestsFactoriesGeneric:
         obj_result = tt.generic(
             ValidatedClass,
             kwargs={"age": 25},
-            validate=lambda o: o.age >= 18,
+            validate=cast(
+                t_test.Tests.TestResultValue,
+                cast(object, lambda o: cast(ValidatedClass, o).age >= 18),
+            ),
         )
         if isinstance(obj_result, r):
             obj = obj_result.value
@@ -926,7 +955,10 @@ class TestsFlextTestsFactoriesGeneric:
             tt.generic(
                 ValidatedClass,
                 kwargs={"age": 15},
-                validate=lambda o: o.age >= 18,
+                validate=cast(
+                    t_test.Tests.TestResultValue,
+                    cast(object, lambda o: cast(ValidatedClass, o).age >= 18),
+                ),
             )
 
     def test_generic_as_result(self) -> None:
@@ -938,6 +970,7 @@ class TestsFlextTestsFactoriesGeneric:
 
         result = tt.generic(ResultClass, kwargs={"value": "test"}, as_result=True)
         assert isinstance(result, FlextResult)
-        assertion_helpers.assert_flext_result_success(result)
+        typed_result = cast(FlextResult[ResultClass], cast(object, result))
+        assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, ResultClass)
         assert result.value.value == "test"

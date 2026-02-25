@@ -38,6 +38,7 @@ from flext_core import (
 )
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
+from flext_core._models.entity import _ComparableConfigMap
 from flext_core.models import m
 
 
@@ -679,7 +680,7 @@ class TestFlextModels:
         event = m.DomainEvent(
             event_type="user_created",
             aggregate_id="user-123",
-            data=m.ConfigMap(root={"name": "test"}),
+            data=_ComparableConfigMap(root={"name": "test"}),
         )
         assert all(hasattr(event, attr) for attr in ["unique_id", "created_at"])
         assert event.event_type == "user_created"
@@ -823,7 +824,7 @@ class TestFlextModels:
         event = m.DomainEvent(
             event_type="test_event",
             aggregate_id="aggregate-123",
-            data=m.ConfigMap(root={"key": "value"}),
+            data=_ComparableConfigMap(root={"key": "value"}),
         )
         assert event.event_type == "test_event"
         assert event.aggregate_id == "aggregate-123"
@@ -852,7 +853,7 @@ class TestFlextModels:
             created_by="user-123",
             modified_by="user-456",
             tags=["important", "urgent"],
-            attributes=m.Dict(root={"priority": "high"}),
+            attributes={"priority": "high"},
         )
         assert meta.created_by == "user-123"
         assert meta.modified_by == "user-456"
@@ -872,7 +873,7 @@ class TestFlextModels:
     def test_handler_registration_model_creation(self) -> None:
         """Test HandlerRegistration model with correct fields."""
 
-        def dummy_handler(value: t.GeneralValueType) -> t.GeneralValueType:
+        def dummy_handler(value: t.ScalarValue) -> t.ScalarValue:
             return value
 
         reg = m.HandlerRegistration(
@@ -1102,7 +1103,7 @@ class TestFlextModels:
         """Test ContextData model with validators."""
         ctx = m.ContextData(
             data=m.Dict(root={"request_id": "req-456", "user_id": "user-123"}),
-            metadata=m.Metadata(attributes=m.Dict(root={"source": "api"})),
+            metadata=m.Metadata(attributes={"source": "api"}),
         )
         assert ctx.data["request_id"] == "req-456"
         metadata = ctx.metadata
@@ -1112,9 +1113,9 @@ class TestFlextModels:
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
         export = m.ContextExport(
-            data=m.Dict(root={"key": "value"}),
-            metadata=m.Metadata(attributes=m.Dict(root={"version": "1.0"})),
-            statistics=m.Dict(root={"sets": 10, "gets": 20}),
+            data=m.Dict(root={"key": "value"}).root,
+            metadata=m.Metadata(attributes={"version": "1.0"}),
+            statistics=m.Dict(root={"sets": 10, "gets": 20}).root,
         )
         assert export.data["key"] == "value"
         assert export.statistics["sets"] == 10

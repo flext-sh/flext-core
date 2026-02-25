@@ -69,8 +69,10 @@ class ResultHelpers:
     ) -> T | None:
         try:
             return func()
-        except catch:
-            return default
+        except Exception as exc:
+            if isinstance(exc, catch):
+                return default
+            raise
 
     @staticmethod
     def starts(value: str, prefix: str, *prefixes: str) -> bool:

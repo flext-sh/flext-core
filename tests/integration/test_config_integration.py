@@ -184,7 +184,7 @@ class TestFlextSettingsSingletonIntegration:
         # Container should have reference to global config
         # Verify container has access to config (via get method or direct access)
         # Note: _flext_config is private, so we verify via public API
-        config_result: FlextResult[t.GeneralValueType] = container.get("config")
+        config_result = container.get("config")
         if config_result.is_success:
             # Identity check - cast to Any for type compatibility
             retrieved_config: object = config_result.value

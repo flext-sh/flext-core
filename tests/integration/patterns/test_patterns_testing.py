@@ -16,8 +16,9 @@ from __future__ import annotations
 
 import gc
 import time
-from collections.abc import Callable, Container, Iterator, Sized
+from collections.abc import Callable, Container, Iterator, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
+from typing import Any, cast
 
 import pytest
 from hypothesis import given, settings, strategies as st
@@ -62,11 +63,27 @@ class MockScenario:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        self.given = FlextUtilities.mapper().get(data, "given", default={})
-        self.when = FlextUtilities.mapper().get(data, "when", default={})
-        self.then = FlextUtilities.mapper().get(data, "then", default={})
-        self.tags = FlextUtilities.mapper().get(data, "tags", default=[])
-        self.priority = FlextUtilities.mapper().get(data, "priority", default="normal")
+        self.given: dict[str, FlextTypes.GeneralValueType] = cast(
+            dict[str, FlextTypes.GeneralValueType],
+            FlextUtilities.mapper().get(cast(Any, data), "given", default={}),
+        )
+        self.when: dict[str, FlextTypes.GeneralValueType] = cast(
+            dict[str, FlextTypes.GeneralValueType],
+            FlextUtilities.mapper().get(cast(Any, data), "when", default={}),
+        )
+        self.then: dict[str, FlextTypes.GeneralValueType] = cast(
+            dict[str, FlextTypes.GeneralValueType],
+            FlextUtilities.mapper().get(cast(Any, data), "then", default={}),
+        )
+        self.tags: list[str] = cast(
+            list[str],
+            FlextUtilities.mapper().get(cast(Any, data), "tags", default=[]),
+        )
+        self.priority: str = FlextUtilities.mapper().get(
+            cast(Any, data),
+            "priority",
+            default="normal",
+        )
 
 
 class GivenWhenThenBuilder:
@@ -122,9 +139,9 @@ class GivenWhenThenBuilder:
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
         data: MockScenarioData = {
-            "given": self._given,
-            "when": self._when,
-            "then": self._then,
+            "given": cast(Any, self._given),
+            "when": cast(Any, self._when),
+            "then": cast(Any, self._then),
             "tags": self._tags,
             "priority": self._priority,
         }
@@ -151,7 +168,7 @@ class FlextTestBuilder:
 
     def with_metadata(self, **kwargs: FlextTypes.GeneralValueType) -> FlextTestBuilder:
         """Add metadata to the test data."""
-        self._data.update(kwargs)
+        self._data.update(cast(Any, kwargs))
         return self
 
     def with_user_data(self, name: str, email: str) -> FlextTestBuilder:
@@ -290,11 +307,11 @@ class SuiteBuilder:
         """Initialize test suite builder with suite name."""
         super().__init__()
         self.name = name
-        self._scenarios: list[t.GeneralValueType] = []
+        self._scenarios: list[object] = []
         self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
 
-    def add_scenarios(self, scenarios: list[t.GeneralValueType]) -> SuiteBuilder:
+    def add_scenarios(self, scenarios: Sequence[object]) -> SuiteBuilder:
         """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
@@ -315,7 +332,7 @@ class SuiteBuilder:
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
-            "setup_data": self._setup_data,
+            "setup_data": cast(Any, self._setup_data),
         }
         return result
 
@@ -327,17 +344,17 @@ class FixtureBuilder:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
         self._fixtures: FixtureFixturesDict = {}
-        self._setups: list[t.GeneralValueType] = []
-        self._teardowns: list[t.GeneralValueType] = []
+        self._setups: list[object] = []
+        self._teardowns: list[object] = []
 
     def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add user fixture data."""
-        self._fixtures["user"] = kwargs
+        self._fixtures["user"] = cast(Any, kwargs)
         return self
 
     def with_request(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add request fixture data."""
-        self._fixtures["request"] = kwargs
+        self._fixtures["request"] = cast(Any, kwargs)
         return self
 
     def build(self) -> FixtureFixturesDict:
@@ -360,16 +377,16 @@ class FixtureBuilder:
         value: FlextTypes.GeneralValueType,
     ) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
-        self._fixtures[key] = value
+        cast(dict[str, Any], self._fixtures)[key] = value
         return self
 
     def setup_context(
         self,
-    ) -> Callable[[], ContextManager[dict[str, FlextTypes.GeneralValueType]]]:
+    ) -> Callable[[], ContextManager[FixtureFixturesDict]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[dict[str, FlextTypes.GeneralValueType]]:
+        def _ctx() -> Iterator[FixtureFixturesDict]:
             for f in self._setups:
                 if callable(f):
                     _ = f()
@@ -661,7 +678,9 @@ class TestAdvancedPatterns:
         def act_on_data(data: object) -> object:
             if isinstance(data, dict) and "numbers" in data:
                 numbers = data["numbers"]
-                if isinstance(numbers, list) and all(isinstance(n, int) for n in numbers):
+                if isinstance(numbers, list) and all(
+                    isinstance(n, int) for n in numbers
+                ):
                     return sum(numbers)
             return 0
 
@@ -722,7 +741,7 @@ class TestComprehensiveIntegration:
 
         # Build complete test suite
         # Convert scenarios to list[t.GeneralValueType] explicitly
-        scenario_list: list[t.GeneralValueType] = scenarios
+        scenario_list: Sequence[object] = scenarios
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
             .add_scenarios(scenario_list)
@@ -876,6 +895,6 @@ class TestRealWorldScenarios:
             .build()
         )
 
-        given_config: object = scenario.given["config"]
+        given_config = scenario.given.get("config")
         assert given_config == config
         assert "configuration" in scenario.tags

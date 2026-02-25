@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import ClassVar
 
 from defusedxml import ElementTree as DefusedET
 from flext_core.result import FlextResult, r
@@ -23,7 +24,7 @@ from flext_infra.constants import c
 class _DiagResult:
     """Internal container for extracted diagnostics."""
 
-    __slots__ = (
+    __slots__: ClassVar[tuple[str, str, str, str, str]] = (
         "error_traces",
         "failed_cases",
         "skip_cases",
@@ -46,7 +47,7 @@ class PytestDiagExtractor:
     and uses regex-based log parsing when XML is unavailable.
     """
 
-    _ENCODING = c.Encoding.DEFAULT
+    _ENCODING: ClassVar[str] = c.Encoding.DEFAULT
 
     def extract(
         self,
@@ -105,6 +106,9 @@ class PytestDiagExtractor:
         try:
             root = DefusedET.parse(junit_path).getroot()
         except DefusedET.ParseError:
+            return False
+
+        if root is None:
             return False
 
         slow_rows: list[tuple[float, str]] = []
@@ -196,8 +200,7 @@ class PytestDiagExtractor:
                 line
                 for line in lines
                 if re.search(
-                    r"CoverageWarning|PytestCollectionWarning|DeprecationWarning"
-                    r"|UserWarning|RuntimeWarning",
+                    r"CoverageWarning|PytestCollectionWarning|DeprecationWarning|UserWarning|RuntimeWarning",
                     line,
                 )
             ]

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Never
+
 from flext_core import c, m, r, t, u
 
 
@@ -9,8 +11,8 @@ def test_utilities_reliability_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
 
-    fail = u.Reliability.retry(
-        lambda: r[int].fail("e"), max_attempts=1, delay_seconds=0.0
+    fail: r[Never] = u.Reliability.retry(
+        lambda: r.fail("e"), max_attempts=1, delay_seconds=0.0
     )
     assert fail.is_failure
 
@@ -38,10 +40,10 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
         lambda seconds: sleep_calls.append(seconds),
     )
 
-    def _raise_once() -> r[int]:
+    def _raise_once() -> r[Never]:
         raise ValueError("boom")
 
-    failed = u.Reliability.retry(
+    failed: r[Never] = u.Reliability.retry(
         _raise_once,
         max_attempts=2,
         delay_seconds=0.01,

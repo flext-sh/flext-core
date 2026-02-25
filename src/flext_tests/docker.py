@@ -18,30 +18,62 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import importlib
 import json
 import socket
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar, Protocol, cast
 
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
-
-try:
-    from python_on_whales import (  # pyright: ignore[reportMissingImports]
-        DockerClient as WhalesDockerClient,
-        docker,
-    )
-except ImportError:
-    WhalesDockerClient = Any  # type: ignore[assignment]
-    docker = None
+from pydantic import TypeAdapter
 
 from flext_tests.constants import c
 from flext_tests.models import m
+
+try:
+    whales_module = importlib.import_module("python_on_whales")
+    _whales_docker = getattr(whales_module, "docker", None)
+except ModuleNotFoundError:
+    _whales_docker = None
+
+
+class _WhalesClientConfigProtocol(Protocol):
+    compose_files: list[str]
+
+
+class _WhalesComposeProtocol(Protocol):
+    def up(
+        self,
+        *,
+        services: Sequence[str],
+        detach: bool,
+        remove_orphans: bool,
+    ) -> None: ...
+
+    def down(
+        self,
+        *,
+        remove_orphans: bool,
+        volumes: bool,
+    ) -> None: ...
+
+
+class _WhalesDockerClientProtocol(Protocol):
+    client_config: _WhalesClientConfigProtocol
+    compose: _WhalesComposeProtocol
+
+
+docker: _WhalesDockerClientProtocol | None = cast(
+    "_WhalesDockerClientProtocol | None",
+    _whales_docker,
+)
+
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -57,7 +89,9 @@ class FlextTestsDocker:
     """
 
     # ContainerStatus is StrEnum - alias for type hints and runtime use
-    ContainerStatus: type = c.Tests.Docker.ContainerStatus
+    ContainerStatus: ClassVar[type[c.Tests.Docker.ContainerStatus]] = (
+        c.Tests.Docker.ContainerStatus
+    )
 
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
@@ -92,7 +126,9 @@ class FlextTestsDocker:
         def __init__(self) -> None:
             """Initialize offline Docker client without contacting daemon."""
             super().__init__()
-            self._offline_containers = FlextTestsDocker._OfflineContainers()
+            self._offline_containers: FlextTestsDocker._OfflineContainers = (
+                FlextTestsDocker._OfflineContainers()
+            )
 
         @property
         def containers(self) -> FlextTestsDocker._OfflineContainers:
@@ -110,10 +146,10 @@ class FlextTestsDocker:
             None
         )
         self.logger: FlextLogger = FlextLogger(__name__)
-        self.workspace_root = workspace_root or Path.cwd()
-        self.worker_id = worker_id or "master"
+        self.workspace_root: Path = workspace_root or Path.cwd()
+        self.worker_id: str = worker_id or "master"
         self._dirty_containers: set[str] = set()
-        self._state_file = (
+        self._state_file: Path = (
             Path.home() / ".flext" / f"docker_state_{self.worker_id}.json"
         )
         self._load_dirty_state()
@@ -147,9 +183,14 @@ class FlextTestsDocker:
         """Load dirty container state from persistent storage."""
         try:
             if self._state_file.exists():
-                with self._state_file.open("r") as f:
-                    state = json.load(f)
-                    self._dirty_containers = set(state.get("dirty_containers", []))
+                state_text = self._state_file.read_text(encoding="utf-8")
+                state_raw = TypeAdapter(Mapping[str, Sequence[str]]).validate_json(
+                    state_text,
+                )
+                dirty_raw = state_raw.get("dirty_containers", ())
+                self._dirty_containers = {
+                    str(container_name) for container_name in dirty_raw
+                }
         except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
             self.logger.warning("Failed to load dirty state", error=str(exc))
             self._dirty_containers = set()
@@ -229,17 +270,20 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(container_name)
-            ports_raw = getattr(container, "ports", {}) or {}
+            ports_raw = getattr(container, "ports", None)
             ports: dict[str, str] = {}
-            for k, v in ports_raw.items():
-                if v:
-                    ports[str(k)] = str(v[0].get("HostPort", "")) if v else ""
+            if isinstance(ports_raw, Mapping):
+                ports_mapping = cast("Mapping[object, object]", ports_raw)
+                for container_port, host_bindings in ports_mapping.items():
+                    host_port = self._extract_host_port(host_bindings)
+                    if host_port:
+                        ports[str(container_port)] = host_port
 
-            # Access Container attributes via getattr for type safety
-            status_val = str(getattr(container, "status", "unknown"))
-            image_obj = getattr(container, "image", None)
-            image_tags = getattr(image_obj, "tags", []) if image_obj else []
-            container_id = str(getattr(container, "id", ""))
+            status_val = str(container.status)
+            image_obj = container.image
+            image_tags_raw = image_obj.tags if image_obj is not None else ()
+            image_tags = [str(tag) for tag in image_tags_raw]
+            container_id = str(container.id)
             return r[m.Tests.Docker.ContainerInfo].ok(
                 m.Tests.Docker.ContainerInfo(
                     name=container_name,
@@ -286,6 +330,19 @@ class FlextTestsDocker:
             return r[str].fail(f"Container {name} not found")
         except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             return r[str].fail(f"Failed to start container: {exc}")
+
+    @staticmethod
+    def _extract_host_port(bindings: object) -> str:
+        if not isinstance(bindings, Sequence) or isinstance(bindings, str | bytes):
+            return ""
+        if not bindings:
+            return ""
+        first_binding = bindings[0]
+        if not isinstance(first_binding, Mapping):
+            return ""
+        first_binding_map = cast("Mapping[object, object]", first_binding)
+        host_port = first_binding_map.get("HostPort", "")
+        return str(host_port)
 
     def compose_up(
         self,
@@ -357,6 +414,7 @@ class FlextTestsDocker:
         network_name: str | None = None,
     ) -> r[str]:
         """Start a Docker Compose stack."""
+        _ = network_name
         result = self.compose_up(compose_file)
         if result.is_failure:
             return r[str].fail(f"Stack start failed: {result.error}")

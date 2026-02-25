@@ -19,8 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import cast
+from collections.abc import Sequence
 
 from flext_core import (
     FlextContainer,
@@ -32,13 +31,11 @@ from flext_core import (
     FlextSettings,
     c,
     m,
-    p,
     r,
     s,
-    t,
     u,
 )
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 # ═══════════════════════════════════════════════════════════════════
 # DOMAIN MODELS
@@ -145,14 +142,9 @@ class IntegrationService(s[m.ConfigMap]):
 
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        # Business Rule: Container accepts any object type including FlextLogger
-        # Cast to container.register() compatible type for type checker
-        logger_typed: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
-        ) = logger
-        _ = container.register("logger", logger_typed)
+        _ = container.register("logger", logger)
 
-        logger_result: r[t.GeneralValueType] = container.get("logger")
+        logger_result = container.get("logger")
         if logger_result.is_success:
             print("✅ Container service resolution")
 
@@ -222,9 +214,7 @@ class IntegrationService(s[m.ConfigMap]):
         print("\n=== Registry/Dispatcher Integration ===")
 
         dispatcher = FlextDispatcher()
-        _registry = FlextRegistry(
-            dispatcher=cast("p.CommandBus | None", dispatcher),
-        )
+        _registry = FlextRegistry(dispatcher=dispatcher)
         print("✅ Registry/Dispatcher initialized")
 
     @staticmethod
@@ -265,9 +255,10 @@ def main() -> None:
         components = data["components_integrated"]
         total = data["total_components"]
         if (
-            isinstance(components, (list, tuple))
-            or (hasattr(components, "__getitem__") and hasattr(components, "__len__"))
-        ) and isinstance(total, int):
+            isinstance(components, Sequence)
+            and not isinstance(components, str | bytes | bytearray)
+            and isinstance(total, int)
+        ):
             components_list = list(components)
             print(f"\n✅ Integrated {total} components")
             print(f"✅ Demonstrated {len(components_list)} integration patterns")

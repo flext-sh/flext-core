@@ -27,6 +27,8 @@ from flext_core import (
     FlextLogger,
     FlextRuntime,
     FlextSettings,
+    m,
+    p,
     r,
     s,
 )
@@ -68,7 +70,7 @@ class TestConfigServiceViaDI:
         """Test injecting FlextSettings via @inject decorator."""
         # Use DependencyIntegration to create container with config
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected_config"},
+            config=m.ConfigMap(root={"app_name": "injected_config"}),
         )
 
         module = ModuleType("config_injection_module")
@@ -119,7 +121,7 @@ class TestLoggerServiceViaDI:
 
         # Logger is auto-registered by default, so we can retrieve it directly
         # or register a custom one with a different name
-        logger_result: r[FlextLogger] = container.get("logger")
+        logger_result = container.get("logger")
         assert logger_result.is_success
         assert isinstance(logger_result.value, FlextLogger)
 
@@ -132,7 +134,7 @@ class TestLoggerServiceViaDI:
         assertion_helpers.assert_flext_result_success(result)
 
         # Retrieve custom logger
-        custom_logger_result: r[FlextLogger] = container.get("custom_logger")
+        custom_logger_result = container.get("custom_logger")
         assert custom_logger_result.is_success
         assert isinstance(custom_logger_result.value, FlextLogger)
 
@@ -160,17 +162,19 @@ class TestContextServiceViaDI:
         container = FlextContainer(_context=FlextContext())
 
         # Context is auto-registered when provided, so we can retrieve it directly
-        context_result: r[FlextContext] = container.get("context")
+        context_result = container.get("context")
         assert context_result.is_success
         assert isinstance(context_result.value, FlextContext)
 
         # Test registering a custom context with a different name
         custom_context = FlextContext()
-        result = container.register("custom_context", custom_context)
+        result = container.register(
+            "custom_context", cast("t.GeneralValueType", custom_context)
+        )
         assertion_helpers.assert_flext_result_success(result)
 
         # Retrieve custom context
-        custom_context_result: r[FlextContext] = container.get("custom_context")
+        custom_context_result = container.get("custom_context")
         assert custom_context_result.is_success
         assert isinstance(custom_context_result.value, FlextContext)
         assert custom_context_result.value is custom_context
@@ -204,19 +208,27 @@ class TestServicesIntegrationViaDI:
 
         class ServiceWithDI(s[str]):
             @classmethod
-            def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
+            def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 # Create a factory function that returns a context instance
                 def create_context() -> FlextContext:
                     """Factory function for creating context instances."""
                     return FlextContext()
 
-                return {
-                    "config_overrides": {"app_name": "service_app"},
-                    "services": {
-                        "logger": FlextLogger.create_module_logger("service"),
-                        "custom_context": create_context(),
-                    },
-                }
+                return p.RuntimeBootstrapOptions(
+                    config_overrides={"app_name": "service_app"},
+                    services=cast(
+                        "dict[str, t.GeneralValueType]",
+                        {
+                            "logger": cast(
+                                "t.GeneralValueType",
+                                FlextLogger.create_module_logger("service"),
+                            ),
+                            "custom_context": cast(
+                                "t.GeneralValueType", create_context()
+                            ),
+                        },
+                    ),
+                )
 
             def execute(self) -> r[str]:
                 # Access config
@@ -263,13 +275,13 @@ class TestServicesIntegrationViaDI:
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
         services_raw: dict[str, t.GeneralValueType] = {
-            "logger": logger_instance,
-            "context": context_instance,
+            "logger": cast("t.GeneralValueType", logger_instance),
+            "context": cast("t.GeneralValueType", context_instance),
         }
         # Cast to t.GeneralValueType dict - services dict accepts any object
         services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected"},
+            config=m.ConfigMap(root={"app_name": "injected"}),
             services=services,
         )
 

@@ -100,11 +100,13 @@ class DatabaseService(m.ArbitraryTypesModel):
                 c.Errors.VALIDATION_ERROR,
             )
 
-        result: m.ConfigMap = m.ConfigMap(root={
-            "id": u.generate_short_id(),
-            "name": "Alice",
-            "email": "alice@example.com",
-        })
+        result: m.ConfigMap = m.ConfigMap(
+            root={
+                "id": u.generate_short_id(),
+                "name": "Alice",
+                "email": "alice@example.com",
+            }
+        )
         return r[m.ConfigMap].ok(result)
 
 
@@ -211,18 +213,20 @@ class DependencyInjectionService(s[m.ConfigMap]):
         self._demonstrate_resolution(container)
         self._demonstrate_advanced_patterns(container)
 
-        result_data: m.ConfigMap = m.ConfigMap(root={
-            "patterns_demonstrated": 5,
-            "services_registered": ["database", "cache", "email"],
-            "di_patterns": [
-                "service_registration",
-                "dependency_resolution",
-                "auto_wiring",
-                "lifecycle_management",
-                "error_handling",
-            ],
-            "completed_at": datetime.now(UTC).isoformat(),
-        })
+        result_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "patterns_demonstrated": 5,
+                "services_registered": ["database", "cache", "email"],
+                "di_patterns": [
+                    "service_registration",
+                    "dependency_resolution",
+                    "auto_wiring",
+                    "lifecycle_management",
+                    "error_handling",
+                ],
+                "completed_at": datetime.now(UTC).isoformat(),
+            }
+        )
 
         self.logger.info("Dependency injection demonstration completed")
         return r[m.ConfigMap].ok(result_data)
@@ -233,25 +237,31 @@ class DependencyInjectionService(s[m.ConfigMap]):
         container = FlextContainer()
 
         # Create services with centralized config mappings from t
-        db_config: m.ConfigMap = m.ConfigMap(root={
-            "driver": "sqlite",
-            "url": "sqlite:///:memory:",
-            "timeout": c.Network.DEFAULT_TIMEOUT,
-        })
+        db_config: m.ConfigMap = m.ConfigMap(
+            root={
+                "driver": "sqlite",
+                "url": "sqlite:///:memory:",
+                "timeout": c.Network.DEFAULT_TIMEOUT,
+            }
+        )
         db_service = DatabaseService(config=db_config)
         db_service.status = c.Cqrs.CommonStatus.ACTIVE
 
-        cache_config: m.ConfigMap = m.ConfigMap(root={
-            "backend": "memory",
-            "ttl": c.Defaults.DEFAULT_CACHE_TTL,
-        })
+        cache_config: m.ConfigMap = m.ConfigMap(
+            root={
+                "backend": "memory",
+                "ttl": c.Defaults.DEFAULT_CACHE_TTL,
+            }
+        )
         cache_service = CacheService(config=cache_config)
         cache_service.status = c.Cqrs.CommonStatus.ACTIVE
 
-        email_config: m.ConfigMap = m.ConfigMap(root={
-            "host": "smtp.example.com",
-            "port": 587,
-        })
+        email_config: m.ConfigMap = m.ConfigMap(
+            root={
+                "host": "smtp.example.com",
+                "port": 587,
+            }
+        )
         email_service = EmailService(config=email_config)
         email_service.status = c.Cqrs.CommonStatus.ACTIVE
 

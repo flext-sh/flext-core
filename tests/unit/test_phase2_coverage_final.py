@@ -146,18 +146,18 @@ class TestPhase2FinalCoveragePush:
         success = FlextResult[str].ok("test")
         assert success.is_success is True
         assert success.is_failure is False
-        failure = FlextResult[str].fail("error")
+        failure: FlextResult[str] = FlextResult[str].fail("error")
         assert failure.is_success is False
         assert failure.is_failure is True
 
     def test_flext_result_error_access(self) -> None:
         """Test FlextResult error property access."""
-        failure = FlextResult[str].fail("test_error")
+        failure: FlextResult[str] = FlextResult[str].fail("test_error")
         assert failure.error == "test_error"
 
     def test_flext_result_lash_operations(self) -> None:
         """Test FlextResult lash recovery operations."""
-        failure = FlextResult[str].fail("original_error")
+        failure: FlextResult[str] = FlextResult[str].fail("original_error")
 
         def recover_func(error: str) -> FlextResult[str]:
             """Recovery function."""
@@ -169,7 +169,7 @@ class TestPhase2FinalCoveragePush:
 
     def test_flext_result_alt_operations(self) -> None:
         """Test FlextResult alt error transformation."""
-        failure = FlextResult[str].fail("original_error")
+        failure: FlextResult[str] = FlextResult[str].fail("original_error")
 
         def transform_error(error: str) -> str:
             """Transform error message."""

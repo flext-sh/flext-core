@@ -74,7 +74,7 @@ class FlextService[TDomainResult](
         validate_assignment=True,
     )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
@@ -386,7 +386,7 @@ class FlextService[TDomainResult](
     @computed_field
     def runtime(
         self,
-    ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
+    ) -> m.ServiceRuntime:
         """View of the runtime triple for this service instance."""
         return u.require_initialized(self._runtime, "Runtime")
 

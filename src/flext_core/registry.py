@@ -474,7 +474,9 @@ class FlextRegistry(FlextService[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler],
+        handlers: Sequence[
+            p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler
+        ],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -507,7 +509,10 @@ class FlextRegistry(FlextService[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[RegistryBindingKey, p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler],
+        bindings: Mapping[
+            RegistryBindingKey,
+            p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
+        ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
 

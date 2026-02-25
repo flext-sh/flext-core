@@ -7,6 +7,7 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 import pytest
+from collections.abc import Mapping
 
 from flext_core import t, r
 from tests.conftest import test_framework
@@ -134,16 +135,19 @@ class TestAutomatedFlextResult:
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: object = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextResult cleanup failed"
                 )
 
     def _execute_result_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.GeneralValueType],
+    ) -> r[bool]:
         """Execute a test operation on result instance.
 
         This method should be customized based on the actual result API.
@@ -151,13 +155,13 @@ class TestAutomatedFlextResult:
         """
         try:
             # Generic operation - return instance as success
-            if isinstance(instance, dict):
-                return r[t.GeneralValueType].ok(instance)
-            return r[t.GeneralValueType].ok(instance)
+            _ = instance
+            _ = input_data
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextResult operation failed: {e}")
+            return r[bool].fail(f"FlextResult operation failed: {e}")
 
     @pytest.fixture
-    def test_result_instance(self) -> t.GeneralValueType:
+    def test_result_instance(self) -> object:
         """Fixture for result test instance."""
         return fixture_factory.create_test_result_instance()

@@ -24,10 +24,14 @@ from flext_core import (
     r,
     t,
 )
+from pydantic import ConfigDict
 
 from tests.helpers.scenarios import (
+    ParserScenario,
     ParserScenarios,
+    ReliabilityScenario,
     ReliabilityScenarios,
+    ValidationScenario,
     ValidationScenarios,
 )
 from tests.test_utils import assertion_helpers
@@ -104,7 +108,7 @@ class FlextTestAutomationFramework:
     def create_test_entity(
         unique_id: str,
         name: str,
-        **kwargs: object,
+        **kwargs: t.GeneralValueType,
     ) -> TestResult[m.Entity]:
         """Create test entity with real functionality.
 
@@ -118,16 +122,25 @@ class FlextTestAutomationFramework:
 
         """
         try:
-            # Use real entity creation through facade
-            entity_data = {"unique_id": unique_id, "name": name, **kwargs}
-            # Note: This would need to be implemented in the actual facade
-            # For now, return mock success
-            return r[m.Entity].ok(type("MockEntity", (), entity_data)())
+
+            class TestEntity(m.Entity):
+                model_config = ConfigDict(extra="allow")
+                name: str
+
+            entity = TestEntity.model_validate({
+                "unique_id": unique_id,
+                "name": name,
+                **kwargs,
+            })
+            return r[m.Entity].ok(entity)
         except Exception as e:
             return r[m.Entity].fail(f"Entity creation failed: {e}")
 
     @staticmethod
-    def create_test_value_object(value: object, value_type: type[T]) -> TestResult[T]:
+    def create_test_value_object(
+        value: object,
+        value_type: Callable[[object], T],
+    ) -> TestResult[T]:
         """Create test value object with real validation.
 
         Args:
@@ -139,11 +152,8 @@ class FlextTestAutomationFramework:
 
         """
         try:
-            # Use real value object creation through facade
-            if hasattr(value_type, "__init__"):
-                obj = value_type(value)
-                return r[T].ok(obj)
-            return r[T].fail(f"Invalid value type: {value_type}")
+            obj = value_type(value)
+            return r[T].ok(obj)
         except Exception as e:
             return r[T].fail(f"Value object creation failed: {e}")
 
@@ -220,7 +230,8 @@ class FlextScenarioRunner:
 
     @staticmethod
     def execute_validation_scenario(
-        validator_func: Callable[..., object], scenario: object
+        validator_func: Callable[..., FlextResult[object]],
+        scenario: ValidationScenario,
     ) -> FlextResult[object]:
         """Execute validation scenario and return result.
 
@@ -243,7 +254,8 @@ class FlextScenarioRunner:
 
     @staticmethod
     def execute_parser_scenario(
-        parser_func: Callable[..., object], scenario: object
+        parser_func: Callable[[str], FlextResult[object]],
+        scenario: ParserScenario,
     ) -> FlextResult[object]:
         """Execute parser scenario and return result.
 
@@ -262,7 +274,9 @@ class FlextScenarioRunner:
 
     @staticmethod
     def assert_scenario_result(
-        result: FlextResult[object], scenario: object, context: str = ""
+        result: FlextResult[object],
+        scenario: ValidationScenario | ParserScenario | ReliabilityScenario,
+        context: str = "",
     ) -> None:
         """Assert scenario result matches expected outcome.
 
@@ -272,28 +286,29 @@ class FlextScenarioRunner:
             context: Optional context for error messages
 
         """
+        expected_value = getattr(scenario, "expected_value", None)
+        expected_error_contains = getattr(
+            scenario,
+            "expected_error_contains",
+            getattr(scenario, "error_contains", None),
+        )
+
         if scenario.should_succeed:
             assert result.is_success, (
                 f"{context}: Expected success, got failure: {result.error}"
             )
-            if (
-                hasattr(scenario, "expected_value")
-                and scenario.expected_value is not None
-            ):
-                assert result.value == scenario.expected_value, (
-                    f"{context}: Expected {scenario.expected_value}, got {result.value}"
+            if expected_value is not None:
+                assert result.value == expected_value, (
+                    f"{context}: Expected {expected_value}, got {result.value}"
                 )
         else:
             assert result.is_failure, (
                 f"{context}: Expected failure, got success: {result.value}"
             )
-            if (
-                hasattr(scenario, "expected_error_contains")
-                and scenario.expected_error_contains
-            ):
-                assert scenario.expected_error_contains in str(result.error), (
+            if expected_error_contains:
+                assert expected_error_contains in str(result.error), (
                     f"{context}: Expected error containing "
-                    f"'{scenario.expected_error_contains}', "
+                    f"'{expected_error_contains}', "
                     f"got '{result.error}'"
                 )
 
@@ -566,19 +581,19 @@ def flext_result_failure() -> r[object]:
 
 
 @pytest.fixture
-def validation_scenarios() -> ValidationScenarios:
+def validation_scenarios() -> type[ValidationScenarios]:
     """Access to all centralized validation scenarios."""
     return ValidationScenarios
 
 
 @pytest.fixture
-def parser_scenarios() -> ParserScenarios:
+def parser_scenarios() -> type[ParserScenarios]:
     """Access to all centralized parser scenarios."""
     return ParserScenarios
 
 
 @pytest.fixture
-def reliability_scenarios() -> ReliabilityScenarios:
+def reliability_scenarios() -> type[ReliabilityScenarios]:
     """Access to all centralized reliability scenarios."""
     return ReliabilityScenarios
 
@@ -814,14 +829,20 @@ def assert_rejects(
     try:
         instance = model_class(**{field_name: value})
         pytest.fail(
-            f"Expected validation to fail for {field_name}={value}, ",
-            f"but got: {getattr(instance, field_name)}",
+            (
+                f"Expected validation to fail for {field_name}={value}, "
+                f"but got: {getattr(instance, field_name)}"
+            ),
+            pytrace=False,
         )
     except Exception as e:
         error_msg = str(e)
         if error_type and not isinstance(e, error_type):
             pytest.fail(
-                f"Expected {error_type.__name__}, ",
-                f"but got {type(e).__name__}: {error_msg}",
+                (
+                    f"Expected {error_type.__name__}, "
+                    f"but got {type(e).__name__}: {error_msg}"
+                ),
+                pytrace=False,
             )
         return error_msg

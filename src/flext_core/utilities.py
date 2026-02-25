@@ -524,7 +524,6 @@ class FlextUtilities:
         if isinstance(value, bool) or value <= 0:
             return r[int | float].fail(f"{field_name} must be positive")
         return r[int | float].ok(value)
-        return r[int | float].ok(value)
 
     @staticmethod
     def validate_uri(
@@ -546,7 +545,8 @@ class FlextUtilities:
         """Return success when ``port`` is a valid port number (1-65535)."""
         if not isinstance(port, int) or isinstance(port, bool):
             return r[int].fail(f"{field_name} must be an integer")
-        if port < 1 or port > 65535:
+        max_port = 65535
+        if port < 1 or port > max_port:
             return r[int].fail(f"{field_name} must be between 1 and 65535")
         return r[int].ok(port)
 
@@ -557,10 +557,13 @@ class FlextUtilities:
     ) -> r[str]:
         """Return success when ``hostname`` is a valid hostname or FQDN."""
         # RFC 1123 hostname pattern: labels separated by dots, each 1-63 chars
-        hostname_pattern = r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
+        hostname_pattern = (
+            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
+        )
         if re.search(hostname_pattern, hostname) is None:
             return r[str].fail(f"{field_name} has invalid hostname format")
         return r[str].ok(hostname)
+
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
     err = staticmethod(FlextUtilitiesResultHelpers.err)

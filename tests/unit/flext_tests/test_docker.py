@@ -21,12 +21,13 @@ import pytest
 from docker import DockerClient
 
 from flext_core import FlextConstants, FlextResult
+from flext_tests.constants import c as tests_c
 from flext_tests.docker import FlextTestsDocker
 from tests.test_utils import assertion_helpers
 
 # Access nested classes
 ContainerInfo = FlextTestsDocker.ContainerInfo
-ContainerStatus = FlextTestsDocker.ContainerStatus
+ContainerStatus = tests_c.Tests.Docker.ContainerStatus
 
 
 class TestContainerStatus:

@@ -799,7 +799,7 @@ class FlextProtocols:
 
         Reflects real implementations like FlextHandlers which provide
         comprehensive validation and execution pipelines for CQRS handlers.
-        
+
         Type Parameters:
         - MessageT: Type of message handled (command, query, or event)
         - ResultT: Type of result returned by handler

@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import operator
 
@@ -115,9 +114,7 @@ class TestFlextTestsDomains:
 
     def test_api_response_data_error(self) -> None:
         """Test api_response_data with error status."""
-        response: dict[str, t.GeneralValueType] = FlextTestsDomains.api_response_data(
-            status="error",
-        )
+        response = FlextTestsDomains.api_response_data(status="error")
 
         assert response["status"] == "error"
         assert "error" in response

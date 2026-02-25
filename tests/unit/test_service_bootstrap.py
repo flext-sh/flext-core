@@ -17,20 +17,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, r, t
+from typing import Never, cast
+
+from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, p, r
 from flext_tests import u
 
 
-class ConcreteTestService(FlextService[r[bool]]):
+class ConcreteTestService(FlextService[bool]):
     """Concrete service for testing bootstrap patterns."""
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
-        return {
-            "config_overrides": {"debug": True},
-            "subproject": "test",
-        }
+        return p.RuntimeBootstrapOptions(
+            config_overrides={"app_name": "test_app"},
+            subproject="test",
+        )
 
     def execute(self) -> r[bool]:
         """Execute service logic."""
@@ -54,7 +56,7 @@ class TestServiceBootstrap:
         """Test _create_runtime creates ServiceRuntime with bootstrap options."""
         # Act
         runtime = ConcreteTestService._create_runtime(
-            config_overrides={"debug": True},
+            config_overrides={"app_name": "runtime_app"},
             subproject="test",
         )
 
@@ -69,7 +71,7 @@ class TestServiceBootstrap:
         assert isinstance(runtime.container, FlextContainer)
 
         # Verify config overrides applied
-        assert runtime.config.debug is True
+        assert runtime.config.app_name == "runtime_app"
 
     def test_create_initial_runtime_uses_bootstrap_options(self) -> None:
         """Test _create_initial_runtime uses _runtime_bootstrap_options."""
@@ -78,7 +80,7 @@ class TestServiceBootstrap:
 
         # Assert - runtime created with bootstrap options
         assert runtime.config is not None
-        assert runtime.config.debug is True  # From bootstrap options
+        assert runtime.config.app_name == "test_app"  # From bootstrap options
         assert runtime.container is not None
 
     def test_create_runtime_with_services(self) -> None:
@@ -91,7 +93,7 @@ class TestServiceBootstrap:
 
         # Assert - service registered in container
         service_result = runtime.container.get("test_key")
-        u.Tests.Result.assert_result_success(service_result)
+        u.Tests.Result.assert_result_success(cast("r[Never]", service_result))
         assert service_result.value == "test_value"
 
     def test_create_runtime_with_factories(self) -> None:
@@ -108,7 +110,7 @@ class TestServiceBootstrap:
 
         # Assert - factory registered in container
         factory_result = runtime.container.get("test_factory")
-        u.Tests.Result.assert_result_success(factory_result)
+        u.Tests.Result.assert_result_success(cast("r[Never]", factory_result))
         assert factory_result.value == "factory_value"
 
     def test_create_runtime_with_resources(self) -> None:
@@ -125,7 +127,7 @@ class TestServiceBootstrap:
 
         # Assert - resource registered in container
         resource_result = runtime.container.get("test_resource")
-        u.Tests.Result.assert_result_success(resource_result)
+        u.Tests.Result.assert_result_success(cast("r[Never]", resource_result))
         assert resource_result.value == "resource_value"
 
     def test_create_runtime_with_context(self) -> None:
@@ -142,11 +144,10 @@ class TestServiceBootstrap:
     def test_create_runtime_with_config_overrides(self) -> None:
         """Test _create_runtime applies config overrides."""
         # Arrange
-        config_overrides = {"debug": True, "trace": True}
+        config_overrides = {"app_name": "override_app"}
 
         # Act
         runtime = ConcreteTestService._create_runtime(config_overrides=config_overrides)
 
         # Assert - config overrides applied
-        assert runtime.config.debug is True
-        assert runtime.config.trace is True
+        assert runtime.config.app_name == "override_app"

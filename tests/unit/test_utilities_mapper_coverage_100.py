@@ -11,12 +11,10 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
-
 import operator
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -61,7 +59,7 @@ class TestuMapperExtract:
     def test_extract_object(self) -> None:
         """Test object attribute extraction."""
         obj = SimpleObj(name="test", value=42)
-        result = u.mapper().extract(obj, "name")
+        result = u.mapper().extract(cast(Any, obj), "name")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
 
@@ -146,14 +144,16 @@ class TestuMapperAccessors:
     def test_take_extraction(self) -> None:
         """Test take value extraction."""
         data = {"a": 1, "b": "str"}
-        assert u.mapper().take(data, "a", as_type=int) == 1
-        assert u.mapper().take(data, "b", as_type=int, default=0) == 0  # Type mismatch
+        assert u.mapper().take(cast(Any, data), "a", as_type=int) == 1
+        assert (
+            u.mapper().take(cast(Any, data), "b", as_type=int, default=0) == 0
+        )  # Type mismatch
 
     def test_take_slice(self) -> None:
         """Test take slicing."""
         items = [1, 2, 3, 4, 5]
-        assert u.mapper().take(items, 2) == [1, 2]
-        assert u.mapper().take(items, 2, from_start=False) == [4, 5]
+        assert u.mapper().take(cast(Any, items), 2) == [1, 2]
+        assert u.mapper().take(cast(Any, items), 2, from_start=False) == [4, 5]
 
         d = {"a": 1, "b": 2, "c": 3}
         # Dict order preserved in recent python
@@ -233,7 +233,7 @@ class TestuMapperConversions:
         obj = SimpleObj("test", 1)
         # Pass dict directly - convert_to_json_value handles any dict
         # Purpose is to CONVERT arbitrary objects to JSON-safe format
-        res = u.mapper().convert_to_json_value({"obj": obj})
+        res = u.mapper().convert_to_json_value(cast(Any, {"obj": obj}))
         # Should convert obj to string representation
         assert isinstance(res, dict)
         assert "obj" in res
@@ -243,7 +243,7 @@ class TestuMapperConversions:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
         d = {"a": SimpleObj("test", 1)}
         # Use convert_to_json_value which handles any dict
-        res = u.mapper().convert_to_json_value(d)
+        res = u.mapper().convert_to_json_value(cast(Any, d))
         # Result should be a dict
         if isinstance(res, dict):
             assert isinstance(res["a"], str)
@@ -254,7 +254,7 @@ class TestuMapperConversions:
         """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
         test_list = [{"a": SimpleObj("test", 1)}]
         # Use convert_to_json_value which handles any sequence
-        res = u.mapper().convert_to_json_value(test_list)
+        res = u.mapper().convert_to_json_value(cast(Any, test_list))
         # Result should be a list
         if isinstance(res, list) and isinstance(res[0], dict):
             assert isinstance(res[0]["a"], str)
@@ -278,7 +278,7 @@ class TestuMapperBuild:
         # Map (x*2): [6, 8]
         res = u.mapper().build(
             [1, 2, 3, 4],
-            ops=cast("m.ConfigMap | None", ops),
+            ops=cast("dict[str, t.GeneralValueType] | None", ops),
         )
         assert res == [6, 8]
 
@@ -297,7 +297,7 @@ class TestuMapperBuild:
         }
         res = u.mapper().build(
             input_data,
-            ops=cast("m.ConfigMap | None", ops),
+            ops=cast("dict[str, t.GeneralValueType] | None", ops),
         )
         assert res == [25, 35]
 
@@ -305,7 +305,7 @@ class TestuMapperBuild:
         """Test build normalize."""
         res = u.mapper().build(
             ["A", "b"],
-            ops=cast("m.ConfigMap | None", {"normalize": "lower"}),
+            ops=cast("dict[str, t.GeneralValueType] | None", {"normalize": "lower"}),
         )
         assert res == ["a", "b"]
 
@@ -313,7 +313,7 @@ class TestuMapperBuild:
         """Test build group - keys are converted to strings for ConfigurationDict."""
         res = u.mapper().build(
             ["cat", "dog", "ant"],
-            ops=cast("m.ConfigMap | None", {"group": len}),
+            ops=cast("dict[str, t.GeneralValueType] | None", {"group": len}),
         )
         # Keys are converted to strings because result is ConfigurationDict
         assert res == {"3": ["cat", "dog", "ant"]}
@@ -322,7 +322,7 @@ class TestuMapperBuild:
         """Test build chunk."""
         res = u.mapper().build(
             [1, 2, 3, 4],
-            ops=cast("m.ConfigMap | None", {"chunk": 2}),
+            ops=cast("dict[str, t.GeneralValueType] | None", {"chunk": 2}),
         )
         assert res == [[1, 2], [3, 4]]
 
@@ -347,8 +347,8 @@ class TestuMapperBuild:
             "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
         }
         res = u.mapper().construct(
-            cast("m.ConfigMap", spec),
-            cast("m.ConfigMap", source),
+            cast("dict[str, t.ConfigMapValue]", spec),
+            m.ConfigMap(root=cast("dict[str, t.ConfigMapValue]", source)),
         )
         assert res == {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
 
@@ -364,15 +364,15 @@ class TestuMapperAdvanced:
                 return {"a": 1}
 
         obj = Dumpable()
-        assert u.mapper().extract(obj, "a").value == 1
-        assert u.mapper().extract(obj, "b", default=2).value == 2
+        assert u.mapper().extract(cast(Any, obj), "a").value == 1
+        assert u.mapper().extract(cast(Any, obj), "b", default=2).value == 2
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
         # Convert fails -> returns default (which is convert_type() -> int() -> 0)
         res = u.mapper().build(
             "invalid",
-            ops=cast("m.ConfigMap | None", {"convert": int}),
+            ops=cast("dict[str, t.GeneralValueType] | None", {"convert": int}),
         )
         assert res == 0
 
@@ -380,7 +380,7 @@ class TestuMapperAdvanced:
         res = u.mapper().build(
             "invalid",
             ops=cast(
-                "m.ConfigMap | None",
+                "dict[str, t.GeneralValueType] | None",
                 {"convert": int, "convert_default": 10},
             ),
         )
@@ -397,7 +397,9 @@ class TestuMapperAdvanced:
                 "strip_empty": True,
             },
         }
-        res = u.mapper().build(data, ops=cast("m.ConfigMap | None", ops))
+        res = u.mapper().build(
+            data, ops=cast("dict[str, t.GeneralValueType] | None", ops)
+        )
         # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
         assert res == {"a": "UPPER"}
 
@@ -406,14 +408,14 @@ class TestuMapperAdvanced:
         data = [{"a": 2}, {"a": 1}]
         res = u.mapper().build(
             data,
-            ops=cast("m.ConfigMap | None", {"sort": "a"}),
+            ops=cast("dict[str, t.GeneralValueType] | None", {"sort": "a"}),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
         res = u.mapper().build(
             data,
             ops=cast(
-                "m.ConfigMap | None",
+                "dict[str, t.GeneralValueType] | None",
                 {"sort": operator.itemgetter("a")},
             ),
         )

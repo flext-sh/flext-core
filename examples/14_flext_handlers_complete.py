@@ -111,20 +111,24 @@ class HandlersService(s[m.ConfigMap]):
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
 
-        return r[m.ConfigMap].ok({
-            "handlers_demonstrated": [
-                c.Cqrs.HandlerType.COMMAND,
-                c.Cqrs.HandlerType.QUERY,
-                "pipeline",
-                "error_handling",
-            ],
-            "cqrs_patterns": [
-                "separation_of_concerns",
-                "type_safety",
-                "result_patterns",
-            ],
-            "handler_types": 2,
-        })
+        return r[m.ConfigMap].ok(
+            m.ConfigMap(
+                root={
+                    "handlers_demonstrated": [
+                        c.Cqrs.HandlerType.COMMAND,
+                        c.Cqrs.HandlerType.QUERY,
+                        "pipeline",
+                        "error_handling",
+                    ],
+                    "cqrs_patterns": [
+                        "separation_of_concerns",
+                        "type_safety",
+                        "result_patterns",
+                    ],
+                    "handler_types": 2,
+                }
+            )
+        )
 
     @staticmethod
     def _demonstrate_command_handlers() -> None:
@@ -231,13 +235,10 @@ def main() -> None:
         handlers = data.get("handlers_demonstrated", [])
         patterns = data.get("cqrs_patterns", [])
 
-        def _is_seq(x: object) -> bool:
-            return type(x) in {list, tuple} or (
-                hasattr(x, "__getitem__") and hasattr(x, "__len__")
-            )
-
-        handler_count = len(handlers) if _is_seq(handlers) else 0
-        pattern_count = len(patterns) if _is_seq(patterns) else 0
+        handler_items = handlers if isinstance(handlers, list | tuple) else []
+        pattern_items = patterns if isinstance(patterns, list | tuple) else []
+        handler_count = len(handler_items)
+        pattern_count = len(pattern_items)
         print(f"\n✅ Demonstrated {handler_count} handler patterns")
         print(f"✅ Used {pattern_count} CQRS patterns")
     else:

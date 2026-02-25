@@ -20,6 +20,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 from flext_core import (
     FlextConstants,
     FlextModels,
@@ -34,16 +36,18 @@ from flext_core.models import m
 # SAMPLE DATA
 # ═══════════════════════════════════════════════════════════════════
 
-TEST_DATA: m.ConfigMap = {
-    "email": "test@example.com",
-    "invalid_email": "invalid-email",
-    "number_str": "42",
-    "float_str": "3.14",
-    "invalid_number": "not-a-number",
-    "uri": "https://example.com/api",
-    "port": 8080,
-    "hostname": "api.example.com",
-}
+TEST_DATA: m.ConfigMap = m.ConfigMap(
+    root={
+        "email": "test@example.com",
+        "invalid_email": "invalid-email",
+        "number_str": "42",
+        "float_str": "3.14",
+        "invalid_number": "not-a-number",
+        "uri": "https://example.com/api",
+        "port": 8080,
+        "hostname": "api.example.com",
+    }
+)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -70,25 +74,29 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
 
-            return FlextResult[m.ConfigMap].ok({
-                "utilities_demonstrated": [
-                    "validation",
-                    "id_generation",
-                    "conversions",
-                    "caching",
-                    "reliability",
-                    "string_parsing",
-                    "collection",
-                    "type_checking",
-                ],
-                "utility_categories": 8,
-                "flext_utilities_features": [
-                    "type_safety",
-                    "error_handling",
-                    "performance",
-                    "reliability",
-                ],
-            })
+            return FlextResult[m.ConfigMap].ok(
+                m.ConfigMap(
+                    root={
+                        "utilities_demonstrated": [
+                            "validation",
+                            "id_generation",
+                            "conversions",
+                            "caching",
+                            "reliability",
+                            "string_parsing",
+                            "collection",
+                            "type_checking",
+                        ],
+                        "utility_categories": 8,
+                        "flext_utilities_features": [
+                            "type_safety",
+                            "error_handling",
+                            "performance",
+                            "reliability",
+                        ],
+                    }
+                )
+            )
 
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
@@ -193,9 +201,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Sort dictionary keys for consistent cache keys (DRY)
         sorted_data = u.sort_dict_keys(TEST_DATA)
-        if isinstance(sorted_data, dict) or (
-            hasattr(sorted_data, "keys") and hasattr(sorted_data, "__getitem__")
-        ):
+        if isinstance(sorted_data, Mapping):
             print(f"✅ Sorted keys: {list(sorted_data.keys())}")
 
         # Clear object cache
@@ -306,19 +312,17 @@ def main() -> None:
         utilities = data.get("utilities_demonstrated", [])
         utilities_count = (
             len(utilities)
-            if (
-                type(utilities) in {list, tuple}
-                or (hasattr(utilities, "__getitem__") and hasattr(utilities, "__len__"))
-            )
+            if isinstance(utilities, Sequence)
+            and not isinstance(utilities, str | bytes | bytearray)
             else 0
         )
         print(f"\n✅ Demonstrated {categories} utility categories")
         print(f"✅ Covered {utilities_count} utility types")
 
-    def handle_error(error: str) -> FlextResult[bool]:
+    def handle_error(error: str) -> FlextResult[None]:
         """Handle error result."""
         print(f"\n❌ Failed: {error}")
-        return FlextResult[bool].ok(value=True)
+        return FlextResult[None].ok(value=None)
 
     result.map(handle_success).lash(handle_error)
 

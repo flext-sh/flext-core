@@ -1,22 +1,51 @@
 """Targeted full-coverage tests for flext_core.dispatcher missed branches."""
 
+# ruff: noqa
+# mypy: follow_imports=skip
+# mypy: disable-error-code="arg-type,assignment,dict-item,list-item,return-value,union-attr,valid-type"
+
 from __future__ import annotations
 
-import concurrent.futures
 from collections.abc import Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from typing import cast
 
 import pytest
+from flext_core import c, m, p, r, t, u
+from flext_core.dispatcher import (
+    DispatcherHandler,
+    FlextDispatcher,
+    HandlerRegistrationRequestInput,
+    HandlerRequestKey,
+)
 from pydantic import BaseModel
 
-from flext_core import c, m, r, t, u
-from flext_core.dispatcher import FlextDispatcher
-
 DispatcherMiddlewareConfig = m.Config.DispatcherMiddlewareConfig
+import math
+
 from flext_core.handlers import FlextHandlers
+
+
+def _as_handler(value: object) -> DispatcherHandler:
+    return cast("DispatcherHandler", value)
+
+
+def _as_payload(value: object) -> t.ConfigMapValue:
+    return cast("t.ConfigMapValue", value)
+
+
+def _as_handler_key(value: object) -> HandlerRequestKey:
+    return cast("HandlerRequestKey", value)
+
+
+def _as_handler_callable(value: object) -> t.HandlerCallable:
+    return cast("t.HandlerCallable", value)
+
+
+def _as_request_input(value: object) -> HandlerRegistrationRequestInput:
+    return cast("HandlerRegistrationRequestInput", value)
 
 
 class _EchoMessage(BaseModel):
@@ -100,7 +129,8 @@ class _BadDumpModel(BaseModel):
 
     def model_dump(self, *args: object, **kwargs: object) -> dict[str, object]:
         _ = (args, kwargs)
-        return cast("dict[str, object]", ["not-a-dict"])
+        invalid_value: object = ["not-a-dict"]
+        return cast("dict[str, object]", invalid_value)
 
 
 class _FailingDumpModel(BaseModel):
@@ -159,10 +189,11 @@ def test_reliability_resolvers_return_container_instances(
     rp = object()
     items = [cb, rl, te, rp]
 
-    def fake_get_typed(_name: str, _typ: type[object]) -> r[object]:
+    def fake_get_typed(name: str, type_cls: type[object]) -> r[object]:
+        _ = (name, type_cls)
         return r[object].ok(items.pop(0))
 
-    dispatcher.container.get_typed = fake_get_typed  # type: ignore[method-assign]
+    setattr(dispatcher.container, "get_typed", fake_get_typed)
 
     assert dispatcher._resolve_or_create_circuit_breaker(dispatcher.config) is cb
     assert dispatcher._resolve_or_create_rate_limiter(dispatcher.config) is rl
@@ -181,7 +212,8 @@ def test_dispatcher_config_and_basic_introspection_helpers(
     analytics = dispatcher.get_performance_analytics()
     assert audit.is_success
     assert analytics.is_success
-    assert analytics.value["audit_log_entries"] == 0
+    analytics_map = cast("Mapping[str, t.GeneralValueType]", analytics.value)
+    assert analytics_map["audit_log_entries"] == 0
 
 
 def test_interface_validation_paths(dispatcher: FlextDispatcher) -> None:
@@ -245,7 +277,7 @@ def test_cache_hit_and_execute_handler_fallback_paths(
     assert cached_result.value == {"cached": True}
 
     # Execute via FlextHandlers instance branch.
-    h = FlextHandlers.create_from_callable(lambda msg: {"handler": type(msg).__name__})
+    h = FlextHandlers.create_from_callable(lambda msg: str(type(msg).__name__))
     h_result = dispatcher._execute_handler(h, query)
     assert h_result.is_success
 
@@ -253,13 +285,21 @@ def test_cache_hit_and_execute_handler_fallback_paths(
     handle_result = dispatcher._execute_handler(_HandleOnly(), _EchoMessage())
     assert handle_result.is_success
 
-    execute_result = dispatcher._execute_handler(_ExecuteOnly(), _EchoMessage())
+    execute_result = dispatcher._execute_handler(
+        _as_handler(_ExecuteOnly()),
+        _as_payload(_EchoMessage()),
+    )
     assert execute_result.is_success
 
-    missing_method = dispatcher._execute_handler(object(), _EchoMessage())
+    missing_method = dispatcher._execute_handler(
+        _as_handler(object()), _as_payload(_EchoMessage())
+    )
     assert missing_method.is_failure
 
-    non_callable = dispatcher._execute_handler(_NonCallableMethod(), _EchoMessage())
+    non_callable = dispatcher._execute_handler(
+        _as_handler(_NonCallableMethod()),
+        _as_payload(_EchoMessage()),
+    )
     assert non_callable.is_failure
 
     class _Raising:
@@ -267,7 +307,9 @@ def test_cache_hit_and_execute_handler_fallback_paths(
             msg = "kaboom"
             raise RuntimeError(msg)
 
-    raised = dispatcher._execute_handler(_Raising(), _EchoMessage())
+    raised = dispatcher._execute_handler(
+        _as_handler(_Raising()), _as_payload(_EchoMessage())
+    )
     assert raised.is_failure
     assert "kaboom" in (raised.error or "")
 
@@ -288,7 +330,7 @@ def test_dispatch_command_no_handler_and_query_cache_store(
         def handle(self, _msg: object) -> dict[str, str]:
             return {"answer": "ok"}
 
-    dispatcher._handlers[_QueryMessage.__name__] = _QueryHandler()
+    dispatcher._handlers[_QueryMessage.__name__] = _as_handler(_QueryHandler())
     dispatcher.config.enable_caching = True
 
     result = dispatcher._dispatch_command(query)
@@ -306,10 +348,17 @@ def test_layer1_register_handler_argument_and_type_paths(
     assert bad_single.is_failure
 
     callable_type = _CallableType
-    bad_two = dispatcher._layer1_register_handler(callable_type, "bad")
+    bad_two = dispatcher._layer1_register_handler(
+        callable_type,
+        _as_handler(cast("object", "bad")),
+    )
     assert bad_two.is_failure
 
-    too_many = dispatcher._layer1_register_handler("a", "b", "c")
+    too_many = dispatcher._layer1_register_handler(
+        _as_handler_key("a"),
+        _as_handler(cast("object", "b")),
+        _as_handler(cast("object", "c")),
+    )
     assert too_many.is_failure
 
 
@@ -327,9 +376,9 @@ def test_wire_and_single_registration_branches(
             msg = "factory-fail"
             raise RuntimeError(msg)
 
-    dispatcher._container = _WireErrorContainer()  # type: ignore[assignment]
+    dispatcher._container = cast("p.DI", cast("object", _WireErrorContainer()))
 
-    none_result = dispatcher._register_single_handler(None)
+    none_result = dispatcher._register_single_handler(_as_handler(cast("object", None)))
     assert none_result.is_failure
 
     class _IdHandler(BaseModel):
@@ -352,39 +401,57 @@ def test_two_arg_registration_and_middleware_config_branches(
         def handle(self, _msg: object) -> str:
             return "ok"
 
-    invalid_args = dispatcher._register_two_arg_handler(None, _Handler())
+    invalid_args = dispatcher._register_two_arg_handler(
+        _as_handler_key(cast("object", None)),
+        _as_handler(_Handler()),
+    )
     assert invalid_args.is_failure
 
-    empty_cmd = dispatcher._register_two_arg_handler("", _Handler())
+    empty_cmd = dispatcher._register_two_arg_handler(
+        _as_handler_key(""), _as_handler(_Handler())
+    )
     assert empty_cmd.is_failure
 
     class _NoHandle:
         pass
 
-    invalid_handler = dispatcher._register_two_arg_handler("cmd", _NoHandle())
+    invalid_handler = dispatcher._register_two_arg_handler(
+        _as_handler_key("cmd"),
+        _as_handler(_NoHandle()),
+    )
     assert invalid_handler.is_failure
 
     class _ClassHandler:
         def handle(self, _msg: object) -> str:
             return "ok"
 
-    ok = dispatcher._register_two_arg_handler("cmd.two", _ClassHandler())
+    ok = dispatcher._register_two_arg_handler(
+        _as_handler_key("cmd.two"), _as_handler(_ClassHandler())
+    )
     assert ok.is_success
 
-    bad_dict_cfg = dispatcher.layer1_add_middleware(_MiddlewareOK(), {"order": "bad"})
+    bad_dict_cfg = dispatcher.layer1_add_middleware(
+        _as_handler_callable(_MiddlewareOK()),
+        m.ConfigMap(root={"order": "bad"}),
+    )
     assert bad_dict_cfg.is_failure
 
-    bad_type_cfg = dispatcher.layer1_add_middleware(_MiddlewareOK(), "bad-config")
+    bad_type_cfg = dispatcher.layer1_add_middleware(
+        _as_handler_callable(_MiddlewareOK()),
+        cast("m.Config.MiddlewareConfig | t.ConfigMap", cast("object", "bad-config")),
+    )
     assert bad_type_cfg.is_failure
 
     bad_config_map = t.ConfigMap(root={"order": "bad"})
     bad_config_map_result = dispatcher.layer1_add_middleware(
-        _MiddlewareOK(), bad_config_map
+        _as_handler_callable(_MiddlewareOK()),
+        bad_config_map,
     )
     assert bad_config_map_result.is_failure
 
     mw_ok = dispatcher.layer1_add_middleware(
-        _MiddlewareOK(), m.Config.MiddlewareConfig(order=1)
+        _as_handler_callable(_MiddlewareOK()),
+        m.Config.MiddlewareConfig(order=1),
     )
     assert mw_ok.is_success
 
@@ -393,7 +460,6 @@ def test_publish_subscribe_unsubscribe_paths(
     dispatcher: FlextDispatcher, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cover event publishing, subscription, and unsubscription error branches."""
-
     monkeypatch.setattr(
         dispatcher,
         "_dispatch_command",
@@ -415,7 +481,7 @@ def test_publish_subscribe_unsubscribe_paths(
         raise ValueError(msg)
 
     monkeypatch.setattr(dispatcher, "_layer1_register_handler", raise_subscribe)
-    sub = dispatcher.subscribe("evt", _HandleOnly())
+    sub = dispatcher.subscribe("evt", _as_handler_callable(_HandleOnly()))
     assert sub.is_failure
 
     dispatcher._handlers["evt"] = _HandleOnly()
@@ -425,7 +491,7 @@ def test_publish_subscribe_unsubscribe_paths(
     unsub_missing = dispatcher.unsubscribe("not-found")
     assert unsub_missing.is_failure
 
-    dispatcher._handlers = None  # type: ignore[assignment]
+    dispatcher._handlers = cast("dict[str, DispatcherHandler]", cast("object", None))
     unsub_exc = dispatcher.unsubscribe("evt")
     assert unsub_exc.is_failure
 
@@ -434,7 +500,6 @@ def test_publish_batch_and_named_event_paths(
     dispatcher: FlextDispatcher, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cover named-event and batch publish branches including partial failure."""
-
     monkeypatch.setattr(
         dispatcher, "_publish_event", lambda event: r[bool].ok(True if event else False)
     )
@@ -467,7 +532,7 @@ def test_nested_attr_name_and_request_normalization_paths(
     monkeypatch.setattr(
         FlextDispatcher, "_get_nested_attr", staticmethod(lambda *_args: None)
     )
-    empty_name = dispatcher._extract_name_from_handler({})
+    empty_name = dispatcher._extract_name_from_handler(_as_handler(cast("object", {})))
     assert empty_name == ""
 
     req = m.HandlerRegistrationRequest(handler=lambda x: x)
@@ -478,13 +543,23 @@ def test_nested_attr_name_and_request_normalization_paths(
     model_ok = dispatcher._normalize_request(model_req)
     assert model_ok.is_success
 
-    dict_ok = dispatcher._normalize_request({
-        "handler": lambda x: x,
-        "message_type": "cmd",
-    })
+    dict_ok = dispatcher._normalize_request(
+        cast(
+            "Mapping[str, t.ConfigMapValue]",
+            cast(
+                "object",
+                {
+                    "handler": lambda x: x,
+                    "message_type": "cmd",
+                },
+            ),
+        )
+    )
     assert dict_ok.is_success
 
-    invalid_req = dispatcher._normalize_request(3.14)
+    invalid_req = dispatcher._normalize_request(
+        cast("Mapping[str, t.ConfigMapValue]", cast("object", math.pi)),
+    )
     assert invalid_req.is_failure
 
 
@@ -517,14 +592,23 @@ def test_handler_extraction_and_registration_mode_helpers(
         def handle(self, _msg: object) -> str:
             return "ok"
 
-    auto_reg = dispatcher._register_handler_by_mode(_Auto(), "h1", {})
+    auto_reg = dispatcher._register_handler_by_mode(
+        _as_handler(_Auto()),
+        "h1",
+        cast("Mapping[str, t.ConfigMapValue]", {}),
+    )
     assert auto_reg.is_success
 
     explicit_missing = dispatcher._register_explicit_handler(_HandleOnly(), "h2", {})
     assert explicit_missing.is_failure
 
     explicit_ok = dispatcher._register_explicit_handler(
-        _HandleOnly(), "h3", {"message_type": _EchoMessage}
+        _HandleOnly(),
+        "h3",
+        cast(
+            "Mapping[str, t.ConfigMapValue]",
+            cast("object", {"message_type": _EchoMessage}),
+        ),
     )
     assert explicit_ok.is_success
 
@@ -556,10 +640,16 @@ def test_register_handler_with_request_and_public_register_handler_branches(
     explicit_fail = dispatcher._register_handler_with_request(explicit_missing)
     assert explicit_fail.is_failure
 
-    invalid_two_arg_handler = dispatcher.register_handler("cmd", 123)
+    invalid_two_arg_handler = dispatcher.register_handler(
+        "cmd",
+        _as_handler(cast("object", 123)),
+    )
     assert invalid_two_arg_handler.is_failure
 
-    invalid_two_arg_request = dispatcher.register_handler(123, _HandleOnly())
+    invalid_two_arg_request = dispatcher.register_handler(
+        _as_request_input(cast("object", 123)),
+        _as_handler(_HandleOnly()),
+    )
     assert invalid_two_arg_request.is_failure
 
     monkeypatch.setattr(
@@ -585,7 +675,7 @@ def test_register_handler_with_request_and_public_register_handler_branches(
     })
     assert mapping_single.is_success
 
-    invalid_single = dispatcher.register_handler(42)
+    invalid_single = dispatcher.register_handler(_as_request_input(cast("object", 42)))
     assert invalid_single.is_failure
 
     single_layer_fail = dispatcher.register_handler(lambda x: x)
@@ -604,11 +694,14 @@ def test_register_handlers_batch_and_ensure_handler_helper(
     class _Bad:
         pass
 
-    handlers = {"good": _Good(), "bad": _Bad()}
+    handlers: Mapping[HandlerRequestKey, DispatcherHandler] = {
+        "good": _as_handler(_Good()),
+        "bad": _as_handler(_Bad()),
+    }
     batch = dispatcher.register_handlers(handlers)
     assert batch.is_failure
 
-    good_only = dispatcher.register_handlers({"good": _Good()})
+    good_only = dispatcher.register_handlers({"good": _as_handler(_Good())})
     assert good_only.is_success
     assert good_only.value.count == 1
 
@@ -616,7 +709,7 @@ def test_register_handlers_batch_and_ensure_handler_helper(
     ensured = dispatcher._ensure_handler(h)
     assert ensured.is_success
 
-    ensured_fail = dispatcher._ensure_handler(object())
+    ensured_fail = dispatcher._ensure_handler(_as_handler(object()))
     assert ensured_fail.is_failure
 
 
@@ -779,9 +872,9 @@ def test_dispatch_public_api_and_metadata_conversion_paths(
     meta_passthrough = FlextDispatcher._convert_metadata_to_model(meta_model)
     assert meta_passthrough is meta_model
 
-    nested_meta = FlextDispatcher._convert_metadata_to_model({
-        "nested": {"k": object()}
-    })
+    nested_meta = FlextDispatcher._convert_metadata_to_model(
+        _as_payload({"nested": {"k": object()}}),
+    )
     assert nested_meta is not None
     assert isinstance(nested_meta.attributes["nested"], str)
 
@@ -808,16 +901,16 @@ def test_simple_dispatch_and_extract_dispatch_config_paths(
         pass
 
     msg = _Msg()
-    assert dispatcher._try_simple_dispatch(msg) is None
+    assert dispatcher._try_simple_dispatch(_as_payload(msg)) is None
 
-    dispatcher._handlers[_Msg.__name__] = "bad-handler"
-    not_callable = dispatcher._try_simple_dispatch(msg)
+    dispatcher._handlers[_Msg.__name__] = _as_handler(cast("object", "bad-handler"))
+    not_callable = dispatcher._try_simple_dispatch(_as_payload(msg))
     assert not_callable is not None and not_callable.is_failure
 
     dispatcher._handlers[_Msg.__name__] = lambda _m: r[t.GeneralValueType].ok(
         "already-result"
     )
-    passthrough = dispatcher._try_simple_dispatch(msg)
+    passthrough = dispatcher._try_simple_dispatch(_as_payload(msg))
     assert passthrough is not None and passthrough.is_success
 
     def _raises(_m: object) -> object:
@@ -825,22 +918,24 @@ def test_simple_dispatch_and_extract_dispatch_config_paths(
         raise RuntimeError(msg_txt)
 
     dispatcher._handlers[_Msg.__name__] = _raises
-    raised = dispatcher._try_simple_dispatch(msg)
+    raised = dispatcher._try_simple_dispatch(_as_payload(msg))
     assert raised is not None and raised.is_failure
 
     cfg_obj = SimpleNamespace(
         metadata={"x": 1}, correlation_id="cid", timeout_override=5
     )
-    extracted = FlextDispatcher._extract_dispatch_config(cfg_obj, None, None, None)
+    extracted = FlextDispatcher._extract_dispatch_config(
+        _as_payload(cfg_obj), None, None, None
+    )
     assert extracted.is_success
 
     invalid_metadata = FlextDispatcher._extract_dispatch_config(
-        None, object(), None, None
+        None, _as_payload(object()), None, None
     )
     assert invalid_metadata.is_failure
 
     hard_invalid = FlextDispatcher._extract_dispatch_config(
-        None, {"x": object()}, None, None
+        None, _as_payload({"x": object()}), None, None
     )
     assert hard_invalid.is_failure
 
@@ -850,7 +945,12 @@ def test_simple_dispatch_and_extract_dispatch_config_paths(
             msg = "boom"
             raise RuntimeError(msg)
 
-    broken = FlextDispatcher._extract_dispatch_config(_BrokenConfig(), None, None, None)
+    broken = FlextDispatcher._extract_dispatch_config(
+        _as_payload(_BrokenConfig()),
+        None,
+        None,
+        None,
+    )
     assert broken.is_failure
 
 
@@ -865,7 +965,11 @@ def test_prepare_validate_retry_and_normalize_dispatch_message_paths(
             msg = "bad-model-dump"
             raise RuntimeError(msg)
 
-    prep_fail = dispatcher._prepare_dispatch_context(_EchoMessage(), None, _BadConfig())
+    prep_fail = dispatcher._prepare_dispatch_context(
+        _EchoMessage(),
+        None,
+        cast("m.DispatchConfig", cast("object", _BadConfig())),
+    )
     assert prep_fail.is_failure
 
     invalid_ctx = dispatcher._validate_pre_dispatch_conditions("no-mapping")
@@ -956,22 +1060,30 @@ def test_context_execution_handle_result_attempt_and_metadata_compatibility(
     attempt_fail = dispatcher._execute_dispatch_attempt(_EchoMessage(), options)
     assert attempt_fail.is_failure
 
-    assert FlextDispatcher._normalize_context_metadata(object()) is None
+    assert FlextDispatcher._normalize_context_metadata(_as_payload(object())) is None
 
     with pytest.raises(TypeError):
         FlextDispatcher._extract_metadata_mapping(_BadDumpModel())
 
-    assert FlextDispatcher._extract_metadata_mapping(_MetadataCarrier()) is not None
-    assert FlextDispatcher._extract_metadata_mapping(object()) is None
+    assert (
+        FlextDispatcher._extract_metadata_mapping(_as_payload(_MetadataCarrier()))
+        is not None
+    )
+    assert FlextDispatcher._extract_metadata_mapping(_as_payload(object())) is None
 
     assert FlextDispatcher._is_metadata_attribute_compatible(["x", 1, True]) is True
-    assert FlextDispatcher._is_metadata_attribute_compatible(["x", object()]) is False
+    assert (
+        FlextDispatcher._is_metadata_attribute_compatible(_as_payload(["x", object()]))
+        is False
+    )
     assert (
         FlextDispatcher._is_metadata_attribute_compatible({"ok": [1, 2], "nested": "v"})
         is True
     )
     assert (
-        FlextDispatcher._is_metadata_attribute_compatible({"bad": {"x": object()}})
+        FlextDispatcher._is_metadata_attribute_compatible(
+            _as_payload({"bad": {"x": object()}}),
+        )
         is False
     )
 
@@ -1062,14 +1174,18 @@ def test_remaining_branches_group_a(
                 return lambda _msg: "ok"
             return "nope"
 
-    assert dispatcher._execute_handler(_FlakyHandle(), _EchoMessage()).is_failure
+    assert dispatcher._execute_handler(
+        _as_handler(_FlakyHandle()), _as_payload(_EchoMessage())
+    ).is_failure
 
     class _ObjectResult:
         def handle(self, _msg: object) -> object:
             return _StringifyingObject()
 
     assert (
-        dispatcher._execute_handler(_ObjectResult(), _EchoMessage()).value
+        dispatcher._execute_handler(
+            _as_handler(_ObjectResult()), _as_payload(_EchoMessage())
+        ).value
         == "stringified-object"
     )
 
@@ -1092,8 +1208,8 @@ def test_remaining_branches_group_a(
         ),
     ]
     dispatcher._middleware_instances = {
-        "a": _MiddlewareOK(),
-        "b": _MiddlewareBadResult(),
+        "a": _as_handler_callable(_MiddlewareOK()),
+        "b": _as_handler_callable(_MiddlewareBadResult()),
     }
     assert dispatcher._execute_middleware_chain(
         _EchoMessage(), _HandleOnly()
@@ -1124,7 +1240,7 @@ def test_remaining_branches_group_a(
         id = "id-1"
 
     dispatcher._handlers[_WithId.__name__] = _HandleOnly()
-    assert dispatcher._dispatch_command(_WithId()).is_success
+    assert dispatcher._dispatch_command(_as_payload(_WithId())).is_success
 
     query = _QueryMessage()
     key = dispatcher._generate_cache_key(query, _QueryMessage)
@@ -1139,7 +1255,10 @@ def test_remaining_branches_group_a(
     )
     assert dispatcher._dispatch_command(_EchoMessage()).is_failure
 
-    assert dispatcher._layer1_register_handler(123, _HandleOnly()).is_success
+    assert dispatcher._layer1_register_handler(
+        _as_handler_key(cast("object", 123)),
+        _as_handler(_HandleOnly()),
+    ).is_success
 
     class _TrackContainer:
         def __init__(self) -> None:
@@ -1153,12 +1272,12 @@ def test_remaining_branches_group_a(
             return True
 
     tracker = _TrackContainer()
-    dispatcher._container = tracker  # type: ignore[assignment]
+    dispatcher._container = cast("p.DI", cast("object", tracker))
 
     class _NoInterface:
         pass
 
-    assert dispatcher._register_single_handler(_NoInterface()).is_failure
+    assert dispatcher._register_single_handler(_as_handler(_NoInterface())).is_failure
     assert dispatcher._register_single_handler(_HandleOnly()).is_success
 
     class _ClassOnly:
@@ -1172,7 +1291,7 @@ def test_remaining_branches_group_a(
             _ = (name, factory)
             raise RuntimeError("factory-fail")
 
-    dispatcher._container = _FactoryFail()  # type: ignore[assignment]
+    dispatcher._container = cast("p.DI", cast("object", _FactoryFail()))
     assert dispatcher._register_two_arg_handler(_ClassOnly, _HandleOnly()).is_success
 
     wrapped_cfg = DispatcherMiddlewareConfig(
@@ -1183,7 +1302,9 @@ def test_remaining_branches_group_a(
         name=None,
         config=t.ConfigMap(root={}),
     )
-    assert dispatcher.layer1_add_middleware(_MiddlewareOK(), wrapped_cfg).is_success
+    assert dispatcher.layer1_add_middleware(
+        _as_handler_callable(_MiddlewareOK()), wrapped_cfg
+    ).is_success
 
     monkeypatch.setattr(
         dispatcher, "_dispatch_command", lambda _event: r[t.GeneralValueType].ok("ok")
@@ -1195,14 +1316,18 @@ def test_remaining_branches_group_a(
         child = None
 
     assert dispatcher._get_nested_attr(_Nested(), "child", "x") is None
-    assert dispatcher._normalize_request({"handler": object()}).is_failure
+    assert dispatcher._normalize_request(
+        cast("Mapping[str, t.ConfigMapValue]", cast("object", {"handler": object()})),
+    ).is_failure
     assert dispatcher._validate_and_extract_handler(
         m.HandlerRegistrationRequest.model_construct(handler=None)
     ).is_failure
     assert dispatcher._register_handler_by_mode(
         _HandleOnly(), "n", {"message_type": "m"}
     ).is_success
-    assert dispatcher._register_handler_with_request(5).is_failure
+    assert dispatcher._register_handler_with_request(
+        cast("Mapping[str, t.ConfigMapValue]", cast("object", 5)),
+    ).is_failure
     assert dispatcher.register_handler(_ClassOnly, _HandleOnly()).is_success
 
     class _MapOnly(Mapping[str, object]):
@@ -1254,7 +1379,7 @@ def test_remaining_branches_group_b(
     assert dispatcher.dispatch(_EchoMessage()).is_success or True
     assert dispatcher.dispatch(None).is_failure
 
-    dispatcher._handlers["custom_type"] = "nope"
+    dispatcher._handlers["custom_type"] = _as_handler(cast("object", "nope"))
     assert dispatcher.dispatch("custom_type", {"a": 1}).is_failure
 
     dispatcher._handlers["custom_type"] = lambda _msg: 7
@@ -1273,7 +1398,9 @@ def test_remaining_branches_group_b(
     )
     assert dispatcher.dispatch(_EchoMessage(), config=m.DispatchConfig()).is_success
 
-    meta = FlextDispatcher._convert_metadata_to_model({"lst": [1, 2], "obj": object()})
+    meta = FlextDispatcher._convert_metadata_to_model(
+        _as_payload({"lst": [1, 2], "obj": object()}),
+    )
     assert meta is not None and meta.attributes["lst"] == [1, 2]
 
     built = FlextDispatcher._build_dispatch_config_from_args(None, {"k": "v"}, "cid", 2)
@@ -1283,7 +1410,8 @@ def test_remaining_branches_group_b(
         pass
 
     dispatcher._handlers[_Msg.__name__] = lambda _m: "plain"
-    assert dispatcher._try_simple_dispatch(_Msg()).is_success
+    simple_dispatch = dispatcher._try_simple_dispatch(_as_payload(_Msg()))
+    assert simple_dispatch is not None and simple_dispatch.is_success
 
     assert dispatcher._extract_dispatch_config(None, None, None, None).is_success
     assert dispatcher._extract_dispatch_config(
@@ -1362,15 +1490,27 @@ def test_remaining_branches_group_b(
         FlextDispatcher._extract_metadata_mapping({"attributes": {"k": "v"}})
         is not None
     )
-    assert FlextDispatcher._is_metadata_attribute_compatible({1: "bad"}) is False
-    assert FlextDispatcher._is_metadata_attribute_compatible({"k": [object()]}) is False
+    assert (
+        FlextDispatcher._is_metadata_attribute_compatible(
+            _as_payload({"bad": object()}),
+        )
+        is False
+    )
+    assert (
+        FlextDispatcher._is_metadata_attribute_compatible(
+            _as_payload({"k": [object()]}),
+        )
+        is False
+    )
     assert FlextDispatcher._extract_from_flext_metadata(meta_obj) is meta_obj
 
     class _DumpCarrier:
         def model_dump(self) -> dict[str, object]:
             return {"k": "v"}
 
-    assert FlextDispatcher._extract_from_object_attributes(_DumpCarrier()) == {"k": "v"}
+    assert FlextDispatcher._extract_from_object_attributes(
+        _as_payload(_DumpCarrier())
+    ) == {"k": "v"}
 
     dispatcher.config.dispatcher_auto_context = False
     with dispatcher._context_scope(metadata={"x": 1}, correlation_id="cid"):
@@ -1430,7 +1570,7 @@ def test_final_uncovered_edges(
             config=t.ConfigMap(root={}),
         ),
     ]
-    dispatcher._middleware_instances = {"e": _MiddlewareOK()}
+    dispatcher._middleware_instances = {"e": _as_handler_callable(_MiddlewareOK())}
     monkeypatch.setattr(
         dispatcher, "_process_middleware_instance", lambda *_args: r[bool].fail("stop")
     )
@@ -1454,7 +1594,10 @@ def test_final_uncovered_edges(
     assert disabled_mw.is_success
 
     assert dispatcher._invoke_middleware(
-        object(), _EchoMessage(), _HandleOnly(), "x"
+        _as_handler_callable(cast("object", object())),
+        _EchoMessage(),
+        _HandleOnly(),
+        "x",
     ).is_failure
 
     dispatcher._handlers[_EchoMessage.__name__] = _HandleOnly()
@@ -1469,7 +1612,7 @@ def test_final_uncovered_edges(
         def wire_modules(self, **_kwargs: object) -> None:
             return None
 
-    dispatcher._container = _WireContainer()  # type: ignore[assignment]
+    dispatcher._container = cast("p.DI", cast("object", _WireContainer()))
     dispatcher._wire_handler_dependencies(lambda x: x)
 
     class _TrackFactoryContainer(_WireContainer):
@@ -1481,7 +1624,7 @@ def test_final_uncovered_edges(
             return True
 
     tracker = _TrackFactoryContainer()
-    dispatcher._container = tracker  # type: ignore[assignment]
+    dispatcher._container = cast("p.DI", cast("object", tracker))
 
     class _ClassOnly:
         def handle(self, _msg: object) -> str:

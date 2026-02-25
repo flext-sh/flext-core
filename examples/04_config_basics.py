@@ -130,22 +130,26 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
         patterns: tuple[str, ...],
     ) -> FlextResult[m.ConfigMap]:
         """Create success metadata from demonstrated patterns."""
-        return FlextResult[m.ConfigMap].ok({
-            "patterns_demonstrated": list(patterns),
-            "config_features": [
-                "pydantic_settings",
-                "env_vars",
-                "validation",
-                "singleton",
-                "railway_pattern",
-            ],
-            "environment_support": ["development", "production", "testing"],
-            "advanced_features": [
-                "pep695_types",
-                "strenum_validation",
-                "after_validator",
-            ],
-        })
+        return FlextResult[m.ConfigMap].ok(
+            m.ConfigMap(
+                root={
+                    "patterns_demonstrated": list(patterns),
+                    "config_features": [
+                        "pydantic_settings",
+                        "env_vars",
+                        "validation",
+                        "singleton",
+                        "railway_pattern",
+                    ],
+                    "environment_support": ["development", "production", "testing"],
+                    "advanced_features": [
+                        "pep695_types",
+                        "strenum_validation",
+                        "after_validator",
+                    ],
+                }
+            )
+        )
 
     @staticmethod
     def _handle_execution_error(
@@ -361,16 +365,14 @@ def main() -> FlextResult[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        def _is_sequence(x: object) -> bool:
-            return type(x) in {list, tuple} or (
-                hasattr(x, "__getitem__") and hasattr(x, "__len__")
-            )
+        def _sequence_len(x: t.GeneralValueType) -> int:
+            if isinstance(x, Sequence) and not isinstance(x, str | bytes | bytearray):
+                return len(x)
+            return 0
 
-        patterns_count = len(patterns) if _is_sequence(patterns) else 0
-        features_count = len(features) if _is_sequence(features) else 0
-        advanced_count = (
-            len(advanced_features) if _is_sequence(advanced_features) else 0
-        )
+        patterns_count = _sequence_len(patterns)
+        features_count = _sequence_len(features)
+        advanced_count = _sequence_len(advanced_features)
 
         print(f"\n✅ Demonstrated {patterns_count} configuration patterns")
         print(f"✅ Used {features_count} configuration features")

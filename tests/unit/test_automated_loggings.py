@@ -6,6 +6,9 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 
 from flext_core import t, r
@@ -136,15 +139,17 @@ class TestAutomatedFlextLoggings:
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        cleanup = getattr(instance, "cleanup", None)
+        if callable(cleanup):
+            cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextLoggings cleanup failed"
+                    cast("r[t.GeneralValueType]", cleanup_result),
+                    "FlextLoggings cleanup failed",
                 )
 
     def _execute_loggings_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
+        self, instance: object, input_data: Mapping[str, t.GeneralValueType]
     ) -> r[t.GeneralValueType]:
         """Execute a test operation on loggings instance.
 
@@ -153,28 +158,31 @@ class TestAutomatedFlextLoggings:
         """
         try:
             # Generic operation - adapt based on actual loggings interface
-            if hasattr(instance, "process"):
-                result = instance.process(input_data)
+            process = getattr(instance, "process", None)
+            if callable(process):
+                result = process(dict(input_data))
                 # Check if result is FlextResult or needs wrapping
                 if isinstance(result, r):
-                    return result
-                return r[t.GeneralValueType].ok(result)
-            if hasattr(instance, "execute"):
-                result = instance.execute(input_data)
+                    return cast("r[t.GeneralValueType]", result)
+                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", result))
+            execute = getattr(instance, "execute", None)
+            if callable(execute):
+                result = execute(dict(input_data))
                 if isinstance(result, r):
-                    return result
-                return r[t.GeneralValueType].ok(result)
-            if hasattr(instance, "handle"):
-                result = instance.handle(input_data)
+                    return cast("r[t.GeneralValueType]", result)
+                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", result))
+            handle = getattr(instance, "handle", None)
+            if callable(handle):
+                result = handle(dict(input_data))
                 if isinstance(result, r):
-                    return result
-                return r[t.GeneralValueType].ok(result)
+                    return cast("r[t.GeneralValueType]", result)
+                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", result))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(instance)
+            return r[t.GeneralValueType].ok(cast("t.GeneralValueType", instance))
         except Exception as e:
             return r[t.GeneralValueType].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
-    def test_loggings_instance(self) -> t.GeneralValueType:
+    def test_loggings_instance(self) -> object:
         """Fixture for loggings test instance."""
         return fixture_factory.create_test_loggings_instance()

@@ -428,9 +428,9 @@ class TestsFlextConstants(FlextTestsConstants):
 
 
 # Short alias per FLEXT convention
-c = TestsFlextConstants
+tc: type[TestsFlextConstants] = TestsFlextConstants
 
 __all__ = [
     "TestsFlextConstants",
-    "c",
+    "tc",
 ]

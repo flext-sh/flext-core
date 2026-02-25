@@ -6,6 +6,9 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import cast
+
 import pytest
 
 from flext_core import r
@@ -137,15 +140,17 @@ class TestAutomatedFlextContainer:
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        cleanup = getattr(instance, "cleanup", None)
+        if callable(cleanup):
+            cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextContainer cleanup failed"
+                    cast("r[t.GeneralValueType]", cleanup_result),
+                    "FlextContainer cleanup failed",
                 )
 
     def _execute_container_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
+        self, instance: object, input_data: Mapping[str, t.GeneralValueType]
     ) -> r[t.GeneralValueType]:
         """Execute a test operation on container instance.
 
@@ -154,18 +159,21 @@ class TestAutomatedFlextContainer:
         """
         try:
             # Generic operation - adapt based on actual container interface
-            if hasattr(instance, "process"):
-                return instance.process(input_data)
-            if hasattr(instance, "execute"):
-                return instance.execute(input_data)
-            if hasattr(instance, "handle"):
-                return instance.handle(input_data)
+            process = getattr(instance, "process", None)
+            if callable(process):
+                return cast("r[t.GeneralValueType]", process(dict(input_data)))
+            execute = getattr(instance, "execute", None)
+            if callable(execute):
+                return cast("r[t.GeneralValueType]", execute(dict(input_data)))
+            handle = getattr(instance, "handle", None)
+            if callable(handle):
+                return cast("r[t.GeneralValueType]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(instance)
+            return r[t.GeneralValueType].ok(cast("t.GeneralValueType", instance))
         except Exception as e:
             return r[t.GeneralValueType].fail(f"FlextContainer operation failed: {e}")
 
     @pytest.fixture
-    def test_container_instance(self) -> t.GeneralValueType:
+    def test_container_instance(self) -> object:
         """Fixture for container test instance."""
         return fixture_factory.create_test_container_instance()

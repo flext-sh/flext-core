@@ -848,7 +848,7 @@ class TestResultIntegration:
     def test_log_result_failure(self) -> None:
         """Test logging failed result via with_result()."""
         logger = make_result_logger("test")
-        result = FlextResult[str].fail("Something went wrong")
+        result: FlextResult[str] = FlextResult[str].fail("Something went wrong")
         log_result = logger.with_result().error(f"Operation failed: {result.error}")
         assert log_result.is_success
 
@@ -869,7 +869,7 @@ class TestResultIntegration:
     def test_log_result_failure_includes_error_details(self) -> None:
         """Test logging result includes error details."""
         logger = make_result_logger("test")
-        result = FlextResult[str].fail("Error occurred")
+        result: FlextResult[str] = FlextResult[str].fail("Error occurred")
         log_result = logger.with_result().error(f"Error: {result.error}")
         assert log_result.is_success
 

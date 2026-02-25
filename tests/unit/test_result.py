@@ -26,7 +26,8 @@ from typing import ClassVar, Never, cast
 
 import pytest
 
-from flext_core import c, r, t
+from flext_core import c, m, r, t
+from flext_core.protocols import p
 from flext_tests import FlextTestsUtilities, u
 from tests.test_utils import assertion_helpers
 
@@ -437,12 +438,8 @@ class Testr:
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
 
-        # Convert list[str] to list[t.GeneralValueType] for create_parametrized_cases
-        success_values_general: list[t.GeneralValueType] = [
-            cast("t.GeneralValueType", v) for v in success_values
-        ]
         cases = FlextTestsUtilities.Tests.GenericHelpers.create_parametrized_cases(
-            success_values_general,
+            cast("list[object]", success_values),
             failure_errors,
             error_codes=error_codes,
         )
@@ -507,20 +504,22 @@ class Testr:
 
         # safe expects p.VariadicCallable[T] which is Callable[..., T]
         # divide is Callable[[int, int], int], compatible at runtime
-        @r.safe
         def divide(a: int, b: int) -> int:
             return a // b
 
-        result: r[int] = divide(10, 2)
+        divide_func = cast("p.VariadicCallable[int]", divide)
+        divide_wrapped: p.VariadicCallable[r[int]] = r.safe(divide_func)
+
+        result: r[int] = divide_wrapped(10, 2)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 5
 
-        result_fail: r[int] = divide(10, 0)
+        result_fail: r[int] = divide_wrapped(10, 0)
         assert result_fail.is_failure
 
     def test_map_error(self) -> None:
         """Test map_error transforms error message."""
-        result = r[str].fail("original error")
+        result: r[str] = cast("r[str]", r.fail("original error"))
         transformed = result.map_error(lambda e: f"PREFIX: {e}")
         assert transformed.is_failure
         assert transformed.error == "PREFIX: original error"
@@ -543,7 +542,7 @@ class Testr:
 
     def test_filter_failure(self) -> None:
         """Test filter with failure result returns unchanged."""
-        result = r[int].fail("error")
+        result: r[int] = cast("r[int]", r.fail("error"))
         filtered = result.filter(lambda x: x > 5)
         assert filtered.is_failure
         assert filtered.error == "error"
@@ -675,14 +674,14 @@ class Testr:
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure result."""
-        result = r[str].fail("error")
+        result: r[str] = cast("r[str]", r.fail("error"))
         repr_str = repr(result)
         assert "r.fail" in repr_str
         assert "error" in repr_str
 
     def test_value_property_failure(self) -> None:
         """Test value property raises RuntimeError on failure."""
-        result = r[str].fail("error")
+        result: r[str] = cast("r[str]", r.fail("error"))
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             _ = result.value
 
@@ -699,7 +698,7 @@ class Testr:
 
     def test_error_code_property(self) -> None:
         """Test error_code property."""
-        result = r[str].fail("error", error_code="TEST_ERROR")
+        result: r[str] = cast("r[str]", r.fail("error", error_code="TEST_ERROR"))
         assert result.error_code == "TEST_ERROR"
 
         success = r[str].ok("test")
@@ -707,8 +706,8 @@ class Testr:
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data = {"key": "value"}
-        result = r[str].fail("error", error_data=error_data)
+        error_data = m.ConfigMap(root={"key": "value"})
+        result: r[str] = cast("r[str]", r.fail("error", error_data=error_data))
         assert result.error_data == error_data
 
         success = r[str].ok("test")
@@ -716,7 +715,7 @@ class Testr:
 
     def test_unwrap_failure(self) -> None:
         """Test unwrap raises RuntimeError on failure."""
-        result = r[str].fail("error")
+        result: r[str] = cast("r[str]", r.fail("error"))
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             result.value
 
@@ -734,7 +733,7 @@ class Testr:
     def test_flow_through_empty(self) -> None:
         """Test flow_through with no functions."""
         result = r[int].ok(5)
-        final: r[int] = result.flow_through()
+        final = result.flow_through()
         assert final.is_success
         assert final.value == 5
 

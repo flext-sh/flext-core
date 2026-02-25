@@ -126,7 +126,12 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
 
-    assert u.Parser()._extract_key_from_str_conversion(_StrRaises()) is None
+    assert (
+        u.Parser()._extract_key_from_str_conversion(
+            cast("t.GeneralValueType", _StrRaises())
+        )
+        is None
+    )
 
     class _OddNoStr:
         def __str__(self) -> str:
@@ -143,8 +148,12 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
         return original_hasattr(obj, name)
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
-    assert "<object object" in parser3.get_object_key(cast("object", object()))
-    assert parser3.get_object_key(cast("object", _OddNoStr())) == "_OddNoStr"
+    assert "<object object" in parser3.get_object_key(
+        cast("t.GeneralValueType", object())
+    )
+    assert (
+        parser3.get_object_key(cast("t.GeneralValueType", _OddNoStr())) == "_OddNoStr"
+    )
 
     invalid_type = parser3._extract_pattern_components(
         cast("tuple[str, str, int]", cast("object", ("a", 1, 0)))
@@ -174,7 +183,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> No
     assert parser._parse_result_error(r[int].ok(1), default="fallback") == "fallback"
 
     model_result = parser._parse_model(
-        {"name": "ok", "count": 2, "payload": object()},
+        {"name": "ok", "count": 2, "payload": cast("t.GeneralValueType", "obj")},
         _Model,
         "field: ",
         strict=False,
@@ -266,12 +275,18 @@ def test_parser_convert_and_norm_branches(monkeypatch) -> None:
     assert parser._convert_to_float(1.5, default=0.0) == 1.5
     assert parser._convert_to_str("x", default="") == "x"
     assert parser._convert_to_str(None, default="d") == "d"
-    assert parser._convert_to_str(_BadStr(), default="d") == "d"
+    assert (
+        parser._convert_to_str(cast("t.GeneralValueType", _BadStr()), default="d")
+        == "d"
+    )
     assert parser._convert_to_bool(True, default=False) is True
-    assert parser._convert_to_bool(object(), default=True) is True
+    assert (
+        parser._convert_to_bool(cast("t.GeneralValueType", object()), default=True)
+        is True
+    )
     assert parser._convert_fallback("x", object, "d") == "d"
 
-    assert parser.conv_str(_BadConv(), default="d") == "d"
+    assert parser.conv_str(cast("t.GeneralValueType", _BadConv()), default="d") == "d"
     assert parser.conv_str_list(5) == ["5"]
     assert parser.norm_str("abc") == "abc"
     assert parser.norm_list({"a": "", "b": "B"}, case="lower", filter_truthy=True) == {
@@ -404,7 +419,10 @@ def test_parser_remaining_branch_paths(monkeypatch) -> None:
 
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
-    assert parser._convert_to_float(object(), default=1.5) == 1.5
+    assert (
+        parser._convert_to_float(cast("t.GeneralValueType", object()), default=1.5)
+        == 1.5
+    )
     assert parser._convert_fallback("x", str, "d") == "d"
 
     assert (

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .services import (
+from flext_infra.check.services import (
     DEFAULT_GATES,
     PyreflyConfigFixer,
     WorkspaceChecker,

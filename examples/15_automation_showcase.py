@@ -19,6 +19,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_core import (
     FlextContext,
     c,
@@ -152,7 +154,7 @@ class PaymentService(s[m.ConfigMap]):
 class OrderService(s[m.ConfigMap]):
     """Service demonstrating context enrichment helper method."""
 
-    _order_data: m.ConfigMap = PrivateAttr(default_factory=dict)
+    _order_data: m.ConfigMap = PrivateAttr(default_factory=lambda: m.ConfigMap(root={}))
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize service."""
@@ -160,7 +162,7 @@ class OrderService(s[m.ConfigMap]):
 
     def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
-        order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
+        order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data.root)
         # Simple merge: new values override existing ones
         merged: dict[str, t.GeneralValueType] = dict(order_data_dict)
         merged.update(
@@ -181,10 +183,8 @@ class OrderService(s[m.ConfigMap]):
             order_data_dict,
             predicate=is_string_key,
         )
-        result_data: m.ConfigMap = (
-            filtered_dict
-            if u.guard(filtered_dict, dict, return_value=True) is not None
-            else {}
+        result_data = m.ConfigMap(
+            root=(dict(filtered_dict) if isinstance(filtered_dict, Mapping) else {})
         )
         return r[m.ConfigMap].ok(result_data)
 
@@ -195,7 +195,7 @@ class OrderService(s[m.ConfigMap]):
         correlation_id: str | None = None,
     ) -> r[m.ConfigMap]:
         """Process order with automatic context enrichment."""
-        order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
+        order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data.root)
         order_data_dict["order_id"] = order_id
         order_data_dict["customer_id"] = customer_id
 
@@ -317,7 +317,7 @@ class AutomationService(s[m.ConfigMap]):
         ) -> r[m.ConfigMap]:
             enriched: m.ConfigMap = m.ConfigMap(
                 root={
-                    **data,
+                    **data.root,
                     "automation_timestamp": "2025-01-01T12:00:00Z",
                     "duration_ms": 250,
                     "result_id": "RESULT-001",
@@ -406,15 +406,20 @@ class AutomationService(s[m.ConfigMap]):
                 }
             )
 
-        fail_result = r[m.ConfigMap].fail(
+        fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail(
             "No existing engine",
         )
         engine = create_engine() if fail_result.is_failure else fail_result.value
         engine_id = str(engine.get("engine_id", "unknown"))
         worker_count_val = engine.get("worker_count", 0)
-        worker_count = (
-            int(worker_count_val) if type(worker_count_val) in {int, float} else 0
-        )
+        if isinstance(worker_count_val, int):
+            worker_count = worker_count_val
+        elif isinstance(worker_count_val, float) or (
+            isinstance(worker_count_val, str) and worker_count_val.isdigit()
+        ):
+            worker_count = int(worker_count_val)
+        else:
+            worker_count = 0
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")
 
@@ -457,7 +462,7 @@ class AutomationService(s[m.ConfigMap]):
             transformed: list[m.ConfigMap] = [
                 m.ConfigMap(
                     root={
-                        **item,
+                        **item.root,
                         "processed": True,
                         "timestamp": "2025-01-01T12:00:00Z",
                     }
@@ -509,21 +514,17 @@ class AutomationService(s[m.ConfigMap]):
         def load_config() -> m.ConfigMap:
             if not cache:
                 print("   📄 Loading configuration from file...")
-                cache.update(
-                    m.ConfigMap(
-                        root={
-                            "database_url": "postgresql://localhost:5432/testdb",
-                            "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
-                        }
-                    )
-                )
-            return cache
+                cache.update({
+                    "database_url": "postgresql://localhost:5432/testdb",
+                    "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
+                })
+            return m.ConfigMap(root=dict(cache))
 
-        fail_attempt = r[m.ConfigMap].fail(
+        fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail(
             "No cached config",
         )
         config = load_config() if fail_attempt.is_failure else fail_attempt.value
-        config_count = len(config)
+        config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
 
         _ = load_config()

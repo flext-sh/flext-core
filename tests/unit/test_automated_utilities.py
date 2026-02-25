@@ -7,6 +7,7 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 import pytest
+from collections.abc import Mapping
 
 from flext_core import t, r
 from tests.conftest import test_framework
@@ -114,7 +115,7 @@ class TestAutomatedFlextUtilities:
         """Test performance characteristics of utilities."""
         instance = fixture_factory.create_test_utilities_instance()
 
-        def operation() -> r[t.GeneralValueType]:
+        def operation() -> r[bool]:
             return self._execute_utilities_operation(
                 instance, {"performance_test": True}
             )
@@ -136,16 +137,19 @@ class TestAutomatedFlextUtilities:
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: object = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextUtilities cleanup failed"
                 )
 
     def _execute_utilities_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.GeneralValueType],
+    ) -> r[bool]:
         """Execute a test operation on utilities instance.
 
         This method should be customized based on the actual utilities API.
@@ -154,16 +158,13 @@ class TestAutomatedFlextUtilities:
         try:
             # FlextUtilities is a facade class with static methods
             # Return the instance as success (generic operation)
-            if isinstance(instance, dict):
-                # If instance is dict-like, return as success
-                return r[t.GeneralValueType].ok(instance)
-
-            # For other instances, return success
-            return r[t.GeneralValueType].ok(instance)
+            _ = instance
+            _ = input_data
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextUtilities operation failed: {e}")
+            return r[bool].fail(f"FlextUtilities operation failed: {e}")
 
     @pytest.fixture
-    def test_utilities_instance(self) -> t.GeneralValueType:
+    def test_utilities_instance(self) -> object:
         """Fixture for utilities test instance."""
         return fixture_factory.create_test_utilities_instance()

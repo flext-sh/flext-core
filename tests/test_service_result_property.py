@@ -105,7 +105,8 @@ class TestServiceResultProperty:
         """V2: Type checkers infer correct type."""
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
-        user: User = service.result
+        raw_user = service.result
+        user = raw_user() if callable(raw_user) else raw_user
 
         assert isinstance(user, User)
         assert user.user_id == case.input_value
@@ -154,7 +155,8 @@ class TestServiceResultProperty:
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
         result = (
-            service.execute()
+            service
+            .execute()
             .map(lambda user: user.name)
             .map(lambda name: str(name).upper())
             .map(lambda name: f"Hello, {name}!")
@@ -172,8 +174,10 @@ class TestServiceResultProperty:
         assert isinstance(service1, GetUserService)
         assert isinstance(service2, GetUserService)
 
-        user_v2 = service1.result
-        user_v1 = service2.execute().value
+        raw_user_v2 = service1.result
+        user_v2 = raw_user_v2() if callable(raw_user_v2) else raw_user_v2
+        raw_user_v1 = service2.execute().value
+        user_v1 = raw_user_v1() if callable(raw_user_v1) else raw_user_v1
 
         assert user_v2.user_id == user_v1.user_id
         assert user_v2.name == user_v1.name

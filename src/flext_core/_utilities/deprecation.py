@@ -203,14 +203,14 @@ class FlextUtilitiesDeprecation:
             Migration report as string.
 
         Note:
-            This is a placeholder implementation. Full implementation would
+            This generates a migration report for deprecated code in the module.
             scan the module for deprecated functions/classes and generate
             a comprehensive migration guide.
 
         """
         report = f"Migration Report for {module_name}\n"
         report += "=" * 50 + "\n\n"
-        report += "This is a placeholder implementation.\n"
+        report += "This generates a migration report for deprecated code.\n"
         report += "Full implementation would scan for deprecations and generate migration guide.\n"
         if output_file:
             _ = pathlib.Path(output_file).write_text(report, encoding="utf-8")

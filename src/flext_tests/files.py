@@ -33,7 +33,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Literal, Self, TypeVar, overload
+from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, cast, overload
 
 import yaml
 from flext_core import FlextRuntime, r
@@ -97,6 +97,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     # Re-export FileInfo from models for backward compatibility
     FileInfo: ClassVar[type[m.Tests.Files.FileInfo]] = m.Tests.Files.FileInfo
+
+    @staticmethod
+    def _validate_model_content[TModelRead: BaseModel](
+        model_cls: type[TModelRead],
+        content: str | bytes | m.ConfigMap | list[list[str]],
+    ) -> r[TModelRead]:
+        try:
+            model_instance: TModelRead = model_cls.model_validate(content)
+            return r[TModelRead].ok(model_instance)
+        except (TypeError, ValueError, AttributeError) as ex:
+            return r[TModelRead].fail(f"Failed to validate model: {ex}")
 
     # Use class attributes (not PrivateAttr) to match FlextService pattern
     # Initialize mutable attributes as None to avoid ClassVar requirement
@@ -629,10 +640,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
                 text = params.path.read_text(encoding=params.enc)
-                content = json.loads(text)
+                parsed_json = cast("object", json.loads(text))
+                content = self._coerce_read_content(parsed_json)
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
-                content = yaml.safe_load(text)
+                parsed_yaml = cast("object", yaml.safe_load(text))
+                content = self._coerce_read_content(parsed_yaml)
             elif actual_fmt == c.Tests.Files.Format.CSV:
                 content = u.Tests.Files.read_csv(
                     params.path,
@@ -647,11 +660,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Use original model_cls parameter (type[TModel]) instead of params.model_cls
             # (type[BaseModel]) to preserve TModel type for pyrefly
             if model_cls is not None:
-                try:
-                    model_instance: TModel = model_cls.model_validate(content)
-                    return r[TModel].ok(model_instance)
-                except (TypeError, ValueError, AttributeError) as ex:
-                    return r[TModel].fail(f"Failed to validate model: {ex}")
+                return self._validate_model_content(model_cls, content)
 
             return r[str | bytes | m.ConfigMap | list[list[str]]].ok(
                 content,
@@ -858,14 +867,22 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         try:
             match fmt:
                 case "json":
-                    dict1 = json.loads(content1)
-                    dict2 = json.loads(content2)
+                    dict1_raw = cast("object", json.loads(content1))
+                    dict2_raw = cast("object", json.loads(content2))
                 case "yaml":
-                    dict1 = yaml.safe_load(content1)
-                    dict2 = yaml.safe_load(content2)
+                    dict1_raw = cast("object", yaml.safe_load(content1))
+                    dict2_raw = cast("object", yaml.safe_load(content2))
                 case _:
                     return None
-            if u.is_type(dict1, "dict") and u.is_type(dict2, "dict"):
+            if self._is_mapping(dict1_raw) and self._is_mapping(dict2_raw):
+                dict1 = {
+                    str(key): self._to_config_map_value(self._to_payload_value(value))
+                    for key, value in dict1_raw.items()
+                }
+                dict2 = {
+                    str(key): self._to_config_map_value(self._to_payload_value(value))
+                    for key, value in dict2_raw.items()
+                }
                 return (dict1, dict2)
         except (json.JSONDecodeError, yaml.YAMLError, ValueError, TypeError):
             pass
@@ -1218,14 +1235,21 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         f"Unknown operation: {params.operation}"
                     )
 
+        def process_one_value(
+            name_and_content: tuple[str, t.Tests.PayloadValue],
+        ) -> t.GuardInputValue:
+            item_result = process_one(name_and_content)
+            if item_result.is_success:
+                return item_result.value
+            raise ValueError(item_result.error or "Batch item operation failed")
+
         # Use u.Collection.batch() for batch processing
         # u.Collection.batch() handles Result unwrapping automatically
         # Returns r[t.BatchResultDict] with results as direct values (not Results)
-        items_list = list(files_dict.items())
-        # Explicit type annotation helps mypy infer the generic R parameter
+        items_list: list[tuple[str, t.Tests.PayloadValue]] = list(files_dict.items())
         operation_fn: Callable[
-            [tuple[str, t.Tests.PayloadValue]], t.GuardInputValue | r[t.GuardInputValue]
-        ] = process_one
+            [tuple[str, t.Tests.PayloadValue]], t.GuardInputValue
+        ] = process_one_value
         batch_result_dict = u.Collection.batch(
             items_list,
             operation_fn,
@@ -1434,7 +1458,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 # Note: data type is guaranteed by the assignment on lines 1382-1388
                 # (Sized check above was only for filename determination, not for data validation)
                 path = manager.create(
-                    data,
+                    cast(
+                        "str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel",
+                        data,
+                    ),
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=manager._normalize_create_format(validated_kwargs.fmt),
@@ -1588,7 +1615,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             case _:
                 return "auto"
 
-    def _is_nested_rows(self, value: object) -> bool:
+    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[object]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         if len(value) == 0:
@@ -1597,6 +1624,36 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             isinstance(row, Sequence) and not isinstance(row, str | bytes)
             for row in value
         )
+
+    @staticmethod
+    def _is_mapping(value: object) -> TypeGuard[Mapping[object, object]]:
+        return isinstance(value, Mapping)
+
+    def _coerce_read_content(
+        self, value: object
+    ) -> str | bytes | m.ConfigMap | list[list[str]]:
+        if isinstance(value, str | bytes):
+            return value
+        if self._is_mapping(value):
+            mapping_value = cast("Mapping[str, object]", value)
+            return m.ConfigMap(
+                root={
+                    str(key): FlextRuntime.normalize_to_general_value(
+                        self._to_config_map_value(self._to_payload_value(item)),
+                    )
+                    for key, item in mapping_value.items()
+                }
+            )
+        if self._is_nested_rows(value):
+            sequence_value: Sequence[object] = (
+                value if isinstance(value, list | tuple) else ()
+            )
+            return [
+                [str(cell) for cell in row]
+                for row in sequence_value
+                if isinstance(row, list | tuple)
+            ]
+        return str(value)
 
     def _mapping_to_payload(
         self,
@@ -1614,8 +1671,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return value
         if isinstance(value, Path | datetime):
             return str(value)
-        if isinstance(value, Mapping):
-            return self._mapping_to_payload(value)
+        if self._is_mapping(value):
+            mapping_value = cast("Mapping[str, object]", value)
+            return self._mapping_to_payload(mapping_value)
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             return [self._to_payload_value(item) for item in value]
         return str(value)
@@ -1644,13 +1702,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return value
         if isinstance(value, BaseModel):
             return value
-        if isinstance(value, Mapping):
+        if self._is_mapping(value):
+            mapping_value: Mapping[object, object] = value
             return m.ConfigMap(
                 root={
-                    str(k): FlextRuntime.normalize_to_general_value(
-                        self._to_config_map_value(self._to_payload_value(v))
+                    str(key): FlextRuntime.normalize_to_general_value(
+                        self._to_config_map_value(self._to_payload_value(item))
                     )
-                    for k, v in value.items()
+                    for key, item in mapping_value.items()
                 }
             )
         if self._is_nested_rows(value):
@@ -1728,6 +1787,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ContentMeta with extracted statistics
 
         """
+        _ = path
+
         key_count: int | None = None
         item_count: int | None = None
         row_count: int | None = None
@@ -1741,23 +1802,32 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw = json.loads(text) if text.strip() else {}
+                    parsed_raw: object = cast(
+                        "object",
+                        json.loads(text) if text.strip() else {},
+                    )
                 else:
                     # YAML parsing
-                    parsed_raw = yaml.safe_load(text) if text.strip() else {}
+                    parsed_raw = cast(
+                        "object",
+                        yaml.safe_load(text) if text.strip() else {},
+                    )
 
-                if isinstance(parsed_raw, dict):
+                if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(
                         root={
-                            str(k): FlextRuntime.normalize_to_general_value(
+                            str(key): FlextRuntime.normalize_to_general_value(
                                 self._to_config_map_value(self._to_payload_value(v)),
                             )
-                            for k, v in parsed_raw.items()
+                            for key, v in parsed_raw.items()
                         }
                     )
-                    key_count = len(parsed_raw)
+                    key_count = len(parsed_content.root)
                 elif isinstance(parsed_raw, list):
-                    parsed_content = parsed_raw
+                    parsed_list = cast("list[object]", parsed_raw)
+                    parsed_content = [
+                        self._to_payload_value(item) for item in parsed_list
+                    ]
                     item_count = len(parsed_content)
             except (json.JSONDecodeError, yaml.YAMLError):
                 # Invalid content, leave metadata as None
@@ -1777,14 +1847,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # Model validation if requested
         if validate_model is not None:
             model_name = validate_model.__name__
-            if parsed_content is not None and not isinstance(parsed_content, list):
-                content_dict = (
-                    parsed_content
-                    if isinstance(parsed_content, dict)
-                    else dict(parsed_content)
-                )
+            if isinstance(parsed_content, m.ConfigMap):
                 try:
-                    _ = validate_model.model_validate(content_dict)
+                    _ = validate_model.model_validate(parsed_content.root)
                     model_valid = True
                 except (TypeError, ValueError, AttributeError):
                     model_valid = False

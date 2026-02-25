@@ -19,11 +19,11 @@ from flext_core.typings import t
 import time
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import Final
+from typing import Final, Never
 
 import pytest
 
-from flext_core import r, t
+from flext_core import FlextRuntime, r, t
 from flext_tests import u
 
 
@@ -334,21 +334,17 @@ class TestFlextUtilitiesReliability:
             cleanup_func=lambda: cleanups.append("done"),
         )
 
-        u.Tests.Result.assert_success_with_value(
-            result,
-            self.Constants.SUCCESS_RETRY,
-        )
+        assert result.is_success
+        assert result.value == self.Constants.SUCCESS_RETRY
         assert cleanups == ["done"]
         assert attempts == [0, 1]
 
     def test_with_retry_blocked(self) -> None:
         """Test retry blocked by should_retry_func."""
-        blocked = u.Reliability.with_retry(
+        blocked: FlextRuntime.RuntimeResult[Never] = u.Reliability.with_retry(
             lambda: r[str].fail("stop"),
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,
         )
-        u.Tests.Result.assert_failure_with_error(
-            blocked,
-            "stop",
-        )
+        assert blocked.is_failure
+        assert blocked.error is not None and "stop" in blocked.error

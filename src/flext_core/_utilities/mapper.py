@@ -162,8 +162,8 @@ class FlextUtilitiesMapper:
         if isinstance(value, list | tuple):
             # Explicit type annotation for narrowing items
             narrowed_items: list[t.ConfigMapValue] = []
-            item: t.ConfigMapValue
-            for item in value:
+            for item_raw in value:
+                item = FlextUtilitiesMapper._to_general_value_from_object(item_raw)
                 narrowed_item = FlextUtilitiesMapper.narrow_to_general_value_type(item)
                 narrowed_items.append(narrowed_item)
             return narrowed_items
@@ -1162,7 +1162,9 @@ class FlextUtilitiesMapper:
             return {k: data_or_items[k] for k in selected_keys}
         if isinstance(data_or_items, list | tuple):
             items_list: list[t.ConfigMapValue] = [
-                FlextUtilitiesMapper.narrow_to_general_value_type(item)
+                FlextUtilitiesMapper.narrow_to_general_value_type(
+                    FlextUtilitiesMapper._to_general_value_from_object(item)
+                )
                 for item in data_or_items
             ]
             return items_list[:n] if from_start else items_list[-n:]
@@ -1506,9 +1508,10 @@ class FlextUtilitiesMapper:
         filter_pred_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "filter")
         if filter_pred_raw is None:
             return current
+        filter_pred_callable = filter_pred_raw
 
         def filter_pred(value: t.ConfigMapValue) -> bool:
-            return bool(filter_pred_raw(value))
+            return bool(filter_pred_callable(value))
 
         # filter_pred returns PayloadValue, used as truthy check in filter context
         # Handle collections
@@ -1544,10 +1547,11 @@ class FlextUtilitiesMapper:
         map_func_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "map")
         if map_func_raw is None:
             return current
+        map_callable = map_func_raw
 
         def map_func(value: t.ConfigMapValue) -> t.ConfigMapValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
-                map_func_raw(value)
+                map_callable(value)
             )
 
         if isinstance(current, list | tuple):
@@ -1607,16 +1611,17 @@ class FlextUtilitiesMapper:
         convert_func = FlextUtilitiesMapper._get_callable_from_dict(ops, "convert")
         if convert_func is None:
             return current
+        convert_callable_raw = convert_func
 
         convert_default = ops.get("convert_default")
         fallback = convert_default
 
         def convert_callable(value: t.ConfigMapValue) -> t.ConfigMapValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
-                convert_func(value)
+                convert_callable_raw(value)
             )
 
-        converter_name = getattr(convert_func, "__name__", "")
+        converter_name = getattr(convert_callable_raw, "__name__", "")
         if fallback is None:
             if converter_name == "int":
                 fallback = 0
@@ -1979,10 +1984,11 @@ class FlextUtilitiesMapper:
         process_func_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "process")
         if process_func_raw is None:
             return current
+        process_callable = process_func_raw
 
         def process_func(value: t.ConfigMapValue) -> t.ConfigMapValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
-                process_func_raw(value),
+                process_callable(value),
             )
 
         try:
@@ -2092,9 +2098,10 @@ class FlextUtilitiesMapper:
                 else tuple(sorted_list_key)
             )
         if callable(sort_spec_raw):
+            sort_callable = sort_spec_raw
 
             def sort_key(item: t.ConfigMapValue) -> str:
-                return str(sort_spec_raw(item))
+                return str(sort_callable(item))
 
             try:
                 sorted_callable: list[t.ConfigMapValue] = sorted(

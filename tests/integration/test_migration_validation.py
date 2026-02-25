@@ -101,24 +101,19 @@ class TestMigrationScenario2:
         container = FlextContainer()
 
         # Register a simple service
-        class TestService:
-            def __init__(self) -> None:
-                super().__init__()
-                self.name = "test"
+        class TestService(PydanticBaseModel):
+            name: str = "test"
 
         # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
         # Explicit type annotation for container registration
-        service_typed: FlextTypes.GeneralValueType | PydanticBaseModel | Callable[..., FlextTypes.GeneralValueType] = test_service
         registration_result = container.with_service(
-            "test_migration_service", service_typed
+            "test_migration_service", test_service
         )
         assert registration_result is container  # Fluent interface returns Self
 
         # Use correct API: get() for resolution
-        resolution_result: FlextResult[FlextTypes.GeneralValueType] = container.get(
-            "test_migration_service"
-        )
+        resolution_result = container.get("test_migration_service")
         assert resolution_result.is_success
         service = resolution_result.value
         assert isinstance(service, TestService)
@@ -217,7 +212,7 @@ class TestBackwardCompatibility:
         assert success.unwrap_or("default") == "test_value"
 
         # Create failure result
-        failure = FlextResult[str].fail("test_error")
+        failure: FlextResult[str] = FlextResult[str].fail("test_error")
 
         assert not failure.is_success
         assert failure.is_failure
@@ -266,7 +261,9 @@ class TestMigrationComplexity:
             ) -> FlextResult[dict[str, t.GeneralValueType]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict[str, t.GeneralValueType]].fail("Data required")
+                    return FlextResult[dict[str, t.GeneralValueType]].fail(
+                        "Data required"
+                    )
 
                 self.logger.info("Processing data", extra={"size": len(data)})
                 processed: dict[str, t.GeneralValueType] = {

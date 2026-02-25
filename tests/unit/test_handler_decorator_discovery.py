@@ -16,11 +16,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import sys
 import types
-from typing import ClassVar
+from collections.abc import Callable
+from typing import ClassVar, cast
 
 from flext_core import (
     FlextService,
@@ -31,6 +31,29 @@ from flext_core import (
     r,
     t,
 )
+from flext_core.typings import t
+
+type _TestCallable = Callable[..., r[str]]
+type _TestDecorator = Callable[[_TestCallable], _TestCallable]
+
+
+def _test_handler(
+    command: type,
+    *,
+    priority: int = c.Discovery.DEFAULT_PRIORITY,
+    timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
+    middleware: list[type[p.Middleware]] | None = None,
+) -> _TestDecorator:
+    return cast(
+        "_TestDecorator",
+        h.handler(
+            command=command,
+            priority=priority,
+            timeout=timeout,
+            middleware=middleware,
+        ),
+    )
+
 
 # ============================================================================
 # TEST FIXTURES - Sample Commands and Handlers
@@ -75,17 +98,17 @@ class UserService:
 
     name: ClassVar[str] = "UserService"
 
-    @h.handler(command=UserCreateCommand, priority=100)
+    @_test_handler(command=UserCreateCommand, priority=100)
     def handle_create_user(self, cmd: UserCreateCommand) -> r[str]:
         """Handler for creating users with highest priority."""
         return r[str].ok(f"created_{cmd.name}")
 
-    @h.handler(command=UserDeleteCommand, priority=50)
+    @_test_handler(command=UserDeleteCommand, priority=50)
     def handle_delete_user(self, cmd: UserDeleteCommand) -> r[str]:
         """Handler for deleting users with medium priority."""
         return r[str].ok(f"deleted_{cmd.user_id}")
 
-    @h.handler(command=UserQueryCommand, priority=10)
+    @_test_handler(command=UserQueryCommand, priority=10)
     def handle_query_user(self, cmd: UserQueryCommand) -> r[str]:
         """Handler for querying users with low priority."""
         return r[str].ok(f"found_{cmd.user_id}")
@@ -98,7 +121,7 @@ class UserService:
 class OrderService:
     """Service with single handler for testing."""
 
-    @h.handler(command=EventPublished, priority=25)
+    @_test_handler(command=EventPublished, priority=25)
     def handle_event(self, event: EventPublished) -> r[str]:
         """Handler for published events."""
         return r[str].ok(f"processed_{event.event_id}")
@@ -117,13 +140,13 @@ class ServiceWithoutHandlers:
 # ============================================================================
 
 
-@h.handler(command=UserCreateCommand, priority=100)
+@_test_handler(command=UserCreateCommand, priority=100)
 def handle_user_create_globally(cmd: UserCreateCommand) -> r[str]:
     """Module-level handler for user creation."""
     return r[str].ok(f"global_create_{cmd.name}")
 
 
-@h.handler(command=UserDeleteCommand, priority=50)
+@_test_handler(command=UserDeleteCommand, priority=50)
 def handle_user_delete_globally(cmd: UserDeleteCommand) -> r[str]:
     """Module-level handler for user deletion."""
     return r[str].ok(f"global_delete_{cmd.user_id}")
@@ -146,7 +169,7 @@ class TestHandlerDecoratorMetadata:
         """handler() decorator should store config as method attribute."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand, priority=10)
+            @_test_handler(command=UserCreateCommand, priority=10)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -157,7 +180,7 @@ class TestHandlerDecoratorMetadata:
         """Stored metadata should contain the command type."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand)
+            @_test_handler(command=UserCreateCommand)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -169,7 +192,7 @@ class TestHandlerDecoratorMetadata:
         """Decorator should store custom priority value."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand, priority=42)
+            @_test_handler(command=UserCreateCommand, priority=42)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -181,7 +204,7 @@ class TestHandlerDecoratorMetadata:
         """Decorator should use default priority from constants."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand)
+            @_test_handler(command=UserCreateCommand)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -193,7 +216,7 @@ class TestHandlerDecoratorMetadata:
         """Decorator should store timeout value."""
 
         class TestService:
-            @h.handler(
+            @_test_handler(
                 command=UserCreateCommand,
                 timeout=5.0,
             )
@@ -208,7 +231,7 @@ class TestHandlerDecoratorMetadata:
         """Decorator should use default timeout from constants."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand)
+            @_test_handler(command=UserCreateCommand)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -221,7 +244,7 @@ class TestHandlerDecoratorMetadata:
         middleware_types: list[type[p.Middleware]] = []
 
         class TestService:
-            @h.handler(
+            @_test_handler(
                 command=UserCreateCommand,
                 middleware=middleware_types,
             )
@@ -236,7 +259,7 @@ class TestHandlerDecoratorMetadata:
         """Decorator should use empty middleware list when none provided."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand)
+            @_test_handler(command=UserCreateCommand)
             def handle_user(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("handled")
 
@@ -250,7 +273,7 @@ class TestHandlerDecoratorMetadata:
         def original_handler(self: object, cmd: UserCreateCommand) -> r[str]:
             return r[str].ok("handled")
 
-        decorated = h.handler(command=UserCreateCommand)(original_handler)
+        decorated = _test_handler(command=UserCreateCommand)(original_handler)
         assert decorated is original_handler
 
 
@@ -369,7 +392,7 @@ class TestHandlerDiscoveryModule:
     def test_scan_module_ignores_private_functions(self) -> None:
         """scan_module() should skip functions starting with underscore."""
 
-        @h.handler(command=UserCreateCommand)
+        @_test_handler(command=UserCreateCommand)
         def _private_handler(cmd: UserCreateCommand) -> r[str]:
             return r[str].ok("private")
 
@@ -474,11 +497,11 @@ class TestHandlerDiscoveryIntegration:
         """Discovery should handle handlers with same priority."""
 
         class ServiceWithEqualPriority:
-            @h.handler(command=UserCreateCommand, priority=10)
+            @_test_handler(command=UserCreateCommand, priority=10)
             def handler_a(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("a")
 
-            @h.handler(command=UserDeleteCommand, priority=10)
+            @_test_handler(command=UserDeleteCommand, priority=10)
             def handler_b(self, cmd: UserDeleteCommand) -> r[str]:
                 return r[str].ok("b")
 
@@ -501,12 +524,12 @@ class TestHandlerDiscoveryEdgeCases:
         """scan_class() should find handlers from parent classes."""
 
         class BaseService:
-            @h.handler(command=UserCreateCommand, priority=10)
+            @_test_handler(command=UserCreateCommand, priority=10)
             def handle_create(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("created")
 
         class DerivedService(BaseService):
-            @h.handler(command=UserDeleteCommand, priority=5)
+            @_test_handler(command=UserDeleteCommand, priority=5)
             def handle_delete(self, cmd: UserDeleteCommand) -> r[str]:
                 return r[str].ok("deleted")
 
@@ -520,7 +543,7 @@ class TestHandlerDiscoveryEdgeCases:
         """Decorator should handle None timeout explicitly."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand, timeout=None)
+            @_test_handler(command=UserCreateCommand, timeout=None)
             def handle(self, cmd: UserCreateCommand) -> r[str]:
                 return r[str].ok("ok")
 
@@ -547,8 +570,8 @@ class TestHandlerDiscoveryEdgeCases:
         """Multiple @handler decorators should use the last one."""
 
         class TestService:
-            @h.handler(command=UserCreateCommand, priority=10)
-            @h.handler(command=UserDeleteCommand, priority=20)
+            @_test_handler(command=UserCreateCommand, priority=10)
+            @_test_handler(command=UserDeleteCommand, priority=20)
             def handle(self, cmd: t.GeneralValueType) -> r[str]:
                 return r[str].ok("ok")
 
@@ -568,7 +591,7 @@ class TestHandlerDiscoveryEdgeCases:
 class _TestServiceForDiscovery(FlextService[str]):
     """Test service class for handler discovery integration tests."""
 
-    @h.handler(command=UserCreateCommand, priority=10)
+    @_test_handler(command=UserCreateCommand, priority=10)
     def handle_user_create(
         self,
         cmd: UserCreateCommand,
@@ -582,11 +605,11 @@ class _TestServiceForDiscovery(FlextService[str]):
 class _TestServiceWithMultipleHandlers(FlextService[str]):
     """Test service class with multiple handlers for discovery tests."""
 
-    @h.handler(command=UserCreateCommand)
+    @_test_handler(command=UserCreateCommand)
     def create_user(self, cmd: UserCreateCommand) -> r[str]:
         return r[str].ok(f"created_{cmd.name}")
 
-    @h.handler(command=UserDeleteCommand)
+    @_test_handler(command=UserDeleteCommand)
     def delete_user(self, cmd: UserDeleteCommand) -> r[str]:
         return r[str].ok(f"deleted_{cmd.user_id}")
 

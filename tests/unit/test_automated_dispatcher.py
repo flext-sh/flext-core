@@ -6,6 +6,9 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from typing import Any
+from collections.abc import Mapping
+
 import pytest
 
 from flext_core import t, r
@@ -138,16 +141,19 @@ class TestAutomatedFlextDispatcher:
         )
 
         # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: Any = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextDispatcher cleanup failed"
                 )
 
     def _execute_dispatcher_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, t.GeneralValueType],
+    ) -> r[bool]:
         """Execute a test operation on dispatcher instance.
 
         This method should be customized based on the actual dispatcher API.
@@ -156,14 +162,14 @@ class TestAutomatedFlextDispatcher:
         try:
             # For dispatcher, just test that it's properly instantiated
             # Real dispatcher tests are in test_dispatcher_layer3_docker.py
+            _ = input_data
             if hasattr(instance, "__class__"):
-                return r[t.GeneralValueType].ok({"instance": instance.__class__.__name__})
-            # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(instance)
+                return r[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextDispatcher operation failed: {e}")
+            return r[bool].fail(f"FlextDispatcher operation failed: {e}")
 
     @pytest.fixture
-    def test_dispatcher_instance(self) -> t.GeneralValueType:
+    def test_dispatcher_instance(self) -> object:
         """Fixture for dispatcher test instance."""
         return fixture_factory.create_test_dispatcher_instance()
