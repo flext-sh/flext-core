@@ -60,10 +60,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeGuard, TypeVar
 
-from flext_core import r
-from flext_core.typings import t as core_t
 from pydantic import BaseModel
 
+from flext_core import r
+from flext_core.typings import t as core_t
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t

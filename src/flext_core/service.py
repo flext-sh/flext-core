@@ -75,7 +75,6 @@ class FlextService[TDomainResult](
     )
 
     @computed_field
-    @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
         if not hasattr(self, "_execution_result"):

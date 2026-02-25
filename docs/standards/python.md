@@ -44,7 +44,7 @@ FLEXT-Core enforces **zero-tolerance** quality standards. These are non-negotiab
 
 **Every function, parameter, and return must have types:**
 
-```python
+````python
 # ✅ CORRECT
 def get_user(user_id: str) -> FlextResult[User]:
     """Get user by ID."""
@@ -66,7 +66,7 @@ def get_user(user_id: str) -> None:  # Wrong return type (should be FlextResult)
 
 def get_user(user_id: str) -> Any:  # NO Any type
     pass
-```
+```text
 
 ### Type Hints for Collections
 
@@ -84,7 +84,7 @@ def process_users(users: list):  # Missing element type
 
 def process_users(users: List[User]):  # Use lowercase list not List
     pass
-```
+```text
 
 ### Type Variables for Generics
 
@@ -102,7 +102,7 @@ def map_over(items: list[T], func: callable[[T], U]) -> list[U]:
 # ❌ WRONG
 def map_over(items, func):  # No types
     pass
-```
+```text
 
 ## Code Style
 
@@ -123,7 +123,7 @@ def very_long_function_name(
 # ❌ WRONG - Exceeds 79 chars
 def very_long_function_name(parameter_one: str, parameter_two: int, parameter_three: bool) -> FlextResult[dict]:
     pass
-```
+```text
 
 ### Imports: Organize by Category
 
@@ -145,7 +145,7 @@ import os
 import pydantic
 from datetime import datetime
 from flext_core import FlextContainer
-```
+```text
 
 ### Naming Conventions
 
@@ -171,7 +171,7 @@ def UnwrapValue():  # PascalCase for function
 max_retries = 3  # lowercase for constants
 
 VariableName = "value"  # PascalCase for variable
-```
+```text
 
 ## Documentation
 
@@ -214,7 +214,7 @@ def create_user(name: str, email: str, age: int) -> FlextResult[User]:
 def create_user(name, email, age):
     """Creates a user."""  # Too vague
     pass
-```
+```text
 
 ### Module-Level Docstrings
 
@@ -234,7 +234,7 @@ from flext_core import FlextModels, FlextService
 class User(FlextModels.Entity):
     """User entity."""
     pass
-```
+```text
 
 ## Error Handling
 
@@ -252,7 +252,7 @@ def validate_email(email: str) -> str:
     if "@" not in email:
         raise ValueError("Invalid email")  # NO!
     return email
-```
+```text
 
 ### No Bare Except
 
@@ -274,7 +274,7 @@ except:  # NO! Catches KeyboardInterrupt, SystemExit, etc.
 # ❌ WRONG - Too broad
 except Exception:
     pass  # Still too vague
-```
+```text
 
 ## Testing
 
@@ -300,7 +300,7 @@ def test_create():
 
 def test_validate():
     pass
-```
+```text
 
 ### One Assertion Per Test (Mostly)
 
@@ -321,7 +321,7 @@ def test_result():
     assert result.value == 42
     assert result.data == 42
     assert result.value == 42
-```
+```text
 
 ## Linting Rules
 
@@ -335,7 +335,7 @@ ruff check src/
 
 # ❌ Must NOT exist
 # Output should be empty (no violations)
-```
+```text
 
 ### Type Checking: Pyrefly Strict
 
@@ -345,7 +345,7 @@ PYTHONPATH=src pyrefly check src/
 
 # ❌ Must NOT have errors
 # Should show: 0 errors
-```
+```text
 
 ### Format with Ruff
 
@@ -355,7 +355,7 @@ ruff format src/
 
 # Check formatting
 ruff format --check src/
-```
+```text
 
 ## Specific Rules
 
@@ -375,7 +375,7 @@ def add_user(
 def add_user(users: list[User] = []) -> list[User]:
     users.append(user)  # Changes default!
     return users
-```
+```text
 
 ### No Global State
 
@@ -392,7 +392,7 @@ class UserService:
     def get_logger(self):
         global _logger
         return _logger
-```
+```text
 
 ### Comprehensions Over Loops
 
@@ -410,7 +410,7 @@ for user in users:
 for x in numbers:
     if x % 2 == 0:
         print(x)
-```
+```text
 
 ### Context Managers for Resources
 
@@ -423,7 +423,7 @@ with open('file.txt', 'r') as f:
 f = open('file.txt', 'r')
 content = f.read()
 # File might not close if exception
-```
+```text
 
 ## Quality Gate Checklist
 
@@ -439,7 +439,7 @@ Before committing, verify:
 ```bash
 # Run all checks at once
 make validate  # In flext-core directory
-```
+```text
 
 ## Common Violations and Fixes
 
@@ -470,3 +470,4 @@ make validate  # In flext-core directory
 - ✅ No exceptions
 
 **If a standard seems wrong, raise an issue.** Standards can evolve, but when they exist, they apply universally.
+````

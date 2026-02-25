@@ -59,7 +59,7 @@ FLEXT projects use **pure Pydantic v2 patterns** (no v1 compatibility layer):
 
 ## Pattern 1: Basic Model with Constraints
 
-```python
+````python
 from pydantic import BaseModel, Field
 
 class User(BaseModel):
@@ -105,7 +105,7 @@ json_str = user.model_dump_json()
 # Deserialize
 user2 = User.model_validate({"user_id": "...", ...})
 user3 = User.model_validate_json('{"user_id": "..."}')
-```
+```text
 
 **From FLEXT**: `src/flext_core/config.py` - FlextSettings uses this pattern extensively.
 
@@ -158,7 +158,7 @@ class ApiResponse(BaseModel):
         default=None,
         description="Error message if status is error",
     )
-```
+```text
 
 **From FLEXT**: `src/flext_core/config.py` uses ConfigDict for strict validation and serialization control.
 
@@ -201,7 +201,7 @@ product = Product(
     price=999.995,  # Rounded to 999.99
     sku="abc-123",  # Uppercased to "ABC-123"
 )
-```
+```text
 
 ### Validator Modes: before, after, wrap
 
@@ -244,7 +244,7 @@ config = Config(
     retries=3,
     context={"strict": True},
 )
-```
+```text
 
 ### Validate Multiple Fields
 
@@ -262,7 +262,7 @@ class DateRange(BaseModel):
         if v > date.today():
             raise ValueError("Dates cannot be in the future")
         return v
-```
+```text
 
 ## Pattern 4: Model Validators (Cross-Field)
 
@@ -288,7 +288,7 @@ class PasswordChange(BaseModel):
         if self.current_password == self.new_password:
             raise ValueError("New password must be different from current")
         return self
-```
+```text
 
 **From FLEXT**: `src/flext_core/config.py` uses model validators for complex configuration rules.
 
@@ -328,7 +328,7 @@ data = person.model_dump()
 #     "full_name": "Alice Smith",      # Computed
 #     "age": 34,                        # Computed
 # }
-```
+```text
 
 **From FLEXT**: `src/flext_core/models.py` uses computed_field for semantic properties.
 
@@ -358,7 +358,7 @@ config = ServiceConfig(
     worker_count=4,
     port=8080,
 )
-```
+```text
 
 **From FLEXT**: `src/flext_core/typings.py` defines 30+ semantic Annotated types used across projects.
 
@@ -411,7 +411,7 @@ print(f"Database: {settings.database.host}:{settings.database.port}")
 
 # Access secret values securely
 print(f"API Key: {settings.api_key.get_secret_value()}")  # Only when needed
-```
+```text
 
 **From FLEXT**: `src/flext_core/config.py` uses BaseSettings for environment configuration.
 
@@ -453,7 +453,7 @@ address = Address(
     postal_code="10001",
     country="us",  # Normalized to "US"
 )
-```
+```text
 
 ## Pattern 9: Discriminated Unions for Polymorphism
 
@@ -508,7 +508,7 @@ for component in pipeline.components:
         print(f"Target: {component.name} -> {component.connector}")
     elif isinstance(component, Dbt):
         print(f"DBT: {component.name} @ {component.project_path}")
-```
+```text
 
 ## Pattern 10: JSON Schema Generation
 
@@ -553,7 +553,7 @@ print(json.dumps(schemas, indent=2))
 #     ...
 #   }
 # }
-```
+```text
 
 ## Integration with FlextResult
 
@@ -585,7 +585,7 @@ if result.is_success:
     user = result.value
 else:
     print(f"Validation failed: {result.error}")
-```
+```text
 
 ## Best Practices
 
@@ -597,7 +597,7 @@ else:
 
    # Avoid - no documentation
    name: str
-   ```
+```text
 
 1. **Validate in `@field_validator`**
 
@@ -612,7 +612,7 @@ else:
 
    # Avoid - validation hidden in constraints
    age: int = Field(ge=0)  # Only for simple cases
-   ```
+```text
 
 1. **Use ConfigDict for strict validation**
 
@@ -624,7 +624,7 @@ else:
    class Config:
        validate_assignment = False
        extra = "allow"
-   ```
+```text
 
 1. **Use computed_field for derived properties**
 
@@ -639,7 +639,7 @@ else:
    @property
    def full_name(self) -> str:  # Not in model_dump()
        return f"{self.first_name} {self.last_name}"
-   ```
+```text
 
 ## Checklists
 
@@ -679,3 +679,4 @@ ______________________________________________________________________
 **Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Pydantic**: v2.12.3+
+````

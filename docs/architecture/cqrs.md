@@ -68,7 +68,7 @@ FLEXT-Core implements CQRS through two primary components:
 Both components follow railway-oriented programming with `FlextResult` and
 integrate with the infrastructure provided by `FlextMixins`.
 
-```
+````text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    FlextDispatcher (L3)                         │
 │  ├── CQRS routing (command, query, event)                       │
@@ -83,7 +83,7 @@ integrate with the infrastructure provided by `FlextMixins`.
 │                    FlextService (L2.5)                          │
 │  └── Domain services called by handlers                         │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ______________________________________________________________________
 
@@ -103,13 +103,13 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         # Business logic
         user = User(name=command.name, email=command.email)
         return r[User].ok(user)
-```
+```text
 
 ### Execution Pipeline
 
 The `execute()` method orchestrates validation and handling:
 
-```
+```text
 execute(message)
     │
     ├─► validate(message)
@@ -117,7 +117,7 @@ execute(message)
     │
     └─► handle(message)
             └─► Returns r[ResultT]
-```
+```text
 
 ### Handler Configuration
 
@@ -133,7 +133,7 @@ config = FlextModelsCqrs.Handler(
 )
 
 handler = CreateUserHandler(config=config)
-```
+```text
 
 ### Metrics and Context (V1 – Manual)
 
@@ -149,7 +149,7 @@ handler.push_context({"operation": "create_user"})
 handler.record_metric("users_created", 1)
 metrics = handler.get_metrics()
 handler.pop_context()
-```
+```text
 
 > **TODO(handlers.py::FlextHandlers):** Migrate to `FlextMixins.CQRS` utilities
 > for metrics and context once Phase 1 of CQRS modernization lands. See
@@ -169,7 +169,7 @@ from flext_core.dispatcher import FlextDispatcher
 dispatcher = FlextDispatcher()
 dispatcher.register_handler(CreateUserCommand, CreateUserHandler())
 result = dispatcher.dispatch(CreateUserCommand(name="Alice", email="alice@example.com"))
-```
+```text
 
 ### Reliability Patterns
 
@@ -184,7 +184,7 @@ The dispatcher applies layered reliability controls:
 
 ### Dispatch Flow
 
-```
+```text
 dispatch(message)
     │
     ├─► Rate limiter check
@@ -198,7 +198,7 @@ dispatch(message)
     │
     └─► Update circuit breaker state
             └─► Record success/failure
-```
+```text
 
 ### Handler Registration
 
@@ -210,7 +210,7 @@ dispatcher.register_handler(CreateUserCommand, handler)
 dispatcher.register_command(CreateUserCommand, handler)
 dispatcher.register_query(GetUserQuery, handler)
 dispatcher.register_event(UserCreatedEvent, handler)
-```
+```text
 
 > **TODO(dispatcher.py::FlextDispatcher.**init**):** Accept `container` parameter
 > for dependency injection of reliability managers. See Phase 2 of
@@ -235,15 +235,15 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
             name=command.name,
             email=command.email,
         ).execute()
-```
+```text
 
 See Service Patterns Guide for service usage.
 
 ______________________________________________________________________
 
-## Modernization Roadmap
+## Modernization Roadmap - Phase Overview
 
-### Current State (V1)
+### Current State (V1) - Phase Overview
 
 | Component       | Issue                            | Impact                |
 | --------------- | -------------------------------- | --------------------- |
@@ -278,7 +278,7 @@ class FlextMixins:
             def push(self, ctx: dict) -> None: ...
             def pop(self) -> dict | None: ...
             def current(self) -> dict: ...
-```
+```text
 
 ### Phase 2: Dispatcher DI
 
@@ -289,7 +289,7 @@ container = FlextContainer.get_global()
 container.register("circuit_breaker", CustomCircuitBreaker())
 
 dispatcher = FlextDispatcher(container=container)
-```
+```text
 
 ______________________________________________________________________
 
@@ -314,7 +314,7 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
             return r[UserDto].fail(str(exc))
         finally:
             self.pop_context()
-```
+```text
 
 ### V2 Handler (Target - Phase 3+)
 
@@ -331,7 +331,7 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
             result = self._process(command)
 
         return r[UserDto].ok(result)
-```
+```text
 
 ### Migration Path
 
@@ -342,9 +342,9 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 
 ______________________________________________________________________
 
-## Modernization Roadmap
+## Modernization Roadmap - Detailed Strategy
 
-### Current State (V1) vs Target (V2)
+### Current State (V1) vs Target (V2) - Detailed
 
 | Aspecto                   | V1 (Atual)                                | V2 (Target)                              |
 | ------------------------- | ----------------------------------------- | ---------------------------------------- |
@@ -358,7 +358,7 @@ ______________________________________________________________________
 
 ### Timeline
 
-```
+```text
 V1 (Atual)           V2 Integration         V2 Complete
     │                      │                      │
     │  Manual metrics      │  FlextMixins.CQRS    │  Full observability
@@ -367,7 +367,7 @@ V1 (Atual)           V2 Integration         V2 Complete
 ────┼──────────────────────┼──────────────────────┼─────────────────→
     │                      │                      │
  Nov 2025           Jan 2026 (Phase 1-2)    Mar 2026 (Phase 3-5)
-```
+```text
 
 ### Problems Addressed
 
@@ -437,7 +437,7 @@ ______________________________________________________________________
 
 ### Test Structure
 
-```
+```text
 tests/
 ├── unit/
 │   ├── test_handlers.py           # FlextHandlers unit tests
@@ -454,7 +454,7 @@ tests/
 └── performance/
     ├── test_handler_throughput.py
     └── test_dispatcher_latency.py
-```
+```text
 
 ### Running Tests
 
@@ -541,4 +541,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

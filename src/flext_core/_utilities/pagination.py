@@ -143,17 +143,19 @@ class FlextUtilitiesPagination:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
 
-        return r[Mapping[str, t.ConfigMapValue]].ok({
-            "data": data_list,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total_count,
-                "total_pages": total_pages,
-                "has_next": has_next,
-                "has_prev": has_prev,
-            },
-        })
+        return r[Mapping[str, t.ConfigMapValue]].ok(
+            {
+                "data": data_list,
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total": total_count,
+                    "total_pages": total_pages,
+                    "has_next": has_next,
+                    "has_prev": has_prev,
+                },
+            }
+        )
 
     @staticmethod
     def build_pagination_response(

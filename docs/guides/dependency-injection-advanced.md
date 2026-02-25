@@ -58,7 +58,7 @@ FlextContainer is FLEXT's type-safe dependency injection container providing cen
 
 FlextContainer implements the Service Locator pattern (also called the registry pattern). Services are registered centrally and retrieved on demand:
 
-```
+````text
 ┌─────────────────────┐
 │  FlextContainer     │
 │  (Global Singleton) │
@@ -69,7 +69,7 @@ FlextContainer implements the Service Locator pattern (also called the registry 
 │ - config            │ → FlextSettings instance
 │ - api_client        │ → APIClient factory
 └─────────────────────┘
-```
+```text
 
 ### Singleton Pattern
 
@@ -83,7 +83,7 @@ container1 = FlextContainer.get_global()
 container2 = FlextContainer.get_global()
 
 assert container1 is container2  # True - same instance
-```
+```text
 
 ### Type-Safe Resolution (v0.10.0+)
 
@@ -100,7 +100,7 @@ result = container.get_typed("logger", FlextLogger)
 if result.is_success:
     logger: FlextLogger = result.value  # Type is known
     logger.info("Message")  # IDE autocomplete works
-```
+```text
 
 ## Getting Started
 
@@ -114,7 +114,7 @@ container = FlextContainer.get_global()
 
 # Every call returns the same instance
 assert FlextContainer.get_global() is container
-```
+```text
 
 ### Registering Services
 
@@ -135,7 +135,7 @@ if result.is_success:
     print("✅ Logger registered")
 else:
     print(f"❌ Registration failed: {result.error}")
-```
+```text
 
 **Source**: `src/flext_core/container.py` - `register()` method
 
@@ -160,7 +160,7 @@ result = container.register_factory("database", create_database_connection)
 
 if result.is_success:
     print("✅ Database factory registered")
-```
+```text
 
 #### Safe Factory Registration
 
@@ -183,7 +183,7 @@ def safe_factory() -> FlextResult[object]:
 
 container = FlextContainer.get_global()
 result = container.register_factory("safe_service", safe_factory)
-```
+```text
 
 ### Retrieving Services
 
@@ -202,7 +202,7 @@ if result.is_success:
     logger.info("Logged message")
 else:
     print(f"❌ Service not found: {result.error}")
-```
+```text
 
 #### Type-Safe Retrieval (Recommended)
 
@@ -217,7 +217,7 @@ result = container.get_typed("logger", FlextLogger)
 if result.is_success:
     logger: FlextLogger = result.value  # Type checker knows exact type
     logger.info("Message")
-```
+```text
 
 ## Real-World Patterns
 
@@ -268,7 +268,7 @@ app_init = initialize_application()
 if app_init.is_failure:
     print(f"Failed to initialize app: {app_init.error}")
     exit(1)
-```
+```text
 
 ### Pattern 2: Service Resolution Chain
 
@@ -320,7 +320,7 @@ service_result = resolve_payment_service()
 if service_result.is_success:
     service = service_result.value
     result = service.process_payment(1000.00)
-```
+```text
 
 ### Pattern 3: Lazy Service Initialization
 
@@ -360,7 +360,7 @@ print(f"Second access: {result2.value.do_work()}")
 
 # Both are the same instance
 assert result1.value is result2.value
-```
+```text
 
 ### Pattern 4: Conditional Service Registration
 
@@ -389,7 +389,7 @@ def setup_services_based_on_config() -> FlextResult[bool]:
         container.register("email_service", SendgridEmailService(config.api_key))
 
     return FlextResult[bool].ok(True)
-```
+```text
 
 ### Pattern 5: Service Lifecycle Management
 
@@ -442,7 +442,7 @@ def setup_database_lifecycle() -> FlextResult[bool]:
 setup_result = setup_database_lifecycle()
 if setup_result.is_success:
     print("✅ Database setup complete")
-```
+```text
 
 ## Advanced Features
 
@@ -464,7 +464,7 @@ if result.is_success:
     print("✅ All services registered")
 else:
     print(f"❌ Batch failed: {result.error}")
-```
+```text
 
 ### Fallback Resolution
 
@@ -489,7 +489,7 @@ result = (
     .flat_map(lambda _: container.get("primary_service"))
     .lash(lambda _: container.get("fallback_service"))
 )
-```
+```text
 
 ### Service Validation
 
@@ -522,7 +522,7 @@ def validate_all_services() -> FlextResult[bool]:
             )
 
     return FlextResult[bool].ok(True)
-```
+```text
 
 ## Type Safety Best Practices
 
@@ -539,7 +539,7 @@ result: FlextResult[FlextLogger] = container.get_typed("logger", FlextLogger)
 if result.is_success:
     logger: FlextLogger = result.value
     logger.info("Message")  # IDE knows all methods
-```
+```text
 
 ### Avoid: Untyped Retrieval
 
@@ -550,7 +550,7 @@ result = container.get("logger")  # Returns FlextResult[object]
 if result.is_success:
     logger = result.value  # Type is object
     # IDE can't help with autocomplete
-```
+```text
 
 ### Correct: Semantic Type Aliases
 
@@ -564,7 +564,7 @@ ServiceType = t.ServiceType
 def get_service(name: ServiceName, type_cls: type[ServiceType]) -> FlextResult[ServiceType]:
     container = FlextContainer.get_global()
     return container.get_typed(name, type_cls)
-```
+```text
 
 ## Common Patterns
 
@@ -599,7 +599,7 @@ class UserHandler:
 container = FlextContainer.get_global()
 handler = UserHandler(container)
 result = handler.create_user({"name": "Alice"})
-```
+```text
 
 ### Pattern: Testing with Mock Services
 
@@ -623,7 +623,7 @@ class TestUserService(unittest.TestCase):
 
         assert result.is_success
         assert result.value["name"] == "Bob"
-```
+```text
 
 ## Best Practices
 
@@ -637,7 +637,7 @@ result = container.get("service")
 # ❌ WRONG - Creating multiple containers
 container1 = FlextContainer()
 container2 = FlextContainer()  # Different instance!
-```
+```text
 
 ### 2. Check Results
 
@@ -651,7 +651,7 @@ else:
 
 # ❌ WRONG - Assuming success
 service = container.get("service").value  # May crash
-```
+```text
 
 ### 3. Register Early
 
@@ -672,7 +672,7 @@ logger_result = container.get("logger")
 def some_random_function():
     container = FlextContainer.get_global()
     container.register("database", create_db())  # Too late!
-```
+```text
 
 ### 4. Type-Safe Retrieval
 
@@ -682,7 +682,7 @@ result: FlextResult[FlextLogger] = container.get_typed("logger", FlextLogger)
 
 # ⚠️ OK but less safe - Basic retrieval
 result: FlextResult[object] = container.get("logger")
-```
+```text
 
 ## FlextDispatcher Reliability Settings
 
@@ -718,7 +718,7 @@ class AppConfig(FlextSettings):
 # Initialize dispatcher with configuration
 config = AppConfig()
 dispatcher = FlextDispatcher()  # Uses config via FlextSettings singleton
-```
+```text
 
 ### Circuit Breaker Configuration
 
@@ -740,7 +740,7 @@ dispatcher = FlextDispatcher()
 result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
 if result.is_failure and "circuit breaker" in result.error.lower():
     print("Circuit breaker is open - service temporarily unavailable")
-```
+```text
 
 ### Rate Limiting Configuration
 
@@ -763,7 +763,7 @@ for i in range(150):  # More than rate limit
     if result.is_failure and "rate limit" in result.error.lower():
         print(f"Rate limit exceeded at request {i}")
         break
-```
+```text
 
 ### Retry Policy Configuration
 
@@ -784,7 +784,7 @@ dispatcher = FlextDispatcher()
 result = dispatcher.dispatch(ProcessOrderCommand(order_id="123"))
 # If first attempt fails, dispatcher automatically retries up to 3 times
 # with 1 second delay between attempts
-```
+```text
 
 ### Timeout Configuration
 
@@ -812,7 +812,7 @@ result = dispatcher.dispatch(
     LongRunningCommand(data=large_data),
     timeout_override=60  # Override default timeout for this operation
 )
-```
+```text
 
 ### Complete Reliability Configuration Example
 
@@ -853,7 +853,7 @@ def process_with_reliability(command):
     # - Rate limiting (max 1000 requests/minute)
     # - Retry policy (up to 5 attempts with 2s delay)
     # - Timeout enforcement (45s limit)
-```
+```text
 
 ### Environment-Based Configuration
 
@@ -885,7 +885,7 @@ class Config(FlextSettings):
             return 5
         else:
             return 2  # Development: fewer retries
-```
+```text
 
 ### Monitoring Reliability Metrics
 
@@ -907,7 +907,7 @@ print(f"Circuit breaker opens: {metrics.get('circuit_breaker_opens', 0)}")
 print(f"Rate limit hits: {metrics.get('rate_limit_hits', 0)}")
 print(f"Retry attempts: {metrics.get('retry_attempts', 0)}")
 print(f"Timeout executions: {metrics.get('timeout_executions', 0)}")
-```
+```text
 
 ## Architecture Integration
 
@@ -916,7 +916,7 @@ print(f"Timeout executions: {metrics.get('timeout_executions', 0)}")
 **Dependencies**: FlextResult, FlextSettings, dependency-injector
 **Ecosystem**: 32+ projects depend on FlextContainer
 
-```
+```text
 Layer 4: Services use container to resolve dependencies
     ↓
 Layer 3: Handlers and use cases get services via container
@@ -926,7 +926,7 @@ Layer 2: Domain services registered in container
 Layer 1: FlextContainer - core dependency injection
     ↓
 Layer 0: FlextConstants, t
-```
+```text
 
 ## Key Takeaways
 
@@ -956,3 +956,4 @@ Layer 0: FlextConstants, t
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_container.py` for 180+ test cases demonstrating container patterns and edge cases.
+````

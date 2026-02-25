@@ -9,13 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 import json
+import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import cast
+
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
-
 from flext_infra.constants import c
 from flext_infra.json_io import JsonService
 from flext_infra.models import m
@@ -27,17 +30,17 @@ _REPORT_DEFAULT = ".claude/skills/{skill}/report.json"
 _BASELINE_DEFAULT = ".claude/skills/{skill}/baseline.json"
 _CACHE_TTL_SECONDS = 300
 
+_yaml_module = importlib.import_module("yaml")
+
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
     """Load YAML file safely, returning empty mapping on missing/invalid."""
-    import yaml
-
     raw = path.read_text(encoding=c.Encoding.DEFAULT)
-    safe_load = getattr(yaml, "safe_load", None)
+    safe_load = getattr(_yaml_module, "safe_load", None)
     if safe_load is None:
         msg = "PyYAML safe_load unavailable"
         raise RuntimeError(msg)
-    parsed = safe_load(raw)
+    parsed = cast("object", safe_load(raw))
     if parsed is None:
         return {}
     if not isinstance(parsed, dict):
@@ -101,11 +104,15 @@ class SkillValidator:
             rules_path = skills_dir / skill_name / "rules.yml"
             if not rules_path.exists():
                 return r[m.ValidationReport].ok(
-                    m.ValidationReport.model_validate({
-                        "passed": False,
-                        "violations": [f"rules.yml not found for skill '{skill_name}'"],
-                        "summary": f"no rules.yml for {skill_name}",
-                    }),
+                    m.ValidationReport.model_validate(
+                        {
+                            "passed": False,
+                            "violations": [
+                                f"rules.yml not found for skill '{skill_name}'"
+                            ],
+                            "summary": f"no rules.yml for {skill_name}",
+                        }
+                    ),
                 )
 
             rules = _safe_load_yaml(rules_path)
@@ -196,11 +203,13 @@ class SkillValidator:
                 f"{skill_name}: {total} violations, {'PASS' if passed else 'FAIL'}"
             )
             return r[m.ValidationReport].ok(
-                m.ValidationReport.model_validate({
-                    "passed": passed,
-                    "violations": violations,
-                    "summary": summary,
-                }),
+                m.ValidationReport.model_validate(
+                    {
+                        "passed": passed,
+                        "violations": violations,
+                        "summary": summary,
+                    }
+                ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
             return r[m.ValidationReport].fail(
@@ -290,8 +299,6 @@ class SkillValidator:
         mode: str,
     ) -> int:
         """Run a custom rule script and return violation count."""
-        import sys
-
         script_raw = str(rule.get("script", "")).strip()
         if not script_raw:
             return 0

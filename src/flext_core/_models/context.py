@@ -36,7 +36,7 @@ def _normalize_metadata_before(
     | None,
 ) -> FlextModelFoundation.Metadata:
     """BeforeValidator: normalize metadata to FlextModelFoundation.Metadata."""
-    return FlextModelsContext._normalize_metadata(value)
+    return FlextModelsContext.normalize_metadata(value)
 
 
 def _normalize_to_mapping(
@@ -73,7 +73,7 @@ def _normalize_statistics_before(
     if FlextRuntime.is_dict_like(v):
         return dict(v)
     if isinstance(v, BaseModel):
-        return FlextModelsContext._to_general_value_dict(v.model_dump())
+        return FlextModelsContext.to_general_value_dict(v.model_dump())
     msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
     raise TypeError(msg)
 
@@ -87,7 +87,7 @@ class FlextModelsContext:
     """
 
     @staticmethod
-    def _normalize_metadata(
+    def normalize_metadata(
         value: FlextModelFoundation.Metadata
         | t.ConfigMap
         | Mapping[str, t.ScalarValue]
@@ -111,7 +111,7 @@ class FlextModelsContext:
         return FlextModelFoundation.Metadata(attributes=attributes)
 
     @staticmethod
-    def _to_general_value_dict(
+    def to_general_value_dict(
         value: t.ConfigMap | Mapping[str, t.ScalarValue],
     ) -> Mapping[str, t.MetadataAttributeValue]:
         """Convert dict-like value to metadata mapping for Metadata."""
@@ -247,9 +247,11 @@ class FlextModelsContext:
             if value is not None:
                 # T is bounded to PayloadValue in generic contract
                 # Store directly - type parameter constraint guarantees compatibility
-                _ = structlog.contextvars.bind_contextvars(**{
-                    self._key: value,
-                })
+                _ = structlog.contextvars.bind_contextvars(
+                    **{
+                        self._key: value,
+                    }
+                )
             else:
                 # Unbind if setting to None
                 structlog.contextvars.unbind_contextvars(self._key)
@@ -281,9 +283,11 @@ class FlextModelsContext:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                _ = structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value,
-                })
+                _ = structlog.contextvars.bind_contextvars(
+                    **{
+                        token.key: token.previous_value,
+                    }
+                )
 
     class Token(FlextModelsEntity.Value):
         """Token for context variable reset operations.

@@ -49,7 +49,7 @@ This guide covers common issues, their solutions, and debugging techniques for F
 
 ### Health Check Commands
 
-```bash
+````bash
 # Check overall system health
 make validate
 
@@ -63,7 +63,7 @@ make security      # Security issues
 cd flext-core && make validate
 cd flext-ldif && make validate
 cd flext-api && make validate
-```
+```text
 
 ### System Status
 
@@ -79,7 +79,7 @@ poetry show --tree
 
 # Check git status
 git status
-```
+```text
 
 ## Common Issues
 
@@ -90,7 +90,7 @@ git status
 ```python
 # Error
 ModuleNotFoundError: No module named 'flext_core'
-```
+```text
 
 #### Solutions
 
@@ -99,23 +99,23 @@ ModuleNotFoundError: No module named 'flext_core'
 ```bash
 export PYTHONPATH=src
 python -c "import flext_core; print(flext_core.__file__)"
-```
+```text
 
 **Reinstall dependencies:**
 
 ```bash
 make clean
 make setup
-```
+```text
 
 **Check Poetry environment:**
 
 ```bash
 poetry env info
 poetry install
-```
+```text
 
-### r
+#### Debug Python Path
 
 ```python
 # Debug import issues
@@ -130,7 +130,7 @@ try:
     print(f"Success: {flext_core.__file__}")
 except ImportError as e:
     print(f"Failed: {e}")
-```
+```text
 
 ### 2. Type Checking Errors
 
@@ -139,7 +139,7 @@ except ImportError as e:
 ```python
 # Error
 error: Argument 1 to "process" has incompatible type "str"; expected "dict[str, object]"
-```
+```text
 
 #### Solutions
 
@@ -153,19 +153,19 @@ def process(data):
 # ✅ CORRECT
 def process(data: dict[str, object]) -> FlextResult[ProcessedData]:
     return FlextResult.ok(ProcessedData(**data))
-```
+```text
 
 **Run MyPy with details:**
 
 ```bash
 mypy src/module.py --show-error-codes --show-traceback
-```
+```text
 
 **Check specific error:**
 
 ```bash
 mypy src/ --show-error-codes | grep "error-code"
-```
+```text
 
 ### 3. Test Failures
 
@@ -174,7 +174,7 @@ mypy src/ --show-error-codes | grep "error-code"
 ```python
 # Error
 AssertionError: Expected success but got failure
-```
+```text
 
 #### Solutions
 
@@ -182,13 +182,13 @@ AssertionError: Expected success but got failure
 
 ```bash
 pytest tests/unit/test_module.py -vv --tb=long
-```
+```text
 
 **Debug specific test:**
 
 ```bash
 pytest tests/unit/test_module.py::TestClass::test_method -v --pdb
-```
+```text
 
 **Check test data:**
 
@@ -200,7 +200,7 @@ def test_with_debug():
     if result.is_failure:
         print(f"Error: {result.failure()}")
     assert result.is_success
-```
+```text
 
 ### 4. Configuration Issues
 
@@ -209,7 +209,7 @@ def test_with_debug():
 ```python
 # Error
 ValidationError: field required
-```
+```text
 
 #### Solutions
 
@@ -217,7 +217,7 @@ ValidationError: field required
 
 ```bash
 env | grep FLEXT_
-```
+```text
 
 **Validate configuration:**
 
@@ -248,7 +248,7 @@ try:
     print("Configuration valid")
 except ValidationError as e:
     print(f"Configuration error: {e}")
-```
+```text
 
 **Debug configuration loading:**
 
@@ -283,7 +283,7 @@ for key, value in os.environ.items():
 # Load and print configuration
 config = FlextSettings()
 print(f"Config: {config.dict()}")
-```
+```text
 
 ### 5. LDIF Processing Issues
 
@@ -292,7 +292,7 @@ print(f"Config: {config.dict()}")
 ```python
 # Error
 LdifParsingException: Invalid LDIF format
-```
+```text
 
 #### Solutions
 
@@ -310,7 +310,7 @@ result = ldif.parse(content)
 if result.is_failure:
     print(f"Parse error: {result.failure()}")
     print(f"Content: {repr(content)}")
-```
+```text
 
 **Enable debug logging:**
 
@@ -319,7 +319,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Your LDIF processing code
-```
+```text
 
 **Validate LDIF format:**
 
@@ -340,7 +340,7 @@ def validate_ldif_content(content: str) -> t.StringList:
             issues.append(f"Invalid line {i+1}: {line}")
 
     return issues
-```
+```text
 
 ### 6. Migration Issues
 
@@ -349,7 +349,7 @@ def validate_ldif_content(content: str) -> t.StringList:
 ```python
 # Error
 LdifMigrationException: Server compatibility error
-```
+```text
 
 #### Solutions
 
@@ -366,7 +366,7 @@ config = FlextLdifSettings(
 )
 
 print(f"Config: {config.dict()}")
-```
+```text
 
 **Enable server quirks:**
 
@@ -376,7 +376,7 @@ config = FlextLdifSettings(
     source_server="oid",
     target_server="oud"
 )
-```
+```text
 
 **Test with sample data:**
 
@@ -391,7 +391,7 @@ if result.is_success:
     print("Sample parsing successful")
 else:
     print(f"Sample parsing failed: {result.failure()}")
-```
+```text
 
 ### 7. Performance Issues
 
@@ -402,7 +402,7 @@ else:
 # - High memory usage
 # - Slow response times
 # - Timeout errors
-```
+```text
 
 #### Solutions
 
@@ -424,7 +424,7 @@ def profile_memory():
     print(f"Memory used: {memory_used / 1024 / 1024:.2f} MB")
 
 profile_memory()
-```
+```text
 
 **Optimize batch size:**
 
@@ -436,7 +436,7 @@ config = FlextLdifSettings(
     batch_size=100,  # Instead of default 1000
     parallel_processing=False  # Disable for memory issues
 )
-```
+```text
 
 **Enable parallel processing:**
 
@@ -445,7 +445,7 @@ config = FlextLdifSettings(
     parallel_processing=True,
     max_workers=4  # Adjust based on CPU cores
 )
-```
+```text
 
 ## Debugging Techniques
 
@@ -486,7 +486,7 @@ logger.debug("Debug message")
 logger.info("Info message")
 logger.warning("Warning message")
 logger.error("Error message")
-```
+```text
 
 ### 2. Exception Handling
 
@@ -523,7 +523,7 @@ def safe_operation(data: dict) -> FlextResult[dict]:
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         return FlextResult.fail(f"Operation failed: {e}")
-```
+```text
 
 ### 3. Debug Mode
 
@@ -555,7 +555,7 @@ config = FlextSettings(debug=True)
 # Debug information will be printed
 print(f"Debug mode: {config.debug}")
 print(f"Log level: {config.log_level}")
-```
+```text
 
 ### 4. Step-by-Step Debugging
 
@@ -589,7 +589,7 @@ def debug_ldif_processing(content: str):
         print(f"SUCCESS: Parsed {len(entries)} entries")
     else:
         print(f"ERROR: Parse failed: {result.failure()}")
-```
+```text
 
 ## Error Codes Reference
 
@@ -638,7 +638,7 @@ def monitor_memory():
         print("WARNING: High memory usage detected")
 
 monitor_memory()
-```
+```text
 
 ### CPU Issues
 
@@ -657,7 +657,7 @@ def monitor_cpu():
         time.sleep(1)
 
 monitor_cpu()
-```
+```text
 
 ## Getting Help
 
@@ -677,7 +677,7 @@ monitor_cpu()
 
    # Project-specific check
    cd flext-core && make validate
-   ```
+```text
 
 1. **Check Logs**
 
@@ -685,7 +685,7 @@ monitor_cpu()
    # Enable debug logging
    export FLEXT_LOG_LEVEL=DEBUG
    python your_script.py
-   ```
+```text
 
 ### Community Support
 
@@ -716,7 +716,7 @@ When reporting issues, include:
    python --version
    poetry env info
    make info
-   ```
+```text
 
 1. **Error Details**
 
@@ -727,14 +727,14 @@ When reporting issues, include:
        # Your code here
    except Exception as e:
        traceback.print_exc()
-   ```
+```text
 
 1. **Minimal Reproduction**
 
    ```python
    # Minimal code that reproduces the issue
    from flext_core import FlextBus
-   ```
+```text
 
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -778,7 +778,7 @@ def process(data: dict) -> FlextResult[ProcessedData]:
 # ❌ BAD
 def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
-```
+```text
 
 1. **Validate Input Early**
 
@@ -789,7 +789,7 @@ def process(data: dict) -> ProcessedData:
 
        # Process data
        return FlextResult.ok(processed_data)
-   ```
+```text
 
 1. **Use Type Hints**
 
@@ -801,7 +801,7 @@ def process(data: dict) -> ProcessedData:
    # ❌ BAD
    def process(items):
        pass
-   ```
+```text
 
 1. **Test Thoroughly**
 
@@ -814,7 +814,7 @@ def process(data: dict) -> ProcessedData:
        # Test failure case
        result = process_data(None)
        assert result.is_failure
-   ```
+```text
 
 ## Resources
 
@@ -824,3 +824,4 @@ def process(data: dict) -> ProcessedData:
 - Testing Guide
 - [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
+````

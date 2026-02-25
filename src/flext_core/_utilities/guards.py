@@ -1182,42 +1182,46 @@ class FlextUtilitiesGuards:
     # =========================================================================
 
     # Module-level immutable maps to avoid RUF012 (mutable class attribute)
-    _PROTOCOL_CATEGORY_MAP: Mapping[str, str] = MappingProxyType({
-        "config": "config",
-        "context": "context",
-        "container": "container",
-        "command_bus": "command_bus",
-        "handler": "handler",
-        "logger": "logger",
-        "result": "result",
-        "service": "service",
-        "middleware": "middleware",
-    })
+    _PROTOCOL_CATEGORY_MAP: Mapping[str, str] = MappingProxyType(
+        {
+            "config": "config",
+            "context": "context",
+            "container": "container",
+            "command_bus": "command_bus",
+            "handler": "handler",
+            "logger": "logger",
+            "result": "result",
+            "service": "service",
+            "middleware": "middleware",
+        }
+    )
 
-    _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType({
-        # Collection checks
-        "str": "_is_str",
-        "dict": "_is_dict",
-        "list": "is_list",
-        "tuple": "_is_tuple",
-        "sequence": "_is_sequence",
-        "mapping": "_is_mapping",
-        "list_or_tuple": "_is_list_or_tuple",
-        "sequence_not_str": "_is_sequence_not_str",
-        "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
-        "sized": "_is_sized",
-        "callable": "_is_callable_key_func",
-        "bytes": "_is_bytes",
-        # Primitive type checks
-        "int": "_is_int",
-        "float": "_is_float",
-        "bool": "_is_bool",
-        "none": "_is_none",
-        # Non-empty checks
-        "string_non_empty": "is_string_non_empty",
-        "dict_non_empty": "is_dict_non_empty",
-        "list_non_empty": "is_list_non_empty",
-    })
+    _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType(
+        {
+            # Collection checks
+            "str": "_is_str",
+            "dict": "_is_dict",
+            "list": "is_list",
+            "tuple": "_is_tuple",
+            "sequence": "_is_sequence",
+            "mapping": "_is_mapping",
+            "list_or_tuple": "_is_list_or_tuple",
+            "sequence_not_str": "_is_sequence_not_str",
+            "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
+            "sized": "_is_sized",
+            "callable": "_is_callable_key_func",
+            "bytes": "_is_bytes",
+            # Primitive type checks
+            "int": "_is_int",
+            "float": "_is_float",
+            "bool": "_is_bool",
+            "none": "_is_none",
+            # Non-empty checks
+            "string_non_empty": "is_string_non_empty",
+            "dict_non_empty": "is_dict_non_empty",
+            "list_non_empty": "is_list_non_empty",
+        }
+    )
 
     @staticmethod
     def is_type(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
@@ -1647,8 +1651,13 @@ class FlextUtilitiesGuards:
         return_value: bool = False,
     ) -> t.GuardInputValue | bool | None:
         try:
-            if isinstance(validator, type | tuple):
-                if isinstance(value, validator):
+            is_type_validator = isinstance(validator, type) or (
+                isinstance(validator, tuple)
+                and all(isinstance(item, type) for item in validator)
+            )
+            if is_type_validator:
+                validator_type = cast("type | tuple[type, ...]", validator)
+                if isinstance(value, validator_type):
                     return value if return_value else True
             elif callable(validator):
                 if validator(value):

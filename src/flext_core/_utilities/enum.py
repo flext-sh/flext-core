@@ -44,11 +44,13 @@ class FlextUtilitiesEnum:
     """
 
     # Approved modules that can import directly (for testing, internal use)
-    _APPROVED_MODULES: ClassVar[frozenset[str]] = frozenset({
-        "flext_core.utilities",
-        "flext_core._utilities",
-        "tests.",
-    })
+    _APPROVED_MODULES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "flext_core.utilities",
+            "flext_core._utilities",
+            "tests.",
+        }
+    )
 
     # Cache for metadata methods (manual cache since types aren't hashable for lru_cache)
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}

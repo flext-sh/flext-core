@@ -43,14 +43,14 @@ ______________________________________________________________________
 
 Immutable defaults and identifiers with no runtime dependencies.
 
-```python
+````python
 from flext_core import c
 
 # Error code and configuration defaults
 error_code = c.Errors.VALIDATION_FAILED
 request_timeout = c.Configuration.DEFAULT_TIMEOUT
 email_pattern = c.Validation.EMAIL_PATTERN
-```
+```text
 
 ### t — Type System
 
@@ -64,7 +64,7 @@ U = t.U
 TCommand = t.TCommand
 TQuery = t.TQuery
 TEvent = t.TEvent
-```
+```text
 
 ### p — Runtime Interfaces
 
@@ -75,7 +75,7 @@ from flext_core import p
 
 if isinstance(service, p.Configurable):
     service.configure(config)
-```
+```text
 
 ______________________________________________________________________
 
@@ -92,7 +92,7 @@ if FlextRuntime.is_valid_email(email):
     process_email(email)
 
 data = FlextRuntime.to_json_serializable(payload)
-```
+```text
 
 ______________________________________________________________________
 
@@ -110,7 +110,7 @@ result = (
     .map(lambda value: value * 2)
     .map(lambda value: f"Result: {value}")
 )
-```
+```text
 
 ### FlextContainer — Dependency Injection {#flextcontainer}
 
@@ -126,7 +126,7 @@ logger_result = container.get("logger")
 if logger_result.is_success:
     logger = logger_result.value
     logger.info("Application started")
-```
+```text
 
 ### FlextExceptions — Exception Hierarchy
 
@@ -144,7 +144,7 @@ class ValidationException(e.BaseError):
             message=f"Invalid value for {field}: {value}",
             context={"field": field, "value": value},
         )
-```
+```text
 
 ## Short Alias Reference
 
@@ -163,7 +163,7 @@ from flext_core.context import x      # FlextContext alias (via mixins)
 from flext_core.service import s      # FlextService alias
 from flext_core.decorators import d   # FlextDecorators alias
 from flext_core.handlers import h     # FlextHandlers alias
-```
+```text
 
 **Usage Examples**:
 
@@ -190,7 +190,7 @@ if isinstance(service, p.Config):
 # Utilities
 if u.chk().eq(value, expected):
     process(value)
-```
+```text
 
 **Complete Alias Reference**:
 
@@ -238,4 +238,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

@@ -59,7 +59,7 @@ FLEXT loads configuration in the following order (later sources override earlier
 
 Set configuration using environment variables with the `FLEXT_` prefix:
 
-```bash
+````bash
 # Core configuration
 export FLEXT_LOG_LEVEL=INFO
 export FLEXT_DEBUG=false
@@ -73,7 +73,7 @@ export FLEXT_LDIF_SERVERS_ENABLED=true
 # API configuration
 export FLEXT_API_BASE_URL=https://api.example.com
 export FLEXT_API_TIMEOUT=30
-```
+```text
 
 ### Configuration Files
 
@@ -99,7 +99,7 @@ api:
   base_url: https://api.example.com
   timeout: 30
   retry_attempts: 3
-```
+```text
 
 ### Programmatic Configuration
 
@@ -142,7 +142,7 @@ ldif_config = FlextLdifSettings(
     servers_enabled=True,
     batch_size=1000
 )
-```
+```text
 
 ## Project-Specific Configuration
 
@@ -166,7 +166,7 @@ config = FlextLdifSettings(
     parallel_processing=True,
     max_workers=4
 )
-```
+```text
 
 ### flext-api Configuration
 
@@ -182,7 +182,7 @@ config = FlextApiSettings(
         "User-Agent": "FLEXT-API/1.0"
     }
 )
-```
+```text
 
 ### flext-auth Configuration
 
@@ -195,7 +195,7 @@ config = FlextAuthSettings(
     access_token_expire_minutes=30,
     refresh_token_expire_days=7
 )
-```
+```text
 
 ## Environment-Specific Configuration
 
@@ -214,7 +214,7 @@ ldif:
 api:
   base_url: http://localhost:8000
   timeout: 60
-```
+```text
 
 ### Production Environment
 
@@ -233,7 +233,7 @@ api:
   base_url: https://api.production.com
   timeout: 30
   retry_attempts: 5
-```
+```text
 
 ## Configuration Validation
 
@@ -267,7 +267,7 @@ try:
     )
 except ValidationError as e:
     print(f"Configuration error: {e}")
-```
+```text
 
 ## Configuration Inheritance
 
@@ -307,7 +307,7 @@ extended_config = FlextSettings(
     debug=True,  # Override for development
     custom_setting="value"
 )
-```
+```text
 
 ## Best Practices
 
@@ -317,7 +317,7 @@ extended_config = FlextSettings(
 # Never put secrets in configuration files
 export FLEXT_DATABASE_PASSWORD=secret_password
 export FLEXT_API_KEY=your_api_key
-```
+```text
 
 ### 2. Validate Configuration Early
 
@@ -353,7 +353,7 @@ def main():
 
     # Continue with application logic
     return 0
-```
+```text
 
 ### 3. Use Configuration Classes
 
@@ -389,7 +389,7 @@ class MyAppConfig(FlextSettings):
         if v < 0:
             raise ValueError('another_setting must be positive')
         return v
-```
+```text
 
 ### 4. Document Configuration Options
 
@@ -406,7 +406,7 @@ class FlextLdifSettings(BaseModel):
         default=True,
         description="Enable strict RFC validation"
     )
-```
+```text
 
 ## Troubleshooting
 
@@ -465,7 +465,7 @@ if config.is_valid():
     print("Configuration is valid")
 else:
     print("Configuration has errors")
-```
+```text
 
 ## Examples
 
@@ -523,7 +523,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
+```text
 
 ## Reference
 
@@ -531,3 +531,4 @@ if __name__ == "__main__":
 - Environment Variables
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.0/)
 - Configuration Best Practices
+````

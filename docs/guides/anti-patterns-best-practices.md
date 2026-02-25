@@ -57,7 +57,7 @@ ______________________________________________________________________
 
 **Problem**: Raising exceptions for normal business errors creates unpredictable control flow.
 
-```python
+````python
 # ❌ ANTI-PATTERN - Exception-based
 def validate_user(data: dict) -> User:
     """Returns User or raises exception."""
@@ -72,7 +72,7 @@ try:
     user = validate_user(data)
 except ValueError as e:
     print(f"Validation failed: {e}")
-```
+```text
 
 **Why it's wrong**:
 
@@ -102,7 +102,7 @@ if result.is_success:
     user = result.value
 else:
     print(f"Validation failed: {result.error}")
-```
+```text
 
 **Benefits**:
 
@@ -126,7 +126,7 @@ def load_config() -> dict:
     except Exception:
         pass  # SILENT FAILURE!
     return {}
-```
+```text
 
 **Why it's wrong**:
 
@@ -157,7 +157,7 @@ def load_config() -> FlextResult[dict]:
             f"Invalid JSON in config: {e}",
             error_code="CONFIG_PARSE_ERROR",
         )
-```
+```text
 
 **Benefits**:
 
@@ -174,7 +174,7 @@ def load_config() -> FlextResult[dict]:
 # ❌ ANTI-PATTERN - Missing context
 result = FlextResult[dict].fail("An error occurred")
 # No error code, no metadata - hard to debug
-```
+```text
 
 **Solution**: Include structured error information
 
@@ -192,7 +192,7 @@ result = FlextResult[dict].fail(
         "last_error": "Connection timeout",
     },
 )
-```
+```text
 
 ______________________________________________________________________
 
@@ -209,7 +209,7 @@ from typing import Any
 def process_data(data: Any) -> Any:
     """Returns Any - type checker can't help."""
     return data.something()  # IDE doesn't know what methods are available
-```
+```text
 
 **Why it's wrong**:
 
@@ -239,7 +239,7 @@ class Container(Generic[T]):
 # Type checker knows exact type when used
 container = Container[str]()
 result = container.process("hello")  # Type is str
-```
+```text
 
 ### Anti-Pattern 5: Untyped Container Retrieval
 
@@ -252,7 +252,7 @@ from flext_core import FlextContainer
 container = FlextContainer.get_global()
 logger = container.get("logger").value  # Type is object
 logger.debug("Message")  # IDE doesn't know if debug() exists
-```
+```text
 
 **Solution**: Use type-safe retrieval
 
@@ -267,7 +267,7 @@ result = container.get_typed("logger", FlextLogger)
 if result.is_success:
     logger: FlextLogger = result.value
     logger.debug("Message")  # IDE knows FlextLogger methods
-```
+```text
 
 ### Anti-Pattern 6: Type Ignores Without Justification
 
@@ -280,7 +280,7 @@ def calculate_total(items: list[Item]) -> Decimal:
     for item in items:
         total += item.price
     return total  # Returns int, not Decimal
-```
+```text
 
 **Solution**: Fix the type error
 
@@ -293,7 +293,7 @@ def calculate_total(items: list[Item]) -> Decimal:
     for item in items:
         total += item.price
     return total
-```
+```text
 
 ______________________________________________________________________
 
@@ -303,12 +303,12 @@ ______________________________________________________________________
 
 **Problem**: Modules importing each other violates layer hierarchy.
 
-```
+```python
 config.py imports → result.py
     ↓
 result.py imports ← config.py
         CIRCULAR!
-```
+```text
 
 ```python
 # config.py
@@ -318,7 +318,7 @@ from flext_core.result import FlextResult  # config is higher than result
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
 from flext_core.settings import FlextSettings  # result is lower than config
-```
+```text
 
 **Why it's wrong**:
 
@@ -329,14 +329,14 @@ from flext_core.settings import FlextSettings  # result is lower than config
 
 **Solution**: Respect layer hierarchy (only import downward)
 
-```
+```python
 Layer 0: FlextConstants, t, p (no imports from other layers)
 Layer 0.5: FlextRuntime (imports Layer 0 only)
 Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
 Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
 Layer 3: h, FlextDispatcher (imports Layer 0-2 only)
 Layer 4: FlextSettings, FlextLogger (imports all lower layers)
-```
+```text
 
 ```python
 # ✅ CORRECT - Respect hierarchy
@@ -347,7 +347,7 @@ from flext_core.constants import FlextConstants
 # result.py (Layer 1) - imports only from Layer 0
 from flext_core.constants import FlextConstants
 from flext_core.typings import t
-```
+```text
 
 ### Anti-Pattern 8: Multiple Exports per Module
 
@@ -368,7 +368,7 @@ class ValueObject:  # Third export - WRONG!
 # In __init__.py
 from flext_core.models import FlextModels, DomainModel, ValueObject
 # Violates single class per module rule
-```
+```text
 
 **Why it's wrong**:
 
@@ -395,7 +395,7 @@ class FlextModels:
 # In __init__.py
 from flext_core.models import FlextModels
 # Clear, single responsibility
-```
+```text
 
 ### Anti-Pattern 9: God Objects
 
@@ -425,7 +425,7 @@ class FlextMeltano:
         pass
 
     # ... 100+ more methods
-```
+```text
 
 **Why it's wrong**:
 
@@ -457,7 +457,7 @@ class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
     def run_tap(self, config: dict) -> FlextResult[bool]:
         pass
-```
+```text
 
 ______________________________________________________________________
 
@@ -478,7 +478,7 @@ def service_b():
     return container.get("logger")
 
 # service_a and service_b get different logger instances!
-```
+```text
 
 **Why it's wrong**:
 
@@ -501,7 +501,7 @@ def service_b():
 
 # Both get same logger instance
 assert service_a() is service_b()
-```
+```text
 
 ### Anti-Pattern 11: Not Checking Container Results
 
@@ -514,7 +514,7 @@ from flext_core import FlextContainer
 container = FlextContainer.get_global()
 logger = container.get("logger").value  # May crash
 service = container.get("non_existent").value  # CRASH!
-```
+```text
 
 **Why it's wrong**:
 
@@ -539,7 +539,7 @@ if logger_result.is_failure:
 
 logger = logger_result.value
 logger.info("Service started")
-```
+```text
 
 ______________________________________________________________________
 
@@ -574,7 +574,7 @@ try:
     user = User(email="invalid", age=-5)
 except ValidationError as e:
     print(f"Validation failed: {e}")
-```
+```text
 
 **Solution**: Wrap Pydantic validation in FlextResult
 
@@ -605,7 +605,7 @@ if result.is_success:
     user = result.value
 else:
     print(f"User creation failed: {result.error}")
-```
+```text
 
 ### Anti-Pattern 13: Mutable Value Objects
 
@@ -626,7 +626,7 @@ money.amount = 50.0  # Can be changed - violates value semantics!
 if money1 == money2:
     # Are they really equal? amount might have been modified elsewhere
     pass
-```
+```text
 
 **Why it's wrong**:
 
@@ -652,7 +652,7 @@ money = Money(amount=Decimal("100"), currency="USD")
 money.amount = Decimal("50")  # TypeError: frozen object cannot be modified
 
 # Now safe - value objects can't be modified
-```
+```text
 
 ______________________________________________________________________
 
@@ -674,7 +674,7 @@ def connect_database():
         password="secret123",  # SECURITY ISSUE!
     )
     return connection
-```
+```text
 
 **Why it's wrong**:
 
@@ -710,7 +710,7 @@ def connect_database():
         password=str(db_config.password),
     )
     return connection
-```
+```text
 
 Usage:
 
@@ -722,7 +722,7 @@ DB_USER=REDACTED_LDAP_BIND_PASSWORD DB_PASSWORD=dev_pass python app.py
 # Production
 DB_HOST=prod.db.example.com DB_PORT=5432 DB_DATABASE=flext_prod \
 DB_USER=prod_user DB_PASSWORD=$DB_PASSWORD python app.py
-```
+```text
 
 ### Anti-Pattern 15: No Configuration Validation
 
@@ -738,7 +738,7 @@ config = {
 
 # Later in code - crashes with cryptic error
 time.sleep(config["timeout"])  # TypeError: float argument required
-```
+```text
 
 **Solution**: Validate configuration
 
@@ -770,7 +770,7 @@ try:
 except ValidationError as e:
     print(f"Config validation failed:\n{e}")
     # Clear errors, easy to fix
-```
+```text
 
 ______________________________________________________________________
 
@@ -848,3 +848,4 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
+````

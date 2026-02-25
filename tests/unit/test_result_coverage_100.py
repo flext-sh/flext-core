@@ -92,7 +92,7 @@ class TestrCoverage:
         """Test creating success results with different value types."""
         result = r[object].ok(value)
         # Use TestUtilities for success check, then direct value check for object type
-        _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+        _ResultAssertions.assert_result_success(result)
         assert result.value == expected
 
     def test_ok_rejects_none_value(self) -> None:
@@ -111,7 +111,7 @@ class TestrCoverage:
     def test_fail_with_error_code(self) -> None:
         """Test creating failure with error code."""
         result: r[str] = r[str].fail("Error", error_code="TEST_CODE")
-        _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+        _ResultAssertions.assert_result_failure(result)
         assert result.error_code == "TEST_CODE"
 
     def test_fail_with_error_data(self) -> None:
@@ -313,7 +313,7 @@ class TestrCoverage:
         def recovery(error: str) -> r[str]:
             return r[str].ok(f"Recovered from: {error}")
 
-        result: r[str] = r[str].fail("error").lash(recovery)  # type: ignore[arg-type]
+        result: r[str] = r[str].fail("error").lash(recovery)
         _ResultAssertions.assert_success_with_value(
             result,
             "Recovered from: error",
@@ -337,7 +337,7 @@ class TestrCoverage:
         def failing_recovery(error: str) -> r[str]:
             return r[str].fail("recovery also failed")
 
-        result: r[str] = r[str].fail("original").lash(failing_recovery)  # type: ignore[arg-type]
+        result: r[str] = r[str].fail("original").lash(failing_recovery)
         _ResultAssertions.assert_failure_with_error(
             result,
             "recovery also failed",

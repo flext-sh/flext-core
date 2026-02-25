@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import importlib
 from types import SimpleNamespace
+from typing import cast
 
-from flext_core import FlextRegistry, FlextResult, FlextHandlers, c, h, m, r
+from flext_core import FlextRegistry, FlextResult, FlextHandlers, c, h, m, p, r
 from flext_core.typings import JsonValue
 
 
@@ -19,8 +20,8 @@ class _BrokenListRegistry(FlextRegistry):
         return super().__getattribute__(name)
 
 
-def _success_details(reg_id: str) -> m.HandlerRegistrationDetails:
-    return m.HandlerRegistrationDetails(
+def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
+    return m.Handler.RegistrationDetails(
         registration_id=reg_id,
         handler_mode=c.Cqrs.HandlerType.COMMAND,
         timestamp="",
@@ -43,30 +44,30 @@ def test_summary_properties_and_subclass_storage_reset() -> None:
 
 def test_execute_and_register_handler_failure_paths(monkeypatch) -> None:
     registry = FlextRegistry()
-    registry._dispatcher = None
+    setattr(registry, "_dispatcher", None)
     execute_result = registry.execute()
     assert execute_result.is_failure
 
     class _FailDispatcher:
         def register_handler(self, *_args: object):
-            return r[m.HandlerRegistrationResult].fail("dispatcher-fail")
+            return r[m.Handler.RegistrationResult].fail("dispatcher-fail")
 
-    registry._dispatcher = _FailDispatcher()
+    setattr(registry, "_dispatcher", cast(p.CommandBus, _FailDispatcher()))
     reg_result = registry.register_handler(_Handler())
     assert reg_result.is_failure
     assert reg_result.error == "dispatcher-fail"
 
     class _OkDispatcher:
         def register_handler(self, *_args: object):
-            return r[m.HandlerRegistrationResult].ok(
-                m.HandlerRegistrationResult(
+            return r[m.Handler.RegistrationResult].ok(
+                m.Handler.RegistrationResult(
                     handler_name="h",
                     status="active",
                     mode="command",
                 )
             )
 
-    registry._dispatcher = _OkDispatcher()
+    setattr(registry, "_dispatcher", cast(p.CommandBus, _OkDispatcher()))
     monkeypatch.setattr(
         FlextRegistry, "_create_registration_details", lambda *_args: None
     )
@@ -79,14 +80,14 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch) -> None:
     discovered_handler = _Handler()
 
     def fake_scan(_module: object):
-        cfg = m.Handler.DecoratorConfig(command=str)
+        cfg = m.Handler.DecoratorConfig(command=str, middleware=[])
         return [("x", discovered_handler.handle, cfg)]
 
     monkeypatch.setattr(h.Discovery, "scan_module", staticmethod(fake_scan))
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",
-        lambda self, handler: r[m.HandlerRegistrationDetails].ok(
+        lambda self, handler: r[m.Handler.RegistrationDetails].ok(
             _success_details(getattr(handler, "__name__", "h"))
         ),
     )
@@ -95,11 +96,11 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch) -> None:
 
     registry = FlextRegistry()
     query_details = registry._create_registration_details(
-        m.HandlerRegistrationResult(handler_name="q", status="active", mode="query"),
+        m.Handler.RegistrationResult(handler_name="q", status="active", mode="query"),
         "k1",
     )
     event_details = registry._create_registration_details(
-        m.HandlerRegistrationResult(handler_name="e", status="active", mode="event"),
+        m.Handler.RegistrationResult(handler_name="e", status="active", mode="event"),
         "k2",
     )
     assert query_details.handler_mode == c.Cqrs.HandlerType.QUERY
@@ -119,24 +120,24 @@ def test_summary_error_paths_and_bindings_failures(monkeypatch) -> None:
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",
-        lambda self, _handler: r[m.HandlerRegistrationDetails].fail("x"),
+        lambda self, _handler: r[m.Handler.RegistrationDetails].fail("x"),
     )
     batch = registry.register_handlers([_Handler()])
     assert batch.is_failure
 
     class _FailBindingDispatcher:
         def register_handler(self, *_args: object):
-            return r[m.HandlerRegistrationResult].fail("bind-fail")
+            return r[m.Handler.RegistrationResult].fail("bind-fail")
 
     class _RaiseBindingDispatcher:
         def register_handler(self, *_args: object):
             raise RuntimeError("bind-ex")
 
-    registry._dispatcher = _FailBindingDispatcher()
+    setattr(registry, "_dispatcher", cast(p.CommandBus, _FailBindingDispatcher()))
     failed = registry.register_bindings({str: _Handler()})
     assert failed.is_failure
 
-    registry._dispatcher = _RaiseBindingDispatcher()
+    setattr(registry, "_dispatcher", cast(p.CommandBus, _RaiseBindingDispatcher()))
     raised = registry.register_bindings({str: _Handler()})
     assert raised.is_failure
 

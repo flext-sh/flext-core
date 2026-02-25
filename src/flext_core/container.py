@@ -19,7 +19,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Self, TypeGuard, override
 
-from dependency_injector import containers as di_containers, providers as di_providers
+from dependency_injector import containers as di_containers
+from dependency_injector import providers as di_providers
 from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
@@ -277,10 +278,11 @@ class FlextContainer(FlextRuntime, p.DI):
         if provide_helper is None or not callable(provide_helper):
             msg = "DI bridge Provide helper not initialized"
             raise RuntimeError(msg)
+        provide_fn: Callable[[str], object] = provide_helper
 
         # After narrowing, provide_helper is confirmed callable
         def provide_callable(name: str) -> t.RegisterableService:
-            provided = provide_helper(name)
+            provided = provide_fn(name)
             if self._is_registerable_service(provided):
                 return provided
             msg = "DI bridge Provide helper returned unsupported type"

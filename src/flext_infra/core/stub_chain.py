@@ -16,7 +16,6 @@ from pathlib import Path
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
-
 from flext_infra.constants import c
 from flext_infra.models import m
 from flext_infra.subprocess import CommandRunner
@@ -123,11 +122,13 @@ class StubSupplyChain:
             passed = len(violations) == 0
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
             return r[m.ValidationReport].ok(
-                m.ValidationReport.model_validate({
-                    "passed": passed,
-                    "violations": violations,
-                    "summary": summary,
-                }),
+                m.ValidationReport.model_validate(
+                    {
+                        "passed": passed,
+                        "violations": violations,
+                        "summary": summary,
+                    }
+                ),
             )
         except (OSError, TypeError, ValueError) as exc:
             return r[m.ValidationReport].fail(
@@ -173,11 +174,13 @@ class StubSupplyChain:
         output = ""
         if result.is_success:
             output = result.value.stdout
-        return sorted({
-            m.group(1).strip()
-            for m in _MYPY_HINT_RE.finditer(output)
-            if m.group(1).strip()
-        })
+        return sorted(
+            {
+                m.group(1).strip()
+                for m in _MYPY_HINT_RE.finditer(output)
+                if m.group(1).strip()
+            }
+        )
 
     def _run_pyrefly_missing(self, project_dir: Path) -> list[str]:
         """Run pyrefly check and extract missing imports."""

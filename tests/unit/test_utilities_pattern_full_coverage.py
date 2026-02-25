@@ -21,8 +21,8 @@ class TestPatternMatch:
         """Returns result of first matching predicate's handler."""
         result = u.Pattern.match(
             5,
-            (lambda x: x > 10, lambda x: "large"),
-            (lambda x: x > 0, lambda x: "positive"),
+            (lambda value: value > 10, lambda value: "large"),
+            (lambda value: value > 0, lambda value: "positive"),
         )
         assert result == "positive"
 
@@ -30,8 +30,8 @@ class TestPatternMatch:
         """When multiple patterns match, returns the FIRST match."""
         result = u.Pattern.match(
             15,
-            (lambda x: x > 10, lambda x: "large"),
-            (lambda x: x > 0, lambda x: "positive"),
+            (lambda value: value > 10, lambda value: "large"),
+            (lambda value: value > 0, lambda value: "positive"),
         )
         assert result == "large"
 
@@ -39,9 +39,9 @@ class TestPatternMatch:
         """When no pattern matches, default handler is called."""
         result = u.Pattern.match(
             -5,
-            (lambda x: x > 10, lambda x: "large"),
-            (lambda x: x > 0, lambda x: "positive"),
-            default=lambda x: f"negative: {x}",
+            (lambda value: value > 10, lambda value: "large"),
+            (lambda value: value > 0, lambda value: "positive"),
+            default=lambda value: f"negative: {value}",
         )
         assert result == "negative: -5"
 
@@ -50,15 +50,15 @@ class TestPatternMatch:
         with pytest.raises(ValueError, match="No pattern matched"):
             u.Pattern.match(
                 -5,
-                (lambda x: x > 10, lambda x: "large"),
-                (lambda x: x > 0, lambda x: "positive"),
+                (lambda value: value > 10, lambda value: "large"),
+                (lambda value: value > 0, lambda value: "positive"),
             )
 
     def test_match_with_no_patterns_and_default(self) -> None:
         """With zero patterns and a default, returns default result."""
         result = u.Pattern.match(
             42,
-            default=lambda x: x * 2,
+            default=lambda value: value * 2,
         )
         assert result == 84
 
@@ -71,6 +71,6 @@ class TestPatternMatch:
         """Handler receives the original value passed to match."""
         result = u.Pattern.match(
             "hello",
-            (lambda x: isinstance(x, str), lambda x: x.upper()),
+            (lambda value: isinstance(value, str), lambda value: value.upper()),
         )
         assert result == "HELLO"

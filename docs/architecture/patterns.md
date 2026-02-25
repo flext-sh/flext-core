@@ -28,7 +28,7 @@ Common architectural patterns used in FLEXT-Core and best practices for applying
 
 **Pattern:** Use `FlextResult[T]` for composable error handling.
 
-```python
+````python
 from flext_core import FlextResult
 
 def validate_email(email: str) -> FlextResult[str]:
@@ -47,7 +47,7 @@ result = (
     .flat_map(check_available)
     .map(lambda e: f"Ready: {e}")
 )
-```
+```text
 
 **Benefits:**
 
@@ -74,7 +74,7 @@ logger_result = container.get("logger")
 if logger_result.is_success:
     logger = logger_result.value
     logger.info("Message")
-```
+```text
 
 **Benefits:**
 
@@ -106,7 +106,7 @@ class OrderService(FlextService):
     def place_order(self, customer_id: str, items: list) -> FlextResult[Order]:
         # Business logic here
         pass
-```
+```text
 
 **Benefits:**
 
@@ -146,7 +146,7 @@ def get_user_handler(query: GetUserQuery) -> FlextResult[User]:
 dispatcher.register_handler(CreateUserCommand, create_user_handler)
 dispatcher.register_handler(GetUserQuery, get_user_handler)
 result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
-```
+```text
 
 **Benefits:**
 
@@ -181,7 +181,7 @@ class EmailNotificationSubscriber:
     def on_user_created(self, event: UserCreatedEvent):
         # Send welcome email
         send_email(event.email, "Welcome!")
-```
+```text
 
 **Benefits:**
 
@@ -222,7 +222,7 @@ class UserService(FlextService):
 
     def create_user(self, user: User) -> FlextResult[User]:
         return self.repository.save(user)
-```
+```text
 
 **Benefits:**
 
@@ -260,7 +260,7 @@ class UserService:
             self.cache.set(f"user:{user_id}", user, ttl=3600)
 
         return result
-```
+```text
 
 **Benefits:**
 
@@ -312,7 +312,7 @@ if result.is_success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
-```
+```text
 
 **Benefits:**
 
@@ -339,7 +339,7 @@ def guarded_handler(message):
     return handle(message)
 
 dispatcher.register_handler(MessageType, guarded_handler)
-```
+```text
 
 **Benefits:**
 
@@ -362,7 +362,7 @@ class UserService:
 class UserService:
     def __init__(self, logger):
         self.logger = logger
-```
+```text
 
 **When acceptable:**
 
@@ -394,7 +394,7 @@ class LoggerAdapter(FlextLogger):
 # Use
 external = ExternalLogger()
 logger = LoggerAdapter(external)
-```
+```text
 
 **Benefits:**
 
@@ -423,7 +423,7 @@ class UserFactory:
 result = UserFactory.create_user("REDACTED_LDAP_BIND_PASSWORD", name="Alice")
 if result.is_success:
     REDACTED_LDAP_BIND_PASSWORD = result.value
-```
+```text
 
 **Benefits:**
 
@@ -463,3 +463,4 @@ Use these patterns to build maintainable, scalable FLEXT-Core applications.
 - Service Patterns Guide - Domain service implementation
 - Dependency Injection Advanced - DI container patterns
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
+````

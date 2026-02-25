@@ -547,9 +547,9 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
         # Business Rule: validate accepts AcceptableMessageType compatible objects
         # object is compatible with AcceptableMessageType at runtime
-        message_typed = cast("t.AcceptableMessageType", message)
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(message_typed)
+        message_typed = cast(t.AcceptableMessageType, message)
+        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
+        result = handler_typed.validate(cast(str, message_typed))
         assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_validate_message_protocol(self) -> None:
@@ -634,9 +634,9 @@ class TestFlextHandlers:
         # Business Rule: validate accepts AcceptableMessageType, but None is passed to test error handling
         # None is intentionally passed to test error handling - cast to satisfy type checker
         # The cast allows None to be passed for testing error handling scenarios
-        none_message = cast("t.AcceptableMessageType", None)
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(none_message)
+        none_message = cast(t.AcceptableMessageType, None)
+        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
+        result = handler_typed.validate(cast(str, none_message))
         u.Tests.Result.assert_result_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
@@ -653,9 +653,9 @@ class TestFlextHandlers:
         msg = TestMessage(value="test")
         # Business Rule: validate accepts Pydantic BaseModel instances compatible with AcceptableMessageType
         # TestMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast("t.AcceptableMessageType", msg)
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(msg_typed)
+        msg_typed = cast(t.AcceptableMessageType, msg)
+        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
+        result = handler_typed.validate(cast(str, msg_typed))
         u.Tests.Result.assert_result_success(result)
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -674,9 +674,9 @@ class TestFlextHandlers:
         msg = DataClassMessage(value="test", number=42)
         # Business Rule: validate accepts dataclass instances compatible with AcceptableMessageType
         # DataClassMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast("t.AcceptableMessageType", cast("object", msg))
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(msg_typed)
+        msg_typed = cast(t.AcceptableMessageType, cast(object, msg))
+        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
+        result = handler_typed.validate(cast(str, msg_typed))
         u.Tests.Result.assert_result_success(result)
 
     def test_handlers_slots_message_validation(self) -> None:
@@ -697,9 +697,9 @@ class TestFlextHandlers:
         msg = SlotsMessage(value="test", number=42)
         # Business Rule: validate accepts __slots__ class instances compatible with AcceptableMessageType
         # SlotsMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast("t.AcceptableMessageType", cast("object", msg))
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(msg_typed)
+        msg_typed = cast(t.AcceptableMessageType, cast(object, msg))
+        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
+        result = handler_typed.validate(cast(str, msg_typed))
         u.Tests.Result.assert_result_success(result)
 
 

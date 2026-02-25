@@ -318,7 +318,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        case: FixtureCaseDict = kwargs  # type: ignore[assignment]
+        case: FixtureCaseDict = kwargs
         self._cases.append(case)
         return self
 

@@ -84,18 +84,20 @@ class FlextInfraConstants:
     class Excluded:
         """Directory exclusion sets for analysis."""
 
-        COMMON_EXCLUDED_DIRS: Final[frozenset[str]] = frozenset({
-            ".git",
-            ".venv",
-            "node_modules",
-            "__pycache__",
-            "dist",
-            "build",
-            ".reports",
-            ".mypy_cache",
-            ".pytest_cache",
-            ".ruff_cache",
-        })
+        COMMON_EXCLUDED_DIRS: Final[frozenset[str]] = frozenset(
+            {
+                ".git",
+                ".venv",
+                "node_modules",
+                "__pycache__",
+                "dist",
+                "build",
+                ".reports",
+                ".mypy_cache",
+                ".pytest_cache",
+                ".ruff_cache",
+            }
+        )
         """Common directories to exclude from analysis across all scripts."""
 
         DOC_EXCLUDED_DIRS: Final[frozenset[str]] = COMMON_EXCLUDED_DIRS | {"site"}

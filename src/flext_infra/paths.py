@@ -12,14 +12,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
-
 from flext_infra.constants import c
 
-_WORKSPACE_MARKERS: frozenset[str] = frozenset({
-    ".git",
-    c.Files.MAKEFILE_FILENAME,
-    c.Files.PYPROJECT_FILENAME,
-})
+_WORKSPACE_MARKERS: frozenset[str] = frozenset(
+    {
+        ".git",
+        c.Files.MAKEFILE_FILENAME,
+        c.Files.PYPROJECT_FILENAME,
+    }
+)
 
 
 class PathResolver:

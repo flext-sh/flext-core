@@ -14,10 +14,10 @@ from collections.abc import MutableMapping
 from pathlib import Path
 
 import tomlkit
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
 from tomlkit.items import Table
 
+from flext_core.result import FlextResult, r
+from flext_core.typings import t
 from flext_infra.constants import c
 
 type TomlScalar = str | int | float | bool | None

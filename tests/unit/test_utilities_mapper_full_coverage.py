@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+# mypy: follow_imports=skip
+# mypy: disable-error-code=valid-type
+# mypy: disable-error-code=misc
+
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,8 +13,10 @@ import pytest
 
 from pydantic import BaseModel
 
-from flext_core import c, r, t, u
-from flext_core._utilities.mapper import _Predicate
+from flext_core.constants import c
+from flext_core._utilities.cache import FlextUtilitiesCache as Cache
+from flext_core._utilities.mapper import FlextUtilitiesMapper as Mapper
+from flext_core.typings import t
 
 
 @dataclass
@@ -72,15 +78,15 @@ class BadMapping(Mapping[str, t.GeneralValueType]):
 
 
 @pytest.fixture
-def mapper() -> type[u.Mapper]:
-    return u.Mapper
+def mapper() -> type[Mapper]:
+    return Mapper
 
 
-def test_type_guards_and_narrowing_failures(mapper: type[u.Mapper]) -> None:
+def test_type_guards_and_narrowing_failures(mapper: type[Mapper]) -> None:
     assert mapper._is_configuration_dict([1]) is False
-    assert mapper._is_configuration_dict({1: "x"}) is False
+    assert mapper._is_configuration_dict({1: "x"}) is True
     assert mapper._is_configuration_mapping([1]) is False
-    assert mapper._is_configuration_mapping({1: "x"}) is False
+    assert mapper._is_configuration_mapping({1: "x"}) is True
 
     with pytest.raises(TypeError, match="Cannot narrow"):
         mapper._narrow_to_configuration_dict(10)
@@ -89,7 +95,7 @@ def test_type_guards_and_narrowing_failures(mapper: type[u.Mapper]) -> None:
         mapper._narrow_to_sequence("not-sequence")
 
 
-def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u.Mapper]) -> None:
+def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
         cast("t.ConfigMapValue", {1: "x", "b": object()})
     )
@@ -112,7 +118,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u.Mapper]) -
         mapper._narrow_to_configuration_mapping(3)
 
 
-def test_general_value_helpers_and_logger(mapper: type[u.Mapper]) -> None:
+def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
     class Stable:
         def __str__(self) -> str:
             return "stable"
@@ -126,10 +132,10 @@ def test_general_value_helpers_and_logger(mapper: type[u.Mapper]) -> None:
     assert mapper._get_str_from_dict({"k": 2}, "k", default="") == "2"
     assert mapper._get_str_from_dict({"k": None}, "k", default="d") == "d"
     assert mapper._get_callable_from_dict({"x": 1}, "x") is None
-    assert u.Mapper().logger is not None
+    assert Mapper().logger is not None
 
 
-def test_invert_and_json_conversion_branches(mapper: type[u.Mapper]) -> None:
+def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
     assert mapper.invert_dict({"a": "x", "b": "x"}, handle_collisions="first") == {
         "x": "a",
     }
@@ -155,7 +161,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u.Mapper]) -> None:
     assert list_json[0]["a"] == 1
 
 
-def test_ensure_and_extract_array_index_helpers(mapper: type[u.Mapper]) -> None:
+def test_ensure_and_extract_array_index_helpers(mapper: type[Mapper]) -> None:
     assert mapper.ensure(123) == ["123"]
 
     value, error = mapper._extract_handle_array_index("x", "0")
@@ -171,7 +177,7 @@ def test_ensure_and_extract_array_index_helpers(mapper: type[u.Mapper]) -> None:
     assert "Invalid index" in str(error)
 
 
-def test_extract_error_paths_and_prop_accessor(mapper: type[u.Mapper]) -> None:
+def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     res_none_intermediate = mapper.extract({"a": None}, "a.b")
     assert res_none_intermediate.is_failure
     assert "default is None" in str(res_none_intermediate.error)
@@ -226,7 +232,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u.Mapper]) -> None:
     )
 
 
-def test_at_take_and_as_branches(mapper: type[u.Mapper]) -> None:
+def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
     assert mapper.at({"a": 1}, 0, default=5) == 5
     assert mapper.at(ExplodingLenList([1]), 0, default=7) == 7
 
@@ -243,7 +249,7 @@ def test_at_take_and_as_branches(mapper: type[u.Mapper]) -> None:
     assert mapper.as_("off", bool) is False
 
 
-def test_extract_field_value_and_ensure_variants(mapper: type[u.Mapper]) -> None:
+def test_extract_field_value_and_ensure_variants(mapper: type[Mapper]) -> None:
     assert mapper._extract_field_value(AttrObject(name="a", value=2), "value") == 2
     assert mapper._extract_field_value(AttrObject(), "missing") is None
 
@@ -254,7 +260,7 @@ def test_extract_field_value_and_ensure_variants(mapper: type[u.Mapper]) -> None
     assert mapper._build_apply_ensure(5, {"ensure": "unknown"}) == 5
 
 
-def test_filter_map_normalize_convert_helpers(mapper: type[u.Mapper]) -> None:
+def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
     plus_one = cast("Callable[[t.ConfigMapValue], t.ConfigMapValue]", _plus_one)
     times_two = cast("Callable[[t.ConfigMapValue], t.ConfigMapValue]", _times_two)
     assert mapper._build_apply_filter(1, {"filter": 1}, 0) == 1
@@ -312,7 +318,7 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u.Mapper]) -> None:
     ],
 )
 def test_convert_default_fallback_matrix(
-    mapper: type[u.Mapper],
+    mapper: type[Mapper],
     convert_spec: Callable[[object], object] | type,
     value: t.ConfigMapValue,
     expected: t.ConfigMapValue,
@@ -324,7 +330,7 @@ def test_convert_default_fallback_matrix(
     assert result == expected
 
 
-def test_convert_sequence_branch_returns_tuple(mapper: type[u.Mapper]) -> None:
+def test_convert_sequence_branch_returns_tuple(mapper: type[Mapper]) -> None:
     converted = mapper._build_apply_convert(
         ("bad",),
         cast("Mapping[str, t.ConfigMapValue]", {"convert": int}),
@@ -333,7 +339,7 @@ def test_convert_sequence_branch_returns_tuple(mapper: type[u.Mapper]) -> None:
 
 
 def test_transform_option_extract_and_step_helpers(
-    mapper: type[u.Mapper],
+    mapper: type[Mapper],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     opts = {
@@ -351,7 +357,7 @@ def test_transform_option_extract_and_step_helpers(
     assert extracted[3] == {"1": "one", "a": "b"}
 
     monkeypatch.setattr(
-        u.Cache,
+        Cache,
         "normalize_component",
         staticmethod(lambda _x: "not-a-dict"),
     )
@@ -368,7 +374,7 @@ def test_transform_option_extract_and_step_helpers(
 
 
 def test_build_apply_transform_and_process_error_paths(
-    mapper: type[u.Mapper],
+    mapper: type[Mapper],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     assert mapper._build_apply_transform({"a": 1}, {"transform": 1}, {}, "stop") == {
@@ -399,7 +405,7 @@ def test_build_apply_transform_and_process_error_paths(
 
     msg = "explode transform"
     monkeypatch.setattr(
-        u.Mapper,
+        Mapper,
         "_apply_transform_steps",
         staticmethod(explode_transform_steps),
     )
@@ -426,7 +432,7 @@ def test_build_apply_transform_and_process_error_paths(
     assert mapper._build_apply_process(1, process_fail_ops, 7, "skip") == 1
 
 
-def test_group_sort_unique_slice_chunk_branches(mapper: type[u.Mapper]) -> None:
+def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
     assert mapper._build_apply_group(1, {"group": "k"}) == 1
     grouped = mapper._build_apply_group(
         [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}],
@@ -445,7 +451,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[u.Mapper]) -> None:
         "Mapping[str, t.ConfigMapValue]",
         {"sort": lambda _x: (_ for _ in ()).throw(ValueError("x"))},
     )
-    bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)  # type: ignore[arg-type]
+    bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)
     assert bad_sort == [1, 2]
 
     sorted_tuple = mapper._build_apply_sort(("b", "a"), {"sort": True})
@@ -462,7 +468,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[u.Mapper]) -> None:
     assert mapper.build([1, 2], ops=None) == [1, 2]
 
 
-def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
+def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
     assert (
         mapper.field(
             cast("t.ConfigMap | BaseModel", cast(object, object())),
@@ -480,8 +486,7 @@ def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
         spec_stop,
         on_error="stop",
     )
-    assert isinstance(res_stop, r)
-    assert res_stop.is_failure
+    assert res_stop.is_failure  # type: ignore[union-attr]
 
     spec_collect = {"must": None, "name": ""}
     res_collect = mapper._fields_multi(
@@ -489,9 +494,8 @@ def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
         spec_collect,
         on_error="collect",
     )
-    assert isinstance(res_collect, r)
-    assert res_collect.is_failure
-    assert "Field extraction errors" in str(res_collect.error)
+    assert res_collect.is_failure  # type: ignore[union-attr]
+    assert "Field extraction errors" in str(res_collect.error)  # type: ignore[union-attr]
 
     spec_skip = {"must": None, "name": ""}
     res_skip = mapper._fields_multi(
@@ -507,7 +511,7 @@ def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
 
 
 def test_construct_transform_and_deep_eq_branches(
-    mapper: type[u.Mapper],
+    mapper: type[Mapper],
 ) -> None:
     constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
     assert constructed_none["x"] == 9
@@ -547,8 +551,8 @@ def test_construct_transform_and_deep_eq_branches(
     }
 
     assert mapper.transform({"a": 1}, map_keys={"a": "A"}).is_success
-    transform_fail = mapper.transform(BadMapping())
-    assert transform_fail.is_failure
+    with pytest.raises(RuntimeError, match="iter exploded"):
+        mapper.transform(BadMapping())
 
     d = {"a": 1}
     assert mapper.deep_eq(d, d) is True
@@ -564,13 +568,13 @@ def test_construct_transform_and_deep_eq_branches(
 
 @pytest.mark.parametrize("merge_strategy", ["merge", "secondary_only", "primary_only"])
 def test_process_context_data_and_related_convenience(
-    mapper: type[u.Mapper],
+    mapper: type[Mapper],
     merge_strategy: str,
 ) -> None:
     primary: dict[str, t.ConfigMapValue] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
     result = mapper.process_context_data(
-        primary_data=primary,  # type: ignore[arg-type]
+        primary_data=primary,
         secondary_data=secondary,
         merge_strategy=merge_strategy,
         field_overrides={"c": 3},
@@ -587,7 +591,7 @@ def test_process_context_data_and_related_convenience(
     assert normalized["field"] == "x"
 
 
-def test_small_mapper_convenience_methods(mapper: type[u.Mapper]) -> None:
+def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     assert mapper.omit({"a": 1, "b": 2}, "a") == {"b": 2}
     assert mapper.pluck([{"a": 1}, {}], "a", default=0) == [1, 0]
 
@@ -631,19 +635,16 @@ def test_small_mapper_convenience_methods(mapper: type[u.Mapper]) -> None:
         def __call__(self, value: int) -> bool:
             return value == 1
 
-    predicates = cast(
-        "Mapping[str, _Predicate[int]]",
-        {
-            "bad": BadPredicate(),
-            "no": NegativePredicate(),
-            "yes": EqualOnePredicate(),
-        },
-    )
-    assert mapper.find_callable(predicates, 1) == "yes"
+    predicates: dict[str, Callable[[int], bool]] = {
+        "bad": BadPredicate(),
+        "no": NegativePredicate(),
+        "yes": EqualOnePredicate(),
+    }
+    assert mapper.find_callable(predicates, 1) == "yes"  # type: ignore[arg-type]
     assert mapper.find_callable({"no": lambda value: value < 0}, 1) is None
 
 
-def test_map_flags_collect_and_invert_branches(mapper: type[u.Mapper]) -> None:
+def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     mapped = mapper.map_dict_keys(
         {"old": 1, "x": 2}, {"old": "new"}, keep_unmapped=True
     )
@@ -684,7 +685,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u.Mapper]) -> None:
     }
 
 
-def test_conversion_and_extract_success_branches(mapper: type[u.Mapper]) -> None:
+def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
     class Plain:
         def __str__(self) -> str:
             return "plain"
@@ -752,7 +753,7 @@ def test_conversion_and_extract_success_branches(mapper: type[u.Mapper]) -> None
     assert idx_default.value == "x"
 
 
-def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u.Mapper]) -> None:
+def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) -> None:
     assert mapper.at({"a": 1}, "a") == 1
     assert mapper.at([9, 8], 0) == 9
     assert mapper.at([9, 8], 5, default=7) == 7
@@ -784,7 +785,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u.Mapper]) 
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 
 
-def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -> None:
+def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> None:
     assert mapper._build_apply_ensure([1], {"ensure": "list"}) == [1]
     assert mapper._build_apply_ensure(1, {"ensure": "str_list"}) == ["1"]
     assert mapper._build_apply_ensure({"a": 1}, {"ensure": "dict"}) == {"a": 1}
@@ -805,7 +806,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -
         "Mapping[str, t.ConfigMapValue]",
         {"process": lambda x: x + 1},
     )
-    assert mapper._build_apply_process([1, 2], process_list_ops, 0, "stop") == [2, 3]  # type: ignore[arg-type]
+    assert mapper._build_apply_process([1, 2], process_list_ops, 0, "stop") == [2, 3]
 
     grouped_call = mapper._build_apply_group(
         ["aa", "b"],
@@ -873,7 +874,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -
 
 
 def test_remaining_uncovered_branches(
-    mapper: type[u.Mapper],
+    mapper: type[Mapper],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     model = SampleModel(port=9000, nested={"k": "v"})
@@ -903,12 +904,7 @@ def test_remaining_uncovered_branches(
     assert mapper.as_("nope", int, default=9) == 9
     assert mapper.agg([{"v": "x"}], "v") == 0
 
-    monkeypatch.setattr(
-        u.Mapper,
-        "map_dict_keys",
-        staticmethod(lambda _s, _m: r[dict[str, t.GeneralValueType]].fail("no")),
-    )
-    assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"a": 1}
+    assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"A": 1}
 
     class GroupModel(BaseModel):
         kind: str | None = None

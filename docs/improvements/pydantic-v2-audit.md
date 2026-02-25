@@ -84,7 +84,7 @@ ______________________________________________________________________
 
 **Source Code Evidence**:
 
-```bash
+````bash
 # Check for Pydantic v2 methods
 $ grep -n "model_dump\|model_validate" src/flext_core/models.py | head -7
 924:    if hasattr(self, "model_dump") and hasattr(other, "model_dump"):
@@ -97,7 +97,7 @@ $ grep -n "model_dump\|model_validate" src/flext_core/models.py | head -7
 # Check for old v1 patterns
 $ grep -rn "\.dict()\|\.parse_obj()" src/flext_core/*.py
 # NO RESULTS - Zero v1 patterns
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -136,7 +136,7 @@ model_config = SettingsConfigDict(
         "description": "FLEXT ecosystem configuration",
     },
 )
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -169,7 +169,7 @@ models.py:1152: @model_validator(mode="after")
 # Check for old v1 @validator decorator
 $ grep -rn "@validator" src/flext_core/*.py | grep -v "@field_validator\|@model_validator"
 # NO RESULTS - Zero v1 validators
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -192,7 +192,7 @@ config.py:497:  @model_validator(mode="after")
 models.py:1152: @model_validator(mode="after")
 models.py:1425: @model_validator(mode="after")
 models.py:1499: @model_validator(mode="after")
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -222,7 +222,7 @@ models.py:379:  @computed_field
 models.py:425:  @computed_field
 models.py:707:  @computed_field
 models.py:1008: @computed_field
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -246,7 +246,7 @@ $ grep -n "Annotated\[" src/flext_core/typings.py | head -5
 331:RetryCount = Annotated[
 341:NonEmptyStr = Annotated[
 350:LogLevel = Annotated[
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -278,7 +278,7 @@ class FlextSettings(BaseSettings):
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
         # ... 10 more configuration options
     )
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -304,7 +304,7 @@ def validate_url_format(cls, v):
     """Custom URL validation."""
     # ... validation logic
     return v
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -327,7 +327,7 @@ $ grep -n "Discriminator" src/flext_core/models.py
 1919:    message_type: Discriminator field for union routing (always 'query')
 3582:# Discriminator field for automatic routing based on message_type
 3585:    Discriminator("message_type"),
-```
+```text
 
 **Additional Evidence**:
 
@@ -347,7 +347,7 @@ class Query(BaseModel):
         frozen=True,
         description="Message type discriminator - always 'query'",
     )
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -386,7 +386,7 @@ $ grep -rn "@validator" src/flext_core/*.py | grep -v "@field_validator\|@model_
 # V1 Config class check
 $ grep -rn "class Config:" src/flext_core/*.py
 # NO RESULTS - Only ConfigDict/SettingsConfigDict used
-```
+```text
 
 **Evidence Summary**:
 
@@ -500,7 +500,7 @@ ______________________________________________________________________
    # To:
 
    "See `src/flext_core/config.py` (674 lines)"
-   ```
+```text
 
 ### Medium Priority
 
@@ -600,3 +600,4 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 ______________________________________________________________________
 
 **Next**: Complete Phase 1.6 - API Reference audits
+````

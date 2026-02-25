@@ -381,13 +381,10 @@ class Teste:
             error = e.BaseError("Test error", correlation_id="corr-123")
             assert error.correlation_id == "corr-123"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_METADATA:
-            metadata = u.Tests.ExceptionHelpers.create_metadata_object({
-                "field": "email",
-                "value": "invalid",
-            })
+            metadata = m.ConfigMap(root={"field": "email", "value": "invalid"})
             error = e.BaseError(
                 "Test error",
-                metadata=FlextRuntime.Metadata(attributes=dict(metadata)),
+                metadata=metadata,
             )
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
@@ -592,13 +589,7 @@ class Teste:
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
-            metadata=FlextRuntime.Metadata(
-                attributes=dict(
-                    u.Tests.ExceptionHelpers.create_metadata_object({
-                        "test": "data",
-                    })
-                )
-            ),
+            metadata=m.ConfigMap(root={"test": "data"}),
         )
         assert "test" in exc.metadata.attributes
         assert exc.metadata.attributes["test"] == "data"
@@ -625,12 +616,10 @@ class Teste:
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
-        metadata = u.Tests.ExceptionHelpers.create_metadata_object({
-            "existing": "value",
-        })
+        metadata = m.ConfigMap(root={"existing": "value"})
         error = e.BaseError(
             "Test error",
-            metadata=FlextRuntime.Metadata(attributes=dict(metadata)),
+            metadata=metadata,
             new_field="new_value",
         )
         assert error.metadata.attributes["existing"] == "value"
@@ -702,11 +691,14 @@ class Teste:
         ids=["validation_kwargs", "configuration_kwargs"],
     )
     def test_exception_extra_kwargs(
-        self, error_class: type[e.BaseError], msg: str, custom_attr: str
+        self,
+        error_class: type[e.BaseError],
+        msg: str,
+        custom_attr: Literal["custom_key"],
     ) -> None:
         """Test exception classes with extra_kwargs merging."""
-        error_ctor = cast("Callable[..., e.BaseError]", error_class)
-        error = error_ctor(msg, **{custom_attr: "custom_value"})
+        error_ctor = cast(Callable[..., e.BaseError], error_class)
+        error = error_ctor(msg, **{custom_attr: "custom_value"})  # type: ignore[misc]
         assert error.metadata is not None
         assert custom_attr in error.metadata.attributes
 
@@ -783,7 +775,7 @@ class Teste:
         context: dict[str, t.MetadataAttributeValue] = {
             "correlation_id": "test-correlation-id",
             "metadata": cast(
-                "t.MetadataAttributeValue", metadata_obj
+                "t.MetadataAttributeValue", cast(object, metadata_obj)
             ),  # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
             "auto_log": True,
             "auto_correlation": True,
@@ -830,7 +822,7 @@ class Teste:
         metadata_obj = m.Metadata(attributes={"key": "value"})
         # Convert to Mapping[str, t.MetadataAttributeValue] for _extract_context_values
         context: dict[str, t.MetadataAttributeValue] = {
-            "metadata": cast("t.MetadataAttributeValue", metadata_obj),
+            "metadata": cast("t.MetadataAttributeValue", cast(object, metadata_obj)),
         }
         _corr_id, metadata, _auto_log, _auto_corr = (
             e.NotFoundError._extract_context_values(context)
@@ -859,7 +851,8 @@ class Teste:
         context: dict[str, t.MetadataAttributeValue] = {
             "correlation_id": "test-id",
             "metadata": cast(
-                "t.MetadataAttributeValue", m.Metadata(attributes={"key": "value"})
+                "t.MetadataAttributeValue",
+                cast(object, m.Metadata(attributes={"key": "value"})),
             ),
             "auto_log": True,
             "auto_correlation": True,
@@ -986,17 +979,11 @@ class Teste:
 
     def test_conflict_error_build_context_with_extra_kwargs(self) -> None:
         """Test ConflictError with extra_kwargs - tests line 625."""
-        extra_kwargs_raw = {
-            "custom": "value",
-            "resource_type": "User",
-            "resource_id": "123",
-        }
-        # Pass extra kwargs directly to ConflictError
-        # ConflictError accepts **extra_kwargs: t.MetadataAttributeValue
-        # Values are already ScalarValue types (str, int, float, bool)
         error = e.ConflictError(
             "Conflict",
-            **extra_kwargs_raw,
+            custom="value",
+            resource_type="User",
+            resource_id="123",
         )
         assert error.metadata is not None
         assert "custom" in error.metadata.attributes
@@ -1080,7 +1067,7 @@ class Teste:
         # but at runtime can handle type objects (defensive programming)
         # Mypy limitation: type objects not in MetadataAttributeValue union
         extra_kwargs_type: dict[str, t.MetadataAttributeValue] = cast(
-            "t.MetadataAttributeDict",
+            "dict[str, t.MetadataAttributeValue]",
             extra_kwargs_type_raw,
         )
         result = e.TypeError._normalize_type(
@@ -1278,7 +1265,7 @@ class Teste:
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", metadata_obj),
+            metadata=cast("t.MetadataAttributeValue", cast(object, metadata_obj)),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1414,7 +1401,7 @@ class Teste:
         for k, v in kwargs_raw.items():
             if isinstance(v, m.Metadata):
                 # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
-                kwargs[k] = cast("t.MetadataAttributeValue", v)
+                kwargs[k] = cast("t.MetadataAttributeValue", cast(object, v))
             elif isinstance(v, (str, int, float, bool, type(None), list, dict)):
                 # These are already t.GeneralValueType
                 kwargs[k] = FlextRuntime.normalize_to_metadata_value(

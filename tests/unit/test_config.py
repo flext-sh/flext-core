@@ -580,7 +580,7 @@ class TestFlextSettingsPydantic:
             class WrongType:
                 pass
 
-            wrong_instance: FlextSettings = WrongType()  # type: ignore[assignment]
+            wrong_instance: FlextSettings = WrongType()
             FlextSettings._instances[FlextSettings] = wrong_instance
 
             # Now trying to get instance should raise TypeError

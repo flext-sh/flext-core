@@ -163,8 +163,9 @@ class FlextModelFoundation:
             for tag in raw_tags:
                 try:
                     clean_tag = (
-                        FlextModelFoundation.Validators.strict_string_adapter
-                        .validate_python(tag)
+                        FlextModelFoundation.Validators.strict_string_adapter.validate_python(
+                            tag
+                        )
                         .strip()
                         .lower()
                     )
@@ -940,11 +941,13 @@ class FlextModelFoundation:
             # Create new instance with all fields set correctly
             now = datetime.now(UTC)
             current_data = dict(self.model_dump())
-            current_data.update({
-                "is_deleted": True,
-                "deleted_at": now,
-                "deleted_by": deleted_by,
-            })
+            current_data.update(
+                {
+                    "is_deleted": True,
+                    "deleted_at": now,
+                    "deleted_by": deleted_by,
+                }
+            )
 
             # Replace current instance data using __dict__.update to bypass
             # intermediate validation states during assignment
@@ -1215,9 +1218,8 @@ class FlextModelFoundation:
 
         @classmethod
         def validate_batch(cls, items: Sequence[t.GuardInputValue]) -> list[Self]:
-            batch_adapter = TypeAdapter(list[cls])
             try:
-                return batch_adapter.validate_python(items)
+                return [cls.model_validate(item) for item in items]
             except ValidationError as exc:
                 item_errors: list[str] = []
                 for error in exc.errors():

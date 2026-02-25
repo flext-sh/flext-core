@@ -33,13 +33,13 @@ Get started with FLEXT-Core in 5 minutes. This guide covers the essentials; see 
 
 ## Installation
 
-```bash
+````bash
 # Add to your project
 poetry add flext-core
 
 # Or with pip
 pip install flext-core
-```
+```text
 
 **Requirements**: Python 3.13+
 
@@ -67,7 +67,7 @@ if result.is_success:
     print(f"Valid: {email}")
 else:
     print(f"Error: {result.error}")
-```
+```text
 
 ### 2. Dependency Injection (FlextContainer)
 
@@ -86,7 +86,7 @@ logger_result = container.get("logger")
 if logger_result.is_success:
     logger = logger_result.value
     logger.info("Application started")
-```
+```text
 
 ### 3. Domain-Driven Design (FlextModels)
 
@@ -108,7 +108,7 @@ class User(FlextModels.Entity):
 # Use your models
 user = User(id="123", name="Alice", email=Email(address="alice@example.com"))
 print(f"Created: {user.name}")
-```
+```text
 
 ## Common Use Cases (3 minutes)
 
@@ -143,7 +143,7 @@ if result.is_success:
     print(f"Registered: {data['username']}")
 else:
     print(f"Registration failed: {result.error}")
-```
+```text
 
 ### Use Case 2: Service with Dependency Injection
 
@@ -172,7 +172,7 @@ if service_result.is_success:
     send_result = service.send_welcome_email("user@example.com")
     if send_result.is_success:
         print(send_result.value)
-```
+```text
 
 ### Use Case 3: Domain Models with Validation
 
@@ -224,7 +224,7 @@ if result.is_success:
     print(f"Order created: {order.entity_id} with {len(order.items)} items")
 else:
     print(f"Order failed: {result.error}")
-```
+```text
 
 ### Use Case 4: Dispatcher-Driven CQRS
 
@@ -255,7 +255,7 @@ result = dispatcher.dispatch(CreateUser(email="user@example.com"))
 
 if result.is_success:
     print(f"Created: {result.value}")
-```
+```text
 
 ## Key Patterns Cheat Sheet
 
@@ -273,7 +273,7 @@ if result.is_success:
     value = result.value
 else:
     error = result.error
-```
+```text
 
 ### Pattern 2: Transform Values
 
@@ -284,7 +284,7 @@ result = (
     .map(lambda x: x * 2)  # Transform to 20
     .map(lambda x: f"Result: {x}")  # Transform to "Result: 20"
 )
-```
+```text
 
 ### Pattern 3: Chain Operations
 
@@ -295,7 +295,7 @@ result = (
     .flat_map(lambda user: update_profile(user))  # Returns FlextResult[User]
     .flat_map(lambda user: send_confirmation(user))  # Returns FlextResult[str]
 )
-```
+```text
 
 ### Pattern 4: Error Recovery
 
@@ -308,7 +308,7 @@ result = (
 
 # Or provide fallback
 result = operation().unwrap_or("default value")
-```
+```text
 
 ### Pattern 5: Access Both APIs
 
@@ -316,7 +316,7 @@ result = operation().unwrap_or("default value")
 # Both .data and .value work (backward compatibility)
 result = FlextResult[str].ok("test")
 assert result.value == result.data == "test"
-```
+```text
 
 ## Testing Example
 
@@ -345,7 +345,7 @@ def test_chained_operations():
     )
     assert result.is_success
     assert result.value == 25
-```
+```text
 
 ## Next Steps
 
@@ -385,7 +385,7 @@ async def get_user_async(user_id: str) -> FlextResult[User]:
 result = await get_user_async("123")
 if result.is_success:
     user = result.value
-```
+```text
 
 **Q: Can I create custom exception types?**
 A: Yes, but prefer FlextResult for business errors. Custom exceptions for framework/infrastructure errors are fine.
@@ -414,7 +414,7 @@ ruff format .
 
 # Full validation (recommended before commit)
 make validate
-```
+```text
 
 ## Quick Reference
 
@@ -442,3 +442,4 @@ make validate
 ______________________________________________________________________
 
 **Ready to dive deeper?** Start with the Configuration Guide to learn how to configure FLEXT-Core for your application.
+````

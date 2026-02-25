@@ -40,17 +40,17 @@ For each new automation family, deliver all items below:
 
 Skills are validated by the generic runner:
 
-```bash
+````bash
 python3 scripts/core/skill_validate.py --skill <name>
 python3 scripts/core/skill_validate.py --skill <name> --mode strict
 python3 scripts/core/skill_validate.py --skill <name> --update-baseline
-```
+```text
 
 The runner auto-discovers all skills:
 
 ```bash
 python3 scripts/core/skill_validate.py --all
-```
+```text
 
 ## Standard Skill Format
 
@@ -106,8 +106,9 @@ python3 scripts/core/skill_validate.py --list-skills
 python3 scripts/core/skill_validate.py --skill flext-strict-typing
 python3 scripts/core/skill_validate.py --skill lib-pydantic-v2
 python3 scripts/core/skill_validate.py --all
-```
+```text
 
 ## Adoption Rule
 
 For future automation work, do not introduce manual-only procedures. Ship scripts + skill + docs together in the same change.
+````

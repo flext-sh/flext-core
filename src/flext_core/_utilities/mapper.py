@@ -35,13 +35,9 @@ def _bind_legacy_mapper_function_aliases() -> None:
     if mapper_fn is None:
         return
     if not hasattr(mapper_fn, "map_dict_keys"):
-        setattr(mapper_fn, "map_dict_keys", FlextUtilitiesMapper.map_dict_keys)
+        mapper_fn.map_dict_keys = FlextUtilitiesMapper.map_dict_keys
     if not hasattr(mapper_fn, "_apply_transform_steps"):
-        setattr(
-            mapper_fn,
-            "_apply_transform_steps",
-            FlextUtilitiesMapper.apply_transform_steps,
-        )
+        mapper_fn._apply_transform_steps = FlextUtilitiesMapper.apply_transform_steps
 
 
 def _is_transform_steps_callable(

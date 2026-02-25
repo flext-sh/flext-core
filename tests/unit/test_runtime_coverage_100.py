@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections import UserDict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import ClassVar, Never, cast, overload
 
 import structlog
@@ -40,7 +40,7 @@ class TestRuntimeDictLike:
 
         # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
         obj = BadDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.GeneralValueType", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -61,7 +61,7 @@ class TestRuntimeDictLike:
 
         # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
         obj = BadDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.GeneralValueType", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -79,7 +79,7 @@ class TestRuntimeDictLike:
 
         # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.GeneralValueType", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -95,7 +95,7 @@ class TestRuntimeDictLike:
 
         # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.GeneralValueType", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -111,7 +111,7 @@ class TestRuntimeDictLike:
 
         # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.GeneralValueType", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -127,7 +127,7 @@ class TestRuntimeDictLike:
 
         # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", obj)
+        obj_typed = cast("t.GeneralValueType", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -198,7 +198,7 @@ class TestRuntimeTypeChecking:
         # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
         # Create a key that starts with _level_ but has fewer parts than required
         malformed_key = "_level_"  # This will split into fewer parts than required
-        event_dict: m.ConfigMap = {
+        event_dict: dict[str, t.ConfigMapValue] = {
             malformed_key: "value1",  # Malformed - not enough parts after split
             "normal_key": "value2",  # Not prefixed
         }
@@ -243,7 +243,7 @@ class TestRuntimeTypeChecking:
             if config.logger_factory is not None
             else None
         )
-        config_dict: m.ConfigMap = {
+        config_dict: dict[str, t.ConfigMapValue] = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,
@@ -293,8 +293,7 @@ class TestRuntimeTypeChecking:
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        bad_type = cast("type", BadType)
-        result = FlextRuntime.extract_generic_args(bad_type)
+        result = FlextRuntime.extract_generic_args(BadType)
         assert result == ()
 
     def test_is_sequence_type_with_origin(self) -> None:
@@ -332,8 +331,7 @@ class TestRuntimeTypeChecking:
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        bad_type = cast("type", BadType)
-        result = FlextRuntime.is_sequence_type(bad_type)
+        result = FlextRuntime.is_sequence_type(BadType)
         assert result is False
 
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
@@ -344,7 +342,7 @@ class TestRuntimeTypeChecking:
         # Format: _level_<level>_<key> where parts_count = 4
         # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
         # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
-        event_dict: m.ConfigMap = {
+        event_dict: Mapping[str, t.ConfigMapValue] = {
             "_level_debug_config": {"key": "value"},  # DEBUG level (10)
             "_level_info_status": "ok",  # INFO level (20)
             "_level_error_stack": "trace",  # ERROR level (40)
@@ -379,7 +377,7 @@ class TestRuntimeTypeChecking:
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = True
-            additional_processors: ClassVar[list[t.GeneralValueType]] = [custom_processor]
+            additional_processors: ClassVar[list[object]] = [custom_processor]
             wrapper_class_factory: ClassVar[object | None] = None
             logger_factory: ClassVar[object | None] = None
             cache_logger_on_first_use: ClassVar[bool] = True
@@ -403,7 +401,7 @@ class TestRuntimeTypeChecking:
             if config.logger_factory is not None
             else None
         )
-        config_dict: m.ConfigMap = {
+        config_dict: dict[str, t.ConfigMapValue] = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,

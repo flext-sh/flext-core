@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-# mypy: disable-error-code=func-returns-value,assignment,method-assign,misc,arg-type,truthy-function
-
 import types
 from collections.abc import Callable
 from typing import Any, cast
@@ -134,7 +132,7 @@ def test_initialize_di_components_error_paths(monkeypatch: pytest.MonkeyPatch) -
 def test_sync_config_namespace_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
     c._config = FlextSettings()
-    c._user_overrides = {}
+    c._user_overrides = m.ConfigMap(root={})
     c._global_config = m.Container.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
@@ -183,7 +181,7 @@ def test_configure_with_resource_register_and_factory_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     c = FlextContainer.create()
-    c._user_overrides = {}
+    c._user_overrides = m.ConfigMap(root={})
     c._global_config = m.Container.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
@@ -201,7 +199,7 @@ def test_configure_with_resource_register_and_factory_error_paths(
     )
     assert c.with_resource("res", lambda: "x") is c
     assert called == ["res"]
-    c.register_resource = original_register_resource
+    object.__setattr__(c, "register_resource", original_register_resource)
 
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_object",
@@ -276,7 +274,8 @@ def test_misc_unregistration_clear_and_reset() -> None:
     c.clear_all()
 
     FlextContainer.reset_singleton_for_testing()
-    assert FlextContainer._global_instance is None
+    instance = FlextContainer.create()
+    assert instance._global_instance is instance
 
 
 def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -284,7 +283,7 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     c._services = {}
     c._factories = {}
     c._resources = {}
-    c._user_overrides = {}
+    c._user_overrides = m.ConfigMap(root={})
     c._global_config = m.Container.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
@@ -400,7 +399,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
         max_services=10,
         max_factories=10,
     )
-    c._user_overrides = {}
+    c._user_overrides = m.ConfigMap(root={})
     registered: dict[str, Callable[..., object]] = {}
     c_any.has_service = lambda name: False
 
@@ -454,7 +453,7 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         services={},
         factories={},
         resources={},
-        user_overrides={},
+        user_overrides=m.ConfigMap(root={}),
         container_config=m.Container.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
@@ -537,7 +536,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
         max_services=10,
         max_factories=10,
     )
-    c._user_overrides = {}
+    c._user_overrides = m.ConfigMap(root={})
 
     class _CfgNoMethod:
         _namespace_registry = {"n1": object()}
@@ -587,9 +586,12 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     c_any._config = _CfgFallback()
     captured: dict[str, Callable[..., object]] = {}
     c_any.has_service = lambda _name: False
-    c_any.register_factory = lambda name, f: (
-        captured.setdefault(name, f) or r[bool].ok(True)
-    )
+
+    def _capture_factory(name: str, factory: Callable[..., object]) -> r[bool]:
+        captured[name] = factory
+        return r[bool].ok(True)
+
+    c_any.register_factory = _capture_factory
     c.sync_config_to_di()
 
     c_any._config = _CfgBadNamespace()

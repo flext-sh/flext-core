@@ -25,7 +25,7 @@ Layer rule: domain code depends only on lower layers and shared runtime contract
 
 Base classes for entities, value objects, and aggregate roots implemented with Pydantic v2.
 
-```python
+````python
 from decimal import Decimal
 from flext_core import m, r
 
@@ -69,7 +69,7 @@ class Order(m.AggregateRoot):
         self.items.append(item)
         self.total += item.price * item.quantity
         return r[bool].ok(True)
-```
+```text
 
 ### FlextService — Service Base
 
@@ -114,7 +114,7 @@ registry.register_event(UserCreated, service.handle_user_created)
 result = FlextDispatcher(registry=registry).dispatch(CreateUser(email="user@example.com"))
 if result.is_success:
     print(f"Created user: {result.value}")
-```
+```text
 
 Domain models and services remain independent of frameworks while integrating cleanly with the dispatcher and application orchestration.
 
@@ -126,4 +126,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

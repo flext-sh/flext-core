@@ -20,6 +20,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Annotated
 
+from pydantic import EmailStr, Field, computed_field, model_validator
+
 from flext_core import (
     c,
     m,
@@ -29,7 +31,6 @@ from flext_core import (
 )
 from flext_core._models.base import FlextModelFoundation as F
 from flext_core._models.generic import FlextGenericModels as gm
-from pydantic import EmailStr, Field, computed_field, model_validator
 
 # Using centralized literals from c (DRY - no local aliases)
 

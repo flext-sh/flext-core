@@ -53,7 +53,7 @@ ______________________________________________________________________
 is essentially a **Pydantic model with an `execute()` method** that returns
 `FlextResult[T]`.
 
-```python
+````python
 from flext_core import FlextService, FlextResult
 
 class CreateUserService(FlextService[User]):
@@ -63,7 +63,7 @@ class CreateUserService(FlextService[User]):
     def execute(self) -> FlextResult[User]:
         user = User(name=self.name, email=self.email)
         return FlextResult[User].ok(user)
-```
+```text
 
 ______________________________________________________________________
 
@@ -84,7 +84,7 @@ if result.is_success:
     print(f"Created user: {user.name}")
 else:
     print(f"Error: {result.error}")
-```
+```text
 
 **Characteristics:**
 
@@ -113,7 +113,7 @@ try:
     print(f"Created user: {user.name}")
 except FlextExceptions.BaseError as e:
     print(f"Error: {e}")
-```
+```text
 
 **Characteristics:**
 
@@ -140,7 +140,7 @@ class AutoUserService(FlextService[User]):
 # Instantiation returns User directly (not service instance)
 user = AutoUserService(name="Alice", email="alice@example.com")
 print(f"Created user: {user.name}")
-```
+```text
 
 **Characteristics:**
 
@@ -185,7 +185,7 @@ class ProcessOrderService(FlextService[Order]):
 
         repo = repo_result.value
         return repo.find_by_id(self.order_id)
-```
+```text
 
 ______________________________________________________________________
 
@@ -202,7 +202,7 @@ def process_user(name: str, email: str) -> FlextResult[User]:
         .flat_map(lambda _: ValidateNameService(name=name).execute())
         .flat_map(lambda _: CreateUserService(name=name, email=email).execute())
     )
-```
+```text
 
 **Note**: Use `.flat_map()` for chaining operations. This is the standard FLEXT pattern and works seamlessly with all FlextResult operations.
 
@@ -226,7 +226,7 @@ def create_notification_service(
 # Usage
 service = create_notification_service("email", "Hello!")
 result = service.execute()
-```
+```text
 
 ______________________________________________________________________
 
@@ -245,7 +245,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
             name=command.name,
             email=command.email,
         ).execute()
-```
+```text
 
 See CQRS Architecture for handler details.
 
@@ -271,7 +271,7 @@ def test_create_user_service_invalid_email():
 
     assert result.is_failure
     assert "email" in result.error.lower()
-```
+```text
 
 ### Integration Testing
 
@@ -283,7 +283,7 @@ def test_service_with_container(container: FlextContainer):
     result = service.execute()
 
     assert result.is_success
-```
+```text
 
 ______________________________________________________________________
 
@@ -304,7 +304,7 @@ try:
     value = MyService(param="value").result
 except FlextExceptions.BaseError as e:
     handle_error(str(e))
-```
+```text
 
 ### Gradual Adoption
 
@@ -358,3 +358,4 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_service.py` for comprehensive service pattern examples and test cases.
+````

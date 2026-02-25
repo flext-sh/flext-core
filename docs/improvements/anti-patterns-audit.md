@@ -85,7 +85,7 @@ ______________________________________________________________________
 
 **Source Code Evidence**:
 
-```bash
+`````bash
 # FlextResult usage across codebase
 $ grep -n "FlextResult\[" src/flext_core/*.py | wc -l
 1121
@@ -97,7 +97,7 @@ $ grep -n "raise.*Error" src/flext_core/models.py | head -5
 1121:   raise FlextExceptions.TypeError(
 1160:   raise FlextExceptions.ValidationError(
 1258:   raise FlextExceptions.ValidationError(
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -112,7 +112,7 @@ $ grep -n "raise.*Error" src/flext_core/models.py | head -5
 def ok(cls, data: T_co) -> FlextResult[T_co]:
     """Create successful result wrapping data."""
     return cls._success(data)
-```
+```text
 
 #### Anti-Pattern 2: Swallowing Errors ✅
 
@@ -127,7 +127,7 @@ def ok(cls, data: T_co) -> FlextResult[T_co]:
 # Search for swallowed exceptions
 $ grep -n "except.*pass" src/flext_core/*.py
 # NO RESULTS - No swallowed exceptions found
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -153,7 +153,7 @@ def fail(
 ) -> FlextResult[Never]:
     """Create failed result with error message and optional code/data."""
     return cls._failure(error, error_code, error_data)
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -177,7 +177,7 @@ ______________________________________________________________________
 # Search for Any type usage
 $ grep -n ": Any" src/flext_core/*.py
 # NO RESULTS - No Any type usage in source code
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -190,7 +190,7 @@ $ grep -n ": Any" src/flext_core/*.py
 T_co = TypeVar("T_co", covariant=True)
 T = TypeVar("T")
 # Proper generic types, no Any usage
-```
+```text
 
 #### Anti-Pattern 5: Untyped Container Retrieval ✅
 
@@ -207,7 +207,7 @@ def get_typedT -> FlextResult[T]:
 
     Returns FlextResult[T] with proper type information.
     """
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -228,7 +228,7 @@ def get_typedT -> FlextResult[T]:
 # Check for type: ignore usage
 $ grep -n "type: ignore" src/flext_core/*.py | wc -l
 # Minimal usage, all with specific codes when present
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -258,18 +258,18 @@ ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
 ❌ FORBIDDEN - Never use internal module imports (for ecosystem):
     from flext_core.result import FlextResult  # Breaks ecosystem
 """
-```
+```text
 
 **Layer Hierarchy Enforcement**:
 
-```
+```text
 Layer 4: config.py, loggings.py, context.py
 Layer 3: handlers.py, bus.py, dispatcher.py
 Layer 2: models.py, service.py
 Layer 1: result.py, container.py, exceptions.py
 Layer 0.5: runtime.py
 Layer 0: constants.py, typings.py, protocols.py
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -296,7 +296,7 @@ $ grep -n "class Flext" src/flext_core/*.py | wc -l
 $ grep -n "^class " src/flext_core/models.py
 86:class FlextModels:
 # Only one top-level class (rest are nested)
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -321,7 +321,7 @@ $ wc -l src/flext_core/*.py | sort -nr | head -5
  1725 src/flext_core/result.py
  1679 src/flext_core/utilities.py
  1664 src/flext_core/processors.py
-```
+```text
 
 **models.py Structure**:
 
@@ -356,7 +356,7 @@ container.py:108:  >>> container = FlextContainer()  # Docstring example
 container.py:130:  # Subsequent calls to FlextContainer() return same instance
 container.py:337:  container = FlextContainer()  # Internal implementation
 container.py:1032: # For new code, use FlextContainer() directly
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -379,7 +379,7 @@ def get(self, identifier: str) -> FlextResult[object]:
 
     Returns FlextResult wrapping service or error.
     """
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -428,7 +428,7 @@ $ grep -n "frozen.*True" src/flext_core/models.py
 538:    frozen=True,
 964:    frozen=True,
 1960:   frozen=True,
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -458,7 +458,7 @@ class FlextSettings(BaseSettings):
         env_prefix="FLEXT_",
         # Environment variable support
     )
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -480,7 +480,7 @@ class FlextSettings(BaseSettings):
     # Pydantic automatically validates all fields
     timeout: int = Field(gt=0)
     log_level: str = Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
-```
+```text
 
 **Verification**: ✅ ACCURATE
 
@@ -540,7 +540,7 @@ Pydantic validation: Yes (all fields)
 # Container Pattern
 get_global() enforcement: Yes (singleton pattern)
 Type-safe retrieval: Yes (get_typed at line 574)
-```
+```text
 
 ### Qualitative Assessment
 
@@ -570,7 +570,7 @@ ______________________________________________________________________
 
    ```markdown
    Example: Anti-Pattern 1 - See result.py:313 (ok method)
-   ```
+```text
 
 ### Medium Priority
 
@@ -594,8 +594,8 @@ ______________________________________________________________________
    ```bash
    # Search for business logic exceptions
    grep -r "raise ValueError\|raise KeyError" src/
-   ```
-   ````
+```text
+`````
 
 ### Low Priority
 

@@ -44,7 +44,7 @@ Global context is managed using `structlog.contextvars` and is automatically pro
 
 **Usage:**
 
-```python
+````python
 from flext_core.loggings import FlextLogger
 
 # Bind global context
@@ -57,7 +57,7 @@ FlextLogger.Context.bind_global_context(
 # All subsequent log messages will include this context
 logger = FlextLogger.create_module_logger(__name__)
 logger.info("Application started")  # Includes global context
-```
+```text
 
 **Unbinding:**
 
@@ -67,7 +67,7 @@ FlextLogger.Context.unbind_global_context("app_version")
 
 # Unbind all global context
 FlextLogger.Context.unbind_global_context()
-```
+```text
 
 ### 2. Scoped Context
 
@@ -112,7 +112,7 @@ FlextLogger.Context.bind_context(
 # Log messages will include context from all active scopes
 logger = FlextLogger.create_module_logger(__name__)
 logger.info("Processing user creation")  # Includes all scoped contexts
-```
+```text
 
 **Unbinding:**
 
@@ -127,7 +127,7 @@ FlextLogger.Context.unbind_context(
 FlextLogger.Context.unbind_context(
     scope=c.Context.SCOPE_OPERATION
 )
-```
+```text
 
 ### 3. Level Context
 
@@ -152,7 +152,7 @@ FlextLogger.Context.bind_context_for_level(
 logger = FlextLogger.create_module_logger(__name__)
 logger.debug("Debug message")  # Includes level context
 logger.info("Info message")     # Does NOT include level context
-```
+```text
 
 **Unbinding:**
 
@@ -165,7 +165,7 @@ FlextLogger.Context.unbind_context_for_level(
 
 # Unbind all context from a level
 FlextLogger.Context.unbind_context_for_level(level=logging.DEBUG)
-```
+```text
 
 ## Context Precedence
 
@@ -192,7 +192,7 @@ logger = FlextLogger.create_module_logger(__name__)
 logger.info("Processing started")  # Automatically includes request_id
 logger.warning("Validation failed")  # Automatically includes request_id
 logger.error("Operation failed")  # Automatically includes request_id
-```
+```text
 
 ## Best Practices
 
@@ -229,7 +229,7 @@ class UserHandler:
             FlextLogger.Context.unbind_context(
                 scope=c.Context.SCOPE_REQUEST
             )
-```
+```text
 
 ## Auto-Configuration
 
@@ -239,7 +239,7 @@ FLEXT automatically configures structlog on first logger creation. You don't nee
 # Automatic configuration - no manual setup required
 logger = FlextLogger.create_module_logger(__name__)
 logger.info("This works automatically!")
-```
+```text
 
 For custom configuration, you can still call `FlextRuntime.configure_structlog()` explicitly before creating loggers.
 
@@ -248,3 +248,4 @@ For custom configuration, you can still call `FlextRuntime.configure_structlog()
 - Service Patterns Guide - Using logging in services
 - Error Handling Guide - Logging errors and exceptions
 - Testing Guide - Testing with structured logging
+````

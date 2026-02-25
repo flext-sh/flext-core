@@ -24,9 +24,9 @@ import warnings
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Never, TypeVar
 
-from flext_core import r
 from pydantic import BaseModel
 
+from flext_core import r
 from flext_tests.base import FlextTestsUtilityBase as s
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -192,10 +192,12 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         """
         # Validate and convert kwargs to ModelFactoryParams using FlextUtilities
         try:
-            params = m.Tests.Factory.ModelFactoryParams.model_validate({
-                "kind": kind,
-                **kwargs,
-            })
+            params = m.Tests.Factory.ModelFactoryParams.model_validate(
+                {
+                    "kind": kind,
+                    **kwargs,
+                }
+            )
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.Factory.FactoryModel].fail(f"Invalid parameters: {exc}")
 
@@ -485,11 +487,13 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to ResultFactoryParams using FlextUtilities
         # Pass kind and value explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.ResultFactoryParams.model_validate({
-                "kind": kind,
-                "value": value,
-                **kwargs,
-            })
+            params = m.Tests.Factory.ResultFactoryParams.model_validate(
+                {
+                    "kind": kind,
+                    "value": value,
+                    **kwargs,
+                }
+            )
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.PayloadValue].fail(f"Invalid parameters: {exc}")
 
@@ -876,10 +880,12 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to ListFactoryParams using FlextUtilities
         # Pass source explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.ListFactoryParams.model_validate({
-                "source": source,
-                **kwargs,
-            })
+            params = m.Tests.Factory.ListFactoryParams.model_validate(
+                {
+                    "source": source,
+                    **kwargs,
+                }
+            )
         except (TypeError, ValueError, AttributeError) as exc:
             return r[builtins.list[t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {exc}",
@@ -1027,10 +1033,12 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to DictFactoryParams using FlextUtilities
         # Pass source explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.DictFactoryParams.model_validate({
-                "source": source,
-                **kwargs,
-            })
+            params = m.Tests.Factory.DictFactoryParams.model_validate(
+                {
+                    "source": source,
+                    **kwargs,
+                }
+            )
         except (TypeError, ValueError, AttributeError) as exc:
             return r[Mapping[str, t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {exc}",
@@ -1158,10 +1166,12 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to GenericFactoryParams using FlextUtilities
         # Pass type_ explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.GenericFactoryParams.model_validate({
-                "type_": type_,
-                **kwargs,
-            })
+            params = m.Tests.Factory.GenericFactoryParams.model_validate(
+                {
+                    "type_": type_,
+                    **kwargs,
+                }
+            )
         except (TypeError, ValueError, AttributeError) as exc:
             return r[T].fail(f"Invalid parameters: {exc}")
 

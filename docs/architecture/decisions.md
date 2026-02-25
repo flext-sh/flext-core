@@ -79,11 +79,11 @@ Record of major architectural decisions made in FLEXT-Core development.
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-001
 
 Need clear separation of concerns and dependency management for scalable, maintainable codebase supporting 32+ dependent projects.
 
-### Decision
+### Decision - ADR-001
 
 Implement strict 5-layer architecture with unidirectional dependencies:
 
@@ -94,7 +94,7 @@ Implement strict 5-layer architecture with unidirectional dependencies:
 - Layer 3: Application (use cases)
 - Layer 4: Infrastructure (external dependencies)
 
-### Rationale
+### Rationale - ADR-001
 
 - Clear separation enables independent testing
 - Unidirectional dependencies prevent circular imports
@@ -102,13 +102,13 @@ Implement strict 5-layer architecture with unidirectional dependencies:
 - Maintainable: Changes localized to appropriate layer
 - Stable API: Layer 0 and 1 form contract
 
-### Alternatives Considered
+### Alternatives Considered - ADR-001
 
 - Hexagonal (Ports/Adapters): Less clear dependency flow
 - Microkernel: Overkill for library
 - Event-Driven: Works but less deterministic
 
-### Consequences
+### Consequences - ADR-001
 
 - ✅ Clear code organization
 - ✅ Testable in isolation
@@ -121,15 +121,15 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-002
 
 Need composable error handling without exceptions for explicit error flows.
 
-### Decision
+### Decision - ADR-002
 
 Implement `FlextResult[T]` monad supporting both success and failure states with monadic operations (map, flat_map, filter).
 
-### Rationale
+### Rationale - ADR-002
 
 - Composable: Chain operations like railway tracks
 - Type-safe: Compiler catches missing error handling
@@ -137,13 +137,13 @@ Implement `FlextResult[T]` monad supporting both success and failure states with
 - Functional: Pure functions without exceptions
 - Legacy support: Both `.data` and `.value` work
 
-### Alternatives Considered
+### Alternatives Considered - ADR-002
 
 - Exceptions: Implicit, implicit error paths
 - Optional\[T\]: Only represents absence, not failures
 - Result enums: Language-dependent, less composable
 
-### Consequences
+### Consequences - ADR-002
 
 - ✅ Clear error handling
 - ✅ No exception overhead
@@ -157,15 +157,15 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-003
 
 Need modern validation framework for Python 3.13+ projects.
 
-### Decision
+### Decision - ADR-003
 
 Use Pydantic v2 exclusively with zero v1 legacy code (.dict(), .parse_obj() forbidden).
 
-### Rationale
+### Rationale - ADR-003
 
 - Modern: Built for Python 3.13+
 - Performance: 2-5x faster than v1
@@ -173,13 +173,13 @@ Use Pydantic v2 exclusively with zero v1 legacy code (.dict(), .parse_obj() forb
 - Ecosystem: v2 is future direction
 - Fresh start: No migration baggage
 
-### Alternatives Considered
+### Alternatives Considered - ADR-003
 
 - Pydantic v1: Legacy, slower, sunset path
 - Dataclasses: No validation
 - Attrs: Limited validation
 
-### Consequences
+### Consequences - ADR-003
 
 - ✅ Modern, fast validation
 - ✅ Clear migration path for users
@@ -192,11 +192,11 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-004
 
 Multiple top-level classes in modules causes circular dependencies and confuses API surface.
 
-### Decision
+### Decision - ADR-004
 
 ONE public class per module with `Flext` prefix. Nested helpers allowed inside main class.
 
@@ -214,19 +214,19 @@ class FlextContainer:  # Second top-level class
     pass
 ```
 
-### Rationale
+### Rationale - ADR-004
 
 - Clear API surface: Users know main export
 - Prevents circular deps: One class per module file
 - Ecosystem scale: 32+ projects depend on this
 - Discoverability: Root imports only
 
-### Alternatives Considered
+### Alternatives Considered - ADR-004
 
 - Multiple classes: Causes confusion and circular deps
 - Submodules: Breaks ecosystem import pattern
 
-### Consequences
+### Consequences - ADR-004
 
 - ✅ Clear, predictable structure
 - ✅ No circular dependencies
@@ -239,28 +239,28 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-005
 
 Need centralized service management accessible from anywhere without passing through entire call chain.
 
-### Decision
+### Decision - ADR-005
 
 Implement `FlextContainer.get_global()` singleton for service registration and resolution.
 
-### Rationale
+### Rationale - ADR-005
 
 - Accessibility: Available everywhere
 - Simplicity: No constructor parameter threading
 - Lifecycle: Centralized service management
 - Testing: Can be cleared per test
 
-### Alternatives Considered
+### Alternatives Considered - ADR-005
 
 - Constructor injection: Verbose in deep call chains
 - Service locator pattern: Similar but less explicit
 - Multiple containers: Complex state management
 
-### Consequences
+### Consequences - ADR-005
 
 - ✅ Easy service access
 - ✅ Centralized lifecycle
@@ -273,11 +273,11 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-006
 
 32+ dependent projects need predictable, stable APIs to avoid cascading breaking changes.
 
-### Decision
+### Decision - ADR-006
 
 - Layer 0-1: NEVER break (core APIs guaranteed)
 - Layer 2-3: Evolve carefully (deprecation cycles)
@@ -294,19 +294,19 @@ FlextResult[T].is_success
 FlextResult[T].value  # `.data` remains available as a legacy alias
 ```
 
-### Rationale
+### Rationale - ADR-006
 
 - Ecosystem resilience: Dependent projects stay compatible
 - Versioning strategy: Semantic versioning with guarantees
 - User confidence: Upgrade safely
 - Long-term support: Stable foundation
 
-### Alternatives Considered
+### Alternatives Considered - ADR-006
 
 - Breaking changes allowed: Breaks ecosystem
 - No stability guarantees: Unpredictable maintenance
 
-### Consequences
+### Consequences - ADR-006
 
 - ✅ Stable foundation
 - ✅ Ecosystem resilience
@@ -319,15 +319,15 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-007
 
 Need complete type safety without escape hatches that reduce code reliability.
 
-### Decision
+### Decision - ADR-007
 
 **Zero `Any` type usage** across flext-core. All code must have complete type annotations.
 
-### Rationale
+### Rationale - ADR-007
 
 - Compiler checks: Catches errors early
 - Documentation: Types document intent
@@ -335,12 +335,12 @@ Need complete type safety without escape hatches that reduce code reliability.
 - IDE support: Better autocomplete and hints
 - Example: Sets standard for ecosystem
 
-### Alternatives Considered
+### Alternatives Considered - ADR-007
 
 - Allow `Any`: Reduces type safety benefit
 - Partial typing: Still has gaps
 
-### Consequences
+### Consequences - ADR-007
 
 - ✅ Complete type safety
 - ✅ Excellent IDE support
@@ -353,27 +353,27 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-008
 
 Developers want to take shortcuts across layers to "just make it work" causing tight coupling.
 
-### Decision
+### Decision - ADR-008
 
 **Enforce strict layer boundaries** - can only import from lower layers. Violations cause immediate code review rejection.
 
-### Rationale
+### Rationale - ADR-008
 
 - Maintainability: Decoupled layers stay decoupled
 - Testability: Mock external layers easily
 - Scalability: Add new features without refactoring
 - Quality: Prevents technical debt
 
-### Alternatives Considered
+### Alternatives Considered - ADR-008
 
 - Flexible boundaries: Enables shortcuts, creates debt
 - Enforced at runtime: Too late, already broken
 
-### Consequences
+### Consequences - ADR-008
 
 - ✅ Clean architecture maintained
 - ✅ No circular dependencies
@@ -386,11 +386,11 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-009
 
 Support multiple Python versions increases maintenance burden and limits modern features.
 
-### Decision
+### Decision - ADR-009
 
 **Python 3.13+ ONLY**. Do not support older versions.
 
@@ -401,19 +401,19 @@ Features enabled:
 - Modern type hints (PEP 696, etc.)
 - Latest standard library
 
-### Rationale
+### Rationale - ADR-009
 
 - Maintenance: Focus on current Python
 - Performance: Use latest optimizations
 - Ecosystem: Modern dependencies also target 3.13+
 - Features: Access newest Python capabilities
 
-### Alternatives Considered
+### Alternatives Considered - ADR-009
 
 - Support 3.10+: Maintenance burden
 - Support 3.12: Still missing features
 
-### Consequences
+### Consequences - ADR-009
 
 - ✅ Modern features available
 - ✅ Reduced maintenance
@@ -426,11 +426,11 @@ ______________________________________________________________________
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
-### Problem
+### Problem - ADR-010
 
 Need decoupled communication between domain objects without direct references.
 
-### Decision
+### Decision - ADR-010
 
 Use domain events (emitted from aggregates, published by infrastructure) for cross-aggregate communication.
 
@@ -444,19 +444,19 @@ class OrderService(FlextService):
         return FlextResult[Order].ok(order)
 ```
 
-### Rationale
+### Rationale - ADR-010
 
 - Decoupling: Services don't know about each other
 - Async-friendly: Events can be processed asynchronously
 - Audit trail: Record all important business events
 - Scalability: Easy to add subscribers
 
-### Alternatives Considered
+### Alternatives Considered - ADR-010
 
 - Direct calls: Creates coupling
 - Callbacks: Less explicit than events
 
-### Consequences
+### Consequences - ADR-010
 
 - ✅ Decoupled services
 - ✅ Async processing capability

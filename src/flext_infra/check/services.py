@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import override
 
 import structlog
+
 from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
-
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 from flext_infra.json_io import JsonService
@@ -338,11 +338,13 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                 gate_result = project.gates.get(gate)
                 if not gate_result or len(gate_result.issues) == 0:
                     continue
-                lines.extend([
-                    f"### {gate} ({len(gate_result.issues)} errors)",
-                    "",
-                    "```",
-                ])
+                lines.extend(
+                    [
+                        f"### {gate} ({len(gate_result.issues)} errors)",
+                        "",
+                        "```",
+                    ]
+                )
                 lines.extend(
                     _format_issue(issue)
                     for issue in gate_result.issues[:_MAX_DISPLAY_ISSUES]
@@ -518,13 +520,15 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         duration: float,
         raw_output: str,
     ) -> _GateExecution:
-        model = m.GateResult.model_validate({
-            "gate": gate,
-            "project": project,
-            "passed": passed,
-            "errors": [_format_issue(issue) for issue in issues],
-            "duration": round(duration, 3),
-        })
+        model = m.GateResult.model_validate(
+            {
+                "gate": gate,
+                "project": project,
+                "passed": passed,
+                "errors": [_format_issue(issue) for issue in issues],
+                "duration": round(duration, 3),
+            }
+        )
         return _GateExecution(result=model, issues=issues, raw_output=raw_output)
 
     def _run_ruff_lint(self, project_dir: Path) -> _GateExecution:

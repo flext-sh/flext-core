@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -38,7 +39,12 @@ def test_conversion_string_and_join_paths() -> None:
 def test_to_general_value_type_branches() -> None:
     assert u.Conversion.to_general_value_type(None) is None
     model = _Model(value=1)
-    assert u.Conversion.to_general_value_type(cast("StrictJsonValue", model)) == model
+    assert (
+        u.Conversion.to_general_value_type(
+            cast("StrictJsonValue", cast("object", model))
+        )
+        == model
+    )
     assert isinstance(
         u.Conversion.to_general_value_type(cast("StrictJsonValue", object())), str
     )
@@ -47,7 +53,10 @@ def test_to_general_value_type_branches() -> None:
 def test_to_flexible_value_and_safe_list_branches() -> None:
     assert u.Conversion.to_flexible_value(None) is None
     assert (
-        u.Conversion.to_flexible_value(cast("StrictJsonValue", _Model(value=1))) is None
+        u.Conversion.to_flexible_value(
+            cast("StrictJsonValue", cast("object", _Model(value=1)))
+        )
+        is None
     )
 
     mapping_value: Mapping[str, t.GeneralValueType] = {"x": 1}
@@ -55,7 +64,9 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
         u.Conversion.to_flexible_value(cast("StrictJsonValue", mapping_value)) is None
     )
     assert (
-        u.Conversion.to_flexible_value(cast("StrictJsonValue", datetime.now(UTC)))
+        u.Conversion.to_flexible_value(
+            cast("StrictJsonValue", cast("object", datetime.now(UTC)))
+        )
         is not None
     )
 

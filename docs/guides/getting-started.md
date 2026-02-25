@@ -53,7 +53,7 @@ FLEXT is an enterprise-grade data integration platform built with Python 3.13+ a
 
 Install FLEXT core and commonly used libraries:
 
-```bash
+````bash
 # Install core framework
 pip install flext-core
 
@@ -62,7 +62,7 @@ pip install flext-ldif
 
 # Install additional libraries as needed
 pip install flext-api flext-auth flext-ldap
-```
+```text
 
 ### Development Installation
 
@@ -82,7 +82,7 @@ pip install -e .
 
 # Install development dependencies
 pip install -e ".[dev]"
-```
+```text
 
 ### Docker Installation
 
@@ -94,7 +94,7 @@ docker build -t flext:latest -f docker/Dockerfile .
 
 # Run FLEXT container
 docker run -v $(pwd)/data:/app/data flext:latest
-```
+```text
 
 ## Your First FLEXT Application
 
@@ -129,7 +129,7 @@ container = FlextContainer()
 # container.register(IService, ServiceImplementation())
 
 print("FLEXT application initialized!")
-```
+```text
 
 ### 2. Using flext-ldif for LDIF Processing
 
@@ -151,7 +151,7 @@ if result.is_success:
     print(f"Successfully parsed {len(entries)} LDIF entries")
 else:
     print(f"Failed to parse LDIF: {result.failure()}")
-```
+```text
 
 ### 3. Railway-Oriented Error Handling
 
@@ -202,7 +202,7 @@ if result.is_success:
     print(f"Success: {result.unwrap()}")
 else:
     print(f"Error: {result.failure()}")
-```
+```text
 
 ### 4. CQRS Pattern with Commands and Queries
 
@@ -257,7 +257,7 @@ dispatcher.register_handler(GetUserQuery, user_service.get_user)
 # Use the dispatcher
 create_result = dispatcher.dispatch(CreateUserCommand("john", "john@example.com"))
 get_result = dispatcher.dispatch(GetUserQuery("user123"))
-```
+```text
 
 ## Configuration
 
@@ -270,7 +270,7 @@ FLEXT uses environment variables for configuration:
 export FLEXT_LOG_LEVEL=INFO
 export FLEXT_LDIF_DEFAULT_ENCODING=utf-8
 export FLEXT_LDIF_STRICT_VALIDATION=true
-```
+```text
 
 ### Programmatic Configuration
 
@@ -287,7 +287,7 @@ config = FlextLdifSettings(
 
 # Use configuration
 ldif = FlextLdif(config=config)
-```
+```text
 
 ## Next Steps
 
@@ -330,3 +330,4 @@ Now that you have FLEXT installed and running, explore these areas:
 1. **Examples**: Real-world usage examples
 
 Happy coding with FLEXT! 🚀
+````

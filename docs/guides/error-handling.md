@@ -62,7 +62,7 @@ FLEXT-Core provides **functional error handling** through `FlextResult[T]` inste
 - **Success**: Contains a value of type `T`
 - **Failure**: Contains an error message
 
-```python
+````python
 from flext_core import FlextResult
 
 # Success result
@@ -70,7 +70,7 @@ success = FlextResult[int].ok(42)
 
 # Failure result
 failure = FlextResult[int].fail("Something went wrong")
-```
+```text
 
 ### Checking Result State
 
@@ -92,7 +92,7 @@ if result.is_failure:
 # Alternative check
 if not result.is_success:
     print(f"Failed with: {result.error}")
-```
+```text
 
 ### Extracting Values Safely
 
@@ -113,7 +113,7 @@ value = result.unwrap_or_else(lambda e: 0)  # 42
 # Both .data and .value work (backward compatibility)
 data = result.data  # 42
 value = result.value  # 42
-```
+```text
 
 ## Railway-Oriented Programming
 
@@ -158,7 +158,7 @@ if email_result.is_success:
     print(f"✅ {email_result.value}")
 else:
     print(f"❌ {email_result.error}")
-```
+```text
 
 ### Monadic Operations
 
@@ -179,7 +179,7 @@ result = (
     .map(lambda x: x + 3)      # 13
     .map(lambda x: str(x))     # "13"
 )
-```
+```text
 
 #### flat_map() - Chain Operations
 
@@ -199,7 +199,7 @@ result = (
 )
 
 print(result.error)  # "Division by zero"
-```
+```text
 
 #### filter() - Add Success Conditions
 
@@ -219,7 +219,7 @@ result = result.filter(
     lambda x: x < 10,
     "Value must be less than 10"
 )  # FlextResult[int].fail("Value must be less than 10")
-```
+```text
 
 #### map_error() - Transform Error Messages
 
@@ -236,7 +236,7 @@ result = (
 )
 
 print(result.error)  # "[ERROR] Operation failed: Database connection failed"
-```
+```text
 
 ## Practical Error Handling Patterns
 
@@ -287,7 +287,7 @@ if result.is_success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
-```
+```text
 
 ### Pattern 2: Database Operations
 
@@ -337,7 +337,7 @@ if result.is_success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
-```
+```text
 
 ### Pattern 3: External Service Calls
 
@@ -380,7 +380,7 @@ if result.is_success:
     print(f"User: {result.value}")
 else:
     print(f"Error: {result.error}")
-```
+```text
 
 ### Pattern 4: Error Recovery
 
@@ -408,7 +408,7 @@ def handle_failure(error: str) -> FlextResult[str]:
     return fallback_operation()
 
 result = risky_operation().lash(handle_failure)
-```
+```text
 
 ### Pattern 5: Batch Operations
 
@@ -448,7 +448,7 @@ if result.is_success:
     print(f"✅ Processed: {result.value}")
 else:
     print(f"❌ {result.error}")
-```
+```text
 
 ## Error Types and Categorization
 
@@ -470,7 +470,7 @@ def withdraw_from_account(amount: float, balance: float) -> FlextResult[float]:
 result = withdraw_from_account(100, 50)
 if result.is_failure:
     print(f"Transaction failed: {result.error}")  # Clear, user-facing
-```
+```text
 
 ### System Errors (Infrastructure)
 
@@ -489,7 +489,7 @@ def read_config_file(path: str) -> FlextResult[str]:
         return FlextResult[str].fail(f"Permission denied reading: {path}")
     except Exception as e:
         return FlextResult[str].fail(f"System error reading config: {str(e)}")
-```
+```text
 
 ## Best Practices
 
@@ -507,7 +507,7 @@ def find_user(user_id: str) -> dict:
     if user_id not in users_db:
         raise ValueError(f"User {user_id} not found")  # Don't do this
     return users_db[user_id]
-```
+```text
 
 ### 2. Chain Operations with flat_map
 
@@ -528,7 +528,7 @@ validation = validate_user(user_id.value)
 if validation.is_failure:
     return validation
 # ... etc
-```
+```text
 
 ### 3. Use Meaningful Error Messages
 
@@ -540,7 +540,7 @@ return FlextResult[str].fail(
 
 # ❌ WRONG - Vague
 return FlextResult[str].fail("Invalid input")
-```
+```text
 
 ### 4. Handle Errors at Application Boundaries
 
@@ -563,7 +563,7 @@ def process_request(request) -> FlextResult[dict]:
     """Business logic - returns FlextResult."""
     # ... implementation
     pass
-```
+```text
 
 ### 5. Log Errors Appropriately
 
@@ -584,7 +584,7 @@ def risky_operation() -> FlextResult[str]:
             "error_type": type(e).__name__
         })
         return FlextResult[str].fail(f"Operation failed: {str(e)}")
-```
+```text
 
 ## Summary
 
@@ -619,3 +619,4 @@ This approach makes error handling explicit, composable, and maintainable.
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for comprehensive test cases demonstrating all error handling patterns.
+````

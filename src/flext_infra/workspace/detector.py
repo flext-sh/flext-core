@@ -16,7 +16,6 @@ from urllib.parse import urlparse
 
 from flext_core.result import r
 from flext_core.service import FlextService
-
 from flext_infra.subprocess import CommandRunner
 
 

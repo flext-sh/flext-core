@@ -258,9 +258,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
             keys_to_remove = [
                 instance_cls
                 for instance_cls in cls._instances
-                if instance_cls is cls
-                or issubclass(instance_cls, cls)
-                or issubclass(cls, instance_cls)
+                if instance_cls is cls or issubclass(instance_cls, cls)
             ]
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
@@ -313,11 +311,13 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
 
         """
         # Check database URL scheme if provided
-        if self.database_url and not self.database_url.startswith((
-            "postgresql://",
-            "mysql://",
-            "sqlite://",
-        )):
+        if self.database_url and not self.database_url.startswith(
+            (
+                "postgresql://",
+                "mysql://",
+                "sqlite://",
+            )
+        ):
             msg = "Invalid database URL scheme"
             raise ValueError(msg)
 

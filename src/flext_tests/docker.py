@@ -26,13 +26,14 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, Protocol, cast
 
-from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
+from docker import DockerClient as DockerSDKClient
+from docker import from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
-from flext_core.loggings import FlextLogger
-from flext_core.result import r
 from pydantic import TypeAdapter
 
+from flext_core.loggings import FlextLogger
+from flext_core.result import r
 from flext_tests.constants import c
 from flext_tests.models import m
 
@@ -184,9 +185,9 @@ class FlextTestsDocker:
         try:
             if self._state_file.exists():
                 state_text = self._state_file.read_text(encoding="utf-8")
-                state_raw = TypeAdapter(Mapping[str, Sequence[str]]).validate_json(
-                    state_text,
-                )
+                state_raw: Mapping[str, Sequence[str]] = TypeAdapter(
+                    Mapping[str, Sequence[str]],
+                ).validate_json(state_text)
                 dirty_raw = state_raw.get("dirty_containers", ())
                 self._dirty_containers = {
                     str(container_name) for container_name in dirty_raw

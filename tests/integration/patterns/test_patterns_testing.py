@@ -207,7 +207,7 @@ class ParameterizedTestBuilder:
     def add_case(
         self,
         email: str | None = None,
-        input: str | None = None,  # noqa: A002
+        input: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
         case: FixtureCaseDict = {}

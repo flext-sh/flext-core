@@ -26,7 +26,7 @@ Canonical references:
 
 ## Layered Topology
 
-```
+````text
 ┌─────────────────────────────────────────────────────────────┐
 │              Application / Orchestration (L3)               │
 │  dispatcher.py, handlers.py, decorators.py, registry.py     │
@@ -50,7 +50,7 @@ Canonical references:
 │                    Pure Contracts (L0)                      │
 │  constants.py, typings.py, protocols.py                     │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 ## Layer Catalog (source-aligned)
 
@@ -143,4 +143,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

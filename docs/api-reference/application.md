@@ -25,7 +25,7 @@ Primary components in this layer: `FlextDispatcher`, `h`, `FlextRegistry`, and `
 
 `FlextDispatcher` is the command/query dispatcher that orchestrates handler execution while applying reliability features such as retries, rate limiting, timeouts, and optional caching.
 
-```python
+````python
 from flext_core import FlextDispatcher
 
 # Define messages
@@ -46,7 +46,7 @@ dispatcher.register_handler(GetUserQuery, handle_get_user)
 # Dispatch with built-in reliability (retries, timeouts, rate limiting)
 create_result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
 user_result = dispatcher.dispatch(GetUserQuery("user-123"))
-```
+```text
 
 **Key capabilities**
 
@@ -69,7 +69,7 @@ class CreateUserHandler(h[CreateUserCommand, bool]):
             return r[bool].fail("Invalid email")
         # Business logic here
         return r[bool].ok(True)
-```
+```text
 
 **Highlights**
 
@@ -92,7 +92,7 @@ summary = registry.register_handlers([
     (CreateUserCommand, create_user_handler),
     (GetUserQuery, get_user_handler),
 ])
-```
+```text
 
 **Highlights**
 
@@ -114,7 +114,7 @@ from flext_core.result import r
 def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
     logger.info("creating user", user=cmd.name)
     return r[bool].ok(True)
-```
+```text
 
 **Highlights**
 
@@ -137,4 +137,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

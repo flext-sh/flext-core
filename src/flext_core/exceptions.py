@@ -18,6 +18,8 @@ from pydantic import (
     ConfigDict,
     Field,
     TypeAdapter,
+)
+from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
@@ -278,17 +280,21 @@ class FlextExceptions:
         excluded = excluded_keys or frozenset()
         context_map: m.ConfigMap = m.ConfigMap(root={})
         if context:
-            context_map.update({
-                k: FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in context.items()
-                if k not in excluded
-            })
+            context_map.update(
+                {
+                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in context.items()
+                    if k not in excluded
+                }
+            )
         if extra_kwargs:
-            context_map.update({
-                k: FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in extra_kwargs.items()
-                if k not in excluded
-            })
+            context_map.update(
+                {
+                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in extra_kwargs.items()
+                    if k not in excluded
+                }
+            )
         return context_map
 
     @staticmethod
@@ -1129,7 +1135,6 @@ class FlextExceptions:
 
             qualname_value = getattr(type_value, "__qualname__", None)
             return e._safe_optional_str(qualname_value)
-            return None
 
         @staticmethod
         def _build_type_context(

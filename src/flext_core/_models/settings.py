@@ -239,7 +239,7 @@ class FlextModelsConfig:
                 raise ValueError(msg)
 
             adjusted_workers = min(self.max_workers, self.batch_size)
-            setattr(self, "max_workers", adjusted_workers)
+            self.max_workers = adjusted_workers
 
             return self
 

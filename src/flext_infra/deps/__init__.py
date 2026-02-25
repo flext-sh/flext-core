@@ -25,10 +25,12 @@ from flext_infra.deps.extra_paths import (
     MYPY_BASE_ROOT,
     PYRIGHT_BASE_PROJECT,
     PYRIGHT_BASE_ROOT,
-    ROOT as EXTRA_PATHS_ROOT,
     get_dep_paths,
     sync_extra_paths,
     sync_one,
+)
+from flext_infra.deps.extra_paths import (
+    ROOT as EXTRA_PATHS_ROOT,
 )
 from flext_infra.deps.internal_sync import InternalDependencySyncService
 from flext_infra.deps.modernizer import PyprojectModernizer

@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 import tomlkit
-from flext_core import r
 from tomlkit.toml_document import TOMLDocument
 
+from flext_core import r
 from flext_infra.constants import c
 from flext_infra.deps.path_sync import extract_dep_name
 from flext_infra.paths import PathResolver

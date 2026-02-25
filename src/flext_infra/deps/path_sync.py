@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 
 import structlog
-from flext_core import r
 from tomlkit.toml_document import TOMLDocument
 
+from flext_core import r
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 from flext_infra.toml_io import TomlService

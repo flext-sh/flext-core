@@ -162,7 +162,7 @@ class FlextUtilitiesDeprecation:
                 *args: t.ConfigMapValue,
                 **kwargs: t.ConfigMapValue,
             ) -> None:
-                cls_name = cls.__name__
+                cls_name = getattr(cls, "__name__", cls.__class__.__name__)
                 message_parts = [f"{cls_name} is deprecated"]
                 if version:
                     message_parts.append(f"since version {version}")

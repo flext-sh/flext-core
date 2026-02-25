@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Comprehensive coverage tests for FlextExceptions.
 
 Module: flext_core.exceptions

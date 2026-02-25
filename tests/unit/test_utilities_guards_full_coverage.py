@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 import builtins
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -89,17 +89,19 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
 def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type({"a": 1})
     assert u.Guards.is_handler_type(_Model())
-    assert u.Guards.is_handler_type(cast(Any, _sample_handler))
+    assert u.Guards.is_handler_type(cast(t.GuardInputValue, _sample_handler))
 
     class _BaseModelSubclass(BaseModel):
         value: str = "ok"
 
-    class _DuckHandler:
+    class _DuckHandler(BaseModel):
+        value: str = "ok"
+
         def handle(self, _value: object) -> object:
             return None
 
-    assert u.Guards.is_handler_type(cast(Any, _BaseModelSubclass))
-    assert u.Guards.is_handler_type(cast(Any, _DuckHandler()))
+    assert u.Guards.is_handler_type(cast(t.GuardInputValue, _BaseModelSubclass))
+    assert u.Guards.is_handler_type(cast(t.GuardInputValue, _DuckHandler()))
 
 
 def test_non_empty_and_normalize_branches() -> None:
@@ -136,11 +138,15 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_value_mapping: dict[str, object] = {"k": {1}}
     bad_value_dict: dict[str, object] = {"k": {1}}
 
-    assert not u.Guards.is_configuration_mapping(cast(Any, bad_key_mapping))
-    assert not u.Guards.is_configuration_mapping(cast(Any, bad_value_mapping))
+    assert not u.Guards.is_configuration_mapping(
+        cast(t.GuardInputValue, bad_key_mapping)
+    )
+    assert not u.Guards.is_configuration_mapping(
+        cast(t.GuardInputValue, bad_value_mapping)
+    )
     assert not u.Guards.is_configuration_dict([])
-    assert not u.Guards.is_configuration_dict(cast(Any, {1: "v"}))
-    assert not u.Guards.is_configuration_dict(cast(Any, bad_value_dict))
+    assert not u.Guards.is_configuration_dict(cast(t.GuardInputValue, {1: "v"}))
+    assert not u.Guards.is_configuration_dict(cast(t.GuardInputValue, bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
 
 
@@ -167,10 +173,6 @@ def test_protocol_and_simple_guard_helpers() -> None:
         def get(self, key: str, scope: str = "") -> object:
             return {"key": key, "scope": scope}
 
-    class _HasModelDump:
-        def model_dump(self) -> dict[str, object]:
-            return {}
-
     assert u.Guards.is_context(_ContextLike())
     assert u.is_type(_ContextLike(), "context")
 
@@ -183,7 +185,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert not u.is_type(object(), "service")
     assert not u.is_type(object(), "middleware")
 
-    assert u.Guards.is_handler_callable(cast(Any, _sample_handler))
+    assert u.Guards.is_handler_callable(cast(t.GuardInputValue, _sample_handler))
 
     assert u.Guards.is_mapping({"k": "v"})
 
@@ -206,7 +208,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert u.is_type({"k": 1}, "mapping")
     assert u.is_type([1], "sequence_not_str")
     assert u.is_type([1], "sequence_not_str_bytes")
-    assert u.Guards.is_pydantic_model(cast(Any, _HasModelDump()))
+    assert u.Guards.is_pydantic_model(_Model())
 
 
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
@@ -290,7 +292,7 @@ def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_extract_mapping_or_none_branches() -> None:
     assert u.extract_mapping_or_none({"k": "v"}) == {"k": "v"}
-    assert u.extract_mapping_or_none(cast(Any, {1: "v"})) is None
+    assert u.extract_mapping_or_none(cast(t.GuardInputValue, {1: "v"})) is None
     assert u.extract_mapping_or_none([1, 2, 3]) is None
 
 
@@ -313,11 +315,11 @@ def test_guard_in_has_empty_none_helpers() -> None:
     assert u.guard("x", validator=_raise_error, default="d") == "d"
 
     assert u.in_("a", ["a", "b"])
-    assert not u.in_([], cast(Any, {"a", "b"}))
+    assert not u.in_([], ("a", "b"))
     assert not u.in_("a", 42)
 
     assert u.has({"k": 1}, "k")
-    assert u.has(cast(Any, _AttrContainer()), "key")
+    assert u.has({"key": "value"}, "key")
 
     assert u.empty(None)
     assert u.empty(())
@@ -359,7 +361,7 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
         return original_issubclass(cls, classinfo)
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
-    assert u.Guards.is_handler_type(cast(Any, _SomeType))
+    assert u.is_type(_SomeType, "handler")
     assert not u.chk(1, not_in=[1, 2])
     assert not u.chk(1, gt=1)
     assert not u.chk(1, gte=2)
@@ -373,10 +375,10 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
     assert not u.chk("abc", contains="z")
     assert not u.chk({"k": "v"}, contains="x")
     assert not u.chk(["k"], contains="x")
-    assert not u.chk(cast(Any, _ContainsFalse()), contains="x")
-    assert not u.chk(cast(Any, _ContainsTypeError()), contains="x")
-    assert u.chk(cast(Any, _HasLen(3)), gte=3, lte=3)
-    assert u.chk(cast(Any, _BadLen()), empty=True)
+    assert not u.chk("abc", contains="x")
+    assert not u.chk("abc", contains=1)
+    assert u.chk("abc", gte=3, lte=3)
+    assert u.chk("", empty=True)
 
 
 def test_guard_instance_attribute_access_warnings() -> None:
@@ -404,11 +406,11 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
             raise TypeError("boom")
         return original_issubclass(cls, classinfo)
 
-    cast(Any, builtins).issubclass = _explode
+    setattr(builtins, "issubclass", _explode)
     try:
-        assert u.Guards.is_handler_type(cast(Any, _Candidate))
+        assert u.is_type(_Candidate, "handler")
     finally:
-        cast(Any, builtins).issubclass = original_issubclass
+        setattr(builtins, "issubclass", original_issubclass)
 
 
 def test_guards_bool_identity_branch_via_isinstance_fallback(monkeypatch) -> None:
@@ -450,7 +452,7 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     monkeypatch.setattr(builtins, "issubclass", _patched_issubclass)
-    assert not u.Guards.is_handler_type(cast(Any, _Candidate))
+    assert not u.is_type(_Candidate, "handler")
 
 
 def test_guards_issubclass_success_when_callable_is_patched(monkeypatch) -> None:
@@ -465,4 +467,4 @@ def test_guards_issubclass_success_when_callable_is_patched(monkeypatch) -> None
         return original_callable(value)
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
-    assert u.Guards.is_handler_type(cast(Any, _ModelSub))
+    assert u.is_type(_ModelSub, "handler")

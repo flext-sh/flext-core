@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import csv
+import importlib
 import json
 import os
 import re
@@ -35,10 +36,9 @@ from pathlib import Path
 from types import TracebackType
 from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, cast, overload
 
-import yaml
-from flext_core import FlextRuntime, r
 from pydantic import BaseModel
 
+from flext_core import FlextRuntime, r
 from flext_tests.base import s
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -56,8 +56,30 @@ _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 # Alias for file content union (str, bytes, ConfigMap, etc.)
 TestsFileContent = t.Tests.FileContent
 
+_yaml_module = importlib.import_module("yaml")
+_YAMLError = cast("type[Exception]", getattr(_yaml_module, "YAMLError", Exception))
 
-def _is_batch_content(content_raw: object) -> bool:
+
+def _yaml_safe_load(raw: str) -> object:
+    safe_load_obj: object = getattr(_yaml_module, "safe_load", None)
+    if not callable(safe_load_obj):
+        msg = "PyYAML safe_load unavailable"
+        raise RuntimeError(msg)
+    safe_load = cast("Callable[[str], object]", safe_load_obj)
+    return safe_load(raw)
+
+
+def _yaml_dump(value: object, *, indent: int) -> str:
+    dump_obj: object = getattr(_yaml_module, "dump", None)
+    if not callable(dump_obj):
+        msg = "PyYAML dump unavailable"
+        raise RuntimeError(msg)
+    return str(
+        dump_obj(value, default_flow_style=False, allow_unicode=True, indent=indent)
+    )
+
+
+def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.PayloadValue]:
     try:
         _ = m.Tests.Files.CreateParams.model_validate(
             {
@@ -486,7 +508,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             else:
                 # Fallback - convert to dict representation
                 data = {"value": actual_content} if actual_content else {}
-            yaml_result = yaml.dump(data, default_flow_style=False, allow_unicode=True)
+            yaml_result = _yaml_dump(data, indent=params.indent)
             _ = file_path.write_text(yaml_result, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.CSV:
             # Convert Sequence[Sequence[str]] to list[list[str]] for write_csv
@@ -644,7 +666,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 content = self._coerce_read_content(parsed_json)
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
-                parsed_yaml = cast("object", yaml.safe_load(text))
+                parsed_yaml = _yaml_safe_load(text)
                 content = self._coerce_read_content(parsed_yaml)
             elif actual_fmt == c.Tests.Files.Format.CSV:
                 content = u.Tests.Files.read_csv(
@@ -671,7 +693,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_JSON.format(error=e),
             )
-        except yaml.YAMLError as e:
+        except _YAMLError as e:
             if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_INVALID_YAML.format(error=e))
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
@@ -870,8 +892,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     dict1_raw = cast("object", json.loads(content1))
                     dict2_raw = cast("object", json.loads(content2))
                 case "yaml":
-                    dict1_raw = cast("object", yaml.safe_load(content1))
-                    dict2_raw = cast("object", yaml.safe_load(content2))
+                    dict1_raw = _yaml_safe_load(content1)
+                    dict2_raw = _yaml_safe_load(content2)
                 case _:
                     return None
             if self._is_mapping(dict1_raw) and self._is_mapping(dict2_raw):
@@ -884,7 +906,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     for key, value in dict2_raw.items()
                 }
                 return (dict1, dict2)
-        except (json.JSONDecodeError, yaml.YAMLError, ValueError, TypeError):
+        except (json.JSONDecodeError, _YAMLError, ValueError, TypeError):
             pass
         return None
 
@@ -1235,24 +1257,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         f"Unknown operation: {params.operation}"
                     )
 
-        def process_one_value(
-            name_and_content: tuple[str, t.Tests.PayloadValue],
-        ) -> t.GuardInputValue:
-            item_result = process_one(name_and_content)
-            if item_result.is_success:
-                return item_result.value
-            raise ValueError(item_result.error or "Batch item operation failed")
-
         # Use u.Collection.batch() for batch processing
         # u.Collection.batch() handles Result unwrapping automatically
         # Returns r[t.BatchResultDict] with results as direct values (not Results)
         items_list: list[tuple[str, t.Tests.PayloadValue]] = list(files_dict.items())
-        operation_fn: Callable[
-            [tuple[str, t.Tests.PayloadValue]], t.GuardInputValue
-        ] = process_one_value
+        batch_operation = cast(
+            "Callable[[tuple[str, t.Tests.PayloadValue]], t.GuardInputValue | r[t.GuardInputValue]]",
+            process_one,
+        )
         batch_result_dict = u.Collection.batch(
             items_list,
-            operation_fn,
+            batch_operation,
             on_error=error_mode_str,
             parallel=params.parallel,
         )
@@ -1810,7 +1825,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     # YAML parsing
                     parsed_raw = cast(
                         "object",
-                        yaml.safe_load(text) if text.strip() else {},
+                        _yaml_safe_load(text) if text.strip() else {},
                     )
 
                 if self._is_mapping(parsed_raw):
@@ -1829,7 +1844,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         self._to_payload_value(item) for item in parsed_list
                     ]
                     item_count = len(parsed_content)
-            except (json.JSONDecodeError, yaml.YAMLError):
+            except (json.JSONDecodeError, _YAMLError):
                 # Invalid content, leave metadata as None
                 pass
 

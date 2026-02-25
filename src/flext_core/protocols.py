@@ -12,14 +12,10 @@ from types import ModuleType, TracebackType
 from typing import (
     Protocol,
     Self,
-    _ProtocolMeta,
     runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic._internal._model_construction import (
-    ModelMetaclass,
-)
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
@@ -139,14 +135,12 @@ class _ProtocolIntrospection:
 
 
 # Define combined metaclasses inheriting from both Pydantic's ModelMetaclass and
-# typing's _ProtocolMeta. This resolves the metaclass conflict when classes
-# inherit from both BaseModel/BaseSettings and Protocol subclasses.
-# Note: BaseSettings uses the same ModelMetaclass as BaseModel.
-
-
+# typing's Protocol metaclass. Resolve metaclass at runtime from public types
+# to avoid importing private names (_ProtocolMeta, pydantic._internal).
+# BaseSettings uses the same ModelMetaclass as BaseModel.
 class _CombinedModelMeta(
-    ModelMetaclass,
-    _ProtocolMeta,
+    type(BaseModel),
+    type(Protocol),
 ):
     """Combined metaclass for Pydantic BaseModel + Protocol inheritance."""
 
@@ -1448,7 +1442,7 @@ class FlextProtocols:
             )
 
             # Store protocols using setattr (avoids type: ignore)
-            setattr(cls, "__protocols__", tuple(protocols))
+            cls.__protocols__ = tuple(protocols)
 
             # Validate protocol compliance at class definition time
             for protocol in protocols:
@@ -1600,7 +1594,7 @@ class FlextProtocols:
                 )
 
             # Store protocols using setattr (avoids type: ignore)
-            setattr(cls, "__protocols__", tuple(protocols))
+            cls.__protocols__ = tuple(protocols)
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
@@ -1609,13 +1603,13 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            setattr(cls, "implements_protocol", _instance_implements_protocol)
+            cls.implements_protocol = _instance_implements_protocol
 
             # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
+            cls.get_protocols = classmethod(_class_get_protocols)
 
             return cls
 

@@ -27,7 +27,7 @@ describes the dependency rules and per-layer responsibilities.
 
 ## Layer Hierarchy
 
-```
+````text
 ┌─────────────────────────────────────┐
 │  L3: Application                    │  dispatcher.py, handlers.py, decorators.py
 │  (orchestration & middleware)       │  _dispatcher/reliability.py, _dispatcher/timeout.py
@@ -42,7 +42,7 @@ describes the dependency rules and per-layer responsibilities.
 │  L0: Pure Contracts                 │  constants.py, typings.py, protocols.py
 │  (immutable constants & protocols)  │
 └─────────────────────────────────────┘
-```
+```text
 
 ## Dependency Rules
 
@@ -58,7 +58,7 @@ from flext_core import FlextDispatcher, FlextResult
 
 # ❌ Forbidden: foundation pulling from application
 from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.py
-```
+```text
 
 ## Layer Responsibilities
 
@@ -132,4 +132,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

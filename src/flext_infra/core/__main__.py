@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -121,8 +122,6 @@ def _run_scan(args: argparse.Namespace) -> int:
     )
 
     if result.is_success:
-        import json
-
         data = result.value
         _ = sys.stdout.write(
             f"{json.dumps({'violation_count': data.get('violation_count', 0)})}\n"

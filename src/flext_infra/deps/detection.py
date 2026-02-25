@@ -8,10 +8,10 @@ import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
 from pydantic import Field
 
+from flext_core.result import FlextResult, r
+from flext_core.typings import t
 from flext_infra.constants import c
 from flext_infra.models import m
 from flext_infra.patterns import FlextInfraPatterns
@@ -240,16 +240,20 @@ class DependencyDetectionService:
     ) -> dm.ProjectDependencyReport:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
-        return dm.ProjectDependencyReport.model_validate({
-            "project": project_name,
-            "deptry": {
-                "missing": [item.get("module") for item in classified.dep001],
-                "unused": [item.get("module") for item in classified.dep002],
-                "transitive": [item.get("module") for item in classified.dep003],
-                "dev_in_runtime": [item.get("module") for item in classified.dep004],
-                "raw_count": len(deptry_issues),
-            },
-        })
+        return dm.ProjectDependencyReport.model_validate(
+            {
+                "project": project_name,
+                "deptry": {
+                    "missing": [item.get("module") for item in classified.dep001],
+                    "unused": [item.get("module") for item in classified.dep002],
+                    "transitive": [item.get("module") for item in classified.dep003],
+                    "dev_in_runtime": [
+                        item.get("module") for item in classified.dep004
+                    ],
+                    "raw_count": len(deptry_issues),
+                },
+            }
+        )
 
     def load_dependency_limits(
         self,
@@ -426,16 +430,18 @@ class DependencyDetectionService:
             else None
         )
 
-        report = dm.TypingsReport.model_validate({
-            "required_packages": sorted(required_set),
-            "hinted": hinted,
-            "missing_modules": missing_modules,
-            "current": current,
-            "to_add": sorted(required_set - current_set),
-            "to_remove": sorted(current_set - required_set),
-            "limits_applied": bool(limits),
-            "python_version": python_version,
-        })
+        report = dm.TypingsReport.model_validate(
+            {
+                "required_packages": sorted(required_set),
+                "hinted": hinted,
+                "missing_modules": missing_modules,
+                "current": current,
+                "to_add": sorted(required_set - current_set),
+                "to_remove": sorted(current_set - required_set),
+                "limits_applied": bool(limits),
+                "python_version": python_version,
+            }
+        )
         return r[dm.TypingsReport].ok(report)
 
 

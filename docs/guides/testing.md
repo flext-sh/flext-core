@@ -60,14 +60,14 @@ FLEXT maintains comprehensive test coverage across all **33 projects** with the 
 
 FLEXT uses a hierarchical test structure:
 
-```
+````text
 tests/
 ├── unit/           # Unit tests (fast, isolated)
 ├── integration/    # Integration tests (component interaction)
 ├── e2e/           # End-to-end tests (full workflow)
 ├── fixtures/      # Test data and fixtures
 └── conftest.py    # Pytest configuration
-```
+```text
 
 ## Test Categories
 
@@ -123,7 +123,7 @@ objectClass: inetOrgPerson"""
 
         assert result.is_failure
         assert "parsing" in str(result.failure()).lower()
-```
+```text
 
 ### Integration Tests
 
@@ -171,7 +171,7 @@ class TestLdifIntegration:
         # Test LDIF operations
         result = ldif_service.parse("dn: test")
         assert result.is_success
-```
+```text
 
 ### End-to-End Tests
 
@@ -215,7 +215,7 @@ objectClass: inetOrgPerson"""
         report = result.unwrap()
         assert report.successful_entries > 0
         assert (output_dir / "test.ldif").exists()
-```
+```text
 
 ## Test Markers
 
@@ -243,7 +243,7 @@ def test_end_to_end_scenario():
 def test_performance_benchmark():
     """Slow test - performance or load testing."""
     pass
-```
+```text
 
 ## Running Tests
 
@@ -262,7 +262,7 @@ pytest tests/e2e/         # End-to-end tests only
 pytest -m unit           # Unit tests
 pytest -m integration    # Integration tests
 pytest -m "not slow"     # Skip slow tests
-```
+```text
 
 ### Coverage Analysis
 
@@ -274,7 +274,7 @@ make test
 
 # HTML coverage report
 pytest --cov --cov-report=html
-```
+```text
 
 ### Parallel Test Execution
 
@@ -284,7 +284,7 @@ pytest -n auto
 
 # Specific number of workers
 pytest -n 4
-```
+```text
 
 ## Test Fixtures
 
@@ -326,7 +326,7 @@ def temp_directories(tmp_path):
     output_dir.mkdir()
 
     return input_dir, output_dir
-```
+```text
 
 ### Using Fixtures
 
@@ -347,7 +347,7 @@ def test_file_migration(ldif_service, temp_directories):
     # Run migration
     result = ldif_service.migrate(input_dir, output_dir, "oid", "oud")
     assert result.is_success
-```
+```text
 
 ## Mocking and Stubbing
 
@@ -388,7 +388,7 @@ def test_with_mocked_dependency():
         # Verify mock was called
         mock_service.process.assert_called_once()
         assert result.is_success
-```
+```text
 
 ### Integration Test Stubbing
 
@@ -429,7 +429,7 @@ def test_with_stubbed_service():
     # Test integration
     result = integration_function()
     assert result.is_success
-```
+```text
 
 ## Performance Testing
 
@@ -463,7 +463,7 @@ def test_concurrent_processing():
 
     # Verify performance (should complete in < 1 second)
     assert (end_time - start_time) < 1.0
-```
+```text
 
 ### Memory Testing
 
@@ -490,13 +490,13 @@ def test_memory_usage():
     memory_used = current_memory - initial_memory
 
     assert memory_used < 100 * 1024 * 1024  # 100MB
-```
+```text
 
 ## Test Data Management
 
 ### Test Fixtures Directory
 
-```
+```text
 tests/
 ├── fixtures/
 │   ├── ldif/
@@ -509,7 +509,7 @@ tests/
 │   └── data/
 │       ├── users.json
 │       └── schema.json
-```
+```text
 
 ### Loading Test Data
 
@@ -536,7 +536,7 @@ def test_with_fixture():
     # Use fixture data in test
     result = process_ldif(ldif_content, config_data)
     assert result.is_success
-```
+```text
 
 ## Continuous Integration
 
@@ -575,7 +575,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
-```
+```text
 
 ## Best Practices
 
@@ -597,7 +597,7 @@ def test_parse():
 
 def test_ldif():
     pass
-```
+```text
 
 ### 2. Test Organization
 
@@ -623,7 +623,7 @@ class TestLdifMigration:
     def test_migrate_oid_to_oud(self):
         """Test OID to OUD migration."""
         pass
-```
+```text
 
 ### 3. Assertion Quality
 
@@ -642,7 +642,7 @@ def test_parse_result():
 def test_parse_result():
     result = ldif.parse(content)
     assert result  # Too vague
-```
+```text
 
 ### 4. Test Independence
 
@@ -668,7 +668,7 @@ def test_parse_valid_ldif():
 def test_parse_invalid_ldif():
     result = ldif.parse("invalid")
     assert result.is_failure
-```
+```text
 
 ## Troubleshooting
 
@@ -680,7 +680,7 @@ def test_parse_invalid_ldif():
    # Set PYTHONPATH
    export PYTHONPATH=src
    pytest
-   ```
+```text
 
 1. **Fixture Not Found**
 
@@ -689,21 +689,21 @@ def test_parse_invalid_ldif():
    @pytest.fixture(scope="function")
    def my_fixture():
        return "value"
-   ```
+```text
 
 1. **Test Timeout**
 
    ```bash
    # Increase timeout
    pytest --timeout=300
-   ```
+```text
 
 1. **Coverage Issues**
 
    ```bash
    # Check coverage configuration
    pytest --cov=src --cov-report=term-missing
-   ```
+```text
 
 ## Resources
 
@@ -712,3 +712,4 @@ def test_parse_invalid_ldif():
 - FLEXT Quality Standards
 - Test Examples
 - CI/CD Configuration
+````

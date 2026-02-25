@@ -6,9 +6,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, override
 
-from flext_core.result import r
-from flext_core.service import FlextService
-from flext_core.typings import t
 from jinja2 import (
     Environment,
     FileSystemLoader,
@@ -17,6 +14,9 @@ from jinja2 import (
     select_autoescape,
 )
 
+from flext_core.result import r
+from flext_core.service import FlextService
+from flext_core.typings import t
 from flext_infra.models import m
 
 
@@ -72,16 +72,18 @@ class TemplateEngine(FlextService[str]):
     @staticmethod
     def _default_config() -> m.BaseMkConfig:
         """Return the default base.mk configuration."""
-        return m.BaseMkConfig.model_validate({
-            "project_name": "unnamed",
-            "python_version": "3.13",
-            "core_stack": "python",
-            "package_manager": "poetry",
-            "source_dir": "src",
-            "tests_dir": "tests",
-            "lint_gates": ["lint", "format", "pyrefly", "mypy", "pyright"],
-            "test_command": "pytest",
-        })
+        return m.BaseMkConfig.model_validate(
+            {
+                "project_name": "unnamed",
+                "python_version": "3.13",
+                "core_stack": "python",
+                "package_manager": "poetry",
+                "source_dir": "src",
+                "tests_dir": "tests",
+                "lint_gates": ["lint", "format", "pyrefly", "mypy", "pyright"],
+                "test_command": "pytest",
+            }
+        )
 
     @classmethod
     def default_config(cls) -> m.BaseMkConfig:

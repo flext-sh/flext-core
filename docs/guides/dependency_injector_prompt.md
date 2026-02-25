@@ -8,7 +8,7 @@
 
 Use this prompt whenever you evolve **flext-core** or downstream projects to keep the dependency-injector integration pattern aligned (bridge L0.5/L1 + container L2 + handlers L3), without breaking the ABI or reintroducing ad-hoc registries.
 
-```
+````text
 You are responsible for applying and reinforcing the dependency-injector-based pattern across the codebase. Follow these rules:
 
 Architectural context
@@ -39,4 +39,5 @@ Final checklist
 - Avoid regressions in automatic wiring within the dispatcher/handlers.
 - Update architecture or guide docs in the same change when DI behavior/public usage changes.
 - Keep examples aligned with root policy and avoid direct dependency-injector imports in upper layers.
-```
+```text
+````

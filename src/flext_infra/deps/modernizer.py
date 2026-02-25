@@ -8,10 +8,10 @@ from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
-from flext_core.loggings import FlextLogger
-from flext_core.typings import t
 from tomlkit.items import Array, Table
 
+from flext_core.loggings import FlextLogger
+from flext_core.typings import t
 from flext_infra.subprocess import CommandRunner
 
 _logger = FlextLogger(__name__)
@@ -30,24 +30,26 @@ def _workspace_root(start: Path) -> Path:
 
 
 ROOT = _workspace_root(Path(__file__))
-SKIP_DIRS = frozenset({
-    ".archive",
-    ".claude.disabled",
-    ".flext-deps",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".sisyphus",
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "htmlcov",
-    "node_modules",
-    "site",
-    "vendor",
-})
+SKIP_DIRS = frozenset(
+    {
+        ".archive",
+        ".claude.disabled",
+        ".flext-deps",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".sisyphus",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "htmlcov",
+        "node_modules",
+        "site",
+        "vendor",
+    }
+)
 
 _DEP_NAME_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)")
 _RECENT_LINES_FOR_MARKER = 3
@@ -173,14 +175,16 @@ class ConsolidateGroupsPhase:
             project["optional-dependencies"] = optional
 
         existing = _project_dev_groups(doc)
-        merged_dev = _dedupe_specs([
-            *canonical_dev,
-            *existing.get("dev", []),
-            *existing.get("docs", []),
-            *existing.get("security", []),
-            *existing.get("test", []),
-            *existing.get("typings", []),
-        ])
+        merged_dev = _dedupe_specs(
+            [
+                *canonical_dev,
+                *existing.get("dev", []),
+                *existing.get("docs", []),
+                *existing.get("security", []),
+                *existing.get("test", []),
+                *existing.get("typings", []),
+            ]
+        )
         current_dev = _as_string_list(optional.get("dev"))
         if current_dev != merged_dev:
             optional["dev"] = _array(merged_dev)

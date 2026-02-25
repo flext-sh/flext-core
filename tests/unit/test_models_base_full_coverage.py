@@ -9,58 +9,61 @@ import importlib
 import uuid
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-_base_module = cast("Any", importlib.import_module("flext_core._models.base"))
-FlextModelFoundation = cast("Any", _base_module.FlextModelFoundation)
+from flext_core._models import base as _base_module
+
+FlextModelFoundation = _base_module.FlextModelFoundation
 c = _base_module.c
 t = _base_module.t
-r = cast("Any", importlib.import_module("flext_core.result")).r
-u = cast("Any", importlib.import_module("flext_core.utilities")).u
+from flext_core import result as _result_mod, utilities as _utils_mod
+
+r = _result_mod.r
+u = _utils_mod.u
 
 
-class _FrozenValue(FlextModelFoundation.FrozenValueModel):  # type: ignore[name-defined]
+class _FrozenValue(FlextModelFoundation.FrozenValueModel):
     name: str
     count: int
 
 
-class _Identifiable(FlextModelFoundation.IdentifiableMixin):  # type: ignore[name-defined]
+class _Identifiable(FlextModelFoundation.IdentifiableMixin):
     pass
 
 
-class _Timestampable(FlextModelFoundation.TimestampableMixin):  # type: ignore[name-defined]
+class _Timestampable(FlextModelFoundation.TimestampableMixin):
     pass
 
 
-class _Versionable(FlextModelFoundation.VersionableMixin):  # type: ignore[name-defined]
+class _Versionable(FlextModelFoundation.VersionableMixin):
     pass
 
 
-class _Auditable(FlextModelFoundation.AuditableMixin):  # type: ignore[name-defined]
+class _Auditable(FlextModelFoundation.AuditableMixin):
     pass
 
 
-class _SoftDelete(FlextModelFoundation.SoftDeletableMixin):  # type: ignore[name-defined]
+class _SoftDelete(FlextModelFoundation.SoftDeletableMixin):
     pass
 
 
-class _Taggable(FlextModelFoundation.TaggableMixin):  # type: ignore[name-defined]
+class _Taggable(FlextModelFoundation.TaggableMixin):
     pass
 
 
-class _Validatable(FlextModelFoundation.ValidatableMixin):  # type: ignore[name-defined]
+class _Validatable(FlextModelFoundation.ValidatableMixin):
     value: int = 1
 
 
-class _Serializable(FlextModelFoundation.SerializableMixin):  # type: ignore[name-defined]
+class _Serializable(FlextModelFoundation.SerializableMixin):
     value: str
     optional: str | None = None
 
 
-class _FailingValidatable(FlextModelFoundation.ValidatableMixin):  # type: ignore[name-defined]
+class _FailingValidatable(FlextModelFoundation.ValidatableMixin):
     def validate_self(self) -> _FailingValidatable:
         msg = "invalid"
         raise ValueError(msg)
@@ -87,15 +90,18 @@ def test_strip_whitespace(raw: str, expected: str) -> None:
 
 
 def test_ensure_utc_datetime_naive_and_none() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0)  # noqa: DTZ001
-    assert _base_module.ensure_utc_datetime(naive).tzinfo == UTC
+    naive = datetime(2026, 1, 1, 12, 0, 0)
+    converted = _base_module.ensure_utc_datetime(naive)
+    assert converted is not None
+    assert converted.tzinfo == UTC
     assert _base_module.ensure_utc_datetime(None) is None
 
 
 def test_normalize_to_list_branches() -> None:
     assert _base_module.normalize_to_list([1, 2]) == [1, 2]
     assert _base_module.normalize_to_list((1, 2)) == [1, 2]
-    assert sorted(_base_module.normalize_to_list({1, 2})) == [1, 2]
+    normalized_set = cast(list[int], _base_module.normalize_to_list(list({1, 2})))
+    assert sorted(normalized_set) == [1, 2]
     assert _base_module.normalize_to_list("x") == ["x"]
 
 
@@ -156,8 +162,7 @@ def test_validate_tags_list_normalization_and_errors() -> None:
 
 
 def test_metadata_attributes_accepts_none() -> None:
-    attributes = cast("Mapping[str, object]", cast("object", None))
-    model = FlextModelFoundation.Metadata(attributes=attributes)
+    model = FlextModelFoundation.Metadata(attributes=None)
     assert model.attributes == {}
 
 
@@ -165,26 +170,17 @@ def test_metadata_attributes_accepts_basemodel_mapping() -> None:
     class _Attrs(BaseModel):
         key: str
 
-    attributes = cast("Mapping[str, object]", cast("object", _Attrs(key="value")))
-    model = FlextModelFoundation.Metadata(attributes=attributes)
+    model = FlextModelFoundation.Metadata(attributes=_Attrs(key="value"))
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping"):
-        FlextModelFoundation.Metadata(
-            attributes=cast(
-                "Mapping[str, object]",
-                cast("object", _BrokenDumpModel()),
-            )
-        )
+        FlextModelFoundation.Metadata(attributes=_BrokenDumpModel())
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    t_dict_attributes = cast(
-        "Mapping[str, object]", cast("object", t.Dict(root={"a": 1}))
-    )
-    model_from_t_dict = FlextModelFoundation.Metadata(attributes=t_dict_attributes)
+    model_from_t_dict = FlextModelFoundation.Metadata(attributes=t.Dict(root={"a": 1}))
     model_from_mapping = FlextModelFoundation.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}
@@ -197,15 +193,13 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
         pass
 
     monkeypatch.setattr(_base_module, "BaseModel", _NotPydanticBase)
-    attributes = cast("Mapping[str, object]", cast("object", t.Dict(root={"x": 1})))
+    attributes = t.Dict(root={"x": 1})
     assert FlextModelFoundation.Metadata._validate_attributes(attributes) == {"x": 1}
 
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like"):
-        FlextModelFoundation.Metadata(
-            attributes=cast("Mapping[str, object]", cast("object", 123))
-        )
+        FlextModelFoundation.Metadata(attributes=123)
 
 
 def test_frozen_value_model_equality_and_hash() -> None:
@@ -251,7 +245,7 @@ def test_identifiable_unique_id_empty_rejected() -> None:
 
 
 def test_timestampable_timestamp_conversion_and_json_serializer() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0)  # noqa: DTZ001
+    naive = datetime(2026, 1, 1, 12, 0, 0)
     model = _Timestampable(created_at=naive, updated_at=naive)
     assert model.created_at.tzinfo == UTC
     dumped = model.model_dump(mode="json")
@@ -342,8 +336,8 @@ def test_versionable_internal_validators_for_unreachable_branches() -> None:
 def test_auditable_user_and_timestamp_validators() -> None:
     model = _Auditable(
         created_by="  creator  ",
-        created_at=datetime(2026, 1, 1, 12, 0, 0),  # noqa: DTZ001
-        updated_at=datetime(2026, 1, 1, 13, 0, 0),  # noqa: DTZ001
+        created_at=datetime(2026, 1, 1, 12, 0, 0),
+        updated_at=datetime(2026, 1, 1, 13, 0, 0),
         updated_by=" updater ",
     )
     assert model.created_by == "creator"
@@ -382,7 +376,7 @@ def test_auditable_validation_errors() -> None:
 def test_soft_delete_validators_and_serializer() -> None:
     model = _SoftDelete(
         deleted_by=" user ",
-        deleted_at=datetime(2026, 1, 1, 12, 0, 0),  # noqa: DTZ001
+        deleted_at=datetime(2026, 1, 1, 12, 0, 0),
         is_deleted=True,
     )
     assert model.deleted_by == "user"

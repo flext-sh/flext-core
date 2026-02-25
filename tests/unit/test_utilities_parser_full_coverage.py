@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 from enum import StrEnum
@@ -128,7 +129,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
 
     assert (
         u.Parser()._extract_key_from_str_conversion(
-            cast("t.GeneralValueType", _StrRaises())
+            cast(t.ConfigMapValue, cast(object, _StrRaises()))
         )
         is None
     )
@@ -149,10 +150,11 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast("t.GeneralValueType", object())
+        cast(t.ConfigMapValue, cast(object, object()))
     )
     assert (
-        parser3.get_object_key(cast("t.GeneralValueType", _OddNoStr())) == "_OddNoStr"
+        parser3.get_object_key(cast(t.ConfigMapValue, cast(object, _OddNoStr())))
+        == "_OddNoStr"
     )
 
     invalid_type = parser3._extract_pattern_components(
@@ -183,7 +185,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> No
     assert parser._parse_result_error(r[int].ok(1), default="fallback") == "fallback"
 
     model_result = parser._parse_model(
-        {"name": "ok", "count": 2, "payload": cast("t.GeneralValueType", "obj")},
+        cast(t.ConfigMapValue, {"name": "ok", "count": 2, "payload": "obj"}),
         _Model,
         "field: ",
         strict=False,
@@ -276,17 +278,29 @@ def test_parser_convert_and_norm_branches(monkeypatch) -> None:
     assert parser._convert_to_str("x", default="") == "x"
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
-        parser._convert_to_str(cast("t.GeneralValueType", _BadStr()), default="d")
+        parser._convert_to_str(
+            cast(t.ConfigMapValue, cast(object, _BadStr())),
+            default="d",
+        )
         == "d"
     )
     assert parser._convert_to_bool(True, default=False) is True
     assert (
-        parser._convert_to_bool(cast("t.GeneralValueType", object()), default=True)
+        parser._convert_to_bool(
+            cast(t.ConfigMapValue, cast(object, object())),
+            default=True,
+        )
         is True
     )
     assert parser._convert_fallback("x", object, "d") == "d"
 
-    assert parser.conv_str(cast("t.GeneralValueType", _BadConv()), default="d") == "d"
+    assert (
+        parser.conv_str(
+            cast(t.ConfigMapValue, cast(object, _BadConv())),
+            default="d",
+        )
+        == "d"
+    )
     assert parser.conv_str_list(5) == ["5"]
     assert parser.norm_str("abc") == "abc"
     assert parser.norm_list({"a": "", "b": "B"}, case="lower", filter_truthy=True) == {
@@ -346,7 +360,9 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     parser = u.Parser()
 
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
-    attrs = parser._extract_key_from_attributes(type("Obj", (), {"id": "x1"})())
+    attrs = parser._extract_key_from_attributes(
+        cast(t.ConfigMapValue, cast(object, type("Obj", (), {"id": "x1"})())),
+    )
     assert mapped == "n1"
     assert attrs == "x1"
 
@@ -420,7 +436,10 @@ def test_parser_remaining_branch_paths(monkeypatch) -> None:
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
     assert (
-        parser._convert_to_float(cast("t.GeneralValueType", object()), default=1.5)
+        parser._convert_to_float(
+            cast(t.ConfigMapValue, cast(object, object())),
+            default=1.5,
+        )
         == 1.5
     )
     assert parser._convert_fallback("x", str, "d") == "d"

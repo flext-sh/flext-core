@@ -48,7 +48,7 @@ DDD is an approach to software development that emphasizes:
 
 ### FlextModels Architecture
 
-```
+````text
 FlextModels.AggregateRoot
         ↓
 FlextModels.Entity
@@ -58,7 +58,7 @@ FlextModels.Value
 Pydantic BaseModel
         ↓
 Python 3.13+ Type System
-```
+```text
 
 ## Building Blocks
 
@@ -93,7 +93,7 @@ money3 = Money(amount=Decimal("50"), currency="USD")
 assert money1 == money2  # Same values = equal
 assert money1 != money3  # Different values = not equal
 assert money1 is not money2  # Different objects
-```
+```text
 
 #### When to Use Value Objects
 
@@ -120,7 +120,7 @@ class Address(FlextModels.Value):
     city: str
     postal_code: str
     country: str
-```
+```text
 
 ### Entities: Identity and Mutability
 
@@ -163,7 +163,7 @@ order3 = Order(order_id="ORD-002", customer_id="CUST-1", items=[], total=Decimal
 assert order1 == order2  # Same identity (order_id) = equal
 assert order1 != order3  # Different identity = not equal
 assert order1 is not order2  # Different objects (but same identity)
-```
+```text
 
 #### When to Use Entities
 
@@ -201,7 +201,7 @@ class Product(FlextModels.Entity):
         if quantity > self.inventory:
             raise ValueError("Insufficient inventory")
         self.inventory -= quantity
-```
+```text
 
 ### Aggregate Roots: Consistency Boundaries
 
@@ -324,7 +324,7 @@ try:
     order.confirm()  # Can't confirm shipped order
 except ValueError as e:
     print(f"Business rule violation: {e}")
-```
+```text
 
 #### When to Use Aggregate Roots
 
@@ -376,7 +376,7 @@ product.decrease_inventory(3)
 # Domain events collected on the aggregate can be emitted through the dispatcher
 dispatch_result = dispatcher.publish_events(product.commit_domain_events())
 assert dispatch_result.is_success
-```
+```text
 
 Key points:
 
@@ -601,7 +601,7 @@ if confirm_result.is_success:
 ship_result = order.ship()
 if ship_result.is_success:
     print("✅ Order shipped")
-```
+```text
 
 ### Example 2: User Authentication System
 
@@ -711,7 +711,7 @@ print(f"Email verification: {verify_result.is_success}")  # True
 # Now login works
 login_result = user.login("securepassword")
 print(f"Login: {login_result.is_success}")  # True
-```
+```text
 
 ## Integration with FlextResult
 
@@ -743,7 +743,7 @@ if result.is_success:
     print("✅ Email updated")
 else:
     print(f"❌ Failed: {result.error}")
-```
+```text
 
 ## CQRS: Command Query Responsibility Segregation
 
@@ -808,7 +808,7 @@ class UserCommandService(FlextService):
         self.add_domain_event(UserEmailUpdatedEvent(cmd.user_id, cmd.new_email))
 
         return FlextResult[bool].ok(True)
-```
+```text
 
 ### Queries: Read Operations
 
@@ -878,7 +878,7 @@ class UserQueryService(FlextService):
             {"id": u.entity_id, "username": u.username}
             for u in users
         ])
-```
+```text
 
 ### Dispatcher: Unified Command/Query Bus
 
@@ -915,7 +915,7 @@ result = dispatcher.dispatch_query(get_query)
 if result.is_success:
     user_data = result.value
     print(f"User: {user_data['username']}")
-```
+```text
 
 ### Benefits of CQRS in FLEXT
 
@@ -951,7 +951,7 @@ class Order(FlextModels.AggregateRoot):
 class Order(FlextModels.AggregateRoot):
     items: list[OrderItem]
     # No validation - could have empty items
-```
+```text
 
 ### 2. Use Semantic Types for Values
 
@@ -968,7 +968,7 @@ class Email(FlextModels.Value):
 class Order:
     total: Decimal  # Should be Money
     customer_email: str  # Should be Email
-```
+```text
 
 ### 3. Enforce Business Rules
 
@@ -989,7 +989,7 @@ def add_to_cart(cart, item):
         return False
     cart.items.append(item)
     return True
-```
+```text
 
 ## Key Takeaways
 
@@ -1021,3 +1021,4 @@ def add_to_cart(cart, item):
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_models.py` for 200+ test cases demonstrating DDD patterns with FlextModels.
+````

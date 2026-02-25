@@ -15,9 +15,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, Self, TypeGuard, overload
 
-from flext_core import r
 from pydantic import BaseModel
 
+from flext_core import r
 from flext_tests.constants import c
 from flext_tests.factories import tt
 from flext_tests.models import m
@@ -1233,12 +1233,14 @@ class FlextTestsBuilders:
             services: list[dict[str, str]] = []
             for i in range(count):
                 service = tt.create_service(name=f"service_{i}")
-                services.append({
-                    "id": service.id,
-                    "name": service.name,
-                    "type": service.type,
-                    "status": service.status,
-                })
+                services.append(
+                    {
+                        "id": service.id,
+                        "name": service.name,
+                        "type": service.type,
+                        "status": service.status,
+                    }
+                )
             return services
 
         if factory == "results":

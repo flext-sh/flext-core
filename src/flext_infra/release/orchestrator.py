@@ -17,10 +17,10 @@ from pathlib import Path
 from typing import override
 
 import structlog
+
 from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
-
 from flext_infra.constants import c
 from flext_infra.git import GitService
 from flext_infra.json_io import JsonService
@@ -252,12 +252,14 @@ class ReleaseOrchestrator(FlextService[bool]):
                 failures += 1
             log = output_dir / f"build-{name}.log"
             log.write_text(output + "\n", encoding=_DEFAULT_ENCODING)
-            records.append({
-                "project": name,
-                "path": str(path),
-                "exit_code": code,
-                "log": str(log),
-            })
+            records.append(
+                {
+                    "project": name,
+                    "path": str(path),
+                    "exit_code": code,
+                    "log": str(log),
+                }
+            )
             logger.info("release_phase_build_project", project=name, exit_code=code)
 
         report: Mapping[str, t.ConfigMapValue] = {
@@ -489,18 +491,20 @@ class ReleaseOrchestrator(FlextService[bool]):
             "- root",
         ]
         lines.extend(f"- {p.name}" for p in project_list)
-        lines.extend([
-            "",
-            "## Changes since last tag",
-            "",
-            changes or "- Initial tagged release",
-            "",
-            "## Verification",
-            "",
-            "- make release INTERACTIVE=0 CREATE_BRANCHES=0 RELEASE_PHASE=all",
-            "- make validate VALIDATE_SCOPE=workspace",
-            "- make build",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Changes since last tag",
+                "",
+                changes or "- Initial tagged release",
+                "",
+                "## Verification",
+                "",
+                "- make release INTERACTIVE=0 CREATE_BRANCHES=0 RELEASE_PHASE=all",
+                "- make validate VALIDATE_SCOPE=workspace",
+                "- make build",
+            ]
+        )
 
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)

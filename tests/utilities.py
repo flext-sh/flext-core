@@ -19,7 +19,6 @@ from collections.abc import Callable, Iterator
 from flext_core import FlextResult, t
 from flext_core.utilities import u
 from flext_tests.utilities import FlextTestsUtilities
-
 from tests.test_utils import assertion_helpers
 
 

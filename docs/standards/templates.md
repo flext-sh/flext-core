@@ -100,7 +100,7 @@ Use for new feature documentation (guides/ directory).
 
 [One sentence: What is this and why use it?]
 
-## Overview
+## Overview - Feature Guide Template
 
 [2-3 paragraphs explaining the feature]
 
@@ -110,7 +110,7 @@ Use for new feature documentation (guides/ directory).
 - Feature 2
 - Feature 3
 
-## Basic Usage
+## Basic Usage - Feature Guide Template
 
 ### Simple Example
 
@@ -118,24 +118,24 @@ Use for new feature documentation (guides/ directory).
 from flext_core import [Import]
 
 # Your example here
-```
+```text
 ````
 
-### Common Patterns
+### Common Patterns - Feature Guide Template
 
 #### Pattern 1: [Name]
 
-```python
+````python
 # Example
-```
+```text
 
 #### Pattern 2: [Name]
 
 ```python
 # Example
-```
+```text
 
-## API Reference
+## API Reference - Feature Guide Template
 
 ### Method/Class 1
 
@@ -145,7 +145,7 @@ from flext_core import [Import]
 
 ```python
 # Example
-```
+```text
 
 ### Method/Class 2
 
@@ -155,9 +155,9 @@ from flext_core import [Import]
 
 ```python
 # Example
-```
+```text
 
-## Best Practices
+## Best Practices - Feature Guide Template
 
 ### ✅ DO
 
@@ -171,7 +171,7 @@ from flext_core import [Import]
 - Anti-pattern 2: Why avoid it
 - Anti-pattern 3: Why avoid it
 
-## Common Issues
+## Common Issues - Feature Guide Template
 
 ### Issue: [Problem Description]
 
@@ -181,7 +181,7 @@ from flext_core import [Import]
 
 ```python
 # Example fix
-```
+```text
 
 ### Issue: [Problem Description]
 
@@ -189,15 +189,15 @@ from flext_core import [Import]
 
 **Solution:** How to fix it
 
-## Advanced Topics
+## Advanced Topics - Feature Guide Template
 
 [Optional section for advanced patterns]
 
-## Summary
+## Summary - Feature Guide Template
 
 [One paragraph recap of key points]
 
-## See Also
+## See Also - Feature Guide Template
 
 - Related Guide 1
 - Related Guide 2
@@ -209,16 +209,16 @@ from flext_core import [Import]
 
 Use for API documentation (api-reference/ directory).
 
-```markdown
+````markdown
 # [Layer Name] API Reference
 
 [Overview of what this layer provides]
 
-## [Class/Module Name]
+## [Class/Module Name] - API Reference Template
 
 [Purpose and use cases]
 
-### Class Methods
+### Class Methods - API Reference Template
 
 #### method_name(param1: Type, param2: Type) -> ReturnType
 
@@ -243,7 +243,7 @@ from flext_core import [Import]
 
 - `related_method()`: [Why related]
 
-### Properties
+### Properties - API Reference Template
 
 #### property_name
 
@@ -253,28 +253,28 @@ from flext_core import [Import]
 
 **Example:**
 
-```python
+````python
 obj.property_name  # Access property
-```
+```text
 
-## Quality Metrics
+## Quality Metrics - API Reference Template
 
 | Component  | Coverage | Status | Description |
 | ---------- | -------- | ------ | ----------- |
 | `file1.py` | XX%      | ✅/🔄  | Description |
 | `file2.py` | XX%      | ✅/🔄  | Description |
 
-## Usage Examples
+## Usage Examples - API Reference Template
 
-### Complete Example
+### Complete Example - API Reference Template
 
 [Show how multiple components work together]
 
 ```python
 # Full working example
-```
+```text
 
-## See Also
+## See Also - API Reference Template
 
 - Related API Reference
 - How-To Guide
@@ -285,12 +285,12 @@ obj.property_name  # Access property
 
 Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
-```markdown
+````markdown
 # [System/Component] Troubleshooting
 
-## [Category of Issues]
+## [Category of Issues] - Troubleshooting Template
 
-### Issue: [Problem Description]
+### Issue: [Problem Description] - Troubleshooting Template
 
 **Symptom:**
 [What user observes]
@@ -309,9 +309,9 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
 **Solution 2: [Approach Name]**
 
-```bash
+````bash
 # Commands or code
-```
+```text
 
 **When to check:**
 
@@ -320,9 +320,9 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
 ______________________________________________________________________
 
-## [Another Category]
+## [Another Category] - Troubleshooting Template
 
-### Issue: [Problem Description]
+### Issue: [Problem Description] - Troubleshooting Template (Category 2)
 
 [Same format as above]
 
@@ -337,20 +337,20 @@ Use for architecture/decisions.md.
 
 **Status:** PROPOSED | ACCEPTED | DEPRECATED | **Date:** YYYY-MM-DD
 
-### Problem
+### Problem - ADR Template
 [What challenge are we facing?]
 
-### Decision
+### Decision - ADR Template
 [What choice are we making?]
 
-### Rationale
+### Rationale - ADR Template
 [Why is this the right choice?]
 
-### Alternatives Considered
+### Alternatives Considered - ADR Template
 - Alternative 1: [Why not this?]
 - Alternative 2: [Why not this?]
 
-### Consequences
+### Consequences - ADR Template
 **Positive:**
 - ✅ Good consequence 1
 - ✅ Good consequence 2
@@ -359,10 +359,10 @@ Use for architecture/decisions.md.
 - ❌ Bad consequence 1
 - ❌ Bad consequence 2
 
-### Related Decisions
+### Related Decisions - ADR Template
 - Related ADR
 - Related pattern
-````
+```
 
 ## Best Practices Guide Template
 
@@ -373,52 +373,52 @@ Use for comprehensive guide on patterns/best practices.
 
 [Intro: Why is this important?]
 
-## Principle 1: [Name]
+## Principle 1: [Name] - Best Practices Guide Template
 
 **When to use:** [Context]
 
 ```python
 # ✅ CORRECT
 # Example showing best practice
-```
+```text
 ````
 
-```python
+````python
 # ❌ WRONG
 # Example showing anti-pattern
-```
+```text
 
 **Why:** [Explanation of benefits]
 
-## Principle 2: [Name]
+## Principle 2: [Name] - Best Practices Guide Template
 
 [Same structure]
 
-## Common Patterns
+## Common Patterns - Best Practices Guide Template
 
-### Pattern 1: [Name]
-
-[Description and example]
-
-### Pattern 2: [Name]
+### Pattern 1: [Name] - Best Practices Guide Template
 
 [Description and example]
 
-## Common Mistakes
+### Pattern 2: [Name] - Best Practices Guide Template
 
-### Mistake 1: [What people get wrong]
+[Description and example]
+
+## Common Mistakes - Best Practices Guide Template
+
+### Mistake 1: [What people get wrong] - Best Practices Guide Template
 
 ```python
 # ❌ WRONG - What to avoid
-```
+```text
 
 **Fix:**
 
 ```python
 # ✅ CORRECT - How to fix it
-```
+```text
 
-## Summary
+## Summary - Best Practices Guide Template
 
 [Key takeaways]
 
@@ -428,44 +428,44 @@ Use for comprehensive guide on patterns/best practices.
 
 Use for cheat sheets or quick reference.
 
-```markdown
+````markdown
 # [Feature] Quick Reference
 
-## Installation
+## Installation - Quick Reference Card Template
 ```bash
 pip install flext-core
 ````
 
-## Basic Setup
+## Basic Setup - Quick Reference Card Template
 
-```python
+````python
 from flext_core import [Import]
 
 # Quick setup
-```
+```text
 
-## Common Tasks
+## Common Tasks - Quick Reference Card Template
 
-### Task 1
-
-```python
-# Code
-```
-
-### Task 2
+### Task 1 - Quick Reference Card Template
 
 ```python
 # Code
-```
+```text
 
-## Common Issues
+### Task 2 - Quick Reference Card Template
+
+```python
+# Code
+```text
+
+## Common Issues - Quick Reference Card Template
 
 | Issue     | Solution |
 | --------- | -------- |
 | Problem 1 | Fix 1    |
 | Problem 2 | Fix 2    |
 
-## Resources
+## Resources - Quick Reference Card Template
 
 - Full Guide
 - API Reference
@@ -477,15 +477,15 @@ from flext_core import [Import]
 
 Use for documenting configuration options.
 
-```markdown
+````markdown
 # [Component] Configuration
 
-## Overview
+## Overview - Configuration Documentation Template
 [What can be configured?]
 
-## Configuration Methods
+## Configuration Methods - Configuration Documentation Template
 
-### Method 1: Configuration File
+### Method 1: Configuration File - Configuration Documentation Template
 
 **File:** `config.toml`
 
@@ -495,23 +495,23 @@ key1 = "value"
 key2 = 123
 ````
 
-### Method 2: Environment Variables
+### Method 2: Environment Variables - Configuration Documentation Template
 
-```bash
+````bash
 export SETTING_NAME=value
-```
+```text
 
-### Method 3: Programmatic
+### Method 3: Programmatic - Configuration Documentation Template
 
 ```python
 from flext_core import [Component]
 
 config = Component
-```
+```text
 
-## Configuration Options
+## Configuration Options - Configuration Documentation Template
 
-### option_name
+### option_name - Configuration Documentation Template
 
 - **Type:** DataType
 - **Default:** default_value
@@ -520,27 +520,27 @@ config = Component
 
 ```python
 # Example
-```
+```text
 
-## Environment-Specific
+## Environment-Specific - Configuration Documentation Template
 
-### Development
+### Development - Configuration Documentation Template
 
 ```toml
 [config.development]
-```
+```text
 
-### Production
+### Production - Configuration Documentation Template
 
 ```toml
 [config.production]
-```
+```text
 
-## Complete Example
+## Complete Example - Configuration Documentation Template
 
 ```toml
 # Full working configuration
-```
+```text
 
 ````
 
@@ -548,7 +548,7 @@ config = Component
 
 Use when comparing similar features.
 
-```markdown
+````markdown
 # [Feature A] vs [Feature B] vs [Feature C]
 
 | Aspect | [Feature A] | [Feature B] | [Feature C] |
@@ -559,25 +559,25 @@ Use when comparing similar features.
 | Learning Curve | Easy/Moderate/Hard | ... | ... |
 | When to Use | [When] | [When] | [When] |
 
-## [Feature A] Details
+## [Feature A] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
 ````
 
-## [Feature B] Details
+## [Feature B] Details - Comparison/Alternatives Template
+
+````python
+# Example usage
+```text
+
+## [Feature C] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
-```
+```text
 
-## [Feature C] Details
-
-```python
-# Example usage
-```
-
-## Decision Matrix
+## Decision Matrix - Comparison/Alternatives Template
 
 - Choose [Feature A] if you need [criteria]
 - Choose [Feature B] if you need [criteria]
@@ -589,7 +589,7 @@ Use when comparing similar features.
 
 Use for step-by-step implementation instructions.
 
-```markdown
+````markdown
 # Implementing [Feature Name]
 
 **Time Required:** X hours
@@ -598,7 +598,7 @@ Use for step-by-step implementation instructions.
 - Prerequisite 1
 - Prerequisite 2
 
-## Step 1: [Name]
+## Step 1: [Name] - Implementation Guide Template
 
 [Description]
 
@@ -608,56 +608,56 @@ Use for step-by-step implementation instructions.
 
 **Verify:**
 
-```bash
+````bash
 # How to verify this step worked
-```
+```text
 
-## Step 2: [Name]
+## Step 2: [Name] - Implementation Guide Template
 
 [Description]
 
 ```python
 # Code for step 2
-```
+```text
 
 **Verify:**
 
 ```bash
 # How to verify this step worked
-```
+```text
 
-## Step 3: [Name]
+## Step 3: [Name] - Implementation Guide Template
 
 [Description]
 
 ```python
 # Code for step 3
-```
+```text
 
-## Verification
+## Verification - Implementation Guide Template
 
 Run the following to verify complete implementation:
 
 ```bash
 # Test command
-```
+```text
 
 Expected output:
 
-```
+```json
 [Expected output]
-```
+```text
 
-## Troubleshooting
+## Troubleshooting - Implementation Guide Template
 
 [Common issues during implementation]
 
-## What's Next
+## What's Next - Implementation Guide Template
 
 - Next feature
 - Related topic
 
-```
+```text
 
 ## Tips for Using Templates
 
@@ -679,4 +679,5 @@ See Configuration Guide as a real example of the Feature Guide Template.
 - Update existing templates based on feedback
 - Keep examples current and working
 - Review template usage quarterly
-```
+```text
+````

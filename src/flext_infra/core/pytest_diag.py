@@ -15,9 +15,9 @@ from pathlib import Path
 from typing import ClassVar
 
 from defusedxml import ElementTree as DefusedET
+
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
-
 from flext_infra.constants import c
 
 

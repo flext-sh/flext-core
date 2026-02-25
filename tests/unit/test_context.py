@@ -94,7 +94,7 @@ class TestFlextContext:
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
         initial_data = m.Context.ContextData(
-            data={"user_id": "123", "session_id": "abc"},
+            data=t.Dict(root={"user_id": "123", "session_id": "abc"}),
         )
         context = FlextContext(initial_data)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
@@ -377,7 +377,7 @@ class TestFlextContext:
         hook_called = False
 
         # HandlerCallable = Callable[[t.GeneralValueType], t.GeneralValueType]
-        def test_hook(_arg: t.GeneralValueType) -> t.GeneralValueType:
+        def test_hook(_arg: t.ScalarValue) -> t.ScalarValue:
             nonlocal hook_called
             hook_called = True
             return _arg
@@ -439,7 +439,7 @@ class TestFlextContext:
             }
             assert "key1" in converted_global
             # Pass global scope data to _import_data
-            new_context._import_data(converted_global)
+            new_context._import_data(m.ConfigMap(root=converted_global))
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             new_context,
             "key1",
@@ -720,7 +720,7 @@ class TestFlextContext:
         """Test importing empty data into context."""
         context = test_context
         context.set("existing_key", "existing_value").value
-        context._import_data({})
+        context._import_data(m.ConfigMap(root={}))
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
             "existing_key",
@@ -913,7 +913,7 @@ class TestFlextContext:
             "key1": "value1",
             "key2": "value2",
         }
-        context._import_data(data_to_import)
+        context._import_data(m.ConfigMap(root=data_to_import))
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
             "key1",
@@ -969,7 +969,7 @@ class TestFlextContext:
         context = test_context
         hook_called: list[t.GeneralValueType] = []
 
-        def test_hook(arg: t.GeneralValueType) -> t.GeneralValueType:
+        def test_hook(arg: t.ScalarValue) -> t.ScalarValue:
             hook_called.append(arg)
             return arg
 

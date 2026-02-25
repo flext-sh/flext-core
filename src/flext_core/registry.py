@@ -764,11 +764,13 @@ class FlextRegistry(FlextService[bool]):
 
         """
         cls = type(self)
-        return r[list[str]].ok([
-            k.split("::")[1]
-            for k in cls._class_registered_keys
-            if k.startswith(f"{category}::")
-        ])
+        return r[list[str]].ok(
+            [
+                k.split("::")[1]
+                for k in cls._class_registered_keys
+                if k.startswith(f"{category}::")
+            ]
+        )
 
     def unregister_class_plugin(self, category: str, name: str) -> r[bool]:
         """Unregister plugin from class-level storage.

@@ -52,7 +52,7 @@ Railway-Oriented Programming (ROP) is a functional programming pattern that trea
 
 Imagine two parallel tracks:
 
-```
+````text
 Success Track (happy path):     value -> validate -> transform -> output
                                    ↓         ↓            ↓          ↓
                             ─────────────────────────────────────────────
@@ -60,7 +60,7 @@ Success Track (happy path):     value -> validate -> transform -> output
 Failure Track (error path):    error -> error -> error -> error (short-circuit)
                                    ↓         ↓            ↓
                             ─────────────────────────────────────────────
-```
+```text
 
 When an operation fails, execution automatically switches to the failure track and skips remaining operations. No exceptions needed.
 
@@ -86,7 +86,7 @@ result = FlextResult.ok("data")
 
 # None is valid success (for void operations)
 result = FlextResult[bool].ok(True)  # Represents successful completion
-```
+```text
 
 **Source**: `src/flext_core/result.py:313-337`
 
@@ -112,7 +112,7 @@ result = FlextResult[dict].fail(
     error_code=FlextConstants.Errors.CONFIG_ERROR,
     error_data={"missing_field": "database_url"},
 )
-```
+```text
 
 **Source**: `src/flext_core/result.py:342-392`
 
@@ -142,7 +142,7 @@ if result.is_failure:
     message = result.error          # str
     code = result.error_code        # str | None
     data = result.error_data        # dict[str, object]
-```
+```text
 
 ### Accessing Success Values
 
@@ -166,7 +166,7 @@ if result.is_success:
 # All three throw ValidationError on failure:
 failed_result = FlextResult[str].fail("Error")
 value = failed_result.value  # Raises ValidationError: "Attempted to access value on failed result"
-```
+```text
 
 **Source**: `src/flext_core/result.py:283-292`
 
@@ -216,7 +216,7 @@ else:
 # ✅ Verification sent to user@example.com
 # ❌ Invalid email: missing @
 # ❌ Domain not allowed
-```
+```text
 
 **Key insight**: If ANY operation fails, execution stops and propagates the failure. No exception handling needed.
 
@@ -246,7 +246,7 @@ assert final.value == 6
 failed = FlextResult[str].fail("Error")
 result = failed.map(str.upper)  # Still fails, map is skipped
 assert result.is_failure
-```
+```text
 
 ### filter: Conditional Success
 
@@ -284,7 +284,7 @@ result = (
 )
 assert result.is_failure
 assert "18 or older" in result.error
-```
+```text
 
 ### recover: Error Recovery with Fallback
 
@@ -316,7 +316,7 @@ def get_default_user_for_error(error: str) -> dict:
 
 result = fetch_user("missing").recover(get_default_user_for_error)
 assert result.value["id"] == "guest"
-```
+```text
 
 **Source**: `src/flext_core/result.py`
 
@@ -348,7 +348,7 @@ result = (
     .map_error(lambda e: f"[ERROR] {e}")
 )
 assert result.error == "[ERROR] ORIGINAL ERROR"
-```
+```text
 
 **Source**: `src/flext_core/result.py`
 
@@ -384,7 +384,7 @@ assert result.is_failure  # Catches ZeroDivisionError
 result = FlextResult.safe_call(divide, 10, 2)
 assert result.is_success
 assert result.value == 5.0
-```
+```text
 
 **Source**: `src/flext_core/result.py`
 
@@ -416,7 +416,7 @@ try:
 except json.JSONDecodeError as e:
     result = FlextResult.from_exception(e, error_code="JSON_ERROR")
     assert result.is_failure
-```
+```text
 
 **Source**: `src/flext_core/result.py`
 
@@ -452,7 +452,7 @@ result = (
     .or_else(lambda _: fetch_backup())   # This succeeds
 )
 assert result.is_success
-```
+```text
 
 **Source**: `src/flext_core/result.py`
 
@@ -513,7 +513,7 @@ else:
     print(f"❌ Registration failed: {result.error}")
     if result.error_code:
         print(f"   Error code: {result.error_code}")
-```
+```text
 
 ### Pattern 2: API Call with Fallbacks
 
@@ -555,7 +555,7 @@ print(result.value)  # {"source": "primary", "value": "config"}
 
 result = fetch_data_with_fallback("missing")
 print(result.value)  # {"source": "backup", "value": "missing_backup"}
-```
+```text
 
 ### Pattern 3: Database Transaction
 
@@ -610,7 +610,7 @@ if result.is_success:
     print(f"✅ Transaction {tx['transaction_id']} completed")
 else:
     print(f"❌ Transaction failed: {result.error}")
-```
+```text
 
 ### Pattern 4: Configuration Loading
 
@@ -685,7 +685,7 @@ else:
     print(f"❌ Configuration failed: {result.error}")
     print(f"   Error code: {result.error_code}")
     print(f"   Details: {result.error_data}")
-```
+```text
 
 ## Advanced Techniques
 
@@ -713,7 +713,7 @@ assert result.is_failure
 result = validate_all_items(["valid", "item", "check"])  # All valid
 assert result.is_success
 assert result.value == ["valid", "item", "check"]
-```
+```text
 
 ### Error Recovery
 
@@ -736,7 +736,7 @@ result = (
 
 assert result.is_success
 assert result.value == 0  # Recovered with default
-```
+```text
 
 ### Resource Management
 
@@ -766,7 +766,7 @@ result = FlextResult.with_resource(
 
 if result.is_success:
     print(f"✅ {result.value}")
-```
+```text
 
 ## Decorator Composition with Railway Pattern
 
@@ -795,7 +795,7 @@ if result.is_success:
     user = result.value
 else:
     print(f"Failed after retries: {result.error}")
-```
+```text
 
 ### Combining @timeout + @railway
 
@@ -819,7 +819,7 @@ def expensive_computation(data: list[float]) -> float:
 result = expensive_computation([1.0, 2.0, 3.0])
 if result.is_failure and "timed out" in result.error:
     print("Operation exceeded timeout")
-```
+```text
 
 ### Complete Decorator Composition: @retry + @timeout + @railway
 
@@ -858,7 +858,7 @@ else:
     # - Network timeout (after retries)
     # - API error (after retries)
     # - TimeoutError (exceeded 60 seconds)
-```
+```text
 
 ### Decorator Composition with @combined
 
@@ -890,7 +890,7 @@ def process_order(order_data: dict) -> dict:
 result = process_order({"order_id": "123", "items": [...]})
 if result.is_success:
     print(f"Order processed: {result.value['order_id']}")
-```
+```text
 
 ### Railway Pattern with Decorator Error Handling
 
@@ -932,7 +932,7 @@ if result.is_success:
     print(f"✅ Order {result.value['id']} created")
 else:
     print(f"❌ {result.error}")
-```
+```text
 
 ### See Also
 
@@ -956,7 +956,7 @@ def process_user(data: dict) -> FlextResult[dict]:
     if "email" not in data:
         return FlextResult[dict].fail("Email required")  # Railway pattern
     return FlextResult[dict].ok({"user": data})
-```
+```text
 
 ### 2. Include Error Context
 
@@ -970,7 +970,7 @@ return FlextResult[dict].fail(
     error_code="USER_NOT_FOUND",
     error_data={"user_id": user_id, "database": "primary"},
 )
-```
+```text
 
 ### 3. Use Monadic Composition
 
@@ -996,7 +996,7 @@ def new_way(data):
         .flat_map(process)
         .flat_map(finalize)
     )
-```
+```text
 
 ### 4. Preserve Success Values
 
@@ -1011,7 +1011,7 @@ result = (
 def transform(data) -> FlextResult[dict]:
     result = process(data)
     return FlextResult[dict].ok(result)  # Wrap in FlextResult
-```
+```text
 
 ## Backward Compatibility APIs
 
@@ -1037,7 +1037,7 @@ try:
     value = failed.data   # Also raises
 except Exception:
     pass
-```
+```text
 
 ## Key Takeaways
 
@@ -1068,3 +1068,4 @@ except Exception:
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for 250+ test cases demonstrating all FlextResult patterns and edge cases.
+````

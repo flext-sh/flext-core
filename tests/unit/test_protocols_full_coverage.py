@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from collections.abc import Callable
+from typing import Protocol, cast, runtime_checkable
 
 import pytest
 
@@ -34,7 +35,7 @@ class _RequirePing(Protocol):
 def test_implements_decorator_validation_error_message() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
-    assert isinstance(m.Categories(), m.Categories)
+    assert isinstance(m.ConfigMap(root={}), m.ConfigMap)
     assert isinstance(u.Conversion.to_str_list(1), list)
 
     with pytest.raises(TypeError, match="does not implement required members"):
@@ -53,7 +54,7 @@ def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
     assert isinstance(instance, _MetaCreated)
     assert getattr(_MetaCreated, "__protocols__", ()) == (_NamedProtocol,)
 
-    class _NoProtocols(p.ProtocolModel):
+    class _NoProtocols(m.Base.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
         x: int = 1
 
     assert _NoProtocols.get_protocols() == ()
@@ -79,10 +80,17 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
             return "decorated"
 
     obj = _Decorated()
-    assert obj.implements_protocol(_NamedProtocol) is True
-    assert _Decorated.get_protocols() == (_NamedProtocol,)
+    implements = cast(Callable[[type], bool], getattr(obj, "implements_protocol"))
+    get_protocols = cast(
+        Callable[[], tuple[type, ...]], getattr(_Decorated, "get_protocols")
+    )
+    assert implements(_NamedProtocol) is True
+    assert get_protocols() == (_NamedProtocol,)
     assert p.is_protocol(_NamedProtocol) is True
-    assert p.check_implements_protocol(obj, _NamedProtocol) is True
+    assert (
+        p.check_implements_protocol(cast(t.GuardInputValue, obj), _NamedProtocol)
+        is True
+    )
 
 
 def test_check_implements_protocol_false_non_runtime_protocol() -> None:
@@ -95,7 +103,10 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
             return "thing"
 
     obj = _Thing()
-    assert p.check_implements_protocol(obj, _NotAProtocol) is False
+    assert (
+        p.check_implements_protocol(cast(t.GuardInputValue, obj), _NotAProtocol)
+        is False
+    )
 
 
 def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
@@ -104,12 +115,19 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
             return "runtime"
 
     runtime_obj = _OnlyRuntime()
-    assert p.check_implements_protocol(runtime_obj, _NamedProtocol) is True
+    assert (
+        p.check_implements_protocol(
+            cast(t.GuardInputValue, runtime_obj), _NamedProtocol
+        )
+        is True
+    )
 
-    class _DefaultModelName(p.ProtocolModel):
+    class _DefaultModelName(m.Base.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
         value: int = 1
 
-    class _DefaultSettingsName(p.ProtocolSettings):
+    class _DefaultSettingsName(
+        m.Base.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta
+    ):
         app_name: str = "x"
 
     assert _DefaultModelName()._protocol_name() == "_DefaultModelName"

@@ -72,13 +72,13 @@ This document outlines the development standards, patterns, and quality requirem
 
 **PRE-COMMIT (Required):**
 
-```bash
+````bash
 # All must pass with ZERO violations
 make lint          # Ruff linting
 make type-check    # MyPy + PyRight
 make test         # Full test suite
 make security     # Bandit + pip-audit
-```
+```text
 
 **PRE-PUBLISH (Required):**
 
@@ -87,7 +87,7 @@ make security     # Bandit + pip-audit
 make validate-all    # All projects in ecosystem
 make coverage-html   # Coverage visualization
 make benchmark      # Performance regression tests
-```
+```text
 
 ## 🏗️ Architecture Standards
 
@@ -95,12 +95,12 @@ make benchmark      # Performance regression tests
 
 **Dependency Rule (STRICT):**
 
-```
+```text
 Infrastructure → Application → Domain → Foundation
      (outer)         ↓          ↓         (inner)
 
 Inner layers know NOTHING about outer layers.
-```
+```text
 
 **Layer Responsibilities:**
 
@@ -133,7 +133,7 @@ Inner layers know NOTHING about outer layers.
 
 **Required Structure:**
 
-```
+```text
 src/flext_core/
 ├── __init__.py          # Public API exports ONLY
 ├── result.py           # Railway pattern (FlextResult)
@@ -146,7 +146,7 @@ src/flext_core/
 ├── config.py          # Configuration (FlextSettings)
 ├── loggings.py        # Logging (FlextLogger)
 └── ... (other modules)
-```
+```text
 
 **Import Standards:**
 
@@ -159,7 +159,7 @@ from flext_core import *
 
 # ❌ WRONG - Relative imports in public APIs
 from .result import FlextResult
-```
+```text
 
 ## 🔧 Development Workflow
 
@@ -184,7 +184,7 @@ make setup
 
 # 3. Verify installation
 python -c "import flext_core; print('✅ Ready')"
-```
+```text
 
 ### Development Commands
 
@@ -204,7 +204,7 @@ make security     # Security audit
 make format       # Auto-format code
 make fix          # Auto-fix linting issues
 make check        # Quick validation (lint + type-check)
-```
+```text
 
 **Testing Strategy:**
 
@@ -221,7 +221,7 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 # Specific modules
 pytest tests/unit/test_result.py -v
 pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
-```
+```text
 
 ## 📝 Code Standards
 
@@ -251,7 +251,7 @@ def do_stuff(x):
     if not x:
         return None
     return x
-```
+```text
 
 ### Pattern Standards
 
@@ -271,7 +271,7 @@ def create_user(name: str, email: str) -> User:
     if not name or not email:
         raise ValueError("Invalid input")
     return User(name, email)
-```
+```text
 
 **2. Dependency Injection (MANDATORY for all services):**
 
@@ -291,7 +291,7 @@ class UserService(FlextService):
 class UserService:
     def __init__(self, logger: Logger):
         self.logger = logger
-```
+```text
 
 **3. Domain-Driven Design (MANDATORY for business logic):**
 
@@ -314,7 +314,7 @@ class Order(FlextModels.AggregateRoot):
 class Order:
     def __init__(self, items: list):
         self.items = items
-```
+```text
 
 ## 🔒 API Stability Standards
 
@@ -348,7 +348,7 @@ class Order:
 
 **Required Structure:**
 
-```
+```text
 tests/
 ├── unit/           # Unit tests (fast, isolated)
 │   ├── test_result.py
@@ -361,7 +361,7 @@ tests/
 │   ├── test_patterns.py
 │   └── test_advanced_patterns.py
 └── conftest.py     # Shared fixtures
-```
+```text
 
 **Test Requirements:**
 
@@ -383,7 +383,7 @@ def test_flext_result_ok():
     assert not result.is_failure
     assert result.value == "success"
     assert result.data == "success"  # Dual access
-```
+```text
 
 **Integration Test Example:**
 
@@ -394,7 +394,7 @@ def test_container_singleton():
     container2 = FlextContainer.get_global()
 
     assert container1 is container2  # Same instance
-```
+```text
 
 ## 📚 Documentation Standards
 
@@ -505,3 +505,4 @@ def test_container_singleton():
 ______________________________________________________________________
 
 **FLEXT-Core Development Standards** - Ensuring the highest quality foundation for the entire FLEXT ecosystem.
+````

@@ -27,17 +27,19 @@ from types import MappingProxyType
 
 _MIN_ARGV = 2
 
-_GROUPS: Mapping[str, str] = MappingProxyType({
-    "basemk": "flext_infra.basemk.__main__",
-    "check": "flext_infra.check.__main__",
-    "core": "flext_infra.core.__main__",
-    "deps": "flext_infra.deps.__main__",
-    "docs": "flext_infra.docs.__main__",
-    "github": "flext_infra.github.__main__",
-    "maintenance": "flext_infra.maintenance.__main__",
-    "release": "flext_infra.release.__main__",
-    "workspace": "flext_infra.workspace.__main__",
-})
+_GROUPS: Mapping[str, str] = MappingProxyType(
+    {
+        "basemk": "flext_infra.basemk.__main__",
+        "check": "flext_infra.check.__main__",
+        "core": "flext_infra.core.__main__",
+        "deps": "flext_infra.deps.__main__",
+        "docs": "flext_infra.docs.__main__",
+        "github": "flext_infra.github.__main__",
+        "maintenance": "flext_infra.maintenance.__main__",
+        "release": "flext_infra.release.__main__",
+        "workspace": "flext_infra.workspace.__main__",
+    }
+)
 
 
 def _print_help() -> None:

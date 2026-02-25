@@ -59,7 +59,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Development Setup
 
-```bash
+````bash
 # Clone repository
 git clone https://github.com/flext-sh/flext-core.git
 cd flext-core
@@ -69,7 +69,7 @@ make setup
 
 # Verify installation
 python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
-```
+```text
 
 ## How to Contribute
 
@@ -116,7 +116,7 @@ python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
 ## Alternatives Considered
 
 [Other approaches you've considered]
-```
+```text
 
 ### 3. Submitting Pull Requests
 
@@ -156,7 +156,7 @@ make security      # Bandit + pip-audit
 make check         # lint + type-check only
 make format        # Auto-format code
 make fix           # Auto-fix linting issues
-```
+```text
 
 ### Testing
 
@@ -179,7 +179,7 @@ make test-integration  # Integration tests only
 # Specific modules
 pytest tests/unit/test_result.py -v
 pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
-```
+```text
 
 **Test Markers:**
 
@@ -191,7 +191,7 @@ pytest -m "not slow"        # Exclude slow tests
 
 # With coverage
 pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=term-missing
-```
+```text
 
 ### Code Quality Standards
 
@@ -224,7 +224,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Reinstall dependencies
    make install
-   ```
+```text
 
 1. **Type Errors**
 
@@ -234,7 +234,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Check specific files
    mypy src/flext_core/your_module.py
-   ```
+```text
 
 1. **Test Failures**
 
@@ -244,7 +244,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Debug specific test
    pytest tests/unit/test_result.py::TestFlextResult::test_ok -v -s
-   ```
+```text
 
 ### Documentation Updates
 
@@ -298,7 +298,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 **Module Structure:**
 
-```
+```text
 src/flext_core/
 ├── __init__.py          # Public API exports
 ├── result.py           # Railway pattern implementation
@@ -309,7 +309,7 @@ src/flext_core/
 ├── config.py          # Configuration management
 ├── loggings.py        # Structured logging
 └── ... (other modules)
-```
+```text
 
 **Import Guidelines:**
 
@@ -339,7 +339,7 @@ from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
 from .result import FlextResult
-```
+```text
 
 ## Review Process
 
@@ -430,3 +430,4 @@ ______________________________________________________________________
 Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
 
 **Happy coding!** 🚀
+````

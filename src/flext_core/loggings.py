@@ -1530,7 +1530,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 exc_info=exc_info,
                 context=context_kwargs,
             )
-            self._base_logger.error(message, **context)
+            self._base_logger.error(message, **context.root)
             return r[bool].ok(value=True)
 
 

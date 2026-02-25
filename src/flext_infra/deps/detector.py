@@ -10,10 +10,10 @@ from collections.abc import MutableMapping
 from pathlib import Path
 
 import structlog
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
 from pydantic import Field
 
+from flext_core.result import FlextResult, r
+from flext_core.typings import t
 from flext_infra.constants import c
 from flext_infra.deps.detection import DependencyDetectionService
 from flext_infra.json_io import JsonService
@@ -176,12 +176,14 @@ class RuntimeDevDependencyDetector:
         limits_path = Path(args.limits) if args.limits else limits_default
 
         projects_report: MutableMapping[str, MutableMapping[str, t.ConfigMapValue]] = {}
-        report_model = ddm.WorkspaceDependencyReport.model_validate({
-            "workspace": str(root),
-            "projects": projects_report,
-            "pip_check": None,
-            "dependency_limits": None,
-        })
+        report_model = ddm.WorkspaceDependencyReport.model_validate(
+            {
+                "workspace": str(root),
+                "projects": projects_report,
+                "pip_check": None,
+                "dependency_limits": None,
+            }
+        )
 
         if do_typings:
             limits_data = self._deps.load_dependency_limits(limits_path)
@@ -194,10 +196,12 @@ class RuntimeDevDependencyDetector:
                     else None
                 )
                 report_model.dependency_limits = (
-                    ddm.DependencyLimitsInfo.model_validate({
-                        "python_version": python_version,
-                        "limits_path": str(limits_path),
-                    }).model_dump()
+                    ddm.DependencyLimitsInfo.model_validate(
+                        {
+                            "python_version": python_version,
+                            "limits_path": str(limits_path),
+                        }
+                    ).model_dump()
                 )
 
         for project_path in projects:
@@ -259,10 +263,12 @@ class RuntimeDevDependencyDetector:
             if pip_result.is_failure:
                 return r[int].fail(pip_result.error or "pip check failed")
             pip_lines, pip_exit = pip_result.value
-            report_model.pip_check = ddm.PipCheckReport.model_validate({
-                "ok": pip_exit == 0,
-                "lines": pip_lines,
-            }).model_dump()
+            report_model.pip_check = ddm.PipCheckReport.model_validate(
+                {
+                    "ok": pip_exit == 0,
+                    "lines": pip_lines,
+                }
+            ).model_dump()
 
         report_payload = report_model.model_dump()
 

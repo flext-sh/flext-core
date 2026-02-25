@@ -25,7 +25,7 @@ Canonical references:
 
 Layered configuration system supporting environment variables, files, and programmatic overrides with type-safe access.
 
-```python
+````python
 from flext_core import FlextSettings
 
 config = FlextSettings(
@@ -35,7 +35,7 @@ config = FlextSettings(
 
 api_key = config.get("api.key", required=True)
 debug_mode = config.get("debug", default=False)
-```
+```text
 
 ## Logging and Observability
 
@@ -51,7 +51,7 @@ logger.info("Application started")
 
 with logger.context(operation="user_creation", user_id="user_123"):
     logger.info("Creating user")
-```
+```text
 
 ### FlextContext — Request and Operation Context
 
@@ -67,7 +67,7 @@ context = FlextContext.create(
 )
 logger = context.get_logger(__name__)
 logger.info("Handling request", extra=context.to_log_context())
-```
+```text
 
 Infrastructure components keep cross-cutting concerns consistent and testable without polluting domain or application code.
 
@@ -79,4 +79,5 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
-```
+```text
+````

@@ -52,13 +52,13 @@ This project integrates with FLEXT's comprehensive quality assurance system:
 
 Install the package and verify imports:
 
-```bash
+````bash
 pip install flext-core
 python - <<'PY'
 from flext_core import FlextDispatcher, FlextResult
 print('flext-core ready', FlextDispatcher.__name__, FlextResult.__name__)
 PY
-```
+```text
 
 ## Core Concepts
 
@@ -79,3 +79,4 @@ PY
 
 - **Issues and questions:** GitHub Issues/Discussions
 - **Code of conduct and contribution flow:** see `development/contributing.md`
+````

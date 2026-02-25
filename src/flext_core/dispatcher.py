@@ -1442,7 +1442,7 @@ class FlextDispatcher(s[bool]):
         # config_model might be MiddlewareConfig (no middleware_id) or m.Config.DispatcherMiddlewareConfig (has middleware_id)
         middleware_id_val: str | None = None
         if config_model and hasattr(config_model, "middleware_id"):
-            middleware_id_val = str(getattr(config_model, "middleware_id"))
+            middleware_id_val = str(config_model.middleware_id)
 
         if middleware_id_val is None:
             middleware_id_val = getattr(middleware, "__name__", str(middleware))
@@ -3300,13 +3300,15 @@ class FlextDispatcher(s[bool]):
         cb_metrics = self._circuit_breaker.get_metrics()
         executor_status = self._timeout_enforcer.get_executor_status()
         # Cast all values to _Payload
-        return m.ConfigMap.model_validate({
-            "total_dispatches": 0,
-            "circuit_breaker_failures": cb_metrics["failures"],
-            "circuit_breaker_states": cb_metrics["states"],
-            "circuit_breaker_open_count": cb_metrics["open_count"],
-            **executor_status,
-        })
+        return m.ConfigMap.model_validate(
+            {
+                "total_dispatches": 0,
+                "circuit_breaker_failures": cb_metrics["failures"],
+                "circuit_breaker_states": cb_metrics["states"],
+                "circuit_breaker_open_count": cb_metrics["open_count"],
+                **executor_status,
+            }
+        )
 
     def cleanup(self) -> None:
         """Clean up dispatcher resources using processors."""

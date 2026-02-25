@@ -63,10 +63,10 @@ This guide covers setting up a development environment for FLEXT contributions a
 
 ### 1. Clone the Repository
 
-```bash
+`````bash
 git clone https://github.com/flext-sh/flext.git
 cd flext
-```
+```text
 
 ### 2. Install Dependencies
 
@@ -77,7 +77,7 @@ make setup
 # Or install manually
 poetry install
 pre-commit install
-```
+```text
 
 ### 3. Verify Installation
 
@@ -89,13 +89,13 @@ make validate
 make lint-all
 make type-check-all
 make test-all
-```
+```text
 
 ## Project Structure
 
 FLEXT is organized as a monorepo with the following structure:
 
-```
+```text
 flext/
 ├── flext-core/           # Foundation library
 ├── flext-api/            # HTTP client and FastAPI
@@ -110,7 +110,7 @@ flext/
 ├── docs/                 # Documentation
 ├── scripts/              # Development scripts
 └── examples/             # Usage examples
-```
+```text
 
 ## Development Workflow
 
@@ -118,7 +118,7 @@ flext/
 
 ```bash
 git checkout -b feature/amazing-feature
-```
+```text
 
 ### 2. Make Changes
 
@@ -137,7 +137,7 @@ make check
 
 # Full validation (before push)
 make validate
-```
+```text
 
 ### 4. Commit Changes
 
@@ -145,7 +145,7 @@ make validate
 git add .
 git commit -m "feat(component): add amazing feature"
 git push origin feature/amazing-feature
-```
+```text
 
 ## Code Standards
 
@@ -163,7 +163,7 @@ def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
 # ❌ WRONG - Missing type annotations
 def process_data(data):
     return data
-```
+```text
 
 ### Railway-Oriented Programming
 
@@ -182,7 +182,7 @@ def validate_and_process(data: dict) -> ProcessedData:
     if not data:
         raise ValueError("Data required")
     return transform_data(data)
-```
+```text
 
 ### Unified Models Pattern
 
@@ -202,7 +202,7 @@ class ApiRequest(BaseModel):
 
 class ApiResponse(BaseModel):
     result: object
-```
+```text
 
 ## Testing
 
@@ -219,7 +219,7 @@ pytest tests/e2e/         # End-to-end tests
 
 # Run with coverage
 pytest --cov=src --cov-report=html
-```
+```text
 
 ### Writing Tests
 
@@ -261,7 +261,7 @@ class TestDataProcessing:
 
         assert result.is_failure
         assert "Data required" in result.failure()
-```
+```text
 
 ## Quality Gates
 
@@ -275,7 +275,7 @@ pre-commit install
 
 # Run hooks manually
 pre-commit run --all-files
-```
+```text
 
 ### Quality Checks
 
@@ -291,7 +291,7 @@ make security
 
 # All quality checks
 make validate
-```
+```text
 
 ## Adding New Projects
 
@@ -304,7 +304,7 @@ cd flext-newlib
 
 # Update project metadata
 # Edit pyproject.toml, README.md, etc.
-```
+```text
 
 ### 2. Implement Core Patterns
 
@@ -351,7 +351,7 @@ class FlextNewlibModels:
 
     class Response(BaseModel):
         result: FlextResult[object]
-```
+```text
 
 ### 3. Add to Workspace
 
@@ -359,7 +359,7 @@ class FlextNewlibModels:
 # Add to workspace pyproject.toml
 # Add to workspace Makefile
 # Update documentation
-```
+```text
 
 ## Debugging
 
@@ -371,7 +371,7 @@ mypy src/module.py --show-error-codes --show-traceback
 
 # Check specific error
 mypy src/ --show-error-codes | grep "error-code"
-```
+```text
 
 ### Test Failures
 
@@ -381,7 +381,7 @@ pytest tests/unit/test_module.py -vv --tb=long
 
 # Debug mode
 pytest tests/unit/test_module.py --pdb
-```
+```text
 
 ### Import Issues
 
@@ -392,7 +392,7 @@ python -c "import flext_core; print(flext_core.__file__)"
 
 # Check poetry environment
 poetry env info
-```
+```text
 
 ## Documentation
 
@@ -418,7 +418,7 @@ def process_data(data: dict[str, object]) -> FlextResult[ProcessedData]:
         ...     processed = result.unwrap()
     """
     # Implementation here
-```
+```text
 
 ### README Updates
 
@@ -434,7 +434,7 @@ lib = FlextNewlib()
 result = lib.new_feature()
 
 config = FlextNewlibSettings(new_setting="value")
-```
+```text
 
 ## Contributing
 
@@ -468,9 +468,9 @@ config = FlextNewlibSettings(new_setting="value")
 
    # Reinstall dependencies
    make clean && make setup
-   ```
+```text
 
-````
+````markdown
 
 2. **Test Failures**
 
@@ -480,7 +480,7 @@ config = FlextNewlibSettings(new_setting="value")
 
    # Check specific test
    pytest tests/unit/test_specific.py::test_function -v
-````
+````markdown
 
 1. **Build Issues**
 
@@ -489,7 +489,7 @@ config = FlextNewlibSettings(new_setting="value")
    make clean-all
    make setup
    make build-all
-   ```
+```text
 
 ## Resources
 
@@ -504,3 +504,4 @@ config = FlextNewlibSettings(new_setting="value")
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
 - **Email**: <dev@flext.com>
+`````

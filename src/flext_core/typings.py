@@ -155,7 +155,7 @@ class FlextTypes:
     # COMPLEX TYPE ALIASES (TypeAlias for basedpyright compatibility)
     # =====================================================================
 
-    LaxStr: TypeAlias = str | bytes | bytearray
+    type LaxStr = str | bytes | bytearray
     """LaxStr compatibility for ldap3 integration."""
 
     # =========================================================================
@@ -163,40 +163,40 @@ class FlextTypes:
     # =========================================================================
 
     # Tier 1: Scalar primitives (immutable, JSON-safe)
-    ScalarValue: TypeAlias = str | int | float | bool | datetime | None
-    ScalarAlias: TypeAlias = ScalarValue
+    type ScalarValue = str | int | float | bool | datetime | None
+    type ScalarAlias = ScalarValue
 
     # Tier 2: Pydantic-safe metadata values
-    MetadataScalarValue: TypeAlias = str | int | float | bool | None
-    MetadataListValue: TypeAlias = list[str | int | float | bool | None]
+    type MetadataScalarValue = str | int | float | bool | None
+    type MetadataListValue = list[str | int | float | bool | None]
 
     # Tier 2.5: Pydantic-safe config types for Field() annotations
-    PydanticConfigValue: TypeAlias = (
+    type PydanticConfigValue = (
         str | int | float | bool | None | list[str | int | float | bool | None]
     )
 
     # Tier 3: General value types (superset including BaseModel, Path, datetime)
-    GeneralScalarValue: TypeAlias = str | int | float | bool | datetime | None
-    GeneralListValue: TypeAlias = list[str | int | float | bool | datetime | None]
+    type GeneralScalarValue = str | int | float | bool | datetime | None
+    type GeneralListValue = list[str | int | float | bool | datetime | None]
 
     # Input type for guard functions (flat union, no recursion; prefer models at API)
-    GuardInputValue: TypeAlias = _ContainerValue
+    type GuardInputValue = _ContainerValue
 
     # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
-    ConfigMapValue: TypeAlias = _ContainerValue
+    type ConfigMapValue = _ContainerValue
 
-    FlexibleValue: TypeAlias = GuardInputValue
+    type FlexibleValue = GuardInputValue
 
     # RegisterableService - fixed types only
     RegisterableService: TypeAlias = RegisterableService
 
     # RegistrablePlugin - fixed types only
-    RegistrablePlugin: TypeAlias = (
+    type RegistrablePlugin = (
         ScalarValue | BaseModel | Callable[..., ScalarValue | BaseModel]
     )
 
     # Constant value type - all possible constant types in FlextConstants
-    ConstantValue: TypeAlias = (
+    type ConstantValue = (
         str
         | int
         | float
@@ -218,15 +218,15 @@ class FlextTypes:
         root: list[_ContainerValue]
 
     # File content type supporting all serializable formats
-    FileContent: TypeAlias = str | bytes | BaseModel | Sequence[Sequence[str]]
+    type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
 
     # Sortable value type
-    SortableObjectType: TypeAlias = str | int | float
+    type SortableObjectType = str | int | float
 
     # =========================================================================
     # Conversion Mode Types
     # =========================================================================
-    ConversionMode: TypeAlias = Literal[
+    type ConversionMode = Literal[
         "to_str",
         "to_str_list",
         "normalize",
@@ -234,7 +234,7 @@ class FlextTypes:
     ]
 
     # MetadataAttributeValue - fixed scalar/mapping/list (Mapping, no dict)
-    MetadataAttributeValue: TypeAlias = (
+    type MetadataAttributeValue = (
         str
         | int
         | float
@@ -255,16 +255,16 @@ class FlextTypes:
     )
 
     # Type hint specifier - used for type introspection
-    TypeHintSpecifier: TypeAlias = type | str | Callable[[ScalarValue], ScalarValue]
+    type TypeHintSpecifier = type | str | Callable[[ScalarValue], ScalarValue]
 
     # Generic type argument
-    GenericTypeArgument: TypeAlias = str | type[ScalarValue]
+    type GenericTypeArgument = str | type[ScalarValue]
 
     # Message type specifier
-    MessageTypeSpecifier: TypeAlias = str | type
+    type MessageTypeSpecifier = str | type
 
     # Type origin specifier
-    TypeOriginSpecifier: TypeAlias = (
+    type TypeOriginSpecifier = (
         str | type[ScalarValue] | Callable[[ScalarValue], ScalarValue]
     )
 
@@ -274,19 +274,19 @@ class FlextTypes:
     JsonDict: TypeAlias = JsonDict
 
     # General value type for handlers and config boundaries
-    GeneralValueType: TypeAlias = _ContainerValue
+    type GeneralValueType = _ContainerValue
 
     # Single consolidated callable type for handlers and validators
-    HandlerCallable: TypeAlias = Callable[[ScalarValue], ScalarValue]
+    type HandlerCallable = Callable[[ScalarValue], ScalarValue]
 
     # Acceptable message types for handlers - scalars and models only
-    AcceptableMessageType: TypeAlias = ScalarValue | BaseModel | Sequence[ScalarValue]
+    type AcceptableMessageType = ScalarValue | BaseModel | Sequence[ScalarValue]
 
     # Conditional execution callable types
-    ConditionCallable: TypeAlias = Callable[[ScalarValue], bool]
+    type ConditionCallable = Callable[[ScalarValue], bool]
 
     # Handler type union
-    HandlerType: TypeAlias = HandlerCallable | BaseModel
+    type HandlerType = HandlerCallable | BaseModel
 
     # =========================================================================
     # GENERIC CONTAINERS (RootModels - use m.ConfigMap, m.Dict)
@@ -351,8 +351,8 @@ class FlextTypes:
 
         root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
-    ConfigurationMapping: TypeAlias = ConfigMap
-    ConfigurationDict: TypeAlias = ConfigMap
+    type ConfigurationMapping = ConfigMap
+    type ConfigurationDict = ConfigMap
 
     class ServiceMap(_RootDictModel[_ContainerValue]):
         """Service registry map container. Prefer m.ServiceMap in public API."""
@@ -367,12 +367,12 @@ class FlextTypes:
 
         root: dict[str, int | str | dict[str, int]] = Field(default_factory=dict)
 
-    IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
+    type IncEx = set[str] | Mapping[str, set[str] | bool]
 
-    DecoratorType: TypeAlias = Callable[[HandlerCallable], HandlerCallable]
+    type DecoratorType = Callable[[HandlerCallable], HandlerCallable]
 
-    FactoryCallable: TypeAlias = Callable[[], RegisterableService]
-    ResourceCallable: TypeAlias = Callable[[], _ContainerValue]
+    type FactoryCallable = Callable[[], RegisterableService]
+    type ResourceCallable = Callable[[], _ContainerValue]
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
     class FactoryMap(_RootDictModel[FactoryRegistrationCallable]):
@@ -462,7 +462,7 @@ class FlextTypes:
 
     # Error/Exception types (used in exceptions.py)
     # ErrorTypeMapping removed - Use m.ErrorMap
-    ExceptionKwargsType: TypeAlias = str | int | float | bool | datetime | None
+    type ExceptionKwargsType = str | int | float | bool | datetime | None
 
     # General nested dict type (used in guards.py)
     # GeneralNestedDict removed - Use m.Dict
@@ -494,44 +494,44 @@ class FlextTypes:
     class Validation:
         """Validation type aliases with Pydantic constraints."""
 
-        PortNumber: TypeAlias = Annotated[int, Field(ge=1, le=65535)]
+        type PortNumber = Annotated[int, Field(ge=1, le=65535)]
         """Port number type alias (1-65535)."""
 
-        PositiveTimeout: TypeAlias = Annotated[float, Field(gt=0.0, le=300.0)]
+        type PositiveTimeout = Annotated[float, Field(gt=0.0, le=300.0)]
         """Positive timeout in seconds (0-300)."""
 
-        RetryCount: TypeAlias = Annotated[int, Field(ge=0, le=10)]
+        type RetryCount = Annotated[int, Field(ge=0, le=10)]
         """Retry count (0-10)."""
 
-        WorkerCount: TypeAlias = Annotated[int, Field(ge=1, le=100)]
+        type WorkerCount = Annotated[int, Field(ge=1, le=100)]
         """Worker count (1-100)."""
 
         # =====================================================================
         # EXTENDED VALIDATION TYPES - Reusable Annotated aliases
         # =====================================================================
 
-        NonEmptyStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        type NonEmptyStr = Annotated[str, Field(min_length=1)]
         """Non-empty string (minimum 1 character)."""
 
-        StrippedStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        type StrippedStr = Annotated[str, Field(min_length=1)]
         """String with whitespace stripped (minimum 1 character after strip)."""
 
-        UriString: TypeAlias = Annotated[str, Field(min_length=1)]
+        type UriString = Annotated[str, Field(min_length=1)]
         """URI string with scheme validation (e.g., http://, https://)."""
 
-        HostnameStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        type HostnameStr = Annotated[str, Field(min_length=1)]
         """Hostname string with format validation."""
 
-        PositiveInt: TypeAlias = Annotated[int, Field(gt=0)]
+        type PositiveInt = Annotated[int, Field(gt=0)]
         """Positive integer (> 0)."""
 
-        NonNegativeInt: TypeAlias = Annotated[int, Field(ge=0)]
+        type NonNegativeInt = Annotated[int, Field(ge=0)]
         """Non-negative integer (>= 0)."""
 
-        BoundedStr: TypeAlias = Annotated[str, Field(min_length=1, max_length=255)]
+        type BoundedStr = Annotated[str, Field(min_length=1, max_length=255)]
         """Bounded string (1-255 characters)."""
 
-        TimestampStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        type TimestampStr = Annotated[str, Field(min_length=1)]
         """ISO 8601 timestamp string."""
 
 

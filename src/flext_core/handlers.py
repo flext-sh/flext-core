@@ -736,14 +736,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
-        exec_time_value_attr = self._execution_context.execution_time_ms
-        exec_time_value = (
-            exec_time_value_attr()
-            if callable(exec_time_value_attr)
-            else exec_time_value_attr
-        )
+        exec_time_value = self._execution_context.execution_time_ms
         try:
-            exec_time = float(exec_time_value)
+            if isinstance(exec_time_value, int | float | str):
+                exec_time = float(exec_time_value)
+            else:
+                exec_time = 0.0
         except (TypeError, ValueError):
             exec_time = 0.0
         # Mixin record_metric() returns r[bool], assign to _ to indicate intentional

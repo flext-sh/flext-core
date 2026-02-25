@@ -14,11 +14,13 @@ import warnings
 from typing import Final
 
 # Approved modules that can import directly (for testing, internal use)
-APPROVED_MODULES: Final[frozenset[str]] = frozenset({
-    "flext_core.utilities",
-    "flext_core._utilities",
-    "tests.",
-})
+APPROVED_MODULES: Final[frozenset[str]] = frozenset(
+    {
+        "flext_core.utilities",
+        "flext_core._utilities",
+        "tests.",
+    }
+)
 
 
 def warn_direct_module_access(
