@@ -329,7 +329,6 @@ class FlextRegistry(FlextService[bool]):
         handler: RegistryHandler,
     ) -> r[m.HandlerRegistrationDetails]: ...
 
-
     def register_handler(
         self,
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
@@ -387,7 +386,7 @@ class FlextRegistry(FlextService[bool]):
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
         # Cast handler to RegistryHandler for dispatcher compatibility
-        handler_for_dispatch: RegistryHandler = cast(RegistryHandler, handler)
+        handler_for_dispatch: RegistryHandler = cast("RegistryHandler", handler)
         registration_result = self._dispatcher.register_handler(
             handler_for_dispatch,
         )
@@ -540,7 +539,7 @@ class FlextRegistry(FlextService[bool]):
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
                 # Cast handler to RegistryHandler for dispatcher compatibility
-                handler_for_dispatch: RegistryHandler = cast(RegistryHandler, handler)
+                handler_for_dispatch: RegistryHandler = cast("RegistryHandler", handler)
                 reg_result = self._dispatcher.register_handler(
                     message_type,
                     handler_for_dispatch,

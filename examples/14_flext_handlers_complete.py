@@ -20,7 +20,7 @@ from __future__ import annotations
 from flext_core import c, h, m, r, s, u
 
 
-class CreateUserCommand(m.Cqrs.Command):
+class CreateUserCommand(m.Command):
     """Command to create a user."""
 
     user_id: str
@@ -28,7 +28,7 @@ class CreateUserCommand(m.Cqrs.Command):
     email: str
 
 
-class GetUserQuery(m.Cqrs.Query):
+class GetUserQuery(m.Query):
     """Query to get a user."""
 
     user_id: str

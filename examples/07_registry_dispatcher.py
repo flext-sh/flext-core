@@ -36,7 +36,7 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-class CreateUserCommand(m.Cqrs.Command):
+class CreateUserCommand(m.Command):
     """Create user command."""
 
     name: str
@@ -65,7 +65,7 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
         )
 
 
-class GetUserQuery(m.Cqrs.Query):
+class GetUserQuery(m.Query):
     """Get user query."""
 
     user_id: str

@@ -55,7 +55,7 @@ class DemonstrationResult(m.Value):
     completed_at: str
 
 
-class RunDemonstrationCommand(m.Cqrs.Command):
+class RunDemonstrationCommand(m.Command):
     """Command to run demonstration."""
 
     operation: str = "demonstration"

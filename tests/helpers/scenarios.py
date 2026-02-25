@@ -698,7 +698,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_immediate_success",
             strategy="retry",
-            config={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            config=t.ConfigMap(root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}),
             simulate_failures=0,
             expected_state="success",
             should_succeed=True,
@@ -707,7 +707,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_after_one_failure",
             strategy="retry",
-            config={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            config=t.ConfigMap(root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}),
             simulate_failures=1,
             expected_state="success",
             should_succeed=True,
@@ -716,7 +716,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_exhausted",
             strategy="retry",
-            config={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+            config=t.ConfigMap(root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10}),
             simulate_failures=5,
             expected_state="exhausted",
             should_succeed=False,
@@ -728,7 +728,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",
-            config={"failure_threshold": 5, "timeout_ms": 1000},
+            config=t.ConfigMap(root={"failure_threshold": 5, "timeout_ms": 1000}),
             simulate_failures=0,
             expected_state="closed",
             should_succeed=True,
@@ -737,7 +737,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_open_on_threshold",
             strategy="circuit_breaker",
-            config={"failure_threshold": 2, "timeout_ms": 1000},
+            config=t.ConfigMap(root={"failure_threshold": 2, "timeout_ms": 1000}),
             simulate_failures=3,
             expected_state="open",
             should_succeed=False,
