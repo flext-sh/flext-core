@@ -102,21 +102,22 @@ class FlextTestsBuilders:
                 )
                 for key, item in value.items()
             }
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            return [
-                FlextTestsBuilders._to_guard_input(
-                    FlextTestsBuilders._to_payload_value(item)
-                )
-                for item in value
-            ]
-        return str(value)
+        if isinstance(value, bytes):
+            return str(value)
+        return [
+            FlextTestsBuilders._to_guard_input(
+                FlextTestsBuilders._to_payload_value(item)
+            )
+            for item in value
+        ]
 
     def __init__(self, **data: t.Tests.PayloadValue) -> None:
         """Initialize builder with optional initial data."""
+        super().__init__()
         # Initialize without inheritance
         # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
         # Always initialize as empty dict (class attribute is default, instance needs fresh copy)
-        self._data = {}
+        self._data = dict(data)
 
     def _ensure_data_initialized(self) -> None:
         """Ensure _data is initialized (helper for type safety)."""
@@ -205,7 +206,7 @@ class FlextTestsBuilders:
             value_for_kwargs = dict(value)
         else:
             # Other types: convert to string representation
-            value_for_kwargs = str(value) if value is not None else None
+            value_for_kwargs = str(value)
 
         try:
             params = m.Tests.Builders.AddParams.model_validate(
@@ -587,8 +588,6 @@ class FlextTestsBuilders:
         for part in parts:
             if not isinstance(current, Mapping):
                 return default
-            if not isinstance(current, Mapping):
-                return default
             current_mapping = current
             if part not in current_mapping:
                 return default
@@ -603,15 +602,12 @@ class FlextTestsBuilders:
                 typed_current: T = current
                 return typed_current
             return default
-        if current is None or isinstance(
-            current, str | int | float | bool | bytes | BaseModel
-        ):
+        if isinstance(current, str | int | float | bool | bytes | BaseModel):
             return current
         if isinstance(current, Mapping):
             return {str(k): self._to_payload_value(v) for k, v in current.items()}
-        if isinstance(current, Sequence) and not isinstance(current, str | bytes):
+        if isinstance(current, Sequence):
             return [self._to_payload_value(item) for item in current]
-        # Fallback to default for non-BuilderValue types
         return default
 
     def to_result(

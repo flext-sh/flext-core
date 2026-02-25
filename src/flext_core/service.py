@@ -71,14 +71,10 @@ class FlextService[TDomainResult](
         validate_assignment=True,
     )
 
+    @computed_field
     @property
     def result(self) -> TDomainResult:
-        """Get the execution result, raising exception on failure.
-
-        TODO(docs/FLEXT_SERVICE_ARCHITECTURE.md#zero-ceremony): reassess
-        migrating to ``@computed_field`` once we confirm that Pydantic service
-        serialisation needs standardised dumps.
-        """
+        """Get the execution result, raising exception on failure."""
         if not hasattr(self, "_execution_result"):
             # Lazy execution for services without auto_execute
             execution_result = self.execute()

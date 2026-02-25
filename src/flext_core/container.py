@@ -216,6 +216,10 @@ class FlextContainer(FlextRuntime, p.DI):
 
                             def factory_wrapper(
                                 *_args: object,
+                                _factory_func_ref: Callable[
+                                    ..., object
+                                ] = factory_func_ref,
+                                _factory_name: str = factory_name,
                                 **kwargs: object,
                             ) -> t.RegisterableService:
                                 fn_override = kwargs.get("fn")
@@ -224,11 +228,11 @@ class FlextContainer(FlextRuntime, p.DI):
                                         return ""
                                     raw_result = fn_override()
                                 else:
-                                    raw_result = factory_func_ref()
+                                    raw_result = _factory_func_ref()
                                 if FlextContainer._is_registerable_service(raw_result):
                                     return raw_result
                                 msg = (
-                                    f"Factory '{factory_name}' returned unsupported type: "
+                                    f"Factory '{_factory_name}' returned unsupported type: "
                                     f"{raw_result.__class__.__name__}"
                                 )
                                 raise TypeError(msg)
@@ -600,9 +604,12 @@ class FlextContainer(FlextRuntime, p.DI):
 
         # Register context if not already registered
         # ServiceRegistration uses SkipValidation - can register any service type
-        if not self.has_service("context") and self._context is not None:
-            if self._is_registerable_service(self._context):
-                _ = self.register("context", self._context)
+        if (
+            not self.has_service("context")
+            and self._context is not None
+            and self._is_registerable_service(self._context)
+        ):
+            _ = self.register("context", self._context)
 
     @override
     def configure(

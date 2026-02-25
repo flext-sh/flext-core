@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, model_validator
 from structlog.typing import BindableLogger
 
 from flext_core._models.base import FlextModelFoundation
@@ -32,6 +32,36 @@ def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
             for key, value in data.items()
         }
     )
+
+
+def _normalize_event_data(
+    value: t.GuardInputValue,
+) -> _ComparableConfigMap:
+    """BeforeValidator: normalize event data to _ComparableConfigMap."""
+    if isinstance(value, _ComparableConfigMap):
+        return value
+    if isinstance(value, t.ConfigMap):
+        return _ComparableConfigMap(root=dict(value.items()))
+    if isinstance(value, dict):
+        normalized: t.ConfigMap = t.ConfigMap(
+            root={
+                str(k): FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in value.items()
+            }
+        )
+        return _ComparableConfigMap(root=normalized.root)
+    if isinstance(value, Mapping):
+        normalized = t.ConfigMap(
+            root={
+                str(k): FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in value.items()
+            }
+        )
+        return _ComparableConfigMap(root=normalized.root)
+    if value is None:
+        return _ComparableConfigMap(root={})
+    msg = "Domain event data must be a dictionary or None"
+    raise TypeError(msg)
 
 
 class _ComparableConfigMap(t.ConfigMap):
@@ -67,42 +97,23 @@ class FlextModelsEntity:
 
         event_type: str
         aggregate_id: str
-        data: _ComparableConfigMap = Field(
+        data: Annotated[
+            _ComparableConfigMap,
+            BeforeValidator(_normalize_event_data),
+        ] = Field(
             default_factory=_ComparableConfigMap,
             description="Event data container",
         )
-        metadata: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
-            description="Event metadata container",
-        )
 
-        @field_validator("data", mode="before")
-        @classmethod
-        def normalize_event_data(
-            cls,
-            value: t.GuardInputValue,
-        ) -> _ComparableConfigMap:
-            if isinstance(value, _ComparableConfigMap):
-                return value
-            if isinstance(value, t.ConfigMap):
-                return _ComparableConfigMap(root=dict(value.items()))
-            if isinstance(value, dict):
-                normalized: t.ConfigMap = t.ConfigMap(
-                    root={
-                        str(k): FlextRuntime.normalize_to_metadata_value(v)
-                        for k, v in value.items()
-                    }
-                )
-                return _ComparableConfigMap(root=normalized.root)
-            if isinstance(value, Mapping):
-                normalized = t.ConfigMap(
-                    root={
-                        str(k): FlextRuntime.normalize_to_metadata_value(v)
-                        for k, v in value.items()
-                    }
-                )
-                return _ComparableConfigMap(root=normalized.root)
-            return _ComparableConfigMap(root={})
+        @model_validator(mode="after")
+        def validate_domain_event(self) -> Self:
+            if not self.event_type:
+                msg = "Domain event event_type must be a non-empty string"
+                raise ValueError(msg)
+            if not self.aggregate_id:
+                msg = "Domain event aggregate_id must be a non-empty string"
+                raise ValueError(msg)
+            return self
 
     class Entry(
         FlextModelFoundation.TimestampedModel,
@@ -184,8 +195,7 @@ class FlextModelsEntity:
 
             if len(self.domain_events) >= c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[FlextModelsEntity.DomainEvent].fail(
-                    f"Cannot add event: would exceed max events limit of "
-                    f"{c.Validation.MAX_UNCOMMITTED_EVENTS}",
+                    f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
             data_map = _to_config_map(data)
@@ -209,7 +219,7 @@ class FlextModelsEntity:
             if handler is not None and callable(handler):
                 # Swallow handler exceptions - event is still added
                 with contextlib.suppress(Exception):
-                    handler(data_map.root)
+                    _ = handler(data_map.root)
 
             return r[FlextModelsEntity.DomainEvent].ok(event)
 
@@ -239,8 +249,7 @@ class FlextModelsEntity:
             total_after = len(self.domain_events) + len(event_items)
             if total_after > c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[list[FlextModelsEntity.DomainEvent]].fail(
-                    f"Cannot add {len(events)} events: would exceed max events "
-                    f"limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
+                    f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
             # Validate all event names first
@@ -302,18 +311,36 @@ class FlextModelsEntity:
                     msg = f"Invariant violated: {invariant.__name__}"
                     raise ValueError(msg)
 
-        @override
-        def model_post_init(self, __context: t.GuardInputValue, /) -> None:
-            """Post-init hook to check invariants."""
-            super().model_post_init(__context)
-            self.check_invariants()
+        @model_validator(mode="after")
+        def validate_aggregate_consistency(self) -> Self:
+            try:
+                self.check_invariants()
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as e:
+                msg = f"Aggregate invariant violation: {e}"
+                raise ValueError(msg) from e
+
+            if len(self.domain_events) > c.Validation.MAX_UNCOMMITTED_EVENTS:
+                max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
+                event_count = len(self.domain_events)
+                msg = (
+                    f"Too many uncommitted domain events: {event_count} "
+                    f"(max: {max_events})"
+                )
+                raise ValueError(msg)
+            return self
 
 
 # Resolve forward references created by `from __future__ import annotations`.
 # `Entry.domain_events` references `FlextModelsEntity.DomainEvent` which is
 # unavailable during class body execution. Now that the outer class is fully
 # defined, Pydantic can resolve the ForwardRef from module globals.
-FlextModelsEntity.Entry.model_rebuild()
-FlextModelsEntity.AggregateRoot.model_rebuild()
+_ = FlextModelsEntity.Entry.model_rebuild()
+_ = FlextModelsEntity.AggregateRoot.model_rebuild()
 
 __all__ = ["FlextModelsEntity"]

@@ -505,7 +505,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             FlextRuntime.structlog().contextvars.bind_contextvars(**prefixed_context)
 
             return r[bool].ok(value=True)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
     @classmethod
@@ -565,7 +565,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 FlextRuntime.structlog().contextvars.unbind_contextvars(*prefixed_keys)
 
             return r[bool].ok(value=True)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to unbind context for level {level}: {e}")
 
     @classmethod
@@ -832,9 +832,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     formatted_message,
                     **kwargs,
                 )
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # For trace logging, we don't propagate errors to avoid noise
-            pass
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            # Logger internals must never raise into application flows.
+            FlextLogger._report_internal_logging_failure("trace", exc)
 
     @staticmethod
     def _format_log_message(
@@ -903,7 +903,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 source_parts.append(method_name)
 
             return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            # Caller metadata enrichment is best-effort and must not block logging.
+            FlextLogger._report_internal_logging_failure("get_caller_source_path", exc)
             return None
 
     @staticmethod
@@ -919,7 +921,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 except ValueError:
                     return Path(filename).name
             return Path(filename).name
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            # Path normalization is best-effort and must not block logging.
+            FlextLogger._report_internal_logging_failure(
+                "convert_to_relative_path", exc
+            )
             return Path(filename).name
 
     @staticmethod
@@ -935,6 +941,20 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 break
             current = current.parent
         return None
+
+    @staticmethod
+    def _report_internal_logging_failure(
+        operation: str,
+        exc: Exception,
+    ) -> None:
+        with suppress(AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            FlextRuntime.structlog().get_logger("flext_core.loggings").warning(
+                "Internal logger operation failed",
+                operation=operation,
+                exception=exc,
+                exception_type=exc.__class__.__name__,
+                exception_message=str(exc),
+            )
 
     def _log(
         self,
@@ -1144,7 +1164,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             config = FlextSettings.get_global_instance()
             return config.effective_log_level.upper() == c.Settings.LogLevel.DEBUG.value
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            # Stack-trace policy must fail open to preserve diagnostics.
+            FlextLogger._report_internal_logging_failure(
+                "should_include_stack_trace", exc
+            )
             return True
 
     def build_exception_context(
@@ -1250,9 +1274,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             error_method = getattr(self.logger, "error", None)
             if callable(error_method):
                 _ = error_method(message, *filtered_args, **context_dict.root)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # For exception logging, we don't propagate errors to avoid recursive issues
-            pass
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            # Logger internals must never raise into application flows.
+            FlextLogger._report_internal_logging_failure("exception", exc)
 
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration

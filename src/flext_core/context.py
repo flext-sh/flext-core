@@ -621,7 +621,7 @@ class FlextContext(FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
-        def normalize_plain(raw_value):
+        def normalize_plain(raw_value: t.ConfigMapValue) -> t.ConfigMapValue:
             mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
             try:
                 normalized_map = m.ConfigMap.model_validate(mapped_value)
@@ -769,8 +769,9 @@ class FlextContext(FlextRuntime):
                 try:
                     scope_data = m.ConfigMap.model_validate(scope_payload)
                 except Exception:
-                    continue
-                self._set_in_contextvar(scope_name, scope_data)
+                    scope_data = None
+                if scope_data is not None:
+                    self._set_in_contextvar(scope_name, scope_data)
         else:
             self._set_in_contextvar(
                 c.Context.SCOPE_GLOBAL,
@@ -1022,9 +1023,7 @@ class FlextContext(FlextRuntime):
 
         # Return as dict if requested
         if as_dict:
-            result_dict: dict[str, t.ConfigMapValue] = {
-                scope_name: scope_data for scope_name, scope_data in all_scopes.items()
-            }
+            result_dict: dict[str, t.ConfigMapValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
@@ -1901,9 +1900,7 @@ class FlextContext(FlextRuntime):
             if metadata_value is None:
                 return None
             try:
-                metadata_map: dict[str, t.ConfigMapValue] = {
-                    key: value for key, value in metadata_value.items()
-                }
+                metadata_map: dict[str, t.ConfigMapValue] = dict(metadata_value.items())
             except Exception:
                 return None
             return metadata_map

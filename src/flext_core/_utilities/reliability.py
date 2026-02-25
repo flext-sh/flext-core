@@ -14,7 +14,7 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import TypeGuard, cast
@@ -470,9 +470,7 @@ class FlextUtilitiesReliability:
             return True
         if isinstance(value, Mapping):
             return True
-        if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-            return True
-        return bool(callable(value))
+        return not isinstance(value, str | bytes)
 
     @staticmethod
     def _is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ConfigMapValue]]:
@@ -536,9 +534,7 @@ class FlextUtilitiesReliability:
                 value: t.ConfigMapValue,
             ) -> t.ConfigMapValue | r[t.ConfigMapValue]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                if isinstance(result, r):
-                    return result.value if result.is_success else result
-                return result
+                return result.value if result.is_success else result
 
             return piped
 
@@ -755,7 +751,7 @@ class FlextUtilitiesReliability:
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
                     pred_result = pattern(input_value)
-                    if isinstance(pred_result, bool) and pred_result:
+                    if pred_result:
                         return FlextUtilitiesReliability._resolve_match_output(
                             result,
                             input_value,

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -85,8 +85,6 @@ class FlextUtilitiesParser:
         if isinstance(value, Mapping):
             return str(value)
         if isinstance(value, (BaseModel, Path, datetime)):
-            return str(value)
-        if isinstance(value, Sequence):
             return str(value)
         return str(value)
 
@@ -1769,11 +1767,9 @@ class FlextUtilitiesParser:
 
         """
         if isinstance(items, t.ConfigMap | Mapping):
-            dict_items: Mapping[str, t.ConfigMapValue]
-            if isinstance(items, t.ConfigMap):
-                dict_items = items.root
-            else:
-                dict_items = items
+            dict_items: Mapping[str, t.ConfigMapValue] = (
+                items.root if isinstance(items, t.ConfigMap) else items
+            )
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
@@ -1839,23 +1835,19 @@ class FlextUtilitiesParser:
             items_to_check = [str(k) for k in items.root]
         elif isinstance(items, Mapping):
             items_to_check = [str(k) for k in items]
-        elif isinstance(items, list):
-            items_to_check = items
         else:
-            items_to_check = []
+            items_to_check = items
 
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = FlextUtilitiesParser.norm_list(
             items_to_check,
             case=case or "lower",
         )
-        if isinstance(normalized_result, list | set):
-            return normalized_value in normalized_result
-        if isinstance(normalized_result, t.ConfigMap):
-            return normalized_value in normalized_result.root.values()
         if isinstance(normalized_result, Mapping):
+            if isinstance(normalized_result, t.ConfigMap):
+                return normalized_value in normalized_result.root.values()
             return normalized_value in normalized_result.values()
-        return False
+        return normalized_value in normalized_result
 
 
 __all__ = [

@@ -152,15 +152,21 @@ class FlextMixins(FlextRuntime):
         return r[T].ok(value)
 
     class ModelConversion:
+        """Compatibility namespace exposing model conversion helpers."""
+
         @staticmethod
         def to_dict(
             obj: object | None,
         ) -> m.ConfigMap:
+            """Convert object payloads into ``m.ConfigMap``."""
             return x.to_dict(obj)
 
     class ResultHandling:
+        """Compatibility namespace exposing result helpers."""
+
         @staticmethod
         def ensure_result[T](value: T | r[T]) -> r[T]:
+            """Return ``value`` as ``r[T]`` without changing semantics."""
             return x.ensure_result(value)
 
     # =========================================================================
@@ -674,7 +680,13 @@ class FlextMixins(FlextRuntime):
             """Manages execution context stack."""
 
             # Type annotation for type checker
-            _stack: ClassVar[list[m.Handler.ExecutionContext | m.ConfigMap]] = []
+            _stack: ClassVar[
+                list[
+                    m.Handler.ExecutionContext
+                    | m.ConfigMap
+                    | dict[str, t.ConfigMapValue]
+                ]
+            ] = []
 
             def __init__(
                 self,
@@ -705,8 +717,6 @@ class FlextMixins(FlextRuntime):
                 match ctx:
                     case m.Handler.ExecutionContext() as execution_ctx:
                         self._stack.append(execution_ctx)
-                    case m.ConfigMap() as config_map:
-                        self._stack.append(config_map)
                     case _:
                         # For backward compatibility, accept dict but convert to ExecutionContext
                         # Create ExecutionContext from dict data

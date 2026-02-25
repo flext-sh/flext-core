@@ -35,14 +35,8 @@ def test_models_handler_branches() -> None:
 
 
 def test_models_handler_uncovered_mode_and_reset_paths() -> None:
-    validate_mode = FlextModelsHandler.RegistrationRequest.__dict__["validate_mode"]
-    assert (
-        validate_mode.__func__(
-            FlextModelsHandler.RegistrationRequest,
-            "custom-mode",
-        )
-        == "custom-mode"
-    )
+    # validate_mode was a no-op and was removed; Literal type handles validation
+
 
     ctx = m.Handler.ExecutionContext.create_for_handler("h2", "query")
     assert ctx.is_running is False

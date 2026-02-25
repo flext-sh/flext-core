@@ -23,15 +23,17 @@ import socket
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import NotFound
 from docker.models.containers import Container
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
-from python_on_whales import DockerClient as WhalesDockerClient, docker
-from python_on_whales.exceptions import DockerException
+from python_on_whales import (
+    DockerClient as WhalesDockerClient,
+    docker,
+)
 
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -84,6 +86,7 @@ class FlextTestsDocker:
 
         def __init__(self) -> None:
             """Initialize offline Docker client without contacting daemon."""
+            super().__init__()
             self._offline_containers = FlextTestsDocker._OfflineContainers()
 
         @property
@@ -116,7 +119,7 @@ class FlextTestsDocker:
         self,
     ) -> Mapping[str, m.ConfigMap]:
         """Get shared container configurations."""
-        return cast("Mapping[str, m.ConfigMap]", c.Tests.Docker.SHARED_CONTAINERS)
+        return c.Tests.Docker.SHARED_CONTAINERS
 
     def get_client(self) -> DockerSDKClient | FlextTestsDocker._OfflineDockerClient:
         """Get Docker client with lazy initialization.
@@ -127,7 +130,7 @@ class FlextTestsDocker:
         if self._client is None:
             try:
                 self._client = docker_from_env()
-            except DockerException as error:
+            except Exception as error:
                 self.logger.exception(
                     "Failed to initialize Docker client",
                     error=str(error),
@@ -245,7 +248,7 @@ class FlextTestsDocker:
             return r[m.Tests.Docker.ContainerInfo].fail(
                 f"Container {container_name} not found",
             )
-        except (DockerException, AttributeError, KeyError) as exc:
+        except (Exception, AttributeError, KeyError) as exc:
             return r[m.Tests.Docker.ContainerInfo].fail(str(exc))
 
     def get_container_status(
@@ -269,14 +272,14 @@ class FlextTestsDocker:
             if status_val in {"exited", "created", "paused"}:
                 start_fn = getattr(container, "start", None)
                 if callable(start_fn):
-                    start_fn()
+                    _ = start_fn()
                 return r[str].ok(f"Container {name} started")
 
             return r[str].ok(f"Container {name} in state: {status_val}")
 
         except NotFound:
             return r[str].fail(f"Container {name} not found")
-        except DockerException as exc:
+        except Exception as exc:
             return r[str].fail(f"Failed to start container: {exc}")
 
     def compose_up(
@@ -313,7 +316,7 @@ class FlextTestsDocker:
 
             return r[str].ok("Compose up successful")
 
-        except (DockerException, OSError, ValueError) as exc:
+        except (Exception, OSError, ValueError) as exc:
             self.logger.exception("Compose up failed")
             return r[str].fail(f"Compose up failed: {exc}")
 
@@ -335,7 +338,7 @@ class FlextTestsDocker:
 
             return r[str].ok("Compose down successful")
 
-        except (DockerException, OSError, ValueError) as exc:
+        except (Exception, OSError, ValueError) as exc:
             self.logger.warning("Compose down failed", error=str(exc))
             return r[str].fail(f"Compose down failed: {exc}")
 

@@ -13,13 +13,69 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Annotated
 
 import structlog.contextvars
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+)
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+
+def _normalize_metadata_before(
+    value: FlextModelFoundation.Metadata
+    | t.ConfigMap
+    | Mapping[str, t.ScalarValue]
+    | None,
+) -> FlextModelFoundation.Metadata:
+    """BeforeValidator: normalize metadata to FlextModelFoundation.Metadata."""
+    return FlextModelsContext._normalize_metadata(value)
+
+
+def _normalize_to_mapping(
+    v: t.GuardInputValue,
+) -> Mapping[str, t.GuardInputValue]:
+    """BeforeValidator: normalize dict-like input to a mapping."""
+    if isinstance(v, t.Dict):
+        return v.root
+    if isinstance(v, Mapping):
+        return {
+            str(k): FlextRuntime.normalize_to_general_value(val) for k, val in v.items()
+        }
+    if isinstance(v, BaseModel):
+        dumped = v.model_dump()
+        if not FlextRuntime.is_dict_like(dumped):
+            return {}
+        raw = getattr(dumped, "root", dumped)
+        return {
+            str(k): FlextRuntime.normalize_to_metadata_value(val)
+            for k, val in raw.items()
+        }
+    if v is None:
+        return {}
+    msg = f"must be dict or BaseModel, got {v.__class__.__name__}"
+    raise TypeError(msg)
+
+
+def _normalize_statistics_before(
+    v: t.GuardInputValue,
+) -> Mapping[str, t.GuardInputValue]:
+    """BeforeValidator: normalize statistics input."""
+    if v is None:
+        return {}
+    if FlextRuntime.is_dict_like(v):
+        return dict(v)
+    if isinstance(v, BaseModel):
+        return FlextModelsContext._to_general_value_dict(v.model_dump())
+    msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
+    raise TypeError(msg)
 
 
 class FlextModelsContext:
@@ -303,7 +359,10 @@ class FlextModelsContext:
             default_factory=t.Dict,
             description="Initial context data as key-value pairs",
         )
-        metadata: FlextModelFoundation.Metadata | t.Dict | None = Field(
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | t.Dict | None,
+            BeforeValidator(_normalize_metadata_before),
+        ] = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
@@ -396,22 +455,6 @@ class FlextModelsContext:
             msg = f"Non-JSON-serializable type {obj.__class__.__name__} at {path}"
             raise TypeError(msg)
 
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def validate_metadata(
-            cls,
-            v: FlextModelFoundation.Metadata
-            | t.ConfigMap
-            | Mapping[str, t.ScalarValue]
-            | None,
-        ) -> FlextModelFoundation.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode).
-
-            Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() helper.
-            """
-            return FlextModelsContext._normalize_metadata(v)
-
         @field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(
@@ -447,14 +490,6 @@ class FlextModelsContext:
                     dump_dict,
                 )
             elif FlextRuntime.is_dict_like(v):
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v
-                )
-            elif isinstance(v, Mapping):
-                if all(isinstance(key, str) for key in v):
-                    type_name = v.__class__.__name__
-                    msg = f"Value must be a dictionary or Metadata, got {type_name}"
-                    raise TypeError(msg)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
                     v
                 )
@@ -514,30 +549,20 @@ class FlextModelsContext:
             default_factory=dict,
             description="All context data from all scopes",
         )
-        metadata: FlextModelFoundation.Metadata | t.Dict | None = Field(
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | t.Dict | None,
+            BeforeValidator(_normalize_metadata_before),
+        ] = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
-        statistics: Mapping[str, t.GuardInputValue] = Field(
+        statistics: Annotated[
+            Mapping[str, t.GuardInputValue],
+            BeforeValidator(_normalize_statistics_before),
+        ] = Field(
             default_factory=dict,
             description="Usage statistics (operation counts, timing info)",
         )
-
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def validate_metadata(
-            cls,
-            v: FlextModelFoundation.Metadata
-            | t.ConfigMap
-            | Mapping[str, t.ScalarValue]
-            | None,
-        ) -> FlextModelFoundation.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode).
-
-            Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() helper.
-            """
-            return FlextModelsContext._normalize_metadata(v)
 
         @classmethod
         def check_json_serializable(
@@ -612,14 +637,6 @@ class FlextModelsContext:
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
                     v
                 )
-            elif isinstance(v, Mapping):
-                if all(isinstance(key, str) for key in v):
-                    type_name = v.__class__.__name__
-                    msg = f"Value must be a dict or Pydantic model, got {type_name}"
-                    raise TypeError(msg)
-                normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v
-                )
             else:
                 type_name = v.__class__.__name__
                 msg = f"Value must be a dict or Pydantic model, got {type_name}"
@@ -642,21 +659,6 @@ class FlextModelsContext:
             # working_value is always dict from comprehensions above;
             # explicit dict() satisfies return mapping[str, PayloadValue]
             return dict(working_value)
-
-        @field_validator("statistics", mode="before")
-        @classmethod
-        def validate_statistics(
-            cls,
-            v: t.GuardInputValue | t.Dict | None,
-        ) -> Mapping[str, t.GuardInputValue]:
-            if v is None:
-                return {}
-            if FlextRuntime.is_dict_like(v):
-                return dict(v)
-            if isinstance(v, BaseModel):
-                return FlextModelsContext._to_general_value_dict(v.model_dump())
-            msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
-            raise TypeError(msg)
 
         @computed_field
         def total_data_items(self) -> int:
@@ -704,58 +706,14 @@ class FlextModelsContext:
             str,
             Field(default="", description="Type/category of scope"),
         ] = ""
-        data: Mapping[str, t.GuardInputValue] = Field(
-            default_factory=dict, description="Scope data"
-        )
-        metadata: Mapping[str, t.GuardInputValue] = Field(
-            default_factory=dict, description="Scope metadata"
-        )
-
-        @field_validator("data", mode="before")
-        @classmethod
-        def _validate_data(
-            cls,
-            v: t.GuardInputValue | t.Dict | None,
-        ) -> Mapping[str, t.GuardInputValue]:
-            """Validate scope data - direct validation without helper."""
-            # Fast fail: direct validation instead of helper
-            if isinstance(v, t.Dict):
-                # RootModel - extract root dict
-                return v.root
-            if isinstance(v, Mapping):
-                return {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
-                    for k, val in v.items()
-                }
-            if isinstance(v, BaseModel):
-                return FlextModelsContext._to_general_value_dict(v.model_dump())
-            if v is None:
-                return {}
-            msg = f"data must be dict or BaseModel, got {v.__class__.__name__}"
-            raise TypeError(msg)
-
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def _validate_metadata(
-            cls,
-            v: t.GuardInputValue | t.Dict | None,
-        ) -> Mapping[str, t.GuardInputValue]:
-            """Validate scope metadata - direct validation without helper."""
-            # Fast fail: direct validation instead of helper
-            if isinstance(v, t.Dict):
-                # RootModel - extract root dict
-                return v.root
-            if isinstance(v, Mapping):
-                return {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
-                    for k, val in v.items()
-                }
-            if isinstance(v, BaseModel):
-                return FlextModelsContext._to_general_value_dict(v.model_dump())
-            if v is None:
-                return {}
-            msg = f"metadata must be dict or BaseModel, got {v.__class__.__name__}"
-            raise TypeError(msg)
+        data: Annotated[
+            Mapping[str, t.GuardInputValue],
+            BeforeValidator(_normalize_to_mapping),
+        ] = Field(default_factory=dict, description="Scope data")
+        metadata: Annotated[
+            Mapping[str, t.GuardInputValue],
+            BeforeValidator(_normalize_to_mapping),
+        ] = Field(default_factory=dict, description="Scope metadata")
 
     class ContextStatistics(BaseModel):
         """Statistics tracking for context operations and metrics.
@@ -803,34 +761,12 @@ class FlextModelsContext:
         ] = c.ZERO
         operations: Annotated[
             Mapping[str, t.GuardInputValue],
+            BeforeValidator(_normalize_to_mapping),
             Field(
                 default_factory=dict,
                 description="Extensible operation/metrics counts",
             ),
         ] = Field(default_factory=dict)
-
-        @field_validator("operations", mode="before")
-        @classmethod
-        def _validate_operations(
-            cls,
-            v: t.GuardInputValue | t.ConfigMap | None,
-        ) -> Mapping[str, t.GuardInputValue]:
-            """Validate operations - direct validation without helper."""
-            # Fast fail: direct validation instead of helper
-            if isinstance(v, t.Dict):
-                # RootModel - extract root dict
-                return v.root
-            if isinstance(v, Mapping):
-                return {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
-                    for k, val in v.items()
-                }
-            if isinstance(v, BaseModel):
-                return FlextModelsContext._to_general_value_dict(v.model_dump())
-            if v is None:
-                return {}
-            msg = f"operations must be dict or BaseModel, got {v.__class__.__name__}"
-            raise TypeError(msg)
 
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
@@ -915,34 +851,12 @@ class FlextModelsContext:
         ] = None
         custom_fields: Annotated[
             Mapping[str, t.GuardInputValue],
+            BeforeValidator(_normalize_to_mapping),
             Field(
                 default_factory=dict,
                 description="Extensible custom metadata fields",
             ),
         ] = Field(default_factory=dict)
-
-        @field_validator("custom_fields", mode="before")
-        @classmethod
-        def _validate_custom_fields(
-            cls,
-            v: t.GuardInputValue | t.ConfigMap | None,
-        ) -> Mapping[str, t.GuardInputValue]:
-            """Validate custom_fields - direct validation without helper."""
-            # Fast fail: direct validation instead of helper
-            if isinstance(v, t.Dict):
-                # RootModel - extract root dict
-                return v.root
-            if isinstance(v, Mapping):
-                return {
-                    str(k): FlextRuntime.normalize_to_general_value(val)
-                    for k, val in v.items()
-                }
-            if isinstance(v, BaseModel):
-                return FlextModelsContext._to_general_value_dict(v.model_dump())
-            if v is None:
-                return {}
-            msg = f"custom_fields must be dict or BaseModel, got {v.__class__.__name__}"
-            raise TypeError(msg)
 
     class ContextDomainData(BaseModel):
         """Domain-specific context data storage."""

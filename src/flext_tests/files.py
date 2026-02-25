@@ -461,13 +461,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 _ = file_path.write_bytes(str(actual_content).encode(params.enc))
         elif actual_fmt == c.Tests.Files.Format.JSON:
             # Convert Mapping to dict if needed using u.Mapper.to_dict()
-            # Only call to_dict if it's a Mapping but not a dict
-            if isinstance(actual_content, Mapping) and not isinstance(
-                actual_content, dict
-            ):
+            if isinstance(actual_content, Mapping):
                 data = u.Mapper.to_dict(actual_content)
-            elif isinstance(actual_content, dict):
-                data = actual_content
             else:
                 data = {"value": actual_content} if actual_content else {}
             _ = file_path.write_text(
@@ -475,19 +470,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 encoding=params.enc,
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
-            if isinstance(actual_content, Mapping) and not isinstance(
-                actual_content, dict
-            ):
+            if isinstance(actual_content, Mapping):
                 data = u.Mapper.to_dict(actual_content)
-            elif isinstance(actual_content, dict):
-                data = actual_content
             else:
                 # Fallback - convert to dict representation
                 data = {"value": actual_content} if actual_content else {}
             yaml_result = yaml.dump(data, default_flow_style=False, allow_unicode=True)
-            # yaml.dump returns str | bytes | None - write_text needs str
-            yaml_content: str = yaml_result if isinstance(yaml_result, str) else ""
-            _ = file_path.write_text(yaml_content, encoding=params.enc)
+            _ = file_path.write_text(yaml_result, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.CSV:
             # Convert Sequence[Sequence[str]] to list[list[str]] for write_csv
             csv_content: list[list[str]]
@@ -499,8 +488,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     csv_content = [
                         [str(cell) for cell in row]
                         for row in actual_content
-                        if isinstance(row, Sequence)
-                        and not isinstance(row, str | bytes)
+                        if not isinstance(row, str | bytes)
                     ]
                 else:
                     # Not a nested sequence - wrap in list (single column CSV)
@@ -1597,7 +1585,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 return "yaml"
             case "csv":
                 return "csv"
-        return "auto"
+            case _:
+                return "auto"
 
     def _is_nested_rows(self, value: object) -> bool:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
@@ -1643,12 +1632,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 str(k): self._to_config_map_value(self._to_payload_value(v))
                 for k, v in value.items()
             }
-        if isinstance(value, Sequence):
-            return [
-                self._to_config_map_value(self._to_payload_value(item))
-                for item in value
-            ]
-        return str(value)
+        return [
+            self._to_config_map_value(self._to_payload_value(item)) for item in value
+        ]
 
     def _coerce_file_content(
         self,
@@ -1669,10 +1655,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
-            if isinstance(value, Sequence):
-                for row in value:
-                    if isinstance(row, Sequence) and not isinstance(row, str | bytes):
-                        rows.append([str(cell) for cell in row])
+            sequence_value: Sequence[object] = (
+                value if isinstance(value, list | tuple) else ()
+            )
+            rows.extend(
+                [str(cell) for cell in row]
+                for row in sequence_value
+                if isinstance(row, list | tuple)
+            )
             return rows
         return str(value)
 

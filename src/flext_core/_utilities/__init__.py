@@ -10,7 +10,4 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Internal package - no public exports
-# All utilities are accessed via u facade in utilities.py
-
 __all__: list[str] = []

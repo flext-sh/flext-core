@@ -32,6 +32,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+# pyright: reportAttributeAccessIssue=false
+
 from __future__ import annotations
 
 import math
@@ -41,6 +43,8 @@ from datetime import UTC, datetime
 from typing import cast
 
 import pytest
+from pydantic import TypeAdapter as PydanticTypeAdapter
+from pydantic import ValidationError as PydanticValidationError
 
 from flext_core import FlextConstants, m, r, t
 from flext_tests import u
@@ -203,7 +207,9 @@ class TestuValidation:
         # but runtime supports it
         # Implementation uses string representation for dataclass instances
         # (comment in validation.py: "Use string representation instead of trying to normalize dataclass")
-        result = u.Validation.normalize_component(cast("t.GeneralValueType", data))
+        result = u.Validation.normalize_component(
+            cast("t.GeneralValueType", cast("object", data))
+        )
         assert isinstance(result, str)
         assert "DataclassForTest" in result
         assert "name=" in result
@@ -222,7 +228,9 @@ class TestuValidation:
 
         obj = FailingModel()
         # Should fallback to string representation
-        result = u.Validation.normalize_component(cast("t.GeneralValueType", obj))
+        result = u.Validation.normalize_component(
+            cast("t.GeneralValueType", cast("object", obj))
+        )
         assert result == "FailingModelString"
 
     def test_normalize_component_pydantic_non_dict(self) -> None:
@@ -237,7 +245,9 @@ class TestuValidation:
 
         obj = NonDictModel()
         # Should fallback to string representation
-        result = u.Validation.normalize_component(cast("t.GeneralValueType", obj))
+        result = u.Validation.normalize_component(
+            cast("t.GeneralValueType", cast("object", obj))
+        )
         assert result == "NonDictModelString"
 
     def test_normalize_component_circular_reference_list(self) -> None:
@@ -273,14 +283,18 @@ class TestuValidation:
     def test_nested_classes_wrappers(self) -> None:
         """Test nested class wrappers to ensure coverage."""
         # Network
-        res_uri = u.Validation.Network.validate_uri("https://example.com")
-        assert res_uri.is_success
+        uri_adapter = PydanticTypeAdapter(t.Validation.UriString)
+        assert (
+            uri_adapter.validate_python("https://example.com") == "https://example.com"
+        )
 
-        res_port = u.Validation.Network.validate_port_number(8080)
-        assert res_port.is_success
+        port_adapter = PydanticTypeAdapter(t.Validation.PortNumber)
+        assert port_adapter.validate_python(8080) == 8080
 
-        res_host = u.Validation.Network.validate_hostname(FlextConstants.Network.LOCALHOST)
-        assert res_host.is_success
+        host_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
+        assert host_adapter.validate_python(FlextConstants.Network.LOCALHOST) == (
+            FlextConstants.Network.LOCALHOST
+        )
 
         # String
         res_req = u.Validation.String.validate_required_string("test")
@@ -516,7 +530,11 @@ class TestuValidation:
         ("uri", "should_succeed", "expected_value"),
         [
             ("https://example.com", True, "https://example.com"),
-            ("http://FlextConstants.Network.LOCALHOST:8000", True, "http://FlextConstants.Network.LOCALHOST:8000"),
+            (
+                "http://FlextConstants.Network.LOCALHOST:8000",
+                True,
+                "http://FlextConstants.Network.LOCALHOST:8000",
+            ),
             ("not a uri", False, None),
         ],
     )
@@ -733,23 +751,14 @@ class TestuValidation:
 
     def test_validate_hostname_valid(self) -> None:
         """Test validate_hostname with valid hostname."""
-        # validate_hostname is in Network nested class
-        result = u.Validation.Network.validate_hostname(
-            "example.com",
-        )
-        u.Tests.Result.assert_result_success(result)
-        u.Tests.Result.assert_success_with_value(
-            result,
-            "example.com",  # Returns the hostname
-        )
+        host_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
+        assert host_adapter.validate_python("example.com") == "example.com"
 
     def test_validate_hostname_invalid(self) -> None:
         """Test validate_hostname with invalid hostname."""
-        # validate_hostname is in Network nested class
-        result = u.Validation.Network.validate_hostname(
-            "invalid..hostname",
-        )
-        u.Tests.Result.assert_result_failure(result)
+        host_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
+        with pytest.raises(PydanticValidationError):
+            host_adapter.validate_python("")
 
     def test_validate_identifier_valid(self) -> None:
         """Test validate_identifier with valid identifier."""

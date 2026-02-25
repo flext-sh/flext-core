@@ -5,11 +5,9 @@ queries, and domain events. It favors structural typing over inheritance,
 ensures validation and execution steps return ``FlextResult`` rather than
 raising, and keeps handler metadata ready for registry/dispatcher discovery.
 
-TODO(docs/architecture/cqrs.md#modernization-roadmap): Phase 1 will introduce
-``FlextMixins.CQRS`` utilities (MetricsTracker, ContextStack) to replace the
-manual ``_metrics`` and ``_context_stack`` attributes. Deprecate
-``record_metric()``, ``get_metrics()``, ``push_context()``, ``pop_context()``
-once the mixin is available.
+# CQRS utilities: FlextMixins.CQRS provides MetricsTracker and ContextStack for
+# optional use in subclasses. FlextHandlers implements metrics and context tracking
+# directly as the canonical pattern for handler base class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -993,7 +991,19 @@ h = FlextHandlers
 def _handler_type_to_literal(
     handler_type: c.Cqrs.HandlerType,
 ) -> c.Cqrs.HandlerTypeLiteral:
-    return FlextHandlers._handler_type_to_literal(handler_type)
+    match handler_type:
+        case c.Cqrs.HandlerType.COMMAND:
+            return "command"
+        case c.Cqrs.HandlerType.QUERY:
+            return "query"
+        case c.Cqrs.HandlerType.EVENT:
+            return "event"
+        case c.Cqrs.HandlerType.OPERATION:
+            return "operation"
+        case c.Cqrs.HandlerType.SAGA:
+            return "saga"
+    msg = f"Unsupported handler type: {handler_type}"
+    raise ValueError(msg)
 
 
 __all__ = ["FlextHandlers", "_handler_type_to_literal", "h"]

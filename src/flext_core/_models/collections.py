@@ -147,7 +147,7 @@ class FlextModelsCollections:
                 category: Category name to remove
 
             """
-            self.categories.pop(category, None)
+            _ = self.categories.pop(category, None)
 
         def clear(self) -> None:
             """Clear all categories and entries."""

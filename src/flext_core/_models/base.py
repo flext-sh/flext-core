@@ -13,10 +13,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+import time
 import uuid
-from collections.abc import Callable, Mapping, MutableMapping
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Literal, Self
+from typing import Annotated, Any, ClassVar, Literal, Self
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -34,6 +35,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.functional_validators import ModelWrapValidatorHandler
 
 from flext_core.constants import c
 from flext_core.typings import t
@@ -79,14 +81,6 @@ class FlextModelFoundation:
                 return FlextModelFoundation.Validators.list_adapter.validate_python(v)
             except ValidationError:
                 return [v]
-
-        @staticmethod
-        def validate_positive_number(v: float) -> int | float:
-            """Validate that number is positive."""
-            if v <= 0:
-                msg = "Value must be positive"
-                raise ValueError(msg)
-            return v
 
         @staticmethod
         def validate_non_empty_string(v: str) -> str:
@@ -251,12 +245,9 @@ class FlextModelFoundation:
                     msg = f"Keys starting with '_' are reserved: {key}"
                     raise ValueError(msg)
 
-            normalized_result = (
-                FlextModelFoundation.Validators.metadata_map_adapter.validate_python(
-                    result
-                )
+            return FlextModelFoundation.Validators.metadata_map_adapter.validate_python(
+                result
             )
-            return normalized_result
 
     # Command message type
     class CommandMessage(BaseModel):
@@ -418,6 +409,7 @@ class FlextModelFoundation:
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
+            str_strip_whitespace=True,
         )
 
         unique_id: str = Field(
@@ -426,15 +418,6 @@ class FlextModelFoundation:
             min_length=1,
             frozen=False,  # Allow regeneration
         )
-
-        @field_validator("unique_id")
-        @classmethod
-        def validate_unique_id(cls, v: str) -> str:
-            """Validate that unique_id is not empty and strip whitespace."""
-            if not v or not v.strip():
-                msg = "unique_id cannot be empty or whitespace"
-                raise ValueError(msg)
-            return v.strip()
 
         @computed_field
         def id_short(self) -> str:
@@ -454,7 +437,7 @@ class FlextModelFoundation:
         def is_uuid_format(self) -> bool:
             """Check if unique_id follows UUID format."""
             try:
-                uuid.UUID(self.unique_id)
+                _ = uuid.UUID(self.unique_id)
                 return True
             except (ValueError, TypeError):
                 return False
@@ -663,15 +646,6 @@ class FlextModelFoundation:
             frozen=False,  # Allow version changes
         )
 
-        @field_validator("version")
-        @classmethod
-        def validate_version(cls, v: int) -> int:
-            """Validate version is non-negative."""
-            if v < 0:
-                msg = "Version cannot be negative"
-                raise ValueError(msg)
-            return v
-
         @computed_field
         def is_initial_version(self) -> bool:
             """Check if this is the initial version (version 1).
@@ -766,6 +740,7 @@ class FlextModelFoundation:
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
+            str_strip_whitespace=True,
         )
 
         created_by: str | None = Field(
@@ -787,15 +762,6 @@ class FlextModelFoundation:
             default=None,
             description="Timestamp when record was last updated (UTC timezone)",
         )
-
-        @field_validator("created_by", "updated_by")
-        @classmethod
-        def validate_audit_users(cls, v: str | None) -> str | None:
-            """Validate audit user fields."""
-            if v is not None and not v.strip():
-                msg = "Audit user cannot be empty or whitespace"
-                raise ValueError(msg)
-            return v.strip() if v else None
 
         @field_validator("created_at", "updated_at")
         @classmethod
@@ -905,6 +871,7 @@ class FlextModelFoundation:
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
+            str_strip_whitespace=True,
         )
 
         deleted_at: datetime | None = Field(
@@ -920,15 +887,6 @@ class FlextModelFoundation:
             default=False,
             description="Flag indicating if record is soft deleted",
         )
-
-        @field_validator("deleted_by")
-        @classmethod
-        def validate_deleted_by(cls, v: str | None) -> str | None:
-            """Validate deleted_by field."""
-            if v is not None and not v.strip():
-                msg = "deleted_by cannot be empty or whitespace"
-                raise ValueError(msg)
-            return v.strip() if v else None
 
         @field_validator("deleted_at")
         @classmethod
@@ -1206,7 +1164,7 @@ class FlextModelFoundation:
                 key: Label key to remove.
 
             """
-            self.labels.pop(key, None)
+            _ = self.labels.pop(key, None)
 
         @model_validator(mode="after")
         def validate_tag_consistency(self) -> Self:
@@ -1237,6 +1195,38 @@ class FlextModelFoundation:
             """Override this method to add custom business rule validation."""
             return self
 
+        @model_validator(mode="wrap")
+        @classmethod
+        def validate_performance(
+            cls,
+            value: Any,
+            handler: ModelWrapValidatorHandler[Self],
+        ) -> Self:
+            start_time = time.perf_counter()
+            model = handler(value)
+            elapsed_ms = (time.perf_counter() - start_time) * c.MILLISECONDS_MULTIPLIER
+            if elapsed_ms > c.Validation.VALIDATION_TIMEOUT_MS:
+                msg = (
+                    f"Validation too slow: {elapsed_ms:.2f}ms > "
+                    f"{c.Validation.VALIDATION_TIMEOUT_MS}ms"
+                )
+                raise ValueError(msg)
+            return model
+
+        @classmethod
+        def validate_batch(cls, items: Sequence[t.GuardInputValue]) -> list[Self]:
+            batch_adapter = TypeAdapter(list[cls])
+            try:
+                return batch_adapter.validate_python(items)
+            except ValidationError as exc:
+                item_errors: list[str] = []
+                for error in exc.errors():
+                    location = ".".join(str(part) for part in error.get("loc", ()))
+                    message = str(error.get("msg", "validation error"))
+                    item_errors.append(f"{location}: {message}")
+                msg = f"Batch validation failed: {'; '.join(item_errors)}"
+                raise ValueError(msg) from exc
+
         def validate_self(self) -> Self:
             """Re-validate the model instance."""
             return self.model_copy(deep=True)
@@ -1244,7 +1234,7 @@ class FlextModelFoundation:
         def is_valid(self) -> bool:
             """Check if the model is currently valid."""
             try:
-                self.validate_self()
+                _ = self.validate_self()
                 return True
             except Exception:
                 return False
@@ -1252,7 +1242,7 @@ class FlextModelFoundation:
         def get_validation_errors(self) -> list[str]:
             """Get list of validation errors."""
             try:
-                self.validate_self()
+                _ = self.validate_self()
                 return []
             except Exception as e:
                 return [str(e)]
@@ -1452,12 +1442,8 @@ ValidatedString = Annotated[
 UTCDatetime = Annotated[
     datetime, AfterValidator(FlextModelFoundation.Validators.ensure_utc_datetime)
 ]
-PositiveInt = Annotated[
-    int, AfterValidator(FlextModelFoundation.Validators.validate_positive_number)
-]
-PositiveFloat = Annotated[
-    float, AfterValidator(FlextModelFoundation.Validators.validate_positive_number)
-]
+PositiveInt = Annotated[int, Field(gt=0)]
+PositiveFloat = Annotated[float, Field(gt=0)]
 NormalizedList = Annotated[
     list[t.GuardInputValue],
     BeforeValidator(FlextModelFoundation.Validators.normalize_to_list),
@@ -1481,6 +1467,7 @@ NormalizedTags = Annotated[
 ]
 
 
+# Module-level wrappers for Validators (used by tests and external callers)
 def strip_whitespace(v: str) -> str:
     return FlextModelFoundation.Validators.strip_whitespace(v)
 
@@ -1491,10 +1478,6 @@ def ensure_utc_datetime(v: datetime | None) -> datetime | None:
 
 def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
     return FlextModelFoundation.Validators.normalize_to_list(v)
-
-
-def validate_positive_number(v: float) -> int | float:
-    return FlextModelFoundation.Validators.validate_positive_number(v)
 
 
 def validate_non_empty_string(v: str) -> str:

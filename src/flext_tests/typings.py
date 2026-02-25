@@ -699,16 +699,14 @@ class FlextTestsTypes(FlextTypes):
             value: FlextTestsTypes.Tests.TestPayloadValue,
         ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestPayloadValue]]:
             """Check if value is a ConfigurationDict."""
-            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+            return isinstance(value, dict)
 
         @staticmethod
         def is_configuration_mapping(
             value: FlextTestsTypes.Tests.TestPayloadValue,
         ) -> TypeGuard[m.ConfigMap]:
             """Check if value is a ConfigurationMapping."""
-            if not isinstance(value, Mapping):
-                return False
-            return all(isinstance(k, str) for k in value)
+            return isinstance(value, Mapping)
 
 
 t = FlextTestsTypes

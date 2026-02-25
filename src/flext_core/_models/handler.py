@@ -113,21 +113,6 @@ class FlextModelsHandler:
             description="Explicit handler name override",
         )
 
-        @field_validator("handler_mode")
-        @classmethod
-        def validate_mode(cls, v: str | None) -> str | None:
-            """Validate handler mode against allowed values."""
-            if v is None:
-                return None
-            allowed = {
-                c.Cqrs.HandlerType.COMMAND,
-                c.Cqrs.HandlerType.QUERY,
-                c.Cqrs.HandlerType.EVENT,
-            }
-            if v not in allowed:
-                return v
-            return v
-
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
 
@@ -195,16 +180,6 @@ class FlextModelsHandler:
                 examples=["running", "stopped", "failed"],
             ),
         ] = c.Cqrs.CommonStatus.RUNNING
-
-        @field_validator("timestamp", mode="after")
-        @classmethod
-        def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (using FlextRuntime)."""
-            # Allow empty strings
-            if not v:
-                return v
-            # Validate ISO 8601 format - removed due to missing method
-            return v
 
     class ExecutionContext(BaseModel):
         """Handler execution context for tracking handler performance and state.

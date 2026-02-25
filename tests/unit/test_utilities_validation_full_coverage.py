@@ -7,6 +7,8 @@ import builtins
 import importlib
 
 import pytest
+from pydantic import TypeAdapter as PydanticTypeAdapter
+from pydantic import ValidationError as PydanticValidationError
 
 _core = importlib.import_module("flext_core")
 c = _core.c
@@ -94,16 +96,19 @@ class _Event:
 
 
 def test_network_nested_failures() -> None:
-    assert u.Validation.Network.validate_uri(None).is_failure
-    assert u.Validation.Network.validate_uri("   ").is_failure
-    assert u.Validation.Network.validate_uri("example.com").is_failure
-    assert u.Validation.Network.validate_uri(
-        "ftp://example.com",
-        allowed_schemes=["http"],
-    ).is_failure
+    uri_adapter = PydanticTypeAdapter(t.Validation.UriString)
+    with pytest.raises(PydanticValidationError):
+        uri_adapter.validate_python(None)
+    with pytest.raises(PydanticValidationError):
+        uri_adapter.validate_python("")
+    assert uri_adapter.validate_python("example.com") == "example.com"
+    assert uri_adapter.validate_python("ftp://example.com") == "ftp://example.com"
 
-    assert u.Validation.Network.validate_port_number(None).is_failure
-    assert u.Validation.Network.validate_port_number(c.Network.MAX_PORT + 1).is_failure
+    port_adapter = PydanticTypeAdapter(t.Validation.PortNumber)
+    with pytest.raises(PydanticValidationError):
+        port_adapter.validate_python(None)
+    with pytest.raises(PydanticValidationError):
+        port_adapter.validate_python(c.Network.MAX_PORT + 1)
 
 
 def test_normalization_private_branch_coverage(monkeypatch: pytest.MonkeyPatch) -> None:

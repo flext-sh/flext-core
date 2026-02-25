@@ -599,3 +599,229 @@ def result_assertion_helper() -> FlextResultAssertionHelper:
 def consolidation_context() -> FlextConsolidationContext:
     """Context for test consolidation operations."""
     return FlextConsolidationContext()
+
+
+# =========================================================================
+# PYDANTIC V2 VALIDATION FIXTURES - Test Data for Annotated Types
+# =========================================================================
+# Comprehensive test fixtures for validating Pydantic v2 patterns.
+# Covers: PortNumber, UriString, HostnameStr, and string/numeric validators.
+
+
+@pytest.fixture
+def valid_port_numbers() -> list[int]:
+    """Valid port numbers for PortNumber validation (1-65535)."""
+    return [
+        1,  # Minimum valid port
+        80,  # HTTP
+        443,  # HTTPS
+        8080,  # Common development port
+        3306,  # MySQL
+        5432,  # PostgreSQL
+        27017,  # MongoDB
+        65535,  # Maximum valid port
+    ]
+
+
+@pytest.fixture
+def invalid_port_numbers() -> list[int]:
+    """Invalid port numbers for PortNumber validation."""
+    return [
+        0,  # Below minimum
+        -1,  # Negative
+        -8080,  # Negative port
+        65536,  # Above maximum
+        100000,  # Way above maximum
+    ]
+
+
+@pytest.fixture
+def valid_uris() -> list[str]:
+    """Valid URIs for UriString validation."""
+    return [
+        "http://localhost",
+        "https://example.com",
+        "https://example.com:8080",
+        "https://example.com/path",
+        "https://example.com/path?query=value",
+        "https://user:pass@example.com",
+        "ftp://files.example.com",
+        "grpc://service:50051",
+        "postgresql://localhost:5432/db",
+        "mongodb://localhost:27017/db",
+    ]
+
+
+@pytest.fixture
+def invalid_uris() -> list[str]:
+    """Invalid URIs for UriString validation."""
+    return [
+        "",  # Empty string
+        "   ",  # Whitespace only
+        "localhost",  # Missing scheme
+        "example.com",  # Missing scheme
+        "://example.com",  # Missing scheme name
+        "http://",  # Missing host
+        "http://:8080",  # Missing host
+    ]
+
+
+@pytest.fixture
+def valid_hostnames() -> list[str]:
+    """Valid hostnames for HostnameStr validation."""
+    return [
+        "localhost",
+        "example.com",
+        "sub.example.com",
+        "my-server",
+        "server-01",
+        "api-gateway-v2",
+        "db.prod.internal",
+        "a",  # Single character
+        "a.b",  # Minimal subdomain
+    ]
+
+
+@pytest.fixture
+def invalid_hostnames() -> list[str]:
+    """Invalid hostnames for HostnameStr validation."""
+    return [
+        "",  # Empty string
+        "   ",  # Whitespace only
+        "-invalid",  # Starts with hyphen
+        "invalid-",  # Ends with hyphen
+        "invalid..com",  # Double dots
+        "invalid .com",  # Contains space
+        "invalid@com",  # Contains invalid character
+        "invalid_com",  # Contains underscore
+    ]
+
+
+@pytest.fixture
+def valid_strings() -> list[str]:
+    """Valid non-empty strings for string validation."""
+    return [
+        "a",  # Single character
+        "hello",
+        "Hello World",
+        "test-value",
+        "test_value",
+        "test.value",
+        "123",
+        "value with spaces",
+        "UPPERCASE",
+        "MixedCase",
+    ]
+
+
+@pytest.fixture
+def empty_strings() -> list[str]:
+    """Empty strings for validation."""
+    return [
+        "",  # Empty string
+    ]
+
+
+@pytest.fixture
+def whitespace_strings() -> list[str]:
+    """Whitespace-only strings for validation."""
+    return [
+        " ",  # Single space
+        "   ",  # Multiple spaces
+        "\t",  # Tab
+        "\n",  # Newline
+        "  \t  \n  ",  # Mixed whitespace
+    ]
+
+
+@pytest.fixture
+def valid_ranges() -> list[tuple[int, int, int]]:
+    """Valid numeric ranges (value, min, max) for range validation."""
+    return [
+        (0, 0, 10),  # At minimum
+        (5, 0, 10),  # In middle
+        (10, 0, 10),  # At maximum
+        (100, 0, 1000),  # Large range
+        (-5, -10, 0),  # Negative range
+        (-5, -10, 10),  # Range crossing zero
+    ]
+
+
+@pytest.fixture
+def out_of_range() -> list[tuple[int, int, int]]:
+    """Out-of-range numeric values (value, min, max) for range validation."""
+    return [
+        (-1, 0, 10),  # Below minimum
+        (11, 0, 10),  # Above maximum
+        (100, 0, 50),  # Way above maximum
+        (-100, 0, 10),  # Way below minimum
+    ]
+
+
+# =========================================================================
+# VALIDATION HELPER FUNCTIONS
+# =========================================================================
+
+
+def assert_validates(
+    model_class: type,
+    field_name: str,
+    value: object,
+) -> object:
+    """Validate a value against a model field and return the validated value.
+
+    Args:
+        model_class: Pydantic model class to validate against
+        field_name: Name of the field to validate
+        value: Value to validate
+
+    Returns:
+        The validated value
+
+    Raises:
+        AssertionError: If validation fails
+
+    """
+    try:
+        # Create instance with the field value
+        instance = model_class(**{field_name: value})
+        return getattr(instance, field_name)
+    except Exception as e:
+        pytest.fail(f"Validation failed for {field_name}={value}: {e}")
+
+
+def assert_rejects(
+    model_class: type,
+    field_name: str,
+    value: object,
+    error_type: type[Exception] | None = None,
+) -> str:
+    """Assert that a value is rejected during validation.
+
+    Args:
+        model_class: Pydantic model class to validate against
+        field_name: Name of the field to validate
+        value: Value that should be rejected
+        error_type: Expected exception type (optional)
+
+    Returns:
+        The error message from validation
+
+    Raises:
+        AssertionError: If validation succeeds when it should fail
+
+    """
+    try:
+        instance = model_class(**{field_name: value})
+        pytest.fail(
+            f"Expected validation to fail for {field_name}={value}, ",
+            f"but got: {getattr(instance, field_name)}",
+        )
+    except Exception as e:
+        error_msg = str(e)
+        if error_type and not isinstance(e, error_type):
+            pytest.fail(
+                f"Expected {error_type.__name__}, ",
+                f"but got {type(e).__name__}: {error_msg}",
+            )
+        return error_msg

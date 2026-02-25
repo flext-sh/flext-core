@@ -73,7 +73,7 @@ TK = TypeVar("TK")
 TV = TypeVar("TV")
 
 
-def _is_key_value_pair(
+def _is_key_value_pair[TK, TV](
     key_equals: tuple[TK, TV] | Sequence[tuple[TK, TV]] | None,
 ) -> TypeGuard[tuple[TK, TV]]:
     """Return True if key_equals is a single (key, value) tuple."""
@@ -90,10 +90,7 @@ def _to_test_payload(value: object) -> t.Tests.PayloadValue:
     if isinstance(value, Mapping):
         return {str(k): _to_test_payload(v) for k, v in value.items()}
     if _is_non_string_sequence(value):
-        payload_items: list[t.Tests.PayloadValue] = []
-        for seq_item in value:
-            payload_items.append(_to_test_payload(seq_item))
-        return payload_items
+        return [_to_test_payload(seq_item) for seq_item in value]
     return str(value)
 
 
@@ -105,10 +102,7 @@ def _as_guard_input(value: object) -> core_t.GuardInputValue:
     if isinstance(value, Mapping):
         return {str(k): _as_guard_input(v) for k, v in value.items()}
     if _is_non_string_sequence(value):
-        guard_items: list[core_t.GuardInputValue] = []
-        for seq_item in value:
-            guard_items.append(_as_guard_input(seq_item))
-        return guard_items
+        return [_as_guard_input(seq_item) for seq_item in value]
     return str(value)
 
 
@@ -364,10 +358,7 @@ class FlextTestsMatchers:
         ):
             # Type guard: result_value has __len__ if it passed validation
             # Type narrow for __len__
-            if isinstance(result_value, Sized):
-                actual_len = len(result_value)
-            else:
-                actual_len = 0
+            actual_len = len(result_value) if isinstance(result_value, Sized) else 0
             if isinstance(params.len, int):
                 raise AssertionError(
                     params.msg
@@ -396,15 +387,10 @@ class FlextTestsMatchers:
             deep_input: BaseModel | Mapping[str, t.Tests.PayloadValue]
             if isinstance(result_value, BaseModel):
                 deep_input = result_value
-            elif isinstance(result_value, Mapping):
+            else:
                 deep_input = {
                     str(k): _to_test_payload(v) for k, v in result_value.items()
                 }
-            else:
-                raise AssertionError(
-                    params.msg
-                    or f"Deep matching requires dict or model, got {type(result_value).__name__}",
-                )
             match_result = u.Tests.DeepMatch.match(deep_input, params.deep)
             if not match_result.matched:
                 raise AssertionError(
@@ -858,21 +844,27 @@ class FlextTestsMatchers:
                     or f"Assertion failed: {value!r} did not satisfy constraints"
                 )
                 raise AssertionError(error_msg)
-        if params.is_ is not None and not isinstance(params.is_, tuple):
-            if not isinstance(value, params.is_):
-                raise AssertionError(
-                    params.msg
-                    or f"Assertion failed: {c.Tests.Matcher.ERR_TYPE_FAILED.format(expected=params.is_, actual=type(value).__name__)}",
-                )
-        if params.not_ is not None and not isinstance(params.not_, tuple):
-            if isinstance(value, params.not_):
-                raise AssertionError(
-                    params.msg
-                    or c.Tests.Matcher.ERR_TYPE_FAILED.format(
-                        expected=f"not {params.not_}",
-                        actual=type(value).__name__,
-                    ),
-                )
+        if (
+            params.is_ is not None
+            and not isinstance(params.is_, tuple)
+            and not isinstance(value, params.is_)
+        ):
+            raise AssertionError(
+                params.msg
+                or f"Assertion failed: {c.Tests.Matcher.ERR_TYPE_FAILED.format(expected=params.is_, actual=type(value).__name__)}",
+            )
+        if (
+            params.not_ is not None
+            and not isinstance(params.not_, tuple)
+            and isinstance(value, params.not_)
+        ):
+            raise AssertionError(
+                params.msg
+                or c.Tests.Matcher.ERR_TYPE_FAILED.format(
+                    expected=f"not {params.not_}",
+                    actual=type(value).__name__,
+                ),
+            )
         # Handle tuple types separately
         if (
             params.is_ is not None
@@ -968,10 +960,7 @@ class FlextTestsMatchers:
             # Type guard: value has __len__ if it passed validation
             # Type narrow for __len__
             # Type narrow for __len__
-            if isinstance(value, Sized):
-                actual_len = len(value)
-            else:
-                actual_len = 0
+            actual_len = len(value) if isinstance(value, Sized) else 0
             if isinstance(params.len, int):
                 raise AssertionError(
                     params.msg

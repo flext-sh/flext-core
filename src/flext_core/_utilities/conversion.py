@@ -264,13 +264,7 @@ class FlextUtilitiesConversion:
     @staticmethod
     def to_general_value_type(value: StrictJsonValue) -> StrictJsonValue:
         """Return strict value without compatibility coercion."""
-        if value is None or isinstance(
-            value, str | int | float | bool | list | Mapping
-        ):
-            return value
-        if isinstance(value, BaseModel):
-            return value
-        return str(value)
+        return value
 
     @staticmethod
     def to_flexible_value(value: StrictJsonValue) -> StrictJsonScalar | None:

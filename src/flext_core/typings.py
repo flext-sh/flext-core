@@ -314,8 +314,6 @@ class FlextTypes:
         Subclasses must define ``root: dict[str, V]`` via ``RootModel``.
         """
 
-        root: dict[str, DictValueT]
-
         def __getitem__(self, key: str) -> DictValueT:
             """Get item by key."""
             return self.root[key]
@@ -332,8 +330,7 @@ class FlextTypes:
             """Get length."""
             return len(self.root)
 
-        def __iter__(self):
-            return iter(self.root)
+        root: dict[str, DictValueT] = Field(default_factory=dict)
 
         def __contains__(self, key: str) -> bool:
             """Check if key exists."""
@@ -392,16 +389,16 @@ class FlextTypes:
     ConfigurationDict: TypeAlias = ConfigMap
 
     class ServiceMap(
-        RootModel[dict[str, _ContainerValue]],
         _DictMixin[_ContainerValue],
+        RootModel[dict[str, _ContainerValue]],
     ):
         """Service registry map container. Prefer m.ServiceMap in public API."""
 
         root: dict[str, _ContainerValue] = Field(default_factory=dict)
 
     class ErrorMap(
-        RootModel[dict[str, int | str | dict[str, int]]],
         _DictMixin[int | str | dict[str, int]],
+        RootModel[dict[str, int | str | dict[str, int]]],
     ):
         """Error type mapping container.
 
@@ -419,8 +416,8 @@ class FlextTypes:
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
     class FactoryMap(
-        RootModel[dict[str, FactoryRegistrationCallable]],
         _DictMixin[FactoryRegistrationCallable],
+        RootModel[dict[str, FactoryRegistrationCallable]],
     ):
         """Map of factory registration callables.
 
@@ -430,8 +427,8 @@ class FlextTypes:
         root: dict[str, FactoryRegistrationCallable] = Field(default_factory=dict)
 
     class ResourceMap(
-        RootModel[dict[str, ResourceCallable]],
         _DictMixin[ResourceCallable],
+        RootModel[dict[str, ResourceCallable]],
     ):
         """Map of resource callables.
 
@@ -460,7 +457,7 @@ class FlextTypes:
         root: dict[
             str,
             Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
-        ]
+        ] = Field(default_factory=dict)
 
         def items(
             self,
@@ -469,7 +466,10 @@ class FlextTypes:
             Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
         ]:
             """Get validator items."""
-            return self.root.items()
+            validated: dict[
+                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+            ] = {key: value for key, value in self.root.items() if callable(value)}
+            return validated.items()
 
         def values(
             self,
@@ -477,7 +477,10 @@ class FlextTypes:
             Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
         ]:
             """Get validator values."""
-            return self.root.values()
+            validated: dict[
+                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+            ] = {key: value for key, value in self.root.items() if callable(value)}
+            return validated.values()
 
     class FieldValidatorMap(
         _ValidatorMapMixin,
@@ -558,24 +561,130 @@ class FlextTypes:
         WorkerCount: TypeAlias = Annotated[int, Field(ge=1, le=100)]
         """Worker count (1-100)."""
 
+        # =====================================================================
+        # EXTENDED VALIDATION TYPES - Reusable Annotated aliases
+        # =====================================================================
+
+        NonEmptyStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        """Non-empty string (minimum 1 character)."""
+
+        StrippedStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        """String with whitespace stripped (minimum 1 character after strip)."""
+
+        UriString: TypeAlias = Annotated[str, Field(min_length=1)]
+        """URI string with scheme validation (e.g., http://, https://)."""
+
+        HostnameStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        """Hostname string with format validation."""
+
+        PositiveInt: TypeAlias = Annotated[int, Field(gt=0)]
+        """Positive integer (> 0)."""
+
+        NonNegativeInt: TypeAlias = Annotated[int, Field(ge=0)]
+        """Non-negative integer (>= 0)."""
+
+        BoundedStr: TypeAlias = Annotated[str, Field(min_length=1, max_length=255)]
+        """Bounded string (1-255 characters)."""
+
+        TimestampStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        """ISO 8601 timestamp string."""
+
+
+# ============================================================================
+# FACTORY FUNCTIONS FOR DYNAMIC ANNOTATED TYPES
+# ============================================================================
+
+
+def bounded_int_factory(min_val: int, max_val: int) -> object:
+    """Factory for bounded integer type.
+
+    Args:
+        min_val: Minimum value (inclusive)
+        max_val: Maximum value (inclusive)
+
+    Returns:
+        Annotated type alias for bounded integer
+
+    """
+    return Annotated[int, Field(ge=min_val, le=max_val)]
+
+
+def choice_str_factory(allowed_values: list[str]) -> object:
+    """Factory for choice string type.
+
+    Args:
+        allowed_values: List of allowed string values
+
+    Returns:
+        Annotated type alias for choice string
+
+    """
+    return Annotated[str, Field(pattern=f"^({'|'.join(allowed_values)})$")]
+
+
+def pattern_str_factory(pattern: str) -> object:
+    """Factory for regex pattern string type.
+
+    Args:
+        pattern: Regular expression pattern
+
+    Returns:
+        Annotated type alias for pattern string
+
+    """
+    return Annotated[str, Field(pattern=pattern)]
+
 
 t = FlextTypes
 
+# ============================================================================
+# Module-Level Re-exports of Validation Types
+# ============================================================================
+# These are re-exported from FlextTypes.Validation for convenient access
+PortNumber = FlextTypes.Validation.PortNumber
+NonEmptyStr = FlextTypes.Validation.NonEmptyStr
+StrippedStr = FlextTypes.Validation.StrippedStr
+UriString = FlextTypes.Validation.UriString
+HostnameStr = FlextTypes.Validation.HostnameStr
+PositiveInt = FlextTypes.Validation.PositiveInt
+NonNegativeInt = FlextTypes.Validation.NonNegativeInt
+BoundedStr = FlextTypes.Validation.BoundedStr
+TimestampStr = FlextTypes.Validation.TimestampStr
+PositiveTimeout = FlextTypes.Validation.PositiveTimeout
+RetryCount = FlextTypes.Validation.RetryCount
+WorkerCount = FlextTypes.Validation.WorkerCount
+
 __all__ = [
+    "BoundedStr",
     "FlextTypes",
+    "HostnameStr",
     "JsonDict",
     "JsonPrimitive",
     "JsonValue",
     "MessageT_contra",
+    "NonEmptyStr",
+    "NonNegativeInt",
     "P",
+    # Validation types from FlextTypes.Validation
+    "PortNumber",
+    "PositiveInt",
+    "PositiveTimeout",
     "R",
     "ResultT",
+    "RetryCount",
+    "StrippedStr",
     "T",
     "T_Model",
     "T_Namespace",
     "T_Settings",
     "T_co",
     "T_contra",
+    "TimestampStr",
     "U",
+    "UriString",
+    "WorkerCount",
+    "bounded_int_factory",
+    "choice_str_factory",
+    "pattern_str_factory",
     "t",
 ]

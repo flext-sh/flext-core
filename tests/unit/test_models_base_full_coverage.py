@@ -92,11 +92,16 @@ def test_normalize_to_list_branches() -> None:
     assert _base_module.normalize_to_list("x") == ["x"]
 
 
-def test_validate_positive_number_success_and_error() -> None:
-    assert _base_module.validate_positive_number(1) == 1
-    with pytest.raises(ValueError, match="Value must be positive"):
-        _base_module.validate_positive_number(0)
+def test_validate_positive_number_via_field_constraint() -> None:
+    """PositiveInt/PositiveFloat now use Field(gt=0) instead of custom validator."""
+    from pydantic import TypeAdapter
 
+    adapter = TypeAdapter(_base_module.PositiveInt)
+    assert adapter.validate_python(1) == 1
+    with pytest.raises(ValidationError):
+        adapter.validate_python(0)
+    with pytest.raises(ValidationError):
+        adapter.validate_python(-1)
 
 def test_validate_non_empty_string_success_and_error() -> None:
     assert _base_module.validate_non_empty_string("  data ") == "data"
@@ -217,7 +222,7 @@ def test_identifiable_uuid_format_true_and_regeneration() -> None:
 
 
 def test_identifiable_unique_id_empty_rejected() -> None:
-    with pytest.raises(ValidationError, match="unique_id cannot be empty"):
+    with pytest.raises(ValidationError, match="String should have at least 1 character"):
         _Identifiable(unique_id="   ")
 
 
@@ -301,9 +306,7 @@ def test_versionable_validation_errors() -> None:
 
 
 def test_versionable_internal_validators_for_unreachable_branches() -> None:
-    with pytest.raises(ValueError, match="Version cannot be negative"):
-        _Versionable.validate_version(-1)
-
+    # validate_version field_validator removed; ge=MIN_VERSION handles it declaratively
     raw = _Versionable.model_construct(version=0)
     with pytest.raises(ValueError, match="below minimum allowed"):
         raw.validate_version_consistency()
@@ -339,7 +342,7 @@ def test_auditable_computed_fields_and_mutation_methods() -> None:
 
 
 def test_auditable_validation_errors() -> None:
-    with pytest.raises(ValidationError, match="Audit user cannot be empty"):
+    with pytest.raises(ValidationError, match="String should have at least 1 character"):
         _Auditable(created_by="   ")
     with pytest.raises(ValidationError, match="updated_at set but updated_by is None"):
         _Auditable(created_by="x", updated_at=datetime.now(UTC))
@@ -385,7 +388,7 @@ def test_soft_delete_states_and_restore_cycle() -> None:
 
 
 def test_soft_delete_validation_errors() -> None:
-    with pytest.raises(ValidationError, match="deleted_by cannot be empty"):
+    with pytest.raises(ValidationError, match="String should have at least 1 character"):
         _SoftDelete(deleted_by="   ")
     with pytest.raises(ValidationError, match="is_deleted=True but deleted_at is None"):
         _SoftDelete(is_deleted=True)

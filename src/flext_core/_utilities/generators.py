@@ -147,10 +147,6 @@ class FlextUtilitiesGenerators:
                 msg = f"Failed to convert Mapping {context.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
 
-        if not isinstance(context, BaseModel):
-            msg = f"Context must be dict, Mapping, or BaseModel, got {context.__class__.__name__}"
-            raise TypeError(msg)
-
         try:
             model_data = FlextRuntime.normalize_to_general_value(context.model_dump())
             if FlextUtilitiesGenerators._is_config_mapping(model_data):

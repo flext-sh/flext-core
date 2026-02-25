@@ -186,9 +186,7 @@ class FlextUtilitiesCache:
         """
         if isinstance(key, str):
             return (0, key.lower())
-        if isinstance(key, int | float):
-            return (1, str(key))
-        return (2, str(key))
+        return (1, str(key))
 
     @staticmethod
     def sort_dict_keys(
@@ -288,7 +286,7 @@ class FlextUtilitiesCache:
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):
-                            cache_attr.clear()
+                            _ = cache_attr.clear()
                             cleared_count += 1
                         # Reset to None for simple cached values
                         else:
@@ -356,6 +354,21 @@ class FlextUtilitiesCache:
         """
         key_data = str(args) + str(sorted(kwargs.items()))
         return hashlib.sha256(key_data.encode()).hexdigest()
+
+    @staticmethod
+    def generate_cache_key_for_command(
+        command: t.ConfigMapValue | None,
+        command_type: type,
+    ) -> str:
+        if isinstance(command, Mapping):
+            sorted_data = FlextUtilitiesCache.sort_dict_keys(command)
+            return f"{command_type.__name__}_{hash(str(sorted_data))}"
+        command_str = "None" if command is None else str(command)
+        try:
+            return f"{command_type.__name__}_{hash(command_str)}"
+        except TypeError:
+            encoded = command_str.encode(c.Utilities.DEFAULT_ENCODING)
+            return f"{command_type.__name__}_{abs(hash(encoded))}"
 
 
 __all__ = [

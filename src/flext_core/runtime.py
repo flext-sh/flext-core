@@ -62,6 +62,8 @@ from typing import ClassVar, Self, TypeGuard
 import structlog
 from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
+from structlog.stdlib import add_log_level
 from structlog.typing import BindableLogger
 
 from flext_core.constants import c
@@ -169,6 +171,7 @@ class FlextRuntime:
         """
 
         def __init__(self, stream: typing.TextIO) -> None:
+            super().__init__()
             self.stream = stream
             self.queue: queue.Queue[str | None] = queue.Queue(
                 maxsize=c.Logging.ASYNC_QUEUE_SIZE,
@@ -180,7 +183,7 @@ class FlextRuntime:
                 name="flext-async-log-writer",
             )
             self.thread.start()
-            atexit.register(self.shutdown)
+            _ = atexit.register(self.shutdown)
 
         def write(self, message: str) -> None:
             """Write message to queue (non-blocking)."""
@@ -214,9 +217,9 @@ class FlextRuntime:
                     msg = self.queue.get(timeout=0.1)
                     if msg is None:
                         break
-                    self.stream.write(msg)
+                    _ = self.stream.write(msg)
                     if hasattr(self.stream, "flush"):
-                        self.stream.flush()
+                        _ = self.stream.flush()
                     self.queue.task_done()
                 except queue.Empty:
                     if self.stop_event.is_set():
@@ -224,7 +227,7 @@ class FlextRuntime:
                     continue
                 except Exception:
                     with contextlib.suppress(Exception):
-                        self.stream.write("Error in async log writer\n")
+                        _ = self.stream.write("Error in async log writer\n")
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
@@ -302,8 +305,11 @@ class FlextRuntime:
         return instance
 
     class Bootstrap:
+        """Bootstrap helpers for instantiation without calling ``__init__``."""
+
         @staticmethod
         def create_instance[T](class_type: type[T]) -> T:
+            """Create instance using the runtime low-level constructor path."""
             return FlextRuntime.create_instance(class_type)
 
     # =========================================================================
@@ -330,8 +336,8 @@ class FlextRuntime:
         match value:
             case t.ConfigMap():
                 return True
-            case Mapping() as mapping:
-                return all(isinstance(key, str) for key in mapping)
+            case Mapping():
+                return True
             case _:
                 keys = getattr(value, "keys", None)
                 items = getattr(value, "items", None)
@@ -341,6 +347,7 @@ class FlextRuntime:
                 try:
                     keys_values = keys()
                     item_values = items()
+                    tuple_entry_size = 2
                     if not isinstance(keys_values, Sequence):
                         return False
                     if not isinstance(item_values, Sequence):
@@ -348,7 +355,9 @@ class FlextRuntime:
                     if not all(isinstance(key, str) for key in keys_values):
                         return False
                     for entry in item_values:
-                        if not (isinstance(entry, tuple) and len(entry) == 2):
+                        if not (
+                            isinstance(entry, tuple) and len(entry) == tuple_entry_size
+                        ):
                             return False
                     return True
                 except (AttributeError, TypeError):
@@ -375,7 +384,7 @@ class FlextRuntime:
     ) -> TypeGuard[t.ScalarValue]:
         """Check if value is a scalar type accepted by t.ScalarValue."""
         match value:
-            case str() | int() | float() | bool() | datetime() | None:
+            case datetime() | None:
                 return True
             case _:
                 return False
@@ -666,11 +675,11 @@ class FlextRuntime:
         try:
             origin = typing.get_origin(type_hint)
             if origin is not None and hasattr(origin, "__mro__"):
-                if origin in (list, tuple):
+                if origin in {list, tuple}:
                     return True
                 return Sequence in origin.__mro__
 
-            if type_hint in (list, tuple, str):
+            if type_hint in {list, tuple, str}:
                 return True
 
             # Check if the type itself is a sequence subclass (for type aliases)
@@ -794,9 +803,9 @@ class FlextRuntime:
             services_provider = bridge.services
             resources_provider = bridge.resources
             # Call override via getattr to work around incomplete type stubs
-            services_provider.override(service_module)
-            resources_provider.override(resource_module)
-            cls.bind_configuration_provider(bridge.config, config)
+            _ = services_provider.override(service_module)
+            _ = resources_provider.override(resource_module)
+            _ = cls.bind_configuration_provider(bridge.config, config)
             return bridge, service_module, resource_module
 
         @classmethod
@@ -854,15 +863,15 @@ class FlextRuntime:
             di_container = containers.DynamicContainer()
 
             if config is not None:
-                cls.bind_configuration(di_container, config)
+                _ = cls.bind_configuration(di_container, config)
 
             if services:
                 for name, instance in services.items():
-                    cls.register_object(di_container, name, instance)
+                    _ = cls.register_object(di_container, name, instance)
 
             if factories:
                 for name, factory in factories.items():
-                    cls.register_factory(
+                    _ = cls.register_factory(
                         di_container,
                         name,
                         factory,
@@ -874,7 +883,7 @@ class FlextRuntime:
                     # register_resource[T] accepts Callable[[], T] and infers T
                     # resource_factory is Callable[[], t.ConfigMapValue] from resources
                     # T is inferred as t.ConfigMapValue, which is valid
-                    cls.register_resource(
+                    _ = cls.register_resource(
                         di_container,
                         name,
                         resource_factory,
@@ -1184,11 +1193,11 @@ class FlextRuntime:
         # structlog processors are callables with varying signatures
         processors: list[object] = [
             module.contextvars.merge_contextvars,
-            module.processors.add_log_level,
+            add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
             cls.level_based_context_filter,
-            module.processors.TimeStamper(fmt="iso"),
-            module.processors.StackInfoRenderer(),
+            TimeStamper(fmt="iso"),
+            StackInfoRenderer(),
         ]
         if additional_processors:
             # additional_processors is Sequence[object] - structlog processors are callables
@@ -1199,7 +1208,7 @@ class FlextRuntime:
             processors.append(module.dev.ConsoleRenderer(colors=True))
         else:  # pragma: no cover
             # Tested but not covered: structlog configures once per process
-            processors.append(module.processors.JSONRenderer())
+            processors.append(JSONRenderer())
 
         # Configure structlog with processors and logger factory
         # structlog.configure accepts specific types, but we construct them dynamically
@@ -1240,7 +1249,7 @@ class FlextRuntime:
         # Use getattr to call configure with processors as Sequence
         configure_fn = getattr(module, "configure", None)
         if configure_fn is not None and callable(configure_fn):
-            configure_fn(
+            _ = configure_fn(
                 processors=processors,
                 wrapper_class=wrapper_arg,
                 logger_factory=factory_to_use,
@@ -1336,6 +1345,7 @@ class FlextRuntime:
 
     @staticmethod
     def enable_runtime_checking() -> bool:
+        """Return whether runtime validation helpers are enabled."""
         return True
 
     # =========================================================================
@@ -1377,6 +1387,7 @@ class FlextRuntime:
             is_success: bool = True,
         ) -> None:
             """Initialize RuntimeResult."""
+            super().__init__()
             self._value = value
             self._error = error
             self._error_code = error_code
@@ -1426,6 +1437,7 @@ class FlextRuntime:
 
         @property
         def data(self) -> T:
+            """Return success data alias for protocol compatibility."""
             return self.value
 
         @property
@@ -1497,6 +1509,7 @@ class FlextRuntime:
             self,
             func: Callable[[T], FlextRuntime.RuntimeResult[U]],
         ) -> FlextRuntime.RuntimeResult[U]:
+            """Alias for flat_map to support railway naming conventions."""
             return self.flat_map(func)
 
         def fold[U](
@@ -1819,9 +1832,11 @@ class FlextRuntime:
 
             """
             # Set service context directly in structlog contextvars
-            structlog.contextvars.bind_contextvars(service_name=service_name)
+            _ = structlog.contextvars.bind_contextvars(service_name=service_name)
             if service_version:
-                structlog.contextvars.bind_contextvars(service_version=service_version)
+                _ = structlog.contextvars.bind_contextvars(
+                    service_version=service_version
+                )
 
             # Generate correlation ID if enabled
             if enable_context_correlation:
@@ -1830,7 +1845,9 @@ class FlextRuntime:
                 correlation_id = (
                     f"flext-{''.join(secrets.choice(alphabet) for _ in range(12))}"
                 )
-                structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+                _ = structlog.contextvars.bind_contextvars(
+                    correlation_id=correlation_id
+                )
 
             # Use structlog directly
             logger = structlog.get_logger(__name__)
@@ -2063,10 +2080,11 @@ class FlextRuntime:
                     case int() | str():
                         code_int = int(str(code))
                         if not min_val <= code_int <= max_val:
-                            return FlextRuntime.RuntimeResult[list[int]].fail(
+                            msg = (
                                 f"Invalid HTTP status code: {code} "
-                                f"(must be {min_val}-{max_val})",
+                                f"(must be {min_val}-{max_val})"
                             )
+                            return FlextRuntime.RuntimeResult[list[int]].fail(msg)
                         validated_codes.append(code_int)
                     case _:
                         return FlextRuntime.RuntimeResult[list[int]].fail(

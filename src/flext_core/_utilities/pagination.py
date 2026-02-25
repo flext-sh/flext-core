@@ -216,11 +216,15 @@ class FlextUtilitiesPagination:
             match default_page_size_attr:
                 case int() as page_size if page_size > 0:
                     default_page_size = page_size
+                case _:
+                    pass
 
             max_page_size_attr = getattr(config, "max_page_size", None)
             match max_page_size_attr:
                 case int() as page_size if page_size > 0:
                     max_page_size = page_size
+                case _:
+                    pass
 
         return {
             "default_page_size": default_page_size,

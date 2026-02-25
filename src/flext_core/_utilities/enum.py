@@ -73,8 +73,7 @@ class FlextUtilitiesEnum:
                 for approved in FlextUtilitiesEnum._APPROVED_MODULES
             ):
                 warnings.warn(
-                    "Direct import from _utilities.enum is deprecated. "
-                    "Use 'from flext_core import u; u.Enum.dispatch(...)' instead.",
+                    "Direct import from _utilities.enum is deprecated. Use 'from flext_core import u; u.Enum.dispatch(...)' instead.",
                     DeprecationWarning,
                     stacklevel=4,
                 )
@@ -110,7 +109,7 @@ class FlextUtilitiesEnum:
         if isinstance(value, enum_cls):
             return cast("r[EnumT]", r[StrEnum].ok(value))
         try:
-            return cast("r[EnumT]", r[StrEnum].ok(enum_cls(value)))
+            return r[EnumT].ok(enum_cls(value))
         except ValueError:
             members_dict = getattr(enum_cls, "__members__", {})
             enum_members = list(members_dict.values())
@@ -196,7 +195,7 @@ class FlextUtilitiesEnum:
         if isinstance(value, enum_cls):
             return cast("r[EnumT]", r[StrEnum].ok(value))
         try:
-            return cast("r[EnumT]", r[StrEnum].ok(enum_cls(value)))
+            return r[EnumT].ok(enum_cls(value))
         except ValueError:
             # enum_cls is a StrEnum type, access members via __members__
             # Access enum members via __members__ attribute

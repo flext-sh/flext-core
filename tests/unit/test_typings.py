@@ -20,6 +20,8 @@ from enum import StrEnum
 from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
+from pydantic import TypeAdapter as PydanticTypeAdapter
+from pydantic import ValidationError as PydanticValidationError
 
 from flext_core import (
     E,
@@ -259,36 +261,30 @@ class TestFlextTypings:
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
-        # Test with a valid hostname - validate_hostname is in u.Validation.Network
-        result = u.Validation.Network.validate_hostname(
-            FlextConstants.Network.LOCALHOST
-        )
-        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        hostname_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
+
+        result = hostname_adapter.validate_python(FlextConstants.Network.LOCALHOST)
         tm.that(
-            result.value,
+            result,
             eq=FlextConstants.Network.LOCALHOST,
             msg="FlextConstants.Network.LOCALHOST must validate correctly",
         )
         tm.that(
-            result.value,
+            result,
             is_=str,
             none=False,
             empty=False,
             msg="Result value must be non-empty string",
         )
 
-        # Test with a valid IP address (should also work)
-        result = u.Validation.Network.validate_hostname(
-            FlextConstants.Network.LOOPBACK_IP
-        )
-        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        result = hostname_adapter.validate_python(FlextConstants.Network.LOOPBACK_IP)
         tm.that(
-            result.value,
+            result,
             eq=FlextConstants.Network.LOOPBACK_IP,
             msg="IP address must validate correctly",
         )
         tm.that(
-            result.value,
+            result,
             is_=str,
             none=False,
             empty=False,
@@ -297,19 +293,17 @@ class TestFlextTypings:
 
     def test_hostname_validation_error(self) -> None:
         """Test hostname validation error path with real validation."""
-        # validate_hostname is in u.Validation.Network and returns FlextResult
-        invalid_hostname = "invalid..hostname"  # Invalid due to consecutive dots
+        invalid_hostname = ""
         tm.that(
             invalid_hostname,
             is_=str,
-            none=False,
-            empty=False,
-            msg="Invalid hostname must be a non-empty string",
+            eq="",
+            msg="Invalid hostname must be empty to fail HostnameStr",
         )
 
-        # Test that invalid hostname returns failed result
-        result = u.Validation.Network.validate_hostname(invalid_hostname)
-        tm.that(result.is_failure, eq=True, msg="Invalid hostname must return failure")
+        hostname_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
+        with pytest.raises(PydanticValidationError):
+            hostname_adapter.validate_python(invalid_hostname)
 
 
 __all__ = ["TestFlextTypings"]

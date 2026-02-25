@@ -16,6 +16,7 @@ from typing import Annotated, Self
 from pydantic import (
     BaseModel,
     ConfigDict,
+    Discriminator,
     Field,
     TypeAdapter,
     ValidationError,
@@ -146,9 +147,8 @@ class FlextModelsCqrs:
                 return FlextModelsCqrs.Pagination
             parts = cls.__qualname__.split(".")
             models_module = sys.modules.get("flext_core.models")
-            # Use constant value directly - attribute is on Pagination class,
-            # not on type
-            if not models_module or len(parts) < 2:
+            min_qualname_parts = 2
+            if not models_module or len(parts) < min_qualname_parts:
                 return FlextModelsCqrs.Pagination
             obj: t.GuardInputValue | None = getattr(
                 models_module,
@@ -353,6 +353,41 @@ class FlextModelsCqrs:
             def build(self) -> FlextModelsCqrs.Handler:
                 """Build and validate Handler instance."""
                 return FlextModelsCqrs.Handler.model_validate(self._data.root)
+
+    class Event(BaseModel):
+        """Event model for CQRS event operations.
+
+        Events represent domain events that occur as a result of command execution.
+        They are immutable records of what happened in the system.
+        """
+
+        message_type: c.Cqrs.EventMessageTypeLiteral = Field(
+            default="event",
+            frozen=True,
+            description="Message type discriminator (always 'event')",
+        )
+
+        event_type: str = Field(
+            description="Event type identifier",
+        )
+        aggregate_id: str = Field(
+            description="ID of the aggregate that generated this event",
+        )
+        data: t.Dict = Field(
+            default_factory=t.Dict,
+            description="Event payload data",
+        )
+        metadata: FlextModelFoundation.Metadata = Field(
+            default_factory=lambda: FlextModelFoundation.Metadata(),
+            description="Event metadata (timestamps, correlation IDs, etc.)",
+        )
+
+    # Discriminated union of all CQRS message types
+    # Enables type-safe dispatch based on message_type literal
+    CQRSMessage = Annotated[
+        Command | Query | Event,
+        Discriminator("message_type"),
+    ]
 
     class HandlerBatchRegistrationResult(BaseModel):
         """Result of batch handler registration."""

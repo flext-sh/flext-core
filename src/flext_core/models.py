@@ -26,7 +26,6 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
-from flext_core._models.validation import FlextModelsValidation
 from flext_core.protocols import p
 from flext_core.typings import t
 
@@ -120,6 +119,7 @@ class FlextModels:
     # =========================================================================
 
     Base = FlextModelFoundation
+    Validators = FlextModelFoundation.Validators
     Cqrs = FlextModelsCqrs
     EntityModels = FlextModelsEntity
     Entity_ns = FlextModelsEntity
@@ -127,8 +127,8 @@ class FlextModels:
     Context = FlextModelsContext
     HandlerModels = FlextModelsHandler
     Handler_ns = FlextModelsHandler
-    ValidationModels = FlextModelsValidation
-    Validation = FlextModelsValidation
+    ValidationModels = FlextModelFoundation.Validators
+    Validation = FlextModelFoundation.Validators
 
     # =========================================================================
     # CQRS MESSAGING - Direct access for common usage

@@ -177,7 +177,7 @@ class FlextUtilitiesDeprecation:
                 # Type narrowing: original_init is guaranteed to be callable after None check
                 init_func = original_init
                 if init_func is not None:
-                    init_func(self, *args, **kwargs)
+                    _ = init_func(self, *args, **kwargs)
 
             # Set __init__ on the class for decorator pattern
             # Accessing __init__ on class is necessary for decorator pattern
@@ -213,7 +213,7 @@ class FlextUtilitiesDeprecation:
         report += "This is a placeholder implementation.\n"
         report += "Full implementation would scan for deprecations and generate migration guide.\n"
         if output_file:
-            pathlib.Path(output_file).write_text(report, encoding="utf-8")
+            _ = pathlib.Path(output_file).write_text(report, encoding="utf-8")
         return report
 
     @classmethod

@@ -30,6 +30,9 @@ from flext_core._utilities.pagination import FlextUtilitiesPagination
 from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core._utilities.pattern import FlextUtilitiesPattern
 from flext_core._utilities.reliability import FlextUtilitiesReliability
+from flext_core._utilities.result_helpers import (
+    ResultHelpers as FlextUtilitiesResultHelpers,
+)
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.protocols import p
@@ -97,6 +100,7 @@ class FlextUtilities:
     def mapper() -> type[FlextUtilitiesMapper]:
         """Return the Mapper class for backward-compatible u.mapper().get(...) calls."""
         return FlextUtilitiesMapper
+
     class Model(FlextUtilitiesModel):
         """Model utility class - real inheritance."""
 
@@ -117,17 +121,6 @@ class FlextUtilities:
 
     class Validation(FlextUtilitiesValidation):
         """Validation utility class - real inheritance."""
-
-    # Validation sub-classes exposed at top level for convenience
-    # Allows: u.String.validate_* instead of u.Validation.String.validate_*
-    class String(FlextUtilitiesValidation.String):
-        """String validation utility class - real inheritance."""
-
-    class Numeric(FlextUtilitiesValidation.Numeric):
-        """Numeric validation utility class - real inheritance."""
-
-    class Network(FlextUtilitiesValidation.Network):
-        """Network validation utility class - real inheritance."""
 
     # =========================================================================
     # STATIC METHOD ALIASES - All from _utilities/*.py
@@ -482,26 +475,21 @@ class FlextUtilities:
     validate = staticmethod(FlextUtilitiesValidation.validate)
     validate_pattern = staticmethod(FlextUtilitiesValidation.validate_pattern)
     validate_length = staticmethod(FlextUtilitiesValidation.validate_length)
-    validate_positive = staticmethod(FlextUtilitiesValidation.Numeric.validate_positive)
-    validate_uri = staticmethod(FlextUtilitiesValidation.Network.validate_uri)
-    validate_port_number = staticmethod(
-        FlextUtilitiesValidation.Network.validate_port_number,
-    )
-    validate_hostname = staticmethod(FlextUtilitiesValidation.Network.validate_hostname)
+    validate_positive = staticmethod(FlextUtilitiesValidation.validate_positive)
 
     # Validation/ResultHelpers
-    any_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.any_)
-    err = staticmethod(FlextUtilitiesValidation.ResultHelpers.err)
-    fail = staticmethod(FlextUtilitiesValidation.ResultHelpers.fail)
-    not_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.not_)
-    ok = staticmethod(FlextUtilitiesValidation.ResultHelpers.ok)
-    or_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.or_)
-    result_val = staticmethod(FlextUtilitiesValidation.ResultHelpers.val)
-    starts = staticmethod(FlextUtilitiesValidation.ResultHelpers.starts)
-    try_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.try_)
-    val = staticmethod(FlextUtilitiesValidation.ResultHelpers.val)
-    vals = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals)
-    vals_sequence = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals_sequence)
+    any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
+    err = staticmethod(FlextUtilitiesResultHelpers.err)
+    fail = staticmethod(FlextUtilitiesResultHelpers.fail)
+    not_ = staticmethod(FlextUtilitiesResultHelpers.not_)
+    ok = staticmethod(FlextUtilitiesResultHelpers.ok)
+    or_ = staticmethod(FlextUtilitiesResultHelpers.or_)
+    result_val = staticmethod(FlextUtilitiesResultHelpers.val)
+    starts = staticmethod(FlextUtilitiesResultHelpers.starts)
+    try_ = staticmethod(FlextUtilitiesResultHelpers.try_)
+    val = staticmethod(FlextUtilitiesResultHelpers.val)
+    vals = staticmethod(FlextUtilitiesResultHelpers.vals)
+    vals_sequence = staticmethod(FlextUtilitiesResultHelpers.vals_sequence)
     require_initialized = staticmethod(FlextUtilitiesValidation.require_initialized)
 
 

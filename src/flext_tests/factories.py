@@ -52,9 +52,9 @@ def _to_guard_input(value: t.Tests.PayloadValue) -> t.GuardInputValue:
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_guard_input(_to_payload_value(v)) for k, v in value.items()}
-    if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-        return [_to_guard_input(_to_payload_value(item)) for item in value]
-    return str(value)
+    if isinstance(value, bytes):
+        return str(value)
+    return [_to_guard_input(_to_payload_value(item)) for item in value]
 
 
 class FlextTestsFactories(s[t.Tests.PayloadValue]):
@@ -1061,6 +1061,8 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                     model_kind = "query"
                 case "event":
                     model_kind = "event"
+                case _:
+                    pass
             for i in range(params.count):
                 key: str = params.key_factory(i) if params.key_factory else f"item_{i}"
 

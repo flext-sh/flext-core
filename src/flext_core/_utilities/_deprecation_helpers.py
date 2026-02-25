@@ -48,8 +48,7 @@ def warn_direct_module_access(
                 facade_method = f"u.{module_name.title()}"
 
             warnings.warn(
-                f"Direct import from _utilities.{module_name} is deprecated. "
-                f"Use 'from flext_core import u; {facade_method}' instead.",
+                f"Direct import from _utilities.{module_name} is deprecated. Use 'from flext_core import u; {facade_method}' instead.",
                 DeprecationWarning,
                 stacklevel=4,
             )

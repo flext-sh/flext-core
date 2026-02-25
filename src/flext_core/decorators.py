@@ -903,23 +903,21 @@ class FlextDecorators(FlextRuntime):
                         retry_config=retry_config,
                     )
                     if isinstance(retry_result, Exception):
-                        try:
-                            FlextDecorators._handle_retry_exhaustion(
-                                retry_result,
-                                func,
-                                attempts,
-                                error_code,
-                                logger,
-                            )
-                        except Exception:
-                            raise
+                        FlextDecorators._handle_retry_exhaustion(
+                            retry_result,
+                            func,
+                            attempts,
+                            error_code,
+                            logger,
+                        )
                         retry_error_code = (
                             error_code
                             if error_code is not None
                             else "OPERATION_TIMEOUT"
                         )
+                        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
                         raise e.TimeoutError(
-                            f"Operation {func.__name__} failed after {attempts} attempts",
+                            timeout_message,
                             error_code=retry_error_code,
                             operation=func.__name__,
                             attempts=attempts,
@@ -1081,8 +1079,9 @@ class FlextDecorators(FlextRuntime):
         if last_exception:
             raise last_exception
         retry_error_code = error_code if error_code is not None else "OPERATION_TIMEOUT"
+        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
         raise e.TimeoutError(
-            f"Operation {func.__name__} failed after {attempts} attempts",
+            timeout_message,
             error_code=retry_error_code,
             operation=func.__name__,
             attempts=attempts,

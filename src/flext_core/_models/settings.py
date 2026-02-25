@@ -16,6 +16,8 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    TypeAdapter,
+    ValidationError,
     field_validator,
     model_validator,
 )
@@ -230,17 +232,32 @@ class FlextModelsConfig:
         ]
 
         @model_validator(mode="after")
-        def validate_batch(self) -> Self:
-            """Validate batch configuration consistency."""
+        def validate_cross_fields(self) -> Self:
             max_batch_size = c.Performance.BatchProcessing.MAX_VALIDATION_SIZE
             if self.batch_size > max_batch_size:
                 msg = f"Batch size cannot exceed {max_batch_size}"
                 raise ValueError(msg)
 
             adjusted_workers = min(self.max_workers, self.batch_size)
-            object.__setattr__(self, "max_workers", adjusted_workers)
+            setattr(self, "max_workers", adjusted_workers)
 
             return self
+
+        @classmethod
+        def validate_batch(
+            cls,
+            models: list[t.GuardInputValue],
+        ) -> list[FlextModelsConfig.BatchProcessingConfig]:
+            try:
+                validated = TypeAdapter(list[FlextModelsConfig.BatchProcessingConfig])
+                return validated.validate_python(models)
+            except ValidationError as exc:
+                item_errors = [
+                    f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
+                    for err in exc.errors()
+                ]
+                msg = f"Batch validation failed: {'; '.join(item_errors)}"
+                raise ValueError(msg) from exc
 
     class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""

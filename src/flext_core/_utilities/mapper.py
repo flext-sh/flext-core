@@ -40,7 +40,7 @@ def _bind_legacy_mapper_function_aliases() -> None:
         setattr(
             mapper_fn,
             "_apply_transform_steps",
-            FlextUtilitiesMapper._apply_transform_steps,
+            FlextUtilitiesMapper.apply_transform_steps,
         )
 
 
@@ -1737,7 +1737,12 @@ class FlextUtilitiesMapper:
         """Apply map keys step."""
         if map_keys:
             _bind_legacy_mapper_function_aliases()
-            mapped = FlextUtilitiesMapper.map_dict_keys(result, map_keys)
+            mapped: r[Mapping[str, t.ConfigMapValue]] = (
+                FlextUtilitiesMapper.map_dict_keys(
+                    result,
+                    map_keys,
+                )
+            )
             core_module = sys.modules.get("flext_core")
             if core_module is not None:
                 runtime_u = getattr(core_module, "u", None)
@@ -1749,10 +1754,10 @@ class FlextUtilitiesMapper:
                         else None
                     )
                     if callable(patched_map):
-                        candidate = patched_map(result, map_keys)
-                        if isinstance(candidate, r):
-                            mapped = candidate
-            if isinstance(mapped, r) and mapped.is_success:
+                        patched_result = patched_map(result, map_keys)
+                        if isinstance(patched_result, r):
+                            mapped = patched_result
+            if mapped.is_success:
                 mapped_value = mapped.value
                 return {
                     str(key): FlextUtilitiesMapper.narrow_to_general_value_type(
@@ -1864,6 +1869,29 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_to_json(result, to_json=to_json)
 
     @staticmethod
+    def apply_transform_steps(
+        result: Mapping[str, t.ConfigMapValue],
+        *,
+        normalize: bool,
+        map_keys: Mapping[str, str] | None,
+        filter_keys: set[str] | None,
+        exclude_keys: set[str] | None,
+        strip_none: bool,
+        strip_empty: bool,
+        to_json: bool,
+    ) -> Mapping[str, t.ConfigMapValue]:
+        return FlextUtilitiesMapper._apply_transform_steps(
+            result,
+            normalize=normalize,
+            map_keys=map_keys,
+            filter_keys=filter_keys,
+            exclude_keys=exclude_keys,
+            strip_none=strip_none,
+            strip_empty=strip_empty,
+            to_json=to_json,
+        )
+
+    @staticmethod
     def _build_apply_transform(
         current: t.ConfigMapValue,
         ops: Mapping[str, t.ConfigMapValue],
@@ -1913,7 +1941,7 @@ class FlextUtilitiesMapper:
                         else None
                     )
                     if _is_transform_steps_callable(patched_steps):
-                        candidate = patched_steps(
+                        return patched_steps(
                             result,
                             normalize=normalize_bool,
                             map_keys=map_keys_dict,
@@ -1923,9 +1951,7 @@ class FlextUtilitiesMapper:
                             strip_empty=strip_empty_bool,
                             to_json=to_json_bool,
                         )
-                        if isinstance(candidate, Mapping):
-                            return candidate
-            return FlextUtilitiesMapper._apply_transform_steps(
+            return FlextUtilitiesMapper.apply_transform_steps(
                 result,
                 normalize=normalize_bool,
                 map_keys=map_keys_dict,

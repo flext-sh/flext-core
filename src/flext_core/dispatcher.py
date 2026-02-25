@@ -171,7 +171,7 @@ class FlextDispatcher(s[bool]):
         # Query result caching (from FlextDispatcher - LRU cache)
         # Fast fail: use constant directly, no fallback
         max_cache_size = c.Container.MAX_CACHE_SIZE
-        self._cache: LRUCache[str, r[_Payload]] = LRUCache(
+        self._cache: LRUCache = LRUCache(
             maxsize=max_cache_size,
         )
 
@@ -594,7 +594,7 @@ class FlextDispatcher(s[bool]):
     @staticmethod
     def _is_guard_input_value(value: _Payload) -> TypeGuard[t.GuardInputValue]:
         match value:
-            case str() | int() | float() | bool() | dt() | None:
+            case dt() | None:
                 return True
             case Path():
                 return True
@@ -1304,7 +1304,7 @@ class FlextDispatcher(s[bool]):
 
     def _register_two_arg_handler(
         self,
-        command_type_obj: HandlerRequestKey,
+        command_type_obj: HandlerRequestKey | None,
         handler: DispatcherHandler,
     ) -> r[bool]:
         """Register handler with explicit command type.
@@ -1411,16 +1411,15 @@ class FlextDispatcher(s[bool]):
         # Strict Model Enforcement: Convert dict to Model if needed
         config_model: m.Config.MiddlewareConfig | None = None
         if middleware_config is not None:
-            if isinstance(middleware_config, m.Config.MiddlewareConfig):
-                config_model = middleware_config
-            elif isinstance(middleware_config, t.ConfigMap):
+            model_dump_fn = getattr(middleware_config, "model_dump", None)
+            if callable(model_dump_fn):
                 try:
                     config_model = m.Config.MiddlewareConfig.model_validate(
-                        middleware_config.model_dump()
+                        model_dump_fn()
                     )
                 except Exception as e:
                     return r[bool].fail(
-                        f"Invalid middleware config from ConfigMap: {e}",
+                        f"Invalid middleware config model: {e}",
                         error_code=c.Errors.CONFIGURATION_ERROR,
                     )
             elif FlextRuntime.is_dict_like(middleware_config):
@@ -2941,10 +2940,11 @@ class FlextDispatcher(s[bool]):
             if options.metadata is not None and FlextRuntime.is_dict_like(
                 options.metadata
             ):
-                metadata_map: Mapping[str, t.ConfigMapValue] = (
-                    options.metadata.root
-                    if isinstance(options.metadata, t.ConfigMap)
-                    else options.metadata
+                metadata_root = getattr(options.metadata, "root", None)
+                metadata_map = (
+                    dict(metadata_root.items())
+                    if isinstance(metadata_root, Mapping)
+                    else dict(options.metadata.items())
                 )
                 metadata_attrs: dict[str, t.MetadataAttributeValue] = {}
                 for key, value in metadata_map.items():
@@ -3071,8 +3071,11 @@ class FlextDispatcher(s[bool]):
             )
 
         if FlextRuntime.is_dict_like(value):
-            mapping_value: Mapping[str, object] = (
-                value.root if isinstance(value, t.ConfigMap) else value
+            metadata_root = getattr(value, "root", None)
+            mapping_value = (
+                dict(metadata_root.items())
+                if isinstance(metadata_root, Mapping)
+                else dict(value.items())
             )
 
             for nested in mapping_value.values():

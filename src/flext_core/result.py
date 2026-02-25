@@ -16,7 +16,6 @@ from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
-from returns.unsafe import unsafe_perform_io
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
@@ -181,6 +180,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @property
     def data(self) -> T_co:
+        """Return success data alias for protocol compatibility."""
         return self.value
 
     @property
@@ -194,6 +194,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self._result
 
     def to_maybe(self) -> Maybe[T_co]:
+        """Convert result into Maybe, dropping failure details."""
         if self.is_success:
             return Some(self.value)
         return Nothing
@@ -204,11 +205,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         maybe: Maybe[U],
         error_message: str = "No value",
     ) -> FlextResult[U]:
+        """Build result from Maybe by mapping Nothing to failure."""
         if maybe is Nothing:
             return cls.fail(error_message)
         return cls.ok(maybe.unwrap())
 
     def to_io(self) -> IO[T_co]:
+        """Convert successful value to IO; fail by raising validation error."""
         if self.is_failure:
             exception_module = __import__("flext_core.exceptions", fromlist=["e"])
             raise exception_module.e.ValidationError(
@@ -217,6 +220,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return IO(self.value)
 
     def to_io_result(self) -> IOResult[T_co, str]:
+        """Convert result to IOResult while preserving success/failure state."""
         if self.is_success:
             return IOSuccess(self.value)
         return IOFailure(self.error or "")
@@ -225,15 +229,16 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     def from_io_result[U](
         cls,
         io_result: IOResult[U, str],
-    ) -> FlextResult[U]:
+    ) -> FlextResult[U | IO[U]]:
+        """Build result from IOResult by unwrapping value or failure message."""
         if not hasattr(io_result, "unwrap") or not hasattr(io_result, "failure"):
             return cls.fail("Invalid IOResult structure")
         try:
             io_value = io_result.unwrap()
-            return cls.ok(unsafe_perform_io(io_value))
+            return cls.ok(io_value)
         except Exception:
             io_error = io_result.failure()
-            return cls.fail(str(unsafe_perform_io(io_error)))
+            return cls.fail(str(io_error))
 
     # error_code and error_data properties are inherited from RuntimeResult
 
@@ -282,6 +287,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
     ) -> FlextResult[U]:
+        """Alias for ``flat_map`` to support railway naming conventions."""
         return self.flat_map(func)
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
@@ -710,10 +716,12 @@ r = FlextResult
 
 
 def is_success_result(value: object) -> bool:
+    """Return ``True`` when value is a successful runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 
 
 def is_failure_result(value: object) -> bool:
+    """Return ``True`` when value is a failed runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 
 

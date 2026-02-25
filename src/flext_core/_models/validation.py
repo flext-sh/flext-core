@@ -27,7 +27,7 @@ type ValidationSubject = t.ScalarValue | BaseModel
 type EventInput = BaseModel | Mapping[str, t.ConfigMapValue]
 
 
-class FlextModelsValidation:
+class FlextValidationLegacy:
     """Validation utility functions."""
 
     @staticmethod
@@ -71,7 +71,7 @@ class FlextModelsValidation:
         error_data_key: str,
     ) -> r[ValidationSubject]:
         validation_results = [validator(subject) for validator in validators.values()]
-        errors = FlextModelsValidation._collect_result_errors(validation_results)
+        errors = FlextValidationLegacy._collect_result_errors(validation_results)
         if errors:
             return r[ValidationSubject].fail(
                 f"{failure_message_prefix}: {'; '.join(errors)}",
@@ -86,12 +86,12 @@ class FlextModelsValidation:
         validators: Sequence[Callable[[ValidationSubject], r[ValidationSubject]]],
         fallback_reason: str,
     ) -> r[ValidationSubject]:
-        failure_result = FlextModelsValidation._first_validation_failure_result(
+        failure_result = FlextValidationLegacy._first_validation_failure_result(
             model,
             validators,
         )
         if failure_result is not None:
-            error_msg = FlextModelsValidation._validation_failure_message(
+            error_msg = FlextValidationLegacy._validation_failure_message(
                 failure_result.error,
                 fallback_reason,
             )
@@ -114,10 +114,10 @@ class FlextModelsValidation:
         event: EventInput,
         field_name: str,
     ) -> r[bool] | None:
-        field_value = FlextModelsValidation._event_get(event, field_name, "")
+        field_value = FlextValidationLegacy._event_get(event, field_name, "")
         if field_value and field_value.__class__ is str:
             return None
-        return FlextModelsValidation._validation_error(
+        return FlextValidationLegacy._validation_error(
             f"Domain event {field_name} must be a non-empty string",
         )
 
@@ -130,7 +130,7 @@ class FlextModelsValidation:
         ],
     ) -> r[ValidationSubject]:
         """Validate business-rule callables for a model."""
-        return FlextModelsValidation._validate_model_with_validators(
+        return FlextValidationLegacy._validate_model_with_validators(
             model,
             rules,
             "validation rule failed",
@@ -142,7 +142,7 @@ class FlextModelsValidation:
         field_validators: t.FieldValidatorMap,
     ) -> r[ValidationSubject]:
         """Validate cross-field dependencies with mapped validators."""
-        return FlextModelsValidation._validate_with_validator_mapping(
+        return FlextValidationLegacy._validate_with_validator_mapping(
             model,
             field_validators,
             "Cross-field validation failed",
@@ -210,7 +210,7 @@ class FlextModelsValidation:
         )
 
         for model in models:
-            validation_result = FlextModelsValidation._validate_model_with_validators(
+            validation_result = FlextValidationLegacy._validate_model_with_validators(
                 model,
                 validators,
                 fallback_reason,
@@ -221,13 +221,13 @@ class FlextModelsValidation:
 
             if fail_fast:
                 return r[list[ValidationSubject]].fail(
-                    FlextModelsValidation._validation_failure_message(
+                    FlextValidationLegacy._validation_failure_message(
                         validation_result.error,
                         "item validation failed",
                     ),
                 )
 
-            error_msg = FlextModelsValidation._validation_failure_message(
+            error_msg = FlextValidationLegacy._validation_failure_message(
                 validation_result.error,
                 "validation rule failed",
             )
@@ -255,7 +255,7 @@ class FlextModelsValidation:
         ],
     ) -> r[ValidationSubject]:
         """Validate aggregate/domain invariants for a model."""
-        failure_result = FlextModelsValidation._first_validation_failure_result(
+        failure_result = FlextValidationLegacy._first_validation_failure_result(
             model,
             invariants,
         )
@@ -297,7 +297,7 @@ class FlextModelsValidation:
         event_validators: t.EventValidatorMap,
     ) -> r[ValidationSubject]:
         """Validate event-sourcing constraints for a domain event."""
-        return FlextModelsValidation._validate_with_validator_mapping(
+        return FlextValidationLegacy._validate_with_validator_mapping(
             event,
             event_validators,
             "Event validation failed",
@@ -327,7 +327,7 @@ class FlextModelsValidation:
                 error_code="INVALID_PATTERN_TYPE",
             )
 
-        failure_result = FlextModelsValidation._first_validation_failure_result(
+        failure_result = FlextValidationLegacy._first_validation_failure_result(
             command_or_query,
             validators,
         )
@@ -348,11 +348,11 @@ class FlextModelsValidation:
 
     @staticmethod
     def _validate_event_structure(
-        event: EventInput,
+        event: EventInput | None,
     ) -> r[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 "Domain event cannot be None",
             )
 
@@ -360,10 +360,10 @@ class FlextModelsValidation:
         missing_attrs = [
             attr
             for attr in required_attrs
-            if not FlextModelsValidation._event_has_attr(event, attr)
+            if not FlextValidationLegacy._event_has_attr(event, attr)
         ]
         if missing_attrs:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"Domain event missing required attributes: {missing_attrs}",
             )
 
@@ -375,16 +375,16 @@ class FlextModelsValidation:
     ) -> r[bool]:
         """Validate event field types and values."""
         for required_field in ("event_type", "aggregate_id"):
-            required_field_error = FlextModelsValidation._required_event_string_error(
+            required_field_error = FlextValidationLegacy._required_event_string_error(
                 event,
                 required_field,
             )
             if required_field_error is not None:
                 return required_field_error
 
-        data = FlextModelsValidation._event_get(event, "data", None)
+        data = FlextValidationLegacy._event_get(event, "data", None)
         if data is not None and not FlextRuntime.is_dict_like(data):
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 "Domain event data must be a dictionary or None",
             )
 
@@ -407,8 +407,8 @@ class FlextModelsValidation:
 
         """
         for validation_result in (
-            FlextModelsValidation._validate_event_structure(event),
-            FlextModelsValidation._validate_event_fields(event),
+            FlextValidationLegacy._validate_event_structure(event),
+            FlextValidationLegacy._validate_event_fields(event),
         ):
             if validation_result.is_failure:
                 return validation_result
@@ -432,7 +432,7 @@ class FlextModelsValidation:
             return True
         if not FlextRuntime.is_dict_like(event):
             return False
-        return attr in FlextModelsValidation._event_mapping(event)
+        return attr in FlextValidationLegacy._event_mapping(event)
 
     @staticmethod
     def _event_get(
@@ -446,7 +446,7 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_aggregate_consistency(
-        aggregate: p.Validation.HasInvariants,
+        aggregate: p.Validation.HasInvariants | None,
     ) -> r[p.Validation.HasInvariants]:
         """Validate aggregate consistency and business invariants.
 
@@ -461,7 +461,7 @@ class FlextModelsValidation:
 
         """
         if aggregate is None:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 "Aggregate cannot be None",
             )
 
@@ -474,7 +474,7 @@ class FlextModelsValidation:
             RuntimeError,
             KeyError,
         ) as e:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"Aggregate invariant violation: {e}",
             )
 
@@ -487,7 +487,7 @@ class FlextModelsValidation:
                     f"Too many uncommitted domain events: {event_count} "
                     f"(max: {max_events})"
                 )
-                return FlextModelsValidation._validation_error(
+                return FlextValidationLegacy._validation_error(
                     error_msg,
                 )
 
@@ -495,7 +495,7 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_entity_relationships(
-        entity: BaseModel,
+        entity: BaseModel | None,
     ) -> r[BaseModel]:
         """Validate entity relationships and references.
 
@@ -510,14 +510,14 @@ class FlextModelsValidation:
 
         """
         if entity is None:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 "Entity cannot be None",
             )
 
         if hasattr(entity, "version"):
             version = getattr(entity, "version", 0)
             if version.__class__ is not int or version < 0:
-                return FlextModelsValidation._validation_error(
+                return FlextValidationLegacy._validation_error(
                     "Entity version must be a non-negative integer",
                 )
 
@@ -525,7 +525,7 @@ class FlextModelsValidation:
             if hasattr(entity, timestamp_field):
                 timestamp = getattr(entity, timestamp_field)
                 if timestamp is not None and timestamp.__class__ is not datetime:
-                    return FlextModelsValidation._validation_error(
+                    return FlextValidationLegacy._validation_error(
                         f"Entity {timestamp_field} must be a datetime or None",
                     )
 
@@ -538,22 +538,22 @@ class FlextModelsValidation:
         context: str = "URI",
     ) -> r[str]:
         if uri is None:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} cannot be None",
             )
         try:
             parsed_uri = urlparse(uri)
             if not all([parsed_uri.scheme, parsed_uri.netloc]):
-                return FlextModelsValidation._validation_error(
+                return FlextValidationLegacy._validation_error(
                     f"Invalid {context} format: missing scheme or netloc",
                 )
             if allowed_schemes and parsed_uri.scheme not in allowed_schemes:
-                return FlextModelsValidation._validation_error(
+                return FlextValidationLegacy._validation_error(
                     f"Invalid {context} scheme: '{parsed_uri.scheme}'. Must be one of {allowed_schemes}",
                 )
             return r[str].ok(uri)
         except ValueError as e:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"Invalid {context} format: {e}",
             )
 
@@ -563,11 +563,11 @@ class FlextModelsValidation:
         context: str = "Port",
     ) -> r[int]:
         if port is None:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} cannot be None",
             )
         if not c.Network.MIN_PORT <= port <= c.Network.MAX_PORT:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} must be between {c.Network.MIN_PORT} and {c.Network.MAX_PORT} (got {port})",
             )
         return r[int].ok(port)
@@ -578,11 +578,11 @@ class FlextModelsValidation:
         context: str = "Field",
     ) -> r[str]:
         if value is None:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} cannot be None",
             )
         if not value:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} cannot be empty",
             )
         return r[str].ok(value)
@@ -600,7 +600,7 @@ class FlextModelsValidation:
         )
 
         if not valid_choices:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 "Valid choices cannot be empty",
             )
 
@@ -610,7 +610,7 @@ class FlextModelsValidation:
         )
 
         if target_value not in target_choices:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"Invalid {context}: '{value}'. Must be one of {list(choices_set)}",
             )
         return r[str].ok(value)
@@ -624,11 +624,11 @@ class FlextModelsValidation:
     ) -> r[str]:
         current_length = len(value)
         if min_length is not None and current_length < min_length:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} length {current_length} is less than minimum {min_length}",
             )
         if max_length is not None and current_length > max_length:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"{context} length {current_length} exceeds maximum {max_length}",
             )
         return r[str].ok(value)
@@ -641,14 +641,14 @@ class FlextModelsValidation:
     ) -> r[str]:
         try:
             if not re.fullmatch(pattern, value):
-                return FlextModelsValidation._validation_error(
+                return FlextValidationLegacy._validation_error(
                     f"{context} '{value}' does not match pattern '{pattern}'",
                 )
             return r[str].ok(value)
         except re.error as e:
-            return FlextModelsValidation._validation_error(
+            return FlextValidationLegacy._validation_error(
                 f"Invalid regex pattern '{pattern}': {e}",
             )
 
 
-__all__ = ["FlextModelsValidation"]
+__all__ = ["FlextValidationLegacy"]

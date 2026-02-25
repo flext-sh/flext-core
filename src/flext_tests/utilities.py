@@ -847,10 +847,6 @@ class FlextTestsUtilities(FlextUtilities):
                     elif isinstance(value, set):
                         value_set: set[str] = value
                         result[key] = [str(v) for v in value_set]
-                    elif isinstance(value, str):
-                        # value is str (after None and iterable checks above)
-                        value_str = value
-                        result[key] = [value_str]
                     else:
                         result[key] = [str(value)]
 
@@ -1307,17 +1303,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 result = operation()
                 expected = test_case.get("expected_result")
-
-                # Handle type expectations (e.g., int, bool, str)
-                if type(expected) is type:
-                    expected_type = expected
-                    m = f"Want type {expected_type.__name__}, got {type(result).__name__}"
-                    assert type(result) is expected_type or (
-                        hasattr(type(result), "__mro__")
-                        and expected_type in type(result).__mro__
-                    ), m
-                else:
-                    assert result == expected, f"Expected {expected}, got {result}"
+                assert result == expected, f"Expected {expected}, got {result}"
 
         class DomainHelpers:
             """Helpers for domain model testing."""
@@ -2285,6 +2271,4 @@ def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
         return value.decode(errors="ignore")
     if isinstance(value, Mapping):
         return {str(k): _to_config_map_value(v) for k, v in value.items()}
-    if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-        return [_to_config_map_value(item) for item in value]
-    return str(value)
+    return [_to_config_map_value(item) for item in value]
