@@ -248,7 +248,7 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
-    def require_initialized(value: t.T | None, name: str) -> t.T:
+    def require_initialized[T](value: T | None, name: str) -> T:
         """Guard that a service attribute was initialized.
 
         Args:
@@ -260,6 +260,7 @@ class FlextUtilitiesGuards:
 
         Raises:
             AttributeError: If the value is None (uninitialized).
+
         """
         if value is None:
             msg = f"{name} is not initialized"

@@ -6,16 +6,14 @@ from typing import cast
 from pydantic import BaseModel
 from returns.io import IOSuccess
 
-core = importlib.import_module("flext_core")
-FlextRuntime = core.FlextRuntime
-r = core.r
-t = core.t
+from flext_core import FlextRuntime, r
+from flext_core.typings import JsonValue
 
 result_module = importlib.import_module("flext_core.result")
 
 
 class _ValidationLikeError(Exception):
-    def errors(self) -> list[dict[str, t.GeneralValueType]]:
+    def errors(self) -> list[dict[str, JsonValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 

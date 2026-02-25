@@ -7,30 +7,25 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
-core = importlib.import_module("flext_core")
-FlextExceptions = core.FlextExceptions
-c = core.c
-h = core.h
-m = core.m
-r = core.r
-t = core.t
+from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r
+from flext_core.typings import JsonValue
 
 handlers_module = importlib.import_module("flext_core.handlers")
 
 
-class _Handler(h[t.GeneralValueType, t.GeneralValueType]):
-    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
-        return r[t.GeneralValueType].ok(message)
+class _Handler(FlextHandlers[JsonValue, JsonValue]):
+    def handle(self, message: JsonValue) -> FlextResult[JsonValue]:
+        return r[JsonValue].ok(message)
 
 
 class _QueryHandler(_Handler):
-    def validate_query(self, query: t.GeneralValueType) -> r[bool]:
+    def validate_query(self, query: JsonValue) -> FlextResult[bool]:
         _ = query
         return r[bool].ok(True)
 
 
 class _EventHandler(_Handler):
-    def validate(self, data: t.GeneralValueType) -> r[bool]:
+    def validate(self, data: JsonValue) -> FlextResult[bool]:
         _ = data
         return r[bool].ok(True)
 
@@ -163,7 +158,7 @@ def test_discovery_narrowed_function_paths() -> None:
     decorator = h.handler(str)
 
     @decorator
-    def exposed(value: t.GeneralValueType) -> int:
+    def exposed(value: JsonValue) -> int:
         _ = value
         return 123
 

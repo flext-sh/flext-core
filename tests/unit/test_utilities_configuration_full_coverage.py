@@ -6,24 +6,21 @@ from pathlib import Path
 
 import pytest
 from pydantic import BaseModel
-
-core = importlib.import_module("flext_core")
-r = core.r
-t = core.t
-u = core.u
+from flext_core import r, u
+from flext_core.typings import JsonValue
 
 
 class _DumpErrorModel(BaseModel):
     value: int = 1
 
-    def model_dump(self, **kwargs: object) -> dict[str, t.GeneralValueType]:
+    def model_dump(self, **kwargs: object) -> dict[str, JsonValue]:
         _ = kwargs
         msg = "dump boom"
         raise TypeError(msg)
 
 
 class _DuckDumpError:
-    def model_dump(self) -> dict[str, t.GeneralValueType]:
+    def model_dump(self) -> dict[str, JsonValue]:
         msg = "duck boom"
         raise RuntimeError(msg)
 
@@ -33,7 +30,7 @@ class _Opts(BaseModel):
 
 
 class _ContainerOK:
-    def register(self, _name: str, _instance: t.GeneralValueType):
+    def register(self, _name: str, _instance: JsonValue):
         return r[bool].ok(True)
 
     def register_factory(self, _name: str, _factory):
@@ -41,7 +38,7 @@ class _ContainerOK:
 
 
 class _ContainerFail:
-    def register(self, _name: str, _instance: t.GeneralValueType):
+    def register(self, _name: str, _instance: JsonValue):
         return r[bool].fail("reg fail")
 
     def register_factory(self, _name: str, _factory):
@@ -49,7 +46,7 @@ class _ContainerFail:
 
 
 class _ContainerRaise:
-    def register(self, _name: str, _instance: t.GeneralValueType):
+    def register(self, _name: str, _instance: JsonValue):
         raise RuntimeError("reg ex")
 
     def register_factory(self, _name: str, _factory):

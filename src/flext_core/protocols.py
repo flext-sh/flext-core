@@ -794,17 +794,21 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class Handler(BaseProtocol, Protocol):
-        """Command/Query handler interface.
+    class Handler[MessageT, ResultT](BaseProtocol, Protocol):
+        """Command/Query handler interface (generic).
 
         Reflects real implementations like FlextHandlers which provide
         comprehensive validation and execution pipelines for CQRS handlers.
+        
+        Type Parameters:
+        - MessageT: Type of message handled (command, query, or event)
+        - ResultT: Type of result returned by handler
         """
 
         def handle(
             self,
-            message: t.ScalarValue,
-        ) -> FlextProtocols.Result[t.GuardInputValue]:
+            message: MessageT,
+        ) -> FlextProtocols.Result[ResultT]:
             """Handle message - core business logic method.
 
             Reflects real implementations like FlextHandlers.handle() which
@@ -814,7 +818,7 @@ class FlextProtocols:
 
         def validate(
             self,
-            data: t.ScalarValue,
+            data: MessageT,
         ) -> FlextProtocols.Result[bool]:
             """Validate input data using extensible validation pipeline.
 
@@ -825,7 +829,7 @@ class FlextProtocols:
 
         def validate_command(
             self,
-            command: t.ScalarValue,
+            command: MessageT,
         ) -> FlextProtocols.Result[bool]:
             """Validate command message with command-specific rules.
 
@@ -836,7 +840,7 @@ class FlextProtocols:
 
         def validate_query(
             self,
-            query: t.ScalarValue,
+            query: MessageT,
         ) -> FlextProtocols.Result[bool]:
             """Validate query message with query-specific rules.
 

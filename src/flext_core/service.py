@@ -92,7 +92,7 @@ class FlextService[TDomainResult](
     @override
     def __init__(
         self,
-        **data: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize service with configuration data.
 

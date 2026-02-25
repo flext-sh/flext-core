@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
+from collections.abc import Sized
 from typing import overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
@@ -35,6 +37,7 @@ from flext_core._utilities.result_helpers import (
 )
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core.protocols import p
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -470,6 +473,94 @@ class FlextUtilities:
 
     # Validation - Core
 
+    @staticmethod
+    def validate_length[T: Sized](
+        value: T,
+        *,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        field_name: str = "value",
+    ) -> r[T]:
+        """Return success when ``value`` length is within bounds."""
+        try:
+            length_raw = len(value)
+        except (TypeError, ValueError):
+            return r[T].fail(f"{field_name} length is invalid")
+
+        if not isinstance(length_raw, int):
+            return r[T].fail(f"{field_name} length is invalid")
+
+        length = length_raw
+
+        if min_length is not None and length < min_length:
+            return r[T].fail(
+                f"{field_name} must have at least {min_length} characters/items",
+            )
+
+        if max_length is not None and length > max_length:
+            return r[T].fail(
+                f"{field_name} must have at most {max_length} characters/items",
+            )
+
+        return r[T].ok(value)
+
+    @staticmethod
+    def validate_pattern(
+        value: str,
+        pattern: str,
+        field_name: str = "value",
+    ) -> r[str]:
+        """Return success when ``value`` matches ``pattern``."""
+        if re.search(pattern, value) is None:
+            return r[str].fail(f"{field_name} has invalid format")
+        return r[str].ok(value)
+
+    @staticmethod
+    def validate_positive(
+        value: float,
+        field_name: str = "value",
+    ) -> r[int | float]:
+        """Return success when numeric ``value`` is greater than zero."""
+        if isinstance(value, bool) or value <= 0:
+            return r[int | float].fail(f"{field_name} must be positive")
+        return r[int | float].ok(value)
+        return r[int | float].ok(value)
+
+    @staticmethod
+    def validate_uri(
+        uri: str,
+        field_name: str = "uri",
+    ) -> r[str]:
+        """Return success when ``uri`` is a valid URI/URL format."""
+        # RFC 3986 simplified pattern for URI validation
+        uri_pattern = r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$"
+        if re.search(uri_pattern, uri) is None:
+            return r[str].fail(f"{field_name} has invalid URI format")
+        return r[str].ok(uri)
+
+    @staticmethod
+    def validate_port_number(
+        port: int,
+        field_name: str = "port",
+    ) -> r[int]:
+        """Return success when ``port`` is a valid port number (1-65535)."""
+        if not isinstance(port, int) or isinstance(port, bool):
+            return r[int].fail(f"{field_name} must be an integer")
+        if port < 1 or port > 65535:
+            return r[int].fail(f"{field_name} must be between 1 and 65535")
+        return r[int].ok(port)
+
+    @staticmethod
+    def validate_hostname(
+        hostname: str,
+        field_name: str = "hostname",
+    ) -> r[str]:
+        """Return success when ``hostname`` is a valid hostname or FQDN."""
+        # RFC 1123 hostname pattern: labels separated by dots, each 1-63 chars
+        hostname_pattern = r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
+        if re.search(hostname_pattern, hostname) is None:
+            return r[str].fail(f"{field_name} has invalid hostname format")
+        return r[str].ok(hostname)
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
     err = staticmethod(FlextUtilitiesResultHelpers.err)

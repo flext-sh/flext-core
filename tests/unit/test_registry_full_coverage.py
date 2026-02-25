@@ -3,18 +3,13 @@ from __future__ import annotations
 import importlib
 from types import SimpleNamespace
 
-core = importlib.import_module("flext_core")
-FlextRegistry = core.FlextRegistry
-c = core.c
-h = core.h
-m = core.m
-r = core.r
-t = core.t
+from flext_core import FlextRegistry, FlextResult, FlextHandlers, c, h, m, r
+from flext_core.typings import JsonValue
 
 
-class _Handler(h[t.GeneralValueType, t.GeneralValueType]):
-    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
-        return r[t.GeneralValueType].ok(message)
+class _Handler(FlextHandlers[JsonValue, JsonValue]):
+    def handle(self, message: JsonValue) -> FlextResult[JsonValue]:
+        return r[JsonValue].ok(message)
 
 
 class _BrokenListRegistry(FlextRegistry):
@@ -152,14 +147,14 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(monkeypatch) 
     monkeypatch.setattr(
         registry.container,
         "get",
-        lambda _key: r[t.GeneralValueType].fail("missing"),
+        lambda _key: r[JsonValue].fail("missing"),
     )
     missing = registry.get_plugin("cat", "name")
     assert missing.is_failure
 
     metadata_result = registry.register(
         "svc",
-        object(),
+        "service",
         metadata=m.Metadata(attributes={"k": "v"}),
     )
     assert metadata_result.is_success
@@ -169,7 +164,7 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(monkeypatch) 
         "with_service",
         lambda _name, _service: (_ for _ in ()).throw(ValueError("nope")),
     )
-    reg_fail = registry.register("svc2", object())
+    reg_fail = registry.register("svc2", "service")
     assert reg_fail.is_failure
 
     broken = _BrokenListRegistry()

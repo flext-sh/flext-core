@@ -996,6 +996,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if not name.startswith("_") and callable(getattr(module, name, None))
             )
 
+    def _protocol_name(self) -> str:
+        """Return the protocol name for introspection."""
+        return self.__class__.__name__
+
 
 h = FlextHandlers
 

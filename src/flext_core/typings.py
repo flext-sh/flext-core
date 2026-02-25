@@ -179,22 +179,12 @@ class FlextTypes:
     GeneralListValue: TypeAlias = list[str | int | float | bool | datetime | None]
 
     # Input type for guard functions (flat union, no recursion; prefer models at API)
-    type GuardInputValue = (
-        ScalarValue
-        | BaseModel
-        | Path
-        | Sequence[GuardInputValue]
-        | Mapping[str, GuardInputValue]
-    )
+    GuardInputValue: TypeAlias = _ContainerValue
 
     # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
-    type ConfigMapValue = (
-        ScalarValue
-        | BaseModel
-        | Path
-        | Sequence[ConfigMapValue]
-        | Mapping[str, ConfigMapValue]
-    )
+    ConfigMapValue: TypeAlias = _ContainerValue
+
+    FlexibleValue: TypeAlias = GuardInputValue
 
     # RegisterableService - fixed types only
     RegisterableService: TypeAlias = RegisterableService
@@ -282,8 +272,8 @@ class FlextTypes:
     JsonValue: TypeAlias = JsonValue
     JsonDict: TypeAlias = JsonDict
 
-    # General value type (alias for JsonValue) for handlers and config boundaries
-    GeneralValueType: TypeAlias = JsonValue
+    # General value type for handlers and config boundaries
+    GeneralValueType: TypeAlias = _ContainerValue
 
     # Single consolidated callable type for handlers and validators
     HandlerCallable: TypeAlias = Callable[[ScalarValue], ScalarValue]

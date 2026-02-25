@@ -12,8 +12,8 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from xml.etree import ElementTree as ET  # noqa: S405
 
+from defusedxml import ElementTree as DefusedET
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
@@ -103,8 +103,8 @@ class PytestDiagExtractor:
         if not junit_path.exists():
             return False
         try:
-            root = ET.parse(junit_path).getroot()  # noqa: S314
-        except ET.ParseError:
+            root = DefusedET.parse(junit_path).getroot()
+        except DefusedET.ParseError:
             return False
 
         slow_rows: list[tuple[float, str]] = []

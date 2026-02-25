@@ -137,13 +137,13 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry()
 
         # Register single handler - Protocol-based handler registration
-        create_handler: p.Handler = CreateUserHandler()
+        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = CreateUserHandler()
         register_result = registry.register_handler(create_handler)
         if register_result.is_success:
             print("✅ Handler registered successfully")
 
         # Batch registration - Protocol-based handler registration
-        get_handler: p.Handler = GetUserHandler()
+        get_handler: p.Handler[GetUserQuery, m.ConfigMap] = GetUserHandler()
         batch_result = registry.register_handlers([get_handler])
         if batch_result.is_success:
             summary = batch_result.value
@@ -158,7 +158,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Handler = CreateUserHandler()
+        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = CreateUserHandler()
         _ = registry.register_handler(create_handler)
 
         # Dispatch command - Pydantic models are compatible with t.GeneralValueType
@@ -182,8 +182,8 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Handler = CreateUserHandler()
-        get_handler: p.Handler = GetUserHandler()
+        create_handler: p.Handler[CreateUserCommand, UserCreatedEvent] = CreateUserHandler()
+        get_handler: p.Handler[GetUserQuery, m.ConfigMap] = GetUserHandler()
         _ = registry.register_handler(create_handler)
         _ = registry.register_handler(get_handler)
 

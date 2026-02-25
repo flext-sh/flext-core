@@ -3,10 +3,7 @@ from __future__ import annotations
 import sys
 import importlib
 from types import SimpleNamespace
-
-core = importlib.import_module("flext_core")
-c = core.c
-m = core.m
+from flext_core import c, m
 
 
 def test_command_validator_and_pagination_limit() -> None:
