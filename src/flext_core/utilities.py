@@ -34,7 +34,7 @@ from flext_core._utilities.result_helpers import (
     ResultHelpers as FlextUtilitiesResultHelpers,
 )
 from flext_core._utilities.text import FlextUtilitiesText
-from flext_core._utilities.validation import FlextUtilitiesValidation
+
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -119,7 +119,7 @@ class FlextUtilities:
     class Text(FlextUtilitiesText):
         """Text utility class - real inheritance."""
 
-    class Validation(FlextUtilitiesValidation):
+
         """Validation utility class - real inheritance."""
 
     # =========================================================================
@@ -472,10 +472,7 @@ class FlextUtilities:
     norm_in = staticmethod(FlextUtilitiesParser.norm_in)
 
     # Validation - Core
-    validate = staticmethod(FlextUtilitiesValidation.validate)
-    validate_pattern = staticmethod(FlextUtilitiesValidation.validate_pattern)
-    validate_length = staticmethod(FlextUtilitiesValidation.validate_length)
-    validate_positive = staticmethod(FlextUtilitiesValidation.validate_positive)
+
 
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
@@ -490,7 +487,7 @@ class FlextUtilities:
     val = staticmethod(FlextUtilitiesResultHelpers.val)
     vals = staticmethod(FlextUtilitiesResultHelpers.vals)
     vals_sequence = staticmethod(FlextUtilitiesResultHelpers.vals_sequence)
-    require_initialized = staticmethod(FlextUtilitiesValidation.require_initialized)
+
 
 
 u = FlextUtilities

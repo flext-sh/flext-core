@@ -16,7 +16,7 @@ from typing import Annotated, Self
 from pydantic import Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelFoundation
-from flext_core._utilities.validation import FlextUtilitiesValidation
+
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
@@ -249,13 +249,7 @@ class FlextModelsService:
             v: t.ConfigMapValue,
         ) -> t.ConfigMapValue:
             """Validate operation is callable."""
-            validation = FlextUtilitiesValidation.validate_callable(
-                v,
-                error_message=(
-                    f"Operation callable must be callable, got {v.__class__.__name__}"
-                ),
-            )
-            if validation.is_failure:
-                msg = validation.error or "Operation callable must be callable"
+            if not callable(v):
+                msg = f"Operation callable must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
             return v
