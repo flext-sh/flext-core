@@ -288,10 +288,7 @@ class TestuCacheNormalizeComponent:
             cast("t.GeneralValueType | BaseModel", component),
         )
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            tuple,
-        )
+        assert isinstance(result, tuple)
         # Type narrowing: result is tuple after assert_result_matches_expected
         result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
@@ -356,7 +353,7 @@ class TestuCacheNormalizeComponent:
             cast("t.GeneralValueType | BaseModel", obj),
         )
 
-        tu.Tests.Assertions.assert_result_matches_expected(result, str)
+        assert isinstance(result, str)
         assert result == "custom_object"
 
 

@@ -6,7 +6,7 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Protocol, runtime_checkable
 from collections.abc import Mapping
 
 import pytest
@@ -15,6 +15,26 @@ from flext_core import t, r
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
+
+
+@runtime_checkable
+class _ProcessCapable(Protocol):
+    def process(self, input_data: Mapping[str, t.GeneralValueType]) -> object: ...
+
+
+@runtime_checkable
+class _ExecuteCapable(Protocol):
+    def execute(self) -> object: ...
+
+
+@runtime_checkable
+class _HandleCapable(Protocol):
+    def handle(self, input_data: Mapping[str, t.GeneralValueType]) -> object: ...
+
+
+@runtime_checkable
+class _CleanupCapable(Protocol):
+    def cleanup(self) -> r[bool] | None: ...
 
 
 class TestAutomatedFlextRegistry:
@@ -139,9 +159,8 @@ class TestAutomatedFlextRegistry:
         )
 
         # Test cleanup (if applicable)
-        instance_obj: Any = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
+        if isinstance(instance, _CleanupCapable):
+            cleanup_result = instance.cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
                     cleanup_result, "FlextRegistry cleanup failed"
@@ -159,15 +178,14 @@ class TestAutomatedFlextRegistry:
         """
         try:
             # Generic operation - adapt based on actual registry interface
-            instance_obj: Any = instance
-            if hasattr(instance_obj, "process"):
-                getattr(instance_obj, "process")(input_data)
+            if isinstance(instance, _ProcessCapable):
+                instance.process(input_data)
                 return r[bool].ok(True)
-            if hasattr(instance_obj, "execute"):
-                getattr(instance_obj, "execute")()
+            if isinstance(instance, _ExecuteCapable):
+                instance.execute()
                 return r[bool].ok(True)
-            if hasattr(instance_obj, "handle"):
-                getattr(instance_obj, "handle")(input_data)
+            if isinstance(instance, _HandleCapable):
+                instance.handle(input_data)
                 return r[bool].ok(True)
             return r[bool].ok(True)
         except Exception as e:

@@ -29,9 +29,35 @@ import pytest
 from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
-from flext_core import e, p, r, t
-from flext_tests import u
-from flext_core.models import m
+from flext_core.exceptions import e
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.typings import t
+
+
+class _ResultAssertions:
+    @staticmethod
+    def assert_result_success(result: object) -> None:
+        assert isinstance(result, r)
+        assert result.is_success
+
+    @staticmethod
+    def assert_result_failure(result: object) -> None:
+        assert isinstance(result, r)
+        assert not result.is_success
+
+    @staticmethod
+    def assert_success_with_value(result: object, expected: object) -> None:
+        _ResultAssertions.assert_result_success(result)
+        assert isinstance(result, r)
+        assert result.value == expected
+
+    @staticmethod
+    def assert_failure_with_error(result: object, expected_error: str) -> None:
+        _ResultAssertions.assert_result_failure(result)
+        assert isinstance(result, r)
+        assert result.error == expected_error
+
 
 # =========================================================================
 # Test Suite - r Core Functionality
@@ -64,7 +90,7 @@ class TestrCoverage:
         """Test creating success results with different value types."""
         result = r[object].ok(value)
         # Use TestUtilities for success check, then direct value check for object type
-        u.Tests.Result.assert_result_success(result)  # type: ignore[arg-type]
+        _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == expected
 
     def test_ok_rejects_none_value(self) -> None:
@@ -75,7 +101,7 @@ class TestrCoverage:
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""
         result: r[str] = r[str].fail("Test error")
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             expected_error="Test error",
         )
@@ -83,14 +109,14 @@ class TestrCoverage:
     def test_fail_with_error_code(self) -> None:
         """Test creating failure with error code."""
         result: r[str] = r[str].fail("Error", error_code="TEST_CODE")
-        u.Tests.Result.assert_result_failure(result)  # type: ignore[arg-type]
+        _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
         assert result.error_code == "TEST_CODE"
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: m.ConfigMap = m.ConfigMap(root={"status": "failed", "count": 5})
+        error_data: t.ConfigMap = t.ConfigMap(root={"status": "failed", "count": 5})
         result: r[str] = r[str].fail("Error", error_data=error_data)
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error_data == error_data
 
     # =====================================================================
@@ -100,7 +126,7 @@ class TestrCoverage:
     def test_value_property_on_success(self) -> None:
         """Test accessing value on success result."""
         result = r[str].ok("test")
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "test",
         )
@@ -114,7 +140,7 @@ class TestrCoverage:
     def test_value_property(self) -> None:
         """Test that value property works correctly."""
         result = r[str].ok("test")
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "test",
         )
@@ -122,7 +148,7 @@ class TestrCoverage:
     def test_error_property_on_failure(self) -> None:
         """Test accessing error on failure result."""
         result: r[str] = r[str].fail("test_error")
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             expected_error="test_error",
         )
@@ -164,12 +190,12 @@ class TestrCoverage:
     def test_map_success(self) -> None:
         """Test map operation on success."""
         result = r[int].ok(5).map(lambda x: x * 2)
-        u.Tests.Result.assert_success_with_value(result, 10)
+        _ResultAssertions.assert_success_with_value(result, 10)
 
     def test_map_failure_skips_function(self) -> None:
         """Test that map skips function on failure."""
         result = r[int].fail("error").map(lambda x: x * 2)
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             expected_error="error",
         )
@@ -191,7 +217,7 @@ class TestrCoverage:
             return str(x)
 
         result = r[int].ok(5).map(double).map(add_three).map(to_str)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "13",
         )
@@ -206,7 +232,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flat_map(double_in_result)
         # Use TestUtilities for success check, then direct value check for object type
-        u.Tests.Result.assert_result_success(result)
+        _ResultAssertions.assert_result_success(result)
         assert result.value == 10
 
     def test_flat_map_failure_propagates(self) -> None:
@@ -217,7 +243,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flat_map(failing_op)
         # Use TestUtilities for object type to avoid type-var issue
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error == "Inner failed"
 
     def test_flat_map_initial_failure_skips(self) -> None:
@@ -230,7 +256,7 @@ class TestrCoverage:
 
         result = r[int].fail("error").flat_map(double_in_result)
         # Use TestUtilities for object type to avoid type-var issue
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error == "error"
 
     # =====================================================================
@@ -240,7 +266,7 @@ class TestrCoverage:
     def test_filter_success_when_predicate_true(self) -> None:
         """Test filter passes when predicate is true."""
         result = r[int].ok(5).filter(lambda x: x > 3)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             5,
         )
@@ -248,7 +274,7 @@ class TestrCoverage:
     def test_filter_failure_when_predicate_false(self) -> None:
         """Test filter fails when predicate is false."""
         result = r[int].ok(5).filter(lambda x: x > 10)
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             "did not pass filter",
         )
@@ -256,7 +282,7 @@ class TestrCoverage:
     def test_filter_failure_skips_predicate(self) -> None:
         """Test that filter skips on failure."""
         result: r[int] = r[int].fail("error").filter(lambda x: x > 3)
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error == "error"
 
     # =====================================================================
@@ -266,7 +292,7 @@ class TestrCoverage:
     def test_alt_maps_error_message(self) -> None:
         """Test alt maps error message on failure."""
         result: r[str] = r[str].fail("original").alt(lambda e: f"Modified: {e}")
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             "Modified: original",
         )
@@ -274,7 +300,7 @@ class TestrCoverage:
     def test_alt_skips_on_success(self) -> None:
         """Test that alt skips on success."""
         result = r[str].ok("test").alt(lambda e: f"Modified: {e}")
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "test",
         )
@@ -286,7 +312,7 @@ class TestrCoverage:
             return r[str].ok(f"Recovered from: {error}")
 
         result: r[str] = r[str].fail("error").lash(recovery)  # type: ignore[arg-type]
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "Recovered from: error",
         )
@@ -298,7 +324,7 @@ class TestrCoverage:
             return r[str].fail("recovery failed")
 
         result = r[str].ok("test").lash(recovery)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "test",
         )
@@ -310,7 +336,7 @@ class TestrCoverage:
             return r[str].fail("recovery also failed")
 
         result: r[str] = r[str].fail("original").lash(failing_recovery)  # type: ignore[arg-type]
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             "recovery also failed",
         )
@@ -337,7 +363,7 @@ class TestrCoverage:
             r[int].ok(5).flow_through(double, add_ten),
         )
         # Use TestUtilities for success check, then direct value check for object type
-        u.Tests.Result.assert_result_success(result)
+        _ResultAssertions.assert_result_success(result)
         assert result.value == 20
 
     def test_flow_through_stops_on_failure(self) -> None:
@@ -358,7 +384,7 @@ class TestrCoverage:
             r[str].ok("test").flow_through(double, add_ten),
         )
         # Use TestUtilities for object type to avoid type-var issue
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error == "Not an int"
 
     # =====================================================================
@@ -382,7 +408,7 @@ class TestrCoverage:
         """Test creation from Maybe with Some."""
         maybe = Some("test")
         result = r[str].from_maybe(maybe)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "test",
         )
@@ -390,7 +416,7 @@ class TestrCoverage:
     def test_from_maybe_failure(self) -> None:
         """Test creation from Maybe with Nothing."""
         result = r[str].from_maybe(Nothing, "No value")
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             "No value",
         )
@@ -425,14 +451,14 @@ class TestrCoverage:
         # IOResult wraps returns.result Success/Failure
         io_result: IOResult[str, str] = IOResult.from_value("test")
         result = r[str].from_io_result(io_result)
-        u.Tests.Result.assert_result_success(result)
+        _ResultAssertions.assert_result_success(result)
 
     def test_from_io_result_failure(self) -> None:
         """Test creation from IOResult failure - wraps returns IOFailure/Failure."""
         # IOResult wraps returns.result Success/Failure
         io_result: IOResult[str, str] = IOResult.from_failure("error")
         result = r[str].from_io_result(io_result)
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
 
     # =====================================================================
     # Utility Methods Tests - safe, traverse, accumulate_errors, parallel_map
@@ -453,7 +479,7 @@ class TestrCoverage:
         )
         wrapped_func = r.safe(success_func_typed)
         result: r[str] = wrapped_func()
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "success",
         )
@@ -472,7 +498,7 @@ class TestrCoverage:
         )
         wrapped_func = r.safe(failing_func_typed)
         result: r[str] = wrapped_func()
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error is not None and error_msg in result.error
 
     def test_create_from_callable_success(self) -> None:
@@ -482,7 +508,7 @@ class TestrCoverage:
             return "success"
 
         result = r[str].create_from_callable(success_func)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "success",
         )
@@ -495,7 +521,7 @@ class TestrCoverage:
             raise ValueError(error_msg)
 
         result = r[str].create_from_callable(failing_func)
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error is not None and error_msg in result.error
 
     def test_create_from_callable_with_error_code(self) -> None:
@@ -509,7 +535,7 @@ class TestrCoverage:
             failing_func,
             error_code="TEST_ERROR",
         )
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error_code == "TEST_ERROR"
 
     def test_traverse_success(self) -> None:
@@ -522,7 +548,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].traverse(items, double)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             [2, 4, 6],
         )
@@ -539,7 +565,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].traverse(items, double)
-        u.Tests.Result.assert_failure_with_error(
+        _ResultAssertions.assert_failure_with_error(
             result,
             "Found 2",
         )
@@ -552,7 +578,7 @@ class TestrCoverage:
             r[int].ok(3),
         ]
         combined = r[list[int]].accumulate_errors(*results)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             combined,
             [1, 2, 3],
         )
@@ -565,7 +591,7 @@ class TestrCoverage:
             r[int].fail("error2"),
         ]
         combined = r[list[int]].accumulate_errors(*results)
-        u.Tests.Result.assert_result_failure(combined)
+        _ResultAssertions.assert_result_failure(combined)
         assert combined.error is not None
         assert "error1" in combined.error
         assert "error2" in combined.error
@@ -580,7 +606,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].parallel_map(items, double, fail_fast=True)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             [2, 4, 6],
         )
@@ -597,7 +623,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].parallel_map(items, check, fail_fast=True)
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
 
     def test_parallel_map_accumulate_errors(self) -> None:
         """Test parallel_map with fail_fast=False accumulates errors."""
@@ -611,7 +637,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].parallel_map(items, check, fail_fast=False)
-        u.Tests.Result.assert_result_failure(result)
+        _ResultAssertions.assert_result_failure(result)
         assert result.error is not None and "Found 2" in result.error
 
     # =====================================================================
@@ -620,22 +646,22 @@ class TestrCoverage:
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: list[m.ConfigMap] = []
+        resources_created: list[t.ConfigMap] = []
 
-        def factory() -> m.ConfigMap:
-            resource: m.ConfigMap = m.ConfigMap(root={"id": 1})
+        def factory() -> t.ConfigMap:
+            resource: t.ConfigMap = t.ConfigMap(root={"id": 1})
             resources_created.append(resource)
             return resource
 
         def operation(
-            resource: m.ConfigMap,
+            resource: t.ConfigMap,
         ) -> r[str]:
             if isinstance(resource, dict):
                 return r[str].ok("success")
             return r[str].fail("Invalid resource")
 
         result = r[str].with_resource(factory, operation)
-        u.Tests.Result.assert_success_with_value(
+        _ResultAssertions.assert_success_with_value(
             result,
             "success",
         )
@@ -645,11 +671,11 @@ class TestrCoverage:
         """Test with_resource executes cleanup even on success."""
         cleanups_called = []
 
-        def factory() -> m.ConfigMap:
-            return m.ConfigMap(root={"id": 1})
+        def factory() -> t.ConfigMap:
+            return t.ConfigMap(root={"id": 1})
 
         def operation(
-            resource: m.ConfigMap,
+            resource: t.ConfigMap,
         ) -> r[str]:
             return r[str].ok("success")
 
@@ -657,7 +683,7 @@ class TestrCoverage:
             cleanups_called.append(True)
 
         result = r[str].with_resource(factory, operation, cleanup=cleanup)
-        u.Tests.Result.assert_result_success(result)
+        _ResultAssertions.assert_result_success(result)
         assert len(cleanups_called) == 1
 
     # =====================================================================
@@ -700,13 +726,13 @@ class TestrCoverage:
         """Test context manager __exit__ succeeds."""
         result = r[str].ok("test")
         with result:
-            u.Tests.Result.assert_result_success(result)
+            _ResultAssertions.assert_result_success(result)
 
     def test_context_manager_exit_failure(self) -> None:
         """Test context manager __exit__ on failure."""
         result: r[str] = r[str].fail("error")
         with result:
-            u.Tests.Result.assert_result_failure(result)
+            _ResultAssertions.assert_result_failure(result)
 
     # =====================================================================
     # Representation Tests
@@ -728,7 +754,7 @@ class TestrCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: m.ConfigMap = m.ConfigMap(root={"details": "something"})
+        error_data: t.ConfigMap = t.ConfigMap(root={"details": "something"})
         result: r[str] = r[str].fail(
             "Error",
             error_code="CODE_123",
@@ -740,13 +766,13 @@ class TestrCoverage:
     def test_empty_string_vs_none_error(self) -> None:
         """Test empty string error vs None."""
         result: r[str] = r[str].fail("")
-        u.Tests.Result.assert_failure_with_error(result, "")
+        _ResultAssertions.assert_failure_with_error(result, "")
 
     def test_large_value_handling(self) -> None:
         """Test handling of large values."""
         large_list = list(range(1000))  # Reduced for memory efficiency
         result = r[list[int]].ok(large_list)
-        u.Tests.Result.assert_result_success(result)
+        _ResultAssertions.assert_result_success(result)
         assert len(result.value) == 1000
 
     def test_complex_chaining_scenario(self) -> None:
@@ -773,7 +799,7 @@ class TestrCoverage:
         result = (
             r[int].ok(5).map(double).flat_map(add_three).filter(is_gt_10).map(to_str)
         )
-        u.Tests.Result.assert_success_with_value(result, "13")
+        _ResultAssertions.assert_success_with_value(result, "13")
 
 
 __all__ = ["TestrCoverage"]

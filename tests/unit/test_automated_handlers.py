@@ -4,8 +4,6 @@ Generated automatically for 100% coverage following strict
 type-system-architecture.md rules with real functionality testing.
 """
 
-# ruff: noqa
-
 # mypy: follow_imports=skip
 # mypy: disable-error-code="misc"
 

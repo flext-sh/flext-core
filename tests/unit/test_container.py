@@ -40,7 +40,7 @@ class ServiceScenario:
     """Test scenario for service registration and retrieval."""
 
     name: str
-    service: object
+    service: t.RegisterableService
     description: str = ""
 
 
@@ -49,7 +49,7 @@ class TypedRetrievalScenario:
     """Test scenario for typed service retrieval."""
 
     name: str
-    service: object
+    service: t.RegisterableService
     expected_type: type
     should_pass: bool
     description: str = ""
@@ -84,7 +84,7 @@ class ContainerScenarios:
         TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
     ]
 
-    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.FlexibleValue]]] = [
+    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.ScalarValue]]] = [
         {"max_workers": 8, "timeout_seconds": 60.0},
         {"invalid_key": "value", "another_invalid": 42},
         {},
@@ -195,16 +195,20 @@ class TestFlextContainer:
     )
     def test_register_factory(
         self,
-        return_value: object,
+        return_value: t.RegisterableService,
         clean_container: FlextContainer,
     ) -> None:
         """Test factory registration using fixtures."""
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
             return_value,
         )
+        factory_typed: Callable[[], t.RegisterableService] = cast(
+            "Callable[[], t.RegisterableService]",
+            factory,
+        )
         result = clean_container.register_factory(
             f"factory_{type(return_value).__name__}",
-            factory,
+            factory_typed,
         )
         u.Tests.Result.assert_success_with_value(result, True)
 
@@ -215,7 +219,7 @@ class TestFlextContainer:
     )
     def test_with_factory_fluent(
         self,
-        return_value: object,
+        return_value: t.RegisterableService,
         clean_container: FlextContainer,
     ) -> None:
         """Test fluent interface for factory using fixtures."""
@@ -224,8 +228,8 @@ class TestFlextContainer:
             return_value,
         )
         # Cast factory to correct type for with_factory
-        factory_typed: Callable[[], t.GeneralValueType] = cast(
-            "Callable[[], t.GeneralValueType]",
+        factory_typed: Callable[[], t.RegisterableService] = cast(
+            "Callable[[], t.RegisterableService]",
             factory,
         )
         result = container.with_factory(
@@ -286,7 +290,7 @@ class TestFlextContainer:
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
-        result: r[object] = clean_container.get(scenario.name)
+        result: r[t.RegisterableService] = clean_container.get(scenario.name)
         expected_value: t.GeneralValueType = cast(
             "t.GeneralValueType",
             scenario.service,
@@ -301,7 +305,7 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test getting non-existent service using fixtures."""
-        result: r[object] = clean_container.get("nonexistent")
+        result: r[t.RegisterableService] = clean_container.get("nonexistent")
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",
@@ -317,7 +321,7 @@ class TestFlextContainer:
             factory_result,
         )
         clean_container.register_factory("factory_service", factory)
-        result: r[object] = clean_container.get("factory_service")
+        result: r[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_success_with_value(
             result,
             factory_result,
@@ -334,10 +338,10 @@ class TestFlextContainer:
             )
         )
         clean_container.register_factory("factory_service", factory)
-        result1: r[object] = clean_container.get("factory_service")
+        result1: r[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
-        result2: r[object] = clean_container.get("factory_service")
+        result2: r[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result2)
         tm.that(
             get_count(),
@@ -361,10 +365,13 @@ class TestFlextContainer:
         # Runtime: object is compatible with t.GeneralValueType | BaseModel |
         # Callable | object
         service_typed: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
-        ) = scenario.service
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]
+        ) = cast(
+            "t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]",
+            scenario.service,
+        )
         container.register(scenario.name, service_typed)
-        typed_result: FlextResult[object] = container.get_typed(
+        typed_result: FlextResult[t.RegisterableService] = container.get_typed(
             scenario.name,
             scenario.expected_type,
         )
@@ -525,7 +532,7 @@ class TestFlextContainer:
         )
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: dict[str, t.FlexibleValue]) -> None:
+    def test_configure_container(self, config: dict[str, t.ScalarValue]) -> None:
         """Test container configuration."""
         container = FlextContainer()
         container.configure(config)
@@ -541,7 +548,7 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: dict[str, t.FlexibleValue] = {
+        config: dict[str, t.ScalarValue] = {
             "max_workers": c.Container.DEFAULT_WORKERS,
         }
         result = container.with_config(config)
@@ -656,7 +663,7 @@ class TestFlextContainer:
                 msg=f"Container must have {service_name} after registration",
             )
         for name in required_services:
-            result: r[object] = container.get(name)
+            result: r[t.RegisterableService] = container.get(name)
             u.Tests.Result.assert_result_success(result)
         tm.that(
             len(container.list_services()),
@@ -689,7 +696,7 @@ class TestFlextContainer:
             raise RuntimeError(error_msg)
 
         container.register_factory("failing", failing_factory)
-        result: r[object] = container.get("failing")
+        result: r[t.RegisterableService] = container.get("failing")
         u.Tests.Result.assert_result_failure(result)
 
 

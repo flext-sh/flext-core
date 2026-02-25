@@ -1,6 +1,6 @@
 """Targeted full-coverage tests for flext_core.dispatcher missed branches."""
 
-# ruff: noqa
+# ruff: noqa: E402,SIM210,PLC0415,RUF069,ANN204,E731,ANN001,EM101,RUF012
 # mypy: follow_imports=skip
 # mypy: disable-error-code="arg-type,assignment,dict-item,list-item,return-value,union-attr,valid-type"
 
@@ -129,7 +129,7 @@ class _BadDumpModel(BaseModel):
 
     def model_dump(self, *args: object, **kwargs: object) -> dict[str, object]:
         _ = (args, kwargs)
-        invalid_value: object = ["not-a-dict"]
+        invalid_value = cast("object", ["not-a-dict"])
         return cast("dict[str, object]", invalid_value)
 
 

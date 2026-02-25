@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import cast
+from typing import Never, cast
 
 from flext_core import c, m, r, t, u
 
@@ -66,7 +66,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     flattened = u.Collection.batch(
         [1],
         cast(
-            "t.BatchProcessCallable[int]",
+            "Callable[[int], r[Never]]",
             (lambda _item: cast("r[Never]", r[list[int]].ok([1, 2]))),
         ),
         flatten=True,
@@ -78,7 +78,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     collected = u.Collection.batch(
         [1],
         cast(
-            "t.BatchProcessCallable[int]",
+            "Callable[[int], r[Never]]",
             (lambda _item: cast("r[Never]", r[int].fail("err"))),
         ),
         on_error="collect",

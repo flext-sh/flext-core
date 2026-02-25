@@ -31,7 +31,6 @@ from flext_core import (
     r,
     t,
 )
-from flext_core.typings import t
 
 type _TestCallable = Callable[..., r[str]]
 type _TestDecorator = Callable[[_TestCallable], _TestCallable]
@@ -225,7 +224,7 @@ class TestHandlerDecoratorMetadata:
 
         method = TestService.handle_user
         config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
-        assert config.timeout == 5.0
+        assert config.timeout == pytest.approx(5.0)
 
     def test_decorator_default_timeout(self) -> None:
         """Decorator should use default timeout from constants."""

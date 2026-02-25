@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
+# mypy: follow_imports=skip, disable-error-code=valid-type
+
 # pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 import sys
+import importlib
 import uuid
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
-from typing import cast
+from typing import Any, cast
 
 import pytest
-from flext_core import c, m, r, t, u
-from flext_core._models.base import FlextModelFoundation
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-_base_module = sys.modules[m.Base.Metadata.__module__]
+_base_module = cast(Any, importlib.import_module("flext_core._models.base"))
+FlextModelFoundation = cast(Any, _base_module.FlextModelFoundation)
+c = _base_module.c
+t = _base_module.t
+r = cast(Any, importlib.import_module("flext_core.result")).r
+u = cast(Any, importlib.import_module("flext_core.utilities")).u
 
 
 class _FrozenValue(FlextModelFoundation.FrozenValueModel):

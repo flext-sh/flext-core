@@ -46,7 +46,7 @@ def test_update_success_path_returns_ok_result() -> None:
 def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.Model.normalize_to_pydantic_dict(None) == {}
 
-    data = {"a": 1, "b": object(), "c": [1, object()]}
+    data = t.ConfigMap(root={"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]})
     normalized = u.Model.normalize_to_pydantic_dict(data)
     assert normalized["a"] == 1
     assert isinstance(normalized["b"], str)
@@ -55,7 +55,8 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.Model._normalize_to_pydantic_value(True) is True
     assert u.Model._normalize_to_pydantic_value(1) == 1
     assert u.Model._normalize_to_pydantic_value("x") == "x"
-    list_value = u.Model._normalize_to_pydantic_value([1, object(), None])
+    list_value = u.Model._normalize_to_pydantic_value([1, _Cfg(x=3), None])
+    assert isinstance(list_value, list)
     assert list_value[0] == 1
     assert isinstance(list_value[1], str)
     assert list_value[2] is None
