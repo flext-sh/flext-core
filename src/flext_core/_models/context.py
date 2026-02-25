@@ -36,7 +36,7 @@ def _normalize_metadata_before(
     | None,
 ) -> FlextModelFoundation.Metadata:
     """BeforeValidator: normalize metadata to FlextModelFoundation.Metadata."""
-    return FlextModelsContext._normalize_metadata(value)
+    return FlextModelsContext._normalize_metadata(value)  # noqa: SLF001
 
 
 def _normalize_to_mapping(
@@ -73,7 +73,7 @@ def _normalize_statistics_before(
     if FlextRuntime.is_dict_like(v):
         return dict(v)
     if isinstance(v, BaseModel):
-        return FlextModelsContext._to_general_value_dict(v.model_dump())
+        return FlextModelsContext._to_general_value_dict(v.model_dump())  # noqa: SLF001
     msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
     raise TypeError(msg)
 

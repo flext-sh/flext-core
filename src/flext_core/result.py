@@ -9,17 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Sequence
 from typing import Self, overload
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
+from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, U, t
+
+_module_logger = logging.getLogger(__name__)
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
@@ -46,7 +50,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             self._result = source
             try:
                 failure_value = source.failure()
-            except Exception:
+            except UnwrapFailedError as exc:
+                _module_logger.debug(
+                    "Result source is success path during initialization",
+                    exc_info=exc,
+                )
                 super().__init__(
                     value=source.unwrap(),
                     error_code=error_code,
@@ -168,7 +176,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             try:
                 result = func(*args, **kwargs)
                 return FlextResult[T].ok(result)
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+                RuntimeError,
+            ) as e:
+                _module_logger.debug("FlextResult.safe callable failed", exc_info=e)
                 return FlextResult[T].fail(str(e))
 
         return wrapper
@@ -236,7 +251,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         try:
             io_value = io_result.unwrap()
             return cls.ok(io_value)
-        except Exception:
+        except UnwrapFailedError as exc:
+            _module_logger.debug("Failed to unwrap IOResult", exc_info=exc)
             io_error = io_result.failure()
             return cls.fail(str(io_error))
 
@@ -253,7 +269,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             try:
                 mapped_value = func(self.value)
                 return FlextResult[U](value=mapped_value, is_success=True)
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+                RuntimeError,
+            ) as e:
+                _module_logger.debug("FlextResult.map callable failed", exc_info=e)
                 return FlextResult[U](error=str(e), is_success=False)
         return FlextResult[U](error=self.error or "", is_success=False)
 
@@ -321,7 +344,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if value is None:
                 return cls.fail("Callable returned None", error_code=error_code)
             return cls.ok(value)
-        except Exception as e:
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
+            _module_logger.debug("Callable execution failed", exc_info=e)
             return cls.fail(str(e), error_code=error_code)
 
     # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
@@ -352,7 +376,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         try:
             validated = model.model_validate(data)
             return cls.ok(validated)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+            _module_logger.debug("Model validation failed", exc_info=e)
             errors_fn = getattr(e, "errors", None)
             if callable(errors_fn):
                 raw = errors_fn()
@@ -381,7 +406,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         try:
             converted = model.model_validate(self.value)
             return FlextResult.ok(converted)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+            _module_logger.debug("Model conversion failed", exc_info=e)
             return FlextResult.fail(f"Model conversion failed: {e!s}")
 
     # alt and lash are inherited from RuntimeResult

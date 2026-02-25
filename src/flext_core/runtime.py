@@ -69,6 +69,8 @@ from structlog.typing import BindableLogger
 from flext_core.constants import c
 from flext_core.typings import T, t
 
+_module_logger = logging.getLogger(__name__)
+
 
 class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
@@ -225,8 +227,12 @@ class FlextRuntime:
                     if self.stop_event.is_set():
                         break
                     continue
-                except Exception:
-                    with contextlib.suppress(Exception):
+                except (OSError, ValueError, TypeError) as exc:
+                    _module_logger.warning(
+                        "Async log writer stream operation failed",
+                        exc_info=exc,
+                    )
+                    with contextlib.suppress(OSError, ValueError, TypeError):
                         _ = self.stream.write("Error in async log writer\n")
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
@@ -1482,7 +1488,17 @@ class FlextRuntime:
                         value=func(self.value),
                         is_success=True,
                     )
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    RuntimeError,
+                ) as e:
+                    _module_logger.debug(
+                        "RuntimeResult.map callable failed",
+                        exc_info=e,
+                    )
                     return FlextRuntime.RuntimeResult(error=str(e), is_success=False)
             return FlextRuntime.RuntimeResult(
                 error=self._error or "",
@@ -2028,7 +2044,11 @@ class FlextRuntime:
                         case _:
                             val_typed = str(v_obj)
                     context_dict[key_str] = val_typed
-            except Exception:
+            except (TypeError, ValueError, AttributeError) as exc:
+                _module_logger.debug(
+                    "Failed to normalize mapping context fields",
+                    exc_info=exc,
+                )
                 context_dict = t.ConfigMap()
         elif hasattr(context, "items"):
             context_dict = t.ConfigMap()

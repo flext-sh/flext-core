@@ -94,9 +94,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
     class Text(u.Text):
         """Text utility class for tests - real inheritance."""
 
-    class Validation(u.Validation):
-        """Validation utility class for tests - real inheritance."""
-
     class CoreParserHelpers:
         """Helper methods for parser testing - flext-core specific."""
 

@@ -23,17 +23,22 @@ import socket
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
-from docker.errors import NotFound
+from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
-from python_on_whales import (
-    DockerClient as WhalesDockerClient,
-    docker,
-)
+
+try:
+    from python_on_whales import (  # pyright: ignore[reportMissingImports]
+        DockerClient as WhalesDockerClient,
+        docker,
+    )
+except ImportError:
+    WhalesDockerClient = Any  # type: ignore[assignment]
+    docker = None
 
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -130,7 +135,7 @@ class FlextTestsDocker:
         if self._client is None:
             try:
                 self._client = docker_from_env()
-            except Exception as error:
+            except (DockerException, OSError, TypeError, ValueError) as error:
                 self.logger.exception(
                     "Failed to initialize Docker client",
                     error=str(error),
@@ -248,7 +253,7 @@ class FlextTestsDocker:
             return r[m.Tests.Docker.ContainerInfo].fail(
                 f"Container {container_name} not found",
             )
-        except (Exception, AttributeError, KeyError) as exc:
+        except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as exc:
             return r[m.Tests.Docker.ContainerInfo].fail(str(exc))
 
     def get_container_status(
@@ -279,7 +284,7 @@ class FlextTestsDocker:
 
         except NotFound:
             return r[str].fail(f"Container {name} not found")
-        except Exception as exc:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             return r[str].fail(f"Failed to start container: {exc}")
 
     def compose_up(
@@ -295,7 +300,9 @@ class FlextTestsDocker:
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
 
-            docker_client: WhalesDockerClient = docker
+            if docker is None:
+                return r[str].fail("python_on_whales is not available")
+            docker_client = docker
 
             original_files = docker_client.client_config.compose_files
             try:
@@ -316,7 +323,7 @@ class FlextTestsDocker:
 
             return r[str].ok("Compose up successful")
 
-        except (Exception, OSError, ValueError) as exc:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self.logger.exception("Compose up failed")
             return r[str].fail(f"Compose up failed: {exc}")
 
@@ -327,7 +334,9 @@ class FlextTestsDocker:
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
 
-            docker_client: WhalesDockerClient = docker
+            if docker is None:
+                return r[str].fail("python_on_whales is not available")
+            docker_client = docker
 
             original_files = docker_client.client_config.compose_files
             try:
@@ -338,7 +347,7 @@ class FlextTestsDocker:
 
             return r[str].ok("Compose down successful")
 
-        except (Exception, OSError, ValueError) as exc:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self.logger.warning("Compose down failed", error=str(exc))
             return r[str].fail(f"Compose down failed: {exc}")
 

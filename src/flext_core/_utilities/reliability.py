@@ -188,7 +188,14 @@ class FlextUtilitiesReliability:
                     if current_delay > 0:
                         time.sleep(current_delay)
 
-            except Exception as e:
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e:
                 if retry_on is not None and not isinstance(e, retry_on):
                     raise
 
@@ -310,7 +317,14 @@ class FlextUtilitiesReliability:
                 if cleanup_func:
                     cleanup_func()
 
-            except Exception as e:
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e:
                 # If operation throws exception, consider it a failure
                 if attempt >= max_attempts - 1:
                     return r.fail(f"Operation failed: {e}")
@@ -379,7 +393,14 @@ class FlextUtilitiesReliability:
                 else:
                     current = op_result
 
-            except Exception as e:
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e:
                 if on_error == "stop":
                     return r.fail(f"Pipeline step {i} failed: {e}")
                 # on_error == "skip": continue with previous value

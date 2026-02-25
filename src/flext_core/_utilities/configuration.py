@@ -670,7 +670,7 @@ class FlextUtilitiesConfiguration:
 
             return (True, None)
 
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError) as e:
             return (False, f"Configuration class validation failed: {e!s}")
 
     @staticmethod
@@ -873,7 +873,7 @@ class FlextUtilitiesConfiguration:
             return r[T_Model].fail(
                 f"Failed to build {class_name}: {e}",
             )
-        except Exception as e:
+        except (AttributeError, RuntimeError, KeyError) as e:
             # Unexpected error
             class_name = getattr(model_class, "__name__", "UnknownModel")
             FlextUtilitiesConfiguration._get_logger().exception(
@@ -907,7 +907,7 @@ class FlextUtilitiesConfiguration:
                     register_result.error or "Registration failed",
                 )
             return r[bool].ok(value=True)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Registration failed for {name}: {e}")
 
     @staticmethod
@@ -938,7 +938,7 @@ class FlextUtilitiesConfiguration:
                     register_result.error or "Factory registration failed",
                 )
             return r[bool].ok(value=True)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(
                 f"Factory registration failed for {name}: {e}",
             )
@@ -967,7 +967,7 @@ class FlextUtilitiesConfiguration:
                         f"Bulk registration failed at {name}: {register_result.error}",
                     )
                 count += 1
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 return r[int].fail(
                     f"Bulk registration failed at {name}: {e}",
                 )

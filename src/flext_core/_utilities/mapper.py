@@ -148,7 +148,7 @@ class FlextUtilitiesMapper:
                 return m.ConfigMap(
                     root=FlextUtilitiesMapper._narrow_to_configuration_dict(value),
                 )
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 error_msg = (
                     f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {e}"
                 )
@@ -866,7 +866,7 @@ class FlextUtilitiesMapper:
             # Fallback: convert to string representation for non-PayloadValue
             return r[t.ConfigMapValue | None].ok(str(current))
 
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
             return r[t.ConfigMapValue | None].fail(f"Extract failed: {e}")
 
     # =========================================================================
@@ -1644,7 +1644,7 @@ class FlextUtilitiesMapper:
                 return FlextUtilitiesMapper.narrow_to_general_value_type(
                     convert_callable(value),
                 )
-            except Exception:
+            except (TypeError, ValueError, AttributeError, RuntimeError):
                 return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
 
         if isinstance(current, list | tuple):
@@ -1961,7 +1961,7 @@ class FlextUtilitiesMapper:
                 strip_empty=strip_empty_bool,
                 to_json=to_json_bool,
             )
-        except Exception:
+        except (TypeError, ValueError, AttributeError, KeyError):
             if on_error == "stop":
                 return default
             return current
@@ -2005,7 +2005,7 @@ class FlextUtilitiesMapper:
                 current,
             )
             return process_func(current_general)
-        except Exception:
+        except (TypeError, ValueError, AttributeError, RuntimeError, KeyError):
             # Type annotation: result is object
             return default if on_error == "stop" else current
 
@@ -2106,7 +2106,7 @@ class FlextUtilitiesMapper:
                     if isinstance(current, list)
                     else tuple(sorted_callable)
                 )
-            except Exception:
+            except (TypeError, ValueError):
                 return current
         if sort_spec_raw is True:
             comparable_items: list[t.ConfigMapValue] = [
@@ -2598,7 +2598,7 @@ class FlextUtilitiesMapper:
                 )
                 constructed[target_key] = final_value
 
-            except Exception as e:
+            except (TypeError, ValueError, KeyError, AttributeError) as e:
                 error_msg = f"Failed to construct '{target_key}': {e}"
                 if on_error == "stop":
                     raise ValueError(error_msg) from e
@@ -2660,7 +2660,7 @@ class FlextUtilitiesMapper:
             )
 
             return r[Mapping[str, t.ConfigMapValue]].ok(transformed)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError) as e:
             return r[Mapping[str, t.ConfigMapValue]].fail(f"Transform failed: {e}")
 
     @staticmethod

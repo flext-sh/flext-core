@@ -137,7 +137,7 @@ class FlextUtilitiesArgs:
         ) -> FlextRuntime.RuntimeResult[_ValidatedValueT]:
             try:
                 return validated_func(*args, **kwargs)
-            except Exception as e:
+            except (ValidationError, TypeError, ValueError) as e:
                 return r.fail(str(e))
 
         # wrapper has correct type via @wraps preserving signature
@@ -204,7 +204,7 @@ class FlextUtilitiesArgs:
         """
         try:
             hints = get_type_hints(func)
-        except Exception:
+        except (NameError, TypeError, AttributeError):
             return {}
 
         enum_params = {}

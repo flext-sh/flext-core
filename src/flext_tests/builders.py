@@ -212,7 +212,7 @@ class FlextTestsBuilders:
             params = m.Tests.Builders.AddParams.model_validate(
                 {"key": key, "value": value_for_kwargs, **kwargs},
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid add() parameters: {exc}"
             raise ValueError(error_msg) from exc
 
@@ -642,7 +642,7 @@ class FlextTestsBuilders:
         # Convert kwargs to validated model using FlextUtilities
         try:
             params = m.Tests.Builders.ToResultParams.model_validate(kwargs)
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid to_result() parameters: {exc}"
             raise ValueError(error_msg) from exc
 
@@ -686,7 +686,7 @@ class FlextTestsBuilders:
                 if t.Guards.is_builder_value(instance):
                     return r[t.Tests.PayloadValue].ok(instance)
                 return r[t.Tests.PayloadValue].ok(None)
-            except Exception as exc:
+            except (TypeError, ValueError, AttributeError) as exc:
                 return r[t.Tests.PayloadValue].fail(
                     str(exc),
                     error_code=params.error_code,
@@ -700,7 +700,7 @@ class FlextTestsBuilders:
                 if params.unwrap:
                     return model_instance
                 return r[t.Tests.PayloadValue].ok(model_instance)
-            except Exception as exc:
+            except (TypeError, ValueError, AttributeError) as exc:
                 return r[t.Tests.PayloadValue].fail(
                     str(exc),
                     error_code=params.error_code,
@@ -768,7 +768,7 @@ class FlextTestsBuilders:
         # Use from_kwargs for simple kwargs (all payload-compatible)
         try:
             params = m.Tests.Builders.BuildParams.model_validate(kwargs)
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid build() parameters: {exc}"
             raise ValueError(error_msg) from exc
 
@@ -1014,7 +1014,7 @@ class FlextTestsBuilders:
                     "exclude_keys": list(exclude_keys) if exclude_keys else None,
                 },
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid merge_from() parameters: {exc}"
             raise ValueError(error_msg) from exc
 
@@ -1097,7 +1097,7 @@ class FlextTestsBuilders:
             params = m.Tests.Builders.BatchParams.model_validate(
                 {"key": key, "scenarios": scenarios, **kwargs},
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid batch() parameters: {exc}"
             raise ValueError(error_msg) from exc
 

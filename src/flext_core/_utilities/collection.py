@@ -378,7 +378,7 @@ class FlextUtilitiesCollection:
             return r[dict[str, t.GuardInputValue]].fail(
                 f"Unknown merge strategy: {strategy}",
             )
-        except Exception as e:
+        except (TypeError, ValueError, KeyError, AttributeError) as e:
             return r[dict[str, t.GuardInputValue]].fail(f"Merge failed: {e}")
 
     @staticmethod
@@ -460,7 +460,7 @@ class FlextUtilitiesCollection:
                     direct_result = FlextUtilitiesCollection._coerce_guard_value(
                         result_raw,
                     )
-                except Exception:
+                except (TypeError, ValueError):
                     direct_result = str(result_raw)
                 if do_flatten and FlextUtilitiesCollection._is_general_value_list(
                     direct_result
@@ -470,7 +470,7 @@ class FlextUtilitiesCollection:
                     results.extend(direct_result)
                 else:
                     results.append(direct_result)
-            except Exception as e:
+            except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
                 if error_mode == "fail":
                     return r[t.BatchResultDict].fail(
                         f"Batch processing failed: {e}",
@@ -534,12 +534,12 @@ class FlextUtilitiesCollection:
                 try:
                     result = processor(item)
                     results.append(result)
-                except Exception:
+                except (TypeError, ValueError, RuntimeError, AttributeError, KeyError):
                     if on_error == "skip":
                         continue
                     return r[list[U]].fail(f"Processing failed for item: {item}")
             return r[list[U]].ok(results)
-        except Exception as e:
+        except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             return r[list[U]].fail(f"Process failed: {e}")
 
     @staticmethod
@@ -567,7 +567,7 @@ class FlextUtilitiesCollection:
                     f"Invalid {enum_name} values: {', '.join(errors)}",
                 )
             return r[tuple[StrEnum, ...]].ok(tuple(parsed))
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError) as e:
             return r[tuple[StrEnum, ...]].fail(f"Parse sequence failed: {e}")
 
     @staticmethod
@@ -1029,7 +1029,7 @@ class FlextUtilitiesCollection:
                     f"Invalid {enum_name} values: {', '.join(errors)}",
                 )
             return r[dict[str, E]].ok(result)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError) as e:
             return r[dict[str, E]].fail(f"Parse mapping failed: {e}")
 
     @staticmethod

@@ -51,7 +51,7 @@ class FlextTestsUtilities(FlextUtilities):
     All FlextUtilities functionality is available via inheritance.
     """
 
-    class Validation(FlextUtilities.Validation):
+    class Validation:
         """Validation helpers for tests - extends FlextUtilities.Validation."""
 
         @staticmethod
@@ -82,7 +82,7 @@ class FlextTestsUtilities(FlextUtilities):
                         return r[bool].fail("Validator must return r[bool].ok(True)")
                 except TypeError as e:
                     return r[bool].fail(f"Validator failed: {e}")
-                except Exception as e:
+                except (ValueError, AttributeError, RuntimeError) as e:
                     return r[bool].fail(str(e))
             return r[bool].ok(value=True)
 
@@ -1369,7 +1369,7 @@ class FlextTestsUtilities(FlextUtilities):
                             remove_id=remove_id,
                         )
                         entities.append(entity)
-                    except Exception as e:
+                    except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                         return r[list[TEntity]].fail(
                             f"Failed to create entity {name}: {e}",
                         )

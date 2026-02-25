@@ -248,6 +248,25 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
+    def require_initialized(value: t.T | None, name: str) -> t.T:
+        """Guard that a service attribute was initialized.
+
+        Args:
+            value: The potentially uninitialized attribute.
+            name: Human-readable name for the error message.
+
+        Returns:
+            The value if it is not None.
+
+        Raises:
+            AttributeError: If the value is None (uninitialized).
+        """
+        if value is None:
+            msg = f"{name} is not initialized"
+            raise AttributeError(msg)
+        return value
+
+    @staticmethod
     def is_string_non_empty(value: t.GuardInputValue) -> TypeGuard[str]:
         """Check if value is a non-empty string using duck typing.
 
@@ -1313,7 +1332,7 @@ class FlextUtilitiesGuards:
             elif category == "middleware":
                 spec = TypeCheckMiddleware(value=value)
             return spec.matches() if spec else False
-        except Exception:
+        except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
     @staticmethod
@@ -1351,7 +1370,7 @@ class FlextUtilitiesGuards:
             elif type_spec == p.Middleware:
                 spec = TypeCheckMiddleware(value=value)
             return spec.matches() if spec else False
-        except Exception:
+        except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
     @staticmethod
@@ -1509,7 +1528,7 @@ class FlextUtilitiesGuards:
                     func_name = getattr(condition, "__name__", "custom")
                     return f"{context_name} failed {func_name} check"
                 return error_msg
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             if error_msg is None:
                 return f"{context_name} guard check raised: {e}"
             return error_msg
@@ -1637,7 +1656,7 @@ class FlextUtilitiesGuards:
             elif value:
                 return value if return_value else True
             return default
-        except Exception:
+        except (TypeError, ValueError, AttributeError):
             return default
 
     @staticmethod

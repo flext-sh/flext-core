@@ -196,7 +196,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 "kind": kind,
                 **kwargs,
             })
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.Factory.FactoryModel].fail(f"Invalid parameters: {exc}")
 
         # Helper to create a single model instance
@@ -490,7 +490,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 "value": value,
                 **kwargs,
             })
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.PayloadValue].fail(f"Invalid parameters: {exc}")
 
         # Handle batch creation with mix_pattern
@@ -880,7 +880,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 "source": source,
                 **kwargs,
             })
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[builtins.list[t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {exc}",
             )
@@ -1031,7 +1031,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 "source": source,
                 **kwargs,
             })
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[Mapping[str, t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {exc}",
             )
@@ -1162,7 +1162,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 "type_": type_,
                 **kwargs,
             })
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[T].fail(f"Invalid parameters: {exc}")
 
         args = params.args or ()
@@ -1183,7 +1183,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 try:
                     instance = _create_instance()
                     instances.append(instance)
-                except Exception as e:
+                except (TypeError, ValueError, AttributeError) as e:
                     if params.as_result:
                         return r[builtins.list[T]].fail(
                             f"Failed to create instance: {e}",
@@ -1201,7 +1201,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 result_instance: r[T] = r.ok(instance)
                 return result_instance
             return instance
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError) as e:
             if params.as_result:
                 return r[T].fail(f"Failed to create instance: {e}")
             raise

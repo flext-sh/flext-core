@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
@@ -36,6 +37,8 @@ from flext_core.result import r
 from flext_core.settings import FlextSettings
 from flext_core.typings import t
 from flext_core.utilities import u
+
+_module_logger = logging.getLogger(__name__)
 
 
 class FlextService[TDomainResult](
@@ -489,7 +492,11 @@ class FlextService[TDomainResult](
         """
         try:
             return self.validate_business_rules().is_success
-        except Exception:
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+            _module_logger.debug(
+                "Service business rule validation failed",
+                exc_info=exc,
+            )
             # Validation failed due to exception - consider invalid
             return False
 

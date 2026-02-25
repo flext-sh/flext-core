@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager, suppress
@@ -30,6 +31,8 @@ from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
 from flext_core.typings import t
 from flext_core.utilities import u
+
+_module_logger = logging.getLogger(__name__)
 
 
 class FlextMixins(FlextRuntime):
@@ -123,7 +126,11 @@ class FlextMixins(FlextRuntime):
                         )
                         normalized_model_dump[str(key)] = normalized_value
                 return m.ConfigMap(root=normalized_model_dump)
-            except Exception:
+            except (TypeError, ValueError, AttributeError) as exc:
+                _module_logger.debug(
+                    "Model dump normalization fallback to string conversion",
+                    exc_info=exc,
+                )
                 return m.ConfigMap(root={"value": str(model_dump_result)})
 
         try:
@@ -141,7 +148,10 @@ class FlextMixins(FlextRuntime):
                     normalized_mapping[str(key)] = normalized_mapping_value
                 return m.ConfigMap.model_validate(normalized_mapping)
             return m.ConfigMap.model_validate(obj)
-        except Exception:
+        except (TypeError, ValueError, AttributeError) as exc:
+            _module_logger.debug(
+                "Object-to-config-map normalization failed", exc_info=exc
+            )
             return m.ConfigMap()
 
     @staticmethod
@@ -245,7 +255,10 @@ class FlextMixins(FlextRuntime):
                     options_candidate,
                 )
             )
-        except Exception:
+        except (TypeError, ValueError, AttributeError) as exc:
+            _module_logger.debug(
+                "Runtime bootstrap options validation failed", exc_info=exc
+            )
             options = p.RuntimeBootstrapOptions()
 
         config_type_raw = options.config_type
@@ -342,7 +355,16 @@ class FlextMixins(FlextRuntime):
                         total_dur = float(total_dur_raw)
                         dur_ms = float(dur_ms_raw)
                         stats["total_duration_ms"] = total_dur + dur_ms
-                except Exception:
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    RuntimeError,
+                ) as exc:
+                    _module_logger.debug(
+                        "Tracked operation raised expected exception", exc_info=exc
+                    )
                     # Failure - increment error count
                     err_raw = u.get(stats, "error_count", default=0)
                     stats["error_count"] = int(err_raw) + 1

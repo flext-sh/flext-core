@@ -66,7 +66,7 @@ class FlextUtilitiesModel:
             instance = model_cls.model_validate(data, strict=strict)
             # Type narrowing: instance is M from model_validate return type
             return r[M].ok(instance)
-        except Exception as e:
+        except (ValidationError, TypeError, ValueError) as e:
             return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
@@ -100,7 +100,7 @@ class FlextUtilitiesModel:
             instance = model_cls.model_validate(kwargs)
             # Type narrowing: instance is M from model_validate return type
             return r[M].ok(instance)
-        except Exception as e:
+        except (ValidationError, TypeError, ValueError) as e:
             return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
@@ -146,7 +146,7 @@ class FlextUtilitiesModel:
             updated_instance = instance.model_copy(update=updates)
             # Type narrowing: updated_instance is M from model_copy return type
             return r[M].ok(updated_instance)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             return r[M].fail(f"Model update failed: {e}")
 
     @staticmethod

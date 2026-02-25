@@ -34,7 +34,6 @@ from flext_core._utilities.result_helpers import (
     ResultHelpers as FlextUtilitiesResultHelpers,
 )
 from flext_core._utilities.text import FlextUtilitiesText
-
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -118,9 +117,6 @@ class FlextUtilities:
 
     class Text(FlextUtilitiesText):
         """Text utility class - real inheritance."""
-
-
-        """Validation utility class - real inheritance."""
 
     # =========================================================================
     # STATIC METHOD ALIASES - All from _utilities/*.py
@@ -296,6 +292,7 @@ class FlextUtilities:
     normalize_to_metadata_value = staticmethod(
         FlextUtilitiesGuards.normalize_to_metadata_value,
     )
+    require_initialized = staticmethod(FlextUtilitiesGuards.require_initialized)
 
     # Mapper
     agg = staticmethod(FlextUtilitiesMapper.agg)
@@ -473,7 +470,6 @@ class FlextUtilities:
 
     # Validation - Core
 
-
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
     err = staticmethod(FlextUtilitiesResultHelpers.err)
@@ -487,7 +483,6 @@ class FlextUtilities:
     val = staticmethod(FlextUtilitiesResultHelpers.val)
     vals = staticmethod(FlextUtilitiesResultHelpers.vals)
     vals_sequence = staticmethod(FlextUtilitiesResultHelpers.vals_sequence)
-
 
 
 u = FlextUtilities

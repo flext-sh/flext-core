@@ -8,10 +8,13 @@ from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
+from flext_core.loggings import FlextLogger
 from flext_core.typings import t
 from tomlkit.items import Array, Table
 
 from flext_infra.subprocess import CommandRunner
+
+_logger = FlextLogger(__name__)
 
 
 def _workspace_root(start: Path) -> Path:
@@ -108,7 +111,13 @@ def _read_doc(path: Path) -> tomlkit.TOMLDocument | None:
         return None
     try:
         return tomlkit.parse(path.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, ValueError) as exc:
+        _logger.warning(
+            "Failed to read or parse TOML document",
+            path=str(path),
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
         return None
 
 

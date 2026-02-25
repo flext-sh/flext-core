@@ -30,6 +30,8 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u
 
+_logger = FlextLogger(__name__)
+
 # Concrete value type for context storage
 type ContextValue = t.ConfigMapValue
 
@@ -70,7 +72,11 @@ class FlextContext(FlextRuntime):
                 normalized_value = FlextRuntime.normalize_to_general_value(value)
                 normalized[key] = normalized_value
             return normalized
-        except Exception:
+        except (TypeError, ValueError, AttributeError, KeyError) as exc:
+            _logger.debug(
+                "Failed to normalize contextvar payload to configuration dict",
+                exc_info=exc,
+            )
             return {}
 
     # =========================================================================
@@ -625,11 +631,19 @@ class FlextContext(FlextRuntime):
             mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
             try:
                 normalized_map = m.ConfigMap.model_validate(mapped_value)
-            except Exception:
+            except (TypeError, ValueError, AttributeError) as exc:
+                _logger.debug(
+                    "Context value is not a valid ConfigMap on first validation pass",
+                    exc_info=exc,
+                )
                 root_value = getattr(mapped_value, "root", None)
                 try:
                     normalized_map = m.ConfigMap.model_validate(root_value)
-                except Exception:
+                except (TypeError, ValueError, AttributeError) as root_exc:
+                    _logger.debug(
+                        "Context value root payload is not a valid ConfigMap",
+                        exc_info=root_exc,
+                    )
                     return mapped_value
             return {
                 str(item_key): normalize_plain(item_value)
@@ -756,7 +770,11 @@ class FlextContext(FlextRuntime):
             exported = export_callable(as_dict=True)
             try:
                 exported_map = m.ConfigMap.model_validate(exported)
-            except Exception:
+            except (TypeError, ValueError, AttributeError) as exc:
+                _logger.debug(
+                    "Context export payload validation failed",
+                    exc_info=exc,
+                )
                 exported_map = m.ConfigMap()
 
             for scope_name, scope_payload in exported_map.items():
@@ -768,7 +786,11 @@ class FlextContext(FlextRuntime):
                     continue
                 try:
                     scope_data = m.ConfigMap.model_validate(scope_payload)
-                except Exception:
+                except (TypeError, ValueError, AttributeError) as exc:
+                    _logger.debug(
+                        "Context scope payload validation failed",
+                        exc_info=exc,
+                    )
                     scope_data = None
                 if scope_data is not None:
                     self._set_in_contextvar(scope_name, scope_data)
@@ -1263,7 +1285,8 @@ class FlextContext(FlextRuntime):
             custom_fields_dict = dict(
                 m.ConfigMap.model_validate(custom_fields_raw).items()
             )
-        except Exception:
+        except (TypeError, ValueError, AttributeError) as exc:
+            _logger.debug("Custom metadata field normalization failed", exc_info=exc)
             custom_fields_dict = {}
         result: dict[str, t.ConfigMapValue] = {}
         for k, v in data.items():
@@ -1901,7 +1924,12 @@ class FlextContext(FlextRuntime):
                 return None
             try:
                 metadata_map: dict[str, t.ConfigMapValue] = dict(metadata_value.items())
-            except Exception:
+            except (AttributeError, TypeError) as exc:
+                _logger.warning(
+                    "Failed to convert operation metadata to dict",
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                )
                 return None
             return metadata_map
 

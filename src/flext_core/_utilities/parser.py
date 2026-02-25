@@ -1349,7 +1349,7 @@ class FlextUtilitiesParser:
         try:
             parsed_value = TypeAdapter(target).validate_python(value)
             return r.ok(parsed_value)
-        except Exception as e:
+        except (ValidationError, TypeError, ValueError) as e:
             target_name = getattr(target, "__name__", "type")
             return FlextUtilitiesParser._parse_with_default(
                 default,

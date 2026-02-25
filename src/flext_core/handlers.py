@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
@@ -33,6 +34,8 @@ from flext_core.typings import t
 from flext_core.utilities import u
 
 # Import moved to top of file to avoid circular dependency
+
+_module_logger = logging.getLogger(__name__)
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -252,8 +255,16 @@ class FlextHandlers[MessageT_contra, ResultT](
                             "Result must be compatible with GeneralValueType",
                         )
                     return r[t.ScalarValue].ok(result)
-                except Exception as exc:
-                    # Wrap exception in r
+                except (
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    RuntimeError,
+                ) as exc:
+                    _module_logger.debug(
+                        "Callable handler execution failed", exc_info=exc
+                    )
                     return r[t.ScalarValue].fail(str(exc))
 
         # Use handler_config if provided
@@ -708,7 +719,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             self._record_execution_metrics(success=result.is_success)
 
             return result
-        except Exception as exc:
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+            _module_logger.warning("Critical handler pipeline failure", exc_info=exc)
             # Record failure metrics
             self._record_execution_metrics(success=False, error=str(exc))
             error_msg = f"Critical handler failure: {exc}"

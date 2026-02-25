@@ -199,7 +199,7 @@ class FlextTestsMatchers:
         """
         try:
             params = m.Tests.Matcher.OkParams.model_validate(kwargs)
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
 
         if not result.is_success:
@@ -488,7 +488,7 @@ class FlextTestsMatchers:
         # Legacy 'error' parameter is handled by FailParams model validator
         try:
             params = m.Tests.Matcher.FailParams.model_validate(kwargs)
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
 
         if result.is_success:
@@ -716,7 +716,7 @@ class FlextTestsMatchers:
         # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
         try:
             params = m.Tests.Matcher.ThatParams.model_validate(kwargs)
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             filtered_kwargs = {
                 key: val for key, val in kwargs.items() if key not in {"eq", "ne"}
             }
@@ -724,7 +724,7 @@ class FlextTestsMatchers:
                 raise ValueError(f"Parameter validation failed: {exc}") from exc
             try:
                 params = m.Tests.Matcher.ThatParams.model_validate(filtered_kwargs)
-            except Exception as filtered_exc:
+            except (TypeError, ValueError, AttributeError) as filtered_exc:
                 raise ValueError(
                     f"Parameter validation failed: {filtered_exc}"
                 ) from filtered_exc
@@ -1397,7 +1397,7 @@ class FlextTestsMatchers:
         # u.Model.from_kwargs accepts payload kwargs - Pydantic validates types
         try:
             params = m.Tests.Matcher.ScopeParams.model_validate(kwargs)
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
 
         # Save original environment and working directory
@@ -1454,7 +1454,13 @@ class FlextTestsMatchers:
                 for cleanup_func in params.cleanup:
                     try:
                         cleanup_func()
-                    except Exception as e:
+                    except (
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                        AttributeError,
+                    ) as e:
                         # Log but don't fail on cleanup errors
                         warnings.warn(
                             c.Tests.Matcher.ERR_SCOPE_CLEANUP_FAILED.format(

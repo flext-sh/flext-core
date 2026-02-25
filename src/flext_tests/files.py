@@ -66,7 +66,7 @@ def _is_batch_content(content_raw: object) -> bool:
             },
         )
         return True
-    except Exception:
+    except (TypeError, ValueError, AttributeError):
         return False
 
 
@@ -398,7 +398,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     "extract_result": extract_result,
                 },
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Invalid parameters for file creation: {exc}") from None
 
         target_dir = self._resolve_directory(params.directory)
@@ -603,7 +603,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     "model_cls": model_cls,
                 },
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid parameters for file read: {exc}"
             if model_cls is not None:
                 return r[TModel].fail(error_msg)
@@ -650,7 +650,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 try:
                     model_instance: TModel = model_cls.model_validate(content)
                     return r[TModel].ok(model_instance)
-                except Exception as ex:
+                except (TypeError, ValueError, AttributeError) as ex:
                     return r[TModel].fail(f"Failed to validate model: {ex}")
 
             return r[str | bytes | m.ConfigMap | list[list[str]]].ok(
@@ -742,7 +742,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     "exclude_keys": exclude_keys,
                 },
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[bool].fail(
                 f"Invalid parameters for file comparison: {exc}",
             )
@@ -952,7 +952,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     "validate_model": validate_model,
                 },
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[m.Tests.Files.FileInfo].fail(
                 f"Invalid parameters for file info: {exc}",
             )
@@ -1107,7 +1107,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     "parallel": parallel,
                 },
             )
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             return r[m.Tests.Files.BatchResult].fail(
                 f"Invalid parameters for batch operation: {exc}",
             )
@@ -1185,7 +1185,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         )
                         path = self.create(normalized_content, name, params.directory)
                         return r[t.GuardInputValue].ok(path)
-                    except Exception as e:
+                    except (OSError, TypeError, ValueError, AttributeError) as e:
                         return r[t.GuardInputValue].fail(
                             f"Failed to create {name}: {e}"
                         )
@@ -1209,7 +1209,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     try:
                         Path(path).unlink(missing_ok=True)
                         return r[t.GuardInputValue].ok(Path(path))
-                    except Exception as e:
+                    except OSError as e:
                         return r[t.GuardInputValue].fail(
                             f"Failed to delete {name}: {e}"
                         )
@@ -1786,7 +1786,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 try:
                     _ = validate_model.model_validate(content_dict)
                     model_valid = True
-                except Exception:
+                except (TypeError, ValueError, AttributeError):
                     model_valid = False
             elif fmt in {"json", "yaml"} and text.strip():
                 # Content exists but couldn't be parsed or isn't dict
