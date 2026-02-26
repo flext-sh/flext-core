@@ -27,6 +27,7 @@ from flext_infra.core.pytest_diag import PytestDiagExtractor
 from flext_infra.core.scanner import TextPatternScanner
 from flext_infra.core.skill_validator import SkillValidator
 from flext_infra.core.stub_chain import StubSupplyChain
+from flext_infra.output import output
 
 
 def _run_basemk_validate(args: argparse.Namespace) -> int:
@@ -36,11 +37,11 @@ def _run_basemk_validate(args: argparse.Namespace) -> int:
 
     if result.is_success:
         report = result.value
-        _ = sys.stdout.write(f"{report.summary}\n")
+        output.info(report.summary)
         for v in report.violations:
-            _ = sys.stdout.write(f"  {v}\n")
+            output.warning(v)
         return 0 if report.passed else 1
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "unknown error")
     return 1
 
 
@@ -52,13 +53,13 @@ def _run_inventory(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
-        _ = sys.stdout.write(f"total_scripts={data.get('total_scripts', 0)}\n")
+        print(f"total_scripts={data.get('total_scripts', 0)}")
         written = data.get("reports_written", [])
         if isinstance(written, list):
             for path in written:
-                _ = sys.stdout.write(f"Wrote: {path}\n")
+                output.info(f"Wrote: {path}")
         return 0
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "unknown error")
     return 1
 
 
@@ -103,12 +104,12 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
             skip_cases = [str(item) for item in skip_cases_raw]
             Path(args.skips).write_text("\n".join(skip_cases) + "\n", encoding="utf-8")
 
-        _ = sys.stdout.write(f"failed_count={data.get('failed_count', 0)}\n")
-        _ = sys.stdout.write(f"error_count={data.get('error_count', 0)}\n")
-        _ = sys.stdout.write(f"warning_count={data.get('warning_count', 0)}\n")
-        _ = sys.stdout.write(f"skipped_count={data.get('skipped_count', 0)}\n")
+        print(f"failed_count={data.get('failed_count', 0)}")
+        print(f"error_count={data.get('error_count', 0)}")
+        print(f"warning_count={data.get('warning_count', 0)}")
+        print(f"skipped_count={data.get('skipped_count', 0)}")
         return 0
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "unknown error")
     return 1
 
 
@@ -125,12 +126,10 @@ def _run_scan(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
-        _ = sys.stdout.write(
-            f"{json.dumps({'violation_count': data.get('violation_count', 0)})}\n"
-        )
+        print(json.dumps({"violation_count": data.get("violation_count", 0)}))
         violation_count = data.get("violation_count", 0)
         return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "unknown error")
     return 1
 
 
@@ -145,11 +144,11 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
 
     if result.is_success:
         report = result.value
-        _ = sys.stdout.write(f"{report.summary}\n")
+        output.info(report.summary)
         for v in report.violations:
-            _ = sys.stdout.write(f"  {v}\n")
+            output.warning(v)
         return 0 if report.passed else 1
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "unknown error")
     return 1
 
 
@@ -164,11 +163,11 @@ def _run_stub_validate(args: argparse.Namespace) -> int:
 
     if result.is_success:
         report = result.value
-        _ = sys.stdout.write(f"{report.summary}\n")
+        output.info(report.summary)
         for v in report.violations:
-            _ = sys.stdout.write(f"  {v}\n")
+            output.warning(v)
         return 0 if report.passed else 1
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "unknown error")
     return 1
 
 
