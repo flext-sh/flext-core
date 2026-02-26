@@ -21,7 +21,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, computed_field
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
@@ -93,6 +93,7 @@ class FlextGenericModels:
                 description="Additional context-specific metadata",
             )
 
+            @computed_field
             @property
             def age_seconds(self) -> float:
                 """Calculate age of operation context in seconds.
@@ -104,6 +105,7 @@ class FlextGenericModels:
                 now = datetime.now(UTC)
                 return (now - self.timestamp).total_seconds()
 
+            @computed_field
             @property
             def age_minutes(self) -> float:
                 """Calculate age of operation context in minutes.
@@ -114,6 +116,7 @@ class FlextGenericModels:
                 """
                 return self.age_seconds / 60.0
 
+            @computed_field
             @property
             def is_recent(self) -> bool:
                 """Check if operation context is recent (created within last 5 minutes).
@@ -124,6 +127,7 @@ class FlextGenericModels:
                 """
                 return self.age_minutes <= c.Performance.VERY_RECENT_THRESHOLD_MINUTES
 
+            @computed_field
             @property
             def formatted_timestamp(self) -> str:
                 """Get ISO 8601 formatted timestamp string.
@@ -134,6 +138,7 @@ class FlextGenericModels:
                 """
                 return self.timestamp.isoformat()
 
+            @computed_field
             @property
             def has_user_context(self) -> bool:
                 """Check if operation has user context information.
@@ -144,6 +149,7 @@ class FlextGenericModels:
                 """
                 return self.user_id is not None
 
+            @computed_field
             @property
             def has_tenant_context(self) -> bool:
                 """Check if operation has tenant context information.
@@ -154,6 +160,7 @@ class FlextGenericModels:
                 """
                 return self.tenant_id is not None
 
+            @computed_field
             @property
             def context_summary(self) -> str:
                 """Generate a summary string of the operation context.
@@ -289,6 +296,7 @@ class FlextGenericModels:
                 description="Additional service-specific metadata",
             )
 
+            @computed_field
             @property
             def is_active(self) -> bool:
                 """Check if service is in active status.
@@ -299,6 +307,7 @@ class FlextGenericModels:
                 """
                 return self.status == "active"
 
+            @computed_field
             @property
             def is_healthy(self) -> bool:
                 """Check if service health status is healthy.
@@ -309,6 +318,7 @@ class FlextGenericModels:
                 """
                 return self.health_status == "healthy"
 
+            @computed_field
             @property
             def uptime_hours(self) -> float | None:
                 """Calculate uptime in hours.
@@ -319,6 +329,7 @@ class FlextGenericModels:
                 """
                 return self.uptime_seconds / 3600.0 if self.uptime_seconds else None
 
+            @computed_field
             @property
             def uptime_days(self) -> float | None:
                 """Calculate uptime in days.
@@ -329,6 +340,7 @@ class FlextGenericModels:
                 """
                 return self.uptime_hours / 24.0 if self.uptime_hours else None
 
+            @computed_field
             @property
             def formatted_uptime(self) -> str:
                 """Format uptime as human-readable string.
@@ -353,6 +365,7 @@ class FlextGenericModels:
 
                 return " ".join(parts)
 
+            @computed_field
             @property
             def endpoint_url(self) -> str | None:
                 """Construct service endpoint URL if host and port are available.
@@ -365,6 +378,7 @@ class FlextGenericModels:
                     return f"http://{self.host}:{self.port}"
                 return None
 
+            @computed_field
             @property
             def health_check_age_minutes(self) -> float | None:
                 """Calculate minutes since last health check.
@@ -379,6 +393,7 @@ class FlextGenericModels:
                 now = datetime.now(UTC)
                 return (now - self.last_health_check).total_seconds() / 60.0
 
+            @computed_field
             @property
             def needs_health_check(self) -> bool:
                 """Check if service needs a health check (last check > 5 minutes ago).
@@ -390,6 +405,7 @@ class FlextGenericModels:
                 age = self.health_check_age_minutes
                 return age is None or age > c.Performance.HEALTH_CHECK_STALE_MINUTES
 
+            @computed_field
             @property
             def resource_summary(self) -> str:
                 """Generate resource usage summary.
@@ -465,6 +481,7 @@ class FlextGenericModels:
                 description="Configuration metadata",
             )
 
+            @computed_field
             @property
             def is_valid(self) -> bool:
                 """Check if configuration has no validation errors.
@@ -475,6 +492,7 @@ class FlextGenericModels:
                 """
                 return len(self.validation_errors) == 0
 
+            @computed_field
             @property
             def has_validation_errors(self) -> bool:
                 """Check if configuration has validation errors.
@@ -485,6 +503,7 @@ class FlextGenericModels:
                 """
                 return len(self.validation_errors) > 0
 
+            @computed_field
             @property
             def validation_error_count(self) -> int:
                 """Get count of validation errors.
@@ -495,6 +514,7 @@ class FlextGenericModels:
                 """
                 return len(self.validation_errors)
 
+            @computed_field
             @property
             def config_keys(self) -> list[str]:
                 """Get sorted list of configuration keys.
@@ -505,6 +525,7 @@ class FlextGenericModels:
                 """
                 return sorted(self.config.root.keys())
 
+            @computed_field
             @property
             def config_size(self) -> int:
                 """Get number of configuration entries.
@@ -515,6 +536,7 @@ class FlextGenericModels:
                 """
                 return len(self.config.root)
 
+            @computed_field
             @property
             def age_minutes(self) -> float:
                 """Calculate age of configuration snapshot in minutes.
@@ -526,6 +548,7 @@ class FlextGenericModels:
                 now = datetime.now(UTC)
                 return (now - self.captured_at).total_seconds() / 60.0
 
+            @computed_field
             @property
             def is_recent(self) -> bool:
                 """Check if configuration is recent (captured within last hour).
@@ -536,6 +559,7 @@ class FlextGenericModels:
                 """
                 return self.age_minutes <= c.Performance.RECENT_THRESHOLD_MINUTES
 
+            @computed_field
             @property
             def formatted_captured_at(self) -> str:
                 """Get ISO 8601 formatted capture timestamp.
@@ -668,6 +692,7 @@ class FlextGenericModels:
                 description="Additional health check metadata",
             )
 
+            @computed_field
             @property
             def total_checks(self) -> int:
                 """Get total number of health checks performed.
@@ -678,6 +703,7 @@ class FlextGenericModels:
                 """
                 return len(self.checks)
 
+            @computed_field
             @property
             def healthy_checks_count(self) -> int:
                 """Get count of healthy checks.
@@ -688,6 +714,7 @@ class FlextGenericModels:
                 """
                 return sum(1 for status in self.checks.values() if status)
 
+            @computed_field
             @property
             def unhealthy_checks_count(self) -> int:
                 """Get count of unhealthy checks.
@@ -698,6 +725,7 @@ class FlextGenericModels:
                 """
                 return sum(1 for status in self.checks.values() if not status)
 
+            @computed_field
             @property
             def health_percentage(self) -> float:
                 """Calculate health percentage (0.0 to 100.0).
@@ -710,6 +738,7 @@ class FlextGenericModels:
                     return 100.0
                 return (self.healthy_checks_count / self.total_checks) * 100.0
 
+            @computed_field
             @property
             def unhealthy_checks(self) -> list[str]:
                 """Get list of unhealthy check names.
@@ -720,6 +749,7 @@ class FlextGenericModels:
                 """
                 return [name for name, status in self.checks.items() if not status]
 
+            @computed_field
             @property
             def healthy_checks(self) -> list[str]:
                 """Get list of healthy check names.
@@ -730,6 +760,7 @@ class FlextGenericModels:
                 """
                 return [name for name, status in self.checks.items() if status]
 
+            @computed_field
             @property
             def age_seconds(self) -> float:
                 """Calculate age of health check result in seconds.
@@ -741,6 +772,7 @@ class FlextGenericModels:
                 now = datetime.now(UTC)
                 return (now - self.checked_at).total_seconds()
 
+            @computed_field
             @property
             def is_recent(self) -> bool:
                 """Check if health check is recent (performed within last 2 minutes).
@@ -751,6 +783,7 @@ class FlextGenericModels:
                 """
                 return self.age_seconds <= c.Performance.RECENT_THRESHOLD_SECONDS
 
+            @computed_field
             @property
             def formatted_checked_at(self) -> str:
                 """Get ISO 8601 formatted check timestamp.
@@ -761,6 +794,7 @@ class FlextGenericModels:
                 """
                 return self.checked_at.isoformat()
 
+            @computed_field
             @property
             def status_summary(self) -> str:
                 """Generate health status summary string.
@@ -771,6 +805,7 @@ class FlextGenericModels:
                 """
                 return f"{self.healthy_checks_count}/{self.total_checks} checks passed"
 
+            @computed_field
             @property
             def severity_level(self) -> str:
                 """Determine health severity level based on failure rate.
@@ -935,6 +970,7 @@ class FlextGenericModels:
                 description="Additional operation metadata",
             )
 
+            @computed_field
             @property
             def total_count(self) -> int:
                 """Calculate total processed items.
@@ -950,6 +986,7 @@ class FlextGenericModels:
                     + self.warning_count
                 )
 
+            @computed_field
             @property
             def success_rate(self) -> float:
                 """Calculate success rate as ratio.
@@ -963,6 +1000,7 @@ class FlextGenericModels:
                     self.total_count,
                 )
 
+            @computed_field
             @property
             def failure_rate(self) -> float:
                 """Calculate failure rate as ratio.
@@ -976,6 +1014,7 @@ class FlextGenericModels:
                     self.total_count,
                 )
 
+            @computed_field
             @property
             def completion_percentage(self) -> float:
                 """Calculate completion percentage based on estimated total.
@@ -989,6 +1028,7 @@ class FlextGenericModels:
                     self.estimated_total,
                 )
 
+            @computed_field
             @property
             def remaining_count(self) -> int | None:
                 """Calculate estimated remaining items.
@@ -1001,6 +1041,7 @@ class FlextGenericModels:
                     return None
                 return max(0, self.estimated_total - self.total_count)
 
+            @computed_field
             @property
             def duration_seconds(self) -> float | None:
                 """Calculate operation duration in seconds.
@@ -1015,6 +1056,7 @@ class FlextGenericModels:
                 end_time = self.last_update or datetime.now(UTC)
                 return (end_time - self.start_time).total_seconds()
 
+            @computed_field
             @property
             def items_per_second(self) -> float | None:
                 """Calculate processing rate in items per second.
@@ -1028,6 +1070,7 @@ class FlextGenericModels:
                     return None
                 return self.total_count / duration
 
+            @computed_field
             @property
             def estimated_time_remaining_seconds(self) -> float | None:
                 """Estimate time remaining based on current processing rate.
@@ -1040,6 +1083,7 @@ class FlextGenericModels:
                     return None
                 return self.remaining_count / self.items_per_second
 
+            @computed_field
             @property
             def is_complete(self) -> bool:
                 """Check if operation is complete (all estimated items processed).
@@ -1052,6 +1096,7 @@ class FlextGenericModels:
                     return False
                 return self.total_count >= self.estimated_total
 
+            @computed_field
             @property
             def has_errors(self) -> bool:
                 """Check if operation has any failures.
@@ -1062,6 +1107,7 @@ class FlextGenericModels:
                 """
                 return self.failure_count > 0
 
+            @computed_field
             @property
             def has_warnings(self) -> bool:
                 """Check if operation has any warnings.
@@ -1072,6 +1118,7 @@ class FlextGenericModels:
                 """
                 return self.warning_count > 0
 
+            @computed_field
             @property
             def status_summary(self) -> str:
                 """Generate operation status summary string.
@@ -1234,6 +1281,7 @@ class FlextGenericModels:
                 description="Conversion metadata",
             )
 
+            @computed_field
             @property
             def has_errors(self) -> bool:
                 """Check if any errors occurred.
@@ -1244,6 +1292,7 @@ class FlextGenericModels:
                 """
                 return len(self.errors) > 0
 
+            @computed_field
             @property
             def has_warnings(self) -> bool:
                 """Check if any warnings occurred.
@@ -1254,6 +1303,7 @@ class FlextGenericModels:
                 """
                 return len(self.warnings) > 0
 
+            @computed_field
             @property
             def converted_count(self) -> int:
                 """Get count of converted items.
@@ -1264,6 +1314,7 @@ class FlextGenericModels:
                 """
                 return len(self.converted)
 
+            @computed_field
             @property
             def skipped_count(self) -> int:
                 """Get count of skipped items.
@@ -1274,6 +1325,7 @@ class FlextGenericModels:
                 """
                 return len(self.skipped)
 
+            @computed_field
             @property
             def error_count(self) -> int:
                 """Get count of errors.
@@ -1284,6 +1336,7 @@ class FlextGenericModels:
                 """
                 return len(self.errors)
 
+            @computed_field
             @property
             def warning_count(self) -> int:
                 """Get count of warnings.
@@ -1294,6 +1347,7 @@ class FlextGenericModels:
                 """
                 return len(self.warnings)
 
+            @computed_field
             @property
             def total_processed_count(self) -> int:
                 """Get total count of processed items (converted + skipped).
@@ -1304,6 +1358,7 @@ class FlextGenericModels:
                 """
                 return self.converted_count + self.skipped_count
 
+            @computed_field
             @property
             def success_rate(self) -> float:
                 """Calculate conversion success rate.
@@ -1317,6 +1372,7 @@ class FlextGenericModels:
                     self.total_processed_count,
                 )
 
+            @computed_field
             @property
             def duration_seconds(self) -> float | None:
                 """Calculate conversion duration in seconds.
@@ -1329,6 +1385,7 @@ class FlextGenericModels:
                     return None
                 return (self.end_time - self.start_time).total_seconds()
 
+            @computed_field
             @property
             def items_per_second(self) -> float | None:
                 """Calculate conversion rate in items per second.
@@ -1342,6 +1399,7 @@ class FlextGenericModels:
                     return None
                 return self.total_processed_count / duration
 
+            @computed_field
             @property
             def is_complete(self) -> bool:
                 """Check if conversion is complete.
@@ -1352,6 +1410,7 @@ class FlextGenericModels:
                 """
                 return self.end_time is not None
 
+            @computed_field
             @property
             def completion_percentage(self) -> float:
                 """Calculate completion percentage based on total input count.
@@ -1365,6 +1424,7 @@ class FlextGenericModels:
                     self.total_input_count,
                 )
 
+            @computed_field
             @property
             def status_summary(self) -> str:
                 """Generate conversion status summary string.
@@ -1385,6 +1445,7 @@ class FlextGenericModels:
 
                 return ", ".join(parts)
 
+            @computed_field
             @property
             def conversion_summary(self) -> str:
                 """Generate detailed conversion summary.

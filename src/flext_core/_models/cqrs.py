@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
+    computed_field,
     BaseModel,
     ConfigDict,
     Discriminator,
@@ -101,11 +102,13 @@ class FlextModelsCqrs:
             ),
         ] = c.Pagination.DEFAULT_PAGE_SIZE
 
+        @computed_field
         @property
         def offset(self) -> int:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
+        @computed_field
         @property
         def limit(self) -> int:
             """Get limit (same as size)."""

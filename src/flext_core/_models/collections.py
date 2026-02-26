@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from typing import Self
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, computed_field
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.runtime import FlextRuntime
@@ -153,6 +153,7 @@ class FlextModelsCollections:
             """Clear all categories and entries."""
             self.categories.clear()
 
+        @computed_field
         @property
         def total_entries(self) -> int:
             """Get total number of entries across all categories.
@@ -163,6 +164,7 @@ class FlextModelsCollections:
             """
             return sum(len(entries) for entries in self.categories.values())
 
+        @computed_field
         @property
         def category_names(self) -> list[str]:
             """Get list of all category names.
