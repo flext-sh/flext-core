@@ -115,9 +115,9 @@ backup/
 *.bak
 *.backup
 *.orig
-*_temp.*
-temp_*
-fix_*
+/*_temp.*
+/temp_*
+/fix_*
 *_REPORT*.md
 *_ANALYSIS*.md
 *_SUMMARY*.md
@@ -178,19 +178,19 @@ profiles/profiles.yml.backup
 **/.user.yml
 docs/_build/
 site/
-temp_*.py
-*_temp.py
+/temp_*.py
+/*_temp.py
 *_temp.md
-fix_*.py
-*_fix.py
-debug_*.py
-investigate_*.py
-validate_*.py
-*_validation.py
+/fix_*.py
+/*_fix.py
+/debug_*.py
+/investigate_*.py
+/validate_*.py
+/*_validation.py
 *_analysis.txt
 *_output.txt
 *_report.txt
-temp_test_*
+/temp_test_*
 analysis_temp/
 report_*/
 reports_*/
@@ -287,10 +287,10 @@ build/
 *backup*
 
 # Validation and test scripts outside proper directories
-**/validate*.sh
-**/validate*.py
-**/test*.sh
-**/test*.py
+/validate*.sh
+/validate*.py
+/test*.sh
+/test*.py
 
 # Temporary and working files
 *.tmp
