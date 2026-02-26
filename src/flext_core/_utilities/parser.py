@@ -64,17 +64,18 @@ class FlextUtilitiesParser:
     def _safe_text_length(text: t.ConfigMapValue) -> str | int:
         """Safely get text length for logging."""
         if isinstance(text, str | bytes):
-            try:
-                return len(text)
-            except (TypeError, AttributeError):
-                return "unknown"
+            text_length_result = r[int].create_from_callable(lambda: len(text))
+            if text_length_result.is_success:
+                return text_length_result.value
+            return "unknown"
         try:
             text_value: str | bytes = TypeAdapter(str | bytes).validate_python(text)
-            return len(text_value)
         except ValidationError:
             return "unknown"
-        except (TypeError, AttributeError):
-            return "unknown"
+        text_length_result = r[int].create_from_callable(lambda: len(text_value))
+        if text_length_result.is_success:
+            return text_length_result.value
+        return "unknown"
 
     @staticmethod
     def _to_json_value(value: t.ConfigMapValue) -> t.JsonValue:
@@ -168,10 +169,13 @@ class FlextUtilitiesParser:
 
         """
         # Safely get text length for logging
-        try:
-            text_len = self._safe_text_length(text)
-        except (TypeError, AttributeError):
-            text_len = -1  # Unknown length
+        text_len = (
+            r[str | int]
+            .create_from_callable(
+                lambda: self._safe_text_length(text),
+            )
+            .unwrap_or(-1)
+        )
 
         # Use provided ParseOptions or create default
         parse_opts = (
@@ -250,10 +254,13 @@ class FlextUtilitiesParser:
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Safely get text length (may fail for non-string objects in tests)
-            try:
-                text_len = self._safe_text_length(text)
-            except (TypeError, AttributeError):
-                text_len = -1  # Unknown length
+            text_len = (
+                r[str | int]
+                .create_from_callable(
+                    lambda: self._safe_text_length(text),
+                )
+                .unwrap_or(-1)
+            )
 
             self.logger.exception(
                 "FATAL ERROR during delimited parsing - PARSING ABORTED",
@@ -301,13 +308,16 @@ class FlextUtilitiesParser:
             Text length or -1 if measurement fails
 
         """
-        try:
-            length = self._safe_text_length(text)
-            if isinstance(length, int):
-                return length
-            return -1
-        except (TypeError, AttributeError, ValueError):
-            return -1  # Unknown length
+        length = (
+            r[str | int]
+            .create_from_callable(
+                lambda: self._safe_text_length(text),
+            )
+            .unwrap_or(-1)
+        )
+        if isinstance(length, int):
+            return length
+        return -1
 
     def _execute_escape_splitting(
         self,
@@ -412,17 +422,13 @@ class FlextUtilitiesParser:
             )
 
         # Handle empty text early (only if it's actually a string and empty)
-        try:
-            if not text:
-                self.logger.debug(
-                    "Empty text provided, returning list with empty string",
-                    operation="split_on_char_with_escape",
-                )
-                return r[list[str]].ok([""])
-        except (TypeError, AttributeError):
-            # If text doesn't support truthiness check, continue to processing
-            # where exception will be caught
-            pass
+        text_is_empty_result = r[bool].create_from_callable(lambda: not text)
+        if text_is_empty_result.is_success and text_is_empty_result.value:
+            self.logger.debug(
+                "Empty text provided, returning list with empty string",
+                operation="split_on_char_with_escape",
+            )
+            return r[list[str]].ok([""])
 
         # Execute splitting with error handling
         return self._execute_escape_splitting(text, split_char, escape_char)
@@ -452,10 +458,13 @@ class FlextUtilitiesParser:
 
         """
         # Safely get text length for logging
-        try:
-            text_len = self._safe_text_length(text)
-        except (TypeError, AttributeError):
-            text_len = -1  # Unknown length
+        text_len = (
+            r[str | int]
+            .create_from_callable(
+                lambda: self._safe_text_length(text),
+            )
+            .unwrap_or(-1)
+        )
 
         self.logger.debug(
             "Starting whitespace normalization",
@@ -541,10 +550,13 @@ class FlextUtilitiesParser:
 
         """
         # Safely get text length for logging
-        try:
-            text_len = self._safe_text_length(text)
-        except (TypeError, AttributeError):
-            text_len = -1  # Unknown length
+        text_len = (
+            r[str | int]
+            .create_from_callable(
+                lambda: self._safe_text_length(text),
+            )
+            .unwrap_or(-1)
+        )
 
         self.logger.debug(
             "Starting regex pipeline application",
@@ -594,10 +606,13 @@ class FlextUtilitiesParser:
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Safely get text length (may fail for non-string objects in tests)
-            try:
-                text_len = self._safe_text_length(text)
-            except (TypeError, AttributeError):
-                text_len = -1  # Unknown length
+            text_len = (
+                r[str | int]
+                .create_from_callable(
+                    lambda: self._safe_text_length(text),
+                )
+                .unwrap_or(-1)
+            )
 
             self.logger.exception(
                 "FATAL ERROR during regex pipeline application - PIPELINE ABORTED",
@@ -667,12 +682,12 @@ class FlextUtilitiesParser:
             String key if valid, None otherwise.
 
         """
-        try:
-            str_repr = str(obj)
-            if str_repr and str_repr != f"<{obj.__class__.__name__} object>":
-                return str_repr
-        except (TypeError, ValueError):
-            pass
+        str_result = r[str].create_from_callable(lambda: str(obj))
+        if str_result.is_failure:
+            return None
+        str_repr = str_result.value
+        if str_repr and str_repr != f"<{obj.__class__.__name__} object>":
+            return str_repr
         return None
 
     def get_object_key(self, obj: t.ConfigMapValue) -> str:
@@ -1072,9 +1087,7 @@ class FlextUtilitiesParser:
                     member_name,
                     value,
                 )
-                value_attr = (
-                    member_value.value if hasattr(member_value, "value") else None
-                )
+                value_attr = getattr(member_value, "value", None)
                 value_matches = (
                     value_attr is not None
                     and FlextUtilitiesParser._parse_normalize_compare(
@@ -1091,9 +1104,7 @@ class FlextUtilitiesParser:
 
         # Try parsing value as enum value (not name)
         for member_instance in members.values():
-            member_val = (
-                member_instance.value if hasattr(member_instance, "value") else None
-            )
+            member_val = getattr(member_instance, "value", None)
             if member_val == value:
                 return r.ok(member_instance)
 
@@ -1147,20 +1158,24 @@ class FlextUtilitiesParser:
     def _coerce_to_int(value: t.ConfigMapValue) -> r[int] | None:
         """Coerce value to int. Returns None if not coercible."""
         if value.__class__ in {str, float}:
-            try:
-                return r[int].ok(int(float(str(value))))
-            except (ValueError, TypeError):
-                return None
+            coerced_result = r[int].create_from_callable(
+                lambda: int(float(str(value))),
+            )
+            if coerced_result.is_success:
+                return coerced_result
+            return None
         return None
 
     @staticmethod
     def _coerce_to_float(value: t.ConfigMapValue) -> r[float] | None:
         """Coerce value to float. Returns None if not coercible."""
         if value.__class__ in {str, int}:
-            try:
-                return r[float].ok(float(str(value)))
-            except (ValueError, TypeError):
-                return None
+            coerced_result = r[float].create_from_callable(
+                lambda: float(str(value)),
+            )
+            if coerced_result.is_success:
+                return coerced_result
+            return None
         return None
 
     @staticmethod
@@ -1210,9 +1225,7 @@ class FlextUtilitiesParser:
                 if member_name.lower() == value_lower:
                     return r.ok(member_value)
                 # Also check by value
-                member_val = (
-                    member_value.value if hasattr(member_value, "value") else None
-                )
+                member_val = getattr(member_value, "value", None)
                 if member_val is not None and str(member_val).lower() == value_lower:
                     return r.ok(member_value)
         else:
@@ -1221,9 +1234,7 @@ class FlextUtilitiesParser:
                 return r.ok(members[value_str])
             # Try matching by value
             for member_value in members.values():
-                member_val = (
-                    member_value.value if hasattr(member_value, "value") else None
-                )
+                member_val = getattr(member_value, "value", None)
                 if member_val == value_str:
                     return r.ok(member_value)
 
@@ -1542,10 +1553,7 @@ class FlextUtilitiesParser:
         if isinstance(value, int) and not isinstance(value, bool):
             return value
         if isinstance(value, str):
-            try:
-                return int(value)
-            except ValueError:
-                return default
+            return r[int].create_from_callable(lambda: int(value)).unwrap_or(default)
         if isinstance(value, float):
             return int(value)
         return default
@@ -1556,10 +1564,9 @@ class FlextUtilitiesParser:
         if isinstance(value, float):
             return value
         if isinstance(value, int | str) and not isinstance(value, bool):
-            try:
-                return float(value)
-            except (ValueError, TypeError):
-                return default
+            return (
+                r[float].create_from_callable(lambda: float(value)).unwrap_or(default)
+            )
         return default
 
     @staticmethod
@@ -1569,10 +1576,7 @@ class FlextUtilitiesParser:
             return value
         if value is None:
             return default
-        try:
-            return str(value)
-        except (ValueError, TypeError):
-            return default
+        return r[str].create_from_callable(lambda: str(value)).unwrap_or(default)
 
     @staticmethod
     def _convert_to_bool(value: t.ConfigMapValue, *, default: bool) -> bool:
@@ -1618,10 +1622,7 @@ class FlextUtilitiesParser:
             return default
         if isinstance(value, str):
             return value
-        try:
-            return str(value)
-        except (ValueError, TypeError):
-            return default
+        return r[str].create_from_callable(lambda: str(value)).unwrap_or(default)
 
     @staticmethod
     def conv_str_list(
