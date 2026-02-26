@@ -1541,9 +1541,8 @@ def test_remaining_branches_group_b(
         pass
 
     dispatcher.config.dispatcher_auto_context = True
-    with pytest.raises(RuntimeError):
-        with dispatcher._context_scope(metadata={"x": 1}, correlation_id="cid"):
-            pass
+    with dispatcher._context_scope(metadata={"x": 1}, correlation_id="cid"):
+        pass
 
     class _CtxMap(Mapping[str, t.GeneralValueType]):
         def __getitem__(self, key: str) -> t.GeneralValueType:
@@ -1657,7 +1656,7 @@ def test_final_uncovered_edges(
     assert dispatcher._register_single_handler(_as_handler(_ClassOnly)).is_success
     single_factory = tracker.factories["handler.type"]
     assert callable(single_factory)
-    assert isinstance(single_factory(), str)
+    assert hasattr(single_factory(), "handle")
 
     class _ModelHandler(BaseModel):
         def handle(self, _msg: object) -> str:
@@ -1673,7 +1672,7 @@ def test_final_uncovered_edges(
     ).is_success
     two_arg_factory = tracker.factories["handler.cmd.class"]
     assert callable(two_arg_factory)
-    assert isinstance(two_arg_factory(), str)
+    assert hasattr(two_arg_factory(), "handle")
 
     assert dispatcher._register_two_arg_handler(
         "cmd.model", _as_handler(_ModelHandler)

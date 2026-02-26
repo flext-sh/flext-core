@@ -141,12 +141,24 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ConfigMapValue]]:
-        """Check if value implements ResultLike protocol (has is_success, value, error)."""
-        return (
-            hasattr(value, "is_success")
-            and hasattr(value, "value")
-            and hasattr(value, "error")
-        )
+        """Check if value implements ResultLike protocol (has is_success, value, error).
+
+        Uses try/except to avoid triggering property getters that may raise
+        (e.g., FlextResult.value on failure raises RuntimeError, not AttributeError).
+        """
+        try:
+            return (
+                hasattr(value, "is_success")
+                and hasattr(value, "value")
+                and hasattr(value, "error")
+            )
+        except (RuntimeError, TypeError, ValueError):
+            cls = type(value)
+            return (
+                hasattr(cls, "is_success")
+                and hasattr(cls, "value")
+                and hasattr(cls, "error")
+            )
 
     @staticmethod
     def is_flexible_value(value: object) -> bool:

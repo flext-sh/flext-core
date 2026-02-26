@@ -592,9 +592,11 @@ class FlextDispatcher(s[bool]):
         handler: DispatcherHandler,
         handler_context: str = "handler",
     ) -> r[bool]:
-        """Validate that handler has required handle() interface."""
+        """Validate that handler has required handle() interface or is callable."""
         method_name = c.Mixins.METHOD_HANDLE
-        return self._validate_interface(handler, method_name, handler_context)
+        return self._validate_interface(
+            handler, method_name, handler_context, allow_callable=True
+        )
 
     def _validate_handler_mode(self, handler_mode: str | None) -> r[bool]:
         """Validate handler mode against CQRS types (consolidates register_handler duplication)."""
@@ -639,8 +641,7 @@ class FlextDispatcher(s[bool]):
     @staticmethod
     def _to_container_value(value: object) -> _Payload:
         if u.is_general_value_type(value):
-            normalized: _Payload = cast("_Payload", value)
-            return normalized
+            return value
         return str(value)
 
     @staticmethod
@@ -1332,9 +1333,9 @@ class FlextDispatcher(s[bool]):
 
         # Register handler class as factory in container
         # Factory will create new handler instances when resolved
-        # Only instantiable classes (not functions) can be used as factories
-        handler_cls: type[BaseModel] | None = None
-        if inspect.isclass(handler) and issubclass(handler, BaseModel):
+        # Any class (not just BaseModel) can be used as a factory
+        handler_cls: type | None = None
+        if inspect.isclass(handler):
             handler_cls = handler
         elif isinstance(handler, BaseModel):
             handler_cls = handler.__class__
@@ -1343,7 +1344,7 @@ class FlextDispatcher(s[bool]):
             try:
                 # Create factory function that instantiates handler class
                 # Capture in closure - class is always callable for instantiation
-                cls_ref: type[BaseModel] = handler_cls
+                cls_ref: type = handler_cls
 
                 def _create_handler() -> _Payload:
                     """Factory function to create handler instance."""
@@ -1426,9 +1427,9 @@ class FlextDispatcher(s[bool]):
 
         # Register handler class as factory in container
         # Factory will create new handler instances when resolved
-        # Only instantiable classes (not functions) can be used as factories
-        handler_cls: type[BaseModel] | None = None
-        if inspect.isclass(handler) and issubclass(handler, BaseModel):
+        # Any class (not just BaseModel) can be used as a factory
+        handler_cls: type | None = None
+        if inspect.isclass(handler):
             handler_cls = handler
         elif isinstance(handler, BaseModel):
             handler_cls = handler.__class__
@@ -1437,7 +1438,7 @@ class FlextDispatcher(s[bool]):
             try:
                 # Create factory function that instantiates handler class
                 # Capture in closure - class is always callable for instantiation
-                cls_ref: type[BaseModel] = handler_cls
+                cls_ref: type = handler_cls
 
                 def _create_handler_for_type() -> _Payload:
                     """Factory function to create handler instance."""
@@ -1812,15 +1813,15 @@ class FlextDispatcher(s[bool]):
         | BaseModel
         | Mapping[str, t.ConfigMapValue],
     ) -> r[_RegistrationInputUnion]:
-        if isinstance(request, m.HandlerRegistrationRequest):
-            return r[_RegistrationInputUnion].ok(
-                _REGISTRATION_INPUT_ADAPTER.validate_python({
-                    "input_type": "model",
-                    "request": request.model_dump(),
-                })
-            )
-
         try:
+            if isinstance(request, m.HandlerRegistrationRequest):
+                return r[_RegistrationInputUnion].ok(
+                    _REGISTRATION_INPUT_ADAPTER.validate_python({
+                        "input_type": "model",
+                        "request": request.model_dump(),
+                    })
+                )
+
             if isinstance(request, BaseModel):
                 return r[_RegistrationInputUnion].ok(
                     _REGISTRATION_INPUT_ADAPTER.validate_python({
@@ -2319,7 +2320,11 @@ class FlextDispatcher(s[bool]):
         mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> r[DispatcherHandler]:
         del mode
-        return r[DispatcherHandler].ok(handler)
+        if callable(handler) or hasattr(handler, "handle"):
+            return r[DispatcherHandler].ok(handler)
+        return r[DispatcherHandler].fail(
+            "Invalid handler: must be callable or have 'handle' method"
+        )
 
     # ------------------------------------------------------------------
     def _check_pre_dispatch_conditions(
@@ -2612,6 +2617,10 @@ class FlextDispatcher(s[bool]):
             Metadata model instance or None
 
         """
+        if metadata is None:
+            return None
+        if isinstance(metadata, m.Metadata):
+            return metadata
         metadata_input_result = FlextDispatcher._normalize_metadata_input(metadata)
         if metadata_input_result.is_failure:
             return (
@@ -2832,6 +2841,10 @@ class FlextDispatcher(s[bool]):
             else:
                 normalized_attrs: dict[str, t.MetadataAttributeValue] = {}
                 for k, v in metadata_input.metadata.items():
+                    if not FlextDispatcher._is_metadata_attribute_compatible(cast("_Payload", v)):
+                        return r[m.DispatchConfig].fail(
+                            f"Invalid metadata attribute type for key '{k}': {type(v).__name__}"
+                        )
                     value = FlextDispatcher._to_container_value(v)
                     if not FlextDispatcher._is_metadata_attribute_compatible(value):
                         return r[m.DispatchConfig].fail(
@@ -3187,6 +3200,8 @@ class FlextDispatcher(s[bool]):
         metadata: _Payload,
     ) -> m.Metadata | None:
         """Extract metadata as m.Metadata from various types."""
+        if isinstance(metadata, m.Metadata):
+            return metadata
         metadata_input_result = FlextDispatcher._normalize_metadata_input(metadata)
         if metadata_input_result.is_failure:
             return None
