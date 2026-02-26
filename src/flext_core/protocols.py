@@ -21,6 +21,10 @@ from structlog.typing import BindableLogger
 
 from flext_core.typings import T, t
 
+type ProtocolHandlerCallable = (
+    t.HandlerCallable | Callable[[t.GuardInputValue], t.GuardInputValue]
+)
+
 # =============================================================================
 # PROTOCOL DETECTION AND VALIDATION HELPERS
 # =============================================================================
@@ -34,7 +38,11 @@ class _ProtocolIntrospection:
         """Check if a class is a typing.Protocol."""
         if not hasattr(target_cls, "_is_protocol"):
             return False
-        is_proto = getattr(target_cls, "_is_protocol", False)
+        is_proto = (
+            getattr(target_cls, "_is_protocol")
+            if hasattr(target_cls, "_is_protocol")
+            else False
+        )
         return bool(is_proto) if not callable(is_proto) else bool(is_proto())
 
     @staticmethod
@@ -44,8 +52,16 @@ class _ProtocolIntrospection:
         class_name: str,
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations = getattr(protocol, "__annotations__", {})
-        raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
+        protocol_annotations = (
+            getattr(protocol, "__annotations__")
+            if hasattr(protocol, "__annotations__")
+            else {}
+        )
+        raw_attrs: set[str] | object = (
+            getattr(protocol, "__protocol_attrs__")
+            if hasattr(protocol, "__protocol_attrs__")
+            else set()
+        )
         protocol_methods: set[str] = (
             {x for x in raw_attrs if isinstance(x, str)}
             if isinstance(raw_attrs, set)
@@ -64,7 +80,11 @@ class _ProtocolIntrospection:
 
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
-            base_annotations = getattr(base, "__annotations__", {})
+            base_annotations = (
+                getattr(base, "__annotations__")
+                if hasattr(base, "__annotations__")
+                else {}
+            )
             all_annotations.update(base_annotations.keys())
 
         missing = [
@@ -74,7 +94,11 @@ class _ProtocolIntrospection:
         ]
 
         if missing:
-            protocol_name = getattr(protocol, "__name__", str(protocol))
+            protocol_name = (
+                getattr(protocol, "__name__")
+                if hasattr(protocol, "__name__")
+                else str(protocol)
+            )
             missing_str = ", ".join(sorted(missing))
             msg = (
                 f"Class '{class_name}' does not implement required members "
@@ -102,7 +126,11 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        return getattr(target_cls, "__protocols__", ())
+        return (
+            getattr(target_cls, "__protocols__")
+            if hasattr(target_cls, "__protocols__")
+            else ()
+        )
 
     @classmethod
     def check_implements_protocol(
@@ -115,8 +143,16 @@ class _ProtocolIntrospection:
         if protocol in registered_protocols:
             return True
 
-        protocol_annotations = getattr(protocol, "__annotations__", {})
-        raw_attrs: set[str] | object = getattr(protocol, "__protocol_attrs__", set())
+        protocol_annotations = (
+            getattr(protocol, "__annotations__")
+            if hasattr(protocol, "__annotations__")
+            else {}
+        )
+        raw_attrs: set[str] | object = (
+            getattr(protocol, "__protocol_attrs__")
+            if hasattr(protocol, "__protocol_attrs__")
+            else set()
+        )
         protocol_methods: set[str] = (
             {x for x in raw_attrs if isinstance(x, str)}
             if isinstance(raw_attrs, set)
@@ -138,11 +174,15 @@ class _ProtocolIntrospection:
 # typing's Protocol metaclass. Resolve metaclass at runtime from public types
 # to avoid importing private names (_ProtocolMeta, pydantic._internal).
 # BaseSettings uses the same ModelMetaclass as BaseModel.
-class _CombinedModelMeta(
-    type(BaseModel),
-    type(Protocol),
-):
-    """Combined metaclass for Pydantic BaseModel + Protocol inheritance."""
+def _build_combined_model_meta() -> type:
+    return type(
+        "_CombinedModelMeta",
+        (type(BaseModel), type(Protocol)),
+        {},
+    )
+
+
+_CombinedModelMeta = _build_combined_model_meta()
 
 
 class FlextProtocols:
@@ -515,15 +555,6 @@ class FlextProtocols:
         dispatcher_enable_logging: bool
         """Enable logging in dispatcher operations."""
 
-        def model_copy(
-            self,
-            *,
-            update: Mapping[str, t.ScalarValue] | None = None,
-            deep: bool = False,
-        ) -> Self:
-            """Clone configuration with optional updates (Pydantic standard method)."""
-            ...
-
     # =========================================================================
     # CONTEXT: Context Management Protocols
     # =========================================================================
@@ -863,15 +894,14 @@ class FlextProtocols:
         def register_handler(
             self,
             request: (
-                str
-                | type[object]
+                t.MessageTypeSpecifier
                 | BaseModel
-                | Mapping[str, object]
-                | FlextProtocols.Handler
-                | Callable[..., object]
+                | Mapping[str, t.GuardInputValue]
+                | FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+                | ProtocolHandlerCallable
             ),
-            handler: FlextProtocols.Handler
-            | Callable[..., object]
+            handler: FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+            | ProtocolHandlerCallable
             | BaseModel
             | None = None,
         ) -> FlextProtocols.Result[BaseModel]:
@@ -888,7 +918,11 @@ class FlextProtocols:
         def register_command[TCommand, TResult](
             self,
             command_type: type[TCommand],
-            handler: FlextProtocols.Handler | Callable[..., object] | BaseModel,
+            handler: (
+                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+                | ProtocolHandlerCallable
+                | BaseModel
+            ),
             *,
             handler_config: Mapping[str, t.ScalarValue] | None = None,
         ) -> FlextProtocols.Result[t.GuardInputValue]:
@@ -897,10 +931,12 @@ class FlextProtocols:
 
         @staticmethod
         def create_handler_from_function(
-            handler_func: Callable[..., t.GuardInputValue],
+            handler_func: ProtocolHandlerCallable,
             handler_config: Mapping[str, t.ScalarValue] | None = None,
             mode: str = ...,
-        ) -> FlextProtocols.Result[FlextProtocols.Handler]:
+        ) -> FlextProtocols.Result[
+            FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+        ]:
             """Create handler from function (static method)."""
             ...
 
@@ -941,7 +977,11 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            handler: FlextProtocols.Handler | Callable[..., object] | BaseModel,
+            handler: (
+                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+                | ProtocolHandlerCallable
+                | BaseModel
+            ),
         ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
@@ -953,7 +993,9 @@ class FlextProtocols:
         def register_handlers(
             self,
             handlers: Sequence[
-                FlextProtocols.Handler | Callable[..., object] | BaseModel
+                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+                | ProtocolHandlerCallable
+                | BaseModel
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
@@ -966,8 +1008,10 @@ class FlextProtocols:
         def register_bindings(
             self,
             bindings: Mapping[
-                str | type[object],
-                FlextProtocols.Handler | Callable[..., object] | BaseModel,
+                t.MessageTypeSpecifier,
+                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+                | ProtocolHandlerCallable
+                | BaseModel,
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
@@ -1406,7 +1450,7 @@ class FlextProtocols:
         """
 
         def __new__(
-            mcs,
+            cls,
             name: str,
             bases: tuple[type, ...],
             namespace: Mapping[str, object],
@@ -1434,21 +1478,25 @@ class FlextProtocols:
                 model_bases = [BaseModel]
 
             # Create class with only model bases (no metaclass conflict)
-            cls: type = super().__new__(
-                mcs,
+            built_cls: type = super().__new__(
+                cls,
                 name,
                 tuple(model_bases),
                 dict(namespace),
             )
 
             # Store protocols using setattr (avoids type: ignore)
-            cls.__protocols__ = tuple(protocols)
+            setattr(built_cls, "__protocols__", tuple(protocols))
 
             # Validate protocol compliance at class definition time
             for protocol in protocols:
-                _ProtocolIntrospection.validate_protocol_compliance(cls, protocol, name)
+                _ProtocolIntrospection.validate_protocol_compliance(
+                    built_cls,
+                    protocol,
+                    name,
+                )
 
-            return cls
+            return built_cls
 
     class ProtocolModel(BaseModel, metaclass=ProtocolModelMeta):
         """Base class for Pydantic models that implement protocols.
@@ -1499,7 +1547,11 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return self.__class__.__name__
+            return str(
+                getattr(type(self), "__name__")
+                if hasattr(type(self), "__name__")
+                else "ProtocolModel"
+            )
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
@@ -1547,7 +1599,11 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return self.__class__.__name__
+            return str(
+                getattr(type(self), "__name__")
+                if hasattr(type(self), "__name__")
+                else "ProtocolSettings"
+            )
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
@@ -1585,7 +1641,9 @@ class FlextProtocols:
         def decorator(cls: type[T]) -> type[T]:
             # Validate each protocol at decoration time
             # Use getattr for type-safe access to __name__
-            class_name = getattr(cls, "__name__", str(cls))
+            class_name = (
+                getattr(cls, "__name__") if hasattr(cls, "__name__") else str(cls)
+            )
             for protocol in protocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
                     cls,
@@ -1594,7 +1652,7 @@ class FlextProtocols:
                 )
 
             # Store protocols using setattr (avoids type: ignore)
-            cls.__protocols__ = tuple(protocols)
+            setattr(cls, "__protocols__", tuple(protocols))
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
@@ -1603,13 +1661,13 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            cls.implements_protocol = _instance_implements_protocol
+            setattr(cls, "implements_protocol", _instance_implements_protocol)
 
             # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            cls.get_protocols = classmethod(_class_get_protocols)
+            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
 
             return cls
 

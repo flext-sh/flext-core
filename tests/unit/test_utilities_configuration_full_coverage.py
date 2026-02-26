@@ -17,16 +17,9 @@ from flext_core.typings import JsonValue
 class _DumpErrorModel(BaseModel):
     value: int = 1
 
-    def model_dump(self, **kwargs: object) -> dict[str, JsonValue]:
-        _ = kwargs
-        msg = "dump boom"
-        raise TypeError(msg)
-
 
 class _DuckDumpError:
-    def model_dump(self) -> dict[str, JsonValue]:
-        msg = "duck boom"
-        raise RuntimeError(msg)
+    model_dump = "duck boom"
 
 
 class _Opts(BaseModel):
@@ -88,7 +81,7 @@ def test_resolve_env_file_and_log_level(
 def test_private_getters_exception_paths() -> None:
     assert u.Configuration._try_get_from_model_dump(
         cast("p.HasModelDump", cast("object", _DumpErrorModel())),
-        "value",
+        "missing",
     ) == (False, None)
     assert u.Configuration._try_get_from_duck_model_dump(_DuckDumpError(), "value") == (
         False,

@@ -23,8 +23,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 
-from pydantic import Field
-
 from flext_core import (
     FlextConstants,
     FlextModels,
@@ -34,6 +32,7 @@ from flext_core import (
     t,
     u,
 )
+from pydantic import Field
 
 # ═══════════════════════════════════════════════════════════════════
 # TYPE DEFINITIONS (Python 3.13+ PEP 695 strict)

@@ -145,7 +145,7 @@ def test_register_and_dispatch_success() -> None:
     """Register a callable handler and dispatch a message successfully."""
     dispatcher = FlextDispatcher()
     handler = CallableHandleWrapper(EchoHandler().handle)
-    registration = dispatcher.register_handler(EchoCommand, handler)
+    registration = dispatcher.register_handler(EchoCommand, _as_handler(handler))
     assert registration.is_success
 
     result = dispatcher.dispatch(_as_payload(EchoCommand("ping")))
@@ -165,7 +165,7 @@ def test_dispatch_handler_raises_returns_failure() -> None:
     """Handler exceptions should surface as failure results."""
     dispatcher = FlextDispatcher()
     handler = ExplodingHandler()
-    _ = dispatcher.register_handler(EchoCommand, handler)
+    _ = dispatcher.register_handler(EchoCommand, _as_handler(handler))
     result = dispatcher.dispatch(_as_payload(EchoCommand("ping")))
     assertion_helpers.assert_flext_result_failure(result)
     assert "boom" in (result.error or "")
@@ -214,9 +214,8 @@ def test_dispatch_none_message_fails() -> None:
 def test_try_simple_dispatch_non_callable_handler() -> None:
     """Non-callable handler entries should yield failure."""
     dispatcher = FlextDispatcher()
-    # Cast string to HandlerType for type checker (testing invalid handler)
     dispatcher._handlers[EchoCommand.__name__] = cast(
-        "t.HandlerType",
+        "DispatcherHandler",
         "not_callable",
     )
     result = dispatcher.dispatch(_as_payload(EchoCommand("ping")))

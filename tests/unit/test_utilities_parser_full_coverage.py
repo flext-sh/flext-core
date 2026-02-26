@@ -150,7 +150,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast(t.ConfigMapValue, cast(object, object()))
+        cast(t.ConfigMapValue, object()),
     )
     assert (
         parser3.get_object_key(cast(t.ConfigMapValue, cast(object, _OddNoStr())))
@@ -287,7 +287,7 @@ def test_parser_convert_and_norm_branches(monkeypatch) -> None:
     assert parser._convert_to_bool(True, default=False) is True
     assert (
         parser._convert_to_bool(
-            cast(t.ConfigMapValue, cast(object, object())),
+            cast(t.ConfigMapValue, object()),
             default=True,
         )
         is True
@@ -437,7 +437,7 @@ def test_parser_remaining_branch_paths(monkeypatch) -> None:
     assert parser._convert_to_int(5, default=7) == 5
     assert (
         parser._convert_to_float(
-            cast(t.ConfigMapValue, cast(object, object())),
+            cast(t.ConfigMapValue, object()),
             default=1.5,
         )
         == 1.5

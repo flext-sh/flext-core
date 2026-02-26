@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
@@ -89,7 +90,7 @@ class FlextValidatorLayer:
 
         # Check all imports
         for node in ast.walk(tree):
-            if type(node) is ast.ImportFrom and node.module:
+            if isinstance(node, ast.ImportFrom) and node.module:
                 imported_module = cls._extract_module_name(node.module)
                 imported_layer = hierarchy.get(imported_module)
 

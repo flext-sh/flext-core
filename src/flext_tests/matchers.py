@@ -55,15 +55,15 @@ from __future__ import annotations
 
 import os
 import warnings
-from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence, Sized
+from collections.abc import Iterator, Mapping, MutableMapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeGuard, TypeVar
 
-from pydantic import BaseModel
-
 from flext_core import r
 from flext_core.typings import t as core_t
+from pydantic import BaseModel
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
@@ -104,6 +104,57 @@ def _as_guard_input(value: object) -> core_t.GuardInputValue:
     if _is_non_string_sequence(value):
         return [_as_guard_input(seq_item) for seq_item in value]
     return str(value)
+
+
+def _check_has_lacks(
+    value: object,
+    has: object | Sequence[object] | None,
+    lacks: object | Sequence[object] | None,
+    msg: str | None,
+    *,
+    as_str: bool = False,
+) -> None:
+    """Shared has/lacks containment check for ok(), fail(), and that()."""
+    if has is not None:
+        items = list(has) if _is_non_string_sequence(has) else [has]
+        for item in items:
+            check_val = str(item) if as_str else _as_guard_input(item)
+            target = value if as_str else _as_guard_input(value)
+            if as_str:
+                if check_val not in str(target):
+                    raise AssertionError(
+                        msg
+                        or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                            container=value, item=item
+                        ),
+                    )
+            elif not u.chk(target, contains=check_val):
+                raise AssertionError(
+                    msg
+                    or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                        container=value, item=item
+                    ),
+                )
+    if lacks is not None:
+        items = list(lacks) if _is_non_string_sequence(lacks) else [lacks]
+        for item in items:
+            check_val = str(item) if as_str else _as_guard_input(item)
+            target = value if as_str else _as_guard_input(value)
+            if as_str:
+                if check_val in str(target):
+                    raise AssertionError(
+                        msg
+                        or c.Tests.Matcher.ERR_LACKS_FAILED.format(
+                            container=value, item=item
+                        ),
+                    )
+            elif u.chk(target, contains=check_val):
+                raise AssertionError(
+                    msg
+                    or c.Tests.Matcher.ERR_LACKS_FAILED.format(
+                        container=value, item=item
+                    ),
+                )
 
 
 class FlextTestsMatchers:
@@ -177,7 +228,7 @@ class FlextTestsMatchers:
             result: FlextResult to validate
             **kwargs: Parameters validated via m.Tests.Matcher.OkParams model
                 - eq, ne: Equality/inequality check
-                - is_: Type check (type(x) is Y or Y in type(x).__mro__) - supports single type or tuple
+                - is_: Runtime type check against single type or tuple
                 - none, empty: Nullability checks
                 - gt, gte, lt, lte: Comparison checks (numeric or length)
                 - has, lacks: Unified containment (replaces contains)
@@ -213,7 +264,7 @@ class FlextTestsMatchers:
         if params.path is not None:
             # u.Mapper.extract expects str, not PathSpec
             # Type narrowing
-            if type(params.path) is str:
+            if isinstance(params.path, str):
                 path_str: str = params.path
             else:
                 path_str = ".".join(params.path)
@@ -309,48 +360,7 @@ class FlextTestsMatchers:
             )
 
         # Handle unified has/lacks (works for str, list, dict, set, tuple)
-        # params.has is t.Tests.Matcher.ContainmentSpec | None
-        # ContainmentSpec = object | Sequence[object]
-        if params.has is not None:
-            has_value: object | Sequence[object] = params.has
-            if _is_non_string_sequence(has_value):
-                has_items: Sequence[object] = has_value
-            else:
-                single_has_item: object = has_value
-                has_items = [single_has_item]
-            for item in has_items:
-                item_typed: object = item
-                if not u.chk(
-                    _as_guard_input(result_value),
-                    contains=_as_guard_input(item_typed),
-                ):
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                            container=result_value,
-                            item=item_typed,
-                        ),
-                    )
-
-        if params.lacks is not None:
-            if type(params.lacks) in {list, tuple}:
-                lacks_items: Sequence[object] = params.lacks
-            else:
-                lacks_item: object = params.lacks
-                lacks_items = [lacks_item]
-            for item in lacks_items:
-                if u.chk(
-                    _as_guard_input(result_value),
-                    contains=_as_guard_input(item),
-                ):
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                            container=result_value,
-                            item=item,
-                        ),
-                    )
-
+        _check_has_lacks(result_value, params.has, params.lacks, params.msg)
         # Length validation (delegate to u.Tests.Length)
         result_payload = _to_test_payload(result_value)
         if params.len is not None and not u.Tests.Length.validate(
@@ -501,45 +511,7 @@ class FlextTestsMatchers:
         # Apply error message validation if any check parameters provided
         # Legacy parameters (error, contains, excludes) already converted to has/lacks by model validator
         if params.has or params.lacks or params.starts or params.ends or params.match:
-            # Handle unified has/lacks
-            if params.has is not None:
-                # ExclusionSpec is str | Sequence[str] - need to handle both cases
-                # Convert to list[str] for uniform processing
-                has_value = params.has
-                if isinstance(has_value, str):
-                    items_has: list[str] = [has_value]
-                else:
-                    # Sequence[str] case - convert to list
-                    items_has = [str(x) for x in has_value]
-                for item in items_has:
-                    if not u.chk(err, contains=item):
-                        raise AssertionError(
-                            params.msg
-                            or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                                container=err,
-                                item=item,
-                            ),
-                        )
-
-            if params.lacks is not None:
-                # ExclusionSpec is str | Sequence[str] - need to handle both cases
-                # Convert to list[str] for uniform processing
-                lacks_value = params.lacks
-                if isinstance(lacks_value, str):
-                    items_lacks: list[str] = [lacks_value]
-                else:
-                    # Sequence[str] case - convert to list
-                    items_lacks = [str(x) for x in lacks_value]
-                for item in items_lacks:
-                    if u.chk(err, contains=item):
-                        raise AssertionError(
-                            params.msg
-                            or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                                container=err,
-                                item=item,
-                            ),
-                        )
-
+            _check_has_lacks(err, params.has, params.lacks, params.msg, as_str=True)
             # String assertions
             if params.starts is not None and not u.chk(err, starts=params.starts):
                 raise AssertionError(
@@ -603,7 +575,11 @@ class FlextTestsMatchers:
             actual_raw = result.error_data
             actual_data: MutableMapping[str, t.Tests.PayloadValue] = {}
             if actual_raw is not None:
-                root_value = getattr(actual_raw, "root", actual_raw)
+                root_value: object = (
+                    actual_raw.root
+                    if isinstance(actual_raw, m.ConfigMap)
+                    else actual_raw
+                )
                 if isinstance(root_value, Mapping):
                     actual_data = {
                         str(k): _to_test_payload(v) for k, v in root_value.items()
@@ -762,33 +738,8 @@ class FlextTestsMatchers:
             # If result is failure, check if we're validating the error
             # params.has (converted from error) means we want to validate the error message
             elif params.has is not None:
-                # Validate error message using has parameter
                 err = result_obj.error or ""
-                # params.has is t.Tests.Matcher.ContainmentSpec | None
-                # ContainmentSpec = object | Sequence[object]
-                # For error validation, convert to list of strings for checking
-                # Build list of strings directly to avoid type narrowing issues
-                error_has_items: list[str]
-                if isinstance(params.has, str):
-                    error_has_items = [params.has]
-                elif _is_non_string_sequence(params.has):
-                    # Sequence - convert all items to strings
-                    error_has_items = []
-                    for error_item in params.has:
-                        error_has_items.append(str(error_item))
-                else:
-                    # Convert single object to string
-                    error_has_items = [str(params.has)]
-                for item in error_has_items:
-                    if item not in err:
-                        raise AssertionError(
-                            params.msg
-                            or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                                container=err,
-                                item=item,
-                            ),
-                        )
-                # Error validated, use error string for further validation
+                _check_has_lacks(err, params.has, None, params.msg, as_str=True)
                 actual_value = err
             elif params.ok is None:
                 # If result is failure and no ok/error checks, fail
@@ -898,59 +849,7 @@ class FlextTestsMatchers:
             )
             raise AssertionError(error_msg)
 
-        # Handle unified has/lacks (works for str, list, dict, set, tuple)
-        # params.has is t.Tests.Matcher.ContainmentSpec | None
-        # ContainmentSpec = object | Sequence[object]
-        if params.has is not None:
-            has_value: object | Sequence[object] = params.has
-            if _is_non_string_sequence(has_value):
-                has_items: Sequence[object] = has_value
-            else:
-                has_item: object = has_value
-                has_items = [has_item]
-            for has_item_obj in has_items:
-                # Type narrowing: has_item_obj is object from Sequence[object]
-                has_item_val: object = has_item_obj
-                if not u.chk(
-                    _as_guard_input(value),
-                    contains=_as_guard_input(has_item_val),
-                ):
-                    # str() already returns str
-                    item_str: str = str(has_item_val)
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                            container=value,
-                            item=item_str,
-                        ),
-                    )
-
-        if params.lacks is not None:
-            if _is_non_string_sequence(params.lacks):
-                lacks_items: Sequence[object] = params.lacks
-            else:
-                lacks_item: object = params.lacks
-                lacks_items = [lacks_item]
-            for lacks_item_obj in lacks_items:
-                lacks_item_val: object = lacks_item_obj
-                if u.chk(
-                    _as_guard_input(value),
-                    contains=_as_guard_input(lacks_item_val),
-                ):
-                    # str() already returns str, so cast is redundant
-                    lacks_item_str: str = str(lacks_item_val)
-                    raise AssertionError(
-                        params.msg
-                        or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                            container=value,
-                            item=lacks_item_str,
-                        ),
-                    )
-
-        # Legacy excludes support (deprecated)
-        # Legacy excludes parameter already converted to lacks by model validator
-        # Use params.lacks instead of params.excludes
-
+        _check_has_lacks(value, params.has, params.lacks, params.msg)
         # Length validation (delegate to u.Tests.Length)
         # model_validator already converts legacy length_* params to unified len
         value_payload = _to_test_payload(value)
@@ -1093,7 +992,7 @@ class FlextTestsMatchers:
                     def comparable_key(x: object) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
-                        type_name = getattr(type(result), "__name__", "unknown")
+                        type_name = type(result).__name__
                         return (str(type_name), str(result))
 
                     sorted_list = sorted(value_list, key=comparable_key)
@@ -1261,94 +1160,6 @@ class FlextTestsMatchers:
         """Start chained assertions on result (railway pattern)."""
         return m.Tests.Matcher.Chain[TResult](result=result)
 
-    # =========================================================================
-    # NEW GENERALIST METHODS
-    # =========================================================================
-
-    @staticmethod
-    def assert_contains[TItem](
-        container: Mapping[object, object] | Sequence[TItem] | str,
-        item: TItem | str,
-        *,
-        msg: str | None = None,
-    ) -> None:
-        """DEPRECATED: Use tm.that(container, contains=item) instead.
-
-        Migration:
-            tm.assert_contains(data, "key") -> tm.that(data, contains="key")
-            tm.assert_contains(items, value) -> tm.that(items, contains=value)
-            tm.assert_contains(text, "sub") -> tm.that(text, contains="sub")
-
-        """
-        warnings.warn(
-            "assert_contains() is deprecated. Use tm.that(container, contains=item) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        _ = FlextTestsMatchers.that(container, contains=item, msg=msg)
-
-    @staticmethod
-    def str_(
-        text: str,
-        contains: str | None = None,
-        *,
-        starts: str | None = None,
-        ends: str | None = None,
-        match: str | None = None,
-        excludes: str | None = None,
-        empty: bool | None = None,
-        msg: str | None = None,
-    ) -> None:
-        """DEPRECATED: Use tm.that(text, contains/starts/ends/match/excludes/empty=...) instead.
-
-        Migration:
-            tm.str_(url, starts="http", ends="/") -> tm.that(url, starts="http", ends="/")
-            tm.str_(text, contains="success") -> tm.that(text, contains="success")
-            tm.str_(text, match="[0-9]{4}-[0-9]{2}") -> tm.that(text, match="[0-9]{4}-[0-9]{2}")
-            tm.str_(text, excludes="error") -> tm.that(text, excludes="error")
-            tm.str_(name, empty=False) -> tm.that(name, empty=False)
-
-        """
-        warnings.warn(
-            "str_() is deprecated. Use tm.that(text, contains/starts/ends/match/excludes/empty=...) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        FlextTestsMatchers.that(
-            text,
-            contains=contains,
-            starts=starts,
-            ends=ends,
-            match=match,
-            excludes=excludes,
-            empty=empty,
-            msg=msg,
-        )
-
-    @staticmethod
-    def is_(
-        value: object,
-        expected_type: type[object] | None = None,
-        *,
-        none: bool | None = None,
-        msg: str | None = None,
-    ) -> None:
-        """DEPRECATED: Use tm.that(value, is_=type, none=...) instead.
-
-        Migration:
-            tm.is_(config, FlextSettings) -> tm.that(config, is_=FlextSettings)
-            tm.is_(value, none=False) -> tm.that(value, none=False)
-            tm.is_(value, none=True) -> tm.that(value, none=True)
-            tm.is_(value, str, none=False) -> tm.that(value, is_=str, none=False)
-
-        """
-        warnings.warn(
-            "is_() is deprecated. Use tm.that(value, is_=type, none=...) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        FlextTestsMatchers.that(value, is_=expected_type, none=none, msg=msg)
-
     @staticmethod
     @contextmanager
     def scope(
@@ -1420,20 +1231,24 @@ class FlextTestsMatchers:
                 os.chdir(cwd_path)
 
             # Create scope - use dict[str, t.Tests.PayloadValue] to match TestScope field types
-            cfg: dict[str, t.Tests.PayloadValue] = (
-                dict(params.config) if params.config else {}
-            )
+            cfg: dict[str, t.Tests.PayloadValue] = {}
+            if params.config:
+                cfg = {str(key): value for key, value in params.config.items()}
             # Filter container to payload values - services may be arbitrary objects
             container_dict: dict[str, t.Tests.PayloadValue] = {
                 k: v
                 for k, v in (params.container or {}).items()
                 if t.Guards.is_general_value(v)
             }
-            scope = m.Tests.Matcher.TestScope(
-                config=cfg,
-                container=container_dict,
-                context=dict(params.context or {}),
-            )
+            context_map: dict[str, t.Tests.PayloadValue] = {}
+            if params.context:
+                context_map = {str(key): value for key, value in params.context.items()}
+
+            scope = m.Tests.Matcher.TestScope.model_validate({
+                "config": cfg,
+                "container": container_dict,
+                "context": context_map,
+            })
             yield scope
 
         finally:
@@ -1469,394 +1284,6 @@ class FlextTestsMatchers:
                             RuntimeWarning,
                             stacklevel=2,
                         )
-
-    # =========================================================================
-    # SPECIALIZED ASSERTIONS (keep for backward compatibility)
-    # =========================================================================
-
-    @staticmethod
-    def dict_[TK, TV](
-        data: Mapping[TK, TV],
-        *,
-        has_key: TK | Sequence[TK] | None = None,
-        not_has_key: TK | Sequence[TK] | None = None,
-        has_value: TV | Sequence[TV] | None = None,
-        not_has_value: TV | Sequence[TV] | None = None,
-        key_equals: tuple[TK, TV] | Sequence[tuple[TK, TV]] | None = None,
-        contains: Mapping[TK, TV] | None = None,
-        not_contains: Mapping[TK, TV] | None = None,
-        empty: bool | None = None,
-        length: int | None = None,
-        length_gt: int | None = None,
-        length_gte: int | None = None,
-        length_lt: int | None = None,
-        length_lte: int | None = None,
-        msg: str | None = None,
-    ) -> Mapping[TK, TV]:
-        """DEPRECATED: Use tm.has() for key checks, tm.len() for length checks.
-
-        Migration:
-            tm.that(d, keys=["x"]) -> tm.has(d, "x")
-            tm.dict_(d, length=5)   -> tm.that(d, length=5)
-            tm.dict_(d, empty=False) -> tm.len(d, empty=False)
-
-        This method remains for complex cases requiring key_equals, contains, etc.
-
-        """
-        warnings.warn(
-            (
-                "dict_() is deprecated. Use tm.has() for key checks, "
-                "tm.len() for length. Kept for complex validations."
-            ),
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if has_key is not None:
-            if _is_non_string_sequence(has_key):
-                for key in has_key:
-                    if key not in data:
-                        raise AssertionError(msg or f"Key {key!r} not found in dict")
-            elif has_key not in data:
-                raise AssertionError(msg or f"Key {has_key!r} not found in dict")
-
-        if not_has_key is not None:
-            if _is_non_string_sequence(not_has_key):
-                for key in not_has_key:
-                    if key in data:
-                        raise AssertionError(
-                            msg or f"Key {key!r} should not be in dict"
-                        )
-            elif not_has_key in data:
-                raise AssertionError(
-                    msg or f"Key {not_has_key!r} should not be in dict"
-                )
-
-        if has_value is not None:
-            if _is_non_string_sequence(has_value):
-                for val in has_value:
-                    if val not in data.values():
-                        raise AssertionError(msg or f"Value {val!r} not found in dict")
-            elif has_value not in data.values():
-                raise AssertionError(msg or f"Value {has_value!r} not found in dict")
-
-        if not_has_value is not None:
-            if _is_non_string_sequence(not_has_value):
-                for val in not_has_value:
-                    if val in data.values():
-                        raise AssertionError(
-                            msg or f"Value {val!r} should not be in dict"
-                        )
-            elif not_has_value in data.values():
-                raise AssertionError(
-                    msg or f"Value {not_has_value!r} should not be in dict"
-                )
-
-        if key_equals is not None:
-            # key_equals is tuple[TK, TV] | Sequence[tuple[TK, TV]]
-            # Use TypeGuard for proper type narrowing
-            if _is_key_value_pair(key_equals):
-                # TypeGuard narrows to tuple[TK, TV]
-                key_item, expected_item = key_equals
-                if key_item not in data:
-                    raise AssertionError(msg or f"Key {key_item!r} not found in dict")
-                if data[key_item] != expected_item:
-                    raise AssertionError(
-                        msg
-                        or f"Key '{key_item}': expected {expected_item}, got {data[key_item]}",
-                    )
-            else:
-                # Sequence of tuples - validate each pair
-                for pair in key_equals:
-                    if isinstance(pair, tuple) and len(pair) == 2:
-                        pair_key, pair_val = pair
-                        if pair_key not in data:
-                            raise AssertionError(
-                                msg or f"Key {pair_key!r} not found in dict",
-                            )
-                        if data[pair_key] != pair_val:
-                            raise AssertionError(
-                                msg
-                                or f"Key '{pair_key}': expected {pair_val}, got {data[pair_key]}",
-                            )
-
-        if contains is not None:
-            for key, val in contains.items():
-                if key not in data:
-                    raise AssertionError(msg or f"Key {key!r} not found in dict")
-                if data.get(key) != val:
-                    raise AssertionError(
-                        msg or f"Key '{key}': expected {val}, got {data.get(key)}",
-                    )
-
-        if empty is not None:
-            FlextTestsMatchers.that(data, msg=msg, empty=empty)
-
-        if (
-            length is not None
-            or length_gt is not None
-            or length_gte is not None
-            or length_lt is not None
-            or length_lte is not None
-        ):
-            # Convert Mapping to list for length check using tm.that()
-            length_kwargs: dict[str, t.Tests.PayloadValue] = {}
-            if length is not None:
-                length_kwargs["length"] = length
-            if length_gt is not None:
-                length_kwargs["length_gt"] = length_gt
-            if length_gte is not None:
-                length_kwargs["length_gte"] = length_gte
-            if length_lt is not None:
-                length_kwargs["length_lt"] = length_lt
-            if length_lte is not None:
-                length_kwargs["length_lte"] = length_lte
-            _ = FlextTestsMatchers.that(list(data.keys()), msg=msg, **length_kwargs)
-
-        return dict(data)
-
-    @staticmethod
-    def list_[TItem](
-        items: Sequence[TItem],
-        *,
-        contains: TItem | None = None,
-        not_contains: TItem | None = None,
-        first_equals: TItem | None = None,
-        last_equals: TItem | None = None,
-        equals: Sequence[TItem] | None = None,
-        empty: bool | None = None,
-        length: int | None = None,
-        length_gt: int | None = None,
-        length_gte: int | None = None,
-        length_lt: int | None = None,
-        length_lte: int | None = None,
-        all_match: Callable[[TItem], bool] | None = None,
-        any_matches: Callable[[TItem], bool] | None = None,
-        msg: str | None = None,
-    ) -> list[TItem]:
-        """DEPRECATED: Use tm.has() for containment, tm.len() for length checks.
-
-        Migration:
-            tm.that(l, has="x") -> tm.has(l, "x")
-            tm.that(l, length=5)    -> tm.that(l, length=5)
-            tm.list_(l, empty=False) -> tm.len(l, empty=False)
-
-        This method remains for complex cases like all_match, any_matches, etc.
-
-        """
-        warnings.warn(
-            (
-                "list_() is deprecated. Use tm.has() for containment, "
-                "tm.len() for length. Kept for predicates (all_match, any_matches)."
-            ),
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if contains is not None:
-            FlextTestsMatchers.that(items, msg=msg, contains=contains)
-
-        if not_contains is not None and not_contains in items:
-            raise AssertionError(msg or f"{not_contains} should not be in list")
-
-        if first_equals is not None:
-            FlextTestsMatchers.that(items, msg="List must not be empty", empty=False)
-            FlextTestsMatchers.that(items[0], msg=msg, eq=first_equals)
-
-        if last_equals is not None:
-            FlextTestsMatchers.that(items, msg="List must not be empty", empty=False)
-            FlextTestsMatchers.that(items[-1], msg=msg, eq=last_equals)
-
-        if equals is not None:
-            FlextTestsMatchers.that(list(items), msg=msg, eq=list(equals))
-
-        if empty is not None:
-            FlextTestsMatchers.that(items, msg=msg, empty=empty)
-
-        if (
-            length is not None
-            or length_gt is not None
-            or length_gte is not None
-            or length_lt is not None
-            or length_lte is not None
-        ):
-            # Use tm.that() directly instead of deprecated tm.len()
-            length_kwargs: dict[str, t.Tests.PayloadValue] = {}
-            if length is not None:
-                length_kwargs["length"] = length
-            if length_gt is not None:
-                length_kwargs["length_gt"] = length_gt
-            if length_gte is not None:
-                length_kwargs["length_gte"] = length_gte
-            if length_lt is not None:
-                length_kwargs["length_lt"] = length_lt
-            if length_lte is not None:
-                length_kwargs["length_lte"] = length_lte
-            _ = FlextTestsMatchers.that(items, msg=msg, **length_kwargs)
-
-        if all_match is not None and not all(all_match(item) for item in items):
-            raise AssertionError(msg or "Not all items matched predicate")
-
-        if any_matches is not None and not any(any_matches(item) for item in items):
-            raise AssertionError(msg or "No item matched predicate")
-
-        return list(items)
-
-    @staticmethod
-    def len(
-        items: Sequence[object] | str | Mapping[object, object],
-        expected: int | None = None,
-        *,
-        gt: int | None = None,
-        gte: int | None = None,
-        lt: int | None = None,
-        lte: int | None = None,
-        empty: bool | None = None,
-        msg: str | None = None,
-    ) -> None:
-        """DEPRECATED: Use tm.that(items, length/length_gt/length_gte/empty=...) instead.
-
-        Migration:
-            tm.that(items, length=5) -> tm.that(items, length=5)
-            tm.that(items, length_gt=0, lt=10) -> tm.that(items, length_gt=0, length_lt=10)
-            tm.that(items, length_gte=1) -> tm.that(items, length_gte=1)
-            tm.len(items, empty=False) -> tm.that(items, empty=False)
-
-        """
-        warnings.warn(
-            "len() is deprecated. Use tm.that(items, length/length_gt/length_gte/empty=...) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        length_kwargs: dict[str, t.Tests.PayloadValue] = {}
-        if expected is not None:
-            length_kwargs["length"] = expected
-        if gt is not None:
-            length_kwargs["length_gt"] = gt
-        if gte is not None:
-            length_kwargs["length_gte"] = gte
-        if lt is not None:
-            length_kwargs["length_lt"] = lt
-        if lte is not None:
-            length_kwargs["length_lte"] = lte
-        if empty is not None:
-            length_kwargs["empty"] = empty
-        FlextTestsMatchers.that(items, msg=msg, **length_kwargs)
-
-    @staticmethod
-    def assert_is_type(
-        value: object,
-        type_spec: type[object],
-        msg: str | None = None,
-    ) -> object:
-        """DEPRECATED: Use tm.is_(value, type, none=False) instead.
-
-        Note: Renamed from is_type to avoid signature conflict with parent class.
-
-        Migration:
-            tm.assert_is_type(v, str) -> tm.is_(v, str, none=False)
-
-        """
-        warnings.warn(
-            "assert_is_type() is deprecated. Use tm.is_(value, type, none=False) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextTestsMatchers.is_(value, type_spec, none=False, msg=msg)
-
-    @staticmethod
-    def hasattr(
-        obj: object,
-        *attrs: str,
-        msg: str | None = None,
-    ) -> None:
-        """DEPRECATED: Use tm.that(hasattr(obj, attr), eq=True) for each attribute.
-
-        Migration:
-            tm.hasattr(obj, "attr1", "attr2") ->
-                tm.that(hasattr(obj, "attr1"), eq=True)
-                tm.that(hasattr(obj, "attr2"), eq=True)
-
-        """
-        warnings.warn(
-            "hasattr() is deprecated. Use tm.that(hasattr(obj, attr), eq=True) for each attribute.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if not attrs:
-            msg = "At least one attribute name required"
-            raise ValueError(msg)
-        for attr in attrs:
-            _ = FlextTestsMatchers.that(hasattr(obj, attr), msg=msg, eq=True)
-
-    @staticmethod
-    def method(obj: object, name: str, msg: str | None = None) -> None:
-        """DEPRECATED: Use tm.that(hasattr(obj, name), eq=True) and tm.that(callable(...), eq=True).
-
-        Migration:
-            tm.that(hasattr(api, "connect"), eq=True) and tm.that(callable(getattr(api, "connect", None)), eq=True) ->
-                tm.that(hasattr(api, "connect"), eq=True)
-                tm.that(callable(getattr(api, "connect")), eq=True)
-
-        """
-        warnings.warn(
-            "method() is deprecated. Use tm.that(hasattr(obj, name), eq=True) and tm.that(callable(...), eq=True).",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        _ = FlextTestsMatchers.that(hasattr(obj, name), msg=msg, eq=True)
-        _ = FlextTestsMatchers.that(callable(getattr(obj, name)), msg=msg, eq=True)
-
-    @staticmethod
-    def not_none(*values: object, msg: str | None = None) -> None:
-        """DEPRECATED: Use tm.that(value, none=False) for each value.
-
-        Migration:
-            tm.that(value1, value2, value3, none=False) ->
-                tm.that(value1, none=False)
-                tm.that(value2, none=False)
-                tm.that(value3, none=False)
-
-        """
-        warnings.warn(
-            "not_none() is deprecated. Use tm.that(value, none=False) for each value.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        for value in values:
-            _ = FlextTestsMatchers.that(value, msg=msg, none=False)
-
-    # =========================================================================
-    # CONVENIENCE ALIASES (DEPRECATED - Use tm.that() instead)
-    # =========================================================================
-
-    @staticmethod
-    def eq(actual: object, expected: object, msg: str | None = None) -> None:
-        """DEPRECATED: Use tm.that(actual, eq=expected) instead.
-
-        Migration:
-            tm.that(a, eq=b) -> tm.that(a, eq=b)
-
-        """
-        warnings.warn(
-            "eq() is deprecated. Use tm.that(actual, eq=expected) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        _ = FlextTestsMatchers.that(actual, msg=msg, eq=expected)
-
-    @staticmethod
-    def true(condition: bool, msg: str | None = None) -> None:
-        """DEPRECATED: Use tm.that(condition, eq=True) instead.
-
-        Migration:
-            tm.that(callable(func, eq=True)) -> tm.that(callable(func), eq=True)
-
-        """
-        warnings.warn(
-            "true() is deprecated. Use tm.that(condition, eq=True) instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        _ = FlextTestsMatchers.that(condition, msg=msg, eq=True)
 
     @staticmethod
     def assert_length_equals(

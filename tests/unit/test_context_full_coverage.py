@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, cast
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextContext, c, m, r, t, u
 
@@ -195,10 +196,9 @@ def test_metadata_and_scope_helpers() -> None:
     metadata_dump = ctx._get_all_metadata()
     assert "attributes" in metadata_dump
 
-    class _DummyMetadata:
-        @staticmethod
-        def model_dump() -> dict[str, t.GeneralValueType]:
-            return {"custom_fields": "bad", "x": "y"}
+    class _DummyMetadata(BaseModel):
+        custom_fields: str = "bad"
+        x: str = "y"
 
     ctx._metadata = cast(Any, _DummyMetadata())
     all_md = ctx._get_all_metadata()

@@ -19,6 +19,7 @@ from collections.abc import Callable, Iterator
 from flext_core import FlextResult, t
 from flext_core.utilities import u
 from flext_tests.utilities import FlextTestsUtilities
+
 from tests.test_utils import assertion_helpers
 
 
@@ -115,17 +116,18 @@ class TestsFlextUtilities(FlextTestsUtilities):
             result = operation()
 
             if expected_error is not None:
-                (
-                    assertion_helpers.assert_flext_result_failure(result),
-                    (f"Expected failure for: {description}, got success"),
+                assertion_helpers.assert_flext_result_failure(
+                    result,
+                    f"Expected failure for: {description}, got success",
+                    error_contains=expected_error,
                 )
                 assert expected_error in str(result.error), (
                     f"Expected error '{expected_error}' in '{result.error}' for: {description}"
                 )
             else:
-                (
-                    assertion_helpers.assert_flext_result_success(result),
-                    (f"Expected success for: {description}, got: {result.error}"),
+                assertion_helpers.assert_flext_result_success(
+                    result,
+                    f"Expected success for: {description}, got: {result.error}",
                 )
                 if expected_value is not None:
                     assert result.value == expected_value, (
@@ -205,10 +207,9 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadModelDump:
             """Object with model_dump that raises."""
 
-            def model_dump(self) -> dict[str, t.GeneralValueType]:
-                """Raise error on model_dump."""
-                msg = "Bad model_dump"
-                raise RuntimeError(msg)
+            model_dump: Callable[[], dict[str, t.GeneralValueType]] = staticmethod(
+                lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+            )
 
         class BadConfig:
             """Config object that raises on attribute access."""
@@ -236,7 +237,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             """
             assertion_helpers.assert_flext_result_failure(
-                result, description, expected_error
+                result, description, error_contains=expected_error
             )
 
         @staticmethod
@@ -251,7 +252,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 (f"Expected success for: {description}, got: {result.error}"),
             )
@@ -270,7 +271,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 (f"Expected success for: {description}, got: {result.error}"),
             )

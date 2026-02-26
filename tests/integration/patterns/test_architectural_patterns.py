@@ -143,19 +143,23 @@ class TestEnterprisePatterns:
                 self._data: dict[str, t.GeneralValueType] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: object) -> FlextResult[bool]:
+            def save(
+                self, entity_id: str, data: t.GeneralValueType
+            ) -> FlextResult[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return FlextResult[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> FlextResult[object]:
+            def find_by_id(self, entity_id: str) -> FlextResult[t.GeneralValueType]:
                 """Find entity by ID."""
                 self._query_count += 1
 
                 if entity_id in self._data:
-                    return FlextResult[object].ok(self._data[entity_id])
+                    return FlextResult[t.GeneralValueType].ok(self._data[entity_id])
 
-                return FlextResult[object].fail(f"Entity not found: {entity_id}")
+                return FlextResult[t.GeneralValueType].fail(
+                    f"Entity not found: {entity_id}"
+                )
 
             def get_query_count(self) -> int:
                 """Get number of queries executed."""
@@ -168,7 +172,7 @@ class TestEnterprisePatterns:
         start_time = time.perf_counter()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 f"Save operation {i} should succeed",
             )
@@ -187,7 +191,9 @@ class TestEnterprisePatterns:
         # Query entities
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
+            query_result: FlextResult[t.GeneralValueType] = repo.find_by_id(
+                f"entity_{i}"
+            )
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, dict), (

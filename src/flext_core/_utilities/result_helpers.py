@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
@@ -15,14 +14,6 @@ R2 = TypeVar("R2")
 
 
 class ResultHelpers:
-    @staticmethod
-    def ok(value: T) -> r[T]:
-        return r.ok(value)
-
-    @staticmethod
-    def fail(error: str) -> r[object]:
-        return r[object].fail(error)
-
     @staticmethod
     def err(result: p.Result[T], *, default: str = "Unknown error") -> str:
         if result.is_failure and result.error:
@@ -87,24 +78,16 @@ class ResultHelpers:
         return any(bool(v) for v in values)
 
     @staticmethod
-    def then(value: r[T], func: Callable[[T], r[R2]]) -> r[R2]:
-        return FlextUtilitiesReliability.then(value, func)
-
-    @staticmethod
     def empty(items: object) -> bool:
         if isinstance(items, r):
             if items.is_failure:
                 return True
-            return FlextUtilitiesGuards.empty(cast("t.GuardInputValue", items.value))
+            return FlextUtilitiesGuards.empty(items.value)
         if items is None:
             return True
         if not FlextUtilitiesGuards.is_general_value_type(items):
             return True
-        return FlextUtilitiesGuards.empty(cast("t.GuardInputValue", items))
-
-    @staticmethod
-    def in_(value: t.GuardInputValue, container: t.GuardInputValue) -> bool:
-        return FlextUtilitiesGuards.in_(value, container)
+        return FlextUtilitiesGuards.empty(items)
 
     @staticmethod
     def count(

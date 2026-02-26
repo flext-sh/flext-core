@@ -262,7 +262,7 @@ class TestFlextLogger:
 
         # Validate bound logger can be used for logging
         result = bound_logger.info("Test message with bound context")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Bound logger should work for logging",
         )
@@ -285,7 +285,7 @@ class TestFlextLogger:
 
         # Validate logger works with standard logging patterns
         result = logger.info("Compatibility test message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Logger should work with standard patterns",
         )
@@ -308,7 +308,7 @@ class TestFlextLogger:
 
         # Validate logger can be used for logging
         result = logger.info("Module-level logger test message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Module-level logger should work",
         )
@@ -430,7 +430,7 @@ class TestFlextLoggerUsage:
 
         # Validate all logging operations succeeded
         for i, result in enumerate(results):
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 f"Log entry {i + 1} should succeed",
             )
@@ -457,7 +457,7 @@ class TestFlextLoggerUsage:
 
         # Validate performance logging succeeds
         result = perf_logger.info("Performance test message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Performance logging should succeed",
         )
@@ -565,7 +565,7 @@ class TestFlextLoggerIntegration:
             )
 
             # Validate logging succeeded
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging should succeed",
             )
@@ -613,7 +613,10 @@ class TestFlextLoggerIntegration:
         )
 
         # Validate logging succeeded
-        assertion_helpers.assert_flext_result_success(result), "Logging should succeed"
+        _ = (
+            assertion_helpers.assert_flext_result_success(result),
+            "Logging should succeed",
+        )
 
         # Validate logged values are correct
         # Note: Actual log content validation would require log capture

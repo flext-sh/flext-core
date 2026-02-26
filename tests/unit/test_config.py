@@ -24,7 +24,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import ValidationError
@@ -32,6 +32,7 @@ from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings
 from flext_core.constants import c
+from flext_core.models import m
 from flext_core.typings import t
 from flext_core.utilities import u
 from flext_tests import tm
@@ -43,18 +44,18 @@ from flext_tests.utilities import FlextTestsUtilities
 class ConfigScenarios:
     """Centralized config test scenarios using c."""
 
-    INIT_CASES: ClassVar[list[dict[str, t.GeneralValueType]]] = [
+    INIT_CASES: ClassVar[list[dict[str, str | bool]]] = [
         {"app_name": "test_app", "version": "1.0.0", "debug": True},
         {"app_name": "dict_app", "version": "2.0.0", "debug": False},
         {"app_name": "valid_app", "version": "1.0.0"},
     ]
 
-    FIELD_ACCESS_CASES: ClassVar[list[tuple[str, object, object]]] = [
+    FIELD_ACCESS_CASES: ClassVar[list[tuple[str, str, str]]] = [
         ("app_name", "test_value", "modified_value"),
         ("version", "1.0.0", "2.0.0"),
     ]
 
-    DEBUG_TRACE_CASES: ClassVar[list[dict[str, t.GeneralValueType]]] = [
+    DEBUG_TRACE_CASES: ClassVar[list[dict[str, bool]]] = [
         {"debug": True, "trace": False},
         {"debug": True, "trace": True},
         {"debug": False, "trace": False},
@@ -72,7 +73,7 @@ class ConfigScenarios:
         ("FLEXT_DEBUG", "true", True, "INFO"),
     ]
 
-    VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, t.GeneralValueType], str]]] = [
+    VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, bool], str]]] = [
         ({"trace": True, "debug": False}, "Trace mode requires debug mode"),
     ]
 
@@ -85,20 +86,20 @@ class TestFlextSettings:
         ConfigScenarios.INIT_CASES,
         ids=lambda d: str(u.mapper().get(d, "app_name", default="default")),
     )
-    def test_config_initialization(self, config_data: dict[str, t.GeneralValueType]) -> None:
+    def test_config_initialization(self, config_data: dict[str, str | bool]) -> None:
         """Test config initialization with various values."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
             **config_data,
         )
         FlextTestsUtilities.Tests.ConfigHelpers.assert_config_fields(
             config,
-            config_data,
+            m.ConfigMap.model_validate(dict(config_data)),
         )
         tm.that(config, is_=FlextSettings, msg="Config must be FlextSettings instance")
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data: dict[str, t.GeneralValueType] = {
+        config_data: dict[str, str | bool] = {
             "app_name": "dict_app",
             "version": "2.0.0",
             "debug": False,
@@ -108,7 +109,7 @@ class TestFlextSettings:
         )
         FlextTestsUtilities.Tests.ConfigHelpers.assert_config_fields(
             config,
-            config_data,
+            m.ConfigMap.model_validate(dict(config_data)),
         )
 
     def test_config_to_dict(self) -> None:
@@ -156,8 +157,8 @@ class TestFlextSettings:
     def test_config_field_access(
         self,
         field_name: str,
-        value: object,
-        modified: object,
+        value: str,
+        modified: str,
     ) -> None:
         """Test config field access operations."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
@@ -278,9 +279,7 @@ class TestFlextSettings:
         ConfigScenarios.VALIDATION_ERROR_CASES,
     )
     def test_config_validation_errors(
-        self,
-        config_data: dict[str, t.GeneralValueType],
-        error_pattern: str,
+        self, config_data: dict[str, bool], error_pattern: str
     ) -> None:
         """Test config validation with invalid inputs."""
         with pytest.raises(ValidationError) as exc_info:
@@ -308,9 +307,11 @@ class TestFlextSettings:
     @pytest.mark.parametrize(
         "debug_trace",
         ConfigScenarios.DEBUG_TRACE_CASES,
-        ids=lambda d: f"debug_{u.mapper().get(d, 'debug')}_trace_{u.mapper().get(d, 'trace', default=False)}",
+        ids=lambda d: (
+            f"debug_{u.mapper().get(d, 'debug')}_trace_{u.mapper().get(d, 'trace', default=False)}"
+        ),
     )
-    def test_config_debug_enabled(self, debug_trace: dict[str, t.GeneralValueType]) -> None:
+    def test_config_debug_enabled(self, debug_trace: dict[str, bool]) -> None:
         """Test debug enabled checking using direct fields."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
             **debug_trace,
@@ -574,13 +575,13 @@ class TestFlextSettingsPydantic:
         # This tests the TypeError path in __new__ when instance type mismatch
         # This is a defensive check that's hard to trigger in normal usage
         # We'll test it by manipulating the singleton registry directly
-        original_instances = FlextSettings._instances.copy()
+        original_instances = dict(FlextSettings._instances.items())
         try:
             # Manually add wrong type to instances dict to trigger TypeError
             class WrongType:
                 pass
 
-            wrong_instance: FlextSettings = WrongType()
+            wrong_instance = cast(FlextSettings, cast(object, WrongType()))
             FlextSettings._instances[FlextSettings] = wrong_instance
 
             # Now trying to get instance should raise TypeError
@@ -647,24 +648,17 @@ class TestFlextSettingsPydantic:
     def test_auto_config_create_config(self) -> None:
         """Test AutoConfig.create_config method."""
 
-        class TestConfig(BaseSettings):
-            test_field: str = "default"
-
-        auto_config = FlextSettings.AutoConfig(config_class=TestConfig)
+        auto_config = FlextSettings.AutoConfig(config_class=FlextSettings)
         instance = auto_config.create_config()
-        assert isinstance(instance, TestConfig)
+        assert isinstance(instance, FlextSettings)
 
     def test_auto_register_decorator(self) -> None:
         """Test auto_register decorator registers namespace."""
 
-        @FlextSettings.auto_register("test_namespace")
-        class TestNamespaceConfig(BaseSettings):
-            test_field: str = "default"
+        FlextSettings.auto_register("test_namespace")(FlextSettings)
 
         assert "test_namespace" in FlextSettings._namespace_registry
-        assert (
-            FlextSettings._namespace_registry["test_namespace"] == TestNamespaceConfig
-        )
+        assert FlextSettings._namespace_registry["test_namespace"] == FlextSettings
 
         # Cleanup
         del FlextSettings._namespace_registry["test_namespace"]
@@ -672,10 +666,7 @@ class TestFlextSettingsPydantic:
     def test_register_namespace(self) -> None:
         """Test register_namespace method."""
 
-        class TestConfig(BaseSettings):
-            test_field: str = "default"
-
-        FlextSettings.register_namespace("test_register", TestConfig)
+        FlextSettings.register_namespace("test_register", FlextSettings)
         assert "test_register" in FlextSettings._namespace_registry
 
         # Cleanup
@@ -695,19 +686,15 @@ class TestFlextSettingsPydantic:
     def test_get_namespace_type_mismatch(self) -> None:
         """Test get_namespace raises TypeError for type mismatch."""
 
-        class TestConfig(BaseSettings):
-            test_field: str = "default"
-
-        FlextSettings.register_namespace("test_type", TestConfig)
+        FlextSettings.register_namespace("test_type", FlextSettings)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
 
-        # Try to get with wrong type (FlextSettings instead of TestConfig)
         with pytest.raises(TypeError, match="is not subclass"):
-            config.get_namespace("test_type", FlextSettings)
+            config.get_namespace("test_type", threading.Thread)
 
         # Test successful get_namespace with correct type
         instance = config.get_namespace("test_type", BaseSettings)
-        assert isinstance(instance, TestConfig)
+        assert isinstance(instance, FlextSettings)
 
         # Cleanup
         del FlextSettings._namespace_registry["test_type"]
@@ -715,15 +702,12 @@ class TestFlextSettingsPydantic:
     def test_get_namespace_found(self) -> None:
         """Test get_namespace returns namespace config when registered."""
 
-        class TestConfig(BaseSettings):
-            test_field: str = "default"
-
-        FlextSettings.register_namespace("test_attr", TestConfig)
+        FlextSettings.register_namespace("test_attr", FlextSettings)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
 
         # Test get_namespace() access (replaces __getattr__)
-        instance = config.get_namespace("test_attr", TestConfig)
-        assert isinstance(instance, TestConfig)
+        instance = config.get_namespace("test_attr", FlextSettings)
+        assert isinstance(instance, FlextSettings)
 
         # Cleanup
         del FlextSettings._namespace_registry["test_attr"]

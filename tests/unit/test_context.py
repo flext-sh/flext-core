@@ -384,7 +384,7 @@ class TestFlextContext:
 
         context._add_hook("set", test_hook)
         context.set("test_key", "test_value").value
-        assert hook_called is True
+        assert hook_called
 
     def test_context_metadata(self, test_context: FlextContext) -> None:
         """Test context metadata."""

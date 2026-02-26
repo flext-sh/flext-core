@@ -1,14 +1,13 @@
 """Additional coverage for flext_core.service using real executions."""
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Mapping
 from typing import cast
 
 import pytest
 
-from flext_core import e, p, r, s, t
+from flext_core import e, r, s, t
 from flext_tests import u
 
 
@@ -61,9 +60,7 @@ def test_clone_runtime_creates_isolated_scope() -> None:
     assert cloned.config.app_name == "cloned"
     assert cloned.config.app_name != base_app_name
     # Ensure new container resolves injected service
-    resolved_result: p.Result[t.GeneralValueType] = cloned.container.get(
-        "val",
-    )
+    resolved_result = cloned.container.get("val")
     # Type narrowing: assert_result_success accepts r[TResult], protocol Result is compatible
     # Cast to r[t.GeneralValueType] for type compatibility
     resolved_result_typed: r[t.GeneralValueType] = cast(

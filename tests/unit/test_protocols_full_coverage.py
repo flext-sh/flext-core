@@ -54,10 +54,14 @@ def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
     assert isinstance(instance, _MetaCreated)
     assert getattr(_MetaCreated, "__protocols__", ()) == (_NamedProtocol,)
 
-    class _NoProtocols(m.Base.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
+    class _NoProtocols(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
         x: int = 1
 
-    assert _NoProtocols.get_protocols() == ()
+    get_protocols = cast(
+        Callable[[], tuple[type, ...]],
+        getattr(_NoProtocols, "get_protocols"),
+    )
+    assert get_protocols() == ()
 
 
 def test_protocol_model_and_settings_methods() -> None:
@@ -122,13 +126,19 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
         is True
     )
 
-    class _DefaultModelName(m.Base.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
+    class _DefaultModelName(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
         value: int = 1
 
-    class _DefaultSettingsName(
-        m.Base.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta
-    ):
+    class _DefaultSettingsName(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
         app_name: str = "x"
 
-    assert _DefaultModelName()._protocol_name() == "_DefaultModelName"
-    assert _DefaultSettingsName()._protocol_name() == "_DefaultSettingsName"
+    model_name_getter = cast(
+        Callable[[], str],
+        getattr(_DefaultModelName(), "_protocol_name"),
+    )
+    settings_name_getter = cast(
+        Callable[[], str],
+        getattr(_DefaultSettingsName(), "_protocol_name"),
+    )
+    assert model_name_getter() == "_DefaultModelName"
+    assert settings_name_getter() == "_DefaultSettingsName"

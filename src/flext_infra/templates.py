@@ -60,53 +60,5 @@ class TemplateEngine:
         except (IndexError, ValueError) as exc:
             return r[str].fail(f"template render error: {exc}")
 
-    def render_generated_header(
-        self,
-        source: str,
-        project: str,
-    ) -> FlextResult[str]:
-        """Render a generated file header.
-
-        Args:
-            source: Source script that generated the file.
-            project: Project the file was generated for.
-
-        Returns:
-            FlextResult[str] with the rendered header.
-
-        """
-        return self.render(
-            self.GENERATED_HEADER,
-            source=source,
-            project=project,
-        )
-
-    def render_status_line(
-        self,
-        project: str,
-        phase: str,
-        result: str,
-        reason: str,
-    ) -> FlextResult[str]:
-        """Render a status line.
-
-        Args:
-            project: Project name.
-            phase: Execution phase.
-            result: Result status (PASS/FAIL).
-            reason: Human-readable reason.
-
-        Returns:
-            FlextResult[str] with the rendered status line.
-
-        """
-        return self.render(
-            self.STATUS_LINE,
-            project=project,
-            phase=phase,
-            result=result,
-            reason=reason,
-        )
-
 
 __all__ = ["TemplateEngine"]

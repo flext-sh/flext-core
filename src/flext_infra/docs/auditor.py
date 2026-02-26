@@ -20,9 +20,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
-
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
+
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DocScope,

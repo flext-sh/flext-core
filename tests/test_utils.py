@@ -136,7 +136,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[..., FlextResult[t.GeneralValueType]],
+        operation_func: Callable[[], FlextResult[t.GeneralValueType]],
         test_case: StandardTestCase,
         context: str = "",
     ) -> t.GeneralValueType:

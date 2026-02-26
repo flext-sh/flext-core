@@ -11,8 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_infra.__version__ import __version__, __version_info__
-from flext_infra.basemk import BaseMkGenerator
-from flext_infra.basemk import TemplateEngine as BaseMkTemplateEngine
+from flext_infra.basemk import BaseMkGenerator, TemplateEngine as BaseMkTemplateEngine
 from flext_infra.constants import FlextInfraConstants, c
 from flext_infra.discovery import DiscoveryService
 from flext_infra.git import GitService

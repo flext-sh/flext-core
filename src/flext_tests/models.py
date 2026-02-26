@@ -15,6 +15,8 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import TypeAliasType
 
+from flext_core import FlextModels, r, u
+from flext_core._models.base import FlextModelFoundation
 from pydantic import (
     AliasChoices,
     BaseModel,
@@ -25,8 +27,6 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModels, r, u
-from flext_core._models.base import FlextModelFoundation
 from flext_tests.constants import c
 from flext_tests.typings import t
 
@@ -375,7 +375,7 @@ class FlextTestsModels(FlextModels):
                 """Parameters for tt.generic() factory method with Pydantic 2 advanced validation.
 
                 Uses Field constraints for inline validation. Type validation done via
-                model_validator since Field constraints cannot validate type (type(x) is Y or Y in type(x).__mro__) checks.
+                    model_validator since Field constraints cannot validate runtime type checks.
                 """
 
                 type_: type = Field(
@@ -1353,7 +1353,7 @@ class FlextTestsModels(FlextModels):
                 is_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("is_", "is"),
-                    description="Type check (type(x) is Y or Y in type(x).__mro__) - single type or tuple",
+                    description="Runtime type check against single type or tuple",
                 )
                 none: bool | None = Field(
                     default=None,
@@ -1478,7 +1478,7 @@ class FlextTestsModels(FlextModels):
                 is_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("is_", "is"),
-                    description="Type check (type(x) is Y or Y in type(x).__mro__) - single type or tuple",
+                    description="Runtime type check against single type or tuple",
                 )
                 not_: type | tuple[type, ...] | None = Field(
                     default=None,
@@ -1684,7 +1684,7 @@ class FlextTestsModels(FlextModels):
                 @classmethod
                 def convert_cwd(cls, value: Path | str | None) -> Path | str | None:
                     """Convert string to Path if needed."""
-                    if type(value) is str:
+                    if isinstance(value, str):
                         return Path(value)
                     return value
 

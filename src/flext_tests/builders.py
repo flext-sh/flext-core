@@ -15,9 +15,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, Self, TypeGuard, overload
 
+from flext_core import r
 from pydantic import BaseModel
 
-from flext_core import r
 from flext_tests.constants import c
 from flext_tests.factories import tt
 from flext_tests.models import m
@@ -258,24 +258,42 @@ class FlextTestsBuilders:
 
             # Type narrowing for Entity classes
             if is_entity_class(cls_type):
+                entity_cls: type[m.Tests.Factory.Entity] = cls_type
                 name_val = cls_kwargs.get("name", "")
                 value_val = cls_kwargs.get("value", "")
+
+                def entity_factory(
+                    *,
+                    name: str,
+                    value: t.Tests.PayloadValue,
+                ) -> m.Tests.Factory.Entity:
+                    return entity_cls(name=name, value=value)
+
                 resolved_value = u.Tests.DomainHelpers.create_test_entity_instance(
                     name=str(name_val) if name_val else "",
                     value=value_val or "",
-                    entity_class=cls_type,
+                    entity_class=entity_factory,
                 )
             # Type narrowing for Value classes
             elif is_value_class(cls_type):
+                value_cls: type[m.Tests.Factory.ValueObject] = cls_type
                 data_val = cls_kwargs.get("data", "")
                 count_val = cls_kwargs.get("count", 1)
+
+                def value_factory(
+                    *,
+                    data: str,
+                    count: int,
+                ) -> m.Tests.Factory.ValueObject:
+                    return value_cls(data=data, count=count)
+
                 resolved_value = (
                     u.Tests.DomainHelpers.create_test_value_object_instance(
                         data=str(data_val) if data_val else "",
                         count=int(count_val)
                         if isinstance(count_val, int | float)
                         else 1,
-                        value_class=cls_type,
+                        value_class=value_factory,
                     )
                 )
             # Generic class instantiation
@@ -291,9 +309,9 @@ class FlextTestsBuilders:
                 else:
                     instance = cls_type.__call__()
                 # Type narrow: dynamic class instantiation results are BuilderValue
-                if (
-                    type(instance) in {str, int, float, bool, type(None), list, dict}
-                    or BaseModel in type(instance).__mro__
+                if isinstance(
+                    instance,
+                    str | int | float | bool | list | dict | BaseModel | type(None),
                 ):
                     resolved_value = instance
                 else:
@@ -344,7 +362,7 @@ class FlextTestsBuilders:
                     filtered_dict[dict_key] = dict_value
                 elif isinstance(dict_value, list | tuple):
                     filtered_dict[dict_key] = list(dict_value)
-                elif type(dict_value) is dict:
+                elif isinstance(dict_value, dict):
                     filtered_dict[dict_key] = dict_value
             # model_kind_str is validated by _get_model_kind - use match for type safety
             model_kind: Literal["user", "config", "service", "entity", "value"]
@@ -530,14 +548,14 @@ class FlextTestsBuilders:
                     error_msg = f"Path '{part}' not found in '{path}'"
                     raise KeyError(error_msg)
             next_val = current[part]
-            if type(next_val) is not dict:
+            if not isinstance(next_val, dict):
                 if create_parents:
                     current[part] = {}
                     next_val = current[part]
                 else:
                     error_msg = f"Path '{part}' is not a dict in '{path}'"
                     raise TypeError(error_msg)
-            if type(next_val) is dict:
+            if isinstance(next_val, dict):
                 current = next_val
 
         # current is BuilderDict, which accepts BuilderValue
@@ -1232,15 +1250,15 @@ class FlextTestsBuilders:
         if factory == "services":
             services: list[dict[str, str]] = []
             for i in range(count):
-                service = tt.create_service(name=f"service_{i}")
-                services.append(
-                    {
-                        "id": service.id,
-                        "name": service.name,
-                        "type": service.type,
-                        "status": service.status,
-                    }
-                )
+                service_result = tt.model("service", name=f"service_{i}")
+                if not isinstance(service_result, m.Tests.Factory.Service):
+                    continue
+                services.append({
+                    "id": service_result.id,
+                    "name": service_result.name,
+                    "type": service_result.type,
+                    "status": service_result.status,
+                })
             return services
 
         if factory == "results":
@@ -1361,12 +1379,12 @@ class FlextTestsBuilders:
             ),
         ] = {}
         for key, value in data.items():
-            if type(value) is list:
+            if isinstance(value, list):
                 converted_items: list[
                     t.Tests.PayloadValue | r[t.Tests.PayloadValue]
                 ] = []
                 for item in value:
-                    if type(item) is dict and item.get("_is_result_marker"):
+                    if isinstance(item, dict) and item.get("_is_result_marker"):
                         if "_result_ok" in item:
                             converted_items.append(
                                 r[t.Tests.PayloadValue].ok(item["_result_ok"]),
@@ -1381,7 +1399,7 @@ class FlextTestsBuilders:
                     else:
                         converted_items.append(item)
                 processed[key] = converted_items
-            elif type(value) is dict and value.get("_is_result_marker"):
+            elif isinstance(value, dict) and value.get("_is_result_marker"):
                 # Handle add() with result_ok or result_fail
                 if "_result_ok" in value:
                     processed[key] = r[t.Tests.PayloadValue].ok(value["_result_ok"])
@@ -1415,7 +1433,7 @@ class FlextTestsBuilders:
         for key, value in data.items():
             new_key = f"{parent_key}{sep}{key}" if parent_key else key
             # Check if value is a dict (not BaseModel)
-            if type(value) is dict:
+            if isinstance(value, dict):
                 items.extend(
                     self._flatten_dict(value, new_key, sep).items(),
                 )
@@ -1621,17 +1639,13 @@ class FlextTestsBuilders:
                     items: list[tuple[str, t.Tests.PayloadValue]] = []
                     for key, value in data.items():
                         new_key = f"{parent}{separator}{key}" if parent else key
-                        # Check if value is a Mapping but not a BaseModel
-                        if isinstance(value, Mapping) and not isinstance(
-                            value, BaseModel
-                        ):
+                        if isinstance(value, Mapping):
                             value_dict: dict[str, t.Tests.PayloadValue] = {}
                             for k, v in value.items():
                                 if v is None:
                                     value_dict[str(k)] = None
-                                elif (
-                                    type(v) in {str, bool, int, float, list, dict}
-                                    or BaseModel in type(v).__mro__
+                                elif isinstance(
+                                    v, (str, bool, int, float, list, dict, BaseModel)
                                 ):
                                     value_dict[str(k)] = v
                                 else:
@@ -1705,10 +1719,18 @@ class FlextTestsBuilders:
                 value: t.Tests.PayloadValue = "",
             ) -> T:
                 """Create entity - DELEGATES to u.Tests.DomainHelpers."""
+
+                def entity_factory(
+                    *,
+                    name: str,
+                    value: t.Tests.PayloadValue,
+                ) -> T:
+                    return entity_class(name=name, value=value)
+
                 return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=name,
                     value=value,
-                    entity_class=entity_class,
+                    entity_class=entity_factory,
                 )
 
             @staticmethod
@@ -1718,10 +1740,18 @@ class FlextTestsBuilders:
                 count: int = 1,
             ) -> T:
                 """Create value object - DELEGATES to u.Tests.DomainHelpers."""
+
+                def value_factory(
+                    *,
+                    data: str,
+                    count: int,
+                ) -> T:
+                    return value_class(data=data, count=count)
+
                 return u.Tests.DomainHelpers.create_test_value_object_instance(
                     data=data,
                     count=count,
-                    value_class=value_class,
+                    value_class=value_factory,
                 )
 
             @staticmethod
@@ -1744,12 +1774,20 @@ class FlextTestsBuilders:
                 values: Sequence[t.Tests.PayloadValue],
             ) -> list[T]:
                 """Create batch entities - DELEGATES to u.Tests.DomainHelpers."""
-                result = u.Tests.DomainHelpers.create_test_entities_batch(
+
+                def entity_factory(
+                    *,
+                    name: str,
+                    value: t.Tests.PayloadValue,
+                ) -> T:
+                    return entity_class(name=name, value=value)
+
+                result: r[list[T]] = u.Tests.DomainHelpers.create_test_entities_batch(
                     names=list(names),
                     values=list(values),
-                    entity_class=entity_class,
+                    entity_class=entity_factory,
                 )
-                if result.is_success:
+                if result.is_success and result.value is not None:
                     return result.value
                 raise ValueError(result.error)
 

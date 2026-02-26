@@ -109,7 +109,9 @@ class FlextMixins(FlextRuntime):
         if isinstance(obj, m.ConfigMap):
             return obj
 
-        model_dump_callable = getattr(obj, "model_dump", None)
+        model_dump_callable = (
+            getattr(obj, "model_dump") if hasattr(obj, "model_dump") else None
+        )
         if callable(model_dump_callable):
             model_dump_result = model_dump_callable()
             try:
@@ -160,24 +162,6 @@ class FlextMixins(FlextRuntime):
         if isinstance(value, FlextResult):
             return value
         return r[T].ok(value)
-
-    class ModelConversion:
-        """Compatibility namespace exposing model conversion helpers."""
-
-        @staticmethod
-        def to_dict(
-            obj: object | None,
-        ) -> m.ConfigMap:
-            """Convert object payloads into ``m.ConfigMap``."""
-            return x.to_dict(obj)
-
-    class ResultHandling:
-        """Compatibility namespace exposing result helpers."""
-
-        @staticmethod
-        def ensure_result[T](value: T | r[T]) -> r[T]:
-            """Return ``value`` as ``r[T]`` without changing semantics."""
-            return x.ensure_result(value)
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
@@ -236,14 +220,18 @@ class FlextMixins(FlextRuntime):
         # Use getattr to safely access PrivateAttr before initialization
         # PrivateAttr may return the descriptor object if not initialized
         # Check if _runtime is actually a ServiceRuntime instance
-        runtime = getattr(self, "_runtime", None)
+        runtime = getattr(self, "_runtime") if hasattr(self, "_runtime") else None
         match runtime:
             case m.ServiceRuntime() as service_runtime:
                 return service_runtime
             case _:
                 pass
 
-        runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
+        runtime_options_callable = (
+            getattr(self, "_runtime_bootstrap_options")
+            if hasattr(self, "_runtime_bootstrap_options")
+            else None
+        )
         options_candidate = (
             runtime_options_callable()
             if callable(runtime_options_callable)
@@ -313,19 +301,19 @@ class FlextMixins(FlextRuntime):
     def track(
         self,
         operation_name: str,
-    ) -> Iterator[dict[str, t.ConfigMapValue]]:
+    ) -> Iterator[Mapping[str, t.ConfigMapValue]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats_attr = f"_stats_{operation_name}"
-        stats: m.ConfigMap = getattr(
-            self,
-            stats_attr,
-            m.ConfigMap(
+        stats: m.ConfigMap = (
+            getattr(self, stats_attr)
+            if hasattr(self, stats_attr)
+            else m.ConfigMap(
                 root={
                     "operation_count": 0,
                     "error_count": 0,
                     "total_duration_ms": 0.0,
                 }
-            ),
+            )
         )
 
         op_count_raw = u.get(stats, "operation_count", default=0)
@@ -507,7 +495,11 @@ class FlextMixins(FlextRuntime):
             }
         )
 
-        log_method = getattr(self.logger, level, self.logger.info)
+        log_method = (
+            getattr(self.logger, level)
+            if hasattr(self.logger, level)
+            else self.logger.info
+        )
         _ = log_method(message, extra=context_data.root)
 
     # =========================================================================
@@ -736,44 +728,40 @@ class FlextMixins(FlextRuntime):
                 # _stack is initialized in __init__, but check for safety
                 if not hasattr(self, "_stack"):
                     vars(self)["_stack"] = []
-                match ctx:
-                    case m.Handler.ExecutionContext() as execution_ctx:
-                        self._stack.append(execution_ctx)
-                    case _:
-                        # For backward compatibility, accept dict but convert to ExecutionContext
-                        # Create ExecutionContext from dict data
-                        handler_name_raw = ctx.get("handler_name", "unknown")
-                        handler_name: str = (
-                            str(handler_name_raw)
-                            if handler_name_raw is not None
-                            else "unknown"
-                        )
-                        handler_mode_raw = ctx.get("handler_mode", "operation")
-                        handler_mode_str: str = (
-                            str(handler_mode_raw)
-                            if handler_mode_raw is not None
-                            else "operation"
-                        )
-                        # Match statement for Literal type narrowing (no cast needed)
-                        handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
-                            "command"
-                            if handler_mode_str == "command"
-                            else "query"
-                            if handler_mode_str == "query"
-                            else "event"
-                            if handler_mode_str == "event"
-                            else "saga"
-                            if handler_mode_str == "saga"
-                            else "operation"
-                        )
-                        execution_ctx = m.Handler.ExecutionContext.create_for_handler(
-                            handler_name=handler_name,
-                            handler_mode=handler_mode_literal,
-                        )
-                        self._stack.append(execution_ctx)
+                if isinstance(ctx, m.Handler.ExecutionContext):
+                    self._stack.append(ctx)
+                    return r[bool].ok(value=True)
+
+                ctx_mapping = ctx
+                handler_name_raw = ctx_mapping.get("handler_name", "unknown")
+                handler_name: str = (
+                    str(handler_name_raw) if handler_name_raw is not None else "unknown"
+                )
+                handler_mode_raw = ctx_mapping.get("handler_mode", "operation")
+                handler_mode_str: str = (
+                    str(handler_mode_raw)
+                    if handler_mode_raw is not None
+                    else "operation"
+                )
+                handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
+                    "command"
+                    if handler_mode_str == "command"
+                    else "query"
+                    if handler_mode_str == "query"
+                    else "event"
+                    if handler_mode_str == "event"
+                    else "saga"
+                    if handler_mode_str == "saga"
+                    else "operation"
+                )
+                execution_ctx = m.Handler.ExecutionContext.create_for_handler(
+                    handler_name=handler_name,
+                    handler_mode=handler_mode_literal,
+                )
+                self._stack.append(execution_ctx)
                 return r[bool].ok(value=True)
 
-            def pop_context(self) -> r[dict[str, t.ConfigMapValue]]:
+            def pop_context(self) -> r[Mapping[str, t.ConfigMapValue]]:
                 """Pop execution context from the stack.
 
                 Returns:
@@ -874,8 +862,10 @@ class FlextMixins(FlextRuntime):
             return (
                 hasattr(obj, "handle")
                 and hasattr(obj, "validate")
-                and callable(getattr(obj, "handle", None))
-                and callable(getattr(obj, "validate", None))
+                and callable(getattr(obj, "handle") if hasattr(obj, "handle") else None)
+                and callable(
+                    getattr(obj, "validate") if hasattr(obj, "validate") else None
+                )
             )
 
         @staticmethod
@@ -896,7 +886,7 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_protocol_compliance(
-            _obj: p.Handler
+            _obj: p.Handler[t.GuardInputValue, t.GuardInputValue]
             | p.Service[t.ConfigMapValue]
             | p.CommandBus
             | p.Repository[t.ConfigMapValue]

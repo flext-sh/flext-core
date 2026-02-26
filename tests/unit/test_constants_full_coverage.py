@@ -3,13 +3,7 @@ from __future__ import annotations
 from enum import auto
 
 from flext_core import c, m, r, t, u
-
-
-constants_mod = __import__(
-    "flext_core.constants", fromlist=["AutoStrEnum", "BiMapping"]
-)
-AutoStrEnum = constants_mod.AutoStrEnum
-BiMapping = constants_mod.BiMapping
+from flext_core.constants import AutoStrEnum, BiMapping
 
 
 class _Status(AutoStrEnum):

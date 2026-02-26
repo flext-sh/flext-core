@@ -30,8 +30,8 @@ from pathlib import Path
 from typing import override
 
 import structlog
-
 from flext_core import FlextService, r
+
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 

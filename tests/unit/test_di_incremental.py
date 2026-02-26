@@ -25,13 +25,14 @@ from flext_core import (
     FlextContext,
     FlextRuntime,
     FlextSettings,
+    p,
     r,
     s,
     t,
 )
 from flext_core.typings import t
 from flext_tests import u
-from tests.test_utils import assertion_helpers
+from ..test_utils import assertion_helpers
 
 # DI decorators from Runtime
 Provide = FlextRuntime.DependencyIntegration.Provide
@@ -86,7 +87,7 @@ class TestDIBridgeRealExecution:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
             FlextRuntime.DependencyIntegration.create_layered_bridge(
-                config={"database": {"dsn": "sqlite://test.db"}},
+                config=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
 
@@ -387,14 +388,11 @@ class TestServiceBootstrapWithDI:
 
         class TestService(s[str]):
             @classmethod
-            def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
-                # Return RuntimeBootstrapOptions TypedDict with correct types
-                # factories expects Callable[[], ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]]
-                # lambda: {"custom": "data"} returns dict[str, str] which is Mapping[str, ScalarValue]
-                return {
-                    "services": {"custom_service": "custom_value"},
-                    "factories": {"custom_factory": lambda: {"custom": "data"}},
-                }
+            def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                return p.RuntimeBootstrapOptions(
+                    services={"custom_service": "custom_value"},
+                    factories={"custom_factory": lambda: {"custom": "data"}},
+                )
 
             def execute(self) -> r[str]:
                 return r[str].ok("test")
@@ -462,11 +460,11 @@ class TestRealWiringScenarios:
         module = ModuleType("multi_function_module")
 
         @inject
-        def func1(config: dict = Provide["shared_config"]) -> str:
+        def func1(config: dict[str, str] = Provide["shared_config"]) -> str:
             return config["env"]
 
         @inject
-        def func2(config: dict = Provide["shared_config"]) -> bool:
+        def func2(config: dict[str, str] = Provide["shared_config"]) -> bool:
             return config["env"] == "test"
 
         setattr(module, "func1", func1)

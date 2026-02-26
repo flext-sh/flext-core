@@ -34,7 +34,6 @@ class FlextUtilitiesChecker:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-        # get_logger returns StructlogLogger per runtime.pyi stub
         return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
 
     @classmethod
@@ -80,7 +79,12 @@ class FlextUtilitiesChecker:
 
         """
         message_types: list[t.MessageTypeSpecifier] = []
-        for base in getattr(handler_class, "__orig_bases__", ()) or ():
+        orig_bases = (
+            handler_class.__orig_bases__
+            if hasattr(handler_class, "__orig_bases__")
+            else ()
+        )
+        for base in orig_bases:
             # Layer 0.5: Use FlextRuntime for type introspection
             origin = get_origin(base)
             # Check by name to avoid circular import
@@ -119,7 +123,7 @@ class FlextUtilitiesChecker:
         try:
             return get_type_hints(
                 handle_method,
-                globalns=getattr(handle_method, "__globals__", {}),
+                globalns=handle_method.__globals__,
                 localns=dict(vars(handler_class)),
             )
         except (NameError, AttributeError, TypeError):
@@ -179,9 +183,12 @@ class FlextUtilitiesChecker:
             Message type from handle method or None
 
         """
-        handle_method = getattr(handler_class, c.Mixins.METHOD_HANDLE, None)
-        if handle_method is None:
+        if not hasattr(handler_class, c.Mixins.METHOD_HANDLE):
             return None
+        handle_method_raw = getattr(handler_class, c.Mixins.METHOD_HANDLE)
+        if not callable(handle_method_raw):
+            return None
+        handle_method: t.HandlerCallable = handle_method_raw
 
         signature = cls._get_method_signature(handle_method)
         if signature is None:
@@ -240,10 +247,7 @@ class FlextUtilitiesChecker:
             return True
 
         # object type by name should be compatible with everything
-        if (
-            hasattr(expected_type, "__name__")
-            and getattr(expected_type, "__name__", "") == "object"
-        ):
+        if hasattr(expected_type, "__name__") and expected_type.__name__ == "object":
             return True
 
         return None  # Not object type - continue checking
@@ -268,10 +272,15 @@ class FlextUtilitiesChecker:
             True if dict compatible, None if not dict types
 
         """
+        origin_is_dict = isinstance(origin_type, type) and dict in origin_type.__mro__
+        message_origin_is_dict = (
+            isinstance(message_origin, type) and dict in message_origin.__mro__
+        )
+
         # Handle dict-like compatibility for runtime classes and generic aliases.
         # If expected is dict-like, accept dict-derived message types.
-        if origin_type is dict and (
-            message_origin is dict
+        if origin_is_dict and (
+            message_origin_is_dict
             or (isinstance(message_type, type) and dict in message_type.__mro__)
         ):
             return True
@@ -281,7 +290,7 @@ class FlextUtilitiesChecker:
             isinstance(message_type, type)
             and dict in message_type.__mro__
             and (
-                origin_type is dict
+                origin_is_dict
                 or (isinstance(expected_type, type) and dict in expected_type.__mro__)
             )
         ):

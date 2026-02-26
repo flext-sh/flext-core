@@ -88,7 +88,7 @@ class CoerceValidatorScenario:
     """Coerce validator test scenario."""
 
     name: str
-    value: t.FlexibleValue
+    value: str | int | float | bool | Status | None
     expected_success: bool
     expected_status: Status | None
     expected_error: str | None
@@ -227,10 +227,9 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        # Convert object to t.GeneralValueType for type compatibility
-        value_typed: t.GeneralValueType = (
+        value_typed: str | int | float | bool | Status | None = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
             else str(scenario.value)
         )
         result = u.Enum.is_member(Status, value_typed)
@@ -243,10 +242,9 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        # Convert object to t.GeneralValueType for type compatibility
-        value_typed: t.GeneralValueType = (
+        value_typed: str | int | float | bool | Status | None = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
             else str(scenario.value)
         )
         result = u.Enum.is_subset(

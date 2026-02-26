@@ -11,15 +11,13 @@ from __future__ import annotations
 import ast
 import re
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from flext_core.result import r
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextValidatorTypes:
@@ -194,14 +192,14 @@ class FlextValidatorTypes:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if type(node) is not ast.Call:
+            if not isinstance(node, ast.Call):
                 continue
             # Check for cast call
-            is_cast_name = type(node.func) is ast.Name and node.func.id == "cast"
+            is_cast_name = isinstance(node.func, ast.Name) and node.func.id == "cast"
             is_cast_typing = (
-                type(node.func) is ast.Attribute
+                isinstance(node.func, ast.Attribute)
                 and node.func.attr == "cast"
-                and type(node.func.value) is ast.Name
+                and isinstance(node.func.value, ast.Name)
                 and node.func.value.id == "typing"
             )
             if is_cast_name or is_cast_typing:

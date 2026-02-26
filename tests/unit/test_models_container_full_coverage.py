@@ -13,6 +13,8 @@ def test_container_resource_registration_metadata_normalized() -> None:
     reg = m.Container.ResourceRegistration(
         name="r1",
         factory=lambda: 1,
-        metadata={"value": "x"},
+        metadata=m.Metadata(attributes={"value": "x"}),
     )
+    assert reg.metadata is not None
+    assert isinstance(reg.metadata, m.Metadata)
     assert reg.metadata.attributes["value"] == "x"

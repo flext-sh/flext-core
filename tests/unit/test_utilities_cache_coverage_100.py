@@ -483,7 +483,7 @@ class TestuCacheClearObjectCache:
 
         result = u.Cache.clear_object_cache(obj)
         assertion_helpers.assert_flext_result_success(result)
-        assert obj._cached_value is None
+        assert getattr(obj, "_cached_value", None) is None
 
     def test_clear_object_cache_with_non_dict_cache(self) -> None:
         """Test clear_object_cache with cache that doesn't have clear() method."""
@@ -499,7 +499,7 @@ class TestuCacheClearObjectCache:
         result = u.Cache.clear_object_cache(obj)
         assertion_helpers.assert_flext_result_success(result)
         # Should set to None (line 284-285)
-        assert obj._cache is None
+        assert getattr(obj, "_cache", None) is None
 
     def test_clear_object_cache_multiple_attributes(self) -> None:
         """Test clear_object_cache clears multiple cache attributes."""
@@ -521,7 +521,7 @@ class TestuCacheClearObjectCache:
 
         assertion_helpers.assert_flext_result_success(result)
         assert len(obj._cache) == 0
-        assert obj._cached_value is None
+        assert getattr(obj, "_cached_value", None) is None
         assert len(obj._cached_at) == 0
 
     def test_clear_object_cache_no_cache_attributes(self) -> None:

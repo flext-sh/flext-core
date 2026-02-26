@@ -17,15 +17,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import csv
-import importlib
 import json
 import os
 import re
 import shutil
 import tempfile
-import warnings
 from collections.abc import (
-    Callable,
     Generator,
     Mapping,
     Sequence,
@@ -34,11 +31,12 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, cast, overload
-
-from pydantic import BaseModel
+from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, overload
 
 from flext_core import FlextRuntime, r
+from pydantic import BaseModel
+from yaml import YAMLError, dump as yaml_dump, safe_load as yaml_safe_load
+
 from flext_tests.base import s
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -56,26 +54,16 @@ _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 # Alias for file content union (str, bytes, ConfigMap, etc.)
 TestsFileContent = t.Tests.FileContent
 
-_yaml_module = importlib.import_module("yaml")
-_YAMLError = cast("type[Exception]", getattr(_yaml_module, "YAMLError", Exception))
+_YAMLError = YAMLError
 
 
 def _yaml_safe_load(raw: str) -> object:
-    safe_load_obj: object = getattr(_yaml_module, "safe_load", None)
-    if not callable(safe_load_obj):
-        msg = "PyYAML safe_load unavailable"
-        raise RuntimeError(msg)
-    safe_load = cast("Callable[[str], object]", safe_load_obj)
-    return safe_load(raw)
+    return yaml_safe_load(raw)
 
 
 def _yaml_dump(value: object, *, indent: int) -> str:
-    dump_obj: object = getattr(_yaml_module, "dump", None)
-    if not callable(dump_obj):
-        msg = "PyYAML dump unavailable"
-        raise RuntimeError(msg)
     return str(
-        dump_obj(value, default_flow_style=False, allow_unicode=True, indent=indent)
+        yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent)
     )
 
 
@@ -662,7 +650,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
                 text = params.path.read_text(encoding=params.enc)
-                parsed_json = cast("object", json.loads(text))
+                parsed_json = json.loads(text)
                 content = self._coerce_read_content(parsed_json)
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
@@ -889,8 +877,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         try:
             match fmt:
                 case "json":
-                    dict1_raw = cast("object", json.loads(content1))
-                    dict2_raw = cast("object", json.loads(content2))
+                    dict1_raw = json.loads(content1)
+                    dict2_raw = json.loads(content2)
                 case "yaml":
                     dict1_raw = _yaml_safe_load(content1)
                     dict2_raw = _yaml_safe_load(content2)
@@ -1176,7 +1164,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         def process_one(
             name_and_content: tuple[str, t.Tests.PayloadValue],
-        ) -> r[t.GuardInputValue]:
+        ) -> t.GuardInputValue | r[t.GuardInputValue]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
@@ -1222,8 +1210,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         normalized_content = self._coerce_file_content(
                             content_for_create
                         )
-                        path = self.create(normalized_content, name, params.directory)
-                        return r[t.GuardInputValue].ok(path)
+                        return self.create(normalized_content, name, params.directory)
                     except (OSError, TypeError, ValueError, AttributeError) as e:
                         return r[t.GuardInputValue].fail(
                             f"Failed to create {name}: {e}"
@@ -1231,23 +1218,27 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 case "read":
                     # For read, content should be Path or str - wrap in Path() for type safety
                     path = (
-                        Path(content) if isinstance(content, Path | str) else Path(name)
+                        Path(content)
+                        if isinstance(content, (Path, str))
+                        else Path(name)
                     )
                     # Read file - we only care about success/failure, not the exact return type
                     # Use model_cls=None for simpler type handling - batch doesn't need model parsing
                     read_result = self.read(path, model_cls=None)
                     if read_result.is_success:
                         # Return the path, not the content (BatchResult expects Path)
-                        return r[t.GuardInputValue].ok(path)
+                        return path
                     return r[Path].fail(read_result.error or f"Failed to read {name}")
                 case "delete":
                     # For delete, content should be Path or str - wrap in Path() for type safety
                     path = (
-                        Path(content) if isinstance(content, Path | str) else Path(name)
+                        Path(content)
+                        if isinstance(content, (Path, str))
+                        else Path(name)
                     )
                     try:
                         Path(path).unlink(missing_ok=True)
-                        return r[t.GuardInputValue].ok(Path(path))
+                        return Path(path)
                     except OSError as e:
                         return r[t.GuardInputValue].fail(
                             f"Failed to delete {name}: {e}"
@@ -1257,38 +1248,27 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         f"Unknown operation: {params.operation}"
                     )
 
-        # Use u.Collection.batch() for batch processing
-        # u.Collection.batch() handles Result unwrapping automatically
-        # Returns r[t.BatchResultDict] with results as direct values (not Results)
         items_list: list[tuple[str, t.Tests.PayloadValue]] = list(files_dict.items())
-        batch_operation = cast(
-            "Callable[[tuple[str, t.Tests.PayloadValue]], t.GuardInputValue | r[t.GuardInputValue]]",
-            process_one,
-        )
-        batch_result_dict = u.Collection.batch(
-            items_list,
-            batch_operation,
-            on_error=error_mode_str,
-            parallel=params.parallel,
-        )
+        results: list[t.GuardInputValue] = []
+        errors: list[tuple[int, str]] = []
+        total = len(items_list)
 
-        # Handle batch failure (on_error="fail" mode)
-        if batch_result_dict.is_failure:
-            return r[m.Tests.Files.BatchResult].fail(
-                batch_result_dict.error or "Batch operation failed",
-            )
+        for index, item in enumerate(items_list):
+            operation_result = process_one(item)
+            if isinstance(operation_result, r):
+                if operation_result.is_success:
+                    results.append(operation_result.value)
+                    continue
 
-        # Extract results from batch result dict
-        # u.Collection.batch() returns BatchResultDict with:
-        # - results: list[R] (direct values, not Results - unwrapped automatically)
-        # - errors: list[tuple[int, str]] (index, error_message)
-        # - total, success_count, error_count
-        batch_data = batch_result_dict.value
-        results = batch_data.results
-        errors = batch_data.errors
-        total = batch_data.total or len(files_dict)
-        _ = batch_data.success_count
-        _ = batch_data.error_count
+                error_message = operation_result.error or "Unknown error"
+                if error_mode_str == "fail":
+                    return r[m.Tests.Files.BatchResult].fail(
+                        f"Batch operation failed: {error_message}",
+                    )
+                errors.append((index, str(error_message)))
+                continue
+
+            results.append(operation_result)
 
         # Convert results to dict and errors to dict
         # u.Collection.batch() returns results as list of (index, result) tuples
@@ -1302,19 +1282,6 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 name, _ = items_list[idx]
                 if isinstance(result, Path):
                     results_dict[name] = r[Path | t.Tests.PayloadValue].ok(result)
-                elif u.is_type(result, "result"):
-                    # Duck-typed access to FlextResult attributes
-                    is_success = getattr(result, "is_success", False)
-                    if is_success:
-                        value = getattr(result, "value", None)
-                        results_dict[name] = r[Path | t.Tests.PayloadValue].ok(
-                            self._to_payload_value(value)
-                        )
-                    else:
-                        error = (
-                            getattr(result, "error", "Unknown error") or "Unknown error"
-                        )
-                        failed_dict[name] = error
                 else:
                     results_dict[name] = r[Path | t.Tests.PayloadValue].ok(
                         self._to_payload_value(result)
@@ -1426,12 +1393,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             paths: dict[str, Path] = {}
             default_ext = ext or c.Tests.Files.DEFAULT_EXTENSION
             for name, data_raw in content.items():
-                # Type narrowing: data_raw is from content.items()
-                # content type is: str | bytes | ConfigurationMapping | Sequence[Sequence[str]] | BaseModel
-                # data_raw already has the correct type, no cast needed
-                data: (
-                    str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
-                ) = data_raw
+                data: t.Tests.PayloadValue = data_raw
                 filename = name if "." in name else f"{name}{default_ext}"
                 # Determine if we need to adjust extension based on content type
                 if "." not in name and (
@@ -1473,10 +1435,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 # Note: data type is guaranteed by the assignment on lines 1382-1388
                 # (Sized check above was only for filename determination, not for data validation)
                 path = manager.create(
-                    cast(
-                        "str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel",
-                        data,
-                    ),
+                    manager._coerce_file_content(data),
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=manager._normalize_create_format(validated_kwargs.fmt),
@@ -1520,77 +1479,6 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     # =========================================================================
     # DIRECTORY UTILITIES (kept for permission testing)
-    # =========================================================================
-
-    def create_readonly_directory(
-        self,
-        name: str = c.Tests.Files.DEFAULT_READONLY_DIR_NAME,
-        directory: Path | None = None,
-    ) -> Path:
-        """Create a read-only directory for testing permission scenarios.
-
-        Args:
-            name: Name for the read-only directory
-            directory: Parent directory (uses base_dir or temp if None)
-
-        Returns:
-            Path to the created read-only directory
-
-        """
-        target_dir = self._resolve_directory(directory)
-        read_only_dir = target_dir / name
-        read_only_dir.mkdir(parents=True, exist_ok=True)
-        read_only_dir.chmod(c.Tests.Files.PERMISSION_READONLY_DIR)
-        self.created_dirs.append(read_only_dir)
-        return read_only_dir
-
-    def restore_directory_permissions(self, directory: Path) -> None:
-        """Restore directory permissions to writable (0o755).
-
-        Args:
-            directory: Directory to restore permissions for
-
-        """
-        directory.chmod(c.Tests.Files.PERMISSION_WRITABLE_DIR)
-
-    def get_file_info(self, file_path: Path) -> m.Tests.Files.FileInfo:
-        """Get file info. DEPRECATED: Use info() instead (returns r[FileInfo])."""
-        warnings.warn(
-            c.Tests.Files.DEPRECATION_GET_FILE_INFO,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        result = self.info(file_path)
-        if result.is_success:
-            return result.value
-        return m.Tests.Files.FileInfo(exists=False)
-
-    @classmethod
-    @contextmanager
-    def temporary_files(
-        cls,
-        files: Mapping[str, str],
-        extension: str = c.Tests.Files.DEFAULT_EXTENSION,
-    ) -> Generator[Mapping[str, Path]]:
-        """Create temporary files. DEPRECATED: Use tf.files() instead."""
-        warnings.warn(
-            c.Tests.Files.DEPRECATION_TEMPORARY_FILES,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        # Convert StringDict to broader type for files() compatibility using Mapping
-        # Use Mapping to avoid dict invariant type error
-        content_mapping: Mapping[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
-        ] = files
-        # Convert to dict for files() method which expects dict
-        content_dict: dict[
-            str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
-        ] = dict(content_mapping)
-        with cls.files(content_dict, ext=extension) as created:
-            yield created
 
     # =========================================================================
     # PRIVATE HELPERS
@@ -1650,7 +1538,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, str | bytes):
             return value
         if self._is_mapping(value):
-            mapping_value = cast("Mapping[str, object]", value)
+            mapping_value = {str(key): item for key, item in value.items()}
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
@@ -1673,7 +1561,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _mapping_to_payload(
         self,
         mapping: Mapping[str, object],
-    ) -> dict[str, t.Tests.PayloadValue]:
+    ) -> Mapping[str, t.Tests.PayloadValue]:
         payload: dict[str, t.Tests.PayloadValue] = {}
         for key, value in mapping.items():
             payload[str(key)] = self._to_payload_value(value)
@@ -1687,7 +1575,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, Path | datetime):
             return str(value)
         if self._is_mapping(value):
-            mapping_value = cast("Mapping[str, object]", value)
+            mapping_value = {str(key): item for key, item in value.items()}
             return self._mapping_to_payload(mapping_value)
         if isinstance(value, Sequence) and not isinstance(value, str | bytes):
             return [self._to_payload_value(item) for item in value]
@@ -1817,16 +1705,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: object = cast(
-                        "object",
-                        json.loads(text) if text.strip() else {},
-                    )
+                    parsed_raw: object = json.loads(text) if text.strip() else {}
                 else:
                     # YAML parsing
-                    parsed_raw = cast(
-                        "object",
-                        _yaml_safe_load(text) if text.strip() else {},
-                    )
+                    parsed_raw = _yaml_safe_load(text) if text.strip() else {}
 
                 if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(
@@ -1839,7 +1721,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                     key_count = len(parsed_content.root)
                 elif isinstance(parsed_raw, list):
-                    parsed_list = cast("list[object]", parsed_raw)
+                    parsed_list = parsed_raw
                     parsed_content = [
                         self._to_payload_value(item) for item in parsed_list
                     ]

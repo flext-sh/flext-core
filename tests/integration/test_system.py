@@ -65,8 +65,8 @@ class TestCompleteFlextSystemIntegration:
         """Test railway-oriented programming with FlextResult."""
         # Cenário de sucesso - criação e encadeamento
         success_result = FlextResult[str].ok("dados_iniciais")
-        assert success_result.is_success is True
-        assert success_result.is_success is True
+        assert success_result.is_success
+        assert success_result.is_success
         assert success_result.is_failure is False
         assert success_result.value == "dados_iniciais"
         assert success_result.error is None

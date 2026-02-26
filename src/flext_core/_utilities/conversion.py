@@ -63,7 +63,7 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return default or ""
-        if value.__class__ is str:
+        if isinstance(value, str):
             return str(value)
         try:
             float_value = FlextUtilitiesConversion._float_adapter.validate_python(value)
@@ -287,10 +287,10 @@ class FlextUtilitiesConversion:
             return None
         if isinstance(value, BaseModel | Mapping | list | tuple | set | frozenset):
             return None
-        if callable(value):
-            return None
-        if hasattr(value, "isoformat") and callable(getattr(value, "isoformat", None)):
-            return str(value)
+        if hasattr(value, "isoformat"):
+            isoformat_method = value.isoformat
+            if callable(isoformat_method):
+                return str(value)
         try:
             return _StrictJsonScalarModel.model_validate({"value": value}).value
         except ValidationError:

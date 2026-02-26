@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping
 from typing import Annotated, Final, Self
 
 from pydantic import (
+    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
@@ -94,25 +95,22 @@ class FlextModelsConfig:
                 include_timestamp=True,
             )
 
-    class RetryConfiguration(FlextModelFoundation.ArbitraryTypesModel):
+    class RetryConfiguration(
+        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelFoundation.RetryConfigurationMixin,
+    ):
         """Retry configuration with advanced validation."""
 
-        max_attempts: int = Field(
+        max_retries: int = Field(
             default=c.Reliability.MAX_RETRY_ATTEMPTS,
             ge=c.Reliability.RETRY_COUNT_MIN,
             le=c.Reliability.MAX_RETRY_ATTEMPTS,
+            alias="max_attempts",
+            validation_alias=AliasChoices("max_attempts", "max_retries"),
+            serialization_alias="max_attempts",
             description=("Maximum retry attempts from c (Constants default)"),
         )
-        initial_delay_seconds: float = Field(
-            default=c.Performance.DEFAULT_INITIAL_DELAY_SECONDS,
-            gt=c.ZERO,
-            description="Initial delay between retries",
-        )
-        max_delay_seconds: float = Field(
-            default=c.DEFAULT_MAX_DELAY_SECONDS,
-            gt=c.ZERO,
-            description="Maximum delay between retries",
-        )
+
         exponential_backoff: bool = True
         backoff_multiplier: float = Field(
             default=c.DEFAULT_BACKOFF_MULTIPLIER,

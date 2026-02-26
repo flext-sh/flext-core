@@ -35,11 +35,11 @@ TMessage = TypeVar("TMessage")
 
 
 def _type_origin(value: object) -> t.TypeOriginSpecifier:
-    return cast("t.TypeOriginSpecifier", cast("object", value))
+    return cast("t.TypeOriginSpecifier", value)
 
 
 def _message_type(value: object) -> t.MessageTypeSpecifier:
-    return cast("t.MessageTypeSpecifier", cast("object", value))
+    return cast("t.MessageTypeSpecifier", value)
 
 
 # Test handler classes

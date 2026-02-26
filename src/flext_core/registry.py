@@ -12,13 +12,14 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, cast, overload
+from datetime import datetime
+from typing import Annotated, ClassVar, Self, TypeGuard, overload
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
-from flext_core.dispatcher import FlextDispatcher
+from flext_core.dispatcher import DispatcherHandler, FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import m
 from flext_core.protocols import p
@@ -27,7 +28,7 @@ from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
 
-type RegistryHandler = Callable[..., object] | BaseModel
+type RegistryHandler = t.HandlerCallable | BaseModel
 type RegistryBindingKey = str | type[object]
 
 
@@ -279,6 +280,32 @@ class FlextRegistry(FlextService[bool]):
             else c.Cqrs.CommonStatus.RUNNING
         )
 
+    @staticmethod
+    def _is_registry_handler(
+        value: t.HandlerCallable
+        | BaseModel
+        | p.Handler[t.GeneralValueType, t.GeneralValueType],
+    ) -> TypeGuard[RegistryHandler]:
+        return callable(value) or isinstance(value, BaseModel)
+
+    @staticmethod
+    def _to_dispatcher_handler(handler: RegistryHandler) -> DispatcherHandler:
+        if isinstance(handler, BaseModel):
+            return handler
+
+        func: t.HandlerCallable = handler
+
+        def handler_adapter(message: t.ScalarValue) -> t.ScalarValue:
+            result = func(message)
+            if (
+                isinstance(result, str | int | float | bool | datetime)
+                or result is None
+            ):
+                return result
+            return str(result)
+
+        return handler_adapter
+
     def _create_registration_details(
         self,
         reg_result: m.HandlerRegistrationResult,
@@ -304,7 +331,9 @@ class FlextRegistry(FlextService[bool]):
         elif "event" in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.EVENT
 
-        timestamp = getattr(reg_result, "timestamp", "")
+        timestamp = (
+            getattr(reg_result, "timestamp") if hasattr(reg_result, "timestamp") else ""
+        )
         status = reg_result.status
 
         return m.HandlerRegistrationDetails(
@@ -331,7 +360,9 @@ class FlextRegistry(FlextService[bool]):
 
     def register_handler(
         self,
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType]
+        | RegistryHandler
+        | None,
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -345,16 +376,20 @@ class FlextRegistry(FlextService[bool]):
         """
         if handler is None:
             return r[m.HandlerRegistrationDetails].fail("Handler cannot be None")
+        if not self._is_registry_handler(handler):
+            return r[m.HandlerRegistrationDetails].fail(
+                "Handler must be callable or BaseModel",
+            )
 
         # Propagate context for distributed tracing
-        handler_name = handler.__class__.__name__ if handler else "unknown"
+        handler_name = handler.__class__.__name__
         self._propagate_context(f"register_handler_{handler_name}")
 
         self.logger.debug(
             "Starting handler registration",
             operation="register_handler",
             handler_name=handler_name,
-            handler_type=handler.__class__.__name__ if handler else "None",
+            handler_type=handler.__class__.__name__,
         )
 
         key = FlextRegistry._resolve_handler_key(handler)
@@ -385,11 +420,27 @@ class FlextRegistry(FlextService[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
-        # Cast handler to RegistryHandler for dispatcher compatibility
-        handler_for_dispatch: RegistryHandler = cast("RegistryHandler", handler)
-        registration_result = self._dispatcher.register_handler(
-            handler_for_dispatch,
-        )
+        handler_for_dispatch: RegistryHandler = handler
+        registration_result: r[m.HandlerRegistrationResult]
+        if isinstance(self._dispatcher, FlextDispatcher):
+            dispatcher_handler = FlextRegistry._to_dispatcher_handler(
+                handler_for_dispatch,
+            )
+            registration_result = self._dispatcher.register_handler(
+                dispatcher_handler,
+            )
+        else:
+            protocol_result = self._dispatcher.register_handler(
+                handler_for_dispatch,
+            )
+            if protocol_result.is_failure:
+                registration_result = r[m.HandlerRegistrationResult].fail(
+                    protocol_result.error or "Unknown error",
+                )
+            else:
+                registration_result = r[m.HandlerRegistrationResult].ok(
+                    m.HandlerRegistrationResult.model_validate(protocol_result.value),
+                )
         if registration_result.is_success:
             # Convert model result to RegistrationDetails
             reg_result = registration_result.value
@@ -534,7 +585,11 @@ class FlextRegistry(FlextService[bool]):
         # def register_handler(self, request: ..., handler: ... = None)
 
         for message_type, handler in bindings.items():
-            message_type_name = getattr(message_type, "__name__", message_type)
+            message_type_name = (
+                getattr(message_type, "__name__")
+                if hasattr(message_type, "__name__")
+                else message_type
+            )
             key = f"binding::{message_type_name}::{handler.__class__.__name__}"
 
             # We use the dispatcher directly because registry's register_handler
@@ -543,12 +598,38 @@ class FlextRegistry(FlextService[bool]):
             try:
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
-                # Cast handler to RegistryHandler for dispatcher compatibility
-                handler_for_dispatch: RegistryHandler = cast("RegistryHandler", handler)
-                reg_result = self._dispatcher.register_handler(
-                    message_type,
-                    handler_for_dispatch,
-                )
+                if not self._is_registry_handler(handler):
+                    _ = self._add_registration_error(
+                        key,
+                        "Handler must be callable or BaseModel",
+                        summary,
+                    )
+                    continue
+                handler_for_dispatch: RegistryHandler = handler
+                reg_result: r[m.HandlerRegistrationResult]
+                if isinstance(self._dispatcher, FlextDispatcher):
+                    dispatcher_handler = FlextRegistry._to_dispatcher_handler(
+                        handler_for_dispatch,
+                    )
+                    reg_result = self._dispatcher.register_handler(
+                        message_type,
+                        dispatcher_handler,
+                    )
+                else:
+                    protocol_result = self._dispatcher.register_handler(
+                        message_type,
+                        handler_for_dispatch,
+                    )
+                    if protocol_result.is_failure:
+                        reg_result = r[m.HandlerRegistrationResult].fail(
+                            protocol_result.error or "Unknown error",
+                        )
+                    else:
+                        reg_result = r[m.HandlerRegistrationResult].ok(
+                            m.HandlerRegistrationResult.model_validate(
+                                protocol_result.value,
+                            ),
+                        )
 
                 if reg_result.is_success:
                     # Convert dispatcher result to Registry details
@@ -764,13 +845,11 @@ class FlextRegistry(FlextService[bool]):
 
         """
         cls = type(self)
-        return r[list[str]].ok(
-            [
-                k.split("::")[1]
-                for k in cls._class_registered_keys
-                if k.startswith(f"{category}::")
-            ]
-        )
+        return r[list[str]].ok([
+            k.split("::")[1]
+            for k in cls._class_registered_keys
+            if k.startswith(f"{category}::")
+        ])
 
     def unregister_class_plugin(self, category: str, name: str) -> r[bool]:
         """Unregister plugin from class-level storage.
@@ -811,7 +890,9 @@ class FlextRegistry(FlextService[bool]):
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
     ) -> str:
         """Resolve registration key from handler."""
-        handler_id = getattr(handler, "handler_id", None)
+        handler_id = (
+            getattr(handler, "handler_id") if hasattr(handler, "handler_id") else None
+        )
         return str(handler_id) if handler_id else handler.__class__.__name__
 
     def register(
@@ -838,7 +919,11 @@ class FlextRegistry(FlextService[bool]):
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
             validated_metadata = m.ConfigMap.model_validate(
-                getattr(metadata, "attributes", metadata),
+                (
+                    getattr(metadata, "attributes")
+                    if hasattr(metadata, "attributes")
+                    else metadata
+                ),
             )
 
         # Store metadata if provided (for future use)
@@ -897,7 +982,11 @@ class FlextRegistry(FlextService[bool]):
     def list_items(self) -> r[list[str]]:
         """List registered items (RegistrationTracker protocol)."""
         try:
-            keys = list(getattr(self, "_registered_keys", []))
+            keys = list(
+                getattr(self, "_registered_keys")
+                if hasattr(self, "_registered_keys")
+                else []
+            )
             return r[list[str]].ok(keys)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[list[str]].fail(str(e))

@@ -17,11 +17,12 @@ import time
 import uuid
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
-from typing import Annotated, Any, ClassVar, Literal, Self
+from typing import Annotated, ClassVar, Literal, Self
 from urllib.parse import urlparse
 
 from pydantic import (
     AfterValidator,
+    AliasChoices,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -41,7 +42,19 @@ from flext_core.constants import c
 from flext_core.typings import t
 
 
+def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
+    """Ensure datetime is UTC timezone."""
+    if v is not None and v.tzinfo is None:
+        return v.replace(tzinfo=UTC)
+    return v
+
+
+UTCDatetime = Annotated[datetime, AfterValidator(_ensure_utc_datetime)]
+
+
 # Renamed to FlextModelFoundation for better clarity
+
+
 class FlextModelFoundation:
     """Container for base model classes - Tier 0, 100% standalone."""
 
@@ -70,9 +83,7 @@ class FlextModelFoundation:
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:
             """Ensure datetime is UTC timezone."""
-            if v is not None and v.tzinfo is None:
-                return v.replace(tzinfo=UTC)
-            return v
+            return _ensure_utc_datetime(v)
 
         @staticmethod
         def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
@@ -163,9 +174,8 @@ class FlextModelFoundation:
             for tag in raw_tags:
                 try:
                     clean_tag = (
-                        FlextModelFoundation.Validators.strict_string_adapter.validate_python(
-                            tag
-                        )
+                        FlextModelFoundation.Validators.strict_string_adapter
+                        .validate_python(tag)
                         .strip()
                         .lower()
                     )
@@ -229,12 +239,11 @@ class FlextModelFoundation:
             try:
                 result = t.Dict.model_validate(value).root
             except ValidationError:
-                model_dump = getattr(value, "model_dump", None)
-                if not callable(model_dump):
+                if not isinstance(value, BaseModel):
                     msg = "attributes must be dict-like"
                     raise TypeError(msg) from None
 
-                dumped = model_dump()
+                dumped = value.model_dump()
                 try:
                     result = t.Dict.model_validate(dumped).root
                 except ValidationError as exc:
@@ -466,24 +475,15 @@ class FlextModelFoundation:
             validate_assignment=True,
         )
 
-        created_at: datetime = Field(
+        created_at: UTCDatetime = Field(
             default_factory=lambda: datetime.now(UTC),
             description="Timestamp when the model was created (UTC timezone)",
             frozen=True,  # Creation time should never change
         )
-        updated_at: datetime | None = Field(
+        updated_at: UTCDatetime | None = Field(
             default=None,
             description="Timestamp when the model was last updated (UTC timezone)",
         )
-
-        @field_validator("created_at", "updated_at")
-        @classmethod
-        def validate_timestamps(cls, v: datetime | None) -> datetime | None:
-            """Ensure timestamps are UTC."""
-            if v is not None and v.tzinfo is None:
-                # Assume naive datetime is UTC
-                return v.replace(tzinfo=UTC)
-            return v
 
         @field_serializer("created_at", "updated_at", when_used="json")
         def serialize_timestamps(self, value: datetime | None) -> str | None:
@@ -754,23 +754,15 @@ class FlextModelFoundation:
             description="User/system that last updated this record",
             min_length=1,
         )
-        created_at: datetime = Field(
+        created_at: UTCDatetime = Field(
             default_factory=lambda: datetime.now(UTC),
             description="Timestamp when record was created (UTC timezone)",
             frozen=True,
         )
-        updated_at: datetime | None = Field(
+        updated_at: UTCDatetime | None = Field(
             default=None,
             description="Timestamp when record was last updated (UTC timezone)",
         )
-
-        @field_validator("created_at", "updated_at")
-        @classmethod
-        def validate_audit_timestamps(cls, v: datetime | None) -> datetime | None:
-            """Ensure audit timestamps are UTC."""
-            if v is not None and v.tzinfo is None:
-                return v.replace(tzinfo=UTC)
-            return v
 
         @field_serializer("created_at", "updated_at", when_used="json")
         def serialize_audit_timestamps(self, value: datetime | None) -> str | None:
@@ -875,7 +867,7 @@ class FlextModelFoundation:
             str_strip_whitespace=True,
         )
 
-        deleted_at: datetime | None = Field(
+        deleted_at: UTCDatetime | None = Field(
             default=None,
             description="Timestamp when record was soft deleted (UTC timezone)",
         )
@@ -888,14 +880,6 @@ class FlextModelFoundation:
             default=False,
             description="Flag indicating if record is soft deleted",
         )
-
-        @field_validator("deleted_at")
-        @classmethod
-        def validate_deleted_at(cls, v: datetime | None) -> datetime | None:
-            """Ensure deleted_at is UTC."""
-            if v is not None and v.tzinfo is None:
-                return v.replace(tzinfo=UTC)
-            return v
 
         @field_serializer("deleted_at", when_used="json")
         def serialize_deleted_at(self, value: datetime | None) -> str | None:
@@ -941,13 +925,11 @@ class FlextModelFoundation:
             # Create new instance with all fields set correctly
             now = datetime.now(UTC)
             current_data = dict(self.model_dump())
-            current_data.update(
-                {
-                    "is_deleted": True,
-                    "deleted_at": now,
-                    "deleted_by": deleted_by,
-                }
-            )
+            current_data.update({
+                "is_deleted": True,
+                "deleted_at": now,
+                "deleted_by": deleted_by,
+            })
 
             # Replace current instance data using __dict__.update to bypass
             # intermediate validation states during assignment
@@ -1185,6 +1167,30 @@ class FlextModelFoundation:
     # ADVANCED MIXINS - Using Pydantic v2 Advanced Features
     # ═══════════════════════════════════════════════════════════════════════════
 
+    class RetryConfigurationMixin(BaseModel):
+        """Mixin for shared retry configuration properties.
+
+        Business Rule: Consolidates common retry parameters across service
+        and configuration domains to ensure consistent reliability behavior.
+        """
+
+        max_retries: int = Field(
+            default=c.Reliability.DEFAULT_MAX_RETRIES,
+            ge=c.ZERO,
+            validation_alias=AliasChoices("max_retries", "max_attempts"),
+            description="Maximum number of retry attempts",
+        )
+        initial_delay_seconds: float = Field(
+            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+            gt=c.ZERO,
+            description="Initial delay between retries in seconds",
+        )
+        max_delay_seconds: float = Field(
+            default=c.Reliability.RETRY_BACKOFF_MAX,
+            gt=c.ZERO,
+            description="Maximum delay between retries in seconds",
+        )
+
     class ValidatableMixin(BaseModel):
         """Mixin providing advanced validation capabilities using Pydantic v2."""
 
@@ -1202,7 +1208,7 @@ class FlextModelFoundation:
         @classmethod
         def validate_performance(
             cls,
-            value: Any,
+            value: t.GuardInputValue,
             handler: ModelWrapValidatorHandler[Self],
         ) -> Self:
             start_time = time.perf_counter()
@@ -1359,7 +1365,9 @@ class FlextModelFoundation:
             self, name: str, default: t.GuardInputValue = None
         ) -> t.GuardInputValue:
             """Get a runtime field value."""
-            return getattr(self, name, default)
+            if hasattr(self, name):
+                return super().__getattribute__(name)
+            return default
 
         @classmethod
         def rebuild_with_validator(
@@ -1441,9 +1449,6 @@ StrippedString = Annotated[
 ValidatedString = Annotated[
     str, AfterValidator(FlextModelFoundation.Validators.validate_non_empty_string)
 ]
-UTCDatetime = Annotated[
-    datetime, AfterValidator(FlextModelFoundation.Validators.ensure_utc_datetime)
-]
 PositiveInt = Annotated[int, Field(gt=0)]
 PositiveFloat = Annotated[float, Field(gt=0)]
 NormalizedList = Annotated[
@@ -1467,47 +1472,6 @@ ValidatedConfigDict = Annotated[
 NormalizedTags = Annotated[
     list[str], PlainValidator(FlextModelFoundation.Validators.validate_tags_list)
 ]
-
-
-# Module-level wrappers for Validators (used by tests and external callers)
-def strip_whitespace(v: str) -> str:
-    return FlextModelFoundation.Validators.strip_whitespace(v)
-
-
-def ensure_utc_datetime(v: datetime | None) -> datetime | None:
-    return FlextModelFoundation.Validators.ensure_utc_datetime(v)
-
-
-def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
-    return FlextModelFoundation.Validators.normalize_to_list(v)
-
-
-def validate_non_empty_string(v: str) -> str:
-    return FlextModelFoundation.Validators.validate_non_empty_string(v)
-
-
-def validate_email(v: str) -> str:
-    return FlextModelFoundation.Validators.validate_email(v)
-
-
-def validate_url(v: str) -> str:
-    return FlextModelFoundation.Validators.validate_url(v)
-
-
-def validate_semver(v: str) -> str:
-    return FlextModelFoundation.Validators.validate_semver(v)
-
-
-def validate_uuid_string(v: str) -> str:
-    return FlextModelFoundation.Validators.validate_uuid_string(v)
-
-
-def validate_config_dict(v: t.GuardInputValue) -> Mapping[str, t.GuardInputValue]:
-    return FlextModelFoundation.Validators.validate_config_dict(v)
-
-
-def validate_tags_list(v: t.GuardInputValue) -> list[str]:
-    return FlextModelFoundation.Validators.validate_tags_list(v)
 
 
 __all__ = ["FlextModelFoundation"]

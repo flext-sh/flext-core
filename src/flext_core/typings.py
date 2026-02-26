@@ -185,7 +185,7 @@ class FlextTypes:
     # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
     type ConfigMapValue = _ContainerValue
 
-    type FlexibleValue = GuardInputValue
+    type FlexibleValue = _ContainerValue
 
     # RegisterableService - fixed types only
     RegisterableService: TypeAlias = RegisterableService
@@ -286,7 +286,7 @@ class FlextTypes:
     type ConditionCallable = Callable[[ScalarValue], bool]
 
     # Handler type union
-    type HandlerType = HandlerCallable | BaseModel
+    type HandlerType = Callable[[ScalarValue], ScalarValue] | BaseModel
 
     # =========================================================================
     # GENERIC CONTAINERS (RootModels - use m.ConfigMap, m.Dict)
@@ -369,7 +369,9 @@ class FlextTypes:
 
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
-    type DecoratorType = Callable[[HandlerCallable], HandlerCallable]
+    type DecoratorType = Callable[
+        [Callable[[ScalarValue], ScalarValue]], Callable[[ScalarValue], ScalarValue]
+    ]
 
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], _ContainerValue]

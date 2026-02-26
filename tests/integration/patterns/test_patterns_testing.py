@@ -18,28 +18,50 @@ import gc
 import time
 from collections.abc import Callable, Container, Iterator, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import Any, cast
 
 import pytest
+from flext_core import FlextTypes, FlextUtilities
+from flext_core.typings import t
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities, P, R
-from flext_core.typings import t
-from tests.typings import TestsFlextTypes
+type FixtureCaseDict = dict[str, str]
+type FixtureDataDict = dict[str, t.GeneralValueType]
+type FixtureFixturesDict = dict[str, t.GeneralValueType]
+type FixtureSuiteDict = dict[str, t.GeneralValueType]
+type MockScenarioData = dict[str, t.GeneralValueType]
 
-FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
-FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
-FixtureFixturesDict = TestsFlextTypes.Fixtures.FixtureFixturesDict
-FixtureSuiteDict = TestsFlextTypes.Fixtures.FixtureSuiteDict
-MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
+
+def _to_general_mapping(
+    value: t.ConfigMapValue | None,
+) -> dict[str, FlextTypes.GeneralValueType]:
+    if not isinstance(value, dict):
+        return {}
+    return {
+        str(key): FlextUtilities.normalize_to_general_value(item)
+        for key, item in value.items()
+    }
+
+
+def _to_string_list(value: t.ConfigMapValue | None) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value]
+
+
+def _to_string(value: t.ConfigMapValue | None, *, default: str) -> str:
+    if isinstance(value, str):
+        return value
+    if value is None:
+        return default
+    return str(value)
 
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+    def decorator(func: Callable[..., object]) -> Callable[..., object]:
         # Use setattr for dynamic attribute setting to avoid type checker issues
         # Type ignore needed because Callable doesn't have _test_pattern attribute
         setattr(func, "_test_pattern", pattern)
@@ -63,25 +85,13 @@ class MockScenario:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        self.given: dict[str, FlextTypes.GeneralValueType] = cast(
-            dict[str, FlextTypes.GeneralValueType],
-            FlextUtilities.mapper().get(cast(Any, data), "given", default={}),
-        )
-        self.when: dict[str, FlextTypes.GeneralValueType] = cast(
-            dict[str, FlextTypes.GeneralValueType],
-            FlextUtilities.mapper().get(cast(Any, data), "when", default={}),
-        )
-        self.then: dict[str, FlextTypes.GeneralValueType] = cast(
-            dict[str, FlextTypes.GeneralValueType],
-            FlextUtilities.mapper().get(cast(Any, data), "then", default={}),
-        )
-        self.tags: list[str] = cast(
-            list[str],
-            FlextUtilities.mapper().get(cast(Any, data), "tags", default=[]),
-        )
-        self.priority: str = FlextUtilities.mapper().get(
-            cast(Any, data),
-            "priority",
+        mapper = FlextUtilities.mapper()
+        self.given = _to_general_mapping(mapper.get(data, "given", default={}))
+        self.when = _to_general_mapping(mapper.get(data, "when", default={}))
+        self.then = _to_general_mapping(mapper.get(data, "then", default={}))
+        self.tags = _to_string_list(mapper.get(data, "tags", default=[]))
+        self.priority = _to_string(
+            mapper.get(data, "priority", default="normal"),
             default="normal",
         )
 
@@ -139,9 +149,9 @@ class GivenWhenThenBuilder:
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
         data: MockScenarioData = {
-            "given": cast(Any, self._given),
-            "when": cast(Any, self._when),
-            "then": cast(Any, self._then),
+            "given": self._given,
+            "when": self._when,
+            "then": self._then,
             "tags": self._tags,
             "priority": self._priority,
         }
@@ -168,7 +178,7 @@ class FlextTestBuilder:
 
     def with_metadata(self, **kwargs: FlextTypes.GeneralValueType) -> FlextTestBuilder:
         """Add metadata to the test data."""
-        self._data.update(cast(Any, kwargs))
+        self._data.update(kwargs)
         return self
 
     def with_user_data(self, name: str, email: str) -> FlextTestBuilder:
@@ -207,14 +217,14 @@ class ParameterizedTestBuilder:
     def add_case(
         self,
         email: str | None = None,
-        input: str | None = None,
+        input_value: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
         case: FixtureCaseDict = {}
         if email is not None:
             case["email"] = email
-        if input is not None:
-            case["input"] = input
+        if input_value is not None:
+            case["input"] = input_value
         self._cases.append(case)
         return self
 
@@ -332,7 +342,7 @@ class SuiteBuilder:
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
-            "setup_data": cast(Any, self._setup_data),
+            "setup_data": self._setup_data,
         }
         return result
 
@@ -349,12 +359,12 @@ class FixtureBuilder:
 
     def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add user fixture data."""
-        self._fixtures["user"] = cast(Any, kwargs)
+        self._fixtures["user"] = kwargs
         return self
 
     def with_request(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add request fixture data."""
-        self._fixtures["request"] = cast(Any, kwargs)
+        self._fixtures["request"] = kwargs
         return self
 
     def build(self) -> FixtureFixturesDict:
@@ -377,7 +387,7 @@ class FixtureBuilder:
         value: FlextTypes.GeneralValueType,
     ) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
-        cast(dict[str, Any], self._fixtures)[key] = value
+        self._fixtures[key] = value
         return self
 
     def setup_context(
@@ -752,7 +762,9 @@ class TestComprehensiveIntegration:
 
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
-        assert "integration" in suite["tags"]
+        tags_value = suite["tags"]
+        assert isinstance(tags_value, list)
+        assert "integration" in tags_value
         setup_data = suite["setup_data"]
         if isinstance(setup_data, dict) and "environment" in setup_data:
             env_value: object = setup_data["environment"]

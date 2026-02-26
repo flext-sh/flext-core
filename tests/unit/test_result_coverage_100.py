@@ -313,7 +313,8 @@ class TestrCoverage:
         def recovery(error: str) -> r[str]:
             return r[str].ok(f"Recovered from: {error}")
 
-        result: r[str] = r[str].fail("error").lash(recovery)
+        failed: r[str] = r[str].fail("error")
+        result: r[str] = failed.lash(recovery)
         _ResultAssertions.assert_success_with_value(
             result,
             "Recovered from: error",
@@ -337,7 +338,8 @@ class TestrCoverage:
         def failing_recovery(error: str) -> r[str]:
             return r[str].fail("recovery also failed")
 
-        result: r[str] = r[str].fail("original").lash(failing_recovery)
+        failed: r[str] = r[str].fail("original")
+        result: r[str] = failed.lash(failing_recovery)
         _ResultAssertions.assert_failure_with_error(
             result,
             "recovery also failed",

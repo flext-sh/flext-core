@@ -137,20 +137,20 @@ class HandlersService(s[m.ConfigMap]):
 
         handler = CommandHandler()
 
-        command = CreateUserCommand(
-            user_id="user-123",
-            name="Alice",
-            email="alice@example.com",
-        )
+        command = CreateUserCommand.model_validate({
+            "user_id": "user-123",
+            "name": "Alice",
+            "email": "alice@example.com",
+        })
         result = handler.handle(command)
         if result.is_success:
             print(f"✅ Command executed: {result.value}")
 
-        invalid_command = CreateUserCommand(
-            user_id="user-456",
-            name="",
-            email="bob@example.com",
-        )
+        invalid_command = CreateUserCommand.model_validate({
+            "user_id": "user-456",
+            "name": "",
+            "email": "bob@example.com",
+        })
         invalid_result = handler.handle(invalid_command)
         if invalid_result.is_failure:
             print(f"❌ Command failed: {invalid_result.error}")
@@ -162,13 +162,13 @@ class HandlersService(s[m.ConfigMap]):
 
         handler = QueryHandler()
 
-        query = GetUserQuery(user_id="user-123")
+        query = GetUserQuery.model_validate({"user_id": "user-123"})
         result = handler.handle(query)
         if result.is_success:
             user = result.value
             print(f"✅ Query result: {user.name} ({user.email})")
 
-        not_found_query = GetUserQuery(user_id="not-found")
+        not_found_query = GetUserQuery.model_validate({"user_id": "not-found"})
         not_found_result = handler.handle(not_found_query)
         if not_found_result.is_failure:
             print(f"❌ Query failed: {not_found_result.error}")
@@ -197,11 +197,11 @@ class HandlersService(s[m.ConfigMap]):
 
         command_handler = CommandHandler()
 
-        error_command = CreateUserCommand(
-            user_id="error-user",
-            name="",
-            email="",
-        )
+        error_command = CreateUserCommand.model_validate({
+            "user_id": "error-user",
+            "name": "",
+            "email": "",
+        })
 
         error_result = command_handler.handle(error_command)
         if error_result.is_failure:

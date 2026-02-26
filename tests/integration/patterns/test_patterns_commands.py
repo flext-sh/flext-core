@@ -12,6 +12,7 @@ from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.typings import t
+
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
@@ -102,6 +103,24 @@ class FailingCommand(FlextModels.TimestampedModel):
     def validate_command(self) -> FlextResult[bool]:
         """Fail validation intentionally."""
         return FlextResult[bool].fail("This command always fails")
+
+
+def _create_user_command(*, username: str, email: str) -> CreateUserCommand:
+    return CreateUserCommand.model_validate({
+        "username": username,
+        "email": email,
+    })
+
+
+def _update_user_command(
+    *,
+    target_user_id: str,
+    updates: dict[str, t.GeneralValueType],
+) -> UpdateUserCommand:
+    return UpdateUserCommand.model_validate({
+        "target_user_id": target_user_id,
+        "updates": updates,
+    })
 
 
 class CreateUserCommandHandler(
@@ -251,7 +270,7 @@ class TestFlextCommand:
 
     def test_command_creation_with_auto_id(self) -> None:
         """Test creating command with auto-generated ID."""
-        command: CreateUserCommand = CreateUserCommand(
+        command: CreateUserCommand = _create_user_command(
             username="john_doe",
             email="john@example.com",
         )
@@ -267,7 +286,7 @@ class TestFlextCommand:
     def test_command_creation_with_custom_id(self) -> None:
         """Test creating command with custom ID."""
         # Cannot create command with custom id - not supported by Pydantic model
-        command = CreateUserCommand(
+        command = _create_user_command(
             username="jane_doe",
             email="jane@example.com",
         )
@@ -278,7 +297,7 @@ class TestFlextCommand:
 
     def test_get_payload(self) -> None:
         """Test getting command payload."""
-        command = CreateUserCommand(username="test_user", email="test@example.com")
+        command = _create_user_command(username="test_user", email="test@example.com")
         payload = command.get_payload()
 
         # UserPayloadDict has total=False, so use .get() for optional fields
@@ -290,7 +309,7 @@ class TestFlextCommand:
 
     def test_validate_command_success(self) -> None:
         """Test successful command validation."""
-        command = CreateUserCommand(username="valid_user", email="valid@example.com")
+        command = _create_user_command(username="valid_user", email="valid@example.com")
         result = command.validate_command()
 
         if not (result.is_success):
@@ -299,7 +318,7 @@ class TestFlextCommand:
 
     def test_validate_command_failure_no_username(self) -> None:
         """Test command validation failure for missing username."""
-        command = CreateUserCommand(username="", email="test@example.com")
+        command = _create_user_command(username="", email="test@example.com")
         result = command.validate_command()
 
         if not (result.is_failure):
@@ -315,7 +334,7 @@ class TestFlextCommand:
 
     def test_validate_command_failure_no_email(self) -> None:
         """Test command validation failure for missing email."""
-        command = CreateUserCommand(username="test_user", email="")
+        command = _create_user_command(username="test_user", email="")
         result = command.validate_command()
 
         if not (result.is_failure):
@@ -331,7 +350,7 @@ class TestFlextCommand:
 
     def test_validate_command_failure_invalid_email(self) -> None:
         """Test command validation failure for invalid email."""
-        command = CreateUserCommand(username="test_user", email="invalid_email")
+        command = _create_user_command(username="test_user", email="invalid_email")
         result = command.validate_command()
 
         if not (result.is_failure):
@@ -347,7 +366,7 @@ class TestFlextCommand:
 
     def test_get_command_metadata(self) -> None:
         """Test command basic properties."""
-        command = CreateUserCommand(username="test_user", email="test@example.com")
+        command = _create_user_command(username="test_user", email="test@example.com")
 
         # Test basic command properties
         assert command.username == "test_user"
@@ -413,7 +432,7 @@ class TestFlextCommandHandler:
         handler: FlextCommandHandler[
             CreateUserCommand, dict[str, t.GeneralValueType]
         ] = CreateUserCommandHandler()
-        command: CreateUserCommand = CreateUserCommand(
+        command: CreateUserCommand = _create_user_command(
             username="john",
             email="john@example.com",
         )
@@ -437,7 +456,7 @@ class TestFlextCommandHandler:
     def test_process_command_success(self) -> None:
         """Test complete command processing flow."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
-        command: CreateUserCommand = CreateUserCommand(
+        command: CreateUserCommand = _create_user_command(
             username="jane",
             email="jane@example.com",
         )
@@ -456,7 +475,7 @@ class TestFlextCommandHandler:
         handler: FlextCommandHandler[
             CreateUserCommand, dict[str, t.GeneralValueType]
         ] = CreateUserCommandHandler()
-        command: CreateUserCommand = CreateUserCommand(
+        command: CreateUserCommand = _create_user_command(
             username="",
             email="invalid",
         )
@@ -476,10 +495,7 @@ class TestFlextCommandHandler:
 
     def test_process_command_cannot_handle(self) -> None:
         """Test validation failure for wrong command type."""
-        handler: FlextCommandHandler[
-            CreateUserCommand, dict[str, t.GeneralValueType]
-        ] = CreateUserCommandHandler()
-        wrong_command: UpdateUserCommand = UpdateUserCommand(
+        wrong_command: UpdateUserCommand = _update_user_command(
             target_user_id="123",
             updates={"name": "test"},
         )

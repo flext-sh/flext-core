@@ -65,9 +65,9 @@ class BiMapping[K, V]:
         """
         forward_dict: dict[K, V] = dict(data)
         self._forward: MappingProxyType[K, V] = MappingProxyType(forward_dict)
-        self._inverse: MappingProxyType[V, K] = MappingProxyType(
-            {v: k for k, v in data.items()}
-        )
+        self._inverse: MappingProxyType[V, K] = MappingProxyType({
+            v: k for k, v in data.items()
+        })
 
     @property
     def forward(self) -> MappingProxyType[K, V]:
@@ -655,15 +655,13 @@ class FlextConstants:
         ASYNC_BLOCK_ON_FULL: Final[bool] = False
 
         # Log level hierarchy for level-based context filtering
-        LEVEL_HIERARCHY: Final[MappingProxyType[str, int]] = MappingProxyType(
-            {
-                "debug": 10,
-                "info": 20,
-                "warning": 30,
-                "error": 40,
-                "critical": 50,
-            }
-        )
+        LEVEL_HIERARCHY: Final[MappingProxyType[str, int]] = MappingProxyType({
+            "debug": 10,
+            "info": 20,
+            "warning": 30,
+            "error": 40,
+            "critical": 50,
+        })
         """Numeric log levels for comparison (lower = more verbose)."""
 
         class ContextOperation(StrEnum):

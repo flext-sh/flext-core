@@ -17,6 +17,7 @@ from typing import ClassVar
 
 from flext_core import FlextModels, FlextResult, FlextService, t
 from flext_core.models import m
+
 from tests.constants import TestsFlextConstants
 
 # =========================================================================
@@ -446,7 +447,7 @@ class ServiceFactoryRegistry:
             case ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
             case _:
-                msg = f"Unknown service type: {case.service_type}"
+                msg = f"Unsupported service type: {case.service_type}"
                 raise ValueError(msg)
 
         return service

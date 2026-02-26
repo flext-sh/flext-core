@@ -13,6 +13,7 @@ import hashlib
 from pathlib import Path
 
 from flext_core import r
+
 from flext_infra.models import m
 
 
@@ -42,13 +43,11 @@ class BaseMkValidator:
             source = workspace_root / "base.mk"
             if not source.exists():
                 return r[m.ValidationReport].ok(
-                    m.ValidationReport.model_validate(
-                        {
-                            "passed": False,
-                            "violations": ["missing root base.mk"],
-                            "summary": "missing root base.mk",
-                        }
-                    ),
+                    m.ValidationReport.model_validate({
+                        "passed": False,
+                        "violations": ["missing root base.mk"],
+                        "summary": "missing root base.mk",
+                    }),
                 )
 
             source_hash = self._sha256(source)
@@ -72,13 +71,11 @@ class BaseMkValidator:
             )
 
             return r[m.ValidationReport].ok(
-                m.ValidationReport.model_validate(
-                    {
-                        "passed": passed,
-                        "violations": mismatched,
-                        "summary": summary,
-                    }
-                ),
+                m.ValidationReport.model_validate({
+                    "passed": passed,
+                    "violations": mismatched,
+                    "summary": summary,
+                }),
             )
         except OSError as exc:
             return r[m.ValidationReport].fail(

@@ -18,8 +18,6 @@ from pydantic import (
     ConfigDict,
     Field,
     TypeAdapter,
-)
-from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
@@ -32,7 +30,8 @@ from flext_core.typings import t
 
 
 class MetadataProtocol(Protocol):
-    attributes: Mapping[str, t.MetadataAttributeValue]
+    @property
+    def attributes(self) -> Mapping[str, t.MetadataAttributeValue]: ...
 
 
 class FlextExceptions:
@@ -238,7 +237,9 @@ class FlextExceptions:
             pass
 
         dumped_map: Mapping[str, t.MetadataAttributeValue] | None = None
-        model_dump = getattr(value, "model_dump", None)
+        model_dump = (
+            getattr(value, "model_dump") if hasattr(value, "model_dump") else None
+        )
         if callable(model_dump):
             dumped_candidate = model_dump()
             try:
@@ -254,9 +255,7 @@ class FlextExceptions:
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in attrs_map.items()
                 }
-                return m.Metadata(
-                    attributes=attrs,
-                )
+                return m.Metadata.model_validate({"attributes": attrs})
 
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
@@ -264,9 +263,7 @@ class FlextExceptions:
                 k: FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in attrs_map.items()
             }
-            return m.Metadata(
-                attributes=attrs,
-            )
+            return m.Metadata.model_validate({"attributes": attrs})
 
         return None
 
@@ -280,21 +277,17 @@ class FlextExceptions:
         excluded = excluded_keys or frozenset()
         context_map: m.ConfigMap = m.ConfigMap(root={})
         if context:
-            context_map.update(
-                {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in context.items()
-                    if k not in excluded
-                }
-            )
+            context_map.update({
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in context.items()
+                if k not in excluded
+            })
         if extra_kwargs:
-            context_map.update(
-                {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in extra_kwargs.items()
-                    if k not in excluded
-                }
-            )
+            context_map.update({
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in extra_kwargs.items()
+                if k not in excluded
+            })
         return context_map
 
     @staticmethod
@@ -391,7 +384,7 @@ class FlextExceptions:
 
         def to_dict(
             self,
-        ) -> dict[str, t.MetadataAttributeValue]:
+        ) -> Mapping[str, t.MetadataAttributeValue]:
             """Convert exception to dictionary representation.
 
             Returns:
@@ -421,7 +414,7 @@ class FlextExceptions:
         ) -> MetadataProtocol:
             """Normalize metadata from dict-like object."""
             # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
-            merged_attrs = {}
+            merged_attrs: dict[str, t.MetadataAttributeValue] = {}
 
             # Normalize metadata_dict values
             for k, v in metadata_dict.items():
@@ -464,8 +457,8 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata_value(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return m.Metadata(attributes=normalized_attrs)
-                return m.Metadata(attributes={})
+                    return m.Metadata.model_validate({"attributes": normalized_attrs})
+                return m.Metadata.model_validate({"attributes": {}})
 
             metadata_model = e._safe_metadata(metadata)
             if metadata_model is not None:
@@ -478,7 +471,7 @@ class FlextExceptions:
                 }
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
-                return m.Metadata(attributes=merged_attrs)
+                return m.Metadata.model_validate({"attributes": merged_attrs})
 
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
@@ -488,7 +481,7 @@ class FlextExceptions:
                 )
 
             # Fallback: convert to FlextRuntime.Metadata with string value
-            return m.Metadata(attributes={"value": str(metadata)})
+            return m.Metadata.model_validate({"attributes": {"value": str(metadata)}})
 
     # Specific exception classes with minimal code
     class ValidationError(BaseError):
@@ -1133,7 +1126,11 @@ class FlextExceptions:
             if string_value is not None:
                 return string_value
 
-            qualname_value = getattr(type_value, "__qualname__", None)
+            qualname_value = (
+                getattr(type_value, "__qualname__")
+                if hasattr(type_value, "__qualname__")
+                else None
+            )
             return e._safe_optional_str(qualname_value)
 
         @staticmethod
@@ -1339,7 +1336,7 @@ class FlextExceptions:
         bool,
         bool,
         t.MetadataAttributeValue,
-        dict[str, t.MetadataAttributeValue],
+        Mapping[str, t.MetadataAttributeValue],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
@@ -1388,7 +1385,11 @@ class FlextExceptions:
         metadata: MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None = (
             None
         )
-        model_dump = getattr(metadata_raw, "model_dump", None)
+        model_dump = (
+            getattr(metadata_raw, "model_dump")
+            if hasattr(metadata_raw, "model_dump")
+            else None
+        )
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
         if metadata is None:
@@ -1398,7 +1399,7 @@ class FlextExceptions:
     @staticmethod
     def create_error(error_type: str, message: str) -> e.BaseError:
         """Create an exception instance based on error type."""
-        error_classes = {
+        error_classes: dict[str, type[e.BaseError]] = {
             "ValidationError": e.ValidationError,
             "ConfigurationError": e.ConfigurationError,
             "ConnectionError": e.ConnectionError,
@@ -1455,11 +1456,16 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_metadata_value(
-        meta: MetadataProtocol | None,
-    ) -> dict[str, t.MetadataAttributeValue] | None:
+        meta: MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None,
+    ) -> Mapping[str, t.MetadataAttributeValue] | None:
         """Prepare metadata value for error creation."""
         if meta is None:
             return None
+        if isinstance(meta, Mapping):
+            return {
+                key: FlextRuntime.normalize_to_metadata_value(value)
+                for key, value in meta.items()
+            }
         return dict(meta.attributes)
 
     @staticmethod
@@ -1487,7 +1493,7 @@ class FlextExceptions:
             error_context["error_code"] = error_code
 
         # Create appropriate error class based on type
-        error_classes = {
+        error_classes: dict[str, type[e.BaseError]] = {
             "validation": e.ValidationError,
             "configuration": e.ConfigurationError,
             "connection": e.ConnectionError,

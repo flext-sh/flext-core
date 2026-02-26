@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 from pydantic import BaseModel
 
 from flext_core import c, m, r, t, u
@@ -12,11 +14,6 @@ class _Cfg(BaseModel):
 
 class _BadCopyModel(BaseModel):
     x: int = 1
-
-    def model_copy(self, *, update=None, deep: bool = False):
-        _ = update
-        _ = deep
-        raise RuntimeError("copy failed")
 
 
 def test_merge_defaults_and_dump_paths() -> None:
@@ -33,7 +30,7 @@ def test_merge_defaults_and_dump_paths() -> None:
 
 
 def test_update_exception_path() -> None:
-    result = u.Model.update(_BadCopyModel(), x=5)
+    result = u.Model.update(cast("_BadCopyModel", cast("BaseModel", object())), x=5)
     assert result.is_failure
 
 

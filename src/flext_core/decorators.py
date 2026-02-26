@@ -886,6 +886,7 @@ class FlextDecorators(FlextRuntime):
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
+                retry_func = func
                 # Create retry config from parameters
                 retry_config = m.RetryConfiguration(
                     max_attempts=attempts,
@@ -895,17 +896,19 @@ class FlextDecorators(FlextRuntime):
                     ),
                 )
                 try:
+                    retry_args: tuple[object, ...] = tuple(args)
+                    retry_kwargs: Mapping[str, object] = dict(kwargs)
                     retry_result = FlextDecorators._execute_retry_loop(
-                        func,
-                        args,
-                        kwargs,
+                        retry_func,
+                        retry_args,
+                        retry_kwargs,
                         logger,
                         retry_config=retry_config,
                     )
                     if isinstance(retry_result, Exception):
                         FlextDecorators._handle_retry_exhaustion(
                             retry_result,
-                            func,
+                            retry_func,
                             attempts,
                             error_code,
                             logger,
@@ -933,7 +936,7 @@ class FlextDecorators(FlextRuntime):
                 ) as exc:
                     FlextDecorators._handle_retry_exhaustion(
                         exc,
-                        func,
+                        retry_func,
                         attempts,
                         error_code,
                         logger,
@@ -947,7 +950,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def _resolve_logger(
         args: tuple[object, ...],
-        func: Callable[..., R],
+        func: Callable[P, R],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
@@ -957,7 +960,9 @@ class FlextDecorators(FlextRuntime):
         """
         first_arg = args[0] if args else None
         potential_logger: FlextLogger | None = (
-            getattr(first_arg, "logger", None) if first_arg is not None else None
+            (getattr(first_arg, "logger") if hasattr(first_arg, "logger") else None)
+            if first_arg is not None
+            else None
         )
         if potential_logger is not None:
             return potential_logger
@@ -965,8 +970,8 @@ class FlextDecorators(FlextRuntime):
         return FlextLogger(func.__module__)
 
     @staticmethod
-    def _execute_retry_loop[R](
-        func: Callable[..., R],  # Variadic: called with pre-split args/kwargs
+    def _execute_retry_loop(
+        func: Callable[..., R],
         args: tuple[object, ...],
         kwargs: Mapping[str, object],
         logger: FlextLogger,
@@ -992,7 +997,7 @@ class FlextDecorators(FlextRuntime):
         if retry_config is None:
             retry_config = m.RetryConfiguration()
 
-        attempts = retry_config.max_attempts
+        attempts = retry_config.max_retries
         delay = retry_config.initial_delay_seconds
         # Map exponential_backoff bool to strategy string
         strategy = (
@@ -1160,7 +1165,9 @@ class FlextDecorators(FlextRuntime):
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
-            fallback_logger = getattr(logger, "logger", None)
+            fallback_logger = (
+                getattr(logger, "logger") if hasattr(logger, "logger") else None
+            )
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
             fallback_kwargs = m.ConfigMap(root=dict(kwargs.root))
@@ -1288,7 +1295,7 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: Literal[False] = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[..., R]], Callable[..., R]]: ...
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
     @overload
     @staticmethod
@@ -1299,7 +1306,7 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: Literal[True],
         error_code: str | None = None,
-    ) -> Callable[[Callable[..., R]], Callable[..., r[R]]]: ...
+    ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
 
     @staticmethod
     def combined(
@@ -1309,7 +1316,7 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[..., R]], Callable[..., R] | Callable[..., r[R]]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, r[R]]]:
         """Combined decorator applying multiple automation patterns at once.
 
         Combines @inject, @log_operation (with optional track_perf), and optionally
@@ -1362,7 +1369,7 @@ class FlextDecorators(FlextRuntime):
         # This separation ensures proper type inference by pyrefly
         if use_railway:
             # Railway path decorator
-            def railway_decorator(func: Callable[..., R]) -> Callable[..., r[R]]:
+            def railway_decorator(func: Callable[P, R]) -> Callable[P, r[R]]:
                 # Railway decorator changes return type from R to r[R]
                 result = FlextDecorators.railway(error_code=error_code)(func)
                 # Apply dependency injection to railway-wrapped function
@@ -1377,7 +1384,7 @@ class FlextDecorators(FlextRuntime):
             return railway_decorator
 
         # Non-railway path decorator
-        def standard_decorator(func: Callable[..., R]) -> Callable[..., R]:
+        def standard_decorator(func: Callable[P, R]) -> Callable[P, R]:
             result = func
             if inject_deps:
                 result = FlextDecorators.inject(**inject_deps)(result)

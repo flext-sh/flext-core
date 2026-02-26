@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_core import r
+
 from flext_tests._validator import (
     FlextValidatorBypass,
     FlextValidatorImports,
@@ -264,20 +265,16 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
         ]
 
         if include_tests_validation:
-            validators.append(
-                (
-                    "tests",
-                    cls.tests(path, exclude_patterns, approved_exceptions),
-                )
-            )
+            validators.append((
+                "tests",
+                cls.tests(path, exclude_patterns, approved_exceptions),
+            ))
 
         if pyproject_path and pyproject_path.exists():
-            validators.append(
-                (
-                    "config",
-                    cls.validate_config(pyproject_path, approved_exceptions),
-                )
-            )
+            validators.append((
+                "config",
+                cls.validate_config(pyproject_path, approved_exceptions),
+            ))
 
         for name, result in validators:
             if result.is_failure:

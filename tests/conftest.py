@@ -16,8 +16,6 @@ from pathlib import Path
 from typing import TypeVar, cast
 
 import pytest
-from pydantic import ConfigDict
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -27,6 +25,8 @@ from flext_core import (
     r,
     t,
 )
+from pydantic import ConfigDict
+
 from tests.helpers.scenarios import (
     ParserScenario,
     ParserScenarios,
@@ -69,8 +69,8 @@ class FlextTestAutomationFramework:
             AssertionError: If result is not success
 
         """
-        (
-            assertion_helpers.assert_flext_result_success(result),
+        assertion_helpers.assert_flext_result_success(
+            result,
             f"{context}: Expected success, got failure: {result.error}",
         )
         return result.value
@@ -95,9 +95,10 @@ class FlextTestAutomationFramework:
             AssertionError: If result is not failure or error doesn't match
 
         """
-        (
-            assertion_helpers.assert_flext_result_failure(result),
+        assertion_helpers.assert_flext_result_failure(
+            result,
             f"{context}: Expected failure, got success: {result.value}",
+            error_contains=expected_error,
         )
         if expected_error:
             assert expected_error in str(result.error), (

@@ -361,7 +361,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.trace("Test trace message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Trace logging should succeed",
         )
@@ -385,7 +385,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.debug("Test debug message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Debug logging should succeed",
         )
@@ -408,7 +408,7 @@ class TestLoggingMethods:
 
         # Execute logging with context and validate result
         result = logger.debug("Debug with context", user_id="123", action="login")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Debug logging with context should succeed",
         )
@@ -433,7 +433,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.info("Test info message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Info logging should succeed",
         )
@@ -460,7 +460,7 @@ class TestLoggingMethods:
             status="completed",
             duration="0.5s",
         )
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Info logging with context should succeed",
         )
@@ -484,7 +484,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.warning("Test warning message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Warning logging should succeed",
         )
@@ -507,7 +507,7 @@ class TestLoggingMethods:
 
         # Execute logging with context and validate result
         result = logger.warning("Warning with context", retry_count=3, delay="1s")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Warning logging with context should succeed",
         )
@@ -531,7 +531,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.error("Test error message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Error logging should succeed",
         )
@@ -554,7 +554,7 @@ class TestLoggingMethods:
 
         # Execute logging with context and validate result
         result = logger.error("Error with context", error_code="ERR_001", user_id="456")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Error logging with context should succeed",
         )
@@ -578,7 +578,7 @@ class TestLoggingMethods:
 
         # Execute logging and validate result
         result = logger.critical("Test critical message")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Critical logging should succeed",
         )
@@ -605,7 +605,7 @@ class TestLoggingMethods:
             alert_level="high",
             system="payment",
         )
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Critical logging with context should succeed",
         )
@@ -628,7 +628,7 @@ class TestLoggingMethods:
 
         # Execute logging with formatting and validate result
         result = logger.info("User %s logged in", "john")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             "Logging with formatting should succeed",
         )
@@ -651,7 +651,7 @@ class TestLoggingMethods:
 
         # Execute logging with multiple format arguments and validate result
         result = logger.info("Message with %s and %d", "arg1", 42)
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             ("Logging with multiple format arguments should succeed"),
         )
@@ -685,7 +685,7 @@ class TestExceptionLogging:
             exception_obj = e
             # Execute exception logging and validate result
             result = logger.exception("An error occurred", exception=e)
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging should succeed",
             )
@@ -719,7 +719,7 @@ class TestExceptionLogging:
             exception_obj = e
             # Execute exception logging and validate result
             result = logger.exception("Operation failed")
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging with exc_info should succeed",
             )
@@ -747,7 +747,7 @@ class TestExceptionLogging:
 
         # Execute error logging outside exception context and validate result
         result = logger.error("No exception context")
-        (
+        _ = (
             assertion_helpers.assert_flext_result_success(result),
             ("Error logging without exception context should succeed"),
         )
@@ -781,7 +781,7 @@ class TestExceptionLogging:
                 operation="file_read",
                 file="data.txt",
             )
-            (
+            _ = (
                 assertion_helpers.assert_flext_result_success(result),
                 "Exception logging with context should succeed",
             )

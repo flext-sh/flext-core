@@ -142,7 +142,8 @@ class CacheService(m.ArbitraryTypesModel):
 
         # Railway pattern with u validation (DRY)
         return (
-            u.validate_length(
+            u
+            .validate_length(
                 key,
                 max_length=c.Validation.MAX_NAME_LENGTH,
             )

@@ -145,14 +145,8 @@ class TestFlextContainer:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
         # Cast object to t.GeneralValueType | BaseModel for type compatibility
-        # scenario.service is compatible at runtime but typed as object
-        service_typed: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]
-        ) = cast(
-            "t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]",
-            scenario.service,
-        )
-        result = container.with_service(scenario.name, service_typed)
+        
+        result = container.with_service(scenario.name, scenario.service)
         tm.that(
             result is container,
             eq=True,
@@ -202,10 +196,7 @@ class TestFlextContainer:
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
             return_value,
         )
-        factory_typed: Callable[[], t.RegisterableService] = cast(
-            "Callable[[], t.RegisterableService]",
-            factory,
-        )
+        factory_typed: Callable[[], t.RegisterableService] = factory
         result = clean_container.register_factory(
             f"factory_{type(return_value).__name__}",
             factory_typed,
@@ -228,10 +219,7 @@ class TestFlextContainer:
             return_value,
         )
         # Cast factory to correct type for with_factory
-        factory_typed: Callable[[], t.RegisterableService] = cast(
-            "Callable[[], t.RegisterableService]",
-            factory,
-        )
+        factory_typed: Callable[[], t.RegisterableService] = factory
         result = container.with_factory(
             f"factory_{type(return_value).__name__}",
             factory_typed,
@@ -363,14 +351,8 @@ class TestFlextContainer:
         container = clean_container
         # Cast scenario.service to container.register() compatible type
         # Runtime: object is compatible with t.GeneralValueType | BaseModel |
-        # Callable | object
-        service_typed: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]
-        ) = cast(
-            "t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]",
-            scenario.service,
-        )
-        container.register(scenario.name, service_typed)
+        
+        container.register(scenario.name, scenario.service)
         typed_result: FlextResult[t.RegisterableService] = container.get_typed(
             scenario.name,
             scenario.expected_type,

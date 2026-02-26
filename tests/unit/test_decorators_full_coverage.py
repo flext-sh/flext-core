@@ -8,8 +8,7 @@ from typing import Any, cast
 
 import pytest
 
-from flext_core import FlextContext, d, e, m, r, t, c, u
-deprecated = d.deprecated
+from flext_core import FlextContext, c, d, e, m, r, t, u
 
 
 class _ResultLogger:
@@ -55,7 +54,7 @@ class _ObjWithLogger:
 
 
 def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:
-    @deprecated("old API")
+    @d.deprecated("old API")
     def fn(value: str) -> str:
         return value.upper()
 
@@ -157,7 +156,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
 
     calls = {"n": 0}
 
-    def flaky() -> str:
+    def flaky(*_args: object, **_kwargs: object) -> str:
         calls["n"] += 1
         raise ValueError("nope")
 
@@ -181,7 +180,11 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         ),
     )
     result_none = d._execute_retry_loop(
-        lambda: "x", tuple(), {}, cast(Any, fake_logger), retry_config=None
+        lambda *_args, **_kwargs: "x",
+        tuple(),
+        {},
+        cast(Any, fake_logger),
+        retry_config=None,
     )
     assert isinstance(result_none, RuntimeError)
 
@@ -193,7 +196,7 @@ def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> Non
 
     fake_logger = _FakeLogger()
 
-    def fn() -> None:
+    def fn(*_args: object, **_kwargs: object) -> None:
         return None
 
     with pytest.raises(e.TimeoutError):
@@ -335,9 +338,13 @@ def test_with_correlation_with_context_track_operation_and_factory(
     ensure_calls: list[int] = []
     fake_logger = _FakeLogger()
 
+    def _ensure_correlation_id() -> str:
+        ensure_calls.append(1)
+        return "cid-1"
+
     monkeypatch.setattr(
         "flext_core.decorators.FlextContext.Utilities.ensure_correlation_id",
-        lambda: ensure_calls.append(1) or "cid-1",
+        _ensure_correlation_id,
     )
 
     @d.with_correlation()
@@ -382,7 +389,7 @@ def test_with_correlation_with_context_track_operation_and_factory(
     assert tracked() == "done"
 
     @d.factory(name="svc.factory", singleton=True, lazy=False)
-    def build(_value: t.GeneralValueType) -> t.GeneralValueType:
+    def build(_value: t.ScalarValue) -> t.ScalarValue:
         return 7
 
     assert hasattr(build, c.Discovery.FACTORY_ATTR)
@@ -457,7 +464,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
 
     calls = {"n": 0}
 
-    def always_fails() -> str:
+    def always_fails(*_args: object, **_kwargs: object) -> str:
         calls["n"] += 1
         raise KeyError("fail")
 
@@ -476,7 +483,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
     assert isinstance(result, Exception)
     assert calls["n"] == 2
 
-    def fn() -> None:
+    def fn(*_args: object, **_kwargs: object) -> None:
         return None
 
     with pytest.raises(ValueError, match="last"):

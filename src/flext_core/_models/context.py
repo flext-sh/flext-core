@@ -32,7 +32,7 @@ from flext_core.typings import t
 def _normalize_metadata_before(
     value: FlextModelFoundation.Metadata
     | t.ConfigMap
-    | Mapping[str, t.ScalarValue]
+    | Mapping[str, t.ConfigMapValue]
     | None,
 ) -> FlextModelFoundation.Metadata:
     """BeforeValidator: normalize metadata to FlextModelFoundation.Metadata."""
@@ -53,10 +53,9 @@ def _normalize_to_mapping(
         dumped = v.model_dump()
         if not FlextRuntime.is_dict_like(dumped):
             return {}
-        raw = getattr(dumped, "root", dumped)
         return {
             str(k): FlextRuntime.normalize_to_metadata_value(val)
-            for k, val in raw.items()
+            for k, val in dumped.items()
         }
     if v is None:
         return {}
@@ -90,7 +89,7 @@ class FlextModelsContext:
     def normalize_metadata(
         value: FlextModelFoundation.Metadata
         | t.ConfigMap
-        | Mapping[str, t.ScalarValue]
+        | Mapping[str, t.ConfigMapValue]
         | None,
     ) -> FlextModelFoundation.Metadata:
         """Normalize metadata input to FlextModelFoundation.Metadata."""
@@ -104,22 +103,26 @@ class FlextModelsContext:
                 f"got {value.__class__.__name__}"
             )
             raise TypeError(msg)
-        raw = getattr(value, "root", value)
         attributes: Mapping[str, t.MetadataAttributeValue] = {
-            str(k): FlextRuntime.normalize_to_metadata_value(v) for k, v in raw.items()
+            str(k): FlextRuntime.normalize_to_metadata_value(v)
+            for k, v in (
+                value.root.items() if isinstance(value, t.ConfigMap) else value.items()
+            )
         }
         return FlextModelFoundation.Metadata(attributes=attributes)
 
     @staticmethod
     def to_general_value_dict(
-        value: t.ConfigMap | Mapping[str, t.ScalarValue],
+        value: t.ConfigMap | Mapping[str, t.ConfigMapValue],
     ) -> Mapping[str, t.MetadataAttributeValue]:
         """Convert dict-like value to metadata mapping for Metadata."""
         if not FlextRuntime.is_dict_like(value):
             return {}
-        raw = getattr(value, "root", value)
         return {
-            str(k): FlextRuntime.normalize_to_metadata_value(v) for k, v in raw.items()
+            str(k): FlextRuntime.normalize_to_metadata_value(v)
+            for k, v in (
+                value.root.items() if isinstance(value, t.ConfigMap) else value.items()
+            )
         }
 
     class ArbitraryTypesModel(FlextModelFoundation.ArbitraryTypesModel):
@@ -226,10 +229,16 @@ class FlextModelsContext:
                 is checked then the value is returned; T is bounded to t.GuardInputValue.
 
             """
-            structlog_context = structlog.contextvars.get_contextvars()
-            if not structlog_context or self._key not in structlog_context:
+            contextvars_data = structlog.contextvars.get_contextvars()
+            if not isinstance(contextvars_data, Mapping):
                 return self._default
-            return structlog_context[self._key]
+            structlog_context: Mapping[str, t.ConfigMapValue] = contextvars_data
+            if self._key not in structlog_context:
+                return self._default
+            value = structlog_context[self._key]
+            if value is None:
+                return self._default
+            return value
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -247,11 +256,9 @@ class FlextModelsContext:
             if value is not None:
                 # T is bounded to PayloadValue in generic contract
                 # Store directly - type parameter constraint guarantees compatibility
-                _ = structlog.contextvars.bind_contextvars(
-                    **{
-                        self._key: value,
-                    }
-                )
+                _ = structlog.contextvars.bind_contextvars(**{
+                    self._key: value,
+                })
             else:
                 # Unbind if setting to None
                 structlog.contextvars.unbind_contextvars(self._key)
@@ -283,11 +290,9 @@ class FlextModelsContext:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                _ = structlog.contextvars.bind_contextvars(
-                    **{
-                        token.key: token.previous_value,
-                    }
-                )
+                _ = structlog.contextvars.bind_contextvars(**{
+                    token.key: token.previous_value,
+                })
 
     class Token(FlextModelsEntity.Value):
         """Token for context variable reset operations.
@@ -379,37 +384,7 @@ class FlextModelsContext:
             val: t.GuardInputValue,
         ) -> t.GuardInputValue:
             """Normalize any value to t.GuardInputValue recursively."""
-            if val is None or val.__class__ in {str, int, float, bool}:
-                return val
-            if isinstance(val, t.Dict):
-                result: MutableMapping[str, t.GuardInputValue] = {}
-                dict_v = val.root
-                for k, v in dict_v.items():
-                    result[str(k)] = (
-                        FlextModelsContext.ContextData.normalize_to_general_value(v)
-                    )
-                return result
-            if isinstance(val, Mapping):
-                result = {}
-                dict_v = dict(val)
-                for k, v in dict_v.items():
-                    result[str(k)] = (
-                        FlextModelsContext.ContextData.normalize_to_general_value(v)
-                    )
-                return result
-            if (
-                FlextRuntime.is_list_like(val)
-                and val.__class__ is not str
-                and val.__class__ is not bytes
-            ):
-                # Type narrowing: is_list_like ensures Sequence protocol
-                # Convert to list[t.GuardInputValue] recursively
-                seq_val: Sequence[t.GuardInputValue] = val
-                return [
-                    FlextModelsContext.ContextData.normalize_to_general_value(item)
-                    for item in seq_val
-                ]
-            return val
+            return FlextRuntime.normalize_to_general_value(val)
 
         @classmethod
         def normalize_to_serializable_value(

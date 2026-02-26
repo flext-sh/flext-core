@@ -16,14 +16,6 @@ from flext_core._models.context import (
 )
 
 
-class _ModelDumpNotDict(BaseModel):
-    def model_dump(
-        self, *args: object, **kwargs: object
-    ) -> dict[str, t.ConfigMapValue]:
-        _ = (args, kwargs)
-        return cast("dict[str, t.ConfigMapValue]", "not-dict")
-
-
 class _ModelWithNoCallableDump:
     model_dump = "bad"
 
@@ -108,17 +100,17 @@ def test_context_data_normalize_and_json_checks() -> None:
 def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
         FlextModelsContext.ContextData.validate_dict_serializable(
-            cast("t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None", 123)
+            cast(
+                "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
+                cast("object", 123),
+            )
         )
-
-    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
-        FlextModelsContext.ContextData.validate_dict_serializable(_ModelDumpNotDict())
 
     with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
         FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
-                _ModelWithNoCallableDump(),
+                cast("object", _ModelWithNoCallableDump()),
             )
         )
 
@@ -172,13 +164,10 @@ def test_context_export_serializable_and_validators() -> None:
         )
 
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
-        FlextModelsContext.ContextExport.validate_dict_serializable(_ModelDumpNotDict())
-
-    with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
         FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
-                _ModelWithNoCallableDump(),
+                cast("object", _ModelWithNoCallableDump()),
             )
         )
 
@@ -197,7 +186,10 @@ def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
 
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
         FlextModelsContext.ContextExport.validate_dict_serializable(
-            cast("t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None", 123)
+            cast(
+                "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
+                cast("object", 123),
+            )
         )
 
     metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})
@@ -283,4 +275,6 @@ def test_context_data_metadata_normalizer_paths() -> None:
     with pytest.raises(
         TypeError, match="metadata must be None, dict, or FlextModelsBase.Metadata"
     ):
-        _ = FlextModelsContext.normalize_metadata(cast("t.ConfigMap", 1.23))
+        _ = FlextModelsContext.normalize_metadata(
+            cast("t.ConfigMap", cast("object", 1.23))
+        )

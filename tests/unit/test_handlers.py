@@ -322,7 +322,7 @@ class TestFlextHandlers:
             handler_type=c.Cqrs.HandlerType.COMMAND,
             handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
-        config = cast("m.CqrsHandler", config_raw)
+        config = config_raw
         handler = RestrictiveHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
         u.Tests.Result.assert_result_failure_with_error(
@@ -350,7 +350,7 @@ class TestFlextHandlers:
             handler_type=c.Cqrs.HandlerType.COMMAND,
             handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
-        config = cast("m.CqrsHandler", config_raw)
+        config = config_raw
         handler = ValidationFailingHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
         u.Tests.Result.assert_result_failure_with_error(
@@ -376,7 +376,7 @@ class TestFlextHandlers:
             handler_type=c.Cqrs.HandlerType.COMMAND,
             handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
-        config = cast("m.CqrsHandler", config_raw)
+        config = config_raw
         handler = ExceptionHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
         u.Tests.Result.assert_result_failure_with_error(

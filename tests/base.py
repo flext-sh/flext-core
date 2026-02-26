@@ -25,6 +25,7 @@ from flext_core import (
     T,
 )
 from flext_tests.base import FlextTestsServiceBase
+
 from tests.constants import TestsFlextConstants
 
 
@@ -276,10 +277,6 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
             """
             if not handler_id:
                 msg = "Handler ID cannot be empty"
-                raise ValueError(msg)
-
-            if not callable(transform_fn):
-                msg = "Transform function must be callable"
                 raise ValueError(msg)
 
             def transform(

@@ -11,11 +11,12 @@ import warnings
 
 import pytest
 
-from typing import Any, cast
+from typing import cast
 
 from flext_core import FlextResult, m, t
 from flext_tests import tm
 from flext_tests.constants import c
+from flext_tests.typings import t as tests_t
 
 
 class TestFlextTestsMatchers:
@@ -215,13 +216,22 @@ class TestFlextTestsMatchers:
     def test_ok_with_is_parameter(self) -> None:
         """Test tm.ok() with is_ parameter."""
         result = FlextResult[str].ok("test")
-        value = tm.ok(result, where=cast(Any, lambda x: isinstance(x, str)))
+        value = tm.ok(
+            result,
+            where=cast("tests_t.Tests.PayloadValue", lambda x: isinstance(x, str)),
+        )
         assert value == "test"
 
     def test_ok_with_is_tuple_parameter(self) -> None:
         """Test tm.ok() with is_ tuple parameter."""
         result = FlextResult[str].ok("test")
-        value = tm.ok(result, where=cast(Any, lambda x: isinstance(x, str | bytes)))
+        value = tm.ok(
+            result,
+            where=cast(
+                "tests_t.Tests.PayloadValue",
+                lambda x: isinstance(x, str | bytes),
+            ),
+        )
         assert value == "test"
 
     def test_ok_with_has_parameter(self) -> None:
@@ -279,14 +289,17 @@ class TestFlextTestsMatchers:
     def test_ok_with_where_parameter(self) -> None:
         """Test tm.ok() with where parameter."""
         result = FlextResult[int].ok(42)
-        value = tm.ok(result, where=cast(Any, lambda x: x > 0))
+        value = tm.ok(result, where=cast("tests_t.Tests.PayloadValue", lambda x: x > 0))
         assert value == 42
 
     def test_ok_with_where_parameter_fails(self) -> None:
         """Test tm.ok() with where parameter fails when predicate returns False."""
         result = FlextResult[int].ok(42)
         with pytest.raises(AssertionError):
-            tm.ok(result, where=cast(Any, lambda x: x < 0))
+            tm.ok(
+                result,
+                where=cast("tests_t.Tests.PayloadValue", lambda x: x < 0),
+            )
 
     def test_ok_with_starts_parameter(self) -> None:
         """Test tm.ok() with starts parameter."""

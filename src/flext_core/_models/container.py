@@ -49,12 +49,13 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
-    raw = getattr(value, "root", value)
     attrs: Mapping[str, t.MetadataAttributeValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
-        for key, raw_value in raw.items()
+        for key, raw_value in (
+            value.root.items() if isinstance(value, t.ConfigMap) else value.items()
+        )
     }
-    return FlextModelFoundation.Metadata(attributes=dict(attrs))
+    return FlextModelFoundation.Metadata.model_validate({"attributes": attrs})
 
 
 class FlextModelsContainer:

@@ -9,16 +9,16 @@ from flext_core import c, m
 def test_command_validator_and_pagination_limit() -> None:
     assert m.Cqrs.Command.validate_command(None) == "Command"
     assert m.Cqrs.Command.validate_command(123) == "123"
-    page = m.Cqrs.Pagination(page=3, size=11)
+    page = m.Pagination(page=3, size=11)
     assert page.limit == 11
 
 
 def test_query_resolve_pagination_wrapper_and_fallback(monkeypatch) -> None:
     class Wrapper:
-        class Pagination(m.Cqrs.Pagination):
+        class Pagination(m.Pagination):
             pass
 
-        class Query(m.Cqrs.Query):
+        class Query(m.Query):
             pass
 
     Wrapper.Query.__module__ = "flext_core.models"
@@ -30,20 +30,20 @@ def test_query_resolve_pagination_wrapper_and_fallback(monkeypatch) -> None:
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
 
     monkeypatch.setitem(sys.modules, "flext_core.models", None)
-    assert Wrapper.Query._resolve_pagination_class() is m.Cqrs.Pagination
+    assert Wrapper.Query._resolve_pagination_class() is m.Pagination
 
 
 def test_query_validate_pagination_dict_and_default() -> None:
-    parsed = m.Cqrs.Query.model_validate({
+    parsed = m.Query.model_validate({
         "pagination": {"page": "4", "size": "20"},
         "filters": {},
     })
-    assert isinstance(parsed.pagination, m.Cqrs.Pagination)
+    assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 4
     assert parsed.pagination.size == 20
 
-    defaulted = m.Cqrs.Query.model_validate({"pagination": None, "filters": {}})
-    assert isinstance(defaulted.pagination, m.Cqrs.Pagination)
+    defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
+    assert isinstance(defaulted.pagination, m.Pagination)
     assert defaulted.pagination.page == c.Pagination.DEFAULT_PAGE_NUMBER
 
 
@@ -71,7 +71,7 @@ def test_handler_builder_fluent_methods() -> None:
 def test_cqrs_query_resolve_deeper_and_int_pagination(monkeypatch) -> None:
     class Wrapper:
         class Inner:
-            class Query(m.Cqrs.Query):
+            class Query(m.Query):
                 pass
 
     Wrapper.Inner.Query.__module__ = "flext_core.models"
@@ -79,11 +79,12 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(monkeypatch) -> None:
     monkeypatch.setitem(
         sys.modules, "flext_core.models", SimpleNamespace(Wrapper=Wrapper)
     )
-    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Cqrs.Pagination
+    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Pagination
 
-    parsed = m.Cqrs.Query.model_validate({
+    parsed = m.Query.model_validate({
         "pagination": {"page": 2, "size": 10},
         "filters": {},
     })
+    assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 2
     assert parsed.pagination.size == 10

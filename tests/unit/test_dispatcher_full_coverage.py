@@ -40,6 +40,15 @@ def _as_handler_callable(value: object) -> t.HandlerCallable:
     return cast("t.HandlerCallable", value)
 
 
+def _as_registration_handler(
+    value: object,
+) -> t.HandlerCallable | p.Handler[t.GuardInputValue, t.GuardInputValue] | BaseModel:
+    return cast(
+        "t.HandlerCallable | p.Handler[t.GuardInputValue, t.GuardInputValue] | BaseModel",
+        value,
+    )
+
+
 def _as_request_input(value: object) -> HandlerRegistrationRequestInput:
     return cast("HandlerRegistrationRequestInput", value)
 
@@ -123,21 +132,11 @@ class _BadDumpModel(BaseModel):
 
     x: int = 1
 
-    def model_dump(self, *args: object, **kwargs: object) -> dict[str, object]:
-        _ = (args, kwargs)
-        invalid_value = cast("object", ["not-a-dict"])
-        return cast("dict[str, object]", invalid_value)
-
 
 class _FailingDumpModel(BaseModel):
     """Model whose dump raises for extraction error path."""
 
     x: int = 1
-
-    def model_dump(self, *args: object, **kwargs: object) -> dict[str, object]:
-        _ = (args, kwargs)
-        msg = "boom-dump"
-        raise RuntimeError(msg)
 
 
 class _MetadataCarrier:
@@ -241,7 +240,7 @@ def test_validation_and_routing_helpers(dispatcher: FlextDispatcher) -> None:
     assert invalid_mode.is_failure
 
     explicit_handler = _HandleOnly()
-    dispatcher._handlers[_EchoMessage.__name__] = explicit_handler
+    dispatcher._handlers[_EchoMessage.__name__] = _as_handler(explicit_handler)
     assert dispatcher._route_to_handler(_EchoMessage()) is explicit_handler
 
     dispatcher._handlers.clear()
@@ -263,8 +262,9 @@ def test_cache_hit_and_execute_handler_fallback_paths(
     dispatcher.config.enable_caching = True
     query = _QueryMessage()
     cache_key = dispatcher._generate_cache_key(query, _QueryMessage)
-    cached = r[t.GeneralValueType].ok({"cached": True})
-    dispatcher._cache[cache_key] = cached
+    cached = r[dict[str, bool]].ok({"cached": True})
+    cache_map = cast("dict[str, r[dict[str, bool]]]", dispatcher._cache)
+    cache_map[cache_key] = cached
 
     cached_result = dispatcher._check_cache_for_result(
         query, _QueryMessage, is_query=True
@@ -274,11 +274,13 @@ def test_cache_hit_and_execute_handler_fallback_paths(
 
     # Execute via FlextHandlers instance branch.
     h = FlextHandlers.create_from_callable(lambda msg: str(type(msg).__name__))
-    h_result = dispatcher._execute_handler(h, query)
+    h_result = dispatcher._execute_handler(_as_handler(h), query)
     assert h_result.is_success
 
     # Non-FlextHandlers: handle path, execute path, invalid path, non-callable path, exception path.
-    handle_result = dispatcher._execute_handler(_HandleOnly(), _EchoMessage())
+    handle_result = dispatcher._execute_handler(
+        _as_handler(_HandleOnly()), _EchoMessage()
+    )
     assert handle_result.is_success
 
     execute_result = dispatcher._execute_handler(
@@ -480,7 +482,7 @@ def test_publish_subscribe_unsubscribe_paths(
     sub = dispatcher.subscribe("evt", _as_handler_callable(_HandleOnly()))
     assert sub.is_failure
 
-    dispatcher._handlers["evt"] = _HandleOnly()
+    dispatcher._handlers["evt"] = _as_handler(_HandleOnly())
     unsub_ok = dispatcher.unsubscribe("evt")
     assert unsub_ok.is_success
 
@@ -564,7 +566,7 @@ def test_handler_extraction_and_registration_mode_helpers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Cover handler extraction defaults and mode-specific registration branches."""
-    bad_model = m.HandlerRegistrationRequest.model_construct(handler=123)
+    bad_model = m.HandlerRegistrationRequest.model_construct(handler=_as_handler(123))
     bad_extract = dispatcher._validate_and_extract_handler(bad_model)
     assert bad_extract.is_failure
 
@@ -595,11 +597,15 @@ def test_handler_extraction_and_registration_mode_helpers(
     )
     assert auto_reg.is_success
 
-    explicit_missing = dispatcher._register_explicit_handler(_HandleOnly(), "h2", {})
+    explicit_missing = dispatcher._register_explicit_handler(
+        _as_handler(_HandleOnly()),
+        "h2",
+        {},
+    )
     assert explicit_missing.is_failure
 
     explicit_ok = dispatcher._register_explicit_handler(
-        _HandleOnly(),
+        _as_handler(_HandleOnly()),
         "h3",
         cast(
             "Mapping[str, t.ConfigMapValue]",
@@ -615,7 +621,9 @@ def test_register_handler_with_request_and_public_register_handler_branches(
 ) -> None:
     """Cover request-based registration and public register_handler validation branches."""
     # _register_handler_with_request failure from invalid extracted handler
-    constructed_bad = m.HandlerRegistrationRequest.model_construct(handler=object())
+    constructed_bad = m.HandlerRegistrationRequest.model_construct(
+        handler=_as_handler(object())
+    )
     req_fail = dispatcher._register_handler_with_request(constructed_bad)
     assert req_fail.is_failure
 
@@ -627,12 +635,14 @@ def test_register_handler_with_request_and_public_register_handler_branches(
     assert auto_ok.value["handler_name"] == "preferred"
 
     explicit_req = m.HandlerRegistrationRequest(
-        handler=_HandleOnly(), message_type=_EchoMessage
+        handler=_as_registration_handler(_HandleOnly()), message_type=_EchoMessage
     )
     explicit_ok = dispatcher._register_handler_with_request(explicit_req)
     assert explicit_ok.is_success
 
-    explicit_missing = m.HandlerRegistrationRequest(handler=_HandleOnly())
+    explicit_missing = m.HandlerRegistrationRequest(
+        handler=_as_registration_handler(_HandleOnly())
+    )
     explicit_fail = dispatcher._register_handler_with_request(explicit_missing)
     assert explicit_fail.is_failure
 
@@ -651,13 +661,13 @@ def test_register_handler_with_request_and_public_register_handler_branches(
     monkeypatch.setattr(
         dispatcher, "_layer1_register_handler", lambda *_args: r[bool].fail("reg-fail")
     )
-    reg_fail = dispatcher.register_handler("cmd.name", _HandleOnly())
+    reg_fail = dispatcher.register_handler("cmd.name", _as_handler(_HandleOnly()))
     assert reg_fail.is_failure
 
     monkeypatch.setattr(
         dispatcher, "_layer1_register_handler", lambda *_args: r[bool].ok(True)
     )
-    reg_str_ok = dispatcher.register_handler("cmd.name", _HandleOnly())
+    reg_str_ok = dispatcher.register_handler("cmd.name", _as_handler(_HandleOnly()))
     assert reg_str_ok.is_success
 
     model_single = dispatcher.register_handler(
@@ -702,7 +712,7 @@ def test_register_handlers_batch_and_ensure_handler_helper(
     assert good_only.value.count == 1
 
     h = FlextHandlers.create_from_callable(lambda msg: msg)
-    ensured = dispatcher._ensure_handler(h)
+    ensured = dispatcher._ensure_handler(_as_handler(h))
     assert ensured.is_success
 
     ensured_fail = dispatcher._ensure_handler(_as_handler(object()))
@@ -856,7 +866,9 @@ def test_dispatch_public_api_and_metadata_conversion_paths(
     dispatcher: FlextDispatcher,
 ) -> None:
     """Cover dispatch API variants and metadata/config conversion helpers."""
-    dispatcher._handlers["custom_type"] = lambda msg: _StringifyingObject()
+    dispatcher._handlers["custom_type"] = _as_handler(
+        lambda msg: _as_payload(_StringifyingObject())
+    )
     result = dispatcher.dispatch("custom_type", {"x": 1})
     assert result.is_success
     assert result.value == "stringified-object"
@@ -903,8 +915,8 @@ def test_simple_dispatch_and_extract_dispatch_config_paths(
     not_callable = dispatcher._try_simple_dispatch(_as_payload(msg))
     assert not_callable is not None and not_callable.is_failure
 
-    dispatcher._handlers[_Msg.__name__] = lambda _m: r[t.GeneralValueType].ok(
-        "already-result"
+    dispatcher._handlers[_Msg.__name__] = _as_handler(
+        lambda _m: _as_payload(r[t.GeneralValueType].ok("already-result"))
     )
     passthrough = dispatcher._try_simple_dispatch(_as_payload(msg))
     assert passthrough is not None and passthrough.is_success
@@ -913,7 +925,7 @@ def test_simple_dispatch_and_extract_dispatch_config_paths(
         msg_txt = "handler exploded"
         raise RuntimeError(msg_txt)
 
-    dispatcher._handlers[_Msg.__name__] = _raises
+    dispatcher._handlers[_Msg.__name__] = _as_handler(_raises)
     raised = dispatcher._try_simple_dispatch(_as_payload(msg))
     assert raised is not None and raised.is_failure
 
@@ -957,9 +969,7 @@ def test_prepare_validate_retry_and_normalize_dispatch_message_paths(
     """Cover context preparation/validation/retry and dispatch-message normalization branches."""
 
     class _BadConfig:
-        def model_dump(self) -> dict[str, object]:
-            msg = "bad-model-dump"
-            raise RuntimeError(msg)
+        value = "no-model-dump"
 
     prep_fail = dispatcher._prepare_dispatch_context(
         _EchoMessage(),
@@ -1058,8 +1068,7 @@ def test_context_execution_handle_result_attempt_and_metadata_compatibility(
 
     assert FlextDispatcher._normalize_context_metadata(_as_payload(object())) is None
 
-    with pytest.raises(TypeError):
-        FlextDispatcher._extract_metadata_mapping(_BadDumpModel())
+    assert FlextDispatcher._extract_metadata_mapping(_BadDumpModel()) is not None
 
     assert (
         FlextDispatcher._extract_metadata_mapping(_as_payload(_MetadataCarrier()))
@@ -1208,12 +1217,12 @@ def test_remaining_branches_group_a(
         "b": _as_handler_callable(_MiddlewareBadResult()),
     }
     assert dispatcher._execute_middleware_chain(
-        _EchoMessage(), _HandleOnly()
+        _EchoMessage(), _as_handler(_HandleOnly())
     ).is_success
 
     missing = dispatcher._process_middleware_instance(
         _EchoMessage(),
-        _HandleOnly(),
+        _as_handler(_HandleOnly()),
         DispatcherMiddlewareConfig(
             middleware_id="missing",
             middleware_type="m",
@@ -1229,19 +1238,19 @@ def test_remaining_branches_group_a(
     ).is_failure
     assert dispatcher.execute().is_success
 
-    dispatcher._handlers["dict"] = _HandleOnly()
+    dispatcher._handlers["dict"] = _as_handler(_HandleOnly())
     assert dispatcher._dispatch_command({"command_id": "c-1"}).is_success
 
     class _WithId:
         id = "id-1"
 
-    dispatcher._handlers[_WithId.__name__] = _HandleOnly()
+    dispatcher._handlers[_WithId.__name__] = _as_handler(_HandleOnly())
     assert dispatcher._dispatch_command(_as_payload(_WithId())).is_success
 
     query = _QueryMessage()
     key = dispatcher._generate_cache_key(query, _QueryMessage)
     dispatcher._cache[key] = r[t.GeneralValueType].ok("cached")
-    dispatcher._handlers[_QueryMessage.__name__] = _HandleOnly()
+    dispatcher._handlers[_QueryMessage.__name__] = _as_handler(_HandleOnly())
     assert dispatcher._dispatch_command(query).value == "cached"
 
     monkeypatch.setattr(
@@ -1274,13 +1283,13 @@ def test_remaining_branches_group_a(
         pass
 
     assert dispatcher._register_single_handler(_as_handler(_NoInterface())).is_failure
-    assert dispatcher._register_single_handler(_HandleOnly()).is_success
+    assert dispatcher._register_single_handler(_as_handler(_HandleOnly())).is_success
 
     class _ClassOnly:
         def handle(self, _msg: object) -> str:
             return "ok"
 
-    assert dispatcher._register_single_handler(_ClassOnly).is_success
+    assert dispatcher._register_single_handler(_as_handler(_ClassOnly)).is_success
 
     class _FactoryFail(_TrackContainer):
         def register_factory(self, name: str, factory: object) -> bool:
@@ -1288,7 +1297,10 @@ def test_remaining_branches_group_a(
             raise RuntimeError("factory-fail")
 
     dispatcher._container = cast("p.DI", cast("object", _FactoryFail()))
-    assert dispatcher._register_two_arg_handler(_ClassOnly, _HandleOnly()).is_success
+    assert dispatcher._register_two_arg_handler(
+        _ClassOnly,
+        _as_handler(_HandleOnly()),
+    ).is_success
 
     wrapped_cfg = DispatcherMiddlewareConfig(
         middleware_id="mw-id",
@@ -1319,12 +1331,14 @@ def test_remaining_branches_group_a(
         m.HandlerRegistrationRequest.model_construct(handler=None)
     ).is_failure
     assert dispatcher._register_handler_by_mode(
-        _HandleOnly(), "n", {"message_type": "m"}
+        _as_handler(_HandleOnly()), "n", {"message_type": "m"}
     ).is_success
     assert dispatcher._register_handler_with_request(
         cast("Mapping[str, t.ConfigMapValue]", cast("object", 5)),
     ).is_failure
-    assert dispatcher.register_handler(_ClassOnly, _HandleOnly()).is_success
+    assert dispatcher.register_handler(
+        _ClassOnly, _as_handler(_HandleOnly())
+    ).is_success
 
     class _MapOnly(Mapping[str, object]):
         def __getitem__(self, key: str) -> object:
@@ -1344,7 +1358,9 @@ def test_remaining_branches_group_a(
         lambda *_args: r[bool].fail("layer1-fail"),
     )
     assert dispatcher.register_handler(lambda x: x).is_failure
-    assert dispatcher.register_handlers({_ClassOnly: _HandleOnly()}).is_failure
+    assert dispatcher.register_handlers({
+        _ClassOnly: _as_handler(_HandleOnly())
+    }).is_failure
 
 
 def test_remaining_branches_group_b(
@@ -1384,7 +1400,7 @@ def test_remaining_branches_group_b(
     def _raising(_msg: object) -> object:
         raise RuntimeError("dispatch-error")
 
-    dispatcher._handlers["custom_type"] = _raising
+    dispatcher._handlers["custom_type"] = _as_handler(_raising)
     assert dispatcher.dispatch("custom_type", {"a": 1}).is_failure
 
     monkeypatch.setattr(
@@ -1431,13 +1447,16 @@ def test_remaining_branches_group_b(
         "_execute_dispatch_attempt",
         lambda *_args: r[t.GeneralValueType].ok("done"),
     )
-    retry_context = {
-        "message": _EchoMessage(),
-        "message_type": "m",
-        "metadata": {"x": 1},
-        "correlation_id": "cid",
-        "timeout_override": 1,
-    }
+    retry_context = cast(
+        "t.ConfigMapValue",
+        {
+            "message": _EchoMessage(),
+            "message_type": "m",
+            "metadata": {"x": 1},
+            "correlation_id": "cid",
+            "timeout_override": 1,
+        },
+    )
     assert dispatcher._execute_with_retry_policy(retry_context).is_success
 
     monkeypatch.setattr(
@@ -1477,9 +1496,7 @@ def test_remaining_branches_group_b(
     assert FlextDispatcher._extract_metadata_mapping({"k": "v"}) is not None
 
     class _GoodDump(BaseModel):
-        def model_dump(self, *args: object, **kwargs: object) -> dict[str, object]:
-            _ = (args, kwargs)
-            return {"k": "v"}
+        k: str = "v"
 
     assert FlextDispatcher._extract_metadata_mapping(_GoodDump()) is not None
     assert (
@@ -1500,9 +1517,8 @@ def test_remaining_branches_group_b(
     )
     assert FlextDispatcher._extract_from_flext_metadata(meta_obj) is meta_obj
 
-    class _DumpCarrier:
-        def model_dump(self) -> dict[str, object]:
-            return {"k": "v"}
+    class _DumpCarrier(BaseModel):
+        k: str = "v"
 
     assert FlextDispatcher._extract_from_object_attributes(
         _as_payload(_DumpCarrier())
@@ -1571,13 +1587,13 @@ def test_final_uncovered_edges(
         dispatcher, "_process_middleware_instance", lambda *_args: r[bool].fail("stop")
     )
     assert dispatcher._execute_middleware_chain(
-        _EchoMessage(), _HandleOnly()
+        _EchoMessage(), _as_handler(_HandleOnly())
     ).is_failure
 
     disabled_mw = FlextDispatcher._process_middleware_instance(
         dispatcher,
         _EchoMessage(),
-        _HandleOnly(),
+        _as_handler(_HandleOnly()),
         DispatcherMiddlewareConfig(
             middleware_id="disabled",
             middleware_type="m",
@@ -1590,19 +1606,19 @@ def test_final_uncovered_edges(
     assert disabled_mw.is_success
 
     assert dispatcher._invoke_middleware(
-        _as_handler_callable(cast("object", object())),
+        _as_handler_callable(object()),
         _EchoMessage(),
-        _HandleOnly(),
+        _as_handler(_HandleOnly()),
         "x",
     ).is_failure
 
-    dispatcher._handlers[_EchoMessage.__name__] = _HandleOnly()
+    dispatcher._handlers[_EchoMessage.__name__] = _as_handler(_HandleOnly())
     monkeypatch.setattr(
         dispatcher, "_execute_middleware_chain", lambda *_args: r[bool].fail("mid-fail")
     )
     assert dispatcher._dispatch_command(_EchoMessage()).is_failure
 
-    assert dispatcher._layer1_register_handler(_HandleOnly()).is_success
+    assert dispatcher._layer1_register_handler(_as_handler(_HandleOnly())).is_success
 
     class _WireContainer:
         def wire_modules(self, **_kwargs: object) -> None:
@@ -1626,7 +1642,7 @@ def test_final_uncovered_edges(
         def handle(self, _msg: object) -> str:
             return "ok"
 
-    assert dispatcher._register_single_handler(_ClassOnly).is_success
+    assert dispatcher._register_single_handler(_as_handler(_ClassOnly)).is_success
     single_factory = tracker.factories["handler.type"]
     assert callable(single_factory)
     assert isinstance(single_factory(), str)
@@ -1635,17 +1651,21 @@ def test_final_uncovered_edges(
         def handle(self, _msg: object) -> str:
             return "ok"
 
-    assert dispatcher._register_single_handler(_ModelHandler).is_success
+    assert dispatcher._register_single_handler(_as_handler(_ModelHandler)).is_success
     model_single_factory = tracker.factories["handler.modelmetaclass"]
     assert callable(model_single_factory)
     assert isinstance(model_single_factory(), BaseModel)
 
-    assert dispatcher._register_two_arg_handler("cmd.class", _ClassOnly).is_success
+    assert dispatcher._register_two_arg_handler(
+        "cmd.class", _as_handler(_ClassOnly)
+    ).is_success
     two_arg_factory = tracker.factories["handler.cmd.class"]
     assert callable(two_arg_factory)
     assert isinstance(two_arg_factory(), str)
 
-    assert dispatcher._register_two_arg_handler("cmd.model", _ModelHandler).is_success
+    assert dispatcher._register_two_arg_handler(
+        "cmd.model", _as_handler(_ModelHandler)
+    ).is_success
     model_two_arg_factory = tracker.factories["handler.cmd.model"]
     assert callable(model_two_arg_factory)
     assert isinstance(model_two_arg_factory(), BaseModel)

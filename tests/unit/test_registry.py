@@ -22,9 +22,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 from flext_core.typings import t
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
@@ -38,6 +39,7 @@ from flext_core import (
 )
 from flext_tests import FlextTestsUtilities, u
 from flext_core.models import m
+from flext_core.registry import RegistryHandler
 
 
 class RegistryOperationType(StrEnum):
@@ -267,34 +269,23 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[h[t.GeneralValueType, t.GeneralValueType]]:
+    ) -> list[RegistryHandler]:
         """Create test handlers."""
-        return [ConcreteTestHandler() for _ in range(count)]
+        return [cast("RegistryHandler", ConcreteTestHandler()) for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: list[h[t.GeneralValueType, t.GeneralValueType]],
-    ) -> list[
-        tuple[
-            type[t.GeneralValueType],
-            h[t.GeneralValueType, t.GeneralValueType],
-        ]
-    ]:
+        handlers: Sequence[RegistryHandler],
+    ) -> list[tuple[type[t.GeneralValueType], RegistryHandler]]:
         """Create test bindings using str message type."""
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def create_function_map(
-        handlers: list[h[t.GeneralValueType, t.GeneralValueType]],
-    ) -> dict[
-        type[t.GeneralValueType],
-        h[t.GeneralValueType, t.GeneralValueType],
-    ]:
+        handlers: Sequence[RegistryHandler],
+    ) -> dict[type[t.GeneralValueType], RegistryHandler]:
         """Create test function map using str message type."""
-        result: dict[
-            type[t.GeneralValueType],
-            h[t.GeneralValueType, t.GeneralValueType],
-        ] = {}
+        result: dict[type[t.GeneralValueType], RegistryHandler] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
         return result
@@ -312,12 +303,17 @@ class TestFlextRegistry:
         """Test handler registration with various scenarios."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(None)
+            result = registry.register_handler(
+                cast(
+                    "RegistryHandler",
+                    cast("object", None),
+                )
+            )
         else:
             handler = ConcreteTestHandler()
-            result = registry.register_handler(handler)
+            result = registry.register_handler(cast("RegistryHandler", handler))
             if test_case.duplicate_registration:
-                result = registry.register_handler(handler)
+                result = registry.register_handler(cast("RegistryHandler", handler))
         if test_case.should_succeed:
             u.Tests.Result.assert_result_success(result)
         else:
@@ -432,7 +428,7 @@ class TestFlextRegistry:
             RegistryOperationType.RESOLVE_HANDLER_KEY,
             RegistryOperationType.RESOLVE_BINDING_KEY,
         ):
-            key = registry._resolve_handler_key(handler)
+            key = registry._resolve_handler_key(cast("RegistryHandler", handler))
             assert isinstance(key, str) and len(key) > 0
 
     @pytest.mark.parametrize(
@@ -444,7 +440,12 @@ class TestFlextRegistry:
         """Test error handling scenarios."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(None)
+            result = registry.register_handler(
+                cast(
+                    "RegistryHandler",
+                    cast("object", None),
+                )
+            )
             u.Tests.Result.assert_result_failure(result)
             # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
             u.Tests.Result.assert_failure_with_error(
@@ -453,7 +454,7 @@ class TestFlextRegistry:
             )
         else:
             handler = ConcreteTestHandler()
-            result = registry.register_handler(handler)
+            result = registry.register_handler(cast("RegistryHandler", handler))
             u.Tests.Result.assert_result_success(result)
             assert isinstance(result.value, m.Handler.RegistrationDetails)
 
@@ -467,7 +468,7 @@ class TestFlextRegistry:
         """Test registry integration with dispatcher."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
-        result = registry.register_handler(handler)
+        result = registry.register_handler(cast("RegistryHandler", handler))
         u.Tests.Result.assert_result_success(result)
         assert isinstance(result.value, m.Handler.RegistrationDetails)
 
@@ -503,7 +504,8 @@ class TestFlextRegistry:
     def test_safe_status_extraction(self, status: str | None, expected: str) -> None:
         """Test safe status extraction."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        assert registry._safe_get_status(status) == expected
+        parsed_status = cast("str", status)
+        assert registry._safe_get_status(parsed_status) == expected
 
 
 __all__ = ["ConcreteTestHandler", "TestFlextRegistry"]

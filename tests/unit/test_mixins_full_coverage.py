@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -55,12 +55,12 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
     assert x.fail("error").is_failure
 
     conf = m.ConfigMap(root={"a": "b"})
-    assert x.ModelConversion.to_dict(conf) is conf
+    assert cast("Any", x).ModelConversion.to_dict(conf) is conf
 
     monkeypatch.setattr(
         FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1)
     )
-    scalar_wrapped = x.ModelConversion.to_dict(_SvcModel(value="ok"))
+    scalar_wrapped = cast("Any", x).ModelConversion.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
 
     class _BadMap(Mapping[str, t.GeneralValueType]):
@@ -74,9 +74,9 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
             raise RuntimeError("boom")
 
     assert (
-        x.ModelConversion.to_dict(
-            cast("Mapping[str, t.GeneralValueType]", _BadMap())
-        ).root
+        cast("Any", x)
+        .ModelConversion.to_dict(cast("Mapping[str, t.GeneralValueType]", _BadMap()))
+        .root
         == {}
     )
 
@@ -111,7 +111,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(monkeypatch) -> None:
     assert runtime_container.wired is not None
 
     with service.track("op") as metrics:
-        metrics["duration_ms"] = 2.0
+        cast("dict[str, t.GeneralValueType]", metrics)["duration_ms"] = 2.0
     assert hasattr(service, "_stats_op")
 
     try:
@@ -213,20 +213,25 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch) -> None:
 
 
 def test_mixins_validation_and_protocol_paths() -> None:
-    validators = [
+    validators: list[Callable[[t.ConfigMapValue], r[bool]]] = [
         lambda _v: r[bool].ok(False),
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
 
-    fail_validators = [
+    fail_validators: list[Callable[[t.ConfigMapValue], r[bool]]] = [
         lambda _v: r[bool].fail("no"),
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)
     assert fail_result.is_failure
 
     assert (
-        x.ProtocolValidation.is_handler(SimpleNamespace(handle=lambda *_a, **_k: None))
+        x.ProtocolValidation.is_handler(
+            cast(
+                "t.ConfigMapValue",
+                cast("object", SimpleNamespace(handle=lambda *_a, **_k: None)),
+            )
+        )
         is False
     )
     assert (
@@ -238,19 +243,24 @@ def test_mixins_validation_and_protocol_paths() -> None:
     assert x.ProtocolValidation.is_command_bus() is True
 
     unknown = x.ProtocolValidation.validate_protocol_compliance(
-        cast("p.Handler", cast("object", SimpleNamespace())),
+        cast(
+            "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+            cast("object", SimpleNamespace()),
+        ),
         "Nope",
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
-        cast("p.Handler", cast("object", SimpleNamespace())),
+        cast(
+            "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+            cast("object", SimpleNamespace()),
+        ),
         "Service",
     )
     assert unknown.is_failure
     assert known.is_success
 
-    class _ModelDumpOnly:
-        def model_dump(self) -> dict[str, str]:
-            return {}
+    class _ModelDumpOnly(BaseModel):
+        pass
 
     missing = x.ProtocolValidation.validate_processor_protocol(
         cast("p.HasModelDump", cast("object", _ModelDumpOnly()))

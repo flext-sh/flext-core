@@ -28,6 +28,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import (
     FlextContainer,
@@ -302,19 +303,20 @@ class TestFlextDecorators:
         elif test_case.operation == DecoratorOperationType.INJECT_PROVIDED:
             container = FlextContainer()
 
-            @dataclasses.dataclass
-            class TestServiceTyped:
+            class TestServiceTyped(BaseModel):
                 value: str
 
             # Cast dataclass instance for type compatibility with container
-            service_instance: TestServiceTyped = TestServiceTyped("from_container")
+            service_instance: TestServiceTyped = TestServiceTyped(
+                value="from_container"
+            )
             container.with_service("service", service_instance)
 
             @FlextDecorators.inject(service="service")
             def process(*, service: TestServiceTyped) -> str:
                 return service.value
 
-            explicit_service = TestServiceTyped("explicit")
+            explicit_service = TestServiceTyped(value="explicit")
             assert process(service=explicit_service) == "explicit"
 
     @pytest.mark.parametrize(

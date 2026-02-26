@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import ValidationError
@@ -25,6 +25,11 @@ from flext_core.constants import c
 from flext_core.models import m
 from flext_core.typings import t
 from flext_core.utilities import u
+
+_expected_validation_errors: tuple[type[Exception], ...] = (
+    ValidationError,
+    TypeError,
+)
 
 
 class ContainerModelsScenarios:
@@ -111,7 +116,7 @@ class TestFlextModelsContainer:
             assert registration.metadata is not None
             assert isinstance(registration.metadata, m.Metadata)
         else:
-            with pytest.raises((ValidationError, TypeError)):
+            with pytest.raises(_expected_validation_errors):
                 m.Container.ServiceRegistration(
                     name="test_service",
                     service="test_value",
@@ -210,7 +215,7 @@ class TestFlextModelsContainer:
             assert registration.metadata is not None
             assert isinstance(registration.metadata, m.Metadata)
         else:
-            with pytest.raises((ValidationError, TypeError)):
+            with pytest.raises(_expected_validation_errors):
                 m.Container.FactoryRegistration(
                     name="test_factory",
                     factory=factory,
@@ -474,19 +479,34 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(cast(Any, "invalid_string"))
+            u.Model.normalize_to_metadata(
+                cast(
+                    "m.Metadata | m.ConfigMap | None",
+                    cast("object", "invalid_string"),
+                )
+            )
 
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(cast(Any, 123))
+            u.Model.normalize_to_metadata(
+                cast(
+                    "m.Metadata | m.ConfigMap | None",
+                    cast("object", 123),
+                )
+            )
 
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(cast(Any, [1, 2, 3]))
+            u.Model.normalize_to_metadata(
+                cast(
+                    "m.Metadata | m.ConfigMap | None",
+                    cast("object", [1, 2, 3]),
+                )
+            )
 
     def test_service_registration_metadata_non_mapping_dict_like(self) -> None:
         """Test ServiceRegistration metadata with non-Mapping dict-like object."""

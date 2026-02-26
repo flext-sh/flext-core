@@ -15,6 +15,7 @@ from __future__ import annotations
 from flext_core.typings import t
 
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 
@@ -318,8 +319,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        case: FixtureCaseDict = kwargs
-        self._cases.append(case)
+        case = cast("FixtureCaseDict", kwargs)
         return self
 
     def add_success_cases(

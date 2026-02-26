@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+
 from flext_infra.constants import c
 from flext_infra.models import m
 
@@ -67,15 +68,13 @@ class DiscoveryService:
                 kind = "submodule" if entry.name in submodules else "external"
 
                 projects.append(
-                    m.ProjectInfo.model_validate(
-                        {
-                            "path": entry,
-                            "name": entry.name,
-                            "stack": f"{stack}/{kind}",
-                            "has_tests": (entry / "tests").is_dir(),
-                            "has_src": (entry / c.Paths.DEFAULT_SRC_DIR).is_dir(),
-                        }
-                    ),
+                    m.ProjectInfo.model_validate({
+                        "path": entry,
+                        "name": entry.name,
+                        "stack": f"{stack}/{kind}",
+                        "has_tests": (entry / "tests").is_dir(),
+                        "has_src": (entry / c.Paths.DEFAULT_SRC_DIR).is_dir(),
+                    }),
                 )
 
             return r[list[m.ProjectInfo]].ok(projects)
@@ -83,18 +82,6 @@ class DiscoveryService:
             return r[list[m.ProjectInfo]].fail(
                 f"project discovery failed: {exc}",
             )
-
-    def discover(
-        self,
-        root: Path | str,
-    ) -> FlextResult[list[m.ProjectInfo]]:
-        """Protocol-compliant discover method.
-
-        Satisfies ``InfraProtocols.DiscoveryProtocol.discover``.
-        """
-        if not isinstance(root, Path):
-            root = Path(str(root))
-        return self.discover_projects(root)
 
     def find_all_pyproject_files(
         self,

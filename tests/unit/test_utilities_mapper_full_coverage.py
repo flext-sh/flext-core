@@ -13,6 +13,7 @@ import pytest
 
 from pydantic import BaseModel
 
+from flext_core import FlextResult, m, p
 from flext_core.constants import c
 from flext_core._utilities.cache import FlextUtilitiesCache as Cache
 from flext_core._utilities.mapper import FlextUtilitiesMapper as Mapper
@@ -208,9 +209,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     assert res_non_general.value == "converted"
 
     class ExplodingModelDump:
-        def model_dump(self) -> dict[str, t.GeneralValueType]:
-            msg = "boom"
-            raise ValueError(msg)
+        def __init__(self) -> None:
+            self.model_dump = lambda: (_ for _ in ()).throw(ValueError("boom"))
 
     res_exception = mapper.extract(
         cast("t.ConfigMap | BaseModel", cast(object, ExplodingModelDump())),
@@ -471,7 +471,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
 def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
     assert (
         mapper.field(
-            cast("t.ConfigMap | BaseModel", cast(object, object())),
+            cast("p.AccessibleData", object()),
             "missing",
             required=True,
         )
@@ -486,7 +486,8 @@ def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
         spec_stop,
         on_error="stop",
     )
-    assert res_stop.is_failure  # type: ignore[union-attr]
+    assert isinstance(res_stop, FlextResult)
+    assert res_stop.is_failure
 
     spec_collect = {"must": None, "name": ""}
     res_collect = mapper._fields_multi(
@@ -494,8 +495,9 @@ def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
         spec_collect,
         on_error="collect",
     )
-    assert res_collect.is_failure  # type: ignore[union-attr]
-    assert "Field extraction errors" in str(res_collect.error)  # type: ignore[union-attr]
+    assert isinstance(res_collect, FlextResult)
+    assert res_collect.is_failure
+    assert "Field extraction errors" in str(res_collect.error)
 
     spec_skip = {"must": None, "name": ""}
     res_skip = mapper._fields_multi(
@@ -506,7 +508,11 @@ def test_field_and_fields_multi_branches(mapper: type[Mapper]) -> None:
     assert res_skip == {"name": "n"}
 
     spec_ops_not_dict = {"x": {"ops": "bad"}}
-    res_ops = mapper._fields_multi({"x": 2}, spec_ops_not_dict, on_error="skip")  # type: ignore[arg-type]
+    res_ops = mapper._fields_multi(
+        m.ConfigMap(root={"x": 2}),
+        spec_ops_not_dict,
+        on_error="skip",
+    )
     assert isinstance(res_ops, dict)
 
 
@@ -525,7 +531,7 @@ def test_construct_transform_and_deep_eq_branches(
             "literal": 5,
         },
     )
-    constructed = mapper.construct(spec, source)  # type: ignore[arg-type]
+    constructed = mapper.construct(spec, m.ConfigMap(root=source))
     assert constructed["name"] == "alice"
     assert constructed["n"] == 4
     assert constructed["literal"] == 5
@@ -543,10 +549,18 @@ def test_construct_transform_and_deep_eq_branches(
                 raise RuntimeError(msg)
             return ""
 
-    assert mapper.construct({"x": ExplodeOnGet()}, {"x": 1}, on_error="stop") == {  # type: ignore[arg-type]
+    assert mapper.construct(
+        {"x": ExplodeOnGet()},
+        m.ConfigMap(root={"x": 1}),
+        on_error="stop",
+    ) == {
         "x": "",
     }
-    assert mapper.construct({"x": ExplodeOnGet()}, {"x": 1}, on_error="skip") == {  # type: ignore[arg-type]
+    assert mapper.construct(
+        {"x": ExplodeOnGet()},
+        m.ConfigMap(root={"x": 1}),
+        on_error="skip",
+    ) == {
         "x": "",
     }
 
@@ -584,8 +598,8 @@ def test_process_context_data_and_related_convenience(
     assert "c" in result
 
     normalized = mapper.normalize_context_values(
-        context={"a": "1"},  # type: ignore[arg-type]
-        extra_kwargs={"b": 2},  # type: ignore[arg-type]
+        context=m.ConfigMap(root={"a": "1"}),
+        extra_kwargs=m.ConfigMap(root={"b": 2}),
         field="x",
     )
     assert normalized["field"] == "x"
@@ -635,12 +649,12 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
         def __call__(self, value: int) -> bool:
             return value == 1
 
-    predicates: dict[str, Callable[[int], bool]] = {
+    predicates: dict[str, NamedPredicate] = {
         "bad": BadPredicate(),
         "no": NegativePredicate(),
         "yes": EqualOnePredicate(),
     }
-    assert mapper.find_callable(predicates, 1) == "yes"  # type: ignore[arg-type]
+    assert mapper.find_callable(predicates, 1) == "yes"
     assert mapper.find_callable({"no": lambda value: value < 0}, 1) is None
 
 
@@ -710,9 +724,8 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
     assert mapper.ensure([1, 2]) == ["1", "2"]
     assert mapper.ensure_str_or_none("x") == "x"
 
-    class DumpOnly:
-        def model_dump(self) -> dict[str, t.GeneralValueType]:
-            return {"a": 1}
+    class DumpOnly(BaseModel):
+        a: int = 1
 
     value, found = mapper._extract_get_value(
         cast("t.ConfigMapValue | BaseModel", cast(object, DumpOnly())), "a"
@@ -781,7 +794,8 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
 
     assert mapper._extract_field_value({"x": 1}, "x") == 1
     assert mapper.agg([{"v": 1}, {"v": 2}], "v") == 3
-    assert mapper.agg(({"v": 1}, {"v": "no"}), "v") == 1
+    mixed_items: tuple[dict[str, t.ConfigMapValue], ...] = ({"v": 1}, {"v": "no"})
+    assert mapper.agg(mixed_items, "v") == 1
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 
 
@@ -834,16 +848,16 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
         {"a": {"default": 0, "ops": {"map": lambda x: x + 1}}},
     )
     assert mapper._fields_multi(
-        {"a": 1},  # type: ignore[arg-type]
+        m.ConfigMap(root={"a": 1}),
         spec_with_ops,
         on_error="skip",
     ) == {"a": 2}
 
-    assert mapper.construct({"x": {"value": 1}}, {"x": 0}) == {"x": 1}  # type: ignore[arg-type]
-    assert mapper.construct({"x": "a"}, {"a": 2}) == {"x": 2}  # type: ignore[arg-type]
+    assert mapper.construct({"x": {"value": 1}}, m.ConfigMap(root={"x": 0})) == {"x": 1}
+    assert mapper.construct({"x": "a"}, m.ConfigMap(root={"a": 2})) == {"x": 2}
     assert mapper.construct(
         {"x": {"field": "a", "ops": "noop"}},
-        {"a": 2},  # type: ignore[arg-type]
+        m.ConfigMap(root={"a": 2}),
     ) == {"x": 2}
     assert mapper.to_dict({"a": 1}) == {"a": 1}
 

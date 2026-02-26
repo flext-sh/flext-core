@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from types import ModuleType
 from typing import ClassVar
@@ -95,22 +95,23 @@ class FlextHandlers[MessageT_contra, ResultT](
     _expected_result_type: ClassVar[type | None] = None
     _config_model: m.Handler
 
+    _HANDLER_TYPE_LITERALS: ClassVar[
+        Mapping[c.Cqrs.HandlerType, c.Cqrs.HandlerTypeLiteral]
+    ] = {
+        c.Cqrs.HandlerType.COMMAND: "command",
+        c.Cqrs.HandlerType.QUERY: "query",
+        c.Cqrs.HandlerType.EVENT: "event",
+        c.Cqrs.HandlerType.OPERATION: "operation",
+        c.Cqrs.HandlerType.SAGA: "saga",
+    }
+
     @staticmethod
     def _handler_type_to_literal(
         handler_type: c.Cqrs.HandlerType,
     ) -> c.Cqrs.HandlerTypeLiteral:
         """Convert HandlerType StrEnum to HandlerTypeLiteral."""
-        match handler_type:
-            case c.Cqrs.HandlerType.COMMAND:
-                return "command"
-            case c.Cqrs.HandlerType.QUERY:
-                return "query"
-            case c.Cqrs.HandlerType.EVENT:
-                return "event"
-            case c.Cqrs.HandlerType.OPERATION:
-                return "operation"
-            case c.Cqrs.HandlerType.SAGA:
-                return "saga"
+        if handler_type in FlextHandlers._HANDLER_TYPE_LITERALS:
+            return FlextHandlers._HANDLER_TYPE_LITERALS[handler_type]
         msg = f"Unsupported handler type: {handler_type}"
         raise ValueError(msg)
 

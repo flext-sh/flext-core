@@ -15,12 +15,11 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
-from datetime import datetime
-from pathlib import Path
 from typing import TypeGuard, cast
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import TypeAdapter, ValidationError
 
+from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -379,7 +378,7 @@ class FlextUtilitiesReliability:
             try:
                 op_result = op(current)
 
-                if FlextUtilitiesReliability._is_result_like(op_result):
+                if FlextUtilitiesGuards.is_result_like(op_result):
                     if op_result.is_failure:
                         if on_error == "stop":
                             err_msg = op_result.error or "Unknown error"
@@ -472,7 +471,7 @@ class FlextUtilitiesReliability:
             if isinstance(op, Mapping):
                 op_dict = op
                 # Check if current is PayloadValue compatible
-                if FlextUtilitiesReliability._is_general_value_type(current):
+                if FlextUtilitiesGuards.is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
                 else:
                     # For non-PayloadValue, skip build and just pass through
@@ -481,21 +480,6 @@ class FlextUtilitiesReliability:
             elif callable(op):
                 current = op(current)
         return current
-
-    @staticmethod
-    def _is_general_value_type(value: t.ConfigMapValue) -> TypeGuard[t.ConfigMapValue]:
-        """Check if value is compatible with PayloadValue."""
-        if value is None:
-            return True
-        if isinstance(value, (str | int | float | bool | datetime | Path, BaseModel)):
-            return True
-        if isinstance(value, Mapping):
-            return True
-        return not isinstance(value, str | bytes)
-
-    @staticmethod
-    def _is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ConfigMapValue]]:
-        return isinstance(value, p.ResultLike)
 
     @staticmethod
     def _is_match_predicate(

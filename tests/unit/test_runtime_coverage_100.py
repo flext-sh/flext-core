@@ -253,7 +253,7 @@ class TestRuntimeTypeChecking:
         }
         FlextRuntime.configure_structlog(config=config_dict)
 
-        assert FlextRuntime._structlog_configured is True
+        assert FlextRuntime._structlog_configured
 
     def test_enable_runtime_checking(self) -> None:
         """Test enable_runtime_checking method."""
@@ -410,4 +410,4 @@ class TestRuntimeTypeChecking:
             "cache_logger_on_first_use": config.cache_logger_on_first_use,
         }
         FlextRuntime.configure_structlog(config=config_dict)
-        assert FlextRuntime._structlog_configured is True
+        assert FlextRuntime._structlog_configured

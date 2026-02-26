@@ -38,9 +38,7 @@ def test_not_found_error_correlation_id_selection_and_extra_kwargs() -> None:
     assert err_explicit.to_dict()["extra_value"] == 3
 
     err_preserved = e.NotFoundError(
-        "missing",
-        resource_id="x",
-        **{"correlation_id": "preserved-cid"},
+        "missing", resource_id="x", correlation_id="preserved-cid"
     )
     assert err_preserved.correlation_id == "preserved-cid"
 
@@ -50,7 +48,7 @@ def test_get_str_from_kwargs_and_merge_metadata_context_paths() -> None:
     assert e._get_str_from_kwargs(kwargs, "value") == "123"
     assert e._get_str_from_kwargs(kwargs, "missing") is None
 
-    context: dict[str, t.MetadataAttributeValue] = {}
+    context = m.ConfigMap(root={})
 
     err = e.BaseError("meta", metadata={"x": 1})
     meta = err.metadata
@@ -60,7 +58,7 @@ def test_get_str_from_kwargs_and_merge_metadata_context_paths() -> None:
     assert context["k"] == 1
     assert context["z"] == "q"
 
-    context2: dict[str, t.MetadataAttributeValue] = {}
+    context2 = m.ConfigMap(root={})
     mapping_obj = MappingProxyType({"p": 7})
     e._merge_metadata_into_context(context2, mapping_obj)
     assert context2["p"] == 7
@@ -75,7 +73,7 @@ def test_exceptions_uncovered_metadata_paths() -> None:
 
     raw = exceptions_module._Metadata(attributes={"x": 1})
     object.__setattr__(raw, "attributes", {"x": 1, "y": "z"})
-    merged: dict[str, t.MetadataAttributeValue] = {}
+    merged = m.ConfigMap(root={})
     e._merge_metadata_into_context(merged, raw)
     assert merged["x"] == 1
     assert merged["y"] == "z"

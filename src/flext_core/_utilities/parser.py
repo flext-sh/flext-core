@@ -648,9 +648,10 @@ class FlextUtilitiesParser:
 
         """
         for attr in ("name", "id"):
-            attr_value = getattr(obj, attr, None)
-            if isinstance(attr_value, str):
-                return attr_value
+            if hasattr(obj, attr):
+                attr_value = getattr(obj, attr)
+                if isinstance(attr_value, str):
+                    return attr_value
         return None
 
     @staticmethod
@@ -711,7 +712,7 @@ class FlextUtilitiesParser:
             >>> # Instance
             >>> obj = object()
             >>> key = parser.get_object_key(obj)
-            >>> key.__class__ is str
+            >>> isinstance(key, str)
             True
 
         """
@@ -722,10 +723,14 @@ class FlextUtilitiesParser:
             has_name_attr=hasattr(obj, "__name__"),
         )
 
-        if obj.__class__ is str:
+        if isinstance(obj, str):
             key = obj
-        elif (dunder_name := getattr(obj, "__name__", None)).__class__ is str:
-            key = dunder_name
+        elif hasattr(obj, "__name__"):
+            dunder_name = getattr(obj, "__name__")
+            if isinstance(dunder_name, str):
+                key = dunder_name
+            else:
+                key = obj.__class__.__name__
         elif isinstance(obj, Mapping):
             # After isinstance, obj is Mapping - use directly
             mapping_key = self._extract_key_from_mapping(obj)
@@ -984,7 +989,14 @@ class FlextUtilitiesParser:
         default: t.ConfigMapValue = None,
     ) -> t.ConfigMapValue:
         """Get attribute safely (avoids circular import with u.get)."""
-        return getattr(obj, attr, default)
+        if hasattr(obj, attr):
+            attr_value = getattr(obj, attr)
+            return (
+                attr_value
+                if FlextUtilitiesGuards.is_general_value_type(attr_value)
+                else str(attr_value)
+            )
+        return default
 
     @staticmethod
     def _parse_find_first[T](
@@ -1048,7 +1060,7 @@ class FlextUtilitiesParser:
         """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
         if StrEnum not in target.__mro__:
             return None
-        members_proxy = getattr(target, "__members__", {})
+        members_proxy = target.__members__ if hasattr(target, "__members__") else {}
         # Convert to dict for easier iteration
         members: Mapping[str, T] = dict(members_proxy)
 
@@ -1060,7 +1072,9 @@ class FlextUtilitiesParser:
                     member_name,
                     value,
                 )
-                value_attr = getattr(member_value, "value", None)
+                value_attr = (
+                    member_value.value if hasattr(member_value, "value") else None
+                )
                 value_matches = (
                     value_attr is not None
                     and FlextUtilitiesParser._parse_normalize_compare(
@@ -1077,12 +1091,15 @@ class FlextUtilitiesParser:
 
         # Try parsing value as enum value (not name)
         for member_instance in members.values():
-            member_val = getattr(member_instance, "value", None)
+            member_val = (
+                member_instance.value if hasattr(member_instance, "value") else None
+            )
             if member_val == value:
                 return r.ok(member_instance)
 
+        target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
         return r.fail(
-            f"Cannot parse '{value}' as {getattr(target, '__name__', 'Unknown')}",
+            f"Cannot parse '{value}' as {target_name}",
         )
 
     @staticmethod
@@ -1197,7 +1214,7 @@ class FlextUtilitiesParser:
         if not issubclass(target, StrEnum):
             return None
         # Get members - returns MappingProxyType[str, T]
-        members_proxy = getattr(target, "__members__", {})
+        members_proxy = target.__members__ if hasattr(target, "__members__") else {}
         # Convert to dict for easier iteration
         members: Mapping[str, T] = dict(members_proxy)
         value_str = str(value)
@@ -1209,7 +1226,9 @@ class FlextUtilitiesParser:
                 if member_name.lower() == value_lower:
                     return r.ok(member_value)
                 # Also check by value
-                member_val = getattr(member_value, "value", None)
+                member_val = (
+                    member_value.value if hasattr(member_value, "value") else None
+                )
                 if member_val is not None and str(member_val).lower() == value_lower:
                     return r.ok(member_value)
         else:
@@ -1218,14 +1237,15 @@ class FlextUtilitiesParser:
                 return r.ok(members[value_str])
             # Try matching by value
             for member_value in members.values():
-                member_val = getattr(member_value, "value", None)
+                member_val = (
+                    member_value.value if hasattr(member_value, "value") else None
+                )
                 if member_val == value_str:
                     return r.ok(member_value)
 
         # No match found - return default or error
-        error_msg = (
-            f"Cannot parse '{value_str}' as {getattr(target, '__name__', 'Unknown')}"
-        )
+        target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
+        error_msg = f"Cannot parse '{value_str}' as {target_name}"
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
@@ -1312,19 +1332,23 @@ class FlextUtilitiesParser:
                 target, "__name__", "type"
             )
             # For error case, return failure wrapped in appropriate type
-            if target is int and default.__class__ is int:
+            if (
+                target is int
+                and isinstance(default, int)
+                and not isinstance(default, bool)
+            ):
                 return r[int].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-            if target is float and default.__class__ is float:
+            if target is float and isinstance(default, float):
                 return r[float].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-            if target is str and default.__class__ is str:
+            if target is str and isinstance(default, str):
                 return r[str].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
-            if target is bool and default.__class__ is bool:
+            if target is bool and isinstance(default, bool):
                 return r[bool].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
@@ -1350,7 +1374,7 @@ class FlextUtilitiesParser:
             parsed_value = TypeAdapter(target).validate_python(value)
             return r.ok(parsed_value)
         except (ValidationError, TypeError, ValueError) as e:
-            target_name = getattr(target, "__name__", "type")
+            target_name = target.__name__ if hasattr(target, "__name__") else "type"
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,
@@ -1526,7 +1550,7 @@ class FlextUtilitiesParser:
             # → 3.14
 
         """
-        if value.__class__ is target_type:
+        if isinstance(value, target_type):
             return value
 
         if (
@@ -1839,14 +1863,10 @@ class FlextUtilitiesParser:
             items_to_check = items
 
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
-        normalized_result = FlextUtilitiesParser.norm_list(
-            items_to_check,
-            case=case or "lower",
-        )
-        if isinstance(normalized_result, Mapping):
-            if isinstance(normalized_result, t.ConfigMap):
-                return normalized_value in normalized_result.root.values()
-            return normalized_value in normalized_result.values()
+        normalized_result = [
+            FlextUtilitiesParser.norm_str(item, case=case or "lower")
+            for item in items_to_check
+        ]
         return normalized_value in normalized_result
 
 

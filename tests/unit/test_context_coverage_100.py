@@ -149,7 +149,7 @@ class TestContext100Coverage:
 
         # Resume context
         context._resume()
-        assert context._suspended is False
+        assert not context._suspended
 
     def test_destroy_deactivates_context(self) -> None:
         """Test destroy deactivates context."""

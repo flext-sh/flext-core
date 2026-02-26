@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
-from collections.abc import Sized
 from typing import overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
@@ -30,7 +28,6 @@ from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core._utilities.pagination import FlextUtilitiesPagination
 from flext_core._utilities.parser import FlextUtilitiesParser
-from flext_core._utilities.pattern import FlextUtilitiesPattern
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.result_helpers import (
     ResultHelpers as FlextUtilitiesResultHelpers,
@@ -111,9 +108,6 @@ class FlextUtilities:
 
     class Parser(FlextUtilitiesParser):
         """Parser utility class - real inheritance."""
-
-    class Pattern(FlextUtilitiesPattern):
-        """Pattern utility class - real inheritance."""
 
     class Reliability(FlextUtilitiesReliability):
         """Reliability utility class - real inheritance."""
@@ -246,12 +240,12 @@ class FlextUtilities:
     )
     create_enum = staticmethod(FlextUtilitiesEnum.create_enum)
     get_enum_values = staticmethod(FlextUtilitiesEnum.get_enum_values)
-    is_enum_member = staticmethod(FlextUtilitiesEnum.is_enum_member)
+    is_enum_member = staticmethod(FlextUtilitiesEnum.is_member)
     is_member = staticmethod(FlextUtilitiesEnum.is_member)
     is_subset = staticmethod(FlextUtilitiesEnum.is_subset)
     members = staticmethod(FlextUtilitiesEnum.members)
     names = staticmethod(FlextUtilitiesEnum.names)
-    parse_enum = staticmethod(FlextUtilitiesEnum.parse_enum)
+    parse_enum = staticmethod(FlextUtilitiesEnum.parse)
     values = staticmethod(FlextUtilitiesEnum.values)
 
     # Generators
@@ -292,8 +286,9 @@ class FlextUtilities:
     is_config_value = staticmethod(FlextUtilitiesGuards.is_config_value)
     is_mapping = staticmethod(FlextUtilitiesGuards.is_mapping)
     none_ = staticmethod(FlextUtilitiesGuards.none_)
+    is_result_like = staticmethod(FlextUtilitiesGuards.is_result_like)
     normalize_to_metadata_value = staticmethod(
-        FlextUtilitiesGuards.normalize_to_metadata_value,
+        FlextRuntime.normalize_to_metadata_value,
     )
     require_initialized = staticmethod(FlextUtilitiesGuards.require_initialized)
 
@@ -423,9 +418,6 @@ class FlextUtilities:
         FlextUtilitiesPagination.validate_pagination_params,
     )
 
-    # Pattern
-    match = staticmethod(FlextUtilitiesPattern.match)
-
     # Reliability
     calculate_delay = staticmethod(FlextUtilitiesReliability.calculate_delay)
     chain = staticmethod(FlextUtilitiesReliability.chain)
@@ -445,9 +437,7 @@ class FlextUtilities:
     is_dict_like = staticmethod(FlextRuntime.is_dict_like)
     is_list_like = staticmethod(FlextRuntime.is_list_like)
     normalize_to_general_value = staticmethod(FlextRuntime.normalize_to_general_value)
-    runtime_normalize_to_metadata_value = staticmethod(
-        FlextRuntime.normalize_to_metadata_value,
-    )
+
     runtime_generate_datetime_utc = staticmethod(FlextRuntime.generate_datetime_utc)
     generate_id = staticmethod(FlextRuntime.generate_id)
     generate_prefixed_id = staticmethod(FlextRuntime.generate_prefixed_id)
@@ -472,104 +462,18 @@ class FlextUtilities:
     norm_in = staticmethod(FlextUtilitiesParser.norm_in)
 
     # Validation - Core
-
-    @staticmethod
-    def validate_length[T: Sized](
-        value: T,
-        *,
-        min_length: int | None = None,
-        max_length: int | None = None,
-        field_name: str = "value",
-    ) -> r[T]:
-        """Return success when ``value`` length is within bounds."""
-        try:
-            length_raw = len(value)
-        except (TypeError, ValueError):
-            return r[T].fail(f"{field_name} length is invalid")
-
-        if not isinstance(length_raw, int):
-            return r[T].fail(f"{field_name} length is invalid")
-
-        length = length_raw
-
-        if min_length is not None and length < min_length:
-            return r[T].fail(
-                f"{field_name} must have at least {min_length} characters/items",
-            )
-
-        if max_length is not None and length > max_length:
-            return r[T].fail(
-                f"{field_name} must have at most {max_length} characters/items",
-            )
-
-        return r[T].ok(value)
-
-    @staticmethod
-    def validate_pattern(
-        value: str,
-        pattern: str,
-        field_name: str = "value",
-    ) -> r[str]:
-        """Return success when ``value`` matches ``pattern``."""
-        if re.search(pattern, value) is None:
-            return r[str].fail(f"{field_name} has invalid format")
-        return r[str].ok(value)
-
-    @staticmethod
-    def validate_positive(
-        value: float,
-        field_name: str = "value",
-    ) -> r[int | float]:
-        """Return success when numeric ``value`` is greater than zero."""
-        if isinstance(value, bool) or value <= 0:
-            return r[int | float].fail(f"{field_name} must be positive")
-        return r[int | float].ok(value)
-
-    @staticmethod
-    def validate_uri(
-        uri: str,
-        field_name: str = "uri",
-    ) -> r[str]:
-        """Return success when ``uri`` is a valid URI/URL format."""
-        # RFC 3986 simplified pattern for URI validation
-        uri_pattern = r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$"
-        if re.search(uri_pattern, uri) is None:
-            return r[str].fail(f"{field_name} has invalid URI format")
-        return r[str].ok(uri)
-
-    @staticmethod
-    def validate_port_number(
-        port: int,
-        field_name: str = "port",
-    ) -> r[int]:
-        """Return success when ``port`` is a valid port number (1-65535)."""
-        if not isinstance(port, int) or isinstance(port, bool):
-            return r[int].fail(f"{field_name} must be an integer")
-        max_port = 65535
-        if port < 1 or port > max_port:
-            return r[int].fail(f"{field_name} must be between 1 and 65535")
-        return r[int].ok(port)
-
-    @staticmethod
-    def validate_hostname(
-        hostname: str,
-        field_name: str = "hostname",
-    ) -> r[str]:
-        """Return success when ``hostname`` is a valid hostname or FQDN."""
-        # RFC 1123 hostname pattern: labels separated by dots, each 1-63 chars
-        hostname_pattern = (
-            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
-        )
-        if re.search(hostname_pattern, hostname) is None:
-            return r[str].fail(f"{field_name} has invalid hostname format")
-        return r[str].ok(hostname)
-
+    validate_length = staticmethod(FlextUtilitiesGuards.validate_length)
+    validate_pattern = staticmethod(FlextUtilitiesGuards.validate_pattern)
+    validate_positive = staticmethod(FlextUtilitiesGuards.validate_positive)
+    validate_uri = staticmethod(FlextUtilitiesGuards.validate_uri)
+    validate_port_number = staticmethod(FlextUtilitiesGuards.validate_port_number)
+    validate_hostname = staticmethod(FlextUtilitiesGuards.validate_hostname)
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
     err = staticmethod(FlextUtilitiesResultHelpers.err)
-    fail = staticmethod(FlextUtilitiesResultHelpers.fail)
+    fail = staticmethod(r.fail)
     not_ = staticmethod(FlextUtilitiesResultHelpers.not_)
-    ok = staticmethod(FlextUtilitiesResultHelpers.ok)
+    ok = staticmethod(r.ok)
     or_ = staticmethod(FlextUtilitiesResultHelpers.or_)
     result_val = staticmethod(FlextUtilitiesResultHelpers.val)
     starts = staticmethod(FlextUtilitiesResultHelpers.starts)

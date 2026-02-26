@@ -32,7 +32,7 @@ from flext_core import FlextContainer, FlextContext, t
 from flext_core.models import m
 from flext_core.result import r
 from flext_tests import FlextTestsUtilities, u
-from tests.test_utils import assertion_helpers
+from ..test_utils import assertion_helpers
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,7 +252,7 @@ class TestServiceDomain:
         container = FlextContainer(_context=FlextContext())
         FlextContext.set_container(container)
         result = FlextContext.Service.get_service("nonexistent_service_xyz")
-        assertion_helpers.assert_flext_result_failure(result) or result.is_success
+        assertion_helpers.assert_flext_result_failure(result)
 
 
 class TestRequestDomain:
@@ -283,11 +283,12 @@ class TestRequestDomain:
             "transaction_id": "txn_123",
             "amount": 99.99,
         }
+        metadata_map = m.ConfigMap(root=metadata)
         with FlextContext.Request.request_context(
             user_id="user_456",
             operation_name="payment_processing",
             request_id="req_789",
-            metadata=metadata,
+            metadata=metadata_map,
         ):
             assert FlextContext.Request.get_user_id() == "user_456"
             assert FlextContext.Request.get_operation_name() == "payment_processing"
@@ -579,7 +580,7 @@ class TestContextDataModel:
     def test_context_with_context_data_model(self) -> None:
         """Test FlextContext initialization with ContextData model."""
         context_data = m.Context.ContextData(
-            data={"key1": "value1", "key2": "value2"},
+            data=t.Dict(root={"key1": "value1", "key2": "value2"}),
         )
         context = FlextContext(context_data)
         result1 = context.get("key1")

@@ -143,19 +143,17 @@ class FlextUtilitiesPagination:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
 
-        return r[Mapping[str, t.ConfigMapValue]].ok(
-            {
-                "data": data_list,
-                "pagination": {
-                    "page": page,
-                    "page_size": page_size,
-                    "total": total_count,
-                    "total_pages": total_pages,
-                    "has_next": has_next,
-                    "has_prev": has_prev,
-                },
-            }
-        )
+        return r[Mapping[str, t.ConfigMapValue]].ok({
+            "data": data_list,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total_count,
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev,
+            },
+        })
 
     @staticmethod
     def build_pagination_response(
@@ -214,19 +212,21 @@ class FlextUtilitiesPagination:
 
         if config is not None:
             # Use getattr to safely access attributes without type narrowing issues
-            default_page_size_attr = getattr(config, "default_page_size", None)
-            match default_page_size_attr:
-                case int() as page_size if page_size > 0:
-                    default_page_size = page_size
-                case _:
-                    pass
+            if hasattr(config, "default_page_size"):
+                default_page_size_attr = getattr(config, "default_page_size")
+                match default_page_size_attr:
+                    case int() as page_size if page_size > 0:
+                        default_page_size = page_size
+                    case _:
+                        pass
 
-            max_page_size_attr = getattr(config, "max_page_size", None)
-            match max_page_size_attr:
-                case int() as page_size if page_size > 0:
-                    max_page_size = page_size
-                case _:
-                    pass
+            if hasattr(config, "max_page_size"):
+                max_page_size_attr = getattr(config, "max_page_size")
+                match max_page_size_attr:
+                    case int() as page_size if page_size > 0:
+                        max_page_size = page_size
+                    case _:
+                        pass
 
         return {
             "default_page_size": default_page_size,

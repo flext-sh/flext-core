@@ -68,14 +68,8 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
     # p.Config Protocol Implementation (validated at class definition)
     # =========================================================================
 
-    def model_copy(
-        self,
-        *,
-        update: Mapping[str, t.ScalarValue] | None = None,
-        deep: bool = False,
-    ) -> Self:
-        """Clone configuration with optional updates (p.Config protocol)."""
-        return super().model_copy(update=update, deep=deep)
+    def _protocol_name(self) -> str:
+        return self.__class__.__name__
 
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var
@@ -243,7 +237,8 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         raw_instance = cls._instances[base_class]
         raw_type = raw_instance.__class__
         if raw_type is not cls and not issubclass(raw_type, cls):
-            msg = f"Singleton instance is not of expected type {cls.__name__}"
+            cls_name = cls.__name__
+            msg = f"Singleton instance is not of expected type {cls_name}"
             raise TypeError(msg)
         return raw_instance
 
@@ -311,13 +306,11 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
 
         """
         # Check database URL scheme if provided
-        if self.database_url and not self.database_url.startswith(
-            (
-                "postgresql://",
-                "mysql://",
-                "sqlite://",
-            )
-        ):
+        if self.database_url and not self.database_url.startswith((
+            "postgresql://",
+            "mysql://",
+            "sqlite://",
+        )):
             msg = "Invalid database URL scheme"
             raise ValueError(msg)
 

@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import functools
-import pathlib
 import warnings
 from collections.abc import Callable
 from typing import ClassVar
@@ -187,34 +186,6 @@ class FlextUtilitiesDeprecation:
             return cls
 
         return decorator
-
-    @staticmethod
-    def generate_migration_report(
-        module_name: str,
-        output_file: str | None = None,
-    ) -> str:
-        """Generate migration report for deprecated code.
-
-        Args:
-            module_name: Name of module to scan for deprecations.
-            output_file: Optional file path to write report.
-
-        Returns:
-            Migration report as string.
-
-        Note:
-            This generates a migration report for deprecated code in the module.
-            scan the module for deprecated functions/classes and generate
-            a comprehensive migration guide.
-
-        """
-        report = f"Migration Report for {module_name}\n"
-        report += "=" * 50 + "\n\n"
-        report += "This generates a migration report for deprecated code.\n"
-        report += "Full implementation would scan for deprecations and generate migration guide.\n"
-        if output_file:
-            _ = pathlib.Path(output_file).write_text(report, encoding="utf-8")
-        return report
 
     @classmethod
     def warn_once(cls, identifier: str, message: str) -> None:

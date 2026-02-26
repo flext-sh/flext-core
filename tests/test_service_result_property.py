@@ -18,10 +18,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import FlextExceptions, FlextResult
-from tests.test_utils import assertion_helpers
+from .test_utils import assertion_helpers
 
 from .helpers.factories import (
     FailingService,
@@ -175,9 +177,9 @@ class TestServiceResultProperty:
         assert isinstance(service2, GetUserService)
 
         raw_user_v2 = service1.result
-        user_v2 = raw_user_v2() if callable(raw_user_v2) else raw_user_v2
+        user_v2 = cast("User", raw_user_v2() if callable(raw_user_v2) else raw_user_v2)
         raw_user_v1 = service2.execute().value
-        user_v1 = raw_user_v1() if callable(raw_user_v1) else raw_user_v1
+        user_v1 = cast("User", raw_user_v1() if callable(raw_user_v1) else raw_user_v1)
 
         assert user_v2.user_id == user_v1.user_id
         assert user_v2.name == user_v1.name

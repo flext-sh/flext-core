@@ -19,8 +19,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Self, TypeGuard, override
 
-from dependency_injector import containers as di_containers
-from dependency_injector import providers as di_providers
+from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
@@ -207,28 +206,35 @@ class FlextContainer(FlextRuntime, p.DI):
                     factories = FactoryDecoratorsDiscovery.scan_module(caller_module)
                     for factory_name, factory_config in factories:
                         # Get actual factory function from module
-                        factory_func_raw = getattr(caller_module, factory_name, None)
+                        factory_func_raw = (
+                            getattr(caller_module, factory_name)
+                            if hasattr(caller_module, factory_name)
+                            else None
+                        )
                         # Type narrowing: Factory functions decorated with @factory()
                         # are expected to return RegisterableService, but getattr returns object
                         if callable(factory_func_raw):
-                            # Type narrow: @factory() decorated functions return PayloadValue
-                            # Create wrapper with explicitly typed callable - bind reference
-                            factory_func_ref = factory_func_raw
 
                             def factory_wrapper(
                                 *_args: object,
-                                _factory_func_ref: Callable[
-                                    ..., object
-                                ] = factory_func_ref,
+                                _factory_func_ref: Callable[[], object] | None = (
+                                    factory_func_raw
+                                ),
                                 _factory_name: str = factory_name,
                                 **kwargs: object,
                             ) -> t.RegisterableService:
                                 fn_override = kwargs.get("fn")
                                 if fn_override is not None:
-                                    if not callable(fn_override):
+                                    if callable(fn_override):
+                                        raw_result = fn_override()
+                                    else:
                                         return ""
-                                    raw_result = fn_override()
                                 else:
+                                    if not callable(_factory_func_ref):
+                                        msg = (
+                                            f"Factory '{_factory_name}' is not callable"
+                                        )
+                                        raise TypeError(msg)
                                     raw_result = _factory_func_ref()
                                 if FlextContainer._is_registerable_service(raw_result):
                                     return raw_result
@@ -273,7 +279,11 @@ class FlextContainer(FlextRuntime, p.DI):
         """
         # getattr accesses Provide from bridge object safely
         # Provide is always initialized by dependency-injector in _di_bridge
-        provide_helper = getattr(self._di_bridge, "Provide", None)
+        provide_helper = (
+            getattr(self._di_bridge, "Provide")
+            if hasattr(self._di_bridge, "Provide")
+            else None
+        )
         # Type narrowing via isinstance check + RuntimeError if missing
         if provide_helper is None or not callable(provide_helper):
             msg = "DI bridge Provide helper not initialized"
@@ -366,7 +376,9 @@ class FlextContainer(FlextRuntime, p.DI):
         if not hasattr(bridge, config_attr):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
-        config_provider_obj = getattr(bridge, config_attr, None)
+        config_provider_obj = (
+            getattr(bridge, config_attr) if hasattr(bridge, config_attr) else None
+        )
         if config_provider_obj is None:
             error_msg = "Bridge config provider cannot be None"
             raise TypeError(error_msg)
@@ -482,17 +494,21 @@ class FlextContainer(FlextRuntime, p.DI):
         # Access namespace registry via FlextSettings (self._config), not ContainerConfig
         # Note: Namespace registry is accessed via FlextSettings class, not ContainerConfig
         # Use getattr to safely access registry if it exists
-        namespace_registry = getattr(
-            self._config.__class__,
-            "_namespace_registry",
-            {},
+        namespace_registry = (
+            getattr(self._config.__class__, "_namespace_registry")
+            if hasattr(self._config.__class__, "_namespace_registry")
+            else {}
         )
         for namespace in namespace_registry:
             factory_name = f"config.{namespace}"
 
             # Get config class for this namespace from FlextSettings
             # Use getattr to safely access method if it exists
-            get_namespace_config = getattr(self._config, "get_namespace_config", None)
+            get_namespace_config = (
+                getattr(self._config, "get_namespace_config")
+                if hasattr(self._config, "get_namespace_config")
+                else None
+            )
             if get_namespace_config is None:
                 continue
             config_class = get_namespace_config(namespace)
@@ -504,7 +520,11 @@ class FlextContainer(FlextRuntime, p.DI):
                 config_cls: type[BaseModel] = config_class,
             ) -> BaseModel:
                 """Factory for creating namespace config instance."""
-                get_namespace = getattr(self._config, "get_namespace", None)
+                get_namespace = (
+                    getattr(self._config, "get_namespace")
+                    if hasattr(self._config, "get_namespace")
+                    else None
+                )
                 if get_namespace is None:
                     return config_cls()
                 result = get_namespace(ns, config_cls)
@@ -788,8 +808,6 @@ class FlextContainer(FlextRuntime, p.DI):
         try:
             if hasattr(self._di_services, name):
                 return r[bool].fail(f"Factory '{name}' already registered")
-            if not callable(factory):
-                return r[bool].fail(f"Factory '{name}' must be callable")
 
             def normalized_factory() -> t.RegisterableService:
                 raw_result = factory()
@@ -966,7 +984,7 @@ class FlextContainer(FlextRuntime, p.DI):
             service = self._services[name].service
             if not self._is_instance_of(service, type_cls):
                 return r[T].fail(
-                    f"Service '{name}' is not of type {getattr(type_cls, '__name__', 'Unknown')}"
+                    f"Service '{name}' is not of type {(getattr(type_cls, '__name__') if hasattr(type_cls, '__name__') else 'Unknown')}"
                 )
             # TypeGuard narrows service to type T
             return r[T].ok(service)
@@ -1159,47 +1177,29 @@ class FlextContainer(FlextRuntime, p.DI):
             isolated state that inherits the global configuration by default.
 
         """
-        # Clone base config if not provided
-        # Type narrowing via isinstance for protocol → concrete access
+        # Clone base config — config objects are always BaseModel (FlextSettings)
         config_input = config  # Keep original for subproject check
-        base_config: p.Config
-        if config is None:
-            config_instance = self.config
-            config_copy_method = getattr(config_instance, "model_copy", None)
-            if callable(config_copy_method):
-                candidate_config = config_copy_method(deep=True)
-                if self._is_config_protocol(candidate_config):
-                    base_config = candidate_config
-                else:
-                    base_config = self._get_default_config().model_copy(deep=True)
-            else:
-                base_config = self._get_default_config().model_copy(deep=True)
+        if config is not None and isinstance(config, BaseModel):
+            base_config: p.Config = config.model_copy(deep=True)
+        elif isinstance(self.config, BaseModel):
+            base_config = self.config.model_copy(deep=True)
         else:
-            config_copy_method = getattr(config, "model_copy", None)
-            if callable(config_copy_method):
-                candidate_config = config_copy_method(deep=True)
-                if self._is_config_protocol(candidate_config):
-                    base_config = candidate_config
-                else:
-                    base_config = self.config.model_copy(deep=True)
-            else:
-                base_config = self.config.model_copy(deep=True)
+            base_config = self._get_default_config()
 
         # Apply subproject suffix to app_name only when config is None
-        # If config was explicitly provided, respect it (don't modify)
-        # This allows explicit config to take precedence over subproject naming
-        if subproject and config_input is None:
-            # Only apply subproject when using global config (config is None)
-            # Explicit config parameter means user wants that exact config
+        if subproject and config_input is None and isinstance(base_config, BaseModel):
             base_config = base_config.model_copy(
                 update={"app_name": f"{base_config.app_name}.{subproject}"},
-                deep=True,
             )
 
         scoped_context: p.Context
         if context is None:
             ctx_instance = self.context
-            clone_method = getattr(ctx_instance, "clone", None)
+            clone_method = (
+                getattr(ctx_instance, "clone")
+                if hasattr(ctx_instance, "clone")
+                else None
+            )
             if callable(clone_method):
                 candidate_context = clone_method()
                 if self._is_context_protocol(candidate_context):

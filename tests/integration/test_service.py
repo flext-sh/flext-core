@@ -8,14 +8,13 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from dataclasses import dataclass
 
 import pytest
+from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
 from pydantic import PrivateAttr
 
-from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
@@ -194,6 +193,14 @@ class ServiceConfig(m.CollectionsConfig):
     name: str
     version: str
     temp_dir: str | None = None
+
+
+def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:
+    return ServiceConfig.model_validate({
+        "name": name,
+        "version": version,
+        "temp_dir": temp_dir,
+    })
 
 
 class LifecycleService(FlextService[str]):
@@ -505,7 +512,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -536,7 +543,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -570,7 +577,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
@@ -601,7 +608,7 @@ class TestFlextServiceIntegration:
         """
         # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),

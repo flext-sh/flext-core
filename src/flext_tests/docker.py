@@ -24,23 +24,22 @@ import socket
 import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import ClassVar, Protocol, cast
+from typing import ClassVar, Protocol
 
-from docker import DockerClient as DockerSDKClient
-from docker import from_env as docker_from_env
+from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
-from pydantic import TypeAdapter
-
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
+from pydantic import TypeAdapter
+
 from flext_tests.constants import c
 from flext_tests.models import m
 
 try:
     whales_module = importlib.import_module("python_on_whales")
-    _whales_docker = getattr(whales_module, "docker", None)
-except ModuleNotFoundError:
+    _whales_docker = whales_module.docker
+except (AttributeError, ModuleNotFoundError):
     _whales_docker = None
 
 
@@ -70,10 +69,7 @@ class _WhalesDockerClientProtocol(Protocol):
     compose: _WhalesComposeProtocol
 
 
-docker: _WhalesDockerClientProtocol | None = cast(
-    "_WhalesDockerClientProtocol | None",
-    _whales_docker,
-)
+docker: _WhalesDockerClientProtocol | None = _whales_docker
 
 
 logger: FlextLogger = FlextLogger(__name__)
@@ -271,11 +267,10 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(container_name)
-            ports_raw = getattr(container, "ports", None)
+            ports_raw = container.ports
             ports: dict[str, str] = {}
             if isinstance(ports_raw, Mapping):
-                ports_mapping = cast("Mapping[object, object]", ports_raw)
-                for container_port, host_bindings in ports_mapping.items():
+                for container_port, host_bindings in ports_raw.items():
                     host_port = self._extract_host_port(host_bindings)
                     if host_port:
                         ports[str(container_port)] = host_port
@@ -313,16 +308,13 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(name)
-            # Access Container attributes via getattr for type safety
-            status_val = str(getattr(container, "status", "unknown"))
+            status_val = str(container.status)
 
             if status_val == "running":
                 return r[str].ok(f"Container {name} already running")
 
             if status_val in {"exited", "created", "paused"}:
-                start_fn = getattr(container, "start", None)
-                if callable(start_fn):
-                    _ = start_fn()
+                _ = container.start()
                 return r[str].ok(f"Container {name} started")
 
             return r[str].ok(f"Container {name} in state: {status_val}")
@@ -341,8 +333,7 @@ class FlextTestsDocker:
         first_binding = bindings[0]
         if not isinstance(first_binding, Mapping):
             return ""
-        first_binding_map = cast("Mapping[object, object]", first_binding)
-        host_port = first_binding_map.get("HostPort", "")
+        host_port = first_binding.get("HostPort", "")
         return str(host_port)
 
     def compose_up(

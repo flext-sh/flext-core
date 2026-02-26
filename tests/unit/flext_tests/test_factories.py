@@ -631,9 +631,7 @@ class TestsFlextTestsFactoriesRes:
     def test_res_fail(self) -> None:
         """Test failed result creation."""
         result_raw = tt.res("fail", error="Error message")
-        result = cast(
-            r[t_test.Tests.PayloadValue], _as_single_payload_result(result_raw)
-        )
+        result = _as_single_payload_result(result_raw)
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
@@ -645,9 +643,7 @@ class TestsFlextTestsFactoriesRes:
             error="Error message",
             error_code="ERR001",
         )
-        result = cast(
-            r[t_test.Tests.PayloadValue], _as_single_payload_result(result_raw)
-        )
+        result = _as_single_payload_result(result_raw)
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Error message"
         # Note: error_code may be stored in result metadata
@@ -666,9 +662,7 @@ class TestsFlextTestsFactoriesRes:
             value=None,
             error_on_none="Value is required",
         )
-        result = cast(
-            r[t_test.Tests.PayloadValue], _as_single_payload_result(result_raw)
-        )
+        result = _as_single_payload_result(result_raw)
         assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error or ""
         assert "required" in error_msg.lower()
@@ -694,10 +688,7 @@ class TestsFlextTestsFactoriesRes:
             "fail",
             errors=["err1", "err2"],
         )
-        results = cast(
-            list[r[t_test.Tests.PayloadValue]],
-            results_raw if isinstance(results_raw, list) else [results_raw],
-        )
+        results = results_raw if isinstance(results_raw, list) else [results_raw]
         assert isinstance(results, list)
         assert len(results) == 2
         assert all(result.is_failure for result in results)

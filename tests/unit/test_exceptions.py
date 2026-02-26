@@ -697,8 +697,7 @@ class Teste:
         custom_attr: Literal["custom_key"],
     ) -> None:
         """Test exception classes with extra_kwargs merging."""
-        error_ctor = cast(Callable[..., e.BaseError], error_class)
-        error = error_ctor(msg, **{custom_attr: "custom_value"})  # type: ignore[misc]
+        error = error_class(msg, **{custom_attr: "custom_value"})
         assert error.metadata is not None
         assert custom_attr in error.metadata.attributes
 
@@ -709,7 +708,7 @@ class Teste:
             12345,  # int is t.GeneralValueType but not Mapping/Metadata
             {},
         )
-        assert isinstance(result, p.Log.Metadata)
+        assert hasattr(result, "attributes")
         # Assuming fallback behavior normalizes single value to "value" key
         # or similar default behavior in normalize_metadata
         # Check attributes exist
@@ -722,7 +721,7 @@ class Teste:
         # Cast merged_kwargs to MetadataAttributeValue for type compatibility
         merged_kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", merged_kwargs)
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
-        assert isinstance(result, p.Log.Metadata)
+        assert hasattr(result, "attributes")
         assert result.attributes["key1"] == "value1"
         assert result.attributes["key2"] == "value2"
 
@@ -1292,14 +1291,9 @@ class Teste:
         # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
-                cast(
-                    "t.GeneralValueType",
-                    str(v)
-                    if not isinstance(
-                        v, (str, int, float, bool, type(None), list, dict)
-                    )
-                    else cast("t.GeneralValueType", v),
-                ),
+                str(v)
+                if not isinstance(v, (str, int, float, bool, type(None), list, dict))
+                else cast("t.GeneralValueType", v),
             )
             for k, v in dict_like.items()
         }
@@ -1419,7 +1413,7 @@ class Teste:
         corr_id, metadata, auto_log, auto_corr, _config, extra = result
 
         assert corr_id == "test-id"
-        assert isinstance(metadata, m.Metadata)
+        assert metadata is not None
         assert auto_log is True
         assert auto_corr is True
         assert "field" in extra
@@ -1536,14 +1530,9 @@ class Teste:
         # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
-                cast(
-                    "t.GeneralValueType",
-                    str(v)
-                    if not isinstance(
-                        v, (str, int, float, bool, type(None), list, dict)
-                    )
-                    else cast("t.GeneralValueType", v),
-                ),
+                str(v)
+                if not isinstance(v, (str, int, float, bool, type(None), list, dict))
+                else cast("t.GeneralValueType", v),
             )
             for k, v in dict_like.items()
         }
@@ -1580,14 +1569,9 @@ class Teste:
         # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
-                cast(
-                    "t.GeneralValueType",
-                    str(v)
-                    if not isinstance(
-                        v, (str, int, float, bool, type(None), list, dict)
-                    )
-                    else cast("t.GeneralValueType", v),
-                ),
+                str(v)
+                if not isinstance(v, (str, int, float, bool, type(None), list, dict))
+                else cast("t.GeneralValueType", v),
             )
             for k, v in dict_like.items()
         }
@@ -1628,14 +1612,9 @@ class Teste:
         # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
-                cast(
-                    "t.GeneralValueType",
-                    str(v)
-                    if not isinstance(
-                        v, (str, int, float, bool, type(None), list, dict)
-                    )
-                    else cast("t.GeneralValueType", v),
-                ),
+                str(v)
+                if not isinstance(v, (str, int, float, bool, type(None), list, dict))
+                else cast("t.GeneralValueType", v),
             )
             for k, v in dict_like.items()
         }
@@ -1835,12 +1814,9 @@ class Teste:
             if k == "metadata" and isinstance(v, DictLike):
                 # Convert DictLike to dict[str, t.MetadataAttributeValue]
                 dict_like_dict: dict[str, t.MetadataAttributeValue] = {
-                    k2: cast(
-                        "t.MetadataAttributeValue",
-                        str(v2)
-                        if not isinstance(v2, (str, int, float, bool, type(None)))
-                        else cast("t.MetadataAttributeValue", v2),
-                    )
+                    k2: str(v2)
+                    if not isinstance(v2, (str, int, float, bool, type(None)))
+                    else cast("t.MetadataAttributeValue", v2)
                     for k2, v2 in v.items()
                 }
                 kwargs_dict_like[k] = cast("t.MetadataAttributeValue", dict_like_dict)

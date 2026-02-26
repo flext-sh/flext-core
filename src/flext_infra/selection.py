@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
-from flext_infra.constants import c
+
 from flext_infra.discovery import DiscoveryService
 from flext_infra.models import m
 
@@ -29,28 +29,6 @@ class ProjectSelector:
     ) -> None:
         """Initialize the project selector."""
         self._discovery = discovery or DiscoveryService()
-
-    def filter_projects(
-        self,
-        projects: list[m.ProjectInfo],
-        kind: str,
-    ) -> FlextResult[list[m.ProjectInfo]]:
-        """Filter a list of projects by their kind.
-
-        Kind is encoded in the ``stack`` field as ``{tech}/{kind}``.
-
-        Args:
-            projects: The list of projects to filter.
-            kind: The kind to include ("submodule", "external", or "all").
-
-        Returns:
-            FlextResult with filtered project list.
-
-        """
-        if kind == "all":
-            return r[list[m.ProjectInfo]].ok(list(projects))
-        filtered = [p for p in projects if p.stack.endswith(f"/{kind}")]
-        return r[list[m.ProjectInfo]].ok(filtered)
 
     def resolve_projects(
         self,
@@ -91,30 +69,6 @@ class ProjectSelector:
         return r[list[m.ProjectInfo]].ok(
             sorted(resolved, key=lambda p: p.name),
         )
-
-    def python_projects(
-        self,
-        workspace_root: Path,
-        names: list[str] | None = None,
-    ) -> FlextResult[list[m.ProjectInfo]]:
-        """Resolve projects that have pyproject.toml (Python only).
-
-        Args:
-            workspace_root: The root directory of the workspace.
-            names: Optional project names to filter.
-
-        Returns:
-            FlextResult with Python project list.
-
-        """
-        result = self.resolve_projects(workspace_root, names or [])
-        if result.is_failure:
-            return result
-
-        python_only = [
-            p for p in result.value if (p.path / c.Files.PYPROJECT_FILENAME).exists()
-        ]
-        return r[list[m.ProjectInfo]].ok(python_only)
 
 
 __all__ = ["ProjectSelector"]

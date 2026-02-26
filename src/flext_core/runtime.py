@@ -345,9 +345,9 @@ class FlextRuntime:
             case Mapping():
                 return True
             case _:
-                keys = getattr(value, "keys", None)
-                items = getattr(value, "items", None)
-                get = getattr(value, "get", None)
+                keys = getattr(value, "keys") if hasattr(value, "keys") else None
+                items = getattr(value, "items") if hasattr(value, "items") else None
+                get = getattr(value, "get") if hasattr(value, "get") else None
                 if not (callable(keys) and callable(items) and callable(get)):
                     return False
                 try:
@@ -426,7 +426,7 @@ class FlextRuntime:
         if isinstance(val, Path):
             return str(val)
 
-        model_dump = getattr(val, "model_dump", None)
+        model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
         if callable(model_dump):
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue
@@ -473,7 +473,7 @@ class FlextRuntime:
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
 
-        model_dump = getattr(val, "model_dump", None)
+        model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
         if callable(model_dump):
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue
@@ -592,12 +592,12 @@ class FlextRuntime:
             Attribute value or default
 
         """
-        return getattr(obj, attr, default)
+        return getattr(obj, attr) if hasattr(obj, attr) else default
 
     @staticmethod
     def extract_generic_args(
         type_hint: t.TypeHintSpecifier,
-    ) -> tuple[t.GenericTypeArgument | type[dict[str, t.ConfigMapValue]], ...]:
+    ) -> tuple[t.GenericTypeArgument | type[Mapping[str, t.ConfigMapValue]], ...]:
         """Extract generic type arguments from a type hint.
 
         Business Rule: Extracts generic type arguments from type hints using
@@ -624,7 +624,11 @@ class FlextRuntime:
 
             # Check if it's a known type alias
             if hasattr(type_hint, "__name__"):
-                type_name = getattr(type_hint, "__name__", "")
+                type_name = (
+                    getattr(type_hint, "__name__")
+                    if hasattr(type_hint, "__name__")
+                    else ""
+                )
                 # Handle common type aliases - use actual type objects
                 # GenericTypeArgument = str | type[t.ConfigMapValue]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
@@ -689,12 +693,18 @@ class FlextRuntime:
                 return True
 
             # Check if the type itself is a sequence subclass (for type aliases)
-            hint_mro = getattr(type_hint, "__mro__", None)
+            hint_mro = (
+                getattr(type_hint, "__mro__") if hasattr(type_hint, "__mro__") else None
+            )
             if hint_mro is not None and Sequence in hint_mro:
                 return True
 
             # Check __name__ for type aliases like StringList
-            type_name = getattr(type_hint, "__name__", None)
+            type_name = (
+                getattr(type_hint, "__name__")
+                if hasattr(type_hint, "__name__")
+                else None
+            )
             return bool(
                 type_name is not None
                 and type_name
@@ -819,11 +829,7 @@ class FlextRuntime:
             cls,
             *,
             config: t.ConfigMap | None = None,
-            services: Mapping[
-                str,
-                t.ConfigMapValue | BaseModel | Callable[..., t.ConfigMapValue],
-            ]
-            | None = None,
+            services: Mapping[str, t.RegisterableService] | None = None,
             factories: Mapping[
                 str,
                 Callable[
@@ -1165,27 +1171,43 @@ class FlextRuntime:
         # Extract config values or use individual parameters
         async_logging = True
         if config is not None:
-            log_level = getattr(config, "log_level", log_level)
-            console_renderer = getattr(config, "console_renderer", console_renderer)
-            additional_processors_from_config = getattr(
-                config,
-                "additional_processors",
-                None,
+            log_level = (
+                getattr(config, "log_level")
+                if hasattr(config, "log_level")
+                else log_level
+            )
+            console_renderer = (
+                getattr(config, "console_renderer")
+                if hasattr(config, "console_renderer")
+                else console_renderer
+            )
+            additional_processors_from_config = (
+                getattr(config, "additional_processors")
+                if hasattr(config, "additional_processors")
+                else None
             )
             if additional_processors_from_config:
                 additional_processors = additional_processors_from_config
-            wrapper_class_factory = getattr(
-                config,
-                "wrapper_class_factory",
-                wrapper_class_factory,
+            wrapper_class_factory = (
+                getattr(config, "wrapper_class_factory")
+                if hasattr(config, "wrapper_class_factory")
+                else wrapper_class_factory
             )
-            logger_factory = getattr(config, "logger_factory", logger_factory)
-            cache_logger_on_first_use = getattr(
-                config,
-                "cache_logger_on_first_use",
-                cache_logger_on_first_use,
+            logger_factory = (
+                getattr(config, "logger_factory")
+                if hasattr(config, "logger_factory")
+                else logger_factory
             )
-            async_logging = getattr(config, "async_logging", True)
+            cache_logger_on_first_use = (
+                getattr(config, "cache_logger_on_first_use")
+                if hasattr(config, "cache_logger_on_first_use")
+                else cache_logger_on_first_use
+            )
+            async_logging = (
+                getattr(config, "async_logging")
+                if hasattr(config, "async_logging")
+                else True
+            )
 
         # Single guard - no redundant checks
         if cls._structlog_configured:
@@ -1239,7 +1261,11 @@ class FlextRuntime:
             # PrintLoggerFactory accepts file-like objects with write method
             # _AsyncLogWriter has write/flush methods (duck-typed TextIO)
             # Use getattr to call PrintLoggerFactory with duck-typed file arg
-            print_logger_factory = getattr(module, "PrintLoggerFactory", None)
+            print_logger_factory = (
+                getattr(module, "PrintLoggerFactory")
+                if hasattr(module, "PrintLoggerFactory")
+                else None
+            )
             if print_logger_factory is not None:
                 factory_to_use = print_logger_factory(file=cls._async_writer)
             else:
@@ -1253,7 +1279,9 @@ class FlextRuntime:
         # structlog.configure accepts processors as Sequence[Processor] or list[Processor]
         # Our processors list contains valid Processor objects, pass directly
         # Use getattr to call configure with processors as Sequence
-        configure_fn = getattr(module, "configure", None)
+        configure_fn = (
+            getattr(module, "configure") if hasattr(module, "configure") else None
+        )
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
                 processors=processors,
@@ -1922,8 +1950,8 @@ class FlextRuntime:
             and type(entity_a) not in type(entity_b).__mro__
         ):
             return False
-        id_a = getattr(entity_a, id_attr, None)
-        id_b = getattr(entity_b, id_attr, None)
+        id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
+        id_b = getattr(entity_b, id_attr) if hasattr(entity_b, id_attr) else None
         return id_a is not None and id_a == id_b
 
     @staticmethod
@@ -1935,7 +1963,7 @@ class FlextRuntime:
         if FlextRuntime._is_scalar(entity):
             return hash(entity)
         # Now entity is a complex object with potential id_attr
-        entity_id = getattr(entity, id_attr, None)
+        entity_id = getattr(entity, id_attr) if hasattr(entity, id_attr) else None
         if entity_id is None:
             return hash(id(entity))
         # Complex objects always have __class__
@@ -1994,7 +2022,11 @@ class FlextRuntime:
 
         """
         default_log_level = c.Logging.DEFAULT_LEVEL.upper()
-        return int(getattr(logging, default_log_level, logging.INFO))
+        return int(
+            getattr(logging, default_log_level)
+            if hasattr(logging, default_log_level)
+            else logging.INFO
+        )
 
     @staticmethod
     def ensure_trace_context(
@@ -2023,26 +2055,7 @@ class FlextRuntime:
             try:
                 for k_obj, v_obj in context.items():
                     key_str = str(k_obj)
-                    match v_obj:
-                        case None:
-                            val_typed: t.ConfigMapValue = None
-                        case (
-                            str()
-                            | int()
-                            | float()
-                            | bool()
-                            | datetime()
-                            | BaseModel()
-                            | Path()
-                            | list()
-                            | tuple()
-                            | dict()
-                        ):
-                            val_typed = v_obj
-                        case _ if callable(v_obj):
-                            val_typed = str(v_obj)
-                        case _:
-                            val_typed = str(v_obj)
+                    val_typed = FlextRuntime.normalize_to_general_value(v_obj)
                     context_dict[key_str] = val_typed
             except (TypeError, ValueError, AttributeError) as exc:
                 _module_logger.debug(

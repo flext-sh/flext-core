@@ -30,7 +30,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextResult, p, t, u
-from tests.test_utils import assertion_helpers
+from ..test_utils import assertion_helpers
 from flext_core.models import m
 
 # =========================================================================
@@ -158,28 +158,10 @@ class UtilityScenarios:
         **kwargs: t.GeneralValueType,
     ) -> p.HasModelDump:
         """Create mock config object."""
-
-        class TestConfig:
-            def model_dump(self) -> m.ConfigMap:
-                # Convert kwargs to proper ConfigurationMapping type
-                # HasModelDump expects Mapping[str, FlexibleValue]
-                # ConfigurationMapping = Mapping[str, t.GeneralValueType]
-                # For test purposes, we return ConfigurationMapping which is compatible
-                result: dict[str, t.GeneralValueType] = {}
-                for key, value in kwargs.items():
-                    result[str(key)] = value
-                # dict[str, t.GeneralValueType] is compatible with Mapping[str, t.GeneralValueType]
-                return result
-
-        # TestConfig implements HasModelDump protocol via structural typing
-        # model_dump() returns ConfigurationMapping which satisfies the protocol
-        # ConfigurationMapping = Mapping[str, t.GeneralValueType]
-        # HasModelDump expects Mapping[str, FlexibleValue]
-        # t.GeneralValueType is compatible with FlexibleValue at runtime
-        # Type assertion: TestConfig structurally implements HasModelDump
-        # The model_dump() method signature is compatible with the protocol
-        # Use cast to help type checker understand structural typing
-        return cast("p.HasModelDump", TestConfig())
+        result: dict[str, t.GeneralValueType] = {}
+        for key, value in kwargs.items():
+            result[str(key)] = value
+        return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
 
     @staticmethod
     def create_mock_cached_object() -> object:
@@ -187,7 +169,7 @@ class UtilityScenarios:
 
         class TestCachedObject:
             def __init__(self) -> None:
-                self._cache: m.ConfigMap = {"key": "value"}
+                self._cache: m.ConfigMap = m.ConfigMap(root={"key": "value"})
                 self._simple_cache: str = "cached_value"
 
         return TestCachedObject()

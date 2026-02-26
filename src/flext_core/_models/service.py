@@ -39,14 +39,12 @@ class FlextModelsService:
         span_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         parent_span_id: str | None = None
 
-    class RetryConfiguration(FlextModelFoundation.FrozenStrictModel):
+    class RetryConfiguration(
+        FlextModelFoundation.FrozenStrictModel,
+        FlextModelFoundation.RetryConfigurationMixin,
+    ):
         """Retry configuration for operations."""
 
-        max_retries: int = Field(default=c.Reliability.DEFAULT_MAX_RETRIES, ge=0)
-        initial_delay_seconds: float = Field(
-            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, gt=0
-        )
-        max_delay_seconds: float = Field(default=c.Reliability.RETRY_BACKOFF_MAX, gt=0)
         exponential_base: float = Field(
             default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0
         )
@@ -95,6 +93,7 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.parameters is None:
                 self.parameters = FlextModelsService.ServiceParameters()
+
             if self.context is None:
                 self.context = FlextModelsService.TraceContext()
             return self
@@ -110,6 +109,7 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.parameters is None:
                 self.parameters = FlextModelsService.ServiceParameters()
+
             return self
 
     class DomainServiceBatchRequest(FlextModelFoundation.ArbitraryTypesModel):
@@ -157,6 +157,7 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.filters is None:
                 self.filters = FlextModelsService.ServiceFilters()
+
             return self
 
     class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
@@ -180,6 +181,7 @@ class FlextModelsService:
                 self.data = FlextModelsService.ServiceData()
             if self.filters is None:
                 self.filters = FlextModelsService.ServiceFilters()
+
             return self
 
     class AclResponse(FlextModelFoundation.ArbitraryTypesModel):
@@ -204,6 +206,7 @@ class FlextModelsService:
             """Apply default values for optional nested classes."""
             if self.context is None:
                 self.context = FlextModelsService.ServiceContext()
+
             return self
 
     class OperationExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
@@ -237,6 +240,7 @@ class FlextModelsService:
                 self.arguments = FlextModelsService.ServiceParameters()
             if self.keyword_arguments is None:
                 self.keyword_arguments = FlextModelsService.ServiceParameters()
+
             if self.retry_config is None:
                 self.retry_config = FlextModelsService.RetryConfiguration()
             return self

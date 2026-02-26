@@ -1,15 +1,25 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, cast
 
-from flext_core import c, m, r, t, u
+import pytest
+
+from flext_core import c, m, p, r, t, u
 
 
 def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
     _ = mode
 
 
-def _bad_hints_func(mode: "UnknownHint") -> None:
+class UnknownHint:
+    pass
+
+
+def _bad_hints_func(mode: UnknownHint) -> None:
+    _ = mode
+
+
+def _no_op_func(mode: c.Cqrs.HandlerType) -> None:
     _ = mode
 
 
@@ -20,14 +30,16 @@ def test_args_get_enum_params_branches() -> None:
     assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
-    annotated = u.Args.get_enum_params(_annotated_func)
+    annotated = u.Args.get_enum_params(cast("p.CallableWithHints", _annotated_func))
     assert "mode" in annotated
 
-    failed = u.Args.get_enum_params(_bad_hints_func)
+    failed = u.Args.get_enum_params(cast("p.CallableWithHints", _bad_hints_func))
     assert failed == {}
 
 
-def test_args_get_enum_params_annotated_unwrap_branch(monkeypatch) -> None:
+def test_args_get_enum_params_annotated_unwrap_branch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import flext_core._utilities.args as args_module
 
     monkeypatch.setattr(
@@ -35,5 +47,7 @@ def test_args_get_enum_params_annotated_unwrap_branch(monkeypatch) -> None:
         "get_type_hints",
         lambda _func: {"mode": Annotated[c.Cqrs.HandlerType, "meta"]},
     )
-    params = u.Args.get_enum_params(lambda mode: None)
+    params = u.Args.get_enum_params(
+        cast("p.CallableWithHints", _no_op_func),
+    )
     assert params["mode"] is c.Cqrs.HandlerType

@@ -15,6 +15,7 @@ from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 
 from pydantic import TypeAdapter, ValidationError
 
+from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
 
@@ -26,13 +27,6 @@ class _Predicate(Protocol[_PredicateT_contra]):
     """Protocol for callable predicates that accept a value and return bool."""
 
     def __call__(self, value: _PredicateT_contra) -> bool: ...
-
-
-@runtime_checkable
-class _ResultLike(Protocol):
-    is_success: bool
-    value: object
-    error: object
 
 
 class _BatchResultCompat(t.BatchResultDict):
@@ -73,14 +67,6 @@ class FlextUtilitiesCollection:
             return guard_value_adapter.validate_python(value)
         except ValidationError:
             return str(value)
-
-    @staticmethod
-    def _is_result_like(value: object) -> TypeGuard[_ResultLike]:
-        return (
-            hasattr(value, "is_success")
-            and hasattr(value, "value")
-            and hasattr(value, "error")
-        )
 
     # =========================================================================
     # Type Guards for Runtime Type Narrowing
@@ -429,7 +415,7 @@ class FlextUtilitiesCollection:
             try:
                 result_raw = operation(item)
                 # Handle both direct returns and FlextResult returns
-                if FlextUtilitiesCollection._is_result_like(result_raw):
+                if FlextUtilitiesGuards.is_result_like(result_raw):
                     is_success = bool(getattr(result_raw, "is_success", False))
                     result_value = getattr(result_raw, "value", None)
                     result_error = getattr(result_raw, "error", None)

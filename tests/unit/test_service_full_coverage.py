@@ -1,15 +1,13 @@
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import c, m, r, t, u
-
-
-service_mod = __import__(
-    "flext_core.service", fromlist=["FlextService", "FlextSettings"]
-)
-FlextService = service_mod.FlextService
-FlextSettings = service_mod.FlextSettings
+from flext_core import p
+from flext_core.service import FlextService, FlextSettings
+import flext_core.service as service_mod
 
 
 class _Svc(FlextService[bool]):
@@ -21,7 +19,9 @@ class _FakeConfig:
     version = "1"
 
 
-def test_service_init_type_guards_and_properties(monkeypatch) -> None:
+def test_service_init_type_guards_and_properties(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
@@ -30,8 +30,8 @@ def test_service_init_type_guards_and_properties(monkeypatch) -> None:
 
     bad_ctx_runtime = m.ServiceRuntime.model_construct(
         config=FlextSettings(),
-        context=object(),
-        container=object(),
+        context=cast("p.Context", "invalid-context"),
+        container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
         _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_ctx_runtime)
@@ -43,9 +43,9 @@ def test_service_init_type_guards_and_properties(monkeypatch) -> None:
         "flext_core.context", fromlist=["FlextContext"]
     ).FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
-        config=_FakeConfig(),
+        config=cast("p.Config", _FakeConfig()),
         context=good_ctx,
-        container=object(),
+        container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
         _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_cfg_runtime)
@@ -67,7 +67,7 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
 
     class _CustomSvc(_Svc):
         @classmethod
-        def _runtime_bootstrap_options(cls):
+        def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return service_mod.p.RuntimeBootstrapOptions(
                 config_type=_CustomSettings,
             )

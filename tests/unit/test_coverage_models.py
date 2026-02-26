@@ -27,6 +27,7 @@ import pytest
 from pydantic import ValidationError, field_validator
 
 from flext_core import m, t
+from flext_core._models import entity as _entity_module
 
 FlextModelsCqrs = m.Cqrs
 
@@ -62,7 +63,7 @@ class TestValueObjects:
 
         point = Point(x=1.0, y=2.0)
         with pytest.raises(ValidationError):
-            point.x = 3.0
+            setattr(point, "x", 3.0)
 
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""
@@ -331,7 +332,10 @@ class TestQueries:
 
     def test_query_creation(self) -> None:
         """Test creating a query."""
-        query = GetUserQuery(filters={"user_id": "USER-001"}, query_type="get_user")
+        query = GetUserQuery(
+            filters=t.Dict(root={"user_id": "USER-001"}),
+            query_type="get_user",
+        )
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
         assert query.query_type == "get_user"
@@ -364,7 +368,9 @@ class TestDomainEvents:
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="USER-001",
-            data={"user_id": "USER-001", "email": "user@example.com"},
+            data=_entity_module._ComparableConfigMap(
+                root={"user_id": "USER-001", "email": "user@example.com"}
+            ),
         )
         assert event.event_type == "UserCreated"
         assert event.aggregate_id == "USER-001"
@@ -378,12 +384,16 @@ class TestDomainEvents:
         event1 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data={"tracking_number": "TRACK-123"},
+            data=_entity_module._ComparableConfigMap(
+                root={"tracking_number": "TRACK-123"}
+            ),
         )
         event2 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data={"tracking_number": "TRACK-123"},
+            data=_entity_module._ComparableConfigMap(
+                root={"tracking_number": "TRACK-123"}
+            ),
         )
         assert event1.unique_id != event2.unique_id
         assert event1.event_type == event2.event_type
@@ -398,7 +408,7 @@ class TestDomainEvents:
         event = AccountUpdatedEvent(
             event_type="AccountUpdated",
             aggregate_id="ACC-001",
-            data={"field": "balance"},
+            data=_entity_module._ComparableConfigMap(root={"field": "balance"}),
         )
         assert event.created_at is not None
         assert isinstance(event.created_at, datetime)
@@ -412,7 +422,7 @@ class TestDomainEvents:
         event = PaymentProcessedEvent(
             event_type="PaymentProcessed",
             aggregate_id="PAY-001",
-            data={"amount": 99.99},
+            data=_entity_module._ComparableConfigMap(root={"amount": 99.99}),
         )
         assert event.unique_id is not None
         assert event.created_at is not None

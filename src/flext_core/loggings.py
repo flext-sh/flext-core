@@ -21,6 +21,9 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, cast, overload
 
+from structlog.typing import Context
+
+from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.models import m
 from flext_core.protocols import p
@@ -62,7 +65,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     # Protocol compliance: BindableLogger._context property
     @property
-    def _context(self) -> dict[str, t.GeneralValueType]:
+    def _context(self) -> Context:
         """Context mapping for BindableLogger protocol compliance."""
         return {}
 
@@ -603,7 +606,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 if hasattr(container, "config")
                 else FlextSettings.get_global_instance()
             )
-            level = getattr(config, "log_level", "INFO")
+            level = (
+                getattr(config, "log_level") if hasattr(config, "log_level") else "INFO"
+            )
         # Create logger with container context
         logger = cls.create_module_logger(f"container_{id(container)}")
         # Bind container context
@@ -739,11 +744,27 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         # Extract config values (config takes priority over individual params)
         if config is not None:
-            _level = getattr(config, "level", _level)
-            _service_name = getattr(config, "service_name", _service_name)
-            _service_version = getattr(config, "service_version", _service_version)
-            _correlation_id = getattr(config, "correlation_id", _correlation_id)
-            _force_new = getattr(config, "force_new", _force_new)
+            _level = getattr(config, "level") if hasattr(config, "level") else _level
+            _service_name = (
+                getattr(config, "service_name")
+                if hasattr(config, "service_name")
+                else _service_name
+            )
+            _service_version = (
+                getattr(config, "service_version")
+                if hasattr(config, "service_version")
+                else _service_version
+            )
+            _correlation_id = (
+                getattr(config, "correlation_id")
+                if hasattr(config, "correlation_id")
+                else _correlation_id
+            )
+            _force_new = (
+                getattr(config, "force_new")
+                if hasattr(config, "force_new")
+                else _force_new
+            )
 
         # DO NOT configure structlog here - should be done at application startup
         # Application must call FlextRuntime.configure_structlog() explicitly before creating loggers
@@ -1271,7 +1292,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context_dict["exception_type"] = exception_value.__class__.__name__
                 context_dict["exception_message"] = str(exception_value)
 
-            error_method = getattr(self.logger, "error", None)
+            error_method = (
+                getattr(self.logger, "error") if hasattr(self.logger, "error") else None
+            )
             if callable(error_method):
                 _ = error_method(message, *filtered_args, **context_dict.root)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -1350,15 +1373,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             *args: t.MetadataAttributeValue | FlextResult[t.MetadataAttributeValue],
             **kwargs: t.GuardInputValue,
         ) -> t.GuardInputValue | None:
-            method: t.MetadataAttributeValue | None = getattr(
-                self._base_logger, method_name, None
+            method = (
+                getattr(self._base_logger, method_name)
+                if hasattr(self._base_logger, method_name)
+                else None
             )
-            if method is not None and callable(method):
-                result: t.ConfigMapValue = method(
-                    *args,
-                    **kwargs,
-                )
-                return FlextRuntime.normalize_to_general_value(result)
+            if callable(method):
+                result = method(*args, **kwargs)
+                if FlextUtilitiesGuards.is_general_value_type(result):
+                    return FlextRuntime.normalize_to_general_value(result)
+                return str(result)
             return None
 
         def _log_and_wrap(

@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
@@ -148,8 +149,8 @@ class FlextValidatorImports:
         for node in ast.walk(tree):
             # Check if condition is TYPE_CHECKING
             if (
-                type(node) is ast.If
-                and type(node.test) is ast.Name
+                isinstance(node, ast.If)
+                and isinstance(node.test, ast.Name)
                 and node.test.id == "TYPE_CHECKING"
             ):
                 violation = u.Tests.Validator.create_violation(
@@ -177,7 +178,7 @@ class FlextValidatorImports:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if type(node) is not ast.Try:
+            if not isinstance(node, ast.Try):
                 continue
             # Check if any handler catches ImportError or ModuleNotFoundError
             for handler in node.handlers:
@@ -215,14 +216,14 @@ class FlextValidatorImports:
         for node in ast.walk(tree):
             # Check for sys.path
             if (
-                type(node) is ast.Attribute
-                and type(node.value) is ast.Name
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name)
                 and node.value.id == "sys"
                 and node.attr == "path"
             ):
                 # Check if it's being modified (append, insert, extend)
                 parent = u.Tests.Validator.get_parent(tree, node)
-                if type(parent) is ast.Call:
+                if isinstance(parent, ast.Call):
                     violation = u.Tests.Validator.create_violation(
                         file_path,
                         node.lineno,

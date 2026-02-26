@@ -49,6 +49,14 @@ type TestCaseMap = Mapping[str, TestPayload]
 type InputPayloadMap = dict[str, object]
 
 
+def _build_domain_test_entity(
+    *,
+    name: str,
+    value: TestPayload,
+) -> TestsFlextModels.Core.DomainTestEntity:
+    return DomainTestEntity(name=name, value=cast("int", value))
+
+
 def _convert_to_general_value(obj: object) -> TestPayload:
     """Convert object to t.GeneralValueType (handles Pydantic models).
 
@@ -61,7 +69,7 @@ def _convert_to_general_value(obj: object) -> TestPayload:
     """
     if isinstance(obj, BaseModel):
         # Convert Pydantic model to dict
-        return cast("TestPayload", obj.model_dump())
+        return obj.model_dump()
     if isinstance(obj, (str, int, float, bool, type(None))):
         return obj
     if isinstance(obj, dict):
@@ -110,9 +118,17 @@ def _require_payload_str(value: TestPayload) -> str:
 
 def _require_payload_mapping(value: TestPayload) -> Mapping[str, TestPayload]:
     if isinstance(value, Mapping):
-        return cast("Mapping[str, TestPayload]", value)
+        return value
     msg = f"Expected mapping payload, got {type(value).__name__}"
     raise AssertionError(msg)
+
+
+def _as_test_payload(value: object) -> TestPayload:
+    return cast("TestPayload", value)
+
+
+def _as_payload_map(value: InputPayloadMap) -> Mapping[str, TestPayload]:
+    return cast("Mapping[str, TestPayload]", value)
 
 
 def create_compare_entities_cases() -> list[TestCaseMap]:
@@ -130,7 +146,7 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
             TestsFlextConstants.TestDomain.ENTITY_VALUE_20,
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
         ],
-        entity_class=DomainTestEntity,
+        entity_class=_build_domain_test_entity,
         remove_ids=[False, False, True],  # alice_no_id without ID
     )
     assert entities_result.is_success, (
@@ -168,43 +184,46 @@ def create_compare_entities_cases() -> list[TestCaseMap]:
         "entity_b": custom2,
     }
 
-    return [
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="compare_entities_by_id",
-            description="same_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_same_id),
-            expected_result=True,
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="compare_entities_by_id",
-            description="different_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_different_id),
-            expected_result=False,
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="compare_entities_by_id",
-            description="different_type",
-            input_data=cast("Mapping[str, TestPayload]", input_data_different_type),
-            expected_result=False,
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="compare_entities_by_id",
-            description="no_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_no_id),
-            expected_result=False,
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="compare_entities_by_id",
-            description="custom_id_attr",
-            input_data=cast("Mapping[str, TestPayload]", input_data_custom),
-            expected_result=True,
-            id_attr="custom_id",
-        ),
-    ]
+    return cast(
+        "list[TestCaseMap]",
+        [
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="compare_entities_by_id",
+                description="same_id",
+                input_data=_as_payload_map(input_data_same_id),
+                expected_result=True,
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="compare_entities_by_id",
+                description="different_id",
+                input_data=_as_payload_map(input_data_different_id),
+                expected_result=False,
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="compare_entities_by_id",
+                description="different_type",
+                input_data=_as_payload_map(input_data_different_type),
+                expected_result=False,
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="compare_entities_by_id",
+                description="no_id",
+                input_data=_as_payload_map(input_data_no_id),
+                expected_result=False,
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="compare_entities_by_id",
+                description="custom_id_attr",
+                input_data=_as_payload_map(input_data_custom),
+                expected_result=True,
+                id_attr="custom_id",
+            ),
+        ],
+    )
 
 
 def create_hash_entity_cases() -> list[TestCaseMap]:
@@ -220,7 +239,7 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
         ],
-        entity_class=DomainTestEntity,
+        entity_class=_build_domain_test_entity,
         remove_ids=[False, True],  # alice_no_id without ID
     )
     assert entities_result.is_success, (
@@ -241,29 +260,32 @@ def create_hash_entity_cases() -> list[TestCaseMap]:
         "entity": custom,
     }
 
-    return [
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="hash_entity_by_id",
-            description="with_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_with_id),
-            expected_result=cast("TestPayload", int),
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="hash_entity_by_id",
-            description="no_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_no_id),
-            expected_result=cast("TestPayload", int),
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="hash_entity_by_id",
-            description="custom_id_attr",
-            input_data=cast("Mapping[str, TestPayload]", input_data_custom),
-            expected_result=cast("TestPayload", int),
-            id_attr="custom_id",
-        ),
-    ]
+    return cast(
+        "list[TestCaseMap]",
+        [
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="hash_entity_by_id",
+                description="with_id",
+                input_data=_as_payload_map(input_data_with_id),
+                expected_result=_as_test_payload(int),
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="hash_entity_by_id",
+                description="no_id",
+                input_data=_as_payload_map(input_data_no_id),
+                expected_result=_as_test_payload(int),
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="hash_entity_by_id",
+                description="custom_id_attr",
+                input_data=_as_payload_map(input_data_custom),
+                expected_result=_as_test_payload(int),
+                id_attr="custom_id",
+            ),
+        ],
+    )
 
 
 def create_compare_value_objects_cases() -> list[TestCaseMap]:
@@ -285,7 +307,7 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
     alice_entity = u.Tests.DomainHelpers.create_test_entity_instance(
         name=TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
         value=TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
-        entity_class=DomainTestEntity,
+        entity_class=_build_domain_test_entity,
     )
     simple1 = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
     simple2 = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
@@ -340,7 +362,7 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
                 False,
                 False,
                 True,
-                cast("TestPayload", bool),
+                _as_test_payload(bool),
                 True,
             ],
         ),
@@ -392,11 +414,11 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
                 "list[Mapping[str, TestPayload]]", input_data_list_hash
             ),
             expected_results=[
-                cast("TestPayload", int),
-                cast("TestPayload", int),
-                cast("TestPayload", int),
-                cast("TestPayload", int),
-                cast("TestPayload", int),
+                _as_test_payload(int),
+                _as_test_payload(int),
+                _as_test_payload(int),
+                _as_test_payload(int),
+                _as_test_payload(int),
             ],
         ),
     )
@@ -415,7 +437,7 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
             TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
         ],
-        entity_class=DomainTestEntity,
+        entity_class=_build_domain_test_entity,
         remove_ids=[False, True],  # alice_no_id without ID
     )
     assert entities_result.is_success, (
@@ -436,29 +458,32 @@ def create_validate_entity_has_id_cases() -> list[TestCaseMap]:
         "entity": custom,
     }
 
-    return [
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="validate_entity_has_id",
-            description="has_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_has_id),
-            expected_result=True,
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="validate_entity_has_id",
-            description="no_id",
-            input_data=cast("Mapping[str, TestPayload]", input_data_no_id_validate),
-            expected_result=False,
-            id_attr="unique_id",
-        ),
-        u.Tests.TestCaseHelpers.create_operation_test_case(
-            operation="validate_entity_has_id",
-            description="custom_attr",
-            input_data=cast("Mapping[str, TestPayload]", input_data_custom_validate),
-            expected_result=True,
-            id_attr="custom_id",
-        ),
-    ]
+    return cast(
+        "list[TestCaseMap]",
+        [
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="validate_entity_has_id",
+                description="has_id",
+                input_data=_as_payload_map(input_data_has_id),
+                expected_result=True,
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="validate_entity_has_id",
+                description="no_id",
+                input_data=_as_payload_map(input_data_no_id_validate),
+                expected_result=False,
+                id_attr="unique_id",
+            ),
+            u.Tests.TestCaseHelpers.create_operation_test_case(
+                operation="validate_entity_has_id",
+                description="custom_attr",
+                input_data=_as_payload_map(input_data_custom_validate),
+                expected_result=True,
+                id_attr="custom_id",
+            ),
+        ],
+    )
 
 
 def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
@@ -503,7 +528,7 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
                 True,
                 False,
                 True,
-                cast("TestPayload", bool),
+                _as_test_payload(bool),
                 False,
                 False,
             ],
@@ -530,14 +555,11 @@ class TestuDomain:
         """Test compare_entities_by_id using FlextTestsUtilities."""
         # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
         # Cast lambda return type to t.GeneralValueType for type checker
-        operation_result: TestPayload = cast(
-            "TestPayload",
-            u.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-                id_attr=_require_payload_str(
-                    cast("TestPayload", test_case.get("id_attr", "unique_id")),
-                ),
+        operation_result = u.Tests.DomainHelpers.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
+            id_attr=_require_payload_str(
+                test_case.get("id_attr", "unique_id"),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
@@ -557,14 +579,11 @@ class TestuDomain:
         """Test hash_entity_by_id using FlextTestsUtilities."""
         # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
         # Cast lambda return type to t.GeneralValueType for type checker
-        operation_result: TestPayload = cast(
-            "TestPayload",
-            u.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-                id_attr=_require_payload_str(
-                    cast("TestPayload", test_case.get("id_attr", "unique_id")),
-                ),
+        operation_result = u.Tests.DomainHelpers.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
+            id_attr=_require_payload_str(
+                test_case.get("id_attr", "unique_id"),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
@@ -584,12 +603,9 @@ class TestuDomain:
         """Test compare_value_objects_by_value using FlextTestsUtilities."""
         # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
         # Cast lambda return type to t.GeneralValueType for type checker
-        operation_result: TestPayload = cast(
-            "TestPayload",
-            u.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-            ),
+        operation_result = u.Tests.DomainHelpers.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
@@ -608,12 +624,9 @@ class TestuDomain:
         """Test hash_value_object_by_value using FlextTestsUtilities."""
         # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
         # Cast lambda return type to t.GeneralValueType for type checker
-        operation_result: TestPayload = cast(
-            "TestPayload",
-            u.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-            ),
+        operation_result = u.Tests.DomainHelpers.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
@@ -632,14 +645,11 @@ class TestuDomain:
         """Test validate_entity_has_id using FlextTestsUtilities."""
         # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
         # Cast lambda return type to t.GeneralValueType for type checker
-        operation_result: TestPayload = cast(
-            "TestPayload",
-            u.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-                id_attr=_require_payload_str(
-                    cast("TestPayload", test_case.get("id_attr", "unique_id")),
-                ),
+        operation_result = u.Tests.DomainHelpers.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
+            id_attr=_require_payload_str(
+                test_case.get("id_attr", "unique_id"),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
@@ -659,12 +669,9 @@ class TestuDomain:
         """Test validate_value_object_immutable using FlextTestsUtilities."""
         # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
         # Cast lambda return type to t.GeneralValueType for type checker
-        operation_result: TestPayload = cast(
-            "TestPayload",
-            u.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-            ),
+        operation_result = u.Tests.DomainHelpers.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
@@ -679,7 +686,7 @@ class TestuDomain:
         """Test validation with config that raises TypeError using u.Domain directly."""
         obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
-            obj_value = cast("TestPayload", obj)
+            obj_value = cast("t.ConfigMapValue", cast("object", obj))
             result = u.Domain.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:

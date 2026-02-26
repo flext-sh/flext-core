@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Hashable
 from datetime import datetime
+from typing import cast
 
 from pydantic import BaseModel, ConfigDict
 
@@ -95,7 +96,12 @@ class TestValidateValueObjectImmutable:
 
         obj = PlainObj()
         # PlainObj uses object.__setattr__ → mutable
-        assert u.Domain.validate_value_object_immutable(obj) is False
+        assert (
+            u.Domain.validate_value_object_immutable(
+                cast("t.ConfigMapValue", cast("object", obj))
+            )
+            is False
+        )
 
     def test_object_without_model_config(self) -> None:
         """Object without model_config just checks __setattr__."""
@@ -119,5 +125,15 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
                 raise AttributeError(name)
             return object.__getattribute__(self, name)
 
-    assert u.Domain.validate_value_object_immutable(_BrokenConfig()) is False
-    assert u.Domain.validate_value_object_immutable(_NoSetattrVisible()) is False
+    assert (
+        u.Domain.validate_value_object_immutable(
+            cast("t.ConfigMapValue", cast("object", _BrokenConfig()))
+        )
+        is False
+    )
+    assert (
+        u.Domain.validate_value_object_immutable(
+            cast("t.ConfigMapValue", cast("object", _NoSetattrVisible()))
+        )
+        is False
+    )

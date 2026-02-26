@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import ItemsView, Iterator, Mapping
-from datetime import UTC, datetime
+from datetime import UTC, datetime, tzinfo
+from typing import cast
 
 import importlib
 import pytest
@@ -31,13 +32,9 @@ class _GoodModel(BaseModel):
     value: int = 7
 
 
-class _BrokenModel(BaseModel):
-    value: int = 1
-
-    def model_dump(self, **kwargs: object) -> dict[str, JsonValue]:
-        _ = kwargs
-        msg = "dump-failed"
-        raise TypeError(msg)
+class _BrokenModel:
+    def __init__(self) -> None:
+        self.model_dump = lambda: (_ for _ in ()).throw(TypeError("dump-failed"))
 
 
 def test_normalize_context_to_dict_error_paths() -> None:
@@ -45,13 +42,23 @@ def test_normalize_context_to_dict_error_paths() -> None:
         u.Generators._normalize_context_to_dict(_BrokenMapping())
 
     with pytest.raises(TypeError, match="Failed to dump BaseModel"):
-        u.Generators._normalize_context_to_dict(_BrokenModel())
+        u.Generators._normalize_context_to_dict(
+            cast(
+                "Mapping[str, JsonValue] | BaseModel | None",
+                cast("object", _BrokenModel()),
+            )
+        )
 
     with pytest.raises(TypeError, match="Context cannot be None"):
         u.Generators._normalize_context_to_dict(None)
 
     with pytest.raises(TypeError, match="Context must be dict, Mapping, or BaseModel"):
-        u.Generators._normalize_context_to_dict(42)
+        u.Generators._normalize_context_to_dict(
+            cast(
+                "Mapping[str, JsonValue] | BaseModel | None",
+                cast("object", 42),
+            )
+        )
 
 
 def test_enrich_and_ensure_trace_context_branches(
@@ -125,9 +132,9 @@ def test_generate_special_paths_and_dynamic_subclass(
 
     fixed_ts = datetime(2026, 1, 2, tzinfo=UTC)
 
-    class _FixedDatetime(datetime):
-        @classmethod
-        def now(cls, tz: object | None = None) -> datetime:
+    class _FixedDatetime:
+        @staticmethod
+        def now(tz: tzinfo | None = None) -> datetime:
             _ = tz
             return fixed_ts
 

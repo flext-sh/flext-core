@@ -296,83 +296,6 @@ class FlextTestsConstants(FlextConstants):
             # Operation messages
             SUCCESS_MESSAGE: Final[str] = "success"
 
-            # Deprecation message templates - use .format() for method names
-            DEPRECATION_RESULT_OK: Final[str] = (
-                'Result.ok() is deprecated. Use tt.res("ok", value=value) instead.'
-            )
-            DEPRECATION_RESULT_FAIL: Final[str] = (
-                'Result.fail() is deprecated. Use tt.res("fail", error=error) instead.'
-            )
-            DEPRECATION_RESULT_FROM_VALUE: Final[str] = (
-                "Result.from_value() deprecated. Use tt.res('from_value')."
-            )
-            DEPRECATION_MODELS_USER: Final[str] = (
-                "Models.user() deprecated. Use tt.model('user', ...)."
-            )
-            DEPRECATION_MODELS_CONFIG: Final[str] = (
-                "Models.config() deprecated. Use tt.model('config', ...)."
-            )
-            DEPRECATION_MODELS_SERVICE: Final[str] = (
-                "Models.service() deprecated. Use tt.model('service', ...)."
-            )
-            DEPRECATION_MODELS_ENTITY: Final[str] = (
-                "Models.entity() deprecated. Use tt.model('entity', ...)."
-            )
-            DEPRECATION_MODELS_VALUE_OBJECT: Final[str] = (
-                "Models.value_object() deprecated. Use tt.model('value', ...)."
-            )
-            DEPRECATION_OPS_SIMPLE: Final[str] = (
-                "Operations.simple() deprecated. Use tt.op('simple')."
-            )
-            DEPRECATION_OPS_ADD: Final[str] = (
-                "Operations.add() deprecated. Use tt.op('add')."
-            )
-            DEPRECATION_OPS_FORMAT: Final[str] = (
-                "Operations.format() deprecated. Use tt.op('format')."
-            )
-            DEPRECATION_OPS_ERROR: Final[str] = (
-                "Operations.error() deprecated. Use tt.op('error', ...)."
-            )
-            DEPRECATION_OPS_TYPE_ERROR: Final[str] = (
-                "Operations.type_error() deprecated. Use tt.op('type_error')."
-            )
-            DEPRECATION_OPS_RESULT_OK: Final[str] = (
-                "Operations.result_ok() deprecated. Use tt.op('result_ok')."
-            )
-            DEPRECATION_OPS_RESULT_FAIL: Final[str] = (
-                "Operations.result_fail() deprecated. Use tt.op('result_fail')."
-            )
-            DEPRECATION_BATCH_USERS: Final[str] = (
-                "Batch.users() deprecated. Use tt.batch('user', count=n)."
-            )
-            DEPRECATION_BATCH_CONFIGS: Final[str] = (
-                "Batch.configs() deprecated. Use tt.batch('config', count=n)."
-            )
-            DEPRECATION_BATCH_SERVICES: Final[str] = (
-                "Batch.services() deprecated. Use tt.batch('service', count=n)."
-            )
-            DEPRECATION_BATCH_RESULTS: Final[str] = (
-                "Batch.results() deprecated. Use tt.results(values, ...)."
-            )
-            DEPRECATION_CREATE_USER: Final[str] = (
-                "create_user() deprecated. Use tt.model('user', ...)."
-            )
-            DEPRECATION_CREATE_CONFIG: Final[str] = (
-                "create_config() deprecated. Use tt.model('config', ...)."
-            )
-            DEPRECATION_CREATE_SERVICE: Final[str] = (
-                "create_service() deprecated. Use tt.model('service', ...)."
-            )
-            DEPRECATION_BATCH_USERS_FUNC: Final[str] = (
-                "batch_users() deprecated. Use tt.batch('user', count=n)."
-            )
-            DEPRECATION_CREATE_TEST_OPERATION: Final[str] = (
-                "create_test_operation() deprecated. Use tt.op(kind, ...)."
-            )
-            DEPRECATION_CREATE_TEST_SERVICE: Final[str] = (
-                "create_test_service() deprecated. Use tt.svc(...)."
-            )
-
             @classmethod
             def user_email(cls, user_id: str) -> str:
                 """Generate user email from template.
@@ -540,31 +463,6 @@ class FlextTestsConstants(FlextConstants):
             ERROR_READ: Final[str] = "Read error: {error}"
             ERROR_COMPARE: Final[str] = "Compare error: {error}"
             ERROR_INFO: Final[str] = "Info error: {error}"
-
-            # Deprecation message templates
-            DEPRECATION_CREATE_TEXT: Final[str] = (
-                "create_text_file() is deprecated. Use create(content, name) instead."
-            )
-            DEPRECATION_CREATE_BINARY: Final[str] = (
-                "create_binary_file() is deprecated. "
-                "Use create(content, name, fmt='bin') instead."
-            )
-            DEPRECATION_CREATE_EMPTY: Final[str] = (
-                "create_empty_file() is deprecated. Use create('', name) instead."
-            )
-            DEPRECATION_CREATE_CONFIG: Final[str] = (
-                "create_config_file() is deprecated. Use create(content, name) instead."
-            )
-            DEPRECATION_CREATE_FILE_SET: Final[str] = (
-                "create_file_set() is deprecated. Use tf.files(content) instead."
-            )
-            DEPRECATION_GET_FILE_INFO: Final[str] = (
-                "get_file_info() is deprecated. Use info(path) instead. "
-                "Note: info() returns r[FileInfo]."
-            )
-            DEPRECATION_TEMPORARY_FILES: Final[str] = (
-                "temporary_files() is deprecated. Use tf.files(content) instead."
-            )
 
             @classmethod
             def format_size(cls, size: int) -> str:
@@ -907,85 +805,77 @@ class FlextTestsConstants(FlextConstants):
                 )
 
                 # Approved ruff ignores (CONFIG-002) - from ruff-shared.toml
-                RUFF_IGNORES: Final[frozenset[str]] = frozenset(
-                    {
-                        "BLE001",
-                        "COM812",
-                        "CPY001",
-                        "D203",
-                        "D213",
-                        "D401",
-                        "D417",
-                        "DOC201",
-                        "DOC202",
-                        "DOC402",
-                        "DOC501",
-                        "DOC502",
-                        "E501",
-                        "ERA001",
-                        "FBT003",
-                        "G004",
-                        "N813",
-                        "N816",
-                        "PLR0904",
-                        "PLR0911",
-                        "PLR0912",
-                        "PLR0913",
-                        "PLR0914",
-                        "PLR0915",
-                        "PLR0917",
-                        "PLR6301",
-                        "PYI042",
-                        "Q000",
-                        "RUF001",
-                        "RUF002",
-                        "RUF003",
-                        "RUF005",
-                        "S608",
-                        "TC001",
-                        "TC002",
-                        "TC003",
-                        "TRY003",
-                        "TRY300",
-                        "TRY301",
-                        "UP007",
-                        "UP040",
-                        "W293",
-                    }
-                )
+                RUFF_IGNORES: Final[frozenset[str]] = frozenset({
+                    "BLE001",
+                    "COM812",
+                    "CPY001",
+                    "D203",
+                    "D213",
+                    "D401",
+                    "D417",
+                    "DOC201",
+                    "DOC202",
+                    "DOC402",
+                    "DOC501",
+                    "DOC502",
+                    "E501",
+                    "ERA001",
+                    "FBT003",
+                    "G004",
+                    "N813",
+                    "N816",
+                    "PLR0904",
+                    "PLR0911",
+                    "PLR0912",
+                    "PLR0913",
+                    "PLR0914",
+                    "PLR0915",
+                    "PLR0917",
+                    "PLR6301",
+                    "PYI042",
+                    "Q000",
+                    "RUF001",
+                    "RUF002",
+                    "RUF003",
+                    "RUF005",
+                    "S608",
+                    "TC001",
+                    "TC002",
+                    "TC003",
+                    "TRY003",
+                    "TRY300",
+                    "TRY301",
+                    "UP007",
+                    "UP040",
+                    "W293",
+                })
 
                 # Direct technology imports that should use facades (IMPORT-005)
-                TECH_IMPORTS: Final[frozenset[str]] = frozenset(
-                    {
-                        "ldap3",
-                        "oracledb",
-                        "cx_Oracle",
-                        "click",
-                        "rich",
-                        "typer",
-                    }
-                )
+                TECH_IMPORTS: Final[frozenset[str]] = frozenset({
+                    "ldap3",
+                    "oracledb",
+                    "cx_Oracle",
+                    "click",
+                    "rich",
+                    "typer",
+                })
 
                 # Mock patterns to detect (TEST-002)
-                MOCK_NAMES: Final[frozenset[str]] = frozenset(
-                    {
-                        "Mock",
-                        "MagicMock",
-                        "AsyncMock",
-                        "PropertyMock",
-                    }
-                )
+                MOCK_NAMES: Final[frozenset[str]] = frozenset({
+                    "Mock",
+                    "MagicMock",
+                    "AsyncMock",
+                    "PropertyMock",
+                })
 
                 # FLEXT packages for root import checks (IMPORT-006)
-                FLEXT_PACKAGES: Final[frozenset[str]] = frozenset(
-                    {
-                        "flext_core",
-                        "flext_cli",
-                        "flext_ldap",
-                        "flext_ldif",
-                        "flext_tests",
-                    }
-                )
+                FLEXT_PACKAGES: Final[frozenset[str]] = frozenset({
+                    "flext_core",
+                    "flext_cli",
+                    "flext_ldap",
+                    "flext_ldif",
+                    "flext_tests",
+                })
 
                 # Approved internal import patterns (IMPORT-006)
                 # __init__.py in internal packages can import siblings

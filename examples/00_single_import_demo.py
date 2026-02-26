@@ -22,8 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Callable, Sequence, Set as AbstractSet
 from dataclasses import dataclass
 from itertools import starmap
 
@@ -142,7 +141,8 @@ class UserService:
 
             # Railway pattern with advanced functional composition (DRY)
             return (
-                self._validate_data(user_data)
+                self
+                ._validate_data(user_data)
                 .flat_map(lambda _: self._validate_and_transform(user_data, _))
                 .map(self._log_success)
             )
@@ -152,12 +152,10 @@ class UserService:
         data: m.ConfigMap,
     ) -> r[bool]:
         """Validate input data using u (DRY) - no None types."""
-        required_fields: AbstractSet[str] = frozenset(
-            {
-                "name",
-                "email",
-            }
-        )  # Advanced collections.abc Set
+        required_fields: AbstractSet[str] = frozenset({
+            "name",
+            "email",
+        })  # Advanced collections.abc Set
         present_fields: AbstractSet[str] = frozenset(data.keys())
 
         if not required_fields <= present_fields:
@@ -231,16 +229,15 @@ def demonstrate_utilities() -> None:
     ]
 
     result = (
-        r.traverse(validation_results, lambda r: r)
+        r
+        .traverse(validation_results, lambda r: r)
         .flat_map(lambda _: cache_result)
         .map(
-            lambda cache_cleared: "\n".join(
-                [
-                    f"Cache cleared: {cache_cleared}",
-                    f"Generated ID: {correlation_id[:12]}",
-                    f"All validations passed: {len(validation_results)} checks",
-                ]
-            ),
+            lambda cache_cleared: "\n".join([
+                f"Cache cleared: {cache_cleared}",
+                f"Generated ID: {correlation_id[:12]}",
+                f"All validations passed: {len(validation_results)} checks",
+            ]),
         )
     )
 

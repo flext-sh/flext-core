@@ -14,10 +14,10 @@ from collections.abc import MutableMapping
 from pathlib import Path
 
 import tomlkit
-from tomlkit.items import Table
-
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
+from tomlkit.items import Table
+
 from flext_infra.constants import c
 
 type TomlScalar = str | int | float | bool | None
@@ -26,7 +26,6 @@ type TomlValue = (
 )
 type TomlMap = MutableMapping[str, t.ConfigMapValue]
 type TomlMutableMap = MutableMapping[str, t.ConfigMapValue]
-type _TableLike = Table | TomlMutableMap
 
 
 def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
@@ -61,19 +60,6 @@ class TomlService:
             return r[TomlMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
             return r[TomlMap].fail(f"TOML read error: {exc}")
-
-    def read_pyproject(self, path: Path) -> FlextResult[TomlMap]:
-        """Read and parse a pyproject.toml from a directory or file.
-
-        Args:
-            path: Directory containing pyproject.toml, or direct file path.
-
-        Returns:
-            FlextResult with parsed TOML data.
-
-        """
-        target = path / c.Files.PYPROJECT_FILENAME if path.is_dir() else path
-        return self.read(target)
 
     def read_document(self, path: Path) -> FlextResult[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
@@ -193,36 +179,6 @@ class TomlService:
             path = f"{prefix}.{key}" if prefix else key
             del target[key]
             removed.append(path)
-
-    def sync_section(
-        self,
-        target: _TableLike,
-        canonical: TomlMap,
-        *,
-        prune_extras: bool = True,
-    ) -> tuple[list[str], list[str], list[str]]:
-        """Sync a TOML section to canonical values.
-
-        Returns:
-            Tuple of (added, updated, removed) key paths.
-
-        """
-        added: list[str] = []
-        updated: list[str] = []
-        removed: list[str] = []
-        target_mapping = _as_toml_mapping(target)
-        if target_mapping is None:
-            return added, updated, removed
-        self.sync_mapping(
-            target_mapping,
-            canonical,
-            prune_extras=prune_extras,
-            prefix="",
-            added=added,
-            updated=updated,
-            removed=removed,
-        )
-        return added, updated, removed
 
 
 __all__ = ["TomlService"]

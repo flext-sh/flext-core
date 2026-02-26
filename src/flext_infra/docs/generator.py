@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
-
 from flext_core.result import r
+
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DocScope,
@@ -216,33 +216,31 @@ class DocGenerator:
             return []
         site_name = f"{scope.name} Documentation"
         content = (
-            "\n".join(
-                [
-                    f"site_name: {site_name}",
-                    f"site_description: Standard guides for {scope.name}",
-                    f"site_url: {c.Github.GITHUB_REPO_URL}",
-                    f"repo_name: {c.Github.GITHUB_REPO_NAME}",
-                    f"repo_url: {c.Github.GITHUB_REPO_URL}",
-                    f"edit_uri: edit/main/{scope.name}/docs/guides/",
-                    "docs_dir: docs/guides",
-                    "site_dir: .reports/docs/site",
-                    "",
-                    "theme:",
-                    "  name: mkdocs",
-                    "",
-                    "plugins: []",
-                    "",
-                    "nav:",
-                    "  - Home: README.md",
-                    "  - Getting Started: getting-started.md",
-                    "  - Configuration: configuration.md",
-                    "  - Development: development.md",
-                    "  - Testing: testing.md",
-                    "  - Troubleshooting: troubleshooting.md",
-                    "  - Security: security.md",
-                    "  - Automation Skill Pattern: skill-automation-pattern.md",
-                ]
-            )
+            "\n".join([
+                f"site_name: {site_name}",
+                f"site_description: Standard guides for {scope.name}",
+                f"site_url: {c.Github.GITHUB_REPO_URL}",
+                f"repo_name: {c.Github.GITHUB_REPO_NAME}",
+                f"repo_url: {c.Github.GITHUB_REPO_URL}",
+                f"edit_uri: edit/main/{scope.name}/docs/guides/",
+                "docs_dir: docs/guides",
+                "site_dir: .reports/docs/site",
+                "",
+                "theme:",
+                "  name: mkdocs",
+                "",
+                "plugins: []",
+                "",
+                "nav:",
+                "  - Home: README.md",
+                "  - Getting Started: getting-started.md",
+                "  - Configuration: configuration.md",
+                "  - Development: development.md",
+                "  - Testing: testing.md",
+                "  - Troubleshooting: troubleshooting.md",
+                "  - Security: security.md",
+                "  - Automation Skill Pattern: skill-automation-pattern.md",
+            ])
             + "\n"
         )
         return [self._write_if_needed(mkdocs_path, content, apply=apply)]
@@ -264,14 +262,12 @@ class DocGenerator:
         for line in lines:
             if not heading_done and line.startswith("# "):
                 title = line[2:].strip()
-                out.extend(
-                    [
-                        f"# {project} - {title}",
-                        "",
-                        f"> Project profile: `{project}`",
-                        "",
-                    ]
-                )
+                out.extend([
+                    f"# {project} - {title}",
+                    "",
+                    f"> Project profile: `{project}`",
+                    "",
+                ])
                 heading_done = True
                 continue
             out.append(line)

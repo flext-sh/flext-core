@@ -14,11 +14,14 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r, t
+
 from flext_infra.constants import c
 from flext_infra.git import GitService
 from flext_infra.reporting import ReportingService
 from flext_infra.selection import ProjectSelector
 from flext_infra.subprocess import CommandRunner
+
+type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.ScalarValue]]]
 
 
 class PrWorkspaceManager:
@@ -222,15 +225,13 @@ class PrWorkspaceManager:
 
         elapsed = int(time.monotonic() - started)
         status = c.Status.OK if exit_code == 0 else c.Status.FAIL
-        return r[Mapping[str, t.ScalarValue]].ok(
-            {
-                "display": display,
-                "status": status,
-                "elapsed": elapsed,
-                "exit_code": exit_code,
-                "log_path": str(log_path) if log_path else None,
-            }
-        )
+        return r[Mapping[str, t.ScalarValue]].ok({
+            "display": display,
+            "status": status,
+            "elapsed": elapsed,
+            "exit_code": exit_code,
+            "log_path": str(log_path) if log_path else None,
+        })
 
     def orchestrate(
         self,
@@ -242,7 +243,7 @@ class PrWorkspaceManager:
         checkpoint: bool = True,
         fail_fast: bool = False,
         pr_args: Mapping[str, str] | None = None,
-    ) -> r[dict[str, int | list[Mapping[str, t.ScalarValue]]]]:
+    ) -> r[OrchestrationSummary]:
         """Run PR operations across workspace repositories.
 
         Args:
@@ -263,7 +264,7 @@ class PrWorkspaceManager:
             projects or [],
         )
         if projects_result.is_failure:
-            return r[dict[str, int | list[Mapping[str, t.ScalarValue]]]].fail(
+            return r[OrchestrationSummary].fail(
                 projects_result.error or "project resolution failed",
             )
 
@@ -293,14 +294,12 @@ class PrWorkspaceManager:
                     break
 
         total = len(repos)
-        return r[dict[str, int | list[Mapping[str, t.ScalarValue]]]].ok(
-            {
-                "total": total,
-                "success": total - failures,
-                "fail": failures,
-                "results": results,
-            }
-        )
+        return r[OrchestrationSummary].ok({
+            "total": total,
+            "success": total - failures,
+            "fail": failures,
+            "results": results,
+        })
 
     @staticmethod
     def _repo_display_name(repo_root: Path, workspace_root: Path) -> str:

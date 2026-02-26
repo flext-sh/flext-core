@@ -19,6 +19,7 @@ from pathlib import Path
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
+
 from flext_infra.git import GitService
 from flext_infra.subprocess import CommandRunner
 from flext_infra.versioning import VersioningService
@@ -161,12 +162,10 @@ class PrManager:
 
         existing = existing_result.value
         if existing:
-            return r[Mapping[str, t.ScalarValue]].ok(
-                {
-                    "status": "already-open",
-                    "pr_url": existing.get("url"),
-                }
-            )
+            return r[Mapping[str, t.ScalarValue]].ok({
+                "status": "already-open",
+                "pr_url": existing.get("url"),
+            })
 
         command = [
             "gh",
@@ -189,12 +188,10 @@ class PrManager:
             return r[Mapping[str, t.ScalarValue]].fail(
                 result.error or "PR creation failed"
             )
-        return r[Mapping[str, t.ScalarValue]].ok(
-            {
-                "status": "created",
-                "pr_url": result.value,
-            }
-        )
+        return r[Mapping[str, t.ScalarValue]].ok({
+            "status": "created",
+            "pr_url": result.value,
+        })
 
     def view(self, repo_root: Path, selector: str) -> FlextResult[str]:
         """View a PR by selector (number or branch name).
@@ -357,12 +354,10 @@ class PrManager:
         )
         if dispatch_result.is_success:
             return r[Mapping[str, str]].ok({"status": "release-dispatched", "tag": tag})
-        return r[Mapping[str, str]].ok(
-            {
-                "status": "release-dispatch-failed",
-                "tag": tag,
-            }
-        )
+        return r[Mapping[str, str]].ok({
+            "status": "release-dispatch-failed",
+            "tag": tag,
+        })
 
 
 def _selector(pr_number: str, head: str) -> str:

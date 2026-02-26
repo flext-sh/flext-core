@@ -5,8 +5,7 @@ from pydantic_settings import BaseSettings
 from flext_core import c, m, r, t, u
 
 
-settings_mod = __import__("flext_core.settings", fromlist=["FlextSettings"])
-FlextSettings = settings_mod.FlextSettings
+from flext_core.settings import FlextSettings
 
 
 class _SubSettings(FlextSettings):

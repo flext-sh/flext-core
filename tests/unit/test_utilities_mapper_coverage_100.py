@@ -359,9 +359,8 @@ class TestuMapperAdvanced:
     def test_model_dump_extraction(self) -> None:
         """Test extraction via model_dump."""
 
-        class Dumpable:
-            def model_dump(self) -> dict[str, int]:
-                return {"a": 1}
+        class Dumpable(BaseModel):
+            a: int = 1
 
         obj = Dumpable()
         assert u.mapper().extract(cast(Any, obj), "a").value == 1

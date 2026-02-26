@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pydantic import Field
+from typing import cast
 
 from flext_core import c, m, r, t, u
 
@@ -9,7 +10,7 @@ class _Stats(m.CollectionsStatistics):
     value: int | None = None
 
 
-class _Rules(m.Collections.Rules):
+class _Rules(m.Rules):
     name: str = ""
     count: int = 0
 
@@ -29,13 +30,13 @@ class _Config(m.CollectionsConfig):
 
 
 def test_categories_clear_and_symbols_are_available() -> None:
-    categories = m.Categories[str]()
+    categories = m.Categories()
     categories.add_entries("x", ["a"])
     categories.clear()
     assert categories.categories == {}
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
-    assert isinstance(u.Collection.find([1], lambda x: x == 1), int)
+    assert isinstance(u.Collection.find([1], lambda value: value == 1), int)
 
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:
@@ -52,10 +53,15 @@ def test_rules_merge_combines_model_dump_values() -> None:
 
 
 def test_results_internal_conflict_paths_and_combine() -> None:
-    merged_dict = _Results._merge_dicts([
-        {"ok": "v", "xs": [1, "a", object()]},
-        {"ys": [2, None, 3.5]},
-    ])
+    merged_dict = _Results._merge_dicts(
+        cast(
+            "list[t.ConfigMapValue]",
+            [
+                {"ok": "v", "xs": [1, "a", object()]},
+                {"ys": [2, None, 3.5]},
+            ],
+        )
+    )
     assert merged_dict["ok"] == "v"
     assert merged_dict["xs"] == [1, "a"]
     assert merged_dict["ys"] == [2, None, 3.5]
@@ -78,7 +84,7 @@ def test_options_merge_conflict_paths_and_empty_merge_options() -> None:
 
 
 def test_config_hash_from_mapping_and_non_hashable() -> None:
-    loaded = _Config.from_mapping({"value": 7})
+    loaded = _Config.from_mapping(t.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
 
     try:

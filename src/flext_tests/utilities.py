@@ -25,8 +25,7 @@ from collections.abc import (
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-
-from pydantic import BaseModel
+from typing import Protocol
 
 from flext_core import (
     FlextContext,
@@ -37,11 +36,26 @@ from flext_core import (
     T,
     r,
 )
+from flext_core.dispatcher import DispatcherHandler
 from flext_core.typings import t as core_t
+from pydantic import BaseModel
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.protocols import p
 from flext_tests.typings import t
+
+
+class _FactoryMethod[TResult](Protocol):
+    def __call__(self, **kwargs: t.Tests.PayloadValue) -> TResult: ...
+
+
+class _EntityFactory[TEntity](Protocol):
+    def __call__(self, *, name: str, value: t.Tests.PayloadValue) -> TEntity: ...
+
+
+class _ValueObjectFactory[TValue](Protocol):
+    def __call__(self, *, data: str, count: int) -> TValue: ...
 
 
 class FlextTestsUtilities(FlextUtilities):
@@ -251,9 +265,9 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 attribute_existed = hasattr(target, attribute)
-                original_value = (
-                    getattr(target, attribute, None) if attribute_existed else None
-                )
+                original_value: t.Tests.PayloadValue | None = None
+                if attribute_existed:
+                    original_value = target.__getattribute__(attribute)
                 setattr(target, attribute, value)
                 try:
                     yield
@@ -857,7 +871,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_model_creation_success[TResult](
-                factory_method: Callable[..., TResult],
+                factory_method: _FactoryMethod[TResult],
                 expected_attrs: m.ConfigMap,
                 **factory_kwargs: t.Tests.PayloadValue,
             ) -> TResult:
@@ -878,7 +892,9 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 instance = factory_method(**factory_kwargs)
                 for key, expected_value in expected_attrs.items():
-                    actual_value = getattr(instance, key, None)
+                    actual_value = (
+                        getattr(instance, key) if hasattr(instance, key) else None
+                    )
                     msg = f"Attr {key}: expected {expected_value}, got {actual_value}"
                     assert actual_value == expected_value, msg
                 return instance
@@ -936,7 +952,9 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 for key, expected_value in expected_fields.items():
-                    actual_value = getattr(config, key, None)
+                    actual_value = (
+                        getattr(config, key) if hasattr(config, key) else None
+                    )
                     msg = f"Config {key}: expected {expected_value}, got {actual_value}"
                     assert actual_value == expected_value, msg
 
@@ -1123,7 +1141,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_dispatcher(
-                handlers: Mapping[str, t.HandlerType] | None = None,
+                handlers: Mapping[str, DispatcherHandler] | None = None,
             ) -> FlextDispatcher:
                 """Create a test dispatcher instance with optional handlers.
 
@@ -1312,7 +1330,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_entity_instance[TEntity](
                 name: str,
                 value: t.Tests.PayloadValue,
-                entity_class: Callable[..., TEntity],
+                entity_class: _EntityFactory[TEntity],
                 *,
                 remove_id: bool = False,
             ) -> TEntity:
@@ -1337,7 +1355,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_entities_batch[TEntity](
                 names: list[str],
                 values: list[t.Tests.PayloadValue],
-                entity_class: Callable[..., TEntity],
+                entity_class: _EntityFactory[TEntity],
                 remove_ids: list[bool] | None = None,
             ) -> r[list[TEntity]]:
                 """Create batch of test entities.
@@ -1379,7 +1397,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_object_instance[TValue](
                 data: str,
                 count: int,
-                value_class: Callable[..., TValue],
+                value_class: _ValueObjectFactory[TValue],
             ) -> TValue:
                 """Create a test value object instance.
 
@@ -1398,7 +1416,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_objects_batch[TValue](
                 data_list: list[str],
                 count_list: list[int],
-                value_class: type[TValue],
+                value_class: _ValueObjectFactory[TValue],
             ) -> list[TValue]:
                 """Create batch of test value objects.
 
@@ -1439,14 +1457,17 @@ class FlextTestsUtilities(FlextUtilities):
                     Operation result (type depends on operation)
 
                 """
-                op_method = getattr(FlextUtilities.Domain, operation, None)
-                if op_method is None:
+                if not hasattr(FlextUtilities.Domain, operation):
+                    msg = f"Unknown operation: {operation}"
+                    raise ValueError(msg)
+                op_method = getattr(FlextUtilities.Domain, operation)
+                if not callable(op_method):
                     msg = f"Unknown operation: {operation}"
                     raise ValueError(msg)
 
                 # Merge input_data with kwargs
                 all_args = {**input_data, **kwargs}
-                return op_method(**all_args)
+                return _to_payload(op_method(**all_args))
 
         class ExceptionHelpers:
             """Helpers for exception testing."""
@@ -1488,17 +1509,25 @@ class FlextTestsUtilities(FlextUtilities):
                     FlextResult from mapper operation
 
                 """
-                op_method = getattr(FlextUtilities.Mapper, operation, None)
-                if op_method is None:
+                if not hasattr(FlextUtilities.Mapper, operation):
+                    msg = f"Unknown operation: {operation}"
+                    raise ValueError(msg)
+                op_method = getattr(FlextUtilities.Mapper, operation)
+                if not callable(op_method):
                     msg = f"Unknown operation: {operation}"
                     raise ValueError(msg)
 
                 all_args = {**input_data, **kwargs}
-                result = op_method(**all_args)
-                if hasattr(type(result), "__mro__") and r in type(result).__mro__:
-                    return result
-                # If operation returns a value directly, wrap it
-                return r[t.Tests.PayloadValue].ok(result)
+                raw_result = op_method(**all_args)
+                if isinstance(raw_result, r):
+                    if raw_result.is_success:
+                        return r[t.Tests.PayloadValue].ok(
+                            _to_payload(raw_result.value),
+                        )
+                    return r[t.Tests.PayloadValue].fail(
+                        raw_result.error or "Unknown error",
+                    )
+                return r[t.Tests.PayloadValue].ok(_to_payload(raw_result))
 
         class BadObjects:
             """Factory for objects that cause errors during testing."""
@@ -1506,10 +1535,12 @@ class FlextTestsUtilities(FlextUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                def model_dump(self) -> MutableMapping[str, t.Tests.PayloadValue]:
-                    """Raise error on model_dump."""
-                    msg = "Bad model_dump"
-                    raise RuntimeError(msg)
+                model_dump: Callable[
+                    [],
+                    MutableMapping[str, t.Tests.PayloadValue],
+                ] = staticmethod(
+                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                )
 
             class BadConfig:
                 """Config object that raises on attribute access."""
@@ -1664,10 +1695,7 @@ class FlextTestsUtilities(FlextUtilities):
                     AssertionError: If result is not instance of expected_type
 
                 """
-                assert type(result) is expected_type or (
-                    hasattr(type(result), "__mro__")
-                    and expected_type in type(result).__mro__
-                ), (
+                assert isinstance(result, expected_type), (
                     f"Expected {expected_type.__name__}, got {type(result).__name__}"
                     f"{f' for {description}' if description else ''}"
                 )
@@ -1724,7 +1752,7 @@ class FlextTestsUtilities(FlextUtilities):
                     return fmt
 
                 # Detect from content type
-                if type(content) is bytes:
+                if isinstance(content, bytes):
                     return c.Tests.Files.Format.BIN
                 if FlextUtilities.is_type(content, "mapping"):
                     # Check extension for yaml vs json
@@ -1785,9 +1813,9 @@ class FlextTestsUtilities(FlextUtilities):
                     writer = csv.writer(f, delimiter=delim)
                     if headers:
                         writer.writerow(headers)
-                    if type(content) is list:
+                    if isinstance(content, list):
                         for row in content:
-                            if type(row) is list:
+                            if isinstance(row, list):
                                 writer.writerow(row)
 
             @staticmethod
@@ -1947,11 +1975,11 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 names: set[str] = set()
-                if type(exc_type) is ast.Name:
+                if isinstance(exc_type, ast.Name):
                     names.add(exc_type.id)
-                elif type(exc_type) is ast.Tuple:
+                elif isinstance(exc_type, ast.Tuple):
                     for elt in exc_type.elts:
-                        if type(elt) is ast.Name:
+                        if isinstance(elt, ast.Name):
                             names.add(elt.id)
                 return names
 
@@ -1968,9 +1996,9 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 return (
-                    (type(node) is ast.Name and node.id == "Any")
-                    or (type(node) is ast.Attribute and node.attr == "Any")
-                    or (type(node) is ast.Constant and node.value == "Any")
+                    (isinstance(node, ast.Name) and node.id == "Any")
+                    or (isinstance(node, ast.Attribute) and node.attr == "Any")
+                    or (isinstance(node, ast.Constant) and node.value == "Any")
                 )
 
             @staticmethod
@@ -2007,11 +2035,11 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 if len(body) == 1:
                     stmt = body[0]
-                    if type(stmt) is ast.Pass:
+                    if isinstance(stmt, ast.Pass):
                         return True
                     if (
-                        type(stmt) is ast.Expr
-                        and type(stmt.value) is ast.Constant
+                        isinstance(stmt, ast.Expr)
+                        and isinstance(stmt.value, ast.Constant)
                         and stmt.value.value is ...
                     ):
                         return True

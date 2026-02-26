@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
@@ -138,11 +139,11 @@ class FlextValidatorSettings:
         violations: list[m.Tests.Validator.Violation] = []
 
         tool_data_raw: t.Tests.PayloadValue = data.get("tool", {})
-        if type(tool_data_raw) is not dict:
+        if not isinstance(tool_data_raw, dict):
             return violations
         tool_data = tool_data_raw
         mypy_config_raw: t.Tests.PayloadValue = tool_data.get("mypy", {})
-        if type(mypy_config_raw) is not dict:
+        if not isinstance(mypy_config_raw, dict):
             return violations
         mypy_config = mypy_config_raw
 
@@ -165,11 +166,11 @@ class FlextValidatorSettings:
         # Check per-module overrides
         # Type annotations for .get() results to help pyright inference
         overrides_raw: t.Tests.PayloadValue = mypy_config.get("overrides", [])
-        if type(overrides_raw) is not list:
+        if not isinstance(overrides_raw, list):
             return violations
         overrides: list[t.Tests.PayloadValue] = overrides_raw
         for override in overrides:
-            if type(override) is not dict:
+            if not isinstance(override, dict):
                 continue
             override_dict: Mapping[str, t.Tests.PayloadValue] = override
             module_raw = override_dict.get("module", "unknown")
@@ -247,20 +248,20 @@ class FlextValidatorSettings:
         violations: list[m.Tests.Validator.Violation] = []
 
         tool_data = data.get("tool", {})
-        if type(tool_data) is not dict:
+        if not isinstance(tool_data, dict):
             return violations
         ruff_config_raw = tool_data.get("ruff", {})
-        if type(ruff_config_raw) is not dict:
+        if not isinstance(ruff_config_raw, dict):
             return violations
         ruff_config = ruff_config_raw
         lint_config_raw = ruff_config.get("lint", {})
-        if type(lint_config_raw) is not dict:
+        if not isinstance(lint_config_raw, dict):
             return violations
         lint_config = lint_config_raw
 
         # Check for custom ignores beyond approved list
         ignores_raw = lint_config.get("ignore", [])
-        if type(ignores_raw) is list:
+        if isinstance(ignores_raw, list):
             approved_ignores = c.Tests.Validator.Approved.RUFF_IGNORES
             ignores_list = ignores_raw
             for ignore_raw in ignores_list:
@@ -294,10 +295,10 @@ class FlextValidatorSettings:
         violations: list[m.Tests.Validator.Violation] = []
 
         tool_data = data.get("tool", {})
-        if type(tool_data) is not dict:
+        if not isinstance(tool_data, dict):
             return violations
         pyright_config_raw = tool_data.get("pyright", {})
-        if type(pyright_config_raw) is not dict:
+        if not isinstance(pyright_config_raw, dict):
             return violations
         pyright_config = pyright_config_raw
 

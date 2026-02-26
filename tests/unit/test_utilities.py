@@ -19,8 +19,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
-
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from typing import ClassVar, cast
@@ -31,6 +29,7 @@ from pydantic import BaseModel
 from flext_core import FlextSettings, p, r, t
 from flext_core.constants import c
 from flext_tests import FlextTestsUtilities, u
+from flext_tests.typings import t as tests_t
 from flext_core.models import m
 
 
@@ -113,9 +112,9 @@ class UtilityScenarios:
             "abc123",
             [
                 lambda d: r[bool].ok(True) if len(d) > 0 else r[bool].fail("Empty"),
-                lambda d: r[bool].ok(True)
-                if d.isalnum()
-                else r[bool].fail("Non-alnum"),
+                lambda d: (
+                    r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
+                ),
             ],
             True,
             None,
@@ -147,14 +146,12 @@ class UtilityScenarios:
             name: str
             value: int
 
-        # Use cast to match VariadicCallable signature
-        def factory_func(**kw: object) -> TestModel:
+        def factory_func(**kw: tests_t.Tests.PayloadValue) -> TestModel:
             return TestModel(name="test", value=42, **kw)
 
-        factory_method = cast("p.VariadicCallable[TestModel]", factory_func)
         return FlextTestsUtilities.Tests.ModelTestHelpers.assert_model_creation_success(
-            factory_method=factory_method,
-            expected_attrs={"name": "test", "value": 42},
+            factory_method=factory_func,
+            expected_attrs=m.ConfigMap(root={"name": "test", "value": 42}),
         )
 
 
@@ -331,7 +328,7 @@ class Testu:
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
-        data: m.ConfigMap = {"z": 1, "a": 2, "m": 3}
+        data: m.ConfigMap = m.ConfigMap(root={"z": 1, "a": 2, "m": 3})
         result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
         assert list(result.keys()) == ["a", "m", "z"]
@@ -349,7 +346,7 @@ class Testu:
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing object cache."""
-        cache_data: m.ConfigMap = {"test": "data"}
+        cache_data: m.ConfigMap = m.ConfigMap(root={"test": "data"})
         result = u.Cache.clear_object_cache(cache_data)
         u.Tests.Result.assert_result_success(result)
 
@@ -365,11 +362,13 @@ class Testu:
         if has_cache:
 
             class TestWithCache:
-                _cache: ClassVar[m.ConfigMap] = {}
+                _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
 
             cache_obj = TestWithCache()
             # Cast to t.GeneralValueType for type checker - test class is valid object
-            result = u.Cache.has_cache_attributes(cast("t.GeneralValueType", cache_obj))
+            result = u.Cache.has_cache_attributes(
+                cast("t.GeneralValueType", cast("object", cache_obj))
+            )
             assert result is expected
         else:
 
@@ -379,7 +378,7 @@ class Testu:
             no_cache_obj = TestNoCache()
             # Cast to t.GeneralValueType for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.GeneralValueType", no_cache_obj),
+                cast("t.GeneralValueType", cast("object", no_cache_obj)),
             )
             assert result is expected
 
@@ -431,7 +430,10 @@ class Testu:
 
     def test_configuration_get_singleton(self) -> None:
         """Test getting singleton configuration."""
-        value = u.Configuration.get_singleton(FlextSettings, "app_name")
+        value = u.Configuration.get_singleton(
+            cast("type", cast("object", FlextSettings)),
+            "app_name",
+        )
         assert value is not None
 
     # =====================================================================

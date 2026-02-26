@@ -135,7 +135,7 @@ class RailwayTestCase:
             raise FlextExceptions.BaseError(msg)
 
         # Start with first user
-        user_result = GetUserService(user_id=self.user_ids[0]).result()
+        user_result = _service_result(GetUserService(user_id=self.user_ids[0]))
         user: User | str = (
             user_result if isinstance(user_result, (User, str)) else str(user_result)
         )
@@ -146,10 +146,12 @@ class RailwayTestCase:
                 user = user.email if isinstance(user, User) else str(user)
             elif op == "send_email":
                 email_to = str(user) if not isinstance(user, str) else user
-                response_obj: EmailResponse = SendEmailService(
-                    to=email_to,
-                    subject="Test",
-                ).result()
+                response_obj: EmailResponse = _service_result(
+                    SendEmailService(
+                        to=email_to,
+                        subject="Test",
+                    )
+                )
                 user = response_obj.status
 
         return user
@@ -295,6 +297,13 @@ class MultiOperationService(FlextService[m.ConfigMap]):
                 return FlextResult.fail(f"Unknown operation: {self.operation}")
 
 
+def _service_result[T_Value](service: FlextService[T_Value]) -> T_Value:
+    result_attr = getattr(service, "result")
+    if callable(result_attr):
+        return cast("T_Value", result_attr())
+    return cast("T_Value", result_attr)
+
+
 # ============================================================================
 # Pattern 1: V1 Explícito (.execute().value)
 # ============================================================================
@@ -353,7 +362,7 @@ class TestPattern2V2Property:
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v2_property_success(self, case: ServiceTestCase) -> None:
         """V2 Property: Use .result for happy path."""
-        user = case.create_user_service().result()
+        user = _service_result(case.create_user_service())
 
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
@@ -363,7 +372,7 @@ class TestPattern2V2Property:
     def test_v2_property_failure_raises(self, case: ServiceTestCase) -> None:
         """V2 Property: .result raises exception on failure."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            case.create_user_service().result()
+            _service_result(case.create_user_service())
 
         error_str = str(exc_info.value).lower()
         assert case.expected_error is not None
@@ -421,7 +430,7 @@ class TestPattern4RailwayV2Property:
     ) -> None:
         """V2 Property: .execute() available for railway pattern."""
         # V2 Property: Use .result for happy path
-        user_result = GetUserService(user_id="123").result()
+        user_result = _service_result(GetUserService(user_id="123"))
         assert isinstance(user_result, User)
         assert user_result.unique_id == "123"
 
@@ -522,7 +531,7 @@ class TestPattern6ErrorHandling:
     def test_error_handling_try_except_v2_property(self) -> None:
         """Error Handling: try/except with V2 Property."""
         try:
-            user_result = GetUserService(user_id="123").result()
+            user_result = _service_result(GetUserService(user_id="123"))
             assert isinstance(user_result, User)
             assert user_result.unique_id == "123"
         except FlextExceptions.BaseError:
@@ -531,13 +540,13 @@ class TestPattern6ErrorHandling:
     def test_error_handling_try_except_v2_property_failure(self) -> None:
         """Error Handling: try/except catches failure."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            GetUserService(user_id="invalid").result()
+            _service_result(GetUserService(user_id="invalid"))
         assert "not found" in str(exc_info.value).lower()
 
     def test_error_handling_graceful_degradation(self) -> None:
         """Error Handling: Graceful degradation pattern."""
         try:
-            user_result = GetUserService(user_id="123").result()
+            user_result = _service_result(GetUserService(user_id="123"))
             assert isinstance(user_result, User)
             email = user_result.email
         except FlextExceptions.BaseError:
@@ -609,10 +618,12 @@ class TestPattern8MultipleOperations:
         expected: m.ConfigMap,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result: m.ConfigMap = MultiOperationService(
-            operation=operation,
-            value=value,
-        ).result()
+        result: m.ConfigMap = _service_result(
+            MultiOperationService(
+                operation=operation,
+                value=value,
+            )
+        )
 
         assert result["operation"] == expected["operation"]
         assert result["result"] == expected["result"]
@@ -620,7 +631,7 @@ class TestPattern8MultipleOperations:
     def test_multiple_operations_invalid(self) -> None:
         """Multiple Operations: Invalid operation fails."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            MultiOperationService(operation="invalid", value=5).result()
+            _service_result(MultiOperationService(operation="invalid", value=5))
 
         assert "Unknown operation" in str(exc_info.value)
 
@@ -659,7 +670,7 @@ class TestAllPatternsIntegration:
         assert v1_result.is_success
 
         # V2 Property: Happy path
-        v2_user_result = GetUserService(user_id="456").result()
+        v2_user_result = _service_result(GetUserService(user_id="456"))
         assert isinstance(v2_user_result, User)
         assert v2_user_result.unique_id == "456"
 
@@ -692,7 +703,7 @@ class TestAllPatternsIntegration:
     def test_complete_real_world_scenario(self) -> None:
         """Complete scenario using multiple patterns."""
         # Step 1: Get user (V2 Property)
-        user = GetUserService(user_id="123").result()
+        user = _service_result(GetUserService(user_id="123"))
 
         # Step 2: Validate and send email (Railway V1)
         email_result = (
@@ -707,8 +718,10 @@ class TestAllPatternsIntegration:
         assert message_id.startswith("msg-")
 
         # Step 3: Multiple operations (V2 Property)
-        calc_result: m.ConfigMap = MultiOperationService(
-            operation="double",
-            value=10,
-        ).result()
+        calc_result: m.ConfigMap = _service_result(
+            MultiOperationService(
+                operation="double",
+                value=10,
+            )
+        )
         assert calc_result["result"] == 20

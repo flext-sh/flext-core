@@ -5,7 +5,7 @@ import importlib
 from typing import cast
 
 from pydantic import BaseModel
-from returns.io import IOSuccess
+from returns.io import IOResult, IOSuccess
 
 from flext_core import FlextRuntime, r
 from flext_core.typings import JsonValue
@@ -152,9 +152,7 @@ def test_from_validation_and_to_model_paths() -> None:
 def test_lash_runtime_result_and_from_io_result_fallback() -> None:
     runtime_ok = FlextRuntime.RuntimeResult(value=99, is_success=True)
     failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
-    lash_ok: r[int] = failed_for_lash.lash(
-        lambda _e: cast("FlextRuntime.RuntimeResult[int]", runtime_ok)
-    )
+    lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok)
     assert lash_ok.is_success
     assert lash_ok.value == 99
 
@@ -169,6 +167,7 @@ def test_lash_runtime_result_and_from_io_result_fallback() -> None:
     good = r[int].from_io_result(IOSuccess(1))
     assert good.is_success
 
-    invalid: r[int] = r[int].from_io_result(cast("object", object()))
+    invalid_io = cast("IOResult[int, str]", object())
+    invalid = r[int].from_io_result(invalid_io)
     assert invalid.is_failure
     assert invalid.error == "Invalid IOResult structure"

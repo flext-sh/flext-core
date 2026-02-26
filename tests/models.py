@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from typing import TypedDict
 
 from flext_core import FlextModels, FlextProtocols, FlextTypes
+from flext_core._models.collections import FlextModelsCollections
 from flext_core.models import m
 from flext_core.typings import t
 from flext_tests.models import FlextTestsModels
@@ -66,7 +67,7 @@ class TestsFlextModels:
         class DomainTestEntity:
             """Test entity for domain tests."""
 
-            def __init__(self, name: str, value: int) -> None:
+            def __init__(self, name: str, value: t.GeneralValueType) -> None:
                 """Initialize test entity with name and value."""
                 self.name = name
                 self.value = value
@@ -159,7 +160,10 @@ class TestsFlextModels:
             """Object without __setattr__."""
 
         # ParseOptions reference for string parser tests
-        class ParseOptions(m.CollectionsParseOptions):
+        # ParseOptions reference for string parser tests
+        class ParseOptions(FlextModelsCollections.ParseOptions):
+            """Parse options - real inheritance."""
+
             """Parse options - real inheritance."""
 
     @dataclass(frozen=True, slots=True)

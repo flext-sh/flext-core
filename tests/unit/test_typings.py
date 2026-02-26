@@ -261,8 +261,9 @@ class TestFlextTypings:
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
-        hostname_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
-
+        hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
+            t.Validation.HostnameStr
+        )
         result = hostname_adapter.validate_python(FlextConstants.Network.LOCALHOST)
         tm.that(
             result,
@@ -301,7 +302,9 @@ class TestFlextTypings:
             msg="Invalid hostname must be empty to fail HostnameStr",
         )
 
-        hostname_adapter = PydanticTypeAdapter(t.Validation.HostnameStr)
+        hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
+            t.Validation.HostnameStr
+        )
         with pytest.raises(PydanticValidationError):
             hostname_adapter.validate_python(invalid_hostname)
 

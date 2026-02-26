@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pydantic import BaseModel
 from flext_core import t
 
 
@@ -98,7 +99,7 @@ class TestValidatorCallable:
     def test_validator_callable_invocation(self) -> None:
         """ValidatorCallable can be called (line 457)."""
 
-        def upper(v: t.GeneralValueType) -> t.GeneralValueType:
+        def upper(v: t.ScalarValue | BaseModel) -> t.ScalarValue | BaseModel:
             return str(v).upper() if isinstance(v, str) else v
 
         vc = t.ValidatorCallable(root=upper)
@@ -111,7 +112,7 @@ class TestValidatorMapMixin:
     def test_items(self) -> None:
         """items() returns validator items (line 470)."""
 
-        def noop(v: t.GeneralValueType) -> t.GeneralValueType:
+        def noop(v: t.ScalarValue | BaseModel) -> t.ScalarValue | BaseModel:
             return v
 
         fvm = t.FieldValidatorMap(root={"field1": noop})
@@ -122,7 +123,7 @@ class TestValidatorMapMixin:
     def test_values(self) -> None:
         """values() returns validator values (line 476)."""
 
-        def noop(v: t.GeneralValueType) -> t.GeneralValueType:
+        def noop(v: t.ScalarValue | BaseModel) -> t.ScalarValue | BaseModel:
             return v
 
         fvm = t.FieldValidatorMap(root={"field1": noop})

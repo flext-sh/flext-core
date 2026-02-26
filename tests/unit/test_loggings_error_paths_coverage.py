@@ -82,7 +82,7 @@ class TestLoggingsErrorPaths:
             "bind",
             test_key="test_value",
         )
-        assertion_helpers.assert_flext_result_success(result) or isinstance(
+        _ = assertion_helpers.assert_flext_result_success(result) or isinstance(
             result, dict
         )
 

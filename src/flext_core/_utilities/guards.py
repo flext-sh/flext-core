@@ -14,223 +14,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-import warnings
 from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, Literal, TypeGuard, cast
-
-from pydantic import BaseModel, ConfigDict, Discriminator, Field
+from typing import TypeGuard
 
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
-
-# =============================================================================
-# CENTRALIZED TYPE CHECK SPECIFICATIONS (Pydantic v2 Discriminated Unions)
-# =============================================================================
-
-
-class TypeCheckConfig(BaseModel):
-    """Type check specification for Config protocol."""
-
-    category: Literal["config"] = Field(
-        default="config", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies Config protocol."""
-        return (
-            hasattr(self.value, "app_name")
-            and getattr(self.value, "app_name", None) is not None
-        )
-
-
-class TypeCheckContext(BaseModel):
-    """Type check specification for Context protocol."""
-
-    category: Literal["context"] = Field(
-        default="context", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies Context protocol."""
-        return hasattr(self.value, "request_id") or hasattr(
-            self.value, "correlation_id"
-        )
-
-
-class TypeCheckContainer(BaseModel):
-    """Type check specification for DI/Container protocol."""
-
-    category: Literal["container"] = Field(
-        default="container", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies DI protocol."""
-        return hasattr(self.value, "register") and callable(
-            getattr(self.value, "register", None)
-        )
-
-
-class TypeCheckCommandBus(BaseModel):
-    """Type check specification for CommandBus protocol."""
-
-    category: Literal["command_bus"] = Field(
-        default="command_bus", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies CommandBus protocol."""
-        return hasattr(self.value, "dispatch") and callable(
-            getattr(self.value, "dispatch", None)
-        )
-
-
-class TypeCheckHandler(BaseModel):
-    """Type check specification for Handler protocol."""
-
-    category: Literal["handler"] = Field(
-        default="handler", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies Handler protocol."""
-        return hasattr(self.value, "handle") and callable(
-            getattr(self.value, "handle", None)
-        )
-
-
-class TypeCheckLogger(BaseModel):
-    """Type check specification for StructlogLogger protocol."""
-
-    category: Literal["logger"] = Field(
-        default="logger", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies StructlogLogger protocol."""
-        return (
-            hasattr(self.value, "debug")
-            and hasattr(self.value, "info")
-            and hasattr(self.value, "warning")
-            and hasattr(self.value, "error")
-            and hasattr(self.value, "exception")
-        )
-
-
-class TypeCheckResult(BaseModel):
-    """Type check specification for Result protocol."""
-
-    category: Literal["result"] = Field(
-        default="result", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies Result protocol."""
-        return (
-            hasattr(self.value, "is_success")
-            and hasattr(self.value, "is_failure")
-            and hasattr(self.value, "value")
-            and hasattr(self.value, "error")
-        )
-
-
-class TypeCheckService(BaseModel):
-    """Type check specification for Service protocol."""
-
-    category: Literal["service"] = Field(
-        default="service", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies Service protocol."""
-        return hasattr(self.value, "run") and callable(getattr(self.value, "run", None))
-
-
-class TypeCheckMiddleware(BaseModel):
-    """Type check specification for Middleware protocol."""
-
-    category: Literal["middleware"] = Field(
-        default="middleware", description="Protocol category discriminator"
-    )
-    value: object = Field(description="Value to check")
-
-    model_config = ConfigDict(
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    def matches(self) -> bool:
-        """Validate if value satisfies Middleware protocol."""
-        return hasattr(self.value, "before_dispatch") and callable(
-            getattr(self.value, "before_dispatch", None),
-        )
-
-
-TypeCheckSpec = Annotated[
-    TypeCheckConfig
-    | TypeCheckContext
-    | TypeCheckContainer
-    | TypeCheckCommandBus
-    | TypeCheckHandler
-    | TypeCheckLogger
-    | TypeCheckResult
-    | TypeCheckService
-    | TypeCheckMiddleware,
-    Discriminator("category"),
-]
 
 
 class FlextUtilitiesGuards:
@@ -347,93 +140,13 @@ class FlextUtilitiesGuards:
         )
 
     @staticmethod
-    def normalize_to_metadata_value(
-        val: t.GuardInputValue,
-    ) -> t.MetadataAttributeValue:
-        """Normalize any value to MetadataAttributeValue.
-
-        MetadataAttributeValue is more restrictive than t.GuardInputValue,
-        so we need to normalize nested structures to flat types.
-
-        Args:
-            val: Value to normalize
-
-        Returns:
-            t.MetadataAttributeValue: Normalized value compatible with Metadata attributes
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> u.Guards.normalize_to_metadata_value("test")
-            'test'
-            >>> u.Guards.normalize_to_metadata_value({"key": "value"})
-            {'key': 'value'}
-            >>> u.Guards.normalize_to_metadata_value([1, 2, 3])
-            [1, 2, 3]
-
-        """
-        if val is None or isinstance(val, (str, int, float, bool)):
-            return val
-        if isinstance(val, Mapping):
-            # Convert to flat dict with ScalarValue values
-            # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
-            # ConfigurationMapping is Mapping[str, t.GuardInputValue]
-            val_mapping = val  # type narrowing via TypeGuard
-            # Use full type from start to satisfy dict invariance
-            result_dict: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | datetime
-                | list[str | int | float | bool | datetime | None]
-                | None,
-            ] = {}
-            # TypeGuard already narrows to Mapping - no extra check needed
-            dict_v = dict(val_mapping.items())
-            for k, v in dict_v.items():
-                # Explicit type annotations for loop variables
-                key: str = k
-                value: t.GuardInputValue = v
-                if value is None or isinstance(
-                    value,
-                    (
-                        str,
-                        int,
-                        float,
-                        bool,
-                        datetime,
-                    ),
-                ):
-                    result_dict[key] = value
-                else:
-                    result_dict[key] = str(value)
-            return result_dict
-        if isinstance(val, list):
-            # Convert to list[t.MetadataAttributeValue]
-            # Type narrowing: is_list_like returns TypeGuard[Sequence[t.GuardInputValue]]
-            val_sequence = val  # type narrowing via TypeGuard
-            result_list: t.GeneralListValue = []
-            # TypeGuard already narrows to Sequence - no extra check needed
-            # Exclude str/bytes from iteration
-            if not isinstance(val_sequence, (str, bytes)):
-                for item in val_sequence:
-                    # Explicit type annotation for loop variable
-                    list_item: t.GuardInputValue = item
-                    if list_item is None or isinstance(
-                        list_item,
-                        (
-                            str,
-                            int,
-                            float,
-                            bool,
-                        ),
-                    ):
-                        result_list.append(list_item)
-                    else:
-                        result_list.append(str(list_item))
-            return result_list
-        return str(val)
+    def is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ConfigMapValue]]:
+        """Check if value implements ResultLike protocol (has is_success, value, error)."""
+        return (
+            hasattr(value, "is_success")
+            and hasattr(value, "value")
+            and hasattr(value, "error")
+        )
 
     @staticmethod
     def is_flexible_value(value: object) -> bool:
@@ -508,7 +221,9 @@ class FlextUtilitiesGuards:
         return hasattr(value, "model_dump") or isinstance(value, Path)
 
     @staticmethod
-    def is_handler_type(value: t.GuardInputValue) -> TypeGuard[t.HandlerType]:
+    def is_handler_type(
+        value: t.GuardInputValue | t.HandlerCallable,
+    ) -> TypeGuard[t.HandlerType]:
         """Check if value is a valid t.HandlerType.
 
         t.HandlerType = HandlerCallable | Mapping[str, t.ConfigMapValue] | BaseModel
@@ -536,16 +251,8 @@ class FlextUtilitiesGuards:
         if isinstance(value, Mapping):
             return True
         # Check if BaseModel instance or class
-        if hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump", None)
-        ):
+        if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
             return True
-        if isinstance(value, type):
-            try:
-                if BaseModel in value.__mro__:
-                    return True
-            except TypeError:
-                pass
         # Check for handler protocol methods (duck typing)
         # All values are objects in Python, so type check (value, object) is always True
         return hasattr(value, "handle") or hasattr(value, "can_handle")
@@ -671,27 +378,6 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def _is_config(obj: t.GuardInputValue) -> TypeGuard[p.Config]:
-        """Check if object satisfies the Config protocol.
-
-        Enables type narrowing for configuration objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Config]: True if obj satisfies Config protocol
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> if u.is_type(config, "config"):
-            ...     # config is now typed as p.Config
-            ...     name = config.app_name
-
-        """
-        return hasattr(obj, "app_name") and getattr(obj, "app_name", None) is not None
-
-    @staticmethod
     def is_context(obj: object) -> TypeGuard[p.Context]:
         """Check if object satisfies the Context protocol.
 
@@ -706,138 +392,12 @@ class FlextUtilitiesGuards:
         """
         return (
             hasattr(obj, "clone")
-            and callable(getattr(obj, "clone", None))
+            and callable(getattr(obj, "clone"))
             and hasattr(obj, "set")
-            and callable(getattr(obj, "set", None))
+            and callable(getattr(obj, "set"))
             and hasattr(obj, "get")
-            and callable(getattr(obj, "get", None))
+            and callable(getattr(obj, "get"))
         )
-
-    @staticmethod
-    def _is_context(obj: object) -> TypeGuard[p.Context]:
-        """Private version of is_context for internal protocol checks."""
-        return hasattr(obj, "request_id") or hasattr(obj, "correlation_id")
-
-    @staticmethod
-    def _is_container(obj: t.GuardInputValue) -> TypeGuard[p.DI]:
-        """Check if object satisfies the DI protocol.
-
-        Enables type narrowing for container objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.DI]: True if obj satisfies DI protocol
-
-        """
-        return hasattr(obj, "register") and callable(getattr(obj, "register", None))
-
-    @staticmethod
-    def _is_command_bus(obj: t.GuardInputValue) -> TypeGuard[p.CommandBus]:
-        """Check if object satisfies the CommandBus protocol.
-
-        Enables type narrowing for dispatcher/command bus without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.CommandBus]: True if obj satisfies CommandBus
-
-        """
-        return hasattr(obj, "dispatch") and callable(getattr(obj, "dispatch", None))
-
-    @staticmethod
-    def _is_handler(obj: t.GuardInputValue) -> TypeGuard[p.Handler]:
-        """Check if object satisfies the Handler protocol.
-
-        Enables type narrowing for handler objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Handler]: True if obj satisfies Handler protocol
-
-        """
-        return hasattr(obj, "handle") and callable(getattr(obj, "handle", None))
-
-    @staticmethod
-    def _is_logger(obj: t.GuardInputValue) -> TypeGuard[p.Log.StructlogLogger]:
-        """Check if object satisfies the StructlogLogger protocol.
-
-        Enables type narrowing for logger objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Log.StructlogLogger]: True if satisfies protocol
-
-        """
-        return (
-            hasattr(obj, "debug")
-            and hasattr(obj, "info")
-            and hasattr(obj, "warning")
-            and hasattr(obj, "error")
-            and hasattr(obj, "exception")
-        )
-
-    @staticmethod
-    def _is_result(obj: t.GuardInputValue) -> TypeGuard[p.Result[t.GuardInputValue]]:
-        """Check if object satisfies the Result protocol.
-
-        Enables type narrowing for result objects.
-
-        Uses attribute-based checking instead of type check because
-        p.Result has optional methods that
-        may not be implemented by all Result classes.
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Result]: True if obj satisfies Result protocol
-
-        """
-        # Check for core result properties
-        return (
-            hasattr(obj, "is_success")
-            and hasattr(obj, "is_failure")
-            and hasattr(obj, "value")
-            and hasattr(obj, "error")
-        )
-
-    @staticmethod
-    def _is_service(obj: t.GuardInputValue) -> TypeGuard[p.Service[t.GuardInputValue]]:
-        """Check if object satisfies the Service protocol.
-
-        Enables type narrowing for service objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Service]: True if obj satisfies Service protocol
-
-        """
-        return hasattr(obj, "run") and callable(getattr(obj, "run", None))
-
-    @staticmethod
-    def _is_middleware(obj: t.GuardInputValue) -> TypeGuard[p.Middleware]:
-        """Check if object satisfies the Middleware protocol.
-
-        Enables type narrowing for middleware objects without .
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            TypeGuard[p.Middleware]: True if obj satisfies Middleware
-
-        """
-        return hasattr(obj, "process") and callable(getattr(obj, "process", None))
 
     # =========================================================================
     # Generic Type Guards for Collections and Sequences
@@ -1060,7 +620,7 @@ class FlextUtilitiesGuards:
 
         """
         return isinstance(value, (str, bytes, list, tuple, dict)) or (
-            hasattr(value, "__len__") and callable(getattr(value, "__len__", None))
+            hasattr(value, "__len__") and callable(getattr(value, "__len__"))
         )
 
     @staticmethod
@@ -1181,47 +741,68 @@ class FlextUtilitiesGuards:
     # Generic is_type() Function - Unified Type Checking
     # =========================================================================
 
-    # Module-level immutable maps to avoid RUF012 (mutable class attribute)
-    _PROTOCOL_CATEGORY_MAP: Mapping[str, str] = MappingProxyType(
-        {
-            "config": "config",
-            "context": "context",
-            "container": "container",
-            "command_bus": "command_bus",
-            "handler": "handler",
-            "logger": "logger",
-            "result": "result",
-            "service": "service",
-            "middleware": "middleware",
-        }
-    )
+    # Protocol specs: name -> check function (returns bool)
+    # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
+    _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
+        "config": lambda v: (
+            hasattr(v, "app_name") and getattr(v, "app_name") is not None
+        ),
+        "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
+        "container": lambda v: (
+            hasattr(v, "register") and callable(getattr(v, "register"))
+        ),
+        "command_bus": lambda v: (
+            hasattr(v, "dispatch") and callable(getattr(v, "dispatch"))
+        ),
+        "handler": lambda v: hasattr(v, "handle") and callable(getattr(v, "handle")),
+        "logger": lambda v: all(
+            hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
+        ),
+        "result": lambda v: all(
+            hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
+        ),
+        "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run")),
+        "middleware": lambda v: (
+            hasattr(v, "before_dispatch") and callable(getattr(v, "before_dispatch"))
+        ),
+    })
 
-    _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType(
-        {
-            # Collection checks
-            "str": "_is_str",
-            "dict": "_is_dict",
-            "list": "is_list",
-            "tuple": "_is_tuple",
-            "sequence": "_is_sequence",
-            "mapping": "_is_mapping",
-            "list_or_tuple": "_is_list_or_tuple",
-            "sequence_not_str": "_is_sequence_not_str",
-            "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
-            "sized": "_is_sized",
-            "callable": "_is_callable_key_func",
-            "bytes": "_is_bytes",
-            # Primitive type checks
-            "int": "_is_int",
-            "float": "_is_float",
-            "bool": "_is_bool",
-            "none": "_is_none",
-            # Non-empty checks
-            "string_non_empty": "is_string_non_empty",
-            "dict_non_empty": "is_dict_non_empty",
-            "list_non_empty": "is_list_non_empty",
-        }
-    )
+    _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
+        p.Config: "config",
+        p.Context: "context",
+        p.DI: "container",
+        p.CommandBus: "command_bus",
+        p.Handler: "handler",
+        p.Log.StructlogLogger: "logger",
+        p.Result: "result",
+        p.Service: "service",
+        p.Middleware: "middleware",
+    })
+
+    _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType({
+        # Collection checks
+        "str": "_is_str",
+        "dict": "_is_dict",
+        "list": "is_list",
+        "tuple": "_is_tuple",
+        "sequence": "_is_sequence",
+        "mapping": "_is_mapping",
+        "list_or_tuple": "_is_list_or_tuple",
+        "sequence_not_str": "_is_sequence_not_str",
+        "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
+        "sized": "_is_sized",
+        "callable": "_is_callable_key_func",
+        "bytes": "_is_bytes",
+        # Primitive type checks
+        "int": "_is_int",
+        "float": "_is_float",
+        "bool": "_is_bool",
+        "none": "_is_none",
+        # Non-empty checks
+        "string_non_empty": "is_string_non_empty",
+        "dict_non_empty": "is_dict_non_empty",
+        "list_non_empty": "is_list_non_empty",
+    })
 
     @staticmethod
     def is_type(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
@@ -1229,7 +810,7 @@ class FlextUtilitiesGuards:
 
         Provides a single entry point for all type checking operations,
         supporting string-based type names, direct type/class checks, and
-        protocol checks. Uses centralized Pydantic v2 discriminated union models
+        protocol checks. Uses centralized _PROTOCOL_SPECS mapping
         for protocol validation to eliminate repeated if/type_spec branches.
 
         Args:
@@ -1270,9 +851,9 @@ class FlextUtilitiesGuards:
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
 
-            # Protocol checks via centralized TypeCheckSpec models
-            if type_name in FlextUtilitiesGuards._PROTOCOL_CATEGORY_MAP:
-                return FlextUtilitiesGuards._check_protocol_via_model(value, type_name)
+            # Protocol checks via _PROTOCOL_SPECS mapping
+            if type_name in FlextUtilitiesGuards._PROTOCOL_SPECS:
+                return FlextUtilitiesGuards._check_protocol(value, type_name)
 
             # Non-protocol string-based checks
             if type_name in FlextUtilitiesGuards._STRING_METHOD_MAP:
@@ -1301,79 +882,12 @@ class FlextUtilitiesGuards:
             return False
 
     @staticmethod
-    def _check_protocol_via_model(value: object, type_name: str) -> bool:
-        """Check protocol via centralized Pydantic v2 model.
-
-        Creates the appropriate TypeCheckSpec variant and validates the value.
-
-        Args:
-            value: Value to validate against protocol
-            type_name: Protocol name from _PROTOCOL_CATEGORY_MAP
-
-        Returns:
-            bool: True if value satisfies the protocol
-
-        """
-        category = FlextUtilitiesGuards._PROTOCOL_CATEGORY_MAP[type_name]
+    def _check_protocol(value: object, name: str) -> bool:
+        """Check protocol via _PROTOCOL_SPECS mapping."""
+        if name == "context":
+            return FlextUtilitiesGuards.is_context(value)
         try:
-            spec: TypeCheckSpec | None = None
-            if category == "config":
-                spec = TypeCheckConfig(value=value)
-            elif category == "context":
-                return FlextUtilitiesGuards.is_context(value)
-            elif category == "container":
-                spec = TypeCheckContainer(value=value)
-            elif category == "command_bus":
-                spec = TypeCheckCommandBus(value=value)
-            elif category == "handler":
-                spec = TypeCheckHandler(value=value)
-            elif category == "logger":
-                spec = TypeCheckLogger(value=value)
-            elif category == "result":
-                spec = TypeCheckResult(value=value)
-            elif category == "service":
-                spec = TypeCheckService(value=value)
-            elif category == "middleware":
-                spec = TypeCheckMiddleware(value=value)
-            return spec.matches() if spec else False
-        except (TypeError, ValueError, AttributeError, RuntimeError):
-            return False
-
-    @staticmethod
-    def _check_protocol_type(value: object, type_spec: type) -> bool:
-        """Check protocol by type via centralized models.
-
-        Maps protocol types to appropriate TypeCheckSpec variants.
-
-        Args:
-            value: Value to validate against protocol
-            type_spec: Protocol type (p.Config, p.Context, etc.)
-
-        Returns:
-            bool: True if value satisfies the protocol
-
-        """
-        try:
-            spec: TypeCheckSpec | None = None
-            if type_spec == p.Config:
-                spec = TypeCheckConfig(value=value)
-            elif type_spec == p.Context:
-                spec = TypeCheckContext(value=value)
-            elif type_spec == p.DI:
-                spec = TypeCheckContainer(value=value)
-            elif type_spec == p.CommandBus:
-                spec = TypeCheckCommandBus(value=value)
-            elif type_spec == p.Handler:
-                spec = TypeCheckHandler(value=value)
-            elif type_spec == p.Log.StructlogLogger:
-                spec = TypeCheckLogger(value=value)
-            elif type_spec == p.Result:
-                spec = TypeCheckResult(value=value)
-            elif type_spec == p.Service:
-                spec = TypeCheckService(value=value)
-            elif type_spec == p.Middleware:
-                spec = TypeCheckMiddleware(value=value)
-            return spec.matches() if spec else False
+            return FlextUtilitiesGuards._PROTOCOL_SPECS[name](value)
         except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
@@ -1389,7 +903,7 @@ class FlextUtilitiesGuards:
 
         """
         return hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump", None),
+            getattr(value, "model_dump"),
         )
 
     @staticmethod
@@ -1425,11 +939,7 @@ class FlextUtilitiesGuards:
         context_name: str,
         error_msg: str | None,
     ) -> str | None:
-        type_match = (
-            value.__class__ is condition
-            if isinstance(condition, type)
-            else any(value.__class__ is c for c in condition)
-        )
+        type_match = isinstance(value, condition)
         if not type_match:
             if error_msg is None:
                 type_name = (
@@ -1456,7 +966,11 @@ class FlextUtilitiesGuards:
     ) -> str | None:
         if not condition(value):
             if error_msg is None:
-                desc = getattr(condition, "description", "validation")
+                desc = (
+                    getattr(condition, "description")
+                    if hasattr(condition, "description")
+                    else "validation"
+                )
                 return f"{context_name} failed {desc} check"
             return error_msg
         return None
@@ -1502,19 +1016,19 @@ class FlextUtilitiesGuards:
                 return None
             return error_msg or f"{context_name} must be list-like"
         if shortcut_lower == "string":
-            if value.__class__ is str:
+            if isinstance(value, str):
                 return None
             return error_msg or f"{context_name} must be string"
         if shortcut_lower == "int":
-            if value.__class__ is int and value.__class__ is not bool:
+            if isinstance(value, int) and not isinstance(value, bool):
                 return None
             return error_msg or f"{context_name} must be int"
         if shortcut_lower == "float":
-            if value.__class__ in {int, float} and value.__class__ is not bool:
+            if isinstance(value, int | float) and not isinstance(value, bool):
                 return None
             return error_msg or f"{context_name} must be float"
         if shortcut_lower == "bool":
-            if value.__class__ is bool:
+            if isinstance(value, bool):
                 return None
             return error_msg or f"{context_name} must be bool"
         return error_msg or f"{context_name} unknown guard shortcut: {condition}"
@@ -1529,7 +1043,11 @@ class FlextUtilitiesGuards:
         try:
             if not bool(condition(value)):
                 if error_msg is None:
-                    func_name = getattr(condition, "__name__", "custom")
+                    func_name = (
+                        condition.__name__
+                        if hasattr(condition, "__name__")
+                        else "custom"
+                    )
                     return f"{context_name} failed {func_name} check"
                 return error_msg
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
@@ -1564,7 +1082,11 @@ class FlextUtilitiesGuards:
                 error_msg,
             )
         if isinstance(condition, p.ValidatorSpec):
-            typed_value: t.ConfigMapValue = cast("t.ConfigMapValue", value)
+            if not FlextUtilitiesGuards.is_general_value_type(value):
+                return (
+                    error_msg or f"{context_name} must be a valid configuration value"
+                )
+            typed_value: t.ConfigMapValue = value
             return FlextUtilitiesGuards._guard_check_validator(
                 typed_value,
                 condition,
@@ -1572,9 +1094,13 @@ class FlextUtilitiesGuards:
                 error_msg,
             )
         if isinstance(condition, str):
-            typed_value = cast("t.ConfigMapValue", value)
+            if not FlextUtilitiesGuards.is_general_value_type(value):
+                return (
+                    error_msg or f"{context_name} must be a valid configuration value"
+                )
+            typed_value_s: t.ConfigMapValue = value
             return FlextUtilitiesGuards._guard_check_string_shortcut(
-                typed_value,
+                typed_value_s,
                 condition,
                 context_name,
                 error_msg,
@@ -1650,20 +1176,24 @@ class FlextUtilitiesGuards:
         default: t.GuardInputValue | None = None,
         return_value: bool = False,
     ) -> t.GuardInputValue | bool | None:
+        guarded_value: t.GuardInputValue = value
         try:
-            is_type_validator = isinstance(validator, type) or (
-                isinstance(validator, tuple)
-                and all(isinstance(item, type) for item in validator)
-            )
-            if is_type_validator:
-                validator_type = cast("type | tuple[type, ...]", validator)
-                if isinstance(value, validator_type):
-                    return value if return_value else True
+            if isinstance(validator, type):
+                if isinstance(value, validator):
+                    return guarded_value if return_value else True
+            elif isinstance(validator, tuple):
+                tuple_types = tuple(
+                    item for item in validator if isinstance(item, type)
+                )
+                if len(tuple_types) == len(validator) and isinstance(
+                    value, tuple_types
+                ):
+                    return guarded_value if return_value else True
             elif callable(validator):
                 if validator(value):
-                    return value if return_value else True
+                    return guarded_value if return_value else True
             elif value:
-                return value if return_value else True
+                return guarded_value if return_value else True
             return default
         except (TypeError, ValueError, AttributeError):
             return default
@@ -1815,8 +1345,8 @@ class FlextUtilitiesGuards:
             eq: Check value == eq
             ne: Check value != ne
             gt/gte/lt/lte: Numeric comparisons (works with len for sequences)
-            is_: Check type(value) is is_
-            not_: Check type(value) is not not_
+            is_: Check isinstance(value, is_)
+            not_: Check not isinstance(value, not_)
             in_: Check value in in_
             not_in: Check value not in not_in
             none: Check value is None (True) or is not None (False)
@@ -1869,7 +1399,7 @@ class FlextUtilitiesGuards:
             check_val = len(value)
         elif hasattr(value, "__len__"):
             try:
-                len_method = getattr(value, "__len__", None)
+                len_method = getattr(value, "__len__")
                 if callable(len_method):
                     length = len_method()
                     if isinstance(length, int):
@@ -1912,7 +1442,7 @@ class FlextUtilitiesGuards:
                     return False
             # Other types - use hasattr/getattr with explicit type narrowing
             elif hasattr(value, "__contains__"):
-                contains_method = getattr(value, "__contains__", None)
+                contains_method = getattr(value, "__contains__")
                 if callable(contains_method):
                     try:
                         if not contains_method(contains):
@@ -1922,47 +1452,90 @@ class FlextUtilitiesGuards:
 
         return True
 
-    def __getattribute__(self, name: str) -> t.GuardInputValue:
-        """Intercept attribute access to warn about direct usage.
+    # =========================================================================
+    # Validation Methods
+    # =========================================================================
 
-        Emits DeprecationWarning when public methods are accessed directly
-        instead of through u.guard() or u.Guards.*.
-
-        Args:
-            name: Attribute name being accessed
-
-        Returns: t.GuardInputValue: The requested attribute
-
-        """
-        # Allow access to private methods and special attributes
-        if name.startswith("_") or name in {
-            "__class__",
-            "__dict__",
-            "__module__",
-            "__qualname__",
-            "__name__",
-            "__doc__",
-            "__annotations__",
-            "__init__",
-            "__new__",
-            "__subclasshook__",
-            "__instancecheck__",
-            "__subclasscheck__",
-        }:
-            return super().__getattribute__(name)
-
-        # Check if this is a public method that should be accessed via u.Guards
-        if hasattr(FlextUtilitiesGuards, name):
-            warnings.warn(
-                (
-                    f"Direct access to FlextUtilitiesGuards.{name} is deprecated. "
-                    f"Use u.guard() or u.Guards.{name} instead."
-                ),
-                DeprecationWarning,
-                stacklevel=2,
+    @staticmethod
+    def validate_length[T: Sized](
+        value: T,
+        *,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        field_name: str = "value",
+    ) -> r[T]:
+        """Return success when ``value`` length is within bounds."""
+        try:
+            length = len(value)
+        except (TypeError, ValueError):
+            return r[T].fail(f"{field_name} length is invalid")
+        if min_length is not None and length < min_length:
+            return r[T].fail(
+                f"{field_name} must have at least {min_length} characters/items",
             )
+        if max_length is not None and length > max_length:
+            return r[T].fail(
+                f"{field_name} must have at most {max_length} characters/items",
+            )
+        return r[T].ok(value)
 
-        return super().__getattribute__(name)
+    @staticmethod
+    def validate_pattern(
+        value: str,
+        pattern: str,
+        field_name: str = "value",
+    ) -> r[str]:
+        """Return success when ``value`` matches ``pattern``."""
+        if re.search(pattern, value) is None:
+            return r[str].fail(f"{field_name} has invalid format")
+        return r[str].ok(value)
+
+    @staticmethod
+    def validate_positive(
+        value: float,
+        field_name: str = "value",
+    ) -> r[int | float]:
+        """Return success when numeric ``value`` is greater than zero."""
+        if isinstance(value, bool) or value <= 0:
+            return r[int | float].fail(f"{field_name} must be positive")
+        return r[int | float].ok(value)
+
+    @staticmethod
+    def validate_uri(
+        uri: str,
+        field_name: str = "uri",
+    ) -> r[str]:
+        """Return success when ``uri`` is a valid URI/URL format."""
+        uri_pattern = r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$"
+        if re.search(uri_pattern, uri) is None:
+            return r[str].fail(f"{field_name} has invalid URI format")
+        return r[str].ok(uri)
+
+    @staticmethod
+    def validate_port_number(
+        port: int,
+        field_name: str = "port",
+    ) -> r[int]:
+        """Return success when ``port`` is a valid port number (1-65535)."""
+        if not isinstance(port, int) or isinstance(port, bool):
+            return r[int].fail(f"{field_name} must be an integer")
+        max_port = 65535
+        if port < 1 or port > max_port:
+            return r[int].fail(f"{field_name} must be between 1 and 65535")
+        return r[int].ok(port)
+
+    @staticmethod
+    def validate_hostname(
+        hostname: str,
+        field_name: str = "hostname",
+    ) -> r[str]:
+        """Return success when ``hostname`` is a valid hostname or FQDN."""
+        hostname_pattern = (
+            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
+        )
+        if re.search(hostname_pattern, hostname) is None:
+            return r[str].fail(f"{field_name} has invalid hostname format")
+        return r[str].ok(hostname)
 
 
 __all__ = [

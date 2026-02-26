@@ -480,10 +480,7 @@ class TestExceptionFactory:
         # Mypy limitation: dict unpacking to **kwargs not fully supported
         # The dict[str, MetadataAttributeValue] is compatible with **kwargs: MetadataAttributeValue
         # Use type ignore for dict unpacking (runtime behavior is correct)
-        kwargs_typed: dict[str, t.MetadataAttributeValue] = cast(
-            "dict[str, t.MetadataAttributeValue]",
-            converted_kwargs,
-        )
+        kwargs_typed: dict[str, t.MetadataAttributeValue] = converted_kwargs
         create_error = cast(
             "Callable[..., FlextExceptions.BaseError]",
             FlextExceptions.create,

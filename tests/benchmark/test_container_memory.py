@@ -53,7 +53,7 @@ class TestContainerMemory:
         gc.collect()
         after_creation = get_memory_usage()
 
-        after_creation - initial_memory
+        _ = after_creation - initial_memory
 
     @pytest.mark.benchmark
     def test_memory_with_services(self) -> None:
@@ -72,7 +72,7 @@ class TestContainerMemory:
         gc.collect()
         after_registration = get_memory_usage()
 
-        after_registration - initial_memory
+        _ = after_registration - initial_memory
 
     @pytest.mark.benchmark
     def test_memory_with_factories(self) -> None:
@@ -98,7 +98,7 @@ class TestContainerMemory:
         gc.collect()
         after_registration = get_memory_usage()
 
-        after_registration - initial_memory
+        _ = after_registration - initial_memory
 
     @pytest.mark.benchmark
     def test_memory_after_clear_all(self) -> None:
@@ -120,7 +120,7 @@ class TestContainerMemory:
         gc.collect()
         after_clear = get_memory_usage()
 
-        before_clear - after_clear
+        _ = before_clear - after_clear
 
     @pytest.mark.benchmark
     def test_memory_leak_detection(self) -> None:

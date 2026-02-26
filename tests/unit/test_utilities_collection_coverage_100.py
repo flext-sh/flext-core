@@ -638,10 +638,7 @@ class TestuCollectionParseSequence:
         )
 
         if scenario.expected_success:
-            (
-                assertion_helpers.assert_flext_result_success(result),
-                f"Expected success but got: {result.error}",
-            )
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
             if scenario.expected_count is not None:
                 assert len(result.value) == scenario.expected_count
@@ -649,10 +646,7 @@ class TestuCollectionParseSequence:
             for val in result.value:
                 assert isinstance(val, scenario.enum_cls)
         else:
-            (
-                assertion_helpers.assert_flext_result_failure(result),
-                "Expected failure but got success",
-            )
+            assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None
             if scenario.error_contains:
                 assert scenario.error_contains in result.error
@@ -752,10 +746,7 @@ class TestuCollectionParseMapping:
         )
 
         if scenario.expected_success:
-            (
-                assertion_helpers.assert_flext_result_success(result),
-                f"Expected success but got: {result.error}",
-            )
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
             if scenario.expected_keys is not None:
                 assert set(result.value.keys()) == set(scenario.expected_keys)
@@ -763,10 +754,7 @@ class TestuCollectionParseMapping:
             for val in result.value.values():
                 assert isinstance(val, scenario.enum_cls)
         else:
-            (
-                assertion_helpers.assert_flext_result_failure(result),
-                "Expected failure but got success",
-            )
+            assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None
             if scenario.error_contains:
                 assert scenario.error_contains in result.error
@@ -1039,7 +1027,7 @@ class TestuCollectionBatch:
         items = [[1, 2], [3, 4], 5]
         result = u.Collection.batch(
             items,
-            lambda x: x,
+            cast("Callable[[object], int | r[int]]", lambda x: cast("int | r[int]", x)),
             flatten=True,
         )
         assertion_helpers.assert_flext_result_success(result)

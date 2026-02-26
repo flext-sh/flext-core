@@ -560,7 +560,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.fail()."""
         # Result.fail() returns r[T] where T is inferred from context
         result_raw: r[t.GeneralValueType] = tb.Tests.Result.fail("Error", code="E001")
-        result = cast(r[t.GeneralValueType], result_raw)
+        result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
     def test_tests_result_batch_ok(self) -> None:
@@ -638,7 +638,7 @@ class TestFlextTestsBuilders:
         result_raw = builder.to_result(error_code="E001")
         result = _as_builder_result(result_raw)
         # Should succeed but error_code is ignored without error
-        assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        assertion_helpers.assert_flext_result_success(result)
 
     def test_batch_params_validation_scenarios_not_empty(self) -> None:
         """Test BatchParams validates scenarios is not empty."""
@@ -733,7 +733,7 @@ class TestFlextTestsBuilders:
         # Result.fail() delegates to tt.res("fail", error=...)
         # Result.fail() returns r[T] where T is inferred from context
         result_raw: r[t.GeneralValueType] = tb.Tests.Result.fail("Error")
-        result = cast(r[t.GeneralValueType], result_raw)
+        result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
     def test_result_batch_ok_delegates_to_tt_results(self) -> None:
@@ -839,4 +839,4 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Operation.execute_service() delegates to tu.Tests.Factory."""
         # Operation.execute_service() delegates to tu.Tests.Factory.execute_user_service()
         result = tb.Tests.Operation.execute_service()
-        assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        assertion_helpers.assert_flext_result_success(result)

@@ -12,11 +12,22 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, TypeGuard
 
-from pydantic import BaseModel, InstanceOf
-
 from flext_core import FlextTypes
 from flext_core.models import m
 from flext_core.result import r
+from pydantic import BaseModel, InstanceOf
+
+type _TestPayloadValue = (
+    str
+    | int
+    | float
+    | bool
+    | None
+    | bytes
+    | BaseModel
+    | Sequence[_TestPayloadValue]
+    | Mapping[str, _TestPayloadValue]
+)
 
 
 class FlextTestsTypes(FlextTypes):
@@ -38,19 +49,13 @@ class FlextTestsTypes(FlextTypes):
         """
 
         type TestPayloadScalar = str | int | float | bool | None
-        type TestPayloadValue = (
-            TestPayloadScalar
-            | bytes
-            | BaseModel
-            | Sequence[TestPayloadValue]
-            | Mapping[str, TestPayloadValue]
-        )
+        type TestPayloadValue = _TestPayloadValue
 
         # File content type for test operations
         type FileContent = (
             str
             | bytes
-            | Mapping[str, TestPayloadValue]
+            | Mapping[str, _TestPayloadValue]
             | Sequence[Sequence[str]]
             | InstanceOf[BaseModel]
         )
@@ -79,10 +84,10 @@ class FlextTestsTypes(FlextTypes):
         type TestConfigMapping = m.ConfigMap
         """Mapping for test configuration with specific value types."""
 
-        type PayloadValue = TestPayloadValue
+        type PayloadValue = _TestPayloadValue
         """Canonical payload value for test modules."""
 
-        type TestResultValue = TestPayloadValue
+        type TestResultValue = _TestPayloadValue
         """Type for test result values with specific constraints."""
 
         # Note: Generic callables can't use module TypeVars in type aliases
@@ -649,31 +654,30 @@ class FlextTestsTypes(FlextTypes):
                 return True
             if BaseModel in type(value).__mro__:
                 return True
-            return type(value) in {list, dict}
+            return isinstance(value, list | dict)
 
         @staticmethod
         def is_sequence(
             value: FlextTestsTypes.Tests.TestPayloadValue,
         ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.TestPayloadValue]]:
             """Check if value is a payload sequence."""
-            return type(value) in {list, tuple} and type(value) not in {
-                str,
-                bytes,
-            }
+            return isinstance(value, list | tuple) and not isinstance(
+                value, str | bytes
+            )
 
         @staticmethod
         def is_mapping(
             value: FlextTestsTypes.Tests.TestPayloadValue,
         ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestPayloadValue]]:
             """Check if value is a payload mapping."""
-            return type(value) is dict
+            return isinstance(value, dict)
 
         @staticmethod
         def is_builder_dict(
             value: FlextTestsTypes.Tests.TestPayloadValue,
         ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
             """Check if value is a BuilderDict (dict with str keys)."""
-            return type(value) is dict and all(type(k) is str for k in value)
+            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
 
         @staticmethod
         def is_test_result_value(
@@ -682,11 +686,11 @@ class FlextTestsTypes(FlextTypes):
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True
-            if type(value) in {str, int, float, bool}:
+            if isinstance(value, str | int | float | bool):
                 return True
-            if type(value) in {list, tuple}:
+            if isinstance(value, list | tuple):
                 return True
-            return type(value) is dict
+            return isinstance(value, dict)
 
         @staticmethod
         def is_model_kind(

@@ -264,11 +264,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         result = u.Guards.normalize_to_metadata_value(scenario.value)
 
         # Verify type
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            scenario.expected_type,
-            description=scenario.name,
-        )
+        assert isinstance(result, scenario.expected_type), scenario.name
 
         # Verify specific value if provided
         if scenario.expected_value is not None:
@@ -279,10 +275,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         value = cast("t.GeneralValueType", {123: "value", "key": "test"})
         result = u.Guards.normalize_to_metadata_value(value)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Non-string keys should be skipped (only string keys are processed)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.MetadataAttributeValue]", result)
@@ -303,10 +296,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         )
         result = u.Guards.normalize_to_metadata_value(value)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
+        assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
         result_dict = cast("dict[str, t.MetadataAttributeValue]", result)
         assert result_dict["str"] == "value"
@@ -332,10 +322,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         )
         result = u.Guards.normalize_to_metadata_value(value)
 
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            list,
-        )
+        assert isinstance(result, list)
         # Type narrowing: result is list after assert_result_matches_expected
         result_list = cast("list[t.MetadataAttributeValue]", result)
         assert result_list[0] == "string"
@@ -357,7 +344,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         value = cast("t.GeneralValueType", CustomObject())
         result = u.Guards.normalize_to_metadata_value(value)
 
-        tu.Tests.Assertions.assert_result_matches_expected(result, str)
+        assert isinstance(result, str)
         assert result == "custom_object"
 
 

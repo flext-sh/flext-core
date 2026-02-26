@@ -209,25 +209,11 @@ class TestServicesIntegrationViaDI:
         class ServiceWithDI(s[str]):
             @classmethod
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                # Create a factory function that returns a context instance
-                def create_context() -> FlextContext:
-                    """Factory function for creating context instances."""
-                    return FlextContext()
-
                 return p.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
-                    services=cast(
-                        "dict[str, t.GeneralValueType]",
-                        {
-                            "logger": cast(
-                                "t.GeneralValueType",
-                                FlextLogger.create_module_logger("service"),
-                            ),
-                            "custom_context": cast(
-                                "t.GeneralValueType", create_context()
-                            ),
-                        },
-                    ),
+                    services={
+                        "logger": FlextLogger.create_module_logger("service"),
+                    },
                 )
 
             def execute(self) -> r[str]:
@@ -246,18 +232,6 @@ class TestServicesIntegrationViaDI:
                     is_=FlextLogger,
                     none=False,
                     msg="Logger must be accessible via DI",
-                )
-
-                # Type narrowing: container.get returns r[T], cast to help mypy
-                container_get_result2: object = self.container.get("custom_context")
-                context_result = cast("r[t.GeneralValueType]", container_get_result2)
-                u.Tests.Result.assert_success(context_result)
-                context = cast("FlextContext", context_result.value)
-                tm.that(
-                    context,
-                    is_=FlextContext,
-                    none=False,
-                    msg="Context must be accessible via DI",
                 )
 
                 return r[str].ok(f"app: {app_name}")

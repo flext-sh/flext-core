@@ -68,11 +68,12 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
             )
         ],
     )
-    monkeypatch.setattr(
-        container,
-        "register_factory",
-        lambda name, _factory: called.append(name) or r[bool].ok(True),
-    )
+
+    def _register_factory(name: str, _factory: Callable[[], object]) -> r[bool]:
+        called.append(name)
+        return r[bool].ok(True)
+
+    monkeypatch.setattr(container, "register_factory", _register_factory)
     monkeypatch.setattr(
         "flext_core.container.FlextContainer.__call__",
         lambda *a, **kw: container,
@@ -174,7 +175,7 @@ def test_register_existing_providers_skips_and_register_core_fallback(
     c_any._config = _FalseConfig()
     c_any._context = None
     monkeypatch.setattr(c, "has_service", lambda _name: False)
-    assert c.register_core_services() is None
+    c.register_core_services()
 
 
 def test_configure_with_resource_register_and_factory_error_paths(
@@ -194,9 +195,12 @@ def test_configure_with_resource_register_and_factory_error_paths(
 
     called: list[str] = []
     original_register_resource = c.register_resource
-    monkeypatch.setattr(
-        c, "register_resource", lambda name, _f: called.append(name) or r[bool].ok(True)
-    )
+
+    def _register_resource(name: str, _factory: Callable[[], object]) -> r[bool]:
+        called.append(name)
+        return r[bool].ok(True)
+
+    monkeypatch.setattr(c, "register_resource", _register_resource)
     assert c.with_resource("res", lambda: "x") is c
     assert called == ["res"]
     object.__setattr__(c, "register_resource", original_register_resource)
@@ -640,9 +644,12 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
 
     executed: list[str] = []
     c_any.has_service = lambda _name: False
-    c_any.register_factory = lambda _name, factory: (
-        executed.append(type(factory()).__name__) or r[bool].ok(True)
-    )
+
+    def _track_factory(_name: str, factory: Callable[[], object]) -> r[bool]:
+        executed.append(type(factory()).__name__)
+        return r[bool].ok(True)
+
+    c_any.register_factory = _track_factory
     c_any._config = _CfgFallback()
     c.sync_config_to_di()
     c_any._config = _CfgBadNamespace()

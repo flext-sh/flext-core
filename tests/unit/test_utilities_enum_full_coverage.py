@@ -2,6 +2,7 @@ from __future__ import annotations
 # pyright: reportMissingImports=false, reportPrivateUsage=false, reportUnknownMemberType=false, reportUntypedFunctionDecorator=false, reportUnusedCallResult=false, reportUnknownVariableType=false, reportCallIssue=false, reportArgumentType=false
 
 from enum import StrEnum
+from collections.abc import Callable
 from typing import cast, override
 
 import pytest
@@ -51,7 +52,10 @@ def test_check_direct_access_warns_from_non_approved_module() -> None:
         (123, False),
     ],
 )
-def test_private_is_member_by_value(value: object, expected: bool) -> None:
+def test_private_is_member_by_value(
+    value: str | int | float | bool | Status | None,
+    expected: bool,
+) -> None:
     assert u.Enum._is_member_by_value(value, Status) is expected
 
 
@@ -129,7 +133,8 @@ def test_bi_map_returns_forward_copy_and_inverse() -> None:
 
 
 def test_create_enum_executes_factory_path() -> None:
-    with pytest.raises((TypeError, AttributeError)):
+    expected_errors = cast("tuple[type[Exception], ...]", (TypeError, AttributeError))
+    with pytest.raises(expected_errors):
         _ = u.Enum.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"})
 
 
@@ -161,7 +166,7 @@ def test_dispatch_parse_mode_with_enum_string_and_other_object() -> None:
     assert parsed_from_string.is_success
     assert parsed_from_string.value == Status.PENDING
 
-    parsed_from_other = u.Enum.dispatch(TextLike(), Status, mode="parse")
+    parsed_from_other = u.Enum.dispatch(str(TextLike()), Status, mode="parse")
     assert parsed_from_other.is_success
     assert parsed_from_other.value == Status.ACTIVE
 
@@ -173,11 +178,12 @@ def test_dispatch_coerce_mode_with_enum_string_and_other_object() -> None:
     from_string = u.Enum.dispatch("active", Status, mode="coerce")
     assert from_string == Status.ACTIVE
 
-    from_other = u.Enum.dispatch(TextLike(), Status, mode="coerce")
+    from_other = u.Enum.dispatch(str(TextLike()), Status, mode="coerce")
     assert from_other == Status.ACTIVE
 
 
 def test_dispatch_unknown_mode_raises() -> None:
     bad_mode = cast(str, "not-a-mode")
+    dispatch_any = cast("Callable[..., object]", u.Enum.dispatch)
     with pytest.raises(ValueError, match="Unknown mode"):
-        _ = u.Enum.dispatch("active", Status, mode=bad_mode)
+        _ = dispatch_any("active", Status, mode=bad_mode)

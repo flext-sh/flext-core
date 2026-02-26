@@ -807,12 +807,12 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = cast(
+                consume_factory_func = cast(
                     "Callable[[], tuple[dict[str, str], int]]",
                     getattr(module, "consume"),
                 )
-                assert callable(consume_func)
-                tokens, value = consume_func()
+                assert callable(consume_factory_func)
+                tokens, value = consume_factory_func()
                 assert tokens == {"token": "abc123"}
                 assert value == 42
             finally:
@@ -858,15 +858,15 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = cast(
+                consume_automation_func = cast(
                     "Callable[[], tuple[int, dict[str, int], bool, dict[str, bool]]]",
                     getattr(module, "consume"),
                 )
-                assert callable(consume_func)
+                assert callable(consume_automation_func)
                 first_static, first_token, config_enabled, resource_value = (
-                    consume_func()
+                    consume_automation_func()
                 )
-                second_static, second_token, _, _ = consume_func()
+                second_static, second_token, _, _ = consume_automation_func()
 
                 assert first_static == second_static == 7
                 assert config_enabled is True
@@ -912,13 +912,13 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = cast(
+                consume_service_func = cast(
                     "Callable[[], tuple[bool, dict[str, int], dict[str, bool]]]",
                     getattr(module, "consume"),
                 )
-                assert callable(consume_func)
-                feature_flag, first_token, resource = consume_func()
-                _, second_token, _ = consume_func()
+                assert callable(consume_service_func)
+                feature_flag, first_token, resource = consume_service_func()
+                _, second_token, _ = consume_service_func()
 
                 assert runtime.config.app_name == "runtime-service"
                 assert feature_flag is True
@@ -935,41 +935,13 @@ class TestFlextRuntime:
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                    # factories should be Mapping[str, Callable[[], ScalarValue | Sequence | Mapping]]
-                    # RuntimeBootstrapOptions["factories"] has the correct type
                     def counter_factory() -> t.GeneralValueType:
                         return {"count": 1}
 
-                    # counter_factory returns dict[str, int] which is Mapping[str, ScalarValue]
-                    # Cast to satisfy type checker
-                    counter_factory_typed: Callable[
-                        [],
-                        (
-                            t.ScalarValue
-                            | Sequence[t.ScalarValue]
-                            | Mapping[str, t.ScalarValue]
-                        ),
-                    ] = cast(
-                        "Callable[[], t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]]",
-                        counter_factory,
-                    )
-                    factories_dict: Mapping[
-                        str,
-                        Callable[
-                            [],
-                            (
-                                t.ScalarValue
-                                | Sequence[t.ScalarValue]
-                                | Mapping[str, t.ScalarValue]
-                            ),
-                        ],
-                    ] = {
-                        "counter": counter_factory_typed,
-                    }
                     return p.RuntimeBootstrapOptions(
                         config_overrides={"app_name": "runtime-aware"},
                         services={"preseed": {"enabled": True}},
-                        factories=factories_dict,
+                        factories={"counter": counter_factory},
                     )
 
             component = RuntimeAwareComponent()

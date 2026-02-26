@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import (
     BaseModel,
@@ -54,8 +53,8 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: t.GuardInputValue,
-        ) -> t.GuardInputValue:
+            v: t.HandlerCallable | t.GuardInputValue,
+        ) -> t.HandlerCallable:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
@@ -86,9 +85,18 @@ class FlextModelsHandler:
             description="Message type bound (for explicit mode)",
         )
 
+        _GETITEM_FIELDS: ClassVar[frozenset[str]] = frozenset({
+            "handler_name",
+            "status",
+            "mode",
+            "handler_mode",
+            "message_type",
+        })
+
         def __getitem__(self, key: str) -> t.GuardInputValue:
-            dump = self.model_dump()
-            return dump[key]
+            if key in self._GETITEM_FIELDS:
+                return getattr(self, key)
+            raise KeyError(key)
 
     class RegistrationRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Request model for dynamic handler registration.
@@ -97,10 +105,14 @@ class FlextModelsHandler:
         legacy dictionary-based configuration.
         """
 
-        handler: Callable[..., object] | BaseModel = Field(
+        handler: (
+            t.HandlerCallable
+            | p.Handler[t.GuardInputValue, t.GuardInputValue]
+            | BaseModel
+        ) = Field(
             description="Handler instance (callable, object, or FlextHandlers)",
         )
-        message_type: str | type[object] | None = Field(
+        message_type: t.MessageTypeSpecifier | None = Field(
             default=None,
             description="Message type to handle (required for explicit mode)",
         )
@@ -253,22 +265,7 @@ class FlextModelsHandler:
 
         @computed_field
         def execution_time_ms(self) -> float:
-            """Get execution time in milliseconds.
-
-            Returns:
-                Execution time in milliseconds, or 0.0 if not started
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-                >>> # ... handler executes ...
-                >>> elapsed = context.execution_time_ms
-                >>> elapsed.__class__ is float
-                True
-
-            """
+            """Get execution time in milliseconds."""
             if self._start_time is None:
                 return 0.0
 

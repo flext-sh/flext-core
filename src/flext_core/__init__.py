@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
-from flext_core._beartype_conf import BEARTYPE_CONF
 from flext_core.constants import FlextConstants, c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -53,7 +52,6 @@ from flext_core.typings import (
 from flext_core.utilities import FlextUtilities, u
 
 __all__ = [
-    "BEARTYPE_CONF",
     "E",
     "FlextConstants",
     "FlextContainer",

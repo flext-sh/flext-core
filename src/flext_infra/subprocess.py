@@ -15,6 +15,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+
 from flext_infra.constants import c
 from flext_infra.models import m
 
@@ -57,13 +58,11 @@ class CommandRunner:
                 timeout=timeout,
                 env=env,
             )
-            output = m.CommandOutput.model_validate(
-                {
-                    "stdout": result.stdout or "",
-                    "stderr": result.stderr or "",
-                    "exit_code": result.returncode,
-                }
-            )
+            output = m.CommandOutput.model_validate({
+                "stdout": result.stdout or "",
+                "stderr": result.stderr or "",
+                "exit_code": result.returncode,
+            })
             return r[m.CommandOutput].ok(output)
         except subprocess.TimeoutExpired as exc:
             cmd_str = shlex.join(list(cmd))

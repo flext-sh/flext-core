@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.result import r
+
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
@@ -167,7 +168,7 @@ class FlextValidatorBypass:
         violations: list[m.Tests.Validator.Violation] = []
 
         for node in ast.walk(tree):
-            if type(node) is ast.ExceptHandler:
+            if isinstance(node, ast.ExceptHandler):
                 # Check for bare except (no exception type)
                 if node.type is None:
                     violation = u.Tests.Validator.create_violation(

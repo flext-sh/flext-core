@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import cast
 
 from flext_core import (
     FlextDispatcher,
@@ -146,13 +147,13 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry()
 
         # Register single handler - Protocol-based handler registration
-        create_handler = CreateUserHandler()
+        create_handler = cast("t.HandlerCallable", CreateUserHandler())
         register_result = registry.register_handler(create_handler)
         if register_result.is_success:
             print("✅ Handler registered successfully")
 
         # Batch registration - Protocol-based handler registration
-        get_handler = GetUserHandler()
+        get_handler = cast("t.HandlerCallable", GetUserHandler())
         batch_result = registry.register_handlers([get_handler])
         if batch_result.is_success:
             summary = batch_result.value
@@ -167,13 +168,14 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler = CreateUserHandler()
+        create_handler = cast("t.HandlerCallable", CreateUserHandler())
         _ = registry.register_handler(create_handler)
 
         # Dispatch command - Pydantic models are compatible with t.GeneralValueType
-        command: t.GeneralValueType = CreateUserCommand(
-            name="Alice", email="alice@example.com"
-        )
+        command: t.GeneralValueType = CreateUserCommand.model_validate({
+            "name": "Alice",
+            "email": "alice@example.com",
+        })
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
@@ -191,21 +193,22 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler = CreateUserHandler()
-        get_handler = GetUserHandler()
+        create_handler = cast("t.HandlerCallable", CreateUserHandler())
+        get_handler = cast("t.HandlerCallable", GetUserHandler())
         _ = registry.register_handler(create_handler)
         _ = registry.register_handler(get_handler)
 
         # Dispatch command - Pydantic models as message payload
-        command: CreateUserCommand = CreateUserCommand(
-            name="Bob", email="bob@example.com"
-        )
+        command: CreateUserCommand = CreateUserCommand.model_validate({
+            "name": "Bob",
+            "email": "bob@example.com",
+        })
         command_result = dispatcher.dispatch(command)
         if command_result.is_success:
             print("✅ Command dispatched successfully")
 
         # Dispatch query
-        query: GetUserQuery = GetUserQuery(user_id="user-123")
+        query: GetUserQuery = GetUserQuery.model_validate({"user_id": "user-123"})
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value

@@ -20,6 +20,7 @@ from __future__ import annotations
 # mypy: disable-error-code="valid-type,misc"
 # mypy: follow-imports=skip
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
@@ -28,6 +29,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core.exceptions import FlextExceptions
+from flext_core import p
 from flext_core.models import m
 from flext_core.typings import t
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
@@ -98,17 +100,6 @@ class InvalidModelForTest(BaseModel):
     """Model with invalid model_dump."""
 
     value: str = "test"
-
-    def model_dump(
-        self,
-        *,
-        mode: str = "python",
-        **kwargs: object,
-    ) -> dict[str, t.GeneralValueType]:
-        """Return invalid type - test error handling."""
-        # Intentionally return wrong type to test error handling
-        # In real code this would raise, but for testing we need valid signature
-        return {"error": "not a dict", "value": self.value}
 
 
 @dataclass
@@ -192,16 +183,6 @@ class FailingOptionsForTest(m.ValueObject):
     """Options that fail on model_dump."""
 
     value: str = "test"
-
-    def model_dump(
-        self,
-        *,
-        mode: str = "python",
-        **kwargs: object,
-    ) -> dict[str, t.GeneralValueType]:
-        """Raise error - test error handling."""
-        msg = "Unexpected error"
-        raise RuntimeError(msg)
 
 
 class TestConfigModels:
@@ -399,7 +380,7 @@ class TestFlextUtilitiesConfiguration:
                 enabled=TestConfigConstants.TestValues.TEST_ENABLED_FALSE,
             )
             result = FlextUtilitiesConfiguration.get_parameter(
-                cast("p.HasModelDump", cast(object, config)),
+                cast(p.HasModelDump, cast(object, config)),
                 param_name,
             )
             # Use tm.that for assertions
@@ -414,7 +395,7 @@ class TestFlextUtilitiesConfiguration:
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 FlextUtilitiesConfiguration.get_parameter(
-                    cast("p.HasModelDump", cast(object, config)),
+                    cast(p.HasModelDump, cast(object, config)),
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
             assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
@@ -423,7 +404,7 @@ class TestFlextUtilitiesConfiguration:
 
         def test_from_pydantic_model_invalid_dump(self) -> None:
             """Test get_parameter handles invalid model_dump return."""
-            config = cast("p.HasModelDump", cast(object, InvalidModelForTest()))
+            config = cast(p.HasModelDump, cast(object, InvalidModelForTest()))
             result = FlextUtilitiesConfiguration.get_parameter(
                 config,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -453,8 +434,11 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
-            config_cast = cast("object", config)
-            result = FlextUtilitiesConfiguration.get_parameter(config_cast, param_name)  # type: ignore[arg-type]
+            config_cast = cast(
+                "p.HasModelDump | Mapping[str, t.ConfigMapValue]",
+                cast("object", config),
+            )
+            result = FlextUtilitiesConfiguration.get_parameter(config_cast, param_name)
             assert result == expected_value
 
         def test_from_attribute_access_not_found(self) -> None:
@@ -462,10 +446,13 @@ class TestFlextUtilitiesConfiguration:
             config = DataclassConfigForTest(
                 name=TestConfigConstants.TestValues.TEST_NAME,
             )
-            config_cast = cast("object", config)
+            config_cast = cast(
+                "p.HasModelDump | Mapping[str, t.ConfigMapValue]",
+                cast("object", config),
+            )
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 FlextUtilitiesConfiguration.get_parameter(
-                    config_cast,  # type: ignore[arg-type]
+                    config_cast,
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
             assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
@@ -693,7 +680,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 "new_value",
             )
-            _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL
@@ -707,7 +694,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_failure(result)
             assert result.error is not None
             assert TestConfigConstants.ErrorMessages.IS_NOT_CALLABLE in result.error
 
@@ -718,7 +705,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP
@@ -733,7 +720,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.MISSING.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
@@ -900,7 +887,7 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
 
-            _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_success(result)
             assert result.value.format == expected_format
             assert result.value.indent == expected_indent
 
@@ -919,7 +906,7 @@ class TestFlextUtilitiesConfiguration:
                 sort_keys=TestConfigConstants.TestValues.TEST_SORT_KEYS_TRUE,
             )
 
-            _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_success(result)
             assert result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_XML
             assert result.value.indent == TestConfigConstants.TestValues.TEST_INDENT_8
             assert (
@@ -938,7 +925,7 @@ class TestFlextUtilitiesConfiguration:
                 ),
             )
 
-            _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_YAML
             )
@@ -954,7 +941,7 @@ class TestFlextUtilitiesConfiguration:
                 indent=TestConfigConstants.TestValues.TEST_INDENT_6,
             )
 
-            _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_TOML
             )
@@ -972,7 +959,7 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
 
-            _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_JSON
             )
@@ -989,7 +976,7 @@ class TestFlextUtilitiesConfiguration:
                 format=TestConfigConstants.TestValues.TEST_FORMAT_JSON,
             )
 
-            _ResultAssertions.assert_result_success(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_JSON
             )
@@ -1003,7 +990,7 @@ class TestFlextUtilitiesConfiguration:
                 value=TestConfigConstants.TestValues.TEST_VALUE_INVALID,
             )
 
-            _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
@@ -1016,14 +1003,15 @@ class TestFlextUtilitiesConfiguration:
             """Test build_options_from_kwargs handles unexpected errors."""
             result = FlextUtilitiesConfiguration.build_options_from_kwargs(
                 model_class=FailingOptionsForTest,
-                explicit_options=FailingOptionsForTest(
-                    value=TestConfigConstants.TestValues.TEST_NAME,
+                explicit_options=cast(
+                    "FailingOptionsForTest",
+                    cast("object", object()),
                 ),
                 default_factory=FailingOptionsForTest,
                 value="new",
             )
 
-            _ResultAssertions.assert_result_failure(result)  # type: ignore[arg-type]
+            _ResultAssertions.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(

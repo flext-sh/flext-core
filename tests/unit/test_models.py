@@ -204,7 +204,7 @@ class TestFlextModels:
             command_type: str = "test_command"
             data: str
 
-        command = TestCommand(data="test_data")
+        command = TestCommand.model_validate({"data": "test_data"})
         tm.that(
             command.command_type,
             eq="test_command",
@@ -557,7 +557,7 @@ class TestFlextModels:
         # Access directly to avoid mypy inference issues with computed_field
         assert bool(entity.is_initial_version) is True
         assert entity.version == 1
-        entity.updated_at = entity.created_at
+        object.__setattr__(entity, "updated_at", entity.created_at)
         # is_modified is also a computed_field (property) that returns bool
         assert bool(entity.is_modified) is True
 
@@ -658,7 +658,7 @@ class TestFlextModels:
         value_set = set(value_list)
         assert len(value_set) == 2
         with pytest.raises(ValidationError):
-            value1.value = 100
+            setattr(value1, "value", 100)
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
@@ -667,7 +667,7 @@ class TestFlextModels:
             action: str
             target: str
 
-        command = TestCommand(action="create", target="user")
+        command = TestCommand.model_validate({"action": "create", "target": "user"})
         assert all(
             hasattr(command, attr) for attr in ["unique_id", "created_at", "updated_at"]
         )
@@ -1124,7 +1124,7 @@ class TestFlextModels:
         """Test HandlerExecutionContext model creation."""
         context = m.HandlerExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
-            handler_mode=c.Cqrs.HandlerType.COMMAND.value,
+            handler_mode="command",
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"

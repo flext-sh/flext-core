@@ -12,15 +12,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
+
 from flext_infra.constants import c
 
-_WORKSPACE_MARKERS: frozenset[str] = frozenset(
-    {
-        ".git",
-        c.Files.MAKEFILE_FILENAME,
-        c.Files.PYPROJECT_FILENAME,
-    }
-)
+_WORKSPACE_MARKERS: frozenset[str] = frozenset({
+    ".git",
+    c.Files.MAKEFILE_FILENAME,
+    c.Files.PYPROJECT_FILENAME,
+})
 
 
 class PathResolver:
@@ -45,22 +44,6 @@ class PathResolver:
             return r[Path].ok(resolved)
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
-
-    def repo_root_from_script(self, script_file: str | Path) -> FlextResult[Path]:
-        """Resolve the repository root based on a script file location.
-
-        Args:
-            script_file: Path to the script file (usually __file__).
-
-        Returns:
-            FlextResult[Path] with the absolute path to the repo root.
-
-        """
-        try:
-            resolved = Path(script_file).resolve().parents[1]
-            return r[Path].ok(resolved)
-        except (IndexError, OSError, TypeError) as exc:
-            return r[Path].fail(f"failed to resolve repo root: {exc}")
 
     def workspace_root_from_file(self, file: str | Path) -> FlextResult[Path]:
         """Resolve workspace root by walking up from file location.

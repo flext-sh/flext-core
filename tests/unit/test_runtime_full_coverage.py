@@ -4,9 +4,10 @@ import logging
 import queue
 import contextlib
 import io
+from importlib import import_module
 from datetime import UTC, datetime
 from pathlib import Path
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
 from typing import Callable, Generator, cast
 
 import pytest
@@ -15,8 +16,11 @@ from pydantic import BaseModel
 import flext_core.runtime as runtime_module
 from flext_core import c, m, r, t, u
 from flext_core.runtime import FlextRuntime
-from tests.unit import test_runtime as runtime_tests
-from tests.unit import test_runtime_coverage_100 as runtime_cov_tests
+
+runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
+runtime_cov_tests: ModuleType = import_module(
+    "tests.unit.test_runtime_coverage_100",
+)
 
 
 @pytest.fixture(autouse=True)
@@ -402,7 +406,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast(object, ConfigNoAsync())),
     )
-    assert FlextRuntime._structlog_configured is True
+    assert FlextRuntime._structlog_configured
 
     FlextRuntime._structlog_configured = False
     calls.clear()
@@ -420,7 +424,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast(object, ConfigAsyncFallback())),
     )
-    assert FlextRuntime._structlog_configured is True
+    assert FlextRuntime._structlog_configured
 
 
 def test_reconfigure_and_reset_state_paths() -> None:
@@ -440,7 +444,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
     assert dummy.called is True
     FlextRuntime.reset_structlog_state_for_testing()
-    assert FlextRuntime._structlog_configured is False
+    assert not FlextRuntime._structlog_configured
 
 
 def test_runtime_result_all_missed_branches() -> None:
@@ -522,13 +526,13 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert (
         FlextRuntime.compare_entities_by_id(
             "a",
-            cast("t.GeneralValueType", cast(object, object())),
+            cast("t.GeneralValueType", object()),
         )
         is False
     )
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.GeneralValueType", cast(object, object())),
+            cast("t.GeneralValueType", object()),
             3,
         )
         is False
@@ -550,13 +554,13 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert FlextRuntime.hash_entity_by_id("x") == hash("x")
     obj = object()
     assert FlextRuntime.hash_entity_by_id(
-        cast("t.GeneralValueType", cast(object, obj)),
+        cast("t.GeneralValueType", obj),
     ) == hash(id(obj))
 
     assert FlextRuntime.compare_value_objects_by_value("a", "a") is True
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.GeneralValueType", cast(object, object())),
+            cast("t.GeneralValueType", object()),
             1,
         )
         is False

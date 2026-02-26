@@ -60,7 +60,7 @@ class TestService100Coverage:
         result = service.validate_business_rules()
 
         # Default implementation should succeed
-        assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        _ = assertion_helpers.assert_flext_result_success(result) or result.is_failure
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""

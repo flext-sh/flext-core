@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import importlib
-
 # mypy: follow_imports=skip, disable-error-code=valid-type
 # pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 import uuid
@@ -162,7 +160,7 @@ def test_validate_tags_list_normalization_and_errors() -> None:
 
 
 def test_metadata_attributes_accepts_none() -> None:
-    model = FlextModelFoundation.Metadata(attributes=None)
+    model = FlextModelFoundation.Metadata.model_validate({"attributes": None})
     assert model.attributes == {}
 
 
@@ -170,17 +168,21 @@ def test_metadata_attributes_accepts_basemodel_mapping() -> None:
     class _Attrs(BaseModel):
         key: str
 
-    model = FlextModelFoundation.Metadata(attributes=_Attrs(key="value"))
+    model = FlextModelFoundation.Metadata.model_validate({
+        "attributes": _Attrs(key="value")
+    })
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping"):
-        FlextModelFoundation.Metadata(attributes=_BrokenDumpModel())
+        FlextModelFoundation.Metadata.model_validate({"attributes": _BrokenDumpModel()})
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    model_from_t_dict = FlextModelFoundation.Metadata(attributes=t.Dict(root={"a": 1}))
+    model_from_t_dict = FlextModelFoundation.Metadata.model_validate({
+        "attributes": t.Dict(root={"a": 1})
+    })
     model_from_mapping = FlextModelFoundation.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}
@@ -194,12 +196,17 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
 
     monkeypatch.setattr(_base_module, "BaseModel", _NotPydanticBase)
     attributes = t.Dict(root={"x": 1})
-    assert FlextModelFoundation.Metadata._validate_attributes(attributes) == {"x": 1}
+    assert FlextModelFoundation.Metadata._validate_attributes(
+        cast(
+            t.MetadataAttributeValue | Mapping[str, t.MetadataAttributeValue],
+            attributes,
+        )
+    ) == {"x": 1}
 
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like"):
-        FlextModelFoundation.Metadata(attributes=123)
+        FlextModelFoundation.Metadata.model_validate({"attributes": 123})
 
 
 def test_frozen_value_model_equality_and_hash() -> None:

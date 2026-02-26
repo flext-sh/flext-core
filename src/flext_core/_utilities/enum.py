@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-import warnings
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import (
@@ -20,7 +18,6 @@ from typing import (
     TypeGuard,
     TypeIs,
     TypeVar,
-    cast,
     overload,
 )
 
@@ -43,15 +40,6 @@ class FlextUtilitiesEnum:
     - Direct integration with Pydantic BeforeValidator
     """
 
-    # Approved modules that can import directly (for testing, internal use)
-    _APPROVED_MODULES: ClassVar[frozenset[str]] = frozenset(
-        {
-            "flext_core.utilities",
-            "flext_core._utilities",
-            "tests.",
-        }
-    )
-
     # Cache for metadata methods (manual cache since types aren't hashable for lru_cache)
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
@@ -63,22 +51,6 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
     # PRIVATE HELPERS
     # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def _check_direct_access() -> None:
-        """Warn if accessed from non-approved module."""
-        frame = inspect.currentframe()
-        if frame and frame.f_back and frame.f_back.f_back:
-            caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
-            if not any(
-                caller_module.startswith(approved)
-                for approved in FlextUtilitiesEnum._APPROVED_MODULES
-            ):
-                warnings.warn(
-                    "Direct import from _utilities.enum is deprecated. Use 'from flext_core import u; u.Enum.dispatch(...)' instead.",
-                    DeprecationWarning,
-                    stacklevel=4,
-                )
 
     @staticmethod
     def _validate_str(value: t.ScalarValue | StrEnum) -> str | None:
@@ -96,31 +68,28 @@ class FlextUtilitiesEnum:
         if isinstance(value, enum_cls):
             return True
         if isinstance(value, str):
-            value_map = getattr(enum_cls, "_value2member_map_", {})
+            value_map = enum_cls._value2member_map_
             return value in value_map
         return False
 
     @staticmethod
     def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
         """Check membership by name (internal helper)."""
-        return name in getattr(enum_cls, "__members__", {})
+        return name in enum_cls.__members__
 
     @staticmethod
     def _parse(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
         """Parse string to enum (internal helper)."""
         if isinstance(value, enum_cls):
-            return cast("r[EnumT]", r[StrEnum].ok(value))
+            return r[EnumT].ok(value)
         try:
             return r[EnumT].ok(enum_cls(value))
         except ValueError:
-            members_dict = getattr(enum_cls, "__members__", {})
+            members_dict = enum_cls.__members__
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
-            enum_name = getattr(enum_cls, "__name__", "Enum")
-            return cast(
-                "r[EnumT]",
-                r[StrEnum].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}"),
-            )
+            enum_name = enum_cls.__name__
+            return r.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
@@ -150,7 +119,7 @@ class FlextUtilitiesEnum:
             return True
         if isinstance(value, str):
             # Check if value is in enum's value-to-member mapping
-            value_map = getattr(enum_cls, "_value2member_map_", {})
+            value_map = enum_cls._value2member_map_
             return value in value_map
         return False
 
@@ -195,20 +164,17 @@ class FlextUtilitiesEnum:
 
         """
         if isinstance(value, enum_cls):
-            return cast("r[EnumT]", r[StrEnum].ok(value))
+            return r[EnumT].ok(value)
         try:
             return r[EnumT].ok(enum_cls(value))
         except ValueError:
             # enum_cls is a StrEnum type, access members via __members__
             # Access enum members via __members__ attribute
-            members_dict = getattr(enum_cls, "__members__", {})
+            members_dict = enum_cls.__members__
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
-            enum_name = getattr(enum_cls, "__name__", "Enum")
-            return cast(
-                "r[EnumT]",
-                r[StrEnum].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}"),
-            )
+            enum_name = enum_cls.__name__
+            return r.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
     def parse_or_default[E: StrEnum](
@@ -268,7 +234,7 @@ class FlextUtilitiesEnum:
                     return enum_cls(value)
                 except ValueError:
                     pass
-            enum_name = getattr(enum_cls, "__name__", "Enum")
+            enum_name = enum_cls.__name__
             msg = f"Invalid {enum_name}: {value!r}"
             raise ValueError(msg)
 
@@ -298,7 +264,7 @@ class FlextUtilitiesEnum:
                 return value
             if isinstance(value, str):
                 # Try by name first
-                members_dict = getattr(enum_cls, "__members__", {})
+                members_dict = enum_cls.__members__
                 if value in members_dict:
                     member = members_dict[value]
                     if isinstance(member, enum_cls):
@@ -308,7 +274,7 @@ class FlextUtilitiesEnum:
                     return enum_cls(value)
                 except ValueError:
                     pass
-            enum_name = getattr(enum_cls, "__name__", "Enum")
+            enum_name = enum_cls.__name__
             msg = f"Invalid {enum_name}: {value!r}"
             raise ValueError(msg)
 
@@ -335,7 +301,7 @@ class FlextUtilitiesEnum:
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        members_dict: Mapping[str, E] = getattr(enum_cls, "__members__", {})
+        members_dict: Mapping[str, E] = enum_cls.__members__
         result = frozenset(m.value for m in members_dict.values())
 
         # Cache result
@@ -357,7 +323,7 @@ class FlextUtilitiesEnum:
             return FlextUtilitiesEnum._names_cache[enum_cls]
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        members_dict: Mapping[str, E] = getattr(enum_cls, "__members__", {})
+        members_dict: Mapping[str, E] = enum_cls.__members__
         result = frozenset(members_dict.keys())
 
         # Cache result
@@ -377,12 +343,12 @@ class FlextUtilitiesEnum:
         # Check cache first - retrieve cached members for this enum class
         # Cache is keyed by enum_cls, so if we find it, it's the correct type
         cached = FlextUtilitiesEnum._members_cache.get(enum_cls)
-        if cached is not None and cached.__class__ is frozenset:
+        if isinstance(cached, frozenset):
             # isinstance narrows to frozenset, key guarantees correct element type
             return frozenset(enum_cls(member.value) for member in cached)
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        members_dict: Mapping[str, E] = getattr(enum_cls, "__members__", {})
+        members_dict: Mapping[str, E] = enum_cls.__members__
         result: frozenset[E] = frozenset(members_dict.values())
 
         # Cache result - store in dictionary for all future calls with same enum_cls
@@ -517,19 +483,6 @@ class FlextUtilitiesEnum:
             {"__members__": {k: StrEnum(k, v) for k, v in values.items()}},
         )
 
-    @staticmethod
-    def is_enum_member[E: StrEnum](
-        value: t.ScalarValue | E,
-        enum_cls: type[E],
-    ) -> TypeIs[E]:
-        """Check if value is enum member. Shortcut for is_member()."""
-        return FlextUtilitiesEnum.is_member(enum_cls, value)
-
-    @staticmethod
-    def parse_enum[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Parse value to enum. Shortcut for parse()."""
-        return FlextUtilitiesEnum.parse(enum_cls, value)
-
     # ─────────────────────────────────────────────────────────────
     # GENERALIZED DISPATCH METHOD
     # ─────────────────────────────────────────────────────────────
@@ -598,8 +551,6 @@ class FlextUtilitiesEnum:
             Depends on mode - bool (for is_member/is_name), r[E] (for parse), or E (for coerce)
 
         """
-        FlextUtilitiesEnum._check_direct_access()
-
         if mode == "is_member":
             by_name_value = FlextUtilitiesEnum._validate_str(value)
             if by_name and by_name_value is not None:

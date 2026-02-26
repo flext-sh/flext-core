@@ -20,13 +20,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import builtins
-import warnings
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Never, TypeVar
 
+from flext_core import r
 from pydantic import BaseModel
 
-from flext_core import r
 from flext_tests.base import FlextTestsUtilityBase as s
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -192,12 +191,10 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         """
         # Validate and convert kwargs to ModelFactoryParams using FlextUtilities
         try:
-            params = m.Tests.Factory.ModelFactoryParams.model_validate(
-                {
-                    "kind": kind,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.ModelFactoryParams.model_validate({
+                "kind": kind,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.Factory.FactoryModel].fail(f"Invalid parameters: {exc}")
 
@@ -367,12 +364,14 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             if params.as_dict:
                 result_dict: MutableMapping[str, BaseModel] = {}
                 for inst in instances:
-                    # Try to get ID from common attributes using getattr
-                    inst_id = (
-                        getattr(inst, "id", None)
-                        or getattr(inst, "model_id", None)
-                        or u.Tests.Factory.generate_id()
-                    )
+                    inst_id: object = u.Tests.Factory.generate_id()
+                    inst_data = inst.model_dump()
+                    id_value = inst_data.get("id")
+                    model_id_value = inst_data.get("model_id")
+                    if id_value is not None:
+                        inst_id = id_value
+                    elif model_id_value is not None:
+                        inst_id = model_id_value
                     result_dict[str(inst_id)] = inst
                 if params.as_result:
                     dict_result: r[Mapping[str, BaseModel]] = r[
@@ -406,11 +405,14 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Single instance - handle as_dict
         typed_instance = instance
         if params.as_dict:
-            inst_id = (
-                getattr(typed_instance, "id", None)
-                or getattr(typed_instance, "model_id", None)
-                or u.Tests.Factory.generate_id()
-            )
+            inst_id: object = u.Tests.Factory.generate_id()
+            typed_data = typed_instance.model_dump()
+            id_value = typed_data.get("id")
+            model_id_value = typed_data.get("model_id")
+            if id_value is not None:
+                inst_id = id_value
+            elif model_id_value is not None:
+                inst_id = model_id_value
             single_result_dict: MutableMapping[str, BaseModel] = {
                 str(inst_id): typed_instance,
             }
@@ -487,13 +489,11 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to ResultFactoryParams using FlextUtilities
         # Pass kind and value explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.ResultFactoryParams.model_validate(
-                {
-                    "kind": kind,
-                    "value": value,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.ResultFactoryParams.model_validate({
+                "kind": kind,
+                "value": value,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.PayloadValue].fail(f"Invalid parameters: {exc}")
 
@@ -880,12 +880,10 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to ListFactoryParams using FlextUtilities
         # Pass source explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.ListFactoryParams.model_validate(
-                {
-                    "source": source,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.ListFactoryParams.model_validate({
+                "source": source,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[builtins.list[t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {exc}",
@@ -1033,12 +1031,10 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to DictFactoryParams using FlextUtilities
         # Pass source explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.DictFactoryParams.model_validate(
-                {
-                    "source": source,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.DictFactoryParams.model_validate({
+                "source": source,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[Mapping[str, t.Tests.PayloadValue]].fail(
                 f"Invalid parameters: {exc}",
@@ -1166,12 +1162,10 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Validate and convert kwargs to GenericFactoryParams using FlextUtilities
         # Pass type_ explicitly, then merge with kwargs
         try:
-            params = m.Tests.Factory.GenericFactoryParams.model_validate(
-                {
-                    "type_": type_,
-                    **kwargs,
-                }
-            )
+            params = m.Tests.Factory.GenericFactoryParams.model_validate({
+                "type_": type_,
+                **kwargs,
+            })
         except (TypeError, ValueError, AttributeError) as exc:
             return r[T].fail(f"Invalid parameters: {exc}")
 
@@ -1183,7 +1177,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             type_cls: type[T] = params.type_
             instance = type_cls(*args, **kwargs_dict)
             if params.validate_fn and not params.validate_fn(instance):
-                type_name = getattr(type_cls, "__name__", "Unknown")
+                type_name = type_cls.__name__
                 raise ValueError(f"Validation failed for {type_name}")
             return instance
 
@@ -1293,156 +1287,6 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             }
         return m.Tests.Factory.User.model_validate(user_data)
 
-    @staticmethod
-    def create_config(
-        service_type: str = c.Tests.Factory.DEFAULT_SERVICE_TYPE,
-        environment: str = c.Tests.Factory.DEFAULT_ENVIRONMENT,
-        **overrides: t.Tests.TestResultValue,
-    ) -> m.Tests.Factory.Config:
-        """Create a test configuration.
-
-        Args:
-            service_type: Type of service
-            environment: Environment name
-            **overrides: Additional field overrides
-
-        Returns:
-            Config model instance
-
-        """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_CREATE_CONFIG,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        config_data: MutableMapping[str, t.Tests.PayloadValue] = {
-            "service_type": service_type,
-            "environment": environment,
-        }
-        # Convert overrides dict to ConfigurationDict
-        overrides_dict: MutableMapping[str, t.Tests.PayloadValue] = dict(overrides)
-        merge_result = u.merge(
-            {k: _to_guard_input(v) for k, v in config_data.items()},
-            {k: _to_guard_input(v) for k, v in overrides_dict.items()},
-            strategy="deep",
-        )
-        if merge_result.is_success:
-            config_data = {
-                str(k): _to_payload_value(v) for k, v in merge_result.value.items()
-            }
-        return m.Tests.Factory.Config.model_validate(config_data)
-
-    @staticmethod
-    def create_service(
-        service_type: str = c.Tests.Factory.DEFAULT_SERVICE_TYPE,
-        service_id: str | None = None,
-        **overrides: t.Tests.TestResultValue,
-    ) -> m.Tests.Factory.Service:
-        """Create a test service.
-
-        Args:
-            service_type: Type of service
-            service_id: Optional service ID
-            **overrides: Additional field overrides
-
-        Returns:
-            Service model instance
-
-        """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_CREATE_SERVICE,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        service_data: MutableMapping[str, t.Tests.TestResultValue] = {
-            "id": service_id or u.generate("uuid"),
-            "type": service_type,
-            "status": c.Tests.Factory.DEFAULT_SERVICE_STATUS,
-        }
-        if "name" not in overrides:
-            service_data["name"] = c.Tests.Factory.service_name(service_type)
-        # Update with compatible types
-        service_data.update(dict(overrides))
-        return m.Tests.Factory.Service.model_validate(service_data)
-
-    @staticmethod
-    def batch_users(
-        count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
-    ) -> builtins.list[m.Tests.Factory.User]:
-        """Create a batch of test users.
-
-        Args:
-            count: Number of users to create
-
-        Returns:
-            List of user model instances
-
-        """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_BATCH_USERS_FUNC,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        users: list[m.Tests.Factory.User] = []
-        for i in range(count):
-            result = FlextTestsFactories.model(
-                "user",
-                name=f"User {i}",
-                email=f"user{i}@example.com",
-            )
-            user_instance = FlextTestsFactories._extract_model_instance(result)
-            if isinstance(user_instance, m.Tests.Factory.User):
-                users.append(user_instance)
-        return users
-
-    @classmethod
-    def create_test_operation(
-        cls,
-        operation_type: str = "simple",
-        **overrides: t.Tests.TestResultValue,
-    ) -> object:
-        """Create a test operation callable.
-
-        Args:
-            operation_type: Type of operation ('simple', 'add', 'format', 'error')
-            **overrides: Additional configuration
-
-        Returns:
-            Test operation callable (object - varying signatures)
-
-        """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_CREATE_TEST_OPERATION,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        error_msg = overrides.get("error_message", "Test error")
-        error_message: str = error_msg if isinstance(error_msg, str) else "Test error"
-
-        type_error_msg = overrides.get("error_message", "Wrong type")
-        type_error_message: str = (
-            type_error_msg if isinstance(type_error_msg, str) else "Wrong type"
-        )
-
-        ops: Mapping[str, object] = {
-            "simple": u.Tests.Factory.simple_operation,
-            "add": u.Tests.Factory.add_operation,
-            "format": u.Tests.Factory.format_operation,
-            "error": u.Tests.Factory.create_error_operation(error_message),
-            "type_error": u.Tests.Factory.create_type_error_operation(
-                type_error_message,
-            ),
-        }
-        operations = ops
-
-        if operation_type in operations:
-            return operations[operation_type]
-
-        def unknown_operation() -> str:
-            return f"unknown operation: {operation_type}"
-
-        return unknown_operation
-
     # ==========================================================================
     # SERVICE FACTORY - For creating dynamic test service classes
     # ==========================================================================
@@ -1454,9 +1298,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
     ) -> type:
         """Internal implementation for creating test service classes.
 
-        This is the actual implementation used by both svc() and
-        create_test_service(). The public create_test_service() method
-        emits a deprecation warning before calling this.
+        This is the actual implementation used by svc().
 
         Args:
             service_type: Type of service to create
@@ -1585,11 +1427,12 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 """Validate business rules for complex service."""
                 if service_type == "complex":
                     return self._validate_business_rules_complex()
-                parent_validate = getattr(super(), "validate_business_rules", None)
-                if callable(parent_validate):
-                    parent_result = parent_validate()
-                    if isinstance(parent_result, r):
-                        return parent_result
+                try:
+                    parent_result = super().validate_business_rules()
+                except AttributeError:
+                    return r[bool].ok(value=True)
+                if isinstance(parent_result, r):
+                    return parent_result
                 return r[bool].ok(value=True)
 
             def validate_config(self) -> r[bool]:
@@ -1603,31 +1446,6 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 return r[bool].ok(value=True)
 
         return TestService
-
-    @staticmethod
-    def create_test_service(
-        service_type: str = "test",
-        **overrides: t.Tests.TestResultValue,
-    ) -> type:
-        """Create a test service class.
-
-        .. deprecated::
-            Use tt.svc() instead. This method will be removed in a future version.
-
-        Args:
-            service_type: Type of service to create
-            **overrides: Additional attributes for the service
-
-        Returns:
-            Test service class
-
-        """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_CREATE_TEST_SERVICE,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextTestsFactories._create_test_service_impl(service_type, **overrides)
 
     # ==========================================================================
     # FLEXTSERVICE INTERFACE IMPLEMENTATION
