@@ -19,7 +19,6 @@ from collections.abc import (
     Generator,
     Mapping,
     MutableMapping,
-    Sequence,
     Sized,
 )
 from contextlib import contextmanager
@@ -29,14 +28,12 @@ from typing import Protocol
 
 from flext_core import (
     FlextContext,
-    FlextDispatcher,
     FlextRegistry,
     FlextSettings,
     FlextUtilities,
     T,
     r,
 )
-from flext_core.dispatcher import DispatcherHandler
 from flext_core.typings import t as core_t
 from pydantic import BaseModel
 
@@ -389,26 +386,6 @@ class FlextTestsUtilities(FlextUtilities):
 
                 return error_op
 
-            @staticmethod
-            def create_type_error_operation(
-                error_message: str,
-            ) -> Callable[[], t.Tests.PayloadValue]:
-                """Create callable that raises TypeError.
-
-                Args:
-                    error_message: Error message for TypeError
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Callable that raises TypeError when called.
-
-                """
-
-                def type_error_op() -> t.Tests.PayloadValue:
-                    raise TypeError(error_message)
-
-                return type_error_op
-
             # =====================================================================
             # Service execution - Reusable service execution helpers
             # =====================================================================
@@ -569,26 +546,6 @@ class FlextTestsUtilities(FlextUtilities):
                 )
 
             @staticmethod
-            def assert_result_success_and_unwrap[T](
-                result: r[T],
-            ) -> T:
-                """Assert result is success and return unwrapped value.
-
-                Args:
-                    result: FlextResult to check and unwrap
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    The unwrapped value if result is success
-
-                Raises:
-                    AssertionError: If result is not success
-
-                """
-                _ = FlextTestsUtilities.Tests.Result.assert_success(result)
-                return result.value
-
-            @staticmethod
             def assert_result_failure_with_error[T](
                 result: r[T],
                 expected_error: str,
@@ -607,65 +564,6 @@ class FlextTestsUtilities(FlextUtilities):
                     result,
                     expected_error,
                 )
-
-            @staticmethod
-            def assert_result_success_and_type[T](
-                result: r[T],
-                expected_type: str | type[BaseModel] | None = None,
-            ) -> T:
-                """Assert result is success and return unwrapped value (type-safe).
-
-                Args:
-                    result: FlextResult to check
-                    expected_type: Optional type hint (for documentation)
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Unwrapped value from result
-
-                Raises:
-                    AssertionError: If result is failure
-
-                """
-                return FlextTestsUtilities.Tests.Result.assert_success(result)
-
-            @staticmethod
-            def assert_result_success_and_unwrap_string(
-                result: p.Result[str],
-            ) -> str:
-                """Assert result is success and return unwrapped string.
-
-                Args:
-                    result: FlextResult[str] to check
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Unwrapped string value
-
-                Raises:
-                    AssertionError: If result is failure
-
-                """
-                return FlextTestsUtilities.Tests.Result.assert_success(result)
-
-            @staticmethod
-            def assert_result_success_and_unwrap_list[T](
-                result: p.Result[list[T]],
-            ) -> list[T]:
-                """Assert result is success and return unwrapped list.
-
-                Args:
-                    result: FlextResult[list[T]] to check
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Unwrapped list value
-
-                Raises:
-                    AssertionError: If result is failure
-
-                """
-                return FlextTestsUtilities.Tests.Result.assert_success(result)
 
         class GenericHelpers:
             """Generic helpers for test data creation."""
@@ -829,42 +727,6 @@ class FlextTestsUtilities(FlextUtilities):
                         f"Expected no failures but found first failure at index "
                         f"{actual_first_failure}"
                     )
-
-            @staticmethod
-            def normalize_dict_values_to_lists(
-                data: Mapping[str, str | list[str] | tuple[str, ...] | set[str] | None]
-                | None,
-            ) -> MutableMapping[str, list[str]]:
-                """Normalize dictionary values to lists.
-
-                Converts single values to single-element lists for LDAP attribute
-                compatibility where all values must be list[str].
-
-                Args:
-                    data: Dictionary with mixed value types (strings, lists, ec.)
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Dictionary with all values as lists of strings
-
-                """
-                if data is None:
-                    return {}
-
-                result: MutableMapping[str, list[str]] = {}
-                for key, value in data.items():
-                    if value is None:
-                        result[key] = []
-                    elif isinstance(value, (list, tuple)):
-                        value_seq: Sequence[str] = value
-                        result[key] = [str(v) for v in value_seq]
-                    elif isinstance(value, set):
-                        value_set: set[str] = value
-                        result[key] = [str(v) for v in value_set]
-                    else:
-                        result[key] = [str(value)]
-
-                return result
 
         class ModelTestHelpers:
             """Model testing helpers."""
@@ -1135,65 +997,6 @@ class FlextTestsUtilities(FlextUtilities):
                     or c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
                     metadata=metadata,
                 )
-
-        class DispatcherHelpers:
-            """Helpers for dispatcher testing."""
-
-            @staticmethod
-            def create_test_dispatcher(
-                handlers: Mapping[str, DispatcherHandler] | None = None,
-            ) -> FlextDispatcher:
-                """Create a test dispatcher instance with optional handlers.
-
-                Args:
-                    handlers: Optional dict of handler name -> handler instance
-
-                Returns:
-                    New FlextDispatcher instance with registered handlers
-
-                """
-                dispatcher = FlextDispatcher()
-                if handlers:
-                    for name, handler in handlers.items():
-                        _ = dispatcher.register_handler(name, handler)
-                return dispatcher
-
-            @staticmethod
-            def assert_handler_result(
-                result: p.Result[t.Tests.PayloadValue],
-                *,
-                expected_success: bool = True,
-                expected_value: t.Tests.PayloadValue | None = None,
-                expected_error: str | None = None,
-            ) -> None:
-                """Assert handler result matches expectations.
-
-                Args:
-                    result: FlextResult from handler
-                    expected_success: Whether result should be success
-                    expected_value: Expected value if success
-                    expected_error: Expected error substring if failure
-
-                Raises:
-                    AssertionError: If result doesn't match expectations
-
-                """
-                if expected_success:
-                    assert result.is_success, (
-                        f"Expected success, got failure: {result.error}"
-                    )
-                    if expected_value is not None:
-                        assert result.value == expected_value, (
-                            f"Expected {expected_value}, got {result.value}"
-                        )
-                else:
-                    assert result.is_failure, (
-                        f"Expected failure, got success: {result.value}"
-                    )
-                    if expected_error is not None:
-                        assert expected_error in str(result.error), (
-                            f"Expected error '{expected_error}' in '{result.error}'"
-                        )
 
         class ParserHelpers:
             """Helpers for parser testing."""
@@ -1488,47 +1291,6 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 return {"attributes": attributes, **attributes}
 
-        class MapperHelpers:
-            """Helpers for data mapper testing."""
-
-            @staticmethod
-            def execute_mapper_operation(
-                operation: str,
-                input_data: Mapping[str, t.Tests.PayloadValue],
-                **kwargs: t.Tests.PayloadValue,
-            ) -> r[t.Tests.PayloadValue]:
-                """Execute a mapper utility operation.
-
-                Args:
-                    operation: Operation name from FlextUtilities.Mapper
-                    input_data: Input data dictionary
-                    **kwargs: Additional arguments
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult from mapper operation
-
-                """
-                if not hasattr(FlextUtilities.Mapper, operation):
-                    msg = f"Unknown operation: {operation}"
-                    raise ValueError(msg)
-                op_method = getattr(FlextUtilities.Mapper, operation)
-                if not callable(op_method):
-                    msg = f"Unknown operation: {operation}"
-                    raise ValueError(msg)
-
-                all_args = {**input_data, **kwargs}
-                raw_result = op_method(**all_args)
-                if isinstance(raw_result, r):
-                    if raw_result.is_success:
-                        return r[t.Tests.PayloadValue].ok(
-                            _to_payload(raw_result.value),
-                        )
-                    return r[t.Tests.PayloadValue].fail(
-                        raw_result.error or "Unknown error",
-                    )
-                return r[t.Tests.PayloadValue].ok(_to_payload(raw_result))
-
         class BadObjects:
             """Factory for objects that cause errors during testing."""
 
@@ -1657,26 +1419,6 @@ class FlextTestsUtilities(FlextUtilities):
                         f"Expected error '{expected_error}' not in '{error}'"
                     )
                 return error
-
-            @staticmethod
-            def assert_result_failure_with_error(
-                result: r[T],
-                expected_error: str,
-            ) -> None:
-                """Assert result is failure with specific error message.
-
-                Args:
-                    result: FlextResult to check
-                    expected_error: Expected error substring
-
-                Raises:
-                    AssertionError: If result is not failure or error doesn't match
-
-                """
-                _ = FlextTestsUtilities.Tests.Assertions.assert_result_failure(
-                    result,
-                    expected_error,
-                )
 
             @staticmethod
             def assert_result_matches_expected(
@@ -1863,22 +1605,6 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 return c.Tests.Files.format_size(size)
-
-            @staticmethod
-            def get_format_from_extension(extension: str) -> str:
-                """Get format from file extension.
-
-                Delegates to constants.Files.get_format for consistency.
-
-                Args:
-                    extension: File extension (e.g., ".json")
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Format string or "text" as default
-
-                """
-                return c.Tests.Files.get_format(extension)
 
         class Validator:
             """Validator utilities for architecture validation (tv.* methods).
@@ -2274,22 +2000,6 @@ class FlextTestsUtilities(FlextUtilities):
 u = FlextTestsUtilities
 
 __all__ = ["FlextTestsUtilities", "u"]
-
-
-def _to_payload(value: object) -> t.Tests.PayloadValue:
-    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
-        return value
-    if isinstance(value, Mapping):
-        return {str(k): _to_payload(v) for k, v in value.items()}
-    if isinstance(value, Sequence) and not isinstance(value, str | bytes):
-        return [_to_payload(item) for item in value]
-    return str(value)
-
-
-def _to_scalar(value: t.Tests.PayloadValue) -> core_t.ScalarValue:
-    if value is None or isinstance(value, str | int | float | bool):
-        return value
-    return str(value)
 
 
 def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
