@@ -439,35 +439,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         return self.validate(query)
 
-    def validate_message(
-        self,
-        message: MessageT_contra,
-    ) -> r[bool]:
-        """Validate message using type checking and validation rules.
-
-        Validates the message against accepted message types and custom
-        validation rules. Uses duck typing for flexible message validation.
-
-        Args:
-            message: Message to validate
-
-        Returns:
-            r[bool]: Success if message is valid, failure with error details
-
-        """
-        # Check accepted message types if specified
-        if self._accepted_message_types:
-            message_type = message.__class__
-            if not any(
-                message_type is accepted_type or accepted_type in message_type.__mro__
-                for accepted_type in self._accepted_message_types
-            ):
-                msg = f"Message type {message_type.__name__} not in accepted types"
-                return r[bool].fail(msg)
-
-        # Delegate to base validation
-        return self.validate(message)
-
     def can_handle(self, message_type: type) -> bool:
         """Check if handler can handle the specified message type.
 
@@ -514,10 +485,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
         return r[bool].ok(value=True)
-
-    def get_metrics(self) -> r[dict[str, t.ConfigMapValue]]:
-        """Return a snapshot of collected handler metrics."""
-        return r[dict[str, t.ConfigMapValue]].ok(dict(self._metrics.items()))
 
     def push_context(
         self,
@@ -569,13 +536,6 @@ class FlextHandlers[MessageT_contra, ResultT](
             )
             return r[m.ConfigMap].ok(context_dict)
         return r[m.ConfigMap].ok(popped)
-
-    def current_context(self) -> m.Handler.ExecutionContext | None:
-        """Return current execution context when available."""
-        if not self._stack:
-            return None
-        top_item = self._stack[-1]
-        return top_item if isinstance(top_item, m.Handler.ExecutionContext) else None
 
     def dispatch_message(
         self,
@@ -710,26 +670,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         )
         if error is not None:
             _ = self.record_metric("error", error)
-
-    def __call__(self, input_data: MessageT_contra) -> r[ResultT]:
-        """Callable interface for seamless integration with dispatchers.
-
-        Enables handlers to be used as callable objects, providing a clean
-        interface for dispatcher systems and middleware. Internally delegates
-        to the execute() method for full validation and error handling pipeline.
-
-        Args:
-            input_data: Input message to handle
-
-        Returns:
-            r[ResultT]: Handler execution result
-
-        Example:
-            >>> handler = UserHandler()
-            >>> result = handler(command)  # Equivalent to handler.execute(command)
-
-        """
-        return self.execute(input_data)
 
     @staticmethod
     def handler(
@@ -948,10 +888,6 @@ class FlextHandlers[MessageT_contra, ResultT](
                 for name in dir(module)
                 if not name.startswith("_") and callable(getattr(module, name, None))
             )
-
-    def _protocol_name(self) -> str:
-        """Return the protocol name for introspection."""
-        return self.__class__.__name__
 
 
 h = FlextHandlers

@@ -790,6 +790,8 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             )
         result = self._run(
             [
+                sys.executable,
+                "-m",
                 "bandit",
                 "-r",
                 c.Paths.DEFAULT_SRC_DIR,

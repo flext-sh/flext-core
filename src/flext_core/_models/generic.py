@@ -19,7 +19,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import Field, computed_field
 
@@ -414,7 +414,7 @@ class FlextGenericModels:
                     str: Formatted resource summary.
 
                 """
-                parts = []
+                parts: list[str] = []
                 if self.memory_usage_mb is not None:
                     parts.append(f"RAM: {self.memory_usage_mb:.1f}MB")
                 if self.cpu_usage_percent is not None:
@@ -429,17 +429,20 @@ class FlextGenericModels:
                     dict: Health check compatible dictionary.
 
                 """
-                return {
-                    "name": self.name,
-                    "version": self.version,
-                    "status": self.status,
-                    "health": self.health_status,
-                    "uptime": self.formatted_uptime,
-                    "timestamp": self.last_health_check.isoformat()
-                    if self.last_health_check
-                    else None,
-                    **self.metadata.root,
-                }
+                return cast(
+                    "Mapping[str, t.GuardInputValue]",
+                    {
+                        "name": self.name,
+                        "version": self.version,
+                        "status": self.status,
+                        "health": self.health_status,
+                        "uptime": self.formatted_uptime,
+                        "timestamp": self.last_health_check.isoformat()
+                        if self.last_health_check
+                        else None,
+                        **self.metadata.root,
+                    },
+                )
 
         class Configuration(FlextModelFoundation.FrozenStrictModel):
             """Comprehensive configuration snapshot with validation and metadata.

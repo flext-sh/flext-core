@@ -1139,15 +1139,7 @@ class FlextModelFoundation:
                 self.tags.remove(tag)
 
         def has_tag(self, tag: str) -> bool:
-            """Check if record has a specific tag.
-
-            Args:
-                tag: Tag to check for.
-
-            Returns:
-                bool: True if tag is present.
-
-            """
+            """Check if record has a specific tag."""
             return tag in self.tags
 
         def add_category(self, category: str) -> None:
@@ -1171,15 +1163,7 @@ class FlextModelFoundation:
                 self.categories.remove(category)
 
         def has_category(self, category: str) -> bool:
-            """Check if record has a specific category.
-
-            Args:
-                category: Category to check for.
-
-            Returns:
-                bool: True if category is present.
-
-            """
+            """Check if record has a specific category."""
             return category in self.categories
 
         def set_label(self, key: str, value: str) -> None:
@@ -1193,16 +1177,7 @@ class FlextModelFoundation:
             self.labels[key] = value
 
         def get_label(self, key: str, default: str | None = None) -> str | None:
-            """Get a label value.
-
-            Args:
-                key: Label key.
-                default: Default value if key not found.
-
-            Returns:
-                str | None: Label value or default.
-
-            """
+            """Get a label value."""
             return self.labels.get(key, default)
 
         def remove_label(self, key: str) -> None:

@@ -1,28 +1,35 @@
+"""Coverage tests for current utilities parser APIs."""
+
 # mypy: ignore-errors
 from __future__ import annotations
 
+from collections import UserString
 from enum import StrEnum
 from typing import cast
 
-from pydantic import BaseModel
+import pytest
 
 from flext_core import c, m, r, t, u
 from flext_core._utilities.parser import FlextUtilitiesParser
+from pydantic import BaseModel
 
 
-class _LenRaises(str):
+class _LenRaises(UserString):
     def __len__(self) -> int:
-        raise TypeError("len boom")
+        msg = "len boom"
+        raise TypeError(msg)
 
 
 class _BoolRaises:
     def __bool__(self) -> bool:
-        raise TypeError("bool boom")
+        msg = "bool boom"
+        raise TypeError(msg)
 
 
 class _StrRaises:
     def __str__(self) -> str:
-        raise TypeError("str boom")
+        msg = "str boom"
+        raise TypeError(msg)
 
 
 class _Status(StrEnum):
@@ -35,7 +42,9 @@ class _Model(BaseModel):
     count: int
 
 
-def test_parser_safe_length_and_parse_delimited_error_paths(monkeypatch) -> None:
+def test_parser_safe_length_and_parse_delimited_error_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     parser = u.Parser()
     sample: t.GeneralValueType = "ok"
     assert sample == "ok"
@@ -59,7 +68,8 @@ def test_parser_safe_length_and_parse_delimited_error_paths(monkeypatch) -> None
 
     class _SplitRaises:
         def split(self, _delimiter: str) -> list[str]:
-            raise RuntimeError("split boom")
+            msg = "split boom"
+            raise RuntimeError(msg)
 
     monkeypatch.setattr(
         parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x"))
@@ -71,7 +81,9 @@ def test_parser_safe_length_and_parse_delimited_error_paths(monkeypatch) -> None
     assert split_failure.is_failure
 
 
-def test_parser_split_and_normalize_exception_paths(monkeypatch) -> None:
+def test_parser_split_and_normalize_exception_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     parser = u.Parser()
 
     monkeypatch.setattr(parser, "_safe_text_length", lambda _v: "abc")
@@ -100,7 +112,9 @@ def test_parser_split_and_normalize_exception_paths(monkeypatch) -> None:
     assert regex_fail.is_failure
 
 
-def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
+def test_parser_pipeline_and_pattern_branches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     parser = u.Parser()
 
     monkeypatch.setattr(
@@ -129,14 +143,15 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
 
     assert (
         u.Parser()._extract_key_from_str_conversion(
-            cast(t.ConfigMapValue, cast(object, _StrRaises()))
+            cast("t.ConfigMapValue", cast("object", _StrRaises()))
         )
         is None
     )
 
     class _OddNoStr:
         def __str__(self) -> str:
-            raise TypeError("bad")
+            msg = "bad"
+            raise TypeError(msg)
 
     parser3 = u.Parser()
     original_hasattr = (
@@ -150,10 +165,10 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast(t.ConfigMapValue, object()),
+        cast("t.ConfigMapValue", object()),
     )
     assert (
-        parser3.get_object_key(cast(t.ConfigMapValue, cast(object, _OddNoStr())))
+        parser3.get_object_key(cast("t.ConfigMapValue", cast("object", _OddNoStr())))
         == "_OddNoStr"
     )
 
@@ -174,7 +189,9 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch) -> None:
     assert bad_tuple.is_failure
 
 
-def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> None:
+def test_parser_parse_helpers_and_primitive_coercion_branches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     parser = u.Parser()
 
     assert parser._parse_find_first([1, 2], lambda v: v > 5) is None
@@ -185,7 +202,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> No
     assert parser._parse_result_error(r[int].ok(1), default="fallback") == "fallback"
 
     model_result = parser._parse_model(
-        cast(t.ConfigMapValue, {"name": "ok", "count": 2, "payload": "obj"}),
+        cast("t.ConfigMapValue", {"name": "ok", "count": 2, "payload": "obj"}),
         _Model,
         "field: ",
         strict=False,
@@ -198,11 +215,6 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> No
     bool_from_int = parser._coerce_to_bool(0)
     assert bool_from_int is not None and bool_from_int.is_success
     assert parser._coerce_to_str(42).is_success
-
-    assert parser._coerce_primitive("1", int) is not None
-    assert parser._coerce_primitive("1.2", float) is not None
-    assert parser._coerce_primitive(1, str) is not None
-    assert parser._coerce_primitive("true", bool) is not None
 
     enum_ci = parser._parse_try_enum(
         "inactive",
@@ -222,11 +234,6 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> No
     )
     assert enum_ci is not None and enum_ci.is_success
     assert enum_value is not None and enum_value.is_success
-
-    assert parser._try_coerce_to_primitive("1", int) is not None
-    assert parser._try_coerce_to_primitive("1.1", float) is not None
-    assert parser._try_coerce_to_primitive(1, str) is not None
-    assert parser._try_coerce_to_primitive("true", bool) is not None
 
     primitive_float = parser._parse_try_primitive("2.2", float, 0.0, None, "")
     primitive_str = parser._parse_try_primitive(5, str, "x", None, "")
@@ -261,25 +268,29 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(monkeypatch) -> No
     assert parsed.is_success
 
 
-def test_parser_convert_and_norm_branches(monkeypatch) -> None:
+def test_parser_convert_and_norm_branches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     parser = u.Parser()
 
     class _BadStr:
         def __str__(self) -> str:
-            raise TypeError("nope")
+            msg = "nope"
+            raise TypeError(msg)
 
     class _BadConv:
         def __str__(self) -> str:
-            raise TypeError("nope")
+            msg = "nope"
+            raise TypeError(msg)
 
     assert parser.convert("10", int, 0) == 10
     assert parser._convert_to_int(True, default=7) == 7
-    assert parser._convert_to_float(1.5, default=0.0) == 1.5
+    assert parser._convert_to_float(1.5, default=0.0) == pytest.approx(1.5)
     assert parser._convert_to_str("x", default="") == "x"
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            cast(t.ConfigMapValue, cast(object, _BadStr())),
+            cast("t.ConfigMapValue", cast("object", _BadStr())),
             default="d",
         )
         == "d"
@@ -287,7 +298,7 @@ def test_parser_convert_and_norm_branches(monkeypatch) -> None:
     assert parser._convert_to_bool(True, default=False) is True
     assert (
         parser._convert_to_bool(
-            cast(t.ConfigMapValue, object()),
+            cast("t.ConfigMapValue", object()),
             default=True,
         )
         is True
@@ -296,7 +307,7 @@ def test_parser_convert_and_norm_branches(monkeypatch) -> None:
 
     assert (
         parser.conv_str(
-            cast(t.ConfigMapValue, cast(object, _BadConv())),
+            cast("t.ConfigMapValue", cast("object", _BadConv())),
             default="d",
         )
         == "d"
@@ -361,7 +372,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
 
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
-        cast(t.ConfigMapValue, cast(object, type("Obj", (), {"id": "x1"})())),
+        cast("t.ConfigMapValue", cast("object", type("Obj", (), {"id": "x1"})())),
     )
     assert mapped == "n1"
     assert attrs == "x1"
@@ -387,14 +398,10 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     assert enum_by_value is not None and enum_by_value.is_success
 
 
-def test_parser_remaining_branch_paths(monkeypatch) -> None:
+def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     parser = u.Parser()
 
     assert parser._coerce_to_float([]) is None
-    assert (
-        parser._coerce_primitive("x", cast("type[int | float | str | bool]", object))
-        is None
-    )
 
     class _ValueEnum(StrEnum):
         FIRST = "v-1"
@@ -408,14 +415,6 @@ def test_parser_remaining_branch_paths(monkeypatch) -> None:
         field_prefix="",
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
-
-    assert (
-        parser._try_coerce_to_primitive(
-            "x",
-            cast("type[int | float | str | bool]", object),
-        )
-        is None
-    )
 
     monkeypatch.setattr(
         FlextUtilitiesParser,
@@ -435,13 +434,10 @@ def test_parser_remaining_branch_paths(monkeypatch) -> None:
 
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
-    assert (
-        parser._convert_to_float(
-            cast(t.ConfigMapValue, object()),
-            default=1.5,
-        )
-        == 1.5
-    )
+    assert parser._convert_to_float(
+        cast("t.ConfigMapValue", object()),
+        default=1.5,
+    ) == pytest.approx(1.5)
     assert parser._convert_fallback("x", str, "d") == "d"
 
     assert (

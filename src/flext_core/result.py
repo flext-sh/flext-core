@@ -338,38 +338,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             _module_logger.debug("Callable execution failed", exc_info=e)
             return cls.fail(str(e), error_code=error_code)
 
-    @classmethod
-    def from_callable[U](
-        cls,
-        func: Callable[[], U],
-        error_code: str | None = None,
-    ) -> FlextResult[U]:
-        try:
-            value = func()
-            if value is None:
-                return cls.fail("Callable returned None", error_code=error_code)
-            return cls.ok(value)
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-            _module_logger.debug("Callable execution failed", exc_info=e)
-            return cls.fail(str(e), error_code=error_code)
-
-    @classmethod
-    def from_optional[U](
-        cls,
-        value: U | None,
-        error: str | None = "Optional value was None",
-    ) -> FlextResult[U]:
-        if value is None:
-            return cls.fail(error)
-        return cls.ok(value)
-
-    @classmethod
-    def collect[U](
-        cls,
-        results: Sequence[FlextResult[U]],
-    ) -> FlextResult[list[U]]:
-        return cls.accumulate_errors(*results)
-
     # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
 
     @classmethod

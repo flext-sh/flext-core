@@ -124,7 +124,7 @@ class UserService:
 
     def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
         """Create user with advanced context tracing and railway pattern - direct functional composition."""
-        with FlextContext.Request.request_context(operation_name="create_user"):
+        with FlextContext.Correlation.new_correlation():
             correlation_id = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
             )
@@ -373,7 +373,7 @@ def main() -> None:
     """Advanced FLEXT demo with railway patterns and context management - functional composition."""
     logger = FlextLogger.create_module_logger(__name__)
 
-    with FlextContext.Request.request_context(operation_name="demo"):
+    with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
         logger.info("Starting demonstration", extra={"correlation_id": correlation_id})
 

@@ -192,12 +192,7 @@ class CircuitBreakerManager:
         return self._failures.get(message_type, 0)
 
     def get_threshold(self) -> int:
-        """Get circuit breaker threshold.
-
-        Returns:
-            Circuit breaker failure threshold.
-
-        """
+        """Get circuit breaker threshold."""
         return self._threshold
 
     def cleanup(self) -> None:
@@ -332,21 +327,11 @@ class RateLimiterManager:
         return r[bool].ok(value=True)
 
     def get_max_requests(self) -> int:
-        """Get maximum requests per window.
-
-        Returns:
-            Maximum requests allowed per window.
-
-        """
+        """Get maximum requests per window."""
         return self._max_requests
 
     def get_window_seconds(self) -> float:
-        """Get rate limit window duration in seconds.
-
-        Returns:
-            Rate limit window duration in seconds.
-
-        """
+        """Get rate limit window duration in seconds."""
         return self._window_seconds
 
     def cleanup(self) -> None:
@@ -373,22 +358,12 @@ class RetryPolicy:
         self._max_delay = c.Reliability.DEFAULT_MAX_DELAY_SECONDS
 
     def should_retry(self, current_attempt: int) -> bool:
-        """Check if we should retry the operation.
-
-        Returns:
-            True if operation should be retried, False otherwise.
-
-        """
+        """Check if we should retry the operation."""
         return current_attempt < self._max_attempts - 1
 
     @staticmethod
     def is_retriable_error(error: str | None) -> bool:
-        """Check if an error is retriable.
-
-        Returns:
-            True if error is retriable, False otherwise.
-
-        """
+        """Check if an error is retriable."""
         if error is None:
             return False
 
@@ -402,12 +377,7 @@ class RetryPolicy:
         return any(pattern.lower() in error.lower() for pattern in retriable_patterns)
 
     def get_exponential_delay(self, attempt_number: int) -> float:
-        """Calculate exponential backoff delay for given attempt.
-
-        Returns:
-            Exponential backoff delay in seconds.
-
-        """
+        """Calculate exponential backoff delay for given attempt."""
         if self._base_delay <= 0.0:
             return 0.0
 
@@ -417,21 +387,11 @@ class RetryPolicy:
         return min(exponential_delay, self._max_delay)
 
     def get_retry_delay(self) -> float:
-        """Get base delay between retry attempts.
-
-        Returns:
-            Base delay in seconds between retry attempts.
-
-        """
+        """Get base delay between retry attempts."""
         return self._base_delay
 
     def get_max_attempts(self) -> int:
-        """Get maximum retry attempts.
-
-        Returns:
-            Maximum number of retry attempts allowed.
-
-        """
+        """Get maximum retry attempts."""
         return self._max_attempts
 
     def record_attempt(self, message_type: str) -> None:

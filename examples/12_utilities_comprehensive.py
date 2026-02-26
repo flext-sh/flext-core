@@ -127,18 +127,28 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # URI validation
         uri = str(TEST_DATA["uri"])
-        uri_result = u.validate_uri(uri)
+        uri_result = u.validate_pattern(
+            uri, r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$", "uri"
+        )
         print(f"✅ URI validation: {uri} -> {uri_result.is_success}")
 
         # Port validation
         port_value = TEST_DATA["port"]
         if isinstance(port_value, int):
-            port_result = u.validate_port_number(port_value)
+            port_result = (
+                FlextResult[int].ok(port_value)
+                if 1 <= port_value <= 65535
+                else FlextResult[int].fail("port must be between 1 and 65535")
+            )
             print(f"✅ Port validation: {port_value} -> {port_result.is_success}")
 
         # Hostname validation
         hostname = str(TEST_DATA["hostname"])
-        hostname_result = u.validate_hostname(hostname)
+        hostname_result = u.validate_pattern(
+            hostname,
+            r"^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$",
+            "hostname",
+        )
         print(f"✅ Hostname validation: {hostname} -> {hostname_result.is_success}")
 
     @staticmethod

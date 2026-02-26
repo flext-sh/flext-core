@@ -96,35 +96,6 @@ class FlextRegistry(FlextService[bool]):
             """
             return bool(self.errors)
 
-        @computed_field
-        def successful_registrations(self) -> int:
-            """Number of successful registrations.
-
-            Returns:
-                Count of successfully registered handlers
-
-            """
-            return len(self.registered)
-
-        @computed_field
-        def failed_registrations(self) -> int:
-            """Number of failed registrations.
-
-            Returns:
-                Count of failed registration attempts
-
-            """
-            return len(self.errors)
-
-        def __bool__(self) -> bool:
-            """Boolean representation - False when there are errors, True otherwise.
-
-            Returns:
-                False if any errors occurred (is_failure), True if successful
-
-            """
-            return not self.errors
-
     # Private attributes using Pydantic v2 PrivateAttr pattern
     _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=set)
@@ -872,16 +843,6 @@ class FlextRegistry(FlextService[bool]):
         self.logger.info("Unregistered class plugin %s: %s", category, name)
         return r[bool].ok(value=True)
 
-    @classmethod
-    def reset_class_storage(cls) -> None:
-        """Reset class-level storage (for testing only).
-
-        This method clears all class-level plugins for this specific class.
-        Use in test fixtures to ensure test isolation.
-        """
-        cls._class_plugin_storage = {}
-        cls._class_registered_keys = set()
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -952,49 +913,6 @@ class FlextRegistry(FlextService[bool]):
     # =========================================================================
     # Protocol Implementations: RegistrationTracker, BatchProcessor
     # =========================================================================
-
-    def register_item(
-        self,
-        name: str,
-        item: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
-    ) -> r[bool]:
-        """Register item (RegistrationTracker protocol)."""
-        # Direct implementation without try/except - use FlextResult for error handling
-        return self.register(name, item)
-
-    def get_item(
-        self, name: str
-    ) -> r[t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel]:
-        """Get registered item (RegistrationTracker protocol)."""
-        try:
-            return r[
-                t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel
-            ].ok(
-                getattr(self, name),
-            )
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[
-                t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel
-            ].fail(
-                str(e),
-            )
-
-    def list_items(self) -> r[list[str]]:
-        """List registered items (RegistrationTracker protocol)."""
-        try:
-            keys = list(
-                getattr(self, "_registered_keys")
-                if hasattr(self, "_registered_keys")
-                else []
-            )
-            return r[list[str]].ok(keys)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[list[str]].fail(str(e))
-
-    @staticmethod
-    def get_batch_size() -> int:
-        """Get batch size (BatchProcessor protocol)."""
-        return 100
 
 
 __all__ = ["FlextRegistry"]

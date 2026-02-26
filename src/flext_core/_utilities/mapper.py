@@ -102,15 +102,15 @@ class FlextUtilitiesMapper:
             return value
         if isinstance(value, Mapping):
             # Coerce to ConfigMap (Pydantic will validate keys are strings)
-            try:
-                return m.ConfigMap(
+            coerced_result = r[m.ConfigMap].create_from_callable(
+                lambda: m.ConfigMap(
                     root=FlextUtilitiesMapper._narrow_to_configuration_dict(value),
-                )
-            except (TypeError, ValueError) as e:
-                error_msg = (
-                    f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {e}"
-                )
-                raise TypeError(error_msg) from e
+                ),
+            )
+            if coerced_result.is_success and coerced_result.value is not None:
+                return coerced_result.value
+            error_msg = f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {coerced_result.error}"
+            raise TypeError(error_msg)
         error_msg = f"Cannot narrow {value.__class__.__name__} to m.ConfigMap"
         raise TypeError(error_msg)
 
@@ -220,7 +220,8 @@ class FlextUtilitiesMapper:
             >>> # {"newName": "value1", "bar": "value2", "other": "value3"}
 
         """
-        try:
+
+        def _map_keys() -> Mapping[str, t.ConfigMapValue]:
             result: dict[str, t.ConfigMapValue] = {}
 
             for key, value in source.items():
@@ -230,12 +231,16 @@ class FlextUtilitiesMapper:
                 elif keep_unmapped:
                     result[key] = value
 
-            return r[Mapping[str, t.ConfigMapValue]].ok(result)
+            return result
 
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+        mapped_result = r[Mapping[str, t.ConfigMapValue]].create_from_callable(
+            _map_keys
+        )
+        if mapped_result.is_failure:
             return r[Mapping[str, t.ConfigMapValue]].fail(
-                f"Failed to map dict keys: {e}",
+                f"Failed to map dict keys: {mapped_result.error}",
             )
+        return mapped_result
 
     @staticmethod
     def build_flags_dict(
@@ -268,7 +273,8 @@ class FlextUtilitiesMapper:
             >>> # {"can_read": True, "can_write": True, "can_delete": False}
 
         """
-        try:
+
+        def _build_flags() -> Mapping[str, bool]:
             result: dict[str, bool] = {}
 
             # Initialize all flags to default
@@ -281,10 +287,14 @@ class FlextUtilitiesMapper:
                 if mapped_key:
                     result[mapped_key] = True
 
-            return r[Mapping[str, bool]].ok(result)
+            return result
 
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[Mapping[str, bool]].fail(f"Failed to build flags dict: {e}")
+        flags_result = r[Mapping[str, bool]].create_from_callable(_build_flags)
+        if flags_result.is_failure:
+            return r[Mapping[str, bool]].fail(
+                f"Failed to build flags dict: {flags_result.error}",
+            )
+        return flags_result
 
     @staticmethod
     def collect_active_keys(
@@ -309,17 +319,22 @@ class FlextUtilitiesMapper:
             >>> active = result.value  # ["r", "w"]
 
         """
-        try:
+
+        def _collect_keys() -> list[str]:
             active_keys: list[str] = []
 
             for source_key, output_key in key_mapping.items():
                 if source.get(source_key):
                     active_keys.append(output_key)
 
-            return r[list[str]].ok(active_keys)
+            return active_keys
 
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[list[str]].fail(f"Failed to collect active keys: {e}")
+        active_keys_result = r[list[str]].create_from_callable(_collect_keys)
+        if active_keys_result.is_failure:
+            return r[list[str]].fail(
+                f"Failed to collect active keys: {active_keys_result.error}",
+            )
+        return active_keys_result
 
     @staticmethod
     def transform_values(
@@ -1594,12 +1609,14 @@ class FlextUtilitiesMapper:
             fallback = converter_defaults.get(converter_name, current)
 
         def _convert(value: t.ConfigMapValue) -> t.ConfigMapValue:
-            try:
-                return FlextUtilitiesMapper.narrow_to_general_value_type(
+            converted_result = r[t.ConfigMapValue].create_from_callable(
+                lambda: FlextUtilitiesMapper.narrow_to_general_value_type(
                     convert_callable(value),
-                )
-            except (TypeError, ValueError, AttributeError, RuntimeError):
-                return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
+                ),
+            )
+            if converted_result.is_success and converted_result.value is not None:
+                return converted_result.value
+            return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
 
         if isinstance(current, list | tuple):
             current_items: Sequence[t.ConfigMapValue] = current
@@ -1863,13 +1880,9 @@ class FlextUtilitiesMapper:
             FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
         )
         # Implement transform logic directly using available utilities
-        try:
-            # Type narrowing: current_dict is ConfigurationMapping, dict() returns ConfigurationDict
-            # dict() constructor returns Mapping[str, t.ConfigMapValue] which is ConfigurationDict
-            # Type narrowing: dict() returns ConfigurationDict
-            result: Mapping[str, t.ConfigMapValue] = dict(current_dict)
-            return FlextUtilitiesMapper.apply_transform_steps(
-                result,
+        transform_result = r[Mapping[str, t.ConfigMapValue]].create_from_callable(
+            lambda: FlextUtilitiesMapper.apply_transform_steps(
+                dict(current_dict),
                 normalize=normalize_bool,
                 map_keys=map_keys_dict,
                 filter_keys=filter_keys_set,
@@ -1877,11 +1890,13 @@ class FlextUtilitiesMapper:
                 strip_none=strip_none_bool,
                 strip_empty=strip_empty_bool,
                 to_json=to_json_bool,
-            )
-        except (TypeError, ValueError, AttributeError, KeyError):
+            ),
+        )
+        if transform_result.is_failure:
             if on_error == "stop":
                 return default
             return current
+        return transform_result.value if transform_result.value is not None else current
 
     @staticmethod
     def _build_apply_process(
@@ -1903,7 +1918,7 @@ class FlextUtilitiesMapper:
                 process_callable(value),
             )
 
-        try:
+        def _process_current() -> t.ConfigMapValue:
             if isinstance(current, list | tuple):
                 # Type narrowing: current is Sequence, items are t.ConfigMapValue
                 seq_current: Sequence[t.ConfigMapValue] = current
@@ -1923,9 +1938,11 @@ class FlextUtilitiesMapper:
                 current,
             )
             return process_func(current_general)
-        except (TypeError, ValueError, AttributeError, RuntimeError, KeyError):
-            # Type annotation: result is object
+
+        process_result = r[t.ConfigMapValue].create_from_callable(_process_current)
+        if process_result.is_failure:
             return default if on_error == "stop" else current
+        return process_result.value if process_result.value is not None else current
 
     @staticmethod
     def _build_apply_group(
@@ -2019,18 +2036,20 @@ class FlextUtilitiesMapper:
             def sort_key(item: t.ConfigMapValue) -> str:
                 return str(sort_callable(item))
 
-            try:
-                sorted_callable: list[t.ConfigMapValue] = sorted(
+            sorted_result = r[list[t.ConfigMapValue]].create_from_callable(
+                lambda: sorted(
                     current_list,
                     key=sort_key,
-                )
-                return (
-                    list(sorted_callable)
-                    if isinstance(current, list)
-                    else tuple(sorted_callable)
-                )
-            except (TypeError, ValueError):
+                ),
+            )
+            if sorted_result.is_failure:
                 return current
+            sorted_callable = sorted_result.value
+            return (
+                list(sorted_callable)
+                if isinstance(current, list)
+                else tuple(sorted_callable)
+            )
         if sort_spec_raw is True:
             comparable_items: list[t.ConfigMapValue] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
@@ -2455,13 +2474,9 @@ class FlextUtilitiesMapper:
             >>> transformed = result.map_or({})  # {"new": "value"}
 
         """
-        try:
-            # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
-            source_dict: Mapping[str, t.ConfigMapValue] = dict(source)
-
-            # Apply transform steps
-            transformed = FlextUtilitiesMapper._apply_transform_steps(
-                source_dict,
+        transform_result = r[Mapping[str, t.ConfigMapValue]].create_from_callable(
+            lambda: FlextUtilitiesMapper._apply_transform_steps(
+                dict(source),
                 normalize=normalize,
                 map_keys=map_keys,
                 filter_keys=filter_keys,
@@ -2469,11 +2484,13 @@ class FlextUtilitiesMapper:
                 strip_none=strip_none,
                 strip_empty=strip_empty,
                 to_json=to_json,
+            ),
+        )
+        if transform_result.is_failure:
+            return r[Mapping[str, t.ConfigMapValue]].fail(
+                f"Transform failed: {transform_result.error}",
             )
-
-            return r[Mapping[str, t.ConfigMapValue]].ok(transformed)
-        except (TypeError, ValueError, AttributeError, KeyError) as e:
-            return r[Mapping[str, t.ConfigMapValue]].fail(f"Transform failed: {e}")
+        return transform_result
 
     @staticmethod
     def to_dict[T](mapping: Mapping[str, T]) -> Mapping[str, T]:
@@ -2946,12 +2963,12 @@ class FlextUtilitiesMapper:
         if target_type is None:
             return value
 
-        try:
-            return target_type(value)
-        except (TypeError, ValueError):
-            if default is not None:
-                return default
-            return value
+        cast_result = r[T].create_from_callable(lambda: target_type(value))
+        if cast_result.is_success and cast_result.value is not None:
+            return cast_result.value
+        if default is not None:
+            return default
+        return value
 
     @staticmethod
     def find_callable[T](
@@ -2980,14 +2997,19 @@ class FlextUtilitiesMapper:
             >>> assert result == "is_multiple"
 
         """
+
+        def build_predicate_call(predicate_fn: _Predicate[T]) -> Callable[[], bool]:
+            def _call_predicate() -> bool:
+                return predicate_fn(value)
+
+            return _call_predicate
+
         for name, predicate in callables.items():
-            try:
-                result: bool = predicate(value)
-                if result:
-                    return name
-            except (ValueError, TypeError, AttributeError):
-                # Skip predicates that fail for this value
-                continue
+            predicate_result = r[bool].create_from_callable(
+                build_predicate_call(predicate)
+            )
+            if predicate_result.is_success and predicate_result.value:
+                return name
         return None
 
 

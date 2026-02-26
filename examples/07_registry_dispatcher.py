@@ -157,7 +157,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         batch_result = registry.register_handlers([get_handler])
         if batch_result.is_success:
             summary = batch_result.value
-            print(f"✅ Batch registration: {summary.successful_registrations} handlers")
+            print(f"✅ Batch registration: {len(summary.registered)} handlers")
 
     @staticmethod
     def _demonstrate_dispatcher() -> None:

@@ -373,15 +373,7 @@ class FlextRuntime:
     def is_list_like(
         value: t.ConfigMapValue,
     ) -> TypeGuard[Sequence[t.ConfigMapValue]]:
-        """Type guard to check if value is list-like.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a list[t.ConfigMapValue] or list-like sequence, False otherwise
-
-        """
+        """Type guard to check if value is list-like."""
         return isinstance(value, list)
 
     @staticmethod
@@ -538,15 +530,7 @@ class FlextRuntime:
     def is_valid_identifier(
         value: t.GeneralValueType,
     ) -> TypeGuard[str]:
-        """Type guard to check if value is a valid Python identifier.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid Python identifier, False otherwise
-
-        """
+        """Type guard to check if value is a valid Python identifier."""
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod

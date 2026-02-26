@@ -200,7 +200,9 @@ class FlextTestsBuilders:
             value_for_kwargs = None
         elif type(value) in {str, int, float, bool} or BaseModel in type(value).__mro__:
             value_for_kwargs = value
-        elif isinstance(value, list | tuple):
+        elif isinstance(value, Sequence) and not isinstance(
+            value, str | bytes | bytearray
+        ):
             value_for_kwargs = list(value)
         elif isinstance(value, dict):
             value_for_kwargs = dict(value)
@@ -360,7 +362,9 @@ class FlextTestsBuilders:
             for dict_key, dict_value in data_dict.items():
                 if type(dict_value) in {str, int, float, bool, type(None)}:
                     filtered_dict[dict_key] = dict_value
-                elif isinstance(dict_value, list | tuple):
+                elif isinstance(dict_value, Sequence) and not isinstance(
+                    dict_value, str | bytes | bytearray
+                ):
                     filtered_dict[dict_key] = list(dict_value)
                 elif isinstance(dict_value, dict):
                     filtered_dict[dict_key] = dict_value

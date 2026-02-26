@@ -1408,7 +1408,9 @@ class FlextProtocols:
     # - PayloadValue: Primitives, BaseModel, sequences, mappings
     # - BindableLogger: Logger protocol
     # - Callable: Factories that return PayloadValue
-    RegisterableService = t.RegisterableService
+    type RegisterableService = (
+        t.GeneralValueType | BindableLogger | Callable[..., t.GeneralValueType]
+    )
 
     # ServiceFactory: Factory callable that returns RegisterableService
     type ServiceFactory = t.FactoryCallable
@@ -1676,15 +1678,7 @@ class FlextProtocols:
     # Expose utility functions as static methods for external use
     @staticmethod
     def is_protocol(target_cls: type) -> bool:
-        """Check if a class is a typing.Protocol.
-
-        Args:
-            target_cls: The class to check.
-
-        Returns:
-            True if target_cls is a Protocol, False otherwise.
-
-        """
+        """Check if a class is a typing.Protocol."""
         return _ProtocolIntrospection.is_protocol(target_cls)
 
     @staticmethod

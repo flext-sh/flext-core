@@ -65,24 +65,7 @@ class FactoryDecoratorsDiscovery:
 
     @staticmethod
     def has_factories(module: ModuleType) -> bool:
-        """Check if module has any factory-decorated functions.
-
-        Efficiently checks if a module contains any functions marked with
-        the @factory() decorator without scanning all items.
-
-        Args:
-            module: Module object to check for factories
-
-        Returns:
-            True if module has at least one factory, False otherwise
-
-        Example:
-            >>> from flext_core._decorators import FactoryDecoratorsDiscovery
-            >>> if FactoryDecoratorsDiscovery.has_factories(my_module):
-            ...     # Auto-register factories in container
-            ...     container.auto_register_factories(my_module)
-
-        """
+        """Check if module has any factory-decorated functions."""
         return any(
             hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
             for name in dir(module)

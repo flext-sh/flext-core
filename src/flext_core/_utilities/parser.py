@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import overload
+from typing import cast, overload
 
 import structlog
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -1214,8 +1214,7 @@ class FlextUtilitiesParser:
             return None
         # Get members - returns MappingProxyType[str, T]
         members_proxy = target.__members__ if hasattr(target, "__members__") else {}
-        # Convert to dict for easier iteration
-        members: Mapping[str, T] = dict(members_proxy)
+        members: Mapping[str, T] = cast("Mapping[str, T]", members_proxy)
         value_str = str(value)
 
         # Case-insensitive matching
@@ -1223,20 +1222,20 @@ class FlextUtilitiesParser:
             value_lower = value_str.lower()
             for member_name, member_value in members.items():
                 if member_name.lower() == value_lower:
-                    return r.ok(member_value)
+                    return r[T].ok(member_value)
                 # Also check by value
                 member_val = getattr(member_value, "value", None)
                 if member_val is not None and str(member_val).lower() == value_lower:
-                    return r.ok(member_value)
+                    return r[T].ok(member_value)
         else:
             # Case-sensitive lookup by name
             if value_str in members:
-                return r.ok(members[value_str])
+                return r[T].ok(members[value_str])
             # Try matching by value
             for member_value in members.values():
                 member_val = getattr(member_value, "value", None)
                 if member_val == value_str:
-                    return r.ok(member_value)
+                    return r[T].ok(member_value)
 
         # No match found - return default or error
         target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"

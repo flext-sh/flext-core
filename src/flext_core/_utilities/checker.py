@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import cast, get_origin, get_type_hints
 
 from flext_core.constants import c
@@ -103,7 +103,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: t.HandlerCallable,
+        handle_method: Callable[..., object],
     ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
@@ -116,7 +116,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: t.HandlerCallable,
+        handle_method: Callable[..., object],
         handler_class: type,
     ) -> Mapping[str, t.GuardInputValue]:
         """Safely extract type hints from handle method."""
@@ -188,7 +188,7 @@ class FlextUtilitiesChecker:
         handle_method_raw = getattr(handler_class, c.Mixins.METHOD_HANDLE)
         if not callable(handle_method_raw):
             return None
-        handle_method: t.HandlerCallable = handle_method_raw
+        handle_method: Callable[..., object] = handle_method_raw
 
         signature = cls._get_method_signature(handle_method)
         if signature is None:
@@ -244,10 +244,6 @@ class FlextUtilitiesChecker:
         """
         # object type should be compatible with everything
         if expected_type is object:
-            return True
-
-        # object type by name should be compatible with everything
-        if hasattr(expected_type, "__name__") and expected_type.__name__ == "object":
             return True
 
         return None  # Not object type - continue checking

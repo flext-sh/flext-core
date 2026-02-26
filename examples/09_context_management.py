@@ -20,9 +20,41 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Mapping, Sequence
+from collections.abc import Generator, Mapping, Sequence
+from contextlib import contextmanager
 
 from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
+
+
+@contextmanager
+def _request_scope(
+    *,
+    operation_name: str,
+    user_id: str | None = None,
+    request_id: str | None = None,
+    metadata: m.ConfigMap | None = None,
+) -> Generator[None]:
+    resolved_request_id = request_id or u.generate("correlation")
+    with FlextContext.Correlation.new_correlation(resolved_request_id):
+        request_token = FlextContext.Variables.RequestId.set(resolved_request_id)
+        operation_token = FlextContext.Variables.OperationName.set(operation_name)
+        user_token = (
+            FlextContext.Variables.UserId.set(user_id) if user_id is not None else None
+        )
+        metadata_token = (
+            FlextContext.Variables.OperationMetadata.set(metadata)
+            if metadata is not None
+            else None
+        )
+        try:
+            yield
+        finally:
+            FlextContext.Variables.RequestId.reset(request_token)
+            FlextContext.Variables.OperationName.reset(operation_token)
+            if user_token is not None:
+                FlextContext.Variables.UserId.reset(user_token)
+            if metadata_token is not None:
+                FlextContext.Variables.OperationMetadata.reset(metadata_token)
 
 
 class ContextManagementService(
@@ -56,7 +88,7 @@ class ContextManagementService(
         print("\n=== Context Concepts ===")
 
         # Use FlextContext.Request for request-scoped operations
-        with FlextContext.Request.request_context(
+        with _request_scope(
             operation_name="demonstrate_context",
             user_id="demo-user",
             request_id=u.generate("correlation"),
@@ -94,7 +126,7 @@ class ContextManagementService(
 
         # Combine multiple with statements (SIM117)
         with (
-            FlextContext.Request.request_context(
+            _request_scope(
                 operation_name=operation_name,
                 request_id=request_id,
                 metadata=m.ConfigMap(
@@ -109,7 +141,7 @@ class ContextManagementService(
             ) as timing_metadata,
         ):
             # Simulate operation
-            user_id = FlextContext.Request.get_user_id() or "anonymous"
+            user_id = FlextContext.Variables.UserId.get() or "anonymous"
             operation = FlextContext.Request.get_operation_name() or "unknown"
 
             request_data: m.ConfigMap = m.ConfigMap(
@@ -145,7 +177,7 @@ class ContextManagementService(
             thread_id: int,
         ) -> r[m.ConfigMap]:
             """Thread operation with isolated context."""
-            with FlextContext.Request.request_context(
+            with _request_scope(
                 operation_name=f"thread_{thread_id}",
                 request_id=f"req-{thread_id}",
             ):
@@ -196,8 +228,8 @@ class ContextManagementService(
             operation_name=operation_name,
         ) as timing_metadata:
             # Simulate work
-            start_time = FlextContext.Performance.get_operation_start_time()
-            operation_metadata = FlextContext.Performance.get_operation_metadata() or {}
+            start_time = FlextContext.Variables.OperationStartTime.get()
+            operation_metadata = FlextContext.Variables.OperationMetadata.get() or {}
 
             performance_data: m.ConfigMap = m.ConfigMap(
                 root={
@@ -224,7 +256,7 @@ class ContextManagementService(
 
         correlation_id = u.generate("correlation")
 
-        with FlextContext.Request.request_context(
+        with _request_scope(
             operation_name="correlation_demo",
             request_id=correlation_id,
         ):
@@ -295,7 +327,7 @@ def demonstrate_context_features() -> None:
     print("\n=== Context Features ===")
 
     # Use FlextContext utilities directly (no wrappers)
-    with FlextContext.Request.request_context(
+    with _request_scope(
         operation_name="feature_demo",
     ):
         correlation_id = (

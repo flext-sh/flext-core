@@ -153,7 +153,7 @@ class IntegrationService(s[m.ConfigMap]):
         """Show FlextContext integration."""
         print("\n=== FlextContext Integration ===")
 
-        with FlextContext.Request.request_context(operation_name="integration_demo"):
+        with FlextContext.Correlation.new_correlation():
             correlation_id = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
             )

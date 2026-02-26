@@ -1,20 +1,17 @@
+"""Coverage tests for current utilities guard APIs."""
+
 from __future__ import annotations
 
-from collections.abc import Callable
-from dataclasses import dataclass
-from datetime import datetime
-from enum import StrEnum
 import builtins
-from pathlib import Path
-from typing import cast
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel
-from pydantic_settings import BaseSettings
-
 from flext_core import c, m, r, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.protocols import p
+from pydantic import BaseModel
 
 
 class _Model(BaseModel):
@@ -36,41 +33,6 @@ class _LoggerLike:
 
     def exception(self, *_args: object, **_kwargs: object) -> None:
         return None
-
-
-@dataclass
-class _HasLen:
-    value: int
-
-    def __len__(self) -> int:
-        return self.value
-
-
-class _BadLen:
-    def __len__(self) -> int:
-        raise TypeError("len boom")
-
-
-class _ContainsFalse:
-    def __contains__(self, _item: object) -> bool:
-        return False
-
-
-class _ContainsTypeError:
-    def __contains__(self, _item: object) -> bool:
-        raise TypeError("contains boom")
-
-
-class _AttrContainer:
-    key: str = "value"
-
-
-class _Settings(BaseSettings):
-    app_name: str = "flext"
-
-
-class _Status(StrEnum):
-    READY = "ready"
 
 
 def _sample_handler(value: t.GeneralValueType) -> t.GeneralValueType:
@@ -100,7 +62,7 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
 def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type({"a": 1})
     assert u.Guards.is_handler_type(_Model())
-    assert u.Guards.is_handler_type(cast(t.GuardInputValue, _sample_handler))
+    assert u.Guards.is_handler_type(cast("t.GuardInputValue", _sample_handler))
 
     class _BaseModelSubclass(BaseModel):
         value: str = "ok"
@@ -111,8 +73,8 @@ def test_is_handler_type_branches() -> None:
         def handle(self, _value: object) -> object:
             return None
 
-    assert u.Guards.is_handler_type(cast(t.GuardInputValue, _BaseModelSubclass))
-    assert u.Guards.is_handler_type(cast(t.GuardInputValue, _DuckHandler()))
+    assert u.Guards.is_handler_type(cast("t.GuardInputValue", _BaseModelSubclass))
+    assert u.Guards.is_handler_type(cast("t.GuardInputValue", _DuckHandler()))
 
 
 def test_non_empty_and_normalize_branches() -> None:
@@ -150,22 +112,22 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_value_dict: dict[str, object] = {"k": {1}}
 
     assert not u.Guards.is_configuration_mapping(
-        cast(t.GuardInputValue, bad_key_mapping)
+        cast("t.GuardInputValue", bad_key_mapping)
     )
     assert not u.Guards.is_configuration_mapping(
-        cast(t.GuardInputValue, bad_value_mapping)
+        cast("t.GuardInputValue", bad_value_mapping)
     )
     assert not u.Guards.is_configuration_dict([])
-    assert not u.Guards.is_configuration_dict(cast(t.GuardInputValue, {1: "v"}))
-    assert not u.Guards.is_configuration_dict(cast(t.GuardInputValue, bad_value_dict))
+    assert not u.Guards.is_configuration_dict(cast("t.GuardInputValue", {1: "v"}))
+    assert not u.Guards.is_configuration_dict(cast("t.GuardInputValue", bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
 
 
 def test_is_flexible_value_covers_all_branches() -> None:
     assert u.Guards.is_flexible_value(None)
     assert u.Guards.is_flexible_value(1)
-    assert u.Guards.is_flexible_value(datetime.now())
-    assert u.Guards.is_flexible_value(["a", 1, None, datetime.now()])
+    assert u.Guards.is_flexible_value(datetime.now(UTC))
+    assert u.Guards.is_flexible_value(["a", 1, None, datetime.now(UTC)])
     assert not u.Guards.is_flexible_value(["a", {"no": "nested"}])
     assert not u.Guards.is_flexible_value({1: "bad_key"})
     assert not u.Guards.is_flexible_value({"k": {"nested": "bad"}})
@@ -175,7 +137,7 @@ def test_is_flexible_value_covers_all_branches() -> None:
 
 def test_protocol_and_simple_guard_helpers() -> None:
     class _ContextLike:
-        def clone(self) -> "_ContextLike":
+        def clone(self) -> _ContextLike:
             return self
 
         def set(self, key: str, value: t.GeneralValueType, scope: str = "") -> object:
@@ -196,7 +158,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert not u.is_type(object(), "service")
     assert not u.is_type(object(), "middleware")
 
-    assert u.Guards.is_handler_callable(cast(t.GuardInputValue, _sample_handler))
+    assert u.Guards.is_handler_callable(cast("t.GuardInputValue", _sample_handler))
 
     assert u.Guards.is_mapping({"k": "v"})
 
@@ -236,7 +198,7 @@ def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     class _ProtocolLike:
-        __protocol_attrs__: set[str] = {"x"}
+        __protocol_attrs__: ClassVar[set[str]] = {"x"}
 
     original_isinstance = builtins.isinstance
 
@@ -245,7 +207,8 @@ def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> 
         classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if classinfo is _ProtocolLike:
-            raise TypeError("forced protocol isinstance error")
+            msg = "forced protocol isinstance error"
+            raise TypeError(msg)
         return original_isinstance(obj, classinfo)
 
     targets: list[tuple[str, type[object]]] = [
@@ -303,7 +266,7 @@ def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_extract_mapping_or_none_branches() -> None:
     assert u.extract_mapping_or_none({"k": "v"}) == {"k": "v"}
-    assert u.extract_mapping_or_none(cast(t.GuardInputValue, {1: "v"})) is None
+    assert u.extract_mapping_or_none(cast("t.GuardInputValue", {1: "v"})) is None
     assert u.extract_mapping_or_none([1, 2, 3]) is None
 
 
@@ -368,7 +331,8 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
         classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if cls is _SomeType and classinfo is BaseModel:
-            raise TypeError("boom")
+            msg = "boom"
+            raise TypeError(msg)
         return original_issubclass(cls, classinfo)
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
@@ -414,7 +378,8 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
         classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
-            raise TypeError("boom")
+            msg = "boom"
+            raise TypeError(msg)
         return original_issubclass(cls, classinfo)
 
     setattr(builtins, "issubclass", _explode)
@@ -424,7 +389,9 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
         setattr(builtins, "issubclass", original_issubclass)
 
 
-def test_guards_bool_identity_branch_via_isinstance_fallback(monkeypatch) -> None:
+def test_guards_bool_identity_branch_via_isinstance_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
@@ -440,7 +407,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(monkeypatch) -> Non
 
 
 def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     original_callable = builtins.callable
     original_issubclass = builtins.issubclass
@@ -458,7 +425,8 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
         classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
-            raise TypeError("boom")
+            msg = "boom"
+            raise TypeError(msg)
         return original_issubclass(cls, classinfo)
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
@@ -466,7 +434,9 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
     assert not u.is_type(_Candidate, "handler")
 
 
-def test_guards_issubclass_success_when_callable_is_patched(monkeypatch) -> None:
+def test_guards_issubclass_success_when_callable_is_patched(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     original_callable = builtins.callable
 
     class _ModelSub(BaseModel):
@@ -479,34 +449,3 @@ def test_guards_issubclass_success_when_callable_is_patched(monkeypatch) -> None
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     assert u.is_type(_ModelSub, "handler")
-
-
-def test_typeis_guards_namespace_and_runtime_behavior() -> None:
-    assert u.is_str("x")
-    assert not u.is_str(1)
-    assert u.is_int(3)
-    assert not u.is_int(True)
-    assert u.is_float(1.5)
-    assert u.is_bool(False)
-    assert u.is_none(None)
-    assert u.is_non_empty_str(" ok ")
-    assert not u.is_non_empty_str("  ")
-    assert u.is_positive_int(2)
-    assert not u.is_positive_int(-1)
-
-    list_value: t.GeneralValueType = ["a", 1, datetime.now()]
-    assert u.is_list(list_value)
-    assert u.is_dict({"k": "v"})
-    assert not u.is_dict(cast("t.GeneralValueType", {1: "v"}))
-    assert u.is_sequence(("a", 1))
-    assert not u.is_sequence("abc")
-    assert u.is_mapping({"k": "v"})
-    assert not u.is_mapping(cast("t.GeneralValueType", {1: "v"}))
-
-    model_value: t.GeneralValueType = _Model()
-    assert u.is_base_model(model_value)
-    assert u.is_base_settings(_Settings())
-    assert u.is_result(r[int].ok(1))
-    assert u.is_path(Path("."))
-    assert u.is_datetime(datetime.now())
-    assert u.is_enum(_Status.READY)

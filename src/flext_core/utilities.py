@@ -10,9 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, overload
-
-from pydantic import TypeAdapter, ValidationError
+from typing import overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
@@ -35,7 +33,6 @@ from flext_core._utilities.result_helpers import (
     ResultHelpers as FlextUtilitiesResultHelpers,
 )
 from flext_core._utilities.text import FlextUtilitiesText
-from flext_core._utilities.type_guards import FlextUtilitiesTypeGuards
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -117,16 +114,6 @@ class FlextUtilities:
 
     class Text(FlextUtilitiesText):
         """Text utility class - real inheritance."""
-
-    _validated_uri_adapter: ClassVar[TypeAdapter[t.ValidatedURI]] = TypeAdapter(
-        t.ValidatedURI
-    )
-    _validated_port_adapter: ClassVar[TypeAdapter[t.ValidatedPort]] = TypeAdapter(
-        t.ValidatedPort
-    )
-    _validated_hostname_adapter: ClassVar[TypeAdapter[t.ValidatedHostname]] = (
-        TypeAdapter(t.ValidatedHostname)
-    )
 
     # =========================================================================
     # STATIC METHOD ALIASES - All from _utilities/*.py
@@ -286,33 +273,18 @@ class FlextUtilities:
     is_configuration_mapping = staticmethod(
         FlextUtilitiesGuards.is_configuration_mapping,
     )
-    is_str = staticmethod(FlextUtilitiesTypeGuards.is_str)
-    is_int = staticmethod(FlextUtilitiesTypeGuards.is_int)
-    is_float = staticmethod(FlextUtilitiesTypeGuards.is_float)
-    is_bool = staticmethod(FlextUtilitiesTypeGuards.is_bool)
-    is_none = staticmethod(FlextUtilitiesTypeGuards.is_none)
-    is_dict = staticmethod(FlextUtilitiesTypeGuards.is_dict)
-    is_sequence = staticmethod(FlextUtilitiesTypeGuards.is_sequence)
-    is_base_model = staticmethod(FlextUtilitiesTypeGuards.is_base_model)
-    is_base_settings = staticmethod(FlextUtilitiesTypeGuards.is_base_settings)
-    is_result = staticmethod(FlextUtilitiesTypeGuards.is_result)
-    is_path = staticmethod(FlextUtilitiesTypeGuards.is_path)
-    is_datetime = staticmethod(FlextUtilitiesTypeGuards.is_datetime)
-    is_enum = staticmethod(FlextUtilitiesTypeGuards.is_enum)
-    is_non_empty_str = staticmethod(FlextUtilitiesTypeGuards.is_non_empty_str)
-    is_positive_int = staticmethod(FlextUtilitiesTypeGuards.is_positive_int)
     is_context = staticmethod(FlextUtilitiesGuards.is_context)
     is_dict_non_empty = staticmethod(FlextUtilitiesGuards.is_dict_non_empty)
     is_general_value_type = staticmethod(FlextUtilitiesGuards.is_general_value_type)
     is_handler_type = staticmethod(FlextUtilitiesGuards.is_handler_type)
     is_handler_callable = staticmethod(FlextUtilitiesGuards.is_handler_callable)
-    is_list = staticmethod(FlextUtilitiesTypeGuards.is_list)
+    is_list = staticmethod(FlextUtilitiesGuards.is_list)
     is_list_non_empty = staticmethod(FlextUtilitiesGuards.is_list_non_empty)
     is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
     is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)
     is_type = staticmethod(FlextUtilitiesGuards.is_type)
     is_config_value = staticmethod(FlextUtilitiesGuards.is_config_value)
-    is_mapping = staticmethod(FlextUtilitiesTypeGuards.is_mapping)
+    is_mapping = staticmethod(FlextUtilitiesGuards.is_mapping)
     none_ = staticmethod(FlextUtilitiesGuards.none_)
     is_result_like = staticmethod(FlextUtilitiesGuards.is_result_like)
     normalize_to_metadata_value = staticmethod(
@@ -493,41 +465,6 @@ class FlextUtilities:
     validate_length = staticmethod(FlextUtilitiesGuards.validate_length)
     validate_pattern = staticmethod(FlextUtilitiesGuards.validate_pattern)
     validate_positive = staticmethod(FlextUtilitiesGuards.validate_positive)
-
-    @staticmethod
-    def validate_uri(
-        uri: str,
-        field_name: str = "uri",
-    ) -> r[str]:
-        try:
-            validated = FlextUtilities._validated_uri_adapter.validate_python(uri)
-        except ValidationError:
-            return r[str].fail(f"{field_name} has invalid URI format")
-        return r[str].ok(validated)
-
-    @staticmethod
-    def validate_port_number(
-        port: int,
-        field_name: str = "port",
-    ) -> r[int]:
-        try:
-            validated = FlextUtilities._validated_port_adapter.validate_python(port)
-        except ValidationError:
-            return r[int].fail(f"{field_name} must be between 1 and 65535")
-        return r[int].ok(validated)
-
-    @staticmethod
-    def validate_hostname(
-        hostname: str,
-        field_name: str = "hostname",
-    ) -> r[str]:
-        try:
-            validated = FlextUtilities._validated_hostname_adapter.validate_python(
-                hostname
-            )
-        except ValidationError:
-            return r[str].fail(f"{field_name} has invalid hostname format")
-        return r[str].ok(validated)
 
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)

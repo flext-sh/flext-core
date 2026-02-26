@@ -698,30 +698,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def get_logger(
         name: str | None = None,
     ) -> p.Log.StructlogLogger:
-        """Get structlog logger instance (alias for FlextRuntime.get_logger).
-
-        Business Rule: Gets a structlog logger instance, delegating to FlextRuntime
-        for centralized logging management. Logger inherits global and scoped context
-        automatically. This method provides compatibility with code that expects
-        FlextLogger.get_logger() instead of FlextRuntime.get_logger().
-
-        Audit Implication: Logger retrieval ensures audit trail completeness by
-        providing access to structured logging with context. All loggers are retrieved
-        through this method or FlextRuntime.get_logger(), ensuring consistent logger
-        configuration across FLEXT. Logger name is critical for tracing log messages
-        to their source in audit trails.
-
-        Args:
-            name: Logger name (module name). Defaults to __name__ of caller.
-
-        Returns:
-            Logger: Typed structlog logger instance
-
-        Example:
-            >>> logger = FlextLogger.get_logger()
-            >>> logger.debug("Debug message")
-
-        """
+        """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
         return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(name))
 
     # =========================================================================

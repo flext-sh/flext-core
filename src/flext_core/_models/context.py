@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Annotated
+from typing import Annotated, cast
 
 import structlog.contextvars
 from pydantic import (
@@ -109,7 +109,7 @@ class FlextModelsContext:
                 value.root.items() if isinstance(value, t.ConfigMap) else value.items()
             )
         }
-        return FlextModelFoundation.Metadata(attributes=attributes)
+        return FlextModelFoundation.Metadata.model_validate({"attributes": attributes})
 
     @staticmethod
     def to_general_value_dict(
@@ -238,7 +238,7 @@ class FlextModelsContext:
             value = structlog_context[self._key]
             if value is None:
                 return self._default
-            return value
+            return cast("T", value)
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.

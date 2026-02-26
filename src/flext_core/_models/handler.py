@@ -305,20 +305,7 @@ class FlextModelsHandler:
             self,
             state: t.Dict,
         ) -> None:
-            """Set metrics state.
-
-            Direct assignment to _metrics_state. Use this to update metrics.
-
-            Args:
-                state: Metrics state to set
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.set_metrics_state({"items_processed": 42, "errors": 0})
-
-            """
+            """Set metrics state."""
             # Use PrivateAttr for proper Pydantic v2 pattern
             self._metrics_state = state
 

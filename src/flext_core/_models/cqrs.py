@@ -14,13 +14,13 @@ from collections.abc import Mapping
 from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
-    computed_field,
     BaseModel,
     ConfigDict,
     Discriminator,
     Field,
     TypeAdapter,
     ValidationError,
+    computed_field,
     field_validator,
 )
 

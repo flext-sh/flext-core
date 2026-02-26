@@ -267,8 +267,6 @@ class FlextModels:
 
     ArbitraryTypesModel: TypeAlias = FlextModelFoundation.ArbitraryTypesModel
     StrictBoundaryModel: TypeAlias = FlextModelFoundation.StrictBoundaryModel
-    FlexibleInternalModel: TypeAlias = FlextModelFoundation.FlexibleInternalModel
-    ImmutableValueModel: TypeAlias = FlextModelFoundation.ImmutableValueModel
     FrozenStrictModel: TypeAlias = FlextModelFoundation.FrozenStrictModel
     TaggedModel: TypeAlias = FlextModelFoundation.TaggedModel
     IdentifiableMixin: TypeAlias = FlextModelFoundation.IdentifiableMixin

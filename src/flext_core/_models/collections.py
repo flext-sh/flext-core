@@ -79,15 +79,7 @@ class FlextModelsCollections:
             return self.categories.get(category, [])
 
         def has_category(self, category: str) -> bool:
-            """Check if a category exists.
-
-            Args:
-                category: Category name to check
-
-            Returns:
-                bool: True if category exists, False otherwise
-
-            """
+            """Check if a category exists."""
             return category in self.categories
 
         def get(

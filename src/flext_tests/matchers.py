@@ -118,43 +118,81 @@ def _check_has_lacks(
     if has is not None:
         items = list(has) if _is_non_string_sequence(has) else [has]
         for item in items:
-            check_val = str(item) if as_str else _as_guard_input(item)
-            target = value if as_str else _as_guard_input(value)
             if as_str:
-                if check_val not in str(target):
+                check_str = str(item)
+                target = str(value)
+                if check_str not in target:
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
                             container=value, item=item
                         ),
                     )
-            elif not u.chk(target, contains=check_val):
-                raise AssertionError(
-                    msg
-                    or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                        container=value, item=item
-                    ),
-                )
+            else:
+                check_val = _as_guard_input(item)
+                target = _as_guard_input(value)
+                if not isinstance(target, Mapping | str):
+                    raise AssertionError(
+                        msg
+                        or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                            container=value, item=item
+                        ),
+                    )
+
+                if isinstance(target, str):
+                    if str(check_val) not in target:
+                        raise AssertionError(
+                            msg
+                            or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                                container=value, item=item
+                            ),
+                        )
+                elif check_val not in target:
+                    raise AssertionError(
+                        msg
+                        or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                            container=value, item=item
+                        ),
+                    )
     if lacks is not None:
         items = list(lacks) if _is_non_string_sequence(lacks) else [lacks]
         for item in items:
-            check_val = str(item) if as_str else _as_guard_input(item)
-            target = value if as_str else _as_guard_input(value)
             if as_str:
-                if check_val in str(target):
+                check_str = str(item)
+                target = str(value)
+                if check_str in target:
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
                             container=value, item=item
                         ),
                     )
-            elif u.chk(target, contains=check_val):
-                raise AssertionError(
-                    msg
-                    or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                        container=value, item=item
-                    ),
-                )
+            else:
+                check_val = _as_guard_input(item)
+                target = _as_guard_input(value)
+                if not isinstance(target, Mapping | str):
+                    raise AssertionError(
+                        msg
+                        or c.Tests.Matcher.ERR_LACKS_FAILED.format(
+                            container=value, item=item
+                        ),
+                    )
+
+                if isinstance(target, str):
+                    if str(check_val) in target:
+                        raise AssertionError(
+                            msg
+                            or c.Tests.Matcher.ERR_LACKS_FAILED.format(
+                                container=value, item=item
+                            ),
+                        )
+                elif check_val in target:
+                    raise AssertionError(
+                        msg
+                        or c.Tests.Matcher.ERR_LACKS_FAILED.format(
+                            container=value, item=item
+                        ),
+                    )
 
 
 class FlextTestsMatchers:

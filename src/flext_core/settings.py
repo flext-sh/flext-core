@@ -28,7 +28,7 @@ from flext_core.typings import T_Namespace, T_Settings, t
 from flext_core.utilities import u
 
 
-class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
+class FlextSettings(p.ProtocolSettings, FlextRuntime):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
@@ -69,7 +69,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
     # =========================================================================
 
     def _protocol_name(self) -> str:
-        return self.__class__.__name__
+        return "FlextSettings"
 
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var
@@ -237,7 +237,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         raw_instance = cls._instances[base_class]
         raw_type = raw_instance.__class__
         if raw_type is not cls and not issubclass(raw_type, cls):
-            cls_name = cls.__name__
+            cls_name = getattr(cls, "__name__", type(cls).__name__)
             msg = f"Singleton instance is not of expected type {cls_name}"
             raise TypeError(msg)
         return raw_instance
@@ -506,15 +506,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
 
     @classmethod
     def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
-        """Get configuration class for a namespace.
-
-        Args:
-            namespace: Namespace identifier
-
-        Returns:
-            Configuration class or None if not found
-
-        """
+        """Get configuration class for a namespace."""
         return cls._namespace_registry.get(namespace)
 
     def get_namespace(

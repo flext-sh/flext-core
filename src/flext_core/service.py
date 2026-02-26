@@ -440,21 +440,7 @@ class FlextService[TDomainResult](
         return r[bool].ok(value=True)
 
     def is_valid(self) -> bool:
-        """Check if service is in valid state for execution.
-
-        Performs business rule validation and returns boolean result.
-        Catches exceptions during validation to ensure safe state checking.
-        Used by infrastructure components to determine if service can execute.
-
-        Returns:
-            bool: True if service is valid and ready for execution
-
-        Example:
-            >>> service = MyService()
-            >>> if service.is_valid():
-            ...     result = service.execute()
-
-        """
+        """Check if service is in valid state for execution."""
         try:
             return self.validate_business_rules().is_success
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
@@ -466,23 +452,7 @@ class FlextService[TDomainResult](
             return False
 
     def get_service_info(self) -> Mapping[str, t.ScalarValue]:
-        """Get service metadata and configuration information.
-
-        Returns comprehensive metadata about the service instance including
-        type information and execution parameters.
-        Used by monitoring, logging, and debugging infrastructure.
-
-        Returns:
-            Mapping[str, t.ScalarValue]: Service metadata dictionary containing:
-                - service_type: Class name of the service
-                - Additional metadata can be added by subclasses
-
-        Example:
-            >>> service = MyService()
-            >>> info = service.get_service_info()
-            >>> print(f"Service: {info['service_type']}")
-
-        """
+        """Get service metadata and configuration information."""
         return {
             "service_type": self.__class__.__name__,
         }

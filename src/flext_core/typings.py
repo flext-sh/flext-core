@@ -9,13 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
-import re
 import typing
 from collections.abc import Callable, ItemsView, KeysView, Mapping, Sequence, ValuesView
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import StrEnum
-from ipaddress import IPv4Address, IPv6Address, ip_address
 from pathlib import Path
 from re import Pattern
 from typing import (
@@ -26,9 +23,8 @@ from typing import (
     TypeAlias,
     TypeVar,
 )
-from urllib.parse import urlparse
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
@@ -142,282 +138,6 @@ type FactoryCallable = Callable[[], RegisterableService]
 type ResourceCallable = Callable[[], _ContainerValue]
 
 type FactoryRegistrationCallable = Callable[[], _ScalarML | Sequence[_ScalarML]]
-
-
-_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-_HOSTNAME_LABEL_PATTERN = re.compile(r"^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$")
-_DN_COMPONENT_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9-]*\s*=\s*.+$")
-_ORACLE_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_$#]{0,29}$")
-_SINGER_STREAM_PATTERN = re.compile(r"^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*$")
-_MAX_HOSTNAME_LENGTH = 253
-_MAX_PORT = 65535
-_MAX_PERCENTAGE = 100.0
-_MAX_BOUNDED_LIST_ITEMS = 1000
-
-
-def _ensure_string(value: str | bytes | bytearray) -> str:
-    if not isinstance(value, str):
-        msg = "value must be a string"
-        raise TypeError(msg)
-    return value
-
-
-def _validate_non_empty_str(value: str) -> str:
-    text = _ensure_string(value).strip()
-    if not text:
-        msg = "value cannot be empty"
-        raise ValueError(msg)
-    return text
-
-
-def _validate_stripped_str(value: str) -> str:
-    return _ensure_string(value).strip()
-
-
-def _validate_lower_str(value: str) -> str:
-    return _ensure_string(value).strip().lower()
-
-
-def _validate_upper_str(value: str) -> str:
-    return _ensure_string(value).strip().upper()
-
-
-def _validate_slug_str(value: str) -> str:
-    text = _ensure_string(value).strip().lower()
-    if not _SLUG_PATTERN.fullmatch(text):
-        msg = "value must be a valid slug"
-        raise ValueError(msg)
-    return text
-
-
-def _validate_identifier_str(value: str) -> str:
-    text = _ensure_string(value).strip()
-    if not text.isidentifier():
-        msg = "value must be a valid identifier"
-        raise ValueError(msg)
-    return text
-
-
-def _validate_hostname(value: str) -> str:
-    hostname = _ensure_string(value).strip()
-    if not hostname or len(hostname) > _MAX_HOSTNAME_LENGTH:
-        msg = "value must be a valid hostname"
-        raise ValueError(msg)
-    labels = hostname.split(".")
-    if any(not _HOSTNAME_LABEL_PATTERN.fullmatch(label) for label in labels):
-        msg = "value must be a valid hostname"
-        raise ValueError(msg)
-    return hostname.lower()
-
-
-def _validate_port(value: int) -> int:
-    if isinstance(value, bool):
-        msg = "value must be an integer"
-        raise TypeError(msg)
-    if value < 1 or value > _MAX_PORT:
-        msg = "value must be between 1 and 65535"
-        raise ValueError(msg)
-    return value
-
-
-def _validate_uri(value: str) -> str:
-    uri = _ensure_string(value).strip()
-    parsed = urlparse(uri)
-    if not parsed.scheme or not parsed.netloc:
-        msg = "value must be a valid URI"
-        raise ValueError(msg)
-    return uri
-
-
-def _validate_ipv4(value: str) -> str:
-    address = ip_address(_ensure_string(value).strip())
-    if not isinstance(address, IPv4Address):
-        msg = "value must be a valid IPv4 address"
-        raise TypeError(msg)
-    return str(address)
-
-
-def _validate_ipv6(value: str) -> str:
-    address = ip_address(_ensure_string(value).strip())
-    if not isinstance(address, IPv6Address):
-        msg = "value must be a valid IPv6 address"
-        raise TypeError(msg)
-    return str(address)
-
-
-def _validate_positive_int(value: int) -> int:
-    if isinstance(value, bool):
-        msg = "value must be an integer"
-        raise TypeError(msg)
-    if value <= 0:
-        msg = "value must be positive"
-        raise ValueError(msg)
-    return value
-
-
-def _validate_non_negative_int(value: int) -> int:
-    if isinstance(value, bool):
-        msg = "value must be an integer"
-        raise TypeError(msg)
-    if value < 0:
-        msg = "value must be non-negative"
-        raise ValueError(msg)
-    return value
-
-
-def _validate_percentage(value: float) -> float:
-    if isinstance(value, bool):
-        msg = "value must be numeric"
-        raise TypeError(msg)
-    percentage = float(value)
-    if percentage < 0.0 or percentage > _MAX_PERCENTAGE:
-        msg = "value must be between 0 and 100"
-        raise ValueError(msg)
-    return percentage
-
-
-def _validate_bounded_float(value: float) -> float:
-    if isinstance(value, bool):
-        msg = "value must be numeric"
-        raise TypeError(msg)
-    numeric = float(value)
-    if numeric < 0.0 or numeric > 1.0:
-        msg = "value must be between 0.0 and 1.0"
-        raise ValueError(msg)
-    return numeric
-
-
-def _validate_existing_path(value: Path) -> Path:
-    path = Path(value)
-    if not path.exists():
-        msg = "path must exist"
-        raise ValueError(msg)
-    return path
-
-
-def _validate_existing_file_path(value: Path) -> Path:
-    path = _validate_existing_path(value)
-    if not path.is_file():
-        msg = "path must be an existing file"
-        raise ValueError(msg)
-    return path
-
-
-def _validate_existing_dir_path(value: Path) -> Path:
-    path = _validate_existing_path(value)
-    if not path.is_dir():
-        msg = "path must be an existing directory"
-        raise ValueError(msg)
-    return path
-
-
-def _validate_writable_path(value: Path) -> Path:
-    path = Path(value)
-    target = path if path.exists() else path.parent
-    if not target.exists() or not target.is_dir() or not os.access(target, os.W_OK):
-        msg = "path parent must exist and be writable"
-        raise ValueError(msg)
-    return path
-
-
-def _normalize_utc_datetime(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
-
-
-def _validate_past_datetime(value: datetime) -> datetime:
-    dt = _normalize_utc_datetime(value)
-    if dt >= datetime.now(UTC):
-        msg = "value must be in the past"
-        raise ValueError(msg)
-    return dt
-
-
-def _validate_future_datetime(value: datetime) -> datetime:
-    dt = _normalize_utc_datetime(value)
-    if dt <= datetime.now(UTC):
-        msg = "value must be in the future"
-        raise ValueError(msg)
-    return dt
-
-
-def _validate_iso_datetime_str(value: str) -> str:
-    text = _ensure_string(value).strip()
-    if not text:
-        msg = "value cannot be empty"
-        raise ValueError(msg)
-    normalized = text.replace("Z", "+00:00")
-    try:
-        _ = datetime.fromisoformat(normalized)
-    except ValueError as exc:
-        msg = "value must be an ISO 8601 datetime string"
-        raise ValueError(msg) from exc
-    return text
-
-
-def _validate_non_empty_list[T](value: list[T]) -> list[T]:
-    if len(value) == 0:
-        msg = "list cannot be empty"
-        raise ValueError(msg)
-    return value
-
-
-def _validate_unique_list[T](value: list[T]) -> list[T]:
-    seen: set[str] = set()
-    for item in value:
-        marker = repr(item)
-        if marker in seen:
-            msg = "list items must be unique"
-            raise ValueError(msg)
-        seen.add(marker)
-    return value
-
-
-def _validate_bounded_list[T](value: list[T]) -> list[T]:
-    if len(value) > _MAX_BOUNDED_LIST_ITEMS:
-        msg = "list cannot contain more than 1000 items"
-        raise ValueError(msg)
-    return value
-
-
-def _validate_dn_str(value: str) -> str:
-    text = _ensure_string(value).strip()
-    if not text:
-        msg = "DN cannot be empty"
-        raise ValueError(msg)
-    parts = [part.strip() for part in text.split(",")]
-    if any(not _DN_COMPONENT_PATTERN.fullmatch(part) for part in parts):
-        msg = "value must be a valid distinguished name"
-        raise ValueError(msg)
-    return text
-
-
-def _validate_ldif_line(value: str) -> str:
-    text = _ensure_string(value)
-    if not text.strip():
-        msg = "LDIF line cannot be empty"
-        raise ValueError(msg)
-    if "\n" in text or "\r" in text:
-        msg = "LDIF line must not contain newlines"
-        raise ValueError(msg)
-    return text
-
-
-def _validate_oracle_identifier(value: str) -> str:
-    identifier = _ensure_string(value).strip().upper()
-    if not _ORACLE_IDENTIFIER_PATTERN.fullmatch(identifier):
-        msg = "value must be a valid Oracle identifier"
-        raise ValueError(msg)
-    return identifier
-
-
-def _validate_singer_stream_name(value: str) -> str:
-    stream = _ensure_string(value).strip()
-    if not _SINGER_STREAM_PATTERN.fullmatch(stream):
-        msg = "value must be a valid Singer stream name"
-        raise ValueError(msg)
-    return stream
 
 
 class FlextTypes:
@@ -769,45 +489,6 @@ class FlextTypes:
         success_count: int = Field(default=0)
         error_count: int = Field(default=0)
 
-    type NonEmptyStr = Annotated[str, AfterValidator(_validate_non_empty_str)]
-    type StrippedStr = Annotated[str, AfterValidator(_validate_stripped_str)]
-    type LowerStr = Annotated[str, AfterValidator(_validate_lower_str)]
-    type UpperStr = Annotated[str, AfterValidator(_validate_upper_str)]
-    type SlugStr = Annotated[str, AfterValidator(_validate_slug_str)]
-    type IdentifierStr = Annotated[str, AfterValidator(_validate_identifier_str)]
-
-    type ValidatedHostname = Annotated[str, AfterValidator(_validate_hostname)]
-    type ValidatedPort = Annotated[int, AfterValidator(_validate_port)]
-    type ValidatedURI = Annotated[str, AfterValidator(_validate_uri)]
-    type ValidatedIPv4 = Annotated[str, AfterValidator(_validate_ipv4)]
-    type ValidatedIPv6 = Annotated[str, AfterValidator(_validate_ipv6)]
-
-    type PositiveInt = Annotated[int, AfterValidator(_validate_positive_int)]
-    type NonNegativeInt = Annotated[int, AfterValidator(_validate_non_negative_int)]
-    type Percentage = Annotated[float, AfterValidator(_validate_percentage)]
-    type BoundedFloat = Annotated[float, AfterValidator(_validate_bounded_float)]
-
-    type ExistingPath = Annotated[Path, AfterValidator(_validate_existing_path)]
-    type ExistingFilePath = Annotated[
-        Path, AfterValidator(_validate_existing_file_path)
-    ]
-    type ExistingDirPath = Annotated[Path, AfterValidator(_validate_existing_dir_path)]
-    type WritablePath = Annotated[Path, AfterValidator(_validate_writable_path)]
-
-    type UTCDatetime = Annotated[datetime, AfterValidator(_normalize_utc_datetime)]
-    type PastDatetime = Annotated[datetime, AfterValidator(_validate_past_datetime)]
-    type FutureDatetime = Annotated[datetime, AfterValidator(_validate_future_datetime)]
-    type ISODatetimeStr = Annotated[str, AfterValidator(_validate_iso_datetime_str)]
-
-    type NonEmptyList[T] = Annotated[list[T], AfterValidator(_validate_non_empty_list)]
-    type UniqueList[T] = Annotated[list[T], AfterValidator(_validate_unique_list)]
-    type BoundedList[T] = Annotated[list[T], AfterValidator(_validate_bounded_list)]
-
-    type DNStr = Annotated[str, AfterValidator(_validate_dn_str)]
-    type LDIFLine = Annotated[str, AfterValidator(_validate_ldif_line)]
-    type OracleIdentifier = Annotated[str, AfterValidator(_validate_oracle_identifier)]
-    type SingerStreamName = Annotated[str, AfterValidator(_validate_singer_stream_name)]
-
     # =====================================================================
     # VALIDATION TYPES (Annotated with Pydantic constraints)
     # =====================================================================
@@ -856,146 +537,23 @@ class FlextTypes:
         """ISO 8601 timestamp string."""
 
 
-# ============================================================================
-# FACTORY FUNCTIONS FOR DYNAMIC ANNOTATED TYPES
-# ============================================================================
-
-
-def bounded_int_factory(min_val: int, max_val: int) -> object:
-    """Factory for bounded integer type.
-
-    Args:
-        min_val: Minimum value (inclusive)
-        max_val: Maximum value (inclusive)
-
-    Returns:
-        Annotated type alias for bounded integer
-
-    """
-    return Annotated[int, Field(ge=min_val, le=max_val)]
-
-
-def choice_str_factory(allowed_values: list[str]) -> object:
-    """Factory for choice string type.
-
-    Args:
-        allowed_values: List of allowed string values
-
-    Returns:
-        Annotated type alias for choice string
-
-    """
-    return Annotated[str, Field(pattern=f"^({'|'.join(allowed_values)})$")]
-
-
-def pattern_str_factory(pattern: str) -> object:
-    """Factory for regex pattern string type.
-
-    Args:
-        pattern: Regular expression pattern
-
-    Returns:
-        Annotated type alias for pattern string
-
-    """
-    return Annotated[str, Field(pattern=pattern)]
-
-
 t = FlextTypes
 
-# ============================================================================
-# Module-Level Re-exports of Validation Types
-# ============================================================================
-PortNumber = FlextTypes.Validation.PortNumber
-NonEmptyStr = FlextTypes.NonEmptyStr
-StrippedStr = FlextTypes.StrippedStr
-LowerStr = FlextTypes.LowerStr
-UpperStr = FlextTypes.UpperStr
-SlugStr = FlextTypes.SlugStr
-IdentifierStr = FlextTypes.IdentifierStr
-ValidatedHostname = FlextTypes.ValidatedHostname
-ValidatedPort = FlextTypes.ValidatedPort
-ValidatedURI = FlextTypes.ValidatedURI
-ValidatedIPv4 = FlextTypes.ValidatedIPv4
-ValidatedIPv6 = FlextTypes.ValidatedIPv6
-PositiveInt = FlextTypes.PositiveInt
-NonNegativeInt = FlextTypes.NonNegativeInt
-Percentage = FlextTypes.Percentage
-BoundedFloat = FlextTypes.BoundedFloat
-ExistingPath = FlextTypes.ExistingPath
-ExistingFilePath = FlextTypes.ExistingFilePath
-ExistingDirPath = FlextTypes.ExistingDirPath
-WritablePath = FlextTypes.WritablePath
-UTCDatetime = FlextTypes.UTCDatetime
-PastDatetime = FlextTypes.PastDatetime
-FutureDatetime = FlextTypes.FutureDatetime
-ISODatetimeStr = FlextTypes.ISODatetimeStr
-DNStr = FlextTypes.DNStr
-LDIFLine = FlextTypes.LDIFLine
-OracleIdentifier = FlextTypes.OracleIdentifier
-SingerStreamName = FlextTypes.SingerStreamName
-
-UriString = FlextTypes.Validation.UriString
-HostnameStr = FlextTypes.Validation.HostnameStr
-BoundedStr = FlextTypes.Validation.BoundedStr
-TimestampStr = FlextTypes.Validation.TimestampStr
-PositiveTimeout = FlextTypes.Validation.PositiveTimeout
-RetryCount = FlextTypes.Validation.RetryCount
-WorkerCount = FlextTypes.Validation.WorkerCount
-
 __all__ = [
-    "BoundedFloat",
-    "BoundedStr",
-    "DNStr",
-    "ExistingDirPath",
-    "ExistingFilePath",
-    "ExistingPath",
     "FlextTypes",
-    "FutureDatetime",
-    "HostnameStr",
-    "ISODatetimeStr",
-    "IdentifierStr",
     "JsonDict",
     "JsonPrimitive",
     "JsonValue",
-    "LDIFLine",
-    "LowerStr",
     "MessageT_contra",
-    "NonEmptyStr",
-    "NonNegativeInt",
-    "OracleIdentifier",
     "P",
-    "PastDatetime",
-    "Percentage",
-    "PortNumber",
-    "PositiveInt",
-    "PositiveTimeout",
     "R",
     "ResultT",
-    "RetryCount",
-    "SingerStreamName",
-    "SlugStr",
-    "StrippedStr",
     "T",
     "T_Model",
     "T_Namespace",
     "T_Settings",
     "T_co",
     "T_contra",
-    "TimestampStr",
     "U",
-    "UTCDatetime",
-    "UpperStr",
-    "UriString",
-    "ValidatedHostname",
-    "ValidatedIPv4",
-    "ValidatedIPv6",
-    "ValidatedPort",
-    "ValidatedURI",
-    "WorkerCount",
-    "WritablePath",
-    "bounded_int_factory",
-    "choice_str_factory",
-    "pattern_str_factory",
     "t",
 ]

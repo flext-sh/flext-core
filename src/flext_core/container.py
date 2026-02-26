@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, override
+from typing import Self, TypeGuard, cast, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel
@@ -1172,16 +1172,19 @@ class FlextContainer(FlextRuntime, p.DI):
         # Clone base config — config objects are always BaseModel (FlextSettings)
         config_input = config  # Keep original for subproject check
         if config is not None and isinstance(config, BaseModel):
-            base_config: p.Config = config.model_copy(deep=True)
+            base_config: p.Config = cast("p.Config", config.model_copy(deep=True))
         elif isinstance(self.config, BaseModel):
-            base_config = self.config.model_copy(deep=True)
+            base_config = cast("p.Config", self.config.model_copy(deep=True))
         else:
             base_config = self._get_default_config()
 
         # Apply subproject suffix to app_name only when config is None
         if subproject and config_input is None and isinstance(base_config, BaseModel):
-            base_config = base_config.model_copy(
-                update={"app_name": f"{base_config.app_name}.{subproject}"},
+            base_config = cast(
+                "p.Config",
+                base_config.model_copy(
+                    update={"app_name": f"{base_config.app_name}.{subproject}"},
+                ),
             )
 
         scoped_context: p.Context

@@ -74,41 +74,12 @@ class FlextVersion:
 
     @classmethod
     def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
-        """Check if current version meets minimum version requirement.
-
-        Performs version comparison to determine if the current package version
-        is at least the specified minimum version. Useful for feature gating
-        and compatibility checks.
-
-        Args:
-            major: Minimum major version number
-            minor: Minimum minor version number (default: 0)
-            patch: Minimum patch version number (default: 0)
-
-        Returns:
-            bool: True if current version >= specified version
-
-        """
+        """Check if current version meets minimum version requirement."""
         return cls.__version_info__ >= (major, minor, patch)
 
     @classmethod
     def get_package_info(cls) -> Mapping[str, str]:
-        """Get comprehensive package information dictionary.
-
-        Returns all available package metadata in a structured dictionary
-        format for programmatic access to package information.
-
-        Returns:
-            Mapping[str, str]: Package metadata dictionary containing:
-                - name: Package name
-                - version: Version string
-                - description: Package description
-                - author: Author name
-                - author_email: Author email
-                - license: License type
-                - url: Homepage URL
-
-        """
+        """Get comprehensive package information dictionary."""
         return {
             "name": cls.__title__,
             "version": cls.__version__,
