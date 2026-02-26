@@ -54,7 +54,7 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
         cast("t.HandlerCallable", _UnknownHintHandler.handle),
         _UnknownHintHandler,
     )
-    assert hints == {}
+    assert hints == {"message": MissingType, "return": type(None)}
 
 
 def test_extract_message_type_from_parameter_branches() -> None:
@@ -84,11 +84,13 @@ def test_extract_message_type_from_handle_with_only_self() -> None:
 
 
 def test_object_dict_and_type_error_fallback_paths() -> None:
+    # _check_object_type_compatibility uses `is object` identity check
+    assert u.Checker._check_object_type_compatibility(cast("t.TypeOriginSpecifier", object)) is True
+    # Non-object type returns None
     class _FakeObjectName:
         __name__ = "object"
-
     fake_object = cast("t.TypeOriginSpecifier", _FakeObjectName())
-    assert u.Checker._check_object_type_compatibility(fake_object) is True
+    assert u.Checker._check_object_type_compatibility(fake_object) is None
 
     class _DictChild(dict[str, str]):
         pass

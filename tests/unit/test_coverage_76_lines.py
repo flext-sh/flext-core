@@ -155,13 +155,13 @@ class TestResultTransformations:
         # Without error_data, it's None
         r_no_data: FlextResult[int] = FlextResult[int].fail("error")
         assert r_no_data.error_data is None
-        # With error_data, it's a dict
+        # With error_data, it's a ConfigMap
         r_with_data: FlextResult[int] = FlextResult[int].fail(
             "error",
             error_data=m.ConfigMap(root={"detail": "info"}),
         )
-        assert isinstance(r_with_data.error_data, dict)
-        assert r_with_data.error_data == {"detail": "info"}
+        assert isinstance(r_with_data.error_data, m.ConfigMap)
+        assert r_with_data.error_data["detail"] == "info"
 
     def test_result_value_on_success(self) -> None:
         """Test .value on success."""

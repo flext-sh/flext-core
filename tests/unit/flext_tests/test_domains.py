@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import operator
 
+import pytest
 from flext_core import (
-    t,
     u,
 )
 from flext_tests.domains import FlextTestsDomains
@@ -64,7 +64,7 @@ class TestFlextTestsDomains:
         assert isinstance(payload, dict)
         assert "order_id" in payload
         assert "user_id" in payload
-        assert payload["amount"] == 99.99
+        assert payload["amount"] == pytest.approx(99.99)
         assert payload["currency"] == "USD"
         assert payload["status"] == "pending"
 
@@ -121,7 +121,7 @@ class TestFlextTestsDomains:
         # Type narrowing: error is t.GeneralValueType, check if it's a dict
         error_value = response.get("error")
         if isinstance(error_value, dict):
-            error_obj: dict[str, t.GeneralValueType] = error_value
+            error_obj = error_value
             assert error_obj.get("code") == "TEST_ERROR"
             assert error_obj.get("message") == "Test error message"
 

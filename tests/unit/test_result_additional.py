@@ -61,7 +61,7 @@ def test_map_error_identity_and_transform() -> None:
     assert transformed.is_failure
     assert transformed.error is not None and "bad_mapped" in transformed.error
     assert transformed.error_code == "E1"
-    assert transformed.error_data == {"k": "v"}
+    assert transformed.error_data == t.ConfigMap(root={"k": "v"})
 
 
 def test_flow_through_short_circuits_on_failure() -> None:
@@ -92,10 +92,12 @@ def test_create_from_callable_and_repr() -> None:
     u.Tests.Result.assert_result_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
 
-    error_callable: Callable[[], int] = cast("Callable[[], int]", lambda: 1 / 0)
+    error_callable: Callable[[], int] = cast(
+        "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error"))
+    )
     error_result = r[int].create_from_callable(error_callable)
     u.Tests.Result.assert_result_failure(error_result)
-    assert "division" in (error_result.error or "")
+    assert "test error" in (error_result.error or "")
 
     success_result = r[int].create_from_callable(lambda: 7)
     assert repr(success_result) == "r.ok(7)"

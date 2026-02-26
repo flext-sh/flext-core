@@ -8,7 +8,6 @@ from enum import StrEnum
 from typing import cast
 
 import pytest
-
 from flext_core import c, m, r, t, u
 from flext_core._utilities.parser import FlextUtilitiesParser
 from pydantic import BaseModel
@@ -322,10 +321,10 @@ def test_parser_convert_and_norm_branches(
 
     mapping_result = parser.norm_in("a", m.ConfigMap(root={"A": "1"}), case="lower")
     config_map_result = parser.norm_in("a", m.ConfigMap(root={"A": "x"}), case="lower")
-    unsupported_result = parser.norm_in("a", cast("list[str]", object()), case="lower")
+    with pytest.raises(TypeError):
+        parser.norm_in("a", cast("list[str]", object()), case="lower")
     assert mapping_result is True
     assert config_map_result is True
-    assert unsupported_result is False
 
     original_norm_list = FlextUtilitiesParser.norm_list
     monkeypatch.setattr(
@@ -334,7 +333,7 @@ def test_parser_convert_and_norm_branches(
         staticmethod(lambda *_args, **_kwargs: {"k": "v"}),
     )
     try:
-        assert parser.norm_in("v", ["x"], case="lower") is True
+        assert parser.norm_in("v", ["x"], case="lower") is False
     finally:
         monkeypatch.setattr(FlextUtilitiesParser, "norm_list", original_norm_list)
 

@@ -31,7 +31,7 @@ class TestDictMixinOperations:
     def test_iter(self) -> None:
         """__iter__ returns iterator over keys (line 331)."""
         d = t.Dict(root={"x": "1", "y": "2"})
-        keys = list(iter(d))
+        keys = list(d.keys())
         assert "x" in keys
         assert "y" in keys
 
@@ -90,7 +90,7 @@ class TestConfigMapDictOps:
     def test_configmap_iter(self) -> None:
         """ConfigMap supports __iter__."""
         cm = t.ConfigMap(root={"a": "1", "b": "2"})
-        assert set(cm) == {"a", "b"}
+        assert set(cm.keys()) == {"a", "b"}
 
 
 class TestValidatorCallable:

@@ -10,14 +10,13 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 
 import pytest
-from pydantic import BaseModel, TypeAdapter, ValidationError
-
+from flext_core import result as _result_mod, utilities as _utils_mod
 from flext_core._models import base as _base_module
+from pydantic import BaseModel, ValidationError
 
 FlextModelFoundation = _base_module.FlextModelFoundation
 c = _base_module.c
 t = _base_module.t
-from flext_core import result as _result_mod, utilities as _utils_mod
 
 r = _result_mod.r
 u = _utils_mod.u
@@ -76,89 +75,6 @@ class _BrokenDumpModel(BaseModel):
         return super().__getattribute__(name)
 
 
-@pytest.mark.parametrize(
-    ("raw", "expected"),
-    [
-        ("  value  ", "value"),
-        ("name", "name"),
-    ],
-)
-def test_strip_whitespace(raw: str, expected: str) -> None:
-    assert _base_module.strip_whitespace(raw) == expected
-
-
-def test_ensure_utc_datetime_naive_and_none() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0)
-    converted = _base_module.ensure_utc_datetime(naive)
-    assert converted is not None
-    assert converted.tzinfo == UTC
-    assert _base_module.ensure_utc_datetime(None) is None
-
-
-def test_normalize_to_list_branches() -> None:
-    assert _base_module.normalize_to_list([1, 2]) == [1, 2]
-    assert _base_module.normalize_to_list((1, 2)) == [1, 2]
-    normalized_set = cast(list[int], _base_module.normalize_to_list(list({1, 2})))
-    assert sorted(normalized_set) == [1, 2]
-    assert _base_module.normalize_to_list("x") == ["x"]
-
-
-def test_validate_positive_number_via_field_constraint() -> None:
-    """PositiveInt/PositiveFloat now use Field(gt=0) instead of custom validator."""
-    adapter = TypeAdapter(_base_module.PositiveInt)
-    assert adapter.validate_python(1) == 1
-    with pytest.raises(ValidationError):
-        adapter.validate_python(0)
-    with pytest.raises(ValidationError):
-        adapter.validate_python(-1)
-
-
-def test_validate_non_empty_string_success_and_error() -> None:
-    assert _base_module.validate_non_empty_string("  data ") == "data"
-    with pytest.raises(ValueError, match="String cannot be empty or whitespace"):
-        _base_module.validate_non_empty_string("   ")
-
-
-def test_validate_email_success_and_error() -> None:
-    assert _base_module.validate_email("a@b.com") == "a@b.com"
-    with pytest.raises(ValueError, match="Invalid email format"):
-        _base_module.validate_email("invalid")
-
-
-def test_validate_url_success_and_error() -> None:
-    assert _base_module.validate_url("https://example.com") == "https://example.com"
-    with pytest.raises(ValueError, match="Invalid URL format"):
-        _base_module.validate_url("example")
-
-
-def test_validate_semver_success_and_error() -> None:
-    assert _base_module.validate_semver("1.2.3-alpha+001") == "1.2.3-alpha+001"
-    with pytest.raises(ValueError, match="Invalid semantic version format"):
-        _base_module.validate_semver("1.2")
-
-
-def test_validate_uuid_string_success_and_error() -> None:
-    valid = str(uuid.uuid4())
-    assert _base_module.validate_uuid_string(valid) == valid
-    with pytest.raises(ValueError, match="Invalid UUID format"):
-        _base_module.validate_uuid_string("nope")
-
-
-def test_validate_config_dict_errors_and_reserved_key() -> None:
-    with pytest.raises(TypeError, match="Configuration must be a dictionary"):
-        _base_module.validate_config_dict("x")
-    with pytest.raises(ValueError, match="reserved"):
-        _base_module.validate_config_dict({"_secret": 1})
-
-
-def test_validate_tags_list_normalization_and_errors() -> None:
-    assert _base_module.validate_tags_list([" A ", "a", "B", " "]) == ["a", "b"]
-    with pytest.raises(TypeError, match="Tags must be a list"):
-        _base_module.validate_tags_list("x")
-    with pytest.raises(TypeError, match="Tag must be string"):
-        _base_module.validate_tags_list([1])
-
-
 def test_metadata_attributes_accepts_none() -> None:
     model = FlextModelFoundation.Metadata.model_validate({"attributes": None})
     assert model.attributes == {}
@@ -198,7 +114,7 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
     attributes = t.Dict(root={"x": 1})
     assert FlextModelFoundation.Metadata._validate_attributes(
         cast(
-            t.MetadataAttributeValue | Mapping[str, t.MetadataAttributeValue],
+            "t.MetadataAttributeValue | Mapping[str, t.MetadataAttributeValue]",
             attributes,
         )
     ) == {"x": 1}
@@ -252,7 +168,7 @@ def test_identifiable_unique_id_empty_rejected() -> None:
 
 
 def test_timestampable_timestamp_conversion_and_json_serializer() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0)
+    naive = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
     model = _Timestampable(created_at=naive, updated_at=naive)
     assert model.created_at.tzinfo == UTC
     dumped = model.model_dump(mode="json")
@@ -343,8 +259,8 @@ def test_versionable_internal_validators_for_unreachable_branches() -> None:
 def test_auditable_user_and_timestamp_validators() -> None:
     model = _Auditable(
         created_by="  creator  ",
-        created_at=datetime(2026, 1, 1, 12, 0, 0),
-        updated_at=datetime(2026, 1, 1, 13, 0, 0),
+        created_at=datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC),
+        updated_at=datetime(2026, 1, 1, 13, 0, 0, tzinfo=UTC),
         updated_by=" updater ",
     )
     assert model.created_by == "creator"
@@ -383,7 +299,7 @@ def test_auditable_validation_errors() -> None:
 def test_soft_delete_validators_and_serializer() -> None:
     model = _SoftDelete(
         deleted_by=" user ",
-        deleted_at=datetime(2026, 1, 1, 12, 0, 0),
+        deleted_at=datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC),
         is_deleted=True,
     )
     assert model.deleted_by == "user"

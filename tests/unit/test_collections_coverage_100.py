@@ -195,8 +195,7 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
-        result_dict: t.ConfigMap = result
-        assert result_dict.root.get("count") == 30
+        assert result["count"] == 30
 
     def test_statistics_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
@@ -208,8 +207,7 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
-        result_dict: t.ConfigMap = result
-        assert result_dict.root.get("items") == ["a", "b", "c"]
+        assert result["items"] == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
@@ -223,10 +221,9 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
-        result_dict: t.ConfigMap = result
-        assert result_dict.root.get("count") == 30
-        assert result_dict.root.get("items") == ["a", "b"]
-        assert result_dict.root.get("name") == "second"
+        assert result["count"] == 30
+        assert result["items"] == ["a", "b"]
+        assert result["name"] == "second"
 
     def test_statistics_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
@@ -239,9 +236,8 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
         assert FlextRuntime.is_dict_like(result)
-        result_dict: t.ConfigMap = result
-        assert result_dict.root.get("count") == 10
-        assert result_dict.root.get("name") == "first"
+        assert result["count"] == 10
+        assert result["name"] == "first"
 
 
 class TestFlextModelsCollectionsSettings:

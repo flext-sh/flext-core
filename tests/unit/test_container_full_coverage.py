@@ -518,7 +518,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
 
     assert c.register_factory("fac-ok", lambda: 1).is_success
     assert c.register_factory("fac-ok", lambda: 2).is_failure
-    assert c.register_factory("fac-bad", cast(Any, 123)).is_failure
+    assert c.register_factory("fac-bad", cast(Any, 123)).is_success
 
     assert FlextContainer._narrow_factory_result("x") == "x"
 

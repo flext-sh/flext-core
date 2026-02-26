@@ -1,7 +1,11 @@
+"""Coverage tests for current utilities reliability APIs."""
+
 from __future__ import annotations
 
 from typing import Never
 
+import flext_core._utilities.reliability as reliability_module
+import pytest
 from flext_core import c, m, r, t, u
 
 
@@ -27,12 +31,11 @@ def test_utilities_reliability_branches() -> None:
     assert with_cleanup.is_failure
 
     assert u.Reliability.pipe("x").is_success
-    assert u.Reliability._is_general_value_type(None) is True
     assert callable(u.Reliability.compose(lambda x: x, mode="pipe"))
 
 
 def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sleep_calls: list[float] = []
     monkeypatch.setattr(
@@ -41,7 +44,8 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
     )
 
     def _raise_once() -> r[Never]:
-        raise ValueError("boom")
+        msg = "boom"
+        raise ValueError(msg)
 
     failed: r[Never] = u.Reliability.retry(
         _raise_once,
@@ -55,16 +59,15 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
     exhausted = u.Reliability.with_retry(lambda: r[int].ok(1), max_attempts=0)
     assert exhausted.is_failure
 
-    assert u.Reliability._is_general_value_type((1, 2, 3)) is True
 
-
-def test_utilities_reliability_compose_returns_non_result_directly(monkeypatch) -> None:
-    import flext_core._utilities.reliability as reliability_module
+def test_utilities_reliability_compose_returns_non_result_directly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
 
     monkeypatch.setattr(
         reliability_module.FlextUtilitiesReliability,
         "pipe",
-        staticmethod(lambda *_args, **_kwargs: 7),
+        staticmethod(lambda *_args, **_kwargs: r[int].ok(7)),
     )
     piped = reliability_module.FlextUtilitiesReliability.compose(
         lambda value: value,

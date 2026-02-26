@@ -57,11 +57,8 @@ def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
     class _NoProtocols(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
         x: int = 1
 
-    get_protocols = cast(
-        Callable[[], tuple[type, ...]],
-        getattr(_NoProtocols, "get_protocols"),
-    )
-    assert get_protocols() == ()
+    assert not hasattr(_NoProtocols, "get_protocols")
+    assert getattr(_NoProtocols, "__protocols__", ()) == ()
 
 
 def test_protocol_model_and_settings_methods() -> None:
@@ -126,10 +123,10 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
         is True
     )
 
-    class _DefaultModelName(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
+    class _DefaultModelName(p.ProtocolModel):
         value: int = 1
 
-    class _DefaultSettingsName(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
+    class _DefaultSettingsName(p.ProtocolModel):
         app_name: str = "x"
 
     model_name_getter = cast(

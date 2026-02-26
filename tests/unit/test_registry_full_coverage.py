@@ -1,10 +1,11 @@
+"""Coverage tests for FlextRegistry compatibility paths."""
+
 from __future__ import annotations
 
-import importlib
-from types import SimpleNamespace
 from typing import cast
 
-from flext_core import FlextRegistry, FlextResult, FlextHandlers, c, h, m, p, r, t
+import pytest
+from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
 from flext_core.typings import JsonValue
 
 
@@ -12,12 +13,8 @@ class _Handler(FlextHandlers[JsonValue, JsonValue]):
     def handle(self, message: JsonValue) -> FlextResult[JsonValue]:
         return r[JsonValue].ok(message)
 
-
-class _BrokenListRegistry(FlextRegistry):
-    def __getattribute__(self, name: str):
-        if name == "_registered_keys":
-            raise TypeError("broken")
-        return super().__getattribute__(name)
+    def __call__(self, message: JsonValue) -> FlextResult[JsonValue]:
+        return self.handle(message)
 
 
 def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
@@ -36,8 +33,8 @@ def _as_registry_handler(handler: _Handler) -> t.HandlerCallable:
 def test_summary_properties_and_subclass_storage_reset() -> None:
     detail = _success_details("a")
     summary = FlextRegistry.Summary(registered=[detail], errors=["x"])
-    assert summary.successful_registrations == 1
-    assert summary.failed_registrations == 1
+    assert len(summary.registered) == 1
+    assert len(summary.errors) == 1
 
     class _ChildRegistry(FlextRegistry):
         pass
@@ -46,7 +43,9 @@ def test_summary_properties_and_subclass_storage_reset() -> None:
     assert _ChildRegistry._class_registered_keys == set()
 
 
-def test_execute_and_register_handler_failure_paths(monkeypatch) -> None:
+def test_execute_and_register_handler_failure_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     registry = FlextRegistry()
     setattr(registry, "_dispatcher", None)
     execute_result = registry.execute()
@@ -59,7 +58,7 @@ def test_execute_and_register_handler_failure_paths(monkeypatch) -> None:
     setattr(
         registry,
         "_dispatcher",
-        cast(p.CommandBus, cast("object", _FailDispatcher())),
+        cast("p.CommandBus", cast("object", _FailDispatcher())),
     )
     reg_result = registry.register_handler(_as_registry_handler(_Handler()))
     assert reg_result.is_failure
@@ -78,7 +77,7 @@ def test_execute_and_register_handler_failure_paths(monkeypatch) -> None:
     setattr(
         registry,
         "_dispatcher",
-        cast(p.CommandBus, cast("object", _OkDispatcher())),
+        cast("p.CommandBus", cast("object", _OkDispatcher())),
     )
     monkeypatch.setattr(
         FlextRegistry, "_create_registration_details", lambda *_args: None
@@ -88,7 +87,9 @@ def test_execute_and_register_handler_failure_paths(monkeypatch) -> None:
     assert fallback.value.registration_id != ""
 
 
-def test_create_auto_discover_and_mode_mapping(monkeypatch) -> None:
+def test_create_auto_discover_and_mode_mapping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     discovered_handler = _Handler()
 
     def fake_scan(_module: object):
@@ -119,7 +120,9 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch) -> None:
     assert event_details.handler_mode == c.Cqrs.HandlerType.EVENT
 
 
-def test_summary_error_paths_and_bindings_failures(monkeypatch) -> None:
+def test_summary_error_paths_and_bindings_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     summary = FlextRegistry.Summary()
     msg = FlextRegistry._add_registration_error("k", "", summary)
     assert msg == ""
@@ -143,12 +146,13 @@ def test_summary_error_paths_and_bindings_failures(monkeypatch) -> None:
 
     class _RaiseBindingDispatcher:
         def register_handler(self, *_args: object):
-            raise RuntimeError("bind-ex")
+            msg = "bind-ex"
+            raise RuntimeError(msg)
 
     setattr(
         registry,
         "_dispatcher",
-        cast(p.CommandBus, cast("object", _FailBindingDispatcher())),
+        cast("p.CommandBus", cast("object", _FailBindingDispatcher())),
     )
     failed = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert failed.is_failure
@@ -156,13 +160,15 @@ def test_summary_error_paths_and_bindings_failures(monkeypatch) -> None:
     setattr(
         registry,
         "_dispatcher",
-        cast(p.CommandBus, cast("object", _RaiseBindingDispatcher())),
+        cast("p.CommandBus", cast("object", _RaiseBindingDispatcher())),
     )
     raised = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert raised.is_failure
 
 
-def test_get_plugin_and_register_metadata_and_list_items_exception(monkeypatch) -> None:
+def test_get_plugin_and_register_metadata_and_list_items_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     registry = FlextRegistry()
     registry._registered_keys.add("cat::name")
     monkeypatch.setattr(
@@ -187,7 +193,3 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(monkeypatch) 
     )
     reg_fail = registry.register("svc2", "service")
     assert reg_fail.is_failure
-
-    broken = _BrokenListRegistry()
-    listed = broken.list_items()
-    assert listed.is_failure

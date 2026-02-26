@@ -12,10 +12,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-from flext_core import m, t
-from tests.test_utils import assertion_helpers
 from flext_core._models.entity import _ComparableConfigMap
 from flext_core.models import m
+
+from tests.test_utils import assertion_helpers
 
 
 # Define Query and Command classes using dataclasses to avoid Pydantic circular dependencies

@@ -1270,7 +1270,7 @@ class TestBatchOperations:
         batch_result = result.value
         # success_count is a computed_field property, not a callable
         # Access it as an attribute, not a method
-        assert batch_result.success_count() >= 1
+        assert batch_result.success_count >= 1
 
     def test_batch_result_model_structure(self, tmp_path: Path) -> None:
         """Test BatchResult model has correct structure."""

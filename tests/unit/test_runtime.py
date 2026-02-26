@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from enum import StrEnum
 from types import ModuleType
 from typing import ClassVar, cast
@@ -30,7 +30,6 @@ from typing import ClassVar, cast
 import pytest
 import structlog
 from dependency_injector import containers, providers
-
 from flext_core import FlextContainer, FlextContext, FlextRuntime, c, p, r, s, t
 from flext_core.mixins import FlextMixins
 
@@ -1096,8 +1095,8 @@ class TestFlextRuntime:
                 service_version="1.0.0",
                 enable_context_correlation=True,
             )
-            assert FlextContext.Service.get_service_name() == "test-service"
-            assert FlextContext.Service.get_service_version() == "1.0.0"
+            assert FlextContext.Variables.ServiceName.get() == "test-service"
+            assert FlextContext.Variables.ServiceVersion.get() == "1.0.0"
             assert FlextContext.Correlation.get_correlation_id() is not None
         elif (
             test_case.operation
@@ -1108,7 +1107,7 @@ class TestFlextRuntime:
                 service_name="minimal-service",
                 enable_context_correlation=True,
             )
-            assert FlextContext.Service.get_service_name() == "minimal-service"
+            assert FlextContext.Variables.ServiceName.get() == "minimal-service"
             assert FlextContext.Correlation.get_correlation_id() is not None
         elif (
             test_case.operation
@@ -1121,7 +1120,7 @@ class TestFlextRuntime:
                 service_version="2.0.0",
                 enable_context_correlation=False,
             )
-            assert FlextContext.Service.get_service_name() == "no-correlation-service"
+            assert FlextContext.Variables.ServiceName.get() == "no-correlation-service"
             assert FlextContext.Correlation.get_correlation_id() is None
 
 

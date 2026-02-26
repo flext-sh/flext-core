@@ -256,7 +256,7 @@ class TestFlextTestsBuilders:
             entries={"a": 1, "b": 2, "c": 3},
             entries_filter=cast(
                 t_test.Tests.PayloadValue,
-                cast(object, frozenset({"a", "c"})),
+                cast(object, {"a", "c"}),
             ),
         )
         data = _as_builder_dict(builder.build())

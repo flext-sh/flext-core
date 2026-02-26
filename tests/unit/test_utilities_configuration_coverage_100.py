@@ -19,20 +19,18 @@ from __future__ import annotations
 
 # mypy: disable-error-code="valid-type,misc"
 # mypy: follow-imports=skip
-
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
-
-from flext_core.exceptions import FlextExceptions
 from flext_core import p
+from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+from flext_core.exceptions import FlextExceptions
 from flext_core.models import m
 from flext_core.typings import t
-from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class _Assertions:
@@ -380,7 +378,7 @@ class TestFlextUtilitiesConfiguration:
                 enabled=TestConfigConstants.TestValues.TEST_ENABLED_FALSE,
             )
             result = FlextUtilitiesConfiguration.get_parameter(
-                cast(p.HasModelDump, cast(object, config)),
+                cast("p.HasModelDump", cast("object", config)),
                 param_name,
             )
             # Use tm.that for assertions
@@ -395,7 +393,7 @@ class TestFlextUtilitiesConfiguration:
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 FlextUtilitiesConfiguration.get_parameter(
-                    cast(p.HasModelDump, cast(object, config)),
+                    cast("p.HasModelDump", cast("object", config)),
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
             assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
@@ -404,7 +402,7 @@ class TestFlextUtilitiesConfiguration:
 
         def test_from_pydantic_model_invalid_dump(self) -> None:
             """Test get_parameter handles invalid model_dump return."""
-            config = cast(p.HasModelDump, cast(object, InvalidModelForTest()))
+            config = cast("p.HasModelDump", cast("object", InvalidModelForTest()))
             result = FlextUtilitiesConfiguration.get_parameter(
                 config,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -1005,7 +1003,7 @@ class TestFlextUtilitiesConfiguration:
                 model_class=FailingOptionsForTest,
                 explicit_options=cast(
                     "FailingOptionsForTest",
-                    cast("object", object()),
+                    object(),
                 ),
                 default_factory=FailingOptionsForTest,
                 value="new",

@@ -228,7 +228,7 @@ class TestsCore:
         result = service.execute()
         u.Tests.Result.assert_result_success(result)
         data = result.value
-        assert isinstance(data, Mapping)
+        assert isinstance(data, m.ConfigMap)
         assert "user_id" in data
 
     @pytest.mark.parametrize(

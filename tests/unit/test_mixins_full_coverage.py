@@ -4,6 +4,8 @@ from collections.abc import Callable, Mapping
 from types import SimpleNamespace
 from typing import Any, cast
 
+import pytest
+
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, c, m, p, r, t, u, x
@@ -55,12 +57,12 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
     assert x.fail("error").is_failure
 
     conf = m.ConfigMap(root={"a": "b"})
-    assert cast("Any", x).ModelConversion.to_dict(conf) is conf
+    assert x.to_dict(conf) is conf
 
     monkeypatch.setattr(
         FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1)
     )
-    scalar_wrapped = cast("Any", x).ModelConversion.to_dict(_SvcModel(value="ok"))
+    scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
 
     class _BadMap(Mapping[str, t.GeneralValueType]):
@@ -73,12 +75,8 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
         def __getitem__(self, _key: str) -> t.GeneralValueType:
             raise RuntimeError("boom")
 
-    assert (
-        cast("Any", x)
-        .ModelConversion.to_dict(cast("Mapping[str, t.GeneralValueType]", _BadMap()))
-        .root
-        == {}
-    )
+    with pytest.raises(RuntimeError, match="boom"):
+        x.to_dict(cast("Mapping[str, t.GeneralValueType]", _BadMap()))
 
 
 def test_mixins_runtime_bootstrap_and_track_paths(monkeypatch) -> None:

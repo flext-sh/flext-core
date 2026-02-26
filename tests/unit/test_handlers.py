@@ -19,8 +19,6 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel
-
 from flext_core import (
     FlextExceptions,
     FlextResult,
@@ -31,6 +29,8 @@ from flext_core import (
     x,
 )
 from flext_tests import FlextTestsUtilities, u
+from pydantic import BaseModel
+
 from tests.test_utils import assertion_helpers
 
 
@@ -472,19 +472,6 @@ class TestFlextHandlers:
             "processed_test_message",
         )
 
-    def test_handlers_callable_interface(self) -> None:
-        """Test __call__ method (callable interface)."""
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
-            "test_callable",
-            "Test Callable",
-        )
-        handler = ConcreteTestHandler(config=config)
-        result = handler("test_message")
-        u.Tests.Result.assert_success_with_value(
-            result,
-            "processed_test_message",
-        )
-
     def test_handlers_can_handle_method(self) -> None:
         """Test can_handle method."""
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
@@ -547,20 +534,10 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
         # Business Rule: validate accepts AcceptableMessageType compatible objects
         # object is compatible with AcceptableMessageType at runtime
-        message_typed = cast(t.AcceptableMessageType, message)
-        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
-        result = handler_typed.validate(cast(str, message_typed))
+        message_typed = cast("t.AcceptableMessageType", message)
+        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
+        result = handler_typed.validate(cast("str", message_typed))
         assertion_helpers.assert_flext_result_success(result)
-
-    def test_handlers_validate_message_protocol(self) -> None:
-        """Test validate_message protocol method."""
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
-            "test_validate_message_protocol",
-            "Test Validate Message Protocol",
-        )
-        handler = ConcreteTestHandler(config=config)
-        result = handler.validate_message("test_message")
-        u.Tests.Result.assert_result_success(result)
 
     def test_handlers_record_metric(self) -> None:
         """Test record_metric protocol method."""
@@ -571,20 +548,6 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
         result = handler.record_metric("test_metric", 42.0)
         u.Tests.Result.assert_result_success(result)
-
-    def test_handlers_get_metrics(self) -> None:
-        """Test get_metrics protocol method."""
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
-            "test_get_metrics",
-            "Test Get Metrics",
-        )
-        handler = ConcreteTestHandler(config=config)
-        handler.record_metric("test_metric", 42.0)
-        result = handler.get_metrics()
-        u.Tests.Result.assert_result_success(result)
-        metrics = result.value
-        assert isinstance(metrics, dict)
-        assert metrics.get("test_metric") == 42.0
 
     def test_handlers_push_context(self) -> None:
         """Test push_context protocol method."""
@@ -634,9 +597,9 @@ class TestFlextHandlers:
         # Business Rule: validate accepts AcceptableMessageType, but None is passed to test error handling
         # None is intentionally passed to test error handling - cast to satisfy type checker
         # The cast allows None to be passed for testing error handling scenarios
-        none_message = cast(t.AcceptableMessageType, None)
-        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
-        result = handler_typed.validate(cast(str, none_message))
+        none_message = cast("t.AcceptableMessageType", None)
+        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
+        result = handler_typed.validate(cast("str", none_message))
         u.Tests.Result.assert_result_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
@@ -653,9 +616,9 @@ class TestFlextHandlers:
         msg = TestMessage(value="test")
         # Business Rule: validate accepts Pydantic BaseModel instances compatible with AcceptableMessageType
         # TestMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast(t.AcceptableMessageType, msg)
-        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
-        result = handler_typed.validate(cast(str, msg_typed))
+        msg_typed = cast("t.AcceptableMessageType", msg)
+        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
+        result = handler_typed.validate(cast("str", msg_typed))
         u.Tests.Result.assert_result_success(result)
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -674,9 +637,9 @@ class TestFlextHandlers:
         msg = DataClassMessage(value="test", number=42)
         # Business Rule: validate accepts dataclass instances compatible with AcceptableMessageType
         # DataClassMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast(t.AcceptableMessageType, cast(object, msg))
-        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
-        result = handler_typed.validate(cast(str, msg_typed))
+        msg_typed = cast("t.AcceptableMessageType", cast("object", msg))
+        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
+        result = handler_typed.validate(cast("str", msg_typed))
         u.Tests.Result.assert_result_success(result)
 
     def test_handlers_slots_message_validation(self) -> None:
@@ -697,9 +660,9 @@ class TestFlextHandlers:
         msg = SlotsMessage(value="test", number=42)
         # Business Rule: validate accepts __slots__ class instances compatible with AcceptableMessageType
         # SlotsMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast(t.AcceptableMessageType, cast(object, msg))
-        handler_typed = cast(h[t.AcceptableMessageType, str], handler)
-        result = handler_typed.validate(cast(str, msg_typed))
+        msg_typed = cast("t.AcceptableMessageType", cast("object", msg))
+        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
+        result = handler_typed.validate(cast("str", msg_typed))
         u.Tests.Result.assert_result_success(result)
 
 

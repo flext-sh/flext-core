@@ -34,9 +34,9 @@ def test_utilities_get_method_coverage() -> None:
     test_data = m.ConfigMap(root={"key": "value", "other": 456})
 
     # Test direct key access
-    result = u.get(test_data, "key")
+    result = u.get(test_data.root, "key")
     assert result == "value"
 
     # Test missing key with default
-    result = u.get(test_data, "missing", default="fallback")
+    result = u.get(test_data.root, "missing", default="fallback")
     assert result == "fallback"

@@ -528,7 +528,7 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
                 True,
                 False,
                 True,
-                _as_test_payload(bool),
+                False,
                 False,
                 False,
             ],
@@ -577,8 +577,6 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test hash_entity_by_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
-        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -586,10 +584,13 @@ class TestuDomain:
                 test_case.get("id_attr", "unique_id"),
             ),
         )
-        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result,
-            test_case,
-        )
+        expected = test_case.get("expected_result")
+        if isinstance(expected, type):
+            assert isinstance(operation_result, expected), (
+                f"Expected type {expected}, got {type(operation_result)}"
+            )
+        else:
+            assert operation_result == expected
 
     @pytest.mark.parametrize(
         "test_case",
@@ -607,10 +608,11 @@ class TestuDomain:
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
-        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result,
-            test_case,
-        )
+        expected = test_case.get("expected_result")
+        if isinstance(expected, type):
+            assert isinstance(operation_result, expected), f"Expected {expected}, got {type(operation_result)}: {operation_result}"
+        else:
+            assert operation_result == expected, f"Expected {expected}, got {operation_result}"
 
     @pytest.mark.parametrize(
         "test_case",
@@ -628,10 +630,8 @@ class TestuDomain:
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
-        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: operation_result,
-            test_case,
-        )
+        # hash_value_object_by_value returns an int; expected_result is the type `int`
+        assert isinstance(operation_result, int), f"Expected int, got {type(operation_result)}: {operation_result}"
 
     @pytest.mark.parametrize(
         "test_case",

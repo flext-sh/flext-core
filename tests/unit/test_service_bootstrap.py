@@ -94,7 +94,7 @@ class TestServiceBootstrap:
         service_result = runtime.container.get("test_key")
         u.Tests.Result.assert_result_success(cast("r[str]", service_result))
         # Assert
-        assert hasattr(runtime, "_container")
+        assert hasattr(runtime, "container")
 
     def test_create_runtime_with_factories(self) -> None:
         """Test _create_runtime accepts factories parameter."""
@@ -112,7 +112,7 @@ class TestServiceBootstrap:
         factory_result = runtime.container.get("test_factory")
         u.Tests.Result.assert_result_success(cast("r[str]", factory_result))
         # Assert
-        assert hasattr(runtime, "_container")
+        assert hasattr(runtime, "container")
 
     def test_create_runtime_with_resources(self) -> None:
         """Test _create_runtime accepts resources parameter."""
@@ -130,7 +130,7 @@ class TestServiceBootstrap:
         resource_result = runtime.container.get("test_resource")
         u.Tests.Result.assert_result_success(cast("r[str]", resource_result))
         # Assert
-        assert hasattr(runtime, "_container")
+        assert hasattr(runtime, "container")
 
     def test_create_runtime_with_context(self) -> None:
         """Test _create_runtime accepts context parameter."""

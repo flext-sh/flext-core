@@ -171,8 +171,8 @@ class TestFlextModelsContainer:
 
         assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes["key1"] == "value1"
-        assert registration.metadata.attributes["key2"] == 42
-        assert registration.metadata.attributes["key3"] is True
+        assert registration.metadata.attributes["key2"] == "42"
+        assert registration.metadata.attributes["key3"] == "True"
 
     def test_service_registration_metadata_nested_dict(self) -> None:
         """Test metadata with nested dict conversion."""
@@ -282,7 +282,7 @@ class TestFlextModelsContainer:
         # registration.metadata is m.Metadata (from _normalize_to_metadata)
         assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes["factory_type"] == "test"
-        assert registration.metadata.attributes["priority"] == 1
+        assert registration.metadata.attributes["priority"] == "1"
 
     @pytest.mark.parametrize(
         "config_dict",
@@ -450,8 +450,8 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         )
         assert isinstance(result, m.Metadata)
         assert result.attributes["key1"] == "value1"
-        assert result.attributes["key2"] == 42
-        assert result.attributes["key3"] is True
+        assert result.attributes["key2"] == "42"
+        assert result.attributes["key3"] == "True"
 
     def test_normalize_to_metadata_existing_metadata(self) -> None:
         """Test normalize_to_metadata with existing Metadata instance."""

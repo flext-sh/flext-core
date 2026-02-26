@@ -77,6 +77,10 @@ class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
         """Handle the message."""
         return r[t.GeneralValueType].ok(f"processed_{message}")
 
+    def __call__(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
+        """Make handler callable for registry validation."""
+        return self.handle(message)
+
 
 class RegistryScenarios:
     """Centralized registry test scenarios using c."""
@@ -412,7 +416,7 @@ class TestFlextRegistry:
             summary.errors.append("test_error")
         assert len(summary.registered) == test_case.handler_count
         assert (len(summary.errors) > 0) == (not test_case.should_succeed)
-        assert (not summary) == (not test_case.should_succeed)
+        assert summary.is_failure == (not test_case.should_succeed)
 
     @pytest.mark.parametrize(
         "test_case",

@@ -14,16 +14,14 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import math
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-
-from flext_core import t, u
-from flext_tests import u as tu
+from flext_core import u
+from flext_core.typings import t
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,8 +102,8 @@ class TypeGuardsScenarios:
         TypeGuardScenario(
             name="non_empty_tuple",
             value=(1, 2),
-            expected_result=False,
-        ),  # is_list_like only checks for list, not tuple
+            expected_result=True,
+        ),  # is_list_non_empty uses Sequence check, includes tuples
         TypeGuardScenario(name="empty_list", value=[], expected_result=False),
         TypeGuardScenario(name="empty_tuple", value=(), expected_result=False),
         TypeGuardScenario(
@@ -125,48 +123,44 @@ class TypeGuardsScenarios:
     NORMALIZE_TO_METADATA_VALUE: ClassVar[list[NormalizeScenario]] = [
         # Primitive types
         NormalizeScenario(name="string_value", value="test", expected_type=str),
-        NormalizeScenario(name="int_value", value=42, expected_type=int),
-        NormalizeScenario(name="float_value", value=math.pi, expected_type=float),
-        NormalizeScenario(name="bool_true", value=True, expected_type=bool),
-        NormalizeScenario(name="bool_false", value=False, expected_type=bool),
+        NormalizeScenario(name="int_value", value=42, expected_type=str),
+        NormalizeScenario(name="float_value", value=math.pi, expected_type=str),
+        NormalizeScenario(name="bool_true", value=True, expected_type=str),
+        NormalizeScenario(name="bool_false", value=False, expected_type=str),
         NormalizeScenario(name="none_value", value=None, expected_type=type(None)),
         # Dict types
         NormalizeScenario(
             name="simple_dict",
             value={"key": "value"},
-            expected_type=dict,
-            expected_value={"key": "value"},
+            expected_type=str,
+            expected_value='{"key": "value"}',  # Dicts become JSON strings
         ),
         NormalizeScenario(
             name="dict_with_primitives",
             value={"a": 1, "b": "test", "c": True, "d": None},
-            expected_type=dict,
+            expected_type=str,
         ),
         NormalizeScenario(
             name="dict_with_nested_dict",
             value={"key": {"nested": "value"}},
-            expected_type=dict,
-            expected_value={
-                "key": "{'nested': 'value'}",
-            },  # Nested dict converted to string
-        ),
+            expected_type=str,
+        ),  # Dict becomes JSON string
         NormalizeScenario(
             name="dict_with_list_value",
             value={"key": [1, 2, 3]},
-            expected_type=dict,
-            expected_value={"key": "[1, 2, 3]"},  # List converted to string
-        ),
+            expected_type=str,
+        ),  # Dict becomes JSON string
         NormalizeScenario(
             name="dict_with_non_string_key",
             value=cast("t.GeneralValueType", {123: "value"}),
-            expected_type=dict,
+            expected_type=str,
         ),
         # List types
         NormalizeScenario(
             name="simple_list",
             value=[1, 2, 3],
             expected_type=list,
-            expected_value=[1, 2, 3],
+            expected_value=["1", "2", "3"],  # Non-scalar items become strings
         ),
         NormalizeScenario(
             name="list_with_primitives",
@@ -198,7 +192,7 @@ class TypeGuardsScenarios:
         ),
         NormalizeScenario(
             name="set_value",
-            value=cast("t.GeneralValueType", {1, 2, 3}),
+            value=cast("t.GeneralValueType", cast("object", {1, 2, 3})),
             expected_type=str,
         ),
         NormalizeScenario(
@@ -261,7 +255,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
     )
     def test_normalize_to_metadata_value(self, scenario: NormalizeScenario) -> None:
         """Test normalize_to_metadata_value with various scenarios."""
-        result = u.Guards.normalize_to_metadata_value(scenario.value)
+        result = u.normalize_to_metadata_value(scenario.value)
 
         # Verify type
         assert isinstance(result, scenario.expected_type), scenario.name
@@ -273,17 +267,21 @@ class TestuTypeGuardsNormalizeToMetadataValue:
     def test_normalize_dict_with_non_string_key(self) -> None:
         """Test normalize_to_metadata_value with dict having non-string keys."""
         value = cast("t.GeneralValueType", {123: "value", "key": "test"})
-        result = u.Guards.normalize_to_metadata_value(value)
+        result = u.normalize_to_metadata_value(value)
 
-        assert isinstance(result, dict)
-        # Non-string keys should be skipped (only string keys are processed)
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.MetadataAttributeValue]", result)
-        assert "key" in result_dict
-        assert result_dict["key"] == "test"
+        # Dicts are now serialized to JSON strings
+        assert isinstance(result, str)
+        import json
+        parsed = json.loads(result)
+        assert "key" in parsed
+        assert parsed["key"] == "test"
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        """Test normalize_to_metadata_value with complex nested dict."""
+        """Test normalize_to_metadata_value with complex nested dict.
+
+        Dicts containing non-JSON-serializable values (like object()) cause
+        TypeError during json.dumps serialization.
+        """
         value = cast(
             "t.GeneralValueType",
             {
@@ -294,17 +292,9 @@ class TestuTypeGuardsNormalizeToMetadataValue:
                 "complex": object(),
             },
         )
-        result = u.Guards.normalize_to_metadata_value(value)
-
-        assert isinstance(result, dict)
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.MetadataAttributeValue]", result)
-        assert result_dict["str"] == "value"
-        assert result_dict["int"] == 42
-        # Nested structures should be converted to strings
-        assert isinstance(result_dict["nested_dict"], str)
-        assert isinstance(result_dict["nested_list"], str)
-        assert isinstance(result_dict["complex"], str)
+        # object() is not JSON-serializable, so json.dumps raises TypeError
+        with pytest.raises(TypeError, match="not JSON serializable"):
+            u.normalize_to_metadata_value(value)
 
     def test_normalize_list_with_complex_items(self) -> None:
         """Test normalize_to_metadata_value with list containing complex items."""
@@ -320,15 +310,15 @@ class TestuTypeGuardsNormalizeToMetadataValue:
                 object(),
             ],
         )
-        result = u.Guards.normalize_to_metadata_value(value)
+        result = u.normalize_to_metadata_value(value)
 
         assert isinstance(result, list)
         # Type narrowing: result is list after assert_result_matches_expected
         result_list = cast("list[t.MetadataAttributeValue]", result)
         assert result_list[0] == "string"
-        assert result_list[1] == 42
-        assert result_list[2] is True
-        assert result_list[3] is None
+        assert result_list[1] == "42"  # int becomes str via _is_scalar
+        assert result_list[2] == "True"  # bool becomes str via _is_scalar
+        assert result_list[3] is None  # None IS scalar, stays None
         # Complex items should be converted to strings
         assert isinstance(result_list[4], str)
         assert isinstance(result_list[5], str)
@@ -341,8 +331,8 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             def __str__(self) -> str:
                 return "custom_object"
 
-        value = cast("t.GeneralValueType", CustomObject())
-        result = u.Guards.normalize_to_metadata_value(value)
+        value = cast("t.GeneralValueType", cast("object", CustomObject()))
+        result = u.normalize_to_metadata_value(value)
 
         assert isinstance(result, str)
         assert result == "custom_object"

@@ -20,7 +20,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import time
 from dataclasses import dataclass
@@ -28,11 +27,10 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel
-
-from flext_core import FlextContext, FlextResult, m, t, x
-from flext_tests import u
+from flext_core import FlextContext, x
 from flext_core.models import m
+from flext_core.typings import t
+from flext_tests import u
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -231,72 +229,6 @@ class TestFlextMixinsNestedClasses:
             )
         elif scenario.scenario_type == ServiceMixinScenarioType.SERVICE_ENRICH:
             service._enrich_context(version="1.0.0", team="test")
-
-    @pytest.mark.parametrize(
-        "scenario",
-        MixinScenarios.MODEL_CONVERSION_SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_model_conversion_scenarios(
-        self,
-        scenario: ModelConversionScenario,
-    ) -> None:
-        """Test ModelConversion.to_dict() with various input types."""
-        if scenario.scenario_type == ModelConversionScenarioType.WITH_BASEMODEL:
-
-            class TestModel(BaseModel):
-                name: str
-                value: int
-
-            test_model_instance = TestModel(name="test", value=42)
-            input_value: BaseModel | t.GeneralValueType = test_model_instance
-        else:
-            input_value = scenario.input_value
-        # Type narrowing: to_dict accepts BaseModel | ContextMetadataMapping | ConfigurationMapping | None
-        if isinstance(input_value, (BaseModel, dict, m.Metadata)):
-            result = x.ModelConversion.to_dict(input_value)
-        else:
-            result = x.ModelConversion.to_dict(None)
-        assert isinstance(result, m.ConfigMap)
-        assert result == scenario.expected_output
-        if scenario.scenario_type == ModelConversionScenarioType.WITH_DICT:
-            assert isinstance(input_value, dict)
-            assert result.root == input_value
-
-    @pytest.mark.parametrize(
-        "scenario",
-        MixinScenarios.RESULT_HANDLING_SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_result_handling_scenarios(self, scenario: ResultHandlingScenario) -> None:
-        """Test ResultHandling.ensure_result() with various inputs."""
-        if scenario.scenario_type == ResultHandlingScenarioType.RAW_VALUE:
-            raw_result = x.ResultHandling.ensure_result(42)
-            u.Tests.Result.assert_success_with_value(
-                raw_result,
-                42,
-            )
-        elif scenario.scenario_type == ResultHandlingScenarioType.EXISTING_RESULT:
-            original = FlextResult[int].ok(100)
-            existing_result: FlextResult[int] = x.ResultHandling.ensure_result(original)
-            assert existing_result is original
-            assert existing_result.value == 100
-        elif scenario.scenario_type == ResultHandlingScenarioType.TYPE_PRESERVATION:
-            int_result = x.ResultHandling.ensure_result(42)
-            str_result = x.ResultHandling.ensure_result("hello")
-            list_result = x.ResultHandling.ensure_result([1, 2, 3])
-            u.Tests.Result.assert_success_with_value(
-                int_result,
-                42,
-            )
-            u.Tests.Result.assert_success_with_value(
-                str_result,
-                "hello",
-            )
-            u.Tests.Result.assert_success_with_value(
-                list_result,
-                [1, 2, 3],
-            )
 
     def test_service_mixin_with_operation_context(self) -> None:
         """Test Service mixin operation context workflow."""

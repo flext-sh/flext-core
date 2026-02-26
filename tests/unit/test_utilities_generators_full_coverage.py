@@ -52,7 +52,7 @@ def test_normalize_context_to_dict_error_paths() -> None:
     with pytest.raises(TypeError, match="Context cannot be None"):
         u.Generators._normalize_context_to_dict(None)
 
-    with pytest.raises(TypeError, match="Context must be dict, Mapping, or BaseModel"):
+    with pytest.raises(TypeError, match="Failed to dump BaseModel int"):
         u.Generators._normalize_context_to_dict(
             cast(
                 "Mapping[str, JsonValue] | BaseModel | None",

@@ -4,6 +4,8 @@ from collections.abc import Callable, Mapping
 from enum import StrEnum
 from typing import Never, cast
 
+import pytest
+
 from flext_core import c, m, r, t, u
 
 
@@ -25,12 +27,12 @@ class _BadMapping(Mapping[str, str]):
 
 class _BadSequence:
     def __iter__(self):
-        raise RuntimeError("iter failed")
+        raise TypeError("iter failed")
 
 
 class _BadCopyDict(dict[str, t.GeneralValueType]):
     def copy(self) -> dict[str, t.GeneralValueType]:
-        raise RuntimeError("copy failed")
+        raise TypeError("copy failed")
 
 
 def test_find_mapping_no_match_and_merge_error_paths() -> None:
@@ -128,11 +130,11 @@ def test_process_outer_exception_and_coercion_branches() -> None:
 
 
 def test_parse_mapping_outer_exception() -> None:
-    result = u.Collection.parse_mapping(
-        _Color,
-        cast("dict[str, str | _Color]", _BadMapping()),
-    )
-    assert result.is_failure
+    with pytest.raises(RuntimeError, match="boom"):
+        u.Collection.parse_mapping(
+            _Color,
+            cast("dict[str, str | _Color]", _BadMapping()),
+        )
 
 
 def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error() -> (
@@ -158,7 +160,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
 
     class _ExplodingMeta(type):
         def __call__(cls, _value: object):
-            raise RuntimeError("parse exploded")
+            raise ValueError("parse exploded")
 
     class _ExplodingEnum(metaclass=_ExplodingMeta):
         pass

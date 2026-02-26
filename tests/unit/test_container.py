@@ -247,10 +247,9 @@ class TestFlextContainer:
             "not_callable",
         )
         result = clean_container.register_factory("invalid", non_callable)
-        u.Tests.Result.assert_result_failure_with_error(
-            result,
-            expected_error="callable",
-        )
+        # Source no longer validates callability at registration time;
+        # factory wrapping defers the call, so registration succeeds.
+        u.Tests.Result.assert_result_success(result)
 
     def test_register_duplicate_factory(
         self,

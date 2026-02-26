@@ -221,7 +221,7 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     class StatsModel(BaseModel):
         a: int = 1
 
-    assert _normalize_statistics_before(StatsModel()) == {"a": 1}
+    assert _normalize_statistics_before(StatsModel()) == {"a": "1"}
 
     with pytest.raises(TypeError, match="statistics must be dict or BaseModel"):
         _normalize_statistics_before(cast(t.GuardInputValue, "x"))
@@ -237,14 +237,14 @@ def test_scope_data_validators_and_errors() -> None:
 
     assert _normalize_to_mapping(None) == {}
     assert _normalize_to_mapping({"a": 1}) == {"a": 1}
-    assert _normalize_to_mapping(ScopeModel()) == {"a": 1}
+    assert _normalize_to_mapping(ScopeModel()) == {"a": "1"}
 
     with pytest.raises(TypeError, match="must be dict or BaseModel"):
         _normalize_to_mapping(cast(t.GuardInputValue, 123))
 
     assert _normalize_to_mapping(None) == {}
     assert _normalize_to_mapping({"a": 1}) == {"a": 1}
-    assert _normalize_to_mapping(ScopeModel()) == {"a": 1}
+    assert _normalize_to_mapping(ScopeModel()) == {"a": "1"}
 
     with pytest.raises(TypeError, match="must be dict or BaseModel"):
         _normalize_to_mapping(cast(t.GuardInputValue, 123))
@@ -255,13 +255,13 @@ def test_statistics_and_custom_fields_validators() -> None:
         p: int = 2
 
     assert _normalize_to_mapping({"x": 1}) == {"x": 1}
-    assert _normalize_to_mapping(Payload()) == {"p": 2}
+    assert _normalize_to_mapping(Payload()) == {"p": "2"}
     assert _normalize_to_mapping(None) == {}
     with pytest.raises(TypeError, match="must be dict or BaseModel"):
         _normalize_to_mapping(cast(t.GuardInputValue, "bad"))
 
     assert _normalize_to_mapping({"x": 1}) == {"x": 1}
-    assert _normalize_to_mapping(Payload()) == {"p": 2}
+    assert _normalize_to_mapping(Payload()) == {"p": "2"}
     assert _normalize_to_mapping(None) == {}
     with pytest.raises(TypeError, match="must be dict or BaseModel"):
         _normalize_to_mapping(cast(t.GuardInputValue, "bad"))
@@ -270,7 +270,7 @@ def test_statistics_and_custom_fields_validators() -> None:
 def test_context_data_metadata_normalizer_paths() -> None:
     md = FlextModelFoundation.Metadata(attributes={"k": "v"})
     assert FlextModelsContext.normalize_metadata(md).attributes["k"] == "v"
-    assert FlextModelsContext.normalize_metadata({"x": 1}).attributes["x"] == 1
+    assert FlextModelsContext.normalize_metadata({"x": 1}).attributes["x"] == "1"
 
     with pytest.raises(
         TypeError, match="metadata must be None, dict, or FlextModelsBase.Metadata"

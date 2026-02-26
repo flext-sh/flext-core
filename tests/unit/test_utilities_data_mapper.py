@@ -37,7 +37,7 @@ class TestMapperMapDictKeys:
         )
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
 
-        result = FlextUtilities.mapper().map_dict_keys(source.root, mapping)
+        result = FlextUtilities.mapper().map_dict_keys(source_raw, mapping)
 
         tm.ok(result, eq={mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2})
 
@@ -53,7 +53,7 @@ class TestMapperMapDictKeys:
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
 
         result = FlextUtilities.mapper().map_dict_keys(
-            source.root,
+            source_raw,
             mapping,
             keep_unmapped=True,
         )
@@ -72,7 +72,7 @@ class TestMapperMapDictKeys:
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
 
         result = FlextUtilities.mapper().map_dict_keys(
-            source.root,
+            source_raw,
             mapping,
             keep_unmapped=False,
         )
@@ -96,7 +96,7 @@ class TestMapperMapDictKeys:
             "m.ConfigMap",
             bad_dict_instance,
         )
-        result = FlextUtilities.mapper().map_dict_keys(bad_dict_typed.root, {})
+        result = FlextUtilities.mapper().map_dict_keys(bad_dict_instance, {})
 
         tm.fail(result, contains="Failed to map dict keys")
 
@@ -228,7 +228,7 @@ class TestMapperTransformValues:
         )
 
         result = FlextUtilities.mapper().transform_values(
-            source.root,
+            source_raw,
             lambda v: str(v).upper(),
         )
 
@@ -245,7 +245,7 @@ class TestMapperTransformValues:
         )
 
         result = FlextUtilities.mapper().transform_values(
-            source.root,
+            source_raw,
             lambda v: v * 2 if isinstance(v, int) else v,
         )
 
@@ -266,7 +266,7 @@ class TestMapperFilterDict:
         )
 
         result = FlextUtilities.mapper().filter_dict(
-            source.root,
+            source_raw,
             lambda k, v: isinstance(v, int) and v > mc.NUM_1,
         )
 

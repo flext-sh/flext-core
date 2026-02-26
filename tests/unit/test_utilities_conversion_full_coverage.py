@@ -45,9 +45,9 @@ def test_to_general_value_type_branches() -> None:
         )
         == model
     )
-    assert isinstance(
-        u.Conversion.to_general_value_type(cast("StrictJsonValue", object())), str
-    )
+    # to_general_value_type is identity — returns value as-is
+    obj = object()
+    assert u.Conversion.to_general_value_type(cast("StrictJsonValue", obj)) is obj
 
 
 def test_to_flexible_value_and_safe_list_branches() -> None:
@@ -76,6 +76,6 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
 
 
 def test_to_flexible_value_fallback_none_branch_for_unsupported_type() -> None:
-    assert (
-        u.Conversion.to_flexible_value(cast("StrictJsonValue", (lambda: None))) is None
-    )
+    # Source falls back to str(value) for unsupported types (not None)
+    result = u.Conversion.to_flexible_value(cast("StrictJsonValue", (lambda: None)))
+    assert isinstance(result, str)

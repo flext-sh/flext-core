@@ -600,4 +600,4 @@ def test_canonical_aliases_are_available() -> None:
     assert result.value == "ok"
     assert value.root == {"k": "v"}
     assert c.Performance.RECENT_THRESHOLD_SECONDS > 0
-    assert hasattr(u, "Validation")
+    assert hasattr(u, "validated")

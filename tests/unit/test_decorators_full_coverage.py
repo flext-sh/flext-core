@@ -174,7 +174,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
     monkeypatch.setattr(
         "flext_core.decorators.m.RetryConfiguration",
         lambda: SimpleNamespace(
-            max_attempts=0,
+            max_retries=0,
             initial_delay_seconds=0.1,
             exponential_backoff=False,
         ),

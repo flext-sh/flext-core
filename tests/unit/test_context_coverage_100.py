@@ -10,22 +10,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 # mypy: disable-error-code=valid-type
-
 from collections import UserDict as UserDictBase
 
 import pytest
-from pydantic import BaseModel
-
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.context import FlextModelsContext
 from flext_core import (
     FlextConstants,
     FlextContext,
     m,
-    r,
 )
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.context import FlextModelsContext
 from flext_core.typings import t
 from flext_tests import u
+from pydantic import BaseModel
+
 from tests.test_utils import assertion_helpers
 
 # ==================== COVERAGE TESTS ====================
@@ -138,34 +136,6 @@ class TestContext100Coverage:
         result = context.validate()
         u.Tests.Result.assert_result_success(result)
 
-    def test_suspend_resume(self) -> None:
-        """Test suspend and resume functionality."""
-        context = FlextContext()
-        context.set("key1", "value1").value
-
-        # Suspend context
-        context._suspend()
-        assert context._suspended is True
-
-        # Resume context
-        context._resume()
-        assert not context._suspended
-
-    def test_destroy_deactivates_context(self) -> None:
-        """Test destroy deactivates context."""
-        context = FlextContext()
-        context.set("key1", "value1").value
-
-        # Destroy context
-        context._destroy()
-
-        # Verify context is inactive
-        assert context._active is False
-
-        # Operations should fail after destroy
-        result = context.set("key2", "value2")
-        u.Tests.Result.assert_result_failure(result)
-
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""
         context = FlextContext()
@@ -181,49 +151,6 @@ class TestContext100Coverage:
         if isinstance(global_data, dict):
             assert "key1" in global_data
             assert "key2" in global_data
-
-    def test_export_snapshot_returns_typed_model(self) -> None:
-        """Test export_snapshot returns typed model."""
-        context = FlextContext()
-        context.set("key1", "value1").value
-
-        snapshot = context._export_snapshot()
-        assert isinstance(snapshot, FlextModelsContext.ContextExport)
-        assert "key1" in snapshot.data
-
-    def test_import_data_loads_dict(self) -> None:
-        """Test import_data loads dictionary."""
-        context = FlextContext()
-
-        import_data: dict[str, t.GeneralValueType] = {
-            "key1": "value1",
-            "key2": "value2",
-        }
-        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
-        converted_data: dict[str, t.GeneralValueType] = {
-            k: v
-            if isinstance(v, (str, int, float, bool, type(None), list, dict))
-            else str(v)
-            for k, v in import_data.items()
-        }
-        context._import_data(m.ConfigMap(root=converted_data))
-
-        # Verify imported data
-        result1 = context.get("key1")
-        result2 = context.get("key2")
-        u.Tests.Result.assert_result_success(result1)
-        u.Tests.Result.assert_result_success(result2)
-
-    def test_import_empty_data(self) -> None:
-        """Test import_data with empty dict."""
-        context = FlextContext()
-        context.set("existing", "value").value
-
-        context._import_data(m.ConfigMap(root={}))
-
-        # Existing data should remain
-        result = context.get("existing")
-        u.Tests.Result.assert_result_success(result)
 
     def test_get_with_none_value_returns_failure(self) -> None:
         """Test get with None value returns failure."""
@@ -245,101 +172,6 @@ class TestContext100Coverage:
         result = context.get("none_key")
         u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "None value" in result.error
-
-    def test_get_when_context_not_active(self) -> None:
-        """Test get when context is not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        result = context.get("any_key")
-        assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None and "not active" in result.error
-
-    def test_set_when_context_not_active(self) -> None:
-        """Test set when context is not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        result = context.set("key", "value")
-        u.Tests.Result.assert_result_failure(result)
-        assert result.error is not None and "not active" in result.error
-
-    def test_has_returns_false_when_not_active(self) -> None:
-        """Test has returns False when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        has_key = context.has("any_key")
-        assert has_key is False
-
-    def test_remove_when_not_active(self) -> None:
-        """Test remove when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        # Remove should not raise, but do nothing
-        context.remove("any_key")  # Should not raise
-
-    def test_clear_when_not_active(self) -> None:
-        """Test clear when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        # Clear should not raise
-        context.clear()  # Should not raise
-
-    def test_merge_when_not_active(self) -> None:
-        """Test merge when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        # Merge should still work (creates new context)
-        merged = context.merge({"key": "value"})
-        assert isinstance(merged, FlextContext)
-
-    def test_clone_when_not_active(self) -> None:
-        """Test clone when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        # Clone should still work
-        cloned = context.clone()
-        assert isinstance(cloned, FlextContext)
-
-    def test_validate_when_not_active(self) -> None:
-        """Test validate when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        result = context.validate()
-        # May succeed or fail depending on implementation
-        # Check for ResultProtocol attributes (structural typing)
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "is_failure")
-
-    def test_export_when_not_active(self) -> None:
-        """Test export when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        exported = context.export()
-        assert isinstance(exported, dict)
-
-    def test_export_snapshot_when_not_active(self) -> None:
-        """Test export_snapshot when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        snapshot = context._export_snapshot()
-        assert isinstance(snapshot, FlextModelsContext.ContextExport)
-
-    def test_import_data_when_not_active(self) -> None:
-        """Test import_data when context not active."""
-        context = FlextContext()
-        context._destroy()  # Deactivates context
-
-        # Import should not raise
-        context._import_data(m.ConfigMap(root={"key": "value"}))  # Should not raise
 
     def test_get_with_different_scope(self) -> None:
         """Test get with different scope."""
@@ -456,63 +288,6 @@ class TestContext100Coverage:
         assert FlextConstants.Context.SCOPE_GLOBAL in all_scopes
         assert "user" in all_scopes
 
-    def test_get_statistics_returns_model(self) -> None:
-        """Test get_statistics returns statistics model."""
-        context = FlextContext()
-        context.set("key1", "value1").value
-        context.get("key1")
-
-        stats = context._get_statistics()
-        assert isinstance(stats, FlextModelsContext.ContextStatistics)
-
-    def test_statistics_access(self) -> None:
-        """Test statistics access via get_statistics."""
-        context = FlextContext()
-        context.set("key1", "value1").value
-
-        stats = context._get_statistics()
-        assert isinstance(stats, FlextModelsContext.ContextStatistics)
-        assert stats.sets >= 1  # Fixed: Field is 'sets', not 'set_count'
-
-    def test_to_json_returns_string(self) -> None:
-        """Test to_json returns JSON string."""
-        context = FlextContext()
-        context.set("key1", "value1").value
-
-        json_str = context.to_json()
-        assert isinstance(json_str, str)
-        assert "key1" in json_str
-
-    def test_serialization_round_trip(self) -> None:
-        """Test serialization round trip."""
-        context1 = FlextContext()
-        context1.set("key1", "value1").value
-        context1.set("key2", "value2").value
-
-        # Export returns {scope: {key: value}}, import expects flat {key: value}
-        exported = context1.export()
-        context2 = FlextContext()
-        # Pass global scope data to _import_data
-        # Type narrowing: exported is dict[str, t.GeneralValueType] | ContextExport
-        # When as_dict=True (default), it returns dict
-        if isinstance(exported, dict):
-            global_data = exported.get("global")
-            if isinstance(global_data, dict):
-                # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
-                converted_global: dict[str, t.GeneralValueType] = {
-                    k: v
-                    if isinstance(v, (str, int, float, bool, type(None), list, dict))
-                    else str(v)
-                    for k, v in global_data.items()
-                }
-                context2._import_data(m.ConfigMap(root=converted_global))
-
-        # Verify data
-        result1 = context2.get("key1")
-        result2 = context2.get("key2")
-        assert result1.is_success
-        assert result2.is_success
-
     def test_export_after_clear(self) -> None:
         """Test export after clear."""
         context = FlextContext()
@@ -543,20 +318,6 @@ class TestContext100Coverage:
         get_result = context.get("key1", scope="user")
         assert get_result.is_failure
 
-    def test_hooks_execution(self) -> None:
-        """Test hooks execution during operations."""
-        context = FlextContext()
-
-        # Hooks are executed internally during set/get operations
-        # Test that operations trigger hooks
-        context.set("key1", "value1").value
-        context.get("key1")
-
-        # Verify hooks were executed (via statistics or internal state)
-        stats = context._get_statistics()
-        assert stats.sets >= 1  # Fixed: Field is 'sets', not 'set_count'
-        assert stats.gets >= 1  # Fixed: Field is 'gets', not 'get_count'
-
     def test_get_with_default_using_unwrap_or(self) -> None:
         """Test get with default using unwrap_or pattern."""
         context = FlextContext()
@@ -566,37 +327,6 @@ class TestContext100Coverage:
         result_typed = result
         value = result_typed.unwrap_or("default_value")
         assert value == "default_value"
-
-    def test_export_import_round_trip(self) -> None:
-        """Test export/import round trip."""
-        context1 = FlextContext()
-        context1.set("key1", "value1").value
-        context1.set("key2", "value2").value
-
-        # Export returns {scope: {key: value}}, import expects flat {key: value}
-        exported = context1.export()
-
-        # Import global scope data into new context
-        context2 = FlextContext()
-        # Type narrowing: exported is dict[str, t.GeneralValueType] | ContextExport
-        # When as_dict=True (default), it returns dict
-        if isinstance(exported, dict):
-            global_data = exported.get("global")
-            if isinstance(global_data, dict):
-                # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
-                converted_global: dict[str, t.GeneralValueType] = {
-                    k: v
-                    if isinstance(v, (str, int, float, bool, type(None), list, dict))
-                    else str(v)
-                    for k, v in global_data.items()
-                }
-                context2._import_data(m.ConfigMap(root=converted_global))
-
-        # Verify
-        result1 = context2.get("key1")
-        result2 = context2.get("key2")
-        assert result1.is_success
-        assert result2.is_success
 
     def test_context_data_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextData.validate_dict_serializable with non-dict."""

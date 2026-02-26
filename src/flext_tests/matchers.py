@@ -131,7 +131,10 @@ def _check_has_lacks(
             else:
                 check_val = _as_guard_input(item)
                 target = _as_guard_input(value)
-                if not isinstance(target, Mapping | str):
+                # Handle RootModel (e.g. ConfigMap) by extracting root dict
+                if isinstance(target, BaseModel) and hasattr(target, "root"):
+                    target = target.root
+                if not isinstance(target, Mapping | str | list):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -170,7 +173,10 @@ def _check_has_lacks(
             else:
                 check_val = _as_guard_input(item)
                 target = _as_guard_input(value)
-                if not isinstance(target, Mapping | str):
+                # Handle RootModel (e.g. ConfigMap) by extracting root dict
+                if isinstance(target, BaseModel) and hasattr(target, "root"):
+                    target = target.root
+                if not isinstance(target, Mapping | str | list):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(

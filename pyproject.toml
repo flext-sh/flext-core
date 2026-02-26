@@ -165,6 +165,14 @@ markers = [
     "edge_cases: edge case tests",
     "stress: stress tests",
     "resilience: resilience tests",
+    "architecture: architectural pattern tests",
+    "advanced: advanced pattern tests",
+    "ddd: domain-driven design tests",
+    "core: core functionality tests",
+    "coverage: coverage-focused tests",
+]
+filterwarnings = [
+    "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
 ]
 
 # [MANAGED] ruff

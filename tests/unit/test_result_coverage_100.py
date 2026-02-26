@@ -278,7 +278,7 @@ class TestrCoverage:
         result = r[int].ok(5).filter(lambda x: x > 10)
         _ResultAssertions.assert_failure_with_error(
             result,
-            "did not pass filter",
+            "Value did not pass filter predicate",
         )
 
     def test_filter_failure_skips_predicate(self) -> None:
@@ -660,7 +660,7 @@ class TestrCoverage:
         def operation(
             resource: t.ConfigMap,
         ) -> r[str]:
-            if isinstance(resource, dict):
+            if isinstance(resource, t.ConfigMap):
                 return r[str].ok("success")
             return r[str].fail("Invalid resource")
 

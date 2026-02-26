@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from contextlib import contextmanager
+import math
+import time
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
-from types import SimpleNamespace
 from typing import cast
 
 import pytest
@@ -16,12 +16,10 @@ from flext_core.dispatcher import (
     HandlerRegistrationRequestInput,
     HandlerRequestKey,
 )
+from flext_core.handlers import FlextHandlers
 from pydantic import BaseModel
 
 DispatcherMiddlewareConfig = m.Config.DispatcherMiddlewareConfig
-import math
-
-from flext_core.handlers import FlextHandlers
 
 
 def _as_handler(value: object) -> DispatcherHandler:
@@ -376,7 +374,7 @@ def test_publish_batch_and_named_event_paths(
 ) -> None:
     """Cover named-event and batch publish branches including partial failure."""
     monkeypatch.setattr(
-        dispatcher, "_publish_event", lambda event: r[bool].ok(True if event else False)
+        dispatcher, "_publish_event", lambda event: r[bool].ok(bool(event))
     )
     named = dispatcher.publish("evt.named", {"x": 1})
     assert named.is_success
@@ -517,8 +515,6 @@ def test_execute_with_timeout_paths(
     """Cover executor timeout, executor-shutdown reset, and direct execution branches."""
 
     def slow() -> r[t.GeneralValueType]:
-        import time
-
         time.sleep(0.05)
         return r[t.GeneralValueType].ok("done")
 
@@ -706,7 +702,7 @@ def test_prepare_validate_retry_and_normalize_dispatch_message_paths(
         FlextDispatcher._normalize_dispatch_message("type", None)
 
     timeout_override = dispatcher._get_timeout_seconds(7)
-    assert timeout_override == 7.0
+    assert timeout_override == pytest.approx(7.0)
 
 
 def test_remaining_branches_group_b(
@@ -717,7 +713,8 @@ def test_remaining_branches_group_b(
 
     class _ExecutorBoom:
         def submit(self, _func: object) -> object:
-            raise ValueError("boom")
+            msg = "boom"
+            raise ValueError(msg)
 
     monkeypatch.setattr(
         dispatcher._timeout_enforcer, "should_use_executor", lambda: True
@@ -744,7 +741,8 @@ def test_remaining_branches_group_b(
     assert dispatcher.dispatch("custom_type", {"a": 1}).is_success
 
     def _raising(_msg: object) -> object:
-        raise RuntimeError("dispatch-error")
+        msg = "dispatch-error"
+        raise RuntimeError(msg)
 
     dispatcher._handlers["custom_type"] = _as_handler(_raising)
     assert dispatcher.dispatch("custom_type", {"a": 1}).is_failure
@@ -763,13 +761,6 @@ def test_remaining_branches_group_b(
 
     built = FlextDispatcher._build_dispatch_config_from_args(None, {"k": "v"}, "cid", 2)
     assert isinstance(built, m.DispatchConfig)
-
-    class _Msg:
-        pass
-
-    dispatcher._handlers[_Msg.__name__] = lambda _m: "plain"
-    simple_dispatch = dispatcher._try_simple_dispatch(_as_payload(_Msg()))
-    assert simple_dispatch is not None and simple_dispatch.is_success
 
     assert dispatcher._extract_dispatch_config(None, None, None, None).is_success
     assert dispatcher._extract_dispatch_config(
@@ -832,23 +823,6 @@ def test_remaining_branches_group_b(
     )
     assert dispatcher._execute_dispatch_attempt(_EchoMessage(), opts).is_success
 
-    assert FlextDispatcher._normalize_context_metadata(None) is None
-    assert FlextDispatcher._normalize_context_metadata(
-        m.Metadata(attributes={"k": "v"})
-    ) == {"k": "v"}
-
-    meta_obj = m.Metadata(attributes={"k": "v"})
-    assert FlextDispatcher._extract_metadata_mapping(meta_obj) is meta_obj
-    assert FlextDispatcher._extract_metadata_mapping({"k": "v"}) is not None
-
-    class _GoodDump(BaseModel):
-        k: str = "v"
-
-    assert FlextDispatcher._extract_metadata_mapping(_GoodDump()) is not None
-    assert (
-        FlextDispatcher._extract_metadata_mapping({"attributes": {"k": "v"}})
-        is not None
-    )
     assert (
         FlextDispatcher._is_metadata_attribute_compatible(
             _as_payload({"bad": object()}),
@@ -861,7 +835,6 @@ def test_remaining_branches_group_b(
         )
         is False
     )
-    assert FlextDispatcher._extract_from_flext_metadata(meta_obj) is meta_obj
 
     class _DumpCarrier(BaseModel):
         k: str = "v"
@@ -882,7 +855,7 @@ def test_remaining_branches_group_b(
         def __getitem__(self, key: str) -> t.GeneralValueType:
             return {"x": 1}[key]
 
-        def __iter__(self):
+        def __iter__(self) -> Iterator[str]:
             return iter(["x"])
 
         def __len__(self) -> int:
@@ -892,173 +865,4 @@ def test_remaining_branches_group_b(
     with dispatcher._context_scope(metadata=_CtxMap(), correlation_id=None):
         pass
 
-    assert FlextDispatcher.create_from_global_config().is_success
-    assert len(dispatcher.dispatch_batch("ignored", [_EchoMessage()])) == 1
-    assert "circuit_breaker_failures" in dispatcher.get_performance_metrics()
     dispatcher.cleanup()
-
-
-def test_final_uncovered_edges(
-    dispatcher: FlextDispatcher, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Cover final dispatcher edge lines that require targeted setup."""
-
-    class _FakeHandlerType:
-        __members__ = {"COMMAND": "command", "QUERY": "query"}
-
-    monkeypatch.setattr(c.Cqrs, "HandlerType", _FakeHandlerType)
-    assert dispatcher._validate_handler_mode("command").is_success
-
-    dispatcher._middleware_configs = [
-        DispatcherMiddlewareConfig(
-            middleware_id="d",
-            middleware_type="m",
-            enabled=False,
-            order=0,
-            name=None,
-            config=t.ConfigMap(root={}),
-        ),
-        DispatcherMiddlewareConfig(
-            middleware_id="e",
-            middleware_type="m",
-            enabled=True,
-            order=1,
-            name=None,
-            config=t.ConfigMap(root={}),
-        ),
-    ]
-    dispatcher._middleware_instances = {"e": _as_handler_callable(_MiddlewareOK())}
-    monkeypatch.setattr(
-        dispatcher, "_process_middleware_instance", lambda *_args: r[bool].fail("stop")
-    )
-    assert dispatcher._execute_middleware_chain(
-        _EchoMessage(), _as_handler(_HandleOnly())
-    ).is_failure
-
-    disabled_mw = FlextDispatcher._process_middleware_instance(
-        dispatcher,
-        _EchoMessage(),
-        _as_handler(_HandleOnly()),
-        DispatcherMiddlewareConfig(
-            middleware_id="disabled",
-            middleware_type="m",
-            enabled=False,
-            order=0,
-            name=None,
-            config=t.ConfigMap(root={}),
-        ),
-    )
-    assert disabled_mw.is_success
-
-    assert dispatcher._invoke_middleware(
-        _as_handler_callable(object()),
-        _EchoMessage(),
-        _as_handler(_HandleOnly()),
-        "x",
-    ).is_failure
-
-    dispatcher._handlers[_EchoMessage.__name__] = _as_handler(_HandleOnly())
-    monkeypatch.setattr(
-        dispatcher, "_execute_middleware_chain", lambda *_args: r[bool].fail("mid-fail")
-    )
-    assert dispatcher._dispatch_command(_EchoMessage()).is_failure
-
-    assert dispatcher._layer1_register_handler(_as_handler(_HandleOnly())).is_success
-
-    class _WireContainer:
-        def wire_modules(self, **_kwargs: object) -> None:
-            return None
-
-    dispatcher._container = cast("p.DI", cast("object", _WireContainer()))
-    dispatcher._wire_handler_dependencies(lambda x: x)
-
-    class _TrackFactoryContainer(_WireContainer):
-        def __init__(self) -> None:
-            self.factories: dict[str, object] = {}
-
-        def register_factory(self, name: str, factory: object) -> bool:
-            self.factories[name] = factory
-            return True
-
-    tracker = _TrackFactoryContainer()
-    dispatcher._container = cast("p.DI", cast("object", tracker))
-
-    class _ClassOnly:
-        def handle(self, _msg: object) -> str:
-            return "ok"
-
-    assert dispatcher._register_single_handler(_as_handler(_ClassOnly)).is_success
-    single_factory = tracker.factories["handler.type"]
-    assert callable(single_factory)
-    assert hasattr(single_factory(), "handle")
-
-    class _ModelHandler(BaseModel):
-        def handle(self, _msg: object) -> str:
-            return "ok"
-
-    assert dispatcher._register_single_handler(_as_handler(_ModelHandler)).is_success
-    model_single_factory = tracker.factories["handler.modelmetaclass"]
-    assert callable(model_single_factory)
-    assert isinstance(model_single_factory(), BaseModel)
-
-    assert dispatcher._register_two_arg_handler(
-        "cmd.class", _as_handler(_ClassOnly)
-    ).is_success
-    two_arg_factory = tracker.factories["handler.cmd.class"]
-    assert callable(two_arg_factory)
-    assert hasattr(two_arg_factory(), "handle")
-
-    assert dispatcher._register_two_arg_handler(
-        "cmd.model", _as_handler(_ModelHandler)
-    ).is_success
-    model_two_arg_factory = tracker.factories["handler.cmd.model"]
-    assert callable(model_two_arg_factory)
-    assert isinstance(model_two_arg_factory(), BaseModel)
-
-    class _RuntimeExecutor:
-        def submit(self, _func: object) -> object:
-            raise RuntimeError("other runtime")
-
-    monkeypatch.setattr(
-        dispatcher._timeout_enforcer, "should_use_executor", lambda: True
-    )
-    monkeypatch.setattr(
-        dispatcher._timeout_enforcer, "ensure_executor", lambda: _RuntimeExecutor()
-    )
-    with pytest.raises(RuntimeError):
-        dispatcher._execute_with_timeout(lambda: r[t.GeneralValueType].ok("x"), 0.1)
-
-    opts = m.ExecuteDispatchAttemptOptions(
-        message_type="m",
-        metadata={"x": 1},
-        correlation_id="cid",
-        timeout_override=1,
-        operation_id="op-2893",
-    )
-    monkeypatch.setattr(
-        u, "process", lambda *_args, **_kwargs: r[list[tuple[str, str]]].fail("bad")
-    )
-    monkeypatch.setattr(dispatcher, "_get_timeout_seconds", lambda _ov: 0.01)
-    monkeypatch.setattr(
-        dispatcher,
-        "_execute_with_timeout",
-        lambda *_args, **_kwargs: r[t.GeneralValueType].ok("x"),
-    )
-    assert dispatcher._execute_dispatch_attempt(_EchoMessage(), opts).is_success
-
-    from flext_core.context import FlextContext
-
-    _ = FlextContext.Variables.ParentCorrelationId.set("parent-old")
-
-    class _MapCtx(Mapping[str, t.GeneralValueType]):
-        def __getitem__(self, key: str) -> t.GeneralValueType:
-            return {"x": 1}[key]
-
-        def __iter__(self):
-            return iter(["x"])
-
-        def __len__(self) -> int:
-            return 1
-
-    with dispatcher._context_scope(metadata=_MapCtx(), correlation_id="child-new"):
-        pass

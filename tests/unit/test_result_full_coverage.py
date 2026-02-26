@@ -13,7 +13,7 @@ from flext_core.typings import JsonValue
 result_module = importlib.import_module("flext_core.result")
 
 
-class _ValidationLikeError(Exception):
+class _ValidationLikeError(ValueError):
     def errors(self) -> list[dict[str, JsonValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 

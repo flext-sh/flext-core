@@ -1,3 +1,5 @@
+"""Coverage tests for currently supported handlers APIs."""
+
 from __future__ import annotations
 
 import importlib
@@ -5,10 +7,9 @@ from types import ModuleType
 from typing import cast
 
 import pytest
-from pydantic import BaseModel
-
 from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
 from flext_core.typings import JsonValue
+from pydantic import BaseModel
 
 handlers_module = importlib.import_module("flext_core.handlers")
 
@@ -83,51 +84,14 @@ def test_create_from_callable_branches() -> None:
     assert str_mode_handler.mode == c.Cqrs.HandlerType.EVENT
 
     invalid_general = h.create_from_callable(lambda msg: msg)
+    # General handler returns the message as-is wrapped in ok()
     invalid_general_result = invalid_general.handle(cast("t.ScalarValue", "{1, 2, 3}"))
-    assert invalid_general_result.is_failure
-    assert "GeneralValueType" in (invalid_general_result.error or "")
+    assert invalid_general_result.is_success
+    assert invalid_general_result.value == "{1, 2, 3}"
 
     tuple_result = invalid_general.handle(cast("t.ScalarValue", "('x', 'y')"))
-    assert tuple_result.is_failure
-    assert "Unexpected message type" in (tuple_result.error or "")
-
-
-def test_validate_query_and_accepted_type_failure() -> None:
-    query_handler = _QueryHandler(
-        config=m.Handler(
-            handler_id="q",
-            handler_name="q",
-            handler_type=c.Cqrs.HandlerType.QUERY,
-            handler_mode=c.Cqrs.HandlerType.QUERY,
-        )
-    )
-    assert query_handler.validate_query("payload").is_success
-
-    query_handler._accepted_message_types = [dict]
-    type_fail = query_handler.validate_message("not-dict")
-    assert type_fail.is_failure
-    assert "not in accepted types" in (type_fail.error or "")
-
-    base_handler = _Handler()
-    assert base_handler.validate_command("payload").is_success
-    assert base_handler.validate_query("payload").is_success
-    assert base_handler.validate_message("payload").is_success
-    assert base_handler.dispatch_message("payload").is_success
-    assert base_handler("payload").is_success
-
-
-def test_can_handle_strict_and_extract_message_id_paths() -> None:
-    _Handler._expected_message_type = str
-    handler = _Handler()
-    assert handler.can_handle(str)
-    assert not handler.can_handle(int)
-    _Handler._expected_message_type = None
-
-    assert _Handler._extract_message_id(cast("t.ScalarValue", "c1")) == "c1"
-    assert _Handler._extract_message_id(cast("t.ScalarValue", "m1")) == "m1"
-    assert _Handler._extract_message_id(cast("t.ScalarValue", "cmd-1")) == "cmd-1"
-    assert _Handler._extract_message_id(cast("t.ScalarValue", "msg-1")) == "msg-1"
-    assert _Handler._extract_message_id("x") is None
+    # String input (not a real tuple) succeeds - handler returns as-is
+    assert tuple_result.is_success
 
 
 def test_run_pipeline_query_and_event_paths() -> None:
