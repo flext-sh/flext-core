@@ -132,13 +132,13 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         if not (has_makefile and has_pyproject and has_git):
             return None
 
-        return m.ProjectInfo.model_validate({
-            "name": workspace_root.name,
-            "path": workspace_root,
-            "stack": "python/workspace",
-            "has_tests": (workspace_root / "tests").is_dir(),
-            "has_src": (workspace_root / c.Paths.DEFAULT_SRC_DIR).is_dir(),
-        })
+        return m.ProjectInfo(
+            name=workspace_root.name,
+            path=workspace_root,
+            stack="python/workspace",
+            has_tests=(workspace_root / "tests").is_dir(),
+            has_src=(workspace_root / c.Paths.DEFAULT_SRC_DIR).is_dir(),
+        )
 
     def _migrate_project(
         self,
@@ -177,11 +177,11 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         if not changes and not errors:
             changes.append("no changes needed")
 
-        return m.MigrationResult.model_validate({
-            "project": project.name,
-            "changes": changes,
-            "errors": errors,
-        })
+        return m.MigrationResult(
+            project=project.name,
+            changes=changes,
+            errors=errors,
+        )
 
     @staticmethod
     def _append_result(

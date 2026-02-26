@@ -213,9 +213,7 @@ class FlextUtilitiesModel:
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
 
-            return FlextModelFoundation.Metadata.model_validate({
-                "attributes": attributes
-            })
+            return FlextModelFoundation.Metadata(attributes=attributes)
 
         # Invalid type - raise TypeError
         msg = (

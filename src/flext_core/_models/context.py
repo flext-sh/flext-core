@@ -109,7 +109,7 @@ class FlextModelsContext:
                 value.root.items() if isinstance(value, t.ConfigMap) else value.items()
             )
         }
-        return FlextModelFoundation.Metadata.model_validate({"attributes": attributes})
+        return FlextModelFoundation.Metadata(attributes=attributes)
 
     @staticmethod
     def to_general_value_dict(
@@ -543,40 +543,6 @@ class FlextModelsContext:
             description="Usage statistics (operation counts, timing info)",
         )
 
-        @classmethod
-        def check_json_serializable(
-            cls,
-            obj: t.GuardInputValue,
-            path: str = "",
-        ) -> None:
-            """Recursively check if object is JSON-serializable."""
-            if obj is None or isinstance(obj, (str, int, float, bool)):
-                return
-            # is_dict_like already checks for Mapping protocol compliance
-            if FlextRuntime.is_dict_like(obj):
-                # Type narrowing: is_dict_like ensures Mapping protocol
-                dict_obj: Mapping[str, t.GuardInputValue] = dict(obj)
-                for key, val in dict_obj.items():
-                    # Recursive call using cls for mypy compatibility
-                    cls.check_json_serializable(
-                        val,
-                        f"{path}.{key}",
-                    )
-            # is_list_like already checks for Sequence protocol compliance
-            # Exclude str/bytes which are also Sequence
-            elif FlextRuntime.is_list_like(obj) and not isinstance(obj, (str, bytes)):
-                # Type narrowing: is_list_like ensures Sequence protocol
-                seq_obj: Sequence[t.GuardInputValue] = obj
-                for i, item in enumerate(seq_obj):
-                    # Recursive call using cls for mypy compatibility
-                    cls.check_json_serializable(
-                        item,
-                        f"{path}[{i}]",
-                    )
-            else:
-                msg = f"Non-JSON-serializable type {obj.__class__.__name__} at {path}"
-                raise TypeError(msg)
-
         @field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(
@@ -633,7 +599,7 @@ class FlextModelsContext:
             }
 
             # Recursively check all values are JSON-serializable
-            FlextModelsContext.ContextExport.check_json_serializable(working_value)
+            FlextModelsContext.ContextData.check_json_serializable(working_value)
 
             # working_value is always dict from comprehensions above;
             # explicit dict() satisfies return mapping[str, PayloadValue]

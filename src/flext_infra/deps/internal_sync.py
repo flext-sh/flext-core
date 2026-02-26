@@ -68,10 +68,10 @@ class InternalDependencySyncService:
             repo_url = parser.get(section, "url", fallback="").strip()
             if not repo_url:
                 continue
-            mapping[repo_name] = m.RepoUrls.model_validate({
-                "ssh_url": repo_url,
-                "https_url": self._ssh_to_https(repo_url),
-            })
+            mapping[repo_name] = m.RepoUrls(
+                ssh_url=repo_url,
+                https_url=self._ssh_to_https(repo_url),
+            )
         return mapping
 
     def _parse_repo_map(self, path: Path) -> r[Mapping[str, m.RepoUrls]]:
@@ -91,10 +91,10 @@ class InternalDependencySyncService:
             ssh_url = str(values.get("ssh_url", ""))
             https_url = str(values.get("https_url", self._ssh_to_https(ssh_url)))
             if ssh_url:
-                result[repo_name] = m.RepoUrls.model_validate({
-                    "ssh_url": ssh_url,
-                    "https_url": https_url,
-                })
+                result[repo_name] = m.RepoUrls(
+                    ssh_url=ssh_url,
+                    https_url=https_url,
+                )
         return r[Mapping[str, m.RepoUrls]].ok(result)
 
     def _resolve_ref(self, project_root: Path) -> str:
@@ -191,10 +191,10 @@ class InternalDependencySyncService:
         result: MutableMapping[str, m.RepoUrls] = {}
         for repo_name in sorted(repo_names):
             ssh_url = f"git@github.com:{owner}/{repo_name}.git"
-            result[repo_name] = m.RepoUrls.model_validate({
-                "ssh_url": ssh_url,
-                "https_url": self._ssh_to_https(ssh_url),
-            })
+            result[repo_name] = m.RepoUrls(
+                ssh_url=ssh_url,
+                https_url=self._ssh_to_https(ssh_url),
+            )
         return result
 
     @staticmethod

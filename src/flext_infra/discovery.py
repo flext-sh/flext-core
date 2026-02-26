@@ -68,13 +68,13 @@ class DiscoveryService:
                 kind = "submodule" if entry.name in submodules else "external"
 
                 projects.append(
-                    m.ProjectInfo.model_validate({
-                        "path": entry,
-                        "name": entry.name,
-                        "stack": f"{stack}/{kind}",
-                        "has_tests": (entry / "tests").is_dir(),
-                        "has_src": (entry / c.Paths.DEFAULT_SRC_DIR).is_dir(),
-                    }),
+                    m.ProjectInfo(
+                        path=entry,
+                        name=entry.name,
+                        stack=f"{stack}/{kind}",
+                        has_tests=(entry / "tests").is_dir(),
+                        has_src=(entry / c.Paths.DEFAULT_SRC_DIR).is_dir(),
+                    ),
                 )
 
             return r[list[m.ProjectInfo]].ok(projects)

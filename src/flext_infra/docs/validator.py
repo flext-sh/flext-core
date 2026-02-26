@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
 from flext_core.result import FlextResult, r
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -25,15 +25,20 @@ from flext_infra.docs.shared import (
 logger = structlog.get_logger(__name__)
 
 
-@dataclass(frozen=True)
-class ValidateReport:
+class ValidateReport(BaseModel):
     """Structured validation report for a scope."""
 
-    scope: str
-    result: str
-    message: str
-    missing_adr_skills: list[str]
-    todo_written: bool
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    scope: str = Field(..., description="Scope name.")
+    result: str = Field(..., description="Validation result status.")
+    message: str = Field(..., description="Human-readable result message.")
+    missing_adr_skills: list[str] = Field(
+        default_factory=list, description="List of missing ADR skills."
+    )
+    todo_written: bool = Field(
+        default=False, description="Whether TODOS.md was written."
+    )
 
 
 class DocValidator:

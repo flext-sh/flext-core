@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from dataclasses import dataclass
 from pathlib import Path
 
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.json_io import JsonService
@@ -22,14 +22,15 @@ from flext_infra.selection import ProjectSelector
 from flext_infra.templates import TemplateEngine
 
 
-@dataclass(frozen=True)
-class SyncOperation:
+class SyncOperation(BaseModel):
     """Describe one workflow sync operation."""
 
-    project: str
-    path: str
-    action: str
-    reason: str
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    project: str = Field(..., description="Project name.")
+    path: str = Field(..., description="File path relative to project root.")
+    action: str = Field(..., description="Sync action (create, update, noop, prune).")
+    reason: str = Field(..., description="Reason for the action.")
 
 
 MANAGED_FILES: frozenset[str] = frozenset({"ci.yml"})

@@ -9,11 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import structlog
 from flext_core.result import FlextResult, r
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -25,14 +25,15 @@ from flext_infra.subprocess import CommandRunner
 logger = structlog.get_logger(__name__)
 
 
-@dataclass(frozen=True)
-class BuildReport:
+class BuildReport(BaseModel):
     """Outcome of a single MkDocs build attempt."""
 
-    scope: str
-    result: str
-    reason: str
-    site_dir: str
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    scope: str = Field(..., description="Scope name.")
+    result: str = Field(..., description="Build result status (OK, FAIL, SKIP).")
+    reason: str = Field(..., description="Reason for the result.")
+    site_dir: str = Field(..., description="Path to the generated site directory.")
 
 
 class DocBuilder:
@@ -148,7 +149,7 @@ class DocBuilder:
         """Persist build JSON summary and markdown report."""
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "build-summary.json",
-            {"summary": asdict(report)},
+            {"summary": report.model_dump()},
         )
         _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "build-report.md",

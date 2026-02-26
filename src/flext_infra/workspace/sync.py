@@ -110,11 +110,11 @@ class SyncService(FlextService[m.SyncResult]):
                     changed += 1 if gitignore_result.value else 0
 
                     return r[m.SyncResult].ok(
-                        m.SyncResult.model_validate({
-                            "files_changed": changed,
-                            "source": resolved,
-                            "target": resolved,
-                        }),
+                        m.SyncResult(
+                            files_changed=changed,
+                            source=resolved,
+                            target=resolved,
+                        ),
                     )
                 finally:
                     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)

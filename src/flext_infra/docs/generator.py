@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
 from flext_core.result import r
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -27,23 +27,27 @@ from flext_infra.templates import TemplateEngine
 logger = structlog.get_logger(__name__)
 
 
-@dataclass(frozen=True)
-class GeneratedFile:
+class GeneratedFile(BaseModel):
     """Record of a single generated file."""
 
-    path: str
-    written: bool
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    path: str = Field(..., description="File path.")
+    written: bool = Field(default=False, description="Whether file was written.")
 
 
-@dataclass(frozen=True)
-class GenerateReport:
+class GenerateReport(BaseModel):
     """Structured generation report for a scope."""
 
-    scope: str
-    generated: int
-    applied: bool
-    source: str
-    files: list[GeneratedFile]
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    scope: str = Field(..., description="Scope name.")
+    generated: int = Field(default=0, description="Number of files generated.")
+    applied: bool = Field(default=False, description="Whether generation was applied.")
+    source: str = Field(..., description="Source of generated content.")
+    files: list[GeneratedFile] = Field(
+        default_factory=list, description="List of generated files."
+    )
 
 
 class DocGenerator:

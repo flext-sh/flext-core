@@ -15,6 +15,7 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, Protocol
 
 from pydantic import (
+    BaseModel,
     ConfigDict,
     Field,
     TypeAdapter,
@@ -167,7 +168,7 @@ class FlextExceptions:
         if value is None:
             return None
         try:
-            return e._StrictStringValue.model_validate({"value": value}).value
+            return e._StrictStringValue(value=value).value
         except PydanticValidationError:
             return None
 
@@ -177,7 +178,7 @@ class FlextExceptions:
         if value is None:
             return default
         try:
-            return e._StrictBooleanValue.model_validate({"value": value}).value
+            return e._StrictBooleanValue(value=value).value
         except PydanticValidationError:
             return default
 
@@ -187,7 +188,7 @@ class FlextExceptions:
         if value is None:
             return None
         try:
-            return e._StrictIntValue.model_validate({"value": value}).value
+            return e._StrictIntValue(value=value).value
         except PydanticValidationError:
             return None
 
@@ -197,7 +198,7 @@ class FlextExceptions:
         if value is None:
             return None
         try:
-            return e._StrictNumberValue.model_validate({"value": value}).value
+            return e._StrictNumberValue(value=value).value
         except PydanticValidationError:
             return None
 
@@ -255,7 +256,7 @@ class FlextExceptions:
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in attrs_map.items()
                 }
-                return m.Metadata.model_validate({"attributes": attrs})
+                return m.Metadata(attributes=attrs)
 
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
@@ -263,7 +264,7 @@ class FlextExceptions:
                 k: FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in attrs_map.items()
             }
-            return m.Metadata.model_validate({"attributes": attrs})
+            return m.Metadata(attributes=attrs)
 
         return None
 
@@ -517,8 +518,8 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata_value(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return m.Metadata.model_validate({"attributes": normalized_attrs})
-                return m.Metadata.model_validate({"attributes": {}})
+                    return m.Metadata(attributes=normalized_attrs)
+                return m.Metadata(attributes={})
 
             metadata_model = e._safe_metadata(metadata)
             if metadata_model is not None:
@@ -531,7 +532,7 @@ class FlextExceptions:
                 }
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
-                return m.Metadata.model_validate({"attributes": merged_attrs})
+                return m.Metadata(attributes=merged_attrs)
 
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
@@ -541,7 +542,7 @@ class FlextExceptions:
                 )
 
             # Fallback: convert to FlextRuntime.Metadata with string value
-            return m.Metadata.model_validate({"attributes": {"value": str(metadata)}})
+            return m.Metadata(attributes={"value": str(metadata)})
 
     # Specific exception classes with minimal code
     class ValidationError(BaseError):
@@ -560,42 +561,23 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize validation error with field and value information."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"field", "value"},
+                {"field": field, "value": value},
+                e.ValidationErrorParams,
+                params,
+                {"field", "value"},
             )
-            if field is not None:
-                param_values["field"] = field
-            if value is not None:
-                param_values["value"] = value
-            resolved_params = (
-                params
-                if params is not None
-                else e.ValidationErrorParams.model_validate(dict(param_values))
-            )
-
-            validation_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.field is not None:
-                validation_context["field"] = resolved_params.field
-            if resolved_params.value is not None:
-                validation_context["value"] = FlextRuntime.normalize_to_metadata_value(
-                    resolved_params.value,
-                )
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=validation_context or None,
-                metadata=preserved_metadata,
-                correlation_id=e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=corr,
             )
-            self.field = resolved_params.field
-            self.value = resolved_params.value
+            self.field = resolved.field
+            self.value = resolved.value
 
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
@@ -613,40 +595,23 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize configuration error with config context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"config_key", "config_source"},
+                {"config_key": config_key, "config_source": config_source},
+                e.ConfigurationErrorParams,
+                params,
+                {"config_key", "config_source"},
             )
-            if config_key is not None:
-                param_values["config_key"] = config_key
-            if config_source is not None:
-                param_values["config_source"] = config_source
-            resolved_params = (
-                params
-                if params is not None
-                else e.ConfigurationErrorParams.model_validate(dict(param_values))
-            )
-
-            config_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.config_key is not None:
-                config_context["config_key"] = resolved_params.config_key
-            if resolved_params.config_source is not None:
-                config_context["config_source"] = resolved_params.config_source
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=config_context or None,
-                metadata=preserved_metadata,
-                correlation_id=e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=corr,
             )
-            self.config_key = resolved_params.config_key
-            self.config_source = resolved_params.config_source
+            self.config_key = resolved.config_key
+            self.config_source = resolved.config_source
 
     class ConnectionError(BaseError):
         """Exception raised for network and connection failures."""
@@ -662,39 +627,24 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize connection error with network context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"host", "port", "timeout"},
+                {},
+                e.ConnectionErrorParams,
+                params,
+                {"host", "port", "timeout"},
             )
-            resolved_params = (
-                params
-                if params is not None
-                else e.ConnectionErrorParams.model_validate(dict(param_values))
-            )
-
-            conn_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.host is not None:
-                conn_context["host"] = resolved_params.host
-            if resolved_params.port is not None:
-                conn_context["port"] = resolved_params.port
-            if resolved_params.timeout is not None:
-                conn_context["timeout"] = resolved_params.timeout
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=conn_context or None,
-                metadata=preserved_metadata,
-                correlation_id=e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=corr,
             )
-            self.host = resolved_params.host
-            self.port = resolved_params.port
-            self.timeout = resolved_params.timeout
+            self.host = resolved.host
+            self.port = resolved.port
+            self.timeout = resolved.timeout
 
     class TimeoutError(BaseError):
         """Exception raised for operation timeout errors."""
@@ -712,40 +662,23 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize timeout error with timeout context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"timeout_seconds", "operation"},
+                {"timeout_seconds": timeout_seconds, "operation": operation},
+                e.TimeoutErrorParams,
+                params,
+                {"timeout_seconds", "operation"},
             )
-            if timeout_seconds is not None:
-                param_values["timeout_seconds"] = timeout_seconds
-            if operation is not None:
-                param_values["operation"] = operation
-            resolved_params = (
-                params
-                if params is not None
-                else e.TimeoutErrorParams.model_validate(dict(param_values))
-            )
-
-            timeout_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.timeout_seconds is not None:
-                timeout_context["timeout_seconds"] = resolved_params.timeout_seconds
-            if resolved_params.operation is not None:
-                timeout_context["operation"] = resolved_params.operation
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=timeout_context or None,
-                metadata=preserved_metadata,
-                correlation_id=e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=corr,
             )
-            self.timeout_seconds = resolved_params.timeout_seconds
-            self.operation = resolved_params.operation
+            self.timeout_seconds = resolved.timeout_seconds
+            self.operation = resolved.operation
 
     class AuthenticationError(BaseError):
         """Exception raised for authentication failures."""
@@ -763,40 +696,23 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize authentication error with auth context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"auth_method", "user_id"},
+                {"auth_method": auth_method, "user_id": user_id},
+                e.AuthenticationErrorParams,
+                params,
+                {"auth_method", "user_id"},
             )
-            if auth_method is not None:
-                param_values["auth_method"] = auth_method
-            if user_id is not None:
-                param_values["user_id"] = user_id
-            resolved_params = (
-                params
-                if params is not None
-                else e.AuthenticationErrorParams.model_validate(dict(param_values))
-            )
-
-            auth_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.auth_method is not None:
-                auth_context["auth_method"] = resolved_params.auth_method
-            if resolved_params.user_id is not None:
-                auth_context["user_id"] = resolved_params.user_id
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=auth_context or None,
-                metadata=preserved_metadata,
-                correlation_id=e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=corr,
             )
-            self.auth_method = resolved_params.auth_method
-            self.user_id = resolved_params.user_id
+            self.auth_method = resolved.auth_method
+            self.user_id = resolved.user_id
 
     class AuthorizationError(BaseError):
         """Exception raised for permission and authorization failures."""
@@ -812,41 +728,24 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize authorization error with permission context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"user_id", "resource", "permission"},
+                {},
+                e.AuthorizationErrorParams,
+                params,
+                {"user_id", "resource", "permission"},
             )
-            resolved_params = (
-                params
-                if params is not None
-                else e.AuthorizationErrorParams.model_validate(dict(param_values))
-            )
-
-            authz_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.user_id is not None:
-                authz_context["user_id"] = resolved_params.user_id
-            if resolved_params.resource is not None:
-                authz_context["resource"] = resolved_params.resource
-            if resolved_params.permission is not None:
-                authz_context["permission"] = resolved_params.permission
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=authz_context or None,
-                metadata=preserved_metadata,
-                correlation_id=correlation_id
-                if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
-            self.user_id = resolved_params.user_id
-            self.resource = resolved_params.resource
-            self.permission = resolved_params.permission
+            self.user_id = resolved.user_id
+            self.resource = resolved.resource
+            self.permission = resolved.permission
 
     class NotFoundError(BaseError):
         """Exception raised when a resource is not found."""
@@ -947,47 +846,25 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize not found error with resource context."""
-            # Preserve metadata from extra_kwargs (correlation_id is
-            # consumed by the explicit parameter and never reaches **extra_kwargs)
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            _ = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, _ = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"resource_type", "resource_id"},
+                {"resource_type": resource_type, "resource_id": resource_id},
+                e.NotFoundErrorParams,
+                params,
+                {"resource_type", "resource_id"},
+                excluded_context_keys={"correlation_id", "metadata"},
             )
-            if resource_type is not None:
-                param_values["resource_type"] = resource_type
-            if resource_id is not None:
-                param_values["resource_id"] = resource_id
-            resolved_params = (
-                params
-                if params is not None
-                else e.NotFoundErrorParams.model_validate(dict(param_values))
-            )
-
-            notfound_context = e._build_context_map(
-                context,
-                extra_kwargs,
-                excluded_keys={"correlation_id", "metadata"},
-            )
-            if resolved_params.resource_type is not None:
-                notfound_context["resource_type"] = resolved_params.resource_type
-            if resolved_params.resource_id is not None:
-                notfound_context["resource_id"] = resolved_params.resource_id
-
-            metadata_input = metadata if metadata is not None else preserved_metadata
-
+            metadata_input = metadata if metadata is not None else meta
             super().__init__(
                 message,
                 error_code=error_code,
-                context=notfound_context,
+                context=ctx,
                 metadata=metadata_input,
                 correlation_id=correlation_id,
             )
-            self.resource_type = resolved_params.resource_type
-            self.resource_id = resolved_params.resource_id
+            self.resource_type = resolved.resource_type
+            self.resource_id = resolved.resource_id
 
     class ConflictError(BaseError):
         """Exception raised for resource conflicts."""
@@ -1003,41 +880,24 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize conflict error with resource context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"resource_type", "resource_id", "conflict_reason"},
+                {},
+                e.ConflictErrorParams,
+                params,
+                {"resource_type", "resource_id", "conflict_reason"},
             )
-            resolved_params = (
-                params
-                if params is not None
-                else e.ConflictErrorParams.model_validate(dict(param_values))
-            )
-
-            conflict_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.resource_type is not None:
-                conflict_context["resource_type"] = resolved_params.resource_type
-            if resolved_params.resource_id is not None:
-                conflict_context["resource_id"] = resolved_params.resource_id
-            if resolved_params.conflict_reason is not None:
-                conflict_context["conflict_reason"] = resolved_params.conflict_reason
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=conflict_context or None,
-                metadata=preserved_metadata,
-                correlation_id=correlation_id
-                if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
-            self.resource_type = resolved_params.resource_type
-            self.resource_id = resolved_params.resource_id
-            self.conflict_reason = resolved_params.conflict_reason
+            self.resource_type = resolved.resource_type
+            self.resource_id = resolved.resource_id
+            self.conflict_reason = resolved.conflict_reason
 
     class RateLimitError(BaseError):
         """Exception raised when rate limits are exceeded."""
@@ -1053,41 +913,24 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize rate limit error with limit context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"limit", "window_seconds", "retry_after"},
+                {},
+                e.RateLimitErrorParams,
+                params,
+                {"limit", "window_seconds", "retry_after"},
             )
-            resolved_params = (
-                params
-                if params is not None
-                else e.RateLimitErrorParams.model_validate(dict(param_values))
-            )
-
-            rate_limit_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.limit is not None:
-                rate_limit_context["limit"] = resolved_params.limit
-            if resolved_params.window_seconds is not None:
-                rate_limit_context["window_seconds"] = resolved_params.window_seconds
-            if resolved_params.retry_after is not None:
-                rate_limit_context["retry_after"] = resolved_params.retry_after
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=rate_limit_context or None,
-                metadata=preserved_metadata,
-                correlation_id=correlation_id
-                if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
-            self.limit = resolved_params.limit
-            self.window_seconds = resolved_params.window_seconds
-            self.retry_after = resolved_params.retry_after
+            self.limit = resolved.limit
+            self.window_seconds = resolved.window_seconds
+            self.retry_after = resolved.retry_after
 
     class CircuitBreakerError(BaseError):
         """Exception raised when circuit breaker is open."""
@@ -1103,41 +946,24 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize circuit breaker error with service context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"service_name", "failure_count", "reset_timeout"},
+                {},
+                e.CircuitBreakerErrorParams,
+                params,
+                {"service_name", "failure_count", "reset_timeout"},
             )
-            resolved_params = (
-                params
-                if params is not None
-                else e.CircuitBreakerErrorParams.model_validate(dict(param_values))
-            )
-
-            cb_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.service_name is not None:
-                cb_context["service_name"] = resolved_params.service_name
-            if resolved_params.failure_count is not None:
-                cb_context["failure_count"] = resolved_params.failure_count
-            if resolved_params.reset_timeout is not None:
-                cb_context["reset_timeout"] = resolved_params.reset_timeout
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=cb_context or None,
-                metadata=preserved_metadata,
-                correlation_id=correlation_id
-                if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
-            self.service_name = resolved_params.service_name
-            self.failure_count = resolved_params.failure_count
-            self.reset_timeout = resolved_params.reset_timeout
+            self.service_name = resolved.service_name
+            self.failure_count = resolved.failure_count
+            self.reset_timeout = resolved.reset_timeout
 
     class TypeError(BaseError):
         """Exception raised for type mismatch errors."""
@@ -1296,42 +1122,23 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize operation error with operation context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"operation", "reason"},
+                {"operation": operation, "reason": reason},
+                e.OperationErrorParams,
+                params,
+                {"operation", "reason"},
             )
-            if operation is not None:
-                param_values["operation"] = operation
-            if reason is not None:
-                param_values["reason"] = reason
-            resolved_params = (
-                params
-                if params is not None
-                else e.OperationErrorParams.model_validate(dict(param_values))
-            )
-
-            op_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.operation is not None:
-                op_context["operation"] = resolved_params.operation
-            if resolved_params.reason is not None:
-                op_context["reason"] = resolved_params.reason
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=op_context or None,
-                metadata=preserved_metadata,
-                correlation_id=correlation_id
-                if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
-            self.operation = resolved_params.operation
-            self.reason = resolved_params.reason
+            self.operation = resolved.operation
+            self.reason = resolved.reason
 
     class AttributeAccessError(BaseError):
         """Exception raised for attribute access errors."""
@@ -1349,42 +1156,26 @@ class FlextExceptions:
             **extra_kwargs: t.MetadataAttributeValue,
         ) -> None:
             """Initialize attribute access error with attribute context."""
-            # Preserve metadata and correlation_id from extra_kwargs
-            preserved_metadata = extra_kwargs.pop("metadata", None)
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
-
-            param_values = e._build_param_map(
+            resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                keys={"attribute_name", "attribute_context"},
+                {
+                    "attribute_name": attribute_name,
+                    "attribute_context": attribute_context,
+                },
+                e.AttributeAccessErrorParams,
+                params,
+                {"attribute_name", "attribute_context"},
             )
-            if attribute_name is not None:
-                param_values["attribute_name"] = attribute_name
-            if attribute_context is not None:
-                param_values["attribute_context"] = attribute_context
-            resolved_params = (
-                params
-                if params is not None
-                else e.AttributeAccessErrorParams.model_validate(dict(param_values))
-            )
-
-            attr_context = e._build_context_map(context, extra_kwargs)
-            if resolved_params.attribute_name is not None:
-                attr_context["attribute_name"] = resolved_params.attribute_name
-            if resolved_params.attribute_context is not None:
-                attr_context["attribute_context"] = resolved_params.attribute_context
-
             super().__init__(
                 message,
                 error_code=error_code,
-                context=attr_context or None,
-                metadata=preserved_metadata,
-                correlation_id=correlation_id
-                if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                context=ctx,
+                metadata=meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
-            self.attribute_name = resolved_params.attribute_name
-            self.attribute_context = resolved_params.attribute_context
+            self.attribute_name = resolved.attribute_name
+            self.attribute_context = resolved.attribute_context
 
     @staticmethod
     def prepare_exception_kwargs(

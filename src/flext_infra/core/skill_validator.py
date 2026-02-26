@@ -97,11 +97,11 @@ class SkillValidator:
             rules_path = skills_dir / skill_name / "rules.yml"
             if not rules_path.exists():
                 return r[m.ValidationReport].ok(
-                    m.ValidationReport.model_validate({
-                        "passed": False,
-                        "violations": [f"rules.yml not found for skill '{skill_name}'"],
-                        "summary": f"no rules.yml for {skill_name}",
-                    }),
+                    m.ValidationReport(
+                        passed=False,
+                        violations=[f"rules.yml not found for skill '{skill_name}'"],
+                        summary=f"no rules.yml for {skill_name}",
+                    ),
                 )
 
             rules = _safe_load_yaml(rules_path)
@@ -192,11 +192,11 @@ class SkillValidator:
                 f"{skill_name}: {total} violations, {'PASS' if passed else 'FAIL'}"
             )
             return r[m.ValidationReport].ok(
-                m.ValidationReport.model_validate({
-                    "passed": passed,
-                    "violations": violations,
-                    "summary": summary,
-                }),
+                m.ValidationReport(
+                    passed=passed,
+                    violations=violations,
+                    summary=summary,
+                ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
             return r[m.ValidationReport].fail(

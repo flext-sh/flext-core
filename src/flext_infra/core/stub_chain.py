@@ -122,11 +122,11 @@ class StubSupplyChain:
             passed = len(violations) == 0
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
             return r[m.ValidationReport].ok(
-                m.ValidationReport.model_validate({
-                    "passed": passed,
-                    "violations": violations,
-                    "summary": summary,
-                }),
+                m.ValidationReport(
+                    passed=passed,
+                    violations=violations,
+                    summary=summary,
+                ),
             )
         except (OSError, TypeError, ValueError) as exc:
             return r[m.ValidationReport].fail(

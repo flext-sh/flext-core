@@ -2367,7 +2367,7 @@ class FlextDispatcher(s[bool]):
                 attributes_dict = dict(processed_items)
 
             # attributes_dict is mapping[str, str] which is assignable to mapping[str, _Payload]
-            return m.Metadata.model_validate({"attributes": attributes_dict})
+            return m.Metadata(attributes=attributes_dict)
         # Convert other types to Metadata via dict with string value
         return m.Metadata(attributes={"value": str(metadata)})
 
@@ -2516,9 +2516,7 @@ class FlextDispatcher(s[bool]):
                     normalized_attrs[str(k)] = FlextRuntime.normalize_to_metadata_value(
                         value,
                     )
-                validated_metadata = m.Metadata.model_validate({
-                    "attributes": normalized_attrs
-                })
+                validated_metadata = m.Metadata(attributes=normalized_attrs)
 
             if metadata is not None and validated_metadata is None:
                 msg = (
@@ -2633,15 +2631,13 @@ class FlextDispatcher(s[bool]):
 
         correlation_id_raw = context.get("correlation_id")
         correlation_id: str | None = (
-            correlation_id_raw
-            if FlextDispatcher._is_optional_str(correlation_id_raw)
-            else None
+            correlation_id_raw if isinstance(correlation_id_raw, str | None) else None
         )
 
         timeout_override_raw = context.get("timeout_override")
         timeout_override: int | None = (
             timeout_override_raw
-            if FlextDispatcher._is_optional_int(timeout_override_raw)
+            if isinstance(timeout_override_raw, int | None)
             else None
         )
 
@@ -2806,7 +2802,7 @@ class FlextDispatcher(s[bool]):
                     metadata_attrs[str(key)] = FlextRuntime.normalize_to_metadata_value(
                         value,
                     )
-                _ = m.Metadata.model_validate({"attributes": metadata_attrs})
+                _ = m.Metadata(attributes=metadata_attrs)
 
             timeout_seconds = self._get_timeout_seconds(options.timeout_override)
             _ = self._track_timeout_context(options.operation_id, timeout_seconds)

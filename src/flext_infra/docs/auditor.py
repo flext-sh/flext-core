@@ -16,12 +16,12 @@ import argparse
 import json
 import sys
 from collections.abc import Mapping
-from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -33,25 +33,29 @@ from flext_infra.patterns import FlextInfraPatterns
 logger = structlog.get_logger(__name__)
 
 
-@dataclass(frozen=True)
-class AuditIssue:
+class AuditIssue(BaseModel):
     """Single documentation audit finding."""
 
-    file: str
-    issue_type: str
-    severity: str
-    message: str
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    file: str = Field(..., description="File path relative to scope.")
+    issue_type: str = Field(..., description="Type of issue found.")
+    severity: str = Field(..., description="Severity level (high, medium, low).")
+    message: str = Field(..., description="Human-readable issue message.")
 
 
-@dataclass(frozen=True)
-class AuditReport:
+class AuditReport(BaseModel):
     """Structured audit report for a scope."""
 
-    scope: str
-    issues: list[AuditIssue]
-    checks: list[str]
-    strict: bool
-    passed: bool
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    scope: str = Field(..., description="Scope name.")
+    issues: list[AuditIssue] = Field(
+        default_factory=list, description="List of audit issues."
+    )
+    checks: list[str] = Field(default_factory=list, description="Checks that were run.")
+    strict: bool = Field(default=False, description="Whether strict mode was enabled.")
+    passed: bool = Field(default=False, description="Whether audit passed.")
 
 
 class DocAuditor:

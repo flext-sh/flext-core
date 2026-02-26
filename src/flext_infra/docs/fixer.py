@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
 from flext_core.result import r
 from flext_core.typings import t
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
@@ -29,23 +29,25 @@ from flext_infra.templates import TemplateEngine
 logger = structlog.get_logger(__name__)
 
 
-@dataclass(frozen=True)
-class FixItem:
+class FixItem(BaseModel):
     """Per-file summary of applied fixes."""
 
-    file: str
-    links: int
-    toc: int
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    file: str = Field(..., description="File path relative to scope.")
+    links: int = Field(default=0, description="Number of link fixes applied.")
+    toc: int = Field(default=0, description="Number of TOC updates applied.")
 
 
-@dataclass(frozen=True)
-class FixReport:
+class FixReport(BaseModel):
     """Structured fix report for a scope."""
 
-    scope: str
-    changed_files: int
-    applied: bool
-    items: list[FixItem]
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    scope: str = Field(..., description="Scope name.")
+    changed_files: int = Field(default=0, description="Number of files changed.")
+    applied: bool = Field(default=False, description="Whether changes were applied.")
+    items: list[FixItem] = Field(default_factory=list, description="List of fix items.")
 
 
 class DocFixer:

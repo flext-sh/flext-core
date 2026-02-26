@@ -10,94 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Literal
-
-
-class AutoStrEnum(StrEnum):
-    """Automatic string enumeration with lowercase values.
-
-    Generates enum values automatically from member names by converting them
-    to lowercase strings, reducing manual value specification.
-    """
-
-    @staticmethod
-    def _generate_next_value_(
-        name: str,
-        start: int,
-        count: int,
-        last_values: list[str],
-    ) -> str:
-        """Generate enum value from member name.
-
-        Args:
-            name: The member name to convert.
-            start: Start value (unused - required by parent interface).
-            count: Count value (unused - required by parent interface).
-            last_values: Last values list (unused - required by parent interface).
-
-        Returns:
-            The lowercased member name.
-
-        """
-        del start, count, last_values  # Mark as intentionally unused
-        return name.lower()
-
-
-class BiMapping[K, V]:
-    """Bidirectional immutable mapping.
-
-    Enables efficient bidirectional lookups using a single dictionary structure.
-    Provides immutable forward and inverse mapping views. Values must be unique
-    for proper inverse lookup functionality.
-    """
-
-    __slots__ = ("_forward", "_inverse")
-
-    def __init__(self, data: Mapping[K, V]) -> None:
-        """Initialize bidirectional mapping.
-
-        Args:
-            data: Dictionary to create bidirectional mapping from.
-
-        """
-        forward_dict: dict[K, V] = dict(data)
-        self._forward: MappingProxyType[K, V] = MappingProxyType(forward_dict)
-        self._inverse: MappingProxyType[V, K] = MappingProxyType({
-            v: k for k, v in data.items()
-        })
-
-    @property
-    def forward(self) -> MappingProxyType[K, V]:
-        """Get forward mapping.
-
-        Returns:
-            Immutable mapping from keys to values.
-
-        """
-        return self._forward
-
-    @property
-    def inverse(self) -> MappingProxyType[V, K]:
-        """Get inverse mapping.
-
-        Returns:
-            Immutable mapping from values to keys.
-
-        """
-        return self._inverse
-
-    def __repr__(self) -> str:
-        """Return string representation.
-
-        Returns:
-            String representation of the BiMapping.
-
-        """
-        return f"BiMapping({dict(self._forward)})"
-
 
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
 _MAX_TIMEOUT_SECONDS: Final[int] = 3600

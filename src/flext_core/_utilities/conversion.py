@@ -292,7 +292,7 @@ class FlextUtilitiesConversion:
             if callable(isoformat_method):
                 return str(value)
         try:
-            return _StrictJsonScalarModel.model_validate({"value": value}).value
+            return _StrictJsonScalarModel(value=value).value
         except ValidationError:
             return str(value)
 

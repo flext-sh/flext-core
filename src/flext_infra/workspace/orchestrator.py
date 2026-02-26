@@ -82,12 +82,12 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
                         exit_code=0,
                     )
                     results.append(
-                        m.CommandOutput.model_validate({
-                            "stdout": "",
-                            "stderr": "",
-                            "exit_code": 0,
-                            "duration": 0.0,
-                        }),
+                        m.CommandOutput(
+                            stdout="",
+                            stderr="",
+                            exit_code=0,
+                            duration=0.0,
+                        ),
                     )
                     continue
 
@@ -100,12 +100,12 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
                 if output_result.is_failure:
                     failed += 1
                     results.append(
-                        m.CommandOutput.model_validate({
-                            "stdout": "",
-                            "stderr": output_result.error or "project execution failed",
-                            "exit_code": 1,
-                            "duration": 0.0,
-                        }),
+                        m.CommandOutput(
+                            stdout="",
+                            stderr=output_result.error or "project execution failed",
+                            exit_code=1,
+                            duration=0.0,
+                        ),
                     )
                     if fail_fast:
                         skipped = total - idx
@@ -188,12 +188,12 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         )
 
         return r[m.CommandOutput].ok(
-            m.CommandOutput.model_validate({
-                "stdout": str(log_path),
-                "stderr": stderr,
-                "exit_code": return_code,
-                "duration": round(elapsed, 2),
-            }),
+            m.CommandOutput(
+                stdout=str(log_path),
+                stderr=stderr,
+                exit_code=return_code,
+                duration=round(elapsed, 2),
+            ),
         )
 
     @staticmethod
