@@ -20,6 +20,7 @@ from flext_core.service import FlextService
 from flext_infra.output import output
 from flext_infra.subprocess import CommandRunner
 
+
 class WorkspaceMode(StrEnum):
     """Workspace execution mode enumeration."""
 
@@ -94,6 +95,7 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
             output.info(f"Running in standalone mode (detection error: {exc})")
             return r[WorkspaceMode].fail(f"Detection failed: {exc}")
+
     @staticmethod
     def _repo_name_from_url(url: str) -> str:
         """Extract repository name from Git URL.

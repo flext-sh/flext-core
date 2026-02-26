@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -20,6 +21,7 @@ from flext_core.service import FlextService
 
 from flext_infra.constants import c
 from flext_infra.models import m
+from flext_infra.output import output
 from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
 
@@ -66,14 +68,17 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
             FlextResult containing list of CommandOutput per project.
 
         """
+        output.header("Workspace Orchestration")
         try:
             results: list[m.CommandOutput] = []
             total = len(projects)
             success = 0
             failed = 0
             skipped = 0
+            started_total = time.monotonic()
 
             for idx, project in enumerate(projects, start=1):
+                output.progress(idx, total, project, verb)
                 if skipped:
                     logger.info(
                         "workspace_project_skipped",
@@ -113,16 +118,17 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
                         skipped = total - idx
                     continue
 
-                output = output_result.value
-                results.append(output)
-                if output.exit_code == 0:
+                cmd_output = output_result.value
+                results.append(cmd_output)
+                if cmd_output.exit_code == 0:
                     success += 1
                 else:
                     failed += 1
 
-                if output.exit_code != 0 and fail_fast:
+                if cmd_output.exit_code != 0 and fail_fast:
                     skipped = total - idx
 
+            elapsed_total = time.monotonic() - started_total
             logger.info(
                 "workspace_orchestration_summary",
                 total=total,
@@ -130,6 +136,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
                 failed=failed,
                 skipped=skipped,
             )
+            output.summary(verb, total, success, failed, skipped, elapsed_total)
             return r[list[m.CommandOutput]].ok(results)
 
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
@@ -155,20 +162,16 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
             CommandOutput with log path in stdout, exit code, and timing.
 
         """
-        reports_dir_result = self._reporting.ensure_report_dir(
-            Path.cwd(), "workspace", verb
+        log_path = self._reporting.get_report_path(
+            Path.cwd(), "workspace", verb, f"{project}.log"
         )
-        if reports_dir_result.is_failure:
-            return r[m.CommandOutput].fail(
-                reports_dir_result.error or "failed to create report directory"
-            )
-        reports_dir = reports_dir_result.value
-        log_path = reports_dir / f"{project}.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()
 
         proc_result = self._runner.run_to_file(
             ["make", "-C", project, verb, *make_args],
             log_path,
+            env={"NO_COLOR": "1", **os.environ},
         )
         return_code = proc_result.value if proc_result.is_success else 1
         stderr = "" if proc_result.is_success else (proc_result.error or "")
@@ -181,7 +184,6 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         )
         logger.info(
             "workspace_project_completed",
-            message=msg,
             index=index,
             status=status,
             project=project,

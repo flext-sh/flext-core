@@ -57,15 +57,10 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard
+from typing import ClassVar, Self, TypeGuard
 
 import structlog
 from dependency_injector import containers, providers, wiring
-
-if TYPE_CHECKING:
-    from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
-    from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
-    from structlog.stdlib import add_log_level
 
 from flext_core.constants import c
 from flext_core.protocols import FlextProtocols as p
@@ -83,6 +78,7 @@ class _LazyMetadata:
         # Cache the loaded class on the class itself
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
         return Metadata
+
 
 class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
