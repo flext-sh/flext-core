@@ -57,19 +57,47 @@ class FlextModelFoundation:
     class Validators:
         """Pydantic v2 validators - single namespace for all field validators."""
 
-        tags_adapter: ClassVar[TypeAdapter[list[str]]] = TypeAdapter(list[str])
-        list_adapter: ClassVar[TypeAdapter[list[t.GuardInputValue]]] = TypeAdapter(
-            list[t.GuardInputValue]
-        )
-        strict_string_adapter: ClassVar[
-            TypeAdapter[Annotated[str, Field(strict=True)]]
-        ] = TypeAdapter(Annotated[str, Field(strict=True)])
-        metadata_map_adapter: ClassVar[
-            TypeAdapter[dict[str, t.MetadataAttributeValue]]
-        ] = TypeAdapter(dict[str, t.MetadataAttributeValue])
-        config_adapter: ClassVar[TypeAdapter[dict[str, t.GuardInputValue]]] = (
-            TypeAdapter(dict[str, t.GuardInputValue])
-        )
+        # Private cache variables for lazy-loaded TypeAdapters
+        _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[list[t.GuardInputValue]] | None] = None
+        _strict_string_adapter: ClassVar[TypeAdapter[Annotated[str, Field(strict=True)]] | None] = None
+        _metadata_map_adapter: ClassVar[TypeAdapter[dict[str, t.MetadataAttributeValue]] | None] = None
+        _config_adapter: ClassVar[TypeAdapter[dict[str, t.GuardInputValue]] | None] = None
+
+        @classmethod
+        def tags_adapter(cls) -> TypeAdapter[list[str]]:
+            """Lazy-load tags TypeAdapter on first access."""
+            if cls._tags_adapter is None:
+                cls._tags_adapter = TypeAdapter(list[str])
+            return cls._tags_adapter
+
+        @classmethod
+        def list_adapter(cls) -> TypeAdapter[list[t.GuardInputValue]]:
+            """Lazy-load list TypeAdapter on first access."""
+            if cls._list_adapter is None:
+                cls._list_adapter = TypeAdapter(list[t.GuardInputValue])
+            return cls._list_adapter
+
+        @classmethod
+        def strict_string_adapter(cls) -> TypeAdapter[Annotated[str, Field(strict=True)]]:
+            """Lazy-load strict string TypeAdapter on first access."""
+            if cls._strict_string_adapter is None:
+                cls._strict_string_adapter = TypeAdapter(Annotated[str, Field(strict=True)])
+            return cls._strict_string_adapter
+
+        @classmethod
+        def metadata_map_adapter(cls) -> TypeAdapter[dict[str, t.MetadataAttributeValue]]:
+            """Lazy-load metadata map TypeAdapter on first access."""
+            if cls._metadata_map_adapter is None:
+                cls._metadata_map_adapter = TypeAdapter(dict[str, t.MetadataAttributeValue])
+            return cls._metadata_map_adapter
+
+        @classmethod
+        def config_adapter(cls) -> TypeAdapter[dict[str, t.GuardInputValue]]:
+            """Lazy-load config TypeAdapter on first access."""
+            if cls._config_adapter is None:
+                cls._config_adapter = TypeAdapter(dict[str, t.GuardInputValue])
+            return cls._config_adapter
 
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:
@@ -80,7 +108,7 @@ class FlextModelFoundation:
         def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
             """Normalize value to list format. Fixed types only."""
             try:
-                return FlextModelFoundation.Validators.list_adapter.validate_python(v)
+                return FlextModelFoundation.Validators.list_adapter().validate_python(v)
             except ValidationError:
                 return [v]
 
@@ -91,7 +119,7 @@ class FlextModelFoundation:
             """Validate configuration dictionary structure. Returns dict for model storage."""
             try:
                 normalized = (
-                    FlextModelFoundation.Validators.config_adapter.validate_python(v)
+                    FlextModelFoundation.Validators.config_adapter().validate_python(v)
                 )
             except ValidationError as exc:
                 msg = "Configuration must be a dictionary"
@@ -109,7 +137,7 @@ class FlextModelFoundation:
         def validate_tags_list(v: t.GuardInputValue) -> list[str]:
             """Validate and normalize tags list."""
             try:
-                raw_tags = FlextModelFoundation.Validators.list_adapter.validate_python(
+                raw_tags = FlextModelFoundation.Validators.list_adapter().validate_python(
                     v
                 )
             except ValidationError as exc:
@@ -121,7 +149,7 @@ class FlextModelFoundation:
             for tag in raw_tags:
                 try:
                     clean_tag = (
-                        FlextModelFoundation.Validators.strict_string_adapter
+                        FlextModelFoundation.Validators.strict_string_adapter()
                         .validate_python(tag)
                         .strip()
                         .lower()
@@ -257,7 +285,7 @@ class FlextModelFoundation:
                     msg = f"Keys starting with '_' are reserved: {key}"
                     raise ValueError(msg)
 
-            return FlextModelFoundation.Validators.metadata_map_adapter.validate_python(
+            return FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
                 result
             )
 
