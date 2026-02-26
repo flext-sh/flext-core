@@ -26,7 +26,7 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextExceptions, FlextResult, p, t, u
+from flext_core import FlextExceptions, FlextResult, p, u
 from flext_core.models import m
 from flext_core.typings import t
 from pydantic import BaseModel

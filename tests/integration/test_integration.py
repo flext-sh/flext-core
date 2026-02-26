@@ -34,7 +34,6 @@ from flext_core import (
     FlextContainer,
     FlextResult,
     __version__,
-    t,
     u,
 )
 from flext_core.typings import t

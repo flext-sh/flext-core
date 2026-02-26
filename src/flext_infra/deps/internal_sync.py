@@ -7,19 +7,19 @@ import configparser
 import os
 import re
 import shutil
-import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-import structlog
 from flext_core import r
+from flext_core.loggings import FlextLogger
 
 from flext_infra.constants import c
 from flext_infra.models import m
+from flext_infra.output import output
 from flext_infra.subprocess import CommandRunner
 from flext_infra.toml_io import TomlService
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$")
 GITHUB_REPO_URL_RE = re.compile(
@@ -143,6 +143,7 @@ class InternalDependencySyncService:
 
     def _is_workspace_mode(self, project_root: Path) -> tuple[bool, Path | None]:
         if os.getenv("FLEXT_STANDALONE") == "1":
+            output.info("Standalone mode: skipping workspace dependency sync")
             return False, None
 
         env_workspace_root = self._workspace_root_from_env(project_root)
@@ -417,7 +418,7 @@ def main() -> int:
         return result.value
 
     logger.error("sync_internal_deps_failed", error=result.error)
-    _ = sys.stderr.write(f"[sync-deps] error: {result.error}\n")
+    output.error(f"[sync-deps] {result.error}")
     return 1
 
 

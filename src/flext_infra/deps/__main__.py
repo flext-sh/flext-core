@@ -20,6 +20,8 @@ from types import MappingProxyType
 
 from flext_core.runtime import FlextRuntime
 
+from flext_infra.output import output
+
 _MIN_ARGV = 2
 
 _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
@@ -35,17 +37,17 @@ def main() -> int:
     """Dispatch to the appropriate deps subcommand."""
     FlextRuntime.ensure_structlog_configured()
     if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
-        _ = sys.stdout.write("Usage: flext-infra deps <subcommand> [args...]\n\n")
-        _ = sys.stdout.write("Subcommands:\n")
+        output.info("Usage: flext-infra deps <subcommand> [args...]")
+        output.info("Subcommands:")
         for name in sorted(_SUBCOMMANDS):
-            _ = sys.stdout.write(f"  {name}\n")
+            output.info(f"  {name}")
         return (
             0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
         )
 
     subcommand = sys.argv[1]
     if subcommand not in _SUBCOMMANDS:
-        _ = sys.stderr.write(f"flext-infra deps: unknown subcommand '{subcommand}'\n")
+        output.error(f"flext-infra deps: unknown subcommand '{subcommand}'")
         return 1
 
     sys.argv = [f"flext-infra deps {subcommand}"] + sys.argv[2:]

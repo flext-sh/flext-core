@@ -28,7 +28,6 @@ from flext_core import (
     FlextContainer,
     FlextLogger,
     FlextSettings,
-    t,
 )
 from flext_core.typings import t
 

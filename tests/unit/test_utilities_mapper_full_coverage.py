@@ -1,10 +1,8 @@
+"""Utilities mapper full coverage tests."""
+
 from __future__ import annotations
 
 from collections import UserDict, UserList
-
-# mypy: follow_imports=skip
-# mypy: disable-error-code=valid-type
-# mypy: disable-error-code=misc
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,23 +19,33 @@ from pydantic import BaseModel
 
 @dataclass
 class AttrObject:
+    """AttrObject class."""
+
     name: str = "name"
     value: int = 1
 
 
 class SampleModel(BaseModel):
+    """SampleModel class."""
+
     port: int = c.Platform.DEFAULT_HTTP_PORT
     nested: dict[str, t.GeneralValueType] = {"k": "v"}
 
 
 class BadString:
+    """BadString class."""
+
     def __str__(self) -> str:
+        """__str__ method."""
         msg = "cannot stringify"
         raise ValueError(msg)
 
 
 class BadBool:
+    """BadBool class."""
+
     def __bool__(self) -> bool:
+        """__bool__ method."""
         msg = "cannot bool"
         raise ValueError(msg)
 
@@ -59,21 +67,29 @@ def _identity(value: t.ConfigMapValue) -> t.ConfigMapValue:
 
 
 class ExplodingLenList(UserList[object]):
+    """ExplodingLenList class."""
+
     def __len__(self) -> int:
+        """__len__ method."""
         msg = "len exploded"
         raise TypeError(msg)
 
 
 class BadMapping(Mapping[str, t.GeneralValueType]):
+    """BadMapping class."""
+
     def __getitem__(self, key: str) -> t.GeneralValueType:
+        """__getitem__ method."""
         msg = f"missing {key}"
         raise KeyError(msg)
 
     def __iter__(self) -> Iterator[str]:
+        """__iter__ method."""
         msg = "iter exploded"
         raise RuntimeError(msg)
 
     def __len__(self) -> int:
+        """__len__ method."""
         return 1
 
 
@@ -649,7 +665,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert flags.value == {"can_read": True, "can_write": False}
 
     class BadIter(UserList[str]):
-        def __iter__(self):
+        def __iter__(self) -> Iterator[str]:
             msg = "bad iter"
             raise RuntimeError(msg)
 
@@ -757,7 +773,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
     assert mapper.as_(1, int) == 1
     assert mapper.as_("1", int, strict=True, default=0) == 0
     assert mapper.as_("1", int) == 1
-    assert mapper.as_("1.5", float) == 1.5
+    assert mapper.as_("pytest.approx(1.5)", float) == pytest.approx(1.5)
     assert mapper.as_("true", bool) is True
     assert mapper.as_("maybe", bool, default=False) is False
     assert mapper.as_(None, int, default=3) == 3

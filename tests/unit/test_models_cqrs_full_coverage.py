@@ -1,8 +1,11 @@
+"""Tests for CQRS models full coverage."""
+
 from __future__ import annotations
 
 import sys
 from types import SimpleNamespace
 
+import pytest
 from flext_core import c, m
 from flext_core._models.cqrs import FlextMessage
 from pydantic import TypeAdapter
@@ -15,7 +18,9 @@ def test_command_validator_and_pagination_limit() -> None:
     assert page.limit == 11
 
 
-def test_query_resolve_pagination_wrapper_and_fallback(monkeypatch) -> None:
+def test_query_resolve_pagination_wrapper_and_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class Wrapper:
         class Pagination(m.Pagination):
             pass
@@ -70,7 +75,9 @@ def test_handler_builder_fluent_methods() -> None:
     assert built.metadata.attributes["owner"] == "tests"
 
 
-def test_cqrs_query_resolve_deeper_and_int_pagination(monkeypatch) -> None:
+def test_cqrs_query_resolve_deeper_and_int_pagination(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class Wrapper:
         class Inner:
             class Query(m.Query):

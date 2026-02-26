@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
+import pytest
 from flext_core import FlextResult, FlextSettings
 
 from tests.test_utils import assertion_helpers
@@ -117,7 +118,7 @@ class TestPhase2FinalCoveragePush:
         )
         assert config.app_name == "complete_test"
         assert config.max_retry_attempts == 5
-        assert config.timeout_seconds == 60.0
+        assert config.timeout_seconds == pytest.approx(60.0)
 
     def test_config_json_serialization(self) -> None:
         """Test config JSON serialization and deserialization."""

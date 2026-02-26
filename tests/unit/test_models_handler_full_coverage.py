@@ -1,5 +1,8 @@
+"""Tests for Handler models full coverage."""
+
 from __future__ import annotations
 
+import pytest
 from flext_core import c, m, r, t, u
 
 handler_models = __import__(
@@ -21,16 +24,11 @@ def test_models_handler_branches() -> None:
     )
     assert req.handler_mode == "command"
 
-    try:
+    with pytest.raises(TypeError, match="Handler must be callable"):
         FlextModelsHandler.Registration(name="bad", handler=1)
-    except TypeError as exc:
-        assert "Handler must be callable" in str(exc)
-    else:
-        msg = "Expected TypeError"
-        raise AssertionError(msg)
 
     ctx = m.Handler.ExecutionContext.create_for_handler("h1", "command")
-    assert ctx.execution_time_ms == 0.0
+    assert ctx.execution_time_ms == pytest.approx(0.0)
     state = ctx.metrics_state
     assert isinstance(state, t.Dict)
     ctx.set_metrics_state(t.Dict(root={"x": 1}))

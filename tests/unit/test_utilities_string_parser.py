@@ -32,15 +32,14 @@ from flext_core import (
     FlextResult as r,
     t,
 )
-from flext_core.typings import t
 from flext_tests import u
 from flext_tests.typings import t as tests_t
 
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
+from tests.utilities import TestsFlextUtilities
 
 _PayloadValue = tests_t.Tests.PayloadValue
-from tests.utilities import TestsFlextUtilities
 
 # Test case dataclasses from tests.models
 NormalizeWhitespaceCase = TestsFlextModels.NormalizeWhitespaceCase

@@ -17,8 +17,8 @@ from urllib.parse import urlparse
 from flext_core.result import r
 from flext_core.service import FlextService
 
+from flext_infra.output import output
 from flext_infra.subprocess import CommandRunner
-
 
 class WorkspaceMode(StrEnum):
     """Workspace execution mode enumeration."""
@@ -61,20 +61,24 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
             git_marker = parent / ".git"
 
             if not git_marker.exists():
+                output.info("Running in standalone mode (no parent workspace detected)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
             result_wrapper = self._runner.run_raw(
                 ["git", "-C", str(parent), "config", "--get", "remote.origin.url"],
             )
             if result_wrapper.is_failure:
+                output.info("Running in standalone mode (unable to detect workspace)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
             result = result_wrapper.value
 
             if result.exit_code != 0:
+                output.info("Running in standalone mode (unable to detect workspace)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
             origin = result.stdout.strip()
             if not origin:
+                output.info("Running in standalone mode (no remote origin found)")
                 return r[WorkspaceMode].ok(WorkspaceMode.STANDALONE)
 
             repo_name = self._repo_name_from_url(origin)
@@ -83,11 +87,13 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
                 if repo_name == "flext"
                 else WorkspaceMode.STANDALONE
             )
+            if mode == WorkspaceMode.STANDALONE:
+                output.info(f"Running in standalone mode (parent repo: {repo_name})")
             return r[WorkspaceMode].ok(mode)
 
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            output.info(f"Running in standalone mode (detection error: {exc})")
             return r[WorkspaceMode].fail(f"Detection failed: {exc}")
-
     @staticmethod
     def _repo_name_from_url(url: str) -> str:
         """Extract repository name from Git URL.

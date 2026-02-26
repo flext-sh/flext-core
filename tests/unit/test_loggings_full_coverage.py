@@ -1,10 +1,13 @@
+"""Loggings full coverage tests."""
+
 from __future__ import annotations
 
 import inspect
 import types
 from pathlib import Path
-from typing import cast
+from typing import ClassVar, cast, override
 
+import pytest
 from flext_core import c, m, p, r, t, u
 from flext_core.loggings import FlextLogger
 from flext_core.runtime import FlextRuntime
@@ -66,7 +69,7 @@ class _StructlogShim:
         self.contextvars = _ContextVars()
 
 
-def test_loggings_context_and_factory_paths(monkeypatch) -> None:
+def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     shim = _StructlogShim()
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(lambda: shim))
     assert isinstance(c.Settings.LogLevel.DEBUG.value, str)
@@ -126,7 +129,7 @@ def test_loggings_context_and_factory_paths(monkeypatch) -> None:
         assert isinstance(scoped, FlextLogger)
 
 
-def test_loggings_bind_clear_level_error_paths(monkeypatch) -> None:
+def test_loggings_bind_clear_level_error_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     shim = _StructlogShim()
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(lambda: shim))
 
@@ -165,7 +168,9 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch) -> None:
     assert lvl_unbind.is_failure
 
 
-def test_loggings_instance_and_message_format_paths(monkeypatch) -> None:
+def test_loggings_instance_and_message_format_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake = _FakeBindable()
     monkeypatch.setattr(
         FlextRuntime, "get_logger", staticmethod(lambda _name=None: fake)
@@ -198,7 +203,7 @@ def test_loggings_instance_and_message_format_paths(monkeypatch) -> None:
         co_qualname = "MyType.run"
 
     class _Frame:
-        f_locals: dict[str, object] = {}
+        f_locals: ClassVar[dict[str, object]] = {}
         f_code = _Code()
 
     assert (
@@ -209,7 +214,7 @@ def test_loggings_instance_and_message_format_paths(monkeypatch) -> None:
     )
 
 
-def test_loggings_source_and_log_error_paths(monkeypatch) -> None:
+def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
         "x", cast("p.Log.StructlogLogger", cast("object", fake))
@@ -237,6 +242,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch) -> None:
         def exists(self) -> bool:
             return False
 
+        @override
         def __eq__(self, _other: object) -> bool:
             return True
 
@@ -263,7 +269,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch) -> None:
     logger.warning("warn")
 
 
-def test_loggings_exception_and_adapter_paths(monkeypatch) -> None:
+def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
         "x", cast("p.Log.StructlogLogger", cast("object", fake))
@@ -327,13 +333,13 @@ def test_loggings_exception_and_adapter_paths(monkeypatch) -> None:
     adapter.exception("boom", exception=_NonException("x"), x=1)
 
 
-def test_loggings_remaining_branch_paths(monkeypatch) -> None:
+def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Container:
         pass
 
     captured: dict[str, object] = {}
 
-    def _for_container(cls, _container, level=None):
+    def _for_container(cls: type[object], _container: object, level: object = None):
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",
@@ -379,7 +385,7 @@ def test_loggings_remaining_branch_paths(monkeypatch) -> None:
         co_qualname = "MyClass.run"
 
     class _UpperFrame:
-        f_locals: dict[str, object] = {}
+        f_locals: ClassVar[dict[str, object]] = {}
         f_code = _CodeUpper()
 
     monkeypatch.setattr(c.Validation, "LEVEL_PREFIX_PARTS_COUNT", 2)
@@ -398,7 +404,7 @@ def test_loggings_remaining_branch_paths(monkeypatch) -> None:
     class _CallerFrame:
         f_code = _CodeMethod()
         f_lineno = 40
-        f_locals: dict[str, object] = {}
+        f_locals: ClassVar[dict[str, object]] = {}
 
     monkeypatch.setattr(
         FlextLogger,
@@ -443,13 +449,15 @@ def test_loggings_remaining_branch_paths(monkeypatch) -> None:
     err_logger.error("boom", exception=ValueError("x"))
 
 
-def test_loggings_uncovered_level_trace_path_and_exception_guards(monkeypatch) -> None:
+def test_loggings_uncovered_level_trace_path_and_exception_guards(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _Container:
         pass
 
     captured: dict[str, object] = {}
 
-    def _for_container(cls, _container, level=None):
+    def _for_container(cls: type[object], _container: object, level: object = None):
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",

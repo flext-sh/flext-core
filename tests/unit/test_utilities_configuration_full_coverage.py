@@ -1,7 +1,10 @@
+"""Tests for Configuration utilities full coverage."""
+
 from __future__ import annotations
 
 # mypy: disable-error-code=arg-type
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import cast
 
@@ -27,7 +30,7 @@ class _ContainerOK:
     def register(self, _name: str, _instance: JsonValue):
         return r[bool].ok(True)
 
-    def register_factory(self, _name: str, _factory):
+    def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
         return r[bool].ok(True)
 
 
@@ -35,7 +38,7 @@ class _ContainerFail:
     def register(self, _name: str, _instance: JsonValue):
         return r[bool].fail("reg fail")
 
-    def register_factory(self, _name: str, _factory):
+    def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
         return r[bool].fail("fac fail")
 
 
@@ -44,7 +47,7 @@ class _ContainerRaise:
         msg = "reg ex"
         raise RuntimeError(msg)
 
-    def register_factory(self, _name: str, _factory):
+    def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
         msg = "fac ex"
         raise RuntimeError(msg)
 

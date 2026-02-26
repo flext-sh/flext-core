@@ -1,5 +1,8 @@
+"""Tests for Dispatcher Reliability full coverage."""
+
 from __future__ import annotations
 
+import pytest
 from flext_core import c, m, r, t, u
 
 disp_rel = __import__(
@@ -24,7 +27,7 @@ def test_dispatcher_reliability_branch_paths() -> None:
 
     rl = disp_rel.RateLimiterManager(max_requests=1, window_seconds=1.5)
     assert rl.get_max_requests() == 1
-    assert rl.get_window_seconds() == 1.5
+    assert rl.get_window_seconds() == pytest.approx(1.5)
 
     rp = disp_rel.RetryPolicy(max_attempts=1, retry_delay=0.0)
-    assert rp.get_exponential_delay(1) == 0.0
+    assert rp.get_exponential_delay(1) == pytest.approx(0.0)

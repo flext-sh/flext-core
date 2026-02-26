@@ -1,8 +1,10 @@
+"""Container full coverage tests."""
+
 from __future__ import annotations
 
 import types
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import pytest
 from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
@@ -28,7 +30,8 @@ class _BridgeBadProvide:
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:
+    def Provide(name: str) -> str:  # noqa: N802
+        return name
         return name
 
 
@@ -375,10 +378,13 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
     c = FlextContainer.create()
 
     class _Cfg:
-        _namespace_registry = {"alpha": object(), "beta": object()}
+        _namespace_registry: ClassVar[dict[str, object]] = {
+            "alpha": object(),
+            "beta": object(),
+        }
 
         @staticmethod
-        def get_namespace_config(namespace: str):
+        def get_namespace_config(namespace: str) -> type[BaseModel]:
             if namespace == "alpha":
 
                 class _Model(BaseModel):
@@ -543,27 +549,27 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     c._user_overrides = m.ConfigMap(root={})
 
     class _CfgNoMethod:
-        _namespace_registry = {"n1": object()}
+        _namespace_registry: ClassVar[dict[str, object]] = {"n1": object()}
 
     c_any: Any = c
     c_any._config = _CfgNoMethod()
     c.sync_config_to_di()
 
     class _CfgFallback:
-        _namespace_registry = {"n2": object()}
+        _namespace_registry: ClassVar[dict[str, object]] = {"n2": object()}
 
         @staticmethod
-        def get_namespace_config(_namespace: str):
+        def get_namespace_config(_namespace: str) -> type[BaseModel]:
             class _Model(BaseModel):
                 v: str = "x"
 
             return _Model
 
     class _CfgBadNamespace:
-        _namespace_registry = {"n3": object()}
+        _namespace_registry: ClassVar[dict[str, object]] = {"n3": object()}
 
         @staticmethod
-        def get_namespace_config(_namespace: str):
+        def get_namespace_config(_namespace: str) -> type[BaseModel]:
             class _Model(BaseModel):
                 v: str = "x"
 
@@ -574,10 +580,10 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
             return "bad"
 
     class _CfgGoodNamespace:
-        _namespace_registry = {"n4": object()}
+        _namespace_registry: ClassVar[dict[str, object]] = {"n4": object()}
 
         @staticmethod
-        def get_namespace_config(_namespace: str):
+        def get_namespace_config(_namespace: str) -> type[BaseModel]:
             class _Model(BaseModel):
                 v: str = "x"
 

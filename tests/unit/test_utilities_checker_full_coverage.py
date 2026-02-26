@@ -1,3 +1,9 @@
+"""Tests for type checker utility.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 import inspect
@@ -18,6 +24,8 @@ class _UnknownHintHandler:
 
 
 class MissingType:
+    """Class to simulate a missing type."""
+
     pass
 
 

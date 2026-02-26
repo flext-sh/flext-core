@@ -16,6 +16,7 @@ import operator
 from dataclasses import dataclass
 from typing import Any, cast
 
+import pytest
 from flext_core import t, u
 from flext_core.models import m
 from pydantic import BaseModel
@@ -180,7 +181,7 @@ class TestuMapperUtils:
     def test_as_conversion(self) -> None:
         """Test as_ type conversion."""
         assert u.mapper().as_("123", int) == 123
-        assert u.mapper().as_("12.3", float) == 12.3
+        assert u.mapper().as_("12.3", float) == pytest.approx(12.3)
         assert u.mapper().as_("true", bool) is True
         assert u.mapper().as_("invalid", int, default=0) == 0
 

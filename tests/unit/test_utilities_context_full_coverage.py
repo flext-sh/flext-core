@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import cast
 from unittest.mock import MagicMock
 
@@ -43,7 +43,7 @@ class TestCreateDatetimeProxy:
 
     def test_create_datetime_proxy_with_default(self) -> None:
         """Creates proxy with datetime default."""
-        now = datetime.now()
+        now = datetime.now(UTC)
         proxy = u.Context.create_datetime_proxy("start_time", default=now)
         assert proxy._default == now
 

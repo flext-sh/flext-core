@@ -17,10 +17,10 @@ from pathlib import Path
 
 from flext_core.runtime import FlextRuntime
 
+from flext_infra.output import output
 from flext_infra.paths import PathResolver
 from flext_infra.release.orchestrator import ReleaseOrchestrator
 from flext_infra.versioning import VersioningService
-from flext_infra.output import output
 
 
 def _parse_args() -> argparse.Namespace:

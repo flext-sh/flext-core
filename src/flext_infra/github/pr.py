@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
@@ -21,9 +20,9 @@ from flext_core.result import FlextResult, r
 from flext_core.typings import t
 
 from flext_infra.git import GitService
+from flext_infra.output import output
 from flext_infra.subprocess import CommandRunner
 from flext_infra.versioning import VersioningService
-from flext_infra.output import output
 
 
 class PrManager:

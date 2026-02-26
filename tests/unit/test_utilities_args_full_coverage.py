@@ -1,7 +1,10 @@
+"""Tests for Args utilities full coverage."""
+
 from __future__ import annotations
 
 from typing import Annotated, cast
 
+import flext_core._utilities.args as args_module
 import pytest
 from flext_core import c, m, p, r, t, u
 
@@ -11,6 +14,8 @@ def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
 
 
 class UnknownHint:
+    """Test class for unknown hints."""
+
     pass
 
 
@@ -39,8 +44,6 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import flext_core._utilities.args as args_module
-
     monkeypatch.setattr(
         args_module,
         "get_type_hints",

@@ -35,9 +35,7 @@ from flext_core import (
     r,
     t,
 )
-from flext_core.models import m
 from flext_core.registry import RegistryHandler
-from flext_core.typings import t
 from flext_tests import FlextTestsUtilities, u
 
 

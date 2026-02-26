@@ -33,6 +33,7 @@ def _should_use_color(stream: TextIO | None = None) -> bool:
 
     Returns:
         True if ANSI escape codes should be emitted.
+
     """
     target = stream if stream is not None else sys.stderr
 
@@ -53,7 +54,7 @@ def _should_use_color(stream: TextIO | None = None) -> bool:
     if hasattr(target, "isatty") and target.isatty():
         # 5. TERM=dumb or empty → no colors
         term = os.environ.get("TERM", "")
-        return term not in ("dumb", "")
+        return term not in {"dumb", ""}
 
     return False
 
@@ -67,13 +68,13 @@ def _should_use_unicode() -> bool:
 
     Returns:
         True if UTF-8 symbols can be used safely.
+
     """
     for var in ("LC_ALL", "LANG"):
         value = os.environ.get(var, "")
         if value and "utf" in value.lower():
             return True
     return False
-
 
 
 _USE_COLOR: Final[bool] = _should_use_color()
@@ -111,6 +112,7 @@ class InfraOutput:
         use_unicode: Override automatic unicode detection. ``None`` uses
             the module-level ``_USE_UNICODE`` value.
         stream: Output stream. Defaults to ``sys.stderr``.
+
     """
 
     def __init__(
@@ -120,6 +122,14 @@ class InfraOutput:
         use_unicode: bool | None = None,
         stream: TextIO | None = None,
     ) -> None:
+        """Initialize structured terminal output.
+
+        Args:
+            use_color: Override automatic color detection.
+            use_unicode: Override automatic unicode detection.
+            stream: Output stream. Defaults to sys.stderr.
+
+        """
         self._color: bool = use_color if use_color is not None else _USE_COLOR
         self._unicode: bool = use_unicode if use_unicode is not None else _USE_UNICODE
         self._stream: TextIO = stream if stream is not None else sys.stderr
@@ -136,18 +146,16 @@ class InfraOutput:
         self._sym_warn = "⚠" if self._unicode else "[WARN]"
         self._sym_skip = "–" if self._unicode else "[SKIP]"
 
-
     def _write(self, message: str) -> None:
         """Write a line to the output stream with newline."""
         self._stream.write(message + "\n")
         self._stream.flush()
 
-
     def status(
         self,
         verb: str,
         project: str,
-        result: bool,
+        result: bool,  # noqa: FBT001
         elapsed: float,
     ) -> None:
         """Write a formatted status line for a project operation.
@@ -162,6 +170,7 @@ class InfraOutput:
             project: Project identifier.
             result: ``True`` for success, ``False`` for failure.
             elapsed: Duration in seconds.
+
         """
         if result:
             sym = f"{self._green}{self._sym_ok}{self._reset}"
@@ -193,6 +202,7 @@ class InfraOutput:
             failed: Failed count.
             skipped: Skipped count.
             elapsed: Total duration in seconds.
+
         """
         sep = "──" if self._unicode else "--"
         header = f"{self._bold}{sep} {verb} summary {sep}{self._reset}"
@@ -226,6 +236,7 @@ class InfraOutput:
         Args:
             message: Primary error message.
             detail: Optional detail text shown on the next line.
+
         """
         self._write(f"{self._red}ERROR{self._reset}: {message}")
         if detail:
@@ -236,6 +247,7 @@ class InfraOutput:
 
         Args:
             message: Warning text.
+
         """
         self._write(f"{self._yellow}WARN{self._reset}: {message}")
 
@@ -244,6 +256,7 @@ class InfraOutput:
 
         Args:
             message: Information text.
+
         """
         self._write(f"{self._blue}INFO{self._reset}: {message}")
 
@@ -252,6 +265,7 @@ class InfraOutput:
 
         Args:
             title: Section title text.
+
         """
         sep = "═" if self._unicode else "="
         line = sep * 60
@@ -272,11 +286,11 @@ class InfraOutput:
             total: Total number of items.
             project: Project identifier.
             verb: Operation name.
+
         """
         width = len(str(total))
         counter = f"[{index:0{width}d}/{total:0{width}d}]"
         self._write(f"{self._bold}{counter}{self._reset} {project} {verb} ...")
-
 
 
 output: Final[InfraOutput] = InfraOutput()
@@ -286,7 +300,6 @@ __all__ = [
     "BLUE",
     "BOLD",
     "GREEN",
-    "InfraOutput",
     "RED",
     "RESET",
     "SYM_ARROW",
@@ -296,5 +309,6 @@ __all__ = [
     "SYM_SKIP",
     "SYM_WARN",
     "YELLOW",
+    "InfraOutput",
     "output",
 ]

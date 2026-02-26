@@ -57,7 +57,7 @@ class TestFlextContext:
         if context["operation"] != "login":
             msg = f"Expected {'login'}, got {context['operation']}"
             raise AssertionError(msg)
-        assert context["duration_ms"] == 150.5
+        assert context["duration_ms"] == pytest.approx(150.5)
 
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
@@ -103,11 +103,11 @@ class TestFlextContext:
             "cpu_percent": 75.2,
         }
 
-        if context["duration_ms"] != 250.0:
+        if context["duration_ms"] != pytest.approx(250.0):
             msg = f"Expected {250.0}, got {context['duration_ms']}"
             raise AssertionError(msg)
-        assert context["memory_mb"] == 128.5
-        if context["cpu_percent"] != 75.2:
+        assert context["memory_mb"] == pytest.approx(128.5)
+        if context["cpu_percent"] != pytest.approx(75.2):
             msg = f"Expected {75.2}, got {context['cpu_percent']}"
             raise AssertionError(msg)
 

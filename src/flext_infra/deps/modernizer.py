@@ -73,10 +73,25 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
     return [seen[k] for k in sorted(seen)]
 
 
-def _as_string_list(value: t.ConfigMapValue) -> list[str]:
+def _unwrap_item(value: t.ConfigMapValue | Item | None) -> t.ConfigMapValue | None:
+    """Unwrap a tomlkit Item to get the underlying value."""
+    if isinstance(value, Item):
+        unwrapped = value.unwrap()
+        return unwrapped if not isinstance(unwrapped, Item) else None
+    return value
+
+
+def _as_string_list(value: t.ConfigMapValue | Item | None) -> list[str]:
     """Convert TOML value to list of strings."""
     if value is None or isinstance(value, (str, Mapping)):
         return []
+    if isinstance(value, Item):
+        # Unwrap Item to get the underlying value
+        value = value.unwrap()
+        if value is None or isinstance(value, (str, Mapping)):
+            return []
+        if not isinstance(value, Iterable):
+            return []
     if not isinstance(value, Iterable):
         return []
     items: list[str] = []
@@ -197,18 +212,26 @@ class ConsolidateGroupsPhase:
             doc["tool"] = tool
 
         poetry = _ensure_table(tool, "poetry")
-        poetry_group = _ensure_table(poetry, "group")
-        poetry_dev = _ensure_table(_ensure_table(poetry_group, "dev"), "dependencies")
+        poetry_group = poetry.get("group")
+        if not isinstance(poetry_group, Table):
+            poetry_group = None
 
+        poetry_dev_table: Table | None = None
         for old_group in ("docs", "security", "test", "typings"):
+            if poetry_group is None:
+                continue
             old_group_table = poetry_group.get(old_group)
             if not isinstance(old_group_table, Table):
                 continue
             old_deps = old_group_table.get("dependencies")
             if isinstance(old_deps, Table):
+                if poetry_dev_table is None:
+                    poetry_dev_table = _ensure_table(
+                        _ensure_table(poetry_group, "dev"), "dependencies"
+                    )
                 for dep_name, dep_value in old_deps.items():
-                    if dep_name not in poetry_dev:
-                        poetry_dev[dep_name] = dep_value
+                    if dep_name not in poetry_dev_table:
+                        poetry_dev_table[dep_name] = dep_value
             del poetry_group[old_group]
             changes.append(f"tool.poetry.group.{old_group} removed")
 
@@ -250,7 +273,7 @@ class EnsurePytestConfigPhase:
         pytest_tbl = _ensure_table(tool, "pytest")
         ini = _ensure_table(pytest_tbl, "ini_options")
 
-        if ini.get("minversion") != "8.0":
+        if _unwrap_item(ini.get("minversion")) != "8.0":
             ini["minversion"] = "8.0"
             changes.append("tool.pytest.ini_options.minversion set to 8.0")
 
@@ -319,15 +342,15 @@ class EnsurePyreflyConfigPhase:
 
         pyrefly = _ensure_table(tool, "pyrefly")
 
-        if pyrefly.get("python-version") != "3.13":
+        if _unwrap_item(pyrefly.get("python-version")) != "3.13":
             pyrefly["python-version"] = "3.13"
             changes.append("tool.pyrefly.python-version set to 3.13")
 
-        if pyrefly.get("ignore-errors-in-generated-code") is not True:
+        if _unwrap_item(pyrefly.get("ignore-errors-in-generated-code")) is not True:
             pyrefly["ignore-errors-in-generated-code"] = True
             changes.append("tool.pyrefly.ignore-errors-in-generated-code enabled")
 
-        expected_search = ["."] if is_root else [".."]
+        expected_search = ["."]
         current_search = _as_string_list(pyrefly.get("search-path"))
         if current_search != expected_search:
             pyrefly["search-path"] = _array(expected_search)
@@ -335,7 +358,7 @@ class EnsurePyreflyConfigPhase:
 
         errors = _ensure_table(pyrefly, "errors")
         for error_rule in self._STRICT_ERRORS:
-            if errors.get(error_rule) is not True:
+            if _unwrap_item(errors.get(error_rule)) is not True:
                 errors[error_rule] = True
                 changes.append(f"tool.pyrefly.errors.{error_rule} enabled")
 
@@ -393,7 +416,19 @@ class InjectCommentsPhase:
             changes.append("managed banner injected")
 
         marker_map = dict(self._MARKERS)
+        skip_broken_group_section = False
         for line in lines:
+            if line.strip() == "[group.dev.dependencies]":
+                skip_broken_group_section = True
+                changes.append("broken [group.dev.dependencies] section removed")
+                continue
+
+            if skip_broken_group_section and not line.strip():
+                continue
+
+            if skip_broken_group_section and line.strip():
+                skip_broken_group_section = False
+
             marker = marker_map.get(line.strip())
             if marker:
                 recent = (
@@ -456,45 +491,32 @@ class PyprojectModernizer:
         if doc is None:
             return ["invalid TOML"]
 
-        SUB_PROJECTS = {
-            "algar-oud-mig",
-            "flexcore",
-            "flext-api",
-            "flext-auth",
-            "flext-cli",
-            "flext-core",
-            "flext-db-oracle",
-            "flext-dbt-ldap",
-            "flext-dbt-ldif",
-            "flext-dbt-oracle",
-            "flext-dbt-oracle-wms",
-            "flext-grpc",
-            "flext-ldap",
-            "flext-ldif",
-            "flext-meltano",
-            "flext-observability",
-            "flext-oracle-oic",
-            "flext-oracle-wms",
-            "flext-plugin",
-            "flext-quality",
-            "flext-tap-ldap",
-            "flext-tap-ldif",
-            "flext-tap-oracle",
-            "flext-tap-oracle-oic",
-            "flext-tap-oracle-wms",
-            "flext-target-ldap",
-            "flext-target-ldif",
-            "flext-target-oracle",
-            "flext-target-oracle-oic",
-            "flext-target-oracle-wms",
-            "flext-web",
-            "gruponos-meltano-native",
-        }
-        is_root = path.parent.name not in SUB_PROJECTS
+        is_root = path.parent.resolve() == self.root.resolve()
 
         changes = ConsolidateGroupsPhase().apply(doc, canonical_dev)
         changes.extend(EnsurePytestConfigPhase().apply(doc))
         changes.extend(EnsurePyreflyConfigPhase().apply(doc, is_root=is_root))
+
+        tool = doc.get("tool")
+        if isinstance(tool, Table):
+            poetry = tool.get("poetry")
+            if isinstance(poetry, Table):
+                group = poetry.get("group")
+                if isinstance(group, Table):
+                    empty_groups: list[str] = []
+                    for name in list(group.keys()):
+                        group_item = group.get(name)
+                        if isinstance(group_item, Table):
+                            deps = group_item.get("dependencies")
+                            if isinstance(deps, Table) and len(deps) == 0:
+                                empty_groups.append(name)
+                    for name in empty_groups:
+                        del group[name]
+                        changes.append(f"removed empty poetry group '{name}'")
+                    if len(group) == 0:
+                        del poetry["group"]
+                        changes.append("removed empty poetry group container")
+
         rendered = tomlkit.dumps(doc)
         if not skip_comments:
             rendered, comment_changes = InjectCommentsPhase().apply(rendered)

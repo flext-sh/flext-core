@@ -1,7 +1,14 @@
+"""Tests for collections models full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from typing import cast
 
+import pytest
 from flext_core import c, m, r, t, u
 from pydantic import Field
 
@@ -87,10 +94,5 @@ def test_config_hash_from_mapping_and_non_hashable() -> None:
     loaded = _Config.from_mapping(t.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
 
-    try:
+    with pytest.raises(TypeError, match="unhashable type"):
         hash(loaded)
-    except TypeError as exc:
-        assert "not hashable" in str(exc)
-    else:
-        msg = "Expected TypeError for mutable config hash"
-        raise AssertionError(msg)

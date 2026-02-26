@@ -6,8 +6,6 @@ import io
 import re
 from unittest.mock import patch
 
-import pytest
-
 from flext_infra.output import (
     InfraOutput,
     _should_use_color,
@@ -22,6 +20,8 @@ def _strip_ansi(text: str) -> str:
 
 
 class TestShouldUseColor:
+    """Tests for _should_use_color detection."""
+
     def test_no_color_env_disables(self) -> None:
         with patch.dict("os.environ", {"NO_COLOR": "1"}, clear=False):
             assert _should_use_color() is False
@@ -73,6 +73,8 @@ class TestShouldUseColor:
 
 
 class TestShouldUseUnicode:
+    """Tests for _should_use_unicode detection."""
+
     def test_utf8_lang_enables(self) -> None:
         with patch.dict("os.environ", {"LANG": "en_US.UTF-8"}, clear=True):
             assert _should_use_unicode() is True
@@ -96,6 +98,8 @@ class TestShouldUseUnicode:
 
 
 class TestInfraOutputStatus:
+    """Tests for InfraOutput.status formatting."""
+
     def test_success_status_contains_ok(self) -> None:
         buf = io.StringIO()
         out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
@@ -128,6 +132,8 @@ class TestInfraOutputStatus:
 
 
 class TestInfraOutputSummary:
+    """Tests for InfraOutput.summary formatting."""
+
     def test_summary_format(self) -> None:
         buf = io.StringIO()
         out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
@@ -151,6 +157,8 @@ class TestInfraOutputSummary:
 
 
 class TestInfraOutputMessages:
+    """Tests for error/warning/info message formatting."""
+
     def test_error_message(self) -> None:
         buf = io.StringIO()
         out = InfraOutput(use_color=False, stream=buf)
@@ -179,6 +187,8 @@ class TestInfraOutputMessages:
 
 
 class TestInfraOutputHeader:
+    """Tests for section header formatting."""
+
     def test_header_ascii(self) -> None:
         buf = io.StringIO()
         out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
@@ -195,6 +205,8 @@ class TestInfraOutputHeader:
 
 
 class TestInfraOutputProgress:
+    """Tests for progress indicator formatting."""
+
     def test_progress_format(self) -> None:
         buf = io.StringIO()
         out = InfraOutput(use_color=False, stream=buf)
@@ -218,6 +230,8 @@ class TestInfraOutputProgress:
 
 
 class TestInfraOutputNoColor:
+    """Tests for behavior when color is disabled."""
+
     def test_no_ansi_codes_when_color_disabled(self) -> None:
         buf = io.StringIO()
         out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
@@ -232,12 +246,14 @@ class TestInfraOutputNoColor:
 
 
 class TestModuleSingleton:
+    """Tests for module-level output singleton."""
+
     def test_output_singleton_importable(self) -> None:
-        from flext_infra.output import output
+        from flext_infra.output import output  # noqa: PLC0415
 
         assert isinstance(output, InfraOutput)
 
     def test_output_writes_to_stderr_by_default(self) -> None:
-        from flext_infra.output import output
+        from flext_infra.output import output  # noqa: PLC0415
 
         assert output._stream is not None

@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
 from typing import ClassVar, cast
@@ -271,7 +272,6 @@ class TestuTypeGuardsNormalizeToMetadataValue:
 
         # Dicts are now serialized to JSON strings
         assert isinstance(result, str)
-        import json
 
         parsed = json.loads(result)
         assert "key" in parsed

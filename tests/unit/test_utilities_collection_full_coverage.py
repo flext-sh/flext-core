@@ -1,7 +1,9 @@
+"""Tests for Collection utilities mapping and edge cases."""
+
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from enum import StrEnum
 from typing import Never, cast
 
@@ -15,7 +17,7 @@ class _Color(StrEnum):
 
 
 class _BadMapping(Mapping[str, str]):
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         msg = "boom"
         raise RuntimeError(msg)
 
@@ -27,7 +29,7 @@ class _BadMapping(Mapping[str, str]):
 
 
 class _BadSequence:
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         msg = "iter failed"
         raise TypeError(msg)
 
@@ -119,7 +121,7 @@ def test_process_outer_exception_and_coercion_branches() -> None:
     )
     assert processed.is_failure
 
-    assert u.Collection._coerce_value_to_float(1.5) == 1.5
+    assert u.Collection._coerce_value_to_float(1.5) == pytest.approx(1.5)
     assert u.Collection._coerce_value_to_bool(True) is True
 
     enum_dict = u.Collection.coerce_dict_to_enum(_Color)({"a": _Color.RED})
@@ -162,7 +164,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     assert failed.is_failure
 
     class _ExplodingMeta(type):
-        def __call__(cls, _value: object):
+        def __call__(cls, _value: object) -> object:
             msg = "parse exploded"
             raise ValueError(msg)
 

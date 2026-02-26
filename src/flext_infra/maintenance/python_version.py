@@ -29,13 +29,13 @@ import sys
 from pathlib import Path
 from typing import override
 
-import structlog
 from flext_core import FlextService, r
+from flext_core.loggings import FlextLogger
 
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class PythonVersionEnforcer(FlextService[int]):

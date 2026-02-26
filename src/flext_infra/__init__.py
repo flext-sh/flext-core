@@ -45,6 +45,7 @@ FlextInfraVersioningService = VersioningService
 
 __all__ = [
     "KNOWN_VERBS",
+    "REPORTS_DIR_NAME",
     "BaseMkGenerator",
     "BaseMkTemplateEngine",
     "CommandRunner",
@@ -72,7 +73,6 @@ __all__ = [
     "PathResolver",
     "ProjectSelector",
     "ReleaseOrchestrator",
-    "REPORTS_DIR_NAME",
     "ReportingService",
     "TemplateEngine",
     "TomlService",

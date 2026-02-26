@@ -5,11 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 from collections.abc import MutableMapping
 from pathlib import Path
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 from pydantic import Field
@@ -22,7 +21,7 @@ from flext_infra.paths import PathResolver
 from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class DependencyDetectorModels(m):
@@ -265,7 +264,7 @@ class RuntimeDevDependencyDetector:
         report_payload = report_model.model_dump()
 
         if args.json_stdout:
-            sys.stdout.write(json.dumps(report_payload, indent=2) + "\n")
+            print(json.dumps(report_payload, indent=2))
             return r[int].ok(0)
 
         out_path: Path | None = None

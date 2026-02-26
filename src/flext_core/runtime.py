@@ -57,13 +57,15 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard
 
 import structlog
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
-from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
-from structlog.stdlib import add_log_level
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+    from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
+    from structlog.stdlib import add_log_level
 
 from flext_core.constants import c
 from flext_core.protocols import FlextProtocols as p
@@ -71,6 +73,16 @@ from flext_core.typings import T, t
 
 _module_logger = logging.getLogger(__name__)
 
+
+class _LazyMetadata:
+    """Descriptor for lazy-loading Metadata class."""
+
+    def __get__(self, obj: object, objtype: type | None = None) -> object:
+        from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
+
+        # Cache the loaded class on the class itself
+        setattr(objtype or FlextRuntime, "Metadata", Metadata)
+        return Metadata
 
 class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
@@ -150,20 +162,7 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
-    class Metadata(BaseModel):
-        """Minimal metadata model - implements p.Log.Metadata protocol.
-
-        Used by exceptions.py and other low-level modules that cannot import
-        from _models.base to maintain proper architecture layering.
-        Tier 0.5 can be imported by Tier 1 modules like exceptions.py.
-        """
-
-        model_config = ConfigDict(extra="forbid", frozen=True, validate_assignment=True)
-
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        version: str = Field(default="1.0.0")
-        attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
+    Metadata: object = _LazyMetadata()  # type: ignore[assignment]  # Lazy-loaded from _runtime_metadata
 
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.
@@ -420,6 +419,8 @@ class FlextRuntime:
 
         model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
         if callable(model_dump):
+            from pydantic import TypeAdapter  # noqa: PLC0415
+
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue
             ).validate_python(model_dump())
@@ -467,6 +468,8 @@ class FlextRuntime:
 
         model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
         if callable(model_dump):
+            from pydantic import TypeAdapter  # noqa: PLC0415
+
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue
             ).validate_python(model_dump())
@@ -534,12 +537,14 @@ class FlextRuntime:
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
-    def is_base_model(obj: t.ConfigMapValue) -> TypeGuard[BaseModel]:
+    def is_base_model(obj: t.ConfigMapValue) -> TypeGuard[object]:
         """Type guard to narrow object to BaseModel (part of PayloadValue).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
         that accept PayloadValue (which includes BaseModel).
         """
+        from pydantic import BaseModel  # noqa: PLC0415
+
         match obj:
             case BaseModel():
                 return True
@@ -1203,6 +1208,13 @@ class FlextRuntime:
 
         # structlog processors have specific signatures - use object for processor types
         # structlog processors are callables with varying signatures
+        from structlog.processors import (  # noqa: PLC0415
+            JSONRenderer,
+            StackInfoRenderer,
+            TimeStamper,
+        )
+        from structlog.stdlib import add_log_level  # noqa: PLC0415
+
         processors: list[object] = [
             module.contextvars.merge_contextvars,
             add_log_level,

@@ -1,3 +1,5 @@
+"""Tests for Decorators full coverage."""
+
 from __future__ import annotations
 
 import time
@@ -8,6 +10,8 @@ from typing import Any, cast
 
 import pytest
 from flext_core import FlextContext, c, d, e, m, r, t
+from flext_core.container import FlextContainer
+from flext_core.loggings import FlextLogger
 
 
 class _ResultLogger:
@@ -137,8 +141,6 @@ def test_retry_unreachable_timeouterror_path(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_resolve_logger_prefers_logger_attribute() -> None:
-    from flext_core.loggings import FlextLogger
-
     logger = FlextLogger(__name__)
     owner = _ObjWithLogger(logger=logger)
 
@@ -311,8 +313,6 @@ def test_combined_with_and_without_railway_uses_injection(
     clean_container: object,
 ) -> None:
     _ = clean_container
-
-    from flext_core.container import FlextContainer
 
     di = FlextContainer.create()
     _ = di.register("answer.service", 42)

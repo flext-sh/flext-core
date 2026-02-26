@@ -1,6 +1,8 @@
+"""Tests for Mixins."""
+
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from types import SimpleNamespace
 from typing import cast
 
@@ -49,7 +51,9 @@ class _ContainerForLogger:
         return r[bool].ok(True)
 
 
-def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
+def test_mixins_result_and_model_conversion_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     assert isinstance(c.Context.SCOPE_OPERATION, str)
     assert hasattr(u, "merge")
     assert x.fail("error").is_failure
@@ -64,7 +68,7 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
     assert scalar_wrapped.root == {"value": 1}
 
     class _BadMap(Mapping[str, t.GeneralValueType]):
-        def __iter__(self):
+        def __iter__(self) -> Iterator[str]:
             return iter(["k"])
 
         def __len__(self) -> int:
@@ -78,7 +82,9 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
         x.to_dict(cast("Mapping[str, t.GeneralValueType]", _BadMap()))
 
 
-def test_mixins_runtime_bootstrap_and_track_paths(monkeypatch) -> None:
+def test_mixins_runtime_bootstrap_and_track_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     runtime_container = _RuntimeContainer()
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
@@ -119,7 +125,9 @@ def test_mixins_runtime_bootstrap_and_track_paths(monkeypatch) -> None:
         pass
 
 
-def test_mixins_container_registration_and_logger_paths(monkeypatch) -> None:
+def test_mixins_container_registration_and_logger_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _Service(x):
         pass
 
@@ -168,7 +176,7 @@ def test_mixins_container_registration_and_logger_paths(monkeypatch) -> None:
     assert logger_fallback is not None
 
 
-def test_mixins_context_logging_and_cqrs_paths(monkeypatch) -> None:
+def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class _LocalLogger:
         def info(self, *_args: object, **_kwargs: object) -> None:
             return None
@@ -290,7 +298,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     assert good.is_success
 
 
-def test_mixins_remaining_branch_paths(monkeypatch) -> None:
+def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     runtime_container = _RuntimeContainer()
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
@@ -414,7 +422,9 @@ def test_mixins_remaining_branch_paths(monkeypatch) -> None:
     assert fallback_logger is not None
 
 
-def test_mixins_context_stack_pop_initializes_missing_stack_attr(monkeypatch) -> None:
+def test_mixins_context_stack_pop_initializes_missing_stack_attr(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
     stack = x.CQRS.ContextStack()
     delattr(stack, "_stack")

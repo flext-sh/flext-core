@@ -310,7 +310,7 @@ class TestTimeoutEnforcerEdgeCases:
         results = [f.result() for f in futures]
         elapsed = time.time() - start
 
-        assert all(r == 0.1 for r in results)
+        assert all(r == pytest.approx(0.1) for r in results)
         # Should complete faster than sequential (3 * 0.1 = 0.3s)
         # but account for overhead
         assert elapsed < 0.5

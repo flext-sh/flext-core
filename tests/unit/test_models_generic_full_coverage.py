@@ -1,3 +1,8 @@
+"""Generic model tests with full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+"""
+
 from __future__ import annotations
 
 # pyright: reportMissingImports=false
@@ -220,7 +225,7 @@ def test_health_counts_and_percentage_with_empty_checks() -> None:
     assert health.total_checks == 0
     assert health.healthy_checks_count == 0
     assert health.unhealthy_checks_count == 0
-    assert health.health_percentage == 100.0
+    assert health.health_percentage == pytest.approx(100.0)
     assert health.severity_level == "unknown"
 
 
@@ -285,7 +290,7 @@ def test_health_age_recent_and_monitoring_export() -> None:
     assert monitoring.root["status"] == "down"
     assert monitoring.root["severity"] == "critical"
     assert monitoring.root["cluster"] == "a"
-    assert monitoring.root["duration_ms"] == 17.5
+    assert monitoring.root["duration_ms"] == pytest.approx(17.5)
 
 
 def test_health_with_additional_check_with_and_without_detail() -> None:
@@ -312,9 +317,9 @@ def test_operation_progress_core_rates_and_remaining() -> None:
     )
 
     assert op.total_count == 10
-    assert op.success_rate == 0.8
-    assert op.failure_rate == 0.1
-    assert op.completion_percentage == 50.0
+    assert op.success_rate == pytest.approx(0.8)
+    assert op.failure_rate == pytest.approx(0.1)
+    assert op.completion_percentage == pytest.approx(50.0)
     assert op.remaining_count == 10
     assert op.is_complete is False
 
@@ -324,13 +329,13 @@ def test_operation_progress_remaining_and_complete_without_estimate() -> None:
 
     assert op.remaining_count is None
     assert op.is_complete is False
-    assert op.completion_percentage == 0.0
+    assert op.completion_percentage == pytest.approx(0.0)
 
 
 def test_operation_progress_completion_percentage_with_zero_estimate() -> None:
     op = m.Operation(success_count=5, estimated_total=0)
 
-    assert op.completion_percentage == 0.0
+    assert op.completion_percentage == pytest.approx(0.0)
 
 
 def test_operation_progress_duration_items_and_estimated_remaining() -> None:
@@ -452,7 +457,7 @@ def test_conversion_properties_basic_counts_and_rates() -> None:
     assert conv.warning_count == 1
     assert conv.total_processed_count == 3
     assert abs(conv.success_rate - (2 / 3)) < 0.001
-    assert conv.completion_percentage == 30.0
+    assert conv.completion_percentage == pytest.approx(30.0)
 
 
 def test_conversion_duration_items_per_second_and_completion_flags() -> None:

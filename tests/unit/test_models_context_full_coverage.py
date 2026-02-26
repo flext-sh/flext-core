@@ -1,6 +1,9 @@
+"""Tests for Context models full coverage."""
+
 from __future__ import annotations
 
-from collections.abc import Mapping
+import re
+from collections.abc import Iterator, Mapping
 from typing import cast
 
 import pytest
@@ -23,7 +26,7 @@ class _MappingLike(Mapping[str, t.ConfigMapValue]):
     def __init__(self, data: dict[str, t.ConfigMapValue]) -> None:
         self._data = data
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
     def __len__(self) -> int:
@@ -272,7 +275,8 @@ def test_context_data_metadata_normalizer_paths() -> None:
     assert FlextModelsContext.normalize_metadata({"x": 1}).attributes["x"] == "1"
 
     with pytest.raises(
-        TypeError, match="metadata must be None, dict, or FlextModelsBase.Metadata"
+        TypeError,
+        match=re.escape("metadata must be None, dict, or FlextModelsBase.Metadata"),
     ):
         _ = FlextModelsContext.normalize_metadata(
             cast("t.ConfigMap", cast("object", 1.23))

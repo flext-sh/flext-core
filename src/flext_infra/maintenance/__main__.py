@@ -15,6 +15,7 @@ import sys
 from flext_core.runtime import FlextRuntime
 
 from flext_infra.maintenance.python_version import PythonVersionEnforcer
+from flext_infra.output import output
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -37,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if result.is_success:
         return int(result.value) if result.value is not None else 0
-    _ = sys.stdout.write(f"Error: {result.error}\n")
+    output.error(result.error or "maintenance failed")
     return 1
 
 

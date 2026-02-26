@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import cast
 
 from flext_core import t, u
@@ -54,7 +54,7 @@ class TestDomainHashValueObject:
 
         class EntityWithDate(BaseModel):
             unique_id: str = "test"
-            created: datetime = datetime(2025, 1, 1)
+            created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
         entity = EntityWithDate()
         result = u.Domain.hash_value_object_by_value(entity)
@@ -120,7 +120,7 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
         model_config: _BrokenConfigDict = _BrokenConfigDict()
 
     class _NoSetattrVisible:
-        def __getattribute__(self, name: str):
+        def __getattribute__(self, name: str) -> object:
             if name == "__setattr__":
                 raise AttributeError(name)
             return object.__getattribute__(self, name)

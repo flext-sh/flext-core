@@ -48,7 +48,7 @@ class TestValueObjects:
             currency: str
 
         money = Money(amount=100.0, currency="USD")
-        assert money.amount == 100.0
+        assert money.amount == pytest.approx(100.0)
         assert money.currency == "USD"
 
     def test_value_object_immutability(self) -> None:
@@ -203,7 +203,7 @@ class TestEntities:
         product_dict = product.model_dump()
         assert isinstance(product_dict, dict)
         assert product_dict["name"] == "Widget"
-        assert product_dict["price"] == 19.99
+        assert product_dict["price"] == pytest.approx(19.99)
         assert all(
             key in product_dict for key in ["unique_id", "created_at", "updated_at"]
         )
@@ -300,7 +300,7 @@ class TestCommands:
                 return v
 
         cmd = DepositCommand(account_id="ACC-001", amount=100.0)
-        assert cmd.amount == 100.0
+        assert cmd.amount == pytest.approx(100.0)
         with pytest.raises(ValidationError):
             DepositCommand(account_id="ACC-001", amount=-50.0)
 
@@ -356,7 +356,7 @@ class TestQueries:
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
-        assert query.min_price == 500.0
+        assert query.min_price == pytest.approx(500.0)
 
 
 class TestDomainEvents:
@@ -561,7 +561,7 @@ class TestModelSerialization:
         )
         dumped = cart.model_dump()
         assert len(dumped["items"]) == 2
-        assert dumped["total"] == 99.99
+        assert dumped["total"] == pytest.approx(99.99)
 
 
 class TestModelIntegration:

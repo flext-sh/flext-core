@@ -1,3 +1,5 @@
+"""Tests for runtime full coverage."""
+
 from __future__ import annotations
 
 import contextlib
@@ -5,12 +7,12 @@ import io
 import logging
 import queue
 from collections import UserDict
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Iterator
 from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import Self, cast
+from typing import ClassVar, Self, cast
 
 import flext_core.runtime as runtime_module
 import pytest
@@ -230,7 +232,7 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     writer.shutdown()
 
     assert writer.stop_event.is_set()
-    assert thread.join_timeout == 2.0
+    assert thread.join_timeout == pytest.approx(2.0)
     assert stream.flush_calls == 1
 
 
@@ -272,7 +274,7 @@ def test_normalization_edge_branches() -> None:
             _ = key
             return default
 
-        def __iter__(self):
+        def __iter__(self) -> Iterator[tuple[str, int]]:
             return iter([("x", 1)])
 
     normalized_dict_like = FlextRuntime.normalize_to_general_value(
@@ -377,7 +379,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class Config:
         log_level = logging.DEBUG
         console_renderer = True
-        additional_processors: list[Callable[..., object]] = [lambda *_args: {}]
+        additional_processors: ClassVar[list[Callable[..., object]]] = [
+            lambda *_args: {}
+        ]
         wrapper_class_factory = None
         logger_factory = staticmethod(lambda: object())
         cache_logger_on_first_use = True

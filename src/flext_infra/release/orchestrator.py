@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
@@ -32,7 +32,7 @@ from flext_infra.versioning import VersioningService
 _VALID_PHASES = frozenset({"validate", "version", "build", "publish"})
 _VERSION_RE = re.compile(r'^version\s*=\s*"(.+?)"', re.MULTILINE)
 _DEFAULT_ENCODING = c.Encoding.DEFAULT
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class ReleaseOrchestrator(FlextService[bool]):

@@ -7,15 +7,16 @@ import re
 import sys
 from pathlib import Path
 
-import structlog
 from flext_core import r
+from flext_core.loggings import FlextLogger
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
+from flext_infra.output import output
 from flext_infra.toml_io import TomlService
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 FLEXT_DEPS_DIR = ".flext-deps"
 
@@ -201,7 +202,7 @@ def main() -> int:
     mode = args.mode
     if mode == "auto":
         mode = detect_mode(ROOT)
-        _ = sys.stdout.write(f"[sync-dep-paths] auto-detected mode: {mode}\n")
+        output.info(f"[sync-dep-paths] auto-detected mode: {mode}")
 
     total_changes = 0
     toml_service = TomlService()
@@ -235,9 +236,9 @@ def main() -> int:
         changes = changes_result.value
         if changes:
             prefix = "[DRY-RUN] " if args.dry_run else ""
-            _ = sys.stdout.write(f"{prefix}{root_pyproject}:\n")
+            output.info(f"{prefix}{root_pyproject}:")
             for change in changes:
-                _ = sys.stdout.write(f"{change}\n")
+                output.info(change)
             total_changes += len(changes)
 
     discover_result = DiscoveryService().discover_projects(ROOT)
@@ -304,18 +305,18 @@ def main() -> int:
         changes = changes_result.value
         if changes:
             prefix = "[DRY-RUN] " if args.dry_run else ""
-            _ = sys.stdout.write(f"{prefix}{pyproject}:\n")
+            output.info(f"{prefix}{pyproject}:")
             for change in changes:
-                _ = sys.stdout.write(f"{change}\n")
+                output.info(change)
             total_changes += len(changes)
 
     if total_changes == 0:
-        _ = sys.stdout.write(
-            "[sync-dep-paths] No changes needed - all paths already match target mode.\n"
+        output.info(
+            "[sync-dep-paths] No changes needed - all paths already match target mode."
         )
     else:
         action = "would change" if args.dry_run else "changed"
-        _ = sys.stdout.write(f"\n[sync-dep-paths] {action} {total_changes} path(s).\n")
+        output.info(f"[sync-dep-paths] {action} {total_changes} path(s).")
     return 0
 
 

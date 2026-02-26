@@ -1,7 +1,14 @@
+"""Tests for exceptions full coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from types import MappingProxyType
 
+import flext_core.exceptions as exceptions_module
 from flext_core import c, e, m, r, t, u
 
 
@@ -68,8 +75,6 @@ def test_exceptions_uncovered_metadata_paths() -> None:
     metadata = e.BaseError("x", metadata={"a": 1}).metadata
     same = e.BaseError._normalize_metadata(metadata, {})
     assert same is metadata
-
-    import flext_core.exceptions as exceptions_module
 
     raw = exceptions_module._Metadata(attributes={"x": 1})
     object.__setattr__(raw, "attributes", {"x": 1, "y": "z"})

@@ -90,7 +90,7 @@ class ReportingService:
 
     def get_report_dir(
         self,
-        root: Path,
+        root: Path | str,
         scope: str,
         verb: str,
     ) -> Path:
@@ -105,14 +105,15 @@ class ReportingService:
             Absolute Path to the report directory.
 
         """
-        base = root / REPORTS_DIR_NAME
+        root_path = Path(root) if isinstance(root, str) else root
+        base = root_path / REPORTS_DIR_NAME
         if scope == "workspace":
             return (base / "workspace" / verb).resolve()
         return (base / verb).resolve()
 
     def get_report_path(
         self,
-        root: Path,
+        root: Path | str,
         scope: str,
         verb: str,
         filename: str,

@@ -17,11 +17,11 @@ from pathlib import Path
 
 from flext_core.runtime import FlextRuntime
 
+from flext_infra.output import output
 from flext_infra.workspace.detector import WorkspaceDetector
 from flext_infra.workspace.migrator import ProjectMigrator
 from flext_infra.workspace.orchestrator import OrchestratorService
 from flext_infra.workspace.sync import SyncService
-from flext_infra.output import output
 
 
 def _run_detect(args: argparse.Namespace) -> int:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import cast
 
 import tomlkit
 from flext_core import r
@@ -12,6 +13,7 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.constants import c
 from flext_infra.deps.path_sync import extract_dep_name
+from flext_infra.output import output
 from flext_infra.paths import PathResolver
 from flext_infra.toml_io import TomlService
 
@@ -27,7 +29,7 @@ PYRIGHT_BASE_ROOT = ["scripts", "src", "typings", "typings/generated"]
 MYPY_BASE_ROOT = ["typings", "typings/generated", "src"]
 
 PYRIGHT_BASE_PROJECT = [
-    "..",
+    ".",
     "src",
     "tests",
     "examples",
@@ -35,7 +37,7 @@ PYRIGHT_BASE_PROJECT = [
     "../typings",
     "../typings/generated",
 ]
-MYPY_BASE_PROJECT = ["..", "../typings", "../typings/generated", "src"]
+MYPY_BASE_PROJECT = [".", "../typings", "../typings/generated", "src"]
 
 
 def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
@@ -43,11 +45,13 @@ def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
     project = doc.get("project")
     if not project or not isinstance(project, dict):
         return []
-    deps = project.get("dependencies")
+    project_dict = cast("dict[str, object]", project)
+    deps = project_dict.get("dependencies")
     if not isinstance(deps, list):
         return []
+    deps_list = cast("list[object]", deps)
     paths: list[str] = []
-    for item in deps:
+    for item in deps_list:
         if not isinstance(item, str) or " @ " not in item:
             continue
         _name, path_part = item.split(" @ ", 1)
@@ -66,16 +70,20 @@ def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
     tool = doc.get("tool")
     if not isinstance(tool, dict):
         return []
-    poetry = tool.get("poetry")
+    tool_dict = cast("dict[str, object]", tool)
+    poetry = tool_dict.get("poetry")
     if not isinstance(poetry, dict):
         return []
-    deps = poetry.get("dependencies")
+    poetry_dict = cast("dict[str, object]", poetry)
+    deps = poetry_dict.get("dependencies")
     if not isinstance(deps, dict):
         return []
+    deps_dict = cast("dict[str, object]", deps)
     paths: list[str] = []
-    for val in deps.values():
+    for val in deps_dict.values():
         if isinstance(val, dict) and "path" in val:
-            dep_path = val["path"]
+            val_dict = cast("dict[str, object]", val)
+            dep_path = val_dict["path"]
             if isinstance(dep_path, str) and dep_path:
                 dep_path = dep_path.strip()
                 if dep_path.startswith("./"):
@@ -130,35 +138,42 @@ def sync_one(
     tool = doc.get("tool")
     if not isinstance(tool, dict):
         return r[bool].ok(False)
-    pyright = tool.get("pyright")
-    mypy = tool.get("mypy")
+    tool_dict = cast("dict[str, object]", tool)
+    pyright = tool_dict.get("pyright")
+    mypy = tool_dict.get("mypy")
     if not isinstance(pyright, dict):
         return r[bool].ok(False)
 
     changed = False
-    current_pyright = pyright.get("extraPaths", [])
+    pyright_dict = cast("dict[str, object]", pyright)
+    current_pyright = cast("list[object]", pyright_dict.get("extraPaths", []))
     if list(current_pyright) != pyright_extra:
         arr = tomlkit.array()
         for path_value in pyright_extra:
             arr.append(path_value)
-        pyright["extraPaths"] = arr
+        pyright_dict["extraPaths"] = arr
         changed = True
 
     if isinstance(mypy, dict):
-        current_mypy = mypy.get("mypy_path", [])
+        mypy_dict = cast("dict[str, object]", mypy)
+        current_mypy = cast("list[object]", mypy_dict.get("mypy_path", []))
         if list(current_mypy) != mypy_path:
             arr = tomlkit.array()
             for path_value in mypy_path:
                 arr.append(path_value)
-            mypy["mypy_path"] = arr
+            mypy_dict["mypy_path"] = arr
             changed = True
 
     if not is_root:
-        pyrefly = tool.get("pyrefly")
+        pyrefly = tool_dict.get("pyrefly")
         if isinstance(pyrefly, dict):
-            base_search = [".."] + dep_paths
-            current_search = list(pyrefly.get("search-path", []))
-            seen = set(base_search)
+            pyrefly_dict = cast("dict[str, object]", pyrefly)
+            base_search: list[str] = ["."] + dep_paths
+            current_search_raw = cast(
+                "list[object]", pyrefly_dict.get("search-path", [])
+            )
+            current_search: list[str] = [str(v) for v in current_search_raw]
+            seen: set[str] = set(base_search)
             for path_value in current_search:
                 if path_value not in seen:
                     base_search.append(path_value)
@@ -167,7 +182,7 @@ def sync_one(
                 arr = tomlkit.array()
                 for path_value in base_search:
                     arr.append(path_value)
-                pyrefly["search-path"] = arr
+                pyrefly_dict["search-path"] = arr
                 changed = True
 
     if changed and not dry_run:
@@ -195,7 +210,7 @@ def sync_extra_paths(
             if sync_result.is_failure:
                 return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
             if sync_result.value and not dry_run:
-                _ = sys.stdout.write(f"Updated {pyproject}\n")
+                output.info(f"Updated {pyproject}")
         return r[int].ok(0)
 
     pyproject = ROOT / c.Files.PYPROJECT_FILENAME
@@ -205,9 +220,7 @@ def sync_extra_paths(
     if sync_result.is_failure:
         return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
     if sync_result.value and not dry_run:
-        _ = sys.stdout.write(
-            "Updated extraPaths and mypy_path from path dependencies.\n"
-        )
+        output.info("Updated extraPaths and mypy_path from path dependencies.")
     return r[int].ok(0)
 
 
@@ -235,7 +248,7 @@ def main() -> int:
     result = sync_extra_paths(dry_run=args.dry_run, project_dirs=project_dirs)
     if result.is_success:
         return result.value
-    _ = sys.stderr.write(f"{result.error}\n")
+    output.error(result.error or "sync failed")
     return 1
 
 

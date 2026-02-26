@@ -1,3 +1,5 @@
+"""Tests for Enum utilities full coverage."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -11,17 +13,23 @@ from flext_core import u
 
 
 class Status(StrEnum):
+    """Test Status Enum."""
+
     ACTIVE = "active"
     PENDING = "pending"
     INACTIVE = "inactive"
 
 
 class Priority(StrEnum):
+    """Test Priority Enum."""
+
     LOW = "low"
     HIGH = "high"
 
 
 class TextLike:
+    """Test string-like class implementation."""
+
     @override
     def __str__(self) -> str:
         return "active"
