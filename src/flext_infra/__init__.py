@@ -21,7 +21,7 @@ from flext_infra.paths import PathResolver
 from flext_infra.patterns import FlextInfraPatterns
 from flext_infra.protocols import FlextInfraProtocols, p
 from flext_infra.release import ReleaseOrchestrator
-from flext_infra.reporting import ReportingService
+from flext_infra.reporting import KNOWN_VERBS, REPORTS_DIR_NAME, ReportingService
 from flext_infra.selection import ProjectSelector
 from flext_infra.subprocess import CommandRunner
 from flext_infra.templates import TemplateEngine
@@ -44,6 +44,7 @@ FlextInfraTomlService = TomlService
 FlextInfraVersioningService = VersioningService
 
 __all__ = [
+    "KNOWN_VERBS",
     "BaseMkGenerator",
     "BaseMkTemplateEngine",
     "CommandRunner",
@@ -71,6 +72,7 @@ __all__ = [
     "PathResolver",
     "ProjectSelector",
     "ReleaseOrchestrator",
+    "REPORTS_DIR_NAME",
     "ReportingService",
     "TemplateEngine",
     "TomlService",

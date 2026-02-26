@@ -25,7 +25,7 @@ from flext_infra.json_io import JsonService
 from flext_infra.models import m
 from flext_infra.output import output
 from flext_infra.paths import PathResolver
-from flext_infra.reporting import ReportingService
+from flext_infra.reporting import REPORTS_DIR_NAME, ReportingService
 from flext_infra.subprocess import CommandRunner
 
 DEFAULT_GATES = c.Gates.DEFAULT_CSV
@@ -361,7 +361,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._default_reports_dir = (
             report_dir_result.value
             if report_dir_result.is_success
-            else self._workspace_root / ".reports" / "check"
+            else self._workspace_root / REPORTS_DIR_NAME / "check"
         )
 
     @override
@@ -1441,7 +1441,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="Run quality gates")
     _ = run_parser.add_argument("--gates", default=DEFAULT_GATES)
     _ = run_parser.add_argument("--project", action="append", required=True)
-    _ = run_parser.add_argument("--reports-dir", default=".reports/check")
+    _ = run_parser.add_argument("--reports-dir", default=f"{REPORTS_DIR_NAME}/check")
     _ = run_parser.add_argument("--fail-fast", action="store_true")
 
     fix_parser = subparsers.add_parser(

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from flext_infra.check.services import DEFAULT_GATES, WorkspaceChecker
 from flext_infra.output import output
+from flext_infra.reporting import REPORTS_DIR_NAME
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -14,7 +15,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
     _ = parser.add_argument("projects", nargs="*")
     _ = parser.add_argument("--gates", default=DEFAULT_GATES)
-    _ = parser.add_argument("--reports-dir", default=".reports/check")
+    _ = parser.add_argument("--reports-dir", default=f"{REPORTS_DIR_NAME}/check")
     _ = parser.add_argument("--fail-fast", action="store_true")
     args = parser.parse_args(argv)
 

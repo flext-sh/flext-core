@@ -12,17 +12,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult, r
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
+    DEFAULT_DOCS_OUTPUT_DIR,
     DocScope,
     FlextInfraDocsShared,
 )
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class ValidateReport(BaseModel):
@@ -54,7 +55,7 @@ class DocValidator:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = ".reports/docs",
+        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
         check: str = "all",
         apply: bool = False,
     ) -> FlextResult[list[ValidateReport]]:

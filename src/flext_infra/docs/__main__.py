@@ -20,12 +20,13 @@ from pathlib import Path
 from flext_core.runtime import FlextRuntime
 
 from flext_infra.constants import c
-from flext_infra.output import output
 from flext_infra.docs.auditor import DocAuditor
 from flext_infra.docs.builder import DocBuilder
 from flext_infra.docs.fixer import DocFixer
 from flext_infra.docs.generator import DocGenerator
 from flext_infra.docs.validator import DocValidator
+from flext_infra.output import output
+from flext_infra.reporting import REPORTS_DIR_NAME
 
 
 def _run_audit(args: argparse.Namespace) -> int:
@@ -127,7 +128,7 @@ def main() -> int:
         _ = sub.add_argument("--root", default=".")
         _ = sub.add_argument("--project")
         _ = sub.add_argument("--projects")
-        _ = sub.add_argument("--output-dir", default=".reports/docs")
+        _ = sub.add_argument("--output-dir", default=f"{REPORTS_DIR_NAME}/docs")
 
     # audit
     audit_parser = subparsers.add_parser("audit", help="Audit documentation")

@@ -13,20 +13,21 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_core.typings import t
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
+    DEFAULT_DOCS_OUTPUT_DIR,
     DocScope,
     FlextInfraDocsShared,
 )
 from flext_infra.patterns import FlextInfraPatterns
 from flext_infra.templates import TemplateEngine
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class FixItem(BaseModel):
@@ -63,7 +64,7 @@ class DocFixer:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = ".reports/docs",
+        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
         apply: bool = False,
     ) -> r[list[FixReport]]:
         """Run documentation fixes across project scopes.

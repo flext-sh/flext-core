@@ -11,18 +11,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult, r
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
+    DEFAULT_DOCS_OUTPUT_DIR,
     DocScope,
     FlextInfraDocsShared,
 )
 from flext_infra.subprocess import CommandRunner
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class BuildReport(BaseModel):
@@ -53,7 +54,7 @@ class DocBuilder:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = ".reports/docs",
+        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
     ) -> FlextResult[list[BuildReport]]:
         """Build MkDocs sites across project scopes.
 
@@ -107,7 +108,7 @@ class DocBuilder:
                 site_dir="",
             )
 
-        site_dir = (scope.path / ".reports/docs/site").resolve()
+        site_dir = (scope.path / DEFAULT_DOCS_OUTPUT_DIR / "site").resolve()
         site_dir.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
             "mkdocs",

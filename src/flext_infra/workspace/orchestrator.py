@@ -14,15 +14,16 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_core.service import FlextService
 
 from flext_infra.constants import c
 from flext_infra.models import m
+from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class OrchestratorService(FlextService[list[m.CommandOutput]]):
@@ -38,6 +39,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         """Initialize the orchestrator service."""
         super().__init__()
         self._runner = CommandRunner()
+        self._reporting = ReportingService()
 
     @override
     def execute(self) -> r[list[m.CommandOutput]]:
@@ -153,7 +155,9 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
             CommandOutput with log path in stdout, exit code, and timing.
 
         """
-        reports_dir_result = self._ensure_report_dir(verb)
+        reports_dir_result = self._reporting.ensure_report_dir(
+            Path.cwd(), "workspace", verb
+        )
         if reports_dir_result.is_failure:
             return r[m.CommandOutput].fail(
                 reports_dir_result.error or "failed to create report directory"
@@ -195,24 +199,6 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
                 duration=round(elapsed, 2),
             ),
         )
-
-    @staticmethod
-    def _ensure_report_dir(verb: str) -> r[Path]:
-        """Ensure report directory exists for workspace verb logs.
-
-        Args:
-            verb: Make verb used as subdirectory name.
-
-        Returns:
-            Path to the report directory.
-
-        """
-        reports_dir = Path(".reports") / "workspace" / verb
-        try:
-            reports_dir.mkdir(parents=True, exist_ok=True)
-            return r[Path].ok(reports_dir)
-        except OSError as exc:
-            return r[Path].fail(f"failed to create report directory: {exc}")
 
 
 __all__ = [

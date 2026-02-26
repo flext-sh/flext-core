@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 from flext_infra.json_io import JsonService
-from flext_infra.reporting import ReportingService
+from flext_infra.reporting import REPORTS_DIR_NAME, ReportingService
 
 
 class FlextInfraDocScope(BaseModel):
@@ -37,6 +37,9 @@ DocScope = FlextInfraDocScope
 _discovery = DiscoveryService()
 _json_svc = JsonService()
 _reporting = ReportingService()
+
+DEFAULT_DOCS_OUTPUT_DIR = f"{REPORTS_DIR_NAME}/docs"
+"""Default output directory for documentation reports."""
 
 
 class FlextInfraDocsShared:
