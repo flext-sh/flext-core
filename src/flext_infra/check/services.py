@@ -9,8 +9,6 @@ import re
 import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
-
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
@@ -19,6 +17,7 @@ import structlog
 from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
@@ -42,49 +41,306 @@ logger = structlog.get_logger(__name__)
 _MAX_DISPLAY_ISSUES = 50
 
 
-@dataclass
-class _CheckIssue:
-    file: str
-    line: int
-    column: int
-    code: str
-    message: str
-    severity: str = "error"
+class _CheckIssue(BaseModel):
+    """Single issue reported by a quality gate tool."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    file: str = Field(description="Source file path")
+    line: int = Field(description="Line number")
+    column: int = Field(description="Column number")
+    code: str = Field(description="Rule or error code")
+    message: str = Field(description="Human-readable issue description")
+    severity: str = Field(default="error", description="Issue severity level")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def formatted(self) -> str:
+        """Format issue as ``file:line:col [code] message``."""
+        code_part = f"[{self.code}] " if self.code else ""
+        return (
+            f"{self.file}:{self.line}:{self.column} {code_part}{self.message}".strip()
+        )
 
 
-@dataclass
-class _GateExecution:
-    result: m.GateResult
-    issues: list[_CheckIssue] = field(default_factory=list)
-    raw_output: str = ""
+class _GateExecution(BaseModel):
+    """Execution result for a single quality gate."""
+
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+
+    result: m.GateResult = Field(description="Gate result model")
+    issues: list[_CheckIssue] = Field(
+        default_factory=list, description="Detected issues"
+    )
+    raw_output: str = Field(default="", description="Raw tool output")
 
 
-@dataclass
-class _ProjectResult:
-    project: str
-    gates: MutableMapping[str, _GateExecution] = field(default_factory=dict)
+class _ProjectResult(BaseModel):
+    """Aggregated gate results for a single project."""
 
+    model_config = ConfigDict(extra="forbid")
+
+    project: str = Field(description="Project name")
+    gates: dict[str, _GateExecution] = Field(
+        default_factory=dict, description="Gate name to execution mapping"
+    )
+
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def total_errors(self) -> int:
+        """Total issue count across all gates."""
         return sum(len(v.issues) for v in self.gates.values())
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def passed(self) -> bool:
+        """Whether every gate passed."""
         return all(v.result.passed for v in self.gates.values())
 
 
-@dataclass
-class _RunCommandResult:
-    stdout: str
-    stderr: str
-    returncode: int
+class _RunCommandResult(BaseModel):
+    """Subprocess execution result."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    stdout: str = Field(description="Captured standard output")
+    stderr: str = Field(description="Captured standard error")
+    returncode: int = Field(description="Process exit code")
 
 
-def _format_issue(issue: _CheckIssue) -> str:
-    code_part = f"[{issue.code}] " if issue.code else ""
-    return (
-        f"{issue.file}:{issue.line}:{issue.column} {code_part}{issue.message}".strip()
+# -- Tool-specific JSON parsing models --
+
+
+class _RuffLintLocation(BaseModel):
+    """Location block inside a Ruff lint JSON entry."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    row: int = Field(default=0, description="Line number")
+    column: int = Field(default=0, description="Column number")
+
+
+class _RuffLintError(BaseModel):
+    """Single Ruff lint error from JSON output."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    filename: str = Field(default="?", description="Source file path")
+    location: _RuffLintLocation = Field(
+        default_factory=_RuffLintLocation, description="Error location"
     )
+    code: str = Field(default="", description="Ruff rule code")
+    message: str = Field(default="", description="Error description")
+
+
+class _PyreflyError(BaseModel):
+    """Single Pyrefly error entry."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    path: str = Field(default="?", description="Source file path")
+    line: int = Field(default=0, description="Line number")
+    column: int = Field(default=0, description="Column number")
+    name: str = Field(default="", description="Error name/code")
+    description: str = Field(default="", description="Error description")
+    severity: str = Field(default="error", description="Severity level")
+
+
+class _PyreflyOutput(BaseModel):
+    """Pyrefly JSON output wrapper."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    errors: list[_PyreflyError] = Field(
+        default_factory=list, description="Pyrefly errors"
+    )
+
+
+class _MypyJsonError(BaseModel):
+    """Single mypy JSON error entry."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    file: str = Field(default="?", description="Source file path")
+    line: int = Field(default=0, description="Line number")
+    column: int = Field(default=0, description="Column number")
+    code: str = Field(default="", description="Mypy error code")
+    message: str = Field(default="", description="Error description")
+    severity: str = Field(default="error", description="Severity level")
+
+
+class _PyrightPosition(BaseModel):
+    """Pyright position with zero-based line/character."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    line: int = Field(default=0, description="Zero-based line number")
+    character: int = Field(default=0, description="Zero-based character offset")
+
+
+class _PyrightRange(BaseModel):
+    """Pyright range with start position."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    start: _PyrightPosition = Field(
+        default_factory=_PyrightPosition, description="Range start"
+    )
+
+
+class _PyrightDiagnostic(BaseModel):
+    """Single Pyright diagnostic entry."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    file: str = Field(default="?", description="Source file path")
+    range: _PyrightRange = Field(
+        default_factory=_PyrightRange, description="Diagnostic range"
+    )
+    rule: str = Field(default="", description="Pyright rule name")
+    message: str = Field(default="", description="Diagnostic message")
+    severity: str = Field(default="error", description="Severity level")
+
+
+class _PyrightOutput(BaseModel):
+    """Pyright JSON output wrapper."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    generalDiagnostics: list[_PyrightDiagnostic] = Field(  # noqa: N815
+        default_factory=list, description="General diagnostics list"
+    )
+
+
+class _BanditIssue(BaseModel):
+    """Single Bandit security finding."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    filename: str = Field(default="?", description="Source file path")
+    line_number: int = Field(default=0, description="Line number")
+    test_id: str = Field(default="", description="Bandit test ID")
+    issue_text: str = Field(default="", description="Issue description")
+    issue_severity: str = Field(default="MEDIUM", description="Severity level")
+
+
+class _BanditOutput(BaseModel):
+    """Bandit JSON output wrapper."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    results: list[_BanditIssue] = Field(
+        default_factory=list, description="Bandit findings"
+    )
+
+
+# -- SARIF 2.1.0 report models --
+
+
+class _SarifMessageText(BaseModel):
+    """SARIF message with text content."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(description="Message text")
+
+
+class _SarifRuleDescriptor(BaseModel):
+    """SARIF rule descriptor with short description."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(description="Rule identifier")
+    shortDescription: _SarifMessageText = Field(description="Rule short description")  # noqa: N815
+
+
+class _SarifArtifactLocation(BaseModel):
+    """SARIF artifact location with URI."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    uri: str = Field(description="Artifact URI")
+    uriBaseId: str = Field(default="%SRCROOT%", description="URI base identifier")  # noqa: N815
+
+
+class _SarifRegion(BaseModel):
+    """SARIF region with start line/column."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    startLine: int = Field(description="Start line (1-based)")  # noqa: N815
+    startColumn: int = Field(description="Start column (1-based)")  # noqa: N815
+
+
+class _SarifPhysicalLocation(BaseModel):
+    """SARIF physical location combining artifact and region."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifactLocation: _SarifArtifactLocation = Field(description="Artifact location")  # noqa: N815
+    region: _SarifRegion = Field(description="Source region")
+
+
+class _SarifLocation(BaseModel):
+    """SARIF location wrapper."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    physicalLocation: _SarifPhysicalLocation = Field(description="Physical location")  # noqa: N815
+
+
+class _SarifResult(BaseModel):
+    """SARIF result entry."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ruleId: str = Field(description="Rule identifier")  # noqa: N815
+    level: str = Field(description="Result level (error/warning)")
+    message: _SarifMessageText = Field(description="Result message")
+    locations: list[_SarifLocation] = Field(description="Result locations")
+
+
+class _SarifToolDriver(BaseModel):
+    """SARIF tool driver metadata."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(description="Tool name")
+    informationUri: str = Field(default="", description="Tool documentation URL")  # noqa: N815
+    rules: list[_SarifRuleDescriptor] = Field(
+        default_factory=list, description="Rule descriptors"
+    )
+
+
+class _SarifTool(BaseModel):
+    """SARIF tool wrapper."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    driver: _SarifToolDriver = Field(description="Tool driver")
+
+
+class _SarifRun(BaseModel):
+    """SARIF run entry."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tool: _SarifTool = Field(description="Tool information")
+    results: list[_SarifResult] = Field(default_factory=list, description="Run results")
+
+
+class _SarifReport(BaseModel):
+    """Complete SARIF 2.1.0 report."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    schema_uri: str = Field(
+        default="https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/Schemata/sarif-schema-2.1.0.json",
+        alias="$schema",
+        description="SARIF schema URI",
+    )
+    version: str = Field(default="2.1.0", description="SARIF version")
+    runs: list[_SarifRun] = Field(default_factory=list, description="SARIF runs")
 
 
 class WorkspaceChecker(FlextService[list[_ProjectResult]]):
@@ -321,7 +577,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     "```",
                 ])
                 lines.extend(
-                    _format_issue(issue)
+                    issue.formatted
                     for issue in gate_result.issues[:_MAX_DISPLAY_ISSUES]
                 )
                 if len(gate_result.issues) > _MAX_DISPLAY_ISSUES:
@@ -355,12 +611,12 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             c.Gates.GO: ("Go Vet", "https://pkg.go.dev/cmd/vet"),
         }
 
-        runs: list[Mapping[str, t.ConfigMapValue]] = []
+        sarif_runs: list[_SarifRun] = []
         for gate in gates:
             tool_name, tool_url = tool_info.get(gate, (gate, ""))
-            sarif_results: list[Mapping[str, t.ConfigMapValue]] = []
+            sarif_results: list[_SarifResult] = []
             rules_seen: set[str] = set()
-            rules: list[Mapping[str, t.ConfigMapValue]] = []
+            rules: list[_SarifRuleDescriptor] = []
 
             for project in results:
                 gate_result = project.gates.get(gate)
@@ -371,50 +627,46 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     if rule_id not in rules_seen:
                         rules_seen.add(rule_id)
                         rules.append(
-                            {"id": rule_id, "shortDescription": {"text": rule_id}},
+                            _SarifRuleDescriptor(
+                                id=rule_id,
+                                shortDescription=_SarifMessageText(text=rule_id),
+                            ),
                         )
                     sarif_results.append(
-                        {
-                            "ruleId": rule_id,
-                            "level": (
-                                "error" if issue.severity == "error" else "warning"
-                            ),
-                            "message": {"text": issue.message},
-                            "locations": [
-                                {
-                                    "physicalLocation": {
-                                        "artifactLocation": {
-                                            "uri": issue.file,
-                                            "uriBaseId": "%SRCROOT%",
-                                        },
-                                        "region": {
-                                            "startLine": max(issue.line, 1),
-                                            "startColumn": max(issue.column, 1),
-                                        },
-                                    },
-                                },
+                        _SarifResult(
+                            ruleId=rule_id,
+                            level=("error" if issue.severity == "error" else "warning"),
+                            message=_SarifMessageText(text=issue.message),
+                            locations=[
+                                _SarifLocation(
+                                    physicalLocation=_SarifPhysicalLocation(
+                                        artifactLocation=_SarifArtifactLocation(
+                                            uri=issue.file,
+                                        ),
+                                        region=_SarifRegion(
+                                            startLine=max(issue.line, 1),
+                                            startColumn=max(issue.column, 1),
+                                        ),
+                                    ),
+                                ),
                             ],
-                        },
+                        ),
                     )
 
-            runs.append(
-                {
-                    "tool": {
-                        "driver": {
-                            "name": tool_name,
-                            "informationUri": tool_url,
-                            "rules": rules,
-                        },
-                    },
-                    "results": sarif_results,
-                },
+            sarif_runs.append(
+                _SarifRun(
+                    tool=_SarifTool(
+                        driver=_SarifToolDriver(
+                            name=tool_name,
+                            informationUri=tool_url,
+                            rules=rules,
+                        ),
+                    ),
+                    results=sarif_results,
+                ),
             )
 
-        return {
-            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/Schemata/sarif-schema-2.1.0.json",
-            "version": "2.1.0",
-            "runs": runs,
-        }
+        return _SarifReport(runs=sarif_runs).model_dump(by_alias=True)
 
     def _check_project(
         self,
@@ -495,13 +747,13 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         duration: float,
         raw_output: str,
     ) -> _GateExecution:
-        model = m.GateResult.model_validate({
-            "gate": gate,
-            "project": project,
-            "passed": passed,
-            "errors": [_format_issue(issue) for issue in issues],
-            "duration": round(duration, 3),
-        })
+        model = m.GateResult(
+            gate=gate,
+            project=project,
+            passed=passed,
+            errors=[issue.formatted for issue in issues],
+            duration=round(duration, 3),
+        )
         return _GateExecution(result=model, issues=issues, raw_output=raw_output)
 
     def _run_ruff_lint(self, project_dir: Path) -> _GateExecution:
@@ -523,18 +775,18 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         issues: list[_CheckIssue] = []
         try:
-            for error in json.loads(result.stdout or "[]"):
-                loc = error.get("location", {})
+            for entry in json.loads(result.stdout or "[]"):
+                parsed = _RuffLintError.model_validate(entry)
                 issues.append(
                     _CheckIssue(
-                        file=error.get("filename", "?"),
-                        line=loc.get("row", 0),
-                        column=loc.get("column", 0),
-                        code=error.get("code", ""),
-                        message=error.get("message", ""),
+                        file=parsed.filename,
+                        line=parsed.location.row,
+                        column=parsed.location.column,
+                        code=parsed.code,
+                        message=parsed.message,
                     ),
                 )
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, ValidationError):
             pass
         return self._build_gate_result(
             gate="lint",
@@ -618,20 +870,26 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         issues: list[_CheckIssue] = []
         if json_file.exists():
             try:
-                data = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
-                raw_errors = data.get("errors", []) if isinstance(data, dict) else data
+                raw = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
+                if isinstance(raw, dict):
+                    output = _PyreflyOutput.model_validate(raw)
+                    pyrefly_errors = output.errors
+                else:
+                    pyrefly_errors = [
+                        _PyreflyError.model_validate(item) for item in raw
+                    ]
                 issues.extend(
                     _CheckIssue(
-                        file=error.get("path", "?"),
-                        line=error.get("line", 0),
-                        column=error.get("column", 0),
-                        code=error.get("name", ""),
-                        message=error.get("description", ""),
-                        severity=error.get("severity", "error"),
+                        file=err.path,
+                        line=err.line,
+                        column=err.column,
+                        code=err.name,
+                        message=err.description,
+                        severity=err.severity,
                     )
-                    for error in raw_errors
+                    for err in pyrefly_errors
                 )
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, ValidationError):
                 pass
 
         if not issues and result.returncode != 0:
@@ -703,23 +961,23 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
 
         issues: list[_CheckIssue] = []
         for raw_line in (result.stdout or "").splitlines():
-            line = raw_line.strip()
-            if not line:
+            stripped = raw_line.strip()
+            if not stripped:
                 continue
             try:
-                error = json.loads(line)
-                if error.get("severity") in {"error", "warning", "note"}:
+                parsed = _MypyJsonError.model_validate(json.loads(stripped))
+                if parsed.severity in {"error", "warning", "note"}:
                     issues.append(
                         _CheckIssue(
-                            file=error.get("file", "?"),
-                            line=error.get("line", 0),
-                            column=error.get("column", 0),
-                            code=error.get("code", ""),
-                            message=error.get("message", ""),
-                            severity=error.get("severity", "error"),
+                            file=parsed.file,
+                            line=parsed.line,
+                            column=parsed.column,
+                            code=parsed.code,
+                            message=parsed.message,
+                            severity=parsed.severity,
                         ),
                     )
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, ValidationError):
                 continue
 
         return self._build_gate_result(
@@ -752,20 +1010,19 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         issues: list[_CheckIssue] = []
         try:
-            data = json.loads(result.stdout or "{}")
-            for error in data.get("generalDiagnostics", []):
-                rng = error.get("range", {}).get("start", {})
-                issues.append(
-                    _CheckIssue(
-                        file=error.get("file", "?"),
-                        line=rng.get("line", 0) + 1,
-                        column=rng.get("character", 0) + 1,
-                        code=error.get("rule", ""),
-                        message=error.get("message", ""),
-                        severity=error.get("severity", "error"),
-                    ),
+            output = _PyrightOutput.model_validate(json.loads(result.stdout or "{}"))
+            issues.extend(
+                _CheckIssue(
+                    file=diag.file,
+                    line=diag.range.start.line + 1,
+                    column=diag.range.start.character + 1,
+                    code=diag.rule,
+                    message=diag.message,
+                    severity=diag.severity,
                 )
-        except (json.JSONDecodeError, KeyError):
+                for diag in output.generalDiagnostics
+            )
+        except (json.JSONDecodeError, ValidationError):
             pass
 
         return self._build_gate_result(
@@ -805,19 +1062,19 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         issues: list[_CheckIssue] = []
         try:
-            data = json.loads(result.stdout or "{}")
+            output = _BanditOutput.model_validate(json.loads(result.stdout or "{}"))
             issues.extend(
                 _CheckIssue(
-                    file=error.get("filename", "?"),
-                    line=error.get("line_number", 0),
+                    file=finding.filename,
+                    line=finding.line_number,
                     column=0,
-                    code=error.get("test_id", ""),
-                    message=error.get("issue_text", ""),
-                    severity=error.get("issue_severity", "MEDIUM").lower(),
+                    code=finding.test_id,
+                    message=finding.issue_text,
+                    severity=finding.issue_severity.lower(),
                 )
-                for error in data.get("results", [])
+                for finding in output.results
             )
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, ValidationError):
             pass
         return self._build_gate_result(
             gate="security",

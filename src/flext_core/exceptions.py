@@ -304,6 +304,66 @@ class FlextExceptions:
             param_map.update({k: v for k, v in extra_kwargs.items() if k in keys})
         return param_map
 
+    @staticmethod
+    def _init_error_params[TParams: BaseModel](
+        context: Mapping[str, t.MetadataAttributeValue] | None,
+        extra_kwargs: dict[str, t.MetadataAttributeValue],
+        named_params: dict[str, t.MetadataAttributeValue | None],
+        params_cls: type[TParams],
+        existing_params: TParams | None,
+        param_keys: set[str] | frozenset[str],
+        *,
+        excluded_context_keys: set[str] | frozenset[str] | None = None,
+    ) -> tuple[
+        TParams,
+        m.ConfigMap | None,
+        t.MetadataAttributeValue | None,
+        str | None,
+    ]:
+        """Extract, resolve and build error parameters from kwargs.
+
+        Shared init boilerplate for all typed error subclasses.
+
+        Args:
+            context: Optional context mapping
+            extra_kwargs: Additional kwargs (metadata/correlation_id popped)
+            named_params: Explicitly named params (override if not None)
+            params_cls: Pydantic model class for params
+            existing_params: Pre-built params (skip validation if provided)
+            param_keys: Set of param field names
+            excluded_context_keys: Keys to exclude from context map
+
+        Returns:
+            Tuple of (resolved_params, error_context, metadata, correlation_id)
+
+        """
+        preserved_metadata = extra_kwargs.pop("metadata", None)
+        correlation_id_raw = extra_kwargs.pop("correlation_id", None)
+        correlation_id_str = e._safe_optional_str(correlation_id_raw)
+
+        param_values = e._build_param_map(context, extra_kwargs, keys=param_keys)
+        for key, val in named_params.items():
+            if val is not None:
+                param_values[key] = val
+
+        resolved = (
+            existing_params
+            if existing_params is not None
+            else params_cls.model_validate(dict(param_values))
+        )
+
+        error_context = e._build_context_map(
+            context,
+            extra_kwargs,
+            excluded_keys=excluded_context_keys,
+        )
+        for key in param_keys:
+            attr_val = getattr(resolved, key, None)
+            if attr_val is not None:
+                error_context[key] = FlextRuntime.normalize_to_metadata_value(attr_val)
+
+        return resolved, error_context or None, preserved_metadata, correlation_id_str
+
     class BaseError(Exception):
         """Base exception with correlation metadata and error codes.
 
