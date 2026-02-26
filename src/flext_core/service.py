@@ -348,40 +348,6 @@ class FlextService[TDomainResult](
         """
         return p.RuntimeBootstrapOptions()
 
-    def _clone_runtime(
-        self,
-        *,
-        config_overrides: Mapping[str, t.ScalarValue] | None = None,
-        context: p.Context | None = None,
-        subproject: str | None = None,
-        container_services: Mapping[str, t.RegisterableService] | None = None,
-        container_factories: Mapping[str, t.FactoryCallable] | None = None,
-    ) -> m.ServiceRuntime:
-        """Clone config/context and container in a single unified path."""
-        config: FlextSettings = u.require_initialized(self._config, "Config")
-        ctx: p.Context = u.require_initialized(self._context, "Context")
-        container: p.DI = u.require_initialized(self._container, "Container")
-        cloned_config = config.model_copy(
-            update=config_overrides or {},
-            deep=True,
-        )
-        # Clone context - Ctx implementations have clone() method
-        runtime_context = context.clone() if context is not None else ctx.clone()
-        # runtime_context implements Ctx structurally
-        scoped_container = container.scoped(
-            config=cloned_config,
-            context=runtime_context,
-            subproject=subproject,
-            services=container_services,
-            factories=container_factories,
-        )
-
-        return m.ServiceRuntime.model_construct(
-            config=cloned_config,
-            context=runtime_context,
-            container=scoped_container,
-        )
-
     @computed_field
     def runtime(
         self,

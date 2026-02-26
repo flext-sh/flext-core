@@ -950,14 +950,6 @@ class FlextContainer(FlextRuntime, p.DI):
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def _is_config_protocol(value: object) -> TypeGuard[p.Config]:
-        return bool(
-            hasattr(value, "app_name")
-            and hasattr(value, "version")
-            and hasattr(value, "model_copy")
-        )
-
-    @staticmethod
     def _is_context_protocol(value: object) -> TypeGuard[p.Context]:
         return bool(
             hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get")

@@ -1184,22 +1184,6 @@ class FlextUtilitiesParser:
         return r[str].ok(str(value))
 
     @staticmethod
-    def _coerce_primitive(
-        value: t.ConfigMapValue,
-        target: type[int | float | str | bool],
-    ) -> r[int] | r[float] | r[str] | r[bool] | None:
-        """Coerce primitive types. Returns None if no coercion applied."""
-        if target is int:
-            return FlextUtilitiesParser._coerce_to_int(value)
-        if target is float:
-            return FlextUtilitiesParser._coerce_to_float(value)
-        if target is str:
-            return FlextUtilitiesParser._coerce_to_str(value)
-        if target is bool:
-            return FlextUtilitiesParser._coerce_to_bool(value)
-        return None
-
-    @staticmethod
     def _parse_try_enum[T](
         value: t.ConfigMapValue,
         target: type[T],
@@ -1282,22 +1266,6 @@ class FlextUtilitiesParser:
     def _is_primitive_type(target: type) -> bool:
         """Check if target is a primitive type."""
         return target in {int, float, str, bool}
-
-    @staticmethod
-    def _try_coerce_to_primitive(
-        value: t.ConfigMapValue,
-        target: type[int | float | str | bool],
-    ) -> r[int] | r[float] | r[str] | r[bool] | None:
-        """Try to coerce value to primitive type."""
-        if target is int:
-            return FlextUtilitiesParser._coerce_to_int(value)
-        if target is float:
-            return FlextUtilitiesParser._coerce_to_float(value)
-        if target is str:
-            return FlextUtilitiesParser._coerce_to_str(value)
-        if target is bool:
-            return FlextUtilitiesParser._coerce_to_bool(value)
-        return None
 
     @staticmethod
     def _parse_try_primitive(

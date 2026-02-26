@@ -3,11 +3,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 import builtins
+from pathlib import Path
 from typing import cast
 
 import pytest
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 
 from flext_core import c, m, r, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -62,6 +65,14 @@ class _AttrContainer:
     key: str = "value"
 
 
+class _Settings(BaseSettings):
+    app_name: str = "flext"
+
+
+class _Status(StrEnum):
+    READY = "ready"
+
+
 def _sample_handler(value: t.GeneralValueType) -> t.GeneralValueType:
     return value
 
@@ -110,22 +121,22 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.Guards.is_dict_non_empty({"k": "v"})
     assert u.Guards.is_list_non_empty([1])
 
-    assert u.Guards.normalize_to_metadata_value("x") == "x"
-    dict_scalar_out = u.Guards.normalize_to_metadata_value({"k": 1})
+    assert u.normalize_to_metadata_value("x") == "x"
+    dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
     assert dict_scalar_out == {"k": 1}
-    dict_out = u.Guards.normalize_to_metadata_value(
+    dict_out = u.normalize_to_metadata_value(
         cast("t.GeneralValueType", {"k": object()}),
     )
     assert isinstance(dict_out, dict)
     assert "k" in dict_out
-    list_out = u.Guards.normalize_to_metadata_value(
+    list_out = u.normalize_to_metadata_value(
         cast("t.GeneralValueType", [1, object()]),
     )
     assert isinstance(list_out, list)
     assert list_out[0] == 1
     assert isinstance(list_out[1], str)
     assert isinstance(
-        u.Guards.normalize_to_metadata_value(
+        u.normalize_to_metadata_value(
             cast("t.GeneralValueType", cast("object", {1, 2})),
         ),
         str,
@@ -468,3 +479,34 @@ def test_guards_issubclass_success_when_callable_is_patched(monkeypatch) -> None
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     assert u.is_type(_ModelSub, "handler")
+
+
+def test_typeis_guards_namespace_and_runtime_behavior() -> None:
+    assert u.is_str("x")
+    assert not u.is_str(1)
+    assert u.is_int(3)
+    assert not u.is_int(True)
+    assert u.is_float(1.5)
+    assert u.is_bool(False)
+    assert u.is_none(None)
+    assert u.is_non_empty_str(" ok ")
+    assert not u.is_non_empty_str("  ")
+    assert u.is_positive_int(2)
+    assert not u.is_positive_int(-1)
+
+    list_value: t.GeneralValueType = ["a", 1, datetime.now()]
+    assert u.is_list(list_value)
+    assert u.is_dict({"k": "v"})
+    assert not u.is_dict(cast("t.GeneralValueType", {1: "v"}))
+    assert u.is_sequence(("a", 1))
+    assert not u.is_sequence("abc")
+    assert u.is_mapping({"k": "v"})
+    assert not u.is_mapping(cast("t.GeneralValueType", {1: "v"}))
+
+    model_value: t.GeneralValueType = _Model()
+    assert u.is_base_model(model_value)
+    assert u.is_base_settings(_Settings())
+    assert u.is_result(r[int].ok(1))
+    assert u.is_path(Path("."))
+    assert u.is_datetime(datetime.now())
+    assert u.is_enum(_Status.READY)

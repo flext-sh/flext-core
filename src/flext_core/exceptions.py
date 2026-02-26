@@ -1653,7 +1653,7 @@ class FlextExceptions:
         **kwargs: t.MetadataAttributeValue,
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
-        # Normalize ExceptionKwargsType to t.MetadataAttributeValue
+        # Normalize kwargs to t.MetadataAttributeValue
         # normalize_to_metadata_value already returns t.MetadataAttributeValue
         normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
         for k, v in kwargs.items():

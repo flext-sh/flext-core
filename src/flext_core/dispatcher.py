@@ -18,12 +18,11 @@ import time
 from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager, suppress
 from datetime import datetime as dt
-from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, override
+from typing import Annotated, Literal, Self, TypeGuard, cast, override
 
 from cachetools import LRUCache
-from pydantic import BaseModel
+from pydantic import BaseModel, Discriminator, TypeAdapter
 
 from flext_core._dispatcher import (
     CircuitBreakerManager,
@@ -55,6 +54,51 @@ type HandlerRegistrationRequestInput = (
 
 # Concrete payload type for dispatcher (replaces _Payload per LAW)
 type _Payload = t.ConfigMapValue
+
+
+class _RegistrationModelInput(m.TaggedModel):
+    input_type: Literal["model"] = "model"
+    request: m.HandlerRegistrationRequest
+
+
+class _RegistrationMappingInput(m.TaggedModel):
+    input_type: Literal["mapping"] = "mapping"
+    request: m.HandlerRegistrationRequest
+
+
+type _RegistrationInputUnion = Annotated[
+    _RegistrationModelInput | _RegistrationMappingInput,
+    Discriminator("input_type"),
+]
+
+
+class _MetadataNoneInput(m.TaggedModel):
+    input_type: Literal["none"] = "none"
+    metadata: None = None
+
+
+class _MetadataModelInput(m.TaggedModel):
+    input_type: Literal["model"] = "model"
+    metadata: m.Metadata
+
+
+class _MetadataMappingInput(m.TaggedModel):
+    input_type: Literal["mapping"] = "mapping"
+    metadata: dict[str, object]
+
+
+type _MetadataInputUnion = Annotated[
+    _MetadataNoneInput | _MetadataModelInput | _MetadataMappingInput,
+    Discriminator("input_type"),
+]
+
+
+_REGISTRATION_INPUT_ADAPTER: TypeAdapter[_RegistrationInputUnion] = TypeAdapter(
+    _RegistrationInputUnion,
+)
+_METADATA_INPUT_ADAPTER: TypeAdapter[_MetadataInputUnion] = TypeAdapter(
+    _MetadataInputUnion
+)
 
 
 class FlextDispatcher(s[bool]):
@@ -590,71 +634,18 @@ class FlextDispatcher(s[bool]):
 
     @staticmethod
     def _is_dispatcher_handler(value: object) -> TypeGuard[DispatcherHandler]:
-        return callable(value) or hasattr(value, "model_dump")
-
-    @staticmethod
-    def _is_text_buffer(value: object) -> bool:
-        match value:
-            case str() | bytes() | bytearray():
-                return True
-            case _:
-                return False
-
-    @staticmethod
-    def _is_metadata_primitive(value: object) -> bool:
-        match value:
-            case str() | int() | float() | bool() | dt() | None:
-                return True
-            case BaseModel():
-                return True
-            case _:
-                return False
-
-    @staticmethod
-    def _is_guard_input_value(value: _Payload) -> TypeGuard[t.GuardInputValue]:
-        match value:
-            case dt() | None:
-                return True
-            case Path():
-                return True
-            case BaseModel():
-                return True
-            case Sequence() if not FlextDispatcher._is_text_buffer(value):
-                return all(
-                    FlextDispatcher._is_metadata_primitive(item) for item in value
-                )
-            case _:
-                if not FlextRuntime.is_dict_like(value):
-                    return False
-                return all(
-                    (str(key) == key and FlextDispatcher._is_metadata_primitive(item))
-                    for key, item in value.items()
-                )
-
-    @staticmethod
-    def _is_container_value(value: object) -> TypeGuard[_Payload]:
-        match value:
-            case str() | int() | float() | bool() | dt() | None:
-                return True
-            case Path():
-                return True
-            case BaseModel():
-                return True
-            case Sequence() if not FlextDispatcher._is_text_buffer(value):
-                return all(FlextDispatcher._is_container_value(item) for item in value)
-            case Mapping():
-                return all(
-                    (str(key) == key and FlextDispatcher._is_container_value(item))
-                    for key, item in value.items()
-                )
-            case _:
-                return False
+        return callable(value) or isinstance(value, BaseModel)
 
     @staticmethod
     def _to_container_value(value: object) -> _Payload:
-        if FlextDispatcher._is_container_value(value):
-            return value
+        if u.is_general_value_type(value):
+            normalized: _Payload = cast("_Payload", value)
+            return normalized
         return str(value)
+
+    @staticmethod
+    def _is_result_value(value: object) -> TypeGuard[r[_Payload]]:
+        return bool(u.is_result_like(value))
 
     @staticmethod
     def _to_scalar_value(value: _Payload) -> t.ScalarValue:
@@ -663,6 +654,42 @@ class FlextDispatcher(s[bool]):
                 return value
             case _:
                 return str(value)
+
+    @staticmethod
+    def _is_scalar_primitive(
+        value: object,
+    ) -> TypeGuard[str | int | float | bool | None]:
+        match value:
+            case str() | bool() | int() | float() | None:
+                return True
+            case _:
+                return False
+
+    @staticmethod
+    def _is_metadata_scalar(
+        value: object,
+    ) -> TypeGuard[str | int | float | bool | dt | None]:
+        match value:
+            case str() | bool() | int() | float() | dt() | None:
+                return True
+            case _:
+                return False
+
+    @staticmethod
+    def _is_optional_str(value: object) -> TypeGuard[str | None]:
+        match value:
+            case str() | None:
+                return True
+            case _:
+                return False
+
+    @staticmethod
+    def _is_optional_int(value: object) -> TypeGuard[int | None]:
+        match value:
+            case int() | None:
+                return True
+            case _:
+                return False
 
     def _route_to_handler(
         self,
@@ -677,15 +704,13 @@ class FlextDispatcher(s[bool]):
             The handler instance (HandlerType or object for h) or None if not found
 
         """
-        command_type = type(command)
-        command_name = command_type.__name__
+        route_names = FlextDispatcher._resolve_message_route_names(command)
 
         # First, try to find handler by command type name in _handlers
         # (two-arg registration)
-        if command_name in self._handlers:
-            # handler_entry is always HandlerType (HandlerCallable | BaseModel)
-            # based on _handlers type definition - return directly
-            return self._handlers[command_name]
+        for route_name in route_names:
+            if route_name in self._handlers:
+                return self._handlers[route_name]
 
         # Search auto-registered handlers (single-arg form)
         for handler in self._auto_handlers:
@@ -697,9 +722,23 @@ class FlextDispatcher(s[bool]):
                     else None
                 )
                 # can_handle expects str (message_type), not type
-                if callable(can_handle_method) and can_handle_method(command_name):
+                if callable(can_handle_method) and any(
+                    can_handle_method(route_name) for route_name in route_names
+                ):
                     return handler
         return None
+
+    @staticmethod
+    def _resolve_message_route_names(message: _Payload) -> list[str]:
+        class_name = message.__class__.__name__
+        parsed_route_name: str | None = None
+        with suppress(Exception):
+            parsed_message = FlextModelsCqrs.parse_message(message)
+            parsed_route_name = parsed_message.message_type
+
+        if parsed_route_name is None or parsed_route_name == class_name:
+            return [class_name]
+        return [parsed_route_name, class_name]
 
     @staticmethod
     def _is_query(
@@ -764,7 +803,7 @@ class FlextDispatcher(s[bool]):
                 error_code=c.Errors.CONFIGURATION_ERROR,
             )
 
-        if not FlextDispatcher._is_guard_input_value(command):
+        if not u.is_general_value_type(command):
             return r[_Payload].fail(
                 "Command is not cache-key compatible",
                 error_code=c.Errors.VALIDATION_ERROR,
@@ -835,7 +874,7 @@ class FlextDispatcher(s[bool]):
         )
         if callable(dispatch_method):
             raw_dispatch_result = dispatch_method(command, operation=operation)
-            if u.is_result_like(raw_dispatch_result):
+            if FlextDispatcher._is_result_value(raw_dispatch_result):
                 if raw_dispatch_result.is_failure:
                     return r[_Payload].fail(
                         raw_dispatch_result.error or "Handler dispatch failed",
@@ -1003,7 +1042,7 @@ class FlextDispatcher(s[bool]):
         result_raw = process_method(command, handler)
 
         # Ensure result is _Payload or FlextResult
-        if u.is_result_like(result_raw):
+        if FlextDispatcher._is_result_value(result_raw):
             result: _Payload | r[_Payload] = result_raw
         else:
             result = FlextDispatcher._to_container_value(result_raw)
@@ -1015,7 +1054,7 @@ class FlextDispatcher(s[bool]):
         middleware_type: _Payload,
     ) -> r[bool]:
         """Handle middleware execution result."""
-        if u.is_result_like(result) and result.is_failure:
+        if FlextDispatcher._is_result_value(result) and result.is_failure:
             # Extract error directly from result.error property
             # result is r[_Payload] after type narrowing
             error_msg = result.error or "Unknown error"
@@ -1165,7 +1204,7 @@ class FlextDispatcher(s[bool]):
             # Cache successful query results
             cache_key: str | None = None
             guard_command: t.GuardInputValue | None = (
-                command if FlextDispatcher._is_guard_input_value(command) else None
+                command if u.is_general_value_type(command) else None
             )
             if result.is_success and is_query and guard_command is not None:
                 cache_key = FlextDispatcher._generate_cache_key(
@@ -1768,6 +1807,103 @@ class FlextDispatcher(s[bool]):
         return ""
 
     @staticmethod
+    def _normalize_registration_input(
+        request: m.HandlerRegistrationRequest
+        | BaseModel
+        | Mapping[str, t.ConfigMapValue],
+    ) -> r[_RegistrationInputUnion]:
+        if isinstance(request, m.HandlerRegistrationRequest):
+            return r[_RegistrationInputUnion].ok(
+                _REGISTRATION_INPUT_ADAPTER.validate_python({
+                    "input_type": "model",
+                    "request": request.model_dump(),
+                })
+            )
+
+        try:
+            if isinstance(request, BaseModel):
+                return r[_RegistrationInputUnion].ok(
+                    _REGISTRATION_INPUT_ADAPTER.validate_python({
+                        "input_type": "model",
+                        "request": request.model_dump(),
+                    })
+                )
+
+            if isinstance(request, Mapping):
+                return r[_RegistrationInputUnion].ok(
+                    _REGISTRATION_INPUT_ADAPTER.validate_python({
+                        "input_type": "mapping",
+                        "request": dict(request.items()),
+                    })
+                )
+        except Exception as e:
+            return r[_RegistrationInputUnion].fail(f"Request validation failed: {e!s}")
+
+        return r[_RegistrationInputUnion].fail(
+            f"Invalid request type: {request.__class__.__name__}. Expected dict or HandlerRegistrationRequest.",
+        )
+
+    @staticmethod
+    def _normalize_metadata_input(metadata: _Payload | None) -> r[_MetadataInputUnion]:
+        if metadata is None:
+            return r[_MetadataInputUnion].ok(
+                _METADATA_INPUT_ADAPTER.validate_python({
+                    "input_type": "none",
+                    "metadata": None,
+                })
+            )
+
+        if isinstance(metadata, m.Metadata):
+            return r[_MetadataInputUnion].ok(
+                _METADATA_INPUT_ADAPTER.validate_python({
+                    "input_type": "model",
+                    "metadata": metadata.model_dump(),
+                })
+            )
+
+        if FlextRuntime.is_dict_like(metadata):
+            return r[_MetadataInputUnion].ok(
+                _METADATA_INPUT_ADAPTER.validate_python({
+                    "input_type": "mapping",
+                    "metadata": dict(metadata.items()),
+                })
+            )
+
+        if isinstance(metadata, BaseModel):
+            try:
+                dumped = metadata.model_dump()
+            except Exception as e:
+                msg = f"Failed to dump BaseModel metadata: {e.__class__.__name__}: {e}"
+                return r[_MetadataInputUnion].fail(msg)
+
+            if not FlextRuntime.is_dict_like(dumped):
+                msg = (
+                    f"metadata.model_dump() returned {dumped.__class__.__name__}, "
+                    "expected dict"
+                )
+                return r[_MetadataInputUnion].fail(msg)
+
+            return r[_MetadataInputUnion].ok(
+                _METADATA_INPUT_ADAPTER.validate_python({
+                    "input_type": "mapping",
+                    "metadata": dict(dumped.items()),
+                })
+            )
+
+        extracted = FlextDispatcher._extract_from_object_attributes(metadata)
+        if extracted is not None:
+            return r[_MetadataInputUnion].ok(
+                _METADATA_INPUT_ADAPTER.validate_python({
+                    "input_type": "mapping",
+                    "metadata": dict(extracted.items()),
+                })
+            )
+
+        return r[_MetadataInputUnion].fail(
+            f"Invalid metadata type: {metadata.__class__.__name__}",
+        )
+
+    @staticmethod
     def _normalize_request(
         request: m.HandlerRegistrationRequest
         | BaseModel
@@ -1785,35 +1921,14 @@ class FlextDispatcher(s[bool]):
             r with validated HandlerRegistrationRequest or error
 
         """
-        match request:
-            case m.HandlerRegistrationRequest():
-                return r[m.HandlerRegistrationRequest].ok(request)
-            case _:
-                pass
+        normalized = FlextDispatcher._normalize_registration_input(request)
+        if normalized.is_failure:
+            return r[m.HandlerRegistrationRequest].fail(
+                normalized.error or "Request validation failed"
+            )
 
-        try:
-            if isinstance(request, BaseModel):
-                # Convert other models via dump-load to validate fields
-                # This handles field aliasing and conversion automatically
-                request_data = request.model_dump()
-                return r[m.HandlerRegistrationRequest].ok(
-                    m.HandlerRegistrationRequest(**request_data)
-                )
-
-            if FlextRuntime.is_dict_like(request):
-                # Validate raw dictionary against model schema
-                # Pydantic v2 handles validation and type coercion
-                return r[m.HandlerRegistrationRequest].ok(
-                    m.HandlerRegistrationRequest.model_validate(dict(request.items()))
-                )
-
-        except Exception as e:
-            msg = f"Request validation failed: {e!s}"
-            return r[m.HandlerRegistrationRequest].fail(msg)
-
-        return r[m.HandlerRegistrationRequest].fail(
-            f"Invalid request type: {request.__class__.__name__}. Expected dict or HandlerRegistrationRequest.",
-        )
+        normalized_value = normalized.value
+        return r[m.HandlerRegistrationRequest].ok(normalized_value.request)
 
     def _validate_and_extract_handler(
         self,
@@ -2120,29 +2235,17 @@ class FlextDispatcher(s[bool]):
                 )
             )
 
-        if isinstance(request, BaseModel):
-            return self._register_handler_with_request(request)
-        # Check if request is a dict-like PayloadValue
-        if isinstance(request, dict):
-            try:
-                normalized_request = m.HandlerRegistrationRequest.model_validate(
-                    request
+        if isinstance(request, BaseModel) or isinstance(request, Mapping):
+            normalized_request_result = FlextDispatcher._normalize_request(
+                cast(
+                    "m.HandlerRegistrationRequest | BaseModel | Mapping[str, t.ConfigMapValue]",
+                    request,
                 )
-            except Exception as exc:
-                return r[m.HandlerRegistrationResult].fail(
-                    f"Request validation failed: {exc}",
+            )
+            if normalized_request_result.is_success:
+                return self._register_handler_with_request(
+                    normalized_request_result.value
                 )
-            return self._register_handler_with_request(normalized_request)
-        if isinstance(request, Mapping):
-            try:
-                normalized_request = m.HandlerRegistrationRequest.model_validate(
-                    dict(request)
-                )
-            except Exception as exc:
-                return r[m.HandlerRegistrationResult].fail(
-                    f"Request validation failed: {exc}",
-                )
-            return self._register_handler_with_request(normalized_request)
 
         return r[m.HandlerRegistrationResult].fail(
             f"Invalid registration request type: {type(request).__name__}",
@@ -2455,10 +2558,17 @@ class FlextDispatcher(s[bool]):
 
         # Simple dispatch for registered handlers
         message_type = type(message)
-        message_type_name = message_type_name_override or message_type.__name__
-        if message_type_name in self._handlers:
+        route_names = FlextDispatcher._resolve_message_route_names(message)
+        if message_type_name_override is not None:
+            route_names = [message_type_name_override, *route_names]
+
+        handler_route_name = next(
+            (route_name for route_name in route_names if route_name in self._handlers),
+            None,
+        )
+        if handler_route_name is not None:
             try:
-                handler_raw = self._handlers[message_type_name]
+                handler_raw = self._handlers[handler_route_name]
                 if not callable(handler_raw):
                     return r[_Payload].fail(
                         f"Handler for {message_type} is not callable",
@@ -2502,24 +2612,35 @@ class FlextDispatcher(s[bool]):
             Metadata model instance or None
 
         """
-        if metadata is None:
+        metadata_input_result = FlextDispatcher._normalize_metadata_input(metadata)
+        if metadata_input_result.is_failure:
+            return (
+                m.Metadata(attributes={"value": str(metadata)})
+                if metadata is not None
+                else None
+            )
+
+        metadata_input = metadata_input_result.value
+        if metadata_input.input_type == "none":
             return None
-        if isinstance(metadata, m.Metadata):
-            return metadata
-        # Use guard and process_dict for concise metadata conversion
-        if isinstance(metadata, Mapping):
+
+        if metadata_input.input_type == "model":
+            return metadata_input.metadata
+
+        if metadata_input.input_type == "mapping":
+            metadata_map = metadata_input.metadata
             attributes_dict: dict[str, t.MetadataAttributeValue] = {}
 
             def convert_metadata_value(
                 v: _Payload,
             ) -> t.MetadataAttributeValue:
-                if isinstance(v, (str, int, float, bool, type(None))):
+                if FlextDispatcher._is_scalar_primitive(v):
                     return v
                 if isinstance(v, list):
                     # Use list comprehension for concise list conversion
                     return [
                         item
-                        if isinstance(item, (str, int, float, bool, type(None)))
+                        if FlextDispatcher._is_scalar_primitive(item)
                         else str(item)
                         for item in v
                     ]
@@ -2529,19 +2650,19 @@ class FlextDispatcher(s[bool]):
                     return json.dumps({str(k): str(v2) for k, v2 in v.items()})
                 return str(v)
 
-            # Convert metadata dict to items for processing
-            if isinstance(metadata, dict):
-                process_result = u.process(
-                    list(metadata.items()),
-                    lambda kv: (str(kv[0]), convert_metadata_value(kv[1])),
-                    on_error="collect",
+            process_result = u.process(
+                list(metadata_map.items()),
+                lambda kv: (
+                    str(kv[0]),
+                    convert_metadata_value(FlextDispatcher._to_container_value(kv[1])),
+                ),
+                on_error="collect",
+            )
+            if process_result.is_success:
+                processed_items: list[tuple[str, t.MetadataAttributeValue]] = (
+                    process_result.value
                 )
-                if process_result.is_success:
-                    # process_result.value is list[tuple[str, converted_value]]
-                    processed_items: list[tuple[str, t.MetadataAttributeValue]] = (
-                        process_result.value
-                    )
-                    attributes_dict = dict(processed_items)
+                attributes_dict = dict(processed_items)
 
             # attributes_dict is mapping[str, str] which is assignable to mapping[str, _Payload]
             return m.Metadata.model_validate({"attributes": attributes_dict})
@@ -2593,20 +2714,19 @@ class FlextDispatcher(s[bool]):
             r if handler found and executed, None otherwise
 
         """
-        message_type = type(message)
-        message_type_key = (
-            message_type.__name__
-            if hasattr(message_type, "__name__")
-            else str(message_type)
+        route_names = FlextDispatcher._resolve_message_route_names(message)
+        handler_route_name = next(
+            (route_name for route_name in route_names if route_name in self._handlers),
+            None,
         )
-        if message_type_key not in self._handlers:
+        if handler_route_name is None:
             return None
 
         try:
-            handler_raw = self._handlers[message_type_key]
+            handler_raw = self._handlers[handler_route_name]
             if not callable(handler_raw):
                 return r[_Payload].fail(
-                    f"Handler for {message_type_key} is not callable",
+                    f"Handler for {handler_route_name} is not callable",
                 )
             handler_input = FlextDispatcher._to_scalar_value(message)
             raw_handler_result = handler_raw(handler_input)
@@ -2698,39 +2818,31 @@ class FlextDispatcher(s[bool]):
                     else timeout_override
                 )
 
-            # Validate metadata - NO fallback, explicit validation
-            validated_metadata: m.Metadata | None = None
+            metadata_input_result = FlextDispatcher._normalize_metadata_input(metadata)
+            if metadata_input_result.is_failure:
+                msg = metadata_input_result.error or "Invalid metadata input"
+                return r[m.DispatchConfig].fail(msg)
 
-            if metadata is None:
+            metadata_input = metadata_input_result.value
+            validated_metadata: m.Metadata | None
+            if metadata_input.input_type == "none":
                 validated_metadata = None
-            elif isinstance(metadata, m.Metadata):
-                validated_metadata = metadata
-            elif isinstance(metadata, (Mapping, t.ConfigMap)):
-                meta_map: Mapping[str, object]
-                if isinstance(metadata, t.ConfigMap):
-                    meta_map = metadata.root
-                else:
-                    meta_map = metadata
-
+            elif metadata_input.input_type == "model":
+                validated_metadata = metadata_input.metadata
+            else:
                 normalized_attrs: dict[str, t.MetadataAttributeValue] = {}
-                for k, v in meta_map.items():
-                    if not FlextDispatcher._is_metadata_attribute_compatible(v):
+                for k, v in metadata_input.metadata.items():
+                    value = FlextDispatcher._to_container_value(v)
+                    if not FlextDispatcher._is_metadata_attribute_compatible(value):
                         return r[m.DispatchConfig].fail(
                             f"Invalid metadata attribute type for key '{k}'"
                         )
                     normalized_attrs[str(k)] = FlextRuntime.normalize_to_metadata_value(
-                        FlextDispatcher._to_container_value(v),
+                        value,
                     )
                 validated_metadata = m.Metadata.model_validate({
                     "attributes": normalized_attrs
                 })
-            else:
-                # Fast fail: invalid type
-                msg = (
-                    f"Invalid metadata type: {metadata.__class__.__name__}. "
-                    "Expected _Payload | m.Metadata | None"
-                )
-                return r[m.DispatchConfig].fail(msg)
 
             if metadata is not None and validated_metadata is None:
                 msg = (
@@ -2846,14 +2958,14 @@ class FlextDispatcher(s[bool]):
         correlation_id_raw = context.get("correlation_id")
         correlation_id: str | None = (
             correlation_id_raw
-            if isinstance(correlation_id_raw, (str, type(None)))
+            if FlextDispatcher._is_optional_str(correlation_id_raw)
             else None
         )
 
         timeout_override_raw = context.get("timeout_override")
         timeout_override: int | None = (
             timeout_override_raw
-            if isinstance(timeout_override_raw, (int, type(None)))
+            if FlextDispatcher._is_optional_int(timeout_override_raw)
             else None
         )
 
@@ -2906,7 +3018,7 @@ class FlextDispatcher(s[bool]):
             raise TypeError(msg)
 
         # Extract message type from message object
-        message_type = message.__class__.__name__
+        message_type = FlextDispatcher._resolve_message_route_names(message)[0]
         return message, message_type
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
@@ -3075,31 +3187,17 @@ class FlextDispatcher(s[bool]):
         metadata: _Payload,
     ) -> m.Metadata | None:
         """Extract metadata as m.Metadata from various types."""
-        if isinstance(metadata, m.Metadata):
-            return metadata
-
-        extracted_map: Mapping[str, object] | None = None
-
-        if isinstance(metadata, Mapping):
-            extracted_map = metadata
-        elif isinstance(metadata, BaseModel):
-            try:
-                dumped = metadata.model_dump()
-                if not FlextRuntime.is_dict_like(dumped):
-                    msg = (
-                        f"metadata.model_dump() returned {dumped.__class__.__name__}, "
-                        "expected dict"
-                    )
-                    raise TypeError(msg)
-                extracted_map = dict(dumped.items())
-            except Exception as e:
-                msg = f"Failed to dump BaseModel metadata: {e.__class__.__name__}: {e}"
-                raise TypeError(msg) from e
-        else:
-            extracted_map = FlextDispatcher._extract_from_object_attributes(metadata)
-
-        if extracted_map is None:
+        metadata_input_result = FlextDispatcher._normalize_metadata_input(metadata)
+        if metadata_input_result.is_failure:
             return None
+
+        metadata_input = metadata_input_result.value
+        if metadata_input.input_type == "none":
+            return None
+        if metadata_input.input_type == "model":
+            return metadata_input.metadata
+
+        extracted_map: Mapping[str, object] = metadata_input.metadata
 
         # Convert Mapping to m.Metadata
         # Filter keys that are valid for Metadata attributes (str keys)
@@ -3128,14 +3226,11 @@ class FlextDispatcher(s[bool]):
 
     @staticmethod
     def _is_metadata_attribute_compatible(value: _Payload) -> bool:
-        if isinstance(value, (str, int, float, bool, dt, type(None))):
+        if FlextDispatcher._is_metadata_scalar(value):
             return True
 
         if isinstance(value, list):
-            return all(
-                isinstance(item, (str, int, float, bool, dt, type(None)))
-                for item in value
-            )
+            return all(FlextDispatcher._is_metadata_scalar(item) for item in value)
 
         if FlextRuntime.is_dict_like(value):
             metadata_root = getattr(value, "root") if hasattr(value, "root") else None
@@ -3148,11 +3243,10 @@ class FlextDispatcher(s[bool]):
             for nested in mapping_value.values():
                 if isinstance(nested, list):
                     if not all(
-                        isinstance(item, (str, int, float, bool, dt, type(None)))
-                        for item in nested
+                        FlextDispatcher._is_metadata_scalar(item) for item in nested
                     ):
                         return False
-                elif not isinstance(nested, (str, int, float, bool, dt, type(None))):
+                elif not FlextDispatcher._is_metadata_scalar(nested):
                     return False
             return True
 
@@ -3221,37 +3315,39 @@ class FlextDispatcher(s[bool]):
             if current_parent is not None and current_parent != correlation_id:
                 _ = parent_var.set(current_parent)
 
-        # Set metadata if provided
-        if metadata is not None and isinstance(metadata, dict):
-            # Type narrowing: metadata is dict
-            # mapping[str, PayloadValue] is compatible with ConfigurationDict
-            metadata_dict: m.ConfigMap = m.ConfigMap.model_validate(metadata)
-            _ = metadata_var.set(metadata_dict)
-        elif metadata is not None and isinstance(metadata, Mapping):
-            # Convert Mapping to dict for context variable
-            converted_dict: m.ConfigMap = m.ConfigMap.model_validate(dict(metadata))
-            _ = metadata_var.set(converted_dict)
-
-            # Use provided correlation ID or generate one if needed
-            effective_correlation_id = correlation_id
-            if effective_correlation_id is None:
-                effective_correlation_id = u.generate("correlation")
-
-            if self.config.dispatcher_enable_logging:
-                self._log_with_context(
-                    "debug",
-                    "dispatch_context_entered",
-                    correlation_id=effective_correlation_id,
+        metadata_input_result = FlextDispatcher._normalize_metadata_input(metadata)
+        if metadata_input_result.is_success:
+            metadata_input = metadata_input_result.value
+            if metadata_input.input_type == "mapping":
+                metadata_dict: m.ConfigMap = m.ConfigMap.model_validate(
+                    metadata_input.metadata
                 )
-
-            yield
-
-            if self.config.dispatcher_enable_logging:
-                self._log_with_context(
-                    "debug",
-                    "dispatch_context_exited",
-                    correlation_id=effective_correlation_id,
+                _ = metadata_var.set(metadata_dict)
+            elif metadata_input.input_type == "model":
+                metadata_dict = m.ConfigMap.model_validate(
+                    metadata_input.metadata.attributes,
                 )
+                _ = metadata_var.set(metadata_dict)
+
+        effective_correlation_id = correlation_id
+        if effective_correlation_id is None:
+            effective_correlation_id = u.generate("correlation")
+
+        if self.config.dispatcher_enable_logging:
+            self._log_with_context(
+                "debug",
+                "dispatch_context_entered",
+                correlation_id=effective_correlation_id,
+            )
+
+        yield
+
+        if self.config.dispatcher_enable_logging:
+            self._log_with_context(
+                "debug",
+                "dispatch_context_exited",
+                correlation_id=effective_correlation_id,
+            )
 
     # ------------------------------------------------------------------
     # Factory methods

@@ -24,11 +24,9 @@ from pydantic import (
     AfterValidator,
     AliasChoices,
     BaseModel,
-    BeforeValidator,
     ConfigDict,
     Discriminator,
     Field,
-    PlainValidator,
     TypeAdapter,
     ValidationError,
     computed_field,
@@ -196,6 +194,61 @@ class FlextModelFoundation:
             arbitrary_types_allowed=True,
             use_enum_values=True,
         )
+
+    class StrictBoundaryModel(BaseModel):
+        """Strict boundary model for API/external boundaries.
+
+        Enforces strict validation, forbids extra fields, strips whitespace,
+        and is immutable (frozen). Use at system boundaries where external
+        data enters the system.
+        """
+
+        model_config = ConfigDict(
+            strict=True,
+            validate_assignment=True,
+            extra="forbid",
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            frozen=True,
+        )
+
+    class FlexibleInternalModel(BaseModel):
+        """Flexible internal model for domain logic.
+
+        Allows assignment validation and whitespace stripping but ignores
+        extra fields. Use for internal domain models where flexibility is needed.
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="ignore",
+            str_strip_whitespace=True,
+            use_enum_values=True,
+        )
+
+    class ImmutableValueModel(BaseModel):
+        """Immutable value model for value objects.
+
+        Frozen and strict, forbids extra fields. Use for value objects
+        that should never change after creation.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+        )
+
+    class TaggedModel(BaseModel):
+        """Base pattern for tagged discriminated unions.
+
+        Downstream models should define a `Literal[...]` runtime discriminator field
+        (for example, `message_type`) plus a static class-level `tag` marker.
+        This keeps union routing explicit and avoids ad-hoc `isinstance` trees.
+        """
+
+        model_config = ConfigDict(extra="forbid")
+        tag: ClassVar[str]
 
     # ═══════════════════════════════════════════════════════════════════════════
     # ADVANCED PYDANTIC v2 FEATURES - Discriminated Unions
@@ -1440,38 +1493,6 @@ class FlextModelFoundation:
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""
-
-
-# Type aliases using Validators (single class per module)
-StrippedString = Annotated[
-    str, AfterValidator(FlextModelFoundation.Validators.strip_whitespace)
-]
-ValidatedString = Annotated[
-    str, AfterValidator(FlextModelFoundation.Validators.validate_non_empty_string)
-]
-PositiveInt = Annotated[int, Field(gt=0)]
-PositiveFloat = Annotated[float, Field(gt=0)]
-NormalizedList = Annotated[
-    list[t.GuardInputValue],
-    BeforeValidator(FlextModelFoundation.Validators.normalize_to_list),
-]
-EmailStr = Annotated[
-    str, PlainValidator(FlextModelFoundation.Validators.validate_email)
-]
-UrlStr = Annotated[str, PlainValidator(FlextModelFoundation.Validators.validate_url)]
-SemVerStr = Annotated[
-    str, PlainValidator(FlextModelFoundation.Validators.validate_semver)
-]
-UUIDStr = Annotated[
-    str, PlainValidator(FlextModelFoundation.Validators.validate_uuid_string)
-]
-ValidatedConfigDict = Annotated[
-    Mapping[str, t.GuardInputValue],
-    PlainValidator(FlextModelFoundation.Validators.validate_config_dict),
-]
-NormalizedTags = Annotated[
-    list[str], PlainValidator(FlextModelFoundation.Validators.validate_tags_list)
-]
 
 
 __all__ = ["FlextModelFoundation"]

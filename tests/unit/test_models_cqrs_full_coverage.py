@@ -3,7 +3,11 @@ from __future__ import annotations
 import sys
 import importlib
 from types import SimpleNamespace
+
+from pydantic import TypeAdapter
+
 from flext_core import c, m
+from flext_core._models.cqrs import FlextMessage
 
 
 def test_command_validator_and_pagination_limit() -> None:
@@ -88,3 +92,28 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(monkeypatch) -> None:
     assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 2
     assert parsed.pagination.size == 10
+
+
+def test_flext_message_discriminator_union_parsing() -> None:
+    command = m.Cqrs.parse_message({"message_type": "command", "command_type": "sync"})
+    assert isinstance(command, m.Command)
+    assert command.message_type == "command"
+
+    query = m.Cqrs.parse_message({"message_type": "query", "filters": {"k": "v"}})
+    assert isinstance(query, m.Query)
+    assert query.message_type == "query"
+
+    event = m.Cqrs.parse_message({
+        "message_type": "event",
+        "event_type": "created",
+        "aggregate_id": "agg-1",
+        "data": {"x": 1},
+    })
+    assert isinstance(event, m.Cqrs.Event)
+    assert event.message_type == "event"
+
+
+def test_flext_message_type_alias_adapter() -> None:
+    adapter: TypeAdapter[FlextMessage] = TypeAdapter(FlextMessage)
+    parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
+    assert isinstance(parsed, m.Command)

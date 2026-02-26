@@ -22,8 +22,6 @@ from datetime import datetime
 from types import ModuleType
 from typing import ClassVar
 
-from pydantic import BaseModel
-
 from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.mixins import x
@@ -578,50 +576,6 @@ class FlextHandlers[MessageT_contra, ResultT](
             return None
         top_item = self._stack[-1]
         return top_item if isinstance(top_item, m.Handler.ExecutionContext) else None
-
-    @staticmethod
-    def _extract_message_id(message: t.ScalarValue) -> str | None:
-        """Extract message ID from message object without type narrowing.
-
-        Helper method to avoid type narrowing issues when checking message
-        type before passing to handle().
-
-        Args:
-            message: Message object to extract ID from
-
-        Returns:
-            Message ID string or None if not available
-
-        """
-        if isinstance(message, dict):
-            # Try command_id first, then message_id using extract
-            cmd_id_result = u.extract(
-                message,
-                "command_id",
-                default=None,
-                required=False,
-            )
-            if cmd_id_result.is_success and cmd_id_result.value:
-                return str(cmd_id_result.value)
-            msg_id_result = u.extract(
-                message,
-                "message_id",
-                default=None,
-                required=False,
-            )
-            return (
-                str(msg_id_result.value)
-                if msg_id_result.is_success and msg_id_result.value
-                else None
-            )
-        if isinstance(message, BaseModel):
-            if hasattr(message, "command_id"):
-                cmd_id = getattr(message, "command_id", "") or ""
-                return str(cmd_id) if cmd_id else None
-            if hasattr(message, "message_id"):
-                msg_id = getattr(message, "message_id", "") or ""
-                return str(msg_id) if msg_id else None
-        return None
 
     def dispatch_message(
         self,

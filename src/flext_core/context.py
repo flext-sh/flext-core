@@ -362,42 +362,6 @@ class FlextContext(FlextRuntime):
                 update={"operations": operations}
             )
 
-    def _add_hook(
-        self,
-        event: str,
-        hook: t.HandlerCallable,
-    ) -> None:
-        """Add a hook for an event.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        Args:
-            event: Event name ('set', 'get', 'remove', etc.)
-            hook: Callable hook function
-
-        """
-        if event not in self._hooks:
-            self._hooks[event] = []
-        if callable(hook):
-            self._hooks[event].append(hook)
-
-    def _remove_hook(
-        self,
-        event: str,
-        hook: t.HandlerCallable,
-    ) -> None:
-        """Remove a hook for an event.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        Args:
-            event: Event name ('set', 'get', 'remove', etc.)
-            hook: Callable hook function to remove
-
-        """
-        if event in self._hooks and hook in self._hooks[event]:
-            self._hooks[event].remove(hook)
-
     def _execute_hooks(
         self,
         event: str,
@@ -945,32 +909,6 @@ class FlextContext(FlextRuntime):
             msg = f"Invalid JSON string: {e}"
             raise ValueError(msg) from e
 
-    def _import_data(
-        self,
-        data: m.ConfigMap,
-    ) -> None:
-        """Import data into context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        Args:
-            data: Dictionary of key-value pairs to import
-
-        """
-        if not self._active:
-            return
-        # Use FlextRuntime.normalize_to_general_value directly - no wrapper needed
-        # Normalize each value in dict to ensure ContextValue compatibility
-        normalized_data: m.ConfigMap = m.ConfigMap(root={})
-        for k, v in data.items():
-            normalized_data[str(k)] = FlextRuntime.normalize_to_general_value(v)
-        # Merge into global scope
-        self._set_in_contextvar(
-            c.Context.SCOPE_GLOBAL,
-            normalized_data,
-        )
-
     def items(self) -> list[tuple[str, ContextValue]]:
         """Get all items (key-value pairs) in the context.
 
@@ -1102,27 +1040,6 @@ class FlextContext(FlextRuntime):
         """
         self._suspended = True
 
-    def _resume(self) -> None:
-        """Resume the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        """
-        self._suspended = False
-
-    def _set_suspended(self, *, suspended: bool) -> None:
-        """Set the suspended state of the context.
-
-        Args:
-            suspended: True to suspend, False to resume
-
-        Note:
-            Use is_active property to check if context is active and not suspended.
-            Replaces separate suspend() and resume() methods.
-
-        """
-        self._suspended = suspended
-
     def is_active(self) -> bool:
         """Check if context is active.
 
@@ -1133,27 +1050,6 @@ class FlextContext(FlextRuntime):
 
         """
         return self._active and not self._suspended
-
-    def _destroy(self) -> None:
-        """Destroy the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        """
-        self._active = False
-
-        # Clear all contextvar scopes
-        for scope_name, ctx_var in self._scope_vars.items():
-            _ = ctx_var.set(m.ConfigMap(root={}))
-
-            # DELEGATION: Clear FlextLogger for global scope
-            if scope_name == c.Context.SCOPE_GLOBAL:
-                _ = FlextLogger.clear_global_context()
-
-        # Clear metadata and hooks
-        self._metadata = m.Metadata()  # Reset model
-        self._hooks.clear()
 
     def set_metadata(self, key: str, value: ContextValue) -> None:
         """Set metadata for the context.
@@ -1228,15 +1124,6 @@ class FlextContext(FlextRuntime):
             all_data.update(scope_dict)
         return all_data
 
-    def _get_statistics(self) -> m.ContextStatistics:
-        """Get context statistics.
-
-        Returns:
-            ContextStatistics model with operation counts
-
-        """
-        return self._statistics
-
     def set_statistics_for_clone(
         self,
         statistics: m.ContextStatistics,
@@ -1250,15 +1137,6 @@ class FlextContext(FlextRuntime):
         self._statistics = statistics
 
     def set_all_metadata_for_clone(self, metadata: m.Metadata) -> None:
-        """Set all metadata for the context (used internally for cloning).
-
-        Args:
-            metadata: Metadata model to set
-
-        """
-        self._metadata = metadata
-
-    def _set_all_metadata(self, metadata: m.Metadata) -> None:
         """Set all metadata for the context (used internally for cloning).
 
         Args:
@@ -1317,67 +1195,6 @@ class FlextContext(FlextRuntime):
             if scope_dict:
                 scopes[scope_name] = dict(scope_dict.items())
         return scopes
-
-    def _export_snapshot(self) -> m.ContextExport:
-        """Export context snapshot.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        Returns:
-            ContextExport model with complete context state
-
-        """
-        # Get all data
-        all_data_dict = self._get_all_data()
-        all_data: m.ConfigMap = m.ConfigMap.model_validate(all_data_dict)
-
-        # Get metadata as dict
-        metadata_dict = self._get_all_metadata()
-
-        # Normalize metadata values to MetadataAttributeDict
-        metadata_for_model: m.ConfigMap | None = None
-        if metadata_dict:
-            # Convert ConfigurationDict to MetadataAttributeDict
-            metadata_for_model = m.ConfigMap(
-                root={
-                    k: FlextRuntime.normalize_to_general_value(
-                        FlextRuntime.normalize_to_metadata_value(v)
-                    )
-                    for k, v in metadata_dict.items()
-                }
-            )
-
-        # Get statistics as dict
-        stats_dict_raw: m.ConfigMap = m.ConfigMap(root={})
-        if hasattr(self._statistics, "model_dump"):
-            stats_dict_raw = m.ConfigMap(root=self._statistics.model_dump())
-
-        # Create ContextExport model
-        # statistics expects ContextMetadataMapping (Mapping[str, ContextValue])
-        statistics_mapping: t.Dict = t.Dict(root=dict(stats_dict_raw.items()))
-        metadata_root: m.ConfigMap | None = (
-            m.ConfigMap(
-                root={
-                    k: FlextRuntime.normalize_to_general_value(v)
-                    for k, v in metadata_for_model.items()
-                }
-            )
-            if metadata_for_model
-            else None
-        )
-
-        return m.ContextExport(
-            data=dict(all_data.items()),
-            metadata=m.Metadata(
-                attributes={
-                    key: FlextRuntime.normalize_to_metadata_value(value)
-                    for key, value in metadata_root.items()
-                }
-            )
-            if metadata_root
-            else None,
-            statistics=dict(statistics_mapping.items()),
-        )
 
     # =========================================================================
     # Container integration for dependency injection

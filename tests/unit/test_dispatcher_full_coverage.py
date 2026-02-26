@@ -248,6 +248,18 @@ def test_validation_and_routing_helpers(dispatcher: FlextDispatcher) -> None:
     dispatcher._auto_handlers.append(auto_handler)
     assert dispatcher._route_to_handler(_EchoMessage()) is auto_handler
 
+    class _TaggedCommand(m.Command):
+        command_type: str = "tagged"
+
+    tagged_result = dispatcher.register_handler(
+        "command",
+        _as_handler(lambda _msg: _as_payload("ok-by-discriminator")),
+    )
+    assert tagged_result.is_success
+    routed = dispatcher._try_simple_dispatch(_TaggedCommand())
+    assert routed is not None and routed.is_success
+    assert routed.value == "ok-by-discriminator"
+
     dispatcher._auto_handlers.clear()
     assert dispatcher._route_to_handler(_EchoMessage()) is None
 

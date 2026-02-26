@@ -19,7 +19,6 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, U, t
 
@@ -155,9 +154,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return result
 
     @staticmethod
-    def safe[T](
-        func: p.VariadicCallable[T],
-    ) -> p.VariadicCallable[FlextResult[T]]:
+    def safe[T, **PFunc](
+        func: Callable[PFunc, T],
+    ) -> Callable[PFunc, FlextResult[T]]:
         """Decorator to wrap function in FlextResult.
 
         Catches exceptions and returns FlextResult.fail() on error.
@@ -169,20 +168,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
 
-        def wrapper(
-            *args: t.ScalarValue,
-            **kwargs: t.ScalarValue,
-        ) -> FlextResult[T]:
+        def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> FlextResult[T]:
             try:
                 result = func(*args, **kwargs)
                 return FlextResult[T].ok(result)
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                RuntimeError,
-            ) as e:
+            except Exception as e:
                 _module_logger.debug("FlextResult.safe callable failed", exc_info=e)
                 return FlextResult[T].fail(str(e))
 
@@ -347,6 +337,38 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             _module_logger.debug("Callable execution failed", exc_info=e)
             return cls.fail(str(e), error_code=error_code)
+
+    @classmethod
+    def from_callable[U](
+        cls,
+        func: Callable[[], U],
+        error_code: str | None = None,
+    ) -> FlextResult[U]:
+        try:
+            value = func()
+            if value is None:
+                return cls.fail("Callable returned None", error_code=error_code)
+            return cls.ok(value)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
+            _module_logger.debug("Callable execution failed", exc_info=e)
+            return cls.fail(str(e), error_code=error_code)
+
+    @classmethod
+    def from_optional[U](
+        cls,
+        value: U | None,
+        error: str | None = "Optional value was None",
+    ) -> FlextResult[U]:
+        if value is None:
+            return cls.fail(error)
+        return cls.ok(value)
+
+    @classmethod
+    def collect[U](
+        cls,
+        results: Sequence[FlextResult[U]],
+    ) -> FlextResult[list[U]]:
+        return cls.accumulate_errors(*results)
 
     # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
     BaseModel,
@@ -44,7 +44,9 @@ class FlextModelsCqrs:
     ):
         """Base class for CQRS commands with validation."""
 
-        message_type: c.Cqrs.CommandMessageTypeLiteral = Field(
+        tag: ClassVar[Literal["command"]] = "command"
+
+        message_type: Literal["command"] = Field(
             default="command",
             frozen=True,
             description="Message type discriminator (always 'command')",
@@ -123,7 +125,9 @@ class FlextModelsCqrs:
             },
         )
 
-        message_type: c.Cqrs.QueryMessageTypeLiteral = Field(
+        tag: ClassVar[Literal["query"]] = "query"
+
+        message_type: Literal["query"] = Field(
             default="query",
             frozen=True,
             description="Message type discriminator",
@@ -361,7 +365,9 @@ class FlextModelsCqrs:
         They are immutable records of what happened in the system.
         """
 
-        message_type: c.Cqrs.EventMessageTypeLiteral = Field(
+        tag: ClassVar[Literal["event"]] = "event"
+
+        message_type: Literal["event"] = Field(
             default="event",
             frozen=True,
             description="Message type discriminator (always 'event')",
@@ -382,8 +388,11 @@ class FlextModelsCqrs:
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )
 
-    # Discriminated union of all CQRS message types
-    # Enables type-safe dispatch based on message_type literal
+    @staticmethod
+    def parse_message(payload: t.ConfigMapValue) -> FlextMessage:
+        adapter: TypeAdapter[FlextMessage] = TypeAdapter(FlextMessage)
+        return adapter.validate_python(payload)
+
     CQRSMessage = Annotated[
         Command | Query | Event,
         Discriminator("message_type"),
@@ -397,4 +406,10 @@ class FlextModelsCqrs:
         handlers: list[str]
 
 
-__all__ = ["FlextModelsCqrs"]
+__all__ = ["FlextMessage", "FlextModelsCqrs"]
+
+
+type FlextMessage = Annotated[
+    FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsCqrs.Event,
+    Discriminator("message_type"),
+]

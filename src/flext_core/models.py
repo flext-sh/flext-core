@@ -13,15 +13,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, TypeAlias
-
-from pydantic import Discriminator
+from typing import TypeAlias
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
-from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core._models.cqrs import FlextMessage, FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
@@ -268,7 +266,11 @@ class FlextModels:
     # =========================================================================
 
     ArbitraryTypesModel: TypeAlias = FlextModelFoundation.ArbitraryTypesModel
+    StrictBoundaryModel: TypeAlias = FlextModelFoundation.StrictBoundaryModel
+    FlexibleInternalModel: TypeAlias = FlextModelFoundation.FlexibleInternalModel
+    ImmutableValueModel: TypeAlias = FlextModelFoundation.ImmutableValueModel
     FrozenStrictModel: TypeAlias = FlextModelFoundation.FrozenStrictModel
+    TaggedModel: TypeAlias = FlextModelFoundation.TaggedModel
     IdentifiableMixin: TypeAlias = FlextModelFoundation.IdentifiableMixin
     TimestampableMixin: TypeAlias = FlextModelFoundation.TimestampableMixin
     TimestampedModel: TypeAlias = FlextModelFoundation.TimestampedModel
@@ -313,10 +315,7 @@ class FlextModels:
     # UNIONS - Pydantic discriminated unions
     # =========================================================================
 
-    MessageUnion = Annotated[
-        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsEntity.DomainEvent,
-        Discriminator("message_type"),
-    ]
+    MessageUnion: TypeAlias = FlextMessage
 
 
 # =========================================================================
