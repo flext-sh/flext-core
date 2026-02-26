@@ -60,9 +60,15 @@ class FlextModelFoundation:
         # Private cache variables for lazy-loaded TypeAdapters
         _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
         _list_adapter: ClassVar[TypeAdapter[list[t.GuardInputValue]] | None] = None
-        _strict_string_adapter: ClassVar[TypeAdapter[Annotated[str, Field(strict=True)]] | None] = None
-        _metadata_map_adapter: ClassVar[TypeAdapter[dict[str, t.MetadataAttributeValue]] | None] = None
-        _config_adapter: ClassVar[TypeAdapter[dict[str, t.GuardInputValue]] | None] = None
+        _strict_string_adapter: ClassVar[
+            TypeAdapter[Annotated[str, Field(strict=True)]] | None
+        ] = None
+        _metadata_map_adapter: ClassVar[
+            TypeAdapter[dict[str, t.MetadataAttributeValue]] | None
+        ] = None
+        _config_adapter: ClassVar[TypeAdapter[dict[str, t.GuardInputValue]] | None] = (
+            None
+        )
 
         @classmethod
         def tags_adapter(cls) -> TypeAdapter[list[str]]:
@@ -79,17 +85,25 @@ class FlextModelFoundation:
             return cls._list_adapter
 
         @classmethod
-        def strict_string_adapter(cls) -> TypeAdapter[Annotated[str, Field(strict=True)]]:
+        def strict_string_adapter(
+            cls,
+        ) -> TypeAdapter[Annotated[str, Field(strict=True)]]:
             """Lazy-load strict string TypeAdapter on first access."""
             if cls._strict_string_adapter is None:
-                cls._strict_string_adapter = TypeAdapter(Annotated[str, Field(strict=True)])
+                cls._strict_string_adapter = TypeAdapter(
+                    Annotated[str, Field(strict=True)]
+                )
             return cls._strict_string_adapter
 
         @classmethod
-        def metadata_map_adapter(cls) -> TypeAdapter[dict[str, t.MetadataAttributeValue]]:
+        def metadata_map_adapter(
+            cls,
+        ) -> TypeAdapter[dict[str, t.MetadataAttributeValue]]:
             """Lazy-load metadata map TypeAdapter on first access."""
             if cls._metadata_map_adapter is None:
-                cls._metadata_map_adapter = TypeAdapter(dict[str, t.MetadataAttributeValue])
+                cls._metadata_map_adapter = TypeAdapter(
+                    dict[str, t.MetadataAttributeValue]
+                )
             return cls._metadata_map_adapter
 
         @classmethod
@@ -103,6 +117,15 @@ class FlextModelFoundation:
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:
             """Ensure datetime is UTC timezone."""
             return _ensure_utc_datetime(v)
+
+        @staticmethod
+        def strip_whitespace(v: str) -> str:
+            """Strip leading and trailing whitespace from string."""
+            return v.strip()
+        @staticmethod
+        def strip_whitespace(v: str) -> str:
+            """Strip leading and trailing whitespace from string."""
+            return v.strip()
 
         @staticmethod
         def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
@@ -137,8 +160,8 @@ class FlextModelFoundation:
         def validate_tags_list(v: t.GuardInputValue) -> list[str]:
             """Validate and normalize tags list."""
             try:
-                raw_tags = FlextModelFoundation.Validators.list_adapter().validate_python(
-                    v
+                raw_tags = (
+                    FlextModelFoundation.Validators.list_adapter().validate_python(v)
                 )
             except ValidationError as exc:
                 msg = "Tags must be a list"
@@ -149,7 +172,8 @@ class FlextModelFoundation:
             for tag in raw_tags:
                 try:
                     clean_tag = (
-                        FlextModelFoundation.Validators.strict_string_adapter()
+                        FlextModelFoundation.Validators
+                        .strict_string_adapter()
                         .validate_python(tag)
                         .strip()
                         .lower()
@@ -285,8 +309,10 @@ class FlextModelFoundation:
                     msg = f"Keys starting with '_' are reserved: {key}"
                     raise ValueError(msg)
 
-            return FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
-                result
+            return (
+                FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
+                    result
+                )
             )
 
     # Command message type

@@ -130,10 +130,10 @@ __all__ = [
 
 def __getattr__(name: str) -> object:
     """Lazy-load module attributes on first access (PEP 562).
-    
+
     This defers all imports until actually needed, reducing startup time
     from ~1.2s to <50ms for bare `import flext_infra`.
-    
+
     Handles submodule namespace pollution: when a submodule like
     flext_infra.__version__ is imported, Python adds it to the parent
     module's namespace. We need to check _LAZY_IMPORTS first to ensure
@@ -161,10 +161,10 @@ def __dir__() -> list[str]:
 def _cleanup_submodule_namespace() -> None:
     """Remove submodules from namespace to force __getattr__ usage."""
     import sys
-    
+
     # Get the current module
     current_module = sys.modules[__name__]
-    
+
     # List of submodule names that might pollute the namespace
     submodule_names = [
         "__version__",  # flext_infra.__version__
@@ -187,7 +187,7 @@ def _cleanup_submodule_namespace() -> None:
         "utilities",
         "versioning",
     ]
-    
+
     # Remove submodules from the module's namespace
     for submodule_name in submodule_names:
         if hasattr(current_module, submodule_name):

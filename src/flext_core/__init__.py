@@ -17,30 +17,31 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Type hints only - not loaded at runtime
     from flext_core.__version__ import __version__, __version_info__
-    from flext_core.constants import FlextConstants as c
+    from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
-    from flext_core.decorators import FlextDecorators as d
+    from flext_core.decorators import FlextDecorators, d
     from flext_core.dispatcher import FlextDispatcher
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
+    from flext_core.exceptions import FlextExceptions, e
+    from flext_core.handlers import FlextHandlers, h
     from flext_core.loggings import FlextLogger
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.models import FlextModels as m
-    from flext_core.protocols import FlextProtocols as p
+    from flext_core.mixins import FlextMixins, x
+    from flext_core.models import FlextModels, m
+    from flext_core.protocols import FlextProtocols, p
     from flext_core.registry import FlextRegistry
-    from flext_core.result import FlextResult as r
+    from flext_core.result import FlextResult, r
     from flext_core.runtime import FlextRuntime
-    from flext_core.service import FlextService as s
+    from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         E,
-        FlextTypes as t,
+        FlextTypes,
         MessageT_contra,
         P,
         R,
@@ -52,8 +53,9 @@ if TYPE_CHECKING:
         T_Namespace,
         T_Settings,
         U,
+        t,
     )
-    from flext_core.utilities import FlextUtilities as u
+    from flext_core.utilities import FlextUtilities, u
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -154,10 +156,10 @@ __all__ = [
 
 def __getattr__(name: str) -> object:
     """Lazy-load module attributes on first access (PEP 562).
-    
+
     This defers all imports until actually needed, reducing startup time
     from ~1.2s to <50ms for bare `import flext_core`.
-    
+
     Handles submodule namespace pollution: when a submodule like
     flext_core.__version__ is imported, Python adds it to the parent
     module's namespace. We need to check _LAZY_IMPORTS first to ensure
@@ -184,14 +186,12 @@ def __dir__() -> list[str]:
 # to the parent module's namespace. We remove them to force __getattr__ usage.
 def _cleanup_submodule_namespace() -> None:
     """Remove submodules from namespace to force __getattr__ usage."""
-    import sys
-    
     # Get the current module
     current_module = sys.modules[__name__]
-    
+
     # List of submodule names that might pollute the namespace
     submodule_names = [
-        "__version__",  # flext_core.__version__
+        "__version__",
         "constants",
         "container",
         "context",
@@ -211,7 +211,7 @@ def _cleanup_submodule_namespace() -> None:
         "typings",
         "utilities",
     ]
-    
+
     # Remove submodules from the module's namespace
     for submodule_name in submodule_names:
         if hasattr(current_module, submodule_name):

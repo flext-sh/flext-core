@@ -362,17 +362,16 @@ class EnsurePyreflyConfigPhase:
                 errors[error_rule] = True
                 changes.append(f"tool.pyrefly.errors.{error_rule} enabled")
 
-        if is_root:
-            current_excludes = _as_string_list(pyrefly.get("project-excludes"))
-            pb2_globs = ["**/_pb2.py", "**/_pb2_grpc.py"]
-            needed = set(pb2_globs) - set(current_excludes)
-            if needed:
-                pyrefly["project-excludes"] = _array(
-                    sorted(set(current_excludes) | set(pb2_globs))
-                )
-                changes.append(
-                    f"tool.pyrefly.project-excludes added {', '.join(needed)}"
-                )
+        current_excludes = _as_string_list(pyrefly.get("project-excludes"))
+        pb2_globs = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
+        needed = set(pb2_globs) - set(current_excludes)
+        if needed and (
+            is_root or any(glob in current_excludes for glob in pb2_globs) or True
+        ):
+            pyrefly["project-excludes"] = _array(
+                sorted(set(current_excludes) | set(pb2_globs))
+            )
+            changes.append(f"tool.pyrefly.project-excludes added {', '.join(needed)}")
 
         return changes
 

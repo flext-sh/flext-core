@@ -30,7 +30,7 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.mixins import x
+from flext_core.mixins import FlextMixins
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -43,7 +43,7 @@ _module_logger = logging.getLogger(__name__)
 
 class FlextService[TDomainResult](
     FlextModelFoundation.ArbitraryTypesModel,
-    x,
+    FlextMixins,
     ABC,
 ):
     """Base class for domain services in FLEXT applications.

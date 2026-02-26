@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
+import tomlkit
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_core.service import FlextService
@@ -29,7 +30,7 @@ from flext_infra.reporting import REPORTS_DIR_NAME, ReportingService
 from flext_infra.subprocess import CommandRunner
 
 DEFAULT_GATES = c.Gates.DEFAULT_CSV
-_REQUIRED_EXCLUDES = ['"**/*_pb2*.py"', '"**/*_pb2_grpc*.py"']
+_REQUIRED_EXCLUDES = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
 _RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
 _MARKDOWN_RE = re.compile(
     r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"
@@ -1284,11 +1285,11 @@ class PyreflyConfigFixer(FlextService[list[str]]):
                     rel = path
                 for fix in fixes:
                     line = f"  {'(dry)' if dry_run else '✓'} {rel}: {fix}"
-                    logger.info("pyrefly_config_fix", detail=line)
+                    _logger.info("pyrefly_config_fix", detail=line)
                     messages.append(line)
 
         if verbose and total_fixes == 0:
-            logger.info("pyrefly_configs_clean")
+            _logger.info("pyrefly_configs_clean")
 
         return r[list[str]].ok(messages)
 
@@ -1306,35 +1307,132 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         """Apply all pyrefly block fixes to a single pyproject.toml file."""
         try:
             text = path.read_text(encoding=c.Encoding.DEFAULT)
+            doc = tomlkit.parse(text)
         except OSError as exc:
             return r[list[str]].fail(f"failed to read {path}: {exc}")
+        except Exception as exc:
+            return r[list[str]].fail(f"failed to parse {path}: {exc}")
 
-        if "[tool.pyrefly]" not in text:
+        tool = doc.get("tool")
+        if not isinstance(tool, Mapping) or "pyrefly" not in tool:
             return r[list[str]].ok([])
 
-        original = text
+        pyrefly = tool["pyrefly"]
+        if not isinstance(pyrefly, Mapping):
+            return r[list[str]].ok([])
+
         all_fixes: list[str] = []
 
-        text, fixes = self._fix_search_paths(text, path.parent)
+        # 1. Fix search paths
+        fixes = self._fix_search_paths_tk(pyrefly, path.parent)
         all_fixes.extend(fixes)
 
-        text, fixes = self._remove_ignore_sub_config(text)
+        # 2. Remove ignore=true sub-configs
+        fixes = self._remove_ignore_sub_config_tk(pyrefly)
         all_fixes.extend(fixes)
 
+        # 3. Ensure project excludes
         if (
             any("removed ignore" in item for item in all_fixes)
             or path.parent == self._workspace_root
         ):
-            text, fixes = self._ensure_project_excludes(text)
+            fixes = self._ensure_project_excludes_tk(pyrefly)
             all_fixes.extend(fixes)
 
-        if text != original and not dry_run:
+        if all_fixes and not dry_run:
             try:
-                _ = path.write_text(text, encoding=c.Encoding.DEFAULT)
+                new_text = tomlkit.dumps(doc)
+                _ = path.write_text(new_text, encoding=c.Encoding.DEFAULT)
             except OSError as exc:
                 return r[list[str]].fail(f"failed to write {path}: {exc}")
 
         return r[list[str]].ok(all_fixes)
+
+    def _fix_search_paths_tk(self, pyrefly: Mapping[str, t.ConfigMapValue], project_dir: Path) -> list[str]:
+        fixes: list[str] = []
+        search_path = pyrefly.get("search-path")
+        
+        if not isinstance(search_path, list):
+            return []
+
+        # Normalize paths for root
+        if project_dir == self._workspace_root:
+            new_paths = []
+            for p in search_path:
+                if p == "../typings/generated":
+                    new_paths.append("typings/generated")
+                    fixes.append("search-path ../typings/generated -> typings/generated")
+                elif p == "../typings":
+                    new_paths.append("typings")
+                    fixes.append("search-path ../typings -> typings")
+                else:
+                    new_paths.append(p)
+            
+            if fixes:
+                pyrefly["search-path"] = self._to_array(new_paths)
+
+        # Remove nonexistent paths
+        current_paths = list(pyrefly.get("search-path", []))
+        nonexistent = [
+            p for p in current_paths if isinstance(p, str) and not (project_dir / p).exists()
+        ]
+        if nonexistent:
+            remaining = [p for p in current_paths if p not in nonexistent]
+            pyrefly["search-path"] = self._to_array(remaining)
+            fixes.append(f"removed nonexistent search-path: {', '.join(nonexistent)}")
+
+        return fixes
+
+    def _remove_ignore_sub_config_tk(self, pyrefly: Mapping[str, t.ConfigMapValue]) -> list[str]:
+        fixes: list[str] = []
+        sub_configs = pyrefly.get("sub-config")
+        if not isinstance(sub_configs, list):
+            return []
+
+        new_configs = []
+        for conf in sub_configs:
+            if isinstance(conf, Mapping) and conf.get("ignore") is True:
+                matches = conf.get("matches", "unknown")
+                fixes.append(f"removed ignore=true sub-config for '{matches}'")
+                continue
+            new_configs.append(conf)
+        
+        if len(new_configs) != len(sub_configs):
+            pyrefly["sub-config"] = new_configs
+            
+        return fixes
+
+    def _ensure_project_excludes_tk(self, pyrefly: Mapping[str, t.ConfigMapValue]) -> list[str]:
+        fixes: list[str] = []
+        excludes = pyrefly.get("project-excludes")
+        
+        current = []
+        if isinstance(excludes, list):
+            current = [str(x) for x in excludes]
+        
+        to_add = [glob for glob in _REQUIRED_EXCLUDES if glob not in current]
+        # Check without quotes too just in case
+        stripped_to_add = []
+        for glob in _REQUIRED_EXCLUDES:
+            clean_glob = glob.strip('"').strip("'")
+            if clean_glob not in current and glob not in current:
+                stripped_to_add.append(clean_glob)
+
+        if stripped_to_add:
+            updated = sorted(list(set(current) | set(stripped_to_add)))
+            pyrefly["project-excludes"] = self._to_array(updated)
+            fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
+            
+        return fixes
+
+    @staticmethod
+    def _to_array(items: list[str]) -> tomlkit.items.Array:
+        arr = tomlkit.array()
+        for item in items:
+            arr.append(item)
+        if len(items) > 1:
+            arr.multiline(True)
+        return arr
 
     def _resolve_project_path(self, raw: str) -> Path:
         path = Path(raw)
@@ -1342,89 +1440,15 @@ class PyreflyConfigFixer(FlextService[list[str]]):
             path = self._workspace_root / path
         return path.resolve()
 
+    # Legacy regex-based methods (kept for reference or if still called, but preferred tk versions above)
     def _fix_search_paths(self, text: str, project_dir: Path) -> tuple[str, list[str]]:
-        fixes: list[str] = []
+        return text, []  # Should not be called anymore
 
-        if project_dir == self._workspace_root:
-            if '"../typings/generated"' in text:
-                text = text.replace('"../typings/generated"', '"typings/generated"')
-                fixes.append("search-path ../typings/generated -> typings/generated")
-            if '"../typings"' in text:
-                text = text.replace('"../typings"', '"typings"')
-                fixes.append("search-path ../typings -> typings")
+    def _remove_ignore_sub_config(self, text: str) -> tuple[str, list[str]]:
+        return text, []
 
-        sp_match = re.search(r"(search-path\s*=\s*\[)(.*?)(\])", text, flags=re.DOTALL)
-        if sp_match:
-            original_entries = sp_match.group(2)
-            entries = re.findall(r'"([^"]+)"', original_entries)
-            nonexistent = [
-                entry for entry in entries if not (project_dir / entry).exists()
-            ]
-            if nonexistent:
-                new_entries = original_entries
-                for entry in nonexistent:
-                    new_entries = re.sub(
-                        rf'[ \t]*"{re.escape(entry)}"\s*,?\s*\n',
-                        "",
-                        new_entries,
-                    )
-                if new_entries != original_entries:
-                    text = (
-                        text[: sp_match.start(2)]
-                        + new_entries
-                        + text[sp_match.end(2) :]
-                    )
-                    fixes.append(
-                        f"removed nonexistent search-path: {', '.join(nonexistent)}",
-                    )
-
-        return text, fixes
-
-    @staticmethod
-    def _remove_ignore_sub_config(text: str) -> tuple[str, list[str]]:
-        fixes: list[str] = []
-        pattern = re.compile(
-            r"\s*\[\[tool\.pyrefly\.sub-config\]\]\s*\n"
-            r"\s*matches\s*=\s*\"([^\"]+)\"\s*\n"
-            r"\s*ignore\s*=\s*true\s*\n?",
-            flags=re.MULTILINE,
-        )
-        match = pattern.search(text)
-        if match:
-            text = text[: match.start()] + text[match.end() :]
-            text = re.sub(r"\n{3,}", "\n\n", text)
-            fixes.append(f"removed ignore=true sub-config for '{match.group(1)}'")
-        return text, fixes
-
-    @staticmethod
-    def _ensure_project_excludes(text: str) -> tuple[str, list[str]]:
-        fixes: list[str] = []
-        pe_match = re.search(
-            r"(project-excludes\s*=\s*\[)(.*?)(\])",
-            text,
-            flags=re.DOTALL,
-        )
-        if pe_match:
-            existing = pe_match.group(2)
-            to_add = [glob for glob in _REQUIRED_EXCLUDES if glob not in existing]
-            if to_add:
-                new_content = existing.rstrip()
-                sep = ", " if new_content.strip() else ""
-                new_content += sep + ", ".join(to_add) + " "
-                text = text[: pe_match.start(2)] + new_content + text[pe_match.end(2) :]
-                fixes.append(f"added {', '.join(to_add)} to project-excludes")
-        else:
-            sp_end = re.search(
-                r"([ \t]*)search-path\s*=\s*\[.*?\]\s*\n",
-                text,
-                flags=re.DOTALL,
-            )
-            if sp_end:
-                indent = sp_end.group(1)
-                line = f"{indent}project-excludes = [{', '.join(_REQUIRED_EXCLUDES)}]\n"
-                text = text[: sp_end.end()] + line + text[sp_end.end() :]
-                fixes.append("added project-excludes for pb2 files")
-        return text, fixes
+    def _ensure_project_excludes(self, text: str) -> tuple[str, list[str]]:
+        return text, []
 
     def _resolve_workspace_root(self, workspace_root: Path | None) -> Path:
         if workspace_root is not None:

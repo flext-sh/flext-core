@@ -164,13 +164,14 @@ filterwarnings = [
 
 # [MANAGED] pyrefly
 [tool.pyrefly]
+
 ignore-errors-in-generated-code = true
 python-version = "3.13"
 search-path = [
   ".",
 ]
 
-project-excludes = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
+project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
 [tool.pyrefly.errors]
 deprecated = true
 implicit-abstract-class = true
