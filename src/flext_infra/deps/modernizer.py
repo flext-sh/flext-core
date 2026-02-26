@@ -433,20 +433,9 @@ class PyprojectModernizer:
         if args.audit and total > 0:
             return 1
 
-        if not dry_run and not args.skip_fmt:
-            self._run_pyproject_fmt(files)
         if not dry_run and not args.skip_check:
             return self._run_poetry_check(files)
         return 0
-
-    def _run_pyproject_fmt(self, files: list[Path]) -> None:
-        """Run pyproject-fmt on processed files."""
-        fmt_bin = self.root / ".venv" / "bin" / "pyproject-fmt"
-        if not fmt_bin.exists():
-            return
-        _ = self._runner.run_raw(
-            [str(fmt_bin), *[str(path) for path in files]],
-        )
 
     def _run_poetry_check(self, files: list[Path]) -> int:
         """Run poetry check on each project directory."""
@@ -471,7 +460,6 @@ def _parser() -> argparse.ArgumentParser:
     _ = parser.add_argument("--audit", action="store_true")
     _ = parser.add_argument("--dry-run", action="store_true")
     _ = parser.add_argument("--skip-comments", action="store_true")
-    _ = parser.add_argument("--skip-fmt", action="store_true")
     _ = parser.add_argument("--skip-check", action="store_true")
     return parser
 
