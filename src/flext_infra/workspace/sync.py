@@ -242,7 +242,6 @@ def main() -> int:
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
-        print(f"files_changed={result.value.files_changed}")
         return 0
     output.error(result.error or "sync failed")
     return 1

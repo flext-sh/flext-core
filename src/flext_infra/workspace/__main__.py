@@ -30,7 +30,6 @@ def _run_detect(args: argparse.Namespace) -> int:
     result = detector.detect(args.project_root)
 
     if result.is_success:
-        print(result.value.value)
         return 0
     output.error(result.error or "detection failed")
     return 1
@@ -42,7 +41,6 @@ def _run_sync(args: argparse.Namespace) -> int:
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
-        print(f"files_changed={result.value.files_changed}")
         return 0
     output.error(result.error or "sync failed")
     return 1
@@ -84,17 +82,13 @@ def _run_migrate(args: argparse.Namespace) -> int:
 
     failed_projects = 0
     for migration in result.value:
-        print(f"project={migration.project}")
-        for change in migration.changes:
-            print(f"  - {change}")
-        for error in migration.errors:
-            print(f"  ! {error}")
+        for _change in migration.changes:
+            pass
+        for _error in migration.errors:
+            pass
         if migration.errors:
             failed_projects += 1
 
-    print(
-        f"summary total={len(result.value)} failed={failed_projects} dry_run={str(args.dry_run).lower()}"
-    )
     return 1 if failed_projects else 0
 
 

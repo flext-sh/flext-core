@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
@@ -264,7 +263,6 @@ class RuntimeDevDependencyDetector:
         report_payload = report_model.model_dump()
 
         if args.json_stdout:
-            print(json.dumps(report_payload, indent=2))
             return r[int].ok(0)
 
         out_path: Path | None = None

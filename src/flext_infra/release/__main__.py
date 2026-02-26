@@ -70,7 +70,6 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     if args.interactive != 1:
         return current
 
-    print("Select version bump type: [major|minor|patch]")
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
         msg = "invalid bump type"

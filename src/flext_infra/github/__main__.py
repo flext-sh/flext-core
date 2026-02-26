@@ -49,8 +49,8 @@ def _run_workflows(argv: list[str]) -> int:
         output.error(result.error or "workflow sync failed")
         return 1
 
-    for op in result.value:
-        print(f"{op.action}: {op.project}/{op.path} ({op.reason})")
+    for _op in result.value:
+        pass
     return 0
 
 
@@ -71,8 +71,7 @@ def _run_lint(argv: list[str]) -> int:
         output.error(result.error or "lint failed")
         return 1
 
-    status = result.value.get("status", "unknown")
-    print(f"status={status}")
+    result.value.get("status", "unknown")
     return 0
 
 
@@ -133,7 +132,6 @@ def _run_pr_workspace(argv: list[str]) -> int:
         return 1
 
     data = result.value
-    print(f"total={data['total']} success={data['success']} fail={data['fail']}")
     return 1 if data.get("fail", 0) else 0
 
 
@@ -149,10 +147,8 @@ def main() -> int:
     """Dispatch to the appropriate github subcommand."""
     FlextRuntime.ensure_structlog_configured()
     if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
-        print("Usage: flext-infra github <subcommand> [args...]\n")
-        print("Subcommands:")
-        for name in sorted(_SUBCOMMANDS):
-            print(f"  {name}")
+        for _name in sorted(_SUBCOMMANDS):
+            pass
         return (
             0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
         )

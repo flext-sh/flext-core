@@ -15,7 +15,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # Type hints only - not loaded at runtime
     from flext_infra.__version__ import __version__, __version_info__
-    from flext_infra.basemk import BaseMkGenerator, TemplateEngine as BaseMkTemplateEngine
+    from flext_infra.basemk import (
+        BaseMkGenerator,
+        TemplateEngine as BaseMkTemplateEngine,
+    )
     from flext_infra.constants import FlextInfraConstants as c
     from flext_infra.discovery import DiscoveryService
     from flext_infra.git import GitService
@@ -143,7 +146,8 @@ def __getattr__(name: str) -> object:
         # Cache in globals() to avoid repeated lookups
         globals()[name] = value
         return value
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
 
 
 def __dir__() -> list[str]:

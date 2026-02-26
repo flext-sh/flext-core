@@ -170,7 +170,8 @@ def __getattr__(name: str) -> object:
         # Cache in globals() to avoid repeated lookups
         globals()[name] = value
         return value
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
 
 
 def __dir__() -> list[str]:

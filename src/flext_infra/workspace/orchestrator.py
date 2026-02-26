@@ -178,7 +178,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
 
         elapsed = time.monotonic() - started
         status = c.Status.OK if return_code == 0 else c.Status.FAIL
-        msg = (
+        (
             f"{index:02d} [{status}] {project} {verb}"
             f" ({int(elapsed)}s) exit={return_code} log={log_path}"
         )

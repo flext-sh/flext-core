@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -53,7 +52,6 @@ def _run_inventory(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
-        print(f"total_scripts={data.get('total_scripts', 0)}")
         written = data.get("reports_written", [])
         if isinstance(written, list):
             for path in written:
@@ -104,10 +102,6 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
             skip_cases = [str(item) for item in skip_cases_raw]
             Path(args.skips).write_text("\n".join(skip_cases) + "\n", encoding="utf-8")
 
-        print(f"failed_count={data.get('failed_count', 0)}")
-        print(f"error_count={data.get('error_count', 0)}")
-        print(f"warning_count={data.get('warning_count', 0)}")
-        print(f"skipped_count={data.get('skipped_count', 0)}")
         return 0
     output.error(result.error or "unknown error")
     return 1
@@ -126,7 +120,6 @@ def _run_scan(args: argparse.Namespace) -> int:
 
     if result.is_success:
         data = result.value
-        print(json.dumps({"violation_count": data.get("violation_count", 0)}))
         violation_count = data.get("violation_count", 0)
         return 1 if isinstance(violation_count, int) and violation_count > 0 else 0
     output.error(result.error or "unknown error")

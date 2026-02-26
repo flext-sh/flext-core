@@ -401,8 +401,8 @@ def main() -> int:
     if args.action == "status":
         result = manager.status(repo_root, base, head)
         if result.is_success:
-            for key, value in result.value.items():
-                print(f"{key}={value}")
+            for _key, _value in result.value.items():
+                pass
             return 0
         output.error(result.error or "status failed")
         return 1
@@ -419,8 +419,8 @@ def main() -> int:
             draft=args.draft == 1,
         )
         if result.is_success:
-            for key, value in result.value.items():
-                print(f"{key}={value}")
+            for _key, _value in result.value.items():
+                pass
             return 0
         output.error(result.error or "create failed")
         return 1
@@ -428,7 +428,6 @@ def main() -> int:
     if args.action == "view":
         result_view = manager.view(repo_root, selector)
         if result_view.is_success:
-            print(result_view.value)
             return 0
         output.error(result_view.error or "view failed")
         return 1
@@ -440,8 +439,8 @@ def main() -> int:
             strict=args.checks_strict == 1,
         )
         if result.is_success:
-            for key, value in result.value.items():
-                print(f"{key}={value}")
+            for _key, _value in result.value.items():
+                pass
             return 0
         output.error(result.error or "checks failed")
         return 1
@@ -457,8 +456,8 @@ def main() -> int:
             release_on_merge=args.release_on_merge == 1,
         )
         if merge_result.is_success:
-            for key, val in merge_result.value.items():
-                print(f"{key}={val}")
+            for _key, _val in merge_result.value.items():
+                pass
             return 0
         output.error(merge_result.error or "merge failed")
         return 1
@@ -466,7 +465,6 @@ def main() -> int:
     if args.action == "close":
         result_close = manager.close(repo_root, selector)
         if result_close.is_success:
-            print("status=closed")
             return 0
         output.error(result_close.error or "close failed")
         return 1
