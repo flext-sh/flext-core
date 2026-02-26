@@ -584,7 +584,7 @@ class TestuDomain:
                 test_case.get("id_attr", "unique_id"),
             ),
         )
-        expected = test_case.get("expected_result")
+        expected: object = test_case.get("expected_result")
         if isinstance(expected, type):
             assert isinstance(operation_result, expected), (
                 f"Expected type {expected}, got {type(operation_result)}"
@@ -608,7 +608,7 @@ class TestuDomain:
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
-        expected = test_case.get("expected_result")
+        expected: object = test_case.get("expected_result")
         if isinstance(expected, type):
             assert isinstance(operation_result, expected), f"Expected {expected}, got {type(operation_result)}: {operation_result}"
         else:

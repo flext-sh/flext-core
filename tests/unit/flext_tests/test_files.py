@@ -1268,9 +1268,9 @@ class TestBatchOperations:
         # Should succeed for the valid file
         assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
-        # success_count is a computed_field property, not a callable
-        # Access it as an attribute, not a method
-        assert batch_result.success_count >= 1
+        # success_count is a computed_field (pyrefly limitation: sees it as callable)
+        # Use the underlying 'succeeded' field directly for the assertion
+        assert batch_result.succeeded >= 1
 
     def test_batch_result_model_structure(self, tmp_path: Path) -> None:
         """Test BatchResult model has correct structure."""
