@@ -19,18 +19,15 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 from collections.abc import Callable, Sequence
-from dataclasses import asdict, dataclass
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel
-
-from flext_core import FlextSettings, p, r, t
+from flext_core import FlextSettings, r, t
 from flext_core.constants import c
-from flext_tests import FlextTestsUtilities, u
-from flext_tests.typings import t as tests_t
 from flext_core.models import m
+from flext_tests import u
 
 
 class UtilityScenarios:
@@ -135,24 +132,6 @@ class UtilityScenarios:
         ((str,), int, False),
         ((int,), str, False),
     ]
-
-    @staticmethod
-    def create_test_model() -> BaseModel:
-        """Create test Pydantic model using FlextTestsUtilities pattern."""
-
-        class TestModel(BaseModel):
-            """Test Pydantic model for validation testing."""
-
-            name: str
-            value: int
-
-        def factory_func(**kw: tests_t.Tests.PayloadValue) -> TestModel:
-            return TestModel(name="test", value=42, **kw)
-
-        return FlextTestsUtilities.Tests.ModelTestHelpers.assert_model_creation_success(
-            factory_method=factory_func,
-            expected_attrs=m.ConfigMap(root={"name": "test", "value": 42}),
-        )
 
 
 class Testu:

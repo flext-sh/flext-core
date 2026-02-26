@@ -43,10 +43,6 @@ from flext_tests.protocols import p
 from flext_tests.typings import t
 
 
-class _FactoryMethod[TResult](Protocol):
-    def __call__(self, **kwargs: t.Tests.PayloadValue) -> TResult: ...
-
-
 class _EntityFactory[TEntity](Protocol):
     def __call__(self, *, name: str, value: t.Tests.PayloadValue) -> TEntity: ...
 
@@ -727,39 +723,6 @@ class FlextTestsUtilities(FlextUtilities):
                         f"Expected no failures but found first failure at index "
                         f"{actual_first_failure}"
                     )
-
-        class ModelTestHelpers:
-            """Model testing helpers."""
-
-            @staticmethod
-            def assert_model_creation_success[TResult](
-                factory_method: _FactoryMethod[TResult],
-                expected_attrs: m.ConfigMap,
-                **factory_kwargs: t.Tests.PayloadValue,
-            ) -> TResult:
-                """Assert successful model creation and validate attributes.
-
-                Args:
-                    factory_method: Factory method to call
-                    expected_attrs: Expected attributes to validate
-                    **factory_kwargs: Factory method arguments
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    Created model instance
-
-                Raises:
-                    AssertionError: If creation fails or attributes don't match
-
-                """
-                instance = factory_method(**factory_kwargs)
-                for key, expected_value in expected_attrs.items():
-                    actual_value = (
-                        getattr(instance, key) if hasattr(instance, key) else None
-                    )
-                    msg = f"Attr {key}: expected {expected_value}, got {actual_value}"
-                    assert actual_value == expected_value, msg
-                return instance
 
         class RegistryHelpers:
             """Registry testing helpers - use FlextRegistry directly when possible."""
@@ -2000,6 +1963,40 @@ class FlextTestsUtilities(FlextUtilities):
 u = FlextTestsUtilities
 
 __all__ = ["FlextTestsUtilities", "u"]
+
+
+def _to_scalar(value: object) -> core_t.ScalarValue:
+    """Convert a value to ScalarValue for config overrides.
+
+    Args:
+        value: Any value to convert
+
+    Returns:
+        ScalarValue (str | int | float | bool | datetime | None)
+
+    """
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    return str(value)
+
+
+def _to_payload(value: object) -> t.Tests.PayloadValue:
+    """Convert a value to test PayloadValue.
+
+    Args:
+        value: Any value to convert
+
+    Returns:
+        PayloadValue suitable for test assertions
+
+    """
+    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
+        return value
+    if isinstance(value, Mapping):
+        return {str(k): _to_payload(v) for k, v in value.items()}
+    if isinstance(value, Sized) and hasattr(value, "__iter__"):
+        return [_to_payload(item) for item in value]  # type: ignore[union-attr]
+    return str(value)
 
 
 def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:

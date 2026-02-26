@@ -8,8 +8,9 @@ import os
 import re
 import sys
 import time
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Callable, Mapping, Sequence
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import override

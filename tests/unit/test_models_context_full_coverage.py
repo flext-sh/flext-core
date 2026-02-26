@@ -155,11 +155,11 @@ def test_context_data_validator_forces_non_dict_normalized_branch(
 
 
 def test_context_export_serializable_and_validators() -> None:
-    FlextModelsContext.ContextExport.check_json_serializable(
+    FlextModelsContext.ContextData.check_json_serializable(
         cast(t.GeneralValueType, {"k": [1, True]})
     )
     with pytest.raises(TypeError):
-        FlextModelsContext.ContextExport.check_json_serializable(
+        FlextModelsContext.ContextData.check_json_serializable(
             cast(t.GeneralValueType, {"x": object()})
         )
 

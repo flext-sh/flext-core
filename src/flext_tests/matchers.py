@@ -1330,44 +1330,6 @@ class FlextTestsMatchers:
                         )
 
     @staticmethod
-    def assert_length_equals(
-        value: object,
-        expected: int,
-        msg: str | None = None,
-    ) -> None:
-        """Assert value length equals expected.
-
-        Args:
-            value: Value to check length of (must have __len__)
-            expected: Expected length
-            msg: Optional custom error message
-
-        Raises:
-            AssertionError: If length doesn't match
-
-        """
-        FlextTestsMatchers.that(value, length=expected, msg=msg)
-
-    @staticmethod
-    def assert_length_greater_than(
-        value: object,
-        min_length: int,
-        msg: str | None = None,
-    ) -> None:
-        """Assert value length is greater than min_length.
-
-        Args:
-            value: Value to check length of (must have __len__)
-            min_length: Minimum expected length
-            msg: Optional custom error message
-
-        Raises:
-            AssertionError: If length is not greater than min_length
-
-        """
-        FlextTestsMatchers.that(value, length_gt=min_length, msg=msg)
-
-    @staticmethod
     def assert_result_success[TResult](
         result: r[TResult],
         msg: str | None = None,
