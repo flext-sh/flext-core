@@ -17,7 +17,7 @@ keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "soli
 license = "MIT"
 maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pydantic",
