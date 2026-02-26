@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 # mypy: disable-error-code=arg-type
-
-import importlib
 import logging
 from pathlib import Path
-
-import pytest
-from pydantic import BaseModel
 from typing import cast
 
+import pytest
 from flext_core import p, r, u
 from flext_core.typings import JsonValue
+from pydantic import BaseModel
 
 
 class _DumpErrorModel(BaseModel):
@@ -44,10 +41,12 @@ class _ContainerFail:
 
 class _ContainerRaise:
     def register(self, _name: str, _instance: JsonValue):
-        raise RuntimeError("reg ex")
+        msg = "reg ex"
+        raise RuntimeError(msg)
 
     def register_factory(self, _name: str, _factory):
-        raise RuntimeError("fac ex")
+        msg = "fac ex"
+        raise RuntimeError(msg)
 
 
 def test_resolve_env_file_and_log_level(

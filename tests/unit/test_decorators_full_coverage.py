@@ -7,8 +7,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-
-from flext_core import FlextContext, c, d, e, m, r, t, u
+from flext_core import FlextContext, c, d, e, m, r, t
 
 
 class _ResultLogger:
@@ -104,7 +103,8 @@ def test_log_operation_track_perf_exception_adds_duration(
 
     @d.log_operation("boom", track_perf=True)
     def fn() -> None:
-        raise ValueError("x")
+        msg = "x"
+        raise ValueError(msg)
 
     with pytest.raises(ValueError):
         fn()
@@ -158,7 +158,8 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
 
     def flaky(*_args: object, **_kwargs: object) -> str:
         calls["n"] += 1
-        raise ValueError("nope")
+        msg = "nope"
+        raise ValueError(msg)
 
     cfg = m.RetryConfiguration(
         max_attempts=2,
@@ -166,7 +167,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         exponential_backoff=False,
     )
     result_exc = d._execute_retry_loop(
-        flaky, tuple(), {}, cast(Any, fake_logger), retry_config=cfg
+        flaky, (), {}, cast("Any", fake_logger), retry_config=cfg
     )
     assert isinstance(result_exc, Exception)
     assert calls["n"] == 2
@@ -181,9 +182,9 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
     )
     result_none = d._execute_retry_loop(
         lambda *_args, **_kwargs: "x",
-        tuple(),
+        (),
         {},
-        cast(Any, fake_logger),
+        cast("Any", fake_logger),
         retry_config=None,
     )
     assert isinstance(result_none, RuntimeError)
@@ -205,7 +206,7 @@ def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> Non
             fn,
             2,
             None,
-            cast(Any, fake_logger),
+            cast("Any", fake_logger),
         )
 
 
@@ -222,7 +223,7 @@ def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
 
     cid = d._bind_operation_context(
         operation="op",
-        logger=cast(Any, fake_logger),
+        logger=cast("Any", fake_logger),
         function_name="fn",
         ensure_correlation=False,
     )
@@ -241,18 +242,18 @@ def test_clear_operation_scope_and_handle_log_result_paths(
     )
 
     d._clear_operation_scope(
-        logger=cast(Any, fake_logger), function_name="fn", operation="op"
+        logger=cast("Any", fake_logger), function_name="fn", operation="op"
     )
 
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E1"),
-        logger=cast(Any, fake_logger),
+        logger=cast("Any", fake_logger),
         fallback_message="fallback",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
     d._handle_log_result(
         result=r[bool].fail("y", error_code="E2"),
-        logger=cast(Any, fake_logger),
+        logger=cast("Any", fake_logger),
         fallback_message="fallback2",
         kwargs=m.ConfigMap(root={"extra": "not-a-dict"}),
     )
@@ -267,7 +268,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
 
     d._handle_log_result(
         result=r[bool].fail("x"),
-        logger=cast(Any, _NoFallback()),
+        logger=cast("Any", _NoFallback()),
         fallback_message="m",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
@@ -278,7 +279,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E"),
-        logger=cast(Any, fake_logger),
+        logger=cast("Any", fake_logger),
         fallback_message="fallback",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
@@ -289,7 +290,8 @@ def test_timeout_covers_exception_timeout_branch() -> None:
     @d.timeout(timeout_seconds=0.001, error_code="TMO")
     def fn() -> None:
         time.sleep(0.01)
-        raise ValueError("slow error")
+        msg = "slow error"
+        raise ValueError(msg)
 
     with pytest.raises(e.TimeoutError):
         fn()
@@ -298,7 +300,8 @@ def test_timeout_covers_exception_timeout_branch() -> None:
 def test_timeout_reraises_original_exception_when_within_limit() -> None:
     @d.timeout(timeout_seconds=2.0)
     def fn() -> None:
-        raise ValueError("fast-fail")
+        msg = "fast-fail"
+        raise ValueError(msg)
 
     with pytest.raises(ValueError, match="fast-fail"):
         fn()
@@ -418,7 +421,8 @@ def test_track_performance_success_and_failure_paths(
 
     @d.track_performance("perf-op-fail")
     def fail_fn() -> str:
-        raise ValueError("boom")
+        msg = "boom"
+        raise ValueError(msg)
 
     assert ok_fn() == "ok"
     with pytest.raises(ValueError):
@@ -432,11 +436,12 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert already_result().is_success
 
-    @d.railway(error_code=cast(Any, 123))
+    @d.railway(error_code=cast("Any", 123))
     def fails() -> int:
-        raise RuntimeError("x")
+        msg = "x"
+        raise RuntimeError(msg)
 
-    fail_result = cast(Any, fails())
+    fail_result = cast("Any", fails())
     assert fail_result.is_failure
 
     fake_logger = _FakeLogger()
@@ -466,7 +471,8 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
 
     def always_fails(*_args: object, **_kwargs: object) -> str:
         calls["n"] += 1
-        raise KeyError("fail")
+        msg = "fail"
+        raise KeyError(msg)
 
     cfg = m.RetryConfiguration(
         max_attempts=2,
@@ -475,9 +481,9 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
     )
     result = d._execute_retry_loop(
         always_fails,
-        tuple(),
+        (),
         {},
-        cast(Any, fake_logger),
+        cast("Any", fake_logger),
         retry_config=cfg,
     )
     assert isinstance(result, Exception)
@@ -492,7 +498,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
             fn,
             2,
             "ERR",
-            cast(Any, fake_logger),
+            cast("Any", fake_logger),
         )
 
 
@@ -505,7 +511,8 @@ def test_timeout_additional_success_and_reraise_timeout_paths() -> None:
 
     @d.timeout(timeout_seconds=1.0)
     def raises_timeout() -> None:
-        raise e.TimeoutError("already-timeout")
+        msg = "already-timeout"
+        raise e.TimeoutError(msg)
 
     with pytest.raises(e.TimeoutError, match="already-timeout"):
         raises_timeout()

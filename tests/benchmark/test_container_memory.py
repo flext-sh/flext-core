@@ -18,7 +18,6 @@ import sys
 from collections.abc import Callable
 
 import pytest
-
 from flext_core.container import FlextContainer
 
 

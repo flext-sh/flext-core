@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Annotated, cast
 
 import pytest
-
 from flext_core import c, m, p, r, t, u
 
 

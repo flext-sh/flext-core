@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from pathlib import Path
 import types
+from pathlib import Path
 from typing import cast
 
 from flext_core import c, m, p, r, t, u
@@ -141,7 +141,8 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch) -> None:
     FlextLogger._scoped_contexts["request"] = {"k": "v"}
 
     def _raise_unbind(*_keys: str) -> None:
-        raise RuntimeError("unbind boom")
+        msg = "unbind boom"
+        raise RuntimeError(msg)
 
     monkeypatch.setattr(shim.contextvars, "unbind_contextvars", _raise_unbind)
     failed_clear = FlextLogger.clear_scope("request")
@@ -259,7 +260,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch) -> None:
     assert failed.is_failure
 
     logger.log("INFO", "message", {"k": "v"})
-    logger.warn("warn")
+    logger.warning("warn")
 
 
 def test_loggings_exception_and_adapter_paths(monkeypatch) -> None:
@@ -355,7 +356,8 @@ def test_loggings_remaining_branch_paths(monkeypatch) -> None:
 
     class _TraceLogger(_FakeBindable):
         def debug(self, *_args: object, **_kwargs: object) -> None:
-            raise RuntimeError("trace boom")
+            msg = "trace boom"
+            raise RuntimeError(msg)
 
     trace_logger = FlextLogger.create_bound_logger(
         "x",
@@ -431,13 +433,14 @@ def test_loggings_remaining_branch_paths(monkeypatch) -> None:
 
     class _ErrorLogger(_FakeBindable):
         def error(self, *_args: object, **_kwargs: object) -> None:
-            raise TypeError("err")
+            msg = "err"
+            raise TypeError(msg)
 
     err_logger = FlextLogger.create_bound_logger(
         "x",
         cast("p.Log.StructlogLogger", cast("object", _ErrorLogger())),
     )
-    err_logger.exception("boom", exception=ValueError("x"), exc_info=True)
+    err_logger.error("boom", exception=ValueError("x"))
 
 
 def test_loggings_uncovered_level_trace_path_and_exception_guards(monkeypatch) -> None:
@@ -463,10 +466,12 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(monkeypatch) -
 
     class _StructlogLogger(_FakeBindable):
         def debug(self, *_args: object, **_kwargs: object) -> None:
-            raise KeyError("trace")
+            msg = "trace"
+            raise KeyError(msg)
 
         def error(self, *_args: object, **_kwargs: object) -> None:
-            raise RuntimeError("exception")
+            msg = "exception"
+            raise RuntimeError(msg)
 
     monkeypatch.setattr(p.Log, "StructlogLogger", _StructlogLogger)
     trace_logger = FlextLogger.create_bound_logger(
@@ -474,7 +479,7 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(monkeypatch) -
         cast("p.Log.StructlogLogger", cast("object", _StructlogLogger())),
     )
     trace_logger.trace("%s", "value")
-    trace_logger.exception("boom", exception=ValueError("x"), exc_info=True)
+    trace_logger.error("boom", exception=ValueError("x"))
 
     monkeypatch.setattr(Path, "resolve", lambda self: Path("/tmp/outside.py"))
     monkeypatch.setattr(

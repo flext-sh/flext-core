@@ -25,10 +25,10 @@ from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
-
 from flext_core import c, m, r, t
 from flext_core.protocols import p
 from flext_tests import FlextTestsUtilities, u
+
 from tests.test_utils import assertion_helpers
 
 
@@ -627,7 +627,7 @@ class Testr:
         items = [1, 2, 3]
         result = r.traverse(
             items,
-            lambda x: r[int].fail(f"error_{x}") if x in (2, 3) else r[int].ok(x),
+            lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
             fail_fast=False,
         )
         assertion_helpers.assert_flext_result_failure(result)

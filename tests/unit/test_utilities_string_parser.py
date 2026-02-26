@@ -22,26 +22,24 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Callable
 from typing import cast
 
 import pytest
-
 from flext_core import (
     FlextModels as m,
     FlextResult as r,
     t,
 )
+from flext_core.typings import t
 from flext_tests import u
 from flext_tests.typings import t as tests_t
+
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 
 _PayloadValue = tests_t.Tests.PayloadValue
-from tests.constants import TestsFlextConstants
-from tests.models import TestsFlextModels
 from tests.utilities import TestsFlextUtilities
 
 # Test case dataclasses from tests.models
@@ -495,7 +493,7 @@ class TestuStringParser:
                 return parser.parse_delimited(case.text, case.delimiter)
 
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
-                cast(Callable[[], r[_PayloadValue]], operation),
+                cast("Callable[[], r[_PayloadValue]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
                 description=case.description,

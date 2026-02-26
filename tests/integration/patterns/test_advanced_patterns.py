@@ -12,14 +12,14 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Callable
 from typing import cast
 
 import pytest
-
 from flext_core import FlextResult, u
+from flext_core.typings import t
+
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
@@ -319,7 +319,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        case = cast("FixtureCaseDict", kwargs)
+        cast("FixtureCaseDict", kwargs)
         return self
 
     def add_success_cases(

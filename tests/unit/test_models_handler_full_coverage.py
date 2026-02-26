@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from flext_core import c, m, r, t, u
 
-
 handler_models = __import__(
     "flext_core._models.handler", fromlist=["FlextModelsHandler"]
 )
@@ -27,7 +26,8 @@ def test_models_handler_branches() -> None:
     except TypeError as exc:
         assert "Handler must be callable" in str(exc)
     else:
-        raise AssertionError("Expected TypeError")
+        msg = "Expected TypeError"
+        raise AssertionError(msg)
 
     ctx = m.Handler.ExecutionContext.create_for_handler("h1", "command")
     assert ctx.execution_time_ms == 0.0

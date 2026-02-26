@@ -13,9 +13,8 @@ from datetime import datetime
 from typing import cast
 from unittest.mock import MagicMock
 
-from pydantic import BaseModel
-
 from flext_core import p, t, u
+from pydantic import BaseModel
 
 
 class TestCreateStrProxy:

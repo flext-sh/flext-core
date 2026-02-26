@@ -20,9 +20,6 @@ from enum import StrEnum
 from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
-from pydantic import TypeAdapter as PydanticTypeAdapter
-from pydantic import ValidationError as PydanticValidationError
-
 from flext_core import (
     E,
     P,
@@ -33,10 +30,13 @@ from flext_core import (
     T_contra,
     U,
     t,
-    u,
 )
 from flext_core.constants import FlextConstants
 from flext_tests.matchers import tm
+from pydantic import (
+    TypeAdapter as PydanticTypeAdapter,
+    ValidationError as PydanticValidationError,
+)
 
 
 class TypeVarCategory(StrEnum):

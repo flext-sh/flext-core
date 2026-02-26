@@ -2,15 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import cast
 
 import pytest
-
-from pydantic import BaseModel
-
 from flext_core import FlextLogger, c, m, p, r, t, u, x
 from flext_core.mixins import FlextMixins
 from flext_core.runtime import FlextRuntime
+from pydantic import BaseModel
 
 
 class _SvcModel(BaseModel):
@@ -73,7 +71,8 @@ def test_mixins_result_and_model_conversion_paths(monkeypatch) -> None:
             return 1
 
         def __getitem__(self, _key: str) -> t.GeneralValueType:
-            raise RuntimeError("boom")
+            msg = "boom"
+            raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
         x.to_dict(cast("Mapping[str, t.GeneralValueType]", _BadMap()))
@@ -114,7 +113,8 @@ def test_mixins_runtime_bootstrap_and_track_paths(monkeypatch) -> None:
 
     try:
         with service.track("op_fail"):
-            raise RuntimeError("boom")
+            msg = "boom"
+            raise RuntimeError(msg)
     except RuntimeError:
         pass
 
@@ -268,9 +268,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
             "p.HasModelDump",
             cast(
                 "object",
-                SimpleNamespace(
-                    model_dump=lambda: {}, process=1, validate=lambda: True
-                ),
+                SimpleNamespace(model_dump=dict, process=1, validate=lambda: True),
             ),
         ),
     )
@@ -280,7 +278,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
             cast(
                 "object",
                 SimpleNamespace(
-                    model_dump=lambda: {},
+                    model_dump=dict,
                     process=lambda: True,
                     validate=lambda: True,
                 ),
@@ -404,7 +402,8 @@ def test_mixins_remaining_branch_paths(monkeypatch) -> None:
 
     class _BrokenContainer:
         def get_typed(self, _key: str, _tp: object):
-            raise RuntimeError("boom")
+            msg = "boom"
+            raise RuntimeError(msg)
 
     FlextMixins._logger_cache.clear()
     monkeypatch.setattr(

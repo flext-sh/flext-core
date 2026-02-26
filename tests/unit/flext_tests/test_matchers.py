@@ -7,12 +7,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
-
-import pytest
-
 from typing import cast
 
+import pytest
 from flext_core import FlextResult, m, t
 from flext_tests import tm
 from flext_tests.constants import c

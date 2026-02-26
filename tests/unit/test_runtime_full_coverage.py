@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-import logging
-import queue
 import contextlib
 import io
-from importlib import import_module
+import logging
+import queue
+from collections import UserDict
+from collections.abc import Callable, Generator
 from datetime import UTC, datetime
+from importlib import import_module
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import Callable, Generator, cast
-
-import pytest
-from pydantic import BaseModel
+from typing import Self, cast
 
 import flext_core.runtime as runtime_module
+import pytest
 from flext_core import c, m, r, t, u
 from flext_core.runtime import FlextRuntime
+from pydantic import BaseModel
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module(
@@ -24,7 +25,7 @@ runtime_cov_tests: ModuleType = import_module(
 
 
 @pytest.fixture(autouse=True)
-def reset_runtime_state() -> Generator[None, None, None]:
+def reset_runtime_state() -> Generator[None]:
     FlextRuntime._structlog_configured = False
     if FlextRuntime._async_writer is not None:
         FlextRuntime._async_writer.shutdown()
@@ -114,10 +115,10 @@ def test_async_log_writer_paths() -> None:
 
     forced = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     forced.stream = stream
-    forced.queue = cast("queue.Queue[str | None]", cast(object, EmptyQueue()))
+    forced.queue = cast("queue.Queue[str | None]", cast("object", EmptyQueue()))
     forced.stop_event = runtime_module.threading.Event()
     forced.stop_event.set()
     forced._worker()
@@ -131,7 +132,8 @@ def test_async_log_writer_paths() -> None:
         def write(self, message: str) -> int:
             if self.first:
                 self.first = False
-                raise OSError("boom")
+                msg = "boom"
+                raise OSError(msg)
             self.messages.append(message)
             return len(message)
 
@@ -155,10 +157,10 @@ def test_async_log_writer_paths() -> None:
     failing = FailingStream()
     broken = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     broken.stream = failing
-    broken.queue = cast("queue.Queue[str | None]", cast(object, SequenceQueue()))
+    broken.queue = cast("queue.Queue[str | None]", cast("object", SequenceQueue()))
     broken.stop_event = runtime_module.threading.Event()
     broken._worker()
     assert "Error in async log writer\n" in failing.messages
@@ -179,12 +181,12 @@ def test_async_log_writer_paths() -> None:
 
     continue_writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     continue_writer.stream = stream
     continue_writer.queue = cast(
         "queue.Queue[str | None]",
-        cast(object, EmptyThenSentinelQueue()),
+        cast("object", EmptyThenSentinelQueue()),
     )
     continue_writer.stop_event = runtime_module.threading.Event()
     continue_writer._worker()
@@ -217,13 +219,13 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     stream = FlushOnlyStream()
     writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     writer.stream = stream
-    writer.queue = cast("queue.Queue[str | None]", cast(object, FullQueue()))
+    writer.queue = cast("queue.Queue[str | None]", cast("object", FullQueue()))
     writer.stop_event = runtime_module.threading.Event()
     thread = JoinRecorderThread()
-    writer.thread = cast("runtime_module.threading.Thread", cast(object, thread))
+    writer.thread = cast("runtime_module.threading.Thread", cast("object", thread))
 
     writer.shutdown()
 
@@ -236,7 +238,7 @@ def test_runtime_create_instance_failure_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeObject:
-        def __new__(cls) -> FakeObject:
+        def __new__(cls) -> Self:
             _ = cls
             return cast("FakeObject", object())
 
@@ -274,7 +276,7 @@ def test_normalization_edge_branches() -> None:
             return iter([("x", 1)])
 
     normalized_dict_like = FlextRuntime.normalize_to_general_value(
-        cast("t.GeneralValueType", cast(object, DictLike())),
+        cast("t.GeneralValueType", cast("object", DictLike())),
     )
     assert normalized_dict_like == {"x": 1}
 
@@ -282,7 +284,7 @@ def test_normalization_edge_branches() -> None:
     assert metadata_cfg == '{"a": 1}'
 
     metadata_dict_like = FlextRuntime.normalize_to_metadata_value(
-        cast("t.GeneralValueType", cast(object, DictLike())),
+        cast("t.GeneralValueType", cast("object", DictLike())),
     )
     assert metadata_dict_like == '{"x": 1}'
 
@@ -382,7 +384,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging = True
 
     FlextRuntime.configure_structlog(
-        config=cast("t.GeneralValueType", cast(object, Config())),
+        config=cast("t.GeneralValueType", cast("object", Config())),
     )
     assert FlextRuntime.is_structlog_configured() is True
     assert calls
@@ -404,7 +406,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging = False
 
     FlextRuntime.configure_structlog(
-        config=cast("t.GeneralValueType", cast(object, ConfigNoAsync())),
+        config=cast("t.GeneralValueType", cast("object", ConfigNoAsync())),
     )
     assert FlextRuntime._structlog_configured
 
@@ -422,7 +424,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging = True
 
     FlextRuntime.configure_structlog(
-        config=cast("t.GeneralValueType", cast(object, ConfigAsyncFallback())),
+        config=cast("t.GeneralValueType", cast("object", ConfigAsyncFallback())),
     )
     assert FlextRuntime._structlog_configured
 
@@ -438,7 +440,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
     dummy = DummyWriter()
     FlextRuntime._async_writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast(object, dummy),
+        cast("object", dummy),
     )
     FlextRuntime._structlog_configured = True
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
@@ -546,8 +548,8 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.GeneralValueType", cast(object, A())),
-            cast("t.GeneralValueType", cast(object, B())),
+            cast("t.GeneralValueType", cast("object", A())),
+            cast("t.GeneralValueType", cast("object", B())),
         )
         is False
     )
@@ -577,15 +579,15 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.GeneralValueType", cast(object, C())),
-            cast("t.GeneralValueType", cast(object, D())),
+            cast("t.GeneralValueType", cast("object", C())),
+            cast("t.GeneralValueType", cast("object", D())),
         )
         is False
     )
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.GeneralValueType", cast(object, C())),
-            cast("t.GeneralValueType", cast(object, C())),
+            cast("t.GeneralValueType", cast("object", C())),
+            cast("t.GeneralValueType", cast("object", C())),
         )
         is True
     )
@@ -625,19 +627,18 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     trace_from_model = FlextRuntime.ensure_trace_context(TraceModel())
     assert trace_from_model["key"] == "value"
 
-    class BadDict(dict[object, object]):
+    class BadDict(UserDict[object, object]):
         def items(self):
-            raise RuntimeError("boom")
+            msg = "boom"
+            raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
-        FlextRuntime.ensure_trace_context(
-            cast("t.GeneralValueType", BadDict())
-        )
+        FlextRuntime.ensure_trace_context(cast("t.GeneralValueType", BadDict()))
 
     trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
     assert "trace_id" in trace_from_mapping
 
-    trace_from_other = FlextRuntime.ensure_trace_context(Path("."))
+    trace_from_other = FlextRuntime.ensure_trace_context(Path())
     assert "trace_id" in trace_from_other
 
     ok_statuses: list[t.GeneralValueType] = [200, "201"]
@@ -756,7 +757,7 @@ def test_configure_structlog_print_logger_factory_fallback(
         config=cast(
             "t.GeneralValueType",
             cast(
-                object,
+                "object",
                 type(
                     "Cfg",
                     (),
@@ -905,13 +906,15 @@ def test_model_helpers_remaining_paths() -> None:
     right = Entity("u-1")
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.GeneralValueType", cast(object, left)),
-            cast("t.GeneralValueType", cast(object, right)),
+            cast("t.GeneralValueType", cast("object", left)),
+            cast("t.GeneralValueType", cast("object", right)),
         )
         is True
     )
     assert isinstance(
-        FlextRuntime.hash_entity_by_id(cast("t.GeneralValueType", cast(object, left))),
+        FlextRuntime.hash_entity_by_id(
+            cast("t.GeneralValueType", cast("object", left))
+        ),
         int,
     )
 
@@ -929,7 +932,7 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "float": 1.5,
         "bool": True,
         "dt": datetime.now(UTC),
-        "path": Path("."),
+        "path": Path(),
         "list": [1, 2],
         "dict": {"a": 1},
         "callable": lambda: 1,

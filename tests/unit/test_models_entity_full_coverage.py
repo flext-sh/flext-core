@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from flext_core import c, m, r, t, u
 import pytest
-
+from flext_core import c, m, r, t, u
 
 entity_mod = __import__(
     "flext_core._models.entity",
@@ -23,7 +22,9 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     assert (cfg == 1) is False
 
     # Source raises TypeError for non-dict/Mapping/None data
-    with pytest.raises(TypeError, match="Domain event data must be a dictionary or None"):
+    with pytest.raises(
+        TypeError, match="Domain event data must be a dictionary or None"
+    ):
         FlextModelsEntity.DomainEvent(
             event_type="evt",
             aggregate_id="agg",

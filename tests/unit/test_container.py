@@ -27,8 +27,6 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel
-
 from flext_core import FlextConstants, FlextContainer, FlextResult, r, t
 from flext_core.constants import c
 from flext_tests import tm, u
@@ -145,7 +143,7 @@ class TestFlextContainer:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
         # Cast object to t.GeneralValueType | BaseModel for type compatibility
-        
+
         result = container.with_service(scenario.name, scenario.service)
         tm.that(
             result is container,
@@ -350,7 +348,7 @@ class TestFlextContainer:
         container = clean_container
         # Cast scenario.service to container.register() compatible type
         # Runtime: object is compatible with t.GeneralValueType | BaseModel |
-        
+
         container.register(scenario.name, scenario.service)
         typed_result: FlextResult[t.RegisterableService] = container.get_typed(
             scenario.name,

@@ -4,7 +4,6 @@ from collections.abc import Callable
 from typing import Protocol, cast, runtime_checkable
 
 import pytest
-
 from flext_core import c, m, p, r, t, u
 
 
@@ -81,15 +80,15 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
             return "decorated"
 
     obj = _Decorated()
-    implements = cast(Callable[[type], bool], getattr(obj, "implements_protocol"))
+    implements = cast("Callable[[type], bool]", getattr(obj, "implements_protocol"))
     get_protocols = cast(
-        Callable[[], tuple[type, ...]], getattr(_Decorated, "get_protocols")
+        "Callable[[], tuple[type, ...]]", getattr(_Decorated, "get_protocols")
     )
     assert implements(_NamedProtocol) is True
     assert get_protocols() == (_NamedProtocol,)
     assert p.is_protocol(_NamedProtocol) is True
     assert (
-        p.check_implements_protocol(cast(t.GuardInputValue, obj), _NamedProtocol)
+        p.check_implements_protocol(cast("t.GuardInputValue", obj), _NamedProtocol)
         is True
     )
 
@@ -105,7 +104,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
     obj = _Thing()
     assert (
-        p.check_implements_protocol(cast(t.GuardInputValue, obj), _NotAProtocol)
+        p.check_implements_protocol(cast("t.GuardInputValue", obj), _NotAProtocol)
         is False
     )
 
@@ -118,7 +117,7 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     runtime_obj = _OnlyRuntime()
     assert (
         p.check_implements_protocol(
-            cast(t.GuardInputValue, runtime_obj), _NamedProtocol
+            cast("t.GuardInputValue", runtime_obj), _NamedProtocol
         )
         is True
     )
@@ -130,11 +129,11 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
         app_name: str = "x"
 
     model_name_getter = cast(
-        Callable[[], str],
+        "Callable[[], str]",
         getattr(_DefaultModelName(), "_protocol_name"),
     )
     settings_name_getter = cast(
-        Callable[[], str],
+        "Callable[[], str]",
         getattr(_DefaultSettingsName(), "_protocol_name"),
     )
     assert model_name_getter() == "_DefaultModelName"

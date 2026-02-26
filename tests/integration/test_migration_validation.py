@@ -17,10 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
-from pydantic import BaseModel as PydanticBaseModel
-
 from flext_core import (
     FlextConstants,
     FlextContainer,
@@ -40,6 +36,8 @@ from flext_core import (
     FlextUtilities,
 )
 from flext_core.typings import t
+from pydantic import BaseModel as PydanticBaseModel
+
 from tests.test_utils import assertion_helpers
 
 

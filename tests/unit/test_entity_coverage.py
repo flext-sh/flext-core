@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, m, r
+from flext_core import c, m
 
 
 class TestEntityCoverageEdgeCases:
@@ -23,7 +23,7 @@ class TestEntityCoverageEdgeCases:
         assert entity.entity_id == entity.unique_id
 
     def test_logger_property(self) -> None:
-        """logger property returns FlextRuntime.get_logger (line 87)."""
+        """Logger property returns FlextRuntime.get_logger (line 87)."""
 
         class TestEntity(m.Entity):
             name: str

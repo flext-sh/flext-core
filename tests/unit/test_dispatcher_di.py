@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextContainer, FlextDispatcher
+from flext_core import FlextDispatcher
 from flext_core._dispatcher import (
     CircuitBreakerManager,
     RateLimiterManager,

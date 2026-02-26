@@ -19,12 +19,11 @@ from datetime import datetime
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import ValidationError
-
 from flext_core.constants import c
 from flext_core.models import m
 from flext_core.typings import t
 from flext_core.utilities import u
+from pydantic import ValidationError
 
 _expected_validation_errors: tuple[type[Exception], ...] = (
     ValidationError,
@@ -180,7 +179,9 @@ class TestFlextModelsContainer:
         registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
-            metadata=m.ConfigMap(root=cast(dict[str, t.GeneralValueType], nested_dict)),
+            metadata=m.ConfigMap(
+                root=cast("dict[str, t.GeneralValueType]", nested_dict)
+            ),
         )
         assert isinstance(registration.metadata, m.Metadata)
         # Nested dicts are converted to t.GeneralValueType
@@ -465,7 +466,9 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         result = u.Model.normalize_to_metadata(
             m.ConfigMap(
                 root={
-                    "nested": cast(t.GeneralValueType, {"level1": {"level2": "value"}}),
+                    "nested": cast(
+                        "t.GeneralValueType", {"level1": {"level2": "value"}}
+                    ),
                 }
             )
         )

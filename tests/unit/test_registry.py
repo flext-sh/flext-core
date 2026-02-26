@@ -20,7 +20,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -28,7 +27,6 @@ from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-
 from flext_core import (
     FlextRegistry,
     c,
@@ -37,9 +35,10 @@ from flext_core import (
     r,
     t,
 )
-from flext_tests import FlextTestsUtilities, u
 from flext_core.models import m
 from flext_core.registry import RegistryHandler
+from flext_core.typings import t
+from flext_tests import FlextTestsUtilities, u
 
 
 class RegistryOperationType(StrEnum):
@@ -428,10 +427,10 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
         # All key resolution uses _resolve_handler_key
-        if test_case.operation in (
+        if test_case.operation in {
             RegistryOperationType.RESOLVE_HANDLER_KEY,
             RegistryOperationType.RESOLVE_BINDING_KEY,
-        ):
+        }:
             key = registry._resolve_handler_key(cast("RegistryHandler", handler))
             assert isinstance(key, str) and len(key) > 0
 

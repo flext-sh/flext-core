@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections import UserDict
 from collections.abc import Callable, Mapping
 from enum import StrEnum
 from typing import Never, cast
 
 import pytest
-
 from flext_core import c, m, r, t, u
 
 
@@ -16,7 +16,8 @@ class _Color(StrEnum):
 
 class _BadMapping(Mapping[str, str]):
     def __iter__(self):
-        raise RuntimeError("boom")
+        msg = "boom"
+        raise RuntimeError(msg)
 
     def __len__(self) -> int:
         return 0
@@ -27,12 +28,14 @@ class _BadMapping(Mapping[str, str]):
 
 class _BadSequence:
     def __iter__(self):
-        raise TypeError("iter failed")
+        msg = "iter failed"
+        raise TypeError(msg)
 
 
-class _BadCopyDict(dict[str, t.GeneralValueType]):
+class _BadCopyDict(UserDict[str, t.GeneralValueType]):
     def copy(self) -> dict[str, t.GeneralValueType]:
-        raise TypeError("copy failed")
+        msg = "copy failed"
+        raise TypeError(msg)
 
 
 def test_find_mapping_no_match_and_merge_error_paths() -> None:
@@ -160,7 +163,8 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
 
     class _ExplodingMeta(type):
         def __call__(cls, _value: object):
-            raise ValueError("parse exploded")
+            msg = "parse exploded"
+            raise ValueError(msg)
 
     class _ExplodingEnum(metaclass=_ExplodingMeta):
         pass

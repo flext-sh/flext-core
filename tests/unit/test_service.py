@@ -26,10 +26,9 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-
 from flext_core import r, s, t
-from flext_tests import FlextTestsUtilities, u
 from flext_core.models import m
+from flext_tests import FlextTestsUtilities, u
 
 
 class ServiceScenarioType(StrEnum):

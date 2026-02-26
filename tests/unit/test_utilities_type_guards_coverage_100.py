@@ -272,6 +272,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         # Dicts are now serialized to JSON strings
         assert isinstance(result, str)
         import json
+
         parsed = json.loads(result)
         assert "key" in parsed
         assert parsed["key"] == "test"

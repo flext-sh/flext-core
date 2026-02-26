@@ -10,9 +10,7 @@ comprehensive real validation of all methods and edge cases.
 
 from __future__ import annotations
 
-
 import pytest
-
 from flext_core import __version__, __version_info__
 from flext_core.__version__ import FlextVersion
 from flext_tests import tm
@@ -161,7 +159,8 @@ class TestFlextVersion:
         The FlextVersion class catches PackageNotFoundError at class definition
         time and uses a hardcoded fallback version. We verify the fallback
         dict matches what FlextVersion._metadata resolves to when the package
-        is not installed."""
+        is not installed.
+        """
         # The fallback version is hardcoded in __version__.py
         # Verify it matches the class-level constant
         fallback_metadata = {

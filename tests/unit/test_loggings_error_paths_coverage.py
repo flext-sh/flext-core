@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextRuntime, m, p
 from flext_core.constants import c
+
 from tests.test_utils import assertion_helpers
 
 LoggerClass = FlextLogger

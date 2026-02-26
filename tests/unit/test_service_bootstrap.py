@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Never, cast
+from typing import cast
 
 from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, p, r
 from flext_tests import u

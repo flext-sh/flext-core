@@ -11,12 +11,12 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
-from pydantic import BaseModel as _BaseModel
-
 from flext_core import FlextResult, r
 from flext_tests.factories import tt
 from flext_tests.models import m
 from flext_tests.typings import t as t_test
+from pydantic import BaseModel as _BaseModel
+
 from tests.test_utils import assertion_helpers
 
 # Access models from centralized m.Tests.Factory namespace
@@ -524,7 +524,7 @@ class TestsFlextTestsFactoriesModel:
         """Test model wrapped in FlextResult."""
         result = tt.model("user", as_result=True)
         assert isinstance(result, FlextResult)
-        typed_result = cast(FlextResult[_BaseModel], cast(object, result))
+        typed_result = cast("FlextResult[_BaseModel]", cast("object", result))
         assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, User)
 
@@ -566,14 +566,14 @@ class TestsFlextTestsFactoriesModel:
             "user",
             name="Original",
             transform=cast(
-                t_test.Tests.TestResultValue,
+                "t_test.Tests.TestResultValue",
                 cast(
-                    object,
+                    "object",
                     lambda u: User(
-                        id=cast(User, u).id,
+                        id=cast("User", u).id,
                         name="Transformed",
-                        email=cast(User, u).email,
-                        active=cast(User, u).active,
+                        email=cast("User", u).email,
+                        active=cast("User", u).active,
                     ),
                 ),
             ),
@@ -588,8 +588,8 @@ class TestsFlextTestsFactoriesModel:
             "user",
             active=True,
             validate=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda u: cast(User, u).active),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda u: cast("User", u).active),
             ),
         )
         user = _extract_model(user_result)
@@ -600,8 +600,8 @@ class TestsFlextTestsFactoriesModel:
             "user",
             active=False,
             validate=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda u: cast(User, u).active),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda u: cast("User", u).active),
             ),
             as_result=True,
         )
@@ -623,7 +623,7 @@ class TestsFlextTestsFactoriesRes:
     def test_res_ok(self) -> None:
         """Test successful result creation."""
         result_raw = tt.res("ok", value=42)
-        result = cast(r[int], cast(object, _as_single_payload_result(result_raw)))
+        result = cast("r[int]", cast("object", _as_single_payload_result(result_raw)))
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
@@ -651,7 +651,7 @@ class TestsFlextTestsFactoriesRes:
     def test_res_from_value_success(self) -> None:
         """Test from_value with non-None value."""
         result_raw = tt.res("from_value", value=42)
-        result = cast(r[int], cast(object, _as_single_payload_result(result_raw)))
+        result = cast("r[int]", cast("object", _as_single_payload_result(result_raw)))
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
@@ -671,9 +671,9 @@ class TestsFlextTestsFactoriesRes:
         """Test batch result creation from values."""
         results_raw = tt.res("ok", values=[1, 2, 3])
         results = cast(
-            list[r[int]],
+            "list[r[int]]",
             cast(
-                object,
+                "object",
                 results_raw if isinstance(results_raw, list) else [results_raw],
             ),
         )
@@ -702,9 +702,9 @@ class TestsFlextTestsFactoriesRes:
             mix_pattern=[True, False, True, False],
         )
         results = cast(
-            list[r[int]],
+            "list[r[int]]",
             cast(
-                object,
+                "object",
                 results_raw if isinstance(results_raw, list) else [results_raw],
             ),
         )
@@ -722,11 +722,11 @@ class TestsFlextTestsFactoriesRes:
             "ok",
             value=5,
             transform=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda x: cast(int, x) * 2),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda x: cast("int", x) * 2),
             ),
         )
-        result = cast(r[int], cast(object, _as_single_payload_result(result_raw)))
+        result = cast("r[int]", cast("object", _as_single_payload_result(result_raw)))
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == 10
 
@@ -737,7 +737,7 @@ class TestsFlextTestsFactoriesList:
     def test_list_from_model(self) -> None:
         """Test list creation from model kind."""
         users_raw = tt.list("user", count=3)
-        users = cast(list[User], cast(object, _as_payload_list(users_raw)))
+        users = cast("list[User]", cast("object", _as_payload_list(users_raw)))
         assert isinstance(users, list)
         assert len(users) == 3
         assert all(isinstance(u, User) for u in users)
@@ -745,7 +745,7 @@ class TestsFlextTestsFactoriesList:
     def test_list_from_callable(self) -> None:
         """Test list creation from callable factory."""
         numbers_raw = tt.list(lambda: 42, count=5)
-        numbers = cast(list[int], cast(object, _as_payload_list(numbers_raw)))
+        numbers = cast("list[int]", cast("object", _as_payload_list(numbers_raw)))
         assert numbers == [42, 42, 42, 42, 42]
 
     def test_list_from_sequence(self) -> None:
@@ -755,11 +755,11 @@ class TestsFlextTestsFactoriesList:
         doubled_raw = tt.list(
             [1, 2, 3],
             transform=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda x: cast(int, x) * 2),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda x: cast("int", x) * 2),
             ),
         )
-        doubled = cast(list[int], cast(object, _as_payload_list(doubled_raw)))
+        doubled = cast("list[int]", cast("object", _as_payload_list(doubled_raw)))
         assert doubled == [2, 4, 6]
 
     def test_list_with_filter(self) -> None:
@@ -769,18 +769,18 @@ class TestsFlextTestsFactoriesList:
         evens_raw = tt.list(
             [1, 2, 3, 4, 5],
             filter_=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda x: cast(int, x) % 2 == 0),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda x: cast("int", x) % 2 == 0),
             ),
         )
-        evens = cast(list[int], cast(object, _as_payload_list(evens_raw)))
+        evens = cast("list[int]", cast("object", _as_payload_list(evens_raw)))
         assert evens == [2, 4]
 
     def test_list_with_unique(self) -> None:
         """Test list creation with uniqueness."""
         # Create list with duplicates
         items_raw = tt.list([1, 2, 2, 3, 3, 3], unique=True)
-        items = cast(list[int], cast(object, _as_payload_list(items_raw)))
+        items = cast("list[int]", cast("object", _as_payload_list(items_raw)))
         assert len(items) == 3
         assert set(items) == {1, 2, 3}
 
@@ -792,7 +792,7 @@ class TestsFlextTestsFactoriesList:
             as_result=True,
         )
         assert isinstance(result_raw, r)
-        result = cast(r[list[User]], cast(object, result_raw))
+        result = cast("r[list[User]]", cast("object", result_raw))
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -807,7 +807,7 @@ class TestsFlextTestsFactoriesDict:
             "user",
             count=3,
         )
-        users = cast(dict[str, User], cast(object, _as_payload_mapping(users_raw)))
+        users = cast("dict[str, User]", cast("object", _as_payload_mapping(users_raw)))
         assert isinstance(users, dict)
         assert len(users) == 3
         assert all(isinstance(u, User) for u in users.values())
@@ -820,11 +820,11 @@ class TestsFlextTestsFactoriesDict:
             "user",
             count=3,
             key_factory=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda i: f"user_{cast(int, i)}"),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda i: f"user_{cast('int', i)}"),
             ),
         )
-        users = cast(dict[str, User], cast(object, _as_payload_mapping(users_raw)))
+        users = cast("dict[str, User]", cast("object", _as_payload_mapping(users_raw)))
         assert set(users.keys()) == {"user_0", "user_1", "user_2"}
 
     def test_dict_with_value_factory(self) -> None:
@@ -839,11 +839,11 @@ class TestsFlextTestsFactoriesDict:
             "user",
             count=2,
             value_factory=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, value_factory),
+                "t_test.Tests.TestResultValue",
+                cast("object", value_factory),
             ),
         )
-        users = cast(dict[str, User], cast(object, _as_payload_mapping(users_raw)))
+        users = cast("dict[str, User]", cast("object", _as_payload_mapping(users_raw)))
         assert len(users) == 2
 
     def test_dict_from_mapping(self) -> None:
@@ -853,7 +853,7 @@ class TestsFlextTestsFactoriesDict:
             existing,
             merge_with={"c": 3},
         )
-        merged = cast(dict[str, int], cast(object, _as_payload_mapping(merged_raw)))
+        merged = cast("dict[str, int]", cast("object", _as_payload_mapping(merged_raw)))
         assert merged == {"a": 1, "b": 2, "c": 3}
 
     def test_dict_as_result(self) -> None:
@@ -864,7 +864,7 @@ class TestsFlextTestsFactoriesDict:
             as_result=True,
         )
         assert isinstance(result_raw, r)
-        result = cast(r[dict[str, User]], cast(object, result_raw))
+        result = cast("r[dict[str, User]]", cast("object", result_raw))
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -929,8 +929,8 @@ class TestsFlextTestsFactoriesGeneric:
             ValidatedClass,
             kwargs={"age": 25},
             validate=cast(
-                t_test.Tests.TestResultValue,
-                cast(object, lambda o: cast(ValidatedClass, o).age >= 18),
+                "t_test.Tests.TestResultValue",
+                cast("object", lambda o: cast("ValidatedClass", o).age >= 18),
             ),
         )
         if isinstance(obj_result, r):
@@ -947,8 +947,8 @@ class TestsFlextTestsFactoriesGeneric:
                 ValidatedClass,
                 kwargs={"age": 15},
                 validate=cast(
-                    t_test.Tests.TestResultValue,
-                    cast(object, lambda o: cast(ValidatedClass, o).age >= 18),
+                    "t_test.Tests.TestResultValue",
+                    cast("object", lambda o: cast("ValidatedClass", o).age >= 18),
                 ),
             )
 
@@ -961,7 +961,7 @@ class TestsFlextTestsFactoriesGeneric:
 
         result = tt.generic(ResultClass, kwargs={"value": "test"}, as_result=True)
         assert isinstance(result, FlextResult)
-        typed_result = cast(FlextResult[ResultClass], cast(object, result))
+        typed_result = cast("FlextResult[ResultClass]", cast("object", result))
         assertion_helpers.assert_flext_result_success(typed_result)
         assert isinstance(result.value, ResultClass)
         assert result.value.value == "test"

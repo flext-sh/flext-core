@@ -27,16 +27,14 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import ValidationError
-from pydantic_settings import BaseSettings
-
 from flext_core import FlextSettings
 from flext_core.constants import c
 from flext_core.models import m
-from flext_core.typings import t
 from flext_core.utilities import u
 from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
+from pydantic import ValidationError
+from pydantic_settings import BaseSettings
 
 # cast is already imported at top level
 
@@ -581,7 +579,7 @@ class TestFlextSettingsPydantic:
             class WrongType:
                 pass
 
-            wrong_instance = cast(FlextSettings, cast(object, WrongType()))
+            wrong_instance = cast("FlextSettings", cast("object", WrongType()))
             FlextSettings._instances[FlextSettings] = wrong_instance
 
             # Now trying to get instance should raise TypeError
@@ -647,14 +645,12 @@ class TestFlextSettingsPydantic:
 
     def test_auto_config_create_config(self) -> None:
         """Test AutoConfig.create_config method."""
-
         auto_config = FlextSettings.AutoConfig(config_class=FlextSettings)
         instance = auto_config.create_config()
         assert isinstance(instance, FlextSettings)
 
     def test_auto_register_decorator(self) -> None:
         """Test auto_register decorator registers namespace."""
-
         FlextSettings.auto_register("test_namespace")(FlextSettings)
 
         assert "test_namespace" in FlextSettings._namespace_registry
@@ -665,7 +661,6 @@ class TestFlextSettingsPydantic:
 
     def test_register_namespace(self) -> None:
         """Test register_namespace method."""
-
         FlextSettings.register_namespace("test_register", FlextSettings)
         assert "test_register" in FlextSettings._namespace_registry
 
@@ -685,7 +680,6 @@ class TestFlextSettingsPydantic:
 
     def test_get_namespace_type_mismatch(self) -> None:
         """Test get_namespace raises TypeError for type mismatch."""
-
         FlextSettings.register_namespace("test_type", FlextSettings)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
 
@@ -701,7 +695,6 @@ class TestFlextSettingsPydantic:
 
     def test_get_namespace_found(self) -> None:
         """Test get_namespace returns namespace config when registered."""
-
         FlextSettings.register_namespace("test_attr", FlextSettings)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
 

@@ -32,6 +32,7 @@ from flext_core import (
 )
 from flext_core.typings import t
 from flext_tests import u
+
 from ..test_utils import assertion_helpers
 
 # DI decorators from Runtime

@@ -21,9 +21,9 @@ from enum import StrEnum
 from typing import Annotated, Final, cast
 
 import pytest
-
 from flext_core import p, r, t
 from flext_tests import u
+
 from tests.test_utils import assertion_helpers
 
 

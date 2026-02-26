@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_core import u
 
 
@@ -18,7 +17,7 @@ class TestTextLogger:
     """Tests for u.Text.logger property."""
 
     def test_logger_property_returns_logger(self) -> None:
-        """logger property returns a structlog logger instance."""
+        """Logger property returns a structlog logger instance."""
         text_util = u.Text()
         logger = text_util.logger
         assert logger is not None

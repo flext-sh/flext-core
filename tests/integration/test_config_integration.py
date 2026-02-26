@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import json
 import os
@@ -24,15 +23,14 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextLogger,
-    FlextResult,
     FlextSettings,
     t,
 )
+from flext_core.typings import t
 
 
 @dataclass(frozen=True, slots=True)
@@ -546,8 +544,12 @@ class TestFlextSettingsSingletonIntegration:
                 config_explicit.effective_log_level
                 == FlextConstants.Settings.LogLevel.INFO
             )  # Debug mode forces INFO
-            debug_enabled_explicit: bool = bool(
-                getattr(config_explicit, "is_debug_enabled", getattr(config_explicit, "debug", False))
+            bool(
+                getattr(
+                    config_explicit,
+                    "is_debug_enabled",
+                    getattr(config_explicit, "debug", False),
+                )
             )
             assert config_explicit.trace is False  # Trace mode disabled
 
@@ -560,8 +562,12 @@ class TestFlextSettingsSingletonIntegration:
                 config_no_debug.effective_log_level
                 == FlextConstants.Settings.LogLevel.WARNING
             )
-            debug_enabled_no_debug: bool = bool(
-                getattr(config_no_debug, "is_debug_enabled", getattr(config_no_debug, "debug", False))
+            bool(
+                getattr(
+                    config_no_debug,
+                    "is_debug_enabled",
+                    getattr(config_no_debug, "debug", False),
+                )
             )
 
             # === VALIDATION: Precedence Order Summary ===

@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextSettings
+
 from tests.test_utils import assertion_helpers
 
 

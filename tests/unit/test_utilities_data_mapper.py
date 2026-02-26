@@ -15,12 +15,12 @@ from collections.abc import ItemsView, Iterator, Mapping
 from typing import cast
 
 from flext_core import FlextTypes
-from flext_core.typings import t
+from flext_core.models import m
 from flext_core.utilities import FlextUtilities
 from flext_tests import tm
+
 from tests.constants import TestsFlextConstants
 from tests.test_utils import assertion_helpers
-from flext_core.models import m
 
 
 class TestMapperMapDictKeys:
@@ -31,7 +31,7 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             source_raw,
         )
@@ -46,7 +46,7 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             source_raw,
         )
@@ -65,7 +65,7 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             source_raw,
         )
@@ -92,7 +92,7 @@ class TestMapperMapDictKeys:
 
         # Convert BadDict to ConfigurationDict for type compatibility
         bad_dict_instance = BadDict()
-        bad_dict_typed: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             bad_dict_instance,
         )
@@ -222,7 +222,7 @@ class TestMapperTransformValues:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             source_raw,
         )
@@ -239,7 +239,7 @@ class TestMapperTransformValues:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         # Convert dict[str, int] to ConfigurationDict for type compatibility
-        source: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             source_raw,
         )
@@ -260,7 +260,7 @@ class TestMapperFilterDict:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         # Convert dict[str, int] to ConfigurationDict for type compatibility
-        source: m.ConfigMap = cast(
+        cast(
             "m.ConfigMap",
             source_raw,
         )

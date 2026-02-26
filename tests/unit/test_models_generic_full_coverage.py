@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 # pyright: reportMissingImports=false
-
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from flext_core import c, m, r, t, u
 
 
@@ -254,7 +252,7 @@ def test_health_severity_level_branches(
     checks: dict[str, bool],
     expected: str,
 ) -> None:
-    typed_checks: dict[str, t.GeneralValueType] = {k: v for k, v in checks.items()}
+    typed_checks: dict[str, t.GeneralValueType] = dict(checks.items())
     health = m.Health(checks=t.Dict(root=typed_checks))
 
     assert health.severity_level == expected

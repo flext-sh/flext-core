@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 import importlib
-from typing import cast
-
-from pydantic import BaseModel
-from returns.io import IOResult, IOSuccess
+from typing import Never, cast
 
 from flext_core import FlextRuntime, r
 from flext_core.typings import JsonValue
+from pydantic import BaseModel
+from returns.io import IOResult, IOSuccess
 
 result_module = importlib.import_module("flext_core.result")
 
@@ -32,10 +31,10 @@ class _ErrorsModel(BaseModel):
         context: dict[str, object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
-    ):
+    ) -> Never:
         _ = strict, extra, from_attributes, context, by_alias, by_name
         _ = obj
-        raise _ValidationLikeError()
+        raise _ValidationLikeError
 
 
 class _PlainErrorModel(BaseModel):
@@ -52,10 +51,11 @@ class _PlainErrorModel(BaseModel):
         context: dict[str, object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
-    ):
+    ) -> Never:
         _ = strict, extra, from_attributes, context, by_alias, by_name
         _ = obj
-        raise RuntimeError("plain boom")
+        msg = "plain boom"
+        raise RuntimeError(msg)
 
 
 class _TargetModel(BaseModel):

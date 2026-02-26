@@ -14,12 +14,11 @@ from pathlib import Path
 
 import pytest
 import yaml
-from pydantic import BaseModel
-
-from flext_core import FlextResult as r
-from flext_core import FlextTypes as t
+from flext_core import FlextResult as r, FlextTypes as t
 from flext_tests.files import FlextTestsFiles, tf
 from flext_tests.models import m
+from pydantic import BaseModel
+
 from tests.test_utils import assertion_helpers
 
 # Use the actual nested class directly

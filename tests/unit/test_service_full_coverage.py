@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
-
-from flext_core import c, m, r, t, u
-from flext_core import p
-from flext_core.service import FlextService, FlextSettings
 import flext_core.service as service_mod
+import pytest
+from flext_core import c, m, p, r, t, u
+from flext_core.service import FlextService, FlextSettings
 
 
 class _Svc(FlextService[bool]):

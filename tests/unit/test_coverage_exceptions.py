@@ -16,15 +16,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# mypy: disable-error-code=dict-item,arg-type,var-annotated
+from collections.abc import Callable
 
+# mypy: disable-error-code=dict-item,arg-type,var-annotated
 from dataclasses import dataclass
-from typing import Callable, ClassVar, cast
+from typing import ClassVar, cast
 
 import pytest
-
-from flext_core import FlextConstants, FlextExceptions, FlextResult, FlextRuntime, t
+from flext_core import FlextConstants, FlextExceptions, FlextResult, t
 from flext_core.constants import c
+
 from tests.test_utils import assertion_helpers
 
 

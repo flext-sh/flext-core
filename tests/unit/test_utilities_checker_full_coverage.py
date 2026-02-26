@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from collections import UserDict
 from typing import cast
 
 from flext_core import c, m, r, t, u
@@ -12,7 +13,7 @@ class _OnlySelfHandler:
 
 
 class _UnknownHintHandler:
-    def handle(self, message: "MissingType") -> None:
+    def handle(self, message: MissingType) -> None:
         return None
 
 
@@ -23,13 +24,15 @@ class MissingType:
 class _ExplodingSubclassMeta(type):
     def __subclasscheck__(cls, subclass: type) -> bool:
         _ = subclass
-        raise TypeError("no subclass check")
+        msg = "no subclass check"
+        raise TypeError(msg)
 
 
 class _ExplodingInstanceMeta(type):
     def __instancecheck__(cls, instance: object) -> bool:
         _ = instance
-        raise TypeError("no instance check")
+        msg = "no instance check"
+        raise TypeError(msg)
 
 
 class _ExplodingExpected(metaclass=_ExplodingSubclassMeta):
@@ -85,14 +88,21 @@ def test_extract_message_type_from_handle_with_only_self() -> None:
 
 def test_object_dict_and_type_error_fallback_paths() -> None:
     # _check_object_type_compatibility uses `is object` identity check
-    assert u.Checker._check_object_type_compatibility(cast("t.TypeOriginSpecifier", object)) is True
+    assert (
+        u.Checker._check_object_type_compatibility(
+            cast("t.TypeOriginSpecifier", object)
+        )
+        is True
+    )
+
     # Non-object type returns None
     class _FakeObjectName:
         __name__ = "object"
+
     fake_object = cast("t.TypeOriginSpecifier", _FakeObjectName())
     assert u.Checker._check_object_type_compatibility(fake_object) is None
 
-    class _DictChild(dict[str, str]):
+    class _DictChild(UserDict[str, str]):
         pass
 
     dict_match = u.Checker._check_dict_compatibility(
@@ -161,10 +171,10 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         u.Checker._extract_message_type_from_parameter(param_type, {}, "message") is int
     )
 
-    class _ExpectedDict(dict[str, str]):
+    class _ExpectedDict(UserDict[str, str]):
         pass
 
-    class _MessageDict(dict[str, str]):
+    class _MessageDict(UserDict[str, str]):
         pass
 
     assert (

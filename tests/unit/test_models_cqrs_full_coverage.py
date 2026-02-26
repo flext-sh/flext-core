@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import sys
-import importlib
 from types import SimpleNamespace
-
-from pydantic import TypeAdapter
 
 from flext_core import c, m
 from flext_core._models.cqrs import FlextMessage
+from pydantic import TypeAdapter
 
 
 def test_command_validator_and_pagination_limit() -> None:

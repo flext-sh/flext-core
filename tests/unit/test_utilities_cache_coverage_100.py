@@ -22,10 +22,10 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
+from flext_core import t, u
+from flext_tests import tm
 from pydantic import BaseModel, Field
 
-from flext_core import t, u
-from flext_tests import tm, u as tu
 from tests.test_utils import assertion_helpers
 
 

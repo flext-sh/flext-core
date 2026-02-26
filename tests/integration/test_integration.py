@@ -28,10 +28,8 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import pytest
-
 from flext_core import (
     FlextContainer,
     FlextResult,
@@ -39,6 +37,8 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.typings import t
+
 from tests.test_utils import assertion_helpers
 
 # Use FunctionalExternalService from conftest.py to avoid duplication

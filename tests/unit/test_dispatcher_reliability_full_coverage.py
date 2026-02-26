@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from flext_core import c, m, r, t, u
 
-
 disp_rel = __import__(
     "flext_core._dispatcher.reliability",
     fromlist=["CircuitBreakerManager", "RateLimiterManager", "RetryPolicy"],

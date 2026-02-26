@@ -5,12 +5,10 @@ from __future__ import annotations
 import builtins
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, cast
+from typing import cast
 
 import pytest
 from flext_core import c, m, r, t, u
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.protocols import p
 from pydantic import BaseModel
 
 
@@ -112,14 +110,14 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_value_dict: dict[str, object] = {"k": {1}}
 
     # Source accepts int keys in mappings
-    assert u.Guards.is_configuration_mapping(
-        cast("t.GuardInputValue", bad_key_mapping)
-    )
+    assert u.Guards.is_configuration_mapping(cast("t.GuardInputValue", bad_key_mapping))
     assert not u.Guards.is_configuration_mapping(
         cast("t.GuardInputValue", bad_value_mapping)
     )
     assert not u.Guards.is_configuration_dict([])
-    assert u.Guards.is_configuration_dict(cast("t.GuardInputValue", {1: "v"}))  # Source accepts int keys
+    assert u.Guards.is_configuration_dict(
+        cast("t.GuardInputValue", {1: "v"})
+    )  # Source accepts int keys
     assert not u.Guards.is_configuration_dict(cast("t.GuardInputValue", bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
 
@@ -336,7 +334,9 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
 
     setattr(builtins, "issubclass", _explode)
     try:
-        assert not u.is_type(_Candidate, "handler")  # Source catches TypeError, returns False
+        assert not u.is_type(
+            _Candidate, "handler"
+        )  # Source catches TypeError, returns False
     finally:
         setattr(builtins, "issubclass", original_issubclass)
 

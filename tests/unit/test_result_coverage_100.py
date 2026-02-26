@@ -23,18 +23,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 # mypy: disable-error-code=valid-type
-
 import math
 from typing import cast
 
 import pytest
-from returns.io import IOFailure, IOResult, IOSuccess
-from returns.maybe import Nothing, Some
-
 from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
+from returns.io import IOFailure, IOResult, IOSuccess
+from returns.maybe import Nothing, Some
 
 
 class _ResultAssertions:

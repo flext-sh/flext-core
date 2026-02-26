@@ -222,7 +222,9 @@ class TestFixtureFactory:
         return FlextExceptions
 
     @staticmethod
-    def create_test_handlers_instance() -> type[FlextHandlers[t.GeneralValueType, t.GeneralValueType]]:
+    def create_test_handlers_instance() -> type[
+        FlextHandlers[t.GeneralValueType, t.GeneralValueType]
+    ]:
         """Create test handlers fixture."""
         return FlextHandlers
 

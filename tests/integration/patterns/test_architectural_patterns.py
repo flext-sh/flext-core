@@ -13,9 +13,9 @@ from __future__ import annotations
 import time
 
 import pytest
-
 from flext_core import FlextConstants, FlextResult, m
 from flext_core.typings import t
+
 from tests.test_utils import assertion_helpers
 
 

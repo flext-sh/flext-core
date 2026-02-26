@@ -24,7 +24,6 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-
 from flext_core.constants import c
 from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
@@ -210,9 +209,11 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         ("value", "expected_type"),
         ConstantsScenarios.TYPE_CHECKS,
-        ids=lambda x: f"{type(x[0]).__name__}_{x[1].__name__}"
-        if isinstance(x, tuple) and len(x) == 2
-        else str(x),
+        ids=lambda x: (
+            f"{type(x[0]).__name__}_{x[1].__name__}"
+            if isinstance(x, tuple) and len(x) == 2
+            else str(x)
+        ),
     )
     def test_type_safety_constant_types(
         self,

@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import time
 from collections.abc import Callable, Mapping
@@ -22,8 +21,8 @@ from enum import StrEnum
 from typing import Final, Never
 
 import pytest
-
 from flext_core import FlextRuntime, r, t
+from flext_core.typings import t
 from flext_tests import u
 
 

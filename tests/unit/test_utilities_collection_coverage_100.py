@@ -22,12 +22,12 @@ from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
+from flext_core import FlextRuntime, r, t
+from flext_core.models import m
+from flext_tests import u
 from pydantic import BaseModel, Field
 
-from flext_core import FlextRuntime, r, t
-from flext_tests import u
 from tests.test_utils import assertion_helpers
-from flext_core.models import m
 
 
 class FixtureStatus(StrEnum):
@@ -455,37 +455,37 @@ class CollectionUtilitiesScenarios:
         MapScenario(
             name="list_ints",
             items=[1, 2, 3],
-            mapper=lambda x: cast(int, x) * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=[2, 4, 6],
         ),
         MapScenario(
             name="tuple_ints",
             items=(1, 2, 3),
-            mapper=lambda x: cast(int, x) * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=(2, 4, 6),
         ),
         MapScenario(
             name="set_ints",
             items={1, 2, 3},
-            mapper=lambda x: cast(int, x) * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result={2, 4, 6},
         ),
         MapScenario(
             name="dict_values",
             items={"a": 1, "b": 2},
-            mapper=lambda v: cast(int, v) * 2,
+            mapper=lambda v: cast("int", v) * 2,
             expected_result={"a": 2, "b": 4},
         ),
         MapScenario(
             name="frozenset_ints",
             items=frozenset({1, 2, 3}),
-            mapper=lambda x: cast(int, x) * 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=frozenset({2, 4, 6}),
         ),
         MapScenario(
             name="strings_upper",
             items=["hello", "world"],
-            mapper=lambda x: cast(str, x).upper(),
+            mapper=lambda x: cast("str", x).upper(),
             expected_result=["HELLO", "WORLD"],
         ),
     ]
@@ -494,13 +494,13 @@ class CollectionUtilitiesScenarios:
         FindScenario(
             name="list_find",
             items=[1, 2, 3, 4],
-            predicate=lambda x: cast(int, x) % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=2,
         ),
         FindScenario(
             name="list_not_found",
             items=[1, 3, 5],
-            predicate=lambda x: cast(int, x) % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=None,
         ),
         FindScenario(
@@ -512,7 +512,7 @@ class CollectionUtilitiesScenarios:
         FindScenario(
             name="dict_find_other",
             items={"x": 10, "y": 20},
-            predicate=lambda v: cast(int, v) > 15,
+            predicate=lambda v: cast("int", v) > 15,
             expected_result=20,
         ),
     ]
@@ -521,39 +521,39 @@ class CollectionUtilitiesScenarios:
         FilterScenario(
             name="list_filter",
             items=[1, 2, 3, 4],
-            predicate=lambda x: cast(int, x) % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=[2, 4],
         ),
         FilterScenario(
             name="list_filter_map",
             items=[1, 2, 3, 4],
-            predicate=lambda x: cast(int, x) > 2,
-            mapper=lambda x: cast(int, x) * 2,
+            predicate=lambda x: cast("int", x) > 2,
+            mapper=lambda x: cast("int", x) * 2,
             expected_result=[6, 8],
         ),
         FilterScenario(
             name="dict_filter",
             items={"a": 1, "b": 2, "c": 3},
-            predicate=lambda v: cast(int, v) % 2 != 0,
+            predicate=lambda v: cast("int", v) % 2 != 0,
             expected_result={"a": 1, "c": 3},
         ),
         FilterScenario(
             name="dict_filter_map",
             items={"a": 1, "b": 4},
-            predicate=lambda v: cast(int, v) > 2,
-            mapper=lambda v: cast(int, v) * 2,
+            predicate=lambda v: cast("int", v) > 2,
+            mapper=lambda v: cast("int", v) * 2,
             expected_result={"b": 8},
         ),
         FilterScenario(
             name="list_filter_empty",
             items=[1, 3, 5],
-            predicate=lambda x: cast(int, x) > 10,
+            predicate=lambda x: cast("int", x) > 10,
             expected_result=[],
         ),
         FilterScenario(
             name="list_filter_all",
             items=[2, 4, 6],
-            predicate=lambda x: cast(int, x) % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_result=[2, 4, 6],
         ),
     ]
@@ -567,7 +567,7 @@ class CollectionUtilitiesScenarios:
         CountScenario(
             name="count_predicate",
             items=[1, 2, 3, 4],
-            predicate=lambda x: cast(int, x) % 2 == 0,
+            predicate=lambda x: cast("int", x) % 2 == 0,
             expected_count=2,
         ),
     ]
@@ -576,26 +576,26 @@ class CollectionUtilitiesScenarios:
         ProcessScenario(
             name="process_list",
             items=[1, 2, 3],
-            processor=lambda x: cast(int, x) * 2,
+            processor=lambda x: cast("int", x) * 2,
             expected_result=[2, 4, 6],
         ),
         ProcessScenario(
             name="process_list_skip",
             items=[1, 2, 3],
-            processor=lambda x: cast(int, x) * 2,
+            processor=lambda x: cast("int", x) * 2,
             expected_result=[4, 6],
-            predicate=lambda x: cast(int, x) > 1,
+            predicate=lambda x: cast("int", x) > 1,
         ),
         ProcessScenario(
             name="process_strings",
             items=["a", "b", "c"],
-            processor=lambda x: cast(str, x).upper(),
+            processor=lambda x: cast("str", x).upper(),
             expected_result=["A", "B", "C"],
         ),
         ProcessScenario(
             name="process_empty",
             items=[],
-            processor=lambda x: cast(int, x) * 2,
+            processor=lambda x: cast("int", x) * 2,
             expected_result=[],
         ),
     ]
@@ -879,7 +879,7 @@ class TestuCollectionFind:
         # Collection.find works on lists, tuples, and dicts
         result = u.Collection.find(
             scenario.items,
-            cast(Any, scenario.predicate),
+            cast("Any", scenario.predicate),
         )
         assert result == scenario.expected_result
 

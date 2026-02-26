@@ -28,8 +28,6 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel
-
 from flext_core import (
     FlextContainer,
     FlextDecorators,
@@ -38,6 +36,7 @@ from flext_core import (
     FlextResult,
 )
 from flext_tests import u
+from pydantic import BaseModel
 
 
 class DecoratorOperationType(StrEnum):

@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-from pydantic_settings import BaseSettings
-
 from flext_core import c, m, r, t, u
-
-
 from flext_core.settings import FlextSettings
+from pydantic_settings import BaseSettings
 
 
 class _SubSettings(FlextSettings):

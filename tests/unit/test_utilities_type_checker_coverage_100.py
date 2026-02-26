@@ -20,15 +20,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# mypy: disable-error-code=arg-type
-from flext_core.typings import t
-
 from collections import UserDict as BaseUserDict
 from typing import TypeVar, cast, get_origin
 
 import pytest
-
 from flext_core import FlextResult, h, t, u
+
+# mypy: disable-error-code=arg-type
+from flext_core.typings import t
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")

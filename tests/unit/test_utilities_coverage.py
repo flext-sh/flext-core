@@ -14,8 +14,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.utilities import FlextUtilities
 from flext_core.models import FlextModels as m
+from flext_core.utilities import FlextUtilities
+
 
 class TestUtilitiesCoverage:
     """Placeholder tests for utilities coverage - methods tested in dedicated coverage modules."""

@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import BaseModel
 from flext_core import t
+from pydantic import BaseModel
 
 
 class TestDictMixinOperations:

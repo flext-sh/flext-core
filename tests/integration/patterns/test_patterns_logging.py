@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import logging
 import time
 
 import pytest
-
 from flext_core import FlextLogger
 from flext_core.constants import c
+from flext_core.typings import t
+
 from tests.test_utils import assertion_helpers
 
 # Alias for the LogLevel enum

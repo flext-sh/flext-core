@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pydantic import Field
 from typing import cast
 
 from flext_core import c, m, r, t, u
+from pydantic import Field
 
 
 class _Stats(m.CollectionsStatistics):

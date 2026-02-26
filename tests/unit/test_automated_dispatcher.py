@@ -6,12 +6,12 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-from typing import Any
 from collections.abc import Mapping
+from typing import Any
 
 import pytest
+from flext_core import r, t
 
-from flext_core import t, r
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory

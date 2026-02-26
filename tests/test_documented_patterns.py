@@ -21,13 +21,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-
 import operator
 from dataclasses import dataclass, field
 from typing import cast
 
 import pytest
-from pydantic import BaseModel
 
 # ============================================================================
 # Test Models and Factories
@@ -41,10 +39,11 @@ from flext_core import (
     FlextResult,
     FlextService,
     FlextSettings,
-    t,
 )
-from tests.test_utils import assertion_helpers
 from flext_core.models import m
+from pydantic import BaseModel
+
+from tests.test_utils import assertion_helpers
 
 
 @dataclass

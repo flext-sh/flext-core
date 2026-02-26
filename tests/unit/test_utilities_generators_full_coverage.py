@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import importlib
 from collections.abc import ItemsView, Iterator, Mapping
 from datetime import UTC, datetime, tzinfo
 from typing import cast
 
-import importlib
 import pytest
-from pydantic import BaseModel
 from flext_core import m, u
 from flext_core.typings import JsonValue
+from pydantic import BaseModel
 
 generators_module = importlib.import_module("flext_core._utilities.generators")
 

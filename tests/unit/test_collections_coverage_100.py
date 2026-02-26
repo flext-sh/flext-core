@@ -19,9 +19,8 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from pydantic import Field
-
 from flext_core import FlextRuntime, m, t
+from pydantic import Field
 
 # Use actual classes, not type aliases, for inheritance
 Statistics = m.CollectionsStatistics

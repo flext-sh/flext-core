@@ -14,16 +14,15 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast
 
 import pytest
-
 from flext_core import t
 from flext_core.result import r
+from flext_core.typings import t
 from flext_tests import u
 
 

@@ -24,12 +24,11 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
+from flext_tests import t, u
 from pydantic import BaseModel
 
-from flext_tests import t, u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
-
 
 ComplexValue = TestsFlextModels.Core.ComplexValue
 CustomEntity = TestsFlextModels.Core.CustomEntity
@@ -610,9 +609,13 @@ class TestuDomain:
         )
         expected: object = test_case.get("expected_result")
         if isinstance(expected, type):
-            assert isinstance(operation_result, expected), f"Expected {expected}, got {type(operation_result)}: {operation_result}"
+            assert isinstance(operation_result, expected), (
+                f"Expected {expected}, got {type(operation_result)}: {operation_result}"
+            )
         else:
-            assert operation_result == expected, f"Expected {expected}, got {operation_result}"
+            assert operation_result == expected, (
+                f"Expected {expected}, got {operation_result}"
+            )
 
     @pytest.mark.parametrize(
         "test_case",
@@ -631,7 +634,9 @@ class TestuDomain:
             _require_payload_mapping(test_case["input_data"]),
         )
         # hash_value_object_by_value returns an int; expected_result is the type `int`
-        assert isinstance(operation_result, int), f"Expected int, got {type(operation_result)}: {operation_result}"
+        assert isinstance(operation_result, int), (
+            f"Expected int, got {type(operation_result)}: {operation_result}"
+        )
 
     @pytest.mark.parametrize(
         "test_case",

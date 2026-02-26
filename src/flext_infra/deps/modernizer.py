@@ -286,6 +286,74 @@ class EnsurePytestConfigPhase:
         return changes
 
 
+class EnsurePyreflyConfigPhase:
+    """Ensure standard Pyrefly configuration for max-strict typing."""
+
+    # The 13 opt-in strict rules (from Task 1 research + root pyproject.toml cleanup)
+    _STRICT_ERRORS: tuple[str, ...] = (
+        # 2 warn→error
+        "deprecated",
+        "redundant-cast",
+        # 11 ignore→error
+        "implicit-abstract-class",
+        "implicit-any",
+        "implicitly-defined-attribute",
+        "missing-override-decorator",
+        "missing-source",
+        "not-required-key-access",
+        "open-unpacking",
+        "protocol-implicitly-defined-attribute",
+        "unannotated-attribute",
+        "unannotated-parameter",
+        "unannotated-return",
+    )
+
+    def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
+        """Merge standard Pyrefly config into existing, preserving project-specific entries."""
+        changes: list[str] = []
+
+        tool = doc.get("tool")
+        if not isinstance(tool, Table):
+            tool = tomlkit.table()
+            doc["tool"] = tool
+
+        pyrefly = _ensure_table(tool, "pyrefly")
+
+        if pyrefly.get("python-version") != "3.13":
+            pyrefly["python-version"] = "3.13"
+            changes.append("tool.pyrefly.python-version set to 3.13")
+
+        if pyrefly.get("ignore-errors-in-generated-code") is not True:
+            pyrefly["ignore-errors-in-generated-code"] = True
+            changes.append("tool.pyrefly.ignore-errors-in-generated-code enabled")
+
+        expected_search = ["."] if is_root else [".."]
+        current_search = _as_string_list(pyrefly.get("search-path"))
+        if current_search != expected_search:
+            pyrefly["search-path"] = _array(expected_search)
+            changes.append(f"tool.pyrefly.search-path set to {expected_search}")
+
+        errors = _ensure_table(pyrefly, "errors")
+        for error_rule in self._STRICT_ERRORS:
+            if errors.get(error_rule) is not True:
+                errors[error_rule] = True
+                changes.append(f"tool.pyrefly.errors.{error_rule} enabled")
+
+        if is_root:
+            current_excludes = _as_string_list(pyrefly.get("project-excludes"))
+            pb2_globs = ["**/_pb2.py", "**/_pb2_grpc.py"]
+            needed = set(pb2_globs) - set(current_excludes)
+            if needed:
+                pyrefly["project-excludes"] = _array(
+                    sorted(set(current_excludes) | set(pb2_globs))
+                )
+                changes.append(
+                    f"tool.pyrefly.project-excludes added {', '.join(needed)}"
+                )
+
+        return changes
+
+
 class InjectCommentsPhase:
     """Inject managed/custom/auto markers into pyproject.toml."""
 
@@ -388,8 +456,45 @@ class PyprojectModernizer:
         if doc is None:
             return ["invalid TOML"]
 
+        SUB_PROJECTS = {
+            "algar-oud-mig",
+            "flexcore",
+            "flext-api",
+            "flext-auth",
+            "flext-cli",
+            "flext-core",
+            "flext-db-oracle",
+            "flext-dbt-ldap",
+            "flext-dbt-ldif",
+            "flext-dbt-oracle",
+            "flext-dbt-oracle-wms",
+            "flext-grpc",
+            "flext-ldap",
+            "flext-ldif",
+            "flext-meltano",
+            "flext-observability",
+            "flext-oracle-oic",
+            "flext-oracle-wms",
+            "flext-plugin",
+            "flext-quality",
+            "flext-tap-ldap",
+            "flext-tap-ldif",
+            "flext-tap-oracle",
+            "flext-tap-oracle-oic",
+            "flext-tap-oracle-wms",
+            "flext-target-ldap",
+            "flext-target-ldif",
+            "flext-target-oracle",
+            "flext-target-oracle-oic",
+            "flext-target-oracle-wms",
+            "flext-web",
+            "gruponos-meltano-native",
+        }
+        is_root = path.parent.name not in SUB_PROJECTS
+
         changes = ConsolidateGroupsPhase().apply(doc, canonical_dev)
         changes.extend(EnsurePytestConfigPhase().apply(doc))
+        changes.extend(EnsurePyreflyConfigPhase().apply(doc, is_root=is_root))
         rendered = tomlkit.dumps(doc)
         if not skip_comments:
             rendered, comment_changes = InjectCommentsPhase().apply(rendered)

@@ -5,10 +5,8 @@ from collections.abc import Callable
 from typing import Any, cast
 
 import pytest
-from dependency_injector import providers
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
 from pydantic import BaseModel
-
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
 
 
 class _FalseConfig:
@@ -311,7 +309,9 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     _ = c.scoped(subproject="sub")
     assert isinstance(captured["config"], FlextSettings)
 
-    _ = c.scoped(config=cast(Any, _FalseConfig()), context=cast(Any, _ContextNoClone()))
+    _ = c.scoped(
+        config=cast("Any", _FalseConfig()), context=cast("Any", _ContextNoClone())
+    )
     assert isinstance(captured["context"], FlextContext)
 
 
@@ -518,7 +518,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
 
     assert c.register_factory("fac-ok", lambda: 1).is_success
     assert c.register_factory("fac-ok", lambda: 2).is_failure
-    assert c.register_factory("fac-bad", cast(Any, 123)).is_success
+    assert c.register_factory("fac-bad", cast("Any", 123)).is_success
 
     assert FlextContainer._narrow_factory_result("x") == "x"
 

@@ -11,16 +11,16 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 import operator
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 
+from flext_core import t, u
+from flext_core.models import m
 from pydantic import BaseModel
 
-from flext_core import t, u
 from tests.test_utils import assertion_helpers
-from flext_core.models import m
 
 
 @dataclass
@@ -59,7 +59,7 @@ class TestuMapperExtract:
     def test_extract_object(self) -> None:
         """Test object attribute extraction."""
         obj = SimpleObj(name="test", value=42)
-        result = u.mapper().extract(cast(Any, obj), "name")
+        result = u.mapper().extract(cast("Any", obj), "name")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
 
@@ -144,16 +144,16 @@ class TestuMapperAccessors:
     def test_take_extraction(self) -> None:
         """Test take value extraction."""
         data = {"a": 1, "b": "str"}
-        assert u.mapper().take(cast(Any, data), "a", as_type=int) == 1
+        assert u.mapper().take(cast("Any", data), "a", as_type=int) == 1
         assert (
-            u.mapper().take(cast(Any, data), "b", as_type=int, default=0) == 0
+            u.mapper().take(cast("Any", data), "b", as_type=int, default=0) == 0
         )  # Type mismatch
 
     def test_take_slice(self) -> None:
         """Test take slicing."""
         items = [1, 2, 3, 4, 5]
-        assert u.mapper().take(cast(Any, items), 2) == [1, 2]
-        assert u.mapper().take(cast(Any, items), 2, from_start=False) == [4, 5]
+        assert u.mapper().take(cast("Any", items), 2) == [1, 2]
+        assert u.mapper().take(cast("Any", items), 2, from_start=False) == [4, 5]
 
         d = {"a": 1, "b": 2, "c": 3}
         # Dict order preserved in recent python
@@ -233,7 +233,7 @@ class TestuMapperConversions:
         obj = SimpleObj("test", 1)
         # Pass dict directly - convert_to_json_value handles any dict
         # Purpose is to CONVERT arbitrary objects to JSON-safe format
-        res = u.mapper().convert_to_json_value(cast(Any, {"obj": obj}))
+        res = u.mapper().convert_to_json_value(cast("Any", {"obj": obj}))
         # Should convert obj to string representation
         assert isinstance(res, dict)
         assert "obj" in res
@@ -243,23 +243,25 @@ class TestuMapperConversions:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
         d = {"a": SimpleObj("test", 1)}
         # Use convert_to_json_value which handles any dict
-        res = u.mapper().convert_to_json_value(cast(Any, d))
+        res = u.mapper().convert_to_json_value(cast("Any", d))
         # Result should be a dict
         if isinstance(res, dict):
             assert isinstance(res["a"], str)
         else:
-            raise AssertionError("Expected dict result")
+            msg = "Expected dict result"
+            raise AssertionError(msg)
 
     def test_convert_list_to_json(self) -> None:
         """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
         test_list = [{"a": SimpleObj("test", 1)}]
         # Use convert_to_json_value which handles any sequence
-        res = u.mapper().convert_to_json_value(cast(Any, test_list))
+        res = u.mapper().convert_to_json_value(cast("Any", test_list))
         # Result should be a list
         if isinstance(res, list) and isinstance(res[0], dict):
             assert isinstance(res[0]["a"], str)
         else:
-            raise AssertionError("Expected list of dicts result")
+            msg = "Expected list of dicts result"
+            raise AssertionError(msg)
 
 
 class TestuMapperBuild:
@@ -363,8 +365,8 @@ class TestuMapperAdvanced:
             a: int = 1
 
         obj = Dumpable()
-        assert u.mapper().extract(cast(Any, obj), "a").value == 1
-        assert u.mapper().extract(cast(Any, obj), "b", default=2).value == 2
+        assert u.mapper().extract(cast("Any", obj), "a").value == 1
+        assert u.mapper().extract(cast("Any", obj), "b", default=2).value == 2
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import pytest
-
 from flext_core import c, m, r, t, u
-
 
 settings_models = __import__(
     "flext_core._models.settings", fromlist=["FlextModelsConfig"]

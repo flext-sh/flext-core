@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import UserDict, UserList
+
 # mypy: follow_imports=skip
 # mypy: disable-error-code=valid-type
 # mypy: disable-error-code=misc
@@ -56,7 +58,7 @@ def _identity(value: t.ConfigMapValue) -> t.ConfigMapValue:
     return value
 
 
-class ExplodingLenList(list[object]):
+class ExplodingLenList(UserList[object]):
     def __len__(self) -> int:
         msg = "len exploded"
         raise TypeError(msg)
@@ -214,12 +216,16 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     accessor = mapper.prop("name")
     assert (
         accessor(
-            cast("t.ConfigMap | BaseModel", cast("object", AttrObject(name="x", value=1)))
+            cast(
+                "t.ConfigMap | BaseModel", cast("object", AttrObject(name="x", value=1))
+            )
         )
         == "x"
     )
     assert (
-        mapper.prop("missing")(cast("t.ConfigMap | BaseModel", cast("object", {"a": 1})))
+        mapper.prop("missing")(
+            cast("t.ConfigMap | BaseModel", cast("object", {"a": 1}))
+        )
         == ""
     )
 
@@ -401,7 +407,9 @@ def test_build_apply_transform_and_process_error_paths(
         "_apply_transform_steps",
         staticmethod(explode_transform_steps),
     )
-    assert mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "stop") == "d"
+    assert (
+        mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "stop") == "d"
+    )
     assert mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "skip") == {
         "a": 1,
     }
@@ -601,7 +609,8 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     class BadPredicate(NamedPredicate):
         def __call__(self, value: int) -> bool:
             _ = value
-            raise ValueError("x")
+            msg = "x"
+            raise ValueError(msg)
 
     class NegativePredicate(NamedPredicate):
         def __call__(self, value: int) -> bool:
@@ -627,9 +636,10 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
 
-    class BadItems(dict[str, t.GeneralValueType]):
+    class BadItems(UserDict[str, t.GeneralValueType]):
         def items(self):
-            raise RuntimeError("bad items")
+            msg = "bad items"
+            raise RuntimeError(msg)
 
     fail_map = mapper.map_dict_keys(BadItems(), {})
     assert fail_map.is_failure
@@ -638,9 +648,10 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert flags.is_success
     assert flags.value == {"can_read": True, "can_write": False}
 
-    class BadIter(list[str]):
+    class BadIter(UserList[str]):
         def __iter__(self):
-            raise RuntimeError("bad iter")
+            msg = "bad iter"
+            raise RuntimeError(msg)
 
     fail_flags = mapper.build_flags_dict(BadIter(), {})
     assert fail_flags.is_failure
@@ -649,9 +660,10 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert active.is_success
     assert active.value == ["R"]
 
-    class BadGet(dict[str, bool]):
+    class BadGet(UserDict[str, bool]):
         def get(self, key: str, default: object = None):
-            raise RuntimeError("bad get")
+            msg = "bad get"
+            raise RuntimeError(msg)
 
     fail_active = mapper.collect_active_keys(BadGet(), {"x": "X"})
     assert fail_active.is_failure
@@ -830,7 +842,9 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
 
     context = mapper.process_context_data(
         primary_data=cast("t.ConfigMapValue", cast("object", DictLikeOnly())),
-        secondary_data=cast("t.ConfigMapValue", cast("object", DictLikeOnlySecondary())),
+        secondary_data=cast(
+            "t.ConfigMapValue", cast("object", DictLikeOnlySecondary())
+        ),
         merge_strategy="merge",
     )
     assert context == {}

@@ -9,13 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Hashable
+from collections import UserDict
 from datetime import datetime
 from typing import cast
 
+from flext_core import t, u
 from pydantic import BaseModel, ConfigDict
-
-from flext_core import c, t, u
 
 
 class _SampleEntity(BaseModel):
@@ -39,7 +38,7 @@ class TestDomainLogger:
     """Tests for u.Domain.logger property."""
 
     def test_logger_property_returns_logger(self) -> None:
-        """logger property returns a structlog logger (line 32)."""
+        """Logger property returns a structlog logger (line 32)."""
         domain_util = u.Domain()
         logger = domain_util.logger
         assert logger is not None
@@ -110,11 +109,12 @@ class TestValidateValueObjectImmutable:
 
 
 def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
-    class _BrokenConfigDict(dict[str, bool]):
+    class _BrokenConfigDict(UserDict[str, bool]):
         def get(self, key: str, default: object = None) -> bool:
             _ = key
             _ = default
-            raise TypeError("bad config")
+            msg = "bad config"
+            raise TypeError(msg)
 
     class _BrokenConfig:
         model_config: _BrokenConfigDict = _BrokenConfigDict()
