@@ -1,0 +1,243 @@
+"""Tests for flext_infra.output — terminal output utility."""
+
+from __future__ import annotations
+
+import io
+import re
+from unittest.mock import patch
+
+import pytest
+
+from flext_infra.output import (
+    InfraOutput,
+    _should_use_color,
+    _should_use_unicode,
+)
+
+ANSI_RE = re.compile(r"\033\[\d+m")
+
+
+def _strip_ansi(text: str) -> str:
+    return ANSI_RE.sub("", text)
+
+
+class TestShouldUseColor:
+    def test_no_color_env_disables(self) -> None:
+        with patch.dict("os.environ", {"NO_COLOR": "1"}, clear=False):
+            assert _should_use_color() is False
+
+    def test_no_color_empty_string_disables(self) -> None:
+        with patch.dict("os.environ", {"NO_COLOR": ""}, clear=False):
+            assert _should_use_color() is False
+
+    def test_force_color_enables(self) -> None:
+        env = {"FORCE_COLOR": "1"}
+        with patch.dict("os.environ", env, clear=True):
+            assert _should_use_color() is True
+
+    def test_no_color_beats_force_color(self) -> None:
+        env = {"NO_COLOR": "1", "FORCE_COLOR": "1"}
+        with patch.dict("os.environ", env, clear=True):
+            assert _should_use_color() is False
+
+    def test_ci_env_disables(self) -> None:
+        for var in ("CI", "GITHUB_ACTIONS", "GITLAB_CI"):
+            env = {var: "true"}
+            with patch.dict("os.environ", env, clear=True):
+                assert _should_use_color() is False, f"{var} should disable color"
+
+    def test_tty_with_xterm_enables(self) -> None:
+        stream = io.StringIO()
+        stream.isatty = lambda: True  # type: ignore[assignment]
+        env = {"TERM": "xterm-256color"}
+        with patch.dict("os.environ", env, clear=True):
+            assert _should_use_color(stream) is True
+
+    def test_tty_with_dumb_term_disables(self) -> None:
+        stream = io.StringIO()
+        stream.isatty = lambda: True  # type: ignore[assignment]
+        env = {"TERM": "dumb"}
+        with patch.dict("os.environ", env, clear=True):
+            assert _should_use_color(stream) is False
+
+    def test_tty_with_empty_term_disables(self) -> None:
+        stream = io.StringIO()
+        stream.isatty = lambda: True  # type: ignore[assignment]
+        with patch.dict("os.environ", {"TERM": ""}, clear=True):
+            assert _should_use_color(stream) is False
+
+    def test_non_tty_disables(self) -> None:
+        stream = io.StringIO()
+        with patch.dict("os.environ", {}, clear=True):
+            assert _should_use_color(stream) is False
+
+
+class TestShouldUseUnicode:
+    def test_utf8_lang_enables(self) -> None:
+        with patch.dict("os.environ", {"LANG": "en_US.UTF-8"}, clear=True):
+            assert _should_use_unicode() is True
+
+    def test_lc_all_utf8_enables(self) -> None:
+        with patch.dict("os.environ", {"LC_ALL": "en_US.utf8"}, clear=True):
+            assert _should_use_unicode() is True
+
+    def test_c_locale_disables(self) -> None:
+        with patch.dict("os.environ", {"LANG": "C"}, clear=True):
+            assert _should_use_unicode() is False
+
+    def test_empty_env_disables(self) -> None:
+        with patch.dict("os.environ", {}, clear=True):
+            assert _should_use_unicode() is False
+
+    def test_lc_all_takes_priority(self) -> None:
+        env = {"LC_ALL": "en_US.UTF-8", "LANG": "C"}
+        with patch.dict("os.environ", env, clear=True):
+            assert _should_use_unicode() is True
+
+
+class TestInfraOutputStatus:
+    def test_success_status_contains_ok(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
+        out.status("check", "flext-core", result=True, elapsed=1.23)
+        text = buf.getvalue()
+        assert "[OK]" in text
+        assert "check" in text
+        assert "flext-core" in text
+        assert "1.23s" in text
+
+    def test_failure_status_contains_fail(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
+        out.status("lint", "flext-api", result=False, elapsed=0.45)
+        text = buf.getvalue()
+        assert "[FAIL]" in text
+        assert "flext-api" in text
+
+    def test_unicode_symbols(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=True, stream=buf)
+        out.status("test", "proj", result=True, elapsed=0.1)
+        assert "✓" in buf.getvalue()
+
+    def test_color_codes_present_when_enabled(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=True, use_unicode=False, stream=buf)
+        out.status("check", "proj", result=True, elapsed=0.5)
+        assert "\033[" in buf.getvalue()
+
+
+class TestInfraOutputSummary:
+    def test_summary_format(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
+        out.summary("check", total=33, success=30, failed=2, skipped=1, elapsed=12.34)
+        text = buf.getvalue()
+        assert "check summary" in text
+        assert "Total: 33" in text
+        assert "Success: 30" in text
+        assert "Failed: 2" in text
+        assert "Skipped: 1" in text
+        assert "12.34s" in text
+
+    def test_summary_no_color_for_zero_counts(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=True, use_unicode=False, stream=buf)
+        out.summary("test", total=5, success=5, failed=0, skipped=0, elapsed=1.0)
+        text = buf.getvalue()
+        plain = _strip_ansi(text)
+        assert "Failed: 0" in plain
+        assert "Skipped: 0" in plain
+
+
+class TestInfraOutputMessages:
+    def test_error_message(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.error("something broke")
+        assert "ERROR: something broke" in buf.getvalue()
+
+    def test_error_with_detail(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.error("fail", detail="see logs")
+        text = buf.getvalue()
+        assert "ERROR: fail" in text
+        assert "see logs" in text
+
+    def test_warning_message(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.warning("deprecated feature")
+        assert "WARN: deprecated feature" in buf.getvalue()
+
+    def test_info_message(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.info("starting check")
+        assert "INFO: starting check" in buf.getvalue()
+
+
+class TestInfraOutputHeader:
+    def test_header_ascii(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
+        out.header("Quality Gates")
+        text = buf.getvalue()
+        assert "=" * 60 in text
+        assert "Quality Gates" in text
+
+    def test_header_unicode(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=True, stream=buf)
+        out.header("Quality Gates")
+        assert "═" * 60 in buf.getvalue()
+
+
+class TestInfraOutputProgress:
+    def test_progress_format(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.progress(1, 33, "flext-core", "check")
+        text = buf.getvalue()
+        assert "[01/33]" in text
+        assert "flext-core" in text
+        assert "check ..." in text
+
+    def test_progress_single_digit_total(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.progress(3, 5, "proj", "test")
+        assert "[3/5]" in buf.getvalue()
+
+    def test_progress_large_total(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, stream=buf)
+        out.progress(7, 100, "proj", "lint")
+        assert "[007/100]" in buf.getvalue()
+
+
+class TestInfraOutputNoColor:
+    def test_no_ansi_codes_when_color_disabled(self) -> None:
+        buf = io.StringIO()
+        out = InfraOutput(use_color=False, use_unicode=False, stream=buf)
+        out.info("test")
+        out.warning("test")
+        out.error("test")
+        out.status("check", "proj", True, 0.1)
+        out.header("Title")
+        out.progress(1, 1, "proj", "test")
+        out.summary("check", 1, 1, 0, 0, 0.1)
+        assert "\033[" not in buf.getvalue()
+
+
+class TestModuleSingleton:
+    def test_output_singleton_importable(self) -> None:
+        from flext_infra.output import output
+
+        assert isinstance(output, InfraOutput)
+
+    def test_output_writes_to_stderr_by_default(self) -> None:
+        from flext_infra.output import output
+
+        assert output._stream is not None
