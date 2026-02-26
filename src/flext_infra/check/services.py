@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
@@ -23,6 +23,7 @@ from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
 from flext_infra.json_io import JsonService
 from flext_infra.models import m
+from flext_infra.output import output
 from flext_infra.paths import PathResolver
 from flext_infra.reporting import ReportingService
 from flext_infra.subprocess import CommandRunner
@@ -37,7 +38,7 @@ _MARKDOWN_RE = re.compile(
 _GO_VET_RE = re.compile(
     r"^(?P<file>[^:\n]+\.go):(?P<line>\d+)(?::(?P<col>\d+))?:\s*(?P<msg>.*)$",
 )
-logger = structlog.get_logger(__name__)
+_logger = FlextLogger.create_module_logger(__name__)
 _MAX_DISPLAY_ISSUES = 50
 
 
@@ -398,38 +399,34 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         results: list[_ProjectResult] = []
         total = len(projects)
         failed = 0
+        skipped = 0
+        loop_start = time.monotonic()
 
         for index, project_name in enumerate(projects, 1):
             project_dir = self._workspace_root / project_name
             pyproject_path = project_dir / c.Files.PYPROJECT_FILENAME
             if not project_dir.is_dir() or not pyproject_path.exists():
-                _ = sys.stdout.write(
-                    f"[{index:2d}/{total:2d}] {project_name} ... skipped\n"
-                )
+                output.progress(index, total, project_name, "skip")
+                skipped += 1
                 continue
 
-            _ = sys.stdout.write(f"[{index:2d}/{total:2d}] {project_name} ... ")
-            _ = sys.stdout.flush()
+            output.progress(index, total, project_name, "check")
+            start = time.monotonic()
             project_result = self._check_project(
                 project_dir, resolved_gates, report_base
             )
+            elapsed = time.monotonic() - start
             results.append(project_result)
 
             if project_result.passed:
-                _ = sys.stdout.write("ok\n")
+                output.status("check", project_name, True, elapsed)
             else:
-                counts = " ".join(
-                    f"{gate}={len(project_result.gates[gate].issues)}"
-                    for gate in resolved_gates
-                    if gate in project_result.gates
-                    and len(project_result.gates[gate].issues) > 0
-                )
-                _ = sys.stdout.write(
-                    f"FAIL ({project_result.total_errors} errors: {counts})\n"
-                )
+                output.status("check", project_name, False, elapsed)
                 failed += 1
                 if fail_fast:
                     break
+
+        total_elapsed = time.monotonic() - loop_start
 
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
         md_path = report_base / "check-report.md"
@@ -447,16 +444,13 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             )
 
         total_errors = sum(project.total_errors for project in results)
-        _ = sys.stdout.write(
-            f"\n{'=' * 60}\n"
-            f"Check: {len(results)} projects, {total_errors} errors, {failed} failed\n"
-            f"Reports: {md_path}\n"
-            f"         {sarif_path}\n"
-            f"{'=' * 60}\n"
-        )
+        success = len(results) - failed
+        output.summary("check", len(results), success, failed, skipped, total_elapsed)
+        output.info(f"Reports: {md_path}")
+        output.info(f"         {sarif_path}")
 
         if total_errors > 0:
-            _ = sys.stdout.write("\nErrors by project:\n")
+            output.info("Errors by project:")
             for project in sorted(
                 results, key=lambda item: item.total_errors, reverse=True
             ):
@@ -467,8 +461,8 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     for gate in resolved_gates
                     if gate in project.gates and len(project.gates[gate].issues) > 0
                 )
-                _ = sys.stdout.write(
-                    f"  {project.project:30s} {project.total_errors:6d}  ({breakdown})\n"
+                output.error(
+                    f"{project.project:30s} {project.total_errors:6d}  ({breakdown})"
                 )
 
         return r[list[_ProjectResult]].ok(results)
@@ -1479,7 +1473,7 @@ def run_cli(argv: list[str] | None = None) -> int:
             fail_fast=args.fail_fast,
         )
         if run_result.is_failure:
-            _ = sys.stderr.write(f"{run_result.error or 'check failed'}\n")
+            output.error(run_result.error or "check failed")
             return 2
         failed_projects = [
             project for project in run_result.value if not project.passed
@@ -1494,7 +1488,7 @@ def run_cli(argv: list[str] | None = None) -> int:
             verbose=args.verbose,
         )
         if fix_result.is_failure:
-            _ = sys.stderr.write(f"{fix_result.error or 'pyrefly config fix failed'}\n")
+            output.error(fix_result.error or "pyrefly config fix failed")
             return 1
         return 0
 

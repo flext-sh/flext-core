@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 from flext_infra.check.services import DEFAULT_GATES, WorkspaceChecker
+from flext_infra.output import output
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -19,7 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not args.projects:
-        _ = sys.stderr.write("ERROR: no projects specified\n")
+        output.error("no projects specified")
         return 1
 
     checker = WorkspaceChecker()
@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
         fail_fast=args.fail_fast,
     )
     if result.is_failure:
-        _ = sys.stderr.write(f"{result.error or 'workspace check failed'}\n")
+        output.error(result.error or "workspace check failed")
         return 2
 
     failed_projects = [project for project in result.value if not project.passed]
