@@ -158,5 +158,3 @@ filterwarnings = ["ignore:Remove `format_exc_info` from your processor chain:Use
 
 # [MANAGED] ruff
 
-[tool.pyrefly]
-search_path = ["."]
