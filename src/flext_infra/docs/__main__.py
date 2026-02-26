@@ -17,6 +17,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.constants import c
 from flext_infra.docs.auditor import DocAuditor
 from flext_infra.docs.builder import DocBuilder
@@ -112,6 +114,9 @@ def _run_validate(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
+    """Run documentation services: audit, fix, build, generate, validate."""
+    FlextRuntime.ensure_structlog_configured()
+    parser = argparse.ArgumentParser(description="Documentation management services")
     """Run documentation services: audit, fix, build, generate, validate."""
     parser = argparse.ArgumentParser(description="Documentation management services")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

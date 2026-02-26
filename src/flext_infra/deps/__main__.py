@@ -18,6 +18,8 @@ import sys
 from collections.abc import Mapping
 from types import MappingProxyType
 
+from flext_core.runtime import FlextRuntime
+
 _MIN_ARGV = 2
 
 _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
@@ -31,6 +33,7 @@ _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
 
 def main() -> int:
     """Dispatch to the appropriate deps subcommand."""
+    FlextRuntime.ensure_structlog_configured()
     if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _ = sys.stdout.write("Usage: flext-infra deps <subcommand> [args...]\n\n")
         _ = sys.stdout.write("Subcommands:\n")

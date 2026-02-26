@@ -15,6 +15,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.workspace.detector import WorkspaceDetector
 from flext_infra.workspace.migrator import ProjectMigrator
 from flext_infra.workspace.orchestrator import OrchestratorService
@@ -96,6 +98,9 @@ def _run_migrate(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
+    """Run workspace utilities: detect mode, sync base.mk, orchestrate projects."""
+    FlextRuntime.ensure_structlog_configured()
+    parser = argparse.ArgumentParser(description="Workspace management utilities")
     """Run workspace utilities: detect mode, sync base.mk, orchestrate projects."""
     parser = argparse.ArgumentParser(description="Workspace management utilities")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

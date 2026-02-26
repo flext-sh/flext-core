@@ -6,6 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator
 from flext_infra.models import m
@@ -20,6 +22,9 @@ def _build_config(project_name: str | None) -> m.BaseMkConfig | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Generate base.mk content from templates and write to file or stdout."""
+    FlextRuntime.ensure_structlog_configured()
+    parser = argparse.ArgumentParser(description="base.mk generation utilities")
     """Generate base.mk content from templates and write to file or stdout."""
     parser = argparse.ArgumentParser(description="base.mk generation utilities")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

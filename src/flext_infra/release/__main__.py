@@ -15,6 +15,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.paths import PathResolver
 from flext_infra.release.orchestrator import ReleaseOrchestrator
 from flext_infra.versioning import VersioningService
@@ -91,6 +93,9 @@ def _resolve_tag(args: argparse.Namespace, version: str) -> str:
 
 
 def main() -> int:
+    """Orchestrate the release process through configured phases."""
+    FlextRuntime.ensure_structlog_configured()
+    args = _parse_args()
     """Orchestrate the release process through configured phases."""
     args = _parse_args()
 

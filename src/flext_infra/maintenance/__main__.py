@@ -12,11 +12,15 @@ from __future__ import annotations
 import argparse
 import sys
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.maintenance.python_version import PythonVersionEnforcer
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run maintenance service CLI."""
+    FlextRuntime.ensure_structlog_configured()
+
     parser = argparse.ArgumentParser(
         description="Enforce Python version constraints via pyproject.toml"
     )
@@ -32,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     result = service.execute(check_only=args.check, verbose=args.verbose)
 
     if result.is_success:
-        return result.value
+        return int(result.value) if result.value is not None else 0
     _ = sys.stdout.write(f"Error: {result.error}\n")
     return 1
 

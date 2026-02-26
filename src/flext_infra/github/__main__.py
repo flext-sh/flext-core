@@ -17,6 +17,8 @@ import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.github.linter import WorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import PrWorkspaceManager
@@ -146,6 +148,7 @@ _SUBCOMMANDS: Mapping[str, _Handler] = {
 
 def main() -> int:
     """Dispatch to the appropriate github subcommand."""
+    FlextRuntime.ensure_structlog_configured()
     if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _ = sys.stdout.write("Usage: flext-infra github <subcommand> [args...]\n\n")
         _ = sys.stdout.write("Subcommands:\n")

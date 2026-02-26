@@ -25,6 +25,8 @@ import sys
 from collections.abc import Mapping
 from types import MappingProxyType
 
+from flext_core.runtime import FlextRuntime
+
 _MIN_ARGV = 2
 
 _GROUPS: Mapping[str, str] = MappingProxyType({
@@ -62,6 +64,7 @@ def _print_help() -> None:
 
 def main() -> int:
     """Dispatch to the appropriate group CLI."""
+    FlextRuntime.ensure_structlog_configured()
     if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
         _print_help()
         return (

@@ -19,6 +19,8 @@ import json
 import sys
 from pathlib import Path
 
+from flext_core.runtime import FlextRuntime
+
 from flext_infra.core.basemk_validator import BaseMkValidator
 from flext_infra.core.inventory import InventoryService
 from flext_infra.core.pytest_diag import PytestDiagExtractor
@@ -171,6 +173,9 @@ def _run_stub_validate(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
+    """Run core infrastructure services."""
+    FlextRuntime.ensure_structlog_configured()
+    parser = argparse.ArgumentParser(description="Core infrastructure services")
     """Run core infrastructure services."""
     parser = argparse.ArgumentParser(description="Core infrastructure services")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
