@@ -64,9 +64,9 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
-from structlog.typing import BindableLogger
 
 from flext_core.constants import c
+from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import T, t
 
 _module_logger = logging.getLogger(__name__)
@@ -712,7 +712,7 @@ class FlextRuntime:
     @staticmethod
     def get_logger(
         name: str | None = None,
-    ) -> BindableLogger:
+    ) -> p.Log.StructlogLogger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
 
         Returns the exact same structlog logger instance that FlextLogger uses internally.
@@ -738,7 +738,7 @@ class FlextRuntime:
         # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Log.StructlogLogger protocol
         # All methods (debug, info, warning, error, etc.) are available directly from structlog logger
         # p.Log.StructlogLogger protocol is compatible with structlog's return type via structural typing
-        logger: BindableLogger = structlog.get_logger(name)
+        logger: p.Log.StructlogLogger = structlog.get_logger(name)
         return logger
 
     @staticmethod
@@ -1122,8 +1122,8 @@ class FlextRuntime:
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[object] | None = None,
-        wrapper_class_factory: Callable[[], type[BindableLogger]] | None = None,
-        logger_factory: Callable[[], BindableLogger] | None = None,
+        wrapper_class_factory: Callable[[], type[p.Log.StructlogLogger]] | None = None,
+        logger_factory: Callable[[], p.Log.StructlogLogger] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -1225,7 +1225,7 @@ class FlextRuntime:
         # Configure structlog with processors and logger factory
         # structlog.configure accepts specific types, but we construct them dynamically
 
-        wrapper_arg: type[BindableLogger] | None = (
+        wrapper_arg: type[p.Log.StructlogLogger] | None = (
             wrapper_class_factory()
             if wrapper_class_factory is not None
             else module.make_filtering_bound_logger(level_to_use)
@@ -1235,7 +1235,7 @@ class FlextRuntime:
         # structlog accepts various factory types - we use object to accept all
         factory_to_use: object
         if logger_factory is not None:
-            # Use the provided factory directly (Callable[[], BindableLogger])
+            # Use the provided factory directly (Callable[[], p.Log.StructlogLogger])
             factory_to_use = logger_factory
         elif async_logging:
             # Default factory handling with async buffering

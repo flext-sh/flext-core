@@ -98,7 +98,7 @@ FLEXT-Core documentation follows strict standards for clarity, accuracy, and mai
 - **Best Practices**: Do's and don'ts
 - **Common Issues**: Troubleshooting guide
 
-`````markdown
+``````markdown
 # Feature Name
 
 ## Overview
@@ -107,7 +107,7 @@ One paragraph explaining what this feature does and why use it.
 
 ## Basic Usage
 
-```python
+`````python
 # Working example
 ```text
 ````markdown
@@ -135,8 +135,9 @@ One paragraph explaining what this feature does and why use it.
 ### Issue: Something breaks
 
 **Solution**: How to fix it
+``````
 
-`````
+``````
 
 ## Code Examples
 
@@ -486,7 +487,7 @@ Before publishing documentation:
 - Error1: When this happens
 - Error2: When that happens
 
-`````
+``````
 
 ### For Classes
 
@@ -498,8 +499,10 @@ Before publishing documentation:
 **Inherits from**: Parent class if applicable
 
 **Usage:**
+
 ```python
 # Basic usage example
+```
 ````
 
 ### Methods
@@ -508,13 +511,14 @@ Each method documented as above.
 
 ### Properties
 
-````markdown
+`````markdown
 ### property_name
 
 **Type**: DataType
 
 **Description**: What does this property represent?
-```text
+
+````text
 
 ## Writing Guidelines
 
@@ -698,4 +702,7 @@ FLEXT-Core documentation standards:
 - ✅ Pass quality gate before publishing
 
 Documentation is part of the product. Maintain the same standards as the code.
-````
+`````
+
+```
+```

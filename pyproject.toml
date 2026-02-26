@@ -5,7 +5,7 @@
 # [MANAGED] build system
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2" ]
+requires = ["poetry-core>=2"]
 
 # [CUSTOM] project metadata
 [project]
@@ -13,17 +13,10 @@ name = "flext-core"
 version = "0.12.0-dev"
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 readme = "README.md"
-keywords = [
-  "clean-architecture",
-  "ddd",
-  "enterprise",
-  "flext",
-  "modern",
-  "solid",
-]
+keywords = ["clean-architecture", "ddd", "enterprise", "flext", "modern", "solid"]
 license = "MIT"
-maintainers = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
-authors = [ { email = "team@flext.sh", name = "FLEXT Team" } ]
+maintainers = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+authors = [{ email = "team@flext.sh", name = "FLEXT Team" }]
 requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -131,49 +124,37 @@ scripts = { "flext-basemk" = "flext_infra.basemk:main", "flext-check" = "flext_i
 # [CUSTOM] poetry - flext-core ships three namespace packages
 [tool.poetry]
 packages = [
-    { include = "flext_core", from = "src" },
-    { include = "flext_infra", from = "src" },
-    { include = "flext_tests", from = "src" },
+  { include = "flext_core", from = "src" },
+  { include = "flext_infra", from = "src" },
+  { include = "flext_tests", from = "src" },
 ]
 
 # [MANAGED] deptry
 [tool.deptry]
-pep621_dev_dependency_groups = [
-    "dev",
-]
+pep621_dev_dependency_groups = ["dev"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-python_classes = [
-    "Test*",
-]
-python_files = [
-    "*_test.py",
-    "*_tests.py",
-    "test_*.py",
-]
-addopts = [
-    "--strict-markers",
-]
+python_classes = ["Test*"]
+python_files = ["*_test.py", "*_tests.py", "test_*.py"]
+addopts = ["--strict-markers"]
 markers = [
-    "unit: unit tests",
-    "integration: integration tests",
-    "performance: performance and benchmark tests",
-    "slow: slow-running tests",
-    "docker: tests requiring Docker",
-    "e2e: end-to-end integration tests",
-    "edge_cases: edge case tests",
-    "stress: stress tests",
-    "resilience: resilience tests",
-    "architecture: architectural pattern tests",
-    "advanced: advanced pattern tests",
-    "ddd: domain-driven design tests",
-    "core: core functionality tests",
-    "coverage: coverage-focused tests",
+  "unit: unit tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "slow: slow-running tests",
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "stress: stress tests",
+  "resilience: resilience tests",
+  "architecture: architectural pattern tests",
+  "advanced: advanced pattern tests",
+  "ddd: domain-driven design tests",
+  "core: core functionality tests",
+  "coverage: coverage-focused tests",
 ]
-filterwarnings = [
-    "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
-]
+filterwarnings = ["ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog"]
 
 # [MANAGED] ruff
 

@@ -158,13 +158,12 @@ class FlextTypes:
     type LaxStr = str | bytes | bytearray
     """LaxStr compatibility for ldap3 integration."""
 
-    # =========================================================================
     # ALIGNED TYPE HIERARCHY (Pydantic-safe, no dynamic top types)
     # =========================================================================
 
     # Tier 1: Scalar primitives (immutable, JSON-safe)
-    type ScalarValue = str | int | float | bool | datetime | None
-    type ScalarAlias = ScalarValue
+    ScalarValue: TypeAlias = _ScalarML
+    ScalarAlias: TypeAlias = ScalarValue
 
     # Tier 2: Pydantic-safe metadata values
     type MetadataScalarValue = str | int | float | bool | None
@@ -180,12 +179,12 @@ class FlextTypes:
     type GeneralListValue = list[str | int | float | bool | datetime | None]
 
     # Input type for guard functions (flat union, no recursion; prefer models at API)
-    type GuardInputValue = _ContainerValue
+    GuardInputValue: TypeAlias = _ContainerValue
 
     # Recursive value type for m.ConfigMap / m.Dict root (no isinstance; use models)
-    type ConfigMapValue = _ContainerValue
+    ConfigMapValue: TypeAlias = _ContainerValue
 
-    type FlexibleValue = _ContainerValue
+    FlexibleValue: TypeAlias = _ContainerValue
 
     # RegisterableService - fixed types only
     RegisterableService: TypeAlias = RegisterableService
@@ -274,10 +273,10 @@ class FlextTypes:
     JsonDict: TypeAlias = JsonDict
 
     # General value type for handlers and config boundaries
-    type GeneralValueType = _ContainerValue
+    GeneralValueType: TypeAlias = _ContainerValue
 
     # Single consolidated callable type for handlers and validators
-    type HandlerCallable = Callable[[ScalarValue], ScalarValue]
+    HandlerCallable: TypeAlias = Callable[[ScalarValue], ScalarValue]
 
     # Acceptable message types for handlers - scalars and models only
     type AcceptableMessageType = ScalarValue | BaseModel | Sequence[ScalarValue]
@@ -369,12 +368,8 @@ class FlextTypes:
 
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
-    type DecoratorType = Callable[
-        [Callable[[ScalarValue], ScalarValue]], Callable[[ScalarValue], ScalarValue]
-    ]
-
-    type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], _ContainerValue]
+    FactoryCallable: TypeAlias = FactoryCallable
+    ResourceCallable: TypeAlias = ResourceCallable
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
     class FactoryMap(_RootDictModel[FactoryRegistrationCallable]):

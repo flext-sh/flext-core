@@ -114,9 +114,7 @@ class FlextContext(FlextRuntime):
                 context_data = m.ContextData.model_validate(initial_data)
             else:
                 context_data = m.ContextData(
-                    data=t.Dict(
-                        root=dict(m.ConfigMap.model_validate(initial_data).items())
-                    )
+                    data=t.Dict(root=m.ConfigMap.model_validate(initial_data).root)
                 )
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
@@ -157,7 +155,7 @@ class FlextContext(FlextRuntime):
             # Set initial data in global context
             self._set_in_contextvar(
                 c.Context.SCOPE_GLOBAL,
-                m.ConfigMap(root=dict(context_data.data.items())),
+                m.ConfigMap(root=context_data.data.root),
             )
 
     @overload
@@ -238,9 +236,7 @@ class FlextContext(FlextRuntime):
             if metadata is not None:
                 initial_data_dict.update(dict(metadata.items()))
             return cls(
-                initial_data=m.ContextData(
-                    data=t.Dict(root=dict(initial_data_dict.items()))
-                )
+                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict.root))
             )
         # Default: use initial_data parameter
         # Auto-generate correlation_id for zero-config setup
@@ -257,11 +253,9 @@ class FlextContext(FlextRuntime):
                 "correlation",
             )
             return cls(
-                initial_data=m.ContextData(
-                    data=t.Dict(root=dict(initial_data_dict_new.items()))
-                )
+                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict_new.root))
             )
-        return cls(initial_data=m.ContextData(data=t.Dict(root=dict(data_map.items()))))
+        return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))
 
     # =========================================================================
     # PRIVATE HELPERS - Context variable management and FlextLogger delegation
@@ -318,7 +312,7 @@ class FlextContext(FlextRuntime):
             self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         )
         updated = current.model_copy()
-        updated.update(dict(data.items()))
+        updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
             normalized_context: dict[str, t.MetadataAttributeValue] = {
@@ -517,12 +511,12 @@ class FlextContext(FlextRuntime):
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             updated = m.ConfigMap.model_validate(current)
-            updated.update(dict(data.items()))
+            updated.update(data.root)
             _ = ctx_var.set(updated)
             self._update_statistics(c.Context.OPERATION_SET)
             self._execute_hooks(
                 c.Context.OPERATION_SET,
-                m.ConfigMap(root={"data": m.ConfigMap(root=dict(data.items()))}),
+                m.ConfigMap(root={"data": m.ConfigMap(root=data.root)}),
             )
             return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
@@ -648,10 +642,10 @@ class FlextContext(FlextRuntime):
         if key in current:
             # Use filter_dict for concise key removal
             filtered = u.filter_dict(
-                dict(current.items()),
+                current,
                 lambda k, _v: k != key,
             )
-            _ = ctx_var.set(m.ConfigMap(root=dict(filtered.items())))
+            _ = ctx_var.set(m.ConfigMap(root=filtered))
             # Note: ContextVar.set() already cleared the key, no need to unbind from logger
             # FlextLogger doesn't have unbind_global_context method
             self._update_statistics(c.Context.OPERATION_REMOVE)

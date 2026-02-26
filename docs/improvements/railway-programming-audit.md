@@ -92,7 +92,6 @@ These **production-ready methods** exist in source but are **NOT documented**:
 #### Factory Methods
 
 1. **from_exception()** - Line 1014
-
    - **Purpose**: Create FlextResult from function that might raise
    - **Missing From**: All guides
    - **Impact**: HIGH - Alternative to from_callable

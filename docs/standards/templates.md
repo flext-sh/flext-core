@@ -95,7 +95,7 @@ Reusable templates for creating consistent FLEXT-Core documentation.
 
 Use for new feature documentation (guides/ directory).
 
-````markdown
+`````markdown
 # [Feature Name] Guide
 
 [One sentence: What is this and why use it?]
@@ -114,12 +114,14 @@ Use for new feature documentation (guides/ directory).
 
 ### Simple Example
 
-```python
+````python
 from flext_core import [Import]
 
 # Your example here
 ```text
-````
+`````
+
+`````
 
 ### Common Patterns - Feature Guide Template
 
@@ -203,7 +205,7 @@ from flext_core import [Import]
 - Related Guide 2
 - API Reference
 
-````
+`````
 
 ## API Reference Template
 
@@ -226,6 +228,7 @@ Use for API documentation (api-reference/ directory).
 [What does this method do?]
 
 **Parameters:**
+
 - `param1` (Type): [Explanation]
 - `param2` (Type): [Explanation]
 
@@ -233,10 +236,12 @@ Use for API documentation (api-reference/ directory).
 (ReturnType): [What is returned?]
 
 **Example:**
+
 ```python
 from flext_core import [Import]
 
 # Example usage
+```
 ````
 
 **See Also:**
@@ -296,6 +301,7 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 [What user observes]
 
 **Common Causes:**
+
 1. Cause 1
 2. Cause 2
 3. Cause 3
@@ -303,8 +309,10 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 **Solutions:**
 
 **Solution 1: [Approach Name]**
+
 ```bash
 # Commands or code
+```
 ````
 
 **Solution 2: [Approach Name]**
@@ -338,28 +346,36 @@ Use for architecture/decisions.md.
 **Status:** PROPOSED | ACCEPTED | DEPRECATED | **Date:** YYYY-MM-DD
 
 ### Problem - ADR Template
+
 [What challenge are we facing?]
 
 ### Decision - ADR Template
+
 [What choice are we making?]
 
 ### Rationale - ADR Template
+
 [Why is this the right choice?]
 
 ### Alternatives Considered - ADR Template
+
 - Alternative 1: [Why not this?]
 - Alternative 2: [Why not this?]
 
 ### Consequences - ADR Template
+
 **Positive:**
+
 - ✅ Good consequence 1
 - ✅ Good consequence 2
 
 **Negative:**
+
 - ❌ Bad consequence 1
 - ❌ Bad consequence 2
 
 ### Related Decisions - ADR Template
+
 - Related ADR
 - Related pattern
 ```
@@ -368,7 +384,7 @@ Use for architecture/decisions.md.
 
 Use for comprehensive guide on patterns/best practices.
 
-````markdown
+`````markdown
 # [Topic] Best Practices
 
 [Intro: Why is this important?]
@@ -377,11 +393,13 @@ Use for comprehensive guide on patterns/best practices.
 
 **When to use:** [Context]
 
-```python
+````python
 # ✅ CORRECT
 # Example showing best practice
 ```text
-````
+`````
+
+`````
 
 ````python
 # ❌ WRONG
@@ -422,7 +440,7 @@ Use for comprehensive guide on patterns/best practices.
 
 [Key takeaways]
 
-````
+`````
 
 ## Quick Reference Card Template
 
@@ -432,8 +450,10 @@ Use for cheat sheets or quick reference.
 # [Feature] Quick Reference
 
 ## Installation - Quick Reference Card Template
+
 ```bash
 pip install flext-core
+```
 ````
 
 ## Basic Setup - Quick Reference Card Template
@@ -481,6 +501,7 @@ Use for documenting configuration options.
 # [Component] Configuration
 
 ## Overview - Configuration Documentation Template
+
 [What can be configured?]
 
 ## Configuration Methods - Configuration Documentation Template
@@ -493,6 +514,7 @@ Use for documenting configuration options.
 [section]
 key1 = "value"
 key2 = 123
+```
 ````
 
 ### Method 2: Environment Variables - Configuration Documentation Template
@@ -551,18 +573,19 @@ Use when comparing similar features.
 ````markdown
 # [Feature A] vs [Feature B] vs [Feature C]
 
-| Aspect | [Feature A] | [Feature B] | [Feature C] |
-| -------- | ------------- | ------------- | ------------- | 
-| Use Case | [Description] | [Description] | [Description] |
-| Complexity | Low/Medium/High | Low/Medium/High | Low/Medium/High |
-| Performance | Fast/Moderate/Slow | ... | ... |
-| Learning Curve | Easy/Moderate/Hard | ... | ... |
-| When to Use | [When] | [When] | [When] |
+| Aspect         | [Feature A]        | [Feature B]     | [Feature C]     |
+| -------------- | ------------------ | --------------- | --------------- |
+| Use Case       | [Description]      | [Description]   | [Description]   |
+| Complexity     | Low/Medium/High    | Low/Medium/High | Low/Medium/High |
+| Performance    | Fast/Moderate/Slow | ...             | ...             |
+| Learning Curve | Easy/Moderate/Hard | ...             | ...             |
+| When to Use    | [When]             | [When]          | [When]          |
 
 ## [Feature A] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
+```
 ````
 
 ## [Feature B] Details - Comparison/Alternatives Template
@@ -595,6 +618,7 @@ Use for step-by-step implementation instructions.
 **Time Required:** X hours
 
 **Prerequisites:**
+
 - Prerequisite 1
 - Prerequisite 2
 
@@ -604,6 +628,7 @@ Use for step-by-step implementation instructions.
 
 ```python
 # Code for step 1
+```
 ````
 
 **Verify:**

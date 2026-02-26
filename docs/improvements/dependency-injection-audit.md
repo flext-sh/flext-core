@@ -143,13 +143,14 @@ Document these additional patterns (all methods exist):
 
 The guide mentions v0.9.9 breaking changes but could be clearer:
 
-````markdown
+`````markdown
 BREAKING CHANGES (Phase 4 - v0.9.9):
 
 - register[T]() now uses generic type T instead of object
 - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
 - get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
-```text
+
+````text
 
 Add migration guide from v0.9.8 to v0.9.9.
 
@@ -290,4 +291,7 @@ The Dependency Injection guide is **highly accurate and well-written**. Unlike t
 **Status**: ✅ PRODUCTION READY with minor enhancements recommended
 
 **Next**: Audit Domain-Driven Design guide
-````
+`````
+
+```
+```
