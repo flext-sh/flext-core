@@ -23,6 +23,7 @@ from flext_infra.github.linter import WorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import PrWorkspaceManager
 from flext_infra.github.workflows import WorkflowSyncer
+from flext_infra.output import output
 
 _MIN_ARGV = 2
 
@@ -45,11 +46,11 @@ def _run_workflows(argv: list[str]) -> int:
         report_path=args.report,
     )
     if result.is_failure:
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "workflow sync failed")
         return 1
 
     for op in result.value:
-        _ = sys.stdout.write(f"{op.action}: {op.project}/{op.path} ({op.reason})\n")
+        print(f"{op.action}: {op.project}/{op.path} ({op.reason})")
     return 0
 
 
@@ -67,11 +68,11 @@ def _run_lint(argv: list[str]) -> int:
         strict=args.strict,
     )
     if result.is_failure:
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "lint failed")
         return 1
 
     status = result.value.get("status", "unknown")
-    _ = sys.stdout.write(f"status={status}\n")
+    print(f"status={status}")
     return 0
 
 
@@ -128,13 +129,11 @@ def _run_pr_workspace(argv: list[str]) -> int:
         pr_args=pr_args,
     )
     if result.is_failure:
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "pr-workspace failed")
         return 1
 
     data = result.value
-    _ = sys.stdout.write(
-        f"total={data['total']} success={data['success']} fail={data['fail']}\n"
-    )
+    print(f"total={data['total']} success={data['success']} fail={data['fail']}")
     return 1 if data.get("fail", 0) else 0
 
 
@@ -150,10 +149,10 @@ def main() -> int:
     """Dispatch to the appropriate github subcommand."""
     FlextRuntime.ensure_structlog_configured()
     if len(sys.argv) < _MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
-        _ = sys.stdout.write("Usage: flext-infra github <subcommand> [args...]\n\n")
-        _ = sys.stdout.write("Subcommands:\n")
+        print("Usage: flext-infra github <subcommand> [args...]\n")
+        print("Subcommands:")
         for name in sorted(_SUBCOMMANDS):
-            _ = sys.stdout.write(f"  {name}\n")
+            print(f"  {name}")
         return (
             0 if len(sys.argv) >= _MIN_ARGV and sys.argv[1] in {"-h", "--help"} else 1
         )
@@ -161,7 +160,7 @@ def main() -> int:
     subcommand = sys.argv[1]
     handler = _SUBCOMMANDS.get(subcommand)
     if handler is None:
-        _ = sys.stderr.write(f"flext-infra github: unknown subcommand '{subcommand}'\n")
+        output.error(f"unknown subcommand '{subcommand}'")
         return 1
 
     remaining = sys.argv[2:]

@@ -11,6 +11,7 @@ from flext_core.runtime import FlextRuntime
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator
 from flext_infra.models import m
+from flext_infra.output import output
 
 
 def _build_config(project_name: str | None) -> m.BaseMkConfig | None:
@@ -53,9 +54,7 @@ def main(argv: list[str] | None = None) -> int:
     config = _build_config(args.project_name)
     generated_result = generator.generate(config)
     if generated_result.is_failure:
-        _ = sys.stderr.write(
-            f"Error: {generated_result.error or 'base.mk generation failed'}\n"
-        )
+        output.error(generated_result.error or "base.mk generation failed")
         return 1
 
     write_result = generator.write(
@@ -64,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         stream=sys.stdout,
     )
     if write_result.is_failure:
-        _ = sys.stderr.write(f"Error: {write_result.error or 'base.mk write failed'}\n")
+        output.error(write_result.error or "base.mk write failed")
         return 1
     return 0
 

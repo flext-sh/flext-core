@@ -20,6 +20,7 @@ from flext_core.runtime import FlextRuntime
 from flext_infra.paths import PathResolver
 from flext_infra.release.orchestrator import ReleaseOrchestrator
 from flext_infra.versioning import VersioningService
+from flext_infra.output import output
 
 
 def _parse_args() -> argparse.Namespace:
@@ -69,7 +70,7 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     if args.interactive != 1:
         return current
 
-    _ = sys.stdout.write("Select version bump type: [major|minor|patch]\n")
+    print("Select version bump type: [major|minor|patch]")
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
         msg = "invalid bump type"
@@ -102,7 +103,7 @@ def main() -> int:
     resolver = PathResolver()
     root_result = resolver.workspace_root(args.root)
     if root_result.is_failure:
-        _ = sys.stderr.write(f"Error: {root_result.error}\n")
+        output.error(root_result.error or "workspace root resolution failed")
         return 1
     root = root_result.value
 
@@ -117,7 +118,7 @@ def main() -> int:
         try:
             version = _resolve_version(args, root)
         except RuntimeError as exc:
-            _ = sys.stderr.write(f"Error: {exc}\n")
+            output.error(str(exc))
             return 1
     else:
         version = args.version or "0.0.0"
@@ -140,7 +141,7 @@ def main() -> int:
     )
 
     if result.is_failure:
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "release failed")
         return 1
     return 0
 

@@ -20,6 +20,7 @@ from pathlib import Path
 from flext_core.runtime import FlextRuntime
 
 from flext_infra.constants import c
+from flext_infra.output import output
 from flext_infra.docs.auditor import DocAuditor
 from flext_infra.docs.builder import DocBuilder
 from flext_infra.docs.fixer import DocFixer
@@ -39,7 +40,7 @@ def _run_audit(args: argparse.Namespace) -> int:
         strict=bool(args.strict),
     )
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        output.error(result.error or "audit failed")
         return 1
     failures = sum(1 for report in result.value if not report.passed)
     return 1 if failures else 0
@@ -56,7 +57,7 @@ def _run_fix(args: argparse.Namespace) -> int:
         apply=args.apply,
     )
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        output.error(result.error or "fix failed")
         return 1
     return 0
 
@@ -71,7 +72,7 @@ def _run_build(args: argparse.Namespace) -> int:
         output_dir=args.output_dir,
     )
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        output.error(result.error or "build failed")
         return 1
 
     failures = sum(1 for report in result.value if report.result == c.Status.FAIL)
@@ -89,7 +90,7 @@ def _run_generate(args: argparse.Namespace) -> int:
         apply=args.apply,
     )
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        output.error(result.error or "generate failed")
         return 1
     return 0
 
@@ -106,7 +107,7 @@ def _run_validate(args: argparse.Namespace) -> int:
         apply=args.apply,
     )
     if result.is_failure:
-        print(f"Error: {result.error}", file=sys.stderr)
+        output.error(result.error or "validate failed")
         return 1
 
     failures = sum(1 for report in result.value if report.result == c.Status.FAIL)

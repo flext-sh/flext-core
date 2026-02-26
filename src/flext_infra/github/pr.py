@@ -23,6 +23,7 @@ from flext_core.typings import t
 from flext_infra.git import GitService
 from flext_infra.subprocess import CommandRunner
 from flext_infra.versioning import VersioningService
+from flext_infra.output import output
 
 
 class PrManager:
@@ -402,9 +403,9 @@ def main() -> int:
         result = manager.status(repo_root, base, head)
         if result.is_success:
             for key, value in result.value.items():
-                _ = sys.stdout.write(f"{key}={value}\n")
+                print(f"{key}={value}")
             return 0
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "status failed")
         return 1
 
     if args.action == "create":
@@ -420,17 +421,17 @@ def main() -> int:
         )
         if result.is_success:
             for key, value in result.value.items():
-                _ = sys.stdout.write(f"{key}={value}\n")
+                print(f"{key}={value}")
             return 0
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "create failed")
         return 1
 
     if args.action == "view":
         result_view = manager.view(repo_root, selector)
         if result_view.is_success:
-            _ = sys.stdout.write(f"{result_view.value}\n")
+            print(result_view.value)
             return 0
-        _ = sys.stderr.write(f"Error: {result_view.error}\n")
+        output.error(result_view.error or "view failed")
         return 1
 
     if args.action == "checks":
@@ -441,9 +442,9 @@ def main() -> int:
         )
         if result.is_success:
             for key, value in result.value.items():
-                _ = sys.stdout.write(f"{key}={value}\n")
+                print(f"{key}={value}")
             return 0
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "checks failed")
         return 1
 
     if args.action == "merge":
@@ -458,17 +459,17 @@ def main() -> int:
         )
         if merge_result.is_success:
             for key, val in merge_result.value.items():
-                _ = sys.stdout.write(f"{key}={val}\n")
+                print(f"{key}={val}")
             return 0
-        _ = sys.stderr.write(f"Error: {merge_result.error}\n")
+        output.error(merge_result.error or "merge failed")
         return 1
 
     if args.action == "close":
         result_close = manager.close(repo_root, selector)
         if result_close.is_success:
-            _ = sys.stdout.write("status=closed\n")
+            print("status=closed")
             return 0
-        _ = sys.stderr.write(f"Error: {result_close.error}\n")
+        output.error(result_close.error or "close failed")
         return 1
 
     msg = f"unknown action: {args.action}"

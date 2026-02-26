@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
-import sys
 import tempfile
 from pathlib import Path
 from typing import override
@@ -23,6 +22,7 @@ from flext_core.service import FlextService
 from flext_infra.basemk.generator import BaseMkGenerator
 from flext_infra.constants import c
 from flext_infra.models import m
+from flext_infra.output import output
 
 # Patterns that MUST be in every subproject .gitignore.
 _REQUIRED_GITIGNORE_ENTRIES: list[str] = [
@@ -242,9 +242,9 @@ def main() -> int:
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
-        _ = sys.stdout.write(f"files_changed={result.value.files_changed}\n")
+        print(f"files_changed={result.value.files_changed}")
         return 0
-    _ = sys.stderr.write(f"Error: {result.error}\n")
+    output.error(result.error or "sync failed")
     return 1
 
 

@@ -14,11 +14,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from collections.abc import Mapping
 from pathlib import Path
 
-import structlog
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult, r
 from flext_core.typings import t
 from pydantic import BaseModel, ConfigDict, Field
@@ -29,8 +28,9 @@ from flext_infra.docs.shared import (
     FlextInfraDocsShared,
 )
 from flext_infra.patterns import FlextInfraPatterns
+from flext_infra.output import output
 
-logger = structlog.get_logger(__name__)
+logger = FlextLogger.create_module_logger(__name__)
 
 
 class AuditIssue(BaseModel):
@@ -344,7 +344,7 @@ def main() -> int:
     )
 
     if result.is_failure:
-        _ = sys.stderr.write(f"Error: {result.error}\n")
+        output.error(result.error or "audit failed")
         return 1
 
     failures = sum(1 for report in result.value if not report.passed)
