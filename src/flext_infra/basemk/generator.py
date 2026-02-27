@@ -35,7 +35,8 @@ class BaseMkGenerator(FlextService[str]):
         return self.generate()
 
     def generate(
-        self, config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None = None,
+        self,
+        config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None = None,
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)

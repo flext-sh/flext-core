@@ -263,7 +263,8 @@ class FlextModelFoundation:
         tags: list[str] = Field(default_factory=list)
         attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
         metadata_value: t.MetadataScalarValue = Field(
-            default=None, description="Scalar metadata value.",
+            default=None,
+            description="Scalar metadata value.",
         )
 
         @field_validator("attributes", mode="before")

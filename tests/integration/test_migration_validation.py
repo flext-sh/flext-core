@@ -106,7 +106,8 @@ class TestMigrationScenario2:
         test_service = TestService()
         # Explicit type annotation for container registration
         registration_result = container.with_service(
-            "test_migration_service", test_service,
+            "test_migration_service",
+            test_service,
         )
         assert registration_result is container  # Fluent interface returns Self
 
@@ -136,7 +137,9 @@ class TestMigrationScenario4:
                 return FlextResult[None].ok(None)
 
             def create_user(
-                self, username: str, email: str,
+                self,
+                username: str,
+                email: str,
             ) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
@@ -255,7 +258,8 @@ class TestMigrationComplexity:
                 self.container = FlextContainer()
 
             def process_data(
-                self, data: dict[str, str],
+                self,
+                data: dict[str, str],
             ) -> FlextResult[dict[str, t.GeneralValueType]]:
                 """Typical data processing method."""
                 if not data:

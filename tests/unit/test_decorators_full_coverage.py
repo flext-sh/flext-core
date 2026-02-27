@@ -77,7 +77,8 @@ def test_inject_sets_missing_dependency_from_container(
             return r[object].ok("dep")
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextContainer.create", lambda: _Container(),
+        "flext_core.decorators.FlextContainer.create",
+        lambda: _Container(),
     )
 
     @d.inject(dep="service.dep")
@@ -169,7 +170,11 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         exponential_backoff=False,
     )
     result_exc = d._execute_retry_loop(
-        flaky, (), {}, cast("Any", fake_logger), retry_config=cfg,
+        flaky,
+        (),
+        {},
+        cast("Any", fake_logger),
+        retry_config=cfg,
     )
     assert isinstance(result_exc, Exception)
     assert calls["n"] == 2
@@ -244,7 +249,9 @@ def test_clear_operation_scope_and_handle_log_result_paths(
     )
 
     d._clear_operation_scope(
-        logger=cast("Any", fake_logger), function_name="fn", operation="op",
+        logger=cast("Any", fake_logger),
+        function_name="fn",
+        operation="op",
     )
 
     d._handle_log_result(
@@ -277,7 +284,8 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
 
     fake_logger = _FakeLogger()
     monkeypatch.setattr(
-        "flext_core.decorators.FlextRuntime.is_dict_like", lambda _v: False,
+        "flext_core.decorators.FlextRuntime.is_dict_like",
+        lambda _v: False,
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E"),

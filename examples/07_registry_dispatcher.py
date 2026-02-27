@@ -230,7 +230,8 @@ def main() -> None:
         data = result.value
         patterns = data["patterns_demonstrated"]
         if isinstance(patterns, Sequence) and not isinstance(
-            patterns, str | bytes | bytearray,
+            patterns,
+            str | bytes | bytearray,
         ):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")

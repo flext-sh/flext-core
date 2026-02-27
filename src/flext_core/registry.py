@@ -109,7 +109,8 @@ class FlextRegistry(FlextService[bool]):
     _class_registered_keys: ClassVar[set[str]] = set()
 
     def __init_subclass__(
-        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        cls,
+        **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -292,9 +293,7 @@ class FlextRegistry(FlextService[bool]):
         elif "event" in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.EVENT
 
-        timestamp = (
-            reg_result.timestamp if hasattr(reg_result, "timestamp") else ""
-        )
+        timestamp = reg_result.timestamp if hasattr(reg_result, "timestamp") else ""
         status = reg_result.status
 
         return m.HandlerRegistrationDetails(
@@ -527,7 +526,9 @@ class FlextRegistry(FlextService[bool]):
                 self._add_successful_registration(key, result.value, summary)
             else:
                 self._add_registration_error(
-                    key, result.error or "Unknown error", summary,
+                    key,
+                    result.error or "Unknown error",
+                    summary,
                 )
 
         return self._finalize_summary(summary)
@@ -587,7 +588,8 @@ class FlextRegistry(FlextService[bool]):
                     )
                     continue
                 handler_for_dispatch: p.Handler[
-                    t.GeneralValueType, t.GeneralValueType,
+                    t.GeneralValueType,
+                    t.GeneralValueType,
                 ] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
@@ -666,7 +668,9 @@ class FlextRegistry(FlextService[bool]):
                     self._add_successful_registration(key, details, summary)
                 else:
                     self._add_registration_error(
-                        key, reg_result.error or "Unknown error", summary,
+                        key,
+                        reg_result.error or "Unknown error",
+                        summary,
                     )
             except Exception as e:
                 self._add_registration_error(key, str(e), summary)
@@ -683,7 +687,8 @@ class FlextRegistry(FlextService[bool]):
         plugin: RegistrablePlugin,
         *,
         validate: Callable[
-            [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool],
+            [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel],
+            r[bool],
         ]
         | None = None,
     ) -> r[bool]:
@@ -905,9 +910,7 @@ class FlextRegistry(FlextService[bool]):
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> str:
         """Resolve registration key from handler."""
-        handler_id = (
-            handler.handler_id if hasattr(handler, "handler_id") else None
-        )
+        handler_id = handler.handler_id if hasattr(handler, "handler_id") else None
         return str(handler_id) if handler_id else handler.__class__.__name__
 
     def register(
@@ -934,11 +937,7 @@ class FlextRegistry(FlextService[bool]):
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
             validated_metadata = m.ConfigMap.model_validate(
-                (
-                    metadata.attributes
-                    if hasattr(metadata, "attributes")
-                    else metadata
-                ),
+                (metadata.attributes if hasattr(metadata, "attributes") else metadata),
             )
 
         # Store metadata if provided (for future use)

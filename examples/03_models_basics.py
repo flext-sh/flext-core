@@ -94,7 +94,8 @@ def demonstrate_enhanced_generic_models() -> None:
 
     # Enhanced Operation progress tracking
     operation = gm.Progress.Operation(
-        operation_name="user_import", estimated_total=1000,
+        operation_name="user_import",
+        estimated_total=1000,
     )
     operation.start_operation()
 
@@ -114,7 +115,9 @@ def demonstrate_enhanced_generic_models() -> None:
 
     # Enhanced Conversion tracking
     conversion = gm.Progress.Conversion(
-        source_format="csv", target_format="json", total_input_count=500,
+        source_format="csv",
+        target_format="json",
+        total_input_count=500,
     )
     conversion.start_conversion()
 
@@ -209,7 +212,9 @@ def demonstrate_advanced_pydantic_mixins() -> None:
     # Test business rule validation
     try:
         invalid_entity = AdvancedEntity(
-            name="ACTIVE_Invalid", created_by="system", tags=["test"],
+            name="ACTIVE_Invalid",
+            created_by="system",
+            tags=["test"],
         )
         invalid_entity.soft_delete("REDACTED_LDAP_BIND_PASSWORD")
         print("❌ Should have failed validation")

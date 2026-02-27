@@ -310,7 +310,8 @@ class FlextTestsTypes(FlextTypes):
 
             # Builder dict - stores payload values (mutable)
             type BuilderDict = MutableMapping[
-                str, FlextTestsTypes.Tests.TestPayloadValue,
+                str,
+                FlextTestsTypes.Tests.TestPayloadValue,
             ]
             """Type for builder internal data structure."""
 
@@ -337,7 +338,8 @@ class FlextTestsTypes(FlextTypes):
             """Type for builder sequences."""
 
             type ParametrizedCase = tuple[
-                str, Mapping[str, FlextTestsTypes.Tests.TestPayloadValue],
+                str,
+                Mapping[str, FlextTestsTypes.Tests.TestPayloadValue],
             ]
             """Type for parametrized test cases (test_id, data)."""
 
@@ -413,7 +415,8 @@ class FlextTestsTypes(FlextTypes):
             # =====================================================================
 
             type PredicateSpec = Callable[
-                [FlextTestsTypes.Tests.TestPayloadValue], bool,
+                [FlextTestsTypes.Tests.TestPayloadValue],
+                bool,
             ]
             """Custom predicate function for validation.
 
@@ -662,7 +665,8 @@ class FlextTestsTypes(FlextTypes):
         ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.TestPayloadValue]]:
             """Check if value is a payload sequence."""
             return isinstance(value, list | tuple) and not isinstance(
-                value, str | bytes,
+                value,
+                str | bytes,
             )
 
         @staticmethod

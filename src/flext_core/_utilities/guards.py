@@ -429,7 +429,8 @@ class FlextUtilitiesGuards:
     ) -> TypeGuard[Sequence[t.GuardInputValue]]:
         """Check if value is Sequence and not str or bytes."""
         return isinstance(value, (list, tuple, range)) and not isinstance(
-            value, (str, bytes),
+            value,
+            (str, bytes),
         )
 
     # =========================================================================
@@ -439,16 +440,10 @@ class FlextUtilitiesGuards:
     # Protocol specs: name -> check function (returns bool)
     # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
     _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
-        "config": lambda v: (
-            hasattr(v, "app_name") and v.app_name is not None
-        ),
+        "config": lambda v: hasattr(v, "app_name") and v.app_name is not None,
         "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
-        "container": lambda v: (
-            hasattr(v, "register") and callable(v.register)
-        ),
-        "command_bus": lambda v: (
-            hasattr(v, "dispatch") and callable(v.dispatch)
-        ),
+        "container": lambda v: hasattr(v, "register") and callable(v.register),
+        "command_bus": lambda v: hasattr(v, "dispatch") and callable(v.dispatch),
         "handler": lambda v: hasattr(v, "handle") and callable(v.handle),
         "logger": lambda v: all(
             hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
@@ -501,7 +496,8 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_type(
-        value: t.FlexibleValue, type_spec: str | type | tuple[type, ...],
+        value: t.FlexibleValue,
+        type_spec: str | type | tuple[type, ...],
     ) -> bool:
         """Generic type checking function that unifies all guard checks.
 
@@ -875,7 +871,8 @@ class FlextUtilitiesGuards:
                     item for item in validator if isinstance(item, type)
                 )
                 if len(tuple_types) == len(validator) and isinstance(
-                    value, tuple_types,
+                    value,
+                    tuple_types,
                 ):
                     return guarded_value if return_value else True
             elif callable(validator):

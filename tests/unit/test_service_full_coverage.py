@@ -38,13 +38,16 @@ def test_service_init_type_guards_and_properties(
         container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
-        _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_ctx_runtime),
+        _Svc,
+        "_create_initial_runtime",
+        classmethod(lambda cls: bad_ctx_runtime),
     )
     with pytest.raises(TypeError, match="Expected FlextContext"):
         _Svc()
 
     good_ctx = __import__(
-        "flext_core.context", fromlist=["FlextContext"],
+        "flext_core.context",
+        fromlist=["FlextContext"],
     ).FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
         config=cast("p.Config", _FakeConfig()),
@@ -52,7 +55,9 @@ def test_service_init_type_guards_and_properties(
         container=cast("p.DI", "invalid-container"),
     )
     monkeypatch.setattr(
-        _Svc, "_create_initial_runtime", classmethod(lambda cls: bad_cfg_runtime),
+        _Svc,
+        "_create_initial_runtime",
+        classmethod(lambda cls: bad_cfg_runtime),
     )
     with pytest.raises(TypeError, match="Expected FlextSettings"):
         _Svc()

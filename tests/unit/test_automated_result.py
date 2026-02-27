@@ -58,7 +58,8 @@ class TestAutomatedFlextResult:
         ids=lambda case: case["description"],
     )
     def test_automated_result_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario,
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for result functionality."""
         try:
@@ -95,7 +96,8 @@ class TestAutomatedFlextResult:
         # Test with correct types
         result = self._execute_result_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextResult type safety test",
+            result,
+            "FlextResult type safety test",
         )
 
     def test_automated_result_error_handling(self) -> None:
@@ -122,7 +124,8 @@ class TestAutomatedFlextResult:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextResult performance test exceeded timeout",
+            result,
+            "FlextResult performance test exceeded timeout",
         )
 
     def test_automated_result_resource_management(self) -> None:
@@ -132,7 +135,8 @@ class TestAutomatedFlextResult:
         # Test normal operation
         result = self._execute_result_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextResult resource test",
+            result,
+            "FlextResult resource test",
         )
 
         # Test cleanup (if applicable)
@@ -141,7 +145,8 @@ class TestAutomatedFlextResult:
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextResult cleanup failed",
+                    cleanup_result,
+                    "FlextResult cleanup failed",
                 )
 
     def _execute_result_operation(

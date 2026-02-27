@@ -46,7 +46,8 @@ class FlextModelsService:
         """Retry configuration for operations."""
 
         exponential_base: float = Field(
-            default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0,
+            default=c.Reliability.RETRY_BACKOFF_BASE,
+            ge=1.0,
         )
         retry_on_timeout: bool = True
 

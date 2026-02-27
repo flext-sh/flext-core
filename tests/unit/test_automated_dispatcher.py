@@ -59,7 +59,8 @@ class TestAutomatedFlextDispatcher:
         ids=lambda case: case["description"],
     )
     def test_automated_dispatcher_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario,
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for dispatcher functionality."""
         try:
@@ -68,7 +69,8 @@ class TestAutomatedFlextDispatcher:
 
             # Execute operation with test data
             result = self._execute_dispatcher_operation(
-                instance, test_scenario["input"],
+                instance,
+                test_scenario["input"],
             )
 
             # Assert using automated assertion helpers
@@ -98,7 +100,8 @@ class TestAutomatedFlextDispatcher:
         # Test with correct types
         result = self._execute_dispatcher_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextDispatcher type safety test",
+            result,
+            "FlextDispatcher type safety test",
         )
 
     def test_automated_dispatcher_error_handling(self) -> None:
@@ -121,13 +124,15 @@ class TestAutomatedFlextDispatcher:
 
         def operation() -> object:
             return self._execute_dispatcher_operation(
-                instance, {"performance_test": True},
+                instance,
+                {"performance_test": True},
             )
 
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextDispatcher performance test exceeded timeout",
+            result,
+            "FlextDispatcher performance test exceeded timeout",
         )
 
     def test_automated_dispatcher_resource_management(self) -> None:
@@ -137,7 +142,8 @@ class TestAutomatedFlextDispatcher:
         # Test normal operation
         result = self._execute_dispatcher_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextDispatcher resource test",
+            result,
+            "FlextDispatcher resource test",
         )
 
         # Test cleanup (if applicable)
@@ -146,7 +152,8 @@ class TestAutomatedFlextDispatcher:
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextDispatcher cleanup failed",
+                    cleanup_result,
+                    "FlextDispatcher cleanup failed",
                 )
 
     def _execute_dispatcher_operation(

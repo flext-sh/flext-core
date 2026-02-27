@@ -147,7 +147,10 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
 
         """
         log_path = self._reporting.get_report_path(
-            Path.cwd(), "workspace", verb, f"{project}.log",
+            Path.cwd(),
+            "workspace",
+            verb,
+            f"{project}.log",
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()

@@ -144,7 +144,9 @@ class TestEnterprisePatterns:
                 self._query_count = 0
 
             def save(
-                self, entity_id: str, data: t.GeneralValueType,
+                self,
+                entity_id: str,
+                data: t.GeneralValueType,
             ) -> FlextResult[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data

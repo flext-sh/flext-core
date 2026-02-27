@@ -64,7 +64,9 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert deep.is_success
 
     broken = u.Collection.merge(
-        cast("dict[str, t.GeneralValueType]", None), {"x": 1}, strategy="deep",
+        cast("dict[str, t.GeneralValueType]", None),
+        {"x": 1},
+        strategy="deep",
     )
     assert broken.is_failure
 
@@ -100,7 +102,8 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     assert failed.is_failure
 
     failed_exc = u.Collection.batch(
-        [1], lambda _item: (_ for _ in ()).throw(ValueError("x")),
+        [1],
+        lambda _item: (_ for _ in ()).throw(ValueError("x")),
     )
     assert failed_exc.is_failure
 

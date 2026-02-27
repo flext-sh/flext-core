@@ -58,7 +58,8 @@ class TestAutomatedFlextService:
         ids=lambda case: case["description"],
     )
     def test_automated_service_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario,
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for service functionality."""
         try:
@@ -95,7 +96,8 @@ class TestAutomatedFlextService:
         # Test with correct types
         result = self._execute_service_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextService type safety test",
+            result,
+            "FlextService type safety test",
         )
 
     def test_automated_service_error_handling(self) -> None:
@@ -122,7 +124,8 @@ class TestAutomatedFlextService:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextService performance test exceeded timeout",
+            result,
+            "FlextService performance test exceeded timeout",
         )
 
     def test_automated_service_resource_management(self) -> None:
@@ -132,7 +135,8 @@ class TestAutomatedFlextService:
         # Test normal operation
         result = self._execute_service_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextService resource test",
+            result,
+            "FlextService resource test",
         )
 
         # Test cleanup (if applicable)
@@ -141,7 +145,8 @@ class TestAutomatedFlextService:
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextService cleanup failed",
+                    cleanup_result,
+                    "FlextService cleanup failed",
                 )
 
     def _execute_service_operation(

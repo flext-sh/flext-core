@@ -54,7 +54,8 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def assert_result_success[TResult](
-        result: FlextResult[TResult], context: str = "",
+        result: FlextResult[TResult],
+        context: str = "",
     ) -> TResult:
         """Assert FlextResult is success and return value.
 
@@ -324,7 +325,9 @@ class FlextResultAssertionHelper:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[object], expected_value: object = None, context: str = "",
+        result: FlextResult[object],
+        expected_value: object = None,
+        context: str = "",
     ) -> object:
         """Assert result is success.
 

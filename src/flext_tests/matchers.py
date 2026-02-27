@@ -125,7 +125,8 @@ def _check_has_lacks(
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                            container=value, item=item,
+                            container=value,
+                            item=item,
                         ),
                     )
             else:
@@ -138,7 +139,8 @@ def _check_has_lacks(
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                            container=value, item=item,
+                            container=value,
+                            item=item,
                         ),
                     )
 
@@ -147,14 +149,16 @@ def _check_has_lacks(
                         raise AssertionError(
                             msg
                             or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                                container=value, item=item,
+                                container=value,
+                                item=item,
                             ),
                         )
                 elif check_val not in target:
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                            container=value, item=item,
+                            container=value,
+                            item=item,
                         ),
                     )
     if lacks is not None:
@@ -167,7 +171,8 @@ def _check_has_lacks(
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                            container=value, item=item,
+                            container=value,
+                            item=item,
                         ),
                     )
             else:
@@ -180,7 +185,8 @@ def _check_has_lacks(
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                            container=value, item=item,
+                            container=value,
+                            item=item,
                         ),
                     )
 
@@ -189,14 +195,16 @@ def _check_has_lacks(
                         raise AssertionError(
                             msg
                             or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                                container=value, item=item,
+                                container=value,
+                                item=item,
                             ),
                         )
                 elif check_val in target:
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                            container=value, item=item,
+                            container=value,
+                            item=item,
                         ),
                     )
 
@@ -408,7 +416,8 @@ class FlextTestsMatchers:
         # Length validation (delegate to u.Tests.Length)
         result_payload = _to_test_payload(result_value)
         if params.len is not None and not u.Tests.Length.validate(
-            result_payload, params.len,
+            result_payload,
+            params.len,
         ):
             # Type guard: result_value has __len__ if it passed validation
             # Type narrow for __len__
@@ -888,7 +897,8 @@ class FlextTestsMatchers:
         # model_validator already converts legacy length_* params to unified len
         value_payload = _to_test_payload(value)
         if params.len is not None and not u.Tests.Length.validate(
-            value_payload, params.len,
+            value_payload,
+            params.len,
         ):
             # Type guard: value has __len__ if it passed validation
             # Type narrow for __len__

@@ -29,7 +29,8 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
 
     # Source raises TypeError for non-dict/Mapping/None data
     with pytest.raises(
-        TypeError, match="Domain event data must be a dictionary or None",
+        TypeError,
+        match="Domain event data must be a dictionary or None",
     ):
         FlextModelsEntity.DomainEvent(
             event_type="evt",

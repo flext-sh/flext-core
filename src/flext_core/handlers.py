@@ -284,7 +284,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                     RuntimeError,
                 ) as exc:
                     _module_logger.debug(
-                        "Callable handler execution failed", exc_info=exc,
+                        "Callable handler execution failed",
+                        exc_info=exc,
                     )
                     return r[t.ScalarValue].fail(str(exc))
 

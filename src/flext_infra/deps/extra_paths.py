@@ -170,7 +170,8 @@ def sync_one(
             pyrefly_dict = cast("dict[str, object]", pyrefly)
             base_search: list[str] = ["."] + dep_paths
             current_search_raw = cast(
-                "list[object]", pyrefly_dict.get("search-path", []),
+                "list[object]",
+                pyrefly_dict.get("search-path", []),
             )
             current_search: list[str] = [str(v) for v in current_search_raw]
             seen: set[str] = set(base_search)
@@ -205,7 +206,9 @@ def sync_extra_paths(
         for project_dir in project_dirs:
             pyproject = project_dir / c.Files.PYPROJECT_FILENAME
             sync_result = sync_one(
-                pyproject, dry_run=dry_run, is_root=(project_dir == ROOT),
+                pyproject,
+                dry_run=dry_run,
+                is_root=(project_dir == ROOT),
             )
             if sync_result.is_failure:
                 return r[int].fail(sync_result.error or f"sync failed for {pyproject}")

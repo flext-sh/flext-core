@@ -1261,7 +1261,10 @@ class FlextUtilitiesParser:
             return None
 
         model_result = FlextUtilitiesParser._parse_model(
-            value, target, field_prefix, strict=strict,
+            value,
+            target,
+            field_prefix,
+            strict=strict,
         )
         if model_result.is_success:
             validated_model = TypeAdapter(target).validate_python(model_result.value)
@@ -1307,7 +1310,9 @@ class FlextUtilitiesParser:
                     return bool_result
         except (ValueError, TypeError) as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
-                target, "__name__", "type",
+                target,
+                "__name__",
+                "type",
             )
             # For error case, return failure wrapped in appropriate type
             if (

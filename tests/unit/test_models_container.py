@@ -253,7 +253,9 @@ class TestFlextModelsContainer:
         # Use model_construct for dynamic dict unpacking in tests
         config = m.Container.ContainerConfig.model_validate(config_dict)
         assert config.enable_singleton is u.mapper().get(
-            config_dict, "enable_singleton", default=True,
+            config_dict,
+            "enable_singleton",
+            default=True,
         )
         assert config.enable_factory_caching is u.mapper().get(
             config_dict,
@@ -261,10 +263,14 @@ class TestFlextModelsContainer:
             default=True,
         )
         assert config.max_services == u.mapper().get(
-            config_dict, "max_services", default=1000,
+            config_dict,
+            "max_services",
+            default=1000,
         )
         assert config.max_factories == u.mapper().get(
-            config_dict, "max_factories", default=500,
+            config_dict,
+            "max_factories",
+            default=500,
         )
         assert config.enable_auto_registration is u.mapper().get(
             config_dict,
@@ -277,7 +283,9 @@ class TestFlextModelsContainer:
             default=True,
         )
         assert config.lazy_loading is u.mapper().get(
-            config_dict, "lazy_loading", default=True,
+            config_dict,
+            "lazy_loading",
+            default=True,
         )
 
     def test_container_config_defaults(self) -> None:
@@ -391,7 +399,8 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             m.ConfigMap(
                 root={
                     "nested": cast(
-                        "t.GeneralValueType", {"level1": {"level2": "value"}},
+                        "t.GeneralValueType",
+                        {"level1": {"level2": "value"}},
                     ),
                 },
             ),

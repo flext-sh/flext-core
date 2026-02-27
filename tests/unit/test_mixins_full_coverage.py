@@ -62,7 +62,9 @@ def test_mixins_result_and_model_conversion_paths(
     assert x.to_dict(conf) is conf
 
     monkeypatch.setattr(
-        FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1),
+        FlextRuntime,
+        "normalize_to_general_value",
+        staticmethod(lambda _v: 1),
     )
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
@@ -140,7 +142,9 @@ def test_mixins_container_registration_and_logger_paths(
             return r[bool].fail("already registered")
 
     monkeypatch.setattr(
-        _Service, "container", property(lambda _self: _AlreadyContainer()),
+        _Service,
+        "container",
+        property(lambda _self: _AlreadyContainer()),
     )
     assert service._register_in_container("svc").is_success
 

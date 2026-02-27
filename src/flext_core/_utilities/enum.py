@@ -62,7 +62,8 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def _is_member_by_value[E: StrEnum](
-        value: t.ScalarValue | E, enum_cls: type[E],
+        value: t.ScalarValue | E,
+        enum_cls: type[E],
     ) -> TypeIs[E]:
         """Check membership by value (internal helper)."""
         if isinstance(value, enum_cls):

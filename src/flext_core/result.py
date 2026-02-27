@@ -392,7 +392,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             else:
                 error_msg = str(e)
             return FlextResult[T_Model].fail(
-                f"Validation failed: {error_msg}", exception=e,
+                f"Validation failed: {error_msg}",
+                exception=e,
             )
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:

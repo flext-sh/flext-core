@@ -684,7 +684,9 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def eq(
-                    self, expected: t.ConfigMapValue, msg: str | None = None,
+                    self,
+                    expected: t.ConfigMapValue,
+                    msg: str | None = None,
                 ) -> Self:
                     """Assert value equals expected."""
                     ...

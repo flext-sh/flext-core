@@ -73,7 +73,8 @@ class _GateExecution(BaseModel):
 
     result: m.GateResult = Field(description="Gate result model")
     issues: list[_CheckIssue] = Field(
-        default_factory=list, description="Detected issues",
+        default_factory=list,
+        description="Detected issues",
     )
     raw_output: str = Field(default="", description="Raw tool output")
 
@@ -85,7 +86,8 @@ class _ProjectResult(BaseModel):
 
     project: str = Field(description="Project name")
     gates: dict[str, _GateExecution] = Field(
-        default_factory=dict, description="Gate name to execution mapping",
+        default_factory=dict,
+        description="Gate name to execution mapping",
     )
 
     @computed_field
@@ -130,7 +132,8 @@ class _RuffLintError(BaseModel):
 
     filename: str = Field(default="?", description="Source file path")
     location: _RuffLintLocation = Field(
-        default_factory=_RuffLintLocation, description="Error location",
+        default_factory=_RuffLintLocation,
+        description="Error location",
     )
     code: str = Field(default="", description="Ruff rule code")
     message: str = Field(default="", description="Error description")
@@ -155,7 +158,8 @@ class _PyreflyOutput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     errors: list[_PyreflyError] = Field(
-        default_factory=list, description="Pyrefly errors",
+        default_factory=list,
+        description="Pyrefly errors",
     )
 
 
@@ -187,7 +191,8 @@ class _PyrightRange(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     start: _PyrightPosition = Field(
-        default_factory=_PyrightPosition, description="Range start",
+        default_factory=_PyrightPosition,
+        description="Range start",
     )
 
 
@@ -198,7 +203,8 @@ class _PyrightDiagnostic(BaseModel):
 
     file: str = Field(default="?", description="Source file path")
     range: _PyrightRange = Field(
-        default_factory=_PyrightRange, description="Diagnostic range",
+        default_factory=_PyrightRange,
+        description="Diagnostic range",
     )
     rule: str = Field(default="", description="Pyright rule name")
     message: str = Field(default="", description="Diagnostic message")
@@ -211,7 +217,8 @@ class _PyrightOutput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     generalDiagnostics: list[_PyrightDiagnostic] = Field(
-        default_factory=list, description="General diagnostics list",
+        default_factory=list,
+        description="General diagnostics list",
     )
 
 
@@ -233,7 +240,8 @@ class _BanditOutput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     results: list[_BanditIssue] = Field(
-        default_factory=list, description="Bandit findings",
+        default_factory=list,
+        description="Bandit findings",
     )
 
 
@@ -311,7 +319,8 @@ class _SarifToolDriver(BaseModel):
     name: str = Field(description="Tool name")
     information_uri: str = Field(default="", description="Tool documentation URL")
     rules: list[_SarifRuleDescriptor] = Field(
-        default_factory=list, description="Rule descriptors",
+        default_factory=list,
+        description="Rule descriptors",
     )
 
 
@@ -358,7 +367,8 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._runner = CommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir_result = self._reporting.ensure_report_dir(
-            self._workspace_root, "check",
+            self._workspace_root,
+            "check",
         )
         self._default_reports_dir = (
             report_dir_result.value
@@ -415,7 +425,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             output.progress(index, total, project_name, "check")
             start = time.monotonic()
             project_result = self._check_project(
-                project_dir, resolved_gates, report_base,
+                project_dir,
+                resolved_gates,
+                report_base,
             )
             elapsed = time.monotonic() - start
             results.append(project_result)
@@ -454,7 +466,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         if total_errors > 0:
             output.info("Errors by project:")
             for project in sorted(
-                results, key=lambda item: item.total_errors, reverse=True,
+                results,
+                key=lambda item: item.total_errors,
+                reverse=True,
             ):
                 if project.total_errors == 0:
                     continue
@@ -558,7 +572,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
 
         for project in sorted(
-            results, key=lambda item: item.total_errors, reverse=True,
+            results,
+            key=lambda item: item.total_errors,
+            reverse=True,
         ):
             if project.total_errors == 0:
                 continue
@@ -988,7 +1004,8 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     def _run_pyright(self, project_dir: Path) -> _GateExecution:
         started = time.monotonic()
         check_dirs = self._dirs_with_py(
-            project_dir, self._existing_check_dirs(project_dir),
+            project_dir,
+            self._existing_check_dirs(project_dir),
         )
         if not check_dirs:
             return self._build_gate_result(
@@ -1350,7 +1367,9 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return r[list[str]].ok(all_fixes)
 
     def _fix_search_paths_tk(
-        self, pyrefly: MutableMapping[str, t.ConfigMapValue], project_dir: Path,
+        self,
+        pyrefly: MutableMapping[str, t.ConfigMapValue],
+        project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
         search_path = pyrefly.get("search-path")
@@ -1391,7 +1410,8 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return fixes
 
     def _remove_ignore_sub_config_tk(
-        self, pyrefly: MutableMapping[str, t.ConfigMapValue],
+        self,
+        pyrefly: MutableMapping[str, t.ConfigMapValue],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get("sub-config")
@@ -1412,7 +1432,8 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return fixes
 
     def _ensure_project_excludes_tk(
-        self, pyrefly: MutableMapping[str, t.ConfigMapValue],
+        self,
+        pyrefly: MutableMapping[str, t.ConfigMapValue],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get("project-excludes")

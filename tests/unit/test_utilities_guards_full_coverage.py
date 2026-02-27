@@ -323,7 +323,8 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
     setattr(builtins, "issubclass", _explode)
     try:
         assert not u.is_type(
-            _Candidate, "handler",
+            _Candidate,
+            "handler",
         )  # Source catches TypeError, returns False
     finally:
         setattr(builtins, "issubclass", original_issubclass)

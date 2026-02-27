@@ -1519,7 +1519,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 return "auto"
 
     def _is_nested_rows(
-        self, value: object,
+        self,
+        value: object,
     ) -> TypeGuard[Sequence[Sequence[t.ConfigMapValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
@@ -1535,7 +1536,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
-        self, value: object,
+        self,
+        value: object,
     ) -> str | bytes | m.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
@@ -1571,7 +1573,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _to_payload_value(self, value: object) -> t.Tests.PayloadValue:
         if value is None or isinstance(
-            value, str | int | float | bool | bytes | BaseModel,
+            value,
+            str | int | float | bool | bytes | BaseModel,
         ):
             return value
         if isinstance(value, Path | datetime):
@@ -1585,7 +1588,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ConfigMapValue:
         if value is None or isinstance(
-            value, str | int | float | bool | BaseModel | Path,
+            value,
+            str | int | float | bool | BaseModel | Path,
         ):
             return value
         if isinstance(value, bytes):

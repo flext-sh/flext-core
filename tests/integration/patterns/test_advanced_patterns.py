@@ -167,7 +167,9 @@ class GivenWhenThenBuilder:
             u
             .mapper()
             .map_dict_keys(
-                self._given, {k: str(k) for k in self._given}, keep_unmapped=True,
+                self._given,
+                {k: str(k) for k in self._given},
+                keep_unmapped=True,
             )
             .value
             if isinstance(self._given, dict)
@@ -181,7 +183,9 @@ class GivenWhenThenBuilder:
             u
             .mapper()
             .map_dict_keys(
-                self._when, {k: str(k) for k in self._when}, keep_unmapped=True,
+                self._when,
+                {k: str(k) for k in self._when},
+                keep_unmapped=True,
             )
             .value
             if isinstance(self._when, dict)
@@ -195,7 +199,9 @@ class GivenWhenThenBuilder:
             u
             .mapper()
             .map_dict_keys(
-                self._then, {k: str(k) for k in self._then}, keep_unmapped=True,
+                self._then,
+                {k: str(k) for k in self._then},
+                keep_unmapped=True,
             )
             .value
             if isinstance(self._then, dict)
@@ -311,7 +317,8 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
-        self, **kwargs: str | int | bool | list[str],
+        self,
+        **kwargs: str | int | bool | list[str],
     ) -> ParameterizedTestBuilder:
         """add_case method.
 

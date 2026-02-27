@@ -316,15 +316,21 @@ def test_dependency_registration_duplicate_guards() -> None:
     FlextRuntime.DependencyIntegration.register_factory(container, "factory", lambda: 1)
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_factory(
-            container, "factory", lambda: 2,
+            container,
+            "factory",
+            lambda: 2,
         )
 
     FlextRuntime.DependencyIntegration.register_resource(
-        container, "resource", lambda: 1,
+        container,
+        "resource",
+        lambda: 1,
     )
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_resource(
-            container, "resource", lambda: 2,
+            container,
+            "resource",
+            lambda: 2,
         )
 
 
@@ -456,7 +462,9 @@ def test_reconfigure_and_reset_state_paths() -> None:
 def test_runtime_result_all_missed_branches() -> None:
     success = FlextRuntime.RuntimeResult.ok(1)
     failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult.fail(
-        "e", error_code="E1", error_data=m.ConfigMap(root={"x": 1}),
+        "e",
+        error_code="E1",
+        error_data=m.ConfigMap(root={"x": 1}),
     )
 
     assert success.result is success
@@ -513,7 +521,8 @@ def test_runtime_result_all_missed_branches() -> None:
 
     assert success._protocol_name() == "RuntimeResult"
     with pytest.raises(
-        ValueError, match="Cannot create success result with None value",
+        ValueError,
+        match="Cannot create success result with None value",
     ):
         FlextRuntime.RuntimeResult.ok(None)
 
@@ -883,7 +892,9 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     FlextRuntime.Integration.track_service_resolution("svc", resolved=True)
     FlextRuntime.Integration.track_service_resolution(
-        "svc", resolved=False, error_message="x",
+        "svc",
+        resolved=False,
+        error_message="x",
     )
     FlextRuntime.Integration.track_domain_event(
         "evt",

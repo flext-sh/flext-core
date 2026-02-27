@@ -35,7 +35,8 @@ class FlextInfraModels(_FlextModels):
         project: str = Field(min_length=1, description="Project name")
         passed: bool = Field(description="Gate execution status")
         errors: list[str] = Field(
-            default_factory=list, description="Gate error messages",
+            default_factory=list,
+            description="Gate error messages",
         )
         duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
 
@@ -68,7 +69,8 @@ class FlextInfraModels(_FlextModels):
         source_dir: str = Field(default="src", description="Source directory path")
         tests_dir: str = Field(default="tests", description="Tests directory path")
         lint_gates: list[str] = Field(
-            default_factory=list, description="Enabled quality gates",
+            default_factory=list,
+            description="Enabled quality gates",
         )
         test_command: str = Field(default="pytest", description="Default test command")
 
@@ -88,7 +90,8 @@ class FlextInfraModels(_FlextModels):
             description="Collected validation violations",
         )
         summary: str = Field(
-            default="", description="Human-readable validation summary",
+            default="",
+            description="Human-readable validation summary",
         )
 
     class ReleaseSpec(_FlextModels.ArbitraryTypesModel):
@@ -114,7 +117,8 @@ class FlextInfraModels(_FlextModels):
         success: int = Field(ge=0, description="Successful executions")
         fail: int = Field(ge=0, description="Failed executions")
         results: list[FlextInfraModels.PrExecutionResult] = Field(
-            default_factory=list, description="Per-repository results",
+            default_factory=list,
+            description="Per-repository results",
         )
 
     class RepoUrls(_FlextModels.ArbitraryTypesModel):

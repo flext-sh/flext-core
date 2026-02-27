@@ -373,7 +373,11 @@ class DependencyDetectionService:
                     for spec in typings:
                         if isinstance(spec, str):
                             names.add(
-                                spec.split("[")[0].split(">=")[0].split("==")[0].strip(),
+                                spec
+                                .split("[")[0]
+                                .split(">=")[0]
+                                .split("==")[0]
+                                .strip(),
                             )
                 elif typings is not None and isinstance(typings, Mapping):
                     names.update(str(key) for key in typings)

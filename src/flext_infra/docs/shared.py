@@ -62,7 +62,9 @@ class FlextInfraDocsShared:
                 ),
             ]
             names = FlextInfraDocsShared._selected_project_names(
-                root, project, projects,
+                root,
+                project,
+                projects,
             )
             for name in names:
                 path = (root / name).resolve()

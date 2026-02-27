@@ -277,7 +277,9 @@ class TestFlextSettings:
         ConfigScenarios.VALIDATION_ERROR_CASES,
     )
     def test_config_validation_errors(
-        self, config_data: dict[str, bool], error_pattern: str,
+        self,
+        config_data: dict[str, bool],
+        error_pattern: str,
     ) -> None:
         """Test config validation with invalid inputs."""
         with pytest.raises(ValidationError) as exc_info:

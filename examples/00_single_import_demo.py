@@ -180,7 +180,9 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: m.ConfigMap, _: object,
+        self,
+        user_data: m.ConfigMap,
+        _: object,
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)

@@ -169,7 +169,8 @@ class TestFlextModelsAggregateRoot:
 
         # Add domain event
         result = account.add_domain_event(
-            "MoneyDeposited", m.ConfigMap(root={"amount": 100}),
+            "MoneyDeposited",
+            m.ConfigMap(root={"amount": 100}),
         )
         assertion_helpers.assert_flext_result_success(result)
 
@@ -195,7 +196,8 @@ class TestFlextModelsAggregateRoot:
 
         # Add event
         result = order.add_domain_event(
-            "OrderCreated", m.ConfigMap(root={"timestamp": "2025-01-01"}),
+            "OrderCreated",
+            m.ConfigMap(root={"timestamp": "2025-01-01"}),
         )
         assertion_helpers.assert_flext_result_success(result)
         assert len(order.domain_events) > 0
@@ -353,7 +355,8 @@ class TestFlextModelsIntegration:
 
         # Add domain event
         event_result = order.add_domain_event(
-            "ItemAdded", m.ConfigMap(root={"item_id": "item-1"}),
+            "ItemAdded",
+            m.ConfigMap(root={"item_id": "item-1"}),
         )
         assert event_result.is_success
 

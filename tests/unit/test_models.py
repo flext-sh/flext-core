@@ -799,7 +799,8 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         _ = aggregate.add_domain_event(
-            "failing_event", m.ConfigMap(root={"data": "value"}),
+            "failing_event",
+            m.ConfigMap(root={"data": "value"}),
         )
         u.Tests.Result.assert_result_success(_)
 

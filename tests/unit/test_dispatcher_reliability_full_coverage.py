@@ -19,7 +19,9 @@ def test_dispatcher_reliability_branch_paths() -> None:
     assert u.Conversion.to_str(1) == "1"
 
     cb = disp_rel.CircuitBreakerManager(
-        threshold=3, recovery_timeout=1.0, success_threshold=2,
+        threshold=3,
+        recovery_timeout=1.0,
+        success_threshold=2,
     )
     cb.transition_to_half_open("x")
     cb.record_failure("x")

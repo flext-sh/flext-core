@@ -435,7 +435,9 @@ class FlextUtilitiesMapper:
     def is_json_primitive(value: t.ConfigMapValue) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return bool(
-            FlextUtilitiesGuards.is_type(value, (str, int, float, bool, None.__class__)),
+            FlextUtilitiesGuards.is_type(
+                value, (str, int, float, bool, None.__class__)
+            ),
         )
 
     @classmethod

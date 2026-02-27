@@ -45,7 +45,9 @@ def test_not_found_error_correlation_id_selection_and_extra_kwargs() -> None:
     assert err_explicit.to_dict()["extra_value"] == "3"
 
     err_preserved = e.NotFoundError(
-        "missing", resource_id="x", correlation_id="preserved-cid",
+        "missing",
+        resource_id="x",
+        correlation_id="preserved-cid",
     )
     assert err_preserved.correlation_id == "preserved-cid"
 

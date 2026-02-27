@@ -227,7 +227,8 @@ class ConsolidateGroupsPhase:
             if isinstance(old_deps, Table):
                 if poetry_dev_table is None:
                     poetry_dev_table = _ensure_table(
-                        _ensure_table(poetry_group, "dev"), "dependencies",
+                        _ensure_table(poetry_group, "dev"),
+                        "dependencies",
                     )
                 for dep_name, dep_value in old_deps.items():
                     if dep_name not in poetry_dev_table:

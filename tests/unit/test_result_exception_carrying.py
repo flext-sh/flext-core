@@ -71,7 +71,9 @@ class TestFailWithException:
         error_data = t.ConfigMap({"field": "email", "reason": "invalid format"})
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
-            error_msg, error_data=error_data, exception=exc,
+            error_msg,
+            error_data=error_data,
+            exception=exc,
         )
 
         assert result.is_failure
@@ -185,7 +187,8 @@ class TestCreateFromCallableCarriesException:
             raise ValueError(msg)
 
         result: r[int] = r[int].create_from_callable(
-            failing_operation, error_code="INVALID_VALUE",
+            failing_operation,
+            error_code="INVALID_VALUE",
         )
 
         assert result.is_failure

@@ -253,7 +253,9 @@ class FlextContext(FlextRuntime):
                 "correlation",
             )
             return cls(
-                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict_new.root)),
+                initial_data=m.ContextData(
+                    data=t.Dict(root=initial_data_dict_new.root)
+                ),
             )
         return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))
 
@@ -775,7 +777,8 @@ class FlextContext(FlextRuntime):
             if scope_dict:
                 # Set all key-value pairs in the cloned context for this scope
                 result = cloned.set_all(
-                    m.ConfigMap.model_validate(scope_dict), scope_name,
+                    m.ConfigMap.model_validate(scope_dict),
+                    scope_name,
                 )
                 if not result:
                     # If setting fails, log warning but continue cloning

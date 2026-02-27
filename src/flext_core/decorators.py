@@ -1165,9 +1165,7 @@ class FlextDecorators:
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
-            fallback_logger = (
-                logger.logger if hasattr(logger, "logger") else None
-            )
+            fallback_logger = logger.logger if hasattr(logger, "logger") else None
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
             fallback_kwargs = m.ConfigMap(root=dict(kwargs.root))

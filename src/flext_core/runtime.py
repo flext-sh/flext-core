@@ -82,7 +82,9 @@ class _LazyMetadata:
     """Descriptor for lazy-loading Metadata class."""
 
     def __get__(
-        self, obj: object, objtype: type | None = None,
+        self,
+        obj: object,
+        objtype: type | None = None,
     ) -> type[_runtime_metadata.Metadata]:
 
         # Cache the loaded class on the class itself
@@ -169,7 +171,8 @@ class FlextRuntime:
     _structlog_configured: ClassVar[bool] = False
 
     Metadata: ClassVar[type[_runtime_metadata.Metadata]] = cast(
-        "type[_runtime_metadata.Metadata]", _LazyMetadata(),
+        "type[_runtime_metadata.Metadata]",
+        _LazyMetadata(),
     )  # Lazy-loaded from _runtime_metadata
 
     class _AsyncLogWriter:
@@ -615,11 +618,7 @@ class FlextRuntime:
 
             # Check if it's a known type alias
             if hasattr(type_hint, "__name__"):
-                type_name = (
-                    type_hint.__name__
-                    if hasattr(type_hint, "__name__")
-                    else ""
-                )
+                type_name = type_hint.__name__ if hasattr(type_hint, "__name__") else ""
                 # Handle common type aliases - use actual type objects
                 # GenericTypeArgument = str | type[t.ConfigMapValue]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
@@ -684,18 +683,12 @@ class FlextRuntime:
                 return True
 
             # Check if the type itself is a sequence subclass (for type aliases)
-            hint_mro = (
-                type_hint.__mro__ if hasattr(type_hint, "__mro__") else None
-            )
+            hint_mro = type_hint.__mro__ if hasattr(type_hint, "__mro__") else None
             if hint_mro is not None and Sequence in hint_mro:
                 return True
 
             # Check __name__ for type aliases like StringList
-            type_name = (
-                type_hint.__name__
-                if hasattr(type_hint, "__name__")
-                else None
-            )
+            type_name = type_hint.__name__ if hasattr(type_hint, "__name__") else None
             return bool(
                 type_name is not None
                 and type_name
@@ -1162,11 +1155,7 @@ class FlextRuntime:
         # Extract config values or use individual parameters
         async_logging = True
         if config is not None:
-            log_level = (
-                config.log_level
-                if hasattr(config, "log_level")
-                else log_level
-            )
+            log_level = config.log_level if hasattr(config, "log_level") else log_level
             console_renderer = (
                 config.console_renderer
                 if hasattr(config, "console_renderer")
@@ -1195,9 +1184,7 @@ class FlextRuntime:
                 else cache_logger_on_first_use
             )
             async_logging = (
-                config.async_logging
-                if hasattr(config, "async_logging")
-                else True
+                config.async_logging if hasattr(config, "async_logging") else True
             )
 
         # Single guard - no redundant checks
@@ -1268,9 +1255,7 @@ class FlextRuntime:
         # structlog.configure accepts processors as Sequence[Processor] or list[Processor]
         # Our processors list contains valid Processor objects, pass directly
         # Use getattr to call configure with processors as Sequence
-        configure_fn = (
-            module.configure if hasattr(module, "configure") else None
-        )
+        configure_fn = module.configure if hasattr(module, "configure") else None
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
                 processors=processors,

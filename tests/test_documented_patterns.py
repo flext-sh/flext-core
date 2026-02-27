@@ -94,7 +94,8 @@ class RailwayTestCase:
 
         # Start with first user - explicit type annotation for union type
         user_result: FlextResult[User] = _make(
-            GetUserService, user_id=self.user_ids[0],
+            GetUserService,
+            user_id=self.user_ids[0],
         ).execute()
         result: FlextResult[User | str | EmailResponse] = cast(
             "FlextResult[User | str | EmailResponse]",
@@ -457,7 +458,9 @@ class TestPattern4RailwayV2Property:
             .execute()
             .flat_map(
                 lambda user: _make(
-                    SendEmailService, to=user.email, subject="Hello",
+                    SendEmailService,
+                    to=user.email,
+                    subject="Hello",
                 ).execute(),
             )
             .map(lambda response: response.message_id)
@@ -496,7 +499,9 @@ class TestPattern5MonadicComposition:
             )
             .flat_map(
                 lambda email: _make(
-                    SendEmailService, to=email, subject="Test",
+                    SendEmailService,
+                    to=email,
+                    subject="Test",
                 ).execute(),
             )
         )
@@ -527,7 +532,9 @@ class TestPattern5MonadicComposition:
             .filter(lambda email: "@" in email)
             .flat_map(
                 lambda email: _make(
-                    SendEmailService, to=email, subject="Test",
+                    SendEmailService,
+                    to=email,
+                    subject="Test",
                 ).execute(),
             )
             .map(lambda response: response.status)

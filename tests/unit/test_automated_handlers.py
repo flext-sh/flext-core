@@ -61,7 +61,8 @@ class TestAutomatedFlextHandlers:
         ids=lambda case: case["description"],
     )
     def test_automated_handlers_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario,
+        self,
+        test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for handlers functionality."""
         try:
@@ -98,7 +99,8 @@ class TestAutomatedFlextHandlers:
         # Test with correct types
         result = self._execute_handlers_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextHandlers type safety test",
+            result,
+            "FlextHandlers type safety test",
         )
 
     def test_automated_handlers_error_handling(self) -> None:
@@ -126,7 +128,8 @@ class TestAutomatedFlextHandlers:
 
         def operation() -> r[t.GeneralValueType]:
             return self._execute_handlers_operation(
-                instance, {"performance_test": True},
+                instance,
+                {"performance_test": True},
             )
 
         start = time.perf_counter()
@@ -134,7 +137,8 @@ class TestAutomatedFlextHandlers:
         elapsed = time.perf_counter() - start
         assert elapsed < 1.0
         assertion_helpers.assert_flext_result_success(
-            result, "FlextHandlers performance test exceeded timeout",
+            result,
+            "FlextHandlers performance test exceeded timeout",
         )
 
     def test_automated_handlers_resource_management(self) -> None:
@@ -144,7 +148,8 @@ class TestAutomatedFlextHandlers:
         # Test normal operation
         result = self._execute_handlers_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextHandlers resource test",
+            result,
+            "FlextHandlers resource test",
         )
 
         # Test cleanup (if applicable)

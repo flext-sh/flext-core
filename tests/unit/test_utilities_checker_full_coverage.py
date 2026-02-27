@@ -71,13 +71,17 @@ def test_extract_message_type_from_parameter_branches() -> None:
 
     assert (
         u.Checker._extract_message_type_from_parameter(
-            param, {"message": None}, "message",
+            param,
+            {"message": None},
+            "message",
         )
         is None
     )
     assert (
         u.Checker._extract_message_type_from_parameter(
-            param, {"message": "abc"}, "message",
+            param,
+            {"message": "abc"},
+            "message",
         )
         == "abc"
     )
@@ -145,7 +149,9 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         annotation=list[int],
     )
     assert u.Checker._extract_message_type_from_parameter(
-        param_typed, {}, "message",
+        param_typed,
+        {},
+        "message",
     ) == str(list[int])
 
     param_empty = inspect.Parameter(

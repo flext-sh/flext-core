@@ -400,7 +400,8 @@ class TestuMapperAdvanced:
             },
         }
         res = u.mapper().build(
-            data, ops=cast("dict[str, t.GeneralValueType] | None", ops),
+            data,
+            ops=cast("dict[str, t.GeneralValueType] | None", ops),
         )
         # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
         assert res == {"a": "UPPER"}

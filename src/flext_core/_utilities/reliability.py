@@ -751,7 +751,8 @@ class FlextUtilitiesReliability:
                 return FlextUtilitiesReliability._resolve_match_output(result, value)
             if pattern == input_value:
                 return FlextUtilitiesReliability._resolve_match_output(
-                    result, input_value,
+                    result,
+                    input_value,
                 )
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:

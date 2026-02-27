@@ -283,7 +283,8 @@ class RegistryScenarios:
         handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
     ) -> list[
         tuple[
-            type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType],
+            type[t.GeneralValueType],
+            p.Handler[t.GeneralValueType, t.GeneralValueType],
         ]
     ]:
         """Create test bindings using str message type."""
@@ -293,11 +294,13 @@ class RegistryScenarios:
     def create_function_map(
         handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
     ) -> dict[
-        type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType],
+        type[t.GeneralValueType],
+        p.Handler[t.GeneralValueType, t.GeneralValueType],
     ]:
         """Create test function map using str message type."""
         result: dict[
-            type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType],
+            type[t.GeneralValueType],
+            p.Handler[t.GeneralValueType, t.GeneralValueType],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler

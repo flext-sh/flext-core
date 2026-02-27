@@ -58,7 +58,8 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     )
     FlextModelsContext.StructlogProxyContextVar.reset(
         FlextModelsContext.StructlogProxyToken(
-            key="proxy_key", previous_value="restored",
+            key="proxy_key",
+            previous_value="restored",
         ),
     )
     assert proxy.get() == "restored"

@@ -76,7 +76,8 @@ def test_create_from_callable_branches() -> None:
     assert handler_from_config.handler_name == "cfg"
 
     enum_mode_handler = h.create_from_callable(
-        lambda msg: msg, mode=c.Cqrs.HandlerType.QUERY,
+        lambda msg: msg,
+        mode=c.Cqrs.HandlerType.QUERY,
     )
     assert enum_mode_handler.mode == c.Cqrs.HandlerType.QUERY
 

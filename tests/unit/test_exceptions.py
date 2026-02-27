@@ -735,7 +735,10 @@ class Teste:
         ids=["config_context", "connection_context", "auth_context", "authz_context"],
     )
     def test_exception_with_context(
-        self, error_class: type[e.BaseError], msg: str, context_key: str,
+        self,
+        error_class: type[e.BaseError],
+        msg: str,
+        context_key: str,
     ) -> None:
         """Test exception classes with context metadata."""
         context = {context_key: "value1"}
@@ -755,7 +758,8 @@ class Teste:
         context: dict[str, t.MetadataAttributeValue] = {
             "correlation_id": "test-correlation-id",
             "metadata": cast(
-                "t.MetadataAttributeValue", cast("object", metadata_obj),
+                "t.MetadataAttributeValue",
+                cast("object", metadata_obj),
             ),  # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
             "auto_log": True,
             "auto_correlation": True,
@@ -972,7 +976,10 @@ class Teste:
         """Test RateLimitError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.RateLimitError(
-            "Rate limit", limit=100, window_seconds=60, context=context,
+            "Rate limit",
+            limit=100,
+            window_seconds=60,
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -981,7 +988,9 @@ class Teste:
         """Test CircuitBreakerError with context - tests line 659."""
         context = {"key1": "value1"}
         error = e.CircuitBreakerError(
-            "Circuit open", service="test_service", context=context,
+            "Circuit open",
+            service="test_service",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -990,7 +999,10 @@ class Teste:
         """Test TypeError with context - tests line 701."""
         context = {"key1": "value1"}
         error = e.TypeError(
-            "Type error", expected_type=str, actual_type=int, context=context,
+            "Type error",
+            expected_type=str,
+            actual_type=int,
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -999,7 +1011,9 @@ class Teste:
         """Test OperationError with context - tests lines 757-761."""
         context = {"key1": "value1"}
         error = e.OperationError(
-            "Operation failed", operation="test_op", context=context,
+            "Operation failed",
+            operation="test_op",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -1620,7 +1634,8 @@ class Teste:
             field="test_field",
             value=123,  # int is already t.MetadataAttributeValue (ScalarValue)
             custom_obj=cast(
-                "t.MetadataAttributeValue", str(object()),
+                "t.MetadataAttributeValue",
+                str(object()),
             ),  # object needs to be converted to string
         )
         assert isinstance(error, e.ValidationError)

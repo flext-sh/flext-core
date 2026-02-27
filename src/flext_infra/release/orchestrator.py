@@ -314,7 +314,11 @@ class ReleaseOrchestrator(FlextService[bool]):
 
         notes_path = dir_result.value / "RELEASE_NOTES.md"
         notes_result = self._generate_notes(
-            root, version, tag, project_names, notes_path,
+            root,
+            version,
+            tag,
+            project_names,
+            notes_path,
         )
         if notes_result.is_failure:
             return notes_result

@@ -79,7 +79,8 @@ class FlextContainer(p.DI):
         _factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
-            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+            str,
+            t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -112,7 +113,8 @@ class FlextContainer(p.DI):
         _factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
-            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+            str,
+            t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -241,7 +243,8 @@ class FlextContainer(p.DI):
                                     m.Container.ServiceRegistration(
                                         name=_factory_name,
                                         service=cast(
-                                            "t.RegisterableService", raw_result,
+                                            "t.RegisterableService",
+                                            raw_result,
                                         ),
                                     )
                                     return cast("t.RegisterableService", raw_result)
@@ -288,9 +291,7 @@ class FlextContainer(p.DI):
         # getattr accesses Provide from bridge object safely
         # Provide is always initialized by dependency-injector in _di_bridge
         provide_helper = (
-            self._di_bridge.Provide
-            if hasattr(self._di_bridge, "Provide")
-            else None
+            self._di_bridge.Provide if hasattr(self._di_bridge, "Provide") else None
         )
         # Type narrowing via isinstance check + RuntimeError if missing
         if provide_helper is None or not callable(provide_helper):
@@ -422,7 +423,8 @@ class FlextContainer(p.DI):
         resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         global_config: m.Container.ContainerConfig | None = None,
         user_overrides: Mapping[
-            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+            str,
+            t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -649,7 +651,8 @@ class FlextContainer(p.DI):
                     service=cast("t.RegisterableService", self._context),
                 )
                 _ = self.register(
-                    "context", cast("t.RegisterableService", self._context),
+                    "context",
+                    cast("t.RegisterableService", self._context),
                 )
             except ValidationError:
                 pass  # Skip registration if validation fails
@@ -990,7 +993,8 @@ class FlextContainer(p.DI):
         if isinstance(value, Mapping):
             return True
         if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray),
+            value,
+            (str, bytes, bytearray),
         ):
             return True
         if FlextContainer._is_context_protocol(value):
@@ -1241,9 +1245,7 @@ class FlextContainer(p.DI):
         if context is None:
             ctx_instance = self.context
             clone_method = (
-                ctx_instance.clone
-                if hasattr(ctx_instance, "clone")
-                else None
+                ctx_instance.clone if hasattr(ctx_instance, "clone") else None
             )
             if callable(clone_method):
                 candidate_context = clone_method()

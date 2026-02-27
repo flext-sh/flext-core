@@ -73,7 +73,8 @@ def test_frozen_value_model_equality_and_hash() -> None:
 
 def test_identifiable_unique_id_empty_rejected() -> None:
     with pytest.raises(
-        ValidationError, match="String should have at least 1 character",
+        ValidationError,
+        match="String should have at least 1 character",
     ):
         _Identifiable(unique_id="   ")
 

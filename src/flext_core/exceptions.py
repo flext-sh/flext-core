@@ -238,9 +238,7 @@ class FlextExceptions:
             pass
 
         dumped_map: Mapping[str, t.MetadataAttributeValue] | None = None
-        model_dump = (
-            value.model_dump if hasattr(value, "model_dump") else None
-        )
+        model_dump = value.model_dump if hasattr(value, "model_dump") else None
         if callable(model_dump):
             dumped_candidate = model_dump()
             try:
@@ -1013,9 +1011,7 @@ class FlextExceptions:
                 return string_value
 
             qualname_value = (
-                type_value.__qualname__
-                if hasattr(type_value, "__qualname__")
-                else None
+                type_value.__qualname__ if hasattr(type_value, "__qualname__") else None
             )
             return e._safe_optional_str(qualname_value)
 
@@ -1237,9 +1233,7 @@ class FlextExceptions:
             None
         )
         model_dump = (
-            metadata_raw.model_dump
-            if hasattr(metadata_raw, "model_dump")
-            else None
+            metadata_raw.model_dump if hasattr(metadata_raw, "model_dump") else None
         )
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)

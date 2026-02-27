@@ -88,7 +88,8 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     obj = _Decorated()
     implements = cast("Callable[[type], bool]", getattr(obj, "implements_protocol"))
     get_protocols = cast(
-        "Callable[[], tuple[type, ...]]", getattr(_Decorated, "get_protocols"),
+        "Callable[[], tuple[type, ...]]",
+        getattr(_Decorated, "get_protocols"),
     )
     assert implements(_NamedProtocol) is True
     assert get_protocols() == (_NamedProtocol,)
@@ -123,7 +124,8 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     runtime_obj = _OnlyRuntime()
     assert (
         p.check_implements_protocol(
-            cast("t.GuardInputValue", runtime_obj), _NamedProtocol,
+            cast("t.GuardInputValue", runtime_obj),
+            _NamedProtocol,
         )
         is True
     )

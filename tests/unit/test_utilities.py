@@ -225,7 +225,8 @@ class Testu:
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
         batch_id = u.generate(
-            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,),
+            "batch",
+            parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,),
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 

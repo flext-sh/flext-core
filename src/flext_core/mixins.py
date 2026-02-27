@@ -109,9 +109,7 @@ class FlextMixins(FlextRuntime):
         if isinstance(obj, m.ConfigMap):
             return obj
 
-        model_dump_callable = (
-            obj.model_dump if hasattr(obj, "model_dump") else None
-        )
+        model_dump_callable = obj.model_dump if hasattr(obj, "model_dump") else None
         if callable(model_dump_callable):
             model_dump_result = model_dump_callable()
             try:
@@ -152,7 +150,8 @@ class FlextMixins(FlextRuntime):
             return m.ConfigMap.model_validate(obj)
         except (TypeError, ValueError, AttributeError) as exc:
             _module_logger.debug(
-                "Object-to-config-map normalization failed", exc_info=exc,
+                "Object-to-config-map normalization failed",
+                exc_info=exc,
             )
             return m.ConfigMap(root={})
 
@@ -173,7 +172,8 @@ class FlextMixins(FlextRuntime):
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(
-        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        cls,
+        **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
@@ -245,7 +245,8 @@ class FlextMixins(FlextRuntime):
             )
         except (TypeError, ValueError, AttributeError) as exc:
             _module_logger.debug(
-                "Runtime bootstrap options validation failed", exc_info=exc,
+                "Runtime bootstrap options validation failed",
+                exc_info=exc,
             )
             options = p.RuntimeBootstrapOptions()
 
@@ -351,7 +352,8 @@ class FlextMixins(FlextRuntime):
                     RuntimeError,
                 ) as exc:
                     _module_logger.debug(
-                        "Tracked operation raised expected exception", exc_info=exc,
+                        "Tracked operation raised expected exception",
+                        exc_info=exc,
                     )
                     # Failure - increment error count
                     err_raw = u.get(stats, "error_count", default=0)

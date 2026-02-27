@@ -40,10 +40,12 @@ def _build_migrator(project: im.ProjectInfo, base_mk: str) -> ProjectMigrator:
         return r[list[im.ProjectInfo]].ok([project])
 
     migrator._discovery = cast(
-        "Any", SimpleNamespace(discover_projects=_discover_projects),
+        "Any",
+        SimpleNamespace(discover_projects=_discover_projects),
     )
     migrator._generator = cast(
-        "Any", SimpleNamespace(generate=lambda: r[str].ok(base_mk)),
+        "Any",
+        SimpleNamespace(generate=lambda: r[str].ok(base_mk)),
     )
     return migrator
 

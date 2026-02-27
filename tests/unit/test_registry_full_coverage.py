@@ -80,7 +80,9 @@ def test_execute_and_register_handler_failure_paths(
         cast("p.CommandBus", cast("object", _OkDispatcher())),
     )
     monkeypatch.setattr(
-        FlextRegistry, "_create_registration_details", lambda *_args: None,
+        FlextRegistry,
+        "_create_registration_details",
+        lambda *_args: None,
     )
     fallback = registry.register_handler(_as_registry_handler(_Handler()))
     assert fallback.is_success

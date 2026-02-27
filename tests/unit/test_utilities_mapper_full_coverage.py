@@ -213,7 +213,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
         field = NotGeneral()
 
     res_non_general = mapper.extract(
-        cast("t.ConfigMap | BaseModel", cast("object", Container())), "field",
+        cast("t.ConfigMap | BaseModel", cast("object", Container())),
+        "field",
     )
     assert res_non_general.is_success
     assert res_non_general.value == "converted"
@@ -233,7 +234,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     assert (
         accessor(
             cast(
-                "t.ConfigMap | BaseModel", cast("object", AttrObject(name="x", value=1)),
+                "t.ConfigMap | BaseModel",
+                cast("object", AttrObject(name="x", value=1)),
             ),
         )
         == "x"
@@ -457,7 +459,8 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
 
     assert mapper._build_apply_sort(1, {"sort": True}) == 1
     sorted_with_scalar = mapper._build_apply_sort(
-        [{"name": "b"}, 3, {"name": "a"}], {"sort": "name"},
+        [{"name": "b"}, 3, {"name": "a"}],
+        {"sort": "name"},
     )
     assert isinstance(sorted_with_scalar, list)
 
@@ -647,7 +650,9 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
 
 def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     mapped = mapper.map_dict_keys(
-        {"old": 1, "x": 2}, {"old": "new"}, keep_unmapped=True,
+        {"old": 1, "x": 2},
+        {"old": "new"},
+        keep_unmapped=True,
     )
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
@@ -718,13 +723,15 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
         a: int = 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())), "a",
+        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())),
+        "a",
     )
     assert found is True
     assert value == 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())), "missing",
+        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())),
+        "missing",
     )
     assert found is False
     assert value is None
@@ -859,7 +866,8 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     context = mapper.process_context_data(
         primary_data=cast("t.ConfigMapValue", cast("object", DictLikeOnly())),
         secondary_data=cast(
-            "t.ConfigMapValue", cast("object", DictLikeOnlySecondary()),
+            "t.ConfigMapValue",
+            cast("object", DictLikeOnlySecondary()),
         ),
         merge_strategy="merge",
     )

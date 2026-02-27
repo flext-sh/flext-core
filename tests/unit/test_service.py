@@ -171,7 +171,9 @@ class ServiceScenarios:
             enabled = bool(enabled_val) if enabled_val is not None else True
 
             return ComplexService.model_construct(
-                name=name, amount=amount, enabled=enabled,
+                name=name,
+                amount=amount,
+                enabled=enabled,
             )
 
         if scenario.scenario_type == ServiceScenarioType.FAILING:
