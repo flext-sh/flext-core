@@ -80,14 +80,6 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
             for idx, project in enumerate(projects, start=1):
                 output.progress(idx, total, project, verb)
                 if skipped:
-                    logger.info(
-                        "workspace_project_skipped",
-                        index=idx,
-                        project=project,
-                        verb=verb,
-                        elapsed_seconds=0,
-                        exit_code=0,
-                    )
                     results.append(
                         m.CommandOutput(
                             stdout="",
@@ -129,13 +121,6 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
                     skipped = total - idx
 
             elapsed_total = time.monotonic() - started_total
-            logger.info(
-                "workspace_orchestration_summary",
-                total=total,
-                success=success,
-                failed=failed,
-                skipped=skipped,
-            )
             output.summary(verb, total, success, failed, skipped, elapsed_total)
             return r[list[m.CommandOutput]].ok(results)
 
@@ -178,20 +163,9 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
 
         elapsed = time.monotonic() - started
         status = c.Status.OK if return_code == 0 else c.Status.FAIL
-        (
-            f"{index:02d} [{status}] {project} {verb}"
-            f" ({int(elapsed)}s) exit={return_code} log={log_path}"
-        )
-        logger.info(
-            "workspace_project_completed",
-            index=index,
-            status=status,
-            project=project,
-            verb=verb,
-            elapsed_seconds=int(elapsed),
-            exit_code=return_code,
-            log_path=str(log_path),
-        )
+        # Output project completion status
+        status_symbol = "✓" if return_code == 0 else "✗"
+        output.info(f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})")
 
         return r[m.CommandOutput].ok(
             m.CommandOutput(
