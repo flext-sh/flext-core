@@ -26,9 +26,6 @@ if TYPE_CHECKING:
     from flext_core.result import r
 
 
-type ProtocolHandlerCallable = (
-    t.HandlerCallable | Callable[[t.GuardInputValue], t.GuardInputValue]
-)
 
 # =============================================================================
 # PROTOCOL DETECTION AND VALIDATION HELPERS
@@ -916,11 +913,7 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            handler: (
-                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-                | ProtocolHandlerCallable
-                | BaseModel
-            ),
+            handler: FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
@@ -931,11 +924,7 @@ class FlextProtocols:
 
         def register_handlers(
             self,
-            handlers: Sequence[
-                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-                | ProtocolHandlerCallable
-                | BaseModel
-            ],
+            handlers: Sequence[FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
 
@@ -946,12 +935,7 @@ class FlextProtocols:
 
         def register_bindings(
             self,
-            bindings: Mapping[
-                t.MessageTypeSpecifier,
-                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-                | ProtocolHandlerCallable
-                | BaseModel,
-            ],
+            bindings: Mapping[t.MessageTypeSpecifier, FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
 
