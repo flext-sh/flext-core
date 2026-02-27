@@ -344,6 +344,11 @@ class FlextProtocols:
             ...
 
         @property
+        def exception(self) -> BaseException | None:
+            """Exception captured during operation (if any)."""
+            ...
+
+        @property
         def result(self) -> t.GuardInputValue:
             """Access internal Result for advanced operations."""
             ...
@@ -504,6 +509,11 @@ class FlextProtocols:
         @property
         def error_data(self) -> t.ConfigMap | None:
             """Error data."""
+            ...
+
+        @property
+        def exception(self) -> BaseException | None:
+            """Exception captured during operation (if any)."""
             ...
 
         def unwrap(self) -> T_co:

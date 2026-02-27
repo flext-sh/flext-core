@@ -1398,7 +1398,7 @@ class FlextRuntime:
         - Use p.Result[T] in function signatures to accept both types
         """
 
-        __slots__ = ("_error", "_error_code", "_error_data", "_is_success", "_value")
+        __slots__ = ("_error", "_error_code", "_error_data", "_is_success", "_value", "_exception")
 
         def __init__(
             self,
@@ -1416,6 +1416,7 @@ class FlextRuntime:
             self._error_code = error_code
             self._error_data = error_data
             self._is_success = is_success
+            self._exception: BaseException | None = None
 
         @property
         def value(self) -> T:
@@ -1477,6 +1478,11 @@ class FlextRuntime:
         def error_data(self) -> t.ConfigMap | None:
             """Get the error data."""
             return self._error_data
+
+        @property
+        def exception(self) -> BaseException | None:
+            """Get the exception if one was captured."""
+            return self._exception
 
         def unwrap(self) -> T:
             """Unwrap the success value or raise RuntimeError."""
