@@ -30,8 +30,7 @@ class _BridgeBadProvide:
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:  # noqa: N802
-        return name
+    def Provide(name: str) -> str:        return name
         return name
 
 

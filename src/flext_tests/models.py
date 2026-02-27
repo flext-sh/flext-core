@@ -168,7 +168,7 @@ class FlextTestsModels(FlextModels):
                     default=None,
                     description="Value override",
                 )
-                # ValueObject-specific
+                # Value-specific
                 data: str | None = Field(default=None, description="Data override")
                 value_count: int | None = Field(
                     default=None,
@@ -430,7 +430,7 @@ class FlextTestsModels(FlextModels):
                 name: str = ""
                 status: str = "active"
 
-            # Use module-level Entity and ValueObject to avoid Pydantic forward reference issues
+            # Use module-level Entity and Value to avoid Pydantic forward reference issues
             # Factory classes for test model creation
             class Entity(FlextModels.Entity):
                 """Factory entity class for tests."""
@@ -438,7 +438,7 @@ class FlextTestsModels(FlextModels):
                 name: str = ""
                 value: t.Tests.PayloadValue = None
 
-            class ValueObject(FlextModels.ValueObject):
+            class Value(FlextModels.Value):
                 """Factory value object class for tests."""
 
                 data: str = ""

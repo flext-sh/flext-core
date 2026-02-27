@@ -61,8 +61,16 @@ from typing import ClassVar, Self, TypeGuard, cast
 
 import structlog
 from dependency_injector import containers, providers, wiring
+from pydantic import BaseModel, TypeAdapter
+from structlog.processors import (
+    JSONRenderer,
+    StackInfoRenderer,
+    TimeStamper,
+)
+from structlog.stdlib import add_log_level
 
 from flext_core import _runtime_metadata
+from flext_core._runtime_metadata import Metadata
 from flext_core.constants import c
 from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import T, t
@@ -76,7 +84,6 @@ class _LazyMetadata:
     def __get__(
         self, obj: object, objtype: type | None = None
     ) -> type[_runtime_metadata.Metadata]:
-        from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
 
         # Cache the loaded class on the class itself
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
@@ -420,8 +427,6 @@ class FlextRuntime:
 
         model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
         if callable(model_dump):
-            from pydantic import TypeAdapter  # noqa: PLC0415
-
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue
             ).validate_python(model_dump())
@@ -469,8 +474,6 @@ class FlextRuntime:
 
         model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
         if callable(model_dump):
-            from pydantic import TypeAdapter  # noqa: PLC0415
-
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue
             ).validate_python(model_dump())
@@ -544,8 +547,6 @@ class FlextRuntime:
         This allows isinstance checks to narrow types for FlextRuntime methods
         that accept PayloadValue (which includes BaseModel).
         """
-        from pydantic import BaseModel  # noqa: PLC0415
-
         match obj:
             case BaseModel():
                 return True
@@ -1206,15 +1207,6 @@ class FlextRuntime:
         level_to_use = log_level if log_level is not None else logging.INFO
 
         module = structlog
-
-        # structlog processors have specific signatures - use object for processor types
-        # structlog processors are callables with varying signatures
-        from structlog.processors import (  # noqa: PLC0415
-            JSONRenderer,
-            StackInfoRenderer,
-            TimeStamper,
-        )
-        from structlog.stdlib import add_log_level  # noqa: PLC0415
 
         processors: list[object] = [
             module.contextvars.merge_contextvars,

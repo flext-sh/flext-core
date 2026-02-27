@@ -19,7 +19,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
-from flext_core._models.cqrs import FlextMessage, FlextModelsCqrs
+from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
@@ -54,7 +54,7 @@ class FlextModels:
     class Entity(FlextModelsEntity.Entry):
         """Entity base class - domain objects with identity."""
 
-    class ValueObject(FlextModelsEntity.Value):
+    class Value(FlextModelsEntity.Value):
         """Value object base class - immutable, compared by value."""
 
     class AggregateRoot(FlextModelsEntity.AggregateRoot):
@@ -104,14 +104,6 @@ class FlextModels:
     class Dict(t.Dict):
         """Generic dictionary container."""
 
-    # Value class - inherits from ValueObject for type system compatibility
-    class Value(ValueObject):
-        """Value object base class - alias for ValueObject.
-
-        This is a class (not alias) so mypy accepts it as base class.
-        Functionally identical to ValueObject.
-        """
-
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes
     # =========================================================================
@@ -132,10 +124,20 @@ class FlextModels:
     # CQRS MESSAGING - Direct access for common usage
     # =========================================================================
 
-    Command: TypeAlias = FlextModelsCqrs.Command
-    Query: TypeAlias = FlextModelsCqrs.Query
-    Bus: TypeAlias = FlextModelsCqrs.Bus
-    Pagination: TypeAlias = FlextModelsCqrs.Pagination
+    class Command(FlextModelsCqrs.Command):
+        pass
+
+    class Query(FlextModelsCqrs.Query):
+        pass
+
+    class Event(FlextModelsCqrs.Event):
+        pass
+
+    class Bus(FlextModelsCqrs.Bus):
+        pass
+
+    class Pagination(FlextModelsCqrs.Pagination):
+        pass
 
     # =========================================================================
     # AUTH DOMAIN MODELS
@@ -313,7 +315,7 @@ class FlextModels:
     # UNIONS - Pydantic discriminated unions
     # =========================================================================
 
-    MessageUnion: TypeAlias = FlextMessage
+    Message: TypeAlias = FlextModelsCqrs.FlextMessage
 
 
 # =========================================================================

@@ -216,12 +216,12 @@ class FlextContainer(FlextRuntime, p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                *_args: Any,  # type: ignore[misc]  # DI container flexible args
+                                *_args: Any,
                                 _factory_func_ref: Callable[[], object] | None = (
                                     factory_func_raw
                                 ),
                                 _factory_name: str = factory_name,
-                                **kwargs: Any,  # type: ignore[misc]  # DI container flexible kwargs
+                                **kwargs: Any,
                             ) -> t.RegisterableService:
                                 fn_override = kwargs.get("fn")
                                 if fn_override is not None:
@@ -617,10 +617,7 @@ class FlextContainer(FlextRuntime, p.DI):
         # Note: _di_container.config is the Configuration provider, not the service
         # We need to check if "config" is registered as a service, not just if the attribute exists
         # Type narrowing: FlextSettings extends BaseModel, so u.is_pydantic_model narrows type
-        if (
-            not self.has_service("config")
-            and self._config is not None
-        ):
+        if not self.has_service("config") and self._config is not None:
             try:
                 m.Container.ServiceRegistration(
                     name="config",
@@ -642,10 +639,7 @@ class FlextContainer(FlextRuntime, p.DI):
 
         # Register context if not already registered
         # ServiceRegistration uses SkipValidation - can register any service type
-        if (
-            not self.has_service("context")
-            and self._context is not None
-        ):
+        if not self.has_service("context") and self._context is not None:
             try:
                 m.Container.ServiceRegistration(
                     name="context",

@@ -10,60 +10,25 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 
 import pytest
-from flext_core import result as _result_mod, utilities as _utils_mod
-from flext_core._models import base as _base_module
+from flext_core import c, m, r, t, u
 from pydantic import BaseModel, ValidationError
 
-FlextModelFoundation = _base_module.FlextModelFoundation
-c = _base_module.c
-t = _base_module.t
 
-r = _result_mod.r
-u = _utils_mod.u
-
-
-class _FrozenValue(FlextModelFoundation.FrozenValueModel):
+class _FrozenValue(m.FrozenStrictModel):
     name: str
     count: int
 
 
-class _Identifiable(FlextModelFoundation.IdentifiableMixin):
+class _Identifiable(m.IdentifiableMixin):
     pass
 
 
-class _Timestampable(FlextModelFoundation.TimestampableMixin):
+class _Timestampable(m.TimestampableMixin):
     pass
 
 
-class _Versionable(FlextModelFoundation.VersionableMixin):
+class _Versionable(m.VersionableMixin):
     pass
-
-
-class _Auditable(FlextModelFoundation.AuditableMixin):
-    pass
-
-
-class _SoftDelete(FlextModelFoundation.SoftDeletableMixin):
-    pass
-
-
-class _Taggable(FlextModelFoundation.TaggableMixin):
-    pass
-
-
-class _Validatable(FlextModelFoundation.ValidatableMixin):
-    value: int = 1
-
-
-class _Serializable(FlextModelFoundation.SerializableMixin):
-    value: str
-    optional: str | None = None
-
-
-class _FailingValidatable(FlextModelFoundation.ValidatableMixin):
-    def validate_self(self) -> _FailingValidatable:
-        msg = "invalid"
-        raise ValueError(msg)
 
 
 class _BrokenDumpModel(BaseModel):
@@ -76,7 +41,7 @@ class _BrokenDumpModel(BaseModel):
 
 
 def test_metadata_attributes_accepts_none() -> None:
-    model = FlextModelFoundation.Metadata.model_validate({"attributes": None})
+    model = m.Metadata.model_validate({"attributes": None})
     assert model.attributes == {}
 
 
@@ -84,22 +49,18 @@ def test_metadata_attributes_accepts_basemodel_mapping() -> None:
     class _Attrs(BaseModel):
         key: str
 
-    model = FlextModelFoundation.Metadata.model_validate({
-        "attributes": _Attrs(key="value")
-    })
+    model = m.Metadata.model_validate({"attributes": _Attrs(key="value")})
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping"):
-        FlextModelFoundation.Metadata.model_validate({"attributes": _BrokenDumpModel()})
+        m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    model_from_t_dict = FlextModelFoundation.Metadata.model_validate({
-        "attributes": t.Dict(root={"a": 1})
-    })
-    model_from_mapping = FlextModelFoundation.Metadata(attributes={"b": 2})
+    model_from_t_dict = m.Metadata.model_validate({"attributes": t.Dict(root={"a": 1})})
+    model_from_mapping = m.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}
 
@@ -112,7 +73,7 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
 
     monkeypatch.setattr(_base_module, "BaseModel", _NotPydanticBase)
     attributes = t.Dict(root={"x": 1})
-    assert FlextModelFoundation.Metadata._validate_attributes(
+    assert m.Metadata._validate_attributes(
         cast(
             "t.MetadataAttributeValue | Mapping[str, t.MetadataAttributeValue]",
             attributes,
@@ -122,7 +83,7 @@ def test_metadata_attributes_t_dict_branch_when_basemodel_check_skipped(
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like"):
-        FlextModelFoundation.Metadata.model_validate({"attributes": 123})
+        m.Metadata.model_validate({"attributes": 123})
 
 
 def test_frozen_value_model_equality_and_hash() -> None:
@@ -420,7 +381,7 @@ def test_serializable_mixin_methods() -> None:
 
 
 def test_advanced_serializable_methods() -> None:
-    model = FlextModelFoundation.AdvancedSerializable(
+    model = m.AdvancedSerializable(
         name="sample",
         timestamp=datetime(2026, 1, 1, tzinfo=UTC),
         metadata=t.Dict(root={"n": 1}),
@@ -436,19 +397,17 @@ def test_advanced_serializable_methods() -> None:
 
 
 def test_dynamic_rebuild_model_methods() -> None:
-    model = FlextModelFoundation.DynamicRebuildModel(name="x", value=5)
+    model = m.DynamicRebuildModel(name="x", value=5)
     assert model.doubled_value == 10
 
-    extra_cls = FlextModelFoundation.DynamicRebuildModel.create_with_extra_field(
-        "extra", int
-    )
+    extra_cls = m.DynamicRebuildModel.create_with_extra_field("extra", int)
     assert "extra" in extra_cls.__annotations__
 
     with pytest.raises(ValueError, match="has no field"):
         model.add_runtime_field("runtime_key", "v")
     assert model.get_runtime_field("missing", "default") == "default"
 
-    plus_one_cls = FlextModelFoundation.DynamicRebuildModel.rebuild_with_validator(
+    plus_one_cls = m.DynamicRebuildModel.rebuild_with_validator(
         lambda value: int(cast("str | int", value)) + 1
     )
     plus_one = plus_one_cls(name="x", value=2)
@@ -456,7 +415,7 @@ def test_dynamic_rebuild_model_methods() -> None:
 
 
 def test_dynamic_model_methods() -> None:
-    model = FlextModelFoundation.DynamicModel.create_dynamic("dyn", a=1)
+    model = m.DynamicModel.create_dynamic("dyn", a=1)
     assert model.name == "dyn"
     assert model.dynamic_field_count == 1
     assert model.has_dynamic_fields is True
@@ -467,9 +426,9 @@ def test_dynamic_model_methods() -> None:
 
 
 def test_timestamped_model_and_alias_and_canonical_symbols() -> None:
-    model = FlextModelFoundation.TimestampedModel()
+    model = m.TimestampedModel()
     assert model.created_at.tzinfo == UTC
-    assert hasattr(FlextModelFoundation, "TimestampedModel")
+    assert hasattr(m, "TimestampedModel")
     assert r[str].ok("ok").value == "ok"
     assert c.Performance.DEFAULT_VERSION >= 1
     assert hasattr(u, "mapper")

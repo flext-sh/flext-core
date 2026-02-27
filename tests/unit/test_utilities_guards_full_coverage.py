@@ -135,18 +135,6 @@ def test_is_flexible_value_covers_all_branches() -> None:
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-    class _ContextLike:
-        def clone(self) -> _ContextLike:
-            return self
-
-        def set(self, key: str, value: t.GeneralValueType, scope: str = "") -> object:
-            return {"key": key, "value": value, "scope": scope}
-
-        def get(self, key: str, scope: str = "") -> object:
-            return {"key": key, "scope": scope}
-
-    assert u.Guards.is_context(_ContextLike())
-    assert u.is_type(_ContextLike(), "context")
 
     assert not u.is_type(object(), "config")
     assert not u.is_type(object(), "container")

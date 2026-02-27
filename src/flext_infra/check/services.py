@@ -55,8 +55,7 @@ class _CheckIssue(BaseModel):
     message: str = Field(description="Human-readable issue description")
     severity: str = Field(default="error", description="Issue severity level")
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
+    @computed_field    @property
     def formatted(self) -> str:
         """Format issue as ``file:line:col [code] message``."""
         code_part = f"[{self.code}] " if self.code else ""
@@ -87,14 +86,12 @@ class _ProjectResult(BaseModel):
         default_factory=dict, description="Gate name to execution mapping"
     )
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
+    @computed_field    @property
     def total_errors(self) -> int:
         """Total issue count across all gates."""
         return sum(len(v.issues) for v in self.gates.values())
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
+    @computed_field    @property
     def passed(self) -> bool:
         """Whether every gate passed."""
         return all(v.result.passed for v in self.gates.values())
@@ -209,8 +206,7 @@ class _PyrightOutput(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    generalDiagnostics: list[_PyrightDiagnostic] = Field(  # noqa: N815
-        default_factory=list, description="General diagnostics list"
+    generalDiagnostics: list[_PyrightDiagnostic] = Field(        default_factory=list, description="General diagnostics list"
     )
 
 
@@ -253,8 +249,7 @@ class _SarifRuleDescriptor(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(description="Rule identifier")
-    shortDescription: _SarifMessageText = Field(description="Rule short description")  # noqa: N815
-
+    shortDescription: _SarifMessageText = Field(description="Rule short description")
 
 class _SarifArtifactLocation(BaseModel):
     """SARIF artifact location with URI."""
@@ -262,25 +257,21 @@ class _SarifArtifactLocation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     uri: str = Field(description="Artifact URI")
-    uriBaseId: str = Field(default="%SRCROOT%", description="URI base identifier")  # noqa: N815
-
+    uriBaseId: str = Field(default="%SRCROOT%", description="URI base identifier")
 
 class _SarifRegion(BaseModel):
     """SARIF region with start line/column."""
 
     model_config = ConfigDict(extra="forbid")
 
-    startLine: int = Field(description="Start line (1-based)")  # noqa: N815
-    startColumn: int = Field(description="Start column (1-based)")  # noqa: N815
-
+    startLine: int = Field(description="Start line (1-based)")    startColumn: int = Field(description="Start column (1-based)")
 
 class _SarifPhysicalLocation(BaseModel):
     """SARIF physical location combining artifact and region."""
 
     model_config = ConfigDict(extra="forbid")
 
-    artifactLocation: _SarifArtifactLocation = Field(description="Artifact location")  # noqa: N815
-    region: _SarifRegion = Field(description="Source region")
+    artifactLocation: _SarifArtifactLocation = Field(description="Artifact location")    region: _SarifRegion = Field(description="Source region")
 
 
 class _SarifLocation(BaseModel):
@@ -288,16 +279,14 @@ class _SarifLocation(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    physicalLocation: _SarifPhysicalLocation = Field(description="Physical location")  # noqa: N815
-
+    physicalLocation: _SarifPhysicalLocation = Field(description="Physical location")
 
 class _SarifResult(BaseModel):
     """SARIF result entry."""
 
     model_config = ConfigDict(extra="forbid")
 
-    ruleId: str = Field(description="Rule identifier")  # noqa: N815
-    level: str = Field(description="Result level (error/warning)")
+    ruleId: str = Field(description="Rule identifier")    level: str = Field(description="Result level (error/warning)")
     message: _SarifMessageText = Field(description="Result message")
     locations: list[_SarifLocation] = Field(description="Result locations")
 
@@ -308,8 +297,7 @@ class _SarifToolDriver(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(description="Tool name")
-    informationUri: str = Field(default="", description="Tool documentation URL")  # noqa: N815
-    rules: list[_SarifRuleDescriptor] = Field(
+    informationUri: str = Field(default="", description="Tool documentation URL")    rules: list[_SarifRuleDescriptor] = Field(
         default_factory=list, description="Rule descriptors"
     )
 

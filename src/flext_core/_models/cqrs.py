@@ -38,11 +38,7 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command(
-        FlextModelFoundation.ArbitraryTypesModel,
-        FlextModelFoundation.IdentifiableMixin,
-        FlextModelFoundation.TimestampableMixin,
-    ):
+    class Command(BaseModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -58,17 +54,20 @@ class FlextModelsCqrs:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Command type identifier",
         )
+        command_id: str = Field(
+            default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"),
+        )
         issuer_id: str | None = None
 
-        @field_validator("command_type", mode="before")
-        @classmethod
-        def validate_command(cls, v: t.ScalarValue) -> str:
-            """Auto-set command type from class name if empty."""
-            if isinstance(v, str):
-                return v if v.strip() else cls.__name__
-            if not v:
-                return cls.__name__
-            return str(v)
+        @property
+        def query_type(self) -> str | None:
+            """Query type identifier (always None for commands)."""
+            return None
+
+        @property
+        def event_type(self) -> str | None:
+            """Event type identifier (always None for commands)."""
+            return None
 
     class Pagination(BaseModel):
         """Pagination model for query results."""
@@ -117,9 +116,6 @@ class FlextModelsCqrs:
     class Query(BaseModel):
         """Query model for CQRS query operations."""
 
-        # Use centralized constant from FlextConstants directly:
-        # c.MIN_QUALNAME_PARTS_FOR_WRAPPER
-
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
             json_schema_extra={
@@ -144,6 +140,16 @@ class FlextModelsCqrs:
             default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
         )
         query_type: str | None = None
+
+        @property
+        def command_type(self) -> str | None:
+            """Command type identifier (always None for queries)."""
+            return None
+
+        @property
+        def event_type(self) -> str | None:
+            """Event type identifier (always None for queries)."""
+            return None
 
         @classmethod
         def _resolve_pagination_class(
@@ -379,15 +385,29 @@ class FlextModelsCqrs:
         event_type: str = Field(
             description="Event type identifier",
         )
+
+        @property
+        def command_type(self) -> str | None:
+            """Command type identifier (always None for events)."""
+            return None
+
+        @property
+        def query_type(self) -> str | None:
+            """Query type identifier (always None for events)."""
+            return None
+
         aggregate_id: str = Field(
             description="ID of the aggregate that generated this event",
+        )
+        event_id: str = Field(
+            default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
         )
         data: t.Dict = Field(
             default_factory=t.Dict,
             description="Event payload data",
         )
-        metadata: FlextModelFoundation.Metadata = Field(
-            default_factory=lambda: FlextModelFoundation.Metadata(),
+        metadata: t.Dict = Field(
+            default_factory=t.Dict,
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )
 
@@ -408,11 +428,10 @@ class FlextModelsCqrs:
         count: int
         handlers: list[str]
 
+    type FlextMessage = Annotated[
+        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsCqrs.Event,
+        Discriminator("message_type"),
+    ]
 
-__all__ = ["FlextMessage", "FlextModelsCqrs"]
 
-
-type FlextMessage = Annotated[
-    FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsCqrs.Event,
-    Discriminator("message_type"),
-]
+__all__ = ["FlextModelsCqrs"]

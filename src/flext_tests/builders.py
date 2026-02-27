@@ -254,9 +254,9 @@ class FlextTestsBuilders:
 
             def is_value_class(
                 cls: type[object],
-            ) -> TypeGuard[type[m.Tests.Factory.ValueObject]]:
+            ) -> TypeGuard[type[m.Tests.Factory.Value]]:
                 """Type guard to check if class is Value subclass."""
-                return issubclass(cls, m.Tests.Factory.ValueObject)
+                return issubclass(cls, m.Tests.Factory.Value)
 
             # Type narrowing for Entity classes
             if is_entity_class(cls_type):
@@ -278,7 +278,7 @@ class FlextTestsBuilders:
                 )
             # Type narrowing for Value classes
             elif is_value_class(cls_type):
-                value_cls: type[m.Tests.Factory.ValueObject] = cls_type
+                value_cls: type[m.Tests.Factory.Value] = cls_type
                 data_val = cls_kwargs.get("data", "")
                 count_val = cls_kwargs.get("count", 1)
 
@@ -286,7 +286,7 @@ class FlextTestsBuilders:
                     *,
                     data: str,
                     count: int,
-                ) -> m.Tests.Factory.ValueObject:
+                ) -> m.Tests.Factory.Value:
                     return value_cls(data=data, count=count)
 
                 resolved_value = (
@@ -1738,7 +1738,7 @@ class FlextTestsBuilders:
                 )
 
             @staticmethod
-            def value_object[T: m.Tests.Factory.ValueObject](
+            def value_object[T: m.Tests.Factory.Value](
                 value_class: type[T],
                 data: str = "",
                 count: int = 1,

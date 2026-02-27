@@ -13,13 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core.protocols import FlextProtocols as p
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime

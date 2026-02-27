@@ -149,7 +149,7 @@ class TestFlextModels:
     def test_models_value_object_creation(self) -> None:
         """Test value object creation and immutability."""
 
-        class TestValue(m.ValueObject):
+        class TestValue(m.Value):
             data: str
             count: int
 
@@ -641,7 +641,7 @@ class TestFlextModels:
     def test_value_object_immutability(self) -> None:
         """Test Value object immutability and equality."""
 
-        class TestValue(m.ValueObject):
+        class TestValue(m.Value):
             name: str
             value: int
 

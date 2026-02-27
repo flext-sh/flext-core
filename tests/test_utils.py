@@ -191,10 +191,10 @@ class TestFixtureFactory:
         """Create test value object fixture."""
 
         @dataclass(frozen=True)
-        class TestValueObject:
+        class TestValue:
             value: object
 
-        return TestValueObject(value=value)
+        return TestValue(value=value)
 
     @staticmethod
     def create_test_container_instance() -> FlextContainer:

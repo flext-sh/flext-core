@@ -185,6 +185,7 @@ class FlextTypes:
     ConfigMapValue: TypeAlias = _ContainerValue
 
     FlexibleValue: TypeAlias = _ContainerValue
+    PayloadValue: TypeAlias = PayloadValue
 
     # RegisterableService - fixed types only
     RegisterableService: TypeAlias = RegisterableService

@@ -24,7 +24,7 @@ User = m.Tests.Factory.User
 Config = m.Tests.Factory.Config
 Service = m.Tests.Factory.Service
 Entity = m.Tests.Factory.Entity
-ValueObject = m.Tests.Factory.ValueObject
+Value = m.Tests.Factory.Value
 
 
 def _extract_model(
@@ -557,7 +557,7 @@ class TestsFlextTestsFactoriesModel:
     def test_model_value_object(self) -> None:
         """Test value object model creation."""
         value_obj = tt.model("value", data="test_data", value_count=3)
-        assert isinstance(value_obj, ValueObject)
+        assert isinstance(value_obj, Value)
         assert value_obj.data == "test_data"
 
     def test_model_with_transform(self) -> None:

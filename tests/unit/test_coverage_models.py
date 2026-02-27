@@ -35,13 +35,13 @@ class ModelScenarios:
     """Centralized model test scenarios using FlextConstants."""
 
 
-class TestValueObjects:
+class TestValues:
     """Test immutable value objects using FlextTestsUtilities."""
 
     def test_value_object_creation(self) -> None:
         """Test creating a value object."""
 
-        class Money(m.ValueObject):
+        class Money(m.Value):
             """Money value object."""
 
             amount: float
@@ -54,7 +54,7 @@ class TestValueObjects:
     def test_value_object_immutability(self) -> None:
         """Test value object is immutable."""
 
-        class Point(m.ValueObject):
+        class Point(m.Value):
             """Point value object."""
 
             x: float
@@ -67,7 +67,7 @@ class TestValueObjects:
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""
 
-        class Color(m.ValueObject):
+        class Color(m.Value):
             """Color value object."""
 
             red: int
@@ -81,7 +81,7 @@ class TestValueObjects:
     def test_value_object_validation(self) -> None:
         """Test value object validation."""
 
-        class Email(m.ValueObject):
+        class Email(m.Value):
             """Email value object with validation."""
 
             address: str
@@ -102,7 +102,7 @@ class TestValueObjects:
     def test_value_object_hashable(self) -> None:
         """Test value objects are hashable."""
 
-        class ISBN(m.ValueObject):
+        class ISBN(m.Value):
             """ISBN value object."""
 
             code: str
@@ -611,5 +611,5 @@ __all__ = [
     "TestModelSerialization",
     "TestModelValidation",
     "TestQueries",
-    "TestValueObjects",
+    "TestValues",
 ]

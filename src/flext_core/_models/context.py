@@ -26,56 +26,36 @@ from pydantic import (
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
+
+
+def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
+    if v is None:
+        return {}
+    if isinstance(v, Mapping):
+        return {str(k): v for k, v in v.items()}  # type: ignore
+    if hasattr(v, "model_dump"):
+        return v.model_dump()
+    raise ValueError(f"Cannot normalize {type(v)} to Mapping")
+
+
+def _normalize_metadata_before(v: t.Any) -> t.Any:
+    if v is None:
+        return None
+    if isinstance(v, FlextModelFoundation.Metadata):
+        return v
+    if isinstance(v, Mapping):
+        return FlextModelFoundation.Metadata(attributes=dict(v))
+    return v
+
+
+def _normalize_statistics_before(v: t.Any) -> t.Any:
+    if v is None:
+        return {}
+    return _normalize_to_mapping(v)
+
+
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-
-def _normalize_metadata_before(
-    value: FlextModelFoundation.Metadata
-    | t.ConfigMap
-    | Mapping[str, t.ConfigMapValue]
-    | None,
-) -> FlextModelFoundation.Metadata:
-    """BeforeValidator: normalize metadata to FlextModelFoundation.Metadata."""
-    return FlextModelsContext.normalize_metadata(value)
-
-
-def _normalize_to_mapping(
-    v: t.GuardInputValue,
-) -> Mapping[str, t.GuardInputValue]:
-    """BeforeValidator: normalize dict-like input to a mapping."""
-    if isinstance(v, t.Dict):
-        return v.root
-    if isinstance(v, Mapping):
-        return {
-            str(k): FlextRuntime.normalize_to_general_value(val) for k, val in v.items()
-        }
-    if isinstance(v, BaseModel):
-        dumped = v.model_dump()
-        if not FlextRuntime.is_dict_like(dumped):
-            return {}
-        return {
-            str(k): FlextRuntime.normalize_to_metadata_value(val)
-            for k, val in dumped.items()
-        }
-    if v is None:
-        return {}
-    msg = f"must be dict or BaseModel, got {v.__class__.__name__}"
-    raise TypeError(msg)
-
-
-def _normalize_statistics_before(
-    v: t.GuardInputValue,
-) -> Mapping[str, t.GuardInputValue]:
-    """BeforeValidator: normalize statistics input."""
-    if v is None:
-        return {}
-    if FlextRuntime.is_dict_like(v):
-        return dict(v)
-    if isinstance(v, BaseModel):
-        return FlextModelsContext.to_general_value_dict(v.model_dump())
-    msg = f"statistics must be dict or BaseModel, got {v.__class__.__name__}"
-    raise TypeError(msg)
 
 
 class FlextModelsContext:
@@ -85,49 +65,6 @@ class FlextModelsContext:
     All nested classes can be accessed via FlextModels.* (type aliases) or
     directly via FlextModelsContext.*
     """
-
-    @staticmethod
-    def normalize_metadata(
-        value: FlextModelFoundation.Metadata
-        | t.ConfigMap
-        | Mapping[str, t.ConfigMapValue]
-        | None,
-    ) -> FlextModelFoundation.Metadata:
-        """Normalize metadata input to FlextModelFoundation.Metadata."""
-        if value is None:
-            return FlextModelFoundation.Metadata(attributes={})
-        if isinstance(value, FlextModelFoundation.Metadata):
-            return value
-        if not FlextRuntime.is_dict_like(value):
-            msg = (
-                f"metadata must be None, dict, or FlextModelsBase.Metadata, "
-                f"got {value.__class__.__name__}"
-            )
-            raise TypeError(msg)
-        attributes: Mapping[str, t.MetadataAttributeValue] = {
-            str(k): FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in (
-                value.root.items() if isinstance(value, t.ConfigMap) else value.items()
-            )
-        }
-        return FlextModelFoundation.Metadata(attributes=dict(attributes))
-
-    @staticmethod
-    def to_general_value_dict(
-        value: t.ConfigMap | Mapping[str, t.ConfigMapValue],
-    ) -> Mapping[str, t.MetadataAttributeValue]:
-        """Convert dict-like value to metadata mapping for Metadata."""
-        if not FlextRuntime.is_dict_like(value):
-            return {}
-        return {
-            str(k): FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in (
-                value.root.items() if isinstance(value, t.ConfigMap) else value.items()
-            )
-        }
-
-    class ArbitraryTypesModel(FlextModelFoundation.ArbitraryTypesModel):
-        """Base model with arbitrary types support - real inheritance."""
 
     class StructlogProxyToken(FlextModelsEntity.Value):
         """Token for resetting structlog context variables.
@@ -810,13 +747,13 @@ class FlextModelsContext:
             # Find the field that holds the context instance
             context_field = None
             for field_name in self.__class__.model_fields:
-                if 'context' in field_name.lower():
+                if "context" in field_name.lower():
                     context_field = getattr(self, field_name, None)
                     break
-            
+
             if context_field is None:
                 return self  # No context field found, skip validation
-            
+
             if hasattr(context_field, "get") and hasattr(context_field, "set"):
                 return self
             raise ValueError("Context must have get() and set() methods")

@@ -204,22 +204,43 @@ class FlextProtocols:
 
     @runtime_checkable
     class BaseProtocol(Protocol):
-        """Base protocol that all FLEXT protocols inherit from implicitly.
-
-        Ensures all protocols follow structural typing principles and
-        maintain consistency across the framework.
-        """
+        """Base protocol for FLEXT structural types."""
 
         def _protocol_name(self) -> str:
             """Return the protocol name for introspection."""
             ...
 
+    @runtime_checkable
+    class Routable(Protocol):
+        """Protocol for messages that carry explicit route information."""
+
+        @property
+        def command_type(self) -> str | None:
+            """Command type identifier."""
+            ...
+
+        @property
+        def query_type(self) -> str | None:
+            """Query type identifier."""
+            ...
+
+        @property
+        def event_type(self) -> str | None:
+            """Event type identifier."""
+            ...
+
+    @runtime_checkable
+    class RoutableType(Protocol):
+        """Protocol for message types (classes) with route information."""
+
+        model_fields: Mapping[str, t.ScalarValue]
+
     # =========================================================================
-    # CONTEXT PROTOCOLS (Context Management)
+    # CONTEXT: Context Management Protocols
     # =========================================================================
 
     @runtime_checkable
-    class ContextLike(Protocol):
+    class Context(Protocol):
         """Context protocol for type safety without circular imports.
 
         Defined in protocols.py to keep all protocol definitions together.
@@ -475,6 +496,16 @@ class FlextProtocols:
             """Error message."""
             ...
 
+        @property
+        def error_code(self) -> str | None:
+            """Error code."""
+            ...
+
+        @property
+        def error_data(self) -> t.ConfigMap | None:
+            """Error data."""
+            ...
+
         def unwrap(self) -> T_co:
             """Unwrap value."""
             ...
@@ -554,40 +585,6 @@ class FlextProtocols:
 
         dispatcher_enable_logging: bool
         """Enable logging in dispatcher operations."""
-
-    # =========================================================================
-    # CONTEXT: Context Management Protocols
-    # =========================================================================
-
-    @runtime_checkable
-    class Context(ContextLike, Protocol):
-        """Execution context protocol with cloning semantics.
-
-        Extends FlextProtocols.ContextLike (minimal protocol) for full
-        context operations. Uses ResultLike (covariant) for return types
-        to allow implementations to return FlextResult.
-        """
-
-        def clone(self) -> Self:
-            """Clone context for isolated execution."""
-            ...
-
-        def set(
-            self,
-            key: str,
-            value: t.GuardInputValue,
-            scope: str = ...,
-        ) -> FlextProtocols.ResultLike[bool]:
-            """Set a context value."""
-            ...
-
-        def get(
-            self,
-            key: str,
-            scope: str = ...,
-        ) -> FlextProtocols.ResultLike[t.GuardInputValue]:
-            """Get a context value."""
-            ...
 
     # =========================================================================
     # INFRASTRUCTURE PROTOCOLS (DI and Container Management)
@@ -841,39 +838,6 @@ class FlextProtocols:
             """
             ...
 
-        def validate(
-            self,
-            data: MessageT,
-        ) -> FlextProtocols.Result[bool]:
-            """Validate input data using extensible validation pipeline.
-
-            Reflects real implementations like FlextHandlers.validate() which
-            performs base validation that can be overridden by subclasses.
-            """
-            ...
-
-        def validate_command(
-            self,
-            command: MessageT,
-        ) -> FlextProtocols.Result[bool]:
-            """Validate command message with command-specific rules.
-
-            Reflects real implementations like FlextHandlers.validate_command()
-            which delegates to validate() by default but can be overridden.
-            """
-            ...
-
-        def validate_query(
-            self,
-            query: MessageT,
-        ) -> FlextProtocols.Result[bool]:
-            """Validate query message with query-specific rules.
-
-            Reflects real implementations like FlextHandlers.validate_query()
-            which delegates to validate() by default but can be overridden.
-            """
-            ...
-
         def can_handle(self, message_type: type) -> bool:
             """Check if handler can handle the specified message type.
 
@@ -886,84 +850,34 @@ class FlextProtocols:
     class CommandBus(BaseProtocol, Protocol):
         """Command routing and execution protocol.
 
-        Reflects real implementations like FlextDispatcher which provides
-        CQRS routing, handler registration, and execution with context
-        propagation and reliability controls.
+        Matches FlextDispatcher: strict handler registration and message dispatch.
         """
 
         def register_handler(
             self,
-            request: (
-                t.MessageTypeSpecifier
-                | BaseModel
-                | Mapping[str, t.GuardInputValue]
-                | FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-                | ProtocolHandlerCallable
-            ),
-            handler: FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-            | ProtocolHandlerCallable
-            | BaseModel
-            | None = None,
-        ) -> FlextProtocols.Result[BaseModel]:
-            """Register handler dynamically.
-
-            Reflects real implementations like FlextDispatcher that accept
-            dict, Pydantic model, handler callable, handler object (FlextHandlers),
-            or any object for registration. Uses object to allow handler instances
-            that can't be referenced directly from protocol definitions.
-            Returns ConfigurationMapping with registration details.
-            """
-            ...
-
-        def register_command[TCommand, TResult](
-            self,
-            command_type: type[TCommand],
-            handler: (
-                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-                | ProtocolHandlerCallable
-                | BaseModel
-            ),
+            handler: t.HandlerType,
             *,
-            handler_config: Mapping[str, t.ScalarValue] | None = None,
-        ) -> FlextProtocols.Result[t.GuardInputValue]:
-            """Register command handler."""
-            ...
+            is_event: bool = False,
+        ) -> FlextProtocols.Result[bool]:
+            """Register a handler with route auto-discovery.
 
-        @staticmethod
-        def create_handler_from_function(
-            handler_func: ProtocolHandlerCallable,
-            handler_config: Mapping[str, t.ScalarValue] | None = None,
-            mode: str = ...,
-        ) -> FlextProtocols.Result[
-            FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
-        ]:
-            """Create handler from function (static method)."""
-            ...
-
-        def execute(
-            self,
-            command: t.ScalarValue,
-        ) -> FlextProtocols.Result[
-            t.GuardInputValue
-        ]:  # Use t.GuardInputValue instead of T_co
-            """Execute command."""
+            Handler must expose message_type, event_type, or can_handle
+            for route resolution.
+            """
             ...
 
         def dispatch(
             self,
-            message_or_type: t.GuardInputValue,
-            data: t.GuardInputValue | None = None,
-            *,
-            config: t.GuardInputValue | None = None,
-            metadata: t.GuardInputValue | None = None,
-            correlation_id: str | None = None,
-            timeout_override: int | None = None,
-        ) -> FlextProtocols.Result[t.GuardInputValue]:
-            """Dispatch message (primary method for real implementations).
+            message: FlextProtocols.Routable,
+        ) -> FlextProtocols.Result[t.PayloadValue]:
+            """Dispatch a CQRS message to its registered handler."""
+            ...
 
-            Reflects real implementations like FlextDispatcher which provides
-            flexible dispatch accepting message objects or (type, data) tuples.
-            """
+        def publish(
+            self,
+            event: FlextProtocols.Routable | list[FlextProtocols.Routable],
+        ) -> FlextProtocols.Result[bool]:
+            """Publish events to registered subscribers."""
             ...
 
     @runtime_checkable

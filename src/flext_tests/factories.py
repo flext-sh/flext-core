@@ -65,7 +65,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
 
     Architecture:
         - Extends FlextService for consistent service patterns
-        - Uses FlextModels (m.ValueObject, m.Entity) for domain models
+        - Uses FlextModels (m.Value, m.Entity) for domain models
         - Returns r[T] for operations that can fail
         - Provides both static and instance methods
 
@@ -204,7 +204,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             | m.Tests.Factory.Config
             | m.Tests.Factory.Service
             | m.Tests.Factory.Entity
-            | m.Tests.Factory.ValueObject
+            | m.Tests.Factory.Value
         ):
             if params.factory:
                 factory_result = params.factory()
@@ -215,7 +215,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                         m.Tests.Factory.Config,
                         m.Tests.Factory.Service,
                         m.Tests.Factory.Entity,
-                        m.Tests.Factory.ValueObject,
+                        m.Tests.Factory.Value,
                     ),
                 ):
                     return factory_result
@@ -315,13 +315,13 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                 )
 
             # params.kind == "value"
-            # Use DomainHelpers for value object creation with proper ValueObject model
+            # Use DomainHelpers for value object creation with proper Value model
             value_data = params.data or "default_value"
             value_count = params.value_count or 1
             return u.Tests.DomainHelpers.create_test_value_object_instance(
                 data=value_data,
                 count=value_count,
-                value_class=m.Tests.Factory.ValueObject,
+                value_class=m.Tests.Factory.Value,
             )
 
         # Create single instance

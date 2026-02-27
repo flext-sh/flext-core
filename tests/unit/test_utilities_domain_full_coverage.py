@@ -45,7 +45,7 @@ class TestDomainLogger:
         assert hasattr(logger, "info")
 
 
-class TestDomainHashValueObject:
+class TestDomainHashValue:
     """Tests for u.Domain.hash_value_object_by_value()."""
 
     def test_hash_with_hashable_non_primitive(self) -> None:
@@ -72,7 +72,7 @@ class TestDomainHashValueObject:
         assert isinstance(result, int)
 
 
-class TestValidateValueObjectImmutable:
+class TestValidateValueImmutable:
     """Tests for u.Domain.validate_value_object_immutable()."""
 
     def test_frozen_model_is_immutable(self) -> None:

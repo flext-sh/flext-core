@@ -23,15 +23,13 @@ from types import ModuleType
 from typing import ClassVar
 
 from flext_core.constants import c
-from flext_core.exceptions import FlextExceptions as e
+from flext_core.exceptions import e
 from flext_core.mixins import x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
 from flext_core.utilities import u
-
-# Import moved to top of file to avoid circular dependency
 
 _module_logger = logging.getLogger(__name__)
 

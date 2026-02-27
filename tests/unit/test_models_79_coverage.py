@@ -105,7 +105,7 @@ class TestFlextModelsEntity:
         assert initial_version >= 1  # VersionableMixin default is 1
 
 
-class TestFlextModelsValueObject:
+class TestFlextModelsValue:
     """Test FlextModels.Value functionality."""
 
     def test_value_object_creation(self) -> None:
@@ -369,5 +369,5 @@ __all__ = [
     "TestFlextModelsEntity",
     "TestFlextModelsIntegration",
     "TestFlextModelsQuery",
-    "TestFlextModelsValueObject",
+    "TestFlextModelsValue",
 ]

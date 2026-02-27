@@ -47,7 +47,7 @@ class _EntityFactory[TEntity](Protocol):
     def __call__(self, *, name: str, value: t.Tests.PayloadValue) -> TEntity: ...
 
 
-class _ValueObjectFactory[TValue](Protocol):
+class _ValueFactory[TValue](Protocol):
     def __call__(self, *, data: str, count: int) -> TValue: ...
 
 
@@ -1163,7 +1163,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_object_instance[TValue](
                 data: str,
                 count: int,
-                value_class: _ValueObjectFactory[TValue],
+                value_class: _ValueFactory[TValue],
             ) -> TValue:
                 """Create a test value object instance.
 
@@ -1182,7 +1182,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_objects_batch[TValue](
                 data_list: list[str],
                 count_list: list[int],
-                value_class: _ValueObjectFactory[TValue],
+                value_class: _ValueFactory[TValue],
             ) -> list[TValue]:
                 """Create batch of test value objects.
 
@@ -1958,52 +1958,51 @@ class FlextTestsUtilities(FlextUtilities):
                 # Delegate to flext-core chk() - zero duplication
                 return FlextUtilities.chk(actual_len, gte=min_len, lte=max_len)
 
+        def _to_scalar(value: object) -> core_t.ScalarValue:
+            """Convert a value to ScalarValue for config overrides.
+
+            Args:
+                value: Any value to convert
+
+            Returns:
+                ScalarValue (str | int | float | bool | datetime | None)
+
+            """
+            if value is None or isinstance(value, str | int | float | bool):
+                return value
+            return str(value)
+
+        def _to_payload(value: object) -> t.Tests.PayloadValue:
+            """Convert a value to test PayloadValue.
+
+            Args:
+                value: Any value to convert
+
+            Returns:
+                PayloadValue suitable for test assertions
+
+            """
+            if value is None or isinstance(
+                value, str | int | float | bool | bytes | BaseModel
+            ):
+                return value
+            if isinstance(value, Mapping):
+                return {str(k): _to_payload(v) for k, v in value.items()}
+            if isinstance(value, Sized) and hasattr(value, "__iter__"):
+                return [_to_payload(item) for item in value]
+            return str(value)
+
+        def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
+            if value is None or isinstance(value, str | int | float | bool | BaseModel):
+                return value
+            if isinstance(value, bytes):
+                return value.decode(errors="ignore")
+            if isinstance(value, Mapping):
+                return {str(k): _to_config_map_value(v) for k, v in value.items()}
+            return [_to_config_map_value(item) for item in value]
+
 
 # Runtime aliases: u for project namespace, u distinct to avoid shadowing core u
 u = FlextTestsUtilities
 
 __all__ = ["FlextTestsUtilities", "u"]
-
-
-def _to_scalar(value: object) -> core_t.ScalarValue:
-    """Convert a value to ScalarValue for config overrides.
-
-    Args:
-        value: Any value to convert
-
-    Returns:
-        ScalarValue (str | int | float | bool | datetime | None)
-
-    """
-    if value is None or isinstance(value, str | int | float | bool):
-        return value
-    return str(value)
-
-
-def _to_payload(value: object) -> t.Tests.PayloadValue:
-    """Convert a value to test PayloadValue.
-
-    Args:
-        value: Any value to convert
-
-    Returns:
-        PayloadValue suitable for test assertions
-
-    """
-    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
-        return value
-    if isinstance(value, Mapping):
-        return {str(k): _to_payload(v) for k, v in value.items()}
-    if isinstance(value, Sized) and hasattr(value, "__iter__"):
-        return [_to_payload(item) for item in value]  # type: ignore[union-attr]
-    return str(value)
-
-
-def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
-    if value is None or isinstance(value, str | int | float | bool | BaseModel):
-        return value
-    if isinstance(value, bytes):
-        return value.decode(errors="ignore")
-    if isinstance(value, Mapping):
-        return {str(k): _to_config_map_value(v) for k, v in value.items()}
-    return [_to_config_map_value(item) for item in value]

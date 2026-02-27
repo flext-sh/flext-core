@@ -362,11 +362,11 @@ class FlextModels:
 class DomainModel:  # Second export - WRONG!
     pass
 
-class ValueObject:  # Third export - WRONG!
+class Value:  # Third export - WRONG!
     pass
 
 # In __init__.py
-from flext_core.models import FlextModels, DomainModel, ValueObject
+from flext_core.models import FlextModels, DomainModel, Value
 # Violates single class per module rule
 ```text
 

@@ -12,14 +12,13 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from datetime import datetime
 from typing import Annotated, ClassVar, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
-from flext_core.dispatcher import DispatcherHandler, FlextDispatcher
+from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import m
 from flext_core.protocols import p
@@ -215,7 +214,6 @@ class FlextRegistry(FlextService[bool]):
         value: t.ScalarValue | BaseModel,
     ) -> c.Cqrs.HandlerType:
         """Safely extract and validate handler mode from value."""
-        # Use u.parse() for enum parsing (runtime alias flat namespace)
         parse_result = u.parse(
             value,
             c.Cqrs.HandlerType,
@@ -233,41 +231,36 @@ class FlextRegistry(FlextService[bool]):
         value: c.Cqrs.RegistrationStatus | str,
     ) -> c.Cqrs.CommonStatus:
         """Safely extract and validate status from c.Cqrs.RegistrationStatus value."""
-        # Handle special case: RegistrationStatus.ACTIVE -> CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.ACTIVE:
             return c.Cqrs.CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.INACTIVE:
             return c.Cqrs.CommonStatus.FAILED
-        # Use u.parse() for enum parsing (runtime alias flat namespace)
         parse_result = u.parse(
             value,
             c.Cqrs.CommonStatus,
             default=c.Cqrs.CommonStatus.RUNNING,
             case_insensitive=True,
         )
-        return (
-            parse_result.value
-            if parse_result.is_success
-            else c.Cqrs.CommonStatus.RUNNING
-        )
+        return parse_result.value
 
     @staticmethod
-    def _to_dispatcher_handler(handler: RegistryHandler) -> DispatcherHandler:
-        if isinstance(handler, BaseModel):
-            return handler
+    def _to_dispatcher_handler(
+        handler_for_dispatch: RegistryHandler,
+    ) -> m.Handler | t.HandlerType:
+        """Convert RegistryHandler to dispatcher m.Handler or t.HandlerType."""
+        if isinstance(handler_for_dispatch, m.Handler):
+            return handler_for_dispatch
+        if hasattr(handler_for_dispatch, "handle") or callable(handler_for_dispatch):
+            return cast("t.HandlerType", handler_for_dispatch)
 
-        func: t.HandlerCallable = handler
-
-        def handler_adapter(message: t.ScalarValue) -> t.ScalarValue:
-            result = func(message)
-            if (
-                isinstance(result, str | int | float | bool | datetime)
-                or result is None
-            ):
-                return result
-            return str(result)
-
-        return handler_adapter
+        # Wrapping a raw function inside a Handler model
+        return m.Handler(
+            handler_id=handler_for_dispatch.handler_id,
+            handler_name=handler_for_dispatch.handler_name,
+            handler_mode=handler_for_dispatch.handler_mode,
+            handler_type=handler_for_dispatch.handler_type,
+            metadata=handler_for_dispatch.metadata,
+        )
 
     def _create_registration_details(
         self,
@@ -391,14 +384,26 @@ class FlextRegistry(FlextService[bool]):
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
         handler_for_dispatch: RegistryHandler = handler
-        registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
                 handler_for_dispatch,
             )
-            registration_result = self._dispatcher.register_handler(
+            # Use self-describing standard dispatcher handler
+            raw_result = self._dispatcher.register_handler(
                 dispatcher_handler,
             )
+            if raw_result.is_failure:
+                registration_result = r[m.HandlerRegistrationResult].fail(
+                    raw_result.error or "Unknown error",
+                )
+            else:
+                registration_result = r[m.HandlerRegistrationResult].ok(
+                    m.HandlerRegistrationResult(
+                        handler_name=key,
+                        status=c.Cqrs.CommonStatus.RUNNING,
+                        mode="explicit",
+                    )
+                )
         else:
             protocol_result = self._dispatcher.register_handler(
                 handler_for_dispatch,
@@ -588,13 +593,36 @@ class FlextRegistry(FlextService[bool]):
                     dispatcher_handler = FlextRegistry._to_dispatcher_handler(
                         handler_for_dispatch,
                     )
-                    reg_result = self._dispatcher.register_handler(
-                        message_type,
+                    # Assign the type properly when handling explicit explicit type
+                    # since FlextDispatcher now prefers self-describing handlers mostly.
+                    if (
+                        not getattr(dispatcher_handler, "message_type", None)
+                        and not getattr(dispatcher_handler, "event_type", None)
+                        and not getattr(dispatcher_handler, "query_type", None)
+                        and not getattr(dispatcher_handler, "command_type", None)
+                    ):
+                        setattr(dispatcher_handler, "message_type", message_type)
+
+                    raw_result = self._dispatcher.register_handler(
                         dispatcher_handler,
                     )
+                    if raw_result.is_failure:
+                        reg_result = r[m.HandlerRegistrationResult].fail(
+                            raw_result.error or "Unknown error",
+                        )
+                    else:
+                        reg_result = r[m.HandlerRegistrationResult].ok(
+                            m.HandlerRegistrationResult(
+                                handler_name=key,
+                                status=c.Cqrs.CommonStatus.RUNNING,
+                                mode="explicit",
+                            )
+                        )
                 else:
+                    # Protocol path: set message_type on handler for route discovery
+                    if not getattr(handler_for_dispatch, "message_type", None):
+                        setattr(handler_for_dispatch, "message_type", message_type)
                     protocol_result = self._dispatcher.register_handler(
-                        message_type,
                         handler_for_dispatch,
                     )
                     if protocol_result.is_failure:
@@ -603,8 +631,10 @@ class FlextRegistry(FlextService[bool]):
                         )
                     else:
                         reg_result = r[m.HandlerRegistrationResult].ok(
-                            m.HandlerRegistrationResult.model_validate(
-                                protocol_result.value,
+                            m.HandlerRegistrationResult(
+                                handler_name=key,
+                                status=c.Cqrs.CommonStatus.RUNNING,
+                                mode="explicit",
                             ),
                         )
 
