@@ -33,7 +33,7 @@ DEFAULT_GATES = c.Gates.DEFAULT_CSV
 _REQUIRED_EXCLUDES = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
 _RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
 _MARKDOWN_RE = re.compile(
-    r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"
+    r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"+
     r"(?P<code>MD\d+)(?:/[^\s]+)?\s+(?P<msg>.*)$",
 )
 _GO_VET_RE = re.compile(

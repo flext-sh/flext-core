@@ -24,12 +24,6 @@ from datetime import UTC, datetime
 import pytest
 from flext_core import c, m, r, t, u
 from flext_core._models.base import FlextModelFoundation
-from pydantic import BaseModel
-
-
-class _Simple(BaseModel):
-    x: int
-
 
 # ---------------------------------------------------------------------------
 # Validators.strip_whitespace
