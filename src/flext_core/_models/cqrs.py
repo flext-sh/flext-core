@@ -411,15 +411,15 @@ class FlextModelsCqrs:
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )
 
-    @staticmethod
-    def parse_message(payload: t.ConfigMapValue) -> FlextMessage:
-        adapter: TypeAdapter[FlextMessage] = TypeAdapter(FlextMessage)
-        return adapter.validate_python(payload)
-
-    CQRSMessage = Annotated[
+    type FlextMessage = Annotated[
         Command | Query | Event,
         Discriminator("message_type"),
     ]
+
+    @staticmethod
+    def parse_message(payload: t.ConfigMapValue) -> FlextMessage:
+        """Parse a message payload into a FlextMessage instance."""
+        raise NotImplementedError("parse_message must be implemented by subclasses")
 
     class HandlerBatchRegistrationResult(BaseModel):
         """Result of batch handler registration."""
@@ -428,10 +428,6 @@ class FlextModelsCqrs:
         count: int
         handlers: list[str]
 
-    type FlextMessage = Annotated[
-        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsCqrs.Event,
-        Discriminator("message_type"),
-    ]
 
 
 __all__ = ["FlextModelsCqrs"]

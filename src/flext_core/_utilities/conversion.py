@@ -287,7 +287,7 @@ class FlextUtilitiesConversion:
             return None
         if isinstance(value, BaseModel | Mapping | list | tuple | set | frozenset):
             return None
-        if hasattr(value, "isoformat"):
+        if isinstance(value, datetime) and hasattr(value, "isoformat"):
             isoformat_method = value.isoformat
             if callable(isoformat_method):
                 return str(value)

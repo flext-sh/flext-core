@@ -57,7 +57,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard, cast
+from typing import Any, ClassVar, Self, TypeGuard, cast, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -69,10 +69,10 @@ from structlog.processors import (
 )
 from structlog.stdlib import add_log_level
 
-from flext_core import _runtime_metadata
+import flext_core._runtime_metadata
 from flext_core._runtime_metadata import Metadata
 from flext_core.constants import c
-from flext_core.protocols import FlextProtocols as p
+from flext_core.protocols import p
 from flext_core.typings import T, t
 
 _module_logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ class _LazyMetadata:
     ) -> type[_runtime_metadata.Metadata]:
 
         # Cache the loaded class on the class itself
-        (objtype or FlextRuntime).Metadata = Metadata
+        setattr(objtype or FlextRuntime, "Metadata", Metadata)
         return Metadata
 
 
@@ -355,6 +355,8 @@ class FlextRuntime:
             case Mapping():
                 return True
             case _:
+                if value is None:
+                    return False
                 keys = value.keys if hasattr(value, "keys") else None
                 items = value.items if hasattr(value, "items") else None
                 get = value.get if hasattr(value, "get") else None
@@ -428,11 +430,10 @@ class FlextRuntime:
         if isinstance(val, Path):
             return str(val)
 
-        model_dump = val.model_dump if hasattr(val, "model_dump") else None
-        if callable(model_dump):
+        if isinstance(val, BaseModel):
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue,
-            ).validate_python(model_dump())
+            ).validate_python(val.model_dump())
             return FlextRuntime.normalize_to_general_value(dumped_value)
 
         if FlextRuntime.is_dict_like(val):
@@ -475,11 +476,10 @@ class FlextRuntime:
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
 
-        model_dump = val.model_dump if hasattr(val, "model_dump") else None
-        if callable(model_dump):
+        if isinstance(val, BaseModel):
             dumped_value: t.ConfigMapValue = TypeAdapter(
                 t.ConfigMapValue,
-            ).validate_python(model_dump())
+            ).validate_python(val.model_dump())
             return FlextRuntime.normalize_to_metadata_value(dumped_value)
 
         if FlextRuntime.is_dict_like(val):
@@ -909,7 +909,7 @@ class FlextRuntime:
             configuration_provider = providers.Configuration()
             if config:
                 configuration_provider.from_dict(dict(config))
-            di_container.config = configuration_provider
+            setattr(di_container, "config", configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -1217,11 +1217,11 @@ class FlextRuntime:
         # Configure structlog with processors and logger factory
         # structlog.configure accepts specific types, but we construct them dynamically
 
-        wrapper_arg: type[p.Log.StructlogLogger] | None = (
-            wrapper_class_factory()
-            if wrapper_class_factory is not None
-            else module.make_filtering_bound_logger(level_to_use)
-        )
+        wrapper_arg: type[p.Log.StructlogLogger] | None = None
+        if wrapper_class_factory is not None:
+            wrapper_arg = cast("type[p.Log.StructlogLogger]", wrapper_class_factory())
+        else:
+            wrapper_arg = cast("type[p.Log.StructlogLogger]", module.make_filtering_bound_logger(level_to_use))
 
         # Determine logger factory (handle async buffering)
         # structlog accepts various factory types - we use object to accept all
@@ -1243,7 +1243,7 @@ class FlextRuntime:
                 else None
             )
             if print_logger_factory is not None:
-                factory_to_use = print_logger_factory(file=cls._async_writer)
+                factory_to_use = print_logger_factory(file=cast("Any", cls._async_writer))
             else:
                 factory_to_use = module.PrintLoggerFactory()
         else:
@@ -1258,7 +1258,7 @@ class FlextRuntime:
         configure_fn = module.configure if hasattr(module, "configure") else None
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
-                processors=processors,
+                processors=cast("Any", processors),
                 wrapper_class=wrapper_arg,
                 logger_factory=factory_to_use,
                 cache_logger_on_first_use=cache_logger_on_first_use,
@@ -1658,6 +1658,7 @@ class FlextRuntime:
             """Boolean conversion based on success state."""
             return self.is_success
 
+        @override
         def __repr__(self) -> str:
             """String representation using short alias 'r' for brevity."""
             if self.is_success:
@@ -1975,7 +1976,7 @@ class FlextRuntime:
             and type(obj_a) not in type(obj_b).__mro__
         ):
             return False
-        if FlextRuntime.is_base_model(obj_a) and FlextRuntime.is_base_model(obj_b):
+        if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
             dump_a = obj_a.model_dump()
             dump_b = obj_b.model_dump()
             return dump_a == dump_b
@@ -1987,7 +1988,7 @@ class FlextRuntime:
         """Hash value object based on all attribute values."""
         if FlextRuntime._is_scalar(obj):
             return hash(obj)
-        if FlextRuntime.is_base_model(obj):
+        if isinstance(obj, BaseModel):
             data = obj.model_dump()
             # Ensure all values are hashable by converting to tuple
             return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
@@ -2036,7 +2037,7 @@ class FlextRuntime:
         context_dict = t.ConfigMap(root={})
         if FlextRuntime._is_scalar(context):
             context_dict = t.ConfigMap(root={})
-        elif FlextRuntime.is_base_model(context):
+        elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
         elif FlextRuntime.is_dict_like(context):
             try:

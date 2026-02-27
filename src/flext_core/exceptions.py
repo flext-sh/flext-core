@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, Protocol
+from typing import ClassVar, Protocol, cast, override
 
 from pydantic import (
     BaseModel,
@@ -26,8 +26,6 @@ from flext_core.constants import c
 from flext_core.models import m
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-# FlextRuntime.Metadata used directly (no alias) per runtime-alias-only policy
 
 
 class MetadataProtocol(Protocol):
@@ -167,8 +165,10 @@ class FlextExceptions:
         """Extract optional strict string from dynamic values."""
         if value is None:
             return None
+        if isinstance(value, str):
+            return value
         try:
-            return e._StrictStringValue(value=value).value
+            return e._StrictStringValue(value=cast(str, value)).value
         except PydanticValidationError:
             return None
 
@@ -177,8 +177,10 @@ class FlextExceptions:
         """Extract strict bool from dynamic values with default fallback."""
         if value is None:
             return default
+        if isinstance(value, bool):
+            return value
         try:
-            return e._StrictBooleanValue(value=value).value
+            return e._StrictBooleanValue(value=cast(bool, value)).value
         except PydanticValidationError:
             return default
 
@@ -187,8 +189,10 @@ class FlextExceptions:
         """Extract optional strict integer from dynamic values."""
         if value is None:
             return None
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
         try:
-            return e._StrictIntValue(value=value).value
+            return e._StrictIntValue(value=cast(int, value)).value
         except PydanticValidationError:
             return None
 
@@ -197,15 +201,17 @@ class FlextExceptions:
         """Extract optional strict numeric value from dynamic values."""
         if value is None:
             return None
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value
         try:
-            return e._StrictNumberValue(value=value).value
+            return e._StrictNumberValue(value=cast(int | float, value)).value
         except PydanticValidationError:
             return None
 
     @staticmethod
     def _safe_config_map(
         value: MetadataProtocol
-        | FlextRuntime.Metadata
+        | m.Metadata
         | Mapping[str, t.ConfigMapValue]
         | m.ConfigMap
         | t.ConfigMapValue
@@ -222,7 +228,7 @@ class FlextExceptions:
     @staticmethod
     def _safe_metadata(
         value: MetadataProtocol
-        | FlextRuntime.Metadata
+        | m.Metadata
         | Mapping[str, t.ConfigMapValue]
         | m.ConfigMap
         | t.ConfigMapValue
@@ -376,7 +382,7 @@ class FlextExceptions:
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None = None,
-            metadata: FlextRuntime.Metadata
+            metadata: m.Metadata
             | MetadataProtocol
             | m.ConfigMap
             | t.MetadataAttributeValue
@@ -395,7 +401,7 @@ class FlextExceptions:
                 message: Error message
                 error_code: Optional error code
                 context: Optional context mapping
-                metadata: Optional metadata (FlextRuntime.Metadata, dict, or payload types)
+                metadata: Optional metadata (m.Metadata, dict, or payload types)
                 correlation_id: Optional correlation ID
                 auto_correlation: Auto-generate correlation ID if not provided
                 auto_log: Auto-log error on creation
@@ -435,6 +441,7 @@ class FlextExceptions:
             self.timestamp = time.time()
             self.auto_log = auto_log
 
+        @override
         def __str__(self) -> str:
             """Return string representation with error code if present."""
             if self.error_code:
@@ -493,21 +500,21 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: FlextRuntime.Metadata
+            metadata: m.Metadata
             | MetadataProtocol
             | m.ConfigMap
             | t.MetadataAttributeValue
             | None,
             merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
         ) -> MetadataProtocol:
-            """Normalize metadata from various input types to FlextRuntime.Metadata model.
+            """Normalize metadata from various input types to m.Metadata model.
 
             Args:
-                metadata: FlextRuntime.Metadata instance, dict-like object, or None
+                metadata: m.Metadata instance, dict-like object, or None
                 merged_kwargs: Additional attributes to merge
 
             Returns:
-                Normalized FlextRuntime.Metadata instance
+                Normalized m.Metadata instance
 
             """
             if metadata is None:
@@ -539,7 +546,7 @@ class FlextExceptions:
                     merged_kwargs,
                 )
 
-            # Fallback: convert to FlextRuntime.Metadata with string value
+            # Fallback: convert to m.Metadata with string value
             return m.Metadata(attributes={"value": str(metadata)})
 
     # Specific exception classes with minimal code
@@ -834,7 +841,7 @@ class FlextExceptions:
             resource_id: str | None = None,
             error_code: str = c.Errors.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
-            metadata: FlextRuntime.Metadata
+            metadata: m.Metadata
             | MetadataProtocol
             | m.ConfigMap
             | t.MetadataAttributeValue
@@ -1224,7 +1231,7 @@ class FlextExceptions:
     ]:
         """Extract correlation_id and metadata from kwargs.
 
-        Returns typed values: correlation_id as str | None, metadata as FlextRuntime.Metadata | Mapping | None.
+        Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
         """
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id = e._safe_optional_str(correlation_id_raw)

@@ -19,7 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Literal, Self, cast, overload
+from typing import ClassVar, Literal, Self, cast, overload, override
 
 from structlog.typing import Context
 
@@ -692,6 +692,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         FlextRuntime.ensure_structlog_configured()
         return cls(name)
 
+    @override
     @staticmethod
     def get_logger(
         name: str | None = None,
@@ -773,20 +774,24 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         instance.logger = bound_logger
         return instance
 
+    @override
     def bind(self, **context: t.MetadataAttributeValue) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**context)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
+    @override
     def new(self, **context: t.MetadataAttributeValue) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
         return self.bind(**context)
 
+    @override
     def unbind(self, *keys: str) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
         bound_logger = self.logger.unbind(*keys)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
+    @override
     def try_unbind(self, *keys: str) -> Self:
         """Try to unbind keys from logger - implements BindableLogger protocol."""
         bound_logger = self.logger.try_unbind(*keys)
@@ -1036,6 +1041,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         # Use _log to handle the actual logging
         return self._log(level_enum, message, *args, **context)
 
+    @override
     def debug(
         self,
         msg: str | t.GuardInputValue,
@@ -1055,6 +1061,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
 
+    @override
     def info(
         self,
         msg: str | t.GuardInputValue,
@@ -1074,6 +1081,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
 
+    @override
     def warning(
         self,
         msg: str | t.GuardInputValue,
@@ -1093,6 +1101,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
 
+    @override
     def warn(
         self,
         msg: str | t.GuardInputValue,
@@ -1102,6 +1111,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Alias for warning() - implements p.Log.StructlogLogger protocol."""
         return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
 
+    @override
     def error(
         self,
         msg: str | t.GuardInputValue,
@@ -1121,6 +1131,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
 
+    @override
     def critical(
         self,
         msg: str | t.GuardInputValue,
@@ -1212,6 +1223,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         return context_dict
 
+    @override
     def exception(
         self,
         msg: str | t.GuardInputValue,
