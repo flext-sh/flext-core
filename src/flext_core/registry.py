@@ -212,7 +212,12 @@ class FlextRegistry(FlextService[bool]):
                             # Deduplication happens in register_handler() via _registered_keys
                             # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
-                            _ = instance.register_handler(cast("p.Handler[t.GeneralValueType, t.GeneralValueType]", handler_typed))
+                            _ = instance.register_handler(
+                                cast(
+                                    "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+                                    handler_typed,
+                                )
+                            )
 
         return instance
 
@@ -261,7 +266,7 @@ class FlextRegistry(FlextService[bool]):
             return cast("t.HandlerType", handler_for_dispatch)
 
         # If we reach here, cast to m.Handler to satisfy type checker
-        return cast(m.Handler, handler_for_dispatch)
+        return cast("m.Handler", handler_for_dispatch)
 
     def _create_registration_details(
         self,
@@ -702,7 +707,12 @@ class FlextRegistry(FlextService[bool]):
 
         if validate:
             try:
-                validation_result = validate(cast("t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel", plugin))
+                validation_result = validate(
+                    cast(
+                        "t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel",
+                        plugin,
+                    )
+                )
                 if (
                     hasattr(validation_result, "is_failure")
                     and validation_result.is_failure

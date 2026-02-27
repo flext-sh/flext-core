@@ -203,7 +203,11 @@ class FlextUtilitiesGuards:
         if isinstance(value, Mapping):
             return True
         # Check if BaseModel instance or class
-        if isinstance(value, BaseModel) and hasattr(value, "model_dump") and callable(value.model_dump):
+        if (
+            isinstance(value, BaseModel)
+            and hasattr(value, "model_dump")
+            and callable(value.model_dump)
+        ):
             return True
         # Check for handler protocol methods (duck typing)
         # All values are objects in Python, so type check (value, object) is always True
@@ -440,11 +444,19 @@ class FlextUtilitiesGuards:
     # Protocol specs: name -> check function (returns bool)
     # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
     _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
-        "config": lambda v: hasattr(v, "app_name") and getattr(v, "app_name", None) is not None,
+        "config": lambda v: (
+            hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
+        ),
         "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
-        "container": lambda v: hasattr(v, "register") and callable(getattr(v, "register", None)),
-        "command_bus": lambda v: hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None)),
-        "handler": lambda v: hasattr(v, "handle") and callable(getattr(v, "handle", None)),
+        "container": lambda v: (
+            hasattr(v, "register") and callable(getattr(v, "register", None))
+        ),
+        "command_bus": lambda v: (
+            hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
+        ),
+        "handler": lambda v: (
+            hasattr(v, "handle") and callable(getattr(v, "handle", None))
+        ),
         "logger": lambda v: all(
             hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
         ),
@@ -453,7 +465,8 @@ class FlextUtilitiesGuards:
         ),
         "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run", None)),
         "middleware": lambda v: (
-            hasattr(v, "before_dispatch") and callable(getattr(v, "before_dispatch", None))
+            hasattr(v, "before_dispatch")
+            and callable(getattr(v, "before_dispatch", None))
         ),
     })
 
@@ -587,8 +600,12 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_pydantic_model(value: t.GuardInputValue) -> TypeGuard[p.HasModelDump]:
         """Type guard to check if value is a Pydantic model with model_dump method."""
-        return isinstance(value, BaseModel) and hasattr(value, "model_dump") and callable(
-            value.model_dump,
+        return (
+            isinstance(value, BaseModel)
+            and hasattr(value, "model_dump")
+            and callable(
+                value.model_dump,
+            )
         )
 
     @staticmethod

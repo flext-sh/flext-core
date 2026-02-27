@@ -19,7 +19,6 @@ from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import (
     AfterValidator,
-    AliasChoices,
     BaseModel,
     ConfigDict,
     Discriminator,
@@ -136,7 +135,7 @@ class FlextModelFoundation:
             except ValidationError as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out = {}
+            out: dict[str, t.GuardInputValue] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -529,10 +528,12 @@ class FlextModelFoundation:
     class RetryConfigurationMixin(BaseModel):
         """Mixin for shared retry configuration properties."""
 
+        model_config = ConfigDict(populate_by_name=True)
+
         max_retries: int = Field(
             default=c.Reliability.DEFAULT_MAX_RETRIES,
             ge=c.ZERO,
-            validation_alias=AliasChoices("max_retries", "max_attempts"),
+            alias="max_attempts",
             description="Maximum retry attempts",
         )
         initial_delay_seconds: float = Field(

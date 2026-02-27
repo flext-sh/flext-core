@@ -11,13 +11,10 @@ import time
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 import tomlkit
-from flext_core.loggings import FlextLogger
-from flext_core.result import r
-from flext_core.service import FlextService
-from flext_core.typings import t
+from flext_core import FlextLogger, FlextService, r, t
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 from tomlkit import items
 
@@ -1335,7 +1332,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         if not isinstance(tool, Mapping) or "pyrefly" not in tool:
             return r[list[str]].ok([])
 
-        pyrefly = tool["pyrefly"]
+        pyrefly = cast("MutableMapping[str, t.ConfigMapValue]", tool["pyrefly"])
         if not isinstance(pyrefly, MutableMapping):
             return r[list[str]].ok([])
 

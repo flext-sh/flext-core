@@ -168,7 +168,7 @@ class FlextExceptions:
         if isinstance(value, str):
             return value
         try:
-            return e._StrictStringValue(value=cast(str, value)).value
+            return e._StrictStringValue(value=cast("str", value)).value
         except PydanticValidationError:
             return None
 
@@ -180,7 +180,7 @@ class FlextExceptions:
         if isinstance(value, bool):
             return value
         try:
-            return e._StrictBooleanValue(value=cast(bool, value)).value
+            return e._StrictBooleanValue(value=cast("bool", value)).value
         except PydanticValidationError:
             return default
 
@@ -192,7 +192,7 @@ class FlextExceptions:
         if isinstance(value, int) and not isinstance(value, bool):
             return value
         try:
-            return e._StrictIntValue(value=cast(int, value)).value
+            return e._StrictIntValue(value=cast("int", value)).value
         except PydanticValidationError:
             return None
 
@@ -204,7 +204,7 @@ class FlextExceptions:
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return value
         try:
-            return e._StrictNumberValue(value=cast(int | float, value)).value
+            return e._StrictNumberValue(value=cast("int | float", value)).value
         except PydanticValidationError:
             return None
 

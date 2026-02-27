@@ -419,7 +419,8 @@ class FlextModelsCqrs:
     @staticmethod
     def parse_message(payload: t.ConfigMapValue) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
-        raise NotImplementedError("parse_message must be implemented by subclasses")
+        msg = "parse_message must be implemented by subclasses"
+        raise NotImplementedError(msg)
 
     class HandlerBatchRegistrationResult(BaseModel):
         """Result of batch handler registration."""
@@ -427,7 +428,6 @@ class FlextModelsCqrs:
         status: str
         count: int
         handlers: list[str]
-
 
 
 __all__ = ["FlextModelsCqrs"]

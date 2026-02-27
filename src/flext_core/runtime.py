@@ -69,7 +69,6 @@ from structlog.processors import (
 )
 from structlog.stdlib import add_log_level
 
-import flext_core._runtime_metadata
 from flext_core._runtime_metadata import Metadata
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -1221,7 +1220,10 @@ class FlextRuntime:
         if wrapper_class_factory is not None:
             wrapper_arg = cast("type[p.Log.StructlogLogger]", wrapper_class_factory())
         else:
-            wrapper_arg = cast("type[p.Log.StructlogLogger]", module.make_filtering_bound_logger(level_to_use))
+            wrapper_arg = cast(
+                "type[p.Log.StructlogLogger]",
+                module.make_filtering_bound_logger(level_to_use),
+            )
 
         # Determine logger factory (handle async buffering)
         # structlog accepts various factory types - we use object to accept all
@@ -1243,7 +1245,9 @@ class FlextRuntime:
                 else None
             )
             if print_logger_factory is not None:
-                factory_to_use = print_logger_factory(file=cast("Any", cls._async_writer))
+                factory_to_use = print_logger_factory(
+                    file=cast("Any", cls._async_writer)
+                )
             else:
                 factory_to_use = module.PrintLoggerFactory()
         else:

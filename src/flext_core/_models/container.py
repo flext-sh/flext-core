@@ -12,10 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from datetime import datetime
-from pathlib import Path
-from typing import Annotated, TypeGuard
+from typing import Annotated, Mapping, Sequence, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -50,13 +47,14 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
-    normalized_attrs = {
+    normalized_attrs: dict[str, t.MetadataAttributeValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in (
             value.root.items() if isinstance(value, t.ConfigMap) else value.items()
         )
     }
-    return FlextModelFoundation.Metadata(attributes=normalized_attrs)
+    attrs: Mapping[str, t.MetadataAttributeValue] = normalized_attrs
+    return FlextModelFoundation.Metadata(attributes=attrs)
 
 
 class FlextModelsContainer:
