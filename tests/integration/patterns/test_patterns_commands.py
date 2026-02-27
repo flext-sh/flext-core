@@ -35,7 +35,7 @@ FlextCommandHandler = FlextHandlers
 # =============================================================================
 
 
-class CreateUserCommand(FlextModels.TimestampedModel):
+class CreateUserCommand(FlextModels.Command):
     """Test command for creating users."""
 
     username: str
@@ -60,7 +60,7 @@ class CreateUserCommand(FlextModels.TimestampedModel):
         return FlextResult[bool].ok(True)
 
 
-class UpdateUserCommand(FlextModels.TimestampedModel):
+class UpdateUserCommand(FlextModels.Command):
     """Test command for updating users."""
 
     target_user_id: str
@@ -92,7 +92,7 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
         return FlextResult[bool].ok(True)
 
 
-class FailingCommand(FlextModels.TimestampedModel):
+class FailingCommand(FlextModels.Command):
     """Test command that always fails validation."""
 
     def get_payload(self) -> CommandPayloadDict:

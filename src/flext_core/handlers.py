@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType
 from typing import ClassVar
@@ -98,6 +98,32 @@ class FlextHandlers[MessageT_contra, ResultT](
         c.Cqrs.HandlerType.OPERATION: "operation",
         c.Cqrs.HandlerType.SAGA: "saga",
     }
+
+    def __init_subclass__(
+        cls,
+        **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+    ) -> None:
+        """Validate non-abstract subclasses implement a handle() method.
+
+        Chains with FlextMixins.__init_subclass__ via super() to preserve
+        MRO-based container auto-initialization. Skips validation for
+        abstract subclasses (intermediate bases).
+
+        Raises:
+            TypeError: If a concrete subclass does not override handle().
+
+        """
+        super().__init_subclass__(**kwargs)
+        # Skip abstract subclasses — they are intermediate bases
+        if getattr(cls, "__abstractmethods__", frozenset()):
+            return
+        # Walk MRO: if handle is found before FlextHandlers, it was overridden
+        for klass in cls.__mro__:
+            if klass is FlextHandlers:
+                msg = f"{cls.__qualname__} must implement a handle() method"
+                raise TypeError(msg)
+            if "handle" in klass.__dict__:
+                break
 
     @staticmethod
     def _handler_type_to_literal(

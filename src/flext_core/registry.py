@@ -602,10 +602,11 @@ class FlextRegistry(FlextService[bool]):
                         and not getattr(dispatcher_handler, "command_type", None)
                     ):
                         handler_name = getattr(dispatcher_handler, '__name__', dispatcher_handler.__class__.__name__)
-                        raise TypeError(
+                        msg = (
                             f"Handler {handler_name} must implement p.Handler with self-describing "
                             f"message_type, event_type, query_type, or command_type attribute"
                         )
+                        raise TypeError(msg)
 
                     raw_result = self._dispatcher.register_handler(
                         dispatcher_handler,
@@ -626,10 +627,11 @@ class FlextRegistry(FlextService[bool]):
                     # Protocol path: handler must self-describe
                     if not getattr(handler_for_dispatch, "message_type", None):
                         handler_name = getattr(handler_for_dispatch, '__name__', handler_for_dispatch.__class__.__name__)
-                        raise TypeError(
+                        msg = (
                             f"Handler {handler_name} must implement p.Handler with self-describing "
                             f"message_type attribute for protocol-based registration"
                         )
+                        raise TypeError(msg)
                     protocol_result = self._dispatcher.register_handler(
                         handler_for_dispatch,
                     )
