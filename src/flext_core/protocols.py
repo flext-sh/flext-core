@@ -1398,8 +1398,8 @@ class FlextProtocols:
 
         def __call__(
             self,
-            func: Callable[P, R],
-        ) -> Callable[P, R]:
+            func: Callable[..., R],
+        ) -> Callable[..., R]:
             """Apply decorator to function, returning wrapped callable.
 
             Args:
