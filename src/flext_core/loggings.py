@@ -1005,7 +1005,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         level: str,
         message: str,
-        _context: Mapping[str, t.ScalarValue] | None = None,
+        *args: t.GuardInputValue,
+        **context: t.GuardInputValue | Exception,
     ) -> r[bool]:
         """Log message with specified level - Logger.Log implementation.
 
@@ -1023,19 +1024,17 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         Args:
             level: Log level (debug, info, warning, error, critical)
             message: Log message
-            _context: Optional context mapping
+            *args: Positional args for printf-style message formatting
+            **context: Keyword context to include in structured log
 
         """
-        context_dict: m.ConfigMap = (
-            m.ConfigMap(root=dict(_context)) if _context else m.ConfigMap(root={})
-        )
         # Convert level string to LogLevel enum if possible
         level_enum: c.Settings.LogLevel | str = level
         with suppress(ValueError, AttributeError):
             level_enum = c.Settings.LogLevel(level.upper())
 
         # Use _log to handle the actual logging
-        return self._log(level_enum, message, **context_dict.root)
+        return self._log(level_enum, message, *args, **context)
 
     def debug(
         self,
