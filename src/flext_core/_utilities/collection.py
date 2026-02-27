@@ -59,7 +59,7 @@ class FlextUtilitiesCollection:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
-    def _coerce_guard_value(value: object) -> t.GuardInputValue:
+    def _coerce_guard_value(value: t.FlexibleValue) -> t.GuardInputValue:
         guard_value_adapter: TypeAdapter[t.GuardInputValue] = TypeAdapter(
             t.GuardInputValue,
         )

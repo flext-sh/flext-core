@@ -165,7 +165,9 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         status = c.Status.OK if return_code == 0 else c.Status.FAIL
         # Output project completion status
         status_symbol = "✓" if return_code == 0 else "✗"
-        output.info(f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})")
+        output.info(
+            f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})"
+        )
 
         return r[m.CommandOutput].ok(
             m.CommandOutput(

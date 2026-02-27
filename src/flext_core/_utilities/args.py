@@ -54,7 +54,7 @@ class FlextUtilitiesArgs:
     _enum_type_adapter: TypeAdapter[type[StrEnum]] = TypeAdapter(type[StrEnum])
 
     @staticmethod
-    def _validate_enum_type(candidate: object) -> type[StrEnum] | None:
+    def _validate_enum_type(candidate: type[Enum] | str) -> type[StrEnum] | None:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate)

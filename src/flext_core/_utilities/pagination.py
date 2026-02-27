@@ -195,7 +195,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_pagination_config(
-        config: object | None,
+        config: BaseModel | Mapping[str, t.ConfigMapValue] | None,
     ) -> Mapping[str, int]:
         """Extract pagination configuration values - no fallbacks.
 

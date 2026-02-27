@@ -26,6 +26,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from flext_core.runtime import FlextRuntime
+from flext_infra.output import output
 
 _MIN_ARGV = 2
 
@@ -43,10 +44,8 @@ _GROUPS: Mapping[str, str] = MappingProxyType({
 
 
 def _print_help() -> None:
-    _ = sys.stdout.write(
-        "Usage: python -m flext_infra <group> [subcommand] [args...]\n\n"
-    )
-    _ = sys.stdout.write("Groups:\n")
+    output.info("Usage: python -m flext_infra <group> [subcommand] [args...]")
+    output.header("Groups")
     descriptions: Mapping[str, str] = {
         "basemk": "Base.mk template generation",
         "check": "Lint gates and pyrefly config management",
@@ -59,7 +58,7 @@ def _print_help() -> None:
         "workspace": "Workspace detection, sync, orchestration, migration",
     }
     for group in sorted(_GROUPS):
-        _ = sys.stdout.write(f"  {group:<16}{descriptions.get(group, '')}\n")
+        output.info(f"  {group:<16}{descriptions.get(group, '')}")
 
 
 def main() -> int:
@@ -73,7 +72,7 @@ def main() -> int:
 
     group = sys.argv[1]
     if group not in _GROUPS:
-        _ = sys.stderr.write(f"flext-infra: unknown group '{group}'\n")
+        output.error(f"unknown group '{group}'")
         _print_help()
         return 1
 

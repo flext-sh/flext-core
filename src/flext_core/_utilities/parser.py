@@ -999,7 +999,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_get_attr(
-        obj: object,
+        obj: BaseModel | Mapping[str, t.ConfigMapValue],
         attr: str,
         default: t.ConfigMapValue = None,
     ) -> t.ConfigMapValue:

@@ -84,8 +84,8 @@ class FlextUtilitiesMapper:
             # Narrow dict values to PayloadValue with explicit type annotations
             result: dict[str, t.ConfigMapValue] = {}
             # Iterate over items with explicit key and value types
-            key: object
-            val: object
+            key: str
+            val: t.ConfigMapValue
             for key, val in value.items():
                 # Convert key to string
                 str_key = str(key)
@@ -145,7 +145,7 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
-    def _to_general_value_from_object(value: object) -> t.ConfigMapValue:
+    def _to_general_value_from_object(value: t.FlexibleValue) -> t.ConfigMapValue:
         if FlextUtilitiesGuards.is_general_value_type(value):
             return value
         return str(value)
@@ -1314,7 +1314,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_field_value(
-        item: object,
+        item: t.ConfigMapValue,
         field_name: str,
     ) -> t.ConfigMapValue | None:
         """Extract field value from item (dict or object).

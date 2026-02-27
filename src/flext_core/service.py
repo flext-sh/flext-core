@@ -316,7 +316,7 @@ class FlextService[TDomainResult](
         return normalized or None
 
     @staticmethod
-    def _is_scoped_service_candidate(service: object) -> bool:
+    def _is_scoped_service_candidate(service: p.Service | BaseModel) -> bool:
         return FlextContainer._is_registerable_service(service)
 
     @classmethod

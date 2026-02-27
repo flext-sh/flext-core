@@ -197,7 +197,7 @@ class FlextModelsCqrs:
             if parsed_input is None:
                 return pagination_cls()
 
-            payload: object
+            payload: BaseModel | Mapping[str, t.MetadataAttributeValue] | str
             if isinstance(parsed_input, t.Dict):
                 payload = parsed_input.root
             elif isinstance(parsed_input, FlextModelsCqrs.Pagination):

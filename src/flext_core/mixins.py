@@ -100,7 +100,7 @@ class FlextMixins(FlextRuntime):
 
     @staticmethod
     def to_dict(
-        obj: object | None,
+        obj: BaseModel | Mapping[str, t.ConfigMapValue] | None,
     ) -> m.ConfigMap:
         """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
         if obj is None:

@@ -78,7 +78,7 @@ class ResultHelpers:
         return any(bool(v) for v in values)
 
     @staticmethod
-    def empty(items: object) -> bool:
+    def empty(items: Sequence[t.ConfigMapValue] | Mapping[str, t.ConfigMapValue] | str | None) -> bool:
         if isinstance(items, r):
             if items.is_failure:
                 return True

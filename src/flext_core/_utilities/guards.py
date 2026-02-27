@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeGuard
+from typing import TypeGuard, TypeIs
 
 from flext_core.models import m
 from flext_core.protocols import p
@@ -101,7 +101,7 @@ class FlextUtilitiesGuards:
             )
 
     @staticmethod
-    def is_flexible_value(value: object) -> bool:
+    def is_flexible_value(value: t.FlexibleValue) -> TypeIs[t.FlexibleValue]:
         if value is None or isinstance(value, str | int | float | bool | datetime):
             return True
         if isinstance(value, list | tuple):
@@ -161,7 +161,7 @@ class FlextUtilitiesGuards:
         # Check mapping types (structural)
         if isinstance(value, Mapping):
             # Iterate with explicit type annotations to satisfy pyright
-            v: object
+            v: str | int | float | bool | None
             for v in value.values():
                 if not FlextUtilitiesGuards.is_general_value_type(v):
                     return False
@@ -500,7 +500,7 @@ class FlextUtilitiesGuards:
     })
 
     @staticmethod
-    def is_type(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
+    def is_type(value: t.FlexibleValue, type_spec: str | type | tuple[type, ...]) -> bool:
         """Generic type checking function that unifies all guard checks.
 
         Provides a single entry point for all type checking operations,
@@ -577,7 +577,7 @@ class FlextUtilitiesGuards:
             return False
 
     @staticmethod
-    def _check_protocol(value: object, name: str) -> bool:
+    def _check_protocol(value: t.FlexibleValue, name: str) -> bool:
         """Check protocol via _PROTOCOL_SPECS mapping."""
         if name == "context":
             return FlextUtilitiesGuards.is_context(value)
@@ -621,7 +621,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _guard_check_type(
-        value: object,
+        value: t.FlexibleValue,
         condition: type | tuple[type, ...],
         context_name: str,
         error_msg: str | None,

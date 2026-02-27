@@ -31,6 +31,7 @@ class _RuntimeResultLike(Protocol):
     is_success: bool
     is_failure: bool
 
+
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     """Type-safe result with monadic helpers for operation composition.
 
