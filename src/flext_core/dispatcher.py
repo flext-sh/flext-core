@@ -19,7 +19,7 @@ from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequen
 from contextlib import contextmanager, suppress
 from datetime import datetime as dt
 from types import ModuleType
-from typing import Annotated, Literal, Self, TypeGuard, cast, override
+from typing import Annotated, Any, Literal, Self, TypeGuard, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel, Discriminator, TypeAdapter
@@ -397,7 +397,7 @@ class FlextDispatcher(s[bool]):
 
     def _validate_interface(
         self,
-        obj: object,
+        obj: Any,  # Validates arbitrary runtime values
         method_names: list[str] | str,
         context: str,
         *,
@@ -491,7 +491,7 @@ class FlextDispatcher(s[bool]):
         return callable(value) or isinstance(value, BaseModel)
 
     @staticmethod
-    def _to_container_value(value: object) -> _Payload:
+    def _to_container_value(value: Any) -> _Payload:  # Validates arbitrary runtime values
         if u.is_general_value_type(value):
             return value
         return str(value)
@@ -510,7 +510,7 @@ class FlextDispatcher(s[bool]):
 
     @staticmethod
     def _is_scalar_primitive(
-        value: object,
+        value: Any,  # Validates arbitrary runtime values
     ) -> TypeGuard[str | int | float | bool | None]:
         match value:
             case str() | bool() | int() | float() | None:
@@ -520,7 +520,7 @@ class FlextDispatcher(s[bool]):
 
     @staticmethod
     def _is_metadata_scalar(
-        value: object,
+        value: Any,  # Validates arbitrary runtime values
     ) -> TypeGuard[str | int | float | bool | dt | None]:
         match value:
             case str() | bool() | int() | float() | dt() | None:
@@ -1466,7 +1466,7 @@ class FlextDispatcher(s[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _get_nested_attr(
-        obj: object,
+        obj: Any,  # Validates arbitrary runtime values
         *path: str,
     ) -> object | None:
         """Get nested attribute safely (e.g., obj.attr1.attr2).

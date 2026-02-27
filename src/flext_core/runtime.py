@@ -1246,7 +1246,7 @@ class FlextRuntime:
 
         # Determine logger factory (handle async buffering)
         # structlog accepts various factory types - we use object to accept all
-        factory_to_use: object
+        factory_to_use: Callable[..., object]
         if logger_factory is not None:
             # Use the provided factory directly (Callable[[], p.Log.StructlogLogger])
             factory_to_use = logger_factory
