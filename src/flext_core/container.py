@@ -216,12 +216,12 @@ class FlextContainer(FlextRuntime, p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                *_args: object,
+                                *_args: Any,  # type: ignore[misc]  # DI container flexible args
                                 _factory_func_ref: Callable[[], object] | None = (
                                     factory_func_raw
                                 ),
                                 _factory_name: str = factory_name,
-                                **kwargs: object,
+                                **kwargs: Any,  # type: ignore[misc]  # DI container flexible kwargs
                             ) -> t.RegisterableService:
                                 fn_override = kwargs.get("fn")
                                 if fn_override is not None:
