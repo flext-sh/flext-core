@@ -34,7 +34,7 @@ from flext_core.settings import FlextSettings
 from flext_core.typings import t
 
 
-class FlextContainer(FlextRuntime, p.DI):
+class FlextContainer(p.DI):
     """Singleton container that exposes DI registration and resolution helpers.
 
     Services and factories remain local to the container, keeping dispatcher and
