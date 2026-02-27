@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_fi
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
+from flext_core.container import FlextContainer
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import m
@@ -96,7 +97,7 @@ class FlextRegistry(FlextService[bool]):
             return bool(self.errors)
 
     # Private attributes using Pydantic v2 PrivateAttr pattern
-    _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
+    _dispatcher: p.CommandBus = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=set)
 
     # Class-level storage declarations (created per-subclass via __init_subclass__)
@@ -125,20 +126,24 @@ class FlextRegistry(FlextService[bool]):
 
     def __init__(
         self,
-        dispatcher: p.CommandBus | FlextDispatcher | None = None,
+        dispatcher: p.CommandBus | None = None,
         **data: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
         Args:
-            dispatcher: CommandBus or FlextDispatcher instance (defaults to creating FlextDispatcher)
+            dispatcher: CommandBus protocol instance (defaults to container DI resolution)
             **data: Additional configuration passed to FlextService
 
         """
         super().__init__(**data)
 
         # Create dispatcher instance if not provided
-        self._dispatcher = dispatcher if dispatcher is not None else FlextDispatcher()
+        self._dispatcher = (
+            dispatcher
+            if dispatcher is not None
+            else FlextContainer.get_global().get("command_bus").unwrap()
+        )
 
     def execute(self) -> r[bool]:
         """Validate registry is properly initialized.
@@ -158,7 +163,7 @@ class FlextRegistry(FlextService[bool]):
     @classmethod
     def create(
         cls,
-        dispatcher: p.CommandBus | FlextDispatcher | None = None,
+        dispatcher: p.CommandBus | None = None,
         *,
         auto_discover_handlers: bool = False,
     ) -> Self:
