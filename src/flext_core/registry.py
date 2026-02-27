@@ -27,7 +27,7 @@ from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
 
-type RegistryHandler = t.HandlerCallable | BaseModel
+type RegistrablePlugin = p.Registrable
 type RegistryBindingKey = str | type[object]
 
 
@@ -245,9 +245,9 @@ class FlextRegistry(FlextService[bool]):
 
     @staticmethod
     def _to_dispatcher_handler(
-        handler_for_dispatch: RegistryHandler,
+        handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> m.Handler | t.HandlerType:
-        """Convert RegistryHandler to dispatcher m.Handler or t.HandlerType."""
+        """Convert handler to dispatcher m.Handler or t.HandlerType."""
         if isinstance(handler_for_dispatch, m.Handler):
             return handler_for_dispatch
         if hasattr(handler_for_dispatch, "handle") or callable(handler_for_dispatch):
@@ -311,13 +311,13 @@ class FlextRegistry(FlextService[bool]):
     @overload
     def register_handler(
         self,
-        handler: RegistryHandler,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> r[m.HandlerRegistrationDetails]: ...
 
     def register_handler(
         self,
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType]
-        | RegistryHandler
+        | p.Handler[t.GeneralValueType, t.GeneralValueType]
         | None,
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
@@ -383,7 +383,7 @@ class FlextRegistry(FlextService[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
-        handler_for_dispatch: RegistryHandler = handler
+        handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = handler
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
                 handler_for_dispatch,
@@ -501,7 +501,7 @@ class FlextRegistry(FlextService[bool]):
     def register_handlers(
         self,
         handlers: Sequence[
-            p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler
+            p.Handler[t.GeneralValueType, t.GeneralValueType] | p.Handler[t.GeneralValueType, t.GeneralValueType]
         ],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
@@ -537,7 +537,7 @@ class FlextRegistry(FlextService[bool]):
         self,
         bindings: Mapping[
             RegistryBindingKey,
-            p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
+            p.Handler[t.GeneralValueType, t.GeneralValueType] | p.Handler[t.GeneralValueType, t.GeneralValueType],
         ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
@@ -587,7 +587,7 @@ class FlextRegistry(FlextService[bool]):
                         summary,
                     )
                     continue
-                handler_for_dispatch: RegistryHandler = handler
+                handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
                     dispatcher_handler = FlextRegistry._to_dispatcher_handler(
@@ -662,7 +662,7 @@ class FlextRegistry(FlextService[bool]):
         self,
         category: str,
         name: str,
-        plugin: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
+        plugin: RegistrablePlugin,
         *,
         validate: Callable[
             [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool]
@@ -783,7 +783,7 @@ class FlextRegistry(FlextService[bool]):
         self,
         category: str,
         name: str,
-        plugin: t.RegistrablePlugin,
+        plugin: RegistrablePlugin,
     ) -> r[bool]:
         """Register plugin to class-level storage (shared across all instances).
 
@@ -884,7 +884,7 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | RegistryHandler,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = (
@@ -895,7 +895,7 @@ class FlextRegistry(FlextService[bool]):
     def register(
         self,
         name: str,
-        service: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel,
+        service: RegistrablePlugin,
         metadata: m.ConfigMap | m.Metadata | None = None,
     ) -> r[bool]:
         """Register a service component with optional metadata.

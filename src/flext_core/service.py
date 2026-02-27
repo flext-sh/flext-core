@@ -69,6 +69,7 @@ class FlextService[TDomainResult](
     """
 
     model_config = ConfigDict(
+        strict=True,
         arbitrary_types_allowed=True,
         extra="forbid",
         use_enum_values=True,
@@ -90,10 +91,7 @@ class FlextService[TDomainResult](
         raise FlextExceptions.BaseError(result.error or "Service execution failed")
 
     @override
-    def __init__(
-        self,
-        **data: t.GeneralValueType,
-    ) -> None:
+    def __init__(self) -> None:
         """Initialize service with configuration data.
 
         Sets up the service instance with optional configuration parameters
@@ -114,7 +112,7 @@ class FlextService[TDomainResult](
             self.__class__.__name__,
             runtime.config.version,
         ):
-            super().__init__(**data)
+            super().__init__()
 
         if not isinstance(runtime.context, FlextContext):
             msg = "Expected FlextContext"
@@ -234,11 +232,11 @@ class FlextService[TDomainResult](
                 classes=wire_classes,
             )
 
-        return m.ServiceRuntime.model_construct(
-            config=runtime_config,
-            context=runtime_container.context,
-            container=runtime_container,
-        )
+        return m.ServiceRuntime.model_validate({
+            "config": runtime_config,
+            "context": runtime_container.context,
+            "container": runtime_container,
+        })
 
     @classmethod
     def _create_initial_runtime(cls) -> m.ServiceRuntime:
@@ -285,20 +283,6 @@ class FlextService[TDomainResult](
         options_raw: p.RuntimeBootstrapOptions,
     ) -> p.RuntimeBootstrapOptions:
         del cls
-        if isinstance(options_raw, Mapping):
-            raw_services = options_raw.get("services")
-            if isinstance(raw_services, Mapping):
-                filtered_services: dict[str, t.RegisterableService] = {}
-                for name, service in raw_services.items():
-                    if FlextContainer._is_registerable_service(service):
-                        filtered_services[str(name)] = service
-            else:
-                filtered_services = {}
-            validation_input = {
-                key: value for key, value in options_raw.items() if key != "services"
-            }
-            validated = p.RuntimeBootstrapOptions.model_validate(validation_input)
-            return validated.model_copy(update={"services": filtered_services or None})
         return p.RuntimeBootstrapOptions.model_validate(options_raw)
 
     @classmethod

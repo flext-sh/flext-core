@@ -896,6 +896,16 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
+    class Registrable(BaseProtocol, Protocol):
+        """Protocol for objects that can be registered in FlextRegistry.
+
+        All plugins, providers, and registerable components must satisfy
+        this protocol structurally. Extends BaseProtocol for _protocol_name().
+        """
+
+        # BaseProtocol already provides _protocol_name() -> str
+        # No additional methods needed — BaseProtocol is sufficient
+    @runtime_checkable
     class Registry(BaseProtocol, Protocol):
         """Handler registry protocol for CQRS handler registration.
 

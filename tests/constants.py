@@ -319,7 +319,7 @@ class TestsFlextConstants(FlextTestsConstants):
         CommonStatus = c.Cqrs.CommonStatus
         MetricType = c.Cqrs.MetricType
         ProcessingMode = c.Cqrs.ProcessingMode
-        ValidationLevel = c.Cqrs.ValidationLevel
+        # ValidationLevel = c.Cqrs.ValidationLevel  # REMOVED in 77df5a4e — temporarily commented for service-strict-protocol-enforcement testing
         ProcessingPhase = c.Cqrs.ProcessingPhase
         BindType = c.Cqrs.BindType
         MergeStrategy = c.Cqrs.MergeStrategy
