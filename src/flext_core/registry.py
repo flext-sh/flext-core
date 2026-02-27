@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, overload
+from typing import Annotated, ClassVar, Self, cast, overload
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -327,6 +327,10 @@ class FlextRegistry(FlextService[bool]):
             r[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
         """
+        if handler is None:
+            return r[m.HandlerRegistrationDetails].fail(
+                "Handler cannot be None",
+            )
         try:
             m.HandlerRegistrationDetails.model_validate({
                 "registration_id": handler.__class__.__name__,
