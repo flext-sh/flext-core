@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Iterator, Mapping
 from typing import cast
 
@@ -36,9 +35,9 @@ class _MappingLike(Mapping[str, t.ConfigMapValue]):
         return self._data[key]
 
 
-def test_to_general_value_dict_with_config_map() -> None:
-    value = m.ConfigMap(root={"k": "v"})
-    assert FlextModelsContext.to_general_value_dict(value) == {"k": "v"}
+def test_to_general_value_dict_removed() -> None:
+    """to_general_value_dict was removed during infra migration."""
+    assert not hasattr(FlextModelsContext, "to_general_value_dict")
 
 
 def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
@@ -223,9 +222,9 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     class StatsModel(BaseModel):
         a: int = 1
 
-    assert _normalize_statistics_before(StatsModel()) == {"a": "1"}
+    assert _normalize_statistics_before(StatsModel()) == {"a": 1}
 
-    with pytest.raises(TypeError, match="statistics must be dict or BaseModel"):
+    with pytest.raises(ValueError, match="Cannot normalize"):
         _normalize_statistics_before(cast("t.GuardInputValue", "x"))
 
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
@@ -239,16 +238,16 @@ def test_scope_data_validators_and_errors() -> None:
 
     assert _normalize_to_mapping(None) == {}
     assert _normalize_to_mapping({"a": 1}) == {"a": 1}
-    assert _normalize_to_mapping(ScopeModel()) == {"a": "1"}
+    assert _normalize_to_mapping(ScopeModel()) == {"a": 1}
 
-    with pytest.raises(TypeError, match="must be dict or BaseModel"):
+    with pytest.raises(ValueError, match="Cannot normalize"):
         _normalize_to_mapping(cast("t.GuardInputValue", 123))
 
     assert _normalize_to_mapping(None) == {}
     assert _normalize_to_mapping({"a": 1}) == {"a": 1}
-    assert _normalize_to_mapping(ScopeModel()) == {"a": "1"}
+    assert _normalize_to_mapping(ScopeModel()) == {"a": 1}
 
-    with pytest.raises(TypeError, match="must be dict or BaseModel"):
+    with pytest.raises(ValueError, match="Cannot normalize"):
         _normalize_to_mapping(cast("t.GuardInputValue", 123))
 
 
@@ -257,27 +256,18 @@ def test_statistics_and_custom_fields_validators() -> None:
         p: int = 2
 
     assert _normalize_to_mapping({"x": 1}) == {"x": 1}
-    assert _normalize_to_mapping(Payload()) == {"p": "2"}
+    assert _normalize_to_mapping(Payload()) == {"p": 2}
     assert _normalize_to_mapping(None) == {}
-    with pytest.raises(TypeError, match="must be dict or BaseModel"):
+    with pytest.raises(ValueError, match="Cannot normalize"):
         _normalize_to_mapping(cast("t.GuardInputValue", "bad"))
 
     assert _normalize_to_mapping({"x": 1}) == {"x": 1}
-    assert _normalize_to_mapping(Payload()) == {"p": "2"}
+    assert _normalize_to_mapping(Payload()) == {"p": 2}
     assert _normalize_to_mapping(None) == {}
-    with pytest.raises(TypeError, match="must be dict or BaseModel"):
+    with pytest.raises(ValueError, match="Cannot normalize"):
         _normalize_to_mapping(cast("t.GuardInputValue", "bad"))
 
 
-def test_context_data_metadata_normalizer_paths() -> None:
-    md = FlextModelFoundation.Metadata(attributes={"k": "v"})
-    assert FlextModelsContext.normalize_metadata(md).attributes["k"] == "v"
-    assert FlextModelsContext.normalize_metadata({"x": 1}).attributes["x"] == "1"
-
-    with pytest.raises(
-        TypeError,
-        match=re.escape("metadata must be None, dict, or FlextModelsBase.Metadata"),
-    ):
-        _ = FlextModelsContext.normalize_metadata(
-            cast("t.ConfigMap", cast("object", 1.23))
-        )
+def test_context_data_metadata_normalizer_removed() -> None:
+    """normalize_metadata was removed during infra migration."""
+    assert not hasattr(FlextModelsContext, "normalize_metadata")

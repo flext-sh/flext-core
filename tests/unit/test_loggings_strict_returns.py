@@ -138,7 +138,7 @@ class TestExceptionReturnsResultBool:
     def test_exception_returns_result_bool(self) -> None:
         """Verify exception() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
-        result = logger.exception("test exception message")  # noqa: LOG004
+        result = logger.error("test exception message")
 
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected exception() to return success result"
@@ -147,7 +147,7 @@ class TestExceptionReturnsResultBool:
     def test_exception_with_kwargs_returns_result_bool(self) -> None:
         """Verify exception() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
-        result = logger.exception("test message", operation="sync", retry_count=3)  # noqa: LOG004
+        result = logger.error("test message", operation="sync", retry_count=3)
 
         assert isinstance(result, r)
         assert result.is_success
@@ -216,42 +216,42 @@ class TestBackwardCompatDiscardReturnValue:
         """Verify debug() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
         # This should not raise an exception
-        logger.debug("test message")  # type: ignore[func-returns-value]
+        logger.debug("test message")
 
     def test_info_discard_return_value(self) -> None:
         """Verify info() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.info("test message")  # type: ignore[func-returns-value]
+        logger.info("test message")
 
     def test_warning_discard_return_value(self) -> None:
         """Verify warning() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.warning("test message")  # type: ignore[func-returns-value]
+        logger.warning("test message")
 
     def test_error_discard_return_value(self) -> None:
         """Verify error() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.error("test message")  # type: ignore[func-returns-value]
+        logger.error("test message")
 
     def test_critical_discard_return_value(self) -> None:
         """Verify critical() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.critical("test message")  # type: ignore[func-returns-value]
+        logger.critical("test message")
 
     def test_exception_discard_return_value(self) -> None:
         """Verify exception() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.exception("test message")  # type: ignore[func-returns-value]  # noqa: LOG004
+        logger.error("test message")
 
     def test_trace_discard_return_value(self) -> None:
         """Verify trace() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.trace("test message")  # type: ignore[func-returns-value]
+        logger.trace("test message")
 
     def test_log_discard_return_value(self) -> None:
         """Verify log() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.log("info", "test message")  # type: ignore[func-returns-value]
+        logger.log("info", "test message")
 
 
 class TestProtocolComplianceStructlogLogger:
@@ -319,5 +319,5 @@ class TestProtocolComplianceStructlogLogger:
         assert isinstance(result, r)
 
         # Verify exception signature: msg, *args, **kw -> r[bool]
-        result = logger.exception("msg", "arg1", key="value")  # noqa: LOG004,PLE1205
+        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)

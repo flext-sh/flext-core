@@ -101,8 +101,9 @@ class TestFlextModelsContainer:
                     metadata_value,
                 ),
             )
-            # dict/ConfigMap inputs now yield None metadata (no auto-conversion)
-            if isinstance(metadata_value, m.Metadata):
+            # metadata=None triggers validator that creates default Metadata
+            # dict/ConfigMap inputs yield None metadata (no auto-conversion)
+            if isinstance(metadata_value, m.Metadata) or metadata_value is None:
                 assert registration.metadata is not None
                 assert isinstance(registration.metadata, m.Metadata)
             else:
@@ -151,35 +152,6 @@ class TestFlextModelsContainer:
         assert registration.service_type == "TestService"
         assert registration.tags == ["test", "integration"]
 
-    def test_service_registration_metadata_dict_conversion(self) -> None:
-        """Test metadata dict conversion to Metadata model."""
-        registration = m.Container.ServiceRegistration(
-            name="test",
-            service="value",
-            metadata=m.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
-        )
-        # registration.metadata is m.Metadata (from _normalize_to_metadata)
-        # Check that it's a Metadata instance (not necessarily m.Metadata subclass)
-
-        assert isinstance(registration.metadata, m.Metadata)
-        assert registration.metadata.attributes["key1"] == "value1"
-        assert registration.metadata.attributes["key2"] == "42"
-        assert registration.metadata.attributes["key3"] == "True"
-
-    def test_service_registration_metadata_nested_dict(self) -> None:
-        """Test metadata with nested dict conversion."""
-        nested_dict = {"level1": {"level2": {"level3": "value"}}}
-        registration = m.Container.ServiceRegistration(
-            name="test",
-            service="value",
-            metadata=m.ConfigMap(
-                root=cast("dict[str, t.GeneralValueType]", nested_dict)
-            ),
-        )
-        assert isinstance(registration.metadata, m.Metadata)
-        # Nested dicts are converted to t.GeneralValueType
-        assert "level1" in registration.metadata.attributes
-
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
         ContainerModelsScenarios.METADATA_VALUES,
@@ -206,8 +178,9 @@ class TestFlextModelsContainer:
                     metadata_value,
                 ),
             )
-            # dict/ConfigMap inputs now yield None metadata (no auto-conversion)
-            if isinstance(metadata_value, m.Metadata):
+            # metadata=None triggers validator that creates default Metadata
+            # dict/ConfigMap inputs yield None metadata (no auto-conversion)
+            if isinstance(metadata_value, m.Metadata) or metadata_value is None:
                 assert registration.metadata is not None
                 assert isinstance(registration.metadata, m.Metadata)
             else:
@@ -265,22 +238,6 @@ class TestFlextModelsContainer:
         assert registration.is_singleton is True
         assert registration.cached_instance == "cached_value"
         assert registration.invocation_count == 5
-
-    def test_factory_registration_metadata_dict_conversion(self) -> None:
-        """Test factory metadata dict conversion to Metadata model."""
-
-        def factory() -> t.ScalarValue:
-            return "value"
-
-        registration = m.Container.FactoryRegistration(
-            name="test",
-            factory=factory,
-            metadata=m.ConfigMap(root={"factory_type": "test", "priority": 1}),
-        )
-        # registration.metadata is m.Metadata (from _normalize_to_metadata)
-        assert isinstance(registration.metadata, m.Metadata)
-        assert registration.metadata.attributes["factory_type"] == "test"
-        assert registration.metadata.attributes["priority"] == "1"
 
     @pytest.mark.parametrize(
         "config_dict",
@@ -388,30 +345,6 @@ class TestFlextModelsContainer:
         assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
 
-    def test_service_registration_metadata_empty_dict(self) -> None:
-        """Test ServiceRegistration with empty dict metadata."""
-        registration = m.Container.ServiceRegistration(
-            name="test",
-            service="value",
-            metadata=m.ConfigMap(root={}),
-        )
-        assert isinstance(registration.metadata, m.Metadata)
-        assert registration.metadata.attributes == {}
-
-    def test_factory_registration_metadata_empty_dict(self) -> None:
-        """Test FactoryRegistration with empty dict metadata."""
-
-        def factory() -> t.ScalarValue:
-            return "value"
-
-        registration = m.Container.FactoryRegistration(
-            name="test",
-            factory=factory,
-            metadata=m.ConfigMap(root={}),
-        )
-        assert isinstance(registration.metadata, m.Metadata)
-        assert registration.metadata.attributes == {}
-
 
 class TestFlextUtilitiesModelNormalizeToMetadata:
     """Test suite for FlextUtilitiesModel.normalize_to_metadata() method."""
@@ -501,45 +434,3 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
                     cast("object", [1, 2, 3]),
                 )
             )
-
-    def test_service_registration_metadata_non_mapping_dict_like(self) -> None:
-        """Test ServiceRegistration metadata with non-Mapping dict-like object."""
-
-        # Create a dict-like object that passes _is_dict_like but isn't a Mapping
-        class DictLike:
-            def __init__(self) -> None:
-                self._data: dict[str, t.GeneralValueType] = {}
-
-            def items(self) -> object:
-                return self._data.items()
-
-        # This should trigger the fallback return Metadata(attributes={})
-        # Line 108: return m.Metadata(attributes={})
-        DictLike()
-        # Since DictLike isn't actually a Mapping, _is_dict_like returns False
-        # So we need to test the actual Mapping case that leads to line 108
-        # Line 108 is the fallback when isinstance check fails after _is_dict_like
-        # Actually, let's test with a real dict that gets processed
-        registration = m.Container.ServiceRegistration(
-            name="test",
-            service="value",
-            metadata=m.ConfigMap(root={"key": "value"}),
-        )
-        assert isinstance(registration.metadata, m.Metadata)
-
-    def test_factory_registration_metadata_non_mapping_dict_like(self) -> None:
-        """Test FactoryRegistration metadata with non-Mapping dict-like object."""
-
-        def factory() -> t.ScalarValue:
-            return "value"
-
-        # Test the fallback path (line 187)
-        # This happens when _is_dict_like returns True but isinstance(v, Mapping) is False
-        # In practice, this is hard to trigger since _is_dict_like checks isinstance(value, Mapping)
-        # But we can test the normal dict path which should work
-        registration = m.Container.FactoryRegistration(
-            name="test",
-            factory=factory,
-            metadata=m.ConfigMap(root={"key": "value"}),
-        )
-        assert isinstance(registration.metadata, m.Metadata)

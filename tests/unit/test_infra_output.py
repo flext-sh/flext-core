@@ -55,14 +55,14 @@ class TestShouldUseColor:
 
     def test_tty_with_dumb_term_disables(self) -> None:
         stream = io.StringIO()
-        stream.isatty = lambda: True  # type: ignore[assignment]
+        stream.isatty = lambda: True
         env = {"TERM": "dumb"}
         with patch.dict("os.environ", env, clear=True):
             assert _should_use_color(stream) is False
 
     def test_tty_with_empty_term_disables(self) -> None:
         stream = io.StringIO()
-        stream.isatty = lambda: True  # type: ignore[assignment]
+        stream.isatty = lambda: True
         with patch.dict("os.environ", {"TERM": ""}, clear=True):
             assert _should_use_color(stream) is False
 

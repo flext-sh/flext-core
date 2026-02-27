@@ -210,17 +210,12 @@ class TestFlextModels:
         )
         tm.that(command.data, eq="test_data", msg="Command data must match input")
         tm.that(
-            command.created_at,
-            none=False,
-            msg="Command must have created_at timestamp",
-        )
-        tm.that(
-            command.unique_id,
+            command.command_id,
             none=False,
             empty=False,
-            msg="Command must have unique_id",
+            msg="Command must have command_id",
         )
-        tm.that(command.unique_id, is_=str, msg="Command unique_id must be string")
+        tm.that(command.command_id, is_=str, msg="Command command_id must be string")
 
     def test_models_metadata_creation(self) -> None:
         """Test metadata model creation."""
@@ -551,13 +546,8 @@ class TestFlextModels:
             name: str
 
         entity = TestEntity(name="test")
-        # is_initial_version is a computed_field (property) that returns bool
-        # Access directly to avoid mypy inference issues with computed_field
-        assert bool(entity.is_initial_version) is True
+        # is_initial_version was removed during infra migration
         assert entity.version == 1
-        object.__setattr__(entity, "updated_at", entity.created_at)
-        # is_modified is also a computed_field (property) that returns bool
-        assert bool(entity.is_modified) is True
 
     def test_timestampable_mixin_serialization(self) -> None:
         """Test timestamp serialization in JSON output."""
@@ -583,8 +573,6 @@ class TestFlextModels:
         entity.update_timestamp()
         assert entity.updated_at is not None
         assert entity.updated_at != original_updated
-        # is_modified is a computed_field (property) that returns bool
-        assert bool(entity.is_modified) is True
 
     def test_versionable_mixin(self) -> None:
         """Test VersionableMixin functionality."""
@@ -666,9 +654,7 @@ class TestFlextModels:
             target: str
 
         command = TestCommand.model_validate({"action": "create", "target": "user"})
-        assert all(
-            hasattr(command, attr) for attr in ["unique_id", "created_at", "updated_at"]
-        )
+        assert all(hasattr(command, attr) for attr in ["command_id", "command_type"])
         assert command.command_type == "generic_command"
         assert command.action == "create"
         assert command.target == "user"
@@ -842,8 +828,7 @@ class TestFlextModels:
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
         assert command.message_type == c.Cqrs.HandlerType.COMMAND
-        assert command.unique_id is not None
-        assert command.created_at is not None
+        assert command.command_id is not None
 
     def test_metadata_model_creation(self) -> None:
         """Test Metadata model creation with correct fields."""

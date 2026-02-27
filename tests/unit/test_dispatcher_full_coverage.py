@@ -192,7 +192,7 @@ def test_callable_registration_with_attribute(dispatcher: FlextDispatcher) -> No
         return "func:ok"
 
     # Self-describing handler via attribute (set before registration)
-    func_handler.message_type = SampleCommand  # type: ignore[attr-defined]
+    func_handler.message_type = SampleCommand
 
     res = dispatcher.register_handler(cast("t.HandlerType", func_handler))
     assert res.is_success
@@ -215,7 +215,7 @@ def test_exception_handling_in_dispatch(dispatcher: FlextDispatcher) -> None:
         raise ValueError(msg)
 
     # Self-describing handler via attribute (set before registration)
-    breaking_handler.message_type = SampleCommand  # type: ignore[attr-defined]
+    breaking_handler.message_type = SampleCommand
     dispatcher.register_handler(cast("t.HandlerType", breaking_handler))
 
     res = dispatcher.dispatch(SampleCommand(payload="x"))

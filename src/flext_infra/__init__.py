@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    # Type hints only - not loaded at runtime
     from flext_infra.__version__ import __version__, __version_info__
     from flext_infra.basemk import (
         BaseMkGenerator,
@@ -160,8 +160,6 @@ def __dir__() -> list[str]:
 # to the parent module's namespace. We remove them to force __getattr__ usage.
 def _cleanup_submodule_namespace() -> None:
     """Remove submodules from namespace to force __getattr__ usage."""
-    import sys  # noqa: PLC0415
-
     # Get the current module
     current_module = sys.modules[__name__]
 

@@ -265,7 +265,7 @@ class TestCommands:
 
         cmd = CreateUserCommand(email="user@example.com", username="alice")
         assert cmd.email == "user@example.com"
-        assert cmd.unique_id is not None
+        assert cmd.command_id is not None
 
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""

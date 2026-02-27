@@ -32,7 +32,7 @@ def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
     if v is None:
         return {}
     if isinstance(v, Mapping):
-        return {str(k): v for k, v in v.items()}  # type: ignore[misc]
+        return {str(k): v for k, v in v.items()}
     if hasattr(v, "model_dump"):
         return v.model_dump()
     msg = f"Cannot normalize {type(v)} to Mapping"

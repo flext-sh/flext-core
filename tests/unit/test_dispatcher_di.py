@@ -23,12 +23,11 @@ from flext_core import FlextDispatcher
 class TestDispatcherDI:
     """Test dispatcher dependency injection integration."""
 
-    def test_dispatcher_has_container(self) -> None:
-        """Test dispatcher has container from FlextService inheritance."""
-        # Act - FlextService creates container internally
+    def test_dispatcher_has_handlers(self) -> None:
+        """Test dispatcher has handlers registry."""
+        # Act - FlextDispatcher creates handlers registry internally
         dispatcher = FlextDispatcher()
 
-        # Assert - dispatcher has container from FlextService
-        assert dispatcher._container is not None
-        assert hasattr(dispatcher._container, "get")
-        assert hasattr(dispatcher._container, "register")
+        # Assert - dispatcher has handlers registry
+        assert dispatcher._handlers is not None
+        assert isinstance(dispatcher._handlers, dict)
