@@ -21,7 +21,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Literal, cast
 
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, field_validator
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
@@ -92,6 +92,22 @@ class FlextGenericModels:
                 default_factory=t.Dict,
                 description="Additional context-specific metadata",
             )
+            message: t.ConfigMapValue = Field(
+                default=None,
+                description="Message payload for dispatch operations",
+            )
+            message_type: str = Field(
+                default="",
+                description="Type of message being dispatched",
+            )
+            dispatch_type: str = Field(
+                default="",
+                description="Type of dispatch operation (command, query, event)",
+            )
+            timeout_override: int | None = Field(
+                default=None,
+                description="Optional timeout override in seconds",
+            )
 
             @computed_field
             @property
@@ -137,6 +153,24 @@ class FlextGenericModels:
 
                 """
                 return self.timestamp.isoformat()
+
+            @field_validator("message_type")
+            @classmethod
+            def validate_message_type(cls, v: str) -> str:
+                """Validate message_type is a string.
+                
+                Args:
+                    v: The message_type value to validate.
+                    
+                Returns:
+                    str: The validated message_type.
+                    
+                Raises:
+                    ValueError: If message_type is not a string.
+                """
+                if not isinstance(v, str):
+                    raise ValueError("message_type must be a string")
+                return v
 
             @computed_field
             @property

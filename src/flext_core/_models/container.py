@@ -12,12 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from pathlib import Path
 from datetime import datetime
 from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
+from flext_core.protocols import FlextProtocols as p
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
@@ -114,6 +116,37 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return _normalize_metadata(v)
 
+        @field_validator("service", mode="before")
+        @classmethod
+        def validate_service_type(cls, v: object) -> object:
+            """Validate service is a RegisterableService type.
+            
+            RegisterableService includes: str, int, float, bool, datetime, None,
+            BaseModel, Path, Sequence, Mapping, callables, and objects with __dict__.
+            """
+            # Scalars
+            if isinstance(v, (str, int, float, bool, type(None))):
+                return v
+            # Models and paths
+            if isinstance(v, (BaseModel, Path)):
+                return v
+            # Callables
+            if callable(v):
+                return v
+            # Collections
+            if isinstance(v, Mapping):
+                return v
+            if isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray)):
+                return v
+            # Objects with __dict__ or protocol-like attributes
+            if hasattr(v, "__dict__"):
+                return v
+            if hasattr(v, "bind") and hasattr(v, "info"):
+                return v
+            # Reject invalid types
+            raise ValueError(
+                f"Service must be a RegisterableService type, got {type(v).__name__}"
+            )
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
 

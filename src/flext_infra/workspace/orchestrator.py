@@ -19,7 +19,6 @@ from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_core.service import FlextService
 
-from flext_infra.constants import c
 from flext_infra.models import m
 from flext_infra.output import output
 from flext_infra.reporting import ReportingService
@@ -162,7 +161,6 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         stderr = "" if proc_result.is_success else (proc_result.error or "")
 
         elapsed = time.monotonic() - started
-        status = c.Status.OK if return_code == 0 else c.Status.FAIL
         # Output project completion status
         status_symbol = "✓" if return_code == 0 else "✗"
         output.info(

@@ -1518,7 +1518,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             case _:
                 return "auto"
 
-    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[t.ConfigMapValue]]]:
+    def _is_nested_rows(
+        self, value: object
+    ) -> TypeGuard[Sequence[Sequence[t.ConfigMapValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         if len(value) == 0:
@@ -1705,7 +1707,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: t.ConfigMapValue | list[t.ConfigMapValue] = json.loads(text) if text.strip() else {}
+                    parsed_raw: t.ConfigMapValue | list[t.ConfigMapValue] = (
+                        json.loads(text) if text.strip() else {}
+                    )
                 else:
                     # YAML parsing
                     parsed_raw = _yaml_safe_load(text) if text.strip() else {}

@@ -13,9 +13,9 @@ import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
-from typing import Annotated, ClassVar, Self, TypeGuard, overload
+from typing import Annotated, ClassVar, Self, overload
 
-from pydantic import BaseModel, Field, PrivateAttr, computed_field
+from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
@@ -252,14 +252,6 @@ class FlextRegistry(FlextService[bool]):
         )
 
     @staticmethod
-    def _is_registry_handler(
-        value: t.HandlerCallable
-        | BaseModel
-        | p.Handler[t.GeneralValueType, t.GeneralValueType],
-    ) -> TypeGuard[RegistryHandler]:
-        return callable(value) or isinstance(value, BaseModel)
-
-    @staticmethod
     def _to_dispatcher_handler(handler: RegistryHandler) -> DispatcherHandler:
         if isinstance(handler, BaseModel):
             return handler
@@ -347,9 +339,16 @@ class FlextRegistry(FlextService[bool]):
         """
         if handler is None:
             return r[m.HandlerRegistrationDetails].fail("Handler cannot be None")
-        if not self._is_registry_handler(handler):
+        try:
+            m.HandlerRegistrationDetails.model_validate({
+                "registration_id": handler.__class__.__name__,
+                "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                "timestamp": "",
+                "status": c.Cqrs.CommonStatus.RUNNING,
+            })
+        except ValidationError:
             return r[m.HandlerRegistrationDetails].fail(
-                "Handler must be callable or BaseModel",
+                "Handler validation failed",
             )
 
         # Propagate context for distributed tracing
@@ -569,10 +568,17 @@ class FlextRegistry(FlextService[bool]):
             try:
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
-                if not self._is_registry_handler(handler):
+                try:
+                    m.HandlerRegistrationDetails.model_validate({
+                        "registration_id": key,
+                        "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                        "timestamp": "",
+                        "status": c.Cqrs.CommonStatus.RUNNING,
+                    })
+                except ValidationError:
                     _ = self._add_registration_error(
                         key,
-                        "Handler must be callable or BaseModel",
+                        "Handler validation failed",
                         summary,
                     )
                     continue

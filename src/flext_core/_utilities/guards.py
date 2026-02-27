@@ -500,7 +500,9 @@ class FlextUtilitiesGuards:
     })
 
     @staticmethod
-    def is_type(value: t.FlexibleValue, type_spec: str | type | tuple[type, ...]) -> bool:
+    def is_type(
+        value: t.FlexibleValue, type_spec: str | type | tuple[type, ...]
+    ) -> bool:
         """Generic type checking function that unifies all guard checks.
 
         Provides a single entry point for all type checking operations,

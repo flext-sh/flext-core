@@ -279,6 +279,9 @@ class FlextModelFoundation:
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
         attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
+        metadata_value: t.MetadataScalarValue = Field(
+            default=None, description="Scalar metadata value."
+        )
 
         @field_validator("attributes", mode="before")
         @classmethod
@@ -315,6 +318,14 @@ class FlextModelFoundation:
                     result
                 )
             )
+
+        @field_validator("metadata_value", mode="before")
+        @classmethod
+        def validate_scalar_value(cls, v: object) -> t.MetadataScalarValue:
+            """Validate metadata value is a scalar type."""
+            if isinstance(v, (str, int, float, bool, type(None))):
+                return v
+            raise ValueError(f"Metadata value must be scalar, got {type(v).__name__}")
 
     # Command message type
     class CommandMessage(BaseModel):

@@ -19,6 +19,7 @@ from pydantic import (
     PrivateAttr,
     computed_field,
     field_validator,
+    model_validator,
 )
 
 from flext_core._models.base import FlextModelFoundation
@@ -59,6 +60,16 @@ class FlextModelsHandler:
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
             return v
+
+        @model_validator(mode="after")
+        def validate_handler_interface(self) -> Self:
+            """Validate handler has handle() or execute() method or is callable."""
+            handler = self.handler
+            if callable(handler):
+                return self
+            if hasattr(handler, "handle") or hasattr(handler, "execute"):
+                return self
+            raise ValueError("Handler must be callable or have handle()/execute() method")
 
     class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of a handler registration operation.

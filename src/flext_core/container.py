@@ -20,7 +20,7 @@ from types import ModuleType
 from typing import Self, TypeGuard, cast, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -236,13 +236,18 @@ class FlextContainer(FlextRuntime, p.DI):
                                         )
                                         raise TypeError(msg)
                                     raw_result = _factory_func_ref()
-                                if FlextContainer._is_registerable_service(raw_result):
+                                try:
+                                    m.Container.ServiceRegistration(
+                                        name=_factory_name,
+                                        service=raw_result,
+                                    )
                                     return raw_result
-                                msg = (
-                                    f"Factory '{_factory_name}' returned unsupported type: "
-                                    f"{raw_result.__class__.__name__}"
-                                )
-                                raise TypeError(msg)
+                                except ValidationError:
+                                    msg = (
+                                        f"Factory '{_factory_name}' returned unsupported type: "
+                                        f"{raw_result.__class__.__name__}"
+                                    )
+                                    raise TypeError(msg)
 
                             # Register using the name from decorator config
                             _ = instance.register_factory(
@@ -293,10 +298,15 @@ class FlextContainer(FlextRuntime, p.DI):
         # After narrowing, provide_helper is confirmed callable
         def provide_callable(name: str) -> t.RegisterableService:
             provided = provide_fn(name)
-            if self._is_registerable_service(provided):
+            try:
+                m.Container.ServiceRegistration(
+                    name="provided",
+                    service=provided,
+                )
                 return provided
-            msg = "DI bridge Provide helper returned unsupported type"
-            raise TypeError(msg)
+            except ValidationError:
+                msg = "DI bridge Provide helper returned unsupported type"
+                raise TypeError(msg)
 
         return provide_callable
 
@@ -610,9 +620,15 @@ class FlextContainer(FlextRuntime, p.DI):
         if (
             not self.has_service("config")
             and self._config is not None
-            and self._is_registerable_service(self._config)
         ):
-            _ = self.register("config", self._config)
+            try:
+                m.Container.ServiceRegistration(
+                    name="config",
+                    service=self._config,
+                )
+                _ = self.register("config", self._config)
+            except ValidationError:
+                pass  # Skip registration if validation fails
 
         # Register logger factory if not already registered
         # ServiceRegistration now uses SkipValidation - can store any service type
@@ -629,9 +645,15 @@ class FlextContainer(FlextRuntime, p.DI):
         if (
             not self.has_service("context")
             and self._context is not None
-            and self._is_registerable_service(self._context)
         ):
-            _ = self.register("context", self._context)
+            try:
+                m.Container.ServiceRegistration(
+                    name="context",
+                    service=self._context,
+                )
+                _ = self.register("context", self._context)
+            except ValidationError:
+                pass  # Skip registration if validation fails
 
     @override
     def configure(
@@ -886,7 +908,12 @@ class FlextContainer(FlextRuntime, p.DI):
         if name in self._services:
             service_registration = self._services[name]
             service = service_registration.service
-            if not self._is_registerable_service(service):
+            try:
+                m.Container.ServiceRegistration(
+                    name=name,
+                    service=service,
+                )
+            except ValidationError:
                 return r[t.RegisterableService].fail(
                     f"Service '{name}' has unsupported runtime type",
                 )
@@ -897,7 +924,12 @@ class FlextContainer(FlextRuntime, p.DI):
             try:
                 factory_registration = self._factories[name]
                 resolved = factory_registration.factory()
-                if not self._is_registerable_service(resolved):
+                try:
+                    m.Container.ServiceRegistration(
+                        name=name,
+                        service=resolved,
+                    )
+                except ValidationError:
                     return r[t.RegisterableService].fail(
                         f"Factory '{name}' returned unsupported runtime type",
                     )

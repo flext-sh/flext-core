@@ -20,6 +20,7 @@ from pydantic import (
     Field,
     computed_field,
     field_validator,
+    model_validator,
 )
 
 from flext_core._models.base import FlextModelFoundation
@@ -802,6 +803,23 @@ class FlextModelsContext:
                 description="Extensible custom metadata fields",
             ),
         ] = Field(default_factory=dict)
+
+        @model_validator(mode="after")
+        def validate_context_protocol(self):
+            """Validate context instance has get() and set() methods."""
+            # Find the field that holds the context instance
+            context_field = None
+            for field_name in self.__class__.model_fields:
+                if 'context' in field_name.lower():
+                    context_field = getattr(self, field_name, None)
+                    break
+            
+            if context_field is None:
+                return self  # No context field found, skip validation
+            
+            if hasattr(context_field, "get") and hasattr(context_field, "set"):
+                return self
+            raise ValueError("Context must have get() and set() methods")
 
     class ContextDomainData(BaseModel):
         """Domain-specific context data storage."""

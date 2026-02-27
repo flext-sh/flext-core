@@ -22,6 +22,7 @@ from typing import override
 from pydantic import (
     ConfigDict,
     PrivateAttr,
+    ValidationError,
     computed_field,
 )
 
@@ -305,19 +306,23 @@ class FlextService[TDomainResult](
         cls,
         services: Mapping[str, t.RegisterableService] | None,
     ) -> Mapping[str, t.RegisterableService] | None:
+        """Normalize and validate scoped services using Pydantic model."""
         del cls
         if services is None:
             return None
-        normalized = {
-            str(name): service
-            for name, service in services.items()
-            if FlextService._is_scoped_service_candidate(service)
-        }
+        normalized: dict[str, t.RegisterableService] = {}
+        for name, service in services.items():
+            try:
+                # Validate service using ServiceRegistration model
+                m.Container.ServiceRegistration(
+                    name=str(name),
+                    service=service,
+                )
+                normalized[str(name)] = service
+            except ValidationError:
+                # Skip invalid services
+                continue
         return normalized or None
-
-    @staticmethod
-    def _is_scoped_service_candidate(service: p.Service | BaseModel) -> bool:
-        return FlextContainer._is_registerable_service(service)
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
