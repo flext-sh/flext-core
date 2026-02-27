@@ -1009,7 +1009,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: str,
         message: str,
         _context: Mapping[str, t.ScalarValue] | None = None,
-    ) -> None:
+    ) -> r[bool]:
         """Log message with specified level - Logger.Log implementation.
 
         Business Rule: Logs a message with specified level, converting level string
@@ -1038,7 +1038,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             level_enum = c.Settings.LogLevel(level.upper())
 
         # Use _log to handle the actual logging
-        _ = self._log(level_enum, message, **context_dict.root)
+        return self._log(level_enum, message, **context_dict.root)
 
     def debug(
         self,
