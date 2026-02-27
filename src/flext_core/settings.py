@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -221,7 +221,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: object) -> Self:
+    def __new__(cls, **_kwargs: Any) -> Self:  # type: ignore[misc]  # Pydantic BaseSettings requires flexible kwargs
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -258,7 +258,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # type: ignore[misc]  # Pydantic BaseSettings init signature
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
