@@ -10,6 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType, TracebackType
 from typing import (
+    TYPE_CHECKING,
     Protocol,
     Self,
     runtime_checkable,
@@ -20,6 +21,10 @@ from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
 from flext_core.typings import T, t
+
+if TYPE_CHECKING:
+    from flext_core.result import r
+
 
 type ProtocolHandlerCallable = (
     t.HandlerCallable | Callable[[t.GuardInputValue], t.GuardInputValue]
@@ -960,6 +965,79 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
+    class HandlerDiscovery(BaseProtocol, Protocol):
+        """Handler discovery protocol for introspection and metadata extraction.
+
+        Reflects real implementations like FlextHandlers.Discovery which provides
+        zero-config handler discovery by scanning classes and modules for
+        @handler() decorated methods and functions.
+        """
+
+        @staticmethod
+        def scan_class(
+            target_class: type,
+        ) -> list[tuple[str, t.GeneralValueType]]:
+            """Scan class for handler-decorated methods.
+
+            Introspects the class to find all methods with handler configuration
+            metadata, returning them sorted by priority (highest first).
+
+            Args:
+                target_class: Class to scan for handler decorators
+
+            Returns:
+                List of tuples (method_name, config) sorted by priority
+            """
+            ...
+
+        @staticmethod
+        def scan_module(
+            module: ModuleType,
+        ) -> list[tuple[str, t.HandlerCallable, t.GeneralValueType]]:
+            """Scan module for handler-decorated functions.
+
+            Introspects the module to find all functions with handler configuration
+            metadata, returning them sorted by priority for consistent ordering.
+
+            Args:
+                module: Module object to scan for handler decorators
+
+            Returns:
+                List of tuples (function_name, function, config) sorted by priority
+            """
+            ...
+
+        @staticmethod
+        def has_handlers(target_class: type) -> bool:
+            """Check if class has any handler-decorated methods.
+
+            Efficiently checks if a class contains any methods marked with
+            the @handler() decorator without scanning all methods.
+
+            Args:
+                target_class: Class to check for handlers
+
+            Returns:
+                True if class has at least one handler, False otherwise
+            """
+            ...
+
+        @staticmethod
+        def has_handlers_module(module: ModuleType) -> bool:
+            """Check if module has any handler-decorated functions.
+
+            Efficiently checks if a module contains any functions marked with
+            the @handler() decorator without scanning all items.
+
+            Args:
+                module: Module object to check for handlers
+
+            Returns:
+                True if module has at least one handler, False otherwise
+            """
+            ...
+
+    @runtime_checkable
     class Middleware(BaseProtocol, Protocol):
         """Processing pipeline middleware."""
 
@@ -1004,6 +1082,76 @@ class FlextProtocols:
             """
             ...
 
+    @runtime_checkable
+    class MetricsTracker(BaseProtocol, Protocol):
+        """Metrics tracking protocol for handler execution metrics.
+
+        Reflects real implementations like FlextMixins.CQRS.MetricsTracker which
+        tracks handler execution metrics (latency, success/failure counts, etc.).
+        """
+
+        def record_metric(
+            self,
+            name: str,
+            value: t.ConfigMapValue,
+        ) -> FlextProtocols.Result[bool]:
+            """Record a metric value.
+
+            Args:
+                name: Metric name
+                value: Metric value to record
+
+            Returns:
+                Result[bool]: Success result
+            """
+            ...
+
+        def get_metrics(self) -> FlextProtocols.Result[t.ConfigMap]:
+            """Get current metrics dictionary.
+
+            Returns:
+                Result[ConfigMap]: Success result with metrics collection
+            """
+            ...
+
+    @runtime_checkable
+    class ContextStack(BaseProtocol, Protocol):
+        """Execution context stack protocol for CQRS operations.
+
+        Reflects real implementations like FlextMixins.CQRS.ContextStack which
+        manages a stack of execution contexts for nested handler invocations.
+        """
+
+        def push_context(
+            self,
+            ctx: t.GuardInputValue,
+        ) -> FlextProtocols.Result[bool]:
+            """Push execution context onto the stack.
+
+            Args:
+                ctx: Execution context or context dict to push
+
+            Returns:
+                Result[bool]: Success result
+            """
+            ...
+
+        def pop_context(self) -> FlextProtocols.Result[Mapping[str, t.ConfigMapValue]]:
+            """Pop execution context from the stack.
+
+            Returns:
+                Result[Mapping]: Success result with popped context or empty dict
+            """
+            ...
+
+        def current_context(self) -> t.GuardInputValue | None:
+            """Get current execution context without popping.
+
+            Returns:
+                ExecutionContext | None: Current context or None if stack is empty
+            """
+            ...
+
     # =========================================================================
     # INFRASTRUCTURE: Infrastructure Protocols
     # =========================================================================
@@ -1030,7 +1178,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue | Exception,
                 **kw: t.GuardInputValue | Exception,
-            ) -> None:
+            ) -> r[bool]:
                 """Log debug message."""
                 ...
 
@@ -1039,7 +1187,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue,
                 **kw: t.GuardInputValue | Exception,
-            ) -> None:
+            ) -> r[bool]:
                 """Log info message."""
                 ...
 
@@ -1048,7 +1196,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue,
                 **kw: t.GuardInputValue | Exception,
-            ) -> None:
+            ) -> r[bool]:
                 """Log warning message."""
                 ...
 
@@ -1057,7 +1205,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue,
                 **kw: t.GuardInputValue,
-            ) -> None:
+            ) -> r[bool]:
                 """Log warning message (alias)."""
                 ...
 
@@ -1066,7 +1214,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue,
                 **kw: t.GuardInputValue | Exception,
-            ) -> None:
+            ) -> r[bool]:
                 """Log error message."""
                 ...
 
@@ -1075,7 +1223,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue,
                 **kw: t.GuardInputValue | Exception,
-            ) -> None:
+            ) -> r[bool]:
                 """Log critical message."""
                 ...
 
@@ -1084,7 +1232,7 @@ class FlextProtocols:
                 msg: str | t.GuardInputValue,
                 *args: t.GuardInputValue,
                 **kw: t.GuardInputValue | Exception,
-            ) -> None:
+            ) -> r[bool]:
                 """Log exception with traceback."""
                 ...
 
@@ -1222,6 +1370,45 @@ class FlextProtocols:
             """Negate validator - passes when original fails."""
             ...
 
+    @runtime_checkable
+    class Decorator[P, R](BaseProtocol, Protocol):
+        """Protocol for decorator factory pattern.
+
+        Captures the factory pattern used by all FLEXT decorators:
+        1. Configuration phase: Accept config parameters
+        2. Decorator phase: Return a decorator function
+        3. Wrapper phase: Return a wrapper that executes with added behavior
+
+        All FLEXT decorators (@inject, @log_operation, @track_performance,
+        @railway, @retry, @timeout, @with_correlation, @combined) follow
+        this structural pattern.
+
+        Type Parameters:
+        - P: ParamSpec for function parameters
+        - R: Return type of wrapped function
+
+        Example:
+            @FlextDecorators.log_operation("my_op")
+            def my_function(x: int) -> str:
+                return str(x)
+
+            # Expands to:
+            # my_function = FlextDecorators.log_operation("my_op")(my_function)
+        """
+
+        def __call__(
+            self,
+            func: Callable[P, R],
+        ) -> Callable[P, R]:
+            """Apply decorator to function, returning wrapped callable.
+
+            Args:
+                func: The function to decorate
+
+            Returns:
+                Wrapped function with same signature and return type
+            """
+            ...
     # =========================================================================
     # SPECIALIZED: Specialized Domain Protocols
     # =========================================================================

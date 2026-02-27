@@ -62,9 +62,6 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    # Re-export for external access - use centralized ValidationLevel
-    # from FlextConstants
-    ValidationLevel = c.Cqrs.ValidationLevel
 
     class ServiceRegistration(BaseModel):
         """Model for service registry entries.
@@ -267,10 +264,6 @@ class FlextModelsContainer:
             ge=c.Reliability.RETRY_COUNT_MIN,
             le=c.Container.MAX_FACTORIES,
             description="Maximum number of factories allowed in registry",
-        )
-        validation_mode: c.Cqrs.ValidationLevel = Field(
-            default=c.Cqrs.ValidationLevel.STRICT,
-            description="Validation mode: 'strict' or 'lenient'",
         )
         enable_auto_registration: bool = Field(
             default=False,

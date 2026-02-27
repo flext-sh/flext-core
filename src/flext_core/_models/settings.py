@@ -172,7 +172,6 @@ class FlextModelsConfig:
     class ValidationConfiguration(FlextModelFoundation.ArbitraryTypesModel):
         """Validation configuration."""
 
-        enable_strict_mode: bool = Field(default=True)
         max_validation_errors: int = Field(
             default=c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
             ge=c.Reliability.RETRY_COUNT_MIN,

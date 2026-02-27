@@ -656,11 +656,6 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.CANCELLED,
         ]
 
-        type ValidationLevelLiteral = Literal[
-            FlextConstants.Cqrs.ValidationLevel.STRICT,
-            FlextConstants.Cqrs.ValidationLevel.LENIENT,
-            FlextConstants.Cqrs.ValidationLevel.STANDARD,
-        ]
 
         type ProcessingPhaseLiteral = Literal[
             FlextConstants.Cqrs.ProcessingPhase.PREPARE,
@@ -1010,12 +1005,6 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.COMPENSATING,
         ]
 
-        class ValidationLevel(StrEnum):
-            """CQRS validation levels enumeration."""
-
-            STRICT = "strict"
-            LENIENT = "lenient"
-            STANDARD = "standard"
 
         class ProcessingPhase(StrEnum):
             """CQRS processing phases enumeration."""
