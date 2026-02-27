@@ -203,7 +203,7 @@ class TestLogReturnsResultBool:
         logger = FlextLogger.create_module_logger(__name__)
 
         for level in ["debug", "info", "warning", "error", "critical"]:
-            result = logger.log(level, f"test {level} message")
+            result = logger.log(level, "test %s message", level)
             assert isinstance(result, r), f"log({level}) should return r[bool]"
             assert result.is_success, f"log({level}) should return success"
             assert result.value is True, f"log({level}) result value should be True"
@@ -299,25 +299,25 @@ class TestProtocolComplianceStructlogLogger:
         logger = FlextLogger.create_module_logger(__name__)
 
         # Verify debug signature: msg, *args, **kw -> r[bool]
-        result = logger.debug("msg", "arg1", key="value")
+        result = logger.debug("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify info signature: msg, *args, **kw -> r[bool]
-        result = logger.info("msg", "arg1", key="value")
+        result = logger.info("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify warning signature: msg, *args, **kw -> r[bool]
-        result = logger.warning("msg", "arg1", key="value")
+        result = logger.warning("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify error signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")
+        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify critical signature: msg, *args, **kw -> r[bool]
-        result = logger.critical("msg", "arg1", key="value")
+        result = logger.critical("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify exception signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")
+        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)

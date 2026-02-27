@@ -40,7 +40,7 @@ class _ProtocolIntrospection:
         if not hasattr(target_cls, "_is_protocol"):
             return False
         is_proto = (
-            getattr(target_cls, "_is_protocol")
+            target_cls._is_protocol  # noqa: SLF001
             if hasattr(target_cls, "_is_protocol")
             else False
         )
@@ -54,12 +54,12 @@ class _ProtocolIntrospection:
     ) -> None:
         """Validate that a class implements all required protocol members."""
         protocol_annotations = (
-            getattr(protocol, "__annotations__")
+            protocol.__annotations__
             if hasattr(protocol, "__annotations__")
             else {}
         )
         raw_attrs: set[str] | object = (
-            getattr(protocol, "__protocol_attrs__")
+            protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
         )
@@ -82,7 +82,7 @@ class _ProtocolIntrospection:
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
             base_annotations = (
-                getattr(base, "__annotations__")
+                base.__annotations__
                 if hasattr(base, "__annotations__")
                 else {}
             )
@@ -96,7 +96,7 @@ class _ProtocolIntrospection:
 
         if missing:
             protocol_name = (
-                getattr(protocol, "__name__")
+                protocol.__name__
                 if hasattr(protocol, "__name__")
                 else str(protocol)
             )
@@ -128,7 +128,7 @@ class _ProtocolIntrospection:
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
         return (
-            getattr(target_cls, "__protocols__")
+            target_cls.__protocols__
             if hasattr(target_cls, "__protocols__")
             else ()
         )
@@ -145,12 +145,12 @@ class _ProtocolIntrospection:
             return True
 
         protocol_annotations = (
-            getattr(protocol, "__annotations__")
+            protocol.__annotations__
             if hasattr(protocol, "__annotations__")
             else {}
         )
         raw_attrs: set[str] | object = (
-            getattr(protocol, "__protocol_attrs__")
+            protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
         )
@@ -1426,7 +1426,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class Entry(
-        BaseProtocol, Protocol
+        BaseProtocol, Protocol,
     ):  # Cannot inherit BaseProtocol due to Python nested class limitations
         """Entry object protocol (read-only)."""
 
@@ -1496,7 +1496,7 @@ class FlextProtocols:
     # =========================================================================
     @runtime_checkable
     class CallableWithHints(
-        BaseProtocol, Protocol
+        BaseProtocol, Protocol,
     ):  # Cannot inherit BaseProtocol due to Python nested class limitations
         """Protocol for callables that support type hints introspection."""
 
@@ -1594,7 +1594,7 @@ class FlextProtocols:
             """
             # Separate protocols from model bases
             protocols, model_bases = _ProtocolIntrospection.partition_protocol_bases(
-                bases
+                bases,
             )
 
             # Ensure we have at least one real base
@@ -1610,7 +1610,7 @@ class FlextProtocols:
             )
 
             # Store protocols using setattr (avoids type: ignore)
-            setattr(built_cls, "__protocols__", tuple(protocols))
+            built_cls.__protocols__ = tuple(protocols)
 
             # Validate protocol compliance at class definition time
             for protocol in protocols:
@@ -1672,9 +1672,9 @@ class FlextProtocols:
 
             """
             return str(
-                getattr(type(self), "__name__")
+                type(self).__name__
                 if hasattr(type(self), "__name__")
-                else "ProtocolModel"
+                else "ProtocolModel",
             )
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
@@ -1724,9 +1724,9 @@ class FlextProtocols:
 
             """
             return str(
-                getattr(type(self), "__name__")
+                type(self).__name__
                 if hasattr(type(self), "__name__")
-                else "ProtocolSettings"
+                else "ProtocolSettings",
             )
 
     @staticmethod
@@ -1766,7 +1766,7 @@ class FlextProtocols:
             # Validate each protocol at decoration time
             # Use getattr for type-safe access to __name__
             class_name = (
-                getattr(cls, "__name__") if hasattr(cls, "__name__") else str(cls)
+                cls.__name__ if hasattr(cls, "__name__") else str(cls)
             )
             for protocol in protocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
@@ -1776,7 +1776,7 @@ class FlextProtocols:
                 )
 
             # Store protocols using setattr (avoids type: ignore)
-            setattr(cls, "__protocols__", tuple(protocols))
+            cls.__protocols__ = tuple(protocols)
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
@@ -1785,13 +1785,13 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            setattr(cls, "implements_protocol", _instance_implements_protocol)
+            cls.implements_protocol = _instance_implements_protocol
 
             # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
+            cls.get_protocols = classmethod(_class_get_protocols)
 
             return cls
 

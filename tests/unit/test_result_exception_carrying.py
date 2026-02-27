@@ -71,7 +71,7 @@ class TestFailWithException:
         error_data = t.ConfigMap({"field": "email", "reason": "invalid format"})
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
-            error_msg, error_data=error_data, exception=exc
+            error_msg, error_data=error_data, exception=exc,
         )
 
         assert result.is_failure
@@ -185,7 +185,7 @@ class TestCreateFromCallableCarriesException:
             raise ValueError(msg)
 
         result: r[int] = r[int].create_from_callable(
-            failing_operation, error_code="INVALID_VALUE"
+            failing_operation, error_code="INVALID_VALUE",
         )
 
         assert result.is_failure
@@ -250,7 +250,7 @@ class TestFlatMapPropagatesException:
         exc = KeyError("missing key")
         result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped: r[str] = result.flat_map(lambda x: r[int].ok(x + 1)).flat_map(
-            lambda x: r[str].ok(str(x))
+            lambda x: r[str].ok(str(x)),
         )
 
         assert flat_mapped.is_failure
@@ -298,7 +298,7 @@ class TestLashPropagatesException:
         result: r[int] = r[int].fail("error", exception=exc)
         recovery_exc = RuntimeError("recovery failed")
         recovered: r[int] = result.lash(
-            lambda e: r[int].fail(f"recovery failed: {e}", exception=recovery_exc)
+            lambda e: r[int].fail(f"recovery failed: {e}", exception=recovery_exc),
         )
 
         assert recovered.is_failure
@@ -359,7 +359,7 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import BaseModel, ValidationError
+        from pydantic import BaseModel, ValidationError  # noqa: PLC0415
 
         class User(BaseModel):
             name: str
@@ -378,7 +378,7 @@ class TestToIOChainsException:
 
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
-        from flext_core.exceptions import e
+        from flext_core.exceptions import e  # noqa: PLC0415
 
         exc = ValueError("conversion error")
         result = r[int].fail("error", exception=exc)
