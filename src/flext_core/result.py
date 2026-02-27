@@ -124,6 +124,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         error_code: str | None = None,
         error_data: t.ConfigMap | None = None,
         expected_type: type[U] | None = None,
+        exception: BaseException | None = None,
     ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
@@ -158,6 +159,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             is_success=False,
         )
         result._result = Failure(error_msg)
+        result._exception = exception
         return result
 
     @staticmethod
@@ -181,7 +183,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return FlextResult[T].ok(result)
             except Exception as e:
                 _module_logger.debug("FlextResult.safe callable failed", exc_info=e)
-                return FlextResult[T].fail(str(e))
+                return FlextResult[T].fail(str(e), exception=e)
 
         return wrapper
 
@@ -228,7 +230,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             exception_module = __import__("flext_core.exceptions", fromlist=["e"])
             raise exception_module.e.ValidationError(
                 self.error or "Cannot convert failure to IO"
-            )
+            ) from self._exception
         return IO(self.value)
 
     def to_io_result(self) -> IOResult[T_co, str]:
@@ -251,7 +253,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         except UnwrapFailedError as exc:
             _module_logger.debug("Failed to unwrap IOResult", exc_info=exc)
             io_error = io_result.failure()
-            return cls.fail(str(io_error))
+            return cls.fail(str(io_error), exception=exc)
 
     # error_code and error_data properties are inherited from RuntimeResult
 
@@ -274,8 +276,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 RuntimeError,
             ) as e:
                 _module_logger.debug("FlextResult.map callable failed", exc_info=e)
-                return FlextResult[U](error=str(e), is_success=False)
-        return FlextResult[U](error=self.error or "", is_success=False)
+                result = FlextResult[U](error=str(e), is_success=False)
+                result._exception = e
+                return result
+        result = FlextResult[U](error=self.error or "", is_success=False)
+        result._exception = self._exception
+        return result
 
     def flat_map[U](
         self,
@@ -300,8 +306,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             inner_result = func(self.value)
             if inner_result.is_success:
                 return FlextResult[U].ok(inner_result.value)
-            return FlextResult[U].fail(inner_result.error or "")
-        return FlextResult[U].fail(self.error or "")
+            result = FlextResult[U].fail(inner_result.error or "")
+            result._exception = inner_result._exception
+            return result
+        result = FlextResult[U].fail(self.error or "")
+        result._exception = self._exception
+        return result
 
     def and_then[U](
         self,
@@ -343,7 +353,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return cls.ok(value)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             _module_logger.debug("Callable execution failed", exc_info=e)
-            return cls.fail(str(e), error_code=error_code)
+            return cls.fail(str(e), error_code=error_code, exception=e)
 
     # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
 
@@ -381,7 +391,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 error_msg = str(raw)
             else:
                 error_msg = str(e)
-            return FlextResult[T_Model].fail(f"Validation failed: {error_msg}")
+            return FlextResult[T_Model].fail(f"Validation failed: {error_msg}", exception=e)
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.
@@ -405,7 +415,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return FlextResult.ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError) as e:
             _module_logger.debug("Model conversion failed", exc_info=e)
-            return FlextResult.fail(f"Model conversion failed: {e!s}")
+            return FlextResult.fail(f"Model conversion failed: {e!s}", exception=e)
 
     # alt and lash are inherited from RuntimeResult
     # But we override to return FlextResult for type consistency
@@ -416,11 +426,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_failure:
             transformed_error = func(self.error or "")
-            return FlextResult[T_co].fail(
+            result = FlextResult[T_co].fail(
                 transformed_error,
                 error_code=self.error_code,
                 error_data=self.error_data,
             )
+            result._exception = self._exception
+            return result
         return self
 
     # Alias for alt - more intuitive name for error transformation
@@ -449,7 +461,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             inner_result = func(self.error or "")
             if inner_result.is_success:
                 return FlextResult[T_co].ok(inner_result.value)
-            return FlextResult[T_co].fail(inner_result.error or "")
+            lash_result = FlextResult[T_co].fail(inner_result.error or "")
+            lash_result._exception = inner_result._exception
+            return lash_result
         return self
 
     # Alias for lash - RFC-standard name for recovery
@@ -660,7 +674,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             for item in items:
                 result = func(item)
                 if result.is_failure:
-                    return FlextResult[list[U]].fail(result.error or "Unknown error")
+                    failure_result = FlextResult[list[U]].fail(result.error or "Unknown error")
+                    failure_result._exception = result._exception
+                    return failure_result
                 results.append(result.value)
             return FlextResult[list[U]](value=results, is_success=True)
         # Collect all errors
