@@ -30,7 +30,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 
 
-class FlextDecorators(FlextRuntime):
+class FlextDecorators:
     """Automation decorators for infrastructure concerns.
 
     Architecture: Layer 3 (Application Layer - Cross-Cutting Concerns)

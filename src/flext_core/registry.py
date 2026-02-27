@@ -308,17 +308,10 @@ class FlextRegistry(FlextService[bool]):
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> r[m.HandlerRegistrationDetails]: ...
 
-    @overload
-    def register_handler(
-        self,
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
-    ) -> r[m.HandlerRegistrationDetails]: ...
 
     def register_handler(
         self,
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType]
-        | p.Handler[t.GeneralValueType, t.GeneralValueType]
-        | None,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -330,8 +323,6 @@ class FlextRegistry(FlextService[bool]):
             r[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
         """
-        if handler is None:
-            return r[m.HandlerRegistrationDetails].fail("Handler cannot be None")
         try:
             m.HandlerRegistrationDetails.model_validate({
                 "registration_id": handler.__class__.__name__,
@@ -500,9 +491,7 @@ class FlextRegistry(FlextService[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[
-            p.Handler[t.GeneralValueType, t.GeneralValueType] | p.Handler[t.GeneralValueType, t.GeneralValueType]
-        ],
+        handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -537,7 +526,7 @@ class FlextRegistry(FlextService[bool]):
         self,
         bindings: Mapping[
             RegistryBindingKey,
-            p.Handler[t.GeneralValueType, t.GeneralValueType] | p.Handler[t.GeneralValueType, t.GeneralValueType],
+            p.Handler[t.GeneralValueType, t.GeneralValueType],
         ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
