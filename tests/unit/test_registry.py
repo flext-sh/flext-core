@@ -281,16 +281,24 @@ class RegistryScenarios:
     @staticmethod
     def create_bindings(
         handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
-    ) -> list[tuple[type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType]]]:
+    ) -> list[
+        tuple[
+            type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType]
+        ]
+    ]:
         """Create test bindings using str message type."""
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def create_function_map(
         handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
-    ) -> dict[type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType]]:
+    ) -> dict[
+        type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType]
+    ]:
         """Create test function map using str message type."""
-        result: dict[type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType]] = {}
+        result: dict[
+            type[t.GeneralValueType], p.Handler[t.GeneralValueType, t.GeneralValueType]
+        ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
         return result
@@ -310,7 +318,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    p.Handler[t.GeneralValueType, t.GeneralValueType],
+                    "p.Handler[t.GeneralValueType, t.GeneralValueType]",
                     cast("object", None),
                 )
             )
@@ -447,7 +455,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    p.Handler[t.GeneralValueType, t.GeneralValueType],
+                    "p.Handler[t.GeneralValueType, t.GeneralValueType]",
                     cast("object", None),
                 )
             )
