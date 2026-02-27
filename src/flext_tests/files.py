@@ -57,11 +57,11 @@ TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
 
 
-def _yaml_safe_load(raw: str) -> object:
+def _yaml_safe_load(raw: str) -> t.ConfigMapValue | list[t.ConfigMapValue]:
     return yaml_safe_load(raw)
 
 
-def _yaml_dump(value: object, *, indent: int) -> str:
+def _yaml_dump(value: t.ConfigMapValue, *, indent: int) -> str:
     return str(
         yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent)
     )
@@ -1518,7 +1518,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             case _:
                 return "auto"
 
-    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[object]]]:
+    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[t.ConfigMapValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         if len(value) == 0:
@@ -1529,7 +1529,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         )
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[object, object]]:
+    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.ConfigMapValue]]:
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
@@ -1606,7 +1606,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, BaseModel):
             return value
         if self._is_mapping(value):
-            mapping_value: Mapping[object, object] = value
+            mapping_value: Mapping[str, t.ConfigMapValue] = value
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
@@ -1705,7 +1705,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: object = json.loads(text) if text.strip() else {}
+                    parsed_raw: t.ConfigMapValue | list[t.ConfigMapValue] = json.loads(text) if text.strip() else {}
                 else:
                     # YAML parsing
                     parsed_raw = _yaml_safe_load(text) if text.strip() else {}
