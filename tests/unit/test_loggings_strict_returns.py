@@ -138,7 +138,7 @@ class TestExceptionReturnsResultBool:
     def test_exception_returns_result_bool(self) -> None:
         """Verify exception() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
-        result = logger.exception("test exception message")
+        result = logger.exception("test exception message")  # noqa: LOG004
 
         assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
         assert result.is_success, "Expected exception() to return success result"
@@ -147,7 +147,7 @@ class TestExceptionReturnsResultBool:
     def test_exception_with_kwargs_returns_result_bool(self) -> None:
         """Verify exception() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
-        result = logger.exception("test message", operation="sync", retry_count=3)
+        result = logger.exception("test message", operation="sync", retry_count=3)  # noqa: LOG004
 
         assert isinstance(result, r)
         assert result.is_success
@@ -241,7 +241,7 @@ class TestBackwardCompatDiscardReturnValue:
     def test_exception_discard_return_value(self) -> None:
         """Verify exception() works when return value is discarded."""
         logger = FlextLogger.create_module_logger(__name__)
-        logger.exception("test message")  # type: ignore[func-returns-value]
+        logger.exception("test message")  # type: ignore[func-returns-value]  # noqa: LOG004
 
     def test_trace_discard_return_value(self) -> None:
         """Verify trace() works when return value is discarded."""
@@ -299,25 +299,25 @@ class TestProtocolComplianceStructlogLogger:
         logger = FlextLogger.create_module_logger(__name__)
 
         # Verify debug signature: msg, *args, **kw -> r[bool]
-        result = logger.debug("msg", "arg1", key="value")
+        result = logger.debug("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify info signature: msg, *args, **kw -> r[bool]
-        result = logger.info("msg", "arg1", key="value")
+        result = logger.info("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify warning signature: msg, *args, **kw -> r[bool]
-        result = logger.warning("msg", "arg1", key="value")
+        result = logger.warning("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify error signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")
+        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify critical signature: msg, *args, **kw -> r[bool]
-        result = logger.critical("msg", "arg1", key="value")
+        result = logger.critical("msg", "arg1", key="value")  # noqa: PLE1205
         assert isinstance(result, r)
 
         # Verify exception signature: msg, *args, **kw -> r[bool]
-        result = logger.exception("msg", "arg1", key="value")
+        result = logger.exception("msg", "arg1", key="value")  # noqa: LOG004,PLE1205
         assert isinstance(result, r)
