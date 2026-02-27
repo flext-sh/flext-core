@@ -36,7 +36,7 @@ TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")
 
 
-def _to_payload_value(value: object) -> t.Tests.PayloadValue:
+def _to_payload_value(value: t.ConfigMapValue) -> t.Tests.PayloadValue:
     if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
@@ -364,7 +364,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             if params.as_dict:
                 result_dict: MutableMapping[str, BaseModel] = {}
                 for inst in instances:
-                    inst_id: object = u.Tests.Factory.generate_id()
+                    inst_id: str | int = u.Tests.Factory.generate_id()
                     inst_data = inst.model_dump()
                     id_value = inst_data.get("id")
                     model_id_value = inst_data.get("model_id")
@@ -405,7 +405,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         # Single instance - handle as_dict
         typed_instance = instance
         if params.as_dict:
-            inst_id: object = u.Tests.Factory.generate_id()
+            inst_id: str | int = u.Tests.Factory.generate_id()
             typed_data = typed_instance.model_dump()
             id_value = typed_data.get("id")
             model_id_value = typed_data.get("model_id")
@@ -606,7 +606,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         *,
         error_message: str = c.Tests.Factory.ERROR_DEFAULT,
         result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
-    ) -> object:
+    ) -> Callable[..., object]:
         """Unified operation factory - creates callable test operations.
 
         This is the preferred way to create test operations. Use tt.op() instead of

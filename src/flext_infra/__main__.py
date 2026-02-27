@@ -26,6 +26,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from flext_core.runtime import FlextRuntime
+
 from flext_infra.output import output
 
 _MIN_ARGV = 2

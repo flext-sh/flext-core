@@ -325,7 +325,7 @@ class FlextTestsDocker:
             return r[str].fail(f"Failed to start container: {exc}")
 
     @staticmethod
-    def _extract_host_port(bindings: object) -> str:
+    def _extract_host_port(bindings: list[dict[str, str]] | None) -> str:
         if not isinstance(bindings, Sequence) or isinstance(bindings, str | bytes):
             return ""
         if not bindings:

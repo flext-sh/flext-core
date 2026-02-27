@@ -605,7 +605,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: object = self._data
+        current: t.ConfigMapValue = self._data
 
         for part in parts:
             if not isinstance(current, Mapping):
@@ -759,7 +759,7 @@ class FlextTestsBuilders:
     def build(
         self,
         **kwargs: t.Tests.PayloadValue,  # Accept payload values - validated by BuildParams
-    ) -> object:
+    ) -> Self:
         """Build the dataset with output type control.
 
         Uses Pydantic 2 models for parameter validation and computation.

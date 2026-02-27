@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+import types
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -154,7 +155,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> types.ModuleType:
     """Lazy-load module attributes on first access (PEP 562).
 
     This defers all imports until actually needed, reducing startup time

@@ -533,14 +533,6 @@ class FlextDispatcher(s[bool]):
                 return False
 
     @staticmethod
-    def _is_optional_str(value: object) -> TypeGuard[str | None]:
-        match value:
-            case str() | None:
-                return True
-            case _:
-                return False
-
-    @staticmethod
     def _is_optional_int(value: object) -> TypeGuard[int | None]:
         match value:
             case int() | None:
@@ -1472,7 +1464,7 @@ class FlextDispatcher(s[bool]):
     def _get_nested_attr(
         obj: Any,  # Validates arbitrary runtime values
         *path: str,
-    ) -> object | None:
+    ) -> t.ConfigMapValue | None:
         """Get nested attribute safely (e.g., obj.attr1.attr2).
 
         Returns None if any attribute in path doesn't exist or is None.

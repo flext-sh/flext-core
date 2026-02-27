@@ -242,7 +242,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: object,
+                target: t.ConfigMapValue,
                 attribute: str,
                 value: t.Tests.PayloadValue,
             ) -> Generator[None]:
@@ -1307,7 +1307,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = path.split(".")
-                current: object = c
+                current: t.ConfigMapValue = c
                 for part in parts:
                     current = getattr(current, part)
                 return _to_payload(current)
@@ -1325,7 +1325,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = pattern_attr.split(".")
-                current: object = c
+                current: t.ConfigMapValue = c
                 for part in parts:
                     current = getattr(current, part)
                 pattern_str = str(current)

@@ -342,10 +342,10 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose: object
+                compose: t.ConfigMapValue
                 """Compose API access (python-on-whales style)."""
 
-                client_config: object
+                client_config: Mapping[str, t.ConfigMapValue]
                 """Client configuration (python-on-whales style)."""
 
                 def up(
@@ -598,7 +598,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is success and return value."""
                     ...
 
-                def assert_fail(self, result: object) -> str:
+                def assert_fail(self, result: r[t.ConfigMapValue]) -> str:
                     """Assert result is failure and return error."""
                     ...
 
@@ -649,7 +649,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def validate(
                     self,
-                    value: object,
+                    value: t.ConfigMapValue,
                     spec: int | tuple[int, int],
                 ) -> bool:
                     """Validate length against spec.
@@ -671,7 +671,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that support chained assertions.
                 """
 
-                def ok(self, msg: str | None = None) -> object:
+                def ok(self, msg: str | None = None) -> Self:
                     """Assert result is success."""
                     ...
 
@@ -679,23 +679,23 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     error: str | None = None,
                     msg: str | None = None,
-                ) -> object:
+                ) -> Self:
                     """Assert result is failure."""
                     ...
 
-                def eq(self, expected: object, msg: str | None = None) -> object:
+                def eq(self, expected: t.ConfigMapValue, msg: str | None = None) -> Self:
                     """Assert value equals expected."""
                     ...
 
-                def has(self, item: object, msg: str | None = None) -> object:
+                def has(self, item: t.ConfigMapValue, msg: str | None = None) -> Self:
                     """Assert value/error contains item."""
                     ...
 
-                def len(self, expected: int, msg: str | None = None) -> object:
+                def len(self, expected: int, msg: str | None = None) -> Self:
                     """Assert value has expected length."""
                     ...
 
-                def done(self) -> object:
+                def done(self) -> Self:
                     """Finish chain and return value (for success)."""
                     ...
 
@@ -726,7 +726,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def exit_scope(self, scope: object) -> None:
+                def exit_scope(self, scope: t.ConfigMapValue) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:
@@ -757,7 +757,7 @@ class FlextTestsProtocols(FlextProtocols):
                     content: t.Tests.PayloadValue,
                     name: str = ...,
                     directory: str | None = ...,
-                    **kwargs: object,
+                    **kwargs: str | float | bool | None,
                 ) -> FlextProtocols.Result[Path]:
                     """Create file with auto-detection.
 
@@ -772,7 +772,7 @@ class FlextTestsProtocols(FlextProtocols):
                     path: Path | str,
                     *,
                     model_cls: type[BaseModel] | None = ...,
-                    **kwargs: object,
+                    **kwargs: str | float | bool | None,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Read file with optional model deserialization.
 
@@ -788,7 +788,7 @@ class FlextTestsProtocols(FlextProtocols):
                     file2: Path | str,
                     *,
                     mode: str = ...,
-                    **kwargs: object,
+                    **kwargs: str | float | bool | None,
                 ) -> FlextProtocols.Result[bool]:
                     """Compare two files.
 
@@ -804,7 +804,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     compute_hash: bool = ...,
                     detect_fmt: bool = ...,
-                    **kwargs: object,
+                    **kwargs: str | float | bool | None,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Get comprehensive file information.
 
@@ -822,7 +822,7 @@ class FlextTestsProtocols(FlextProtocols):
                     operation: str = ...,
                     model: type[BaseModel] | None = ...,
                     on_error: str = ...,
-                    **kwargs: object,
+                    **kwargs: str | float | bool | None,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Batch file operations.
 
@@ -1048,7 +1048,7 @@ class FlextTestsProtocols(FlextProtocols):
                 functions used with sorted().
 
                 Example:
-                    def get_id(obj: Any) -> int:
+                    def get_id(obj: t.ConfigMapValue) -> int:
                         return obj.id  # int supports __lt__
 
                     sorted(items, key=get_id)  # OK - int satisfies SupportsLessThan

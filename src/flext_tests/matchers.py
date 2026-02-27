@@ -62,7 +62,7 @@ from typing import TypeGuard, TypeVar
 
 from flext_core import r
 from flext_core.typings import t as core_t
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -80,7 +80,7 @@ def _is_key_value_pair[TK, TV](
     return isinstance(key_equals, tuple) and len(key_equals) == 2
 
 
-def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[object]]:
+def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ConfigMapValue]]:
     return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
 
@@ -108,8 +108,8 @@ def _as_guard_input(value: object) -> core_t.GuardInputValue:
 
 def _check_has_lacks(
     value: object,
-    has: object | Sequence[object] | None,
-    lacks: object | Sequence[object] | None,
+    has: t.ConfigMapValue | Sequence[t.ConfigMapValue] | None,
+    lacks: t.ConfigMapValue | Sequence[t.ConfigMapValue] | None,
     msg: str | None,
     *,
     as_str: bool = False,
@@ -132,7 +132,7 @@ def _check_has_lacks(
                 check_val = _as_guard_input(item)
                 target = _as_guard_input(value)
                 # Handle RootModel (e.g. ConfigMap) by extracting root dict
-                if isinstance(target, BaseModel) and hasattr(target, "root"):
+                if isinstance(target, RootModel):
                     target = target.root
                 if not isinstance(target, Mapping | str | list):
                     raise AssertionError(
@@ -174,7 +174,7 @@ def _check_has_lacks(
                 check_val = _as_guard_input(item)
                 target = _as_guard_input(value)
                 # Handle RootModel (e.g. ConfigMap) by extracting root dict
-                if isinstance(target, BaseModel) and hasattr(target, "root"):
+                if isinstance(target, RootModel):
                     target = target.root
                 if not isinstance(target, Mapping | str | list):
                     raise AssertionError(
@@ -242,7 +242,7 @@ class FlextTestsMatchers:
     @staticmethod
     def ok[TResult](
         result: r[TResult],
-        **kwargs: t.Tests.PayloadValue,
+        **kwargs: str | float | bool | None,
     ) -> TResult | t.Tests.PayloadValue:
         """Enhanced assertion for FlextResult success with optional value validation.
 
@@ -483,7 +483,7 @@ class FlextTestsMatchers:
     @staticmethod
     def fail[TResult](
         result: r[TResult],
-        **kwargs: t.Tests.PayloadValue,
+        **kwargs: str | float | bool | None,
     ) -> str:
         r"""Enhanced assertion for FlextResult failure with optional error validation.
 
@@ -649,7 +649,7 @@ class FlextTestsMatchers:
     @staticmethod
     def that(
         value: object,
-        **kwargs: object,
+        **kwargs: str | float | bool | None,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 
@@ -1033,7 +1033,7 @@ class FlextTestsMatchers:
                     # sorted_param is Callable[[object], object] but sorted needs comparable return
                     user_key_fn = sorted_param
 
-                    def comparable_key(x: object) -> tuple[str, str]:
+                    def comparable_key(x: t.ConfigMapValue) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         type_name = type(result).__name__
