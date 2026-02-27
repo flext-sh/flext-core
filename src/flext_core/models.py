@@ -24,6 +24,7 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
+from flext_core._models.decorators import FlextModelsDecorators
 from flext_core.protocols import p
 from flext_core.typings import t
 
@@ -310,6 +311,20 @@ class FlextModels:
     HandlerExecutionContext: TypeAlias = Handler.ExecutionContext
     HandlerRegistrationRequest: TypeAlias = Handler.RegistrationRequest
     CqrsHandler: TypeAlias = Handler
+
+    # =========================================================================
+    # DECORATOR MODELS - Direct access for common usage
+    # =========================================================================
+
+    class Decorator(FlextModelsDecorators):
+        """Decorator configuration models namespace.
+
+        Re-exports FlextModelsDecorators as a proper class for mypy compatibility.
+        """
+
+        TimeoutConfig: type[FlextModelsDecorators.TimeoutConfig] = (
+            FlextModelsDecorators.TimeoutConfig
+        )
 
     # =========================================================================
     # UNIONS - Pydantic discriminated unions
