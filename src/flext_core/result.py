@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import Any, Self, overload
+from typing import Protocol, Self, TypeIs, overload
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -24,6 +24,12 @@ from flext_core.typings import T_Model, U, t
 
 _module_logger = logging.getLogger(__name__)
 
+
+class _RuntimeResultLike(Protocol):
+    """Protocol for objects that look like RuntimeResult (duck typing)."""
+
+    is_success: bool
+    is_failure: bool
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     """Type-safe result with monadic helpers for operation composition.
@@ -731,12 +737,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 r = FlextResult
 
 
-def is_success_result(value: Any) -> bool:
+def is_success_result(value: _RuntimeResultLike) -> TypeIs[FlextResult]:
     """Return ``True`` when value is a successful runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 
 
-def is_failure_result(value: Any) -> bool:
+def is_failure_result(value: _RuntimeResultLike) -> TypeIs[FlextResult]:
     """Return ``True`` when value is a failed runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 

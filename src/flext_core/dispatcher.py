@@ -491,7 +491,11 @@ class FlextDispatcher(s[bool]):
         return callable(value) or isinstance(value, BaseModel)
 
     @staticmethod
-    def _to_container_value(value: Any) -> _Payload:  # Validates arbitrary runtime values
+    def _to_container_value(value: t.PayloadValue | str | int | float | bool | None) -> _Payload:
+        """Convert handler return value to container-compatible payload.
+
+        Accepts PayloadValue types and primitives, converts to _Payload (ConfigMapValue).
+        """
         if u.is_general_value_type(value):
             return value
         return str(value)
