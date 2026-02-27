@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from types import ModuleType
@@ -36,7 +36,6 @@ _module_logger = logging.getLogger(__name__)
 
 class FlextHandlers[MessageT_contra, ResultT](
     x,
-    ABC,
 ):
     """Abstract CQRS handler with validation and railway-style execution.
 
@@ -299,7 +298,6 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         return CallableHandler(handler_fn=handler_callable, config=config)
 
-    @abstractmethod
     def handle(self, message: MessageT_contra) -> r[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
