@@ -1428,7 +1428,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
                 stripped_to_add.append(clean_glob)
 
         if stripped_to_add:
-            updated = sorted(list(set(current) | set(stripped_to_add)))
+            updated = sorted(set(current) | set(stripped_to_add))
             pyrefly["project-excludes"] = self._to_array(updated)
             fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
 
@@ -1450,7 +1450,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return path.resolve()
 
     # Legacy regex-based methods (kept for reference or if still called, but preferred tk versions above)
-    def _fix_search_paths(self, text: str, project_dir: Path) -> tuple[str, list[str]]:
+    def _fix_search_paths(self, text: str) -> tuple[str, list[str]]:
         return text, []  # Should not be called anymore
 
     def _remove_ignore_sub_config(self, text: str) -> tuple[str, list[str]]:
