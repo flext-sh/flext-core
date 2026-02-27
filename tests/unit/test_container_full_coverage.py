@@ -30,7 +30,7 @@ class _BridgeBadProvide:
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:        return name
+    def Provide(name: str) -> str:
         return name
 
 

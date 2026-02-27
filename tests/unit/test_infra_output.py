@@ -48,7 +48,8 @@ class TestShouldUseColor:
 
     def test_tty_with_xterm_enables(self) -> None:
         stream = io.StringIO()
-        stream.isatty = lambda: True        env = {"TERM": "xterm-256color"}
+        stream.isatty = lambda: True
+        env = {"TERM": "xterm-256color"}
         with patch.dict("os.environ", env, clear=True):
             assert _should_use_color(stream) is True
 

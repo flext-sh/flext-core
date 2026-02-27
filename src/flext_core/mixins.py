@@ -716,9 +716,13 @@ class FlextMixins(FlextRuntime):
                 # Initialize _stack as instance attribute (not PrivateAttr for mixin compatibility)
                 object.__setattr__(self, "_stack", [])
 
+            def _protocol_name(self) -> str:
+                """Return the protocol name for introspection."""
+                return "ContextStack"
+
             def push_context(
                 self,
-                ctx: m.Handler.ExecutionContext | Mapping[str, t.ConfigMapValue],
+                ctx: t.GuardInputValue,
             ) -> r[bool]:
                 """Push execution context onto the stack.
 
@@ -736,6 +740,8 @@ class FlextMixins(FlextRuntime):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
 
+                if not isinstance(ctx, Mapping):
+                    return r[bool].fail("Unsupported context type for push_context")
                 ctx_mapping = ctx
                 handler_name_raw = ctx_mapping.get("handler_name", "unknown")
                 handler_name: str = (
@@ -794,7 +800,7 @@ class FlextMixins(FlextRuntime):
                             )
                 return r[dict[str, t.ConfigMapValue]].ok({})
 
-            def current_context(self) -> m.Handler.ExecutionContext | None:
+            def current_context(self) -> t.GuardInputValue | None:
                 """Get current execution context without popping.
 
                 Returns:

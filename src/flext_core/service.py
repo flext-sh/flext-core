@@ -94,16 +94,13 @@ class FlextService[TDomainResult](
     def __init__(self) -> None:
         """Initialize service with configuration data.
 
-        Sets up the service instance with optional configuration parameters
-        passed through **data. Delegates to parent classes for proper
-        initialization of mixins, models, and infrastructure components.
+        Sets up the service instance with runtime configuration.
+        Delegates to parent classes for proper initialization of mixins,
+        models, and infrastructure components.
 
         Auto-discovery of handler-decorated methods enables zero-config handler
         registration: developers can mark methods with @h.handler() and they are
         automatically discovered during initialization.
-
-        Args:
-            **data: Configuration parameters for service initialization
 
         """
         runtime = self._create_initial_runtime()
