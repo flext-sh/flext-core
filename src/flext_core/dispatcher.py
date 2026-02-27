@@ -111,7 +111,7 @@ class FlextDispatcher(s[bool]):
             route_name = self._resolve_route(message)
         except (TypeError, ValueError) as e:
             return r[t.PayloadValue].fail(
-                f"Dispatch failed: {str(e)}",
+                f"Dispatch failed: {e!s}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
         handler = self._handlers.get(route_name)
@@ -144,6 +144,7 @@ class FlextDispatcher(s[bool]):
 
         Returns:
             Result indicating if publication started successfully.
+
         """
         if isinstance(event, list):
             for e in event:
@@ -247,7 +248,8 @@ class FlextDispatcher(s[bool]):
                     ):
                         return d
 
-        raise TypeError(
+        msg_type_error = (
             f"Message {msg} does not provide a valid route via "
             "command_type, query_type, or event_type"
         )
+        raise TypeError(msg_type_error)
