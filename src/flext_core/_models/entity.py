@@ -65,6 +65,7 @@ def _normalize_event_data(
 
 
 class _ComparableConfigMap(t.ConfigMap):
+    @override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, dict):
             return self.root == other

@@ -57,7 +57,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             value.root.items() if isinstance(value, t.ConfigMap) else value.items()
         )
     }
-    return FlextModelFoundation.Metadata(attributes=attrs)
+    attributes: Mapping[str, t.MetadataAttributeValue] = {}
 
 
 class FlextModelsContainer:

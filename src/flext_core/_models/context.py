@@ -110,7 +110,7 @@ class FlextModelsContext:
                 value.root.items() if isinstance(value, t.ConfigMap) else value.items()
             )
         }
-        return FlextModelFoundation.Metadata(attributes=attributes)
+        return FlextModelFoundation.Metadata(attributes=dict(attributes))
 
     @staticmethod
     def to_general_value_dict(
@@ -805,7 +805,7 @@ class FlextModelsContext:
         ] = Field(default_factory=dict)
 
         @model_validator(mode="after")
-        def validate_context_protocol(self):
+        def validate_context_protocol(self) -> Self:
             """Validate context instance has get() and set() methods."""
             # Find the field that holds the context instance
             context_field = None

@@ -19,12 +19,11 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Literal, cast
+from typing import Literal
 
-from pydantic import Field, computed_field, field_validator
+from pydantic import Field
 
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
 from flext_core.typings import t
 
 
@@ -37,1145 +36,188 @@ class FlextGenericModels:
     - Progress: Mutable accumulators during operations
     """
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # VALUE OBJECTS (Immutable - compared by value)
-    # Function: Represent data that doesn't change after creation
-    # ═══════════════════════════════════════════════════════════════════════════
-
     class Value:
         """Value objects - immutable, compared by value."""
 
-        # NOTE: LdapEntryAttributes REMOVED - LDAP-specific, belongs in flext-ldap
-        # Use: from flext_ldap.models import m; m.Ldap.EntryAttributes
-
         class OperationContext(FlextModelFoundation.FrozenValueModel):
-            """Immutable context of an operation with advanced tracking capabilities.
+            """Immutable context of an operation.
 
             Used by: all projects
-            Function: Metadata of operation that doesn't change during execution
-            Provides comprehensive operation tracking with correlation, timing, and metadata
+            Function: Metadata of operation that doesn't change during execution.
             """
 
             correlation_id: str = Field(
                 default_factory=lambda: str(uuid.uuid4()),
-                description="Unique correlation ID for tracing operations across services",
+                description="Unique correlation ID for tracing",
             )
             operation_id: str = Field(
                 default_factory=lambda: str(uuid.uuid4()),
-                description="Unique operation ID for this specific operation instance",
+                description="Unique operation ID",
             )
             timestamp: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
-                description="UTC timestamp when operation context was created",
+                description="UTC timestamp when created",
             )
-            source: str | None = Field(
-                default=None,
-                description="Source system or component that initiated the operation",
-            )
-            user_id: str | None = Field(
-                default=None,
-                description="ID of user who initiated the operation (if applicable)",
-            )
-            tenant_id: str | None = Field(
-                default=None,
-                description="Multi-tenant identifier for operation isolation",
-            )
-            environment: str | None = Field(
-                default=None,
-                description="Environment context (dev, staging, prod, etc.)",
-            )
-            version: str = Field(
-                default="1.0.0",
-                description="Version of the operation context schema",
-            )
+            source: str | None = Field(default=None, description="Source system")
+            user_id: str | None = Field(default=None, description="User ID")
+            tenant_id: str | None = Field(default=None, description="Tenant ID")
+            environment: str | None = Field(default=None, description="Environment")
+            version: str = Field(default="1.0.0", description="Schema version")
             metadata: t.Dict = Field(
                 default_factory=t.Dict,
-                description="Additional context-specific metadata",
+                description="Additional metadata",
             )
             message: t.ConfigMapValue = Field(
-                default=None,
-                description="Message payload for dispatch operations",
+                default=None, description="Message payload"
             )
-            message_type: str = Field(
-                default="",
-                description="Type of message being dispatched",
-            )
-            dispatch_type: str = Field(
-                default="",
-                description="Type of dispatch operation (command, query, event)",
-            )
+            message_type: str = Field(default="", description="Message type")
+            dispatch_type: str = Field(default="", description="Dispatch type")
             timeout_override: int | None = Field(
-                default=None,
-                description="Optional timeout override in seconds",
+                default=None, description="Timeout override seconds"
             )
-
-            @computed_field
-            @property
-            def age_seconds(self) -> float:
-                """Calculate age of operation context in seconds.
-
-                Returns:
-                    float: Age in seconds since context creation.
-
-                """
-                now = datetime.now(UTC)
-                return (now - self.timestamp).total_seconds()
-
-            @computed_field
-            @property
-            def age_minutes(self) -> float:
-                """Calculate age of operation context in minutes.
-
-                Returns:
-                    float: Age in minutes since context creation.
-
-                """
-                return self.age_seconds / 60.0
-
-            @computed_field
-            @property
-            def is_recent(self) -> bool:
-                """Check if operation context is recent (created within last 5 minutes).
-
-                Returns:
-                    bool: True if context was created within last 5 minutes.
-
-                """
-                return self.age_minutes <= c.Performance.VERY_RECENT_THRESHOLD_MINUTES
-
-            @computed_field
-            @property
-            def formatted_timestamp(self) -> str:
-                """Get ISO 8601 formatted timestamp string.
-
-                Returns:
-                    str: ISO 8601 formatted timestamp.
-
-                """
-                return self.timestamp.isoformat()
-
-            @field_validator("message_type")
-            @classmethod
-            def validate_message_type(cls, v: str) -> str:
-                """Validate message_type is a string.
-                
-                Args:
-                    v: The message_type value to validate.
-                    
-                Returns:
-                    str: The validated message_type.
-                    
-                Raises:
-                    ValueError: If message_type is not a string.
-                """
-                if not isinstance(v, str):
-                    raise ValueError("message_type must be a string")
-                return v
-
-            @computed_field
-            @property
-            def has_user_context(self) -> bool:
-                """Check if operation has user context information.
-
-                Returns:
-                    bool: True if user_id is set.
-
-                """
-                return self.user_id is not None
-
-            @computed_field
-            @property
-            def has_tenant_context(self) -> bool:
-                """Check if operation has tenant context information.
-
-                Returns:
-                    bool: True if tenant_id is set.
-
-                """
-                return self.tenant_id is not None
-
-            @computed_field
-            @property
-            def context_summary(self) -> str:
-                """Generate a summary string of the operation context.
-
-                Returns:
-                    str: Formatted summary including key identifiers.
-
-                """
-                parts = [
-                    f"op:{self.operation_id[:8]}",
-                    f"corr:{self.correlation_id[:8]}",
-                ]
-                if self.source:
-                    parts.append(f"src:{self.source}")
-                if self.user_id:
-                    parts.append(f"user:{self.user_id}")
-                if self.tenant_id:
-                    parts.append(f"tenant:{self.tenant_id}")
-
-                return " | ".join(parts)
-
-            def with_metadata(
-                self, **kwargs: t.GuardInputValue
-            ) -> FlextGenericModels.Value.OperationContext:
-                """Create new context with additional metadata.
-
-                Args:
-                    **kwargs: Metadata key-value pairs to add.
-
-                Returns:
-                    OperationContext: New context with merged metadata.
-
-                """
-                new_metadata = {**self.metadata.root, **kwargs}
-                return self.__class__(
-                    correlation_id=self.correlation_id,
-                    operation_id=self.operation_id,
-                    timestamp=self.timestamp,
-                    source=self.source,
-                    user_id=self.user_id,
-                    tenant_id=self.tenant_id,
-                    environment=self.environment,
-                    version=self.version,
-                    metadata=t.Dict.model_validate(new_metadata),
-                )
-
-            def for_child_operation(
-                self, child_operation_id: str | None = None
-            ) -> FlextGenericModels.Value.OperationContext:
-                """Create context for child operation with same correlation.
-
-                Args:
-                    child_operation_id: Optional child operation ID, generated if None.
-
-                Returns:
-                    OperationContext: Child context with same correlation but new operation ID.
-
-                """
-                return self.__class__(
-                    correlation_id=self.correlation_id,
-                    operation_id=child_operation_id or str(uuid.uuid4()),
-                    timestamp=datetime.now(UTC),
-                    source=self.source,
-                    user_id=self.user_id,
-                    tenant_id=self.tenant_id,
-                    environment=self.environment,
-                    version=self.version,
-                    metadata=self.metadata,
-                )
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # SNAPSHOTS (Immutable - captured state)
-    # Function: Capture state at a specific moment
-    # ═══════════════════════════════════════════════════════════════════════════
 
     class Snapshot:
         """Snapshots - state captured at a specific moment."""
 
         class Service(FlextModelFoundation.FrozenStrictModel):
-            """Comprehensive snapshot of service state with health and metrics.
+            """Snapshot of service state.
 
-            Used by: FlextService.get_info(), monitoring, health checks
-            Function: Capture current service state for logging/debug/metrics
+            Used by: FlextService.get_info(), monitoring, health checks.
             """
 
-            name: str = Field(description="Service name identifier")
-            version: str | None = Field(
-                default=None,
-                description="Service version (semantic versioning)",
-            )
-            status: str = Field(
-                default="active",
-                description="Current service status (active, inactive, degraded, etc.)",
-            )
+            name: str = Field(description="Service name")
+            version: str | None = Field(default=None, description="Service version")
+            status: str = Field(default="active", description="Service status")
             uptime_seconds: float | None = Field(
-                default=None,
-                description="Service uptime in seconds",
+                default=None, description="Uptime in seconds"
             )
             start_time: datetime | None = Field(
-                default=None,
-                description="When service was started",
+                default=None, description="Start time"
             )
             last_health_check: datetime | None = Field(
-                default=None,
-                description="Timestamp of last health check",
+                default=None, description="Last health check"
             )
             health_status: str = Field(
-                default="unknown",
-                description="Health status (healthy, unhealthy, degraded)",
+                default="unknown", description="Health status"
             )
-            port: int | None = Field(
-                default=None,
-                description="Service port number",
-            )
-            host: str | None = Field(
-                default=None,
-                description="Service host address",
-            )
-            pid: int | None = Field(
-                default=None,
-                description="Process ID of service",
-            )
+            port: int | None = Field(default=None, description="Port")
+            host: str | None = Field(default=None, description="Host")
+            pid: int | None = Field(default=None, description="Process ID")
             memory_usage_mb: float | None = Field(
-                default=None,
-                description="Current memory usage in MB",
+                default=None, description="Memory MB"
             )
             cpu_usage_percent: float | None = Field(
-                default=None,
-                description="Current CPU usage percentage",
+                default=None, description="CPU %"
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Additional service-specific metadata",
+                default_factory=t.Dict, description="Service metadata"
             )
 
-            @computed_field
-            @property
-            def is_active(self) -> bool:
-                """Check if service is in active status.
-
-                Returns:
-                    bool: True if status is 'active'.
-
-                """
-                return self.status == "active"
-
-            @computed_field
-            @property
-            def is_healthy(self) -> bool:
-                """Check if service health status is healthy.
-
-                Returns:
-                    bool: True if health_status is 'healthy'.
-
-                """
-                return self.health_status == "healthy"
-
-            @computed_field
-            @property
-            def uptime_hours(self) -> float | None:
-                """Calculate uptime in hours.
-
-                Returns:
-                    float | None: Uptime in hours, or None if uptime_seconds not available.
-
-                """
-                return self.uptime_seconds / 3600.0 if self.uptime_seconds else None
-
-            @computed_field
-            @property
-            def uptime_days(self) -> float | None:
-                """Calculate uptime in days.
-
-                Returns:
-                    float | None: Uptime in days, or None if uptime_seconds not available.
-
-                """
-                return self.uptime_hours / 24.0 if self.uptime_hours else None
-
-            @computed_field
-            @property
-            def formatted_uptime(self) -> str:
-                """Format uptime as human-readable string.
-
-                Returns:
-                    str: Formatted uptime string (e.g., "2d 3h 45m").
-
-                """
-                if not self.uptime_seconds:
-                    return "unknown"
-
-                days = int(self.uptime_seconds // 86400)
-                hours = int((self.uptime_seconds % 86400) // 3600)
-                minutes = int((self.uptime_seconds % 3600) // 60)
-
-                parts = []
-                if days > 0:
-                    parts.append(f"{days}d")
-                if hours > 0 or days > 0:
-                    parts.append(f"{hours}h")
-                parts.append(f"{minutes}m")
-
-                return " ".join(parts)
-
-            @computed_field
-            @property
-            def endpoint_url(self) -> str | None:
-                """Construct service endpoint URL if host and port are available.
-
-                Returns:
-                    str | None: Full endpoint URL or None if incomplete.
-
-                """
-                if self.host and self.port:
-                    return f"http://{self.host}:{self.port}"
-                return None
-
-            @computed_field
-            @property
-            def health_check_age_minutes(self) -> float | None:
-                """Calculate minutes since last health check.
-
-                Returns:
-                    float | None: Minutes since last health check, or None if no check performed.
-
-                """
-                if not self.last_health_check:
-                    return None
-
-                now = datetime.now(UTC)
-                return (now - self.last_health_check).total_seconds() / 60.0
-
-            @computed_field
-            @property
-            def needs_health_check(self) -> bool:
-                """Check if service needs a health check (last check > 5 minutes ago).
-
-                Returns:
-                    bool: True if health check is needed.
-
-                """
-                age = self.health_check_age_minutes
-                return age is None or age > c.Performance.HEALTH_CHECK_STALE_MINUTES
-
-            @computed_field
-            @property
-            def resource_summary(self) -> str:
-                """Generate resource usage summary.
-
-                Returns:
-                    str: Formatted resource summary.
-
-                """
-                parts: list[str] = []
-                if self.memory_usage_mb is not None:
-                    parts.append(f"RAM: {self.memory_usage_mb:.1f}MB")
-                if self.cpu_usage_percent is not None:
-                    parts.append(f"CPU: {self.cpu_usage_percent:.1f}%")
-
-                return " | ".join(parts) if parts else "no metrics"
-
-            def to_health_check_format(self) -> Mapping[str, t.GuardInputValue]:
-                """Convert to standard health check format.
-
-                Returns:
-                    dict: Health check compatible dictionary.
-
-                """
-                return cast(
-                    "Mapping[str, t.GuardInputValue]",
-                    {
-                        "name": self.name,
-                        "version": self.version,
-                        "status": self.status,
-                        "health": self.health_status,
-                        "uptime": self.formatted_uptime,
-                        "timestamp": self.last_health_check.isoformat()
-                        if self.last_health_check
-                        else None,
-                        **self.metadata.root,
-                    },
-                )
-
         class Configuration(FlextModelFoundation.FrozenStrictModel):
-            """Comprehensive configuration snapshot with validation and metadata.
+            """Configuration snapshot.
 
-            Used by: CLI config info, debug, auditing, configuration management
-            Function: Capture current configuration for comparison/logging/validation
+            Used by: CLI config info, debug, auditing.
             """
 
             config: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Configuration key-value pairs",
+                default_factory=t.Dict, description="Config key-value pairs"
             )
             captured_at: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
-                description="When configuration was captured",
+                description="Capture timestamp",
             )
-            source: str | None = Field(
-                default=None,
-                description="Configuration source (file, env, database, etc.)",
-            )
+            source: str | None = Field(default=None, description="Config source")
             environment: str | None = Field(
-                default=None,
-                description="Target environment (dev, staging, prod, etc.)",
+                default=None, description="Target environment"
             )
-            version: str = Field(
-                default="1.0.0",
-                description="Configuration schema version",
-            )
-            checksum: str | None = Field(
-                default=None,
-                description="Configuration checksum for integrity validation",
-            )
+            version: str = Field(default="1.0.0", description="Schema version")
+            checksum: str | None = Field(default=None, description="Checksum")
             validation_errors: list[str] = Field(
-                default_factory=list,
-                description="Configuration validation errors if any",
+                default_factory=list, description="Validation errors"
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Configuration metadata",
+                default_factory=t.Dict, description="Config metadata"
             )
-
-            @computed_field
-            @property
-            def is_valid(self) -> bool:
-                """Check if configuration has no validation errors.
-
-                Returns:
-                    bool: True if no validation errors exist.
-
-                """
-                return len(self.validation_errors) == 0
-
-            @computed_field
-            @property
-            def has_validation_errors(self) -> bool:
-                """Check if configuration has validation errors.
-
-                Returns:
-                    bool: True if validation errors exist.
-
-                """
-                return len(self.validation_errors) > 0
-
-            @computed_field
-            @property
-            def validation_error_count(self) -> int:
-                """Get count of validation errors.
-
-                Returns:
-                    int: Number of validation errors.
-
-                """
-                return len(self.validation_errors)
-
-            @computed_field
-            @property
-            def config_keys(self) -> list[str]:
-                """Get sorted list of configuration keys.
-
-                Returns:
-                    list[str]: Sorted configuration keys.
-
-                """
-                return sorted(self.config.root.keys())
-
-            @computed_field
-            @property
-            def config_size(self) -> int:
-                """Get number of configuration entries.
-
-                Returns:
-                    int: Number of configuration key-value pairs.
-
-                """
-                return len(self.config.root)
-
-            @computed_field
-            @property
-            def age_minutes(self) -> float:
-                """Calculate age of configuration snapshot in minutes.
-
-                Returns:
-                    float: Age in minutes since capture.
-
-                """
-                now = datetime.now(UTC)
-                return (now - self.captured_at).total_seconds() / 60.0
-
-            @computed_field
-            @property
-            def is_recent(self) -> bool:
-                """Check if configuration is recent (captured within last hour).
-
-                Returns:
-                    bool: True if captured within last hour.
-
-                """
-                return self.age_minutes <= c.Performance.RECENT_THRESHOLD_MINUTES
-
-            @computed_field
-            @property
-            def formatted_captured_at(self) -> str:
-                """Get ISO 8601 formatted capture timestamp.
-
-                Returns:
-                    str: ISO 8601 formatted timestamp.
-
-                """
-                return self.captured_at.isoformat()
-
-            def get(
-                self, key: str, default: t.GuardInputValue = None
-            ) -> t.GuardInputValue:
-                """Get configuration value with optional default.
-
-                Args:
-                    key: Configuration key to retrieve.
-                    default: Default value if key not found.
-
-                Returns:
-                    Configuration value or default.
-
-                """
-                return self.config.get(key, default)
-
-            def has_key(self, key: str) -> bool:
-                """Check if configuration contains a key.
-
-                Args:
-                    key: Key to check for existence.
-
-                Returns:
-                    bool: True if key exists in configuration.
-
-                """
-                return key in self.config.root
-
-            def to_environment_variables(self, prefix: str = "") -> dict[str, str]:
-                """Convert configuration to environment variable format.
-
-                Args:
-                    prefix: Optional prefix for environment variable names.
-
-                Returns:
-                    dict: Environment variable name-value pairs.
-
-                """
-                env_vars: dict[str, str] = {}
-                for key, value in self.config.root.items():
-                    env_key = f"{prefix}{key.upper()}" if prefix else key.upper()
-                    env_vars[env_key] = str(value)
-                return env_vars
-
-            def validate_required_keys(self, required_keys: list[str]) -> list[str]:
-                """Validate that required configuration keys are present.
-
-                Args:
-                    required_keys: List of keys that must be present.
-
-                Returns:
-                    list[str]: List of missing required keys.
-
-                """
-                return [key for key in required_keys if key not in self.config.root]
-
-            def with_validation_errors(
-                self, errors: list[str]
-            ) -> FlextGenericModels.Snapshot.Configuration:
-                """Create new configuration with validation errors.
-
-                Args:
-                    errors: List of validation errors to add.
-
-                Returns:
-                    Configuration: New configuration with errors.
-
-                """
-                return self.__class__(
-                    config=self.config,
-                    captured_at=self.captured_at,
-                    source=self.source,
-                    environment=self.environment,
-                    version=self.version,
-                    checksum=self.checksum,
-                    validation_errors=errors,
-                    metadata=self.metadata,
-                )
 
         class Health(FlextModelFoundation.FrozenStrictModel):
-            """Comprehensive health check result with detailed diagnostics.
+            """Health check result.
 
-            Used by: endpoints /health, monitoring, alerting systems
-            Function: Result of a health check with detailed component analysis
+            Used by: /health endpoints, monitoring, alerting.
             """
 
-            healthy: bool = Field(
-                default=True,
-                description="Overall health status",
-            )
+            healthy: bool = Field(default=True, description="Overall health")
             checks: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Individual health check results (component -> status)",
+                default_factory=t.Dict, description="Check results"
             )
             details: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Detailed information for each health check",
+                default_factory=t.Dict, description="Check details"
             )
             checked_at: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
-                description="When health check was performed",
+                description="Check timestamp",
             )
             service_name: str | None = Field(
-                default=None,
-                description="Name of service being checked",
+                default=None, description="Service name"
             )
             service_version: str | None = Field(
-                default=None,
-                description="Version of service being checked",
+                default=None, description="Service version"
             )
             duration_ms: float | None = Field(
-                default=None,
-                description="Time taken to perform health check in milliseconds",
+                default=None, description="Check duration ms"
             )
             environment: str | None = Field(
-                default=None,
-                description="Environment where health check was performed",
+                default=None, description="Environment"
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Additional health check metadata",
+                default_factory=t.Dict, description="Health metadata"
             )
-
-            @computed_field
-            @property
-            def total_checks(self) -> int:
-                """Get total number of health checks performed.
-
-                Returns:
-                    int: Number of health checks.
-
-                """
-                return len(self.checks)
-
-            @computed_field
-            @property
-            def healthy_checks_count(self) -> int:
-                """Get count of healthy checks.
-
-                Returns:
-                    int: Number of checks that passed.
-
-                """
-                return sum(1 for status in self.checks.values() if status)
-
-            @computed_field
-            @property
-            def unhealthy_checks_count(self) -> int:
-                """Get count of unhealthy checks.
-
-                Returns:
-                    int: Number of checks that failed.
-
-                """
-                return sum(1 for status in self.checks.values() if not status)
-
-            @computed_field
-            @property
-            def health_percentage(self) -> float:
-                """Calculate health percentage (0.0 to 100.0).
-
-                Returns:
-                    float: Percentage of healthy checks.
-
-                """
-                if self.total_checks == 0:
-                    return 100.0
-                return (self.healthy_checks_count / self.total_checks) * 100.0
-
-            @computed_field
-            @property
-            def unhealthy_checks(self) -> list[str]:
-                """Get list of unhealthy check names.
-
-                Returns:
-                    list[str]: Names of failed health checks.
-
-                """
-                return [name for name, status in self.checks.items() if not status]
-
-            @computed_field
-            @property
-            def healthy_checks(self) -> list[str]:
-                """Get list of healthy check names.
-
-                Returns:
-                    list[str]: Names of passed health checks.
-
-                """
-                return [name for name, status in self.checks.items() if status]
-
-            @computed_field
-            @property
-            def age_seconds(self) -> float:
-                """Calculate age of health check result in seconds.
-
-                Returns:
-                    float: Age in seconds since check was performed.
-
-                """
-                now = datetime.now(UTC)
-                return (now - self.checked_at).total_seconds()
-
-            @computed_field
-            @property
-            def is_recent(self) -> bool:
-                """Check if health check is recent (performed within last 2 minutes).
-
-                Returns:
-                    bool: True if check was performed within last 2 minutes.
-
-                """
-                return self.age_seconds <= c.Performance.RECENT_THRESHOLD_SECONDS
-
-            @computed_field
-            @property
-            def formatted_checked_at(self) -> str:
-                """Get ISO 8601 formatted check timestamp.
-
-                Returns:
-                    str: ISO 8601 formatted timestamp.
-
-                """
-                return self.checked_at.isoformat()
-
-            @computed_field
-            @property
-            def status_summary(self) -> str:
-                """Generate health status summary string.
-
-                Returns:
-                    str: Formatted status summary (e.g., "3/5 checks passed").
-
-                """
-                return f"{self.healthy_checks_count}/{self.total_checks} checks passed"
-
-            @computed_field
-            @property
-            def severity_level(self) -> str:
-                """Determine health severity level based on failure rate.
-
-                Returns:
-                    str: Severity level (healthy, warning, critical, unknown).
-
-                """
-                if self.total_checks == 0:
-                    return "unknown"
-
-                failure_rate = self.unhealthy_checks_count / self.total_checks
-
-                if failure_rate <= 0.0:
-                    return "healthy"
-                if failure_rate <= c.Performance.FAILURE_RATE_WARNING_THRESHOLD:
-                    return "warning"
-                return "critical"
-
-            def get_check_detail(self, check_name: str) -> t.GuardInputValue:
-                """Get detailed information for a specific health check.
-
-                Args:
-                    check_name: Name of the health check.
-
-                Returns:
-                    Detailed information for the check, or None if not found.
-
-                """
-                return self.details.get(check_name)
-
-            def to_monitoring_format(self) -> t.Dict:
-                """Convert to monitoring system compatible format.
-
-                Returns:
-                    t.Dict: Monitoring compatible dictionary.
-
-                """
-                return t.Dict(
-                    root={
-                        "healthy": self.healthy,
-                        "status": "up" if self.healthy else "down",
-                        "checks": self.checks.root,
-                        "total_checks": self.total_checks,
-                        "healthy_count": self.healthy_checks_count,
-                        "unhealthy_count": self.unhealthy_checks_count,
-                        "health_percentage": self.health_percentage,
-                        "severity": self.severity_level,
-                        "checked_at": self.formatted_checked_at,
-                        "service": self.service_name,
-                        "version": self.service_version,
-                        "duration_ms": self.duration_ms,
-                        **self.metadata.root,
-                    }
-                )
-
-            def with_additional_check(
-                self, name: str, status: bool, detail: t.GuardInputValue = None
-            ) -> FlextGenericModels.Snapshot.Health:
-                """Create new health result with additional check.
-
-                Args:
-                    name: Check name.
-                    status: Check status.
-                    detail: Optional check detail.
-
-                Returns:
-                    Health: New health result with additional check.
-
-                """
-                new_checks = {**self.checks.root, name: status}
-                new_details = {**self.details.root}
-                if detail is not None:
-                    new_details[name] = detail
-
-                new_healthy = all(new_checks.values())
-
-                return self.__class__(
-                    healthy=new_healthy,
-                    checks=t.Dict(root=new_checks),
-                    details=t.Dict(root=new_details),
-                    checked_at=self.checked_at,
-                    service_name=self.service_name,
-                    service_version=self.service_version,
-                    duration_ms=self.duration_ms,
-                    environment=self.environment,
-                    metadata=self.metadata,
-                )
-
-        # NOTE: ObjectClassGroups REMOVED - LDAP-specific, belongs in flext-ldap
-        # Use: from flext_ldap.models import m; m.Ldap.ObjectClassGroups
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # PROGRESS TRACKERS (Mutable - accumulate during operation)
-    # Function: Track progress of operations that evolve
-    # ═══════════════════════════════════════════════════════════════════════════
 
     class Progress:
         """Progress trackers - mutable, accumulate during operation."""
 
         @staticmethod
         def safe_rate(numerator: int, denominator: int) -> float:
+            """Division with zero-safe fallback."""
             if denominator == 0:
                 return 0.0
             return numerator / denominator
 
         @staticmethod
         def safe_percentage(processed: int, total: int | None) -> float:
+            """Percentage with zero-safe fallback, capped at 100."""
             if not total or total == 0:
                 return 0.0
             return min((processed / total) * 100.0, 100.0)
 
         class Operation(FlextModelFoundation.ArbitraryTypesModel):
-            """Comprehensive progress tracking for ongoing operations.
+            """Progress tracking for ongoing operations.
 
-            Used by: batch operations, migrations, sync, data processing
-            Function: Accumulate counters, track progress, and provide metrics during processing
+            Used by: batch operations, migrations, sync, data processing.
             """
 
-            success_count: int = Field(
-                default=0,
-                description="Number of successfully processed items",
-            )
-            failure_count: int = Field(
-                default=0,
-                description="Number of failed items",
-            )
-            skipped_count: int = Field(
-                default=0,
-                description="Number of skipped items",
-            )
-            warning_count: int = Field(
-                default=0,
-                description="Number of items with warnings",
-            )
-            retry_count: int = Field(
-                default=0,
-                description="Number of retry attempts",
-            )
+            success_count: int = Field(default=0, description="Successes")
+            failure_count: int = Field(default=0, description="Failures")
+            skipped_count: int = Field(default=0, description="Skipped")
+            warning_count: int = Field(default=0, description="Warnings")
+            retry_count: int = Field(default=0, description="Retries")
             start_time: datetime | None = Field(
-                default=None,
-                description="When operation started",
+                default=None, description="Start time"
             )
             last_update: datetime | None = Field(
-                default=None,
-                description="When progress was last updated",
+                default=None, description="Last update"
             )
             estimated_total: int | None = Field(
-                default=None,
-                description="Estimated total items to process",
+                default=None, description="Estimated total"
             )
             current_item: str | None = Field(
-                default=None,
-                description="Currently processing item identifier",
+                default=None, description="Current item"
             )
             operation_name: str | None = Field(
-                default=None,
-                description="Name/description of the operation",
+                default=None, description="Operation name"
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Additional operation metadata",
+                default_factory=t.Dict, description="Operation metadata"
             )
-
-            @computed_field
-            @property
-            def total_count(self) -> int:
-                """Calculate total processed items.
-
-                Returns:
-                    int: Total of success + failure + skipped + warning counts.
-
-                """
-                return (
-                    self.success_count
-                    + self.failure_count
-                    + self.skipped_count
-                    + self.warning_count
-                )
-
-            @computed_field
-            @property
-            def success_rate(self) -> float:
-                """Calculate success rate as ratio.
-
-                Returns:
-                    float: Success rate between 0.0 and 1.0.
-
-                """
-                return FlextGenericModels.Progress.safe_rate(
-                    self.success_count,
-                    self.total_count,
-                )
-
-            @computed_field
-            @property
-            def failure_rate(self) -> float:
-                """Calculate failure rate as ratio.
-
-                Returns:
-                    float: Failure rate between 0.0 and 1.0.
-
-                """
-                return FlextGenericModels.Progress.safe_rate(
-                    self.failure_count,
-                    self.total_count,
-                )
-
-            @computed_field
-            @property
-            def completion_percentage(self) -> float:
-                """Calculate completion percentage based on estimated total.
-
-                Returns:
-                    float: Completion percentage (0.0 to 100.0), or 0.0 if no estimate.
-
-                """
-                return FlextGenericModels.Progress.safe_percentage(
-                    self.total_count,
-                    self.estimated_total,
-                )
-
-            @computed_field
-            @property
-            def remaining_count(self) -> int | None:
-                """Calculate estimated remaining items.
-
-                Returns:
-                    int | None: Estimated remaining items, or None if no estimate.
-
-                """
-                if self.estimated_total is None:
-                    return None
-                return max(0, self.estimated_total - self.total_count)
-
-            @computed_field
-            @property
-            def duration_seconds(self) -> float | None:
-                """Calculate operation duration in seconds.
-
-                Returns:
-                    float | None: Duration in seconds since start, or None if not started.
-
-                """
-                if not self.start_time:
-                    return None
-
-                end_time = self.last_update or datetime.now(UTC)
-                return (end_time - self.start_time).total_seconds()
-
-            @computed_field
-            @property
-            def items_per_second(self) -> float | None:
-                """Calculate processing rate in items per second.
-
-                Returns:
-                    float | None: Processing rate, or None if duration not available.
-
-                """
-                duration = self.duration_seconds
-                if not duration or duration == 0:
-                    return None
-                return self.total_count / duration
-
-            @computed_field
-            @property
-            def estimated_time_remaining_seconds(self) -> float | None:
-                """Estimate time remaining based on current processing rate.
-
-                Returns:
-                    float | None: Estimated seconds remaining, or None if cannot calculate.
-
-                """
-                if not self.items_per_second or not self.remaining_count:
-                    return None
-                return self.remaining_count / self.items_per_second
-
-            @computed_field
-            @property
-            def is_complete(self) -> bool:
-                """Check if operation is complete (all estimated items processed).
-
-                Returns:
-                    bool: True if operation appears complete.
-
-                """
-                if self.estimated_total is None:
-                    return False
-                return self.total_count >= self.estimated_total
-
-            @computed_field
-            @property
-            def has_errors(self) -> bool:
-                """Check if operation has any failures.
-
-                Returns:
-                    bool: True if there are any failures.
-
-                """
-                return self.failure_count > 0
-
-            @computed_field
-            @property
-            def has_warnings(self) -> bool:
-                """Check if operation has any warnings.
-
-                Returns:
-                    bool: True if there are any warnings.
-
-                """
-                return self.warning_count > 0
-
-            @computed_field
-            @property
-            def status_summary(self) -> str:
-                """Generate operation status summary string.
-
-                Returns:
-                    str: Formatted status summary.
-
-                """
-                parts = [
-                    f"{self.success_count} success",
-                    f"{self.failure_count} failed",
-                    f"{self.skipped_count} skipped",
-                ]
-                if self.warning_count > 0:
-                    parts.append(f"{self.warning_count} warnings")
-
-                if self.estimated_total:
-                    parts.append(".1f")
-
-                return ", ".join(parts)
 
             def record_success(self) -> None:
                 """Record a successful operation."""
@@ -1202,26 +244,12 @@ class FlextGenericModels:
                 self.retry_count += 1
                 self._update_timestamp()
 
-            def set_current_item(self, item: str) -> None:
-                """Set the currently processing item.
-
-                Args:
-                    item: Identifier of current item being processed.
-
-                """
-                self.current_item = item
-                self._update_timestamp()
-
             def start_operation(
-                self, name: str | None = None, estimated_total: int | None = None
+                self,
+                name: str | None = None,
+                estimated_total: int | None = None,
             ) -> None:
-                """Start the operation tracking.
-
-                Args:
-                    name: Optional operation name.
-                    estimated_total: Optional estimated total items.
-
-                """
+                """Start the operation tracking."""
                 self.operation_name = name
                 self.estimated_total = estimated_total
                 self.start_time = datetime.now(UTC)
@@ -1231,292 +259,42 @@ class FlextGenericModels:
                 """Update the last update timestamp."""
                 self.last_update = datetime.now(UTC)
 
-            def to_progress_report(self) -> t.Dict:
-                """Convert to progress report format for monitoring.
-
-                Returns:
-                    t.Dict: Progress report dictionary.
-
-                """
-                return t.Dict(
-                    root={
-                        "operation": self.operation_name,
-                        "total_processed": self.total_count,
-                        "success": self.success_count,
-                        "failed": self.failure_count,
-                        "skipped": self.skipped_count,
-                        "warnings": self.warning_count,
-                        "success_rate": f"{self.success_rate:.3f}",
-                        "completion_percentage": f"{self.completion_percentage:.1f}",
-                        "estimated_remaining": self.remaining_count,
-                        "current_item": self.current_item,
-                        "duration_seconds": self.duration_seconds,
-                        "items_per_second": f"{self.items_per_second:.2f}"
-                        if self.items_per_second
-                        else None,
-                        "estimated_time_remaining": f"{self.estimated_time_remaining_seconds:.0f}"
-                        if self.estimated_time_remaining_seconds
-                        else None,
-                        "is_complete": self.is_complete,
-                        "has_errors": self.has_errors,
-                        "has_warnings": self.has_warnings,
-                    }
-                )
-
         class Conversion(FlextModelFoundation.ArbitraryTypesModel):
-            """Comprehensive conversion progress tracking with detailed error reporting.
+            """Conversion progress tracking with error reporting.
 
-            Used by: flext-ldif conversion, data transformations, ETL processes
-            Function: Accumulate results, track conversion metrics, and provide detailed error reporting
+            Used by: flext-ldif conversion, data transformations, ETL.
             """
 
-            class Metadata(FlextModelFoundation.ArbitraryTypesModel):
-                """Structured metadata for conversion diagnostics."""
-
-                failed_items: list[t.ConfigMapValue] = Field(default_factory=list)
-                warning_items: list[t.ConfigMapValue] = Field(default_factory=list)
-                skip_reasons: dict[str, str] = Field(default_factory=dict)
-
             converted: list[t.GuardInputValue] = Field(
-                default_factory=list,
-                description="Successfully converted items",
+                default_factory=list, description="Converted items"
             )
             errors: list[str] = Field(
-                default_factory=list,
-                description="Conversion error messages",
+                default_factory=list, description="Error messages"
             )
             warnings: list[str] = Field(
-                default_factory=list,
-                description="Conversion warning messages",
+                default_factory=list, description="Warning messages"
             )
             skipped: list[t.GuardInputValue] = Field(
-                default_factory=list,
-                description="Items that were skipped during conversion",
+                default_factory=list, description="Skipped items"
             )
             start_time: datetime | None = Field(
-                default=None,
-                description="When conversion started",
+                default=None, description="Start time"
             )
             end_time: datetime | None = Field(
-                default=None,
-                description="When conversion completed",
+                default=None, description="End time"
             )
             source_format: str | None = Field(
-                default=None,
-                description="Source data format",
+                default=None, description="Source format"
             )
             target_format: str | None = Field(
-                default=None,
-                description="Target data format",
+                default=None, description="Target format"
             )
             total_input_count: int | None = Field(
-                default=None,
-                description="Total number of input items",
+                default=None, description="Total input count"
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
-                description="Conversion metadata",
+                default_factory=t.Dict, description="Conversion metadata"
             )
-
-            @computed_field
-            @property
-            def has_errors(self) -> bool:
-                """Check if any errors occurred.
-
-                Returns:
-                    bool: True if errors list is not empty.
-
-                """
-                return len(self.errors) > 0
-
-            @computed_field
-            @property
-            def has_warnings(self) -> bool:
-                """Check if any warnings occurred.
-
-                Returns:
-                    bool: True if warnings list is not empty.
-
-                """
-                return len(self.warnings) > 0
-
-            @computed_field
-            @property
-            def converted_count(self) -> int:
-                """Get count of converted items.
-
-                Returns:
-                    int: Number of items in converted list.
-
-                """
-                return len(self.converted)
-
-            @computed_field
-            @property
-            def skipped_count(self) -> int:
-                """Get count of skipped items.
-
-                Returns:
-                    int: Number of items in skipped list.
-
-                """
-                return len(self.skipped)
-
-            @computed_field
-            @property
-            def error_count(self) -> int:
-                """Get count of errors.
-
-                Returns:
-                    int: Number of error messages.
-
-                """
-                return len(self.errors)
-
-            @computed_field
-            @property
-            def warning_count(self) -> int:
-                """Get count of warnings.
-
-                Returns:
-                    int: Number of warning messages.
-
-                """
-                return len(self.warnings)
-
-            @computed_field
-            @property
-            def total_processed_count(self) -> int:
-                """Get total count of processed items (converted + skipped).
-
-                Returns:
-                    int: Total processed items.
-
-                """
-                return self.converted_count + self.skipped_count
-
-            @computed_field
-            @property
-            def success_rate(self) -> float:
-                """Calculate conversion success rate.
-
-                Returns:
-                    float: Success rate between 0.0 and 1.0.
-
-                """
-                return FlextGenericModels.Progress.safe_rate(
-                    self.converted_count,
-                    self.total_processed_count,
-                )
-
-            @computed_field
-            @property
-            def duration_seconds(self) -> float | None:
-                """Calculate conversion duration in seconds.
-
-                Returns:
-                    float | None: Duration in seconds, or None if not completed.
-
-                """
-                if not self.start_time or not self.end_time:
-                    return None
-                return (self.end_time - self.start_time).total_seconds()
-
-            @computed_field
-            @property
-            def items_per_second(self) -> float | None:
-                """Calculate conversion rate in items per second.
-
-                Returns:
-                    float | None: Conversion rate, or None if duration not available.
-
-                """
-                duration = self.duration_seconds
-                if not duration or duration == 0:
-                    return None
-                return self.total_processed_count / duration
-
-            @computed_field
-            @property
-            def is_complete(self) -> bool:
-                """Check if conversion is complete.
-
-                Returns:
-                    bool: True if end_time is set.
-
-                """
-                return self.end_time is not None
-
-            @computed_field
-            @property
-            def completion_percentage(self) -> float:
-                """Calculate completion percentage based on total input count.
-
-                Returns:
-                    float: Completion percentage (0.0 to 100.0), or 0.0 if no total known.
-
-                """
-                return FlextGenericModels.Progress.safe_percentage(
-                    self.total_processed_count,
-                    self.total_input_count,
-                )
-
-            @computed_field
-            @property
-            def status_summary(self) -> str:
-                """Generate conversion status summary string.
-
-                Returns:
-                    str: Formatted status summary.
-
-                """
-                parts = [
-                    f"{self.converted_count} converted",
-                    f"{self.error_count} errors",
-                    f"{self.warning_count} warnings",
-                    f"{self.skipped_count} skipped",
-                ]
-
-                if self.completion_percentage > 0:
-                    parts.append(".1f")
-
-                return ", ".join(parts)
-
-            @computed_field
-            @property
-            def conversion_summary(self) -> str:
-                """Generate detailed conversion summary.
-
-                Returns:
-                    str: Multi-line conversion summary.
-
-                """
-                lines = [
-                    f"Conversion: {self.source_format or 'unknown'} → {self.target_format or 'unknown'}",
-                    f"Status: {'Complete' if self.is_complete else 'In Progress'}",
-                    f"Items: {self.converted_count} converted, {self.skipped_count} skipped",
-                    f"Issues: {self.error_count} errors, {self.warning_count} warnings",
-                ]
-
-                if self.success_rate > 0:
-                    lines.append(".1%")
-
-                if self.duration_seconds:
-                    lines.append(".2f")
-
-                if self.items_per_second:
-                    lines.append(".1f")
-
-                return "\n".join(lines)
-
-            def add_converted(self, item: t.GuardInputValue) -> None:
-                """Add a successfully converted item.
-
-                Args:
-                    item: The converted item to add.
-
-                """
-                self.converted.append(item)
 
             def _append_metadata_item(
                 self,
@@ -1527,14 +305,12 @@ class FlextGenericModels:
                     self.metadata.root[key] = []
                 raw_items = self.metadata.root.get(key, [])
                 items = raw_items if isinstance(raw_items, list) else []
-                if key == "failed_items":
-                    items.append(item)
-                    self.metadata.root[key] = items
-                    return
                 items.append(item)
                 self.metadata.root[key] = items
 
-            def _upsert_skip_reason(self, item: t.ConfigMapValue, reason: str) -> None:
+            def _upsert_skip_reason(
+                self, item: t.ConfigMapValue, reason: str
+            ) -> None:
                 raw_reasons = self.metadata.root.get("skip_reasons", {})
                 reasons: dict[str, str] = {}
                 if isinstance(raw_reasons, Mapping):
@@ -1542,16 +318,14 @@ class FlextGenericModels:
                 reasons[str(item)] = reason
                 self.metadata.root["skip_reasons"] = reasons
 
+            def add_converted(self, item: t.GuardInputValue) -> None:
+                """Add a successfully converted item."""
+                self.converted.append(item)
+
             def add_error(
                 self, error: str, item: t.ConfigMapValue | None = None
             ) -> None:
-                """Add an error message with optional failed item.
-
-                Args:
-                    error: Error message to add.
-                    item: Optional item that caused the error.
-
-                """
+                """Add an error with optional failed item."""
                 self.errors.append(error)
                 if item is not None:
                     self._append_metadata_item("failed_items", item)
@@ -1559,13 +333,7 @@ class FlextGenericModels:
             def add_warning(
                 self, warning: str, item: t.ConfigMapValue | None = None
             ) -> None:
-                """Add a warning message with optional item.
-
-                Args:
-                    warning: Warning message to add.
-                    item: Optional item that generated the warning.
-
-                """
+                """Add a warning with optional item."""
                 self.warnings.append(warning)
                 if item is not None:
                     self._append_metadata_item("warning_items", item)
@@ -1573,13 +341,7 @@ class FlextGenericModels:
             def add_skipped(
                 self, item: t.GuardInputValue, reason: str | None = None
             ) -> None:
-                """Add a skipped item with optional reason.
-
-                Args:
-                    item: The item that was skipped.
-                    reason: Optional reason for skipping.
-
-                """
+                """Add a skipped item with optional reason."""
                 self.skipped.append(item)
                 if reason:
                     self._upsert_skip_reason(item, reason)
@@ -1590,14 +352,7 @@ class FlextGenericModels:
                 target_format: str | None = None,
                 total_input_count: int | None = None,
             ) -> None:
-                """Start the conversion tracking.
-
-                Args:
-                    source_format: Source data format.
-                    target_format: Target data format.
-                    total_input_count: Total number of input items.
-
-                """
+                """Start conversion tracking."""
                 self.source_format = source_format
                 self.target_format = target_format
                 self.total_input_count = total_input_count
@@ -1607,40 +362,7 @@ class FlextGenericModels:
                 """Mark conversion as completed."""
                 self.end_time = datetime.now(UTC)
 
-            def to_conversion_report(self) -> t.Dict:
-                """Convert to conversion report format for monitoring.
-
-                Returns:
-                    t.Dict: Conversion report dictionary.
-
-                """
-                return t.Dict(
-                    root={
-                        "source_format": self.source_format,
-                        "target_format": self.target_format,
-                        "converted_count": self.converted_count,
-                        "error_count": self.error_count,
-                        "warning_count": self.warning_count,
-                        "skipped_count": self.skipped_count,
-                        "success_rate": f"{self.success_rate:.3f}",
-                        "completion_percentage": f"{self.completion_percentage:.1f}",
-                        "duration_seconds": self.duration_seconds,
-                        "items_per_second": f"{self.items_per_second:.1f}"
-                        if self.items_per_second
-                        else None,
-                        "is_complete": self.is_complete,
-                        "has_errors": self.has_errors,
-                        "has_warnings": self.has_warnings,
-                        "status_summary": self.status_summary,
-                        "conversion_summary": self.conversion_summary,
-                    }
-                )
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # GENERIC CONTAINERS (Moved to flext_core.typings.t)
-    # Function: Replace raw dict aliases with strict typed models
-    # ═══════════════════════════════════════════════════════════════════════════
-
-    # Containers moved to typings.py to avoid circular imports with utilities
-
     BatchResultDict = t.BatchResultDict
+
+
+__all__ = ["FlextGenericModels"]

@@ -19,10 +19,10 @@ from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequen
 from contextlib import contextmanager, suppress
 from datetime import datetime as dt
 from types import ModuleType
-from typing import Annotated, Any, Literal, Self, TypeGuard, cast, override
+from typing import Annotated, Any, Literal, Self, cast, override
 
 from cachetools import LRUCache
-from pydantic import BaseModel, Discriminator, TypeAdapter
+from pydantic import BaseModel, Discriminator, TypeAdapter, ValidationError
 
 from flext_core._dispatcher import (
     CircuitBreakerManager,
@@ -487,10 +487,6 @@ class FlextDispatcher(s[bool]):
         )
 
     @staticmethod
-    def _is_dispatcher_handler(value: object) -> TypeGuard[DispatcherHandler]:
-        return callable(value) or isinstance(value, BaseModel)
-
-    @staticmethod
     def _to_container_value(
         value: t.PayloadValue | str | float | bool | None,
     ) -> _Payload:
@@ -503,44 +499,12 @@ class FlextDispatcher(s[bool]):
         return str(value)
 
     @staticmethod
-    def _is_result_value(value: object) -> TypeGuard[r[_Payload]]:
-        return bool(u.is_result_like(value))
-
-    @staticmethod
     def _to_scalar_value(value: _Payload) -> t.ScalarValue:
         match value:
             case str() | int() | float() | bool() | dt() | None:
                 return value
             case _:
                 return str(value)
-
-    @staticmethod
-    def _is_scalar_primitive(
-        value: Any,  # Validates arbitrary runtime values
-    ) -> TypeGuard[str | int | float | bool | None]:
-        match value:
-            case str() | bool() | int() | float() | None:
-                return True
-            case _:
-                return False
-
-    @staticmethod
-    def _is_metadata_scalar(
-        value: Any,  # Validates arbitrary runtime values
-    ) -> TypeGuard[str | int | float | bool | dt | None]:
-        match value:
-            case str() | bool() | int() | float() | dt() | None:
-                return True
-            case _:
-                return False
-
-    @staticmethod
-    def _is_optional_int(value: object) -> TypeGuard[int | None]:
-        match value:
-            case int() | None:
-                return True
-            case _:
-                return False
 
     def _route_to_handler(
         self,
@@ -725,7 +689,7 @@ class FlextDispatcher(s[bool]):
         )
         if callable(dispatch_method):
             raw_dispatch_result = dispatch_method(command, operation=operation)
-            if FlextDispatcher._is_result_value(raw_dispatch_result):
+            if u.is_result_like(raw_dispatch_result):
                 if raw_dispatch_result.is_failure:
                     return r[_Payload].fail(
                         raw_dispatch_result.error or "Handler dispatch failed",
@@ -893,7 +857,7 @@ class FlextDispatcher(s[bool]):
         result_raw = process_method(command, handler)
 
         # Ensure result is _Payload or FlextResult
-        if FlextDispatcher._is_result_value(result_raw):
+        if u.is_result_like(result_raw):
             result: _Payload | r[_Payload] = result_raw
         else:
             result = FlextDispatcher._to_container_value(result_raw)
@@ -905,7 +869,7 @@ class FlextDispatcher(s[bool]):
         middleware_type: _Payload,
     ) -> r[bool]:
         """Handle middleware execution result."""
-        if FlextDispatcher._is_result_value(result) and result.is_failure:
+        if u.is_result_like(result) and result.is_failure:
             # Extract error directly from result.error property
             # result is r[_Payload] after type narrowing
             error_msg = result.error or "Unknown error"
@@ -1097,7 +1061,7 @@ class FlextDispatcher(s[bool]):
             return r[bool].fail("Invalid arguments: expected 1 or 2 positional args")
 
         if handler is None:
-            if self._is_dispatcher_handler(request):
+            if callable(request) or isinstance(request, BaseModel):
                 return self._register_single_handler(request)
             return r[bool].fail("Handler must be callable or BaseModel")
 
@@ -1699,7 +1663,7 @@ class FlextDispatcher(s[bool]):
                 "Handler is required",
             )
 
-        if self._is_dispatcher_handler(handler_raw):
+        if callable(handler_raw) or isinstance(handler_raw, BaseModel):
             handler_typed: DispatcherHandler = handler_raw
         else:
             return r[tuple[DispatcherHandler, str]].fail(
@@ -1743,7 +1707,9 @@ class FlextDispatcher(s[bool]):
         """
         # handler is validated to have can_handle() before calling this function
         # Type narrowing: treat as t.HandlerType directly
-        if self._is_dispatcher_handler(handler) and handler not in self._auto_handlers:
+        if (
+            callable(handler) or isinstance(handler, BaseModel)
+        ) and handler not in self._auto_handlers:
             self._auto_handlers.append(handler)
 
         return r[m.HandlerRegistrationResult].ok(
@@ -1937,7 +1903,7 @@ class FlextDispatcher(s[bool]):
 
         # Single-arg mode: register_handler(dict_or_model_or_handler)
         # First check if request is a BaseModel
-        if self._is_dispatcher_handler(request):
+        if callable(request) or isinstance(request, BaseModel):
             result = self._layer1_register_handler(request)
             if result.is_failure:
                 return r[m.HandlerRegistrationResult].fail(
@@ -2331,24 +2297,16 @@ class FlextDispatcher(s[bool]):
             metadata_map = metadata_input.metadata
             attributes_dict: dict[str, t.MetadataAttributeValue] = {}
 
-            def convert_metadata_value(
-                v: _Payload,
-            ) -> t.MetadataAttributeValue:
-                if FlextDispatcher._is_scalar_primitive(v):
-                    return v
-                if isinstance(v, list):
-                    # Use list comprehension for concise list conversion
-                    return [
-                        item
-                        if FlextDispatcher._is_scalar_primitive(item)
-                        else str(item)
-                        for item in v
-                    ]
-                if isinstance(v, Mapping):
-                    # Serialize nested dicts to JSON for Metadata.attributes compatibility.
-                    # Metadata.attributes only accepts flat scalar values, not nested dicts.
-                    return json.dumps({str(k): str(v2) for k, v2 in v.items()})
-                return str(v)
+            def convert_metadata_value(v: _Payload) -> t.MetadataAttributeValue:
+                match v:
+                    case str() | int() | float() | bool() | None:
+                        return v
+                    case list():
+                        return [str(item) for item in v]
+                    case _ if isinstance(v, Mapping):
+                        return json.dumps({str(k): str(v2) for k, v2 in v.items()})
+                    case _:
+                        return str(v)
 
             process_result = u.process(
                 list(metadata_map.items()),
@@ -2498,23 +2456,16 @@ class FlextDispatcher(s[bool]):
             elif metadata_input.input_type == "model":
                 validated_metadata = metadata_input.metadata
             else:
-                normalized_attrs: dict[str, t.MetadataAttributeValue] = {}
-                for k, v in metadata_input.metadata.items():
-                    if not FlextDispatcher._is_metadata_attribute_compatible(
-                        cast("_Payload", v)
-                    ):
-                        return r[m.DispatchConfig].fail(
-                            f"Invalid metadata attribute type for key '{k}': {type(v).__name__}"
+                try:
+                    normalized_attrs: dict[str, t.MetadataAttributeValue] = {
+                        str(k): FlextRuntime.normalize_to_metadata_value(
+                            FlextDispatcher._to_container_value(v),
                         )
-                    value = FlextDispatcher._to_container_value(v)
-                    if not FlextDispatcher._is_metadata_attribute_compatible(value):
-                        return r[m.DispatchConfig].fail(
-                            f"Invalid metadata attribute type for key '{k}'"
-                        )
-                    normalized_attrs[str(k)] = FlextRuntime.normalize_to_metadata_value(
-                        value,
-                    )
-                validated_metadata = m.Metadata(attributes=normalized_attrs)
+                        for k, v in metadata_input.metadata.items()
+                    }
+                    validated_metadata = m.Metadata(attributes=normalized_attrs)
+                except (ValidationError, TypeError, ValueError) as e:
+                    return r[m.DispatchConfig].fail(f"Invalid metadata: {e}")
 
             if metadata is not None and validated_metadata is None:
                 msg = (
@@ -2830,34 +2781,6 @@ class FlextDispatcher(s[bool]):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _is_metadata_attribute_compatible(value: _Payload) -> bool:
-        if FlextDispatcher._is_metadata_scalar(value):
-            return True
-
-        if isinstance(value, list):
-            return all(FlextDispatcher._is_metadata_scalar(item) for item in value)
-
-        if FlextRuntime.is_dict_like(value):
-            metadata_root = getattr(value, "root") if hasattr(value, "root") else None
-            mapping_value = (
-                dict(metadata_root.items())
-                if isinstance(metadata_root, Mapping)
-                else dict(value.items())
-            )
-
-            for nested in mapping_value.values():
-                if isinstance(nested, list):
-                    if not all(
-                        FlextDispatcher._is_metadata_scalar(item) for item in nested
-                    ):
-                        return False
-                elif not FlextDispatcher._is_metadata_scalar(nested):
-                    return False
-            return True
-
-        return False
-
-    @staticmethod
     def _extract_from_object_attributes(
         metadata: _Payload,
     ) -> Mapping[str, object] | None:
@@ -2994,8 +2917,9 @@ class FlextDispatcher(s[bool]):
                         # Get actual handler function from module
                         # Check if handler_func is not None before checking callable
                         # Use TypeGuard for proper handler type validation
-                        if handler_func is not None and cls._is_dispatcher_handler(
-                            handler_func,
+                        if handler_func is not None and (
+                            callable(handler_func)
+                            or isinstance(handler_func, BaseModel)
                         ):
                             # Register handler with dispatcher
                             # Register under the handler command type name for routing

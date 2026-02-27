@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
-from typing import Self
+from typing import Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -53,6 +53,7 @@ class FlextModelsCollections:
         )
 
         @classmethod
+        @override
         def __class_getitem__(
             cls,
             typevar_values: type | tuple[type, ...],
@@ -796,6 +797,7 @@ class FlextModelsCollections:
             updated_dict = {**current_dict, **updates}
             return self.__class__(**updated_dict)
 
+        @override
         def __eq__(self, other: object) -> bool:
             """Compare configs by value.
 
