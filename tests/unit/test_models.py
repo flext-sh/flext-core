@@ -1054,12 +1054,10 @@ class TestFlextModels:
     def test_validation_configuration_model(self) -> None:
         """Test ValidationConfiguration model with correct fields."""
         val_config = m.ValidationConfiguration(
-            enable_strict_mode=True,
             validate_on_assignment=True,
             validate_on_read=False,
             custom_validators=[],
         )
-        assert val_config.enable_strict_mode is True
         assert val_config.validate_on_assignment is True
 
     def test_cqrs_handler_model_creation(self) -> None:

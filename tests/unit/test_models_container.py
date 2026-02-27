@@ -53,28 +53,18 @@ class ContainerModelsScenarios:
         {"enable_factory_caching": False},
         {"max_services": 500},
         {"max_factories": 250},
-        {"validation_mode": c.Cqrs.ValidationLevel.LENIENT},
         {"enable_auto_registration": True},
         {"enable_lifecycle_hooks": False},
         {"lazy_loading": False},
         {
             "enable_singleton": False,
             "max_services": 2000,
-            "validation_mode": c.Cqrs.ValidationLevel.LENIENT,
         },
     ]
 
 
 class TestFlextModelsContainer:
     """Test suite for FlextModelsContainer models."""
-
-    def test_validation_level_reexport(self) -> None:
-        """Test ValidationLevel re-export."""
-        # ValidationLevel is re-exported from constants via Container namespace
-        # Access via c.Cqrs.ValidationLevel (standard pattern)
-        assert c.Cqrs.ValidationLevel is not None
-        assert hasattr(c.Cqrs.ValidationLevel, "STRICT")
-        assert hasattr(c.Cqrs.ValidationLevel, "LENIENT")
 
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
@@ -312,11 +302,6 @@ class TestFlextModelsContainer:
         assert config.max_factories == u.mapper().get(
             config_dict, "max_factories", default=500
         )
-        assert config.validation_mode == u.mapper().get(
-            config_dict,
-            "validation_mode",
-            default=c.Cqrs.ValidationLevel.STRICT,
-        )
         assert config.enable_auto_registration is u.mapper().get(
             config_dict,
             "enable_auto_registration",
@@ -338,7 +323,6 @@ class TestFlextModelsContainer:
         assert config.enable_factory_caching is True
         assert config.max_services == 1000
         assert config.max_factories == 500
-        assert config.validation_mode == c.Cqrs.ValidationLevel.STRICT
         assert config.enable_auto_registration is False
         assert config.enable_lifecycle_hooks is True
         assert config.lazy_loading is True
