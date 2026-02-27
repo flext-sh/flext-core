@@ -643,6 +643,10 @@ class FlextMixins(FlextRuntime):
         class MetricsTracker:
             """Tracks handler execution metrics."""
 
+            def _protocol_name(self) -> str:
+                """Return protocol name for BaseProtocol compliance."""
+                return "MetricsTracker"
+
             # Type annotation for type checker
             _metrics: ClassVar[MutableMapping[str, t.ConfigMapValue]] = {}
 
