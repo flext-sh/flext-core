@@ -25,6 +25,7 @@ from pydantic import BaseModel, ValidationError
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
 from flext_core.context import FlextContext
+from flext_core.dispatcher import FlextDispatcher
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
@@ -648,6 +649,13 @@ class FlextContainer(p.DI):
                 _ = self.register("context", self._context)
             except ValidationError:
                 pass  # Skip registration if validation fails
+
+        # Register dispatcher as command_bus if not already registered
+        # FlextDispatcher now standalone (no FlextService inheritance)
+        # Safe to instantiate without triggering container creation
+        if not self.has_service("command_bus"):
+            dispatcher = FlextDispatcher()
+            _ = self.register("command_bus", dispatcher)
 
     @override
     def configure(
