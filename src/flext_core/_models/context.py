@@ -26,6 +26,8 @@ from pydantic import (
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
@@ -53,10 +55,6 @@ def _normalize_statistics_before(v: t.Any) -> t.Any:
     if v is None:
         return {}
     return _normalize_to_mapping(v)
-
-
-from flext_core.runtime import FlextRuntime  # noqa: E402
-from flext_core.typings import t  # noqa: E402
 
 
 class FlextModelsContext:
@@ -743,7 +741,7 @@ class FlextModelsContext:
         ] = Field(default_factory=dict)
 
         @model_validator(mode="after")
-        def validate_context_protocol(self) -> Self:
+        def validate_context_protocol(self) -> FlextModelsContext.ContextMetadata:
             """Validate context instance has get() and set() methods."""
             # Find the field that holds the context instance
             context_field = None

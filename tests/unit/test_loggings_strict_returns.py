@@ -299,25 +299,25 @@ class TestProtocolComplianceStructlogLogger:
         logger = FlextLogger.create_module_logger(__name__)
 
         # Verify debug signature: msg, *args, **kw -> r[bool]
-        result = logger.debug("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.debug("msg", "arg1", key="value")
         assert isinstance(result, r)
 
         # Verify info signature: msg, *args, **kw -> r[bool]
-        result = logger.info("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.info("msg", "arg1", key="value")
         assert isinstance(result, r)
 
         # Verify warning signature: msg, *args, **kw -> r[bool]
-        result = logger.warning("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.warning("msg", "arg1", key="value")
         assert isinstance(result, r)
 
         # Verify error signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.error("msg", "arg1", key="value")
         assert isinstance(result, r)
 
         # Verify critical signature: msg, *args, **kw -> r[bool]
-        result = logger.critical("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.critical("msg", "arg1", key="value")
         assert isinstance(result, r)
 
         # Verify exception signature: msg, *args, **kw -> r[bool]
-        result = logger.error("msg", "arg1", key="value")  # noqa: PLE1205
+        result = logger.error("msg", "arg1", key="value")
         assert isinstance(result, r)

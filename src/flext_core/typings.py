@@ -158,6 +158,10 @@ class FlextTypes:
     type LaxStr = str | bytes | bytearray
     """LaxStr compatibility for ldap3 integration."""
 
+    # COMMON TYPING ANCHORS (for use via t.<name>)
+    Any: TypeAlias = typing.Any
+    TYPE_CHECKING: TypeAlias = bool  # TYPE_CHECKING is a bool at runtime
+
     # ALIGNED TYPE HIERARCHY (Pydantic-safe, no dynamic top types)
     # =========================================================================
 

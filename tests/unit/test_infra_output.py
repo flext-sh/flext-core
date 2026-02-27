@@ -249,11 +249,11 @@ class TestModuleSingleton:
     """Tests for module-level output singleton."""
 
     def test_output_singleton_importable(self) -> None:
-        from flext_infra.output import output  # noqa: PLC0415
+        from flext_infra.output import output
 
         assert isinstance(output, InfraOutput)
 
     def test_output_writes_to_stderr_by_default(self) -> None:
-        from flext_infra.output import output  # noqa: PLC0415
+        from flext_infra.output import output
 
         assert output._stream is not None

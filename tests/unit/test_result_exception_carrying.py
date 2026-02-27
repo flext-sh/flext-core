@@ -359,7 +359,7 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import BaseModel, ValidationError  # noqa: PLC0415
+        from pydantic import BaseModel, ValidationError
 
         class User(BaseModel):
             name: str
@@ -378,7 +378,7 @@ class TestToIOChainsException:
 
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
-        from flext_core.exceptions import e  # noqa: PLC0415
+        from flext_core.exceptions import e
 
         exc = ValueError("conversion error")
         result = r[int].fail("error", exception=exc)

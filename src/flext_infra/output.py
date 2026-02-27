@@ -155,7 +155,7 @@ class InfraOutput:
         self,
         verb: str,
         project: str,
-        result: bool,  # noqa: FBT001
+        result: bool,
         elapsed: float,
     ) -> None:
         """Write a formatted status line for a project operation.

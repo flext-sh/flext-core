@@ -47,7 +47,7 @@ def test_strip_whitespace_returns_empty_on_spaces() -> None:
 
 
 def test_ensure_utc_datetime_adds_tzinfo_when_naive() -> None:
-    naive = datetime(2025, 1, 1, 12, 0, 0)  # noqa: DTZ001
+    naive = datetime(2025, 1, 1, 12, 0, 0)
     result = m.Validation.ensure_utc_datetime(naive)
     assert result is not None
     assert result.tzinfo is UTC
