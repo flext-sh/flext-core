@@ -267,12 +267,12 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
         """
         # Check if already initialized (singleton pattern)
         if hasattr(self, "_di_provider"):
-            # Instance already initialized - update fields atomically to avoid
-            # triggering model validators after each field change.
+            # Instance already initialized - use setattr to preserve
+            # Pydantic's type coercion (e.g., str -> SecretStr).
             if kwargs:
                 for key, value in kwargs.items():
                     if key in self.__class__.model_fields:
-                        object.__setattr__(self, key, value)
+                        setattr(self, key, value)
             return
 
         super().__init__()
