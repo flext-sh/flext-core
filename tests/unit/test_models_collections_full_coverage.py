@@ -94,5 +94,5 @@ def test_config_hash_from_mapping_and_non_hashable() -> None:
     loaded = _Config.from_mapping(t.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
 
-    with pytest.raises(TypeError, match="unhashable type"):
+    with pytest.raises(TypeError, match="_Config objects are not hashable"):
         hash(loaded)

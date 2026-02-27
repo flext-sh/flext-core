@@ -122,10 +122,6 @@ class FlextModelFoundation:
         def strip_whitespace(v: str) -> str:
             """Strip leading and trailing whitespace from string."""
             return v.strip()
-        @staticmethod
-        def strip_whitespace(v: str) -> str:
-            """Strip leading and trailing whitespace from string."""
-            return v.strip()
 
         @staticmethod
         def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
@@ -190,6 +186,7 @@ class FlextModelFoundation:
         """Base model with arbitrary types support."""
 
         model_config = ConfigDict(
+            defer_build=True,
             validate_assignment=True,
             extra=c.ModelConfig.EXTRA_FORBID,
             arbitrary_types_allowed=True,
@@ -205,6 +202,7 @@ class FlextModelFoundation:
         """
 
         model_config = ConfigDict(
+            defer_build=True,
             strict=True,
             validate_assignment=True,
             extra="forbid",
@@ -221,6 +219,7 @@ class FlextModelFoundation:
         """
 
         model_config = ConfigDict(
+            defer_build=True,
             validate_assignment=True,
             extra="ignore",
             str_strip_whitespace=True,
@@ -235,6 +234,7 @@ class FlextModelFoundation:
         """
 
         model_config = ConfigDict(
+            defer_build=True,
             frozen=True,
             validate_assignment=True,
             extra="forbid",
@@ -248,7 +248,7 @@ class FlextModelFoundation:
         This keeps union routing explicit and avoids ad-hoc `isinstance` trees.
         """
 
-        model_config = ConfigDict(extra="forbid")
+        model_config = ConfigDict(defer_build=True, extra="forbid")
         tag: ClassVar[str]
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -264,6 +264,7 @@ class FlextModelFoundation:
         """
 
         model_config = ConfigDict(
+            defer_build=True,
             extra=c.ModelConfig.EXTRA_FORBID,
             frozen=True,
             validate_assignment=True,
@@ -421,6 +422,7 @@ class FlextModelFoundation:
         """
 
         model_config = ConfigDict(
+            defer_build=True,
             validate_assignment=True,
             extra="allow",
             arbitrary_types_allowed=True,
@@ -431,6 +433,7 @@ class FlextModelFoundation:
         """Immutable base model with strict validation."""
 
         model_config = ConfigDict(
+            defer_build=True,
             validate_assignment=True,
             validate_return=True,
             validate_default=True,
@@ -473,6 +476,7 @@ class FlextModelFoundation:
         """Mixin for unique identifiers with Pydantic v2 validation."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
             str_strip_whitespace=True,
@@ -527,6 +531,7 @@ class FlextModelFoundation:
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -699,6 +704,7 @@ class FlextModelFoundation:
         """Mixin for versioning with Pydantic v2 validation."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -802,6 +808,7 @@ class FlextModelFoundation:
         """Mixin for audit trail tracking with Pydantic v2 validation."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
             str_strip_whitespace=True,
@@ -925,6 +932,7 @@ class FlextModelFoundation:
         """Mixin for soft delete functionality with Pydantic v2 validation."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
             str_strip_whitespace=True,
@@ -1025,6 +1033,7 @@ class FlextModelFoundation:
         """Mixin for tagging and categorization with Pydantic v2 validation."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -1236,6 +1245,7 @@ class FlextModelFoundation:
         """Mixin providing advanced validation capabilities using Pydantic v2."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -1300,6 +1310,7 @@ class FlextModelFoundation:
         """Mixin providing advanced serialization capabilities."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -1334,7 +1345,7 @@ class FlextModelFoundation:
     class AdvancedSerializable(BaseModel):
         """Model demonstrating advanced serialization capabilities."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config = ConfigDict(defer_build=True, arbitrary_types_allowed=True)
 
         name: str
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -1370,7 +1381,7 @@ class FlextModelFoundation:
     class DynamicRebuildModel(BaseModel):
         """Model demonstrating dynamic schema reconstruction with model_rebuild()."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config = ConfigDict(defer_build=True, arbitrary_types_allowed=True)
 
         name: str
         value: int
@@ -1439,6 +1450,7 @@ class FlextModelFoundation:
         """Model demonstrating dynamic reconstruction capabilities."""
 
         model_config = ConfigDict(
+            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )

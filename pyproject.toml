@@ -140,6 +140,7 @@ minversion = "8.0"
 python_classes = [ "Test*" ]
 python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
 addopts = [ "--strict-markers" ]
+enable_assertion_pass_hook = true
 markers = [
   "unit: unit tests",
   "integration: integration tests",

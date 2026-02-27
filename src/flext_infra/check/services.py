@@ -8,7 +8,7 @@ import os
 import re
 import sys
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
@@ -1318,7 +1318,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
             return r[list[str]].ok([])
 
         pyrefly = tool["pyrefly"]
-        if not isinstance(pyrefly, Mapping):
+        if not isinstance(pyrefly, MutableMapping):
             return r[list[str]].ok([])
 
         all_fixes: list[str] = []
@@ -1348,10 +1348,12 @@ class PyreflyConfigFixer(FlextService[list[str]]):
 
         return r[list[str]].ok(all_fixes)
 
-    def _fix_search_paths_tk(self, pyrefly: Mapping[str, t.ConfigMapValue], project_dir: Path) -> list[str]:
+    def _fix_search_paths_tk(
+        self, pyrefly: MutableMapping[str, t.ConfigMapValue], project_dir: Path
+    ) -> list[str]:
         fixes: list[str] = []
         search_path = pyrefly.get("search-path")
-        
+
         if not isinstance(search_path, list):
             return []
 
@@ -1361,20 +1363,24 @@ class PyreflyConfigFixer(FlextService[list[str]]):
             for p in search_path:
                 if p == "../typings/generated":
                     new_paths.append("typings/generated")
-                    fixes.append("search-path ../typings/generated -> typings/generated")
+                    fixes.append(
+                        "search-path ../typings/generated -> typings/generated"
+                    )
                 elif p == "../typings":
                     new_paths.append("typings")
                     fixes.append("search-path ../typings -> typings")
                 else:
                     new_paths.append(p)
-            
+
             if fixes:
                 pyrefly["search-path"] = self._to_array(new_paths)
 
         # Remove nonexistent paths
         current_paths = list(pyrefly.get("search-path", []))
         nonexistent = [
-            p for p in current_paths if isinstance(p, str) and not (project_dir / p).exists()
+            p
+            for p in current_paths
+            if isinstance(p, str) and not (project_dir / p).exists()
         ]
         if nonexistent:
             remaining = [p for p in current_paths if p not in nonexistent]
@@ -1383,7 +1389,9 @@ class PyreflyConfigFixer(FlextService[list[str]]):
 
         return fixes
 
-    def _remove_ignore_sub_config_tk(self, pyrefly: Mapping[str, t.ConfigMapValue]) -> list[str]:
+    def _remove_ignore_sub_config_tk(
+        self, pyrefly: MutableMapping[str, t.ConfigMapValue]
+    ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get("sub-config")
         if not isinstance(sub_configs, list):
@@ -1396,21 +1404,22 @@ class PyreflyConfigFixer(FlextService[list[str]]):
                 fixes.append(f"removed ignore=true sub-config for '{matches}'")
                 continue
             new_configs.append(conf)
-        
+
         if len(new_configs) != len(sub_configs):
             pyrefly["sub-config"] = new_configs
-            
+
         return fixes
 
-    def _ensure_project_excludes_tk(self, pyrefly: Mapping[str, t.ConfigMapValue]) -> list[str]:
+    def _ensure_project_excludes_tk(
+        self, pyrefly: MutableMapping[str, t.ConfigMapValue]
+    ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get("project-excludes")
-        
+
         current = []
         if isinstance(excludes, list):
             current = [str(x) for x in excludes]
-        
-        to_add = [glob for glob in _REQUIRED_EXCLUDES if glob not in current]
+
         # Check without quotes too just in case
         stripped_to_add = []
         for glob in _REQUIRED_EXCLUDES:
@@ -1422,7 +1431,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
             updated = sorted(list(set(current) | set(stripped_to_add)))
             pyrefly["project-excludes"] = self._to_array(updated)
             fixes.append(f"added {', '.join(stripped_to_add)} to project-excludes")
-            
+
         return fixes
 
     @staticmethod
