@@ -57,11 +57,12 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard
+from typing import ClassVar, Self, TypeGuard, cast
 
 import structlog
 from dependency_injector import containers, providers, wiring
 
+from flext_core import _runtime_metadata
 from flext_core.constants import c
 from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import T, t
@@ -72,7 +73,9 @@ _module_logger = logging.getLogger(__name__)
 class _LazyMetadata:
     """Descriptor for lazy-loading Metadata class."""
 
-    def __get__(self, obj: object, objtype: type | None = None) -> object:
+    def __get__(
+        self, obj: object, objtype: type | None = None
+    ) -> type[_runtime_metadata.Metadata]:
         from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
 
         # Cache the loaded class on the class itself
@@ -158,7 +161,9 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
-    Metadata: object = _LazyMetadata()  # type: ignore[assignment]  # Lazy-loaded from _runtime_metadata
+    Metadata: ClassVar[type[_runtime_metadata.Metadata]] = cast(
+        "type[_runtime_metadata.Metadata]", _LazyMetadata()
+    )  # Lazy-loaded from _runtime_metadata
 
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.

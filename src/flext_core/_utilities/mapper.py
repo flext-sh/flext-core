@@ -10,7 +10,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Protocol, TypeGuard, overload
+from typing import TYPE_CHECKING, Protocol, TypeGuard, overload
+
+if TYPE_CHECKING:
+    import structlog.stdlib
 
 from pydantic import BaseModel
 
@@ -176,7 +179,7 @@ class FlextUtilitiesMapper:
         Returns structlog logger instance (Logger protocol).
         Type annotation omitted to avoid importing structlog.typing here.
         """
-        logger: object = FlextRuntime.get_logger(__name__)
+        logger: structlog.stdlib.BoundLogger = FlextRuntime.get_logger(__name__)
         if FlextUtilitiesMapper._is_structlog_logger(logger):
             return logger
         msg = f"Unexpected logger type: {logger.__class__.__name__}"
