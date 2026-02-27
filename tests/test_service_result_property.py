@@ -93,7 +93,7 @@ class TestServiceResultProperty:
 
     def test_result_property_raises_on_failure(self) -> None:
         """V2: Failures raise exceptions immediately."""
-        service = FailingService(error_message="Test error")
+        service = FailingService.model_construct(error_message="Test error")
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
             _ = service.result
 
@@ -141,7 +141,7 @@ class TestServiceResultProperty:
 
     def test_v1_error_handling_with_flext_result(self) -> None:
         """V1: Error handling via FlextResult pattern."""
-        service = FailingService(error_message="Test failure")
+        service = FailingService.model_construct(error_message="Test failure")
         result = service.execute()
 
         assert isinstance(result, FlextResult)
@@ -218,7 +218,7 @@ class TestServiceResultProperty:
 
     def test_property_behavior_edge_cases(self) -> None:
         """Test property behavior edge cases."""
-        service = GetUserService(user_id="prop")
+        service = GetUserService.model_construct(user_id="prop")
 
         user1 = service.result
         user2 = service.result
@@ -241,19 +241,19 @@ class TestServiceResultProperty:
     def test_result_property_comprehensive_edge_cases(self) -> None:
         """Test comprehensive edge cases."""
         # Different service types
-        user_result = GetUserService(user_id="edge").result
+        user_result = GetUserService.model_construct(user_id="edge").result
         assert isinstance(user_result, User)
 
-        validation_result = ValidatingService(value_input="edge").result
+        validation_result = ValidatingService.model_construct(value_input="edge").result
         assert isinstance(validation_result, str)
         assert validation_result == "EDGE"
 
         # Failure edge case
         with pytest.raises(FlextExceptions.BaseError):
-            FailingService(error_message="").result
+            FailingService.model_construct(error_message="").result
 
         # Empty service operations
-        service = FailingService(error_message="fail")
+        service = FailingService.model_construct(error_message="fail")
         assert isinstance(service.execute(), FlextResult)
         with pytest.raises(FlextExceptions.BaseError):
             _ = service.result

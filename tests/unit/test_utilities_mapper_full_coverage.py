@@ -773,7 +773,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
     assert mapper.as_(1, int) == 1
     assert mapper.as_("1", int, strict=True, default=0) == 0
     assert mapper.as_("1", int) == 1
-    assert mapper.as_("pytest.approx(1.5)", float) == pytest.approx(1.5)
+    assert mapper.as_("1.5", float) == pytest.approx(1.5)
     assert mapper.as_("true", bool) is True
     assert mapper.as_("maybe", bool, default=False) is False
     assert mapper.as_(None, int, default=3) == 3

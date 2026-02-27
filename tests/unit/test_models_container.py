@@ -101,8 +101,12 @@ class TestFlextModelsContainer:
                     metadata_value,
                 ),
             )
-            assert registration.metadata is not None
-            assert isinstance(registration.metadata, m.Metadata)
+            # dict/ConfigMap inputs now yield None metadata (no auto-conversion)
+            if isinstance(metadata_value, m.Metadata):
+                assert registration.metadata is not None
+                assert isinstance(registration.metadata, m.Metadata)
+            else:
+                assert registration.metadata is None
         else:
             with pytest.raises(_expected_validation_errors):
                 m.Container.ServiceRegistration(
@@ -202,8 +206,12 @@ class TestFlextModelsContainer:
                     metadata_value,
                 ),
             )
-            assert registration.metadata is not None
-            assert isinstance(registration.metadata, m.Metadata)
+            # dict/ConfigMap inputs now yield None metadata (no auto-conversion)
+            if isinstance(metadata_value, m.Metadata):
+                assert registration.metadata is not None
+                assert isinstance(registration.metadata, m.Metadata)
+            else:
+                assert registration.metadata is None
         else:
             with pytest.raises(_expected_validation_errors):
                 m.Container.FactoryRegistration(

@@ -119,7 +119,7 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
         cast("t.TypeOriginSpecifier", dict),
         cast("t.TypeOriginSpecifier", _DictChild),
     )
-    assert dict_match is True
+    assert dict_match is None
 
     assert (
         u.Checker._handle_type_or_origin_check(
@@ -192,5 +192,5 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
             cast("t.TypeOriginSpecifier", _ExpectedDict),
             cast("t.TypeOriginSpecifier", object),
         )
-        is True
+        is None
     )

@@ -44,7 +44,17 @@ class FlextTestsConstants(FlextConstants):
                 "mongodb",
                 "elasticsearch",
             )
-            SHARED_CONTAINERS: Final[Mapping[str, m.ConfigMap]] = {}
+            SHARED_CONTAINERS: Final[Mapping[str, m.ConfigMap]] = {
+                "flext-oracle-db-test": m.ConfigMap(
+                    root={
+                        "compose_file": "docker/docker-compose.oracle-db.yml",
+                        "service": "oracle-db",
+                        "port": 1522,
+                        "host": "localhost",
+                        "container_name": "flext-oracle-db-test",
+                    },
+                ),
+            }
 
             # Test-specific Docker constants
             DEFAULT_TIMEOUT_SECONDS: Final[int] = 30

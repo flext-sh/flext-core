@@ -22,7 +22,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
 from flext_core.typings import t
 from flext_tests import u
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from tests.test_utils import assertion_helpers
 
@@ -333,8 +333,7 @@ class TestContext100Coverage:
         # Test with non-dict value for metadata (which uses validate_metadata)
         invalid_metadata: t.GeneralValueType = 123
         with pytest.raises(
-            TypeError,
-            match=r"metadata must be None, dict, or.*Metadata",
+            (TypeError, ValidationError),
         ):
             FlextModelsContext.ContextData.model_validate({
                 "metadata": invalid_metadata

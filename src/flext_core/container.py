@@ -240,9 +240,11 @@ class FlextContainer(p.DI):
                                 try:
                                     m.Container.ServiceRegistration(
                                         name=_factory_name,
-                                        service=raw_result,
+                                        service=cast(
+                                            "t.RegisterableService", raw_result
+                                        ),
                                     )
-                                    return raw_result
+                                    return cast("t.RegisterableService", raw_result)
                                 except ValidationError:
                                     msg = (
                                         f"Factory '{_factory_name}' returned unsupported type: "
@@ -302,9 +304,9 @@ class FlextContainer(p.DI):
             try:
                 m.Container.ServiceRegistration(
                     name="provided",
-                    service=provided,
+                    service=cast("t.RegisterableService", provided),
                 )
-                return provided
+                return cast("t.RegisterableService", provided)
             except ValidationError:
                 msg = "DI bridge Provide helper returned unsupported type"
                 raise TypeError(msg) from None
@@ -622,9 +624,9 @@ class FlextContainer(p.DI):
             try:
                 m.Container.ServiceRegistration(
                     name="config",
-                    service=self._config,
+                    service=cast("t.RegisterableService", self._config),
                 )
-                _ = self.register("config", self._config)
+                _ = self.register("config", cast("t.RegisterableService", self._config))
             except ValidationError:
                 pass  # Skip registration if validation fails
 
@@ -644,9 +646,11 @@ class FlextContainer(p.DI):
             try:
                 m.Container.ServiceRegistration(
                     name="context",
-                    service=self._context,
+                    service=cast("t.RegisterableService", self._context),
                 )
-                _ = self.register("context", self._context)
+                _ = self.register(
+                    "context", cast("t.RegisterableService", self._context)
+                )
             except ValidationError:
                 pass  # Skip registration if validation fails
 
@@ -655,7 +659,7 @@ class FlextContainer(p.DI):
         # Safe to instantiate without triggering container creation
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            _ = self.register("command_bus", dispatcher)
+            _ = self.register("command_bus", cast("t.RegisterableService", dispatcher))
 
     @override
     def configure(

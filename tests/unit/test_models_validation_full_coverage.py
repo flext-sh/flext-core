@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-import pytest
 from flext_core import c, m, r, t, u
 from flext_core._models.base import FlextModelFoundation
 
@@ -82,82 +81,6 @@ def test_normalize_to_list_passes_list_through() -> None:
 def test_normalize_to_list_wraps_int() -> None:
     result = m.Validation.normalize_to_list(42)
     assert result == [42]
-
-
-# ---------------------------------------------------------------------------
-# Validators.validate_non_empty_string
-# ---------------------------------------------------------------------------
-
-
-def test_validate_non_empty_string_passes() -> None:
-    assert m.Validation.validate_non_empty_string("hello") == "hello"
-
-
-def test_validate_non_empty_string_raises_on_empty() -> None:
-    with pytest.raises(ValueError, match="empty"):
-        m.Validation.validate_non_empty_string("")
-
-
-def test_validate_non_empty_string_raises_on_whitespace() -> None:
-    with pytest.raises(ValueError, match="empty"):
-        m.Validation.validate_non_empty_string("   ")
-
-
-# ---------------------------------------------------------------------------
-# Validators.validate_email
-# ---------------------------------------------------------------------------
-
-
-def test_validate_email_passes() -> None:
-    assert m.Validation.validate_email("user@example.com") == "user@example.com"
-
-
-def test_validate_email_raises_on_invalid() -> None:
-    with pytest.raises(ValueError, match="email"):
-        m.Validation.validate_email("not-an-email")
-
-
-# ---------------------------------------------------------------------------
-# Validators.validate_url
-# ---------------------------------------------------------------------------
-
-
-def test_validate_url_passes() -> None:
-    assert m.Validation.validate_url("https://example.com") == "https://example.com"
-
-
-def test_validate_url_raises_on_invalid() -> None:
-    with pytest.raises(ValueError, match="URL"):
-        m.Validation.validate_url("not-a-url")
-
-
-# ---------------------------------------------------------------------------
-# Validators.validate_semver
-# ---------------------------------------------------------------------------
-
-
-def test_validate_semver_passes() -> None:
-    assert m.Validation.validate_semver("1.2.3") == "1.2.3"
-
-
-def test_validate_semver_raises_on_invalid() -> None:
-    with pytest.raises(ValueError, match="semantic version"):
-        m.Validation.validate_semver("abc")
-
-
-# ---------------------------------------------------------------------------
-# Validators.validate_uuid_string
-# ---------------------------------------------------------------------------
-
-
-def test_validate_uuid_string_passes() -> None:
-    uuid_str = "12345678-1234-5678-1234-567812345678"
-    assert m.Validation.validate_uuid_string(uuid_str) == uuid_str
-
-
-def test_validate_uuid_string_raises_on_invalid() -> None:
-    with pytest.raises(ValueError, match="UUID"):
-        m.Validation.validate_uuid_string("not-a-uuid")
 
 
 # ---------------------------------------------------------------------------

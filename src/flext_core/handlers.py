@@ -699,7 +699,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         priority: int = c.Discovery.DEFAULT_PRIORITY,
         timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
         middleware: list[type[p.Middleware]] | None = None,
-    ) -> t.DecoratorType:
+    ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark methods as handlers for commands.
 
         Stores handler configuration as metadata on the decorated method,

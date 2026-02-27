@@ -515,19 +515,6 @@ class FlextTestsMatchers:
             contains: Legacy parameter (deprecated, use has=)
             excludes: Legacy parameter (deprecated, use lacks=)
 
-        Returns:
-            Error message from result
-
-        Raises:
-            AssertionError: If result is success or error doesn't satisfy constraints
-
-        Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated via m.Tests.Matcher.FailParams model.
-
-        Args:
-            result: FlextResult to check
-            error: Expected error substring (legacy parameter, use has=)
-            **kwargs: Parameters validated via m.Tests.Matcher.FailParams model
 
         Returns:
             Error message from result
@@ -535,6 +522,9 @@ class FlextTestsMatchers:
         Raises:
             AssertionError: If result is success or error doesn't satisfy constraints
             ValueError: If parameter validation fails (via Pydantic model)
+
+        Uses Pydantic 2 models for parameter validation and computation.
+        All parameters are validated via m.Tests.Matcher.FailParams model.
 
         """
         # Convert kwargs to validated model using FlextUtilities

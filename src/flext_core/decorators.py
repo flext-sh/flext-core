@@ -1607,7 +1607,7 @@ class FlextDecorators:
         *,
         singleton: bool = False,
         lazy: bool = True,
-    ) -> m.HandlerFactoryDecoratorConfig:
+    ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark functions as factories for DI container.
 
         Stores factory configuration as metadata on the decorated function,

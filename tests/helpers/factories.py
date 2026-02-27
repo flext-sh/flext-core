@@ -187,7 +187,7 @@ class GetUserServiceFactory:
         """Build a GetUserService instance."""
         n = next(cls._counter)
         actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
-        return GetUserService(user_id=actual_user_id)
+        return GetUserService.model_construct(user_id=actual_user_id)
 
     @classmethod
     def build_batch(cls, size: int) -> list[GetUserService]:
@@ -228,7 +228,9 @@ class ValidatingServiceFactory:
     ) -> ValidatingService:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
-        return ValidatingService(value_input=actual_value, min_length=min_length)
+        return ValidatingService.model_construct(
+            value_input=actual_value, min_length=min_length
+        )
 
     @classmethod
     def build_batch(cls, size: int) -> list[ValidatingService]:
@@ -251,7 +253,7 @@ class FailingServiceFactory:
         error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingService:
         """Build a FailingService instance."""
-        return FailingService(error_message=error_message)
+        return FailingService.model_construct(error_message=error_message)
 
     @classmethod
     def build_batch(cls, size: int) -> list[FailingService]:
@@ -269,7 +271,7 @@ class GetUserServiceAutoFactory:
         """Build a GetUserServiceAuto instance."""
         n = next(cls._counter)
         actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
-        return GetUserServiceAuto(user_id=actual_user_id)
+        return GetUserServiceAuto.model_construct(user_id=actual_user_id)
 
     @classmethod
     def build_batch(cls, size: int) -> list[GetUserServiceAuto]:
@@ -310,7 +312,9 @@ class ValidatingServiceAutoFactory:
     ) -> ValidatingServiceAuto:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
-        return ValidatingServiceAuto(value_input=actual_value, min_length=min_length)
+        return ValidatingServiceAuto.model_construct(
+            value_input=actual_value, min_length=min_length
+        )
 
     @classmethod
     def build_batch(cls, size: int) -> list[ValidatingServiceAuto]:
@@ -333,7 +337,7 @@ class FailingServiceAutoFactory:
         error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
-        return FailingServiceAuto(error_message=error_message)
+        return FailingServiceAuto.model_construct(error_message=error_message)
 
     @classmethod
     def build_batch(cls, size: int) -> list[FailingServiceAuto]:

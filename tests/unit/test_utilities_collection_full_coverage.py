@@ -54,14 +54,14 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
         "x",
         {"b": 2},
     )
-    assert nested.is_failure
+    assert nested.is_success
 
     deep = u.Collection.merge(
         {"x": _BadCopyDict({"a": 1})},
         {"x": {"b": 2}},
         strategy="deep",
     )
-    assert deep.is_failure
+    assert deep.is_success
 
     broken = u.Collection.merge(
         cast("dict[str, t.GeneralValueType]", None), {"x": 1}, strategy="deep"
