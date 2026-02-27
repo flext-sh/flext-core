@@ -1350,25 +1350,16 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                     else:
                         override_fields[key] = gv
 
-                # Call parent with **data dict (FlextService.__init__ accepts **data: t.Tests.PayloadValue)
-                # Build service data dict with only non-None values
-                # Type compatibility: t.Tests.PayloadValue is compatible with t.Tests.PayloadValue
-                # (both are from flext_core.typings, t is just an alias)
-                service_data: MutableMapping[str, t.Tests.PayloadValue] = {}
+                # FlextService.__init__() takes no arguments — call with no kwargs
+                super().__init__()
+                # Set service fields after construction
                 if name_value is not None:
-                    service_data["name"] = name_value
+                    self.name = name_value
                 if amount_value is not None:
-                    service_data["amount"] = amount_value
+                    self.amount = amount_value
                 if enabled_value is not None:
-                    service_data["enabled"] = enabled_value
-                # Call parent with **service_data unpacking
-                # BaseModel.__init__ accepts **data: t.Tests.PayloadValue
-                super().__init__(**service_data)
-                # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
-                # Initialize mutable attribute in __init__ to avoid ClassVar requirement
-                # Type narrowing: override_fields is dict[str, t.Tests.PayloadValue]
-                # but _overrides expects dict[str, t.Tests.TestResultValue]
-                # Convert to TestResultValue type
+                    self.enabled = enabled_value
+                # Set overrides
                 self._overrides = override_fields
 
             def _validate_name_not_empty(self) -> r[bool]:

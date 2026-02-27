@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from enum import StrEnum
+from enum import Enum, StrEnum
 from functools import wraps
 from types import UnionType
 from typing import (

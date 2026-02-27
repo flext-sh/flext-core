@@ -130,7 +130,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         self,
         project: str,
         verb: str,
-        index: int,
+        _index: int,
         *,
         make_args: list[str],
     ) -> r[m.CommandOutput]:
@@ -139,7 +139,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         Args:
             project: Project directory name.
             verb: Make verb to execute.
-            index: 1-based project index.
+            _index: 1-based project index.
             make_args: Additional make arguments.
 
         Returns:

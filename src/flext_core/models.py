@@ -127,19 +127,19 @@ class FlextModels:
     # =========================================================================
 
     class Command(FlextModelsCqrs.Command):
-        pass
+        """CQRS Command base."""
 
     class Query(FlextModelsCqrs.Query):
-        pass
+        """CQRS Query base."""
 
     class Event(FlextModelsCqrs.Event):
-        pass
+        """CQRS Event base."""
 
     class Bus(FlextModelsCqrs.Bus):
-        pass
+        """CQRS Bus base."""
 
     class Pagination(FlextModelsCqrs.Pagination):
-        pass
+        """Pagination model base."""
 
     # =========================================================================
     # AUTH DOMAIN MODELS

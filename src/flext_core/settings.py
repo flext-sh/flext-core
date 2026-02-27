@@ -221,7 +221,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: Any) -> Self:
+    def __new__(cls, **_kwargs: Any) -> Self:  # noqa: ANN401
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -258,7 +258,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,

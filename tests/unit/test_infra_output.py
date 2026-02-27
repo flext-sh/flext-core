@@ -55,13 +55,15 @@ class TestShouldUseColor:
 
     def test_tty_with_dumb_term_disables(self) -> None:
         stream = io.StringIO()
-        stream.isatty = lambda: True        env = {"TERM": "dumb"}
+        stream.isatty = lambda: True  # type: ignore[assignment]
+        env = {"TERM": "dumb"}
         with patch.dict("os.environ", env, clear=True):
             assert _should_use_color(stream) is False
 
     def test_tty_with_empty_term_disables(self) -> None:
         stream = io.StringIO()
-        stream.isatty = lambda: True        with patch.dict("os.environ", {"TERM": ""}, clear=True):
+        stream.isatty = lambda: True  # type: ignore[assignment]
+        with patch.dict("os.environ", {"TERM": ""}, clear=True):
             assert _should_use_color(stream) is False
 
     def test_non_tty_disables(self) -> None:
@@ -247,9 +249,11 @@ class TestModuleSingleton:
     """Tests for module-level output singleton."""
 
     def test_output_singleton_importable(self) -> None:
-        from flext_infra.output import output
+        from flext_infra.output import output  # noqa: PLC0415
+
         assert isinstance(output, InfraOutput)
 
     def test_output_writes_to_stderr_by_default(self) -> None:
-        from flext_infra.output import output
+        from flext_infra.output import output  # noqa: PLC0415
+
         assert output._stream is not None

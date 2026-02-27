@@ -160,7 +160,7 @@ def __dir__() -> list[str]:
 # to the parent module's namespace. We remove them to force __getattr__ usage.
 def _cleanup_submodule_namespace() -> None:
     """Remove submodules from namespace to force __getattr__ usage."""
-    import sys
+    import sys  # noqa: PLC0415
 
     # Get the current module
     current_module = sys.modules[__name__]

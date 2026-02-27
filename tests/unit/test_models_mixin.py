@@ -41,9 +41,9 @@ class TestOperationStats:
         stats = m.Mixin.OperationStats()
         assert stats.operation_count == 0
         assert stats.error_count == 0
-        assert stats.total_duration_ms == 0.0
-        assert stats.avg_duration_ms == 0.0
-        assert stats.success_rate == 0.0
+        assert stats.total_duration_ms == pytest.approx(0.0)
+        assert stats.avg_duration_ms == pytest.approx(0.0)
+        assert stats.success_rate == pytest.approx(0.0)
 
     def test_success_rate_computed(self) -> None:
         """success_rate should be computed from operation_count and error_count."""
@@ -53,7 +53,7 @@ class TestOperationStats:
     def test_success_rate_zero_operations(self) -> None:
         """success_rate with zero operations should be 0.0, not raise ZeroDivisionError."""
         stats = m.Mixin.OperationStats()
-        assert stats.success_rate == 0.0
+        assert stats.success_rate == pytest.approx(0.0)
 
     def test_success_rate_no_errors(self) -> None:
         """success_rate with no errors should be 1.0."""

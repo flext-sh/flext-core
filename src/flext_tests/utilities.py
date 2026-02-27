@@ -68,9 +68,7 @@ def _to_payload(value: object) -> t.Tests.PayloadValue:
         PayloadValue suitable for test assertions
 
     """
-    if value is None or isinstance(
-        value, str | int | float | bool | bytes | BaseModel
-    ):
+    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload(v) for k, v in value.items()}

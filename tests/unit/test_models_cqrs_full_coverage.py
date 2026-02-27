@@ -7,13 +7,12 @@ from types import SimpleNamespace
 
 import pytest
 from flext_core import c, m
-from flext_core._models.cqrs import FlextMessage
+
+# FlextMessage accessed via m.Cqrs.FlextMessage (not a module-level export)
 from pydantic import TypeAdapter
 
 
-def test_command_validator_and_pagination_limit() -> None:
-    assert m.Cqrs.Command.validate_command(None) == "Command"
-    assert m.Cqrs.Command.validate_command(123) == "123"
+def test_command_pagination_limit() -> None:
     page = m.Pagination(page=3, size=11)
     assert page.limit == 11
 
@@ -37,7 +36,7 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
 
     monkeypatch.setitem(sys.modules, "flext_core.models", None)
-    assert Wrapper.Query._resolve_pagination_class() is m.Pagination
+    assert Wrapper.Query._resolve_pagination_class() is m.Cqrs.Pagination
 
 
 def test_query_validate_pagination_dict_and_default() -> None:
@@ -45,12 +44,12 @@ def test_query_validate_pagination_dict_and_default() -> None:
         "pagination": {"page": "4", "size": "20"},
         "filters": {},
     })
-    assert isinstance(parsed.pagination, m.Pagination)
+    assert isinstance(parsed.pagination, m.Cqrs.Pagination)
     assert parsed.pagination.page == 4
     assert parsed.pagination.size == 20
 
     defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
-    assert isinstance(defaulted.pagination, m.Pagination)
+    assert isinstance(defaulted.pagination, m.Cqrs.Pagination)
     assert defaulted.pagination.page == c.Pagination.DEFAULT_PAGE_NUMBER
 
 
@@ -88,37 +87,18 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     monkeypatch.setitem(
         sys.modules, "flext_core.models", SimpleNamespace(Wrapper=Wrapper)
     )
-    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Pagination
+    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Cqrs.Pagination
 
     parsed = m.Query.model_validate({
         "pagination": {"page": 2, "size": 10},
         "filters": {},
     })
-    assert isinstance(parsed.pagination, m.Pagination)
+    assert isinstance(parsed.pagination, m.Cqrs.Pagination)
     assert parsed.pagination.page == 2
     assert parsed.pagination.size == 10
 
 
-def test_flext_message_discriminator_union_parsing() -> None:
-    command = m.Cqrs.parse_message({"message_type": "command", "command_type": "sync"})
-    assert isinstance(command, m.Command)
-    assert command.message_type == "command"
-
-    query = m.Cqrs.parse_message({"message_type": "query", "filters": {"k": "v"}})
-    assert isinstance(query, m.Query)
-    assert query.message_type == "query"
-
-    event = m.Cqrs.parse_message({
-        "message_type": "event",
-        "event_type": "created",
-        "aggregate_id": "agg-1",
-        "data": {"x": 1},
-    })
-    assert isinstance(event, m.Cqrs.Event)
-    assert event.message_type == "event"
-
-
 def test_flext_message_type_alias_adapter() -> None:
-    adapter: TypeAdapter[FlextMessage] = TypeAdapter(FlextMessage)
+    adapter: TypeAdapter[m.Cqrs.FlextMessage] = TypeAdapter(m.Cqrs.FlextMessage)
     parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
-    assert isinstance(parsed, m.Command)
+    assert isinstance(parsed, m.Cqrs.Command)

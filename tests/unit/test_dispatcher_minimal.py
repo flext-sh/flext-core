@@ -38,6 +38,8 @@ class ExplodingHandler:
 
 
 class AutoCommand(m.Cqrs.Command):
+    """Auto-routed command fixture."""
+
     command_type: str = "AutoRoute"
     payload: str = "auto"
 
@@ -58,6 +60,7 @@ class EventSubscriber:
     message_type = "OrderCreated"
 
     def __init__(self) -> None:
+        """Initialize received events list."""
         self.received: list[m.Cqrs.Event] = []
 
     def handle(self, event: m.Cqrs.Event) -> None:

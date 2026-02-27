@@ -31,7 +31,7 @@ class TestFailNoExceptionBackwardCompat:
     def test_fail_no_exception_backward_compat(self) -> None:
         """Verify fail() works without exception parameter (backward compat)."""
         error_msg = "Operation failed"
-        result = r[int].fail(error_msg)
+        result: r[int] = r[int].fail(error_msg)
 
         assert result.is_failure
         assert result.error == error_msg
@@ -46,7 +46,7 @@ class TestFailWithException:
         """Verify fail() carries exception when provided."""
         error_msg = "Division by zero"
         exc = ZeroDivisionError("cannot divide by zero")
-        result = r[float].fail(error_msg, exception=exc)
+        result: r[float] = r[float].fail(error_msg, exception=exc)
 
         assert result.is_failure
         assert result.error == error_msg
@@ -58,7 +58,7 @@ class TestFailWithException:
         error_msg = "Invalid input"
         error_code = "INVALID_INPUT"
         exc = ValueError("expected integer")
-        result = r[str].fail(error_msg, error_code=error_code, exception=exc)
+        result: r[str] = r[str].fail(error_msg, error_code=error_code, exception=exc)
 
         assert result.is_failure
         assert result.error == error_msg
@@ -70,7 +70,7 @@ class TestFailWithException:
         error_msg = "Validation failed"
         error_data = t.ConfigMap({"field": "email", "reason": "invalid format"})
         exc = ValueError("invalid email")
-        result = r[dict].fail(error_msg, error_data=error_data, exception=exc)  # type: ignore[type-arg]
+        result: r[dict] = r[dict].fail(error_msg, error_data=error_data, exception=exc)  # type: ignore[type-arg]
 
         assert result.is_failure
         assert result.error == error_msg
@@ -80,7 +80,7 @@ class TestFailWithException:
     def test_fail_with_none_error_and_exception(self) -> None:
         """Verify fail() converts None error to empty string, carries exception."""
         exc = RuntimeError("something went wrong")
-        result = r[int].fail(None, exception=exc)
+        result: r[int] = r[int].fail(None, exception=exc)
 
         assert result.is_failure
         assert result.error == ""
@@ -137,7 +137,7 @@ class TestSafeCarriesException:
 
         @r.safe
         def get_length(obj: object) -> int:
-            return len(obj)  # type: ignore
+            return len(obj)  # type: ignore[arg-type]
 
         result = get_length(42)
 
@@ -153,7 +153,8 @@ class TestCreateFromCallableCarriesException:
         """Verify create_from_callable() captures exception on failure."""
 
         def risky_operation() -> int:
-            raise RuntimeError("operation failed")
+            msg = "operation failed"
+            raise RuntimeError(msg)
 
         result = r[int].create_from_callable(risky_operation)
 
@@ -178,7 +179,8 @@ class TestCreateFromCallableCarriesException:
         """Verify create_from_callable() carries error_code."""
 
         def failing_operation() -> int:
-            raise ValueError("invalid value")
+            msg = "invalid value"
+            raise ValueError(msg)
 
         result = r[int].create_from_callable(
             failing_operation, error_code="INVALID_VALUE"
@@ -196,7 +198,7 @@ class TestMapPropagatesException:
         """Verify map() preserves exception from failed result."""
         exc = ValueError("original error")
         result = r[int].fail("error", exception=exc)
-        mapped = result.map(lambda x: x * 2)
+        mapped: r[int] = result.map(lambda x: x * 2)
 
         assert mapped.is_failure
         assert mapped.exception is exc
@@ -204,7 +206,7 @@ class TestMapPropagatesException:
     def test_map_success_no_exception(self) -> None:
         """Verify map() on success has no exception."""
         result = r[int].ok(5)
-        mapped = result.map(lambda x: x * 2)
+        mapped: r[int] = result.map(lambda x: x * 2)
 
         assert mapped.is_success
         assert mapped.value == 10
@@ -213,7 +215,7 @@ class TestMapPropagatesException:
     def test_map_chain_preserves_exception(self) -> None:
         """Verify exception preserved through map chain."""
         exc = RuntimeError("chain error")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         mapped = result.map(lambda x: x + 1).map(lambda x: x * 2)
 
         assert mapped.is_failure
@@ -226,7 +228,7 @@ class TestFlatMapPropagatesException:
     def test_flat_map_propagates_exception_on_failure(self) -> None:
         """Verify flat_map() preserves exception from failed result."""
         exc = TypeError("type error")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped = result.flat_map(lambda x: r[str].ok(str(x)))
 
         assert flat_mapped.is_failure
@@ -235,7 +237,7 @@ class TestFlatMapPropagatesException:
     def test_flat_map_success_no_exception(self) -> None:
         """Verify flat_map() on success has no exception."""
         result = r[int].ok(5)
-        flat_mapped = result.flat_map(lambda x: r[str].ok(str(x)))
+        flat_mapped: r[str] = result.flat_map(lambda x: r[str].ok(str(x)))
 
         assert flat_mapped.is_success
         assert flat_mapped.value == "5"
@@ -244,7 +246,7 @@ class TestFlatMapPropagatesException:
     def test_flat_map_chain_preserves_exception(self) -> None:
         """Verify exception preserved through flat_map chain."""
         exc = KeyError("missing key")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped = result.flat_map(lambda x: r[int].ok(x + 1)).flat_map(
             lambda x: r[str].ok(str(x))
         )
@@ -259,7 +261,7 @@ class TestAltPropagatesException:
     def test_alt_propagates_exception(self) -> None:
         """Verify alt() preserves exception when transforming error."""
         exc = ValueError("original")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         altered = result.alt(lambda e: f"transformed: {e}")
 
         assert altered.is_failure
@@ -268,7 +270,7 @@ class TestAltPropagatesException:
 
     def test_alt_success_no_exception(self) -> None:
         """Verify alt() on success has no exception."""
-        result = r[int].ok(42)
+        result: r[int] = r[int].ok(42)
         altered = result.alt(lambda e: f"error: {e}")
 
         assert altered.is_success
@@ -344,7 +346,7 @@ class TestFromIOResultCarriesException:
 
     def test_from_io_result_carries_exception(self) -> None:
         """Verify from_io_result() preserves exception from IOResult."""
-        from returns.io import IOSuccess, IO
+        from returns.io import IO, IOSuccess  # noqa: PLC0415
 
         result = r[int].from_io_result(IOSuccess(42))
 
@@ -357,7 +359,7 @@ class TestFromValidationCarriesException:
 
     def test_from_validation_carries_exception(self) -> None:
         """Verify from_validation() captures validation exception."""
-        from pydantic import BaseModel, ValidationError
+        from pydantic import BaseModel, ValidationError  # noqa: PLC0415
 
         class User(BaseModel):
             name: str
@@ -376,7 +378,7 @@ class TestToIOChainsException:
 
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
-        from flext_core.exceptions import e
+        from flext_core.exceptions import e  # noqa: PLC0415
 
         exc = ValueError("conversion error")
         result = r[int].fail("error", exception=exc)
@@ -416,7 +418,7 @@ class TestOkNoneGuardStillRaises:
     def test_ok_none_guard_still_raises(self) -> None:
         """Verify ok(None) raises ValueError (guard maintained)."""
         with pytest.raises(ValueError, match="Cannot create success result with None"):
-            r[int].ok(None)  # type: ignore
+            r[int].ok(None)  # type: ignore[arg-type]
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         """Verify ok() with valid value succeeds."""

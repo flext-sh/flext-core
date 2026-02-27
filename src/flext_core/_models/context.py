@@ -32,7 +32,7 @@ def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
     if v is None:
         return {}
     if isinstance(v, Mapping):
-        return {str(k): v for k, v in v.items()}  # type: ignore
+        return {str(k): v for k, v in v.items()}  # type: ignore[misc]
     if hasattr(v, "model_dump"):
         return v.model_dump()
     msg = f"Cannot normalize {type(v)} to Mapping"
@@ -55,8 +55,8 @@ def _normalize_statistics_before(v: t.Any) -> t.Any:
     return _normalize_to_mapping(v)
 
 
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.runtime import FlextRuntime  # noqa: E402
+from flext_core.typings import t  # noqa: E402
 
 
 class FlextModelsContext:

@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, cast, override
+from typing import Any, Self, TypeGuard, cast, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -217,12 +217,12 @@ class FlextContainer(p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                *_args: Any,
+                                *_args: Any,  # noqa: ANN401
                                 _factory_func_ref: Callable[[], object] | None = (
                                     factory_func_raw
                                 ),
                                 _factory_name: str = factory_name,
-                                **kwargs: Any,
+                                **kwargs: Any,  # noqa: ANN401
                             ) -> t.RegisterableService:
                                 fn_override = kwargs.get("fn")
                                 if fn_override is not None:
@@ -248,7 +248,7 @@ class FlextContainer(p.DI):
                                         f"Factory '{_factory_name}' returned unsupported type: "
                                         f"{raw_result.__class__.__name__}"
                                     )
-                                    raise TypeError(msg)
+                                    raise TypeError(msg) from None
 
                             # Register using the name from decorator config
                             _ = instance.register_factory(
@@ -307,7 +307,7 @@ class FlextContainer(p.DI):
                 return provided
             except ValidationError:
                 msg = "DI bridge Provide helper returned unsupported type"
-                raise TypeError(msg)
+                raise TypeError(msg) from None
 
         return provide_callable
 

@@ -33,7 +33,7 @@ DEFAULT_GATES = c.Gates.DEFAULT_CSV
 _REQUIRED_EXCLUDES = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
 _RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
 _MARKDOWN_RE = re.compile(
-    r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"+
+    r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"
     r"(?P<code>MD\d+)(?:/[^\s]+)?\s+(?P<msg>.*)$",
 )
 _GO_VET_RE = re.compile(
@@ -209,7 +209,8 @@ class _PyrightOutput(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    generalDiagnostics: list[_PyrightDiagnostic] = Field(        default_factory=list, description="General diagnostics list"
+    generalDiagnostics: list[_PyrightDiagnostic] = Field(  # noqa: N815
+        default_factory=list, description="General diagnostics list"
     )
 
 
@@ -252,7 +253,8 @@ class _SarifRuleDescriptor(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(description="Rule identifier")
-    shortDescription: _SarifMessageText = Field(description="Rule short description")
+    shortDescription: _SarifMessageText = Field(description="Rule short description")  # noqa: N815
+
 
 class _SarifArtifactLocation(BaseModel):
     """SARIF artifact location with URI."""
@@ -260,22 +262,24 @@ class _SarifArtifactLocation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     uri: str = Field(description="Artifact URI")
-    uriBaseId: str = Field(default="%SRCROOT%", description="URI base identifier")
+    uriBaseId: str = Field(default="%SRCROOT%", description="URI base identifier")  # noqa: N815
+
 
 class _SarifRegion(BaseModel):
     """SARIF region with start line/column."""
 
     model_config = ConfigDict(extra="forbid")
 
-    startLine: int = Field(description="Start line (1-based)")
-    startColumn: int = Field(description="Start column (1-based)")
+    startLine: int = Field(description="Start line (1-based)")  # noqa: N815
+    startColumn: int = Field(description="Start column (1-based)")  # noqa: N815
+
 
 class _SarifPhysicalLocation(BaseModel):
     """SARIF physical location combining artifact and region."""
 
     model_config = ConfigDict(extra="forbid")
 
-    artifactLocation: _SarifArtifactLocation = Field(description="Artifact location")
+    artifactLocation: _SarifArtifactLocation = Field(description="Artifact location")  # noqa: N815
     region: _SarifRegion = Field(description="Source region")
 
 
@@ -284,14 +288,15 @@ class _SarifLocation(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    physicalLocation: _SarifPhysicalLocation = Field(description="Physical location")
+    physicalLocation: _SarifPhysicalLocation = Field(description="Physical location")  # noqa: N815
+
 
 class _SarifResult(BaseModel):
     """SARIF result entry."""
 
     model_config = ConfigDict(extra="forbid")
 
-    ruleId: str = Field(description="Rule identifier")
+    ruleId: str = Field(description="Rule identifier")  # noqa: N815
     level: str = Field(description="Result level (error/warning)")
     message: _SarifMessageText = Field(description="Result message")
     locations: list[_SarifLocation] = Field(description="Result locations")
@@ -303,7 +308,7 @@ class _SarifToolDriver(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(description="Tool name")
-    informationUri: str = Field(default="", description="Tool documentation URL")
+    informationUri: str = Field(default="", description="Tool documentation URL")  # noqa: N815
     rules: list[_SarifRuleDescriptor] = Field(
         default_factory=list, description="Rule descriptors"
     )

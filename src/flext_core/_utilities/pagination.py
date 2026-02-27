@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from pydantic import BaseModel
+
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime

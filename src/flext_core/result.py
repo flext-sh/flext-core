@@ -307,10 +307,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if inner_result.is_success:
                 return FlextResult[U].ok(inner_result.value)
             result = FlextResult[U].fail(inner_result.error or "")
-            result._exception = inner_result._exception
+            result._exception = inner_result._exception  # noqa: SLF001
             return result
         result = FlextResult[U].fail(self.error or "")
-        result._exception = self._exception
+        result._exception = self._exception  # noqa: SLF001
         return result
 
     def and_then[U](
@@ -433,7 +433,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 error_code=self.error_code,
                 error_data=self.error_data,
             )
-            result._exception = self._exception
+            result._exception = self._exception  # noqa: SLF001
             return result
         return self
 
@@ -464,7 +464,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if inner_result.is_success:
                 return FlextResult[T_co].ok(inner_result.value)
             lash_result = FlextResult[T_co].fail(inner_result.error or "")
-            lash_result._exception = inner_result._exception
+            lash_result._exception = inner_result._exception  # noqa: SLF001
             return lash_result
         return self
 
@@ -679,7 +679,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                     failure_result = FlextResult[list[U]].fail(
                         result.error or "Unknown error"
                     )
-                    failure_result._exception = result._exception
+                    failure_result._exception = result._exception  # noqa: SLF001
                     return failure_result
                 results.append(result.value)
             return FlextResult[list[U]](value=results, is_success=True)
