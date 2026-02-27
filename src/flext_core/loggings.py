@@ -817,7 +817,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: t.GuardInputValue,
         **kwargs: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log trace message - Logger.Log implementation."""
         try:
             try:
@@ -830,9 +830,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     formatted_message,
                     **kwargs,
                 )
+            return r[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             # Logger internals must never raise into application flows.
             FlextLogger._report_internal_logging_failure("trace", exc)
+            return r[bool].fail(f"Trace logging failed: {exc}")
 
     @staticmethod
     def _format_log_message(
@@ -1042,7 +1045,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue | Exception,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
@@ -1054,14 +1057,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         All debug messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
+        return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
 
     def info(
         self,
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log info message - Logger.Log implementation.
 
         Business Rule: Logs an info-level message with optional context. Uses _log
@@ -1073,14 +1076,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         All info messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
+        return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
 
     def warning(
         self,
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log warning message - Logger.Log implementation.
 
         Business Rule: Logs a warning-level message with optional context. Uses _log
@@ -1092,23 +1095,23 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         identification. All warning messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
+        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
 
     def warn(
         self,
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue,
         **kw: t.GuardInputValue,
-    ) -> None:
+    ) -> r[bool]:
         """Alias for warning() - implements p.Log.StructlogLogger protocol."""
-        self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
+        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
 
     def error(
         self,
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
@@ -1120,14 +1123,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         error messages go through this method, ensuring consistent log formatting and
         context inclusion across FLEXT.
         """
-        self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
+        return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
 
     def critical(
         self,
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
@@ -1139,7 +1142,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         response. All critical messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
+        return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
 
     def _log_standard_level(
         self,
@@ -1147,7 +1150,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue | Exception,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         message = str(msg)
         filtered_args: tuple[t.GuardInputValue, ...] = tuple(
             arg
@@ -1155,7 +1158,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             # boundary: logging accepts arbitrary user args
             if not isinstance(arg, BaseException)
         )
-        _ = self._log(level, message, *filtered_args, **kw)
+        return self._log(level, message, *filtered_args, **kw)
 
     @staticmethod
     def _should_include_stack_trace() -> bool:
@@ -1217,7 +1220,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.GuardInputValue,
         *args: t.GuardInputValue,
         **kw: t.GuardInputValue | Exception,
-    ) -> None:
+    ) -> r[bool]:
         """Log exception with conditional stack trace (DEBUG only).
 
         Business Rule: Logs an exception with conditional stack trace inclusion based
@@ -1274,9 +1277,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
             if callable(error_method):
                 _ = error_method(message, *filtered_args, **context_dict.root)
+            return r[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             # Logger internals must never raise into application flows.
             FlextLogger._report_internal_logging_failure("exception", exc)
+            return r[bool].fail(f"Exception logging failed: {exc}")
 
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration

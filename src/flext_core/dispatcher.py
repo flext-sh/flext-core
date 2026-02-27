@@ -10,40 +10,30 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, Sequence
-from typing import cast, override
+import logging
+from collections.abc import Callable, MutableMapping
+from typing import cast
 
 from flext_core.constants import c
-from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
-from flext_core.service import s
 from flext_core.typings import t
 
 
-class FlextDispatcher(s[bool]):
+class FlextDispatcher:
     """Application-level dispatcher that satisfies the command bus protocol.
 
     The dispatcher exposes CQRS routing, handler registration, and execution
     with layered reliability controls for message dispatching and handler execution.
     """
 
-    @override
-    def __init__(
-        self,
-        **data: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
-    ) -> None:
+    def __init__(self) -> None:
         """Initialize dispatcher."""
-        super().__init__(**data)
+        self._logger: logging.Logger = logging.getLogger(__name__)
 
         self._handlers: MutableMapping[str, t.HandlerType] = {}
         self._auto_handlers: list[t.HandlerType] = []
         self._event_subscribers: MutableMapping[str, list[t.HandlerType]] = {}
-
-    @override
-    def execute(self) -> r[bool]:
-        """Execute service - satisfies s abstract method."""
-        return r[bool].ok(value=True)
 
     def register_handler(
         self,
@@ -76,7 +66,7 @@ class FlextDispatcher(s[bool]):
             route_name = self._resolve_route(has_event_type)
         elif callable(has_can_handle):
             self._auto_handlers.append(handler)
-            self.logger.info(f"Registered auto-discovery handler: {handler}")
+            self._logger.info(f"Registered auto-discovery handler: {handler}")
             return r[bool].ok(value=True)
         else:
             return r[bool].fail(
@@ -87,10 +77,10 @@ class FlextDispatcher(s[bool]):
             if route_name not in self._event_subscribers:
                 self._event_subscribers[route_name] = []
             self._event_subscribers[route_name].append(handler)
-            self.logger.info(f"Registered event subscriber for {route_name}")
+            self._logger.info(f"Registered event subscriber for {route_name}")
         else:
             self._handlers[route_name] = handler
-            self.logger.info(f"Registered handler for {route_name}")
+            self._logger.info(f"Registered handler for {route_name}")
 
         return r[bool].ok(value=True)
 
@@ -184,6 +174,7 @@ class FlextDispatcher(s[bool]):
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables.
         """
+        result_raw: t.PayloadValue | None = None
         try:
             if hasattr(handler, "dispatch_message"):
                 result_raw = handler.dispatch_message(message)
@@ -215,7 +206,7 @@ class FlextDispatcher(s[bool]):
             return r[t.PayloadValue].ok(cast("t.PayloadValue", result_raw))
 
         except Exception as exc:
-            self.logger.exception(f"Handler execution failed for {route_name}")
+            self._logger.exception(f"Handler execution failed for {route_name}")
             return r[t.PayloadValue].fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
