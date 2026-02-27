@@ -186,12 +186,13 @@ def test_handler_attribute_discovery(dispatcher: FlextDispatcher) -> None:
 
 
 def test_callable_registration_with_attribute(dispatcher: FlextDispatcher) -> None:
-    """Verify that functions with attributes are accepted."""
+    """Verify that self-describing functions with message_type attribute are accepted."""
 
     def func_handler(msg: SampleCommand) -> str:
         return "func:ok"
 
-    setattr(func_handler, "message_type", SampleCommand)
+    # Self-describing handler via attribute (set before registration)
+    func_handler.message_type = SampleCommand  # type: ignore[attr-defined]
 
     res = dispatcher.register_handler(cast("t.HandlerType", func_handler))
     assert res.is_success
@@ -213,7 +214,8 @@ def test_exception_handling_in_dispatch(dispatcher: FlextDispatcher) -> None:
         msg = "broken"
         raise ValueError(msg)
 
-    setattr(breaking_handler, "message_type", SampleCommand)
+    # Self-describing handler via attribute (set before registration)
+    breaking_handler.message_type = SampleCommand  # type: ignore[attr-defined]
     dispatcher.register_handler(cast("t.HandlerType", breaking_handler))
 
     res = dispatcher.dispatch(SampleCommand(payload="x"))

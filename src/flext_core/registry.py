@@ -594,15 +594,18 @@ class FlextRegistry(FlextService[bool]):
                     dispatcher_handler = FlextRegistry._to_dispatcher_handler(
                         handler_for_dispatch,
                     )
-                    # Assign the type properly when handling explicit explicit type
-                    # since FlextDispatcher now prefers self-describing handlers mostly.
+                    # Handlers MUST self-describe via p.Handler protocol
                     if (
                         not getattr(dispatcher_handler, "message_type", None)
                         and not getattr(dispatcher_handler, "event_type", None)
                         and not getattr(dispatcher_handler, "query_type", None)
                         and not getattr(dispatcher_handler, "command_type", None)
                     ):
-                        setattr(dispatcher_handler, "message_type", message_type)
+                        handler_name = getattr(dispatcher_handler, '__name__', dispatcher_handler.__class__.__name__)
+                        raise TypeError(
+                            f"Handler {handler_name} must implement p.Handler with self-describing "
+                            f"message_type, event_type, query_type, or command_type attribute"
+                        )
 
                     raw_result = self._dispatcher.register_handler(
                         dispatcher_handler,
@@ -620,9 +623,13 @@ class FlextRegistry(FlextService[bool]):
                             )
                         )
                 else:
-                    # Protocol path: set message_type on handler for route discovery
+                    # Protocol path: handler must self-describe
                     if not getattr(handler_for_dispatch, "message_type", None):
-                        setattr(handler_for_dispatch, "message_type", message_type)
+                        handler_name = getattr(handler_for_dispatch, '__name__', handler_for_dispatch.__class__.__name__)
+                        raise TypeError(
+                            f"Handler {handler_name} must implement p.Handler with self-describing "
+                            f"message_type attribute for protocol-based registration"
+                        )
                     protocol_result = self._dispatcher.register_handler(
                         handler_for_dispatch,
                     )
