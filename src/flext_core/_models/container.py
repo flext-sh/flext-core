@@ -50,18 +50,17 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
-    attrs: Mapping[str, t.MetadataAttributeValue] = {
+    {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in (
             value.root.items() if isinstance(value, t.ConfigMap) else value.items()
         )
     }
-    attributes: Mapping[str, t.MetadataAttributeValue] = {}
+    return None
 
 
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
-
 
     class ServiceRegistration(BaseModel):
         """Model for service registry entries.
@@ -116,7 +115,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_service_type(cls, v: object) -> object:
             """Validate service is a RegisterableService type.
-            
+
             RegisterableService includes: str, int, float, bool, datetime, None,
             BaseModel, Path, Sequence, Mapping, callables, and objects with __dict__.
             """
@@ -140,9 +139,9 @@ class FlextModelsContainer:
             if hasattr(v, "bind") and hasattr(v, "info"):
                 return v
             # Reject invalid types
-            raise ValueError(
-                f"Service must be a RegisterableService type, got {type(v).__name__}"
-            )
+            msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
+            raise ValueError(msg)
+
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
 

@@ -1398,7 +1398,14 @@ class FlextRuntime:
         - Use p.Result[T] in function signatures to accept both types
         """
 
-        __slots__ = ("_error", "_error_code", "_error_data", "_is_success", "_value", "_exception")
+        __slots__ = (
+            "_error",
+            "_error_code",
+            "_error_data",
+            "_exception",
+            "_is_success",
+            "_value",
+        )
 
         def __init__(
             self,

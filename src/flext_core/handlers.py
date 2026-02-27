@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from abc import abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from types import ModuleType

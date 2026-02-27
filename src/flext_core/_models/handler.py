@@ -69,7 +69,8 @@ class FlextModelsHandler:
                 return self
             if hasattr(handler, "handle") or hasattr(handler, "execute"):
                 return self
-            raise ValueError("Handler must be callable or have handle()/execute() method")
+            msg = "Handler must be callable or have handle()/execute() method"
+            raise ValueError(msg)
 
     class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of a handler registration operation.

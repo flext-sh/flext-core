@@ -59,9 +59,9 @@ class FlextModelFoundation:
         _metadata_map_adapter: ClassVar[
             TypeAdapter[dict[str, t.MetadataAttributeValue]] | None
         ] = None
-        _config_adapter: ClassVar[
-            TypeAdapter[dict[str, t.GuardInputValue]] | None
-        ] = None
+        _config_adapter: ClassVar[TypeAdapter[dict[str, t.GuardInputValue]] | None] = (
+            None
+        )
 
         @classmethod
         def tags_adapter(cls) -> TypeAdapter[list[str]]:
@@ -261,9 +261,7 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: Mapping[str, t.MetadataAttributeValue] = Field(
-            default_factory=dict
-        )
+        attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
         metadata_value: t.MetadataScalarValue = Field(
             default=None, description="Scalar metadata value."
         )
@@ -306,9 +304,8 @@ class FlextModelFoundation:
             """Validate metadata value is a scalar type."""
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
-            raise ValueError(
-                f"Metadata value must be scalar, got {type(v).__name__}"
-            )
+            msg = f"Metadata value must be scalar, got {type(v).__name__}"
+            raise ValueError(msg)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # DISCRIMINATED UNIONS

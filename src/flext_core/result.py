@@ -391,7 +391,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 error_msg = str(raw)
             else:
                 error_msg = str(e)
-            return FlextResult[T_Model].fail(f"Validation failed: {error_msg}", exception=e)
+            return FlextResult[T_Model].fail(
+                f"Validation failed: {error_msg}", exception=e
+            )
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.
@@ -674,7 +676,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             for item in items:
                 result = func(item)
                 if result.is_failure:
-                    failure_result = FlextResult[list[U]].fail(result.error or "Unknown error")
+                    failure_result = FlextResult[list[U]].fail(
+                        result.error or "Unknown error"
+                    )
                     failure_result._exception = result._exception
                     return failure_result
                 results.append(result.value)

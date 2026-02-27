@@ -473,11 +473,11 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
     assert captured["level"] == "DEBUG"
 
     class _StructlogLogger(_FakeBindable):
-        def debug(self, *_args: object, **_kwargs: object) -> None:
+        def debug(self, *_args: object, **_kwargs: object) -> r[bool]:
             msg = "trace"
             raise KeyError(msg)
 
-        def error(self, *_args: object, **_kwargs: object) -> None:
+        def error(self, *_args: object, **_kwargs: object) -> r[bool]:
             msg = "exception"
             raise RuntimeError(msg)
 

@@ -20,11 +20,11 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core._models.decorators import FlextModelsDecorators
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
-from flext_core._models.decorators import FlextModelsDecorators
 from flext_core.protocols import p
 from flext_core.typings import t
 

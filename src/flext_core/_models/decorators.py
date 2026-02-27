@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
 
 
 class FlextModelsDecorators:

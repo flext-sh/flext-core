@@ -656,7 +656,6 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.CANCELLED,
         ]
 
-
         type ProcessingPhaseLiteral = Literal[
             FlextConstants.Cqrs.ProcessingPhase.PREPARE,
             FlextConstants.Cqrs.ProcessingPhase.EXECUTE,
@@ -1004,7 +1003,6 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.FAILED,
             FlextConstants.Cqrs.CommonStatus.COMPENSATING,
         ]
-
 
         class ProcessingPhase(StrEnum):
             """CQRS processing phases enumeration."""

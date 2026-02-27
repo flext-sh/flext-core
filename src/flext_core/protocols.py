@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from flext_core.result import r
 
 
-
 # =============================================================================
 # PROTOCOL DETECTION AND VALIDATION HELPERS
 # =============================================================================
@@ -902,6 +901,7 @@ class FlextProtocols:
 
         # BaseProtocol already provides _protocol_name() -> str
         # No additional methods needed — BaseProtocol is sufficient
+
     @runtime_checkable
     class Registry(BaseProtocol, Protocol):
         """Handler registry protocol for CQRS handler registration.
@@ -924,7 +924,9 @@ class FlextProtocols:
 
         def register_handlers(
             self,
-            handlers: Sequence[FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]],
+            handlers: Sequence[
+                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+            ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
 
@@ -935,7 +937,10 @@ class FlextProtocols:
 
         def register_bindings(
             self,
-            bindings: Mapping[t.MessageTypeSpecifier, FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]],
+            bindings: Mapping[
+                t.MessageTypeSpecifier,
+                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue],
+            ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
 
@@ -981,6 +986,7 @@ class FlextProtocols:
 
             Returns:
                 List of tuples (method_name, config) sorted by priority
+
             """
             ...
 
@@ -998,6 +1004,7 @@ class FlextProtocols:
 
             Returns:
                 List of tuples (function_name, function, config) sorted by priority
+
             """
             ...
 
@@ -1013,6 +1020,7 @@ class FlextProtocols:
 
             Returns:
                 True if class has at least one handler, False otherwise
+
             """
             ...
 
@@ -1028,6 +1036,7 @@ class FlextProtocols:
 
             Returns:
                 True if module has at least one handler, False otherwise
+
             """
             ...
 
@@ -1097,6 +1106,7 @@ class FlextProtocols:
 
             Returns:
                 Result[bool]: Success result
+
             """
             ...
 
@@ -1105,6 +1115,7 @@ class FlextProtocols:
 
             Returns:
                 Result[ConfigMap]: Success result with metrics collection
+
             """
             ...
 
@@ -1127,6 +1138,7 @@ class FlextProtocols:
 
             Returns:
                 Result[bool]: Success result
+
             """
             ...
 
@@ -1135,6 +1147,7 @@ class FlextProtocols:
 
             Returns:
                 Result[Mapping]: Success result with popped context or empty dict
+
             """
             ...
 
@@ -1143,6 +1156,7 @@ class FlextProtocols:
 
             Returns:
                 ExecutionContext | None: Current context or None if stack is empty
+
             """
             ...
 
@@ -1388,6 +1402,7 @@ class FlextProtocols:
 
             # Expands to:
             # my_function = FlextDecorators.log_operation("my_op")(my_function)
+
         """
 
         def __call__(
@@ -1401,8 +1416,10 @@ class FlextProtocols:
 
             Returns:
                 Wrapped function with same signature and return type
+
             """
             ...
+
     # =========================================================================
     # SPECIALIZED: Specialized Domain Protocols
     # =========================================================================

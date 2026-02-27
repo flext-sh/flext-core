@@ -91,24 +91,16 @@ class FlextGenericModels:
             uptime_seconds: float | None = Field(
                 default=None, description="Uptime in seconds"
             )
-            start_time: datetime | None = Field(
-                default=None, description="Start time"
-            )
+            start_time: datetime | None = Field(default=None, description="Start time")
             last_health_check: datetime | None = Field(
                 default=None, description="Last health check"
             )
-            health_status: str = Field(
-                default="unknown", description="Health status"
-            )
+            health_status: str = Field(default="unknown", description="Health status")
             port: int | None = Field(default=None, description="Port")
             host: str | None = Field(default=None, description="Host")
             pid: int | None = Field(default=None, description="Process ID")
-            memory_usage_mb: float | None = Field(
-                default=None, description="Memory MB"
-            )
-            cpu_usage_percent: float | None = Field(
-                default=None, description="CPU %"
-            )
+            memory_usage_mb: float | None = Field(default=None, description="Memory MB")
+            cpu_usage_percent: float | None = Field(default=None, description="CPU %")
             metadata: t.Dict = Field(
                 default_factory=t.Dict, description="Service metadata"
             )
@@ -146,28 +138,20 @@ class FlextGenericModels:
             """
 
             healthy: bool = Field(default=True, description="Overall health")
-            checks: t.Dict = Field(
-                default_factory=t.Dict, description="Check results"
-            )
-            details: t.Dict = Field(
-                default_factory=t.Dict, description="Check details"
-            )
+            checks: t.Dict = Field(default_factory=t.Dict, description="Check results")
+            details: t.Dict = Field(default_factory=t.Dict, description="Check details")
             checked_at: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
                 description="Check timestamp",
             )
-            service_name: str | None = Field(
-                default=None, description="Service name"
-            )
+            service_name: str | None = Field(default=None, description="Service name")
             service_version: str | None = Field(
                 default=None, description="Service version"
             )
             duration_ms: float | None = Field(
                 default=None, description="Check duration ms"
             )
-            environment: str | None = Field(
-                default=None, description="Environment"
-            )
+            environment: str | None = Field(default=None, description="Environment")
             metadata: t.Dict = Field(
                 default_factory=t.Dict, description="Health metadata"
             )
@@ -200,18 +184,14 @@ class FlextGenericModels:
             skipped_count: int = Field(default=0, description="Skipped")
             warning_count: int = Field(default=0, description="Warnings")
             retry_count: int = Field(default=0, description="Retries")
-            start_time: datetime | None = Field(
-                default=None, description="Start time"
-            )
+            start_time: datetime | None = Field(default=None, description="Start time")
             last_update: datetime | None = Field(
                 default=None, description="Last update"
             )
             estimated_total: int | None = Field(
                 default=None, description="Estimated total"
             )
-            current_item: str | None = Field(
-                default=None, description="Current item"
-            )
+            current_item: str | None = Field(default=None, description="Current item")
             operation_name: str | None = Field(
                 default=None, description="Operation name"
             )
@@ -277,18 +257,10 @@ class FlextGenericModels:
             skipped: list[t.GuardInputValue] = Field(
                 default_factory=list, description="Skipped items"
             )
-            start_time: datetime | None = Field(
-                default=None, description="Start time"
-            )
-            end_time: datetime | None = Field(
-                default=None, description="End time"
-            )
-            source_format: str | None = Field(
-                default=None, description="Source format"
-            )
-            target_format: str | None = Field(
-                default=None, description="Target format"
-            )
+            start_time: datetime | None = Field(default=None, description="Start time")
+            end_time: datetime | None = Field(default=None, description="End time")
+            source_format: str | None = Field(default=None, description="Source format")
+            target_format: str | None = Field(default=None, description="Target format")
             total_input_count: int | None = Field(
                 default=None, description="Total input count"
             )
@@ -308,9 +280,7 @@ class FlextGenericModels:
                 items.append(item)
                 self.metadata.root[key] = items
 
-            def _upsert_skip_reason(
-                self, item: t.ConfigMapValue, reason: str
-            ) -> None:
+            def _upsert_skip_reason(self, item: t.ConfigMapValue, reason: str) -> None:
                 raw_reasons = self.metadata.root.get("skip_reasons", {})
                 reasons: dict[str, str] = {}
                 if isinstance(raw_reasons, Mapping):

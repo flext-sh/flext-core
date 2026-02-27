@@ -829,17 +829,18 @@ class FlextContainer(p.DI):
         try:
             if hasattr(self._di_services, name):
                 return r[bool].fail(f"Factory '{name}' already registered")
-            
+
             def normalized_factory() -> t.RegisterableService:
                 raw_result = factory()
                 narrowed = FlextContainer._narrow_factory_result(raw_result)
                 if not self._is_registerable_service(narrowed):
-                    raise ValueError(
+                    msg = (
                         f"Factory '{name}' returned value that does not satisfy "
                         f"RegisterableService protocol. Expected PayloadValue, protocol, or callable."
                     )
+                    raise ValueError(msg)
                 return narrowed
-            
+
             registration = m.Container.FactoryRegistration(
                 name=name,
                 factory=normalized_factory,

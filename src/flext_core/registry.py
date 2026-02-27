@@ -308,7 +308,6 @@ class FlextRegistry(FlextService[bool]):
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> r[m.HandlerRegistrationDetails]: ...
 
-
     def register_handler(
         self,
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
@@ -374,7 +373,9 @@ class FlextRegistry(FlextService[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
-        handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = handler
+        handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = (
+            handler
+        )
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
                 handler_for_dispatch,
@@ -576,7 +577,9 @@ class FlextRegistry(FlextService[bool]):
                         summary,
                     )
                     continue
-                handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = handler
+                handler_for_dispatch: p.Handler[
+                    t.GeneralValueType, t.GeneralValueType
+                ] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
                     dispatcher_handler = FlextRegistry._to_dispatcher_handler(
@@ -873,7 +876,7 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType] | p.Handler[t.GeneralValueType, t.GeneralValueType],
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = (

@@ -35,7 +35,8 @@ def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
         return {str(k): v for k, v in v.items()}  # type: ignore
     if hasattr(v, "model_dump"):
         return v.model_dump()
-    raise ValueError(f"Cannot normalize {type(v)} to Mapping")
+    msg = f"Cannot normalize {type(v)} to Mapping"
+    raise ValueError(msg)
 
 
 def _normalize_metadata_before(v: t.Any) -> t.Any:
@@ -756,7 +757,8 @@ class FlextModelsContext:
 
             if hasattr(context_field, "get") and hasattr(context_field, "set"):
                 return self
-            raise ValueError("Context must have get() and set() methods")
+            msg = "Context must have get() and set() methods"
+            raise ValueError(msg)
 
     class ContextDomainData(BaseModel):
         """Domain-specific context data storage."""
