@@ -7,8 +7,6 @@ from types import SimpleNamespace
 
 import pytest
 from flext_core import c, m
-
-# FlextMessage accessed via m.Cqrs.FlextMessage (not a module-level export)
 from pydantic import TypeAdapter
 
 
@@ -31,7 +29,7 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     Wrapper.Query.__qualname__ = "Wrapper.Query"
 
     monkeypatch.setitem(
-        sys.modules, "flext_core.models", SimpleNamespace(Wrapper=Wrapper)
+        sys.modules, "flext_core.models", SimpleNamespace(Wrapper=Wrapper),
     )
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
 
@@ -85,7 +83,7 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     Wrapper.Inner.Query.__module__ = "flext_core.models"
     Wrapper.Inner.Query.__qualname__ = "Wrapper.Inner.Query"
     monkeypatch.setitem(
-        sys.modules, "flext_core.models", SimpleNamespace(Wrapper=Wrapper)
+        sys.modules, "flext_core.models", SimpleNamespace(Wrapper=Wrapper),
     )
     assert Wrapper.Inner.Query._resolve_pagination_class() is m.Cqrs.Pagination
 

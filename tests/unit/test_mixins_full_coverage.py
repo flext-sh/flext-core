@@ -62,7 +62,7 @@ def test_mixins_result_and_model_conversion_paths(
     assert x.to_dict(conf) is conf
 
     monkeypatch.setattr(
-        FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1)
+        FlextRuntime, "normalize_to_general_value", staticmethod(lambda _v: 1),
     )
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
@@ -140,7 +140,7 @@ def test_mixins_container_registration_and_logger_paths(
             return r[bool].fail("already registered")
 
     monkeypatch.setattr(
-        _Service, "container", property(lambda _self: _AlreadyContainer())
+        _Service, "container", property(lambda _self: _AlreadyContainer()),
     )
     assert service._register_in_container("svc").is_success
 
@@ -155,7 +155,7 @@ def test_mixins_container_registration_and_logger_paths(
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
         staticmethod(
-            lambda: _ContainerForLogger(True, logger=SimpleNamespace(name="l"))
+            lambda: _ContainerForLogger(True, logger=SimpleNamespace(name="l")),
         ),
     )
     logger_from_di = _Service._get_or_create_logger()
@@ -188,8 +188,6 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
         @classmethod
         def _get_or_create_logger(cls) -> FlextLogger:
             return cast("FlextLogger", cast("object", _LocalLogger()))
-
-        pass
 
     service = _Service()
     service._log_config_once(m.ConfigMap(root={"k": "v"}), message="cfg")
@@ -236,13 +234,13 @@ def test_mixins_validation_and_protocol_paths() -> None:
             cast(
                 "t.ConfigMapValue",
                 cast("object", SimpleNamespace(handle=lambda *_a, **_k: None)),
-            )
+            ),
         )
         is False
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service[t.GeneralValueType]", cast("object", SimpleNamespace()))
+            cast("p.Service[t.GeneralValueType]", cast("object", SimpleNamespace())),
         )
         is True
     )
@@ -269,7 +267,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
         pass
 
     missing = x.ProtocolValidation.validate_processor_protocol(
-        cast("p.HasModelDump", cast("object", _ModelDumpOnly()))
+        cast("p.HasModelDump", cast("object", _ModelDumpOnly())),
     )
     bad_callable = x.ProtocolValidation.validate_processor_protocol(
         cast(

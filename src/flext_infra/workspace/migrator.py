@@ -209,7 +209,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         if self._sha256_text(current) == self._sha256_text(generated.value):
             if dry_run:
                 return r[str].ok(
-                    self._action_text("base.mk already up-to-date", dry_run=True)
+                    self._action_text("base.mk already up-to-date", dry_run=True),
                 )
             return r[str].ok("")
 
@@ -223,7 +223,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
             self._action_text(
                 "base.mk regenerated via BaseMkGenerator",
                 dry_run=dry_run,
-            )
+            ),
         )
 
     def _migrate_makefile(self, project_root: Path, *, dry_run: bool) -> r[str]:
@@ -245,7 +245,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         if updated == original:
             if dry_run:
                 return r[str].ok(
-                    self._action_text("Makefile already migrated", dry_run=True)
+                    self._action_text("Makefile already migrated", dry_run=True),
                 )
             return r[str].ok("")
 
@@ -256,7 +256,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
                 return r[str].fail(f"Makefile update failed: {exc}")
 
         return r[str].ok(
-            self._action_text("Makefile scripts/ references migrated", dry_run=dry_run)
+            self._action_text("Makefile scripts/ references migrated", dry_run=dry_run),
         )
 
     def _migrate_pyproject(
@@ -270,7 +270,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         if not pyproject_path.exists():
             if dry_run:
                 return r[str].ok(
-                    self._action_text("pyproject.toml not found", dry_run=True)
+                    self._action_text("pyproject.toml not found", dry_run=True),
                 )
             return r[str].ok("")
         if project_name == "flext-core":
@@ -279,13 +279,13 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
                     self._action_text(
                         "pyproject.toml dependency unchanged for flext-core",
                         dry_run=True,
-                    )
+                    ),
                 )
             return r[str].ok("")
 
         try:
             document = tomlkit.parse(
-                pyproject_path.read_text(encoding=c.Encoding.DEFAULT)
+                pyproject_path.read_text(encoding=c.Encoding.DEFAULT),
             )
         except (ParseError, OSError) as exc:
             return r[str].fail(f"pyproject parse failed: {exc}")
@@ -296,7 +296,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
                     self._action_text(
                         "pyproject.toml already includes flext-core dependency",
                         dry_run=True,
-                    )
+                    ),
                 )
             return r[str].ok("")
 
@@ -322,7 +322,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
             self._action_text(
                 "pyproject.toml adds flext-core dependency",
                 dry_run=dry_run,
-            )
+            ),
         )
 
     def _migrate_gitignore(self, project_root: Path, *, dry_run: bool) -> r[str]:
@@ -352,7 +352,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         if not missing and len(filtered) == len(existing_lines):
             if dry_run:
                 return r[str].ok(
-                    self._action_text(".gitignore already normalized", dry_run=True)
+                    self._action_text(".gitignore already normalized", dry_run=True),
                 )
             return r[str].ok("")
 
@@ -361,7 +361,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
             if next_lines and next_lines[-1].strip():
                 next_lines.append("")
             next_lines.append(
-                "# --- workspace-migrate: required ignores (auto-managed) ---"
+                "# --- workspace-migrate: required ignores (auto-managed) ---",
             )
             next_lines.extend(missing)
 
@@ -376,7 +376,7 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
             self._action_text(
                 ".gitignore cleaned from scripts/ and normalized",
                 dry_run=dry_run,
-            )
+            ),
         )
 
     @staticmethod

@@ -25,8 +25,6 @@ from typing import TypeVar, cast, get_origin
 
 import pytest
 from flext_core import FlextResult, h, u
-
-# mypy: disable-error-code=arg-type
 from flext_core.typings import t
 
 T = TypeVar("T")

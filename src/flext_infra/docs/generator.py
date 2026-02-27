@@ -47,7 +47,7 @@ class GenerateReport(BaseModel):
     applied: bool = Field(default=False, description="Whether generation was applied.")
     source: str = Field(..., description="Source of generated content.")
     files: list[GeneratedFile] = Field(
-        default_factory=list, description="List of generated files."
+        default_factory=list, description="List of generated files.",
     )
 
 
@@ -109,7 +109,7 @@ class DocGenerator:
             source = "root-generated-artifacts"
         else:
             files = self._generate_project_guides(
-                scope=scope, workspace_root=workspace_root, apply=apply
+                scope=scope, workspace_root=workspace_root, apply=apply,
             )
             files.extend(self._generate_project_mkdocs(scope=scope, apply=apply))
             source = "workspace-docs-guides"
@@ -164,23 +164,23 @@ class DocGenerator:
     ) -> list[GeneratedFile]:
         """Generate placeholder docs at the workspace root."""
         changelog = self._update_toc(
-            "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n"
+            "# Changelog\n\nThis file is managed by `make docs DOCS_PHASE=generate`.\n",
         )
         release = self._update_toc(
-            "# Latest Release\n\nNo tagged release notes were generated yet.\n"
+            "# Latest Release\n\nNo tagged release notes were generated yet.\n",
         )
         roadmap = self._update_toc(
-            "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n"
+            "# Roadmap\n\nRoadmap updates are generated from docs validation outputs.\n",
         )
         return [
             self._write_if_needed(
-                scope.path / "docs/CHANGELOG.md", changelog, apply=apply
+                scope.path / "docs/CHANGELOG.md", changelog, apply=apply,
             ),
             self._write_if_needed(
-                scope.path / "docs/releases/latest.md", release, apply=apply
+                scope.path / "docs/releases/latest.md", release, apply=apply,
             ),
             self._write_if_needed(
-                scope.path / "docs/roadmap/index.md", roadmap, apply=apply
+                scope.path / "docs/roadmap/index.md", roadmap, apply=apply,
             ),
         ]
 
@@ -204,8 +204,8 @@ class DocGenerator:
             )
             files.append(
                 self._write_if_needed(
-                    scope.path / "docs/guides" / source.name, rendered, apply=apply
-                )
+                    scope.path / "docs/guides" / source.name, rendered, apply=apply,
+                ),
             )
         return files
 

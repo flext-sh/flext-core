@@ -10,7 +10,7 @@ import pytest
 from flext_core import c, m, r, t, u
 
 settings_models = __import__(
-    "flext_core._models.settings", fromlist=["FlextModelsConfig"]
+    "flext_core._models.settings", fromlist=["FlextModelsConfig"],
 )
 FlextModelsConfig = settings_models.FlextModelsConfig
 
@@ -29,7 +29,7 @@ def test_models_settings_branch_paths() -> None:
 
     with pytest.raises(ValueError, match="max_delay_seconds"):
         FlextModelsConfig.RetryConfiguration(
-            initial_delay_seconds=2.0, max_delay_seconds=1.0
+            initial_delay_seconds=2.0, max_delay_seconds=1.0,
         )
 
     with pytest.raises(TypeError, match="Validator must be callable"):

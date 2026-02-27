@@ -54,12 +54,12 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     assert proxy.get() == "def"
 
     FlextModelsContext.StructlogProxyContextVar.reset(
-        FlextModelsContext.StructlogProxyToken(key="proxy_key", previous_value=None)
+        FlextModelsContext.StructlogProxyToken(key="proxy_key", previous_value=None),
     )
     FlextModelsContext.StructlogProxyContextVar.reset(
         FlextModelsContext.StructlogProxyToken(
-            key="proxy_key", previous_value="restored"
-        )
+            key="proxy_key", previous_value="restored",
+        ),
     )
     assert proxy.get() == "restored"
 
@@ -81,18 +81,18 @@ def test_context_data_normalize_and_json_checks() -> None:
     assert isinstance(normalized, dict)
 
     FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.GeneralValueType", {"k": [1, "x"]})
+        cast("t.GeneralValueType", {"k": [1, "x"]}),
     )
 
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.GeneralValueType", {"bad": object()})
+            cast("t.GeneralValueType", {"bad": object()}),
         )
 
     obj = object()
     assert (
         FlextModelsContext.ContextData.normalize_to_general_value(
-            cast("t.GeneralValueType", obj)
+            cast("t.GeneralValueType", obj),
         )
         is obj
     )
@@ -104,7 +104,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
             cast(
                 "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
                 cast("object", 123),
-            )
+            ),
         )
 
     with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
@@ -112,19 +112,19 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
             cast(
                 "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
-            )
+            ),
         )
 
     metadata_input = FlextModelFoundation.Metadata(attributes={"a": 1})
     assert FlextModelsContext.ContextData.validate_dict_serializable(
-        metadata_input
+        metadata_input,
     ) == {"a": 1}
 
     class _GoodModel(BaseModel):
         b: int = 2
 
     assert FlextModelsContext.ContextData.validate_dict_serializable(_GoodModel()) == {
-        "b": 2
+        "b": 2,
     }
 
 
@@ -133,7 +133,7 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
 
     as_mapping = _MappingLike({"k": "v"})
     assert FlextModelsContext.ContextData.validate_dict_serializable(as_mapping) == {
-        "k": "v"
+        "k": "v",
     }
 
 
@@ -157,11 +157,11 @@ def test_context_data_validator_forces_non_dict_normalized_branch(
 
 def test_context_export_serializable_and_validators() -> None:
     FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.GeneralValueType", {"k": [1, True]})
+        cast("t.GeneralValueType", {"k": [1, True]}),
     )
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.GeneralValueType", {"x": object()})
+            cast("t.GeneralValueType", {"x": object()}),
         )
 
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
@@ -169,7 +169,7 @@ def test_context_export_serializable_and_validators() -> None:
             cast(
                 "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
-            )
+            ),
         )
 
     assert FlextModelsContext.ContextExport.validate_dict_serializable(None) == {}
@@ -177,12 +177,12 @@ def test_context_export_serializable_and_validators() -> None:
 
 def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
     assert FlextModelsContext.ContextExport.validate_dict_serializable({"a": 1}) == {
-        "a": 1
+        "a": 1,
     }
 
     as_mapping = _MappingLike({"k": "v"})
     assert FlextModelsContext.ContextExport.validate_dict_serializable(as_mapping) == {
-        "k": "v"
+        "k": "v",
     }
 
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
@@ -190,19 +190,19 @@ def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
             cast(
                 "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
                 cast("object", 123),
-            )
+            ),
         )
 
     metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})
     assert FlextModelsContext.ContextExport.validate_dict_serializable(
-        metadata_input
+        metadata_input,
     ) == {"m": 3}
 
     class _GoodExportModel(BaseModel):
         c: int = 4
 
     assert FlextModelsContext.ContextExport.validate_dict_serializable(
-        _GoodExportModel()
+        _GoodExportModel(),
     ) == {"c": 4}
 
     monkeypatch = pytest.MonkeyPatch()

@@ -94,7 +94,7 @@ class RailwayTestCase:
 
         # Start with first user - explicit type annotation for union type
         user_result: FlextResult[User] = _make(
-            GetUserService, user_id=self.user_ids[0]
+            GetUserService, user_id=self.user_ids[0],
         ).execute()
         result: FlextResult[User | str | EmailResponse] = cast(
             "FlextResult[User | str | EmailResponse]",
@@ -151,7 +151,7 @@ class RailwayTestCase:
                         SendEmailService,
                         to=email_to,
                         subject="Test",
-                    )
+                    ),
                 )
                 user = response_obj.status
 
@@ -284,15 +284,15 @@ class MultiOperationService(FlextService[m.ConfigMap]):
         match self.operation:
             case "double":
                 return FlextResult.ok(
-                    m.ConfigMap(root={"operation": "double", "result": self.value * 2})
+                    m.ConfigMap(root={"operation": "double", "result": self.value * 2}),
                 )
             case "square":
                 return FlextResult.ok(
-                    m.ConfigMap(root={"operation": "square", "result": self.value**2})
+                    m.ConfigMap(root={"operation": "square", "result": self.value**2}),
                 )
             case "negate":
                 return FlextResult.ok(
-                    m.ConfigMap(root={"operation": "negate", "result": -self.value})
+                    m.ConfigMap(root={"operation": "negate", "result": -self.value}),
                 )
             case _:
                 return FlextResult.fail(f"Unknown operation: {self.operation}")
@@ -457,7 +457,7 @@ class TestPattern4RailwayV2Property:
             .execute()
             .flat_map(
                 lambda user: _make(
-                    SendEmailService, to=user.email, subject="Hello"
+                    SendEmailService, to=user.email, subject="Hello",
                 ).execute(),
             )
             .map(lambda response: response.message_id)
@@ -496,7 +496,7 @@ class TestPattern5MonadicComposition:
             )
             .flat_map(
                 lambda email: _make(
-                    SendEmailService, to=email, subject="Test"
+                    SendEmailService, to=email, subject="Test",
                 ).execute(),
             )
         )
@@ -527,7 +527,7 @@ class TestPattern5MonadicComposition:
             .filter(lambda email: "@" in email)
             .flat_map(
                 lambda email: _make(
-                    SendEmailService, to=email, subject="Test"
+                    SendEmailService, to=email, subject="Test",
                 ).execute(),
             )
             .map(lambda response: response.status)
@@ -640,7 +640,7 @@ class TestPattern8MultipleOperations:
                 MultiOperationService,
                 operation=operation,
                 value=value,
-            )
+            ),
         )
 
         assert result["operation"] == expected["operation"]
@@ -748,6 +748,6 @@ class TestAllPatternsIntegration:
                 MultiOperationService,
                 operation="double",
                 value=10,
-            )
+            ),
         )
         assert calc_result["result"] == 20

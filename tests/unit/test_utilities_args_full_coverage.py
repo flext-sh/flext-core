@@ -16,8 +16,6 @@ def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
 class UnknownHint:
     """Test class for unknown hints."""
 
-    pass
-
 
 def _bad_hints_func(mode: UnknownHint) -> None:
     _ = mode

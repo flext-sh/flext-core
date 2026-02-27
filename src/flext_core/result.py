@@ -229,7 +229,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_failure:
             exception_module = __import__("flext_core.exceptions", fromlist=["e"])
             raise exception_module.e.ValidationError(
-                self.error or "Cannot convert failure to IO"
+                self.error or "Cannot convert failure to IO",
             ) from self._exception
         return IO(self.value)
 
@@ -392,7 +392,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             else:
                 error_msg = str(e)
             return FlextResult[T_Model].fail(
-                f"Validation failed: {error_msg}", exception=e
+                f"Validation failed: {error_msg}", exception=e,
             )
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
@@ -677,7 +677,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 result = func(item)
                 if result.is_failure:
                     failure_result = FlextResult[list[U]].fail(
-                        result.error or "Unknown error"
+                        result.error or "Unknown error",
                     )
                     failure_result._exception = result._exception
                     return failure_result

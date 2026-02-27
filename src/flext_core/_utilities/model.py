@@ -355,8 +355,8 @@ class FlextUtilitiesModel:
                     try:
                         normalized_items.append(
                             FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item
-                            )
+                                item,
+                            ),
                         )
                     except ValidationError:
                         normalized_items.append(str(item))
@@ -367,8 +367,8 @@ class FlextUtilitiesModel:
                     try:
                         normalized_tuple_items.append(
                             FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item
-                            )
+                                item,
+                            ),
                         )
                     except ValidationError:
                         normalized_tuple_items.append(str(item))

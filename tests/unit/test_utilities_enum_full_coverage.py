@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-
-# pyright: reportMissingImports=false, reportPrivateUsage=false, reportUnknownMemberType=false, reportUntypedFunctionDecorator=false, reportUnusedCallResult=false, reportUnknownVariableType=false, reportCallIssue=false, reportArgumentType=false
 from enum import StrEnum
 from typing import cast, override
 

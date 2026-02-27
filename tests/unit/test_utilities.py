@@ -225,7 +225,7 @@ class Testu:
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
         batch_id = u.generate(
-            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,)
+            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,),
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
@@ -346,7 +346,7 @@ class Testu:
             cache_obj = TestWithCache()
             # Cast to t.GeneralValueType for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.GeneralValueType", cast("object", cache_obj))
+                cast("t.GeneralValueType", cast("object", cache_obj)),
             )
             assert result is expected
         else:

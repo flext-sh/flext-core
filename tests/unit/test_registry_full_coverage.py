@@ -71,7 +71,7 @@ def test_execute_and_register_handler_failure_paths(
                     handler_name="h",
                     status="active",
                     mode="command",
-                )
+                ),
             )
 
     setattr(
@@ -80,7 +80,7 @@ def test_execute_and_register_handler_failure_paths(
         cast("p.CommandBus", cast("object", _OkDispatcher())),
     )
     monkeypatch.setattr(
-        FlextRegistry, "_create_registration_details", lambda *_args: None
+        FlextRegistry, "_create_registration_details", lambda *_args: None,
     )
     fallback = registry.register_handler(_as_registry_handler(_Handler()))
     assert fallback.is_success
@@ -101,7 +101,7 @@ def test_create_auto_discover_and_mode_mapping(
         FlextRegistry,
         "register_handler",
         lambda self, handler: r[m.Handler.RegistrationDetails].ok(
-            _success_details(getattr(handler, "__name__", "h"))
+            _success_details(getattr(handler, "__name__", "h")),
         ),
     )
     created = FlextRegistry.create(auto_discover_handlers=True)

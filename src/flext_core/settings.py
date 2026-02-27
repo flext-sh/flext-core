@@ -258,7 +258,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: str | int) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,

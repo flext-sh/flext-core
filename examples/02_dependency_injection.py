@@ -105,7 +105,7 @@ class DatabaseService(m.ArbitraryTypesModel):
                 "id": u.generate_short_id(),
                 "name": "Alice",
                 "email": "alice@example.com",
-            }
+            },
         )
         return r[m.ConfigMap].ok(result)
 
@@ -225,7 +225,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
                     "error_handling",
                 ],
                 "completed_at": datetime.now(UTC).isoformat(),
-            }
+            },
         )
 
         self.logger.info("Dependency injection demonstration completed")
@@ -242,7 +242,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
                 "driver": "sqlite",
                 "url": "sqlite:///:memory:",
                 "timeout": c.Network.DEFAULT_TIMEOUT,
-            }
+            },
         )
         db_service = DatabaseService(config=db_config)
         db_service.status = c.Cqrs.CommonStatus.ACTIVE
@@ -251,7 +251,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
             root={
                 "backend": "memory",
                 "ttl": c.Defaults.DEFAULT_CACHE_TTL,
-            }
+            },
         )
         cache_service = CacheService(config=cache_config)
         cache_service.status = c.Cqrs.CommonStatus.ACTIVE
@@ -260,7 +260,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
             root={
                 "host": "smtp.example.com",
                 "port": 587,
-            }
+            },
         )
         email_service = EmailService(config=email_config)
         email_service.status = c.Cqrs.CommonStatus.ACTIVE

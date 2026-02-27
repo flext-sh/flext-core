@@ -395,7 +395,7 @@ class TestFlextTestsMatchers:
     def test_fail_with_code_parameter(self) -> None:
         """Test tm.fail() with code parameter."""
         result: FlextResult[str] = FlextResult[str].fail(
-            "error", error_code="VALIDATION"
+            "error", error_code="VALIDATION",
         )
         error = tm.fail(result, code="VALIDATION")
         assert error == "error"
@@ -403,7 +403,7 @@ class TestFlextTestsMatchers:
     def test_fail_with_code_has_parameter(self) -> None:
         """Test tm.fail() with code_has parameter."""
         result: FlextResult[str] = FlextResult[str].fail(
-            "error", error_code="VALIDATION_ERROR"
+            "error", error_code="VALIDATION_ERROR",
         )
         error = tm.fail(result, code_has="VALIDATION")
         assert error == "error"

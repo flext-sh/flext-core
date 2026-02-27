@@ -30,7 +30,7 @@ def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
         root={
             str(key): FlextRuntime.normalize_to_metadata_value(value)
             for key, value in data.items()
-        }
+        },
     )
 
 
@@ -47,7 +47,7 @@ def _normalize_event_data(
             root={
                 str(k): FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in value.items()
-            }
+            },
         )
         return _ComparableConfigMap(root=normalized.root)
     if isinstance(value, Mapping):
@@ -55,7 +55,7 @@ def _normalize_event_data(
             root={
                 str(k): FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in value.items()
-            }
+            },
         )
         return _ComparableConfigMap(root=normalized.root)
     if value is None:

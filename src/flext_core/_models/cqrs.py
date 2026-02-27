@@ -327,7 +327,7 @@ class FlextModelsCqrs:
                         "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
                         "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
                         "metadata": None,
-                    }
+                    },
                 )
 
             def with_id(self, handler_id: str) -> Self:

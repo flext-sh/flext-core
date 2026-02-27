@@ -407,7 +407,7 @@ class FlextModelsContext:
                 )
             elif FlextRuntime.is_dict_like(v):
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v
+                    v,
                 )
             else:
                 type_name = v.__class__.__name__
@@ -420,7 +420,7 @@ class FlextModelsContext:
 
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
-                    val
+                    val,
                 )
                 for k, val in normalized.items()
             }
@@ -517,7 +517,7 @@ class FlextModelsContext:
                 )
             elif FlextRuntime.is_dict_like(v):
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v
+                    v,
                 )
             else:
                 type_name = v.__class__.__name__
@@ -530,7 +530,7 @@ class FlextModelsContext:
 
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
-                    val
+                    val,
                 )
                 for k, val in normalized.items()
             }

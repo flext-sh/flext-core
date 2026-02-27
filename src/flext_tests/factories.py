@@ -1310,7 +1310,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         """
         # Capture overrides in local variable for use in nested class
         captured_overrides: MutableMapping[str, t.Tests.TestResultValue] = dict(
-            overrides
+            overrides,
         )
 
         class TestService(s[t.Tests.PayloadValue]):

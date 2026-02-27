@@ -227,7 +227,7 @@ class ConsolidateGroupsPhase:
             if isinstance(old_deps, Table):
                 if poetry_dev_table is None:
                     poetry_dev_table = _ensure_table(
-                        _ensure_table(poetry_group, "dev"), "dependencies"
+                        _ensure_table(poetry_group, "dev"), "dependencies",
                     )
                 for dep_name, dep_value in old_deps.items():
                     if dep_name not in poetry_dev_table:
@@ -369,7 +369,7 @@ class EnsurePyreflyConfigPhase:
             is_root or any(glob in current_excludes for glob in pb2_globs) or True
         ):
             pyrefly["project-excludes"] = _array(
-                sorted(set(current_excludes) | set(pb2_globs))
+                sorted(set(current_excludes) | set(pb2_globs)),
             )
             changes.append(f"tool.pyrefly.project-excludes added {', '.join(needed)}")
 
@@ -408,7 +408,7 @@ class InjectCommentsPhase:
         out: list[str] = []
 
         has_banner = bool(
-            lines and "[MANAGED] FLEXT pyproject standardization" in lines[0]
+            lines and "[MANAGED] FLEXT pyproject standardization" in lines[0],
         )
         if not has_banner:
             out.extend(self._BANNER.splitlines())

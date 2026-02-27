@@ -147,8 +147,8 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                         "strenum_validation",
                         "after_validator",
                     ],
-                }
-            )
+                },
+            ),
         )
 
     @staticmethod

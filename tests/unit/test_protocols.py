@@ -245,8 +245,8 @@ class TestFlextProtocols:
                         root={
                             "id": entity_id,
                             "name": "Test",
-                        }
-                    )
+                        },
+                    ),
                 )
 
             def save(

@@ -5,7 +5,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
-# pyright: reportMissingImports=false
 from flext_core import c, m, r, t
 
 
@@ -62,7 +61,7 @@ def test_conversion_start_and_complete_methods() -> None:
     conv = m.Conversion()
 
     conv.start_conversion(
-        source_format="xml", target_format="json", total_input_count=99
+        source_format="xml", target_format="json", total_input_count=99,
     )
     conv.complete_conversion()
 

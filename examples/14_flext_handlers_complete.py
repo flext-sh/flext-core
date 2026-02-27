@@ -126,8 +126,8 @@ class HandlersService(s[m.ConfigMap]):
                         "result_patterns",
                     ],
                     "handler_types": 2,
-                }
-            )
+                },
+            ),
         )
 
     @staticmethod

@@ -111,8 +111,8 @@ class IntegrationService(s[m.ConfigMap]):
                             "utility_functions",
                         ],
                         "total_components": 10,
-                    }
-                )
+                    },
+                ),
             )
 
         except Exception as e:

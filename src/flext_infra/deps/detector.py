@@ -43,7 +43,7 @@ class DependencyDetectorModels(m):
 
         workspace: str
         projects: MutableMapping[str, MutableMapping[str, t.ConfigMapValue]] = Field(
-            default_factory=dict
+            default_factory=dict,
         )
         pip_check: MutableMapping[str, t.ScalarValue] | None = None
         dependency_limits: MutableMapping[str, t.ScalarValue] | None = None
@@ -219,7 +219,7 @@ class RuntimeDevDependencyDetector:
                 )
                 if typings_result.is_failure:
                     return r[int].fail(
-                        typings_result.error or "typing dependency detection failed"
+                        typings_result.error or "typing dependency detection failed",
                     )
                 typing_dict = typings_result.value.model_dump()
                 projects_report[project_name]["typings"] = typing_dict
@@ -272,7 +272,7 @@ class RuntimeDevDependencyDetector:
             report_dir_result = self._reporting.ensure_report_dir(root, "dependencies")
             if report_dir_result.is_failure:
                 return r[int].fail(
-                    report_dir_result.error or "failed to create report directory"
+                    report_dir_result.error or "failed to create report directory",
                 )
             out_path = report_dir_result.value / "detect-runtime-dev-latest.json"
 

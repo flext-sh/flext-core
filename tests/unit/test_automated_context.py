@@ -59,7 +59,7 @@ class TestAutomatedFlextContext:
         ids=lambda case: case["description"],
     )
     def test_automated_context_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self, test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for context functionality."""
         try:
@@ -96,7 +96,7 @@ class TestAutomatedFlextContext:
         # Test with correct types
         result = self._execute_context_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContext type safety test"
+            result, "FlextContext type safety test",
         )
 
     def test_automated_context_error_handling(self) -> None:
@@ -123,7 +123,7 @@ class TestAutomatedFlextContext:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContext performance test exceeded timeout"
+            result, "FlextContext performance test exceeded timeout",
         )
 
     def test_automated_context_resource_management(self) -> None:
@@ -133,7 +133,7 @@ class TestAutomatedFlextContext:
         # Test normal operation
         result = self._execute_context_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContext resource test"
+            result, "FlextContext resource test",
         )
 
         # Test cleanup (if applicable)
@@ -142,7 +142,7 @@ class TestAutomatedFlextContext:
             cleanup_result = cleanup_fn()
             if isinstance(cleanup_result, r):
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextContext cleanup failed"
+                    cleanup_result, "FlextContext cleanup failed",
                 )
 
     def _execute_context_operation(

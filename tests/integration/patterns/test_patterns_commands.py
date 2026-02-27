@@ -406,7 +406,7 @@ class TestFlextCommandHandler:
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
         handler: FlextCommandHandler[
-            CreateUserCommand, dict[str, t.GeneralValueType]
+            CreateUserCommand, dict[str, t.GeneralValueType],
         ] = CreateUserCommandHandler()
 
         if handler.can_handle(UpdateUserCommand):
@@ -418,7 +418,7 @@ class TestFlextCommandHandler:
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command object."""
         handler: FlextCommandHandler[
-            CreateUserCommand, dict[str, t.GeneralValueType]
+            CreateUserCommand, dict[str, t.GeneralValueType],
         ] = CreateUserCommandHandler()
 
         if handler.can_handle(str):
@@ -430,7 +430,7 @@ class TestFlextCommandHandler:
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
         handler: FlextCommandHandler[
-            CreateUserCommand, dict[str, t.GeneralValueType]
+            CreateUserCommand, dict[str, t.GeneralValueType],
         ] = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
             username="john",
@@ -473,7 +473,7 @@ class TestFlextCommandHandler:
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
         handler: FlextCommandHandler[
-            CreateUserCommand, dict[str, t.GeneralValueType]
+            CreateUserCommand, dict[str, t.GeneralValueType],
         ] = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
             username="",

@@ -29,7 +29,7 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
                 "project": "flext-core",
                 "changes": ["[DRY-RUN] base.mk regenerated via BaseMkGenerator"],
                 "errors": [],
-            })
+            }),
         ])
 
     _ = monkeypatch.setattr(ProjectMigrator, "migrate", _fake_migrate)
@@ -64,10 +64,10 @@ def test_workspace_cli_migrate_output_contains_summary(
             im.MigrationResult.model_validate({
                 "project": "flext-core",
                 "changes": [
-                    "[DRY-RUN] .gitignore cleaned from scripts/ and normalized"
+                    "[DRY-RUN] .gitignore cleaned from scripts/ and normalized",
                 ],
                 "errors": [],
-            })
+            }),
         ])
 
     _ = monkeypatch.setattr(ProjectMigrator, "migrate", _fake_migrate)

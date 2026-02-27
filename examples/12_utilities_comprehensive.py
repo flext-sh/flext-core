@@ -46,7 +46,7 @@ TEST_DATA: m.ConfigMap = m.ConfigMap(
         "uri": "https://example.com/api",
         "port": 8080,
         "hostname": "api.example.com",
-    }
+    },
 )
 
 
@@ -94,8 +94,8 @@ class UtilitiesService(FlextService[m.ConfigMap]):
                             "performance",
                             "reliability",
                         ],
-                    }
-                )
+                    },
+                ),
             )
 
         except Exception as e:
@@ -128,7 +128,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         # URI validation
         uri = str(TEST_DATA["uri"])
         uri_result = u.validate_pattern(
-            uri, r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$", "uri"
+            uri, r"^[a-zA-Z][a-zA-Z0-9+.-]*://[^\s]+$", "uri",
         )
         print(f"✅ URI validation: {uri} -> {uri_result.is_success}")
 
@@ -259,7 +259,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Split with escape handling using railway pattern (DRY)
         parser.split_on_char_with_escape(
-            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
+            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\",
         ).map(
             lambda split: print(f"✅ Escaped split: {split}"),
         )

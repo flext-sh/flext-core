@@ -52,7 +52,7 @@ def test_normalize_context_to_dict_error_paths() -> None:
             cast(
                 "Mapping[str, JsonValue] | BaseModel | None",
                 cast("object", _BrokenModel()),
-            )
+            ),
         )
 
     with pytest.raises(TypeError, match="Context cannot be None"):
@@ -63,7 +63,7 @@ def test_normalize_context_to_dict_error_paths() -> None:
             cast(
                 "Mapping[str, JsonValue] | BaseModel | None",
                 cast("object", 42),
-            )
+            ),
         )
 
 

@@ -1865,7 +1865,7 @@ class FlextTestsUtilities(FlextUtilities):
             def match(
                 obj: BaseModel | Mapping[str, t.Tests.PayloadValue],
                 spec: Mapping[
-                    str, t.Tests.PayloadValue | Callable[[t.Tests.PayloadValue], bool]
+                    str, t.Tests.PayloadValue | Callable[[t.Tests.PayloadValue], bool],
                 ],
                 *,
                 path_sep: str = ".",

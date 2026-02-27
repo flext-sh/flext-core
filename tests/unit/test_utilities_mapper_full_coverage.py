@@ -108,7 +108,7 @@ def test_type_guards_and_narrowing_failures(mapper: type[Mapper]) -> None:
 
 def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
-        cast("t.ConfigMapValue", {1: "x", "b": object()})
+        cast("t.ConfigMapValue", {1: "x", "b": object()}),
     )
     assert "1" in converted
     assert isinstance(converted["b"], str)
@@ -122,7 +122,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> 
 
     with pytest.raises(TypeError, match="Cannot coerce"):
         _ = mapper._narrow_to_configuration_mapping(
-            cast("t.ConfigMapValue", {1: BadString()})
+            cast("t.ConfigMapValue", {1: BadString()}),
         )
 
     with pytest.raises(TypeError, match="Cannot narrow"):
@@ -136,7 +136,7 @@ def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
 
     assert (
         mapper.narrow_to_general_value_type(
-            cast("t.ConfigMapValue", cast("object", Stable()))
+            cast("t.ConfigMapValue", cast("object", Stable())),
         )
         == "stable"
     )
@@ -166,7 +166,7 @@ def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
     assert as_json["x"] == Path("/tmp")
 
     list_json = mapper.convert_list_to_json(
-        cast("Sequence[t.ConfigMapValue]", [{"a": 1}, {"b": object()}])
+        cast("Sequence[t.ConfigMapValue]", [{"a": 1}, {"b": object()}]),
     )
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
@@ -213,7 +213,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
         field = NotGeneral()
 
     res_non_general = mapper.extract(
-        cast("t.ConfigMap | BaseModel", cast("object", Container())), "field"
+        cast("t.ConfigMap | BaseModel", cast("object", Container())), "field",
     )
     assert res_non_general.is_success
     assert res_non_general.value == "converted"
@@ -233,14 +233,14 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     assert (
         accessor(
             cast(
-                "t.ConfigMap | BaseModel", cast("object", AttrObject(name="x", value=1))
-            )
+                "t.ConfigMap | BaseModel", cast("object", AttrObject(name="x", value=1)),
+            ),
         )
         == "x"
     )
     assert (
         mapper.prop("missing")(
-            cast("t.ConfigMap | BaseModel", cast("object", {"a": 1}))
+            cast("t.ConfigMap | BaseModel", cast("object", {"a": 1})),
         )
         == ""
     )
@@ -366,7 +366,7 @@ def test_transform_option_extract_and_step_helpers(
         "to_json": True,
     }
     extracted = mapper._extract_transform_options(
-        cast("Mapping[str, t.ConfigMapValue]", opts)
+        cast("Mapping[str, t.ConfigMapValue]", opts),
     )
     assert extracted[3] == {"1": "one", "a": "b"}
 
@@ -457,7 +457,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
 
     assert mapper._build_apply_sort(1, {"sort": True}) == 1
     sorted_with_scalar = mapper._build_apply_sort(
-        [{"name": "b"}, 3, {"name": "a"}], {"sort": "name"}
+        [{"name": "b"}, 3, {"name": "a"}], {"sort": "name"},
     )
     assert isinstance(sorted_with_scalar, list)
 
@@ -647,7 +647,7 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
 
 def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     mapped = mapper.map_dict_keys(
-        {"old": 1, "x": 2}, {"old": "new"}, keep_unmapped=True
+        {"old": 1, "x": 2}, {"old": "new"}, keep_unmapped=True,
     )
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
@@ -699,10 +699,10 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
         == "plain"
     )
     assert mapper.convert_to_json_value(
-        cast("t.ConfigMapValue", cast("object", {1: Plain()}))
+        cast("t.ConfigMapValue", cast("object", {1: Plain()})),
     ) == {"1": "plain"}
     assert mapper.convert_to_json_value(
-        cast("t.ConfigMapValue", cast("object", [1, {"k": Plain()}]))
+        cast("t.ConfigMapValue", cast("object", [1, {"k": Plain()}])),
     ) == [1, {"k": "plain"}]
 
     assert mapper.ensure_str(None, "d") == "d"
@@ -718,13 +718,13 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
         a: int = 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())), "a"
+        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())), "a",
     )
     assert found is True
     assert value == 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())), "missing"
+        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())), "missing",
     )
     assert found is False
     assert value is None
@@ -859,7 +859,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     context = mapper.process_context_data(
         primary_data=cast("t.ConfigMapValue", cast("object", DictLikeOnly())),
         secondary_data=cast(
-            "t.ConfigMapValue", cast("object", DictLikeOnlySecondary())
+            "t.ConfigMapValue", cast("object", DictLikeOnlySecondary()),
         ),
         merge_strategy="merge",
     )

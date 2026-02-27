@@ -273,7 +273,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             c.Context.SCOPE_APPLICATION: c.Context.SCOPE_APPLICATION,
             c.Context.SCOPE_REQUEST: c.Context.SCOPE_REQUEST,
             c.Context.SCOPE_OPERATION: c.Context.SCOPE_OPERATION,
-        }
+        },
     )
 
     @classmethod
@@ -607,7 +607,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 else FlextSettings.get_global_instance()
             )
             level = (
-                getattr(config, "log_level") if hasattr(config, "log_level") else "INFO"
+                config.log_level if hasattr(config, "log_level") else "INFO"
             )
         # Create logger with container context
         logger = cls.create_module_logger(f"container_{id(container)}")
@@ -721,24 +721,24 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         # Extract config values (config takes priority over individual params)
         if config is not None:
-            _level = getattr(config, "level") if hasattr(config, "level") else _level
+            _level = config.level if hasattr(config, "level") else _level
             _service_name = (
-                getattr(config, "service_name")
+                config.service_name
                 if hasattr(config, "service_name")
                 else _service_name
             )
             _service_version = (
-                getattr(config, "service_version")
+                config.service_version
                 if hasattr(config, "service_version")
                 else _service_version
             )
             _correlation_id = (
-                getattr(config, "correlation_id")
+                config.correlation_id
                 if hasattr(config, "correlation_id")
                 else _correlation_id
             )
             _force_new = (
-                getattr(config, "force_new")
+                config.force_new
                 if hasattr(config, "force_new")
                 else _force_new
             )
@@ -925,7 +925,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
             # Path normalization is best-effort and must not block logging.
             FlextLogger._report_internal_logging_failure(
-                "convert_to_relative_path", exc
+                "convert_to_relative_path", exc,
             )
             return Path(filename).name
 
@@ -1168,7 +1168,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             # Stack-trace policy must fail open to preserve diagnostics.
             FlextLogger._report_internal_logging_failure(
-                "should_include_stack_trace", exc
+                "should_include_stack_trace", exc,
             )
             return True
 
@@ -1188,7 +1188,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 root={
                     "exception_type": exception.__class__.__name__,
                     "exception_message": str(exception),
-                }
+                },
             )
             merge_result = u.merge(
                 dict(context_dict.root),
@@ -1267,13 +1267,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
 
             if resolved_exception is None and isinstance(
-                exception_value, BaseException
+                exception_value, BaseException,
             ):
                 context_dict["exception_type"] = exception_value.__class__.__name__
                 context_dict["exception_message"] = str(exception_value)
 
             error_method = (
-                getattr(self.logger, "error") if hasattr(self.logger, "error") else None
+                self.logger.error if hasattr(self.logger, "error") else None
             )
             if callable(error_method):
                 _ = error_method(message, *filtered_args, **context_dict.root)
@@ -1324,7 +1324,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     "duration_seconds": elapsed,
                     "operation": self._operation_name,
                     "status": status,
-                }
+                },
             )
 
             if not is_success:
@@ -1394,7 +1394,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         ) -> t.GuardInputValue | None:
             """Track performance metrics - delegate to base logger."""
             return self._call_optional(
-                "track_performance", operation_name, *args, **kwargs
+                "track_performance", operation_name, *args, **kwargs,
             )
 
         def log_result(
@@ -1442,7 +1442,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return self
 
         def bind(
-            self, **context: t.MetadataAttributeValue
+            self, **context: t.MetadataAttributeValue,
         ) -> FlextLogger.ResultAdapter:
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))

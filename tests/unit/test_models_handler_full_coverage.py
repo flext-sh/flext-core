@@ -6,7 +6,7 @@ import pytest
 from flext_core import c, m, r, t, u
 
 handler_models = __import__(
-    "flext_core._models.handler", fromlist=["FlextModelsHandler"]
+    "flext_core._models.handler", fromlist=["FlextModelsHandler"],
 )
 FlextModelsHandler = handler_models.FlextModelsHandler
 

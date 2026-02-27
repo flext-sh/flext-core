@@ -84,7 +84,7 @@ class TestCompleteFlextSystemIntegration:
 
         # Cenário de falha
         failure_result: FlextResult[str] = FlextResult[str].fail(
-            "erro_de_processamento"
+            "erro_de_processamento",
         )
         assert failure_result.is_success is False
         assert failure_result.is_failure is True

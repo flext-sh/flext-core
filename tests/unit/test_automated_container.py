@@ -60,7 +60,7 @@ class TestAutomatedFlextContainer:
         ids=lambda case: case["description"],
     )
     def test_automated_container_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self, test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for container functionality."""
         try:
@@ -97,7 +97,7 @@ class TestAutomatedFlextContainer:
         # Test with correct types
         result = self._execute_container_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer type safety test"
+            result, "FlextContainer type safety test",
         )
 
     def test_automated_container_error_handling(self) -> None:
@@ -120,13 +120,13 @@ class TestAutomatedFlextContainer:
 
         def operation() -> object:
             return self._execute_container_operation(
-                instance, {"performance_test": True}
+                instance, {"performance_test": True},
             )
 
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer performance test exceeded timeout"
+            result, "FlextContainer performance test exceeded timeout",
         )
 
     def test_automated_container_resource_management(self) -> None:
@@ -136,7 +136,7 @@ class TestAutomatedFlextContainer:
         # Test normal operation
         result = self._execute_container_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer resource test"
+            result, "FlextContainer resource test",
         )
 
         # Test cleanup (if applicable)
@@ -150,7 +150,7 @@ class TestAutomatedFlextContainer:
                 )
 
     def _execute_container_operation(
-        self, instance: object, input_data: Mapping[str, t.GeneralValueType]
+        self, instance: object, input_data: Mapping[str, t.GeneralValueType],
     ) -> r[t.GeneralValueType]:
         """Execute a test operation on container instance.
 

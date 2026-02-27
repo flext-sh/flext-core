@@ -79,7 +79,7 @@ class FlextTestsBuilders:
     @staticmethod
     def _to_payload_value(value: object) -> t.Tests.PayloadValue:
         if value is None or isinstance(
-            value, str | int | float | bool | bytes | BaseModel
+            value, str | int | float | bool | bytes | BaseModel,
         ):
             return value
         if isinstance(value, Mapping):
@@ -98,7 +98,7 @@ class FlextTestsBuilders:
         if isinstance(value, Mapping):
             return {
                 str(key): FlextTestsBuilders._to_guard_input(
-                    FlextTestsBuilders._to_payload_value(item)
+                    FlextTestsBuilders._to_payload_value(item),
                 )
                 for key, item in value.items()
             }
@@ -106,7 +106,7 @@ class FlextTestsBuilders:
             return str(value)
         return [
             FlextTestsBuilders._to_guard_input(
-                FlextTestsBuilders._to_payload_value(item)
+                FlextTestsBuilders._to_payload_value(item),
             )
             for item in value
         ]
@@ -201,7 +201,7 @@ class FlextTestsBuilders:
         elif type(value) in {str, int, float, bool} or BaseModel in type(value).__mro__:
             value_for_kwargs = value
         elif isinstance(value, Sequence) and not isinstance(
-            value, str | bytes | bytearray
+            value, str | bytes | bytearray,
         ):
             value_for_kwargs = list(value)
         elif isinstance(value, dict):
@@ -363,7 +363,7 @@ class FlextTestsBuilders:
                 if type(dict_value) in {str, int, float, bool, type(None)}:
                     filtered_dict[dict_key] = dict_value
                 elif isinstance(dict_value, Sequence) and not isinstance(
-                    dict_value, str | bytes | bytearray
+                    dict_value, str | bytes | bytearray,
                 ):
                     filtered_dict[dict_key] = list(dict_value)
                 elif isinstance(dict_value, dict):
@@ -818,7 +818,7 @@ class FlextTestsBuilders:
             str(key): value for key, value in data.items()
         }
         if params.validate_with is not None and not params.validate_with(
-            data_for_hooks
+            data_for_hooks,
         ):
             error_msg = "Validation failed during build"
             raise ValueError(error_msg)
@@ -1616,7 +1616,7 @@ class FlextTestsBuilders:
                         },
                         {
                             str(k): FlextTestsBuilders._to_guard_input(
-                                FlextTestsBuilders._to_payload_value(v)
+                                FlextTestsBuilders._to_payload_value(v),
                             )
                             for k, v in d.items()
                         },
@@ -1649,7 +1649,7 @@ class FlextTestsBuilders:
                                 if v is None:
                                     value_dict[str(k)] = None
                                 elif isinstance(
-                                    v, (str, bool, int, float, list, dict, BaseModel)
+                                    v, (str, bool, int, float, list, dict, BaseModel),
                                 ):
                                     value_dict[str(k)] = v
                                 else:

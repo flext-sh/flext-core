@@ -137,10 +137,10 @@ def test_invalid_registration_attempts(dispatcher: FlextDispatcher) -> None:
     # Attempting to register a string or dict should fail
     # We cast to t.HandlerType to simulate bypass of static types
     assert dispatcher.register_handler(
-        cast("t.HandlerType", "not-a-handler")
+        cast("t.HandlerType", "not-a-handler"),
     ).is_failure
     assert dispatcher.register_handler(
-        cast("t.HandlerType", {"some": "dict"})
+        cast("t.HandlerType", {"some": "dict"}),
     ).is_failure
 
     # Attempting to register a function without message_type should fail
@@ -148,7 +148,7 @@ def test_invalid_registration_attempts(dispatcher: FlextDispatcher) -> None:
         return "ok"
 
     assert dispatcher.register_handler(
-        cast("t.HandlerType", nameless_handler)
+        cast("t.HandlerType", nameless_handler),
     ).is_failure
 
 

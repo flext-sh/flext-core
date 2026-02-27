@@ -21,7 +21,7 @@ logger = FlextLogger.create_module_logger(__name__)
 FLEXT_DEPS_DIR = ".flext-deps"
 
 _PEP621_PATH_DEP_RE = re.compile(
-    r"^(?P<name>[A-Za-z0-9_.-]+)\s*@\s*(?:file:)?(?P<path>.+)$"
+    r"^(?P<name>[A-Za-z0-9_.-]+)\s*@\s*(?:file:)?(?P<path>.+)$",
 )
 _PEP621_NAME_RE = re.compile(r"^\s*(?P<name>[A-Za-z0-9_.-]+)")
 
@@ -177,7 +177,7 @@ def rewrite_dep_paths(
 def main() -> int:
     """Execute dependency path rewriting from command line."""
     parser = argparse.ArgumentParser(
-        description="Rewrite internal FLEXT dependency paths for workspace/standalone mode."
+        description="Rewrite internal FLEXT dependency paths for workspace/standalone mode.",
     )
     _ = parser.add_argument(
         "--mode",
@@ -312,7 +312,7 @@ def main() -> int:
 
     if total_changes == 0:
         output.info(
-            "[sync-dep-paths] No changes needed - all paths already match target mode."
+            "[sync-dep-paths] No changes needed - all paths already match target mode.",
         )
     else:
         action = "would change" if args.dry_run else "changed"

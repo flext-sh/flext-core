@@ -17,8 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-
-# mypy: disable-error-code=dict-item,arg-type,var-annotated
 from dataclasses import dataclass
 from typing import ClassVar, cast
 

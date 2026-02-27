@@ -147,7 +147,7 @@ class WorkflowSyncer:
                             path=str(destination.relative_to(project_root)),
                             action="update",
                             reason="force overwrite ci.yml",
-                        )
+                        ),
                     )
                 else:
                     operations.append(
@@ -156,7 +156,7 @@ class WorkflowSyncer:
                             path=str(destination.relative_to(project_root)),
                             action="noop",
                             reason="already synced",
-                        )
+                        ),
                     )
             else:
                 if apply:
@@ -171,7 +171,7 @@ class WorkflowSyncer:
                         path=str(destination.relative_to(project_root)),
                         action="create",
                         reason="missing ci.yml",
-                    )
+                    ),
                 )
 
             if prune and workflows_dir.exists():
@@ -189,7 +189,7 @@ class WorkflowSyncer:
                             path=str(path.relative_to(project_root)),
                             action="prune",
                             reason="remove non-canonical workflow",
-                        )
+                        ),
                     )
         except OSError as exc:
             return r[list[SyncOperation]].fail(f"sync error: {exc}")

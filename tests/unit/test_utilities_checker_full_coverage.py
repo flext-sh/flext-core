@@ -26,8 +26,6 @@ class _UnknownHintHandler:
 class MissingType:
     """Class to simulate a missing type."""
 
-    pass
-
 
 class _ExplodingSubclassMeta(type):
     def __subclasscheck__(cls, subclass: type) -> bool:
@@ -73,13 +71,13 @@ def test_extract_message_type_from_parameter_branches() -> None:
 
     assert (
         u.Checker._extract_message_type_from_parameter(
-            param, {"message": None}, "message"
+            param, {"message": None}, "message",
         )
         is None
     )
     assert (
         u.Checker._extract_message_type_from_parameter(
-            param, {"message": "abc"}, "message"
+            param, {"message": "abc"}, "message",
         )
         == "abc"
     )
@@ -98,7 +96,7 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
     # _check_object_type_compatibility uses `is object` identity check
     assert (
         u.Checker._check_object_type_compatibility(
-            cast("t.TypeOriginSpecifier", object)
+            cast("t.TypeOriginSpecifier", object),
         )
         is True
     )
@@ -147,7 +145,7 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         annotation=list[int],
     )
     assert u.Checker._extract_message_type_from_parameter(
-        param_typed, {}, "message"
+        param_typed, {}, "message",
     ) == str(list[int])
 
     param_empty = inspect.Parameter(

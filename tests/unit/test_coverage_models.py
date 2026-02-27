@@ -368,7 +368,7 @@ class TestDomainEvents:
             event_type="UserCreated",
             aggregate_id="USER-001",
             data=_entity_module._ComparableConfigMap(
-                root={"user_id": "USER-001", "email": "user@example.com"}
+                root={"user_id": "USER-001", "email": "user@example.com"},
             ),
         )
         assert event.event_type == "UserCreated"
@@ -384,14 +384,14 @@ class TestDomainEvents:
             event_type="OrderShipped",
             aggregate_id="ORD-001",
             data=_entity_module._ComparableConfigMap(
-                root={"tracking_number": "TRACK-123"}
+                root={"tracking_number": "TRACK-123"},
             ),
         )
         event2 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
             data=_entity_module._ComparableConfigMap(
-                root={"tracking_number": "TRACK-123"}
+                root={"tracking_number": "TRACK-123"},
             ),
         )
         assert event1.unique_id != event2.unique_id

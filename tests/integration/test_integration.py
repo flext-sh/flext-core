@@ -40,7 +40,6 @@ from flext_core.typings import t
 
 from tests.test_utils import assertion_helpers
 
-# Use FunctionalExternalService from conftest.py to avoid duplication
 from ..conftest import FunctionalExternalService
 
 pytestmark = [pytest.mark.integration]

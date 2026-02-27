@@ -84,7 +84,7 @@ class FlextModelFoundation:
             """Lazy-load strict string TypeAdapter on first access."""
             if cls._strict_string_adapter is None:
                 cls._strict_string_adapter = TypeAdapter(
-                    Annotated[str, Field(strict=True)]
+                    Annotated[str, Field(strict=True)],
                 )
             return cls._strict_string_adapter
 
@@ -95,7 +95,7 @@ class FlextModelFoundation:
             """Lazy-load metadata map TypeAdapter on first access."""
             if cls._metadata_map_adapter is None:
                 cls._metadata_map_adapter = TypeAdapter(
-                    dict[str, t.MetadataAttributeValue]
+                    dict[str, t.MetadataAttributeValue],
                 )
             return cls._metadata_map_adapter
 
@@ -263,7 +263,7 @@ class FlextModelFoundation:
         tags: list[str] = Field(default_factory=list)
         attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
         metadata_value: t.MetadataScalarValue = Field(
-            default=None, description="Scalar metadata value."
+            default=None, description="Scalar metadata value.",
         )
 
         @field_validator("attributes", mode="before")
@@ -294,7 +294,7 @@ class FlextModelFoundation:
                     raise ValueError(msg)
             return (
                 FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
-                    result
+                    result,
                 )
             )
 

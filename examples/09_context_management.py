@@ -104,7 +104,7 @@ class ContextManagementService(
                     c.Mixins.FIELD_NAME: "context_demo",
                     "correlation_id": correlation_id,
                     "scope": c.Context.SCOPE_REQUEST,
-                }
+                },
             )
 
             print(f"✅ Context data: {context_data}")
@@ -133,7 +133,7 @@ class ContextManagementService(
                     root={
                         "endpoint": "/api/demo",
                         "method": "GET",
-                    }
+                    },
                 ),
             ),
             FlextContext.Performance.timed_operation(
@@ -150,7 +150,7 @@ class ContextManagementService(
                     "request_id": request_id,
                     "operation": operation,
                     "timing": timing_metadata,
-                }
+                },
             )
 
             print(f"✅ Request data: {request_data}")
@@ -190,7 +190,7 @@ class ContextManagementService(
                             "thread_id": thread_id,
                             "correlation_id": correlation_id,
                             "thread_name": threading.current_thread().name,
-                        }
+                        },
                     ),
                 )
 
@@ -205,7 +205,7 @@ class ContextManagementService(
                 "active_threads": thread_count,
                 "thread_names": list(active_threads),
                 "isolated_contexts": len(results),
-            }
+            },
         )
 
         print(f"✅ Thread safety: {thread_count} active threads")
@@ -237,7 +237,7 @@ class ContextManagementService(
                     "start_time": (start_time.isoformat() if start_time else "unknown"),
                     "metadata": operation_metadata,
                     "timing": timing_metadata,
-                }
+                },
             )
 
             print(f"✅ Operation: {operation_name}")
@@ -271,7 +271,7 @@ class ContextManagementService(
                     "correlation_id": context_correlation,
                     "prefix": c.Context.CORRELATION_ID_PREFIX,
                     "length": c.Context.CORRELATION_ID_LENGTH,
-                }
+                },
             )
 
             print(f"✅ Correlation ID: {context_correlation}")
@@ -318,7 +318,7 @@ class ContextManagementService(
                     c.Context.SCOPE_REQUEST,
                     c.Context.SCOPE_SESSION,
                 ),
-            }
+            },
         )
 
 

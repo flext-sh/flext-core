@@ -77,7 +77,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     assert value == "ok"
 
     logger_obj = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
     assert logger_obj._context == {}
     assert logger_obj() is logger_obj
@@ -93,7 +93,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
         FlextLogger,
         "_execute_context_op",
         classmethod(
-            lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom"))
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
         ),
     )
     failed_ctx = FlextLogger._context_operation("bind", x="y")
@@ -111,8 +111,8 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
         "create_module_logger",
         classmethod(
             lambda _cls, _name: FlextLogger.create_bound_logger(
-                "mod", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
-            )
+                "mod", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+            ),
         ),
     )
     created = FlextLogger.for_container(
@@ -173,7 +173,7 @@ def test_loggings_instance_and_message_format_paths(
 ) -> None:
     fake = _FakeBindable()
     monkeypatch.setattr(
-        FlextRuntime, "get_logger", staticmethod(lambda _name=None: fake)
+        FlextRuntime, "get_logger", staticmethod(lambda _name=None: fake),
     )
 
     class _Config:
@@ -208,7 +208,7 @@ def test_loggings_instance_and_message_format_paths(
 
     assert (
         FlextLogger._extract_class_name(
-            cast("types.FrameType", cast("object", _Frame()))
+            cast("types.FrameType", cast("object", _Frame())),
         )
         is None
     )
@@ -217,14 +217,14 @@ def test_loggings_instance_and_message_format_paths(
 def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", fake))
+        "x", cast("p.Log.StructlogLogger", cast("object", fake)),
     )
 
     monkeypatch.setattr(FlextLogger, "_get_calling_frame", staticmethod(lambda: None))
     assert FlextLogger._get_caller_source_path() is None
 
     monkeypatch.setattr(
-        Path, "resolve", lambda self: (_ for _ in ()).throw(RuntimeError("bad"))
+        Path, "resolve", lambda self: (_ for _ in ()).throw(RuntimeError("bad")),
     )
     assert FlextLogger._convert_to_relative_path("/tmp/x.py") == "x.py"
 
@@ -248,13 +248,13 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
 
     assert (
         FlextLogger._find_workspace_root(
-            cast("Path", cast("object", _NoMarkers(Path("/tmp"))))
+            cast("Path", cast("object", _NoMarkers(Path("/tmp")))),
         )
         is None
     )
 
     logger_boom = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
     logger_boom.logger = cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
     monkeypatch.setattr(
@@ -272,7 +272,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
 def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", fake))
+        "x", cast("p.Log.StructlogLogger", cast("object", fake)),
     )
 
     monkeypatch.setattr(
@@ -297,7 +297,7 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     assert "stack_trace" in with_exc_info
 
     broken = FlextLogger.create_bound_logger(
-        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+        "x", cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
     monkeypatch.setattr(
         broken.logger,
@@ -356,7 +356,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     sentinel = object()
     monkeypatch.setattr(
-        FlextRuntime, "get_logger", staticmethod(lambda _name=None: sentinel)
+        FlextRuntime, "get_logger", staticmethod(lambda _name=None: sentinel),
     )
     assert FlextLogger.get_logger("x") is sentinel
 
@@ -391,7 +391,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(c.Validation, "LEVEL_PREFIX_PARTS_COUNT", 2)
     assert (
         FlextLogger._extract_class_name(
-            cast("types.FrameType", cast("object", _UpperFrame()))
+            cast("types.FrameType", cast("object", _UpperFrame())),
         )
         == "MyClass"
     )
@@ -417,7 +417,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         staticmethod(lambda _filename: "example.py"),
     )
     monkeypatch.setattr(
-        FlextLogger, "_extract_class_name", staticmethod(lambda _f: None)
+        FlextLogger, "_extract_class_name", staticmethod(lambda _f: None),
     )
     source = FlextLogger._get_caller_source_path()
     assert source is not None and source.endswith(" run")

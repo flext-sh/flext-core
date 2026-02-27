@@ -101,7 +101,7 @@ class TestEnterprisePatterns:
                     )
 
                 return FlextResult[dict[str, t.GeneralValueType]].ok(
-                    self._config.copy()
+                    self._config.copy(),
                 )
 
         # Test builder usage
@@ -144,7 +144,7 @@ class TestEnterprisePatterns:
                 self._query_count = 0
 
             def save(
-                self, entity_id: str, data: t.GeneralValueType
+                self, entity_id: str, data: t.GeneralValueType,
             ) -> FlextResult[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
@@ -158,7 +158,7 @@ class TestEnterprisePatterns:
                     return FlextResult[t.GeneralValueType].ok(self._data[entity_id])
 
                 return FlextResult[t.GeneralValueType].fail(
-                    f"Entity not found: {entity_id}"
+                    f"Entity not found: {entity_id}",
                 )
 
             def get_query_count(self) -> int:
@@ -192,7 +192,7 @@ class TestEnterprisePatterns:
         start_time = time.perf_counter()
         for i in range(100):
             query_result: FlextResult[t.GeneralValueType] = repo.find_by_id(
-                f"entity_{i}"
+                f"entity_{i}",
             )
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value

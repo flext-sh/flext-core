@@ -83,7 +83,7 @@ class MigrationService(s[m.ConfigMap]):
                 "sync": sync,
                 "batch_size": 100,
                 "max_workers": 4,
-            }
+            },
         )
 
         # ✅ CORRECT: Log config ONCE at initialization
@@ -123,7 +123,7 @@ def main() -> None:
             "port": 5432,
             "database": "mydb",
             "pool_size": 10,
-        }
+        },
     )
 
     db_service = DatabaseService(db_config=db_config)

@@ -147,7 +147,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
 
         """
         log_path = self._reporting.get_report_path(
-            Path.cwd(), "workspace", verb, f"{project}.log"
+            Path.cwd(), "workspace", verb, f"{project}.log",
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()
@@ -164,7 +164,7 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
         # Output project completion status
         status_symbol = "✓" if return_code == 0 else "✗"
         output.info(
-            f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})"
+            f"  {status_symbol} {project} completed in {int(elapsed)}s (log: {log_path.name})",
         )
 
         return r[m.CommandOutput].ok(

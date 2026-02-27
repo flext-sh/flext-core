@@ -1693,7 +1693,7 @@ class FlextTestsModels(FlextModels):
 
                 path: str = Field(description="Path where match occurred or failed")
                 expected: t.Tests.Matcher.ValueSpec = Field(
-                    description="Expected value or predicate"
+                    description="Expected value or predicate",
                 )
                 actual: t.Tests.PayloadValue | None = Field(
                     default=None,

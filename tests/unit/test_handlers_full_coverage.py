@@ -76,7 +76,7 @@ def test_create_from_callable_branches() -> None:
     assert handler_from_config.handler_name == "cfg"
 
     enum_mode_handler = h.create_from_callable(
-        lambda msg: msg, mode=c.Cqrs.HandlerType.QUERY
+        lambda msg: msg, mode=c.Cqrs.HandlerType.QUERY,
     )
     assert enum_mode_handler.mode == c.Cqrs.HandlerType.QUERY
 
@@ -101,7 +101,7 @@ def test_run_pipeline_query_and_event_paths() -> None:
             handler_name="q2",
             handler_type=c.Cqrs.HandlerType.QUERY,
             handler_mode=c.Cqrs.HandlerType.QUERY,
-        )
+        ),
     )
     qr = qh._run_pipeline("query", operation=c.Dispatcher.HANDLER_MODE_QUERY)
     assert qr.is_success
@@ -112,7 +112,7 @@ def test_run_pipeline_query_and_event_paths() -> None:
             handler_name="e2",
             handler_type=c.Cqrs.HandlerType.EVENT,
             handler_mode=c.Cqrs.HandlerType.EVENT,
-        )
+        ),
     )
     er = eh._run_pipeline("event", operation=c.Cqrs.HandlerType.EVENT.value)
     assert er.is_success

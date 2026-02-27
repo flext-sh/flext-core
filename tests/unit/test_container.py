@@ -59,7 +59,7 @@ class ContainerScenarios:
     SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("test_service", {"key": "value"}, "Simple dict service"),
         ServiceScenario(
-            "service_instance", {"instance_id": 123}, "Dict service instance"
+            "service_instance", {"instance_id": 123}, "Dict service instance",
         ),
         ServiceScenario("string_service", "test_value", "String service"),
     ]
@@ -556,7 +556,7 @@ class TestFlextContainer:
         container = FlextContainer()
         config = container.get_config()
         tm.that(
-            config, is_=t.ConfigMap, none=False, msg="get_config must return ConfigMap"
+            config, is_=t.ConfigMap, none=False, msg="get_config must return ConfigMap",
         )
         tm.that(
             "enable_singleton" in config.root or "max_services" in config.root,

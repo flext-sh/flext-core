@@ -699,7 +699,7 @@ class ReliabilityScenarios:
             name="retry_immediate_success",
             strategy="retry",
             config=m.ConfigMap(
-                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
             ),
             simulate_failures=0,
             expected_state="success",
@@ -710,7 +710,7 @@ class ReliabilityScenarios:
             name="retry_after_one_failure",
             strategy="retry",
             config=m.ConfigMap(
-                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
             ),
             simulate_failures=1,
             expected_state="success",
@@ -721,7 +721,7 @@ class ReliabilityScenarios:
             name="retry_exhausted",
             strategy="retry",
             config=m.ConfigMap(
-                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10}
+                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
             ),
             simulate_failures=5,
             expected_state="exhausted",

@@ -94,7 +94,7 @@ class CommandRunner:
         raw_result = self.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
         if raw_result.is_failure:
             return r[m.CommandOutput].fail(
-                raw_result.error or "command execution error"
+                raw_result.error or "command execution error",
             )
 
         output = raw_result.value

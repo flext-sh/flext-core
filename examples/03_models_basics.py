@@ -80,7 +80,7 @@ def demonstrate_enhanced_generic_models() -> None:
                 "cache": True,
                 "external_api": False,
                 "filesystem": True,
-            }
+            },
         ),
         service_name="user-service",
         service_version="2.1.0",
@@ -94,7 +94,7 @@ def demonstrate_enhanced_generic_models() -> None:
 
     # Enhanced Operation progress tracking
     operation = gm.Progress.Operation(
-        operation_name="user_import", estimated_total=1000
+        operation_name="user_import", estimated_total=1000,
     )
     operation.start_operation()
 
@@ -114,7 +114,7 @@ def demonstrate_enhanced_generic_models() -> None:
 
     # Enhanced Conversion tracking
     conversion = gm.Progress.Conversion(
-        source_format="csv", target_format="json", total_input_count=500
+        source_format="csv", target_format="json", total_input_count=500,
     )
     conversion.start_conversion()
 
@@ -136,7 +136,7 @@ def demonstrate_enhanced_generic_models() -> None:
     print(f"📋 Status: {conversion.status_summary}")
 
     print(
-        "✨ Enhanced generic models provide rich monitoring and tracking capabilities!\n"
+        "✨ Enhanced generic models provide rich monitoring and tracking capabilities!\n",
     )
 
 
@@ -209,7 +209,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
     # Test business rule validation
     try:
         invalid_entity = AdvancedEntity(
-            name="ACTIVE_Invalid", created_by="system", tags=["test"]
+            name="ACTIVE_Invalid", created_by="system", tags=["test"],
         )
         invalid_entity.soft_delete("REDACTED_LDAP_BIND_PASSWORD")
         print("❌ Should have failed validation")
@@ -232,7 +232,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
     try:
         invalid_timestamp = F.TimestampableMixin()
         invalid_timestamp.updated_at = invalid_timestamp.created_at.replace(
-            second=0
+            second=0,
         )  # Before creation
     except ValueError as e:
         print(f"✅ Cross-field validation: {e}")
@@ -244,7 +244,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
         print(f"✅ Audit validation: {e}")
 
     print(
-        "🎯 Pydantic v2 mixins provide enterprise-grade validation and functionality!\n"
+        "🎯 Pydantic v2 mixins provide enterprise-grade validation and functionality!\n",
     )
 
 
@@ -366,7 +366,7 @@ class Order(m.AggregateRoot):
             return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
         currency = self.items[0].price.currency
         total_amount = Decimal(
-            sum(item.price.amount * item.quantity for item in self.items)
+            sum(item.price.amount * item.quantity for item in self.items),
         )
         return Money(amount=total_amount, currency=currency)
 
@@ -448,7 +448,7 @@ class DomainModelService(s[m.ConfigMap]):
                     "user_id": user.entity_id,
                     "order_total": float(order_total),
                     "order_status": order.status,
-                }
+                },
             )
 
         def combine_with_user(

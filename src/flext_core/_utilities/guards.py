@@ -203,7 +203,7 @@ class FlextUtilitiesGuards:
         if isinstance(value, Mapping):
             return True
         # Check if BaseModel instance or class
-        if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
+        if hasattr(value, "model_dump") and callable(value.model_dump):
             return True
         # Check for handler protocol methods (duck typing)
         # All values are objects in Python, so type check (value, object) is always True
@@ -315,11 +315,11 @@ class FlextUtilitiesGuards:
         """Check if object satisfies the Context protocol."""
         return (
             hasattr(obj, "clone")
-            and callable(getattr(obj, "clone"))
+            and callable(obj.clone)
             and hasattr(obj, "set")
-            and callable(getattr(obj, "set"))
+            and callable(obj.set)
             and hasattr(obj, "get")
-            and callable(getattr(obj, "get"))
+            and callable(obj.get)
         )
 
     # =========================================================================
@@ -390,7 +390,7 @@ class FlextUtilitiesGuards:
     def _is_sized(value: t.GuardInputValue) -> TypeGuard[Sized]:
         """Check if value has __len__ (str, bytes, Sequence, Mapping)."""
         return isinstance(value, (str, bytes, list, tuple, dict)) or (
-            hasattr(value, "__len__") and callable(getattr(value, "__len__"))
+            hasattr(value, "__len__") and callable(value.__len__)
         )
 
     @staticmethod
@@ -429,7 +429,7 @@ class FlextUtilitiesGuards:
     ) -> TypeGuard[Sequence[t.GuardInputValue]]:
         """Check if value is Sequence and not str or bytes."""
         return isinstance(value, (list, tuple, range)) and not isinstance(
-            value, (str, bytes)
+            value, (str, bytes),
         )
 
     # =========================================================================
@@ -440,25 +440,25 @@ class FlextUtilitiesGuards:
     # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
     _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
         "config": lambda v: (
-            hasattr(v, "app_name") and getattr(v, "app_name") is not None
+            hasattr(v, "app_name") and v.app_name is not None
         ),
         "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
         "container": lambda v: (
-            hasattr(v, "register") and callable(getattr(v, "register"))
+            hasattr(v, "register") and callable(v.register)
         ),
         "command_bus": lambda v: (
-            hasattr(v, "dispatch") and callable(getattr(v, "dispatch"))
+            hasattr(v, "dispatch") and callable(v.dispatch)
         ),
-        "handler": lambda v: hasattr(v, "handle") and callable(getattr(v, "handle")),
+        "handler": lambda v: hasattr(v, "handle") and callable(v.handle),
         "logger": lambda v: all(
             hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
         ),
         "result": lambda v: all(
             hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
         ),
-        "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run")),
+        "service": lambda v: hasattr(v, "run") and callable(v.run),
         "middleware": lambda v: (
-            hasattr(v, "before_dispatch") and callable(getattr(v, "before_dispatch"))
+            hasattr(v, "before_dispatch") and callable(v.before_dispatch)
         ),
     })
 
@@ -501,7 +501,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_type(
-        value: t.FlexibleValue, type_spec: str | type | tuple[type, ...]
+        value: t.FlexibleValue, type_spec: str | type | tuple[type, ...],
     ) -> bool:
         """Generic type checking function that unifies all guard checks.
 
@@ -592,7 +592,7 @@ class FlextUtilitiesGuards:
     def is_pydantic_model(value: t.GuardInputValue) -> TypeGuard[p.HasModelDump]:
         """Type guard to check if value is a Pydantic model with model_dump method."""
         return hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump"),
+            value.model_dump,
         )
 
     @staticmethod
@@ -656,7 +656,7 @@ class FlextUtilitiesGuards:
         if not condition(value):
             if error_msg is None:
                 desc = (
-                    getattr(condition, "description")
+                    condition.description
                     if hasattr(condition, "description")
                     else "validation"
                 )
@@ -875,7 +875,7 @@ class FlextUtilitiesGuards:
                     item for item in validator if isinstance(item, type)
                 )
                 if len(tuple_types) == len(validator) and isinstance(
-                    value, tuple_types
+                    value, tuple_types,
                 ):
                     return guarded_value if return_value else True
             elif callable(validator):
@@ -1088,7 +1088,7 @@ class FlextUtilitiesGuards:
             check_val = len(value)
         elif hasattr(value, "__len__"):
             try:
-                len_method = getattr(value, "__len__")
+                len_method = value.__len__
                 if callable(len_method):
                     length = len_method()
                     if isinstance(length, int):
@@ -1131,7 +1131,7 @@ class FlextUtilitiesGuards:
                     return False
             # Other types - use hasattr/getattr with explicit type narrowing
             elif hasattr(value, "__contains__"):
-                contains_method = getattr(value, "__contains__")
+                contains_method = value.__contains__
                 if callable(contains_method):
                     try:
                         if not contains_method(contains):

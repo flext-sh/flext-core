@@ -137,7 +137,7 @@ class DocFixer:
             *[f"| {item.file} | {item.links} | {item.toc} |" for item in items],
         ]
         _ = FlextInfraDocsShared.write_markdown(
-            scope.report_dir / "fix-report.md", lines
+            scope.report_dir / "fix-report.md", lines,
         )
 
         status = c.Status.OK if apply or not items else c.Status.WARN

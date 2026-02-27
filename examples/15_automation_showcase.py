@@ -69,7 +69,7 @@ class UserService(s[m.ConfigMap]):
                 "id": "usr_123",
                 "username": username,
                 "email": email,
-            }
+            },
         )
 
         return r[m.ConfigMap].ok(user_data)
@@ -137,7 +137,7 @@ class PaymentService(s[m.ConfigMap]):
                 "amount": amount,
                 "status": "completed",
                 "correlation_id": correlation_id,
-            }
+            },
         )
 
         # Clean up operation context
@@ -184,7 +184,7 @@ class OrderService(s[m.ConfigMap]):
             predicate=is_string_key,
         )
         result_data = m.ConfigMap(
-            root=(dict(filtered_dict) if isinstance(filtered_dict, Mapping) else {})
+            root=(dict(filtered_dict) if isinstance(filtered_dict, Mapping) else {}),
         )
         return r[m.ConfigMap].ok(result_data)
 
@@ -245,8 +245,8 @@ class AutomationService(s[m.ConfigMap]):
             m.ConfigMap(
                 root={
                     "status": "automation_ready",
-                }
-            )
+                },
+            ),
         )
 
     @staticmethod
@@ -281,7 +281,7 @@ class AutomationService(s[m.ConfigMap]):
                     "task_type": "data_sync",
                     "records_processed": 1000,
                     "status": "success",
-                }
+                },
             )
             records = u.get(task_data, "records_processed", default=0) or 0
             if u.guard(records, int, return_value=True) is None or records == 0:
@@ -321,7 +321,7 @@ class AutomationService(s[m.ConfigMap]):
                     "automation_timestamp": "2025-01-01T12:00:00Z",
                     "duration_ms": 250,
                     "result_id": "RESULT-001",
-                }
+                },
             )
             return r[m.ConfigMap].ok(enriched)
 
@@ -329,7 +329,7 @@ class AutomationService(s[m.ConfigMap]):
             root={
                 "task_type": c.Cqrs.ProcessingMode.BATCH.value,
                 "source": "database",
-            }
+            },
         )
         pipeline_result = (
             r[m.ConfigMap].ok(automation_input).flow_through(validate, enrich)
@@ -376,8 +376,8 @@ class AutomationService(s[m.ConfigMap]):
                     root={
                         "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
                         "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
-                    }
-                )
+                    },
+                ),
             )
 
         cached = get_cached()
@@ -403,7 +403,7 @@ class AutomationService(s[m.ConfigMap]):
                     "engine_id": "AUTO-ENGINE-001",
                     "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
                     "worker_count": c.Performance.DEFAULT_DB_POOL_SIZE,
-                }
+                },
             )
 
         fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail(
@@ -427,7 +427,7 @@ class AutomationService(s[m.ConfigMap]):
             root={
                 "engine_id": "CACHED-ENGINE-001",
                 "worker_count": c.Container.DEFAULT_WORKERS,
-            }
+            },
         )
         success_result = r[m.ConfigMap].ok(existing)
         cached = success_result.map_or(create_engine())
@@ -465,7 +465,7 @@ class AutomationService(s[m.ConfigMap]):
                         **item.root,
                         "processed": True,
                         "timestamp": "2025-01-01T12:00:00Z",
-                    }
+                    },
                 )
                 for item in data
             ]

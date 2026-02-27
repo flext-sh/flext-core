@@ -46,7 +46,7 @@ class FlextModelsService:
         """Retry configuration for operations."""
 
         exponential_base: float = Field(
-            default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0
+            default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0,
         )
         retry_on_timeout: bool = True
 
@@ -140,7 +140,7 @@ class FlextModelsService:
             list[c.Cqrs.ServiceMetricTypeLiteral],
             Field(
                 default_factory=lambda: list(
-                    c.Cqrs.DEFAULT_METRIC_CATEGORIES
+                    c.Cqrs.DEFAULT_METRIC_CATEGORIES,
                 ),  # Constant reference, not class instance
                 description="Types of metrics to collect",
             ),

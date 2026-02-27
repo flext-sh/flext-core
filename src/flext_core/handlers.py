@@ -284,7 +284,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     RuntimeError,
                 ) as exc:
                     _module_logger.debug(
-                        "Callable handler execution failed", exc_info=exc
+                        "Callable handler execution failed", exc_info=exc,
                     )
                     return r[t.ScalarValue].fail(str(exc))
 
@@ -341,7 +341,6 @@ class FlextHandlers[MessageT_contra, ResultT](
             be handled separately in the validate() method and executed via execute().
 
         """
-        ...
 
     def execute(self, message: MessageT_contra) -> r[ResultT]:
         """Execute handler with complete validation and error handling pipeline.
@@ -553,7 +552,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 root={
                     "handler_name": popped.handler_name,
                     "handler_mode": popped.handler_mode,
-                }
+                },
             )
             return r[m.ConfigMap].ok(context_dict)
         return r[m.ConfigMap].ok(popped)

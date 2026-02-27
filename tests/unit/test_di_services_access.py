@@ -170,7 +170,7 @@ class TestContextServiceViaDI:
         # Test registering a custom context with a different name
         custom_context = FlextContext()
         result = container.register(
-            "custom_context", cast("t.GeneralValueType", custom_context)
+            "custom_context", cast("t.GeneralValueType", custom_context),
         )
         assertion_helpers.assert_flext_result_success(result)
 

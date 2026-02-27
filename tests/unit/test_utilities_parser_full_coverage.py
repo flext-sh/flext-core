@@ -52,7 +52,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     assert parser._safe_text_length(_LenRaises("x")) == "unknown"
 
     monkeypatch.setattr(
-        parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x"))
+        parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x")),
     )
     result = parser.parse_delimited("a,b", ",")
     assert result.is_success
@@ -71,7 +71,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
             raise RuntimeError(msg)
 
     monkeypatch.setattr(
-        parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x"))
+        parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x")),
     )
     split_failure = parser.parse_delimited(
         cast("str", cast("object", _SplitRaises())),
@@ -102,7 +102,7 @@ def test_parser_split_and_normalize_exception_paths(
 
     parser2 = u.Parser()
     monkeypatch.setattr(
-        parser2, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x"))
+        parser2, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x")),
     )
     normalized = parser2.normalize_whitespace("x")
     assert normalized.is_success
@@ -117,13 +117,13 @@ def test_parser_pipeline_and_pattern_branches(
     parser = u.Parser()
 
     monkeypatch.setattr(
-        parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x"))
+        parser, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x")),
     )
     ok = parser.apply_regex_pipeline("abc", [("a", "b")])
     assert ok.is_success
 
     monkeypatch.setattr(
-        parser, "_handle_pipeline_edge_cases", lambda *_args, **_kwargs: None
+        parser, "_handle_pipeline_edge_cases", lambda *_args, **_kwargs: None,
     )
     none_text = parser.apply_regex_pipeline(None, [("a", "b")])
     assert none_text.is_failure
@@ -135,14 +135,14 @@ def test_parser_pipeline_and_pattern_branches(
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
     )
     monkeypatch.setattr(
-        parser2, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x"))
+        parser2, "_safe_text_length", lambda _v: (_ for _ in ()).throw(TypeError("x")),
     )
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
 
     assert (
         u.Parser()._extract_key_from_str_conversion(
-            cast("t.ConfigMapValue", cast("object", _StrRaises()))
+            cast("t.ConfigMapValue", cast("object", _StrRaises())),
         )
         is None
     )
@@ -172,13 +172,13 @@ def test_parser_pipeline_and_pattern_branches(
     )
 
     invalid_type = parser3._extract_pattern_components(
-        cast("tuple[str, str, int]", cast("object", ("a", 1, 0)))
+        cast("tuple[str, str, int]", cast("object", ("a", 1, 0))),
     )
     invalid_flag = parser3._extract_pattern_components(
-        cast("tuple[str, str, int]", cast("object", ("a", "b", "x")))
+        cast("tuple[str, str, int]", cast("object", ("a", "b", "x"))),
     )
     invalid_len = parser3._extract_pattern_components(
-        cast("tuple[str, str]", ("only",))
+        cast("tuple[str, str]", ("only",)),
     )
     assert invalid_type.is_failure
     assert invalid_flag.is_failure
@@ -314,7 +314,7 @@ def test_parser_convert_and_norm_branches(
     assert parser.conv_str_list(5) == ["5"]
     assert parser.norm_str("abc") == "abc"
     assert parser.norm_list({"a": "", "b": "B"}, case="lower", filter_truthy=True) == {
-        "b": "b"
+        "b": "b",
     }
     assert parser.norm_list(["A", "b"], case="lower", to_set=True) == {"a", "b"}
     assert parser.norm_join(["A", "B"], sep="-") == "A-B"

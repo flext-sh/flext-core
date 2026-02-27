@@ -74,8 +74,8 @@ class DecoratorsService(s[m.ConfigMap]):
                             "timeout_enforcement",
                             "composition",
                         ],
-                    }
-                )
+                    },
+                ),
             )
 
         except Exception as e:

@@ -215,7 +215,7 @@ class FlextUtilitiesPagination:
         if config is not None:
             # Use getattr to safely access attributes without type narrowing issues
             if hasattr(config, "default_page_size"):
-                default_page_size_attr = getattr(config, "default_page_size")
+                default_page_size_attr = config.default_page_size
                 match default_page_size_attr:
                     case int() as page_size if page_size > 0:
                         default_page_size = page_size
@@ -223,7 +223,7 @@ class FlextUtilitiesPagination:
                         pass
 
             if hasattr(config, "max_page_size"):
-                max_page_size_attr = getattr(config, "max_page_size")
+                max_page_size_attr = config.max_page_size
                 match max_page_size_attr:
                     case int() as page_size if page_size > 0:
                         max_page_size = page_size

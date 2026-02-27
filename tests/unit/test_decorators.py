@@ -307,7 +307,7 @@ class TestFlextDecorators:
 
             # Cast dataclass instance for type compatibility with container
             service_instance: TestServiceTyped = TestServiceTyped(
-                value="from_container"
+                value="from_container",
             )
             container.with_service("service", service_instance)
 

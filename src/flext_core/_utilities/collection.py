@@ -449,7 +449,7 @@ class FlextUtilitiesCollection:
                 except (TypeError, ValueError):
                     direct_result = str(result_raw)
                 if do_flatten and FlextUtilitiesCollection._is_general_value_list(
-                    direct_result
+                    direct_result,
                 ):
                     # Extend results with all items from the list
                     # Convert each item to PayloadValue

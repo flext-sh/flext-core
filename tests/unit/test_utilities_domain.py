@@ -410,7 +410,7 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, TestPayload]]", input_data_list_hash
+                "list[Mapping[str, TestPayload]]", input_data_list_hash,
             ),
             expected_results=[
                 _as_test_payload(int),

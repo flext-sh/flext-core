@@ -47,7 +47,7 @@ def test_to_general_value_type_branches() -> None:
     model = _Model(value=1)
     assert (
         u.Conversion.to_general_value_type(
-            cast("StrictJsonValue", cast("object", model))
+            cast("StrictJsonValue", cast("object", model)),
         )
         == model
     )
@@ -60,7 +60,7 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
     assert u.Conversion.to_flexible_value(None) is None
     assert (
         u.Conversion.to_flexible_value(
-            cast("StrictJsonValue", cast("object", _Model(value=1)))
+            cast("StrictJsonValue", cast("object", _Model(value=1))),
         )
         is None
     )
@@ -71,7 +71,7 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
     )
     assert (
         u.Conversion.to_flexible_value(
-            cast("StrictJsonValue", cast("object", datetime.now(UTC)))
+            cast("StrictJsonValue", cast("object", datetime.now(UTC))),
         )
         is not None
     )

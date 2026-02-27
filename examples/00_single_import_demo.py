@@ -180,7 +180,7 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: m.ConfigMap, _: object
+        self, user_data: m.ConfigMap, _: object,
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -214,7 +214,7 @@ def demonstrate_utilities() -> None:
         root={
             "unique_id": correlation_id,
             "test": True,
-        }
+        },
     )
 
     # Railway pattern with traverse for multiple operations (DRY - no manual loops)
@@ -284,7 +284,7 @@ def demonstrate_exceptions() -> None:
             return format_error_message(field_str, value_str)
 
         return create_error_result(msg_str, field_str, value_str).map(
-            format_error_after_validation
+            format_error_after_validation,
         )
 
     def process_exception(error: object) -> r[str]:
@@ -295,7 +295,7 @@ def demonstrate_exceptions() -> None:
         list(starmap(process_scenario, error_scenarios))
         + [
             # Standard exception conversion
-            process_exception("Standard exception")
+            process_exception("Standard exception"),
         ],
         identity,
     ).map(print)
@@ -382,7 +382,7 @@ def main() -> None:
             root={
                 "name": "Demo",
                 "email": "demo@example.com",
-            }
+            },
         )
 
         # Service instance (DRY - single creation)

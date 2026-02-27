@@ -32,7 +32,7 @@ def test_narrow_contextvar_invalid_inputs() -> None:
         == {}
     )
     data = FlextContext._narrow_contextvar_to_configuration_dict(
-        cast("Any", {"a": object()})
+        cast("Any", {"a": object()}),
     )
     assert data["a"]
 
@@ -160,14 +160,14 @@ def test_export_paths_with_metadata_and_statistics() -> None:
     ctx.set_metadata("mk", "mv")
 
     exported_dict = ctx.export(
-        include_statistics=True, include_metadata=True, as_dict=True
+        include_statistics=True, include_metadata=True, as_dict=True,
     )
     assert isinstance(exported_dict, dict)
     assert "statistics" in exported_dict
     assert "metadata" in exported_dict
 
     exported_model = ctx.export(
-        include_statistics=True, include_metadata=True, as_dict=False
+        include_statistics=True, include_metadata=True, as_dict=False,
     )
     assert isinstance(exported_model, m.ContextExport)
 

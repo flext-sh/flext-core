@@ -960,7 +960,7 @@ class FlextDecorators:
         """
         first_arg = args[0] if args else None
         potential_logger: FlextLogger | None = (
-            (getattr(first_arg, "logger") if hasattr(first_arg, "logger") else None)
+            (first_arg.logger if hasattr(first_arg, "logger") else None)
             if first_arg is not None
             else None
         )
@@ -1151,7 +1151,7 @@ class FlextDecorators:
                             "function": function_name,
                             "operation": operation,
                         },
-                    }
+                    },
                 ),
             )
 
@@ -1166,7 +1166,7 @@ class FlextDecorators:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
             fallback_logger = (
-                getattr(logger, "logger") if hasattr(logger, "logger") else None
+                logger.logger if hasattr(logger, "logger") else None
             )
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return

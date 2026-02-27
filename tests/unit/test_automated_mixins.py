@@ -59,7 +59,7 @@ class TestAutomatedFlextMixins:
         ids=lambda case: case["description"],
     )
     def test_automated_mixins_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self, test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for mixins functionality."""
         try:
@@ -96,7 +96,7 @@ class TestAutomatedFlextMixins:
         # Test with correct types
         result = self._execute_mixins_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextMixins type safety test"
+            result, "FlextMixins type safety test",
         )
 
     def test_automated_mixins_error_handling(self) -> None:
@@ -123,7 +123,7 @@ class TestAutomatedFlextMixins:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextMixins performance test exceeded timeout"
+            result, "FlextMixins performance test exceeded timeout",
         )
 
     def test_automated_mixins_resource_management(self) -> None:
@@ -133,7 +133,7 @@ class TestAutomatedFlextMixins:
         # Test normal operation
         result = self._execute_mixins_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextMixins resource test"
+            result, "FlextMixins resource test",
         )
 
         # Test cleanup (if applicable)
@@ -147,7 +147,7 @@ class TestAutomatedFlextMixins:
                 )
 
     def _execute_mixins_operation(
-        self, instance: object, input_data: Mapping[str, t.GeneralValueType]
+        self, instance: object, input_data: Mapping[str, t.GeneralValueType],
     ) -> r[t.GeneralValueType]:
         """Execute a test operation on mixins instance.
 

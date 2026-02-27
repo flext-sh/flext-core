@@ -15,7 +15,7 @@ def test_deprecated_class_noop_init_branch() -> None:
 
     legacy_base = type("LegacyBase", (object,), {"__init__": None})
     legacy = u.Deprecation.deprecated_class(replacement="New", version="1.0")(
-        legacy_base
+        legacy_base,
     )
 
     with warnings.catch_warnings(record=True) as caught:

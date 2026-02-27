@@ -82,11 +82,11 @@ class _LazyMetadata:
     """Descriptor for lazy-loading Metadata class."""
 
     def __get__(
-        self, obj: object, objtype: type | None = None
+        self, obj: object, objtype: type | None = None,
     ) -> type[_runtime_metadata.Metadata]:
 
         # Cache the loaded class on the class itself
-        setattr(objtype or FlextRuntime, "Metadata", Metadata)
+        (objtype or FlextRuntime).Metadata = Metadata
         return Metadata
 
 
@@ -169,7 +169,7 @@ class FlextRuntime:
     _structlog_configured: ClassVar[bool] = False
 
     Metadata: ClassVar[type[_runtime_metadata.Metadata]] = cast(
-        "type[_runtime_metadata.Metadata]", _LazyMetadata()
+        "type[_runtime_metadata.Metadata]", _LazyMetadata(),
     )  # Lazy-loaded from _runtime_metadata
 
     class _AsyncLogWriter:
@@ -352,9 +352,9 @@ class FlextRuntime:
             case Mapping():
                 return True
             case _:
-                keys = getattr(value, "keys") if hasattr(value, "keys") else None
-                items = getattr(value, "items") if hasattr(value, "items") else None
-                get = getattr(value, "get") if hasattr(value, "get") else None
+                keys = value.keys if hasattr(value, "keys") else None
+                items = value.items if hasattr(value, "items") else None
+                get = value.get if hasattr(value, "get") else None
                 if not (callable(keys) and callable(items) and callable(get)):
                     return False
                 try:
@@ -425,10 +425,10 @@ class FlextRuntime:
         if isinstance(val, Path):
             return str(val)
 
-        model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
+        model_dump = val.model_dump if hasattr(val, "model_dump") else None
         if callable(model_dump):
             dumped_value: t.ConfigMapValue = TypeAdapter(
-                t.ConfigMapValue
+                t.ConfigMapValue,
             ).validate_python(model_dump())
             return FlextRuntime.normalize_to_general_value(dumped_value)
 
@@ -472,10 +472,10 @@ class FlextRuntime:
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
 
-        model_dump = getattr(val, "model_dump") if hasattr(val, "model_dump") else None
+        model_dump = val.model_dump if hasattr(val, "model_dump") else None
         if callable(model_dump):
             dumped_value: t.ConfigMapValue = TypeAdapter(
-                t.ConfigMapValue
+                t.ConfigMapValue,
             ).validate_python(model_dump())
             return FlextRuntime.normalize_to_metadata_value(dumped_value)
 
@@ -484,7 +484,7 @@ class FlextRuntime:
             normalized_mapping: dict[str, t.ConfigMapValue] = {}
             for key, value in raw_mapping.items():
                 normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
-                    value
+                    value,
                 )
             return json.dumps(normalized_mapping)
 
@@ -616,7 +616,7 @@ class FlextRuntime:
             # Check if it's a known type alias
             if hasattr(type_hint, "__name__"):
                 type_name = (
-                    getattr(type_hint, "__name__")
+                    type_hint.__name__
                     if hasattr(type_hint, "__name__")
                     else ""
                 )
@@ -685,21 +685,21 @@ class FlextRuntime:
 
             # Check if the type itself is a sequence subclass (for type aliases)
             hint_mro = (
-                getattr(type_hint, "__mro__") if hasattr(type_hint, "__mro__") else None
+                type_hint.__mro__ if hasattr(type_hint, "__mro__") else None
             )
             if hint_mro is not None and Sequence in hint_mro:
                 return True
 
             # Check __name__ for type aliases like StringList
             type_name = (
-                getattr(type_hint, "__name__")
+                type_hint.__name__
                 if hasattr(type_hint, "__name__")
                 else None
             )
             return bool(
                 type_name is not None
                 and type_name
-                in {"StringList", "IntList", "FloatList", "BoolList", "List"}
+                in {"StringList", "IntList", "FloatList", "BoolList", "List"},
             )
         except (
             AttributeError,
@@ -1163,39 +1163,39 @@ class FlextRuntime:
         async_logging = True
         if config is not None:
             log_level = (
-                getattr(config, "log_level")
+                config.log_level
                 if hasattr(config, "log_level")
                 else log_level
             )
             console_renderer = (
-                getattr(config, "console_renderer")
+                config.console_renderer
                 if hasattr(config, "console_renderer")
                 else console_renderer
             )
             additional_processors_from_config = (
-                getattr(config, "additional_processors")
+                config.additional_processors
                 if hasattr(config, "additional_processors")
                 else None
             )
             if additional_processors_from_config:
                 additional_processors = additional_processors_from_config
             wrapper_class_factory = (
-                getattr(config, "wrapper_class_factory")
+                config.wrapper_class_factory
                 if hasattr(config, "wrapper_class_factory")
                 else wrapper_class_factory
             )
             logger_factory = (
-                getattr(config, "logger_factory")
+                config.logger_factory
                 if hasattr(config, "logger_factory")
                 else logger_factory
             )
             cache_logger_on_first_use = (
-                getattr(config, "cache_logger_on_first_use")
+                config.cache_logger_on_first_use
                 if hasattr(config, "cache_logger_on_first_use")
                 else cache_logger_on_first_use
             )
             async_logging = (
-                getattr(config, "async_logging")
+                config.async_logging
                 if hasattr(config, "async_logging")
                 else True
             )
@@ -1251,7 +1251,7 @@ class FlextRuntime:
             # _AsyncLogWriter has write/flush methods (duck-typed TextIO)
             # Use getattr to call PrintLoggerFactory with duck-typed file arg
             print_logger_factory = (
-                getattr(module, "PrintLoggerFactory")
+                module.PrintLoggerFactory
                 if hasattr(module, "PrintLoggerFactory")
                 else None
             )
@@ -1269,7 +1269,7 @@ class FlextRuntime:
         # Our processors list contains valid Processor objects, pass directly
         # Use getattr to call configure with processors as Sequence
         configure_fn = (
-            getattr(module, "configure") if hasattr(module, "configure") else None
+            module.configure if hasattr(module, "configure") else None
         )
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
@@ -1881,7 +1881,7 @@ class FlextRuntime:
             _ = structlog.contextvars.bind_contextvars(service_name=service_name)
             if service_version:
                 _ = structlog.contextvars.bind_contextvars(
-                    service_version=service_version
+                    service_version=service_version,
                 )
 
             # Generate correlation ID if enabled
@@ -1892,7 +1892,7 @@ class FlextRuntime:
                     f"flext-{''.join(secrets.choice(alphabet) for _ in range(12))}"
                 )
                 _ = structlog.contextvars.bind_contextvars(
-                    correlation_id=correlation_id
+                    correlation_id=correlation_id,
                 )
 
             # Use structlog directly
@@ -2027,7 +2027,7 @@ class FlextRuntime:
         return int(
             getattr(logging, default_log_level)
             if hasattr(logging, default_log_level)
-            else logging.INFO
+            else logging.INFO,
         )
 
     @staticmethod

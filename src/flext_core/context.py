@@ -114,7 +114,7 @@ class FlextContext(FlextRuntime):
                 context_data = m.ContextData.model_validate(initial_data)
             else:
                 context_data = m.ContextData(
-                    data=t.Dict(root=m.ConfigMap.model_validate(initial_data).root)
+                    data=t.Dict(root=m.ConfigMap.model_validate(initial_data).root),
                 )
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
@@ -236,7 +236,7 @@ class FlextContext(FlextRuntime):
             if metadata is not None:
                 initial_data_dict.update(dict(metadata.items()))
             return cls(
-                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict.root))
+                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict.root)),
             )
         # Default: use initial_data parameter
         # Auto-generate correlation_id for zero-config setup
@@ -253,7 +253,7 @@ class FlextContext(FlextRuntime):
                 "correlation",
             )
             return cls(
-                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict_new.root))
+                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict_new.root)),
             )
         return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))
 
@@ -309,7 +309,7 @@ class FlextContext(FlextRuntime):
         ctx_var = self._get_or_create_scope_var(scope)
         # Use helper for type narrowing to ConfigurationDict
         current = m.ConfigMap.model_validate(
-            self._narrow_contextvar_to_configuration_dict(ctx_var.get())
+            self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
         )
         updated = current.model_copy()
         updated.update(data.root)
@@ -329,7 +329,7 @@ class FlextContext(FlextRuntime):
         ctx_var = self._get_or_create_scope_var(scope)
         value = ctx_var.get()
         return m.ConfigMap.model_validate(
-            FlextContext._narrow_contextvar_to_configuration_dict(value)
+            FlextContext._narrow_contextvar_to_configuration_dict(value),
         )
 
     def _update_statistics(self, operation: str) -> None:
@@ -352,7 +352,7 @@ class FlextContext(FlextRuntime):
         if isinstance(value, int):
             operations[operation] = value + 1
             self._statistics = self._statistics.model_copy(
-                update={"operations": operations}
+                update={"operations": operations},
             )
 
     def _execute_hooks(
@@ -681,7 +681,7 @@ class FlextContext(FlextRuntime):
         if isinstance(clear_value, int):
             operations[c.Context.OPERATION_CLEAR] = clear_value + 1
             self._statistics = self._statistics.model_copy(
-                update={"operations": operations}
+                update={"operations": operations},
             )
 
     def keys(self) -> list[str]:
@@ -775,7 +775,7 @@ class FlextContext(FlextRuntime):
             if scope_dict:
                 # Set all key-value pairs in the cloned context for this scope
                 result = cloned.set_all(
-                    m.ConfigMap.model_validate(scope_dict), scope_name
+                    m.ConfigMap.model_validate(scope_dict), scope_name,
                 )
                 if not result:
                     # If setting fails, log warning but continue cloning
@@ -803,7 +803,7 @@ class FlextContext(FlextRuntime):
         for ctx_var in self._scope_vars.values():
             try:
                 scope_dict = self._narrow_contextvar_to_configuration_dict(
-                    ctx_var.get()
+                    ctx_var.get(),
                 )
             except TypeError as e:
                 return r[bool].fail(str(e))
@@ -874,14 +874,14 @@ class FlextContext(FlextRuntime):
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap.model_validate(v)
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_general_value(
-                    FlextRuntime.normalize_to_metadata_value(metadata_value)
+                    FlextRuntime.normalize_to_metadata_value(metadata_value),
                 )
             metadata_for_model = m.ConfigMap(root=normalized_metadata_map)
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, ContextValue])
         statistics_mapping: t.Dict = t.Dict(
-            root=dict((stats_dict_export or m.ConfigMap(root={})).items())
+            root=dict((stats_dict_export or m.ConfigMap(root={})).items()),
         )
 
         # Return as dict if requested
@@ -898,7 +898,7 @@ class FlextContext(FlextRuntime):
                 root={
                     k: FlextRuntime.normalize_to_general_value(v)
                     for k, v in metadata_for_model.items()
-                }
+                },
             )
             if metadata_for_model
             else None
@@ -910,7 +910,7 @@ class FlextContext(FlextRuntime):
                 attributes={
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in metadata_root.items()
-                }
+                },
             )
             if metadata_root
             else None,
@@ -960,7 +960,7 @@ class FlextContext(FlextRuntime):
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
-            update={"attributes": updated_attributes}
+            update={"attributes": updated_attributes},
         )
 
     def get_metadata(self, key: str) -> r[ContextValue]:
@@ -1037,7 +1037,7 @@ class FlextContext(FlextRuntime):
         custom_fields_dict: dict[str, t.ConfigMapValue] = {}
         try:
             custom_fields_dict = dict(
-                m.ConfigMap.model_validate(custom_fields_raw).items()
+                m.ConfigMap.model_validate(custom_fields_raw).items(),
             )
         except (TypeError, ValueError, AttributeError) as exc:
             _logger.debug("Custom metadata field normalization failed", exc_info=exc)
@@ -1447,7 +1447,7 @@ class FlextContext(FlextRuntime):
                 root={
                     c.Context.METADATA_KEY_START_TIME: start_time.isoformat(),
                     c.Context.KEY_OPERATION_NAME: operation_name,
-                }
+                },
             )
 
             # Save current context (for potential future use in logging/debugging)

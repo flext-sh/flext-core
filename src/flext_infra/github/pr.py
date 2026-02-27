@@ -110,7 +110,7 @@ class PrManager:
         pr_result = self.open_pr_for_head(repo_root, head)
         if pr_result.is_failure:
             return r[Mapping[str, t.ScalarValue]].fail(
-                pr_result.error or "status check failed"
+                pr_result.error or "status check failed",
             )
 
         info: MutableMapping[str, t.ScalarValue] = {
@@ -186,7 +186,7 @@ class PrManager:
         result = self._runner.capture(command, cwd=repo_root)
         if result.is_failure:
             return r[Mapping[str, t.ScalarValue]].fail(
-                result.error or "PR creation failed"
+                result.error or "PR creation failed",
             )
         return r[Mapping[str, t.ScalarValue]].ok({
             "status": "created",

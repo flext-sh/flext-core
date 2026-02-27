@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-# mypy: disable-error-code=arg-type
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -53,7 +52,7 @@ class _ContainerRaise:
 
 
 def test_resolve_env_file_and_log_level(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     existing = tmp_path / "custom.env"
     existing.write_text("A=1\n", encoding="utf-8")

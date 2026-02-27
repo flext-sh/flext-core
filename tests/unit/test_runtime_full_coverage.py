@@ -316,15 +316,15 @@ def test_dependency_registration_duplicate_guards() -> None:
     FlextRuntime.DependencyIntegration.register_factory(container, "factory", lambda: 1)
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_factory(
-            container, "factory", lambda: 2
+            container, "factory", lambda: 2,
         )
 
     FlextRuntime.DependencyIntegration.register_resource(
-        container, "resource", lambda: 1
+        container, "resource", lambda: 1,
     )
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_resource(
-            container, "resource", lambda: 2
+            container, "resource", lambda: 2,
         )
 
 
@@ -380,7 +380,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         log_level = logging.DEBUG
         console_renderer = True
         additional_processors: ClassVar[list[Callable[..., object]]] = [
-            lambda *_args: {}
+            lambda *_args: {},
         ]
         wrapper_class_factory = None
         logger_factory = staticmethod(lambda: object())
@@ -456,7 +456,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
 def test_runtime_result_all_missed_branches() -> None:
     success = FlextRuntime.RuntimeResult.ok(1)
     failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult.fail(
-        "e", error_code="E1", error_data=m.ConfigMap(root={"x": 1})
+        "e", error_code="E1", error_data=m.ConfigMap(root={"x": 1}),
     )
 
     assert success.result is success
@@ -507,13 +507,13 @@ def test_runtime_result_all_missed_branches() -> None:
 
     none_success = NoneValueResult(value=1, is_success=True)
     flowed = none_success.flow_through(
-        lambda x: FlextRuntime.RuntimeResult.ok(cast("int", x) + 1)
+        lambda x: FlextRuntime.RuntimeResult.ok(cast("int", x) + 1),
     )
     assert flowed is none_success
 
     assert success._protocol_name() == "RuntimeResult"
     with pytest.raises(
-        ValueError, match="Cannot create success result with None value"
+        ValueError, match="Cannot create success result with None value",
     ):
         FlextRuntime.RuntimeResult.ok(None)
 
@@ -622,7 +622,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         include_timestamp=True,
     )
     assert {"trace_id", "span_id", "correlation_id", "timestamp"}.issubset(
-        trace_from_scalar
+        trace_from_scalar,
     )
 
     class TraceModel(BaseModel):
@@ -883,7 +883,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     FlextRuntime.Integration.track_service_resolution("svc", resolved=True)
     FlextRuntime.Integration.track_service_resolution(
-        "svc", resolved=False, error_message="x"
+        "svc", resolved=False, error_message="x",
     )
     FlextRuntime.Integration.track_domain_event(
         "evt",
@@ -917,7 +917,7 @@ def test_model_helpers_remaining_paths() -> None:
     )
     assert isinstance(
         FlextRuntime.hash_entity_by_id(
-            cast("t.GeneralValueType", cast("object", left))
+            cast("t.GeneralValueType", cast("object", left)),
         ),
         int,
     )

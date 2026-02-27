@@ -199,7 +199,7 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"],
     )
     def test_register_performance(
         self,
@@ -212,7 +212,7 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"],
     )
     def test_get_performance(
         self,
@@ -250,7 +250,7 @@ class TestContainerPerformance:
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
-        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"]
+        "count", [10, 100, 1000, 10000], ids=["10", "100", "1000", "10000"],
     )
     def test_has_service_performance(
         self,

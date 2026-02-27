@@ -267,7 +267,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             def handle(
-                self, message: dict[str, t.GeneralValueType]
+                self, message: dict[str, t.GeneralValueType],
             ) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 

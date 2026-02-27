@@ -290,7 +290,7 @@ class TestFlextTestsDocker:
     ) -> None:
         """Test wait_for_port_ready returns quickly for unavailable port."""
         result = docker_manager.wait_for_port_ready(
-            FlextConstants.Network.LOOPBACK_IP, 59999, max_wait=1
+            FlextConstants.Network.LOOPBACK_IP, 59999, max_wait=1,
         )
 
         assertion_helpers.assert_flext_result_success(result)

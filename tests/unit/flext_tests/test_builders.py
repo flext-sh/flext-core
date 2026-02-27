@@ -381,7 +381,7 @@ class TestFlextTestsBuilders:
                 lambda d: (
                     cast("t_test.Tests.Builders.BuilderOutputDict", d)["count"] == 5
                 ),
-            )
+            ),
         )
         # Type narrowing: build() returns union, extract dict
         if isinstance(build_result, dict):
@@ -406,7 +406,7 @@ class TestFlextTestsBuilders:
                     cast("int", cast("t_test.Tests.Builders.BuilderOutputDict", d)["x"])
                     * 2
                 ),
-            )
+            ),
         )
         doubled = cast("int", build_result)
         assert doubled == 2
@@ -436,7 +436,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         # to_result() returns r[BuilderDict] | BuilderDict (when unwrap=True)
         result = _as_builder_result(
-            builder.to_result(error="Failed", error_code="E001")
+            builder.to_result(error="Failed", error_code="E001"),
         )
         assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
@@ -468,7 +468,7 @@ class TestFlextTestsBuilders:
             validate=cast(
                 "t_test.Tests.PayloadValue",
                 lambda d: cast("t_test.Tests.Builders.BuilderDict", d)["count"] == 5,
-            )
+            ),
         )
         result = _as_builder_result(result_raw)
         assertion_helpers.assert_flext_result_success(result)
@@ -779,7 +779,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
         # Result.assert_failure() delegates to tu.Tests.Result.assert_failure()
         result: r[t_test.Tests.PayloadValue] = r[t_test.Tests.PayloadValue].fail(
-            "Error"
+            "Error",
         )
         # Type narrowing: assert_failure accepts r[t.GeneralValueType], r[int] is compatible
         error: str = tb.Tests.Result.assert_failure(

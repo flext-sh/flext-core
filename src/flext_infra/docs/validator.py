@@ -35,10 +35,10 @@ class ValidateReport(BaseModel):
     result: str = Field(..., description="Validation result status.")
     message: str = Field(..., description="Human-readable result message.")
     missing_adr_skills: list[str] = Field(
-        default_factory=list, description="List of missing ADR skills."
+        default_factory=list, description="List of missing ADR skills.",
     )
     todo_written: bool = Field(
-        default=False, description="Whether TODOS.md was written."
+        default=False, description="Whether TODOS.md was written.",
     )
 
 
@@ -159,7 +159,7 @@ class DocValidator:
     def _has_adr_reference(skill_path: Path) -> bool:
         """Check whether a skill file contains an ADR reference."""
         text = skill_path.read_text(
-            encoding=c.Encoding.DEFAULT, errors="ignore"
+            encoding=c.Encoding.DEFAULT, errors="ignore",
         ).lower()
         return "adr" in text
 
@@ -170,7 +170,7 @@ class DocValidator:
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
             payload = json.loads(
-                config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
+                config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
             )
             docs_validation = payload.get("docs_validation", {})
             configured = docs_validation.get("required_skills", [])

@@ -112,11 +112,11 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     # Source accepts int keys in mappings
     assert u.Guards.is_configuration_mapping(cast("t.GuardInputValue", bad_key_mapping))
     assert not u.Guards.is_configuration_mapping(
-        cast("t.GuardInputValue", bad_value_mapping)
+        cast("t.GuardInputValue", bad_value_mapping),
     )
     assert not u.Guards.is_configuration_dict([])
     assert u.Guards.is_configuration_dict(
-        cast("t.GuardInputValue", {1: "v"})
+        cast("t.GuardInputValue", {1: "v"}),
     )  # Source accepts int keys
     assert not u.Guards.is_configuration_dict(cast("t.GuardInputValue", bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
@@ -323,7 +323,7 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
     setattr(builtins, "issubclass", _explode)
     try:
         assert not u.is_type(
-            _Candidate, "handler"
+            _Candidate, "handler",
         )  # Source catches TypeError, returns False
     finally:
         setattr(builtins, "issubclass", original_issubclass)

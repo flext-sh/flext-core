@@ -1399,7 +1399,7 @@ class TestCreateInStatic:
             root={
                 "key": "value",
                 "nested": m.ConfigMap(root={"a": 1}),
-            }
+            },
         )
         path = tf.create_in(content, "config.json", tmp_path, indent=4)
 

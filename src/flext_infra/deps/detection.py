@@ -166,7 +166,7 @@ class DependencyDetectionService:
         result = self._runner.run_raw(cmd, cwd=project_path, timeout=120)
         if result.is_failure:
             return r[tuple[list[IssueMap], int]].fail(
-                result.error or "deptry execution failed"
+                result.error or "deptry execution failed",
             )
 
         issues: list[IssueMap] = []
@@ -301,7 +301,7 @@ class DependencyDetectionService:
         )
         if result.is_failure:
             return r[tuple[list[str], list[str]]].fail(
-                result.error or "mypy execution failed"
+                result.error or "mypy execution failed",
             )
 
         output = f"{result.value.stdout}\n{result.value.stderr}"
@@ -373,7 +373,7 @@ class DependencyDetectionService:
                     for spec in typings:
                         if isinstance(spec, str):
                             names.add(
-                                spec.split("[")[0].split(">=")[0].split("==")[0].strip()
+                                spec.split("[")[0].split(">=")[0].split("==")[0].strip(),
                             )
                 elif typings is not None and isinstance(typings, Mapping):
                     names.update(str(key) for key in typings)
@@ -404,7 +404,7 @@ class DependencyDetectionService:
             hints_result = self.run_mypy_stub_hints(project_path, venv_bin)
             if hints_result.is_failure:
                 return r[dm.TypingsReport].fail(
-                    hints_result.error or "typing hint detection failed"
+                    hints_result.error or "typing hint detection failed",
                 )
             hinted, missing_modules = hints_result.value
 

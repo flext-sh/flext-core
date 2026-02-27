@@ -109,7 +109,7 @@ class FlextRegistry(FlextService[bool]):
     _class_registered_keys: ClassVar[set[str]] = set()
 
     def __init_subclass__(
-        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -293,7 +293,7 @@ class FlextRegistry(FlextService[bool]):
             handler_mode = c.Cqrs.HandlerType.EVENT
 
         timestamp = (
-            getattr(reg_result, "timestamp") if hasattr(reg_result, "timestamp") else ""
+            reg_result.timestamp if hasattr(reg_result, "timestamp") else ""
         )
         status = reg_result.status
 
@@ -403,7 +403,7 @@ class FlextRegistry(FlextService[bool]):
                         handler_name=key,
                         status=c.Cqrs.CommonStatus.RUNNING,
                         mode="explicit",
-                    )
+                    ),
                 )
         else:
             protocol_result = self._dispatcher.register_handler(
@@ -527,7 +527,7 @@ class FlextRegistry(FlextService[bool]):
                 self._add_successful_registration(key, result.value, summary)
             else:
                 self._add_registration_error(
-                    key, result.error or "Unknown error", summary
+                    key, result.error or "Unknown error", summary,
                 )
 
         return self._finalize_summary(summary)
@@ -560,7 +560,7 @@ class FlextRegistry(FlextService[bool]):
 
         for message_type, handler in bindings.items():
             message_type_name = (
-                getattr(message_type, "__name__")
+                message_type.__name__
                 if hasattr(message_type, "__name__")
                 else message_type
             )
@@ -587,7 +587,7 @@ class FlextRegistry(FlextService[bool]):
                     )
                     continue
                 handler_for_dispatch: p.Handler[
-                    t.GeneralValueType, t.GeneralValueType
+                    t.GeneralValueType, t.GeneralValueType,
                 ] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
@@ -625,7 +625,7 @@ class FlextRegistry(FlextService[bool]):
                                 handler_name=key,
                                 status=c.Cqrs.CommonStatus.RUNNING,
                                 mode="explicit",
-                            )
+                            ),
                         )
                 else:
                     # Protocol path: handler must self-describe
@@ -666,7 +666,7 @@ class FlextRegistry(FlextService[bool]):
                     self._add_successful_registration(key, details, summary)
                 else:
                     self._add_registration_error(
-                        key, reg_result.error or "Unknown error", summary
+                        key, reg_result.error or "Unknown error", summary,
                     )
             except Exception as e:
                 self._add_registration_error(key, str(e), summary)
@@ -683,7 +683,7 @@ class FlextRegistry(FlextService[bool]):
         plugin: RegistrablePlugin,
         *,
         validate: Callable[
-            [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool]
+            [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel], r[bool],
         ]
         | None = None,
     ) -> r[bool]:
@@ -906,7 +906,7 @@ class FlextRegistry(FlextService[bool]):
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = (
-            getattr(handler, "handler_id") if hasattr(handler, "handler_id") else None
+            handler.handler_id if hasattr(handler, "handler_id") else None
         )
         return str(handler_id) if handler_id else handler.__class__.__name__
 
@@ -935,7 +935,7 @@ class FlextRegistry(FlextService[bool]):
         if metadata is not None:
             validated_metadata = m.ConfigMap.model_validate(
                 (
-                    getattr(metadata, "attributes")
+                    metadata.attributes
                     if hasattr(metadata, "attributes")
                     else metadata
                 ),

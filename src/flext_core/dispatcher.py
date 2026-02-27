@@ -66,21 +66,21 @@ class FlextDispatcher:
             route_name = self._resolve_route(has_event_type)
         elif callable(has_can_handle):
             self._auto_handlers.append(handler)
-            self._logger.info(f"Registered auto-discovery handler: {handler}")
+            self._logger.info("Registered auto-discovery handler: %s", handler)
             return r[bool].ok(value=True)
         else:
             return r[bool].fail(
-                "Handler must expose message_type, event_type, or can_handle"
+                "Handler must expose message_type, event_type, or can_handle",
             )
 
         if is_event:
             if route_name not in self._event_subscribers:
                 self._event_subscribers[route_name] = []
             self._event_subscribers[route_name].append(handler)
-            self._logger.info(f"Registered event subscriber for {route_name}")
+            self._logger.info("Registered event subscriber for %s", route_name)
         else:
             self._handlers[route_name] = handler
-            self._logger.info(f"Registered handler for {route_name}")
+            self._logger.info("Registered handler for %s", route_name)
 
         return r[bool].ok(value=True)
 
@@ -184,11 +184,11 @@ class FlextDispatcher:
                 result_raw = handler.execute(message)
             elif callable(handler):
                 result_raw = cast("Callable[[p.Routable], t.PayloadValue]", handler)(
-                    message
+                    message,
                 )
             else:
                 return r[t.PayloadValue].fail(
-                    f"Handler for {route_name} is not callable"
+                    f"Handler for {route_name} is not callable",
                 )
 
             # Handle ResultLike returns natively
@@ -206,7 +206,7 @@ class FlextDispatcher:
             return r[t.PayloadValue].ok(cast("t.PayloadValue", result_raw))
 
         except Exception as exc:
-            self._logger.exception(f"Handler execution failed for {route_name}")
+            self._logger.exception("Handler execution failed for %s", route_name)
             return r[t.PayloadValue].fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,

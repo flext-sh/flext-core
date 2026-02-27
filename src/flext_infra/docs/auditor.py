@@ -52,7 +52,7 @@ class AuditReport(BaseModel):
 
     scope: str = Field(..., description="Scope name.")
     issues: list[AuditIssue] = Field(
-        default_factory=list, description="List of audit issues."
+        default_factory=list, description="List of audit issues.",
     )
     checks: list[str] = Field(default_factory=list, description="Checks that were run.")
     strict: bool = Field(default=False, description="Whether strict mode was enabled.")
@@ -239,7 +239,7 @@ class DocAuditor:
             elif not scope.name.startswith("flext-"):
                 continue
             content = md_file.read_text(
-                encoding=c.Encoding.DEFAULT, errors="ignore"
+                encoding=c.Encoding.DEFAULT, errors="ignore",
             ).lower()
             issues.extend(
                 AuditIssue(
@@ -307,7 +307,7 @@ class DocAuditor:
             return None, {}
 
         payload = json.loads(
-            config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore")
+            config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
         )
         docs_validation = payload.get("docs_validation", {})
         audit_gate = docs_validation.get("audit_gate", {})

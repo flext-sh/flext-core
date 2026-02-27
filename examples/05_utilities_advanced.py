@@ -121,8 +121,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
                             "api_pagination",
                             "parameter_access",
                         ],
-                    }
-                )
+                    },
+                ),
             )
 
         except Exception as e:
@@ -375,7 +375,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             root={
                 "timeout": 30,
                 "retries": 3,
-            }
+            },
         )
         try:
             timeout = u.get_parameter(config_dict.root, "timeout")

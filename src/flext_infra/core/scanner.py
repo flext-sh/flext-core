@@ -59,7 +59,7 @@ class TextPatternScanner:
                 )
             if not includes:
                 return r[Mapping[str, t.ScalarValue]].fail(
-                    "at least one include glob required"
+                    "at least one include glob required",
                 )
             if match_mode not in {"present", "absent"}:
                 return r[Mapping[str, t.ScalarValue]].fail(

@@ -23,13 +23,13 @@ def main(argv: list[str] | None = None) -> int:
     FlextRuntime.ensure_structlog_configured()
 
     parser = argparse.ArgumentParser(
-        description="Enforce Python version constraints via pyproject.toml"
+        description="Enforce Python version constraints via pyproject.toml",
     )
     _ = parser.add_argument(
-        "--check", action="store_true", help="Check mode (no writes)"
+        "--check", action="store_true", help="Check mode (no writes)",
     )
     _ = parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose output"
+        "--verbose", "-v", action="store_true", help="Verbose output",
     )
     args = parser.parse_args(argv)
 

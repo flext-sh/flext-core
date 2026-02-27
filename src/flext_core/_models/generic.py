@@ -68,12 +68,12 @@ class FlextGenericModels:
                 description="Additional metadata",
             )
             message: t.ConfigMapValue = Field(
-                default=None, description="Message payload"
+                default=None, description="Message payload",
             )
             message_type: str = Field(default="", description="Message type")
             dispatch_type: str = Field(default="", description="Dispatch type")
             timeout_override: int | None = Field(
-                default=None, description="Timeout override seconds"
+                default=None, description="Timeout override seconds",
             )
 
     class Snapshot:
@@ -89,11 +89,11 @@ class FlextGenericModels:
             version: str | None = Field(default=None, description="Service version")
             status: str = Field(default="active", description="Service status")
             uptime_seconds: float | None = Field(
-                default=None, description="Uptime in seconds"
+                default=None, description="Uptime in seconds",
             )
             start_time: datetime | None = Field(default=None, description="Start time")
             last_health_check: datetime | None = Field(
-                default=None, description="Last health check"
+                default=None, description="Last health check",
             )
             health_status: str = Field(default="unknown", description="Health status")
             port: int | None = Field(default=None, description="Port")
@@ -102,7 +102,7 @@ class FlextGenericModels:
             memory_usage_mb: float | None = Field(default=None, description="Memory MB")
             cpu_usage_percent: float | None = Field(default=None, description="CPU %")
             metadata: t.Dict = Field(
-                default_factory=t.Dict, description="Service metadata"
+                default_factory=t.Dict, description="Service metadata",
             )
 
         class Configuration(FlextModelFoundation.FrozenStrictModel):
@@ -112,7 +112,7 @@ class FlextGenericModels:
             """
 
             config: t.Dict = Field(
-                default_factory=t.Dict, description="Config key-value pairs"
+                default_factory=t.Dict, description="Config key-value pairs",
             )
             captured_at: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
@@ -120,15 +120,15 @@ class FlextGenericModels:
             )
             source: str | None = Field(default=None, description="Config source")
             environment: str | None = Field(
-                default=None, description="Target environment"
+                default=None, description="Target environment",
             )
             version: str = Field(default="1.0.0", description="Schema version")
             checksum: str | None = Field(default=None, description="Checksum")
             validation_errors: list[str] = Field(
-                default_factory=list, description="Validation errors"
+                default_factory=list, description="Validation errors",
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict, description="Config metadata"
+                default_factory=t.Dict, description="Config metadata",
             )
 
         class Health(FlextModelFoundation.FrozenStrictModel):
@@ -146,14 +146,14 @@ class FlextGenericModels:
             )
             service_name: str | None = Field(default=None, description="Service name")
             service_version: str | None = Field(
-                default=None, description="Service version"
+                default=None, description="Service version",
             )
             duration_ms: float | None = Field(
-                default=None, description="Check duration ms"
+                default=None, description="Check duration ms",
             )
             environment: str | None = Field(default=None, description="Environment")
             metadata: t.Dict = Field(
-                default_factory=t.Dict, description="Health metadata"
+                default_factory=t.Dict, description="Health metadata",
             )
 
     class Progress:
@@ -186,17 +186,17 @@ class FlextGenericModels:
             retry_count: int = Field(default=0, description="Retries")
             start_time: datetime | None = Field(default=None, description="Start time")
             last_update: datetime | None = Field(
-                default=None, description="Last update"
+                default=None, description="Last update",
             )
             estimated_total: int | None = Field(
-                default=None, description="Estimated total"
+                default=None, description="Estimated total",
             )
             current_item: str | None = Field(default=None, description="Current item")
             operation_name: str | None = Field(
-                default=None, description="Operation name"
+                default=None, description="Operation name",
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict, description="Operation metadata"
+                default_factory=t.Dict, description="Operation metadata",
             )
 
             def record_success(self) -> None:
@@ -246,26 +246,26 @@ class FlextGenericModels:
             """
 
             converted: list[t.GuardInputValue] = Field(
-                default_factory=list, description="Converted items"
+                default_factory=list, description="Converted items",
             )
             errors: list[str] = Field(
-                default_factory=list, description="Error messages"
+                default_factory=list, description="Error messages",
             )
             warnings: list[str] = Field(
-                default_factory=list, description="Warning messages"
+                default_factory=list, description="Warning messages",
             )
             skipped: list[t.GuardInputValue] = Field(
-                default_factory=list, description="Skipped items"
+                default_factory=list, description="Skipped items",
             )
             start_time: datetime | None = Field(default=None, description="Start time")
             end_time: datetime | None = Field(default=None, description="End time")
             source_format: str | None = Field(default=None, description="Source format")
             target_format: str | None = Field(default=None, description="Target format")
             total_input_count: int | None = Field(
-                default=None, description="Total input count"
+                default=None, description="Total input count",
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict, description="Conversion metadata"
+                default_factory=t.Dict, description="Conversion metadata",
             )
 
             def _append_metadata_item(
@@ -293,7 +293,7 @@ class FlextGenericModels:
                 self.converted.append(item)
 
             def add_error(
-                self, error: str, item: t.ConfigMapValue | None = None
+                self, error: str, item: t.ConfigMapValue | None = None,
             ) -> None:
                 """Add an error with optional failed item."""
                 self.errors.append(error)
@@ -301,7 +301,7 @@ class FlextGenericModels:
                     self._append_metadata_item("failed_items", item)
 
             def add_warning(
-                self, warning: str, item: t.ConfigMapValue | None = None
+                self, warning: str, item: t.ConfigMapValue | None = None,
             ) -> None:
                 """Add a warning with optional item."""
                 self.warnings.append(warning)
@@ -309,7 +309,7 @@ class FlextGenericModels:
                     self._append_metadata_item("warning_items", item)
 
             def add_skipped(
-                self, item: t.GuardInputValue, reason: str | None = None
+                self, item: t.GuardInputValue, reason: str | None = None,
             ) -> None:
                 """Add a skipped item with optional reason."""
                 self.skipped.append(item)

@@ -44,7 +44,7 @@ class TestLoggingsErrorPaths:
         # RuntimeResult implements p.Result protocol
         assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
         assertion_helpers.assert_flext_result_success(
-            result
+            result,
         )  # Still succeeds, just skips unbind
 
     def test_handle_context_error_get_operation(self) -> None:
@@ -84,7 +84,7 @@ class TestLoggingsErrorPaths:
             test_key="test_value",
         )
         _ = assertion_helpers.assert_flext_result_success(result) or isinstance(
-            result, dict
+            result, dict,
         )
 
     def test_context_operation_get_with_context_vars_none(self) -> None:

@@ -733,12 +733,12 @@ class TestFlextUtilitiesConfiguration:
         def test_success(self) -> None:
             """Test validate_config_class with valid configuration class."""
             is_valid, error = FlextUtilitiesConfiguration.validate_config_class(
-                ConfigModelForTest
+                ConfigModelForTest,
             )
             # Use tm.that for assertions
             _Assertions.that(is_valid, eq=True, msg="Config class must be valid")
             _Assertions.that(
-                error, none=True, msg="Error must be None for valid config"
+                error, none=True, msg="Error must be None for valid config",
             )
 
         def test_no_model_config(self) -> None:
@@ -753,7 +753,7 @@ class TestFlextUtilitiesConfiguration:
                 msg="Config class without model_config must be invalid",
             )
             _Assertions.that(
-                error, none=False, msg="Error must not be None for invalid config"
+                error, none=False, msg="Error must not be None for invalid config",
             )
             _Assertions.that(
                 error or "",
@@ -764,7 +764,7 @@ class TestFlextUtilitiesConfiguration:
         def test_instantiation_error(self) -> None:
             """Test validate_config_class handles instantiation errors."""
             is_valid, error = FlextUtilitiesConfiguration.validate_config_class(
-                BadConfigForTest
+                BadConfigForTest,
             )
             # Use tm.that for assertions
             _Assertions.that(
@@ -773,7 +773,7 @@ class TestFlextUtilitiesConfiguration:
                 msg="Config class with instantiation error must be invalid",
             )
             _Assertions.that(
-                error, none=False, msg="Error must not be None for invalid config"
+                error, none=False, msg="Error must not be None for invalid config",
             )
             _Assertions.that(
                 error or "",

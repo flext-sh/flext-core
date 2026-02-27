@@ -548,7 +548,7 @@ class TestFlextSettingsSingletonIntegration:
                     config_explicit,
                     "is_debug_enabled",
                     getattr(config_explicit, "debug", False),
-                )
+                ),
             )
             assert config_explicit.trace is False  # Trace mode disabled
 
@@ -566,7 +566,7 @@ class TestFlextSettingsSingletonIntegration:
                     config_no_debug,
                     "is_debug_enabled",
                     getattr(config_no_debug, "debug", False),
-                )
+                ),
             )
 
             # === VALIDATION: Precedence Order Summary ===

@@ -192,7 +192,7 @@ class FlextUtilitiesMapper:
             and hasattr(value, "info")
             and hasattr(value, "warning")
             and hasattr(value, "error")
-            and hasattr(value, "exception")
+            and hasattr(value, "exception"),
         )
 
     @staticmethod
@@ -237,7 +237,7 @@ class FlextUtilitiesMapper:
             return result
 
         mapped_result = r[Mapping[str, t.ConfigMapValue]].create_from_callable(
-            _map_keys
+            _map_keys,
         )
         if mapped_result.is_failure:
             return r[Mapping[str, t.ConfigMapValue]].fail(
@@ -435,7 +435,7 @@ class FlextUtilitiesMapper:
     def is_json_primitive(value: t.ConfigMapValue) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return bool(
-            FlextUtilitiesGuards.is_type(value, (str, int, float, bool, None.__class__))
+            FlextUtilitiesGuards.is_type(value, (str, int, float, bool, None.__class__)),
         )
 
     @classmethod
@@ -711,7 +711,7 @@ class FlextUtilitiesMapper:
         if current.__class__ not in {list, tuple}:
             return None, "Not a sequence"
         sequence: Sequence[t.ConfigMapValue] = FlextUtilitiesMapper._narrow_to_sequence(
-            current
+            current,
         )
         try:
             idx = int(array_match)
@@ -1135,7 +1135,7 @@ class FlextUtilitiesMapper:
         if isinstance(data_or_items, list | tuple):
             items_list: list[t.ConfigMapValue] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
-                    FlextUtilitiesMapper._to_general_value_from_object(item)
+                    FlextUtilitiesMapper._to_general_value_from_object(item),
                 )
                 for item in data_or_items
             ]
@@ -1523,7 +1523,7 @@ class FlextUtilitiesMapper:
 
         def map_func(value: t.ConfigMapValue) -> t.ConfigMapValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
-                map_callable(value)
+                map_callable(value),
             )
 
         if isinstance(current, list | tuple):
@@ -1590,7 +1590,7 @@ class FlextUtilitiesMapper:
 
         def convert_callable(value: t.ConfigMapValue) -> t.ConfigMapValue:
             return FlextUtilitiesMapper._to_general_value_from_object(
-                convert_callable_raw(value)
+                convert_callable_raw(value),
             )
 
         converter_name = (
@@ -2845,7 +2845,7 @@ class FlextUtilitiesMapper:
                 values.append(None)
             else:
                 values.append(
-                    FlextUtilitiesMapper._to_general_value_from_object(raw_value)
+                    FlextUtilitiesMapper._to_general_value_from_object(raw_value),
                 )
         return values
 
@@ -3009,7 +3009,7 @@ class FlextUtilitiesMapper:
 
         for name, predicate in callables.items():
             predicate_result = r[bool].create_from_callable(
-                build_predicate_call(predicate)
+                build_predicate_call(predicate),
             )
             if predicate_result.is_success and predicate_result.value:
                 return name

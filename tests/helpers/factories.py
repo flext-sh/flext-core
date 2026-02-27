@@ -229,7 +229,7 @@ class ValidatingServiceFactory:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
         return ValidatingService.model_construct(
-            value_input=actual_value, min_length=min_length
+            value_input=actual_value, min_length=min_length,
         )
 
     @classmethod
@@ -313,7 +313,7 @@ class ValidatingServiceAutoFactory:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
         return ValidatingServiceAuto.model_construct(
-            value_input=actual_value, min_length=min_length
+            value_input=actual_value, min_length=min_length,
         )
 
     @classmethod

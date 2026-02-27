@@ -40,10 +40,10 @@ def _build_migrator(project: im.ProjectInfo, base_mk: str) -> ProjectMigrator:
         return r[list[im.ProjectInfo]].ok([project])
 
     migrator._discovery = cast(
-        "Any", SimpleNamespace(discover_projects=_discover_projects)
+        "Any", SimpleNamespace(discover_projects=_discover_projects),
     )
     migrator._generator = cast(
-        "Any", SimpleNamespace(generate=lambda: r[str].ok(base_mk))
+        "Any", SimpleNamespace(generate=lambda: r[str].ok(base_mk)),
     )
     return migrator
 
@@ -69,7 +69,7 @@ def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None
     assert any(change.startswith("[DRY-RUN]") for change in migration.changes)
     assert (project_root / "base.mk").read_text(encoding="utf-8") == "OLD_BASE\n"
     assert "scripts/check/workspace_check.py" in (project_root / "Makefile").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
 

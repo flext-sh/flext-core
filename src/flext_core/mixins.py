@@ -110,7 +110,7 @@ class FlextMixins(FlextRuntime):
             return obj
 
         model_dump_callable = (
-            getattr(obj, "model_dump") if hasattr(obj, "model_dump") else None
+            obj.model_dump if hasattr(obj, "model_dump") else None
         )
         if callable(model_dump_callable):
             model_dump_result = model_dump_callable()
@@ -152,7 +152,7 @@ class FlextMixins(FlextRuntime):
             return m.ConfigMap.model_validate(obj)
         except (TypeError, ValueError, AttributeError) as exc:
             _module_logger.debug(
-                "Object-to-config-map normalization failed", exc_info=exc
+                "Object-to-config-map normalization failed", exc_info=exc,
             )
             return m.ConfigMap(root={})
 
@@ -173,7 +173,7 @@ class FlextMixins(FlextRuntime):
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(
-        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+        cls, **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
@@ -220,7 +220,7 @@ class FlextMixins(FlextRuntime):
         # Use getattr to safely access PrivateAttr before initialization
         # PrivateAttr may return the descriptor object if not initialized
         # Check if _runtime is actually a ServiceRuntime instance
-        runtime = getattr(self, "_runtime") if hasattr(self, "_runtime") else None
+        runtime = self._runtime if hasattr(self, "_runtime") else None
         match runtime:
             case m.ServiceRuntime() as service_runtime:
                 return service_runtime
@@ -228,7 +228,7 @@ class FlextMixins(FlextRuntime):
                 pass
 
         runtime_options_callable = (
-            getattr(self, "_runtime_bootstrap_options")
+            self._runtime_bootstrap_options
             if hasattr(self, "_runtime_bootstrap_options")
             else None
         )
@@ -245,7 +245,7 @@ class FlextMixins(FlextRuntime):
             )
         except (TypeError, ValueError, AttributeError) as exc:
             _module_logger.debug(
-                "Runtime bootstrap options validation failed", exc_info=exc
+                "Runtime bootstrap options validation failed", exc_info=exc,
             )
             options = p.RuntimeBootstrapOptions()
 
@@ -312,7 +312,7 @@ class FlextMixins(FlextRuntime):
                     "operation_count": 0,
                     "error_count": 0,
                     "total_duration_ms": 0.0,
-                }
+                },
             )
         )
 
@@ -351,7 +351,7 @@ class FlextMixins(FlextRuntime):
                     RuntimeError,
                 ) as exc:
                     _module_logger.debug(
-                        "Tracked operation raised expected exception", exc_info=exc
+                        "Tracked operation raised expected exception", exc_info=exc,
                     )
                     # Failure - increment error count
                     err_raw = u.get(stats, "error_count", default=0)
@@ -485,14 +485,14 @@ class FlextMixins(FlextRuntime):
         context_data: m.ConfigMap = m.ConfigMap(
             root={
                 "correlation_id": FlextRuntime.normalize_to_general_value(
-                    correlation_id
+                    correlation_id,
                 ),
                 "operation": FlextRuntime.normalize_to_general_value(operation_name),
                 **{
                     k: FlextRuntime.normalize_to_general_value(v)
                     for k, v in extra.items()
                 },
-            }
+            },
         )
 
         log_method = (
@@ -542,7 +542,7 @@ class FlextMixins(FlextRuntime):
                 "service_name": self.__class__.__name__,
                 "service_module": self.__class__.__module__,
                 **context_data,
-            }
+            },
         )
         # Log service initialization ONCE instead of binding to all logs
         self.logger.info(
@@ -587,17 +587,17 @@ class FlextMixins(FlextRuntime):
             # Separate data by level - preserve t.ConfigMapValue from operation_data
             # Use dict for mutability
             debug_data: m.ConfigMap = m.ConfigMap(
-                root={k: v for k, v in operation_data.items() if k in debug_keys}
+                root={k: v for k, v in operation_data.items() if k in debug_keys},
             )
             error_data: m.ConfigMap = m.ConfigMap(
-                root={k: v for k, v in operation_data.items() if k in error_keys}
+                root={k: v for k, v in operation_data.items() if k in error_keys},
             )
             normal_data: m.ConfigMap = m.ConfigMap(
                 root={
                     k: v
                     for k, v in operation_data.items()
                     if k not in debug_keys and k not in error_keys
-                }
+                },
             )
 
             # Bind context using bind_global_context - no level-specific binding available
@@ -789,7 +789,7 @@ class FlextMixins(FlextRuntime):
                                 root={
                                     "handler_name": execution_ctx.handler_name,
                                     "handler_mode": execution_ctx.handler_mode,
-                                }
+                                },
                             )
                             return r[dict[str, t.ConfigMapValue]].ok(context_dict.root)
                         case m.ConfigMap() as popped_dict:
@@ -872,9 +872,9 @@ class FlextMixins(FlextRuntime):
             return (
                 hasattr(obj, "handle")
                 and hasattr(obj, "validate")
-                and callable(getattr(obj, "handle") if hasattr(obj, "handle") else None)
+                and callable(obj.handle if hasattr(obj, "handle") else None)
                 and callable(
-                    getattr(obj, "validate") if hasattr(obj, "validate") else None
+                    obj.validate if hasattr(obj, "validate") else None,
                 )
             )
 

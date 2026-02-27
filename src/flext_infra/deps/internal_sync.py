@@ -23,7 +23,7 @@ logger = FlextLogger.create_module_logger(__name__)
 
 GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$")
 GITHUB_REPO_URL_RE = re.compile(
-    r"^(?:git@github\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?)$"
+    r"^(?:git@github\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?)$",
 )
 _PEP621_PATH_RE = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
 
@@ -78,7 +78,7 @@ class InternalDependencySyncService:
         data_result = self._toml.read(path)
         if data_result.is_failure:
             return r[Mapping[str, m.RepoUrls]].fail(
-                data_result.error or "failed to read repository map"
+                data_result.error or "failed to read repository map",
             )
         data = data_result.value
         repos_obj = data.get("repo", {})
@@ -284,7 +284,7 @@ class InternalDependencySyncService:
         data_result = self._toml.read(pyproject)
         if data_result.is_failure:
             return r[Mapping[str, Path]].fail(
-                data_result.error or f"failed to read {pyproject}"
+                data_result.error or f"failed to read {pyproject}",
             )
         data = data_result.value
 
@@ -349,7 +349,7 @@ class InternalDependencySyncService:
                 parsed_map_result = self._parse_repo_map(map_file)
                 if parsed_map_result.is_failure:
                     return r[int].fail(
-                        parsed_map_result.error or "failed to parse standalone map"
+                        parsed_map_result.error or "failed to parse standalone map",
                     )
                 repo_map = {**parsed_map_result.value, **repo_map}
         elif not map_file.exists():
@@ -357,7 +357,7 @@ class InternalDependencySyncService:
             if owner is None:
                 return r[int].fail(
                     "missing flext-repo-map.toml for standalone dependency resolution "
-                    "and unable to infer GitHub owner from remote.origin.url"
+                    "and unable to infer GitHub owner from remote.origin.url",
                 )
             repo_map = self._synthesized_repo_map(
                 owner,
@@ -371,7 +371,7 @@ class InternalDependencySyncService:
             parsed_map_result = self._parse_repo_map(map_file)
             if parsed_map_result.is_failure:
                 return r[int].fail(
-                    parsed_map_result.error or "failed to parse repo map"
+                    parsed_map_result.error or "failed to parse repo map",
                 )
             repo_map = parsed_map_result.value
 
@@ -391,7 +391,7 @@ class InternalDependencySyncService:
                     symlink_result = self._ensure_symlink(dep_path, sibling)
                     if symlink_result.is_failure:
                         return r[int].fail(
-                            symlink_result.error or f"failed symlink for {repo_name}"
+                            symlink_result.error or f"failed symlink for {repo_name}",
                         )
                     continue
 
@@ -400,7 +400,7 @@ class InternalDependencySyncService:
             checkout_result = self._ensure_checkout(dep_path, selected_url, ref_name)
             if checkout_result.is_failure:
                 return r[int].fail(
-                    checkout_result.error or f"checkout failed for {repo_name}"
+                    checkout_result.error or f"checkout failed for {repo_name}",
                 )
 
         return r[int].ok(0)

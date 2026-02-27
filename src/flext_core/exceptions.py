@@ -239,7 +239,7 @@ class FlextExceptions:
 
         dumped_map: Mapping[str, t.MetadataAttributeValue] | None = None
         model_dump = (
-            getattr(value, "model_dump") if hasattr(value, "model_dump") else None
+            value.model_dump if hasattr(value, "model_dump") else None
         )
         if callable(model_dump):
             dumped_candidate = model_dump()
@@ -1013,7 +1013,7 @@ class FlextExceptions:
                 return string_value
 
             qualname_value = (
-                getattr(type_value, "__qualname__")
+                type_value.__qualname__
                 if hasattr(type_value, "__qualname__")
                 else None
             )
@@ -1029,7 +1029,7 @@ class FlextExceptions:
             """Build type context dictionary."""
             type_context = e._build_context_map(context, extra_kwargs)
             type_context["expected_type"] = e.TypeError._resolve_type_name(
-                expected_type
+                expected_type,
             )
             type_context["actual_type"] = e.TypeError._resolve_type_name(actual_type)
 
@@ -1237,7 +1237,7 @@ class FlextExceptions:
             None
         )
         model_dump = (
-            getattr(metadata_raw, "model_dump")
+            metadata_raw.model_dump
             if hasattr(metadata_raw, "model_dump")
             else None
         )

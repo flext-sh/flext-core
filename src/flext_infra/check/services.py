@@ -19,6 +19,7 @@ from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import t
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
+from tomlkit import items
 
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService
@@ -72,7 +73,7 @@ class _GateExecution(BaseModel):
 
     result: m.GateResult = Field(description="Gate result model")
     issues: list[_CheckIssue] = Field(
-        default_factory=list, description="Detected issues"
+        default_factory=list, description="Detected issues",
     )
     raw_output: str = Field(default="", description="Raw tool output")
 
@@ -84,7 +85,7 @@ class _ProjectResult(BaseModel):
 
     project: str = Field(description="Project name")
     gates: dict[str, _GateExecution] = Field(
-        default_factory=dict, description="Gate name to execution mapping"
+        default_factory=dict, description="Gate name to execution mapping",
     )
 
     @computed_field
@@ -129,7 +130,7 @@ class _RuffLintError(BaseModel):
 
     filename: str = Field(default="?", description="Source file path")
     location: _RuffLintLocation = Field(
-        default_factory=_RuffLintLocation, description="Error location"
+        default_factory=_RuffLintLocation, description="Error location",
     )
     code: str = Field(default="", description="Ruff rule code")
     message: str = Field(default="", description="Error description")
@@ -154,7 +155,7 @@ class _PyreflyOutput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     errors: list[_PyreflyError] = Field(
-        default_factory=list, description="Pyrefly errors"
+        default_factory=list, description="Pyrefly errors",
     )
 
 
@@ -186,7 +187,7 @@ class _PyrightRange(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     start: _PyrightPosition = Field(
-        default_factory=_PyrightPosition, description="Range start"
+        default_factory=_PyrightPosition, description="Range start",
     )
 
 
@@ -197,7 +198,7 @@ class _PyrightDiagnostic(BaseModel):
 
     file: str = Field(default="?", description="Source file path")
     range: _PyrightRange = Field(
-        default_factory=_PyrightRange, description="Diagnostic range"
+        default_factory=_PyrightRange, description="Diagnostic range",
     )
     rule: str = Field(default="", description="Pyright rule name")
     message: str = Field(default="", description="Diagnostic message")
@@ -210,7 +211,7 @@ class _PyrightOutput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     generalDiagnostics: list[_PyrightDiagnostic] = Field(
-        default_factory=list, description="General diagnostics list"
+        default_factory=list, description="General diagnostics list",
     )
 
 
@@ -232,7 +233,7 @@ class _BanditOutput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     results: list[_BanditIssue] = Field(
-        default_factory=list, description="Bandit findings"
+        default_factory=list, description="Bandit findings",
     )
 
 
@@ -270,8 +271,8 @@ class _SarifRegion(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    startLine: int = Field(description="Start line (1-based)")
-    startColumn: int = Field(description="Start column (1-based)")
+    start_line: int = Field(description="Start line (1-based)")
+    start_column: int = Field(description="Start column (1-based)")
 
 
 class _SarifPhysicalLocation(BaseModel):
@@ -296,7 +297,7 @@ class _SarifResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    ruleId: str = Field(description="Rule identifier")
+    rule_id: str = Field(description="Rule identifier")
     level: str = Field(description="Result level (error/warning)")
     message: _SarifMessageText = Field(description="Result message")
     locations: list[_SarifLocation] = Field(description="Result locations")
@@ -308,9 +309,9 @@ class _SarifToolDriver(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(description="Tool name")
-    informationUri: str = Field(default="", description="Tool documentation URL")
+    information_uri: str = Field(default="", description="Tool documentation URL")
     rules: list[_SarifRuleDescriptor] = Field(
-        default_factory=list, description="Rule descriptors"
+        default_factory=list, description="Rule descriptors",
     )
 
 
@@ -357,7 +358,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._runner = CommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir_result = self._reporting.ensure_report_dir(
-            self._workspace_root, "check"
+            self._workspace_root, "check",
         )
         self._default_reports_dir = (
             report_dir_result.value
@@ -414,7 +415,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
             output.progress(index, total, project_name, "check")
             start = time.monotonic()
             project_result = self._check_project(
-                project_dir, resolved_gates, report_base
+                project_dir, resolved_gates, report_base,
             )
             elapsed = time.monotonic() - start
             results.append(project_result)
@@ -453,7 +454,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         if total_errors > 0:
             output.info("Errors by project:")
             for project in sorted(
-                results, key=lambda item: item.total_errors, reverse=True
+                results, key=lambda item: item.total_errors, reverse=True,
             ):
                 if project.total_errors == 0:
                     continue
@@ -463,7 +464,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     if gate in project.gates and len(project.gates[gate].issues) > 0
                 )
                 output.error(
-                    f"{project.project:30s} {project.total_errors:6d}  ({breakdown})"
+                    f"{project.project:30s} {project.total_errors:6d}  ({breakdown})",
                 )
 
         return r[list[_ProjectResult]].ok(results)
@@ -557,7 +558,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
 
         for project in sorted(
-            results, key=lambda item: item.total_errors, reverse=True
+            results, key=lambda item: item.total_errors, reverse=True,
         ):
             if project.total_errors == 0:
                 continue
@@ -577,7 +578,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                 )
                 if len(gate_result.issues) > _MAX_DISPLAY_ISSUES:
                     lines.append(
-                        f"... and {len(gate_result.issues) - _MAX_DISPLAY_ISSUES} more errors"
+                        f"... and {len(gate_result.issues) - _MAX_DISPLAY_ISSUES} more errors",
                     )
                 lines.extend(["```", ""])
 
@@ -629,7 +630,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                         )
                     sarif_results.append(
                         _SarifResult(
-                            ruleId=rule_id,
+                            rule_id=rule_id,
                             level=("error" if issue.severity == "error" else "warning"),
                             message=_SarifMessageText(text=issue.message),
                             locations=[
@@ -639,8 +640,8 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                                             uri=issue.file,
                                         ),
                                         region=_SarifRegion(
-                                            startLine=max(issue.line, 1),
-                                            startColumn=max(issue.column, 1),
+                                            start_line=max(issue.line, 1),
+                                            start_column=max(issue.column, 1),
                                         ),
                                     ),
                                 ),
@@ -653,7 +654,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
                     tool=_SarifTool(
                         driver=_SarifToolDriver(
                             name=tool_name,
-                            informationUri=tool_url,
+                            information_uri=tool_url,
                             rules=rules,
                         ),
                     ),
@@ -987,7 +988,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
     def _run_pyright(self, project_dir: Path) -> _GateExecution:
         started = time.monotonic()
         check_dirs = self._dirs_with_py(
-            project_dir, self._existing_check_dirs(project_dir)
+            project_dir, self._existing_check_dirs(project_dir),
         )
         if not check_dirs:
             return self._build_gate_result(
@@ -1263,7 +1264,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         files_result = self.find_pyproject_files(project_paths or None)
         if files_result.is_failure:
             return r[list[str]].fail(
-                files_result.error or "failed to find pyproject files"
+                files_result.error or "failed to find pyproject files",
             )
 
         messages: list[str] = []
@@ -1349,7 +1350,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return r[list[str]].ok(all_fixes)
 
     def _fix_search_paths_tk(
-        self, pyrefly: MutableMapping[str, t.ConfigMapValue], project_dir: Path
+        self, pyrefly: MutableMapping[str, t.ConfigMapValue], project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
         search_path = pyrefly.get("search-path")
@@ -1364,7 +1365,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
                 if p == "../typings/generated":
                     new_paths.append("typings/generated")
                     fixes.append(
-                        "search-path ../typings/generated -> typings/generated"
+                        "search-path ../typings/generated -> typings/generated",
                     )
                 elif p == "../typings":
                     new_paths.append("typings")
@@ -1390,7 +1391,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return fixes
 
     def _remove_ignore_sub_config_tk(
-        self, pyrefly: MutableMapping[str, t.ConfigMapValue]
+        self, pyrefly: MutableMapping[str, t.ConfigMapValue],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get("sub-config")
@@ -1411,7 +1412,7 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return fixes
 
     def _ensure_project_excludes_tk(
-        self, pyrefly: MutableMapping[str, t.ConfigMapValue]
+        self, pyrefly: MutableMapping[str, t.ConfigMapValue],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get("project-excludes")
@@ -1435,11 +1436,11 @@ class PyreflyConfigFixer(FlextService[list[str]]):
         return fixes
 
     @staticmethod
-    def _to_array(items: list[str]) -> tomlkit.items.Array:
+    def _to_array(items_list: list[str]) -> items.Array:
         arr = tomlkit.array()
-        for item in items:
+        for item in items_list:
             arr.append(item)
-        if len(items) > 1:
+        if len(items_list) > 1:
             arr.multiline(True)
         return arr
 

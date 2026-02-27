@@ -63,7 +63,7 @@ def _yaml_safe_load(raw: str) -> t.ConfigMapValue | list[t.ConfigMapValue]:
 
 def _yaml_dump(value: t.ConfigMapValue, *, indent: int) -> str:
     return str(
-        yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent)
+        yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent),
     )
 
 
@@ -1174,7 +1174,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                             m.ConfigMap(
                                 root={
                                     str(k): FlextRuntime.normalize_to_general_value(
-                                        self._to_config_map_value(v)
+                                        self._to_config_map_value(v),
                                     )
                                     if (
                                         v is None
@@ -1202,18 +1202,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                                     )
                                     else str(v)
                                     for k, v in content.items()
-                                }
+                                },
                             )
                             if isinstance(content, Mapping)
                             else content
                         )
                         normalized_content = self._coerce_file_content(
-                            content_for_create
+                            content_for_create,
                         )
                         return self.create(normalized_content, name, params.directory)
                     except (OSError, TypeError, ValueError, AttributeError) as e:
                         return r[t.GuardInputValue].fail(
-                            f"Failed to create {name}: {e}"
+                            f"Failed to create {name}: {e}",
                         )
                 case "read":
                     # For read, content should be Path or str - wrap in Path() for type safety
@@ -1241,11 +1241,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         return Path(path)
                     except OSError as e:
                         return r[t.GuardInputValue].fail(
-                            f"Failed to delete {name}: {e}"
+                            f"Failed to delete {name}: {e}",
                         )
                 case _:
                     return r[t.GuardInputValue].fail(
-                        f"Unknown operation: {params.operation}"
+                        f"Unknown operation: {params.operation}",
                     )
 
         items_list: list[tuple[str, t.Tests.PayloadValue]] = list(files_dict.items())
@@ -1284,7 +1284,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     results_dict[name] = r[Path | t.Tests.PayloadValue].ok(result)
                 else:
                     results_dict[name] = r[Path | t.Tests.PayloadValue].ok(
-                        self._to_payload_value(result)
+                        self._to_payload_value(result),
                     )
 
         # Process errors from batch result (indexed errors)
@@ -1406,7 +1406,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     filename = f"{name}.json"
                 else:
                     is_nested_sequence = "." not in name and manager._is_nested_rows(
-                        data
+                        data,
                     )
                     if is_nested_sequence:
                         filename = f"{name}.csv"
@@ -1519,7 +1519,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 return "auto"
 
     def _is_nested_rows(
-        self, value: object
+        self, value: object,
     ) -> TypeGuard[Sequence[Sequence[t.ConfigMapValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
@@ -1535,7 +1535,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
-        self, value: object
+        self, value: object,
     ) -> str | bytes | m.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
@@ -1547,7 +1547,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         self._to_config_map_value(self._to_payload_value(item)),
                     )
                     for key, item in mapping_value.items()
-                }
+                },
             )
         if self._is_nested_rows(value):
             sequence_value: Sequence[object] = (
@@ -1571,7 +1571,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _to_payload_value(self, value: object) -> t.Tests.PayloadValue:
         if value is None or isinstance(
-            value, str | int | float | bool | bytes | BaseModel
+            value, str | int | float | bool | bytes | BaseModel,
         ):
             return value
         if isinstance(value, Path | datetime):
@@ -1585,7 +1585,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ConfigMapValue:
         if value is None or isinstance(
-            value, str | int | float | bool | BaseModel | Path
+            value, str | int | float | bool | BaseModel | Path,
         ):
             return value
         if isinstance(value, bytes):
@@ -1612,10 +1612,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
-                        self._to_config_map_value(self._to_payload_value(item))
+                        self._to_config_map_value(self._to_payload_value(item)),
                     )
                     for key, item in mapping_value.items()
-                }
+                },
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
@@ -1665,7 +1665,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if content.is_failure:
                 error_msg = content.error or "FlextResult failure"
                 raise ValueError(
-                    f"Cannot create file from failed FlextResult: {error_msg}"
+                    f"Cannot create file from failed FlextResult: {error_msg}",
                 )
             return self._coerce_file_content(content.value)
         return self._coerce_file_content(content)
@@ -1721,7 +1721,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                                 self._to_config_map_value(self._to_payload_value(v)),
                             )
                             for key, v in parsed_raw.items()
-                        }
+                        },
                     )
                     key_count = len(parsed_content.root)
                 elif isinstance(parsed_raw, list):

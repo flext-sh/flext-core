@@ -92,7 +92,7 @@ def test_create_from_callable_and_repr() -> None:
     assert "Callable returned None" in (none_result.error or "")
 
     error_callable: Callable[[], int] = cast(
-        "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error"))
+        "Callable[[], int]", lambda: (_ for _ in ()).throw(ValueError("test error")),
     )
     error_result = r[int].create_from_callable(error_callable)
     u.Tests.Result.assert_result_failure(error_result)

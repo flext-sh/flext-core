@@ -237,7 +237,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             """
             assertion_helpers.assert_flext_result_failure(
-                result, description, error_contains=expected_error
+                result, description, error_contains=expected_error,
             )
 
         @staticmethod

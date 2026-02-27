@@ -67,7 +67,7 @@ def test_results_internal_conflict_paths_and_combine() -> None:
                 {"ok": "v", "xs": [1, "a", object()]},
                 {"ys": [2, None, 3.5]},
             ],
-        )
+        ),
     )
     assert merged_dict["ok"] == "v"
     assert merged_dict["xs"] == [1, "a"]

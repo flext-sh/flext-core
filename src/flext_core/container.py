@@ -79,7 +79,7 @@ class FlextContainer(p.DI):
         _factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
-            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -112,7 +112,7 @@ class FlextContainer(p.DI):
         _factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
-            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -241,7 +241,7 @@ class FlextContainer(p.DI):
                                     m.Container.ServiceRegistration(
                                         name=_factory_name,
                                         service=cast(
-                                            "t.RegisterableService", raw_result
+                                            "t.RegisterableService", raw_result,
                                         ),
                                     )
                                     return cast("t.RegisterableService", raw_result)
@@ -288,7 +288,7 @@ class FlextContainer(p.DI):
         # getattr accesses Provide from bridge object safely
         # Provide is always initialized by dependency-injector in _di_bridge
         provide_helper = (
-            getattr(self._di_bridge, "Provide")
+            self._di_bridge.Provide
             if hasattr(self._di_bridge, "Provide")
             else None
         )
@@ -422,7 +422,7 @@ class FlextContainer(p.DI):
         resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         global_config: m.Container.ContainerConfig | None = None,
         user_overrides: Mapping[
-            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue]
+            str, t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -490,7 +490,7 @@ class FlextContainer(p.DI):
             root={
                 str(key): FlextRuntime.normalize_to_general_value(value)
                 for key, value in config_dict_raw.items()
-            }
+            },
         )
         _ = FlextRuntime.DependencyIntegration.bind_configuration(
             self._di_container,
@@ -508,7 +508,7 @@ class FlextContainer(p.DI):
         # Note: Namespace registry is accessed via FlextSettings class, not ContainerConfig
         # Use getattr to safely access registry if it exists
         namespace_registry = (
-            getattr(self._config.__class__, "_namespace_registry")
+            self._config.__class__._namespace_registry
             if hasattr(self._config.__class__, "_namespace_registry")
             else {}
         )
@@ -518,7 +518,7 @@ class FlextContainer(p.DI):
             # Get config class for this namespace from FlextSettings
             # Use getattr to safely access method if it exists
             get_namespace_config = (
-                getattr(self._config, "get_namespace_config")
+                self._config.get_namespace_config
                 if hasattr(self._config, "get_namespace_config")
                 else None
             )
@@ -534,7 +534,7 @@ class FlextContainer(p.DI):
             ) -> BaseModel:
                 """Factory for creating namespace config instance."""
                 get_namespace = (
-                    getattr(self._config, "get_namespace")
+                    self._config.get_namespace
                     if hasattr(self._config, "get_namespace")
                     else None
                 )
@@ -649,7 +649,7 @@ class FlextContainer(p.DI):
                     service=cast("t.RegisterableService", self._context),
                 )
                 _ = self.register(
-                    "context", cast("t.RegisterableService", self._context)
+                    "context", cast("t.RegisterableService", self._context),
                 )
             except ValidationError:
                 pass  # Skip registration if validation fails
@@ -720,7 +720,7 @@ class FlextContainer(p.DI):
             root={
                 str(key): FlextRuntime.normalize_to_general_value(value)
                 for key, value in config_dict_raw.items()
-            }
+            },
         )
 
     def with_config(
@@ -795,7 +795,7 @@ class FlextContainer(p.DI):
         if not self._is_registerable_service(service):
             return r[bool].fail(
                 f"Service '{name}' does not satisfy RegisterableService protocol. "
-                f"Expected PayloadValue, protocol implementation, or callable."
+                f"Expected PayloadValue, protocol implementation, or callable.",
             )
         try:
             if hasattr(self._di_services, name):
@@ -990,7 +990,7 @@ class FlextContainer(p.DI):
         if isinstance(value, Mapping):
             return True
         if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
+            value, (str, bytes, bytearray),
         ):
             return True
         if FlextContainer._is_context_protocol(value):
@@ -1002,7 +1002,7 @@ class FlextContainer(p.DI):
     @staticmethod
     def _is_context_protocol(value: object) -> TypeGuard[p.Context]:
         return bool(
-            hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get")
+            hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get"),
         )
 
     @override
@@ -1026,7 +1026,7 @@ class FlextContainer(p.DI):
             service = self._services[name].service
             if not self._is_instance_of(service, type_cls):
                 return r[T].fail(
-                    f"Service '{name}' is not of type {(getattr(type_cls, '__name__') if hasattr(type_cls, '__name__') else 'Unknown')}"
+                    f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
                 )
             # TypeGuard narrows service to type T
             return r[T].ok(service)
@@ -1241,7 +1241,7 @@ class FlextContainer(p.DI):
         if context is None:
             ctx_instance = self.context
             clone_method = (
-                getattr(ctx_instance, "clone")
+                ctx_instance.clone
                 if hasattr(ctx_instance, "clone")
                 else None
             )

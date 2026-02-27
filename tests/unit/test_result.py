@@ -252,7 +252,7 @@ class Testr:
             # value is already t.GeneralValueType from ResultScenario
             if is_success:
                 result_or: r[t.GeneralValueType] = u.Tests.Result.create_success_result(
-                    value
+                    value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))

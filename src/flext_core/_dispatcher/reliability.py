@@ -177,7 +177,7 @@ class CircuitBreakerManager:
                         "message_type": message_type,
                         "state": self.get_state(message_type),
                         "failure_count": self.get_failure_count(message_type),
-                    }
+                    },
                 ),
             )
         return r[bool].ok(value=True)
@@ -319,7 +319,7 @@ class RateLimiterManager:
                         "window_seconds": self._window_seconds,
                         "current_count": count,
                         "retry_after": retry_after,
-                    }
+                    },
                 ),
             )
 

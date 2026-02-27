@@ -58,7 +58,7 @@ class TestAutomatedFlextRuntime:
         ids=lambda case: case["description"],
     )
     def test_automated_runtime_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self, test_scenario: AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for runtime functionality."""
         try:
@@ -95,7 +95,7 @@ class TestAutomatedFlextRuntime:
         # Test with correct types
         result = self._execute_runtime_operation(instance, {"type_safe": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextRuntime type safety test"
+            result, "FlextRuntime type safety test",
         )
 
     def test_automated_runtime_error_handling(self) -> None:
@@ -122,7 +122,7 @@ class TestAutomatedFlextRuntime:
         # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         assertion_helpers.assert_flext_result_success(
-            result, "FlextRuntime performance test exceeded timeout"
+            result, "FlextRuntime performance test exceeded timeout",
         )
 
     def test_automated_runtime_resource_management(self) -> None:
@@ -132,7 +132,7 @@ class TestAutomatedFlextRuntime:
         # Test normal operation
         result = self._execute_runtime_operation(instance, {"resource_test": True})
         assertion_helpers.assert_flext_result_success(
-            result, "FlextRuntime resource test"
+            result, "FlextRuntime resource test",
         )
 
         # Test cleanup (if applicable)
@@ -141,7 +141,7 @@ class TestAutomatedFlextRuntime:
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextRuntime cleanup failed"
+                    cleanup_result, "FlextRuntime cleanup failed",
                 )
 
     def _execute_runtime_operation(

@@ -87,8 +87,8 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
                     "user_id": message.user_id,
                     "name": "Demo User",
                     "email": "demo@example.com",
-                }
-            )
+                },
+            ),
         )
 
 
@@ -131,8 +131,8 @@ class RegistryDispatcherService(s[m.ConfigMap]):
                             "dispatcher_integration",
                             "cqrs_patterns",
                         ],
-                    }
-                )
+                    },
+                ),
             )
 
         except Exception as e:
@@ -230,7 +230,7 @@ def main() -> None:
         data = result.value
         patterns = data["patterns_demonstrated"]
         if isinstance(patterns, Sequence) and not isinstance(
-            patterns, str | bytes | bytearray
+            patterns, str | bytes | bytearray,
         ):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")

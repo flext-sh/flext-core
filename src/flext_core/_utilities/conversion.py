@@ -231,7 +231,7 @@ class FlextUtilitiesConversion:
                 try:
                     default_list = (
                         FlextUtilitiesConversion._str_list_adapter.validate_python(
-                            default
+                            default,
                         )
                     )
                 except ValidationError:

@@ -425,7 +425,7 @@ class FlextTypes:
         ]:
             """Get validator items."""
             validated: dict[
-                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.items()
 
@@ -434,7 +434,7 @@ class FlextTypes:
         ) -> ValuesView[Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],]:
             """Get validator values."""
             validated: dict[
-                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.values()
 
