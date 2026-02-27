@@ -24,6 +24,7 @@ from flext_core._models.decorators import FlextModelsDecorators
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
+from flext_core._models.mixin import FlextModelsMixin
 from flext_core._models.settings import FlextModelsConfig
 from flext_core.protocols import p
 from flext_core.typings import t
@@ -311,6 +312,20 @@ class FlextModels:
     HandlerExecutionContext: TypeAlias = Handler.ExecutionContext
     HandlerRegistrationRequest: TypeAlias = Handler.RegistrationRequest
     CqrsHandler: TypeAlias = Handler
+
+    # =========================================================================
+    # MIXIN MODELS - State models for FlextMixins infrastructure
+    # =========================================================================
+
+    class Mixin(FlextModelsMixin):
+        """Mixin state models namespace for FlextMixins infrastructure.
+
+        The runtime triple (config, context, container) is ``m.ServiceRuntime``.
+        This namespace adds mixin-specific state models not covered by it.
+
+        Models:
+            OperationStats: Accumulated metrics from ``x.track()`` calls.
+        """
 
     # =========================================================================
     # DECORATOR MODELS - Direct access for common usage

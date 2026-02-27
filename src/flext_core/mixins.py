@@ -862,28 +862,21 @@ class FlextMixins(FlextRuntime):
             return result
 
     class ProtocolValidation:
-        """Runtime protocol compliance validation utilities.
-
-        Provides protocol-based checks using isinstance with runtime_checkable
-        protocols from FlextProtocols. Satisfies introspection contract via
-        _protocol_name() for consistency with BaseProtocol pattern.
-        """
-
-        @staticmethod
-        def _protocol_name() -> str:
-            """Return protocol name for introspection consistency."""
-            return "ProtocolValidation"
+        """Runtime protocol compliance validation utilities."""
 
         @staticmethod
         def is_handler(
             obj: t.ConfigMapValue,
         ) -> bool:
-            """Check if object satisfies p.Handler protocol.
-
-            Uses isinstance with runtime_checkable p.Handler protocol
-            for proper type-system-based validation.
-            """
-            return isinstance(obj, p.Handler)
+            """Check if object satisfies p.Handler protocol."""
+            return (
+                hasattr(obj, "handle")
+                and hasattr(obj, "validate")
+                and callable(getattr(obj, "handle") if hasattr(obj, "handle") else None)
+                and callable(
+                    getattr(obj, "validate") if hasattr(obj, "validate") else None
+                )
+            )
 
         @staticmethod
         def is_service(
