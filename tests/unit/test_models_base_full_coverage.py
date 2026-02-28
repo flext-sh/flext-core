@@ -93,4 +93,4 @@ def test_timestamped_model_and_alias_and_canonical_symbols() -> None:
     assert hasattr(m, "TimestampedModel")
     assert r[str].ok("ok").value == "ok"
     assert c.Performance.DEFAULT_VERSION >= 1
-    assert hasattr(u, "mapper")
+    assert hasattr(u, "Mapper")

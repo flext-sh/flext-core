@@ -137,96 +137,35 @@ class FlextInfraDispatcher(FlextService[bool]):
         """
         dispatcher = FlextDispatcher()
 
-        # Create handler functions for each command type
-        # Each handler must expose message_type for dispatcher routing
+        # Generic handler callable with message_type for dispatcher routing
+        class _CommandHandler:
+            """Callable handler with message_type attribute for dispatcher routing."""
 
-        def check_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.CheckCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
+            def __init__(
+                self, message_type_value: str, command_cls: type[m.Command]
+            ) -> None:
+                self.message_type = message_type_value
+                self._command_cls = command_cls
 
-        check_handler.message_type = "flext_infra.check"  # type: ignore[attr-defined]
+            def __call__(self, command: t.GeneralValueType) -> t.GeneralValueType:
+                if isinstance(command, self._command_cls):
+                    return {
+                        "command_type": command.command_type,
+                        "action": command.action,
+                        "args": command.args,
+                    }
+                return {}
 
-        def basemk_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.BaseMkCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        basemk_handler.message_type = "flext_infra.basemk"  # type: ignore[attr-defined]
-
-        def workspace_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.WorkspaceCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        workspace_handler.message_type = "flext_infra.workspace"  # type: ignore[attr-defined]
-
-        def release_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.ReleaseCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        release_handler.message_type = "flext_infra.release"  # type: ignore[attr-defined]
-
-        def docs_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.DocsCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        docs_handler.message_type = "flext_infra.docs"  # type: ignore[attr-defined]
-
-        def github_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.GithubCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        github_handler.message_type = "flext_infra.github"  # type: ignore[attr-defined]
-
-        def core_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.CoreCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        core_handler.message_type = "flext_infra.core"  # type: ignore[attr-defined]
-
-        def deps_handler(command: t.GeneralValueType) -> t.GeneralValueType:
-            if isinstance(command, cls.DepsCommand):
-                return {
-                    "command_type": command.command_type,
-                    "action": command.action,
-                    "args": command.args,
-                }
-            return {}
-
-        deps_handler.message_type = "flext_infra.deps"  # type: ignore[attr-defined]
+        check_handler = _CommandHandler("flext_infra.check", cls.CheckCommand)
+        basemk_handler = _CommandHandler("flext_infra.basemk", cls.BaseMkCommand)
+        workspace_handler = _CommandHandler(
+            "flext_infra.workspace", cls.WorkspaceCommand
+        )
+        release_handler = _CommandHandler("flext_infra.release", cls.ReleaseCommand)
+        docs_handler = _CommandHandler("flext_infra.docs", cls.DocsCommand)
+        github_handler = _CommandHandler("flext_infra.github", cls.GithubCommand)
+        core_handler = _CommandHandler("flext_infra.core", cls.CoreCommand)
+        deps_handler = _CommandHandler("flext_infra.deps", cls.DepsCommand)
 
         # Register all handlers with the dispatcher
         dispatcher.register_handler(check_handler)

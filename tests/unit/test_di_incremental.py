@@ -686,10 +686,10 @@ class TestRealWiringScenarios:
         scoped2 = container.scoped(services={"service": "value2"})
 
         # Verify isolation
-        scoped1.get("service")
+        result1 = scoped1.get("service")
         result2 = scoped2.get("service")
 
-        value1 = u.Tests.Result.assert_success(result2)
+        value1 = u.Tests.Result.assert_success(result1)
         value2 = u.Tests.Result.assert_success(result2)
         assert isinstance(value1, str)
         assert isinstance(value2, str)

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from flext_core import m
-from flext_core._models.entity import _ComparableConfigMap
+from flext_core._models.domain_event import _ComparableConfigMap
 
 from tests.test_utils import assertion_helpers
 

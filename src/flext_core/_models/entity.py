@@ -3,6 +3,9 @@
 TIER 1: Uses base.py (Tier 0) + constants, typings, protocols, runtime only.
 Imports FlextModelFoundation and adds only DDD-specific data classes.
 
+The DomainEvent is defined in domain_event.py and imported here to
+avoid Pydantic forward-reference issues with nested class annotations.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -10,67 +13,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, ClassVar, Self, override
+from collections.abc import Callable, Sequence
+from typing import ClassVar, Self, override
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 from structlog.typing import BindableLogger
 
 from flext_core import FlextRuntime, c, r, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.domain_event import FlextModelsDomainEvent
 
-
-def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
-    if not data:
-        return _ComparableConfigMap(root={})
-    return _ComparableConfigMap(
-        root={
-            str(key): FlextRuntime.normalize_to_metadata_value(value)
-            for key, value in data.items()
-        },
-    )
-
-
-def _normalize_event_data(
-    value: t.GuardInputValue,
-) -> _ComparableConfigMap:
-    """BeforeValidator: normalize event data to _ComparableConfigMap."""
-    if isinstance(value, _ComparableConfigMap):
-        return value
-    if isinstance(value, t.ConfigMap):
-        return _ComparableConfigMap(root=dict(value.items()))
-    if isinstance(value, dict):
-        normalized: t.ConfigMap = t.ConfigMap(
-            root={
-                str(k): FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in value.items()
-            },
-        )
-        return _ComparableConfigMap(root=normalized.root)
-    if isinstance(value, Mapping):
-        normalized = t.ConfigMap(
-            root={
-                str(k): FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in value.items()
-            },
-        )
-        return _ComparableConfigMap(root=normalized.root)
-    if value is None:
-        return _ComparableConfigMap(root={})
-    msg = "Domain event data must be a dictionary or None"
-    raise TypeError(msg)
-
-
-class _ComparableConfigMap(t.ConfigMap):
-    @override
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, dict):
-            return self.root == other
-        if isinstance(other, Mapping):
-            return self.root == dict(other.items())
-        return super().__eq__(other)
-
-    __hash__ = t.ConfigMap.__hash__
+# Module-level aliases for the domain event types — avoids nested forward refs.
+_DomainEvent = FlextModelsDomainEvent.Entry
+_to_config_map = FlextModelsDomainEvent.to_config_map
 
 
 class FlextModelsEntity:
@@ -78,40 +33,12 @@ class FlextModelsEntity:
 
     This class acts as a namespace container for Entity and related DDD patterns.
     Uses FlextModelFoundation for all base classes (Tier 0).
+
+    DomainEvent is imported from FlextModelsDomainEvent to break
+    the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    class DomainEvent(
-        FlextModelFoundation.ArbitraryTypesModel,
-        FlextModelFoundation.IdentifiableMixin,
-        FlextModelFoundation.TimestampableMixin,
-    ):
-        """Base class for domain events."""
-
-        message_type: c.Cqrs.EventMessageTypeLiteral = Field(
-            default="event",
-            frozen=True,
-            description="Message type discriminator for union routing - always 'event'",
-        )
-
-        event_type: str
-        aggregate_id: str
-        data: Annotated[
-            _ComparableConfigMap,
-            BeforeValidator(_normalize_event_data),
-        ] = Field(
-            default_factory=_ComparableConfigMap,
-            description="Event data container",
-        )
-
-        @model_validator(mode="after")
-        def validate_domain_event(self) -> Self:
-            if not self.event_type:
-                msg = "Domain event event_type must be a non-empty string"
-                raise ValueError(msg)
-            if not self.aggregate_id:
-                msg = "Domain event aggregate_id must be a non-empty string"
-                raise ValueError(msg)
-            return self
+    DomainEvent = FlextModelsDomainEvent.Entry
 
     class Entry(
         FlextModelFoundation.TimestampedModel,
@@ -128,7 +55,7 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        domain_events: list[FlextModelsEntity.DomainEvent] = Field(
+        domain_events: list[_DomainEvent] = Field(
             default_factory=list,
             description="List of uncommitted domain events for event sourcing",
         )
@@ -161,11 +88,11 @@ class FlextModelsEntity:
             return FlextRuntime.hash_entity_by_id(self)
 
         @property
-        def uncommitted_events(self: Self) -> list[FlextModelsEntity.DomainEvent]:
+        def uncommitted_events(self: Self) -> list[_DomainEvent]:
             """Get uncommitted domain events without clearing them."""
             return list(self.domain_events)
 
-        def clear_domain_events(self: Self) -> list[FlextModelsEntity.DomainEvent]:
+        def clear_domain_events(self: Self) -> list[_DomainEvent]:
             """Clear and return domain events."""
             events = list(self.domain_events)
             self.domain_events.clear()
@@ -175,7 +102,7 @@ class FlextModelsEntity:
             self: Self,
             event_type: str,
             data: t.ConfigMap | None = None,
-        ) -> r[FlextModelsEntity.DomainEvent]:
+        ) -> r[_DomainEvent]:
             """Add a domain event to this entity.
 
             Args:
@@ -187,17 +114,17 @@ class FlextModelsEntity:
 
             """
             if not event_type:
-                return r[FlextModelsEntity.DomainEvent].fail(
+                return r[_DomainEvent].fail(
                     "Domain event name must be a non-empty string",
                 )
 
             if len(self.domain_events) >= c.Validation.MAX_UNCOMMITTED_EVENTS:
-                return r[FlextModelsEntity.DomainEvent].fail(
+                return r[_DomainEvent].fail(
                     f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
             data_map = _to_config_map(data)
-            event = FlextModelsEntity.DomainEvent(
+            event = _DomainEvent(
                 event_type=event_type,
                 aggregate_id=self.unique_id,
                 data=data_map,
@@ -219,12 +146,12 @@ class FlextModelsEntity:
                 with contextlib.suppress(Exception):
                     _ = handler(data_map.root)
 
-            return r[FlextModelsEntity.DomainEvent].ok(event)
+            return r[_DomainEvent].ok(event)
 
         def add_domain_events_bulk(
             self: Self,
             events: Sequence[tuple[str, t.ConfigMap | None]],
-        ) -> r[list[FlextModelsEntity.DomainEvent]]:
+        ) -> r[list[_DomainEvent]]:
             """Add multiple domain events in bulk.
 
             Args:
@@ -236,7 +163,7 @@ class FlextModelsEntity:
             """
             # Validate input is a valid sequence (list or tuple)
             if events.__class__ not in {list, tuple}:
-                return r[list[FlextModelsEntity.DomainEvent]].fail(
+                return r[list[_DomainEvent]].fail(
                     "Events must be a list or tuple",
                 )
 
@@ -246,21 +173,21 @@ class FlextModelsEntity:
             # Check if adding all events would exceed limit
             total_after = len(self.domain_events) + len(event_items)
             if total_after > c.Validation.MAX_UNCOMMITTED_EVENTS:
-                return r[list[FlextModelsEntity.DomainEvent]].fail(
+                return r[list[_DomainEvent]].fail(
                     f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
             # Validate all event names first
             for event_type, _ in event_items:
                 if not event_type:
-                    return r[list[FlextModelsEntity.DomainEvent]].fail(
+                    return r[list[_DomainEvent]].fail(
                         "Event name must be non-empty string",
                     )
 
             # Add all events
-            created_events: list[FlextModelsEntity.DomainEvent] = []
+            created_events: list[_DomainEvent] = []
             for event_type, data in event_items:
-                event = FlextModelsEntity.DomainEvent(
+                event = _DomainEvent(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
                     data=_to_config_map(data),
@@ -268,11 +195,11 @@ class FlextModelsEntity:
                 self.domain_events.append(event)
                 created_events.append(event)
 
-            return r[list[FlextModelsEntity.DomainEvent]].ok(created_events)
+            return r[list[_DomainEvent]].ok(created_events)
 
         def mark_events_as_committed(
             self: Self,
-        ) -> r[list[FlextModelsEntity.DomainEvent]]:
+        ) -> r[list[_DomainEvent]]:
             """Mark all uncommitted events as committed and return them.
 
             Returns:
@@ -281,7 +208,7 @@ class FlextModelsEntity:
             """
             events = list(self.domain_events)
             self.domain_events.clear()
-            return r[list[FlextModelsEntity.DomainEvent]].ok(events)
+            return r[list[_DomainEvent]].ok(events)
 
     class Value(FlextModelFoundation.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""

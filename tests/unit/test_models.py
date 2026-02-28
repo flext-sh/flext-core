@@ -34,7 +34,7 @@ from flext_core import (
     m,
     t,
 )
-from flext_core._models.entity import _ComparableConfigMap
+from flext_core._models.domain_event import _ComparableConfigMap
 from flext_tests import tm, u
 from pydantic import Field, ValidationError, field_validator
 

@@ -25,7 +25,7 @@ from datetime import datetime
 
 import pytest
 from flext_core import m, t
-from flext_core._models import entity as _entity_module
+from flext_core._models.domain_event import _ComparableConfigMap
 from pydantic import ValidationError, field_validator
 
 FlextModelsCqrs = m.Cqrs
@@ -367,7 +367,7 @@ class TestDomainEvents:
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="USER-001",
-            data=_entity_module._ComparableConfigMap(
+            data=_ComparableConfigMap(
                 root={"user_id": "USER-001", "email": "user@example.com"},
             ),
         )
@@ -383,14 +383,14 @@ class TestDomainEvents:
         event1 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data=_entity_module._ComparableConfigMap(
+            data=_ComparableConfigMap(
                 root={"tracking_number": "TRACK-123"},
             ),
         )
         event2 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data=_entity_module._ComparableConfigMap(
+            data=_ComparableConfigMap(
                 root={"tracking_number": "TRACK-123"},
             ),
         )
@@ -407,7 +407,7 @@ class TestDomainEvents:
         event = AccountUpdatedEvent(
             event_type="AccountUpdated",
             aggregate_id="ACC-001",
-            data=_entity_module._ComparableConfigMap(root={"field": "balance"}),
+            data=_ComparableConfigMap(root={"field": "balance"}),
         )
         assert event.created_at is not None
         assert isinstance(event.created_at, datetime)
@@ -421,7 +421,7 @@ class TestDomainEvents:
         event = PaymentProcessedEvent(
             event_type="PaymentProcessed",
             aggregate_id="PAY-001",
-            data=_entity_module._ComparableConfigMap(root={"amount": 99.99}),
+            data=_ComparableConfigMap(root={"amount": 99.99}),
         )
         assert event.unique_id is not None
         assert event.created_at is not None

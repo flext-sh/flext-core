@@ -116,6 +116,8 @@ class TestFlextInfraPathResolver:
     def test_workspace_root_from_file_nonexistent(self) -> None:
         """Test workspace root resolution with nonexistent file."""
         resolver = FlextInfraPathResolver()
-        result = resolver.workspace_root_from_file(Path("/nonexistent/impossible/file.py"))
+        result = resolver.workspace_root_from_file(
+            Path("/nonexistent/impossible/file.py")
+        )
 
         assert result.is_failure

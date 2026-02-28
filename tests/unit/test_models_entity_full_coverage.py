@@ -9,11 +9,16 @@ from __future__ import annotations
 import pytest
 from flext_core import c, m, r, t, u
 
+domain_event_mod = __import__(
+    "flext_core._models.domain_event",
+    fromlist=["_ComparableConfigMap", "FlextModelsDomainEvent"],
+)
+ComparableConfigMap = domain_event_mod._ComparableConfigMap
+
 entity_mod = __import__(
     "flext_core._models.entity",
-    fromlist=["_ComparableConfigMap", "FlextModelsEntity"],
+    fromlist=["FlextModelsEntity"],
 )
-ComparableConfigMap = entity_mod._ComparableConfigMap
 FlextModelsEntity = entity_mod.FlextModelsEntity
 
 

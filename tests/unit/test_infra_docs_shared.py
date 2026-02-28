@@ -46,16 +46,20 @@ class TestFlextInfraDocScope:
     def test_scope_path_required(self) -> None:
         """Test FlextInfraDocScope requires path."""
         with pytest.raises(Exception):  # pydantic validation
-            FlextInfraDocScope.model_validate(
-                {"name": "test", "path": None, "report_dir": "/tmp"}
-            )
+            FlextInfraDocScope.model_validate({
+                "name": "test",
+                "path": None,
+                "report_dir": "/tmp",
+            })
 
     def test_scope_report_dir_required(self, tmp_path: Path) -> None:
         """Test FlextInfraDocScope requires report_dir."""
         with pytest.raises(Exception):  # pydantic validation
-            FlextInfraDocScope.model_validate(
-                {"name": "test", "path": str(tmp_path), "report_dir": None}
-            )
+            FlextInfraDocScope.model_validate({
+                "name": "test",
+                "path": str(tmp_path),
+                "report_dir": None,
+            })
 
 
 class TestFlextInfraDocsShared:

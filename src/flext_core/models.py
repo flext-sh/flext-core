@@ -61,8 +61,7 @@ class FlextModels:
     class AggregateRoot(FlextModelsEntity.AggregateRoot):
         """Aggregate root base class - consistency boundary."""
 
-    class DomainEvent(FlextModelsEntity.DomainEvent):
-        """Domain event base class - published through dispatcher."""
+    DomainEvent = FlextModelsEntity.DomainEvent
 
     # =========================================================================
     # GENERIC MODELS BY BUSINESS FUNCTION - FLAT namespace (no intermediate levels)
