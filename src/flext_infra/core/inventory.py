@@ -18,7 +18,7 @@ from flext_core import FlextResult, r, t
 from flext_infra import JsonService, c
 
 
-class InventoryService:
+class FlextInfraInventoryService:
     """Generates and manages scripts inventory for workspace governance.
 
     Scans the workspace for Python and Bash scripts and produces
@@ -107,4 +107,4 @@ class InventoryService:
             )
 
 
-__all__ = ["InventoryService"]
+__all__ = ["FlextInfraInventoryService"]

@@ -19,7 +19,7 @@ from flext_core import FlextResult, r, t
 from flext_infra import c
 
 
-class TextPatternScanner:
+class FlextInfraTextPatternScanner:
     """Scans files for regex pattern matches and reports violations.
 
     Supports include/exclude glob filtering and configurable match
@@ -120,4 +120,4 @@ class TextPatternScanner:
         return total
 
 
-__all__ = ["TextPatternScanner"]
+__all__ = ["FlextInfraTextPatternScanner"]

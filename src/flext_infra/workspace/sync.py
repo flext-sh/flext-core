@@ -19,7 +19,7 @@ from typing import override
 from flext_core import FlextService, r
 
 from flext_infra import c, m
-from flext_infra.basemk.generator import BaseMkGenerator
+from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.output import output
 
 # Patterns that MUST be in every subproject .gitignore.
@@ -33,7 +33,7 @@ _REQUIRED_GITIGNORE_ENTRIES: list[str] = [
 class SyncService(FlextService[m.SyncResult]):
     """Infrastructure service for workspace base.mk synchronization.
 
-    Generates a fresh base.mk via ``BaseMkGenerator``, compares its SHA256
+    Generates a fresh base.mk via ``FlextInfraBaseMkGenerator``, compares its SHA256
     hash against the existing file, and writes only when content differs.
     All writes are protected by an ``fcntl`` file lock.
 
@@ -41,13 +41,13 @@ class SyncService(FlextService[m.SyncResult]):
 
     def __init__(
         self,
-        generator: BaseMkGenerator | None = None,
+        generator: FlextInfraBaseMkGenerator | None = None,
         *,
         canonical_root: Path | None = None,
     ) -> None:
         """Initialize the sync service."""
         super().__init__()
-        self._generator = generator or BaseMkGenerator()
+        self._generator = generator or FlextInfraBaseMkGenerator()
         self._canonical_root = canonical_root
 
     @override

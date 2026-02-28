@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
+import pytest  # noqa: F401
 
-from flext_core import r
+from flext_core import FlextService
 from flext_infra.codegen import FlextInfraLazyInitGenerator
 
 

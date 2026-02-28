@@ -20,25 +20,11 @@ import subprocess  # noqa: S404
 from collections import defaultdict
 from pathlib import Path
 
+from typing import override
+
 from flext_core import FlextService, r
 from flext_infra.output import output
 
-import ast
-import contextlib
-import subprocess  # noqa: S404
-from collections import defaultdict
-from pathlib import Path
-
-from flext_core import FlextService
-from flext_infra.output import output
-
-import ast
-import contextlib
-import subprocess  # noqa: S404
-from collections import defaultdict
-from pathlib import Path
-
-from flext_infra.output import output
 
 _ALIAS_TO_SUFFIX: dict[str, str] = {
     "c": "Constants",
@@ -82,9 +68,10 @@ class FlextInfraLazyInitGenerator(FlextService[int]):
 
     def __init__(self, workspace_root: Path) -> None:  # noqa: D107
         super().__init__()
-        self._root = workspace_root
+        self._root: Path = workspace_root
 
     # -- public API ----------------------------------------------------------
+    @override
     def execute(self) -> r[int]:
         """Execute the lazy-init generation process."""
         return r[int].ok(self.run(check_only=False))

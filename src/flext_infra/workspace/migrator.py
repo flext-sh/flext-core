@@ -12,7 +12,7 @@ from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
 from flext_infra import FlextInfraDiscoveryService, c, m
-from flext_infra.basemk.generator import BaseMkGenerator
+from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 _MAKEFILE_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     # scripts/ path → unified CLI: detection
@@ -76,12 +76,12 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         self,
         *,
         discovery: FlextInfraDiscoveryService | None = None,
-        generator: BaseMkGenerator | None = None,
+        generator: FlextInfraBaseMkGenerator | None = None,
     ) -> None:
         """Initialize migrator with optional custom discovery and generator services."""
         super().__init__()
         self._discovery = discovery or FlextInfraDiscoveryService()
-        self._generator = generator or BaseMkGenerator()
+        self._generator = generator or FlextInfraBaseMkGenerator()
 
     @override
     def execute(self) -> r[list[m.MigrationResult]]:

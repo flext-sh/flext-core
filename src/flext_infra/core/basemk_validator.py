@@ -17,7 +17,7 @@ from flext_core import r
 from flext_infra import m
 
 
-class BaseMkValidator:
+class FlextInfraBaseMkValidator:
     """Validates base.mk synchronization across workspace projects.
 
     Compares SHA-256 hashes of vendored base.mk copies against the
@@ -83,4 +83,4 @@ class BaseMkValidator:
             )
 
 
-__all__ = ["BaseMkValidator"]
+__all__ = ["FlextInfraBaseMkValidator"]

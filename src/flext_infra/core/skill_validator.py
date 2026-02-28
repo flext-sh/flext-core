@@ -53,7 +53,7 @@ def _normalize_string_list(value: t.ConfigMapValue, field: str) -> list[str]:
     raise TypeError(msg)
 
 
-class SkillValidator:
+class FlextInfraSkillValidator:
     """Validates workspace skills using rules.yml policy gates.
 
     Supports AST-grep rules, custom validator scripts, and baseline

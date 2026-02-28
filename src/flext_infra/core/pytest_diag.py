@@ -39,7 +39,7 @@ class _DiagResult:
         self.slow_entries: list[str] = []
 
 
-class PytestDiagExtractor:
+class FlextInfraPytestDiagExtractor:
     """Extracts pytest diagnostics from JUnit XML and log files.
 
     Parses JUnit XML for structured failure/error/skip/timing data
@@ -218,4 +218,4 @@ class PytestDiagExtractor:
                 diag.slow_entries.append(line)
 
 
-__all__ = ["PytestDiagExtractor"]
+__all__ = ["FlextInfraPytestDiagExtractor"]
