@@ -94,27 +94,18 @@ class TestFlextModelsContainer:
             registration = m.Container.ServiceRegistration(
                 name="test_service",
                 service="test_value",
-                metadata=cast(
-                    "m.Metadata | m.ConfigMap | None",
-                    metadata_value,
-                ),
+                metadata=metadata_value,
             )
             # metadata=None triggers validator that creates default Metadata
-            # dict/ConfigMap inputs yield None metadata (no auto-conversion)
-            if isinstance(metadata_value, m.Metadata) or metadata_value is None:
-                assert registration.metadata is not None
-                assert isinstance(registration.metadata, m.Metadata)
-            else:
-                assert registration.metadata is None
+            # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
+            assert registration.metadata is not None
+            assert isinstance(registration.metadata, m.Metadata)
         else:
             with pytest.raises(_expected_validation_errors):
                 m.Container.ServiceRegistration(
                     name="test_service",
                     service="test_value",
-                    metadata=cast(
-                        "m.Metadata | m.ConfigMap | None",
-                        metadata_value,
-                    ),
+                        metadata=metadata_value,
                 )
 
     def test_service_registration_defaults(self) -> None:
@@ -171,27 +162,18 @@ class TestFlextModelsContainer:
             registration = m.Container.FactoryRegistration(
                 name="test_factory",
                 factory=factory,
-                metadata=cast(
-                    "m.Metadata | m.ConfigMap | None",
-                    metadata_value,
-                ),
+                    metadata=metadata_value,
             )
             # metadata=None triggers validator that creates default Metadata
-            # dict/ConfigMap inputs yield None metadata (no auto-conversion)
-            if isinstance(metadata_value, m.Metadata) or metadata_value is None:
-                assert registration.metadata is not None
-                assert isinstance(registration.metadata, m.Metadata)
-            else:
-                assert registration.metadata is None
+            # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
+            assert registration.metadata is not None
+            assert isinstance(registration.metadata, m.Metadata)
         else:
             with pytest.raises(_expected_validation_errors):
                 m.Container.FactoryRegistration(
                     name="test_factory",
                     factory=factory,
-                    metadata=cast(
-                        "m.Metadata | m.ConfigMap | None",
-                        metadata_value,
-                    ),
+                        metadata=metadata_value,
                 )
 
     def test_factory_registration_defaults(self) -> None:
@@ -396,10 +378,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         result = u.Model.normalize_to_metadata(
             m.ConfigMap(
                 root={
-                    "nested": cast(
-                        "t.GeneralValueType",
-                        {"level1": {"level2": "value"}},
-                    ),
+                    "nested": {"level1": {"level2": "value"}},
                 },
             ),
         )
@@ -413,31 +392,16 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(
-                cast(
-                    "m.Metadata | m.ConfigMap | None",
-                    cast("object", "invalid_string"),
-                ),
-            )
+            u.Model.normalize_to_metadata("invalid_string")
 
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(
-                cast(
-                    "m.Metadata | m.ConfigMap | None",
-                    cast("object", 123),
-                ),
-            )
+            u.Model.normalize_to_metadata(123)
 
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(
-                cast(
-                    "m.Metadata | m.ConfigMap | None",
-                    cast("object", [1, 2, 3]),
-                ),
-            )
+            u.Model.normalize_to_metadata([1, 2, 3])

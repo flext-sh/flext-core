@@ -92,7 +92,7 @@ class TestServiceBootstrap:
 
         # Assert - service registered in container
         service_result = runtime.container.get("test_key")
-        u.Tests.Result.assert_result_success(cast("r[str]", service_result))
+        u.Tests.Result.assert_success($$$)
         # Assert
         assert hasattr(runtime, "container")
 
@@ -110,7 +110,7 @@ class TestServiceBootstrap:
 
         # Assert - factory registered in container
         factory_result = runtime.container.get("test_factory")
-        u.Tests.Result.assert_result_success(cast("r[str]", factory_result))
+        u.Tests.Result.assert_success($$$)
         # Assert
         assert hasattr(runtime, "container")
 
@@ -128,7 +128,7 @@ class TestServiceBootstrap:
 
         # Assert - resource registered in container
         resource_result = runtime.container.get("test_resource")
-        u.Tests.Result.assert_result_success(cast("r[str]", resource_result))
+        u.Tests.Result.assert_success($$$)
         # Assert
         assert hasattr(runtime, "container")
 

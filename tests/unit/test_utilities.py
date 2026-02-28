@@ -268,7 +268,7 @@ class Testu:
     ) -> None:
         """Test text truncation."""
         result = u.Text.truncate_text(text, max_length=max_length)
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         if should_truncate:
             assert len(result.value) <= max_length + 3  # +3 for "..."
         else:
@@ -326,7 +326,7 @@ class Testu:
         """Test clearing object cache."""
         cache_data: m.ConfigMap = m.ConfigMap(root={"test": "data"})
         result = u.Cache.clear_object_cache(cache_data)
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
 
     @pytest.mark.parametrize(
         ("has_cache", "expected"),

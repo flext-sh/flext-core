@@ -255,7 +255,28 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    def __init__(self, **kwargs: str | int) -> None:
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize config with data.
+
+        Note: BaseSettings handles initialization from environment variables,
+        .env files, and other sources automatically. Kwargs can be passed for
+        testing and explicit configuration (used by model_validate).
+        """
+        # Check if already initialized (singleton pattern)
+        if hasattr(self, "_di_provider"):
+            # Instance already initialized - use setattr to preserve
+            # Pydantic's type coercion (e.g., str -> SecretStr).
+            if kwargs:
+                for key, value in kwargs.items():
+                    if key in self.__class__.model_fields:
+                        setattr(self, key, value)
+            return
+
+        super().__init__(**kwargs)
+
+        # Use runtime bridge for dependency-injector providers (L0.5 pattern)
+        self._di_provider: t.ScalarValue | None = None
+
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -333,6 +354,10 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
     @classmethod
     def get_global_instance(cls) -> Self:
         """Get the global singleton instance."""
+        import os
+        log_level = os.environ.get("FLEXT_LOG_LEVEL")
+        if log_level and log_level.islower():
+            os.environ["FLEXT_LOG_LEVEL"] = log_level.upper()
         return cls()
 
     @classmethod

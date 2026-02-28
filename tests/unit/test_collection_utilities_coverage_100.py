@@ -223,7 +223,7 @@ class TestuCollectionParseSequence:
         result = u.Collection.parse_sequence(Status, scenario.values)
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
@@ -275,7 +275,7 @@ class TestuCollectionParseMapping:
         result = u.Collection.parse_mapping(Status, scenario.mapping)
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, dict)

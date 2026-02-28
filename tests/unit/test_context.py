@@ -128,7 +128,7 @@ class TestFlextContext:
             else str(value)
         )
         set_result = context.set(key, converted_value)
-        u.Tests.Result.assert_result_success(set_result)
+        u.Tests.Result.assert_success($$$)
         # Convert expected to t.GeneralValueType for assert_context_get_success
         expected_value = expected
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
@@ -196,7 +196,7 @@ class TestFlextContext:
         }
         context.set("nested", nested_data).value
         result = context.get("nested")
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         retrieved = result.value
         assert isinstance(retrieved, dict)
         # Type narrowing: retrieved is dict after isinstance check
@@ -265,7 +265,7 @@ class TestFlextContext:
         context = test_context
         context.set("valid_key", "valid_value").value
         result = context.validate()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
 
     def test_context_validation_failure(self, test_context: FlextContext) -> None:
         """Test context validation failure - empty key returns failure."""
@@ -300,7 +300,7 @@ class TestFlextContext:
         for i in range(100):
             context.set(f"key_{i}", f"value_{i}")
             result = context.get(f"key_{i}")
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
         assert (
             time.time() - start_time < 30.0
         )  # Relaxed: context set involves ConfigMap validation
@@ -333,7 +333,7 @@ class TestFlextContext:
             "global_value",
         )
         scoped_result = context.get(f"{scope}_key", scope=scope)
-        u.Tests.Result.assert_result_success(scoped_result)
+        u.Tests.Result.assert_success($$$)
         assert scoped_result.value == value
 
     def test_context_metadata(self, test_context: FlextContext) -> None:
@@ -342,7 +342,7 @@ class TestFlextContext:
         context.set_metadata("created_at", "2025-01-01")
         context.set_metadata("version", "1.0.0")
         created_at_result = context.get_metadata("created_at")
-        u.Tests.Result.assert_result_success(created_at_result)
+        u.Tests.Result.assert_success($$$)
         assert created_at_result.value == "2025-01-01"
         metadata = context._get_all_metadata()
         assert "created_at" in metadata and "version" in metadata
@@ -400,7 +400,7 @@ class TestFlextContext:
         )
         context.set(f"{value_name}_key", converted_value).value
         result = context.get(f"{value_name}_key")
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         assert result.value == special_value
 
     def test_context_edge_case_duplicate_keys_overwrite(
@@ -411,11 +411,11 @@ class TestFlextContext:
         context = test_context
         context.set("key", "value1").value
         result1 = context.get("key")
-        u.Tests.Result.assert_result_success(result1)
+        u.Tests.Result.assert_success($$$)
         assert result1.value == "value1"
         context.set("key", "value2").value
         result2 = context.get("key")
-        u.Tests.Result.assert_result_success(result2)
+        u.Tests.Result.assert_success($$$)
         assert result2.value == "value2"
 
     def test_context_concurrent_reads(self, test_context: FlextContext) -> None:
@@ -508,7 +508,7 @@ class TestFlextContext:
         context = test_context
         context.set_metadata("meta_key", "meta_value")
         result = context.get_metadata("meta_key")
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         assert result.value == "meta_value"
 
     def test_context_get_all_metadata_empty(self, test_context: FlextContext) -> None:

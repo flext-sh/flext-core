@@ -111,6 +111,10 @@ class FlextDispatcher:
             self._logger.info("Registered handler for %s", route_name)
 
         return r[bool].ok(value=True)
+    def _protocol_name(self) -> str:
+        """Return the protocol name for introspection."""
+        return "core-command-bus"
+
 
     def dispatch(
         self,

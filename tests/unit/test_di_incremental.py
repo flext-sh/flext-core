@@ -691,8 +691,8 @@ class TestRealWiringScenarios:
         result1 = scoped1.get("service")
         result2 = scoped2.get("service")
 
-        value1 = u.Tests.Result.assert_result_success(result1)
-        value2 = u.Tests.Result.assert_result_success(result2)
+        value1 = u.Tests.Result.assert_success($$$)
+        value2 = u.Tests.Result.assert_success($$$)
         assert isinstance(value1, str)
         assert isinstance(value2, str)
         assert value1 == "value1"

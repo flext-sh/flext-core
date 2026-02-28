@@ -76,7 +76,12 @@ class _ProtocolIntrospection:
         required_members = {
             m
             for m in required_members
-            if (not m.startswith("_") or m.startswith("__") or m == "_protocol_name")
+            if (
+                not m.startswith("_")
+                or m.startswith("__")
+                or m == "_protocol_name"
+                or m in ("metadata_extra", "sealed")
+            )
         }
 
         all_annotations: set[str] = set()
@@ -154,8 +159,14 @@ class _ProtocolIntrospection:
         required_members = {
             m
             for m in required_members
-            if (not m.startswith("_") or m.startswith("__") or m == "_protocol_name")
+            if (
+                not m.startswith("_")
+                or m.startswith("__")
+                or m == "_protocol_name"
+                or m in ("metadata_extra", "sealed")
+            )
         }
+
         if not required_members:
             return False
         return all(hasattr(instance, member) for member in required_members)

@@ -228,7 +228,7 @@ class TestsCore:
         """Test basic service execution returns expected type."""
         service = UserService()
         result = service.execute()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         data = result.value
         assert isinstance(data, m.ConfigMap)
         assert "user_id" in data
@@ -247,13 +247,13 @@ class TestsCore:
         """Test default business rules validation."""
         service = UserService()
         result = service.validate_business_rules()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
         service = ComplexService.model_construct(name="test")
         result = service.validate_business_rules()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
@@ -295,9 +295,7 @@ class TestsCore:
             )
         )
         # Should pass attribute check, but business rules should fail
-        u.Tests.Result.assert_result_success(
-            validation_result,
-        )  # Attributes exist
+        u.Tests.Result.assert_success($$$)  # Attributes exist
         # But business rules validation should fail
         business_result = service.validate_business_rules()
         u.Tests.Result.assert_result_failure(business_result)

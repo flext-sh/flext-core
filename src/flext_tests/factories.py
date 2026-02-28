@@ -1458,6 +1458,5 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
 
 
 tt = FlextTestsFactories  # Preferred short alias
-f = FlextTestsFactories  # Alternative alias for compatibility
 
 __all__ = ["FlextTestsFactories", "f", "tt"]

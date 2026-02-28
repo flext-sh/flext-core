@@ -481,7 +481,7 @@ class TestFlextModels:
             msg="New entity must have no domain events",
         )
         _ = entity.add_domain_event("test_event", m.ConfigMap(root={"data": "value"}))
-        u.Tests.Result.assert_result_success(_)
+        u.Tests.Result.assert_success($$$)
         tm.that(
             len(entity.domain_events),
             eq=1,
@@ -532,7 +532,7 @@ class TestFlextModels:
             "valid",
             m.ConfigMap(root={"string": "value", "number": 42}),
         )
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         tm.that(
             len(entity.domain_events),
             eq=1,
@@ -600,7 +600,7 @@ class TestFlextModels:
         assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
         _ = aggregate.add_domain_event("test", m.ConfigMap(root={"data": "value"}))
-        u.Tests.Result.assert_result_success(_)
+        u.Tests.Result.assert_success($$$)
 
     def test_aggregate_root_invariants(self) -> None:
         """Test AggregateRoot invariant checking."""
@@ -695,7 +695,7 @@ class TestFlextModels:
         _ = aggregate.add_domain_event("event2", m.ConfigMap(root={"data": "value2"}))
         assert len(aggregate.domain_events) == 2
         result = aggregate.mark_events_as_committed()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         assert len(aggregate.domain_events) == 0
         committed_events = result.value
         assert len(committed_events) == 2
@@ -708,7 +708,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.mark_events_as_committed()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         committed_events = result.value
         assert len(committed_events) == 0
 
@@ -726,7 +726,7 @@ class TestFlextModels:
             ("event3", m.ConfigMap(root={"data": "value3"})),
         ]
         _ = aggregate.add_domain_events_bulk(events)
-        u.Tests.Result.assert_result_success(_)
+        u.Tests.Result.assert_success($$$)
         assert len(aggregate.domain_events) == 3
         assert all(
             aggregate.domain_events[i].event_type == f"event{i + 1}" for i in range(3)
@@ -740,7 +740,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         _ = aggregate.add_domain_events_bulk([])
-        u.Tests.Result.assert_result_success(_)
+        u.Tests.Result.assert_success($$$)
         invalid_empty_name = [
             ("", m.ConfigMap(root={"data": "value"})),
         ]
@@ -783,7 +783,7 @@ class TestFlextModels:
             "user_action",
             m.ConfigMap(root={"event_type": "test_event", "key": "value"}),
         )
-        u.Tests.Result.assert_result_success(_)
+        u.Tests.Result.assert_success($$$)
         assert aggregate.handler_called is True
         assert aggregate.handler_data == {"event_type": "test_event", "key": "value"}
 
@@ -802,7 +802,7 @@ class TestFlextModels:
             "failing_event",
             m.ConfigMap(root={"data": "value"}),
         )
-        u.Tests.Result.assert_result_success(_)
+        u.Tests.Result.assert_success($$$)
 
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""

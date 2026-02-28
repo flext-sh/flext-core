@@ -248,7 +248,7 @@ class TestFlextContainer:
         result = clean_container.register_factory("invalid", non_callable)
         # Source no longer validates callability at registration time;
         # factory wrapping defers the call, so registration succeeds.
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
 
     def test_register_duplicate_factory(
         self,
@@ -325,10 +325,10 @@ class TestFlextContainer:
         )
         clean_container.register_factory("factory_service", factory)
         result1: r[t.RegisterableService] = clean_container.get("factory_service")
-        u.Tests.Result.assert_result_success(result1)
+        u.Tests.Result.assert_success($$$)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
         result2: r[t.RegisterableService] = clean_container.get("factory_service")
-        u.Tests.Result.assert_result_success(result2)
+        u.Tests.Result.assert_success($$$)
         tm.that(
             get_count(),
             eq=2,
@@ -356,7 +356,7 @@ class TestFlextContainer:
             scenario.expected_type,
         )
         if scenario.should_pass:
-            u.Tests.Result.assert_result_success(typed_result)
+            u.Tests.Result.assert_success($$$)
             tm.that(
                 typed_result.value,
                 eq=scenario.service,
@@ -493,7 +493,7 @@ class TestFlextContainer:
             msg=f"Container must have {name} before unregister",
         )
         unregister_result = container.unregister(name)
-        u.Tests.Result.assert_result_success(unregister_result)
+        u.Tests.Result.assert_success($$$)
         tm.that(
             container.has_service(name),
             eq=False,
@@ -647,14 +647,14 @@ class TestFlextContainer:
             )
         for name in required_services:
             result: r[t.RegisterableService] = container.get(name)
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
         tm.that(
             len(container.list_services()),
             eq=3,
             msg="Container must have 3 services in full workflow",
         )
         unregister_result = container.unregister("cache")
-        u.Tests.Result.assert_result_success(unregister_result)
+        u.Tests.Result.assert_success($$$)
         tm.that(
             len(container.list_services()),
             eq=2,

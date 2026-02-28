@@ -312,7 +312,7 @@ class TestuPaginationExtractPageParams:
         )
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
             page, page_size = result.value
             assert page == scenario.expected_page
             assert page_size == scenario.expected_page_size
@@ -339,7 +339,7 @@ class TestuPaginationValidatePaginationParams:
         )
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
             params = result.value
             assert params["page"] == scenario.page
             assert params["page_size"] == scenario.expected_page_size
@@ -367,7 +367,7 @@ class TestuPaginationPreparePaginationData:
         )
 
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            u.Tests.Result.assert_success($$$)
             data = result.value
             assert "data" in data
             assert "pagination" in data
@@ -414,7 +414,7 @@ class TestuPaginationBuildPaginationResponse:
             message="Success",
         )
 
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         response = result.value
         assert "data" in response
         assert "pagination" in response
@@ -436,7 +436,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         response = result.value
         assert "data" in response
         assert "pagination" in response
@@ -481,7 +481,7 @@ class TestuPaginationBuildPaginationResponse:
         result = u.Pagination.build_pagination_response(pagination_data)
 
         # Should still succeed - dict is valid t.GeneralValueType
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success($$$)
         response = result.value
         assert "data" in response
 
