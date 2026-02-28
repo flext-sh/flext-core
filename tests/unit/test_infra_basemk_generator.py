@@ -26,7 +26,7 @@ class _SuccessRenderer:
 
     def render_all(self, config: im.BaseMkConfig | None = None) -> r[str]:
         del config
-        return r[str].ok("all:\n\t@echo 'test'\n")
+        return r[str].ok(".PHONY: help\nhelp:\n\t@echo 'help'\n")
 
 
 class _FailureRenderer:

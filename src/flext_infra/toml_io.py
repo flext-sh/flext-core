@@ -88,6 +88,43 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
                 f"TOML document read error: {exc}",
             )
 
+
+    def write(
+        self,
+        path: Path,
+        payload: tomlkit.TOMLDocument | Mapping[str, t.ConfigMapValue],
+    ) -> FlextResult[bool]:
+        """Write a TOML payload to a file.
+
+        Creates parent directories as needed.
+
+        Args:
+            path: Destination file path.
+            payload: Data to serialize as TOML (dict or TOMLDocument).
+
+        Returns:
+            FlextResult[bool] with True on success.
+
+        """
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if isinstance(payload, tomlkit.TOMLDocument):
+                content = tomlkit.dumps(payload)
+            else:
+                # Convert dict to TOMLDocument
+                doc = tomlkit.document()
+                for key, value in payload.items():
+                    nested_mapping = _as_toml_mapping(value)
+                    if nested_mapping is not None:
+                        doc[key] = self.build_table(nested_mapping)
+                    else:
+                        doc[key] = value
+                content = tomlkit.dumps(doc)
+            _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
+            return r[bool].ok(True)
+        except (OSError, TypeError) as exc:
+            return r[bool].fail(f"TOML write error: {exc}")
+
     def write_document(
         self,
         path: Path,
