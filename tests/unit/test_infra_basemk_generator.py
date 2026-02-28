@@ -56,7 +56,7 @@ def test_generator_execute_returns_generated_content() -> None:
     result = gen.execute()
 
     assert result.is_success
-    assert "all:" in result.value
+    assert "help:" in result.value
 
 
 def test_generator_generate_with_none_config_uses_default() -> None:

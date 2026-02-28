@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, FlextService, r
 
-from flext_infra import TomlService, c
+from flext_infra import FlextInfraTomlService, c
 
 _SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$")
 _DEV_BRANCH_RE = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
@@ -39,9 +39,9 @@ class FlextInfraVersioningService(FlextService[str]):
         """
         return r[str].ok("")
 
-    def __init__(self, toml: TomlService | None = None) -> None:
+    def __init__(self, toml: FlextInfraTomlService | None = None) -> None:
         """Initialize the versioning service."""
-        self._toml = toml or TomlService()
+        self._toml = toml or FlextInfraTomlService()
 
     def parse_semver(
         self,

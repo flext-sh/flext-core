@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.codegen.lazy_init import LazyInitGenerator
+from flext_infra.codegen.lazy_init import FlextInfraLazyInitGenerator
 from flext_infra.output import output
 
 
@@ -57,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
 def _handle_lazy_init(args: argparse.Namespace) -> int:
     """Handle the ``lazy-init`` subcommand."""
     root = args.root.resolve()
-    generator = LazyInitGenerator(workspace_root=root)
+    generator = FlextInfraLazyInitGenerator(workspace_root=root)
     unmapped = generator.run(check_only=args.check)
     if args.check and unmapped > 0:
         output.warning(f"{unmapped} files have unmapped exports")

@@ -20,6 +20,15 @@ import subprocess  # noqa: S404
 from collections import defaultdict
 from pathlib import Path
 
+from flext_core import FlextService, r
+from flext_infra.output import output
+
+import ast
+import contextlib
+import subprocess  # noqa: S404
+from collections import defaultdict
+from pathlib import Path
+
 from flext_core import FlextService
 from flext_infra.output import output
 
@@ -72,9 +81,14 @@ class FlextInfraLazyInitGenerator(FlextService[int]):
     """
 
     def __init__(self, workspace_root: Path) -> None:  # noqa: D107
+        super().__init__()
         self._root = workspace_root
 
     # -- public API ----------------------------------------------------------
+    def execute(self) -> r[int]:
+        """Execute the lazy-init generation process."""
+        return r[int].ok(self.run(check_only=False))
+
 
     def run(self, *, check_only: bool = False) -> int:
         """Process all ``__init__.py`` files in the workspace.
