@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import cast
 
 import tomlkit
 from flext_core import r
@@ -45,11 +44,11 @@ def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
     project = doc.get("project")
     if not project or not isinstance(project, dict):
         return []
-    project_dict = cast("dict[str, object]", project)
+    project_dict = project
     deps = project_dict.get("dependencies")
     if not isinstance(deps, list):
         return []
-    deps_list = cast("list[object]", deps)
+    deps_list = deps
     paths: list[str] = []
     for item in deps_list:
         if not isinstance(item, str) or " @ " not in item:
@@ -70,19 +69,19 @@ def _path_dep_paths_poetry(doc: TOMLDocument) -> list[str]:
     tool = doc.get("tool")
     if not isinstance(tool, dict):
         return []
-    tool_dict = cast("dict[str, object]", tool)
+    tool_dict = tool
     poetry = tool_dict.get("poetry")
     if not isinstance(poetry, dict):
         return []
-    poetry_dict = cast("dict[str, object]", poetry)
+    poetry_dict = poetry
     deps = poetry_dict.get("dependencies")
     if not isinstance(deps, dict):
         return []
-    deps_dict = cast("dict[str, object]", deps)
+    deps_dict = deps
     paths: list[str] = []
     for val in deps_dict.values():
         if isinstance(val, dict) and "path" in val:
-            val_dict = cast("dict[str, object]", val)
+            val_dict = val
             dep_path = val_dict["path"]
             if isinstance(dep_path, str) and dep_path:
                 dep_path = dep_path.strip()
@@ -138,15 +137,15 @@ def sync_one(
     tool = doc.get("tool")
     if not isinstance(tool, dict):
         return r[bool].ok(False)
-    tool_dict = cast("dict[str, object]", tool)
+    tool_dict = tool
     pyright = tool_dict.get("pyright")
     mypy = tool_dict.get("mypy")
     if not isinstance(pyright, dict):
         return r[bool].ok(False)
 
     changed = False
-    pyright_dict = cast("dict[str, object]", pyright)
-    current_pyright = cast("list[object]", pyright_dict.get("extraPaths", []))
+    pyright_dict = pyright
+    current_pyright = pyright_dict.get("extraPaths", [])
     if list(current_pyright) != pyright_extra:
         arr = tomlkit.array()
         for path_value in pyright_extra:
@@ -155,8 +154,8 @@ def sync_one(
         changed = True
 
     if isinstance(mypy, dict):
-        mypy_dict = cast("dict[str, object]", mypy)
-        current_mypy = cast("list[object]", mypy_dict.get("mypy_path", []))
+        mypy_dict = mypy
+        current_mypy = mypy_dict.get("mypy_path", [])
         if list(current_mypy) != mypy_path:
             arr = tomlkit.array()
             for path_value in mypy_path:
@@ -167,12 +166,9 @@ def sync_one(
     if not is_root:
         pyrefly = tool_dict.get("pyrefly")
         if isinstance(pyrefly, dict):
-            pyrefly_dict = cast("dict[str, object]", pyrefly)
+            pyrefly_dict = pyrefly
             base_search: list[str] = ["."] + dep_paths
-            current_search_raw = cast(
-                "list[object]",
-                pyrefly_dict.get("search-path", []),
-            )
+            current_search_raw = pyrefly_dict.get("search-path", [])
             current_search: list[str] = [str(v) for v in current_search_raw]
             seen: set[str] = set(base_search)
             for path_value in current_search:
