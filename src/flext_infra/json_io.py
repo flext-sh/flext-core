@@ -78,9 +78,10 @@ class FlextInfraJsonService(FlextService[FlextResult[bool]]):
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
+            data = payload.model_dump() if isinstance(payload, BaseModel) else payload
             content = (
                 json.dumps(
-                    payload,
+                    data,
                     indent=2,
                     sort_keys=sort_keys,
                     ensure_ascii=ensure_ascii,

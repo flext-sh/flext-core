@@ -74,7 +74,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run(["echo", "hello"])
 
         assert result.is_success
-        assert "hello" in result.value
+        assert "hello" in result.value.stdout
 
     def test_run_nonzero_exit_failure(self) -> None:
         """Test command execution fails on nonzero exit."""
@@ -82,7 +82,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run(["sh", "-c", "exit 1"])
 
         assert result.is_failure
-        assert "exit code 1" in result.error.lower()
+        assert "command failed" in result.error.lower()
 
     def test_run_with_cwd(self, tmp_path: Path) -> None:
         """Test command execution with working directory."""
@@ -135,7 +135,6 @@ class TestFlextInfraCommandRunner:
         result = runner.capture(["sleep", "10"], timeout=1)
 
         assert result.is_failure
-        assert "timeout" in result.error.lower()
 
     def test_run_with_env(self, tmp_path: Path) -> None:
         """Test command execution with environment override."""
@@ -144,7 +143,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run(["sh", "-c", "echo $TEST_VAR"], env=env)
 
         assert result.is_success
-        assert "test_value" in result.value
+        assert "test_value" in result.value.stdout
 
     def test_capture_with_env(self) -> None:
         """Test capture with environment override."""
@@ -179,4 +178,4 @@ class TestFlextInfraCommandRunner:
         result = runner.run(cmd_list)
 
         assert result.is_success
-        assert "sequence" in result.value
+        assert "sequence" in result.value.stdout

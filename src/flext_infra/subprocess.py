@@ -178,6 +178,8 @@ class FlextInfraCommandRunner(FlextService[FlextResult[m.CommandOutput]]):
         self,
         cmd: Sequence[str],
         cwd: Path | None = None,
+        timeout: int | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> FlextResult[str]:
         """Run a command and capture its stdout.
 
@@ -186,12 +188,14 @@ class FlextInfraCommandRunner(FlextService[FlextResult[m.CommandOutput]]):
         Args:
             cmd: Command line arguments as a sequence.
             cwd: Optional working directory for the command.
+            timeout: Optional timeout in seconds.
+            env: Optional environment override.
 
         Returns:
             FlextResult[str] with stripped stdout on success.
 
         """
-        result = self.run(cmd, cwd=cwd)
+        result = self.run(cmd, cwd=cwd, timeout=timeout, env=env)
         if result.is_success:
             value = result.value
             return r[str].ok(value.stdout.strip())

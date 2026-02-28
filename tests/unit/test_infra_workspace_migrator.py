@@ -105,3 +105,53 @@ def test_migrator_apply_updates_project_files(tmp_path: Path) -> None:
     gitignore_text = (project_root / ".gitignore").read_text(encoding="utf-8")
     assert "!scripts/" not in gitignore_text
     assert ".reports/" in gitignore_text
+
+
+def test_migrator_handles_missing_pyproject_gracefully(tmp_path: Path) -> None:
+    """Test that migrator handles missing pyproject.toml gracefully."""
+    project_root = tmp_path / "project-a"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir(parents=True, exist_ok=True)
+    _ = (project_root / "base.mk").write_text("OLD_BASE\n", encoding="utf-8")
+    _ = (project_root / "Makefile").write_text("", encoding="utf-8")
+    # No pyproject.toml
+
+    project = im.ProjectInfo.model_validate({
+        "name": "project-a",
+        "path": project_root,
+        "stack": "python/external",
+        "has_tests": False,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "NEW_BASE\n")
+
+    result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
+
+    assert result.is_success
+    assert (project_root / "base.mk").read_text(encoding="utf-8") == "NEW_BASE\n"
+
+
+def test_migrator_preserves_custom_makefile_content(tmp_path: Path) -> None:
+    """Test that migrator preserves custom Makefile content outside replacements."""
+    project_root = tmp_path / "project-a"
+    project_root.mkdir(parents=True)
+    _write_project(project_root)
+    custom_content = "# Custom rule\ncustom-target:\n\t@echo 'custom'\n"
+    makefile_path = project_root / "Makefile"
+    makefile_path.write_text(custom_content, encoding="utf-8")
+
+    project = im.ProjectInfo.model_validate({
+        "name": "project-a",
+        "path": project_root,
+        "stack": "python/external",
+        "has_tests": False,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "NEW_BASE\n")
+
+    result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
+
+    assert result.is_success
+    makefile_text = makefile_path.read_text(encoding="utf-8")
+    assert "custom-target" in makefile_text
+    assert "@echo 'custom'" in makefile_text

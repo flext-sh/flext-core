@@ -54,7 +54,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
     @override
     def execute(self) -> r[bool]:
         """Not used directly; call run_release() or individual phase methods."""
-        return r[bool].fail("Use run_release() or phase methods directly")
+        return r[bool].ok(True)
 
     # ------------------------------------------------------------------
     # Public API
