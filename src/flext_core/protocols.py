@@ -1800,7 +1800,6 @@ class FlextProtocols:
         """
         return _ProtocolIntrospection.check_implements_protocol(instance, protocol)
 
-    # Alias for convenience (matches instance method name)
     implements_protocol = check_implements_protocol
 
 

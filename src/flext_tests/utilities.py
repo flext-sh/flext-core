@@ -248,11 +248,6 @@ class FlextTestsUtilities(FlextUtilities):
                     assert result.error is not None
                     assert expected_error in result.error
 
-            # Backward compatibility aliases (old API names)
-            assert_result_success = assert_success
-            assert_result_failure = assert_failure
-            assert_result_failure_with_error = assert_failure_with_error
-
             @staticmethod
             def create_success_result[T](value: T) -> r[T]:
                 """Create a success result with the given value.
@@ -514,24 +509,6 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 return FlextUtilities.generate("ulid", length=length)
-
-        # Compatibility aliases for existing test code
-        class TestUtilities:
-            """Compatibility alias - use Result instead."""
-
-            @staticmethod
-            def assert_result_success[TResult](
-                result: r[TResult] | p.Result[TResult],
-            ) -> None:
-                """Assert result is success - compatibility method."""
-                _ = FlextTestsUtilities.Tests.Result.assert_success(result)
-
-            @staticmethod
-            def assert_result_failure[TResult](
-                result: r[TResult] | p.Result[TResult],
-            ) -> None:
-                """Assert result is failure - compatibility method."""
-                _ = FlextTestsUtilities.Tests.Result.assert_failure(result)
 
         class ResultHelpers:
             """Result helpers for test creation and assertions."""

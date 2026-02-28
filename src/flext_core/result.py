@@ -430,7 +430,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return result
         return self
 
-    # Alias for alt - more intuitive name for error transformation
     map_error = alt
 
     def lash(
@@ -461,7 +460,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return lash_result
         return self
 
-    # Alias for lash - RFC-standard name for recovery
     or_else = lash
 
     def tap_error(self, func: Callable[[str], None]) -> Self:

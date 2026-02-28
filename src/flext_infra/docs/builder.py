@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
-    DocScope,
+    FlextInfraDocScope,
     FlextInfraDocsShared,
 )
 from flext_infra.subprocess import CommandRunner
@@ -83,7 +83,7 @@ class DocBuilder:
 
         return r[list[BuildReport]].ok(reports)
 
-    def _build_scope(self, scope: DocScope) -> BuildReport:
+    def _build_scope(self, scope: FlextInfraDocScope) -> BuildReport:
         """Run mkdocs build --strict for a single scope."""
         report = self._run_mkdocs(scope)
         self._write_reports(scope, report)
@@ -96,7 +96,7 @@ class DocBuilder:
         )
         return report
 
-    def _run_mkdocs(self, scope: DocScope) -> BuildReport:
+    def _run_mkdocs(self, scope: FlextInfraDocScope) -> BuildReport:
         """Run mkdocs build --strict and return the result."""
         config = scope.path / "mkdocs.yml"
         if not config.exists():
@@ -145,7 +145,7 @@ class DocBuilder:
         )
 
     @staticmethod
-    def _write_reports(scope: DocScope, report: BuildReport) -> None:
+    def _write_reports(scope: FlextInfraDocScope, report: BuildReport) -> None:
         """Persist build JSON summary and markdown report."""
         _ = FlextInfraDocsShared.write_json(
             scope.report_dir / "build-summary.json",

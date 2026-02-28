@@ -11,12 +11,9 @@ import logging
 import time
 
 import pytest
-from flext_core import FlextLogger, c, t
+from flext_core import FlextLogger, t
 
 from tests.test_utils import assertion_helpers
-
-# Alias for the LogLevel enum
-FlextLogLevel = c.Settings.LogLevel
 
 # Constants
 EXPECTED_BULK_SIZE = 2

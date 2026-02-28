@@ -39,9 +39,6 @@ KNOWN_VERBS: Final[frozenset[str]] = frozenset({
 })
 # Standard subdirectory verbs under `.reports/`.
 
-# Backward-compat alias (internal callers used `_REPORTS_DIR`).
-_REPORTS_DIR = REPORTS_DIR_NAME
-
 
 class ReportingService:
     """Infrastructure service for standardized report path management.

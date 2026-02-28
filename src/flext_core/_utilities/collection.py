@@ -360,14 +360,12 @@ class FlextUtilitiesCollection:
         operation: Callable[[T], R | r[R]],
         *,
         size: int | None = None,
-        _size: int | None = None,  # Alias for size
         on_error: str | None = None,
         parallel: bool = False,
         progress: Callable[[int, int], None] | None = None,
         progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
-        _flatten: bool = False,  # Legacy alias
     ) -> r[t.BatchResultDict]:
         """Process items in batches with progress tracking.
 
@@ -383,10 +381,10 @@ class FlextUtilitiesCollection:
             flatten: Flatten list results
 
         """
-        _ = size or _size
+        _ = size
         _ = parallel
         _ = progress_interval
-        do_flatten = flatten or _flatten
+        do_flatten = flatten
         error_mode = on_error or "fail"
         results: list[t.GuardInputValue] = []
         errors: list[tuple[int, str]] = []

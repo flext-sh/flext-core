@@ -16,15 +16,13 @@ from flext_core import FlextLogger, FlextRuntime, c, m, p
 
 from tests.test_utils import assertion_helpers
 
-LoggerClass = FlextLogger
-
 
 class TestLoggingsErrorPaths:
     """Test error handling paths in loggings.py."""
 
     def test_execute_context_op_unknown_operation(self) -> None:
         """Test _execute_context_op with unknown operation (covers line 131)."""
-        result = LoggerClass._execute_context_op("unknown_operation", {})
+        result = FlextLogger._execute_context_op("unknown_operation", {})
         # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
         # RuntimeResult implements p.Result protocol
         assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
@@ -35,7 +33,7 @@ class TestLoggingsErrorPaths:
     def test_execute_context_op_unbind_non_sequence_keys(self) -> None:
         """Test _execute_context_op UNBIND with non-sequence keys (covers line 123)."""
         # Pass non-sequence keys - isinstance check fails, skips unbind
-        result = LoggerClass._execute_context_op(
+        result = FlextLogger._execute_context_op(
             c.Logging.ContextOperation.UNBIND,
             {"keys": 42},  # int is not Sequence
         )
@@ -49,7 +47,7 @@ class TestLoggingsErrorPaths:
     def test_handle_context_error_get_operation(self) -> None:
         """Test _handle_context_error for GET operation (covers lines 140-142)."""
         # GET operation returns empty dict on error
-        result = LoggerClass._handle_context_error(
+        result = FlextLogger._handle_context_error(
             c.Logging.ContextOperation.GET,
             AttributeError("Test error"),
         )
@@ -59,7 +57,7 @@ class TestLoggingsErrorPaths:
     def test_handle_context_error_non_get_operation(self) -> None:
         """Test _handle_context_error for non-GET operation (covers line 142)."""
         # Non-GET operations return failure result
-        result = LoggerClass._handle_context_error(
+        result = FlextLogger._handle_context_error(
             c.Logging.ContextOperation.BIND,
             RuntimeError("Test error"),
         )
@@ -91,7 +89,7 @@ class TestLoggingsErrorPaths:
         """Test GET operation when context_vars is None (covers line 130)."""
         # This tests the else branch when context_vars is falsy
         FlextLogger.clear_global_context()
-        result = LoggerClass._execute_context_op(
+        result = FlextLogger._execute_context_op(
             c.Logging.ContextOperation.GET,
             {},
         )

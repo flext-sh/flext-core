@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
-    DocScope,
+    FlextInfraDocScope,
     FlextInfraDocsShared,
 )
 from flext_infra.output import output
@@ -114,7 +114,7 @@ class DocAuditor:
 
     def _audit_scope(
         self,
-        scope: DocScope,
+        scope: FlextInfraDocScope,
         *,
         check: str,
         strict: bool,
@@ -188,7 +188,7 @@ class DocAuditor:
             passed=passed,
         )
 
-    def _broken_link_issues(self, scope: DocScope) -> list[AuditIssue]:
+    def _broken_link_issues(self, scope: FlextInfraDocScope) -> list[AuditIssue]:
         """Collect broken internal-link issues for markdown files in scope."""
         issues: list[AuditIssue] = []
         for md_file in FlextInfraDocsShared.iter_markdown_files(scope.path):
@@ -225,7 +225,7 @@ class DocAuditor:
                         )
         return issues
 
-    def _forbidden_term_issues(self, scope: DocScope) -> list[AuditIssue]:
+    def _forbidden_term_issues(self, scope: FlextInfraDocScope) -> list[AuditIssue]:
         """Collect forbidden-term issues for markdown files in scope."""
         issues: list[AuditIssue] = []
         terms: tuple[str, ...] = ()
@@ -277,7 +277,7 @@ class DocAuditor:
         return lower.startswith(("http://", "https://", "mailto:", "tel:", "data:"))
 
     @staticmethod
-    def _to_markdown(scope: DocScope, issues: list[AuditIssue]) -> list[str]:
+    def _to_markdown(scope: FlextInfraDocScope, issues: list[AuditIssue]) -> list[str]:
         """Format audit issues as a markdown report."""
         return [
             "# Docs Audit Report",

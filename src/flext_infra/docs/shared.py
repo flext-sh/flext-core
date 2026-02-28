@@ -32,8 +32,6 @@ class FlextInfraDocScope(BaseModel):
     report_dir: Path = Field(description="Report output directory for this scope")
 
 
-DocScope = FlextInfraDocScope
-
 _discovery = DiscoveryService()
 _json_svc = JsonService()
 _reporting = ReportingService()
@@ -142,7 +140,6 @@ class FlextInfraDocsShared:
 
 
 __all__ = [
-    "DocScope",
     "FlextInfraDocScope",
     "FlextInfraDocsShared",
 ]

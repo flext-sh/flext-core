@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
-    DocScope,
+    FlextInfraDocScope,
     FlextInfraDocsShared,
 )
 from flext_infra.patterns import FlextInfraPatterns
@@ -98,7 +98,7 @@ class DocGenerator:
 
     def _generate_scope(
         self,
-        scope: DocScope,
+        scope: FlextInfraDocScope,
         *,
         apply: bool,
         workspace_root: Path,
@@ -160,7 +160,7 @@ class DocGenerator:
 
     def _generate_root_docs(
         self,
-        scope: DocScope,
+        scope: FlextInfraDocScope,
         *,
         apply: bool,
     ) -> list[GeneratedFile]:
@@ -194,7 +194,7 @@ class DocGenerator:
 
     def _generate_project_guides(
         self,
-        scope: DocScope,
+        scope: FlextInfraDocScope,
         workspace_root: Path,
         *,
         apply: bool,
@@ -221,7 +221,7 @@ class DocGenerator:
 
     def _generate_project_mkdocs(
         self,
-        scope: DocScope,
+        scope: FlextInfraDocScope,
         *,
         apply: bool,
     ) -> list[GeneratedFile]:

@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
-    DocScope,
+    FlextInfraDocScope,
     FlextInfraDocsShared,
 )
 
@@ -92,7 +92,7 @@ class DocValidator:
 
     def _validate_scope(
         self,
-        scope: DocScope,
+        scope: FlextInfraDocScope,
         *,
         check: str,
         apply_mode: bool,
@@ -191,7 +191,7 @@ class DocValidator:
         return (0 if not missing else 1), missing
 
     @staticmethod
-    def _maybe_write_todo(scope: DocScope, *, apply_mode: bool) -> bool:
+    def _maybe_write_todo(scope: FlextInfraDocScope, *, apply_mode: bool) -> bool:
         """Write a TODOS.md file for the scope if apply mode is enabled."""
         if scope.name == "root" or not apply_mode:
             return False

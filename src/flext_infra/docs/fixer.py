@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_infra.constants import c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
-    DocScope,
+    FlextInfraDocScope,
     FlextInfraDocsShared,
 )
 from flext_infra.patterns import FlextInfraPatterns
@@ -94,7 +94,7 @@ class DocFixer:
 
         return r[list[FixReport]].ok(reports)
 
-    def _fix_scope(self, scope: DocScope, *, apply: bool) -> FixReport:
+    def _fix_scope(self, scope: FlextInfraDocScope, *, apply: bool) -> FixReport:
         """Run link and TOC fixes across all markdown files in scope."""
         items: list[FixItem] = []
         for md in FlextInfraDocsShared.iter_markdown_files(scope.path):

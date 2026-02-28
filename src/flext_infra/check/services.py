@@ -1468,16 +1468,6 @@ class PyreflyConfigFixer(FlextService[list[str]]):
             path = self._workspace_root / path
         return path.resolve()
 
-    # Legacy regex-based methods (kept for reference or if still called, but preferred tk versions above)
-    def _fix_search_paths(self, text: str) -> tuple[str, list[str]]:
-        return text, []  # Should not be called anymore
-
-    def _remove_ignore_sub_config(self, text: str) -> tuple[str, list[str]]:
-        return text, []
-
-    def _ensure_project_excludes(self, text: str) -> tuple[str, list[str]]:
-        return text, []
-
     def _resolve_workspace_root(self, workspace_root: Path | None) -> Path:
         if workspace_root is not None:
             return workspace_root.resolve()

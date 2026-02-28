@@ -203,33 +203,33 @@ class TestFlextTestsUtilitiesFactory:
         assert data["key3"] is True
 
 
-class TestFlextTestsUtilitiesTestUtilitiesCompat:
-    """Test suite for TestUtilities compatibility class."""
+class TestFlextTestsUtilitiesResultCompat:
+    """Test suite for Result compatibility methods."""
 
     def test_assert_result_success_passes(self) -> None:
         """Test assert_result_success with successful result."""
         result = FlextResult[str].ok("success")
 
         # Should not raise
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.Result.assert_success(result)
 
     def test_assert_result_success_fails(self) -> None:
         """Test assert_result_success with failed result."""
         result: r[str] = FlextResult[str].fail("error")
 
         with pytest.raises(AssertionError, match="Expected success but got failure"):
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            FlextTestsUtilities.Tests.Result.assert_success(result)
 
     def test_assert_result_failure_passes(self) -> None:
         """Test assert_result_failure with failed result."""
         result: r[str] = FlextResult[str].fail("error")
 
         # Should not raise
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        FlextTestsUtilities.Tests.Result.assert_failure(result)
 
     def test_assert_result_failure_fails(self) -> None:
         """Test assert_result_failure with successful result."""
         result = FlextResult[str].ok("success")
 
         with pytest.raises(AssertionError, match="Expected failure but got success"):
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            FlextTestsUtilities.Tests.Result.assert_failure(result)
