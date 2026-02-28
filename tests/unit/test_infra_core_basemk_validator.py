@@ -283,3 +283,28 @@ class TestFlextInfraBaseMkValidator:
         result = validator.validate(workspace_root)
         assert result.is_success
         assert not result.value.passed
+
+    def test_validate_with_oserror_returns_failure(self, tmp_path: Path) -> None:
+        """Test validate handles OSError exception (lines 79-80)."""
+        validator = FlextInfraBaseMkValidator()
+        workspace_root = tmp_path
+
+        # Create root base.mk
+        root_basemk = workspace_root / "base.mk"
+        root_basemk.write_text("# content")
+
+        # Create a project with base.mk
+        proj_dir = workspace_root / "project1"
+        proj_dir.mkdir()
+        (proj_dir / "pyproject.toml").write_text("")
+        proj_basemk = proj_dir / "base.mk"
+        proj_basemk.write_text("# content")
+
+        # Make the project base.mk unreadable to trigger OSError
+        proj_basemk.chmod(0o000)
+        try:
+            result = validator.validate(workspace_root)
+            # Should return failure result due to OSError
+            assert result.is_failure
+        finally:
+            proj_basemk.chmod(0o644)

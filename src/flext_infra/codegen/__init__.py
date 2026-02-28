@@ -11,17 +11,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core import cleanup_submodule_namespace, lazy_getattr
+from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.codegen.lazy_init import FlextInfraLazyInitGenerator
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraLazyInitGenerator": (
-        "flext_infra.codegen.lazy_init",
-        "FlextInfraLazyInitGenerator",
-    ),
+    "FlextInfraLazyInitGenerator": ("flext_infra.codegen.lazy_init", "FlextInfraLazyInitGenerator"),
 }
 
 __all__ = [

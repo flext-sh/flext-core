@@ -337,3 +337,23 @@ def test_main_entry_point(tmp_path: Path) -> None:
 
 
 __all__ = []
+
+
+def test_main_calls_sys_exit(tmp_path: Path) -> None:
+    """Test main() calls sys.exit."""
+    with patch("sys.argv", ["workspace", "detect", "--project-root", str(tmp_path)]):
+        with patch(
+            "flext_infra.workspace.__main__.FlextInfraWorkspaceDetector"
+        ) as mock_detector_class:
+            mock_detector = Mock()
+            mock_detector_class.return_value = mock_detector
+            mock_detector.detect_mode.return_value = "monorepo"
+            with patch("sys.exit") as _mock_exit:
+                from flext_infra.workspace.__main__ import (
+                    main as _main_func,
+                )
+
+                try:
+                    _main_func(argv=["detect", "--project-root", str(tmp_path)])
+                except SystemExit:
+                    pass

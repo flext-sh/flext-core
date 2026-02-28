@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core import cleanup_submodule_namespace, lazy_getattr
+from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.core.__main__ import main
@@ -25,30 +25,12 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraBaseMkValidator": (
-        "flext_infra.core.basemk_validator",
-        "FlextInfraBaseMkValidator",
-    ),
-    "FlextInfraInventoryService": (
-        "flext_infra.core.inventory",
-        "FlextInfraInventoryService",
-    ),
-    "FlextInfraPytestDiagExtractor": (
-        "flext_infra.core.pytest_diag",
-        "FlextInfraPytestDiagExtractor",
-    ),
-    "FlextInfraSkillValidator": (
-        "flext_infra.core.skill_validator",
-        "FlextInfraSkillValidator",
-    ),
-    "FlextInfraStubSupplyChain": (
-        "flext_infra.core.stub_chain",
-        "FlextInfraStubSupplyChain",
-    ),
-    "FlextInfraTextPatternScanner": (
-        "flext_infra.core.scanner",
-        "FlextInfraTextPatternScanner",
-    ),
+    "FlextInfraBaseMkValidator": ("flext_infra.core.basemk_validator", "FlextInfraBaseMkValidator"),
+    "FlextInfraInventoryService": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
+    "FlextInfraPytestDiagExtractor": ("flext_infra.core.pytest_diag", "FlextInfraPytestDiagExtractor"),
+    "FlextInfraSkillValidator": ("flext_infra.core.skill_validator", "FlextInfraSkillValidator"),
+    "FlextInfraStubSupplyChain": ("flext_infra.core.stub_chain", "FlextInfraStubSupplyChain"),
+    "FlextInfraTextPatternScanner": ("flext_infra.core.scanner", "FlextInfraTextPatternScanner"),
     "main": ("flext_infra.core.__main__", "main"),
 }
 

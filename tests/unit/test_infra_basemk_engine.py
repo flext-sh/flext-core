@@ -103,3 +103,33 @@ def test_basemk_cli_generate_to_file(tmp_path: Path) -> None:
     assert output_path.read_text(encoding="utf-8").startswith(
         "# ====================================",
     )
+
+
+def test_basemk_engine_render_all_returns_string() -> None:
+    """Test engine.render_all() returns string."""
+    # FlextInfraBaseMkTemplateEngine is the correct class
+
+    engine = FlextInfraBaseMkTemplateEngine()
+    result = engine.render_all()
+    assert result.is_success
+    assert isinstance(result.value, str) and len(result.value) > 0
+
+
+def test_basemk_engine_render_all_with_valid_config() -> None:
+    """Test engine.render_all() with explicit config."""
+    # im is already imported at the top
+
+    config = im.BaseMkConfig(
+        project_name="test-project",
+        python_version="3.13",
+        core_stack="python",
+        package_manager="poetry",
+        source_dir="src",
+        tests_dir="tests",
+        lint_gates=["mypy", "ruff"],
+        test_command="pytest",
+    )
+    engine = FlextInfraBaseMkTemplateEngine()
+    result = engine.render_all(config=config)
+    assert result.is_success
+    assert "PROJECT_NAME ?= test-project" in result.value

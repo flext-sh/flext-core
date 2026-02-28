@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -119,7 +120,7 @@ def test_main_lazy_init_default_root() -> None:
 
 
 def test_main_unknown_command() -> None:
-    """Test main() with unknown command."""
+    """Test main() with unknown command (lines 53-54)."""
     argv = ["unknown-command"]
 
     with pytest.raises(SystemExit) as exc_info:
@@ -169,6 +170,20 @@ def test_main_entry_point() -> None:
         mock_main.return_value = 0
         exit_code = codegen_main.main(argv)
         assert exit_code == 0
+
+
+def test_main_entry_point_via_sys_exit() -> None:
+    """Test __main__ entry point via sys.exit (line 68)."""
+    result = subprocess.run(
+        ["python", "-m", "flext_infra.codegen", "lazy-init", "--help"],  # noqa: S607
+        capture_output=True,
+        text=True,
+        cwd="/home/marlonsc/flext/flext-core",
+        check=False,
+    )
+    # Should succeed with help output
+    assert result.returncode == 0
+    assert "lazy-init" in result.stdout
 
 
 __all__ = []

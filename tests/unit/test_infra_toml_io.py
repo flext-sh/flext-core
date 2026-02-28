@@ -170,3 +170,157 @@ class TestFlextInfraTomlService:
         verify_result = service.read(toml_file)
         assert verify_result.is_success
         assert verify_result.value["section"]["key"] == "new"
+
+    def test_value_differs_with_lists(self) -> None:
+        """Test value_differs compares lists as strings."""
+        current = [1, 2, 3]
+        expected = [1, 2, 3]
+        assert not FlextInfraTomlService.value_differs(current, expected)
+
+        expected_diff = [1, 2, 4]
+        assert FlextInfraTomlService.value_differs(current, expected_diff)
+
+    def test_value_differs_with_scalars(self) -> None:
+        """Test value_differs with scalar values."""
+        assert not FlextInfraTomlService.value_differs("same", "same")
+        assert FlextInfraTomlService.value_differs("a", "b")
+        assert not FlextInfraTomlService.value_differs(42, 42)
+        assert FlextInfraTomlService.value_differs(42, 43)
+
+    def test_build_table_with_nested_mapping(self, tmp_path: Path) -> None:
+        """Test build_table creates nested tomlkit tables."""
+        service = FlextInfraTomlService()
+        data = {
+            "section": {"key": "value", "nested": {"deep": "value"}},
+            "simple": "scalar",
+        }
+        table = service.build_table(data)
+        assert isinstance(table, tomlkit.items.Table)
+        assert table["section"]["key"] == "value"
+        assert table["simple"] == "scalar"
+
+    def test_sync_mapping_adds_new_keys(self, tmp_path: Path) -> None:
+        """Test sync_mapping adds missing keys to target."""
+        service = FlextInfraTomlService()
+        target = {}
+        canonical = {"new_key": "new_value"}
+        added = []
+        updated = []
+        removed = []
+
+        service.sync_mapping(
+            target,
+            canonical,
+            prune_extras=False,
+            prefix="",
+            added=added,
+            updated=updated,
+            removed=removed,
+        )
+
+        assert target["new_key"] == "new_value"
+        assert "new_key" in added
+
+    def test_sync_mapping_updates_changed_values(self, tmp_path: Path) -> None:
+        """Test sync_mapping updates changed values."""
+        service = FlextInfraTomlService()
+        target = {"key": "old_value"}
+        canonical = {"key": "new_value"}
+        added = []
+        updated = []
+        removed = []
+
+        service.sync_mapping(
+            target,
+            canonical,
+            prune_extras=False,
+            prefix="",
+            added=added,
+            updated=updated,
+            removed=removed,
+        )
+
+        assert target["key"] == "new_value"
+        assert "key" in updated
+
+    def test_sync_mapping_prunes_extras(self, tmp_path: Path) -> None:
+        """Test sync_mapping removes extra keys when prune_extras=True."""
+        service = FlextInfraTomlService()
+        target = {"keep": "value", "remove": "extra"}
+        canonical = {"keep": "value"}
+        added = []
+        updated = []
+        removed = []
+
+        service.sync_mapping(
+            target,
+            canonical,
+            prune_extras=True,
+            prefix="",
+            added=added,
+            updated=updated,
+            removed=removed,
+        )
+
+        assert "remove" not in target
+        assert "remove" in removed
+
+    def test_sync_mapping_nested_with_prefix(self, tmp_path: Path) -> None:
+        """Test sync_mapping with nested mappings and prefix."""
+        service = FlextInfraTomlService()
+        target = {"section": {"key": "old"}}
+        canonical = {"section": {"key": "new"}}
+        added = []
+        updated = []
+        removed = []
+
+        service.sync_mapping(
+            target,
+            canonical,
+            prune_extras=False,
+            prefix="config",
+            added=added,
+            updated=updated,
+            removed=removed,
+        )
+
+        assert target["section"]["key"] == "new"
+        assert "config.section.key" in updated
+
+    def test_sync_mapping_skips_prune_when_false(self, tmp_path: Path) -> None:
+        """Test sync_mapping skips pruning when prune_extras=False."""
+        service = FlextInfraTomlService()
+        target = {"keep": "value", "extra": "stays"}
+        canonical = {"keep": "value"}
+        added = []
+        updated = []
+        removed = []
+
+        service.sync_mapping(
+            target,
+            canonical,
+            prune_extras=False,
+            prefix="",
+            added=added,
+            updated=updated,
+            removed=removed,
+        )
+
+        assert "extra" in target
+        assert len(removed) == 0
+
+    def test_execute_returns_success(self) -> None:
+        """Test execute() returns FlextResult[bool] with True."""
+        service = FlextInfraTomlService()
+        result = service.execute()
+        assert result.is_success
+        assert result.value is True
+
+    def test_build_table_with_nested_mapping_dict(self) -> None:
+        """Test build_table handles nested mappings."""
+        from flext_infra.toml_io import FlextInfraTomlService  # noqa: PLC0415
+
+        service = FlextInfraTomlService()
+        nested = {"key": {"nested": "value"}}
+        result = service.build_table(nested)
+        assert result is not None

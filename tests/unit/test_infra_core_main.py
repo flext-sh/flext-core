@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -648,3 +649,15 @@ class TestCoreMainFlow:
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with pytest.raises(SystemExit):
                     main()
+
+    def test_main_entry_point_via_sys_exit(self) -> None:
+        """Test __main__ entry point via sys.exit (line 242)."""
+        result = subprocess.run(
+            ["python", "-m", "flext_infra.core", "--help"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            cwd="/home/marlonsc/flext/flext-core",
+            check=False,
+        )
+        # Should succeed with help output
+        assert result.returncode == 0

@@ -5,6 +5,8 @@ Tests cover semantic version parsing, bumping, and branch tag extraction.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from flext_core import r
 from flext_infra import FlextInfraVersioningService
@@ -221,3 +223,142 @@ class TestFlextInfraVersioningService:
         assert isinstance(result, type(r[str].ok("")))
         assert result.is_success
         assert isinstance(result.value, str)
+
+    def test_execute_returns_empty_string(
+        self,
+        service: FlextInfraVersioningService,
+    ) -> None:
+        """Test execute() returns FlextResult[str] with empty string."""
+        result = service.execute()
+
+        assert result.is_success
+        assert result.value == ""
+
+    def test_current_workspace_version_success(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test reading current workspace version from pyproject.toml."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            '[project]\nversion = "1.2.3"\n',
+            encoding="utf-8",
+        )
+
+        result = service.current_workspace_version(tmp_path)
+
+        assert result.is_success
+        assert result.value == "1.2.3"
+
+    def test_current_workspace_version_missing_file(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test reading version when pyproject.toml is missing."""
+        result = service.current_workspace_version(tmp_path)
+
+        assert result.is_failure
+        assert "file not found" in result.error or "read" in result.error
+
+    def test_current_workspace_version_missing_project_table(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test reading version when [project] table is missing."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            '[tool]\nname = "test"\n',
+            encoding="utf-8",
+        )
+
+        result = service.current_workspace_version(tmp_path)
+
+        assert result.is_failure
+        assert "version not found" in result.error
+
+    def test_current_workspace_version_missing_version_field(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test reading version when version field is missing."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            '[project]\nname = "test"\n',
+            encoding="utf-8",
+        )
+
+        result = service.current_workspace_version(tmp_path)
+
+        assert result.is_failure
+        assert "version not found" in result.error
+
+    def test_current_workspace_version_empty_version(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test reading version when version field is empty."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            '[project]\nversion = ""\n',
+            encoding="utf-8",
+        )
+
+        result = service.current_workspace_version(tmp_path)
+
+        assert result.is_failure
+        assert "version not found" in result.error
+
+    def test_replace_project_version_success(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test replacing version in project pyproject.toml."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            '[project]\nversion = "1.0.0"\n',
+            encoding="utf-8",
+        )
+
+        result = service.replace_project_version(tmp_path, "2.0.0")
+
+        assert result.is_success
+        assert result.value is True
+
+        # Verify the change
+        verify = service.current_workspace_version(tmp_path)
+        assert verify.is_success
+        assert verify.value == "2.0.0"
+
+    def test_replace_project_version_missing_file(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test replacing version when pyproject.toml is missing."""
+        result = service.replace_project_version(tmp_path, "2.0.0")
+
+        assert result.is_failure
+        assert "file not found" in result.error or "read" in result.error
+
+    def test_replace_project_version_missing_project_table(
+        self,
+        service: FlextInfraVersioningService,
+        tmp_path: Path,
+    ) -> None:
+        """Test replacing version when [project] table is missing."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            '[tool]\nname = "test"\n',
+            encoding="utf-8",
+        )
+
+        result = service.replace_project_version(tmp_path, "2.0.0")
+
+        assert result.is_failure
+        assert "missing [project] table" in result.error

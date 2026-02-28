@@ -250,3 +250,20 @@ class TestFlextInfraInventoryService:
 
         result = service.generate(workspace_root)
         assert result.is_success
+
+    def test_generate_with_exception_returns_failure_result(
+        self, tmp_path: Path
+    ) -> None:
+        """Test that generate handles exceptions and returns failure (lines 104-105)."""
+        service = FlextInfraInventoryService()
+        workspace_root = tmp_path
+
+        # Mock the json.write to raise an exception
+        with patch.object(
+            type(service._json),
+            "write",
+            side_effect=ValueError("test error"),
+        ):
+            result = service.generate(workspace_root, output_dir=tmp_path / "reports")
+            assert result.is_failure
+            assert "inventory generation failed" in result.error

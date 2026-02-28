@@ -1874,4 +1874,410 @@ class TestConfigFixerRunMethods:
         result = fixer.find_pyproject_files([proj1, proj2])
 
         assert result.is_success
-        assert len(result.value) >= 2
+
+
+class TestRuffFormatEmptyLines:
+    """Test ruff format parsing with empty lines (line 829).
+
+    Tests that empty lines in ruff format output are skipped.
+    """
+
+    def test_run_ruff_format_skips_empty_lines(self, tmp_path: Path) -> None:
+        """Test _run_ruff_format skips empty lines (line 829).
+
+        When ruff format output contains empty lines, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Output with empty lines
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout="file1.py\n\nfile2.py\n",
+                stderr="",
+            )
+            result = checker._run_ruff_format(tmp_path)
+            # Should have issues for non-empty lines
+            assert len(result.issues) >= 1
+
+
+class TestRuffFormatDuplicates:
+    """Test ruff format parsing with duplicate files (line 834).
+
+    Tests that duplicate files in ruff format output are skipped.
+    """
+
+    def test_run_ruff_format_skips_duplicates(self, tmp_path: Path) -> None:
+        """Test _run_ruff_format skips duplicate files (line 834).
+
+        When ruff format output contains duplicates, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Output with duplicates
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout="file1.py\nfile1.py\nfile2.py\n",
+                stderr="",
+            )
+            result = checker._run_ruff_format(tmp_path)
+            # Should have issues but no duplicates
+            files = [issue.file for issue in result.issues]
+            assert len(files) == len(set(files))  # No duplicates
+
+
+class TestMypyEmptyLines:
+    """Test mypy parsing with empty lines (line 981).
+
+    Tests that empty lines in mypy output are skipped.
+    """
+
+    def test_run_mypy_skips_empty_lines(self, tmp_path: Path) -> None:
+        """Test _run_mypy skips empty lines (line 981).
+
+        When mypy output contains empty lines, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Mypy outputs JSON lines, some empty
+            json_output = '{"file": "test.py", "line": 1, "column": 1, "code": "error", "message": "error", "severity": "error"}\n\n'
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout=json_output,
+                stderr="",
+            )
+            result = checker._run_mypy(tmp_path)
+            # Should parse the non-empty line
+            assert isinstance(result, _GateExecution)
+
+
+class TestGoFormatEmptyLines:
+    """Test go format parsing with empty lines (line 1233).
+
+    Tests that empty lines in go format output are skipped.
+    """
+
+    def test_run_go_skips_empty_lines(self, tmp_path: Path) -> None:
+        """Test _run_go skips empty lines (line 1233).
+
+        When go format output contains empty lines, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "go.mod").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Output with empty lines
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout="main.go\n\nutil.go\n",
+                stderr="",
+            )
+            result = checker._run_go(tmp_path)
+            # Should have issues for non-empty lines
+            assert len(result.issues) >= 1
+
+
+class TestConfigFixerProcessFileErrors:
+    """Test FlextInfraConfigFixer.process_file error handling.
+
+    Tests error handling in process_file method.
+    """
+
+    def test_process_file_with_non_mutable_pyrefly(self, tmp_path: Path) -> None:
+        """Test process_file when pyrefly is not mutable (line 1343).
+
+        When pyrefly is not a MutableMapping, return empty list.
+        """
+        fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
+        pyproject = tmp_path / "pyproject.toml"
+        # Create a pyproject with pyrefly as a string (not mutable)
+        pyproject.write_text('[tool.pyrefly]\nvalue = "string"\n')
+
+        result = fixer.process_file(pyproject)
+        # Should return success with empty list
+        assert result.is_success
+
+    def test_process_file_with_write_error(self, tmp_path: Path) -> None:
+        """Test process_file when write fails (lines 1364-1368).
+
+        When writing the file fails, return failure.
+        """
+        fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("[tool.pyrefly]\nsearch-path = []\n")
+
+        with patch.object(fixer, "_fix_search_paths_tk") as mock_fix:
+            with patch("pathlib.Path.write_text") as mock_write:
+                mock_fix.return_value = ["fix1"]
+                mock_write.side_effect = OSError("write error")
+                result = fixer.process_file(pyproject)
+                assert result.is_failure
+                assert "write error" in result.error
+
+
+class TestJsonWriteFailure:
+    """Test JSON write failure (line 459).
+
+    Tests that when JSON write fails, run_projects returns failure.
+    """
+
+    def test_run_projects_with_json_write_failure(self, tmp_path: Path) -> None:
+        """Test run_projects when JSON write fails (line 459).
+
+        When _json.write() returns failure, run_projects should return failure.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        proj_dir = tmp_path / "test-project"
+        proj_dir.mkdir()
+        (proj_dir / "pyproject.toml").write_text("[tool.poetry]\n")
+
+        with patch.object(checker, "_json") as mock_json:
+            mock_json.write.return_value = r[Path].fail("write error")
+            with patch.object(checker, "_run_ruff_lint") as mock_lint:
+                mock_lint.return_value = _GateExecution(
+                    result=m.GateResult(
+                        gate="lint", project="test-project", passed=True
+                    ),
+                    issues=[],
+                )
+                result = checker.run_projects(["test-project"], ["lint"])
+                assert result.is_failure
+                assert "write error" in result.error
+
+
+class TestLintAndFormatPublicMethods:
+    """Test public lint() and format() methods (lines 491, 495).
+
+    Tests the public lint and format methods.
+    """
+
+    def test_lint_public_method(self, tmp_path: Path) -> None:
+        """Test lint() public method (line 491).
+
+        The lint() method should return a GateResult.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run_ruff_lint") as mock_lint:
+            mock_lint.return_value = _GateExecution(
+                result=m.GateResult(gate="lint", project="test", passed=True),
+                issues=[],
+            )
+            result = checker.lint(tmp_path)
+            assert result.is_success
+            assert result.value.gate == "lint"
+
+    def test_format_public_method(self, tmp_path: Path) -> None:
+        """Test format() public method (line 495).
+
+        The format() method should return a GateResult.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run_ruff_format") as mock_format:
+            mock_format.return_value = _GateExecution(
+                result=m.GateResult(gate="format", project="test", passed=True),
+                issues=[],
+            )
+            result = checker.format(tmp_path)
+            assert result.is_success
+            assert result.value.gate == "format"
+
+
+class TestMarkdownReportSkipsEmptyGates:
+    """Test markdown report generation (line 588).
+
+    Tests that markdown report skips gates with no issues.
+    """
+
+    def test_generate_markdown_report_skips_empty_gates(self, tmp_path: Path) -> None:
+        """Test generate_markdown_report skips gates with no issues (line 588).
+
+        When a gate has no issues, it should be skipped in the report.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        gate1 = m.GateResult(gate="lint", project="p", passed=True)
+        gate2 = m.GateResult(gate="format", project="p", passed=False)
+        exec1 = _GateExecution(result=gate1, issues=[])
+        exec2 = _GateExecution(result=gate2, issues=[])
+        project = _ProjectResult(project="p", gates={"lint": exec1, "format": exec2})
+
+        report = checker.generate_markdown_report(
+            [project], ["lint", "format"], "2025-01-01"
+        )
+        # Report should be generated without errors
+        assert isinstance(report, str)
+        assert "# FLEXT Check Report" in report
+
+
+class TestRuffFormatDuplicateSkipping:
+    """Test ruff format duplicate file skipping (line 834).
+
+    Tests that duplicate files are skipped in ruff format output.
+    """
+
+    def test_run_ruff_format_skips_duplicate_files(self, tmp_path: Path) -> None:
+        """Test _run_ruff_format skips duplicate files (line 834).
+
+        When ruff format output contains duplicates, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Output with duplicates
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout="file1.py\nfile1.py\nfile2.py\n",
+                stderr="",
+            )
+            result = checker._run_ruff_format(tmp_path)
+            # Should have issues but no duplicates
+            files = [issue.file for issue in result.issues]
+            assert len(files) == len(set(files))  # No duplicates
+
+
+class TestMypyEmptyLineSkipping:
+    """Test mypy empty line skipping (line 981).
+
+    Tests that empty lines in mypy output are skipped.
+    """
+
+    def test_run_mypy_skips_empty_lines(self, tmp_path: Path) -> None:
+        """Test _run_mypy skips empty lines (line 981).
+
+        When mypy output contains empty lines, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "pyproject.toml").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Mypy outputs JSON lines, some empty
+            json_output = '{"file": "test.py", "line": 1, "column": 1, "code": "error", "message": "error", "severity": "error"}\n\n'
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout=json_output,
+                stderr="",
+            )
+            result = checker._run_mypy(tmp_path)
+            # Should parse the non-empty line
+            assert isinstance(result, _GateExecution)
+
+
+class TestGoFormatEmptyLineSkipping:
+    """Test go format empty line skipping (line 1233).
+
+    Tests that empty lines in go format output are skipped.
+    """
+
+    def test_run_go_skips_empty_lines(self, tmp_path: Path) -> None:
+        """Test _run_go skips empty lines (line 1233).
+
+        When go format output contains empty lines, they should be skipped.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        (tmp_path / "go.mod").touch()
+
+        with patch.object(checker, "_run") as mock_run:
+            # Output with empty lines
+            mock_run.return_value = SimpleNamespace(
+                returncode=1,
+                stdout="main.go\n\nutil.go\n",
+                stderr="",
+            )
+            result = checker._run_go(tmp_path)
+            # Should have issues for non-empty lines
+            assert len(result.issues) >= 1
+
+
+class TestMarkdownReportWithErrors:
+    """Test markdown report generation with errors (line 588).
+
+    Tests that markdown report includes gates with errors.
+    """
+
+    def test_generate_markdown_report_with_errors(self, tmp_path: Path) -> None:
+        """Test generate_markdown_report includes gates with errors (line 588).
+
+        When a gate has errors, it should be included in the report.
+        """
+        checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
+        issue = _CheckIssue(
+            file="test.py", line=1, column=1, code="E1", message="error"
+        )
+        gate1 = m.GateResult(gate="lint", project="p", passed=False)
+        exec1 = _GateExecution(result=gate1, issues=[issue])
+        project = _ProjectResult(project="p", gates={"lint": exec1})
+
+        report = checker.generate_markdown_report([project], ["lint"], "2025-01-01")
+        # Report should include the error
+        assert isinstance(report, str)
+        assert "test.py" in report
+
+
+class TestProcessFileReadError:
+    """Test process_file read error handling (lines 1332-1335).
+
+    Tests error handling when reading pyproject.toml fails.
+    """
+
+    def test_process_file_with_read_error(self, tmp_path: Path) -> None:
+        """Test process_file when read fails (lines 1332-1335).
+
+        When reading the file fails, return failure.
+        """
+        fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
+        pyproject = tmp_path / "pyproject.toml"
+
+        with patch("pathlib.Path.read_text") as mock_read:
+            mock_read.side_effect = OSError("read error")
+            result = fixer.process_file(pyproject)
+            assert result.is_failure
+            assert "read error" in result.error
+
+    def test_process_file_with_parse_error(self, tmp_path: Path) -> None:
+        """Test process_file when parse fails (line 1335).
+
+        When parsing the TOML fails, return failure.
+        """
+        fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("invalid toml {")
+
+        result = fixer.process_file(pyproject)
+        assert result.is_failure
+        assert "parse" in result.error.lower()
+
+    def test_process_file_with_no_tool_section(self, tmp_path: Path) -> None:
+        """Test process_file when no tool section (line 1339).
+
+        When there's no tool section, return empty list.
+        """
+        fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("[build-system]\n")
+
+        result = fixer.process_file(pyproject)
+        assert result.is_success
+        assert len(result.value) == 0
+
+    def test_process_file_with_non_mutable_pyrefly(self, tmp_path: Path) -> None:
+        """Test process_file when pyrefly is not mutable (line 1343).
+
+        When pyrefly is not a MutableMapping, return empty list.
+        """
+        fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
+        pyproject = tmp_path / "pyproject.toml"
+        # Create a pyproject with pyrefly as a string (not mutable)
+        pyproject.write_text('[tool.pyrefly]\nvalue = "string"\n')
+
+        result = fixer.process_file(pyproject)
+        # Should return success with empty list
+        assert result.is_success

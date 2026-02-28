@@ -169,3 +169,10 @@ class TestFlextInfraProjectSelector:
 
         assert result.is_success
         assert len(result.value) == 3
+
+    def test_selector_resolve_projects_empty_list(self, tmp_path: Path) -> None:
+        """Test resolve_projects returns empty list when no projects match."""
+        selector = FlextInfraProjectSelector()
+        result = selector.resolve_projects(tmp_path, [])
+        assert result.is_success
+        assert result.value == []

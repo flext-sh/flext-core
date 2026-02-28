@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+from flext_infra import FlextInfraCommandRunner
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 
 
@@ -162,3 +164,28 @@ def test_orchestrator_fail_fast_with_failure_result(
     assert result.value[0].exit_code == 1
     assert result.value[1].exit_code == 0  # skipped
     assert result.value[2].exit_code == 0  # skipped
+
+
+def test_orchestrate_with_project_execution_failure(tmp_path: Path) -> None:
+    """Test orchestrate handles project execution failure."""
+    orchestrator = FlextInfraOrchestratorService()
+    projects = [
+        Mock(name="proj1", path=tmp_path / "proj1"),
+        Mock(name="proj2", path=tmp_path / "proj2"),
+    ]
+    verb = "test"
+
+    # Mock runner to fail
+    mock_runner = Mock(spec=FlextInfraCommandRunner)
+    mock_runner.run_to_file.return_value = Mock(
+        is_success=False, error="Execution failed"
+    )
+    orchestrator._runner = mock_runner
+
+    result = orchestrator.orchestrate(projects, verb, fail_fast=False)
+    assert result.is_success
+    # Should have results for all projects
+    assert len(result.value) == 2
+    # Both should have exit code 1 (failure)
+    assert result.value[0].exit_code == 1
+    assert result.value[1].exit_code == 1

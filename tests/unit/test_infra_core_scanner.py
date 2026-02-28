@@ -310,3 +310,25 @@ class TestFlextInfraTextPatternScanner:
         with patch("pathlib.Path.read_text", side_effect=OSError("permission denied")):
             count = FlextInfraTextPatternScanner._count_matches([test_file], regex)
             assert count == 0
+
+    def test_scan_with_oserror_returns_failure(self, tmp_path: Path) -> None:
+        """Test scan handles OSError exception (lines 84-85)."""
+        scanner = FlextInfraTextPatternScanner()
+        root = tmp_path
+
+        test_file = root / "test.txt"
+        test_file.write_text("hello")
+
+        # Mock _collect_files to raise OSError
+        with patch.object(
+            FlextInfraTextPatternScanner,
+            "_collect_files",
+            side_effect=OSError("permission denied"),
+        ):
+            result = scanner.scan(
+                root,
+                pattern="hello",
+                includes=["*.txt"],
+            )
+            assert result.is_failure
+            assert "text pattern scan failed" in result.error

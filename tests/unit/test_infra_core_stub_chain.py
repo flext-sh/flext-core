@@ -352,3 +352,20 @@ class TestFlextInfraStubSupplyChain:
 
         projects = FlextInfraStubSupplyChain._discover_stub_projects(tmp_path)
         assert len(projects) == 0
+
+    def test_analyze_with_exception_raises_failure(self, tmp_path: Path) -> None:
+        """Test analyze handles exceptions and returns failure (lines 77-78)."""
+        chain = FlextInfraStubSupplyChain()
+        chain = FlextInfraStubSupplyChain()
+        project_dir = tmp_path / "project"
+        project_dir.mkdir()
+
+        # Mock _run_mypy_hints to raise an exception
+        with patch.object(
+            chain,
+            "_run_mypy_hints",
+            side_effect=ValueError("test error"),
+        ):
+            result = chain.analyze(project_dir, tmp_path)
+            assert result.is_failure
+            assert "stub analysis failed" in result.error

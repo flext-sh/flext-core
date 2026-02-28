@@ -10,17 +10,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core import cleanup_submodule_namespace, lazy_getattr
+from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraPythonVersionEnforcer": (
-        "flext_infra.maintenance.python_version",
-        "FlextInfraPythonVersionEnforcer",
-    ),
+    "FlextInfraPythonVersionEnforcer": ("flext_infra.maintenance.python_version", "FlextInfraPythonVersionEnforcer"),
 }
 
 __all__ = [

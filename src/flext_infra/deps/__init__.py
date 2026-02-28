@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core import cleanup_submodule_namespace, lazy_getattr
+from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.deps.detection import (
@@ -50,38 +50,14 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EXTRA_PATHS_ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
     "FLEXT_DEPS_DIR": ("flext_infra.deps.path_sync", "FLEXT_DEPS_DIR"),
-    "FlextInfraDependencyDetectionModels": (
-        "flext_infra.deps.detection",
-        "FlextInfraDependencyDetectionModels",
-    ),
-    "FlextInfraDependencyDetectionService": (
-        "flext_infra.deps.detection",
-        "FlextInfraDependencyDetectionService",
-    ),
-    "FlextInfraDependencyDetectorModels": (
-        "flext_infra.deps.detector",
-        "FlextInfraDependencyDetectorModels",
-    ),
-    "FlextInfraDependencyPathSync": (
-        "flext_infra.deps.path_sync",
-        "FlextInfraDependencyPathSync",
-    ),
-    "FlextInfraExtraPathsManager": (
-        "flext_infra.deps.extra_paths",
-        "FlextInfraExtraPathsManager",
-    ),
-    "FlextInfraInternalDependencySyncService": (
-        "flext_infra.deps.internal_sync",
-        "FlextInfraInternalDependencySyncService",
-    ),
-    "FlextInfraPyprojectModernizer": (
-        "flext_infra.deps.modernizer",
-        "FlextInfraPyprojectModernizer",
-    ),
-    "FlextInfraRuntimeDevDependencyDetector": (
-        "flext_infra.deps.detector",
-        "FlextInfraRuntimeDevDependencyDetector",
-    ),
+    "FlextInfraDependencyDetectionModels": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
+    "FlextInfraDependencyDetectionService": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
+    "FlextInfraDependencyDetectorModels": ("flext_infra.deps.detector", "FlextInfraDependencyDetectorModels"),
+    "FlextInfraDependencyPathSync": ("flext_infra.deps.path_sync", "FlextInfraDependencyPathSync"),
+    "FlextInfraExtraPathsManager": ("flext_infra.deps.extra_paths", "FlextInfraExtraPathsManager"),
+    "FlextInfraInternalDependencySyncService": ("flext_infra.deps.internal_sync", "FlextInfraInternalDependencySyncService"),
+    "FlextInfraPyprojectModernizer": ("flext_infra.deps.modernizer", "FlextInfraPyprojectModernizer"),
+    "FlextInfraRuntimeDevDependencyDetector": ("flext_infra.deps.detector", "FlextInfraRuntimeDevDependencyDetector"),
     "MYPY_BASE_PROJECT": ("flext_infra.deps.extra_paths", "MYPY_BASE_PROJECT"),
     "MYPY_BASE_ROOT": ("flext_infra.deps.extra_paths", "MYPY_BASE_ROOT"),
     "PYRIGHT_BASE_PROJECT": ("flext_infra.deps.extra_paths", "PYRIGHT_BASE_PROJECT"),

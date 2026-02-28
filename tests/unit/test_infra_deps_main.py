@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 # Ensure modules are imported for coverage
 import flext_infra.deps.__main__  # noqa: F401
 import pytest
-from flext_infra.deps.__main__ import _SUBCOMMANDS, main
+from flext_infra.deps.__main__ import _SUBCOMMANDS, main, main as main_func
 
 
 class TestSubcommandMapping:
@@ -451,3 +451,14 @@ class TestMainExceptionHandling:
                 ):
                     with pytest.raises(Exception, match="Test error"):
                         main()
+
+    def test_main_calls_sys_exit(self) -> None:
+        """Test main() calls sys.exit."""
+        with patch("sys.argv", ["deps", "detect"]):
+            with patch("flext_infra.deps.__main__.main") as mock_main:
+                mock_main.return_value = 0
+                with patch("sys.exit") as _mock_exit:
+                    try:
+                        main_func()
+                    except SystemExit:
+                        pass

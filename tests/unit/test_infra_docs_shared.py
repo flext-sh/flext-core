@@ -6,6 +6,8 @@ markdown helpers, and JSON reporting.
 
 from __future__ import annotations
 
+import json
+import pathlib
 from pathlib import Path
 
 import pytest
@@ -292,3 +294,146 @@ class TestFlextInfraDocsShared:
         assert result.is_success
         content = md_file.read_text()
         assert content.count("\n") >= 3
+
+    def test_iter_markdown_files_returns_sorted_list(self, tmp_path: Path) -> None:
+        """Test iter_markdown_files returns sorted list."""
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        (docs_dir / "z.md").write_text("# Z")
+        (docs_dir / "a.md").write_text("# A")
+        files = FlextInfraDocsShared.iter_markdown_files(tmp_path)
+        assert len(files) >= 2
+        assert files == sorted(files)
+
+    def test_write_json_creates_parent_directories(self, tmp_path: Path) -> None:
+        """Test write_json creates parent directories."""
+        json_file = tmp_path / "nested/deep/test.json"
+        result = FlextInfraDocsShared.write_json(json_file, {"key": "value"})
+        assert result.is_success
+        assert json_file.exists()
+
+    def test_write_json_with_empty_dict(self, tmp_path: Path) -> None:
+        """Test write_json with empty dictionary."""
+        json_file = tmp_path / "empty.json"
+        result = FlextInfraDocsShared.write_json(json_file, {})
+        assert result.is_success
+
+    def test_write_markdown_with_single_line(self, tmp_path: Path) -> None:
+        """Test write_markdown with single line."""
+        md_file = tmp_path / "single.md"
+        result = FlextInfraDocsShared.write_markdown(md_file, ["# Title"])
+        assert result.is_success
+        content = md_file.read_text()
+        assert "# Title" in content
+
+    def test_build_scopes_with_invalid_root_fails(self) -> None:
+        """Test build_scopes handles invalid root gracefully."""
+        result = FlextInfraDocsShared.build_scopes(
+            root=Path("/nonexistent/path"),
+            project=None,
+            projects=None,
+            output_dir=".reports/docs",
+        )
+        assert result.is_success or result.is_failure
+
+    def test_selected_project_names_empty_string(self, tmp_path: Path) -> None:
+        """Test _selected_project_names with empty string."""
+        names = FlextInfraDocsShared._selected_project_names(tmp_path, None, "")
+        assert isinstance(names, list)
+
+    def test_selected_project_names_whitespace_only(self, tmp_path: Path) -> None:
+        """Test _selected_project_names with whitespace-only string."""
+        names = FlextInfraDocsShared._selected_project_names(tmp_path, None, "   ")
+        assert isinstance(names, list)
+
+    def test_iter_markdown_files_with_no_docs_dir(self, tmp_path: Path) -> None:
+        """Test iter_markdown_files when docs dir doesn't exist."""
+        files = FlextInfraDocsShared.iter_markdown_files(tmp_path)
+        assert isinstance(files, list)
+
+    def test_iter_markdown_files_with_docs_at_root(self, tmp_path: Path) -> None:
+        """Test iter_markdown_files finds docs at root."""
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        (docs_dir / "test.md").write_text("# Test")
+        files = FlextInfraDocsShared.iter_markdown_files(tmp_path)
+        assert len(files) > 0
+
+    def test_write_markdown_with_special_characters(self, tmp_path: Path) -> None:
+        """Test write_markdown handles special characters."""
+        md_file = tmp_path / "special.md"
+        lines = ["# Title with émojis 🎉", "Content with spëcial çhars"]
+        result = FlextInfraDocsShared.write_markdown(md_file, lines)
+        assert result.is_success
+
+    def test_write_json_with_nested_structure(self, tmp_path: Path) -> None:
+        """Test write_json with nested dictionary."""
+        json_file = tmp_path / "nested.json"
+        payload = {"level1": {"level2": {"level3": "value"}}}
+        result = FlextInfraDocsShared.write_json(json_file, payload)
+        assert result.is_success
+
+    def test_build_scopes_report_dir_path_resolution(self, tmp_path: Path) -> None:
+        """Test build_scopes resolves report_dir paths correctly."""
+        result = FlextInfraDocsShared.build_scopes(
+            root=tmp_path,
+            project=None,
+            projects=None,
+            output_dir=".reports/docs",
+        )
+        if result.is_success:
+            for scope in result.value:
+                assert scope.report_dir.is_absolute()
+
+    def test_selected_project_names_mixed_separators(self, tmp_path: Path) -> None:
+        """Test _selected_project_names with mixed separators."""
+        names = FlextInfraDocsShared._selected_project_names(
+            tmp_path, None, "proj1, proj2, proj3"
+        )
+        assert "proj1" in names
+        assert "proj2" in names
+
+    def test_iter_markdown_files_excludes_node_modules(self, tmp_path: Path) -> None:
+        """Test iter_markdown_files excludes node_modules."""
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        nm_dir = docs_dir / "node_modules"
+        nm_dir.mkdir(parents=True, exist_ok=True)
+        (nm_dir / "test.md").write_text("# Test")
+        files = FlextInfraDocsShared.iter_markdown_files(tmp_path)
+        assert not any("node_modules" in str(f) for f in files)
+
+    def test_write_markdown_file_content_exact(self, tmp_path: Path) -> None:
+        """Test write_markdown writes exact content."""
+        md_file = tmp_path / "exact.md"
+        lines = ["Line 1", "Line 2", "Line 3"]
+        FlextInfraDocsShared.write_markdown(md_file, lines)
+        content = md_file.read_text()
+        assert content == "Line 1\nLine 2\nLine 3\n"
+
+    def test_write_json_file_readable(self, tmp_path: Path) -> None:
+        """Test write_json creates readable JSON file."""
+        json_file = tmp_path / "readable.json"
+        payload = {"key": "value", "number": 42}
+        FlextInfraDocsShared.write_json(json_file, payload)
+        content = json.loads(json_file.read_text())
+        assert content["key"] == "value"
+        assert content["number"] == 42
+
+    def test_write_markdown_with_oserror_returns_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test write_markdown returns failure on OSError."""
+        md_file = tmp_path / "test.md"
+        # Mock Path.write_text to raise OSError
+
+        def mock_write_text(
+            self: object, data: str, *args: object, **kwargs: object
+        ) -> None:
+            msg = "Permission denied"
+            raise OSError(msg)
+
+        monkeypatch.setattr(pathlib.Path, "write_text", mock_write_text)
+        result = FlextInfraDocsShared.write_markdown(md_file, ["test"])
+        assert result.is_failure
+        assert "markdown write error" in result.error

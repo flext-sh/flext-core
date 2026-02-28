@@ -9,7 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_infra.docs.shared import FlextInfraDocScope
+from flext_core import r
+from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
 from flext_infra.docs.validator import FlextInfraDocValidator, ValidateReport
 
 
@@ -276,3 +277,40 @@ class TestFlextInfraDocValidator:
         # Should detect missing skills
         assert isinstance(code, int)
         assert isinstance(missing, list)
+
+    def test_validate_with_scope_failure_returns_failure(
+        self,
+        validator: FlextInfraDocValidator,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test validate returns failure when scope building fails."""
+
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list]:
+            return r[list].fail("Scope error")
+
+        monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
+        result = validator.validate(tmp_path)
+        assert result.is_failure
+        assert "Scope error" in result.error
+
+    def test_validate_scope_with_adr_check_failure(
+        self,
+        validator: FlextInfraDocValidator,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test _validate_scope handles ADR check failure."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        # Mock _run_adr_skill_check to return failure
+
+        def mock_adr_check(path: Path | str) -> tuple[int, list[str]]:
+            return 1, ["missing_skill"]
+
+        monkeypatch.setattr(validator, "_run_adr_skill_check", mock_adr_check)
+        report = validator._validate_scope(scope, check="adr", apply_mode=False)
+        assert report.scope == "test"

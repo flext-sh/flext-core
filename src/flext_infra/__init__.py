@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core import cleanup_submodule_namespace, lazy_getattr
+from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
@@ -70,86 +70,38 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "FlextInfraBaseMkGenerator"),
-    "FlextInfraBaseMkTemplateEngine": (
-        "flext_infra.basemk",
-        "FlextInfraBaseMkTemplateEngine",
-    ),
-    "FlextInfraBaseMkValidator": (
-        "flext_infra.core.basemk_validator",
-        "FlextInfraBaseMkValidator",
-    ),
-    "FlextInfraCheckConfigFixer": (
-        "flext_infra.check.services",
-        "FlextInfraConfigFixer",
-    ),
-    "FlextInfraCheckWorkspaceChecker": (
-        "flext_infra.check.services",
-        "FlextInfraWorkspaceChecker",
-    ),
+    "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk", "FlextInfraBaseMkTemplateEngine"),
+    "FlextInfraBaseMkValidator": ("flext_infra.core.basemk_validator", "FlextInfraBaseMkValidator"),
+    "FlextInfraCheckConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
+    "FlextInfraCheckWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
     "FlextInfraCommandRunner": ("flext_infra.subprocess", "FlextInfraCommandRunner"),
     "FlextInfraConstants": ("flext_infra.constants", "FlextInfraConstants"),
-    "FlextInfraDiscoveryService": (
-        "flext_infra.discovery",
-        "FlextInfraDiscoveryService",
-    ),
+    "FlextInfraDiscoveryService": ("flext_infra.discovery", "FlextInfraDiscoveryService"),
     "FlextInfraDispatcher": ("flext_infra.dispatcher", "FlextInfraDispatcher"),
     "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
-    "FlextInfraInventoryService": (
-        "flext_infra.core.inventory",
-        "FlextInfraInventoryService",
-    ),
+    "FlextInfraInventoryService": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
     "FlextInfraJsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
-    "FlextInfraLazyInitGenerator": (
-        "flext_infra.codegen",
-        "FlextInfraLazyInitGenerator",
-    ),
+    "FlextInfraLazyInitGenerator": ("flext_infra.codegen", "FlextInfraLazyInitGenerator"),
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
     "FlextInfraOutput": ("flext_infra.output", "FlextInfraOutput"),
     "FlextInfraPathResolver": ("flext_infra.paths", "FlextInfraPathResolver"),
     "FlextInfraPatterns": ("flext_infra.patterns", "FlextInfraPatterns"),
     "FlextInfraPrManager": ("flext_infra.github", "FlextInfraPrManager"),
-    "FlextInfraPrWorkspaceManager": (
-        "flext_infra.github",
-        "FlextInfraPrWorkspaceManager",
-    ),
+    "FlextInfraPrWorkspaceManager": ("flext_infra.github", "FlextInfraPrWorkspaceManager"),
     "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
     "FlextInfraProtocols": ("flext_infra.protocols", "FlextInfraProtocols"),
-    "FlextInfraPytestDiagExtractor": (
-        "flext_infra.core.pytest_diag",
-        "FlextInfraPytestDiagExtractor",
-    ),
-    "FlextInfraPythonVersionEnforcer": (
-        "flext_infra.maintenance",
-        "FlextInfraPythonVersionEnforcer",
-    ),
-    "FlextInfraReleaseOrchestrator": (
-        "flext_infra.release",
-        "FlextInfraReleaseOrchestrator",
-    ),
-    "FlextInfraReportingService": (
-        "flext_infra.reporting",
-        "FlextInfraReportingService",
-    ),
-    "FlextInfraSkillValidator": (
-        "flext_infra.core.skill_validator",
-        "FlextInfraSkillValidator",
-    ),
-    "FlextInfraStubSupplyChain": (
-        "flext_infra.core.stub_chain",
-        "FlextInfraStubSupplyChain",
-    ),
+    "FlextInfraPytestDiagExtractor": ("flext_infra.core.pytest_diag", "FlextInfraPytestDiagExtractor"),
+    "FlextInfraPythonVersionEnforcer": ("flext_infra.maintenance", "FlextInfraPythonVersionEnforcer"),
+    "FlextInfraReleaseOrchestrator": ("flext_infra.release", "FlextInfraReleaseOrchestrator"),
+    "FlextInfraReportingService": ("flext_infra.reporting", "FlextInfraReportingService"),
+    "FlextInfraSkillValidator": ("flext_infra.core.skill_validator", "FlextInfraSkillValidator"),
+    "FlextInfraStubSupplyChain": ("flext_infra.core.stub_chain", "FlextInfraStubSupplyChain"),
     "FlextInfraTemplateEngine": ("flext_infra.templates", "FlextInfraTemplateEngine"),
-    "FlextInfraTextPatternScanner": (
-        "flext_infra.core.scanner",
-        "FlextInfraTextPatternScanner",
-    ),
+    "FlextInfraTextPatternScanner": ("flext_infra.core.scanner", "FlextInfraTextPatternScanner"),
     "FlextInfraTomlService": ("flext_infra.toml_io", "FlextInfraTomlService"),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
-    "FlextInfraVersioningService": (
-        "flext_infra.versioning",
-        "FlextInfraVersioningService",
-    ),
+    "FlextInfraVersioningService": ("flext_infra.versioning", "FlextInfraVersioningService"),
     "FlextInfraWorkflowLinter": ("flext_infra.github", "FlextInfraWorkflowLinter"),
     "FlextInfraWorkflowSyncer": ("flext_infra.github", "FlextInfraWorkflowSyncer"),
     "KNOWN_VERBS": ("flext_infra.reporting", "KNOWN_VERBS"),
@@ -158,10 +110,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),
-    "configure_flext_infra_dependencies": (
-        "flext_infra.container",
-        "configure_flext_infra_dependencies",
-    ),
+    "configure_flext_infra_dependencies": ("flext_infra.container", "configure_flext_infra_dependencies"),
     "get_flext_infra_container": ("flext_infra.container", "get_flext_infra_container"),
     "get_flext_infra_service": ("flext_infra.container", "get_flext_infra_service"),
     "m": ("flext_infra.models", "FlextInfraModels"),

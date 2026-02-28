@@ -7,10 +7,12 @@ and structured FlextResult reports.
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
+from flext_core import r
 from flext_infra.docs.builder import BuildReport, FlextInfraDocBuilder
-from flext_infra.docs.shared import FlextInfraDocScope
+from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
 
 
 class TestFlextInfraDocBuilder:
@@ -196,3 +198,44 @@ class TestFlextInfraDocBuilder:
         report = builder._run_mkdocs(scope)
         assert report.scope == "test"
         assert isinstance(report.result, str)
+
+    def test_build_with_scope_failure_returns_failure(
+        self,
+        builder: FlextInfraDocBuilder,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test build returns failure when scope building fails."""
+
+        # Mock FlextInfraDocsShared.build_scopes to return failure
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list]:
+            return r[list].fail("Scope error")
+
+        monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
+        result = builder.build(tmp_path)
+        assert result.is_failure
+        assert "Scope error" in result.error
+
+    def test_run_mkdocs_with_success_exit_code(
+        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    ) -> None:
+        """Test _run_mkdocs returns OK when exit_code is 0."""
+        mkdocs_file = tmp_path / "mkdocs.yml"
+        mkdocs_file.write_text("site_name: Test\n")
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        # Mock the runner to return success
+        mock_runner = Mock()
+        mock_output = Mock()
+        mock_output.exit_code = 0
+        mock_output.stdout = "Build successful"
+        mock_output.stderr = ""
+        mock_runner.run_raw.return_value = r[Mock].ok(mock_output)
+
+        builder._runner = mock_runner
+        report = builder._run_mkdocs(scope)
+        assert report.result == "OK"
+        assert "build succeeded" in report.reason

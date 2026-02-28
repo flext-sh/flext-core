@@ -253,6 +253,53 @@ class TestFlextInfraReleaseOrchestrator:
 
         assert result.is_success
 
+    def test_run_release_create_branches_enabled(
+        self,
+        workspace_root: Path,
+    ) -> None:
+        """Test run_release with create_branches=True (line 114)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch(
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._create_branches",
+            return_value=r[bool].ok(True),
+        ):
+            with patch(
+                "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._dispatch_phase",
+                return_value=r[bool].ok(True),
+            ):
+                result = orchestrator.run_release(
+                    root=workspace_root,
+                    version="1.0.0",
+                    tag="v1.0.0",
+                    phases=["validate"],
+                    create_branches=True,
+                    dry_run=False,
+                )
+
+        assert result.is_success
+
+    def test_run_release_create_branches_failure(
+        self,
+        workspace_root: Path,
+    ) -> None:
+        """Test run_release with create_branches failure (line 114)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch(
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._create_branches",
+            return_value=r[bool].fail("branch creation failed"),
+        ):
+            result = orchestrator.run_release(
+                root=workspace_root,
+                version="1.0.0",
+                tag="v1.0.0",
+                phases=["validate"],
+                create_branches=True,
+                dry_run=False,
+            )
+
+        assert result.is_failure
+        assert "branch creation failed" in result.error
+
     def test_run_release_multiple_projects(
         self,
         workspace_root: Path,

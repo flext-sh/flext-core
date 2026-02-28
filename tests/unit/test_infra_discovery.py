@@ -169,3 +169,11 @@ class TestFlextInfraDiscoveryService:
         assert result.is_success
         assert isinstance(result.value, list)
         assert all(isinstance(p, m.ProjectInfo) for p in result.value)
+
+    def test_discover_projects_empty_workspace_v2(
+        self, service: FlextInfraDiscoveryService, tmp_path: Path
+    ) -> None:
+        """Test discover_projects returns empty list for empty workspace."""
+        result = service.discover_projects(tmp_path)
+        assert result.is_success
+        assert result.value == []

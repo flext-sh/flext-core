@@ -9,12 +9,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_core import r
 from flext_infra.docs.generator import (
     FlextInfraDocGenerator,
     GeneratedFile,
     GenerateReport,
 )
-from flext_infra.docs.shared import FlextInfraDocScope
+from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared
 
 
 class TestFlextInfraDocGenerator:
@@ -363,3 +364,19 @@ class TestFlextInfraDocGenerator:
         content = "[Local](local.md) [External](https://example.com)"
         result = generator._sanitize_internal_anchor_links(content)
         assert "https://example.com" in result
+
+    def test_generate_with_scope_failure_returns_failure(
+        self,
+        generator: FlextInfraDocGenerator,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test generate returns failure when scope building fails."""
+
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list]:
+            return r[list].fail("Scope error")
+
+        monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
+        result = generator.generate(tmp_path)
+        assert result.is_failure
+        assert "Scope error" in result.error

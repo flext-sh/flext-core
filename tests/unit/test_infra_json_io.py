@@ -139,3 +139,12 @@ class TestFlextInfraJsonService:
             assert result.is_failure
         finally:
             json_file.chmod(0o644)  # Restore permissions for cleanup
+
+    def test_write_returns_true_on_success(self, tmp_path: Path) -> None:
+        """Test write returns True on success."""
+        json_file = tmp_path / "test.json"
+        service = FlextInfraJsonService()
+
+        result = service.write(json_file, {"key": "value"})
+        assert result.is_success
+        assert result.value is True

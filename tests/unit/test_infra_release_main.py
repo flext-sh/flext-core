@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from flext_core import r
+from flext_infra.release import FlextInfraReleaseOrchestrator
 from flext_infra.release.__main__ import (
     _parse_args,
     _resolve_tag,
@@ -591,3 +592,63 @@ class TestReleaseMainFlow:
                                 "proj1",
                                 "proj2",
                             ]
+
+
+class TestResolveVersionInteractive:
+    """Test _resolve_version function with interactive mode."""
+
+    def test_resolve_version_interactive_invalid_bump(self, tmp_path: Path) -> None:
+        """Test _resolve_version with invalid bump type in interactive mode (lines 77-78)."""
+        args = Mock()
+        args.version = None
+        args.bump = None
+        args.interactive = 1
+        with patch("builtins.input", return_value="invalid"):
+            with patch(
+                "flext_infra.release.__main__.FlextInfraVersioningService"
+            ) as mock_vs:
+                mock_vs_inst = mock_vs.return_value
+                mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
+                with pytest.raises(RuntimeError, match="invalid bump type"):
+                    _resolve_version(args, tmp_path)
+
+    def test_resolve_version_interactive_bump_failure(self, tmp_path: Path) -> None:
+        """Test _resolve_version with bump failure in interactive mode (lines 77-78)."""
+        args = Mock()
+        args.version = None
+        args.bump = None
+        args.interactive = 1
+        with patch("builtins.input", return_value="major"):
+            with patch(
+                "flext_infra.release.__main__.FlextInfraVersioningService"
+            ) as mock_vs:
+                mock_vs_inst = mock_vs.return_value
+                mock_vs_inst.current_workspace_version.return_value = r[str].ok("1.0.0")
+                mock_vs_inst.bump_version.return_value = r[str].fail("bump failed")
+                with pytest.raises(RuntimeError, match="bump failed"):
+                    _resolve_version(args, tmp_path)
+
+
+class TestReleaseInit:
+    """Test release module __init__.py lazy imports."""
+
+    def test_lazy_import_orchestrator(self) -> None:
+        """Test lazy import of FlextInfraReleaseOrchestrator."""
+        import flext_infra.release as release_module  # noqa: PLC0415
+
+        orchestrator = release_module.FlextInfraReleaseOrchestrator()
+        assert isinstance(orchestrator, FlextInfraReleaseOrchestrator)
+
+    def test_getattr_invalid_attribute(self) -> None:
+        """Test __getattr__ raises AttributeError for invalid attribute."""
+        import flext_infra.release as release_module  # noqa: PLC0415
+
+        with pytest.raises(AttributeError, match=r"module.*has no attribute"):
+            _ = release_module.NonexistentAttribute
+
+    def test_dir_returns_all_exports(self) -> None:
+        """Test __dir__ returns all exported attributes."""
+        import flext_infra.release as release_module  # noqa: PLC0415
+
+        exports = dir(release_module)
+        assert "FlextInfraReleaseOrchestrator" in exports

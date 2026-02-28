@@ -18,6 +18,7 @@ from flext_infra.github.__main__ import (
     _run_workflows,
     main,
 )
+from flext_infra.github.workflows import SyncOperation
 
 
 class TestRunWorkflows:
@@ -478,5 +479,37 @@ class TestMain:
                     main()
 
                     mock_runtime.ensure_structlog_configured.assert_called_once()
+        finally:
+            sys.argv = original_argv
+
+    def test_run_workflows_iterates_operations(self, tmp_path: Path) -> None:
+        """Test that _run_workflows iterates over operations (line 53)."""
+        original_argv = sys.argv.copy()
+        try:
+            with patch(
+                "flext_infra.github.__main__.FlextInfraWorkflowSyncer"
+            ) as mock_syncer_class:
+                mock_syncer = Mock()
+                mock_syncer_class.return_value = mock_syncer
+                # Return multiple operations to ensure iteration
+
+                ops = [
+                    SyncOperation(
+                        project="p1", path="ci.yml", action="create", reason="new"
+                    ),
+                    SyncOperation(
+                        project="p2", path="ci.yml", action="update", reason="changed"
+                    ),
+                ]
+                mock_syncer.sync_workspace.return_value = r[list].ok(ops)
+                sys.argv = [
+                    "flext-infra",
+                    "workflows",
+                    "--workspace-root",
+                    str(tmp_path),
+                ]
+                result = main()
+                assert result == 0
+                mock_syncer.sync_workspace.assert_called_once()
         finally:
             sys.argv = original_argv

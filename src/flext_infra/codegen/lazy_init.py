@@ -464,7 +464,7 @@ def _generate_file(
             "cleanup_submodule_namespace, lazy_getattr"
         )
     else:
-        lazy_import = "from flext_core import cleanup_submodule_namespace, lazy_getattr"
+        lazy_import = "from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr"
 
     out.extend([
         "from __future__ import annotations",
