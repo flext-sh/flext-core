@@ -500,7 +500,7 @@ class TestFlextDecorators:
 
             result = operation()
             assert isinstance(result, FlextResult)
-            u.Tests.Result.assert_success($$$)
+            u.Tests.Result.assert_success(result)
 
     def test_railway_with_existing_result(self) -> None:
         """Test railway decorator with existing FlextResult."""
@@ -511,7 +511,7 @@ class TestFlextDecorators:
 
         result = returns_result()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
         unwrapped = result.value
         # Railway decorator may unwrap nested FlextResult or keep it
         if isinstance(unwrapped, FlextResult):
@@ -558,7 +558,7 @@ class TestFlextDecorators:
 
         result = stacked_operation()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
 
     def test_integration_retry_with_railway(self) -> None:
         """Test retry decorator with railway."""
@@ -576,7 +576,7 @@ class TestFlextDecorators:
 
         result = flaky_with_railway()
         assert isinstance(result, FlextResult)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
         assert attempts == 2
 
 

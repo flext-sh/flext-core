@@ -11,54 +11,50 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.__version__ import __version__, __version_info__
-    from flext_infra.basemk import (
-        BaseMkGenerator,
-        BaseMkGenerator as FlextInfraBaseMkGenerator,
-        TemplateEngine as BaseMkTemplateEngine,
-    )
-    from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
-    from flext_infra.discovery import (
-        DiscoveryService,
-        DiscoveryService as FlextInfraDiscoveryService,
-    )
-    from flext_infra.git import GitService, GitService as FlextInfraGitService
-    from flext_infra.json_io import JsonService, JsonService as FlextInfraJsonService
-    from flext_infra.models import FlextInfraModels, FlextInfraModels as m
-    from flext_infra.paths import PathResolver, PathResolver as FlextInfraPathResolver
-    from flext_infra.patterns import FlextInfraPatterns
-    from flext_infra.protocols import FlextInfraProtocols, FlextInfraProtocols as p
-    from flext_infra.release import (
-        ReleaseOrchestrator,
-        ReleaseOrchestrator as FlextInfraReleaseOrchestrator,
-    )
-    from flext_infra.reporting import (
+    from flext_infra import (
         KNOWN_VERBS,
         REPORTS_DIR_NAME,
-        ReportingService,
-        ReportingService as FlextInfraReportingService,
-    )
-    from flext_infra.selection import (
-        ProjectSelector,
-        ProjectSelector as FlextInfraProjectSelector,
-    )
-    from flext_infra.subprocess import (
+        BaseMkGenerator,
+        BaseMkGenerator as FlextInfraBaseMkGenerator,
         CommandRunner,
         CommandRunner as FlextInfraCommandRunner,
-    )
-    from flext_infra.templates import (
+        DiscoveryService,
+        DiscoveryService as FlextInfraDiscoveryService,
+        FlextInfraConstants,
+        FlextInfraConstants as c,
+        FlextInfraModels,
+        FlextInfraModels as m,
+        FlextInfraPatterns,
+        FlextInfraProtocols,
+        FlextInfraProtocols as p,
+        FlextInfraTypes,
+        FlextInfraTypes as t,
+        FlextInfraUtilities,
+        FlextInfraUtilities as u,
+        GitService,
+        GitService as FlextInfraGitService,
+        JsonService,
+        JsonService as FlextInfraJsonService,
+        PathResolver,
+        PathResolver as FlextInfraPathResolver,
+        ProjectSelector,
+        ProjectSelector as FlextInfraProjectSelector,
+        ReleaseOrchestrator,
+        ReleaseOrchestrator as FlextInfraReleaseOrchestrator,
+        ReportingService,
+        ReportingService as FlextInfraReportingService,
         TemplateEngine,
+        TemplateEngine as BaseMkTemplateEngine,
         TemplateEngine as FlextInfraTemplateEngine,
-    )
-    from flext_infra.toml_io import TomlService, TomlService as FlextInfraTomlService
-    from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
-    from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
-    from flext_infra.versioning import (
+        TomlService,
+        TomlService as FlextInfraTomlService,
         VersioningService,
         VersioningService as FlextInfraVersioningService,
+        __version__,
+        __version_info__,
     )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)

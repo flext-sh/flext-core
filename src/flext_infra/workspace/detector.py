@@ -16,8 +16,7 @@ from urllib.parse import urlparse
 
 from flext_core import FlextService, r
 
-from flext_infra.output import output
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner, output
 
 
 class WorkspaceMode(StrEnum):

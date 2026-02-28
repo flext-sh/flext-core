@@ -27,8 +27,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_tests.constants import c
-from flext_tests.typings import t
+from flext_tests import c, t
 
 
 # Create FlextTestsModels that extends FlextModels with Tests.Factory namespace

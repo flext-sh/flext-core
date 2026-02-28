@@ -13,8 +13,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r
 
-from flext_infra.discovery import DiscoveryService
-from flext_infra.models import m
+from flext_infra import DiscoveryService, m
 
 
 class ProjectSelector:

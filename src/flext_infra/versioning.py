@@ -15,8 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r
 
-from flext_infra.constants import c
-from flext_infra.toml_io import TomlService
+from flext_infra import TomlService, c
 
 _SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$")
 _DEV_BRANCH_RE = re.compile(r"^(\d+\.\d+\.\d+)-dev$")

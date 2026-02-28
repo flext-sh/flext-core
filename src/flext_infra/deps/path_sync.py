@@ -10,10 +10,7 @@ from pathlib import Path
 from flext_core import FlextLogger, r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra.constants import c
-from flext_infra.discovery import DiscoveryService
-from flext_infra.output import output
-from flext_infra.toml_io import TomlService
+from flext_infra import DiscoveryService, TomlService, c, output
 
 logger = FlextLogger.create_module_logger(__name__)
 

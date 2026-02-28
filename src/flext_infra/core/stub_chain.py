@@ -15,9 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra.constants import c
-from flext_infra.models import m
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner, c, m
 
 _MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
 _MYPY_HINT_RE = re.compile(r"note:\s+(?:hint|note):\s+.*?`(types-\S+)`")

@@ -12,9 +12,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextResult, r
-from flext_tests.factories import tt
-from flext_tests.models import m
-from flext_tests.typings import t as t_test
+from flext_tests import m, t as t_test, tt
 from pydantic import BaseModel as _BaseModel
 
 from tests.test_utils import assertion_helpers

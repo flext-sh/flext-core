@@ -17,7 +17,7 @@ import tomlkit
 from flext_core import FlextResult, r, t
 from tomlkit.items import Table
 
-from flext_infra.constants import c
+from flext_infra import c
 
 type TomlScalar = str | int | float | bool | None
 type TomlValue = (

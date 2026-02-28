@@ -42,7 +42,7 @@ class FactoryDecoratorsDiscovery:
             List of tuples (function_name, FactoryDecoratorConfig) sorted by name
 
         Example:
-            >>> from flext_core._decorators import FactoryDecoratorsDiscovery
+            >>> from flext_core import FactoryDecoratorsDiscovery
             >>> factories = FactoryDecoratorsDiscovery.scan_module(my_module)
             >>> for func_name, config in factories:
             ...     print(f"{func_name}: singleton={config.singleton}")

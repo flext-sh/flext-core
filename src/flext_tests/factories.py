@@ -26,11 +26,7 @@ from typing import Never, TypeVar, override
 from flext_core import r
 from pydantic import BaseModel
 
-from flext_tests.base import FlextTestsUtilityBase as s
-from flext_tests.constants import c
-from flext_tests.models import m
-from flext_tests.typings import t
-from flext_tests.utilities import u
+from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
 
 TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")

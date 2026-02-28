@@ -33,8 +33,7 @@ from flext_core import (
     s,
     t,
 )
-from flext_tests.matchers import tm
-from flext_tests.utilities import u
+from flext_tests import tm, u
 
 from tests.test_utils import assertion_helpers
 

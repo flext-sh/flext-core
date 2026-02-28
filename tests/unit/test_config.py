@@ -28,8 +28,7 @@ from typing import ClassVar, cast
 
 import pytest
 from flext_core import FlextSettings, c, m, u
-from flext_tests import tm
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, tm
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 

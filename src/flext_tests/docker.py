@@ -32,8 +32,7 @@ from docker.models.containers import Container
 from flext_core import FlextLogger, r
 from pydantic import TypeAdapter
 
-from flext_tests.constants import c
-from flext_tests.models import m
+from flext_tests import c, m
 
 try:
     whales_module = importlib.import_module("python_on_whales")

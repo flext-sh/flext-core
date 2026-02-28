@@ -10,8 +10,7 @@ import sys
 
 from _pytest.monkeypatch import MonkeyPatch
 from flext_core import FlextResult as r
-from flext_infra.models import m as im
-from flext_infra.workspace import __main__ as workspace_cli
+from flext_infra import __main__ as workspace_cli, m as im
 from flext_infra.workspace.migrator import ProjectMigrator
 
 

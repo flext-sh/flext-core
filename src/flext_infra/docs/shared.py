@@ -16,10 +16,13 @@ from pathlib import Path
 from flext_core import r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra.constants import c
-from flext_infra.discovery import DiscoveryService
-from flext_infra.json_io import JsonService
-from flext_infra.reporting import REPORTS_DIR_NAME, ReportingService
+from flext_infra import (
+    REPORTS_DIR_NAME,
+    DiscoveryService,
+    JsonService,
+    ReportingService,
+    c,
+)
 
 
 class FlextInfraDocScope(BaseModel):

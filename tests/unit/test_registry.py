@@ -331,7 +331,7 @@ class TestFlextRegistry:
             if test_case.duplicate_registration:
                 result = registry.register_handler(handler)
         if test_case.should_succeed:
-            u.Tests.Result.assert_success($$$)
+            u.Tests.Result.assert_success(result)
         else:
             u.Tests.Result.assert_result_failure(result)
             if test_case.error_pattern:
@@ -355,7 +355,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_success($$$) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        u.Tests.Result.assert_success(
+            result
+        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -375,7 +377,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_success($$$) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        u.Tests.Result.assert_success(
+            result
+        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
         assert result.value is not None
@@ -395,7 +399,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        u.Tests.Result.assert_success($$$) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        u.Tests.Result.assert_success(
+            result
+        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
         assert result.value is not None
@@ -465,7 +471,7 @@ class TestFlextRegistry:
         else:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
-            u.Tests.Result.assert_success($$$)
+            u.Tests.Result.assert_success(result)
             assert isinstance(result.value, m.Handler.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
@@ -479,7 +485,7 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
         assert isinstance(result.value, m.Handler.RegistrationDetails)
 
     @pytest.mark.parametrize(

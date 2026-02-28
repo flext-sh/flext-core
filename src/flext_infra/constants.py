@@ -19,7 +19,7 @@ class FlextInfraConstants:
     configuration, validation rules, check types, and workspace settings.
 
     Usage:
-        >>> from flext_infra.constants import c
+        >>> from flext_infra import c
         >>> # Access constants via c.Status.PASS
         >>> # Access paths via c.Paths.VENV_BIN_REL
     """

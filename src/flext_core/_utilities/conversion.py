@@ -1,6 +1,6 @@
 """Utilities module - FlextUtilitiesConversion.
 
-Extracted from flext_core.utilities for better modularity.
+Extracted from flext_core for better modularity.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -37,7 +37,7 @@ class FlextUtilitiesConversion:
     - List conversion with filtering
     - String normalization with case handling
     - String joining with separators
-    - Reuses base types from flext_core.typings and constants from flext_core.constants
+    - Reuses base types from flext_core and constants from flext_core.constants
     """
 
     _strict_json_list_adapter: TypeAdapter[list[StrictJsonValue]] = TypeAdapter(

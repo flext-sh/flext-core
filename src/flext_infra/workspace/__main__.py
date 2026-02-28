@@ -17,7 +17,7 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.output import output
+from flext_infra import output
 from flext_infra.workspace.detector import WorkspaceDetector
 from flext_infra.workspace.migrator import ProjectMigrator
 from flext_infra.workspace.orchestrator import OrchestratorService

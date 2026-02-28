@@ -10,11 +10,8 @@ import tomlkit
 from flext_core import r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra.constants import c
+from flext_infra import PathResolver, TomlService, c, output
 from flext_infra.deps.path_sync import extract_dep_name
-from flext_infra.output import output
-from flext_infra.paths import PathResolver
-from flext_infra.toml_io import TomlService
 
 _resolver = PathResolver()
 _root_result = _resolver.workspace_root_from_file(__file__)

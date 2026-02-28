@@ -10,10 +10,10 @@ from pathlib import Path
 
 from _pytest.capture import CaptureFixture
 from flext_core import FlextResult as r
+from flext_infra import m as im
 from flext_infra.basemk.__main__ import main as basemk_main
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator
-from flext_infra.models import m as im
 
 
 class _InvalidTemplateEngine:

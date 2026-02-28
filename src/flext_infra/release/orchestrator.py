@@ -18,13 +18,15 @@ from typing import override
 
 from flext_core import FlextLogger, FlextService, r, t
 
-from flext_infra.constants import c
-from flext_infra.git import GitService
-from flext_infra.json_io import JsonService
-from flext_infra.reporting import ReportingService
-from flext_infra.selection import ProjectSelector
-from flext_infra.subprocess import CommandRunner
-from flext_infra.versioning import VersioningService
+from flext_infra import (
+    CommandRunner,
+    GitService,
+    JsonService,
+    ProjectSelector,
+    ReportingService,
+    VersioningService,
+    c,
+)
 
 _VALID_PHASES = frozenset({"validate", "version", "build", "publish"})
 _VERSION_RE = re.compile(r'^version\s*=\s*"(.+?)"', re.MULTILINE)
@@ -229,7 +231,9 @@ class ReleaseOrchestrator(FlextService[bool]):
 
         """
         reporting = ReportingService()
-        output_dir = reporting.get_report_dir(root, "project", "release") / f"v{version}"
+        output_dir = (
+            reporting.get_report_dir(root, "project", "release") / f"v{version}"
+        )
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
         except OSError as exc:

@@ -20,14 +20,12 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra.constants import c
+from flext_infra import FlextInfraPatterns, c, output
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
     FlextInfraDocsShared,
 )
-from flext_infra.output import output
-from flext_infra.patterns import FlextInfraPatterns
 
 logger = FlextLogger.create_module_logger(__name__)
 

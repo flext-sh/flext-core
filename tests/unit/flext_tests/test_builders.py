@@ -12,8 +12,7 @@ from typing import cast
 
 import pytest
 from flext_core import FlextConstants, FlextResult as r, t
-from flext_tests.builders import FlextTestsBuilders, tb
-from flext_tests.typings import t as t_test
+from flext_tests import FlextTestsBuilders, t as t_test, tb
 from pydantic import BaseModel, ValidationError
 
 from tests.test_utils import assertion_helpers

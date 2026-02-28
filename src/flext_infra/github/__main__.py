@@ -19,11 +19,11 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
+from flext_infra import output
 from flext_infra.github.linter import WorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import PrWorkspaceManager
 from flext_infra.github.workflows import WorkflowSyncer
-from flext_infra.output import output
 
 _MIN_ARGV = 2
 

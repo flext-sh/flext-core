@@ -101,9 +101,7 @@ class TestDIBridgeRealExecution:
         # Access config via provider call
         config_dict = bridge.config()
         assert isinstance(config_dict, dict)
-        assert (
-            u.Mapper.extract(config_dict, "database.dsn").value == "sqlite://test.db"
-        )
+        assert u.Mapper.extract(config_dict, "database.dsn").value == "sqlite://test.db"
 
 
 class TestDependencyIntegrationRealExecution:
@@ -688,11 +686,11 @@ class TestRealWiringScenarios:
         scoped2 = container.scoped(services={"service": "value2"})
 
         # Verify isolation
-        result1 = scoped1.get("service")
+        scoped1.get("service")
         result2 = scoped2.get("service")
 
-        value1 = u.Tests.Result.assert_success($$$)
-        value2 = u.Tests.Result.assert_success($$$)
+        value1 = u.Tests.Result.assert_success(result2)
+        value2 = u.Tests.Result.assert_success(result2)
         assert isinstance(value1, str)
         assert isinstance(value2, str)
         assert value1 == "value1"

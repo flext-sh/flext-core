@@ -13,7 +13,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r
 
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner
 
 
 class GitService:

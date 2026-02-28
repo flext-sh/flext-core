@@ -17,11 +17,7 @@ from pathlib import Path
 from flext_core import FlextResult, r, t
 from yaml import safe_load
 
-from flext_infra.constants import c
-from flext_infra.json_io import JsonService
-from flext_infra.models import m
-from flext_infra.subprocess import CommandRunner
-from flext_infra.toml_io import TomlService
+from flext_infra import CommandRunner, JsonService, TomlService, c, m
 
 _SKILLS_DIR = Path(".claude/skills")
 _REPORT_DEFAULT = ".claude/skills/{skill}/report.json"

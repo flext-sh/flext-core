@@ -12,11 +12,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 
-from flext_infra.constants import c
-from flext_infra.models import m
-from flext_infra.output import output
-from flext_infra.subprocess import CommandRunner
-from flext_infra.toml_io import TomlService
+from flext_infra import CommandRunner, TomlService, c, m, output
 
 logger = FlextLogger.create_module_logger(__name__)
 

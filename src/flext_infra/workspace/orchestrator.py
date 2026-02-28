@@ -17,10 +17,7 @@ from typing import override
 
 from flext_core import FlextLogger, FlextService, r
 
-from flext_infra.models import m
-from flext_infra.output import output
-from flext_infra.reporting import ReportingService
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner, ReportingService, m, output
 
 logger = FlextLogger.create_module_logger(__name__)
 

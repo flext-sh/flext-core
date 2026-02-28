@@ -26,8 +26,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import m, p, r
-from flext_tests.matchers import tm
-from flext_tests.utilities import u
+from flext_tests import tm, u
 
 
 class ProtocolCategoryType(StrEnum):

@@ -20,13 +20,13 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
+from flext_infra import output
 from flext_infra.core.basemk_validator import BaseMkValidator
 from flext_infra.core.inventory import InventoryService
 from flext_infra.core.pytest_diag import PytestDiagExtractor
 from flext_infra.core.scanner import TextPatternScanner
 from flext_infra.core.skill_validator import SkillValidator
 from flext_infra.core.stub_chain import StubSupplyChain
-from flext_infra.output import output
 
 
 def _run_basemk_validate(args: argparse.Namespace) -> int:

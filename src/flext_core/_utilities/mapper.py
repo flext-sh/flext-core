@@ -1,6 +1,6 @@
 """Utilities module - FlextUtilitiesMapper.
 
-Extracted from flext_core.utilities for better modularity.
+Extracted from flext_core for better modularity.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -2112,7 +2112,10 @@ class FlextUtilitiesMapper:
         current_items: Sequence[t.ConfigMapValue] = current
         slice_spec = ops["slice"]
         min_slice_length = 2
-        if isinstance(slice_spec, (list, tuple)) and len(slice_spec) >= min_slice_length:
+        if (
+            isinstance(slice_spec, (list, tuple))
+            and len(slice_spec) >= min_slice_length
+        ):
             start_raw = slice_spec[0]
             end_raw = slice_spec[1]
             start: int | None = start_raw if isinstance(start_raw, int) else None

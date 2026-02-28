@@ -34,7 +34,7 @@ from flext_core import (
     r,
     t,
 )
-from flext_core._decorators import FactoryDecoratorsDiscovery
+from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
 
 
 class FlextContainer(p.DI):
@@ -227,7 +227,11 @@ class FlextContainer(p.DI):
                                 _factory_name: str = factory_name,
                                 _factory_config: m.Container.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
-                                fn_override = _factory_config.fn if hasattr(_factory_config, 'fn') else None
+                                fn_override = (
+                                    _factory_config.fn
+                                    if hasattr(_factory_config, "fn")
+                                    else None
+                                )
                                 if fn_override is not None:
                                     if callable(fn_override):
                                         raw_result = fn_override()

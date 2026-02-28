@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Any, ClassVar, Self, override
@@ -20,8 +21,7 @@ from typing import Any, ClassVar, Self, override
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core import FlextRuntime, T_Namespace, T_Settings, c, p, t, u
-from flext_core.__version__ import __version__
+from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
 
 
 class FlextSettings(p.ProtocolSettings, FlextRuntime):
@@ -354,7 +354,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
     @classmethod
     def get_global_instance(cls) -> Self:
         """Get the global singleton instance."""
-        import os
         log_level = os.environ.get("FLEXT_LOG_LEVEL")
         if log_level and log_level.islower():
             os.environ["FLEXT_LOG_LEVEL"] = log_level.upper()

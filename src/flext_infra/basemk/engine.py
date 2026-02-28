@@ -15,7 +15,7 @@ from jinja2 import (
     select_autoescape,
 )
 
-from flext_infra.models import m
+from flext_infra import m
 
 
 class TemplateEngine(FlextService[str]):

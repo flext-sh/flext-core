@@ -62,23 +62,23 @@ class FlextTestsTypes(FlextTypes):
         type ContainerPortMapping = Mapping[str, str]
         """Mapping of container port names to host port bindings."""
 
-        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        # Reuse ConfigurationMapping from flext_core - no duplication
         type ContainerConfigMapping = m.ConfigMap
         """Mapping for container configuration data with specific value types."""
 
-        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        # Reuse ConfigurationMapping from flext_core - no duplication
         type DockerComposeServiceMapping = m.ConfigMap
         """Mapping for docker-compose service configuration with specific types."""
 
-        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        # Reuse ConfigurationMapping from flext_core - no duplication
         type ContainerStateMapping = m.ConfigMap
         """Mapping for container state information with specific value types."""
 
-        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        # Reuse ConfigurationMapping from flext_core - no duplication
         type TestDataMapping = m.ConfigMap
         """Mapping for test data with specific value types."""
 
-        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        # Reuse ConfigurationMapping from flext_core - no duplication
         type TestConfigMapping = m.ConfigMap
         """Mapping for test configuration with specific value types."""
 
@@ -104,7 +104,7 @@ class FlextTestsTypes(FlextTypes):
             type ContainerEnvironment = Sequence[str]
             """Container environment variables as sequence."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type ComposeFileConfig = m.ConfigMap
             """Docker compose file configuration structure with specific types."""
 
@@ -112,7 +112,7 @@ class FlextTestsTypes(FlextTypes):
             type VolumeMapping = Mapping[str, str]
             """Volume mappings (host_path -> container_path)."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type NetworkMapping = m.ConfigMap
             """Network configuration mapping with specific types."""
 
@@ -122,18 +122,18 @@ class FlextTestsTypes(FlextTypes):
             type ContainerHealthStatusLiteral = str  # Future: Literal health values
             """Type-safe literal for container health status."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type ContainerOperationResult = m.ConfigMap
             """Result type for container operations with specific fields."""
 
         class Test:
             """Test-specific type definitions."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type TestCaseData = m.ConfigMap
             """Test case data structure with specific value types."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             # Note: Path is included in FlextTestsTypes.Tests.TestPayloadValue via object compatibility
             type TestFixtureData = m.ConfigMap
             """Test fixture data structure with specific value types."""
@@ -141,7 +141,7 @@ class FlextTestsTypes(FlextTypes):
             type TestAssertionResult = Mapping[str, str | bool | int | None]
             """Test assertion result structure."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type TestExecutionContext = m.ConfigMap
             """Test execution context with specific metadata types."""
 
@@ -238,7 +238,7 @@ class FlextTestsTypes(FlextTypes):
             """Source type for dict() factory method."""
 
             # Generic factory types
-            # Reuse types from flext_core.typings - no duplication
+            # Reuse types from flext_core - no duplication
             type GenericArgs = Sequence[FlextTestsTypes.Tests.TestPayloadValue]
             """Positional arguments for generic type instantiation."""
 
@@ -248,11 +248,11 @@ class FlextTestsTypes(FlextTypes):
         class Files:
             """File-specific type definitions for test file operations (tf)."""
 
-            # Reuse ScalarValue from flext_core.typings - no duplication
+            # Reuse ScalarValue from flext_core - no duplication
             type ScalarValue = t.ScalarValue
             """Scalar values that can be serialized directly."""
 
-            # Reuse JsonValue from flext_core.typings - no duplication
+            # Reuse JsonValue from flext_core - no duplication
             type SerializableValue = t.JsonValue
             """Values that can be serialized to JSON/YAML."""
 
@@ -328,7 +328,7 @@ class FlextTestsTypes(FlextTypes):
             ]
             """Type for builder output dict after batch result conversion."""
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type BuilderMapping = m.ConfigMap
             """Type for builder mappings."""
 
@@ -583,7 +583,7 @@ class FlextTestsTypes(FlextTypes):
                 code_has=["VALID", "ERROR"]          # Contains codes
             """
 
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Reuse ConfigurationMapping from flext_core - no duplication
             type ErrorDataSpec = m.ConfigMap
             """Error data specification: key-value pairs.
 

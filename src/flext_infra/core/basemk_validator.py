@@ -14,7 +14,7 @@ from pathlib import Path
 
 from flext_core import r
 
-from flext_infra.models import m
+from flext_infra import m
 
 
 class BaseMkValidator:

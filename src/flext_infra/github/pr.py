@@ -18,10 +18,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra.git import GitService
-from flext_infra.output import output
-from flext_infra.subprocess import CommandRunner
-from flext_infra.versioning import VersioningService
+from flext_infra import CommandRunner, GitService, VersioningService, output
 
 
 class PrManager:

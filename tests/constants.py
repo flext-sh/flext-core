@@ -18,7 +18,7 @@ from enum import StrEnum
 from typing import Final, Literal
 
 from flext_core import c, m
-from flext_tests.constants import FlextTestsConstants
+from flext_tests import FlextTestsConstants
 
 
 class TestsFlextConstants(FlextTestsConstants):

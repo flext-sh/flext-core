@@ -216,9 +216,7 @@ class FlextRegistry(s[bool]):
                             # Deduplication happens in register_handler() via _registered_keys
                             # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
-                            _ = instance.register_handler(
-                                handler_typed
-                            )
+                            _ = instance.register_handler(handler_typed)
 
         return instance
 
@@ -705,9 +703,7 @@ class FlextRegistry(s[bool]):
 
         if validate:
             try:
-                validation_result = validate(
-                    plugin
-                )
+                validation_result = validate(plugin)
                 if (
                     hasattr(validation_result, "is_failure")
                     and validation_result.is_failure

@@ -10,13 +10,8 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult, r, t
 from pydantic import Field
 
-from flext_infra.constants import c
+from flext_infra import CommandRunner, JsonService, PathResolver, ReportingService, c, m
 from flext_infra.deps.detection import DependencyDetectionService
-from flext_infra.json_io import JsonService
-from flext_infra.models import m
-from flext_infra.paths import PathResolver
-from flext_infra.reporting import ReportingService
-from flext_infra.subprocess import CommandRunner
 
 logger = FlextLogger.create_module_logger(__name__)
 

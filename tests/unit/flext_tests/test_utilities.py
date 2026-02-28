@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult, r
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities
 
 from tests.test_utils import assertion_helpers
 

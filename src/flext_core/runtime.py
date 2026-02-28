@@ -70,7 +70,6 @@ from structlog.processors import (
 from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
-from flext_core._runtime_metadata import Metadata
 
 _module_logger = logging.getLogger(__name__)
 
@@ -82,7 +81,8 @@ class _LazyMetadata:
         self,
         obj: object,
         objtype: type | None = None,
-    ) -> type[Metadata]:
+    ) -> type:
+        from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
 
         # Cache the loaded class on the class itself
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
@@ -167,7 +167,7 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
-    Metadata: ClassVar[type[Metadata]] = _LazyMetadata()
+    Metadata: ClassVar[type] = _LazyMetadata()
 
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.
@@ -1227,9 +1227,7 @@ class FlextRuntime:
                 else None
             )
             if print_logger_factory is not None:
-                factory_to_use = print_logger_factory(
-                    file=cls._async_writer
-                )
+                factory_to_use = print_logger_factory(file=cls._async_writer)
             else:
                 factory_to_use = module.PrintLoggerFactory()
         else:

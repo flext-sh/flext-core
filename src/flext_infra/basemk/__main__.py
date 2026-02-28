@@ -8,10 +8,9 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
+from flext_infra import m, output
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator
-from flext_infra.models import m
-from flext_infra.output import output
 
 
 def _build_config(project_name: str | None) -> m.BaseMkConfig | None:

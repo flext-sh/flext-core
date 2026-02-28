@@ -32,7 +32,7 @@ from flext_core import (
     U,
     t,
 )
-from flext_tests.matchers import tm
+from flext_tests import tm
 from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,

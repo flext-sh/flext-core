@@ -24,7 +24,7 @@ from flext_core import (
     FlextTypes,
     T,
 )
-from flext_tests.base import FlextTestsServiceBase
+from flext_tests import FlextTestsServiceBase
 
 from tests.constants import TestsFlextConstants
 

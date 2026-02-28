@@ -80,7 +80,7 @@ class _ProtocolIntrospection:
                 not m.startswith("_")
                 or m.startswith("__")
                 or m == "_protocol_name"
-                or m in ("metadata_extra", "sealed")
+                or m in {"metadata_extra", "sealed"}
             )
         }
 
@@ -163,7 +163,7 @@ class _ProtocolIntrospection:
                 not m.startswith("_")
                 or m.startswith("__")
                 or m == "_protocol_name"
-                or m in ("metadata_extra", "sealed")
+                or m in {"metadata_extra", "sealed"}
             )
         }
 

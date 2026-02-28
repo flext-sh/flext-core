@@ -88,8 +88,8 @@ class TestContext100Coverage:
         # Verify merged data
         result2 = merged.get("key2")
         result3 = merged.get("key3")
-        u.Tests.Result.assert_success($$$)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result2)
+        u.Tests.Result.assert_success(result3)
 
     def test_merge_with_context(self) -> None:
         """Test merge with another context."""
@@ -105,8 +105,8 @@ class TestContext100Coverage:
         # Verify merged data
         result1 = merged.get("key1")
         result2 = merged.get("key2")
-        u.Tests.Result.assert_success($$$)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result1)
+        u.Tests.Result.assert_success(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -118,13 +118,13 @@ class TestContext100Coverage:
 
         # Verify cloned has same data
         result = cloned.get("key1")
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
         assert result.value == "value1"
 
         # Modify original - clone should be independent
         context1.set("key1", "modified").value
         cloned_result = cloned.get("key1")
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(cloned_result)
         assert cloned_result.value == "value1"  # Clone unchanged
 
     def test_validate_success(self) -> None:
@@ -133,7 +133,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
 
         result = context.validate()
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
 
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""

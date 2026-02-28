@@ -15,10 +15,7 @@ from pathlib import Path
 from flext_core import FlextResult, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra.constants import c
-from flext_infra.json_io import JsonService
-from flext_infra.selection import ProjectSelector
-from flext_infra.templates import TemplateEngine
+from flext_infra import JsonService, ProjectSelector, TemplateEngine, c
 
 
 class SyncOperation(BaseModel):

@@ -9,10 +9,8 @@ from typing import Protocol, TextIO, override
 
 from flext_core import FlextService, r, t
 
+from flext_infra import CommandRunner, c, m
 from flext_infra.basemk.engine import TemplateEngine
-from flext_infra.constants import c
-from flext_infra.models import m
-from flext_infra.subprocess import CommandRunner
 
 
 class _TemplateRenderer(Protocol):

@@ -14,10 +14,7 @@ import logging
 from collections.abc import MutableMapping
 from typing import Protocol, runtime_checkable
 
-from flext_core.constants import c
-from flext_core.protocols import FlextProtocols as p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import FlextProtocols as p, c, r, t
 
 
 @runtime_checkable
@@ -111,10 +108,10 @@ class FlextDispatcher:
             self._logger.info("Registered handler for %s", route_name)
 
         return r[bool].ok(value=True)
+
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection."""
         return "core-command-bus"
-
 
     def dispatch(
         self,

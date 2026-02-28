@@ -18,14 +18,17 @@ from flext_core import FlextLogger, FlextService, r, t
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 from tomlkit import items
 
-from flext_infra.constants import c
-from flext_infra.discovery import DiscoveryService
-from flext_infra.json_io import JsonService
-from flext_infra.models import m
-from flext_infra.output import output
-from flext_infra.paths import PathResolver
-from flext_infra.reporting import REPORTS_DIR_NAME, ReportingService
-from flext_infra.subprocess import CommandRunner
+from flext_infra import (
+    REPORTS_DIR_NAME,
+    CommandRunner,
+    DiscoveryService,
+    JsonService,
+    PathResolver,
+    ReportingService,
+    c,
+    m,
+    output,
+)
 
 DEFAULT_GATES = c.Gates.DEFAULT_CSV
 _REQUIRED_EXCLUDES = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
@@ -363,12 +366,16 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._json = JsonService()
         self._runner = CommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
-        report_dir = self._reporting.get_report_dir(self._workspace_root, "project", "check")
+        report_dir = self._reporting.get_report_dir(
+            self._workspace_root, "project", "check"
+        )
         try:
             report_dir.mkdir(parents=True, exist_ok=True)
             self._default_reports_dir = report_dir
         except OSError:
-            self._default_reports_dir = self._workspace_root / REPORTS_DIR_NAME / "check"
+            self._default_reports_dir = (
+                self._workspace_root / REPORTS_DIR_NAME / "check"
+            )
 
     @override
     def execute(self) -> r[list[_ProjectResult]]:

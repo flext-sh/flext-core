@@ -18,11 +18,7 @@ from typing import Literal, Self, TypeGuard, overload
 from flext_core import r
 from pydantic import BaseModel
 
-from flext_tests.constants import c
-from flext_tests.factories import tt
-from flext_tests.models import m
-from flext_tests.typings import t
-from flext_tests.utilities import u
+from flext_tests import c, m, t, tt, u
 
 
 class FlextTestsBuilders:

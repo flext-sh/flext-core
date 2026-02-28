@@ -20,7 +20,7 @@ from typing import TypedDict
 
 from flext_core import FlextModels, FlextProtocols, FlextTypes, m, t
 from flext_core._models.collections import FlextModelsCollections
-from flext_tests.models import FlextTestsModels
+from flext_tests import FlextTestsModels
 
 
 class TestsFlextModels:

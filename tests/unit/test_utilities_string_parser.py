@@ -32,8 +32,7 @@ from flext_core import (
     m,
     t,
 )
-from flext_tests import u
-from flext_tests.typings import t as tests_t
+from flext_tests import t as tests_t, u
 
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels

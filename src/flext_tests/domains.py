@@ -14,8 +14,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping, MutableMapping
 
-from flext_tests.factories import tt
-from flext_tests.typings import t
+from flext_tests import t, tt
 
 
 class FlextTestsDomains:

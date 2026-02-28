@@ -366,7 +366,7 @@ class TestFlextUtilitiesArgs:
 
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             if scenario.expected_success:
-                u.Tests.Result.assert_success($$$)
+                u.Tests.Result.assert_success(result)
                 parsed = result.value
                 if scenario.expected_status:
                     assert parsed["status"] == scenario.expected_status

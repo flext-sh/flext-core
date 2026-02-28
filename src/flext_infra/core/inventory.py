@@ -15,8 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra.constants import c
-from flext_infra.json_io import JsonService
+from flext_infra import JsonService, c
 
 
 class InventoryService:

@@ -24,8 +24,7 @@ import math
 from datetime import datetime
 
 import pytest
-from flext_core import m, t
-from flext_core._models import entity as _entity_module
+from flext_core import entity as _entity_module, m, t
 from pydantic import ValidationError, field_validator
 
 FlextModelsCqrs = m.Cqrs

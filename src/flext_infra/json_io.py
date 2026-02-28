@@ -16,7 +16,7 @@ from pathlib import Path
 from flext_core import FlextResult, r, t
 from pydantic import BaseModel
 
-from flext_infra.constants import c
+from flext_infra import c
 
 
 class JsonService:

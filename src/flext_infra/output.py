@@ -294,7 +294,7 @@ class InfraOutput:
 
 
 output: Final[InfraOutput] = InfraOutput()
-"""Module-level singleton for direct use: ``from flext_infra.output import output``."""
+"""Module-level singleton for direct use: ``from flext_infra import output``."""
 
 __all__ = [
     "BLUE",

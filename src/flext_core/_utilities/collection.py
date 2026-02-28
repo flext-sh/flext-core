@@ -1,6 +1,6 @@
 """Utilities module - FlextUtilitiesCollection.
 
-Extracted from flext_core.utilities for better modularity.
+Extracted from flext_core for better modularity.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

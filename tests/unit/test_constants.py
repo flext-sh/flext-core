@@ -25,8 +25,7 @@ from typing import ClassVar
 
 import pytest
 from flext_core import c
-from flext_tests import tm
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, tm
 
 
 @dataclass(frozen=True, slots=True)

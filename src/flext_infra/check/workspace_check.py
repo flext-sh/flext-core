@@ -5,9 +5,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from flext_infra import REPORTS_DIR_NAME, output
 from flext_infra.check.services import DEFAULT_GATES, WorkspaceChecker
-from flext_infra.output import output
-from flext_infra.reporting import REPORTS_DIR_NAME
 
 
 def main(argv: list[str] | None = None) -> int:

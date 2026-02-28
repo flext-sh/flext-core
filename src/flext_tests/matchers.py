@@ -63,10 +63,7 @@ from typing import TypeGuard, TypeVar
 from flext_core import r, t as core_t
 from pydantic import BaseModel, RootModel
 
-from flext_tests.constants import c
-from flext_tests.models import m
-from flext_tests.typings import t
-from flext_tests.utilities import u
+from flext_tests import c, m, t, u
 
 TK = TypeVar("TK")
 TV = TypeVar("TV")

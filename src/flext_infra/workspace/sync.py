@@ -18,10 +18,8 @@ from typing import override
 
 from flext_core import FlextService, r
 
+from flext_infra import c, m, output
 from flext_infra.basemk.generator import BaseMkGenerator
-from flext_infra.constants import c
-from flext_infra.models import m
-from flext_infra.output import output
 
 # Patterns that MUST be in every subproject .gitignore.
 _REQUIRED_GITIGNORE_ENTRIES: list[str] = [

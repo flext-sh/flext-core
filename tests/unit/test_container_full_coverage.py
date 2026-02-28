@@ -368,7 +368,10 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
     _ = FlextContainer.create(auto_register_factories=True)
     wrapper = captured["factory.captured"]
     assert wrapper() == 7
-    assert wrapper(fn=123) == ""
+    assert (
+        wrapper(_factory_config=types.SimpleNamespace(fn=123, name="factory.captured"))
+        == ""
+    )
     monkeypatch.setattr(FlextContainer, "register_factory", original_register)
 
 

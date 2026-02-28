@@ -15,9 +15,7 @@ from pathlib import Path
 
 from flext_core import r
 
-from flext_tests.constants import c
-from flext_tests.models import m
-from flext_tests.utilities import u
+from flext_tests import c, m, u
 
 
 class FlextValidatorImports:
@@ -282,12 +280,12 @@ class FlextValidatorImports:
         """Detect non-root imports from flext-* packages internal modules.
 
         Detects imports from internal modules (prefixed with _) like:
-        - from flext_core._models import domain  (violation)
-        - from flext_tests._validator import imports  (violation)
+        - from flext_core import domain  (violation)
+        - from flext_tests import imports  (violation)
 
         Allows public module imports:
         - from flext_core import r  (OK)
-        - from flext_tests.models import m  (OK)
+        - from flext_tests import m  (OK)
 
         Allows __init__.py inside internal packages to import sibling modules:
         - _validator/__init__.py can import from flext_tests._validator.* (OK)

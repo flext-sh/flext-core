@@ -11,10 +11,8 @@ from flext_core import FlextService, r
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
+from flext_infra import DiscoveryService, c, m
 from flext_infra.basemk.generator import BaseMkGenerator
-from flext_infra.constants import c
-from flext_infra.discovery import DiscoveryService
-from flext_infra.models import m
 
 _MAKEFILE_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     # scripts/ path → unified CLI: detection

@@ -11,7 +11,7 @@ import tomlkit
 from flext_core import FlextLogger, t
 from tomlkit.items import Array, Item, Table
 
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner
 
 _logger = FlextLogger(__name__)
 

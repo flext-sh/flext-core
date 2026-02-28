@@ -19,14 +19,12 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.constants import c
+from flext_infra import REPORTS_DIR_NAME, c, output
 from flext_infra.docs.auditor import DocAuditor
 from flext_infra.docs.builder import DocBuilder
 from flext_infra.docs.fixer import DocFixer
 from flext_infra.docs.generator import DocGenerator
 from flext_infra.docs.validator import DocValidator
-from flext_infra.output import output
-from flext_infra.reporting import REPORTS_DIR_NAME
 
 
 def _run_audit(args: argparse.Namespace) -> int:

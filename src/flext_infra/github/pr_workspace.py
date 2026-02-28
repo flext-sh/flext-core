@@ -16,11 +16,7 @@ from pathlib import Path
 
 from flext_core import r, t
 
-from flext_infra.constants import c
-from flext_infra.git import GitService
-from flext_infra.reporting import ReportingService
-from flext_infra.selection import ProjectSelector
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner, GitService, ProjectSelector, ReportingService, c
 
 type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.ScalarValue]]]
 

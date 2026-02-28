@@ -31,17 +31,17 @@ from typing import ClassVar
 
 from flext_core import r
 
-from flext_tests._validator import (
+from flext_tests import (
     FlextValidatorBypass,
     FlextValidatorImports,
     FlextValidatorLayer,
     FlextValidatorSettings,
     FlextValidatorTests,
     FlextValidatorTypes,
+    c,
+    m,
+    s,
 )
-from flext_tests.base import s
-from flext_tests.constants import c
-from flext_tests.models import m
 
 
 class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):

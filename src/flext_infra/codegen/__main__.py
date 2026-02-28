@@ -15,8 +15,8 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
+from flext_infra import output
 from flext_infra.codegen.lazy_init import LazyInitGenerator
-from flext_infra.output import output
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from flext_core import m, t, u
@@ -105,7 +105,7 @@ class TestFlextModelsContainer:
                 m.Container.ServiceRegistration(
                     name="test_service",
                     service="test_value",
-                        metadata=metadata_value,
+                    metadata=metadata_value,
                 )
 
     def test_service_registration_defaults(self) -> None:
@@ -162,7 +162,7 @@ class TestFlextModelsContainer:
             registration = m.Container.FactoryRegistration(
                 name="test_factory",
                 factory=factory,
-                    metadata=metadata_value,
+                metadata=metadata_value,
             )
             # metadata=None triggers validator that creates default Metadata
             # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
@@ -173,7 +173,7 @@ class TestFlextModelsContainer:
                 m.Container.FactoryRegistration(
                     name="test_factory",
                     factory=factory,
-                        metadata=metadata_value,
+                    metadata=metadata_value,
                 )
 
     def test_factory_registration_defaults(self) -> None:

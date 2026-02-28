@@ -14,8 +14,7 @@ from pathlib import Path
 from flext_core._models.entity import FlextModelsEntity
 from pydantic import Field
 
-from flext_tests.constants import FlextTestsConstants, c
-from flext_tests.models import m
+from flext_tests import FlextTestsConstants, c, m
 
 # Type aliases for readability
 type _SeverityLiteral = FlextTestsConstants.Tests.Validator.SeverityLiteral

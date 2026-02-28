@@ -37,10 +37,7 @@ from flext_core import (
 )
 from pydantic import BaseModel
 
-from flext_tests.constants import c
-from flext_tests.models import m
-from flext_tests.protocols import p
-from flext_tests.typings import t
+from flext_tests import c, m, p, t
 
 
 def _to_scalar(value: object) -> core_t.ScalarValue:

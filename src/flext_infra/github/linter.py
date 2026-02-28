@@ -15,8 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra.json_io import JsonService
-from flext_infra.subprocess import CommandRunner
+from flext_infra import CommandRunner, JsonService
 
 
 class WorkflowLinter:

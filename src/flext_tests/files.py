@@ -37,11 +37,7 @@ from flext_core import FlextRuntime, r
 from pydantic import BaseModel
 from yaml import YAMLError, dump as yaml_dump, safe_load as yaml_safe_load
 
-from flext_tests.base import s
-from flext_tests.constants import c
-from flext_tests.models import m
-from flext_tests.typings import t
-from flext_tests.utilities import u
+from flext_tests import c, m, s, t, u
 
 # TypeVar for Pydantic model loading (after imports for proper BaseModel reference)
 TModel = TypeVar("TModel", bound=BaseModel)

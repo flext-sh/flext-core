@@ -209,7 +209,7 @@ class TestFlextMixinsNestedClasses:
         service = MyService()
         if scenario.scenario_type == ServiceMixinScenarioType.CONTAINER_REGISTER:
             result = service._register_in_container("test_service")
-            u.Tests.Result.assert_success($$$)
+            u.Tests.Result.assert_success(result)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPERTY:
             assert isinstance(service.context, FlextContext)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPAGATE:

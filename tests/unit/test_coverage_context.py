@@ -38,7 +38,7 @@ class TestServiceDomain:
         test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
         assert result.value is test_service_obj
 
     def test_register_service(self) -> None:
@@ -46,7 +46,7 @@ class TestServiceDomain:
         FlextContext.set_container(container)
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(result)
 
     def test_get_nonexistent_service(self) -> None:
         container = FlextContainer(_context=FlextContext())

@@ -17,10 +17,8 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.output import output
-from flext_infra.paths import PathResolver
+from flext_infra import PathResolver, VersioningService, output
 from flext_infra.release.orchestrator import ReleaseOrchestrator
-from flext_infra.versioning import VersioningService
 
 
 def _parse_args() -> argparse.Namespace:

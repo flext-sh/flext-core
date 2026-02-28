@@ -13,7 +13,7 @@ import pytest
 from flext_core import (
     u,
 )
-from flext_tests.domains import FlextTestsDomains
+from flext_tests import FlextTestsDomains
 
 
 class TestFlextTestsDomains:

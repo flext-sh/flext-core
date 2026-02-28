@@ -17,8 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, p, r
 from flext_tests import u
 
@@ -92,7 +90,7 @@ class TestServiceBootstrap:
 
         # Assert - service registered in container
         service_result = runtime.container.get("test_key")
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(service_result)
         # Assert
         assert hasattr(runtime, "container")
 
@@ -110,7 +108,7 @@ class TestServiceBootstrap:
 
         # Assert - factory registered in container
         factory_result = runtime.container.get("test_factory")
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(factory_result)
         # Assert
         assert hasattr(runtime, "container")
 
@@ -128,7 +126,7 @@ class TestServiceBootstrap:
 
         # Assert - resource registered in container
         resource_result = runtime.container.get("test_resource")
-        u.Tests.Result.assert_success($$$)
+        u.Tests.Result.assert_success(resource_result)
         # Assert
         assert hasattr(runtime, "container")
 

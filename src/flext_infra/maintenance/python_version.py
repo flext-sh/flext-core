@@ -31,8 +31,7 @@ from typing import override
 
 from flext_core import FlextLogger, FlextService, r
 
-from flext_infra.constants import c
-from flext_infra.discovery import DiscoveryService
+from flext_infra import DiscoveryService, c
 
 logger = FlextLogger.create_module_logger(__name__)
 
