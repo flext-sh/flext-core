@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from flext_infra.codegen import FlextInfraLazyInitGenerator
     from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
     from flext_infra.discovery import FlextInfraDiscoveryService
+    from flext_infra.dispatcher import FlextInfraDispatcher
     from flext_infra.git import FlextInfraGitService
     from flext_infra.github import (
         FlextInfraPrManager,
@@ -109,6 +110,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.discovery",
         "FlextInfraDiscoveryService",
     ),
+    "FlextInfraDispatcher": ("flext_infra.dispatcher", "FlextInfraDispatcher"),
     "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
     "FlextInfraJsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
     "FlextInfraLazyInitGenerator": (
@@ -172,6 +174,7 @@ __all__ = [
     "FlextInfraCommandRunner",
     "FlextInfraConstants",
     "FlextInfraDiscoveryService",
+    "FlextInfraDispatcher",
     "FlextInfraGitService",
     "FlextInfraInventoryService",
     "FlextInfraJsonService",
