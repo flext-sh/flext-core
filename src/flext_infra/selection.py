@@ -36,7 +36,8 @@ class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
             FlextResult with empty list by default.
 
         """
-        return r[list[m.ProjectInfo]].ok([]
+        return r[list[m.ProjectInfo]].ok([])
+
 
     def resolve_projects(
         self,

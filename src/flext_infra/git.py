@@ -80,9 +80,7 @@ class FlextInfraGitService(FlextService[FlextResult[str]]):
 
     def execute(self) -> FlextResult[str]:
         """Execute the service (required by FlextService base class)."""
-        return r[str].ok("git service ready")
+        return r[str].ok("")
 
 
 __all__ = ["FlextInfraGitService"]
-
-        """Execute the service (required by FlextService base class)."""

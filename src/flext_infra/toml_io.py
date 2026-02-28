@@ -110,6 +110,7 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
             )
         except OSError as exc:
             return r[bool].fail(f"TOML write error: {exc}")
+        return r[bool].ok(True)
 
     @staticmethod
     def value_differs(current: t.ConfigMapValue, expected: t.ConfigMapValue) -> bool:
@@ -128,7 +129,7 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
         for key, value in data.items():
             nested_mapping = _as_toml_mapping(value)
             if nested_mapping is not None:
-                table[key] = TomlService.build_table(nested_mapping)
+                table[key] = FlextInfraTomlService.build_table(nested_mapping)
             else:
                 table[key] = value
         return table
@@ -186,7 +187,6 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
-
 __all__ = ["FlextInfraTomlService"]
 
-        """Execute the service (required by FlextService base class)."""
+

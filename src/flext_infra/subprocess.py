@@ -197,9 +197,10 @@ class FlextInfraCommandRunner(FlextService[FlextResult[m.CommandOutput]]):
             return r[str].ok(value.stdout.strip())
         return r[str].fail(result.error or "capture failed")
 
-
-__all__ = ["FlextInfraCommandRunner"]
-
     def execute(self) -> FlextResult[m.CommandOutput]:
         """Execute the service (required by FlextService base class)."""
         return r[m.CommandOutput].ok(m.CommandOutput(stdout="", stderr="", exit_code=0))
+
+
+__all__ = ["FlextInfraCommandRunner"]
+

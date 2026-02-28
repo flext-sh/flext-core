@@ -20,6 +20,15 @@ import subprocess  # noqa: S404
 from collections import defaultdict
 from pathlib import Path
 
+from flext_core import FlextService
+from flext_infra.output import output
+
+import ast
+import contextlib
+import subprocess  # noqa: S404
+from collections import defaultdict
+from pathlib import Path
+
 from flext_infra.output import output
 
 _ALIAS_TO_SUFFIX: dict[str, str] = {
@@ -54,7 +63,7 @@ _SKIP_STDLIB: frozenset[str] = frozenset({
 _MAX_LINE_LENGTH = 88
 
 
-class LazyInitGenerator:
+class FlextInfraLazyInitGenerator(FlextService[int]):
     """Generates ``__init__.py`` with PEP 562 lazy imports.
 
     This service scans ``__init__.py`` files under ``src/`` directories in a

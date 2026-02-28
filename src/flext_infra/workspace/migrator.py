@@ -75,12 +75,12 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
     def __init__(
         self,
         *,
-        discovery: DiscoveryService | None = None,
+        discovery: FlextInfraDiscoveryService | None = None,
         generator: BaseMkGenerator | None = None,
     ) -> None:
         """Initialize migrator with optional custom discovery and generator services."""
         super().__init__()
-        self._discovery = discovery or DiscoveryService()
+        self._discovery = discovery or FlextInfraDiscoveryService()
         self._generator = generator or BaseMkGenerator()
 
     @override

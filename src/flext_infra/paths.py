@@ -84,5 +84,3 @@ class FlextInfraPathResolver(FlextService[Path]):
 
 
 __all__ = ["FlextInfraPathResolver"]
-
-        """Execute the service (required by FlextService base class)."""

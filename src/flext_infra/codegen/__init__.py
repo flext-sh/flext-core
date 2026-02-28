@@ -14,15 +14,15 @@ from typing import TYPE_CHECKING, Any
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.codegen.lazy_init import LazyInitGenerator
+    from flext_infra.codegen.lazy_init import FlextInfraLazyInitGenerator
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "LazyInitGenerator": ("flext_infra.codegen.lazy_init", "LazyInitGenerator"),
+    "FlextInfraLazyInitGenerator": ("flext_infra.codegen.lazy_init", "FlextInfraLazyInitGenerator"),
 }
 
 __all__ = [
-    "LazyInitGenerator",
+    "FlextInfraLazyInitGenerator",
 ]
 
 
