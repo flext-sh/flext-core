@@ -115,17 +115,8 @@ class TestFlextInfraDocAuditor:
 
     def test_audit_report_frozen(self) -> None:
         """Test AuditReport is frozen (immutable)."""
-        report = AuditReport(scope="test", issues=[])
-        with pytest.raises(Exception):  # pydantic frozen raises
-            report.scope = "modified"  # type: ignore
+        assert AuditReport.model_config.get("frozen") is True
 
     def test_audit_issue_frozen(self) -> None:
         """Test AuditIssue is frozen (immutable)."""
-        issue = AuditIssue(
-            file="test.md",
-            issue_type="test",
-            severity="low",
-            message="test",
-        )
-        with pytest.raises(Exception):  # pydantic frozen raises
-            issue.file = "modified"  # type: ignore
+        assert AuditIssue.model_config.get("frozen") is True

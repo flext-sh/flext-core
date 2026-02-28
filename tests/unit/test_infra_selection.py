@@ -127,7 +127,9 @@ class TestFlextInfraProjectSelector:
         result = selector.resolve_projects(nonexistent, ["alpha"])
 
         assert result.is_failure
-        assert result.error and ("discovery failed" in result.error or "failed" in result.error)
+        assert result.error and (
+            "discovery failed" in result.error or "failed" in result.error
+        )
 
     def test_resolve_projects_sorted_output(
         self,

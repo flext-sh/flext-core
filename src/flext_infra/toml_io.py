@@ -91,7 +91,7 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | Mapping[str, t.ConfigMapValue],
+        payload: tomlkit.TOMLDocument | MutableMapping[str, t.ConfigMapValue],
     ) -> FlextResult[bool]:
         """Write a TOML payload to a file.
 

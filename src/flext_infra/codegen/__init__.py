@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraLazyInitGenerator": ("flext_infra.codegen.lazy_init", "FlextInfraLazyInitGenerator"),
+    "FlextInfraLazyInitGenerator": (
+        "flext_infra.codegen.lazy_init",
+        "FlextInfraLazyInitGenerator",
+    ),
 }
 
 __all__ = [

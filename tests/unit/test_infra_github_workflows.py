@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import Mock
 
-from flext_core import r
 from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
 
 
@@ -32,18 +31,7 @@ class TestSyncOperation:
 
     def test_sync_operation_frozen(self) -> None:
         """Test that SyncOperation is immutable."""
-        op = SyncOperation(
-            project="flext-core",
-            path=".github/workflows/ci.yml",
-            action="create",
-            reason="New workflow file",
-        )
-
-        try:
-            op.project = "flext-api"  # type: ignore
-            assert False, "Should not be able to modify frozen model"
-        except Exception:
-            pass
+        assert SyncOperation.model_config.get("frozen") is True
 
 
 class TestFlextInfraWorkflowSyncer:

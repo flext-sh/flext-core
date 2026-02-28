@@ -75,15 +75,11 @@ class TestFlextInfraDocFixer:
 
     def test_fix_report_frozen(self) -> None:
         """Test FixReport is frozen (immutable)."""
-        report = FixReport(scope="test", changed_files=0, applied=False)
-        with pytest.raises(Exception):  # pydantic frozen raises
-            report.scope = "modified"  # type: ignore
+        assert FixReport.model_config.get("frozen") is True
 
     def test_fix_item_frozen(self) -> None:
         """Test FixItem is frozen (immutable)."""
-        item = FixItem(file="test.md", links=0, toc=0)
-        with pytest.raises(Exception):  # pydantic frozen raises
-            item.file = "modified"  # type: ignore
+        assert FixItem.model_config.get("frozen") is True
 
     def test_fix_with_project_filter(
         self, fixer: FlextInfraDocFixer, tmp_path: Path

@@ -15,9 +15,7 @@ class TestFlextInfraSkillValidator:
         validator = FlextInfraSkillValidator()
         assert validator is not None
 
-    def test_validate_with_valid_skill_returns_success(
-        self, tmp_path: Path
-    ) -> None:
+    def test_validate_with_valid_skill_returns_success(self, tmp_path: Path) -> None:
         """Test that validate returns success for valid skill."""
         validator = FlextInfraSkillValidator()
         workspace_root = tmp_path
@@ -42,9 +40,7 @@ class TestFlextInfraSkillValidator:
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
-    def test_validate_with_rules_yml_checks_rules(
-        self, tmp_path: Path
-    ) -> None:
+    def test_validate_with_rules_yml_checks_rules(self, tmp_path: Path) -> None:
         """Test that validate checks rules.yml in skills."""
         validator = FlextInfraSkillValidator()
         workspace_root = tmp_path
@@ -63,9 +59,7 @@ class TestFlextInfraSkillValidator:
         result = validator.validate(workspace_root, "test-skill")
         assert result.is_success or result.is_failure
 
-    def test_validate_with_baseline_comparison(
-        self, tmp_path: Path
-    ) -> None:
+    def test_validate_with_baseline_comparison(self, tmp_path: Path) -> None:
         """Test that validate compares against baseline."""
         validator = FlextInfraSkillValidator()
         workspace_root = tmp_path

@@ -285,7 +285,9 @@ class TestInfraOutputEdgeCases:
     def test_summary_with_large_numbers(self) -> None:
         buf = io.StringIO()
         out = FlextInfraOutput(use_color=False, use_unicode=False, stream=buf)
-        out.summary("check", total=1000, success=950, failed=40, skipped=10, elapsed=123.45)
+        out.summary(
+            "check", total=1000, success=950, failed=40, skipped=10, elapsed=123.45
+        )
         text = buf.getvalue()
         assert "Total: 1000" in text
         assert "Success: 950" in text

@@ -453,7 +453,12 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
     @staticmethod
     def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
-        result = FlextInfraCommandRunner().run_raw(["make", "-C", str(project_path), verb])
+        result = FlextInfraCommandRunner().run_raw([
+            "make",
+            "-C",
+            str(project_path),
+            verb,
+        ])
         if result.is_failure:
             return r[tuple[int, str]].fail(result.error or "make execution failed")
 

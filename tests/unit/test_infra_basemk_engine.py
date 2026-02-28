@@ -66,7 +66,9 @@ def test_generator_renders_with_config_override() -> None:
 
 
 def test_generator_fails_for_invalid_make_syntax() -> None:
-    result = FlextInfraBaseMkGenerator(template_engine=_InvalidTemplateEngine()).generate()
+    result = FlextInfraBaseMkGenerator(
+        template_engine=_InvalidTemplateEngine()
+    ).generate()
 
     assert result.is_failure
     assert result.error is not None

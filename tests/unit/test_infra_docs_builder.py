@@ -61,14 +61,7 @@ class TestFlextInfraDocBuilder:
 
     def test_build_report_frozen(self) -> None:
         """Test BuildReport is frozen (immutable)."""
-        report = BuildReport(
-            scope="test",
-            result="OK",
-            reason="Build successful",
-            site_dir="/tmp/site",
-        )
-        with pytest.raises(Exception):  # pydantic frozen raises
-            report.scope = "modified"  # type: ignore
+        assert BuildReport.model_config.get("frozen") is True
 
     def test_build_with_project_filter(
         self, builder: FlextInfraDocBuilder, tmp_path: Path

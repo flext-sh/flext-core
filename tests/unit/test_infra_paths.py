@@ -113,9 +113,9 @@ class TestFlextInfraPathResolver:
         # Should still succeed (Path.resolve() doesn't validate existence)
         assert result.is_success
 
-    def test_workspace_root_from_file_invalid_type(self) -> None:
-        """Test workspace root resolution with invalid type."""
+    def test_workspace_root_from_file_nonexistent(self) -> None:
+        """Test workspace root resolution with nonexistent file."""
         resolver = FlextInfraPathResolver()
-        result = resolver.workspace_root_from_file(None)  # type: ignore
+        result = resolver.workspace_root_from_file(Path("/nonexistent/impossible/file.py"))
 
         assert result.is_failure

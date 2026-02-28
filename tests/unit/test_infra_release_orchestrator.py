@@ -222,7 +222,7 @@ class TestFlextInfraReleaseOrchestrator:
         orchestrator = FlextInfraReleaseOrchestrator()
         call_count = 0
 
-        def mock_dispatch(phase: str, *args, **kwargs) -> r[bool]:
+        def mock_dispatch(phase: str, *args: str, **kwargs: str) -> r[bool]:
             nonlocal call_count
             call_count += 1
             if phase == "validate":

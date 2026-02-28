@@ -218,7 +218,10 @@ class FlextInfraDocFixer:
     def _update_toc(self, content: str) -> tuple[str, int]:
         """Insert or replace the TOC in content, returning (updated, changed)."""
         toc = self._build_toc(content)
-        if FlextInfraTemplateEngine.TOC_START in content and FlextInfraTemplateEngine.TOC_END in content:
+        if (
+            FlextInfraTemplateEngine.TOC_START in content
+            and FlextInfraTemplateEngine.TOC_END in content
+        ):
             updated = re.sub(
                 r"<!-- TOC START -->.*?<!-- TOC END -->",
                 toc,

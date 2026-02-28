@@ -329,7 +329,10 @@ class FlextInfraDocGenerator:
     def _update_toc(self, content: str) -> str:
         """Insert or replace TOC markers in markdown content."""
         toc = self._build_toc(content)
-        if FlextInfraTemplateEngine.TOC_START in content and FlextInfraTemplateEngine.TOC_END in content:
+        if (
+            FlextInfraTemplateEngine.TOC_START in content
+            and FlextInfraTemplateEngine.TOC_END in content
+        ):
             return re.sub(
                 r"<!-- TOC START -->.*?<!-- TOC END -->",
                 toc,

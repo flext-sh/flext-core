@@ -16,9 +16,7 @@ class TestFlextInfraStubSupplyChain:
         assert chain is not None
         assert hasattr(chain, "_runner")
 
-    def test_analyze_with_valid_project_returns_success(
-        self, tmp_path: Path
-    ) -> None:
+    def test_analyze_with_valid_project_returns_success(self, tmp_path: Path) -> None:
         """Test that analyze returns success for valid project."""
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
@@ -42,9 +40,7 @@ class TestFlextInfraStubSupplyChain:
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
-    def test_analyze_detects_missing_imports(
-        self, tmp_path: Path
-    ) -> None:
+    def test_analyze_detects_missing_imports(self, tmp_path: Path) -> None:
         """Test that analyze detects missing imports."""
         chain = FlextInfraStubSupplyChain()
         project_dir = tmp_path
@@ -59,9 +55,7 @@ class TestFlextInfraStubSupplyChain:
         result = chain.analyze(project_dir, workspace_root)
         assert result.is_success or result.is_failure
 
-    def test_validate_with_workspace_root_returns_success(
-        self, tmp_path: Path
-    ) -> None:
+    def test_validate_with_workspace_root_returns_success(self, tmp_path: Path) -> None:
         """Test that validate returns success for workspace."""
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path
@@ -80,9 +74,7 @@ class TestFlextInfraStubSupplyChain:
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
-    def test_validate_with_project_dirs_filters_projects(
-        self, tmp_path: Path
-    ) -> None:
+    def test_validate_with_project_dirs_filters_projects(self, tmp_path: Path) -> None:
         """Test that validate respects project_dirs filter."""
         chain = FlextInfraStubSupplyChain()
         workspace_root = tmp_path

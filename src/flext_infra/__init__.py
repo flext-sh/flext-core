@@ -116,10 +116,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.release",
         "FlextInfraReleaseOrchestrator",
     ),
-    "FlextInfraReleaseOrchestrator": (
-        "flext_infra.release",
-        "FlextInfraReleaseOrchestrator",
-    ),
     "FlextInfraReportingService": (
         "flext_infra.reporting",
         "FlextInfraReportingService",

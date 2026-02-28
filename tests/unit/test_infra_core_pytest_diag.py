@@ -15,9 +15,7 @@ class TestFlextInfraPytestDiagExtractor:
         extractor = FlextInfraPytestDiagExtractor()
         assert extractor is not None
 
-    def test_extract_with_valid_junit_xml_returns_success(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_with_valid_junit_xml_returns_success(self, tmp_path: Path) -> None:
         """Test that extract returns success for valid JUnit XML."""
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
@@ -46,9 +44,7 @@ class TestFlextInfraPytestDiagExtractor:
         assert hasattr(result, "is_success")
         assert hasattr(result, "is_failure")
 
-    def test_extract_with_failed_tests_reports_failures(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_with_failed_tests_reports_failures(self, tmp_path: Path) -> None:
         """Test that extract reports failed tests."""
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"
@@ -63,9 +59,7 @@ class TestFlextInfraPytestDiagExtractor:
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success or result.is_failure
 
-    def test_extract_with_skipped_tests_reports_skips(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_with_skipped_tests_reports_skips(self, tmp_path: Path) -> None:
         """Test that extract reports skipped tests."""
         extractor = FlextInfraPytestDiagExtractor()
         junit_xml = tmp_path / "junit.xml"

@@ -72,20 +72,11 @@ class TestFlextInfraDocGenerator:
 
     def test_generate_report_frozen(self) -> None:
         """Test GenerateReport is frozen (immutable)."""
-        report = GenerateReport(
-            scope="test",
-            generated=0,
-            applied=False,
-            source="test-source",
-        )
-        with pytest.raises(Exception):  # pydantic frozen raises
-            report.scope = "modified"  # type: ignore
+        assert GenerateReport.model_config.get("frozen") is True
 
     def test_generated_file_frozen(self) -> None:
         """Test GeneratedFile is frozen (immutable)."""
-        file = GeneratedFile(path="test.md", written=False)
-        with pytest.raises(Exception):  # pydantic frozen raises
-            file.path = "modified"  # type: ignore
+        assert GeneratedFile.model_config.get("frozen") is True
 
     def test_generate_with_project_filter(
         self, generator: FlextInfraDocGenerator, tmp_path: Path

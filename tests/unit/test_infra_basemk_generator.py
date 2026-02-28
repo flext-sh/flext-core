@@ -8,17 +8,10 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
-from typing import Protocol
 
 from flext_core import FlextResult as r
 from flext_infra import m as im
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
-
-
-class _MockTemplateRenderer(Protocol):
-    """Mock template renderer for testing."""
-
-    def render_all(self, config: im.BaseMkConfig | None = None) -> r[str]: ...
 
 
 class _SuccessRenderer:

@@ -100,7 +100,9 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
                     # 1. Sync base.mk (copy from canonical or generate)
                     effective_root = canonical_root or self._canonical_root
                     basemk_result = self._sync_basemk(
-                        resolved, config, canonical_root=effective_root,
+                        resolved,
+                        config,
+                        canonical_root=effective_root,
                     )
                     if basemk_result.is_failure:
                         return r[m.SyncResult].fail(
@@ -145,9 +147,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
         """
         # Prefer canonical root copy over template generation
         canonical_basemk = (
-            canonical_root / "base.mk"
-            if canonical_root is not None
-            else None
+            canonical_root / "base.mk" if canonical_root is not None else None
         )
         if (
             canonical_basemk is not None

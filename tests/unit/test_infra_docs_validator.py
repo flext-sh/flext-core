@@ -62,13 +62,7 @@ class TestFlextInfraDocValidator:
 
     def test_validate_report_frozen(self) -> None:
         """Test ValidateReport is frozen (immutable)."""
-        report = ValidateReport(
-            scope="test",
-            result="PASS",
-            message="Validation passed",
-        )
-        with pytest.raises(Exception):  # pydantic frozen raises
-            report.scope = "modified"  # type: ignore
+        assert ValidateReport.model_config.get("frozen") is True
 
     def test_validate_report_missing_adr_skills_field(self) -> None:
         """Test ValidateReport missing_adr_skills field."""
