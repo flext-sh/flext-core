@@ -758,12 +758,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 r = FlextResult
 
 
-def is_success_result(value: _RuntimeResultLike) -> TypeIs[FlextResult]:
+def is_success_result(value: object) -> TypeIs[FlextResult]:
     """Return ``True`` when value is a successful runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 
 
-def is_failure_result(value: _RuntimeResultLike) -> TypeIs[FlextResult]:
+def is_failure_result(value: object) -> TypeIs[FlextResult]:
     """Return ``True`` when value is a failed runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 
