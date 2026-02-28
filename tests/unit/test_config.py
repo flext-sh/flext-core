@@ -79,7 +79,7 @@ class TestFlextSettings:
     @pytest.mark.parametrize(
         "config_data",
         ConfigScenarios.INIT_CASES,
-        ids=lambda d: str(u.mapper().get(d, "app_name", default="default")),
+        ids=lambda d: str(u.Mapper.get(d, "app_name", default="default")),
     )
     def test_config_initialization(self, config_data: dict[str, str | bool]) -> None:
         """Test config initialization with various values."""
@@ -305,7 +305,7 @@ class TestFlextSettings:
         "debug_trace",
         ConfigScenarios.DEBUG_TRACE_CASES,
         ids=lambda d: (
-            f"debug_{u.mapper().get(d, 'debug')}_trace_{u.mapper().get(d, 'trace', default=False)}"
+            f"debug_{u.Mapper.get(d, 'debug')}_trace_{u.Mapper.get(d, 'trace', default=False)}"
         ),
     )
     def test_config_debug_enabled(self, debug_trace: dict[str, bool]) -> None:

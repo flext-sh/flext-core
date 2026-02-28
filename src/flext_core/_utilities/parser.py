@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import cast, overload
+from typing import overload
 
 import structlog
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -78,7 +78,7 @@ class FlextUtilitiesParser:
     def _to_json_value(value: t.ConfigMapValue) -> t.JsonValue:
         if value is None or isinstance(value, str | int | float | bool):
             return value
-        if isinstance(value, list | tuple):
+        if isinstance(value, (list, tuple)):
             return str(value)
         if isinstance(value, Mapping):
             return str(value)
@@ -1211,7 +1211,7 @@ class FlextUtilitiesParser:
             return None
         # Get members - returns MappingProxyType[str, T]
         members_proxy = target.__members__ if hasattr(target, "__members__") else {}
-        members: Mapping[str, T] = cast("Mapping[str, T]", members_proxy)
+        members: Mapping[str, T] = members_proxy
         value_str = str(value)
 
         # Case-insensitive matching

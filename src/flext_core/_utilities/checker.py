@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import cast, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core import FlextRuntime, c, p, t
 
@@ -31,7 +31,7 @@ class FlextUtilitiesChecker:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+        return FlextRuntime.get_logger(__name__)
 
     @classmethod
     def compute_accepted_message_types(

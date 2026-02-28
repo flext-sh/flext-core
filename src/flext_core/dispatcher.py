@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, MutableMapping
-from typing import Protocol, cast, runtime_checkable
+from collections.abc import MutableMapping
+from typing import Protocol, runtime_checkable
 
 from flext_core.constants import c
 from flext_core.protocols import FlextProtocols as p
@@ -202,7 +202,7 @@ class FlextDispatcher:
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables.
         """
-        result_raw: object = None
+        result_raw: t.PayloadValue | None = None
         try:
             if isinstance(handler, DispatchMessageProtocol):
                 result_raw = handler.dispatch_message(message)
@@ -211,7 +211,7 @@ class FlextDispatcher:
             elif isinstance(handler, ExecuteProtocol):
                 result_raw = handler.execute(message)
             elif callable(handler):
-                result_raw = cast("Callable[[p.Routable], t.PayloadValue]", handler)(
+                result_raw = handler(
                     message,
                 )
             else:
@@ -220,9 +220,9 @@ class FlextDispatcher:
                 )
 
             # Handle ResultLike returns natively
-            result_raw_any: t.Any = result_raw  # type: ignore[explicit-any]
+            result_raw_any: t.PayloadValue | None = result_raw
             if isinstance(result_raw_any, p.ResultLike):
-                result_like = cast("p.ResultLike[t.PayloadValue]", result_raw_any)
+                result_like = result_raw_any
                 if result_like.is_failure:
                     return r[t.PayloadValue].fail(
                         result_like.error or "Handler failed",
@@ -256,9 +256,7 @@ class FlextDispatcher:
 
         # 2. Try Pydantic class model_fields defaults
         if isinstance(msg, type) and hasattr(msg, "model_fields"):
-            model_fields = cast(
-                "MutableMapping[str, object] | None", getattr(msg, "model_fields", None)
-            )
+            model_fields = getattr(msg, "model_fields", None)
             if model_fields:
                 for attr in ["command_type", "query_type", "event_type"]:
                     if attr in model_fields:

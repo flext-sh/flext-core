@@ -308,6 +308,7 @@ class FlextService[TDomainResult](
         return normalized or None
 
     @classmethod
+    @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Hook for subclasses to parametrize runtime automation.
 
@@ -344,16 +345,19 @@ class FlextService[TDomainResult](
         return u.require_initialized(self._runtime, "Runtime")
 
     @property
+    @override
     def context(self) -> p.Context:
         """Service-scoped execution context."""
         return u.require_initialized(self._context, "Context")
 
     @property
+    @override
     def config(self) -> p.Config:
         """Service-scoped configuration clone."""
         return u.require_initialized(self._config, "Config")
 
     @property
+    @override
     def container(self) -> p.DI:
         """Container bound to the service context/config."""
         return u.require_initialized(self._container, "Container")

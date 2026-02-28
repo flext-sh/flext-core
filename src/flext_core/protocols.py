@@ -305,11 +305,6 @@ class FlextProtocols:
             ...
 
         @property
-        def data(self) -> T:
-            """Alias for value (backward compatibility)."""
-            ...
-
-        @property
         def is_success(self) -> bool:
             """Success status."""
             ...

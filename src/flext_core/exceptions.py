@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, Protocol, cast, override
+from typing import ClassVar, Protocol, override
 
 from pydantic import (
     BaseModel,
@@ -165,7 +165,7 @@ class FlextExceptions:
         if isinstance(value, str):
             return value
         try:
-            return e._StrictStringValue(value=cast("str", value)).value
+            return e._StrictStringValue(value=value).value
         except PydanticValidationError:
             return None
 
@@ -177,7 +177,7 @@ class FlextExceptions:
         if isinstance(value, bool):
             return value
         try:
-            return e._StrictBooleanValue(value=cast("bool", value)).value
+            return e._StrictBooleanValue(value=value).value
         except PydanticValidationError:
             return default
 
@@ -189,7 +189,7 @@ class FlextExceptions:
         if isinstance(value, int) and not isinstance(value, bool):
             return value
         try:
-            return e._StrictIntValue(value=cast("int", value)).value
+            return e._StrictIntValue(value=value).value
         except PydanticValidationError:
             return None
 
@@ -201,7 +201,7 @@ class FlextExceptions:
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return value
         try:
-            return e._StrictNumberValue(value=cast("int | float", value)).value
+            return e._StrictNumberValue(value=value).value
         except PydanticValidationError:
             return None
 

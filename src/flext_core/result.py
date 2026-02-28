@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, overload
+from typing import Self, TypeIs, overload, override
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -77,6 +77,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             is_success=is_success,
         )
 
+    @override
     @classmethod
     def ok[T](cls, value: T) -> FlextResult[T]:
         """Create successful result wrapping data using Python 3.13 advanced patterns.
@@ -110,6 +111,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return result
 
     @classmethod
+    @override
     def fail[U](
         cls,
         error: str | None,
@@ -180,11 +182,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return wrapper
 
     @property
+    @override
     def result(self) -> Self:
         """Protocol compatibility: return self (same as RuntimeResult)."""
         return self
 
     @property
+    @override
     def data(self) -> T_co:
         """Return success data alias for protocol compatibility."""
         return self.value
@@ -251,6 +255,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     # unwrap, unwrap_or, unwrap_or_else are inherited from RuntimeResult
 
+    @override
     def map[U](self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform success value using function.
 
@@ -275,6 +280,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         result._exception = self._exception
         return result
 
+    @override
     def flat_map[U](
         self,
         func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
@@ -305,6 +311,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         result._exception = self._exception
         return result
 
+    @override
     def and_then[U](
         self,
         func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
@@ -312,6 +319,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """Alias for ``flat_map`` to support railway naming conventions."""
         return self.flat_map(func)
 
+    @override
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure with fallback value.
 
@@ -322,6 +330,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         fallback_value = func(self.error or "")
         return FlextResult[T_co].ok(fallback_value)
 
+    @override
     def tap(self, func: Callable[[T_co], None]) -> FlextResult[T_co]:
         """Apply side effect to success value, return unchanged.
 
@@ -414,6 +423,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     # alt and lash are inherited from RuntimeResult
     # But we override to return FlextResult for type consistency
+    @override
     def alt(self, func: Callable[[str], str]) -> FlextResult[T_co]:
         """Apply alternative function on failure.
 
@@ -430,8 +440,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return result
         return self
 
-    map_error = alt
 
+    @override
     def lash(
         self,
         func: Callable[[str], FlextRuntime.RuntimeResult[T_co]],
@@ -462,6 +472,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     or_else = lash
 
+    @override
     def tap_error(self, func: Callable[[str], None]) -> Self:
         """Execute side effect on failure, return unchanged.
 
@@ -471,6 +482,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             func(self.error or "")
         return self
 
+    @override
     def unwrap_or(self, default: T_co) -> T_co:
         """Return value if success, otherwise return default.
 
@@ -572,6 +584,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return self.value
         return default
 
+    @override
     def filter(
         self,
         predicate: Callable[[T_co], bool],
@@ -602,6 +615,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return FlextResult[T_co].fail("Value did not pass filter predicate")
         return self
 
+    @override
     def fold[U](
         self,
         on_failure: Callable[[str], U],
@@ -738,6 +752,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         all_results = [func(item) for item in items]
         return cls.accumulate_errors(*all_results)
 
+    @override
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection.
 

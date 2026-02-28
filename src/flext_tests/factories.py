@@ -1398,6 +1398,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                         return result
                 return r[bool].ok(value=True)
 
+            @override
             def execute(self) -> r[t.Tests.PayloadValue]:
                 """Execute test operation."""
                 if service_type == "user":
@@ -1414,6 +1415,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                     return u.Tests.Factory.execute_complex_service(validation_result)
                 return u.Tests.Factory.execute_default_service(service_type)
 
+            @override
             def validate_business_rules(self) -> r[bool]:
                 """Validate business rules for complex service."""
                 if service_type == "complex":

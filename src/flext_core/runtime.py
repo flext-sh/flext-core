@@ -57,7 +57,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import Any, ClassVar, Self, TypeGuard, cast, override
+from typing import ClassVar, Self, TypeGuard, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -167,10 +167,7 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
-    Metadata: ClassVar[type[Metadata]] = cast(
-        "type[Metadata]",
-        _LazyMetadata(),
-    )  # Lazy-loaded from _runtime_metadata
+    Metadata: ClassVar[type[Metadata]] = _LazyMetadata()
 
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.
@@ -1206,12 +1203,9 @@ class FlextRuntime:
 
         wrapper_arg: type[p.Log.StructlogLogger] | None = None
         if wrapper_class_factory is not None:
-            wrapper_arg = cast("type[p.Log.StructlogLogger]", wrapper_class_factory())
+            wrapper_arg = wrapper_class_factory()
         else:
-            wrapper_arg = cast(
-                "type[p.Log.StructlogLogger]",
-                module.make_filtering_bound_logger(level_to_use),
-            )
+            wrapper_arg = module.make_filtering_bound_logger(level_to_use)
 
         # Determine logger factory (handle async buffering)
         # structlog accepts various factory types - we use object to accept all
@@ -1234,7 +1228,7 @@ class FlextRuntime:
             )
             if print_logger_factory is not None:
                 factory_to_use = print_logger_factory(
-                    file=cast("Any", cls._async_writer)
+                    file=cls._async_writer
                 )
             else:
                 factory_to_use = module.PrintLoggerFactory()
@@ -1250,7 +1244,7 @@ class FlextRuntime:
         configure_fn = module.configure if hasattr(module, "configure") else None
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
-                processors=cast("Any", processors),
+                processors=processors,
                 wrapper_class=wrapper_arg,
                 logger_factory=factory_to_use,
                 cache_logger_on_first_use=cache_logger_on_first_use,

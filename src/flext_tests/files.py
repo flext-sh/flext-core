@@ -458,7 +458,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 content_for_detect = [
                     [str(cell) for cell in row]
                     for row in actual_content
-                    if isinstance(row, list | tuple)
+                    if isinstance(row, (list, tuple))
                 ]
             else:
                 content_for_detect = str(actual_content)
@@ -1553,12 +1553,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             sequence_value: Sequence[object] = (
-                value if isinstance(value, list | tuple) else ()
+                value if isinstance(value, (list, tuple)) else ()
             )
             return [
                 [str(cell) for cell in row]
                 for row in sequence_value
-                if isinstance(row, list | tuple)
+                if isinstance(row, (list, tuple))
             ]
         return str(value)
 
@@ -1624,12 +1624,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
             sequence_value: Sequence[object] = (
-                value if isinstance(value, list | tuple) else ()
+                value if isinstance(value, (list, tuple)) else ()
             )
             rows.extend(
                 [str(cell) for cell in row]
                 for row in sequence_value
-                if isinstance(row, list | tuple)
+                if isinstance(row, (list, tuple))
             )
             return rows
         return str(value)

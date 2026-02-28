@@ -56,32 +56,6 @@ class ReportingService:
     """
 
     # ------------------------------------------------------------------
-    # Existing API (kept for backward compatibility)
-    # ------------------------------------------------------------------
-
-    def ensure_report_dir(
-        self,
-        workspace_root: Path,
-        *parts: str,
-    ) -> FlextResult[Path]:
-        """Ensure a specific report directory exists.
-
-        Args:
-            workspace_root: The root directory of the workspace.
-            *parts: Subdirectory parts to join with reports root.
-
-        Returns:
-            FlextResult[Path] with the ensured directory path.
-
-        """
-        try:
-            path = (workspace_root / REPORTS_DIR_NAME).joinpath(*parts)
-            path.mkdir(parents=True, exist_ok=True)
-            return r[Path].ok(path)
-        except OSError as exc:
-            return r[Path].fail(f"failed to create report dir: {exc}")
-
-    # ------------------------------------------------------------------
     # New standardized API
     # ------------------------------------------------------------------
 

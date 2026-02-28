@@ -19,9 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Literal, Self, cast, overload, override
-
-from structlog.typing import Context
+from typing import ClassVar, Literal, Self, overload, override
 
 from flext_core import FlextResult, FlextRuntime, FlextSettings, c, m, p, r, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -57,8 +55,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     logger: p.Log.StructlogLogger
 
     # Protocol compliance: BindableLogger._context property
+    @override
     @property
-    def _context(self) -> Context:
+    def _context(self) -> MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]:
         """Context mapping for BindableLogger protocol compliance."""
         return {}
 
@@ -133,7 +132,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             keys_value = kwargs.get("keys")
             if isinstance(keys_value, str):
                 unbind_keys = [keys_value]
-            elif isinstance(keys_value, list | tuple):
+            elif isinstance(keys_value, (list, tuple)):
                 unbind_keys = [str(key) for key in keys_value]
             else:
                 return r[bool].ok(value=True)
@@ -691,7 +690,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         name: str | None = None,
     ) -> p.Log.StructlogLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(name))
+        return FlextRuntime.get_logger(name)
 
     # =========================================================================
     # FACTORY PATTERNS - DI-ready logger creation
@@ -750,7 +749,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         # Create bound logger with initial context
         base_logger = FlextRuntime.get_logger(name)
-        self.logger = cast("p.Log.StructlogLogger", base_logger.bind(**context))
+        self.logger = base_logger.bind(**context)
 
         # Initialize optional state variables
         # Note: _context and _tracking are initialized as needed by methods

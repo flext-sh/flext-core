@@ -116,7 +116,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_to_sequence(value: t.ConfigMapValue) -> Sequence[t.ConfigMapValue]:
         """Safely narrow object to Sequence[t.ConfigMapValue]."""
-        if isinstance(value, list | tuple):
+        if isinstance(value, (list, tuple)):
             # Explicit type annotation for narrowing items
             narrowed_items: list[t.ConfigMapValue] = []
             for item_raw in value:
@@ -470,7 +470,7 @@ class FlextUtilitiesMapper:
             narrowed_value = value
         elif value is None:
             narrowed_value = None
-        elif isinstance(value, (dict | list, BaseModel, Path)) or callable(value):
+        elif isinstance(value, (dict, list, BaseModel, Path)) or callable(value):
             narrowed_value = value
         else:
             # Non-PayloadValue object -> convert to string
@@ -619,7 +619,7 @@ class FlextUtilitiesMapper:
             return default
         if isinstance(value, str):
             return [value]
-        if isinstance(value, list | tuple):
+        if isinstance(value, (list, tuple)):
             # NOTE: Cannot use u.map() here due to circular import
             return [str(item) for item in value]
         return [str(value)]
@@ -1130,7 +1130,7 @@ class FlextUtilitiesMapper:
             keys = list(data_or_items.keys())
             selected_keys = keys[:n] if from_start else keys[-n:]
             return {k: data_or_items[k] for k in selected_keys}
-        if isinstance(data_or_items, list | tuple):
+        if isinstance(data_or_items, (list, tuple)):
             items_list: list[t.ConfigMapValue] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
                     FlextUtilitiesMapper._to_general_value_from_object(item),
@@ -1485,7 +1485,7 @@ class FlextUtilitiesMapper:
 
         # filter_pred returns PayloadValue, used as truthy check in filter context
         # Handle collections
-        if isinstance(current, list | tuple):
+        if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence[object], x is t.ConfigMapValue
             seq_current: Sequence[t.ConfigMapValue] = current
             return [
@@ -1524,7 +1524,7 @@ class FlextUtilitiesMapper:
                 map_callable(value),
             )
 
-        if isinstance(current, list | tuple):
+        if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence, items are t.ConfigMapValue
             seq_current: Sequence[t.ConfigMapValue] = current
             return [
@@ -1553,7 +1553,7 @@ class FlextUtilitiesMapper:
         normalize_case = FlextUtilitiesMapper._get_str_from_dict(ops, "normalize", "")
         if isinstance(current, str):
             return current.lower() if normalize_case == "lower" else current.upper()
-        if isinstance(current, list | tuple):
+        if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence, items are t.ConfigMapValue
             seq_current: Sequence[t.ConfigMapValue] = current
             result: list[t.ConfigMapValue] = []
@@ -1619,7 +1619,7 @@ class FlextUtilitiesMapper:
                 return converted_result.value
             return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
 
-        if isinstance(current, list | tuple):
+        if isinstance(current, (list, tuple)):
             current_items: Sequence[t.ConfigMapValue] = current
             converted = [
                 _convert(FlextUtilitiesMapper.narrow_to_general_value_type(item))
@@ -1920,7 +1920,7 @@ class FlextUtilitiesMapper:
             )
 
         def _process_current() -> t.ConfigMapValue:
-            if isinstance(current, list | tuple):
+            if isinstance(current, (list, tuple)):
                 # Type narrowing: current is Sequence, items are t.ConfigMapValue
                 seq_current: Sequence[t.ConfigMapValue] = current
                 return [
@@ -2112,7 +2112,7 @@ class FlextUtilitiesMapper:
         current_items: Sequence[t.ConfigMapValue] = current
         slice_spec = ops["slice"]
         min_slice_length = 2
-        if isinstance(slice_spec, list | tuple) and len(slice_spec) >= min_slice_length:
+        if isinstance(slice_spec, (list, tuple)) and len(slice_spec) >= min_slice_length:
             start_raw = slice_spec[0]
             end_raw = slice_spec[1]
             start: int | None = start_raw if isinstance(start_raw, int) else None

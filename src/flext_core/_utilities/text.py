@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import cast
 
 from flext_core import FlextRuntime, c, p, r
 
@@ -27,7 +26,7 @@ class FlextUtilitiesText:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def clean_text(text: str) -> str:

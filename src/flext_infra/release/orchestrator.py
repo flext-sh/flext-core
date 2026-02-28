@@ -229,10 +229,11 @@ class ReleaseOrchestrator(FlextService[bool]):
 
         """
         reporting = ReportingService()
-        dir_result = reporting.ensure_report_dir(root, "release", f"v{version}")
-        if dir_result.is_failure:
-            return r[bool].fail(dir_result.error or "report dir creation failed")
-        output_dir = dir_result.value
+        output_dir = reporting.get_report_dir(root, "project", "release") / f"v{version}"
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            return r[bool].fail(f"report dir creation failed: {exc}")
 
         targets = self._build_targets(root, project_names)
         records: list[Mapping[str, str | int]] = []
@@ -305,11 +306,13 @@ class ReleaseOrchestrator(FlextService[bool]):
 
         """
         reporting = ReportingService()
-        dir_result = reporting.ensure_report_dir(root, "release", tag)
-        if dir_result.is_failure:
-            return r[bool].fail(dir_result.error or "report dir creation failed")
+        notes_dir = reporting.get_report_dir(root, "project", "release") / tag
+        try:
+            notes_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            return r[bool].fail(f"report dir creation failed: {exc}")
 
-        notes_path = dir_result.value / "RELEASE_NOTES.md"
+        notes_path = notes_dir / "RELEASE_NOTES.md"
         notes_result = self._generate_notes(
             root,
             version,

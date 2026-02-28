@@ -102,7 +102,7 @@ class TestDIBridgeRealExecution:
         config_dict = bridge.config()
         assert isinstance(config_dict, dict)
         assert (
-            u.mapper().extract(config_dict, "database.dsn").value == "sqlite://test.db"
+            u.Mapper.extract(config_dict, "database.dsn").value == "sqlite://test.db"
         )
 
 

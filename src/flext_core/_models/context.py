@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Annotated, cast
+from typing import Annotated
 
 import structlog.contextvars
 from pydantic import (
@@ -175,7 +175,7 @@ class FlextModelsContext:
             value = structlog_context[self._key]
             if value is None:
                 return self._default
-            return cast("T", value)
+            return value
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.

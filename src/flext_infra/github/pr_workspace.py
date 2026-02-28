@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import time
 from collections.abc import Mapping
 from pathlib import Path
@@ -192,15 +193,12 @@ class PrWorkspaceManager:
 
         """
         display = self._repo_display_name(repo_root, workspace_root)
-        report_dir_result = self._reporting.ensure_report_dir(
-            workspace_root,
-            "workspace",
-            "pr",
-        )
+        report_dir = self._reporting.get_report_dir(workspace_root, "workspace", "pr")
+        with contextlib.suppress(OSError):
+            report_dir.mkdir(parents=True, exist_ok=True)
 
         log_path: Path | None = None
-        if report_dir_result.is_success:
-            log_path = report_dir_result.value / f"{display}.log"
+        log_path = report_dir / f"{display}.log"
 
         if repo_root == workspace_root:
             command = self._build_root_command(repo_root, pr_args)

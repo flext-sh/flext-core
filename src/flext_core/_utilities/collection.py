@@ -229,7 +229,7 @@ class FlextUtilitiesCollection:
 
         Returns first item where predicate returns True, or None.
         """
-        if isinstance(items, list | tuple):
+        if isinstance(items, (list, tuple)):
             for item in items:
                 result: bool = predicate(item)  # Explicit type for result
                 if result:

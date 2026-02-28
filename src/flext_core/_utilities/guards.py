@@ -103,7 +103,7 @@ class FlextUtilitiesGuards:
     def is_flexible_value(value: t.FlexibleValue) -> TypeIs[t.FlexibleValue]:
         if value is None or isinstance(value, str | int | float | bool | datetime):
             return True
-        if isinstance(value, list | tuple):
+        if isinstance(value, (list, tuple)):
             for item in value:
                 if item is not None and not isinstance(
                     item,
@@ -685,7 +685,7 @@ class FlextUtilitiesGuards:
     ) -> str | None:
         shortcut_lower = condition.lower()
         if shortcut_lower == "non_empty":
-            if isinstance(value, str | list | dict) and bool(value):
+            if isinstance(value, (str, list, dict)) and bool(value):
                 return None
             return error_msg or f"{context_name} must be non-empty"
         if shortcut_lower == "positive":

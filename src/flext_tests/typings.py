@@ -662,7 +662,7 @@ class FlextTestsTypes(FlextTypes):
             value: FlextTestsTypes.Tests.TestPayloadValue,
         ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.TestPayloadValue]]:
             """Check if value is a payload sequence."""
-            return isinstance(value, list | tuple) and not isinstance(
+            return isinstance(value, (list, tuple)) and not isinstance(
                 value,
                 str | bytes,
             )
@@ -690,7 +690,7 @@ class FlextTestsTypes(FlextTypes):
                 return True
             if isinstance(value, str | int | float | bool):
                 return True
-            if isinstance(value, list | tuple):
+            if isinstance(value, (list, tuple)):
                 return True
             return isinstance(value, dict)
 

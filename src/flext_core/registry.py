@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, cast, override
+from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -217,10 +217,7 @@ class FlextRegistry(s[bool]):
                             # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
                             _ = instance.register_handler(
-                                cast(
-                                    "p.Handler[t.GeneralValueType, t.GeneralValueType]",
-                                    handler_typed,
-                                )
+                                handler_typed
                             )
 
         return instance
@@ -267,10 +264,10 @@ class FlextRegistry(s[bool]):
         if isinstance(handler_for_dispatch, m.Handler):
             return handler_for_dispatch
         if hasattr(handler_for_dispatch, "handle") or callable(handler_for_dispatch):
-            return cast("t.HandlerType", handler_for_dispatch)
+            return handler_for_dispatch
 
         # If we reach here, cast to m.Handler to satisfy type checker
-        return cast("m.Handler", handler_for_dispatch)
+        return handler_for_dispatch
 
     def _create_registration_details(
         self,
@@ -406,7 +403,7 @@ class FlextRegistry(s[bool]):
                 )
         else:
             protocol_result = self._dispatcher.register_handler(
-                cast("t.HandlerType", handler_for_dispatch),
+                handler_for_dispatch,
             )
             if protocol_result.is_failure:
                 registration_result = r[m.HandlerRegistrationResult].fail(
@@ -639,7 +636,7 @@ class FlextRegistry(s[bool]):
                         )
                         raise TypeError(msg)
                     protocol_result = self._dispatcher.register_handler(
-                        cast("t.HandlerType", handler_for_dispatch),
+                        handler_for_dispatch,
                     )
                     if protocol_result.is_failure:
                         reg_result = r[m.HandlerRegistrationResult].fail(
@@ -709,10 +706,7 @@ class FlextRegistry(s[bool]):
         if validate:
             try:
                 validation_result = validate(
-                    cast(
-                        "t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel",
-                        plugin,
-                    )
+                    plugin
                 )
                 if (
                     hasattr(validation_result, "is_failure")
@@ -733,7 +727,7 @@ class FlextRegistry(s[bool]):
 
         # Store plugin in container for retrieval
         # plugin is from method signature
-        self.container.register(key, cast("t.GeneralValueType", plugin))
+        self.container.register(key, plugin)
         self._registered_keys.add(key)
         self.logger.info("Registered %s: %s", category, name)
         return r[bool].ok(value=True)
@@ -836,7 +830,7 @@ class FlextRegistry(s[bool]):
             )
             return r[bool].ok(value=True)
 
-        cls._class_plugin_storage[key] = cast("t.RegistrablePlugin", plugin)
+        cls._class_plugin_storage[key] = plugin
         cls._class_registered_keys.add(key)
         self.logger.info("Registered class plugin %s: %s", category, name)
         return r[bool].ok(value=True)
@@ -958,7 +952,7 @@ class FlextRegistry(s[bool]):
         try:
             # service is already valid registerable type (from method signature)
             # with_service returns Self for fluent chaining, but we don't need the return value
-            _ = self.container.with_service(name, cast("t.GeneralValueType", service))
+            _ = self.container.with_service(name, service)
             return r[bool].ok(value=True)
         except ValueError as e:
             error_str = str(e)

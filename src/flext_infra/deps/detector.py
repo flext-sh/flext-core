@@ -267,12 +267,12 @@ class RuntimeDevDependencyDetector:
         if args.output:
             out_path = Path(args.output)
         elif not args.dry_run:
-            report_dir_result = self._reporting.ensure_report_dir(root, "dependencies")
-            if report_dir_result.is_failure:
-                return r[int].fail(
-                    report_dir_result.error or "failed to create report directory",
-                )
-            out_path = report_dir_result.value / "detect-runtime-dev-latest.json"
+            report_dir = self._reporting.get_report_dir(root, "project", "dependencies")
+            try:
+                report_dir.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                return r[int].fail(f"failed to create report directory: {exc}")
+            out_path = report_dir / "detect-runtime-dev-latest.json"
 
         if out_path is not None and not args.dry_run:
             write_result = self._json.write(out_path, report_payload)

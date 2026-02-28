@@ -84,7 +84,7 @@ class MockScenario:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        mapper = FlextUtilities.mapper()
+        mapper = FlextUtilities.Mapper
         self.given = _to_general_mapping(mapper.get(data, "given", default={}))
         self.when = _to_general_mapping(mapper.get(data, "when", default={}))
         self.then = _to_general_mapping(mapper.get(data, "then", default={}))

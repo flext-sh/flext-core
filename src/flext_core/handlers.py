@@ -19,7 +19,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import c, e, m, p, r, t, u, x
 
@@ -256,6 +256,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 super().__init__(config=config)
                 self._handler_fn = handler_fn
 
+            @override
             def handle(self, message: t.ScalarValue) -> r[t.ScalarValue]:
                 """Execute the wrapped callable."""
                 if isinstance(message, tuple):

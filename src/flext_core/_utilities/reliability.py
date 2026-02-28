@@ -15,7 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -34,7 +34,7 @@ class FlextUtilitiesReliability:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def with_timeout[TTimeout](

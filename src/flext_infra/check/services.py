@@ -363,15 +363,12 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._json = JsonService()
         self._runner = CommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
-        report_dir_result = self._reporting.ensure_report_dir(
-            self._workspace_root,
-            "check",
-        )
-        self._default_reports_dir = (
-            report_dir_result.value
-            if report_dir_result.is_success
-            else self._workspace_root / REPORTS_DIR_NAME / "check"
-        )
+        report_dir = self._reporting.get_report_dir(self._workspace_root, "project", "check")
+        try:
+            report_dir.mkdir(parents=True, exist_ok=True)
+            self._default_reports_dir = report_dir
+        except OSError:
+            self._default_reports_dir = self._workspace_root / REPORTS_DIR_NAME / "check"
 
     @override
     def execute(self) -> r[list[_ProjectResult]]:

@@ -162,15 +162,12 @@ class GivenWhenThenBuilder:
             return str(value)
 
         # Use mapper to transform dict values and convert keys to strings
-        given_mapped = u.mapper().transform_values(
-            u
-            .mapper()
-            .map_dict_keys(
+        given_mapped = u.Mapper.transform_values(
+            u.Mapper.map_dict_keys(
                 self._given,
                 {k: str(k) for k in self._given},
                 keep_unmapped=True,
-            )
-            .value
+            ).value
             if isinstance(self._given, dict)
             else {},
             convert_dict_value,
@@ -178,15 +175,12 @@ class GivenWhenThenBuilder:
         given_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in given_mapped.items()
         }
-        when_mapped = u.mapper().transform_values(
-            u
-            .mapper()
-            .map_dict_keys(
+        when_mapped = u.Mapper.transform_values(
+            u.Mapper.map_dict_keys(
                 self._when,
                 {k: str(k) for k in self._when},
                 keep_unmapped=True,
-            )
-            .value
+            ).value
             if isinstance(self._when, dict)
             else {},
             convert_dict_value,
@@ -194,15 +188,12 @@ class GivenWhenThenBuilder:
         when_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in when_mapped.items()
         }
-        then_mapped = u.mapper().transform_values(
-            u
-            .mapper()
-            .map_dict_keys(
+        then_mapped = u.Mapper.transform_values(
+            u.Mapper.map_dict_keys(
                 self._then,
                 {k: str(k) for k in self._then},
                 keep_unmapped=True,
-            )
-            .value
+            ).value
             if isinstance(self._then, dict)
             else {},
             convert_dict_value,

@@ -141,7 +141,7 @@ class FlextUtilitiesCache:
                 FlextUtilitiesCache.normalize_component(item) for item in component
             ]
             return tuple(normalized_items)
-        if isinstance(component, list | tuple):
+        if isinstance(component, (list, tuple)):
             # Type narrowing: component is Sequence, so items are t.GuardInputValue
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
         # For other types, convert to string as fallback

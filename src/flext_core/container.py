@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Self, TypeGuard, cast, override
+from typing import Self, TypeGuard, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -221,14 +221,13 @@ class FlextContainer(p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                *_args: Any,
                                 _factory_func_ref: Callable[[], object] | None = (
                                     factory_func_raw
                                 ),
                                 _factory_name: str = factory_name,
-                                **kwargs: Any,
+                                _factory_config: FlextModelsContainer.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
-                                fn_override = kwargs.get("fn")
+                                fn_override = _factory_config.fn if hasattr(_factory_config, 'fn') else None
                                 if fn_override is not None:
                                     if callable(fn_override):
                                         raw_result = fn_override()
@@ -244,12 +243,9 @@ class FlextContainer(p.DI):
                                 try:
                                     m.Container.ServiceRegistration(
                                         name=_factory_name,
-                                        service=cast(
-                                            "t.RegisterableService",
-                                            raw_result,
-                                        ),
+                                        service=raw_result,
                                     )
-                                    return cast("t.RegisterableService", raw_result)
+                                    return raw_result
                                 except ValidationError:
                                     msg = (
                                         f"Factory '{_factory_name}' returned unsupported type: "
@@ -299,7 +295,7 @@ class FlextContainer(p.DI):
         if provide_helper is None or not callable(provide_helper):
             msg = "DI bridge Provide helper not initialized"
             raise RuntimeError(msg)
-        provide_fn: Callable[[str], object] = provide_helper
+        provide_fn: Callable[[str], t.RegisterableService] = provide_helper
 
         # After narrowing, provide_helper is confirmed callable
         def provide_callable(name: str) -> t.RegisterableService:
@@ -307,9 +303,9 @@ class FlextContainer(p.DI):
             try:
                 m.Container.ServiceRegistration(
                     name="provided",
-                    service=cast("t.RegisterableService", provided),
+                    service=provided,
                 )
-                return cast("t.RegisterableService", provided)
+                return provided
             except ValidationError:
                 msg = "DI bridge Provide helper returned unsupported type"
                 raise TypeError(msg) from None
@@ -628,9 +624,9 @@ class FlextContainer(p.DI):
             try:
                 m.Container.ServiceRegistration(
                     name="config",
-                    service=cast("t.RegisterableService", self._config),
+                    service=self._config,
                 )
-                _ = self.register("config", cast("t.RegisterableService", self._config))
+                _ = self.register("config", self._config)
             except ValidationError:
                 pass  # Skip registration if validation fails
 
@@ -650,11 +646,11 @@ class FlextContainer(p.DI):
             try:
                 m.Container.ServiceRegistration(
                     name="context",
-                    service=cast("t.RegisterableService", self._context),
+                    service=self._context,
                 )
                 _ = self.register(
                     "context",
-                    cast("t.RegisterableService", self._context),
+                    self._context,
                 )
             except ValidationError:
                 pass  # Skip registration if validation fails
@@ -664,7 +660,7 @@ class FlextContainer(p.DI):
         # Safe to instantiate without triggering container creation
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            _ = self.register("command_bus", cast("t.RegisterableService", dispatcher))
+            _ = self.register("command_bus", dispatcher)
 
     @override
     def configure(
@@ -1228,19 +1224,16 @@ class FlextContainer(p.DI):
         # Clone base config — config objects are always BaseModel (FlextSettings)
         config_input = config  # Keep original for subproject check
         if config is not None and isinstance(config, BaseModel):
-            base_config: p.Config = cast("p.Config", config.model_copy(deep=True))
+            base_config: p.Config = config.model_copy(deep=True)
         elif isinstance(self.config, BaseModel):
-            base_config = cast("p.Config", self.config.model_copy(deep=True))
+            base_config = self.config.model_copy(deep=True)
         else:
             base_config = self._get_default_config()
 
         # Apply subproject suffix to app_name only when config is None
         if subproject and config_input is None and isinstance(base_config, BaseModel):
-            base_config = cast(
-                "p.Config",
-                base_config.model_copy(
-                    update={"app_name": f"{base_config.app_name}.{subproject}"},
-                ),
+            base_config = base_config.model_copy(
+                update={"app_name": f"{base_config.app_name}.{subproject}"},
             )
 
         scoped_context: p.Context
