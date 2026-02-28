@@ -314,3 +314,28 @@ class TestFlextInfraDocValidator:
         monkeypatch.setattr(validator, "_run_adr_skill_check", mock_adr_check)
         report = validator._validate_scope(scope, check="adr", apply_mode=False)
         assert report.scope == "test"
+
+    def test_validate_scope_with_adr_skill_check_failure(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test _validate_scope handles ADR skill check failure."""
+        validator = FlextInfraDocValidator()
+        scope = FlextInfraDocScope(
+            name="root",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        # Create architecture config to trigger ADR check
+        arch_dir = tmp_path / "docs/architecture"
+        arch_dir.mkdir(parents=True, exist_ok=True)
+        (arch_dir / "architecture_config.json").write_text("{}")
+
+        def mock_adr_check(path: Path | str) -> tuple[int, list[str]]:
+            return 1, ["missing_skill_1", "missing_skill_2"]
+
+        monkeypatch.setattr(validator, "_run_adr_skill_check", mock_adr_check)
+        report = validator._validate_scope(scope, check="adr-skill", apply_mode=False)
+        assert report.scope == "root"
+        assert report.result == "FAIL"

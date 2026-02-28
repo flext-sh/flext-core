@@ -349,7 +349,7 @@ def test_main_calls_sys_exit(tmp_path: Path) -> None:
             mock_detector_class.return_value = mock_detector
             mock_detector.detect_mode.return_value = "monorepo"
             with patch("sys.exit") as _mock_exit:
-                from flext_infra.workspace.__main__ import (
+                from flext_infra.workspace.__main__ import (  # noqa: PLC0415
                     main as _main_func,
                 )
 

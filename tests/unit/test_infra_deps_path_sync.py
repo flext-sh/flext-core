@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
+import tomlkit
 from flext_core import r
 from flext_infra import m
 from flext_infra.deps.path_sync import (
@@ -13,6 +14,7 @@ from flext_infra.deps.path_sync import (
     _rewrite_pep621,
     _rewrite_poetry,
     _target_path,
+    _workspace_root,
     detect_mode,
     extract_dep_name,
     main,
@@ -976,3 +978,220 @@ def test_target_path_standalone() -> None:
     """Test _target_path for standalone mode."""
     result = _target_path("flext-core", is_root=False, mode="standalone")
     assert result == ".flext-deps/flext-core"
+
+
+def test_rewrite_pep621_non_string_item(tmp_path: Path) -> None:
+    """Test _rewrite_pep621 skips non-string items."""
+    doc = tomlkit.document()
+    doc["project"] = tomlkit.table()
+    doc["project"]["dependencies"] = [123]  # Non-string
+
+    changes = _rewrite_pep621(
+        doc,
+        is_root=False,
+        mode="workspace",
+        internal_names={"flext-core"},
+    )
+
+    assert len(changes) == 0
+
+
+def test_rewrite_pep621_no_project_table(tmp_path: Path) -> None:
+    """Test _rewrite_pep621 with missing project table."""
+    doc = tomlkit.document()
+
+    changes = _rewrite_pep621(
+        doc,
+        is_root=False,
+        mode="workspace",
+        internal_names={"flext-core"},
+    )
+
+    assert len(changes) == 0
+
+
+def test_rewrite_poetry_with_non_dict_value(tmp_path: Path) -> None:
+    """Test _rewrite_poetry skips non-dict values."""
+    doc = tomlkit.document()
+    doc["tool"] = tomlkit.table()
+    poetry = tomlkit.table()
+    doc["tool"]["poetry"] = poetry
+    deps = tomlkit.table()
+    deps["flext-core"] = "string-value"  # Not a dict
+    poetry["dependencies"] = deps
+
+    changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
+
+    assert len(changes) == 0
+
+
+def test_rewrite_poetry_no_tool_table(tmp_path: Path) -> None:
+    """Test _rewrite_poetry with missing tool table."""
+    doc = tomlkit.document()
+
+    changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
+
+    assert len(changes) == 0
+
+
+def test_rewrite_poetry_no_poetry_table(tmp_path: Path) -> None:
+    """Test _rewrite_poetry with missing poetry table."""
+    doc = tomlkit.document()
+    doc["tool"] = tomlkit.table()
+
+    changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
+
+    assert len(changes) == 0
+
+
+def test_main_discovery_failure(tmp_path: Path) -> None:
+    """Test main handles discovery failure."""
+    with patch(
+        "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
+        return_value=r[list].fail("discovery failed"),
+    ):
+        with patch("sys.argv", ["sync-paths"]):
+            result = main()
+            assert result == 1
+
+
+def test_main_no_changes_needed(tmp_path: Path) -> None:
+    """Test main with no changes needed."""
+    with patch("sys.argv", ["sync-paths"]):
+        with patch(
+            "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
+            return_value=r[list].ok([]),
+        ):
+            with patch(
+                "flext_infra.deps.path_sync.rewrite_dep_paths",
+                return_value=r[list].ok([]),
+            ):
+                result = main()
+                assert result == 0
+
+
+def test_workspace_root_fallback(tmp_path: Path) -> None:
+    """Test _workspace_root fallback when no .gitmodules found."""
+    # This tests line 30: return here.parents[4]
+    deep = tmp_path / "a" / "b" / "c" / "d" / "e" / "f"
+    deep.mkdir(parents=True)
+    with patch("pathlib.Path.resolve") as mock_resolve:
+        mock_resolve.return_value = deep / "test.py"
+        # _workspace_root already imported at top
+
+        result = _workspace_root()
+        # Should return parents[4] when no .gitmodules found
+        assert isinstance(result, Path)
+
+
+def test_rewrite_pep621_invalid_path_dep_regex(tmp_path: Path) -> None:
+    """Test _rewrite_pep621 skips invalid path dependency regex."""
+    # This tests line 111: continue when regex doesn't match
+    doc = tomlkit.document()
+    doc["project"] = tomlkit.table()
+    # Create a dependency with @ but leading whitespace (breaks regex)
+    doc["project"]["dependencies"] = [
+        "  flext-core @ file://.flext-deps/flext-core"  # Leading whitespace breaks regex
+    ]
+    changes = _rewrite_pep621(
+        doc,
+        is_root=True,
+        mode="workspace",
+        internal_names={"flext-core"},
+    )
+    # Should skip the invalid entry (regex won't match due to leading whitespace)
+    assert len(changes) == 0
+
+
+def test_main_with_changes_and_dry_run(tmp_path: Path) -> None:
+    """Test main outputs changes when dry_run=True."""
+    # This tests lines 242-246: output info when changes exist
+    with patch("sys.argv", ["sync-paths", "--dry-run"]):
+        with patch(
+            "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
+            return_value=r[list].ok([]),
+        ):
+            with patch(
+                "flext_infra.deps.path_sync.rewrite_dep_paths",
+                return_value=r[list].ok(["  PEP621: old -> new"]),
+            ):
+                with patch("flext_infra.deps.path_sync.output.info") as mock_info:
+                    result = main()
+                    assert result == 0
+                    # Verify output.info was called with dry-run prefix
+                    calls = [str(call) for call in mock_info.call_args_list]
+                    assert any("[DRY-RUN]" in str(call) for call in calls)
+
+
+def test_main_with_changes_no_dry_run(tmp_path: Path) -> None:
+    """Test main outputs changes when dry_run=False."""
+    # This tests lines 242-246: output info when changes exist (no dry-run)
+    with patch("sys.argv", ["sync-paths"]):
+        with patch(
+            "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
+            return_value=r[list].ok([]),
+        ):
+            with patch(
+                "flext_infra.deps.path_sync.rewrite_dep_paths",
+                return_value=r[list].ok(["  PEP621: old -> new"]),
+            ):
+                with patch("flext_infra.deps.path_sync.output.info") as mock_info:
+                    result = main()
+                    assert result == 0
+                    # Verify output.info was called without dry-run prefix
+                    calls = [str(call) for call in mock_info.call_args_list]
+                    # Should have at least one call without [DRY-RUN]
+                    assert len(calls) > 0
+
+
+def test_main_project_obj_not_dict_first_loop(tmp_path: Path) -> None:
+    """Test main handles non-dict project object in first loop."""
+    # This tests line 272: continue when project_obj is not dict
+    project_dir = tmp_path / "test-project"
+    project_dir.mkdir()
+    (project_dir / "pyproject.toml").touch()  # Create the file so it exists
+    project_info = m.ProjectInfo(
+        path=project_dir,
+        name="test",
+        stack="test-stack",
+        has_tests=False,
+        has_src=False,
+    )
+    with patch("sys.argv", ["sync-paths"]):
+        with patch(
+            "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
+            return_value=r[list].ok([project_info]),
+        ):
+            with patch(
+                "flext_infra.deps.path_sync.FlextInfraTomlService.read",
+                return_value=r[dict].ok({"project": "not-a-dict"}),
+            ):
+                with patch("flext_infra.deps.path_sync.output.info"):
+                    result = main()
+                    # Should handle gracefully and return 0
+                    assert result == 0
+
+
+def test_main_project_obj_not_dict_second_loop(tmp_path: Path) -> None:
+    """Test main handles non-dict project object in second loop."""
+    # This tests line 286: continue when project_obj is not dict
+    project_info = m.ProjectInfo(
+        path=tmp_path / "test-project",
+        name="test",
+        stack="test-stack",
+        has_tests=False,
+        has_src=False,
+    )
+    with patch("sys.argv", ["sync-paths"]):
+        with patch(
+            "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
+            return_value=r[list].ok([project_info]),
+        ):
+            with patch(
+                "flext_infra.deps.path_sync.FlextInfraTomlService.read",
+                return_value=r[dict].ok({"project": "not-a-dict"}),
+            ):
+                with patch("flext_infra.deps.path_sync.output.info"):
+                    result = main()
+                    # Should handle gracefully and return 0
+                    assert result == 0

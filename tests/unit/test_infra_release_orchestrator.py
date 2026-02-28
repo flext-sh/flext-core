@@ -1166,3 +1166,187 @@ class TestFlextInfraReleaseOrchestrator:
         if changelog.exists():
             content = changelog.read_text()
             assert "1.0.0" in content
+
+
+class TestFlextInfraReleaseOrchestratorPhaseVersion:
+    """Test phase_version with file existence checks (lines 194, 198)."""
+
+    @pytest.fixture
+    def workspace_root(self, tmp_path: Path) -> Path:
+        """Create mock workspace root with version files."""
+        root = tmp_path / "workspace"
+        root.mkdir()
+        (root / ".git").mkdir()
+        (root / "Makefile").touch()
+        (root / "pyproject.toml").write_text('version = "0.1.0"\n')
+        return root
+
+    def test_phase_version_skips_missing_files(self, workspace_root: Path) -> None:
+        """Test phase_version skips files that don't exist (line 194)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch.object(
+            orchestrator,
+            "_version_files",
+            return_value=[workspace_root / "nonexistent.toml"],
+        ):
+            result = orchestrator.phase_version(workspace_root, "1.0.0", [])
+            assert result.is_success
+
+    def test_phase_version_skips_unchanged_versions(self, workspace_root: Path) -> None:
+        """Test phase_version skips files with matching version (line 198)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        version_file = workspace_root / "pyproject.toml"
+        version_file.write_text('version = "1.0.0"\n')
+        with patch.object(
+            orchestrator,
+            "_version_files",
+            return_value=[version_file],
+        ):
+            result = orchestrator.phase_version(workspace_root, "1.0.0", [])
+            assert result.is_success
+
+
+class TestFlextInfraReleaseOrchestratorPhaseBuild:
+    """Test phase_build with directory creation (lines 316-317)."""
+
+    @pytest.fixture
+    def workspace_root(self, tmp_path: Path) -> Path:
+        """Create mock workspace root."""
+        root = tmp_path / "workspace"
+        root.mkdir()
+        (root / ".git").mkdir()
+        (root / "Makefile").touch()
+        (root / "pyproject.toml").write_text('version = "0.1.0"\n')
+        return root
+
+    def test_phase_build_creates_report_directory(self, workspace_root: Path) -> None:
+        """Test phase_build creates report directory (lines 316-317)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch.object(
+            orchestrator,
+            "_build_targets",
+            return_value=[],
+        ):
+            with patch(
+                "flext_infra.release.orchestrator.FlextInfraReportingService"
+            ) as mock_reporting:
+                mock_instance = mock_reporting.return_value
+                mock_instance.get_report_dir.return_value = workspace_root / "reports"
+                result = orchestrator.phase_build(workspace_root, "1.0.0", [])
+                assert result.is_success
+
+
+class TestFlextInfraReleaseOrchestratorDispatchPhase:
+    """Test _dispatch_phase routing (lines 365, 367, 375, 377)."""
+
+    @pytest.fixture
+    def workspace_root(self, tmp_path: Path) -> Path:
+        """Create mock workspace root."""
+        root = tmp_path / "workspace"
+        root.mkdir()
+        (root / ".git").mkdir()
+        (root / "Makefile").touch()
+        (root / "pyproject.toml").write_text('version = "0.1.0"\n')
+        return root
+
+    def test_dispatch_phase_routes_validate(self, workspace_root: Path) -> None:
+        """Test _dispatch_phase routes 'validate' phase (line 365)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch(
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator.phase_validate",
+            return_value=r[bool].ok(True),
+        ):
+            result = orchestrator._dispatch_phase(
+                "validate",
+                workspace_root,
+                "1.0.0",
+                "v1.0.0",
+                [],
+                dry_run=False,
+                push=False,
+                dev_suffix=False,
+            )
+            assert result.is_success
+
+    def test_dispatch_phase_routes_version(self, workspace_root: Path) -> None:
+        """Test _dispatch_phase routes 'version' phase (line 367)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch(
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator.phase_version",
+            return_value=r[bool].ok(True),
+        ):
+            result = orchestrator._dispatch_phase(
+                "version",
+                workspace_root,
+                "1.0.0",
+                "v1.0.0",
+                [],
+                dry_run=False,
+                push=False,
+                dev_suffix=False,
+            )
+            assert result.is_success
+
+    def test_dispatch_phase_routes_build(self, workspace_root: Path) -> None:
+        """Test _dispatch_phase routes 'build' phase (line 375)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch(
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator.phase_build",
+            return_value=r[bool].ok(True),
+        ):
+            result = orchestrator._dispatch_phase(
+                "build",
+                workspace_root,
+                "1.0.0",
+                "v1.0.0",
+                [],
+                dry_run=False,
+                push=False,
+                dev_suffix=False,
+            )
+            assert result.is_success
+
+    def test_dispatch_phase_routes_publish(self, workspace_root: Path) -> None:
+        """Test _dispatch_phase routes 'publish' phase (line 377)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        with patch(
+            "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator.phase_publish",
+            return_value=r[bool].ok(True),
+        ):
+            result = orchestrator._dispatch_phase(
+                "publish",
+                workspace_root,
+                "1.0.0",
+                "v1.0.0",
+                [],
+                dry_run=False,
+                push=False,
+                dev_suffix=False,
+            )
+            assert result.is_success
+
+
+class TestFlextInfraReleaseOrchestratorChangeCollection:
+    """Test _collect_changes git log parsing (lines 598-600)."""
+
+    def test_collect_changes_with_git_log_output(self, tmp_path: Path) -> None:
+        """Test _collect_changes parses git log output (lines 598-600)."""
+        orchestrator = FlextInfraReleaseOrchestrator()
+        workspace_root = tmp_path / "workspace"
+        workspace_root.mkdir()
+        (workspace_root / ".git").mkdir()
+        with patch("flext_infra.release.orchestrator.FlextInfraGitService") as mock_git:
+            mock_git_instance = mock_git.return_value
+            mock_git_instance.tag_exists.return_value = r[bool].ok(True)
+            with patch(
+                "flext_infra.release.orchestrator.FlextInfraCommandRunner"
+            ) as mock_runner:
+                mock_runner_instance = mock_runner.return_value
+                mock_runner_instance.capture.return_value = r[str].ok(
+                    "- abc1234 Fix bug (Alice)\n- def5678 Add feature (Bob)\n"
+                )
+                result = orchestrator._collect_changes(
+                    workspace_root, "v0.9.0", "v1.0.0"
+                )
+                assert result.is_success
+                assert "Fix bug" in result.value

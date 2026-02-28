@@ -1154,3 +1154,102 @@ def test_flext_infra_pyproject_modernizer_find_pyproject_files(tmp_path: Path) -
 
     assert len(files) == 2  # Should skip .venv
     assert all("project" in str(f) for f in files)
+
+
+class TestModernizerUncoveredLines:
+    """Test uncovered lines in modernizer."""
+
+    def test_as_string_list_with_item_unwrap_returns_none(self) -> None:
+        """Test _as_string_list when Item.unwrap returns non-iterable (line 91)."""
+        doc = tomlkit.document()
+        doc["items"] = tomlkit.item(42)
+        item = doc["items"]
+        result = _as_string_list(item)
+        assert result == []
+
+    def test_ensure_table_with_non_table_value(self) -> None:
+        """Test _ensure_table overwrites non-table value (lines 270-271)."""
+        parent = tomlkit.table()
+        parent["key"] = "string_value"
+        result = _ensure_table(parent, "key")
+        assert isinstance(result, Table)
+        assert "key" in parent
+
+    def test_ensure_pyrefly_config_phase_apply_with_non_root(
+        self, tmp_path: Path
+    ) -> None:
+        """Test EnsurePyreflyConfigPhase.apply with is_root=False (lines 340-341)."""
+        doc = tomlkit.document()
+        doc["tool"] = tomlkit.table()
+        phase = EnsurePyreflyConfigPhase()
+        changes = phase.apply(doc, is_root=False)
+        assert len(changes) > 0
+
+    def test_inject_comments_phase_apply_with_optional_dependencies_dev(
+        self, tmp_path: Path
+    ) -> None:
+        """Test InjectCommentsPhase handles optional-dependencies.dev marker (lines 443-455)."""
+        rendered = (
+            "[project.optional-dependencies]\n"
+            "optional-dependencies.dev = ['pytest', 'coverage']\n"
+        )
+        phase = InjectCommentsPhase()
+        result, changes = phase.apply(rendered)
+        assert "optional-dependencies.dev" in result or len(changes) > 0
+
+    def test_consolidate_groups_phase_apply_with_empty_poetry_group(
+        self, tmp_path: Path
+    ) -> None:
+        """Test ConsolidateGroupsPhase removes empty poetry groups (line 426)."""
+        doc = tomlkit.document()
+        doc["project"] = tomlkit.table()
+        doc["project"]["optional-dependencies"] = tomlkit.table()
+        doc["tool"] = tomlkit.table()
+        doc["tool"]["poetry"] = tomlkit.table()
+        doc["tool"]["poetry"]["group"] = tomlkit.table()
+        doc["tool"]["poetry"]["group"]["docs"] = tomlkit.table()
+        doc["tool"]["poetry"]["group"]["docs"]["dependencies"] = tomlkit.table()
+        phase = ConsolidateGroupsPhase()
+        changes = phase.apply(doc, [])
+        assert len(changes) > 0
+
+    def test_flext_infra_pyproject_modernizer_run_with_missing_root_pyproject(
+        self, tmp_path: Path
+    ) -> None:
+        """Test modernizer.run when root pyproject.toml is missing (line 549)."""
+        modernizer = FlextInfraPyprojectModernizer(tmp_path)
+        args = argparse.Namespace(
+            project=None,
+            dry_run=True,
+            verbose=False,
+            audit=False,
+            skip_comments=False,
+            skip_check=True,
+        )
+        result = modernizer.run(args)
+        assert result == 2
+
+    def test_flext_infra_pyproject_modernizer_run_with_no_changes(
+        self, tmp_path: Path
+    ) -> None:
+        """Test modernizer.run when no changes are needed (line 601)."""
+        pyproject = tmp_path / "pyproject.toml"
+        doc = tomlkit.document()
+        doc["project"] = tomlkit.table()
+        doc["project"]["name"] = "test"
+        pyproject.write_text(tomlkit.dumps(doc))
+        modernizer = FlextInfraPyprojectModernizer(tmp_path)
+        args = argparse.Namespace(
+            project=None,
+            dry_run=True,
+            verbose=False,
+            audit=False,
+            skip_comments=False,
+            skip_check=True,
+        )
+        with patch.object(modernizer, "find_pyproject_files", return_value=[pyproject]):
+            with patch("flext_infra.deps.modernizer._read_doc") as mock_read:
+                mock_read.return_value = doc
+                with patch.object(modernizer, "process_file", return_value=[]):
+                    result = modernizer.run(args)
+                    assert result == 0

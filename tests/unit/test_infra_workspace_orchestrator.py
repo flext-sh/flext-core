@@ -10,7 +10,9 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from flext_infra import FlextInfraCommandRunner
+from _pytest.monkeypatch import MonkeyPatch
+from flext_core import r
+from flext_infra import FlextInfraCommandRunner, m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 
 
@@ -189,3 +191,73 @@ def test_orchestrate_with_project_execution_failure(tmp_path: Path) -> None:
     # Both should have exit code 1 (failure)
     assert result.value[0].exit_code == 1
     assert result.value[1].exit_code == 1
+
+
+def test_orchestrate_with_runner_failure_fail_fast(tmp_path: Path) -> None:
+    """Test orchestrate handles runner failure with fail_fast=True."""
+    orchestrator = FlextInfraOrchestratorService()
+
+    orchestrator = FlextInfraOrchestratorService()
+    projects = [
+        Mock(name="proj1", path=tmp_path / "proj1"),
+        Mock(name="proj2", path=tmp_path / "proj2"),
+        Mock(name="proj3", path=tmp_path / "proj3"),
+    ]
+    verb = "test"
+
+    # Mock runner to fail on first project
+    mock_runner = Mock(spec=FlextInfraCommandRunner)
+    mock_runner.run_to_file.return_value = Mock(
+        is_success=False, error="Execution failed"
+    )
+    orchestrator._runner = mock_runner
+
+    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
+    assert result.is_success
+    # Should stop after first failure
+    assert len(result.value) <= 3
+
+
+def test_orchestrate_run_project_failure_with_fail_fast(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Test orchestrate handles _run_project failure with fail_fast (lines 94-105)."""
+    orchestrator = FlextInfraOrchestratorService()
+    projects = ["proj1", "proj2", "proj3"]
+    verb = "test"
+
+    # Mock _run_project to return failure on first call
+    call_count = [0]
+
+    def mock_run_project(
+        self: object,
+        project: str,
+        verb: str,
+        idx: int,
+        make_args: list,
+    ) -> object:
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return r[m.CommandOutput].fail("project execution failed")
+        return r[m.CommandOutput].ok(
+            m.CommandOutput(
+                stdout="",
+                stderr="",
+                exit_code=0,
+                duration=0.0,
+            )
+        )
+
+    monkeypatch.setattr(
+        FlextInfraOrchestratorService,
+        "_run_project",
+        mock_run_project,
+    )
+
+    result = orchestrator.orchestrate(projects, verb, fail_fast=True)
+    assert result.is_success
+    # Should have 3 results: first failed, rest skipped
+    assert len(result.value) == 3
+    assert result.value[0].exit_code == 1  # failed
+    assert result.value[1].exit_code == 0  # skipped
+    assert result.value[2].exit_code == 0  # skipped

@@ -9,6 +9,7 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
+import pytest
 from flext_core import FlextResult as r
 from flext_infra import m as im
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
@@ -234,5 +235,42 @@ def test_generator_normalize_config_with_invalid_dict() -> None:
     gen = FlextInfraBaseMkGenerator()
     result = gen._normalize_config(invalid_dict)
 
+    assert result.is_failure
+    assert "validation failed" in result.error
+
+
+def test_generator_write_to_stream_handles_oserror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test write() handles OSError when writing to stream."""
+    stream = io.StringIO()
+
+    stream = io.StringIO()
+    content = "all:\n\t@echo 'test'\n"
+    gen = FlextInfraBaseMkGenerator()
+
+    def mock_write(*args: object, **kwargs: object) -> None:
+        msg = "Stream write failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(stream, "write", mock_write)
+    result = gen.write(content, stream=stream)
+    assert result.is_failure
+    assert "stdout write failed" in result.error
+
+
+def test_generator_validate_generated_output_handles_oserror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test _validate_generated_output handles OSError gracefully."""
+    gen = FlextInfraBaseMkGenerator()
+    content = "all:\n\t@echo 'test'\n"
+
+    def mock_tempdir(*args: object, **kwargs: object) -> object:
+        msg = "Temp directory creation failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr("tempfile.TemporaryDirectory", mock_tempdir)
+    result = gen._validate_generated_output(content)
     assert result.is_failure
     assert "validation failed" in result.error

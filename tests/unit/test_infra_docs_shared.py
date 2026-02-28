@@ -437,3 +437,67 @@ class TestFlextInfraDocsShared:
         result = FlextInfraDocsShared.write_markdown(md_file, ["test"])
         assert result.is_failure
         assert "markdown write error" in result.error
+
+    def test_build_scopes_skips_missing_projects(self, tmp_path: Path) -> None:
+        """Test build_scopes skips projects without pyproject.toml."""
+        # Create a directory without pyproject.toml
+        missing_proj = tmp_path / "missing-proj"
+        missing_proj.mkdir(parents=True, exist_ok=True)
+        result = FlextInfraDocsShared.build_scopes(
+            root=tmp_path,
+            project=None,
+            projects="missing-proj",
+            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+        )
+        # Should succeed but skip the missing project
+        assert result.is_success
+
+    def test_build_scopes_with_nonexistent_project_skips_it(
+        self, tmp_path: Path
+    ) -> None:
+        """Test build_scopes skips nonexistent projects gracefully."""
+        result = FlextInfraDocsShared.build_scopes(
+            root=tmp_path,
+            project="nonexistent_proj",
+            projects=None,
+            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+        )
+        # Should succeed but only include root scope
+        assert result.is_success
+
+    def test_build_scopes_appends_valid_project_scope(self, tmp_path: Path) -> None:
+        """Test build_scopes appends scope for valid project with pyproject.toml."""
+        proj_dir = tmp_path / "test-proj"
+        proj_dir.mkdir()
+        (proj_dir / "pyproject.toml").write_text('[project]\nname = "test-proj"\n')
+        result = FlextInfraDocsShared.build_scopes(
+            root=tmp_path,
+            project=None,
+            projects="test-proj",
+            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+        )
+        assert result.is_success
+        scope_names = [s.name for s in result.value]
+        assert "test-proj" in scope_names
+
+    def test_build_scopes_catches_oserror(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test build_scopes returns failure on OSError during resolution."""
+        original_resolve = Path.resolve
+
+        def mock_resolve(self_path: Path) -> Path:
+            if "oserror_proj" in str(self_path):
+                msg = "Permission denied"
+                raise OSError(msg)
+            return original_resolve(self_path)
+
+        monkeypatch.setattr(Path, "resolve", mock_resolve)
+        result = FlextInfraDocsShared.build_scopes(
+            root=tmp_path,
+            project="oserror_proj",
+            projects=None,
+            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+        )
+        assert result.is_failure
+        assert "scope resolution failed" in result.error

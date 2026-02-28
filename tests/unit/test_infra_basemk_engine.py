@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from _pytest.capture import CaptureFixture
 from flext_core import FlextResult as r
 from flext_infra import m as im
 from flext_infra.basemk.__main__ import main as basemk_main
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
+from jinja2 import TemplateError
 
 
 class _InvalidTemplateEngine:
@@ -133,3 +135,28 @@ def test_basemk_engine_render_all_with_valid_config() -> None:
     result = engine.render_all(config=config)
     assert result.is_success
     assert "PROJECT_NAME ?= test-project" in result.value
+
+
+def test_basemk_engine_execute_calls_render_all() -> None:
+    """Test engine.execute() calls render_all()."""
+    engine = FlextInfraBaseMkTemplateEngine()
+    result = engine.execute()
+    assert result.is_success
+    assert isinstance(result.value, str)
+    assert len(result.value) > 0
+
+
+def test_basemk_engine_render_all_handles_template_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test engine.render_all() handles TemplateError gracefully."""
+
+    def mock_get_template(*args: object, **kwargs: object) -> object:
+        msg = "Template not found"
+        raise TemplateError(msg)
+
+    engine = FlextInfraBaseMkTemplateEngine()
+    monkeypatch.setattr(engine._environment, "get_template", mock_get_template)
+    result = engine.render_all()
+    assert result.is_failure
+    assert "template render failed" in result.error

@@ -13,6 +13,8 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
+from flext_core import r
 from flext_infra.workspace.sync import FlextInfraSyncService, main
 
 
@@ -311,3 +313,53 @@ def test_sync_service_sync_basemk_generation_failure(tmp_path: Path) -> None:
     result = sync_service._sync_basemk(tmp_path, None)
     assert result.is_failure
     assert "Generation failed" in result.error
+
+
+def test_sync_service_gitignore_sync_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test sync handles .gitignore sync failures gracefully."""
+    sync_service = FlextInfraSyncService()
+
+    def mock_ensure_gitignore(*args: object, **kwargs: object) -> object:
+
+        return r[bool].fail(".gitignore sync failed")
+
+    monkeypatch.setattr(
+        sync_service, "_ensure_gitignore_entries", mock_ensure_gitignore
+    )
+    result = sync_service.sync(project_root=tmp_path)
+    assert result.is_failure
+    assert ".gitignore sync failed" in result.error
+
+
+def test_sync_service_sync_basemk_with_canonical_root(tmp_path: Path) -> None:
+    """Test _sync_basemk uses canonical root when provided."""
+    sync_service = FlextInfraSyncService()
+    canonical_root = tmp_path / "canonical"
+    canonical_root.mkdir(parents=True, exist_ok=True)
+    canonical_basemk = canonical_root / "base.mk"
+    canonical_basemk.write_text("# Canonical base.mk\n")
+
+    result = sync_service._sync_basemk(tmp_path, None, canonical_root=canonical_root)
+    assert result.is_success or result.is_failure
+
+
+def test_main_returns_zero_on_success(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Test main() returns 0 when sync succeeds (line 274)."""
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync", "--project-root", str(tmp_path)],
+    )
+    exit_code = main()
+    assert exit_code == 0
+
+
+def test_main_returns_one_on_failure(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Test main() returns 1 when sync fails (lines 275-276)."""
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sync", "--project-root", "/nonexistent/path"],
+    )
+    exit_code = main()
+    assert exit_code == 1

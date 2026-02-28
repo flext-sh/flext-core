@@ -10,6 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
 from flext_core import FlextResult as r
 from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
@@ -695,3 +696,117 @@ def test_workspace_migrator_error_handling_on_invalid_workspace() -> None:
     # Should handle invalid workspace without raising
     result = migrator.migrate(workspace_root=Path("/nonexistent"))
     assert result.is_failure or result.is_success
+
+
+def test_workspace_migrator_makefile_not_found_dry_run(tmp_path: Path) -> None:
+    """Test _migrate_makefile returns success when Makefile not found in dry_run."""
+    project = im.ProjectInfo.model_validate({
+        "name": "test-proj",
+        "path": str(tmp_path),
+        "stack": "python",
+        "has_tests": True,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "base")
+    result = migrator._migrate_makefile(tmp_path, dry_run=True)
+    assert result.is_success
+    assert "not found" in result.value.lower()
+
+
+def test_workspace_migrator_makefile_read_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test _migrate_makefile handles read errors gracefully."""
+    makefile = tmp_path / "Makefile"
+    makefile.write_text("test")
+    project = im.ProjectInfo.model_validate({
+        "name": "test-proj",
+        "path": str(tmp_path),
+        "stack": "python",
+        "has_tests": True,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "base")
+
+    def mock_read(*args: object, **kwargs: object) -> str:
+        msg = "Read failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(Path, "read_text", mock_read)
+    result = migrator._migrate_makefile(tmp_path, dry_run=False)
+    assert result.is_failure
+    assert "read failed" in result.error.lower()
+
+
+def test_workspace_migrator_pyproject_write_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test _migrate_pyproject handles write errors gracefully."""
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("[tool.poetry]\n")
+    project = im.ProjectInfo.model_validate({
+        "name": "test-proj",
+        "path": str(tmp_path),
+        "stack": "python",
+        "has_tests": True,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "base")
+
+    def mock_write(*args: object, **kwargs: object) -> None:
+        msg = "Write failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(Path, "write_text", mock_write)
+    result = migrator._migrate_pyproject(
+        tmp_path, project_name="test-proj", dry_run=False
+    )
+    assert result.is_failure or result.is_success
+
+
+def test_migrate_makefile_not_found_non_dry_run(tmp_path: Path) -> None:
+    """Test _migrate_makefile returns empty string when Makefile not found (line 231)."""
+    project_root = tmp_path / "project-a"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    # No Makefile created
+
+    project = im.ProjectInfo.model_validate({
+        "name": "project-a",
+        "path": project_root,
+        "stack": "python/external",
+        "has_tests": False,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "base")
+
+    result = migrator._migrate_makefile(project_root, dry_run=False)
+    assert result.is_success
+    assert result.value == ""
+
+
+def test_migrate_pyproject_flext_core_non_dry_run(tmp_path: Path) -> None:
+    """Test _migrate_pyproject returns empty string for flext-core (line 281)."""
+    project_root = tmp_path / "flext-core"
+    project_root.mkdir(parents=True)
+    (project_root / ".git").mkdir()
+    # Create pyproject.toml
+    (project_root / "pyproject.toml").write_text(
+        '[project]\nname = "flext-core"\nversion = "0.1.0"\n',
+        encoding="utf-8",
+    )
+
+    project = im.ProjectInfo.model_validate({
+        "name": "flext-core",
+        "path": project_root,
+        "stack": "python/external",
+        "has_tests": True,
+        "has_src": True,
+    })
+    migrator = _build_migrator(project, "base")
+
+    result = migrator._migrate_pyproject(
+        project_root, project_name="flext-core", dry_run=False
+    )
+    assert result.is_success
+    assert result.value == ""

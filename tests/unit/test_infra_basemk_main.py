@@ -127,3 +127,17 @@ def test_basemk_main_calls_sys_exit() -> None:
                     main(argv=["generate"])
                 except SystemExit:
                     pass
+
+
+def test_basemk_main_with_write_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test main() handles write failure gracefully."""
+    output_file = tmp_path / "base.mk"
+
+    def mock_write(*args: object, **kwargs: object) -> r[bool]:
+        return r[bool].fail("Write failed")
+
+    monkeypatch.setattr(FlextInfraBaseMkGenerator, "write", mock_write)
+    result = main(argv=["generate", "--output", str(output_file)])
+    assert result == 1

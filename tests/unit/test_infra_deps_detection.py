@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from flext_core import r
+from flext_infra.deps import detection
 from flext_infra.deps.detection import (
     FlextInfraDependencyDetectionService,
     _to_infra_value,
@@ -763,3 +764,227 @@ class TestModuleLevelWrappers:
         ):
             result = load_dependency_limits()
         assert isinstance(result, Mapping)
+
+
+class TestDetectionUncoveredLines:
+    """Test uncovered lines in dependency detection."""
+
+    def test_run_deptry_with_non_dict_issue(self, tmp_path: Path) -> None:
+        """Test run_deptry handles non-dict issues (lines 418-420)."""
+        service = FlextInfraDependencyDetectionService()
+        service._runner = Mock()
+        venv_bin = tmp_path / "venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "pyproject.toml").write_text("")
+
+        out_file = project / ".deptry-report.json"
+        out_file.write_text(json.dumps(["not_a_dict", {"error": {"code": "DEP001"}}]))
+
+        cmd_out = Mock(exit_code=0, stdout="", stderr="")
+        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        result = service.run_deptry(project, venv_bin, json_output_path=out_file)
+        assert result.is_success
+        issues, _ = result.value
+        assert len(issues) == 1
+
+    def test_run_pip_check_with_empty_output(self, tmp_path: Path) -> None:
+        """Test run_pip_check with empty output (line 455)."""
+        service = FlextInfraDependencyDetectionService()
+        service._runner = Mock()
+        venv_bin = tmp_path / "venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        (venv_bin / "pip").write_text("")
+
+        cmd_out = Mock(exit_code=0, stdout="", stderr="")
+        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+        result = service.run_pip_check(tmp_path, venv_bin)
+        assert result.is_success
+        lines, exit_code = result.value
+        assert lines == []
+        assert exit_code == 0
+
+    def test_classify_issues_with_missing_error_field(self) -> None:
+        """Test classify_issues skips issues without error field (line 467)."""
+        service = FlextInfraDependencyDetectionService()
+        issues = [{"module": "foo"}]
+        result = service.classify_issues(issues)
+        assert len(result.dep001) == 0
+
+    def test_module_to_types_package_with_custom_limits(self) -> None:
+        """Test module_to_types_package with custom limits (line 481)."""
+        service = FlextInfraDependencyDetectionService()
+        limits = {
+            "typing_libraries": {
+                "module_to_package": {"custom_module": "types-custom"},
+            },
+        }
+        result = service.module_to_types_package("custom_module", limits)
+        assert result == "types-custom"
+
+    def test_get_current_typings_from_pyproject_with_no_data(
+        self, tmp_path: Path
+    ) -> None:
+        """Test get_current_typings_from_pyproject with no data (line 511)."""
+        service = FlextInfraDependencyDetectionService()
+        service._toml = Mock()
+        service._toml.read.return_value = r[dict].ok({})
+        result = service.get_current_typings_from_pyproject(tmp_path)
+        assert result == []
+
+    def test_get_required_typings_with_limits_applied(self, tmp_path: Path) -> None:
+        """Test get_required_typings with limits applied (line 524)."""
+        service = FlextInfraDependencyDetectionService()
+        service._toml = Mock()
+        service._runner = Mock()
+        venv_bin = tmp_path / "venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        (venv_bin / "mypy").write_text("")
+
+        cmd_out = Mock(exit_code=0, stdout="", stderr="")
+        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+
+        service._toml.read.side_effect = [
+            r[dict].ok({"python": {"version": "3.13"}}),
+            r[dict].ok({}),
+        ]
+
+        result = service.get_required_typings(tmp_path, venv_bin)
+        assert result.is_success
+        assert result.value.limits_applied is True
+
+    def test_run_mypy_stub_hints_with_timeout(self, tmp_path: Path) -> None:
+        """Test run_mypy_stub_hints with custom timeout (line 535)."""
+        service = FlextInfraDependencyDetectionService()
+        service._runner = Mock()
+        venv_bin = tmp_path / "venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        (venv_bin / "mypy").write_text("")
+
+        cmd_out = Mock(exit_code=0, stdout="", stderr="")
+        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+
+        result = service.run_mypy_stub_hints(tmp_path, venv_bin, timeout=600)
+        assert result.is_success
+        service._runner.run_raw.assert_called_once()
+        call_kwargs = service._runner.run_raw.call_args[1]
+        assert call_kwargs["timeout"] == 600
+
+    def test_get_required_typings_with_missing_modules(self, tmp_path: Path) -> None:
+        """Test get_required_typings with missing modules (lines 418-420)."""
+        service = FlextInfraDependencyDetectionService()
+        service._toml = Mock()
+        service._runner = Mock()
+        venv_bin = tmp_path / "venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        (venv_bin / "mypy").write_text("")
+
+        cmd_out = Mock(exit_code=0, stdout="", stderr="")
+        service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
+
+        service._toml.read.side_effect = [
+            r[dict].ok({}),  # limits file
+            r[dict].ok({}),  # pyproject
+        ]
+
+        # Mock run_mypy_stub_hints to return missing modules
+        with patch.object(service, "run_mypy_stub_hints") as mock_mypy:
+            mock_mypy.return_value = r[tuple].ok((
+                [],
+                ["requests"],
+            ))  # hinted, missing_modules
+            # Mock module_to_types_package to return a types package
+            with patch.object(service, "module_to_types_package") as mock_module:
+                mock_module.return_value = "types-requests"
+                result = service.get_required_typings(tmp_path, venv_bin)
+                assert result.is_success
+                # Verify that module_to_types_package was called for the missing module
+                mock_module.assert_called()
+
+
+# Tests for module-level wrapper functions
+
+
+def test_discover_projects_wrapper(tmp_path: Path) -> None:
+    """Test discover_projects wrapper function (line 455)."""
+    # detection module already imported at top
+    with patch.object(detection, "_service") as mock_service:
+        mock_service.discover_projects.return_value = r[list].ok([tmp_path])
+        result = detection.discover_projects(tmp_path)
+        assert result.is_success
+        mock_service.discover_projects.assert_called_once_with(
+            tmp_path, projects_filter=None
+        )
+
+
+def test_run_deptry_wrapper(tmp_path: Path) -> None:
+    """Test run_deptry wrapper function (line 467)."""
+    # detection module already imported at top
+    venv_bin = tmp_path / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    with patch.object(detection, "_service") as mock_service:
+        mock_service.run_deptry.return_value = r[tuple].ok(([], 0))
+        result = detection.run_deptry(tmp_path, venv_bin)
+        assert result.is_success
+        mock_service.run_deptry.assert_called_once()
+
+
+def test_run_pip_check_wrapper(tmp_path: Path) -> None:
+    """Test run_pip_check wrapper function (line 481)."""
+    # detection module already imported at top
+    venv_bin = tmp_path / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    with patch.object(detection, "_service") as mock_service:
+        mock_service.run_pip_check.return_value = r[tuple].ok(([], 0))
+        result = detection.run_pip_check(tmp_path, venv_bin)
+        assert result.is_success
+        mock_service.run_pip_check.assert_called_once_with(tmp_path, venv_bin)
+
+
+def test_run_mypy_stub_hints_wrapper(tmp_path: Path) -> None:
+    """Test run_mypy_stub_hints wrapper function (line 511)."""
+    # detection module already imported at top
+    venv_bin = tmp_path / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    with patch.object(detection, "_service") as mock_service:
+        mock_service.run_mypy_stub_hints.return_value = r[tuple].ok(([], []))
+        result = detection.run_mypy_stub_hints(tmp_path, venv_bin)
+        assert result.is_success
+        mock_service.run_mypy_stub_hints.assert_called_once()
+
+
+def test_get_current_typings_from_pyproject_wrapper(tmp_path: Path) -> None:
+    """Test get_current_typings_from_pyproject wrapper function (line 524)."""
+    # detection module already imported at top
+    with patch.object(detection, "_service") as mock_service:
+        mock_service.get_current_typings_from_pyproject.return_value = [
+            "types-requests"
+        ]
+        result = detection.get_current_typings_from_pyproject(tmp_path)
+        assert result == ["types-requests"]
+        mock_service.get_current_typings_from_pyproject.assert_called_once_with(
+            tmp_path
+        )
+
+
+def test_get_required_typings_wrapper(tmp_path: Path) -> None:
+    """Test get_required_typings wrapper function (line 535)."""
+    # detection module already imported at top
+    venv_bin = tmp_path / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    with patch.object(detection, "_service") as mock_service:
+        report = dm.TypingsReport(
+            required_packages=[],
+            hinted=[],
+            missing_modules=[],
+            current=[],
+            to_add=[],
+            to_remove=[],
+            limits_applied=False,
+            python_version=None,
+        )
+        mock_service.get_required_typings.return_value = r[dm.TypingsReport].ok(report)
+        result = detection.get_required_typings(tmp_path, venv_bin)
+        assert result.is_success
+        mock_service.get_required_typings.assert_called_once()
