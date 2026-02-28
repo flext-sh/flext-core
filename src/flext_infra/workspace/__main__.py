@@ -92,7 +92,7 @@ def _run_migrate(args: argparse.Namespace) -> int:
     return 1 if failed_projects else 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Run workspace utilities: detect mode, sync base.mk, orchestrate projects."""
     FlextRuntime.ensure_structlog_configured()
     parser = argparse.ArgumentParser(description="Workspace management utilities")
@@ -166,7 +166,7 @@ def main() -> int:
         help="Preview migration changes without writing files",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.command == "detect":
         return _run_detect(args)

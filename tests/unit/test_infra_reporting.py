@@ -194,3 +194,70 @@ class TestFlextInfraReportingService:
 
         assert isinstance(result, Path)
         assert result.is_absolute()
+
+    def test_execute_returns_empty_path(
+        self,
+        service: FlextInfraReportingService,
+    ) -> None:
+        """Test execute method returns empty Path."""
+        result = service.execute()
+
+        assert result.is_success
+        assert result.value == Path()
+
+    def test_create_latest_symlink_success(
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
+    ) -> None:
+        """Test creating a latest symlink."""
+        report_dir = tmp_path / ".reports" / "tests"
+        report_dir.mkdir(parents=True)
+        run_id = "run-2025-01-01"
+
+        result = service.create_latest_symlink(report_dir, run_id)
+
+        assert result.is_success
+        link = result.value
+        assert link.name == "latest"
+        assert link.is_symlink()
+        assert link.resolve().name == run_id
+
+    def test_create_latest_symlink_update_existing(
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
+    ) -> None:
+        """Test updating an existing latest symlink."""
+        report_dir = tmp_path / ".reports" / "tests"
+        report_dir.mkdir(parents=True)
+        run_id_1 = "run-2025-01-01"
+        run_id_2 = "run-2025-01-02"
+
+        # Create first symlink
+        result1 = service.create_latest_symlink(report_dir, run_id_1)
+        assert result1.is_success
+
+        # Update to second symlink
+        result2 = service.create_latest_symlink(report_dir, run_id_2)
+        assert result2.is_success
+        link = result2.value
+        assert link.is_symlink()
+        assert link.resolve().name == run_id_2
+
+    def test_create_latest_symlink_oserror(
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
+    ) -> None:
+        """Test handling OSError when creating symlink."""
+        readonly_dir = tmp_path / "readonly"
+        readonly_dir.mkdir()
+        readonly_dir.chmod(0o444)
+
+        try:
+            result = service.create_latest_symlink(readonly_dir, "run-id")
+            assert result.is_failure
+            assert "symlink" in result.error.lower()
+        finally:
+            readonly_dir.chmod(0o755)

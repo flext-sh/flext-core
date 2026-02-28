@@ -121,3 +121,78 @@ class TestFlextInfraDocBuilder:
         result = builder.build(tmp_path, projects="proj1,proj2,proj3")
         if result.is_success:
             assert isinstance(result.value, list)
+
+    def test_build_scope_with_mkdocs_config(
+        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    ) -> None:
+        """Test _build_scope with mkdocs.yml present."""
+        mkdocs_file = tmp_path / "mkdocs.yml"
+        mkdocs_file.write_text("site_name: Test\n")
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = builder._build_scope(scope)
+        assert report.scope == "test"
+
+    def test_build_scope_without_mkdocs_config(
+        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    ) -> None:
+        """Test _build_scope without mkdocs.yml returns SKIP."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = builder._build_scope(scope)
+        assert report.result == "SKIP"
+
+    def test_run_mkdocs_no_config(
+        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    ) -> None:
+        """Test _run_mkdocs returns SKIP when mkdocs.yml not found."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = builder._run_mkdocs(scope)
+        assert report.result == "SKIP"
+        assert "mkdocs.yml not found" in report.reason
+
+    def test_write_reports_creates_json_and_markdown(
+        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    ) -> None:
+        """Test _write_reports creates both JSON and markdown files."""
+        report_dir = tmp_path / "reports"
+        report_dir.mkdir(parents=True, exist_ok=True)
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=report_dir,
+        )
+        report = BuildReport(
+            scope="test",
+            result="OK",
+            reason="Build succeeded",
+            site_dir="/tmp/site",
+        )
+        builder._write_reports(scope, report)
+        assert (report_dir / "build-summary.json").exists()
+        assert (report_dir / "build-report.md").exists()
+
+    def test_run_mkdocs_with_command_failure(
+        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    ) -> None:
+        """Test _run_mkdocs handles command failures."""
+        mkdocs_file = tmp_path / "mkdocs.yml"
+        mkdocs_file.write_text("site_name: Test\n")
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = builder._run_mkdocs(scope)
+        assert report.scope == "test"
+        assert isinstance(report.result, str)

@@ -136,3 +136,132 @@ class TestFlextInfraDocFixer:
         report = FixReport(scope="test", changed_files=2, applied=True, items=items)
         assert len(report.items) == 2
         assert report.items[0].file == "file1.md"
+
+    def test_process_file_with_markdown_links(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _process_file detects and fixes markdown links."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\n[Link](missing.md)\n")
+        item = fixer._process_file(md_file, apply=False)
+        assert item.file == str(md_file)
+
+    def test_maybe_fix_link_external_urls(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _maybe_fix_link returns None for external URLs."""
+        md_file = tmp_path / "test.md"
+        assert fixer._maybe_fix_link(md_file, "http://example.com") is None
+        assert fixer._maybe_fix_link(md_file, "https://example.com") is None
+        assert fixer._maybe_fix_link(md_file, "mailto:test@example.com") is None
+
+    def test_maybe_fix_link_fragment_only(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _maybe_fix_link returns None for fragment-only links."""
+        md_file = tmp_path / "test.md"
+        assert fixer._maybe_fix_link(md_file, "#section") is None
+
+    def test_maybe_fix_link_existing_file(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _maybe_fix_link returns None for existing files."""
+        md_file = tmp_path / "test.md"
+        existing = tmp_path / "existing.md"
+        existing.write_text("# Existing")
+        assert fixer._maybe_fix_link(md_file, "existing.md") is None
+
+    def test_maybe_fix_link_adds_md_extension(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _maybe_fix_link adds .md extension when needed."""
+        md_file = tmp_path / "test.md"
+        candidate = tmp_path / "missing.md"
+        candidate.write_text("# Missing")
+        result = fixer._maybe_fix_link(md_file, "missing")
+        assert result == "missing.md"
+
+    def test_anchorize_converts_to_slug(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _anchorize converts heading to anchor slug."""
+        assert fixer._anchorize("Hello World") == "hello-world"
+        assert fixer._anchorize("Test-Case") == "test-case"
+        assert fixer._anchorize("  Spaces  ") == "spaces"
+
+    def test_anchorize_removes_special_chars(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _anchorize removes special characters."""
+        assert fixer._anchorize("Hello! World?") == "hello-world"
+        assert fixer._anchorize("Test@#$%") == "test"
+
+    def test_build_toc_from_headings(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _build_toc generates TOC from headings."""
+        content = "# Main\n\n## Section 1\n\n### Subsection\n\n## Section 2\n"
+        toc = fixer._build_toc(content)
+        assert "<!-- TOC START -->" in toc
+        assert "<!-- TOC END -->" in toc
+        assert "Section 1" in toc
+
+    def test_build_toc_no_headings(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _build_toc with no headings."""
+        content = "# Main\n\nNo sections here.\n"
+        toc = fixer._build_toc(content)
+        assert "No sections found" in toc
+
+    def test_update_toc_replaces_existing(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _update_toc replaces existing TOC."""
+        content = (
+            "# Main\n\n<!-- TOC START -->\nOld TOC\n<!-- TOC END -->\n\n## Section\n"
+        )
+        updated, changed = fixer._update_toc(content)
+        assert changed == 1
+        assert "Old TOC" not in updated
+
+    def test_update_toc_inserts_new(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _update_toc inserts new TOC."""
+        content = "# Main\n\n## Section\n"
+        updated, changed = fixer._update_toc(content)
+        assert changed == 1
+        assert "<!-- TOC START -->" in updated
+
+    def test_fix_scope_with_markdown_files(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _fix_scope processes markdown files."""
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        md_file = docs_dir / "README.md"
+        md_file.write_text("# Test\n\n## Section\n")
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = fixer._fix_scope(scope, apply=False)
+        assert report.scope == "test"
+        assert isinstance(report.items, list)
+
+    def test_process_file_with_apply_true(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _process_file with apply=True writes changes."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\n## Section\n")
+        item = fixer._process_file(md_file, apply=True)
+        assert item.file == str(md_file)
+
+    def test_maybe_fix_link_empty_base(
+        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    ) -> None:
+        """Test _maybe_fix_link with empty base."""
+        md_file = tmp_path / "test.md"
+        assert fixer._maybe_fix_link(md_file, "#section") is None
+
+    def test_anchorize_empty_string(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _anchorize with empty string."""
+        result = fixer._anchorize("")
+        assert result == ""
+
+    def test_build_toc_with_no_h2_h3(self, fixer: FlextInfraDocFixer) -> None:
+        """Test _build_toc with no H2/H3 headings."""
+        content = "# Main\n\nNo sections.\n"
+        toc = fixer._build_toc(content)
+        assert "No sections found" in toc

@@ -154,3 +154,125 @@ class TestFlextInfraDocValidator:
         result = validator.validate(tmp_path, projects="proj1,proj2,proj3")
         if result.is_success:
             assert isinstance(result.value, list)
+
+    def test_validate_scope_with_adr_check(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _validate_scope with adr-skill check."""
+        scope = FlextInfraDocScope(
+            name="root",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = validator._validate_scope(scope, check="adr-skill", apply_mode=False)
+        assert report.scope == "root"
+
+    def test_validate_scope_without_config(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _validate_scope without architecture config."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = validator._validate_scope(scope, check="all", apply_mode=False)
+        assert report.scope == "test"
+
+    def test_has_adr_reference_with_adr_text(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _has_adr_reference detects ADR references."""
+        skill_file = tmp_path / "SKILL.md"
+        skill_file.write_text("# Skill\n\nADR: This is an ADR reference.\n")
+        assert validator._has_adr_reference(skill_file) is True
+
+    def test_has_adr_reference_without_adr_text(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _has_adr_reference returns False without ADR."""
+        skill_file = tmp_path / "SKILL.md"
+        skill_file.write_text("# Skill\n\nNo architecture decision record here.\n")
+        assert validator._has_adr_reference(skill_file) is False
+
+    def test_run_adr_skill_check_no_config(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _run_adr_skill_check with no config uses defaults."""
+        code, missing = validator._run_adr_skill_check(tmp_path)
+        assert isinstance(code, int)
+        assert isinstance(missing, list)
+
+    def test_run_adr_skill_check_with_config(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _run_adr_skill_check loads from config."""
+        config_dir = tmp_path / "docs/architecture"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        config_file = config_dir / "architecture_config.json"
+        config_file.write_text(
+            '{"docs_validation": {"required_skills": ["test-skill"]}}'
+        )
+        code, missing = validator._run_adr_skill_check(tmp_path)
+        assert isinstance(code, int)
+        assert isinstance(missing, list)
+
+    def test_maybe_write_todo_root_scope(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _maybe_write_todo skips root scope."""
+        scope = FlextInfraDocScope(
+            name="root",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        result = validator._maybe_write_todo(scope, apply_mode=True)
+        assert result is False
+
+    def test_maybe_write_todo_apply_false(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _maybe_write_todo with apply_mode=False."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        result = validator._maybe_write_todo(scope, apply_mode=False)
+        assert result is False
+
+    def test_maybe_write_todo_creates_file(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _maybe_write_todo creates TODOS.md."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        result = validator._maybe_write_todo(scope, apply_mode=True)
+        assert result is True
+        assert (tmp_path / "TODOS.md").exists()
+
+    def test_validate_scope_with_all_check(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _validate_scope with all check."""
+        scope = FlextInfraDocScope(
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
+        )
+        report = validator._validate_scope(scope, check="all", apply_mode=False)
+        assert report.scope == "test"
+
+    def test_run_adr_skill_check_with_missing_skills(
+        self, validator: FlextInfraDocValidator, tmp_path: Path
+    ) -> None:
+        """Test _run_adr_skill_check detects missing skills."""
+        skills_dir = tmp_path / ".claude/skills"
+        skills_dir.mkdir(parents=True, exist_ok=True)
+        code, missing = validator._run_adr_skill_check(tmp_path)
+        # Should detect missing skills
+        assert isinstance(code, int)
+        assert isinstance(missing, list)

@@ -121,3 +121,28 @@ class TestFlextInfraPathResolver:
         )
 
         assert result.is_failure
+
+    def test_workspace_root_with_invalid_type(self) -> None:
+        """Test workspace_root handles TypeError gracefully."""
+        resolver = FlextInfraPathResolver()
+        # Pass an invalid type that Path() will reject
+        result = resolver.workspace_root(None)  # type: ignore[arg-type]
+
+        assert result.is_failure
+        assert "failed to resolve" in result.error.lower()
+
+    def test_workspace_root_from_file_with_invalid_type(self) -> None:
+        """Test workspace_root_from_file handles TypeError gracefully."""
+        resolver = FlextInfraPathResolver()
+        result = resolver.workspace_root_from_file(None)  # type: ignore[arg-type]
+
+        assert result.is_failure
+        assert "failed to resolve" in result.error.lower()
+
+    def test_execute_returns_current_directory(self) -> None:
+        """Test execute method returns current working directory."""
+        resolver = FlextInfraPathResolver()
+        result = resolver.execute()
+
+        assert isinstance(result, Path)
+        assert result == Path.cwd()

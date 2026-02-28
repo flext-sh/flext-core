@@ -479,7 +479,9 @@ class TestFlextModels:
             eq=0,
             msg="New entity must have no domain events",
         )
-        result = entity.add_domain_event("test_event", m.ConfigMap(root={"data": "value"}))
+        result = entity.add_domain_event(
+            "test_event", m.ConfigMap(root={"data": "value"})
+        )
         u.Tests.Result.assert_success(result)
         tm.that(
             len(entity.domain_events),

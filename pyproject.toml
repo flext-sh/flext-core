@@ -17,7 +17,7 @@ keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "soli
 license = "MIT"
 maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pydantic",
@@ -45,10 +45,10 @@ dependencies = [
   "python-dotenv>=1",
   "python-on-whales>=0.79",
   "pyyaml>=6.0.2",
-  "returns>=0.26",
   "structlog>=25.4",
   "tomlkit>=0.13",
   "wrapt>=1.17",
+  "returns (>=0.26)",
 ]
 # [MANAGED] consolidated development dependencies
 # [AUTO] merged from dev/docs/security/test/typings

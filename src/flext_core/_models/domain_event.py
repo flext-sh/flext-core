@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated, Self, override
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BeforeValidator, Field, model_validator
 
 from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation

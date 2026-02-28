@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from flext_infra import FlextInfraCommandRunner, m
 
 
@@ -179,3 +180,83 @@ class TestFlextInfraCommandRunner:
 
         assert result.is_success
         assert "sequence" in result.value.stdout
+
+    def test_run_checked_success(self) -> None:
+        """Test run_checked returns True on success."""
+        runner = FlextInfraCommandRunner()
+        result = runner.run_checked(["echo", "test"])
+
+        assert result.is_success
+        assert result.value is True
+
+    def test_run_checked_failure(self) -> None:
+        """Test run_checked returns failure on nonzero exit."""
+        runner = FlextInfraCommandRunner()
+        result = runner.run_checked(["sh", "-c", "exit 1"])
+
+        assert result.is_failure
+        assert "command failed" in result.error.lower()
+
+    def test_run_to_file_success(self, tmp_path: Path) -> None:
+        """Test run_to_file writes output to file."""
+        runner = FlextInfraCommandRunner()
+        output_file = tmp_path / "output.txt"
+        result = runner.run_to_file(["echo", "hello"], output_file)
+
+        assert result.is_success
+        assert result.value == 0
+        assert output_file.exists()
+        assert "hello" in output_file.read_text()
+
+    def test_run_to_file_timeout(self, tmp_path: Path) -> None:
+        """Test run_to_file timeout error."""
+        runner = FlextInfraCommandRunner()
+        output_file = tmp_path / "output.txt"
+        result = runner.run_to_file(["sleep", "10"], output_file, timeout=1)
+
+        assert result.is_failure
+        assert "timeout" in result.error.lower()
+
+    def test_run_to_file_oserror(self, tmp_path: Path) -> None:
+        """Test run_to_file OSError handling."""
+        runner = FlextInfraCommandRunner()
+        # Use a read-only directory to trigger OSError
+        readonly_dir = tmp_path / "readonly"
+        readonly_dir.mkdir()
+        readonly_dir.chmod(0o444)
+        output_file = readonly_dir / "output.txt"
+
+        try:
+            result = runner.run_to_file(["echo", "test"], output_file)
+            assert result.is_failure
+            assert "file output error" in result.error.lower()
+        finally:
+            readonly_dir.chmod(0o755)
+
+    def test_run_to_file_valueerror(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test run_to_file ValueError handling."""
+        runner = FlextInfraCommandRunner()
+        output_file = tmp_path / "output.txt"
+
+        def mock_run(*args: object, **kwargs: object) -> object:
+            msg = "Invalid argument"
+            raise ValueError(msg)
+
+        monkeypatch.setattr("subprocess.run", mock_run)
+        result = runner.run_to_file(["echo", "test"], output_file)
+
+        assert result.is_failure
+        assert "execution error" in result.error.lower()
+
+    def test_execute_returns_empty_output(self) -> None:
+        """Test execute method returns empty CommandOutput."""
+        runner = FlextInfraCommandRunner()
+        result = runner.execute()
+
+        assert result.is_success
+        output = result.value
+        assert output.stdout == ""
+        assert output.stderr == ""
+        assert output.exit_code == 0

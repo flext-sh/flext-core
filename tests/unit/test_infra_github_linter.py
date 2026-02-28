@@ -83,3 +83,16 @@ class TestFlextInfraWorkflowLinter:
         linter = FlextInfraWorkflowLinter()
         assert linter._runner is not None
         assert linter._json is not None
+
+    def test_lint_skipped_with_report(self, tmp_path: Path) -> None:
+        """Test linting skipped with report output."""
+        mock_runner = Mock()
+        mock_json = Mock()
+        report_path = tmp_path / "report.json"
+
+        with patch("shutil.which", return_value=None):
+            linter = FlextInfraWorkflowLinter(runner=mock_runner, json_io=mock_json)
+            result = linter.lint(tmp_path, report_path=report_path)
+
+        assert result.is_success
+        mock_json.write.assert_called_once()
