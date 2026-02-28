@@ -15,7 +15,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import subprocess
+import contextlib
+import subprocess  # noqa: S404
 from collections import defaultdict
 from pathlib import Path
 
@@ -61,7 +62,7 @@ class LazyInitGenerator:
     using ``flext_core.lazy`` utilities.
     """
 
-    def __init__(self, workspace_root: Path) -> None:
+    def __init__(self, workspace_root: Path) -> None:  # noqa: D107
         self._root = workspace_root
 
     # -- public API ----------------------------------------------------------
@@ -510,11 +511,9 @@ def _generate_file(
 
 def _run_ruff_fix(path: Path) -> None:
     """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
-    try:
+    with contextlib.suppress(FileNotFoundError):
         subprocess.run(  # noqa: S603
-            ["ruff", "check", "--fix", "--quiet", str(path)],
+            ["ruff", "check", "--fix", "--quiet", str(path)],  # noqa: S607
             check=False,
             capture_output=True,
         )
-    except FileNotFoundError:
-        pass  # ruff not available, skip

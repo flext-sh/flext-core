@@ -8,8 +8,10 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import p, r, u
+from flext_core import p, r, t, u
 from pydantic import BaseModel
+
+JsonValue = t.JsonValue
 
 
 class _DumpErrorModel(BaseModel):

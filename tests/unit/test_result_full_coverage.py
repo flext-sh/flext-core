@@ -10,9 +10,11 @@ from __future__ import annotations
 import importlib
 from typing import Never, cast
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextRuntime, r, t
 from pydantic import BaseModel
 from returns.io import IOResult, IOSuccess
+
+JsonValue = t.JsonValue
 
 result_module = importlib.import_module("flext_core.result")
 
