@@ -7,8 +7,7 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from flext_core.result import r
-from flext_core.service import FlextService
+from flext_core import FlextService, r
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 

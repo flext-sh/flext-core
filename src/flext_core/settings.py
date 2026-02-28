@@ -20,12 +20,8 @@ from typing import Any, ClassVar, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from flext_core import FlextRuntime, T_Namespace, T_Settings, c, p, t, u
 from flext_core.__version__ import __version__
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Namespace, T_Settings, t
-from flext_core.utilities import u
 
 
 class FlextSettings(p.ProtocolSettings, FlextRuntime):

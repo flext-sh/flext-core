@@ -31,10 +31,10 @@ from typing import ClassVar
 import pytest
 from flext_core import (
     c,
+    m,
     t,
 )
 from flext_core._models.entity import _ComparableConfigMap
-from flext_core.models import m
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
 from pydantic import Field, ValidationError, field_validator

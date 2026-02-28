@@ -24,8 +24,7 @@ from collections import UserDict as BaseUserDict
 from typing import TypeVar, cast, get_origin
 
 import pytest
-from flext_core import FlextResult, h, u
-from flext_core.typings import t
+from flext_core import FlextResult, h, t, u
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")

@@ -19,13 +19,9 @@ from typing import TypeGuard, cast
 
 from pydantic import TypeAdapter, ValidationError
 
+from flext_core import FlextRuntime, c, p, r, t
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 class FlextUtilitiesReliability:

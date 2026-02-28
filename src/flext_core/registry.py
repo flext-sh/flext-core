@@ -16,26 +16,27 @@ from typing import Annotated, ClassVar, Self, cast, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import c
-from flext_core.container import FlextContainer
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import FlextHandlers
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.service import FlextService
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    FlextContainer,
+    FlextDispatcher,
+    FlextHandlers,
+    c,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+)
 
 type RegistrablePlugin = p.Registrable
 type RegistryBindingKey = str | type[object]
 
 
-class FlextRegistry(FlextService[bool]):
+class FlextRegistry(s[bool]):
     """Application-layer registry for CQRS handlers.
 
-    Extends FlextService for automatic infrastructure (config, context,
+    Extends s for automatic infrastructure (config, context,
     container, logging) while providing handler registration and management
     capabilities. The registry pairs message types with handlers, enforces
     idempotent registration, and exposes batch operations that return ``r``
@@ -45,7 +46,7 @@ class FlextRegistry(FlextService[bool]):
     for actual handler registration and execution.
     """
 
-    class Summary(FlextModelsEntity.Value):
+    class Summary(m.Value):
         """Aggregated outcome for batch handler registration tracking.
 
         Tracks successful, skipped, and failed registrations with computed
@@ -134,7 +135,7 @@ class FlextRegistry(FlextService[bool]):
 
         Args:
             dispatcher: CommandBus protocol instance (defaults to container DI resolution)
-            **data: Additional configuration passed to FlextService
+            **data: Additional configuration passed to s
 
         """
         super().__init__(**data)
@@ -143,7 +144,10 @@ class FlextRegistry(FlextService[bool]):
         self._dispatcher = (
             dispatcher
             if dispatcher is not None
-            else FlextContainer.get_global().get("command_bus").unwrap()
+            else FlextContainer
+            .get_global()
+            .get_typed("command_bus", p.CommandBus)
+            .unwrap()
         )
 
     @override
@@ -293,7 +297,7 @@ class FlextRegistry(FlextService[bool]):
         elif "event" in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.EVENT
 
-        timestamp = reg_result.timestamp if hasattr(reg_result, "timestamp") else ""
+        timestamp = getattr(reg_result, "timestamp", "")
         status = reg_result.status
 
         return m.HandlerRegistrationDetails(
@@ -379,6 +383,7 @@ class FlextRegistry(FlextService[bool]):
         handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = (
             handler
         )
+        registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
                 handler_for_dispatch,
@@ -555,11 +560,7 @@ class FlextRegistry(FlextService[bool]):
         # def register_handler(self, request: ..., handler: ... = None)
 
         for message_type, handler in bindings.items():
-            message_type_name = (
-                message_type.__name__
-                if hasattr(message_type, "__name__")
-                else message_type
-            )
+            message_type_name = getattr(message_type, "__name__", str(message_type))
             key = f"binding::{message_type_name}::{handler.__class__.__name__}"
 
             # We use the dispatcher directly because registry's register_handler
@@ -910,7 +911,7 @@ class FlextRegistry(FlextService[bool]):
         handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
     ) -> str:
         """Resolve registration key from handler."""
-        handler_id = handler.handler_id if hasattr(handler, "handler_id") else None
+        handler_id = getattr(handler, "handler_id", None)
         return str(handler_id) if handler_id else handler.__class__.__name__
 
     def register(

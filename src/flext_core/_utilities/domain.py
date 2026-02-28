@@ -12,10 +12,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, c, p, t
 
 
 class FlextUtilitiesDomain:

@@ -39,8 +39,8 @@ from flext_core import (
     FlextResult,
     FlextService,
     FlextSettings,
+    m,
 )
-from flext_core.models import m
 from pydantic import BaseModel
 
 from tests.test_utils import assertion_helpers

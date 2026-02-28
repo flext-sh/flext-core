@@ -28,8 +28,8 @@ from flext_core import (
     p,
     r,
     s,
+    t,
 )
-from flext_core.typings import t
 from flext_tests import u
 
 from ..test_utils import assertion_helpers

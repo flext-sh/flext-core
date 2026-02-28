@@ -30,8 +30,17 @@ from typing import ClassVar, cast
 import pytest
 import structlog
 from dependency_injector import containers, providers
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, p, r, s, t
-from flext_core.mixins import FlextMixins
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextMixins,
+    FlextRuntime,
+    c,
+    p,
+    r,
+    s,
+    t,
+)
 
 
 class RuntimeOperationType(StrEnum):

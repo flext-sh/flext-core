@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, m, r, t, u
-from flext_core.settings import FlextSettings
+from flext_core import FlextSettings, c, m, r, t, u
 from pydantic_settings import BaseSettings
 
 

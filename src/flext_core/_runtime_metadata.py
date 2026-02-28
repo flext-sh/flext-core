@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core.typings import t
+from flext_core import t
 
 
 class Metadata(BaseModel):

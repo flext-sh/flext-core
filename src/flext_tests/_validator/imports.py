@@ -13,7 +13,7 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core.result import r
+from flext_core import r
 
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -286,7 +286,7 @@ class FlextValidatorImports:
         - from flext_tests._validator import imports  (violation)
 
         Allows public module imports:
-        - from flext_core.result import r  (OK)
+        - from flext_core import r  (OK)
         - from flext_tests.models import m  (OK)
 
         Allows __init__.py inside internal packages to import sibling modules:

@@ -10,8 +10,7 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
-from flext_core import r
-from flext_core.typings import t
+from flext_core import r, t
 
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario

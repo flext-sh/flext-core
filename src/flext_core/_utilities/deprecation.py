@@ -15,7 +15,7 @@ import warnings
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core.typings import P, R, t
+from flext_core import P, R, t
 
 
 class FlextUtilitiesDeprecation:

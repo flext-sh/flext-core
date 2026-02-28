@@ -17,8 +17,7 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
-from flext_core import FlextResult, u
-from flext_core.typings import t
+from flext_core import FlextResult, t, u
 
 from tests.typings import TestsFlextTypes
 

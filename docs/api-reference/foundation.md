@@ -152,17 +152,17 @@ FLEXT-Core provides short aliases for frequently used types to keep code concise
 
 ```python
 # ✅ CORRECT - Import short aliases from their modules
-from flext_core.result import r       # FlextResult alias
-from flext_core.typings import t      # FlextTypes alias
-from flext_core.constants import c    # FlextConstants alias
-from flext_core.models import m       # FlextModels alias
-from flext_core.protocols import p    # FlextProtocols alias
-from flext_core.utilities import u    # FlextUtilities alias
-from flext_core.exceptions import e   # FlextExceptions alias
-from flext_core.context import x      # FlextContext alias (via mixins)
-from flext_core.service import s      # FlextService alias
-from flext_core.decorators import d   # FlextDecorators alias
-from flext_core.handlers import h     # FlextHandlers alias
+from flext_core import r       # FlextResult alias
+from flext_core import t      # FlextTypes alias
+from flext_core import c    # FlextConstants alias
+from flext_core import m       # FlextModels alias
+from flext_core import p    # FlextProtocols alias
+from flext_core import u    # FlextUtilities alias
+from flext_core import e   # FlextExceptions alias
+from flext_core import x      # FlextContext alias (via mixins)
+from flext_core import s      # FlextService alias
+from flext_core import d   # FlextDecorators alias
+from flext_core import h     # FlextHandlers alias
 ```text
 
 **Usage Examples**:

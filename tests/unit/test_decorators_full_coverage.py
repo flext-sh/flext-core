@@ -9,9 +9,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from flext_core import FlextContext, c, d, e, m, r, t
-from flext_core.container import FlextContainer
-from flext_core.loggings import FlextLogger
+from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
 
 class _ResultLogger:

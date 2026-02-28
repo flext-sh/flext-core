@@ -49,13 +49,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core.constants import c
-from flext_core.exceptions import FlextExceptions as e
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Model, t
+from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
 
 
 class FlextUtilitiesConfiguration:

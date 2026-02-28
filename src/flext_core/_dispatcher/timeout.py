@@ -14,8 +14,7 @@ from __future__ import annotations
 import concurrent.futures
 from collections.abc import Mapping
 
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core import c, t
 
 
 class TimeoutEnforcer:

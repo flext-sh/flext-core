@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TypedDict
 
-from flext_core.typings import T, T_co, T_contra, t
+from flext_core import T, T_co, T_contra, t
 from flext_tests.typings import (
     FlextTestsTypes,
 )

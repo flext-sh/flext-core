@@ -16,10 +16,10 @@ from flext_core import (
     FlextConstants,
     FlextContext,
     m,
+    t,
 )
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
-from flext_core.typings import t
 from flext_tests import u
 from pydantic import BaseModel, ValidationError
 

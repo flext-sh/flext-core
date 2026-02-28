@@ -16,8 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import override
 
-from flext_core.result import r
-from flext_core.service import FlextService
+from flext_core import FlextService, r
 
 from flext_infra.basemk.generator import BaseMkGenerator
 from flext_infra.constants import c

@@ -256,7 +256,7 @@ ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
     from flext_core import FlextResult, FlextContainer
 
 ❌ FORBIDDEN - Never use internal module imports (for ecosystem):
-    from flext_core.result import FlextResult  # Breaks ecosystem
+    from flext_core import FlextResult  # Breaks ecosystem
 """
 ```text
 

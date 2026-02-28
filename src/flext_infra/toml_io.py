@@ -14,8 +14,7 @@ from collections.abc import MutableMapping
 from pathlib import Path
 
 import tomlkit
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
+from flext_core import FlextResult, r, t
 from tomlkit.items import Table
 
 from flext_infra.constants import c

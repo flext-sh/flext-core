@@ -69,10 +69,8 @@ from structlog.processors import (
 )
 from structlog.stdlib import add_log_level
 
+from flext_core import T, c, p, t
 from flext_core._runtime_metadata import Metadata
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import T, t
 
 _module_logger = logging.getLogger(__name__)
 
@@ -84,7 +82,7 @@ class _LazyMetadata:
         self,
         obj: object,
         objtype: type | None = None,
-    ) -> type[_runtime_metadata.Metadata]:
+    ) -> type[Metadata]:
 
         # Cache the loaded class on the class itself
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
@@ -169,8 +167,8 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
-    Metadata: ClassVar[type[_runtime_metadata.Metadata]] = cast(
-        "type[_runtime_metadata.Metadata]",
+    Metadata: ClassVar[type[Metadata]] = cast(
+        "type[Metadata]",
         _LazyMetadata(),
     )  # Lazy-loaded from _runtime_metadata
 
@@ -356,9 +354,9 @@ class FlextRuntime:
             case _:
                 if value is None:
                     return False
-                keys = value.keys if hasattr(value, "keys") else None
-                items = value.items if hasattr(value, "items") else None
-                get = value.get if hasattr(value, "get") else None
+                keys = getattr(value, "keys", None)
+                items = getattr(value, "items", None)
+                get = getattr(value, "get", None)
                 if not (callable(keys) and callable(items) and callable(get)):
                     return False
                 try:
@@ -436,7 +434,7 @@ class FlextRuntime:
             return FlextRuntime.normalize_to_general_value(dumped_value)
 
         if FlextRuntime.is_dict_like(val):
-            dict_v = val.root if hasattr(val, "root") else val
+            dict_v = getattr(val, "root", val)
             result: dict[str, t.ConfigMapValue] = {}
             for k, v in dict_v.items():
                 result[str(k)] = FlextRuntime.normalize_to_general_value(v)
@@ -482,7 +480,7 @@ class FlextRuntime:
             return FlextRuntime.normalize_to_metadata_value(dumped_value)
 
         if FlextRuntime.is_dict_like(val):
-            raw_mapping = val.root if hasattr(val, "root") else val
+            raw_mapping = getattr(val, "root", val)
             normalized_mapping: dict[str, t.ConfigMapValue] = {}
             for key, value in raw_mapping.items():
                 normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
@@ -617,7 +615,7 @@ class FlextRuntime:
 
             # Check if it's a known type alias
             if hasattr(type_hint, "__name__"):
-                type_name = type_hint.__name__ if hasattr(type_hint, "__name__") else ""
+                type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases - use actual type objects
                 # GenericTypeArgument = str | type[t.ConfigMapValue]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
@@ -682,12 +680,12 @@ class FlextRuntime:
                 return True
 
             # Check if the type itself is a sequence subclass (for type aliases)
-            hint_mro = type_hint.__mro__ if hasattr(type_hint, "__mro__") else None
+            hint_mro = getattr(type_hint, "__mro__", None)
             if hint_mro is not None and Sequence in hint_mro:
                 return True
 
             # Check __name__ for type aliases like StringList
-            type_name = type_hint.__name__ if hasattr(type_hint, "__name__") else None
+            type_name = getattr(type_hint, "__name__", None)
             return bool(
                 type_name is not None
                 and type_name
@@ -1154,37 +1152,27 @@ class FlextRuntime:
         # Extract config values or use individual parameters
         async_logging = True
         if config is not None:
-            log_level = config.log_level if hasattr(config, "log_level") else log_level
-            console_renderer = (
-                config.console_renderer
-                if hasattr(config, "console_renderer")
-                else console_renderer
-            )
-            additional_processors_from_config = (
-                config.additional_processors
-                if hasattr(config, "additional_processors")
-                else None
+            log_level = getattr(config, "log_level", log_level)
+            console_renderer = getattr(config, "console_renderer", console_renderer)
+            additional_processors_from_config = getattr(
+                config,
+                "additional_processors",
+                None,
             )
             if additional_processors_from_config:
                 additional_processors = additional_processors_from_config
-            wrapper_class_factory = (
-                config.wrapper_class_factory
-                if hasattr(config, "wrapper_class_factory")
-                else wrapper_class_factory
+            wrapper_class_factory = getattr(
+                config,
+                "wrapper_class_factory",
+                wrapper_class_factory,
             )
-            logger_factory = (
-                config.logger_factory
-                if hasattr(config, "logger_factory")
-                else logger_factory
+            logger_factory = getattr(config, "logger_factory", logger_factory)
+            cache_logger_on_first_use = getattr(
+                config,
+                "cache_logger_on_first_use",
+                cache_logger_on_first_use,
             )
-            cache_logger_on_first_use = (
-                config.cache_logger_on_first_use
-                if hasattr(config, "cache_logger_on_first_use")
-                else cache_logger_on_first_use
-            )
-            async_logging = (
-                config.async_logging if hasattr(config, "async_logging") else True
-            )
+            async_logging = getattr(config, "async_logging", True)
 
         # Single guard - no redundant checks
         if cls._structlog_configured:
@@ -1300,7 +1288,7 @@ class FlextRuntime:
             ```python
             # CLI override: User passed --debug flag (use runtime aliases)
             from flext_core import c
-            from flext_core.runtime import FlextRuntime
+            from flext_core import FlextRuntime
 
             FlextRuntime.reconfigure_structlog(
                 log_level=c.Settings.LogLevel.DEBUG.value,
@@ -1764,7 +1752,7 @@ class FlextRuntime:
         **CORRECT USAGE** (Application Layer):
             ```python
             from flext_core import FlextContainer
-            from flext_core.runtime import FlextRuntime
+            from flext_core import FlextRuntime
 
             container = FlextContainer.get_global()
             result = container.get("database")

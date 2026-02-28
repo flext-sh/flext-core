@@ -31,8 +31,8 @@ from flext_core import (
     p,
     r,
     s,
+    t,
 )
-from flext_core.typings import t
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
 

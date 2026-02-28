@@ -7,11 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
-from flext_core.constants import FlextConstants
-from flext_core.handlers import FlextHandlers
-from flext_core.models import FlextModels
-from flext_core.typings import t
+from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
 
 from tests.typings import TestsFlextTypes
 

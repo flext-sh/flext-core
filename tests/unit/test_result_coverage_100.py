@@ -26,10 +26,7 @@ import math
 from typing import cast
 
 import pytest
-from flext_core.exceptions import e
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import e, p, r, t
 from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 

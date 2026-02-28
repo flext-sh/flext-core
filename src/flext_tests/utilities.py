@@ -33,8 +33,8 @@ from flext_core import (
     FlextUtilities,
     T,
     r,
+    t as core_t,
 )
-from flext_core.typings import t as core_t
 from pydantic import BaseModel
 
 from flext_tests.constants import c

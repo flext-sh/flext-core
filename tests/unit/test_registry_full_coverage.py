@@ -6,14 +6,13 @@ from typing import cast
 
 import pytest
 from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
-from flext_core.typings import JsonValue
 
 
-class _Handler(FlextHandlers[JsonValue, JsonValue]):
-    def handle(self, message: JsonValue) -> FlextResult[JsonValue]:
-        return r[JsonValue].ok(message)
+class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
+    def handle(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
+        return r[t.JsonValue].ok(message)
 
-    def __call__(self, message: JsonValue) -> FlextResult[JsonValue]:
+    def __call__(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
         return self.handle(message)
 
 
@@ -176,7 +175,7 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
     monkeypatch.setattr(
         registry.container,
         "get",
-        lambda _key: r[JsonValue].fail("missing"),
+        lambda _key: r[t.JsonValue].fail("missing"),
     )
     missing = registry.get_plugin("cat", "name")
     assert missing.is_failure

@@ -12,12 +12,39 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, MutableMapping
-from typing import cast
+from typing import Protocol, cast, runtime_checkable
 
 from flext_core.constants import c
-from flext_core.protocols import p
+from flext_core.protocols import FlextProtocols as p
 from flext_core.result import r
 from flext_core.typings import t
+
+
+@runtime_checkable
+class DispatchMessageProtocol(Protocol):
+    """Protocol for objects that can dispatch messages."""
+
+    def dispatch_message(self, message: p.Routable) -> t.PayloadValue:
+        """Dispatch a message."""
+        ...
+
+
+@runtime_checkable
+class HandleProtocol(Protocol):
+    """Protocol for objects that can handle messages."""
+
+    def handle(self, message: p.Routable) -> t.PayloadValue:
+        """Handle a message."""
+        ...
+
+
+@runtime_checkable
+class ExecuteProtocol(Protocol):
+    """Protocol for objects that can execute messages."""
+
+    def execute(self, message: p.Routable) -> t.PayloadValue:
+        """Execute a message."""
+        ...
 
 
 class FlextDispatcher:
@@ -29,6 +56,7 @@ class FlextDispatcher:
 
     def __init__(self) -> None:
         """Initialize dispatcher."""
+        super().__init__()
         self._logger: logging.Logger = logging.getLogger(__name__)
 
         self._handlers: MutableMapping[str, t.HandlerType] = {}
@@ -138,7 +166,7 @@ class FlextDispatcher:
         """
         if isinstance(event, list):
             for e in event:
-                self.publish(e)
+                _ = self.publish(e)
             return r[bool].ok(value=True)
 
         route_name = self._resolve_route(event)
@@ -159,7 +187,7 @@ class FlextDispatcher:
             return r[bool].ok(value=True)
 
         for handler in handlers:
-            self._execute_handler(handler, event, route_name)
+            _ = self._execute_handler(handler, event, route_name)
 
         return r[bool].ok(value=True)
 
@@ -174,13 +202,13 @@ class FlextDispatcher:
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables.
         """
-        result_raw: t.PayloadValue | None = None
+        result_raw: object = None
         try:
-            if hasattr(handler, "dispatch_message"):
+            if isinstance(handler, DispatchMessageProtocol):
                 result_raw = handler.dispatch_message(message)
-            elif hasattr(handler, "handle"):
+            elif isinstance(handler, HandleProtocol):
                 result_raw = handler.handle(message)
-            elif hasattr(handler, "execute"):
+            elif isinstance(handler, ExecuteProtocol):
                 result_raw = handler.execute(message)
             elif callable(handler):
                 result_raw = cast("Callable[[p.Routable], t.PayloadValue]", handler)(
@@ -192,8 +220,9 @@ class FlextDispatcher:
                 )
 
             # Handle ResultLike returns natively
-            if hasattr(result_raw, "is_failure") and hasattr(result_raw, "is_success"):
-                result_like = cast("p.ResultLike[t.PayloadValue]", result_raw)
+            result_raw_any: t.Any = result_raw  # type: ignore[explicit-any]
+            if isinstance(result_raw_any, p.ResultLike):
+                result_like = cast("p.ResultLike[t.PayloadValue]", result_raw_any)
                 if result_like.is_failure:
                     return r[t.PayloadValue].fail(
                         result_like.error or "Handler failed",
@@ -203,7 +232,7 @@ class FlextDispatcher:
                 return r[t.PayloadValue].ok(result_like.value)
 
             # Bare value return
-            return r[t.PayloadValue].ok(cast("t.PayloadValue", result_raw))
+            return r[t.PayloadValue].ok(result_raw)
 
         except Exception as exc:
             self._logger.exception("Handler execution failed for %s", route_name)
@@ -227,17 +256,20 @@ class FlextDispatcher:
 
         # 2. Try Pydantic class model_fields defaults
         if isinstance(msg, type) and hasattr(msg, "model_fields"):
-            for attr in ["command_type", "query_type", "event_type"]:
-                if attr in msg.model_fields:
-                    field = msg.model_fields[attr]
-                    d = getattr(field, "default", None)
-                    # Check for pydantic_core.PydanticUndefined without import
-                    if (
-                        d is not None
-                        and str(d) != "PydanticUndefined"
-                        and isinstance(d, str)
-                    ):
-                        return d
+            model_fields = cast(
+                "MutableMapping[str, object] | None", getattr(msg, "model_fields", None)
+            )
+            if model_fields:
+                for attr in ["command_type", "query_type", "event_type"]:
+                    if attr in model_fields:
+                        field = model_fields[attr]
+                        default_val = getattr(field, "default", None)
+                        if (
+                            isinstance(default_val, str)
+                            and default_val
+                            and default_val != "PydanticUndefined"
+                        ):
+                            return default_val
 
         msg_type_error = (
             f"Message {msg} does not provide a valid route via "

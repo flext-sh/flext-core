@@ -24,10 +24,8 @@ from pydantic import (
     field_validator,
 )
 
+from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 class FlextModelsCqrs:
@@ -102,13 +100,11 @@ class FlextModelsCqrs:
         ] = c.Pagination.DEFAULT_PAGE_SIZE
 
         @computed_field
-        @property
         def offset(self) -> int:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
         @computed_field
-        @property
         def limit(self) -> int:
             """Get limit (same as size)."""
             return self.size
@@ -203,17 +199,13 @@ class FlextModelsCqrs:
             if parsed_input is None:
                 return pagination_cls()
 
-            payload: BaseModel | Mapping[str, t.MetadataAttributeValue] | str
-            if isinstance(parsed_input, t.Dict):
-                payload = parsed_input.root
-            elif isinstance(parsed_input, FlextModelsCqrs.Pagination):
-                payload = parsed_input.model_dump()
-            else:
-                payload = dict(parsed_input)
-
             try:
-                return pagination_cls.model_validate(payload)
-            except ValidationError:
+                if isinstance(parsed_input, t.Dict):
+                    return pagination_cls.model_validate(parsed_input.root)
+                if isinstance(parsed_input, FlextModelsCqrs.Pagination):
+                    return pagination_cls.model_validate(parsed_input.model_dump())
+                return pagination_cls.model_validate(dict(parsed_input))
+            except (ValidationError, TypeError, ValueError):
                 return pagination_cls()
 
     class Bus(BaseModel):

@@ -23,16 +23,15 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import c
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
     if v is None:
-        return {}
+        out: dict[str, t.GuardInputValue] = {}
+        return out
     if isinstance(v, Mapping):
         return {str(k): v for k, v in v.items()}
     if hasattr(v, "model_dump"):
@@ -51,9 +50,10 @@ def _normalize_metadata_before(v: t.Any) -> t.Any:
     return v
 
 
-def _normalize_statistics_before(v: t.Any) -> t.Any:
+def _normalize_statistics_before(v: t.Any) -> Mapping[str, t.GuardInputValue]:
     if v is None:
-        return {}
+        out: dict[str, t.GuardInputValue] = {}
+        return out
     return _normalize_to_mapping(v)
 
 

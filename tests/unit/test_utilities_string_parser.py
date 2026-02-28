@@ -28,8 +28,8 @@ from typing import cast
 
 import pytest
 from flext_core import (
-    m,
     FlextResult as r,
+    m,
     t,
 )
 from flext_tests import u

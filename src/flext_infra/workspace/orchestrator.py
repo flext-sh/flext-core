@@ -15,9 +15,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core.loggings import FlextLogger
-from flext_core.result import r
-from flext_core.service import FlextService
+from flext_core import FlextLogger, FlextService, r
 
 from flext_infra.models import m
 from flext_infra.output import output

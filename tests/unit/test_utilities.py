@@ -24,9 +24,7 @@ from collections.abc import Callable, Sequence
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextSettings, r, t
-from flext_core.constants import c
-from flext_core.models import m
+from flext_core import FlextSettings, c, m, r, t
 from flext_tests import u
 
 

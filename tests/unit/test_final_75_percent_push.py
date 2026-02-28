@@ -22,9 +22,9 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextResult,
+    p,
     u,
 )
-from flext_core.protocols import p
 
 
 @dataclass(frozen=True, slots=True)

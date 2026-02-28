@@ -17,7 +17,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime
 
 from flext_infra.constants import c
 from flext_infra.docs.auditor import DocAuditor

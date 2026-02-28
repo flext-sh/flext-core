@@ -12,8 +12,8 @@ from __future__ import annotations
 import operator
 from types import ModuleType
 
+from flext_core import c
 from flext_core._models.container import FlextModelsContainer
-from flext_core.constants import c
 
 
 class FactoryDecoratorsDiscovery:

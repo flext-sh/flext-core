@@ -17,8 +17,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core.constants import c
-from flext_core.models import m
+from flext_core import c, m
 from flext_tests.constants import FlextTestsConstants
 
 

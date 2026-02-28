@@ -7,9 +7,7 @@ import os
 from collections.abc import MutableMapping
 from pathlib import Path
 
-from flext_core.loggings import FlextLogger
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
+from flext_core import FlextLogger, FlextResult, r, t
 from pydantic import Field
 
 from flext_infra.constants import c

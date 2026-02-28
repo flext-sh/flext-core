@@ -14,9 +14,7 @@ from collections import UserDict, UserList
 from collections.abc import ItemsView, Iterator, Mapping
 from typing import cast
 
-from flext_core import FlextTypes
-from flext_core.models import m
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextTypes, FlextUtilities, m
 from flext_tests import tm
 
 from tests.constants import TestsFlextConstants

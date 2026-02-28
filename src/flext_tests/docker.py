@@ -29,8 +29,7 @@ from typing import ClassVar, Protocol
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
-from flext_core.loggings import FlextLogger
-from flext_core.result import r
+from flext_core import FlextLogger, r
 from pydantic import TypeAdapter
 
 from flext_tests.constants import c

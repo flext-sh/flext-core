@@ -14,10 +14,7 @@ from __future__ import annotations
 import re
 from typing import cast
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, c, p, r
 
 
 class FlextUtilitiesText:

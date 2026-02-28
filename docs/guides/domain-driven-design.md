@@ -340,9 +340,9 @@ Domain events capture important state changes inside aggregates. FLEXT surfaces 
 
 ```python
 from flext_core import FlextResult
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import h
-from flext_core.models import FlextModels
+from flext_core import FlextDispatcher
+from flext_core import h
+from flext_core import FlextModels
 
 
 class InventoryAdjusted(FlextModels.DomainEvent):

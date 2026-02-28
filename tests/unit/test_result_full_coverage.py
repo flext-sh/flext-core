@@ -11,7 +11,6 @@ import importlib
 from typing import Never, cast
 
 from flext_core import FlextRuntime, r
-from flext_core.typings import JsonValue
 from pydantic import BaseModel
 from returns.io import IOResult, IOSuccess
 

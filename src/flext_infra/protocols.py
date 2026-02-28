@@ -11,7 +11,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 
 type FlextInfraScalar = str | int | float | bool | None
 type FlextInfraPayload = (

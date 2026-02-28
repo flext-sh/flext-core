@@ -16,11 +16,8 @@ from typing import Annotated, ClassVar, Self, override
 from pydantic import BaseModel, BeforeValidator, Field, model_validator
 from structlog.typing import BindableLogger
 
+from flext_core import FlextRuntime, c, r, t
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:

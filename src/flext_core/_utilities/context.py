@@ -13,9 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
+from flext_core import p, t
 from flext_core._models.context import FlextModelsContext
-from flext_core.protocols import p
-from flext_core.typings import t
 
 
 class FlextUtilitiesContext:

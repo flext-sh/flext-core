@@ -326,7 +326,7 @@ else:
 **Pattern:** Chain middleware for cross-cutting concerns.
 
 ```python
-from flext_core.decorators import FlextDecorators
+from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()

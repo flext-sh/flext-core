@@ -11,9 +11,7 @@ import logging
 import time
 
 import pytest
-from flext_core import FlextLogger
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core import FlextLogger, c, t
 
 from tests.test_utils import assertion_helpers
 

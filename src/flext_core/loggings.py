@@ -23,15 +23,8 @@ from typing import ClassVar, Literal, Self, cast, overload, override
 
 from structlog.typing import Context
 
+from flext_core import FlextResult, FlextRuntime, FlextSettings, c, m, p, r, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import FlextResult, r
-from flext_core.runtime import FlextRuntime
-from flext_core.settings import FlextSettings
-from flext_core.typings import t
-from flext_core.utilities import u
 
 
 class FlextLogger(FlextRuntime, p.Log.StructlogLogger):

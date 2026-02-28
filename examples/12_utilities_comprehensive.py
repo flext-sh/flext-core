@@ -28,9 +28,9 @@ from flext_core import (
     FlextResult,
     FlextService,
     c,
+    m,
     u,
 )
-from flext_core.models import m
 
 # ═══════════════════════════════════════════════════════════════════
 # SAMPLE DATA

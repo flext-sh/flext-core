@@ -45,7 +45,7 @@ Global context is managed using `structlog.contextvars` and is automatically pro
 **Usage:**
 
 ````python
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger
 
 # Bind global context
 FlextLogger.Context.bind_global_context(
@@ -84,8 +84,8 @@ Scoped contexts provide isolation for different execution scopes. Each scope mai
 **Usage:**
 
 ```python
-from flext_core.loggings import FlextLogger
-from flext_core.constants import c
+from flext_core import FlextLogger
+from flext_core import c
 
 # Bind context to APPLICATION scope
 FlextLogger.Context.bind_context(
@@ -138,7 +138,7 @@ Level contexts allow you to add additional context that is only included in log 
 **Usage:**
 
 ```python
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger
 import logging
 
 # Bind context for DEBUG level only
@@ -205,8 +205,8 @@ logger.error("Operation failed")  # Automatically includes request_id
 ## Example: Request Handler Pattern
 
 ```python
-from flext_core.loggings import FlextLogger
-from flext_core.constants import c
+from flext_core import FlextLogger
+from flext_core import c
 
 class UserHandler:
     def __init__(self):

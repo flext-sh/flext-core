@@ -16,10 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from flext_core.loggings import FlextLogger
-from flext_core.result import r
-from flext_core.service import FlextService
-from flext_core.typings import t
+from flext_core import FlextLogger, FlextService, r, t
 
 from flext_infra.constants import c
 from flext_infra.git import GitService

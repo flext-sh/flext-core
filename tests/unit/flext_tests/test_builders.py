@@ -11,8 +11,7 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
-from flext_core import FlextConstants, FlextResult as r
-from flext_core.typings import t
+from flext_core import FlextConstants, FlextResult as r, t
 from flext_tests.builders import FlextTestsBuilders, tb
 from flext_tests.typings import t as t_test
 from pydantic import BaseModel, ValidationError

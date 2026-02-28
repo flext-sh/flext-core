@@ -29,8 +29,7 @@ import sys
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger, FlextService, r
 
 from flext_infra.constants import c
 from flext_infra.discovery import DiscoveryService

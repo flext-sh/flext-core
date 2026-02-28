@@ -18,7 +18,7 @@ import sys
 from collections.abc import Callable
 
 import pytest
-from flext_core.container import FlextContainer
+from flext_core import FlextContainer
 
 
 def get_memory_usage() -> int:

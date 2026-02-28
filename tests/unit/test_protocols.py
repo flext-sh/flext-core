@@ -25,8 +25,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
-from flext_core import p, r
-from flext_core.models import m
+from flext_core import m, p, r
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
 

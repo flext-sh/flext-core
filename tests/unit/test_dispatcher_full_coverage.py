@@ -5,8 +5,7 @@ from __future__ import annotations
 from typing import cast, override
 
 import pytest
-from flext_core import m, p, r, t
-from flext_core.dispatcher import FlextDispatcher
+from flext_core import FlextDispatcher, m, p, r, t
 
 # --- Test Models ---
 

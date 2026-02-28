@@ -9,7 +9,6 @@ from typing import cast
 
 import pytest
 from flext_core import p, r, u
-from flext_core.typings import JsonValue
 from pydantic import BaseModel
 
 

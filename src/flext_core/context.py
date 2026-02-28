@@ -19,15 +19,8 @@ from typing import Final, Self, overload
 
 from pydantic import BaseModel
 
+from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
 from flext_core._models.context import FlextModelsContext
-from flext_core.constants import c
-from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
-from flext_core.utilities import u
 
 _logger = FlextLogger(__name__)
 

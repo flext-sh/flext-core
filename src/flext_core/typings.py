@@ -290,7 +290,8 @@ class FlextTypes:
     type ConditionCallable = Callable[[ScalarValue], bool]
 
     # Handler type union
-    type HandlerType = Callable[[ScalarValue], ScalarValue] | BaseModel
+    # Handler type union - includes callables and objects with handler methods
+    type HandlerType = Callable[..., Any] | object
 
     # =========================================================================
     # GENERIC CONTAINERS (RootModels - use m.ConfigMap, m.Dict)
@@ -485,8 +486,8 @@ class FlextTypes:
             extra="forbid",
         )
 
-        results: list[_ScalarML] = Field(default_factory=list)
-        errors: list[tuple[int, str]] = Field(default_factory=list)
+        results: list[_ScalarML] = []
+        errors: list[tuple[int, str]] = []
         total: int = Field(default=0)
         success_count: int = Field(default=0)
         error_count: int = Field(default=0)

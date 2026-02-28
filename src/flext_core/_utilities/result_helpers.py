@@ -3,11 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
+from flext_core import p, r, t
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
 
 T = TypeVar("T")
 R2 = TypeVar("R2")

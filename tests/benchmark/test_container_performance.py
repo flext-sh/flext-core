@@ -18,8 +18,7 @@ import time
 from collections.abc import Callable
 
 import pytest
-from flext_core.container import FlextContainer
-from flext_core.typings import t
+from flext_core import FlextContainer, t
 
 
 class PerformanceBenchmark:

@@ -22,10 +22,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, c, m, t
 
 
 class MetadataProtocol(Protocol):

@@ -9,11 +9,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Literal, overload
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
-type StrictJsonScalar = str | int | float | bool | None
+type StrictJsonScalar = str | int | float | bool | datetime | None
 type StrictJsonValue = (
     StrictJsonScalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
 )
@@ -285,7 +286,7 @@ class FlextUtilitiesConversion:
         # where scalar = str | int | float | bool | datetime | None
         if value is None:
             return None
-        if isinstance(value, BaseModel | Mapping | list | tuple | set | frozenset):
+        if isinstance(value, (BaseModel, Mapping, list, tuple, set, frozenset)):
             return None
         if isinstance(value, datetime) and hasattr(value, "isoformat"):
             isoformat_method = value.isoformat

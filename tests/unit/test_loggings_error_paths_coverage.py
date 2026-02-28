@@ -12,8 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextRuntime, m, p
-from flext_core.constants import c
+from flext_core import FlextLogger, FlextRuntime, c, m, p
 
 from tests.test_utils import assertion_helpers
 

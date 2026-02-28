@@ -22,6 +22,7 @@ from typing import ClassVar, ParamSpec, TypeVar
 import pytest
 from flext_core import (
     E,
+    FlextConstants,
     P,
     R,
     ResultT,
@@ -31,7 +32,6 @@ from flext_core import (
     U,
     t,
 )
-from flext_core.constants import FlextConstants
 from flext_tests.matchers import tm
 from pydantic import (
     TypeAdapter as PydanticTypeAdapter,

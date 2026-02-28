@@ -60,7 +60,6 @@ class FlextModelsMixin:
         )
 
         @computed_field
-        @property
         def success_rate(self) -> float:
             """Fraction of successful operations (0.0-1.0)."""
             if self.operation_count == 0:

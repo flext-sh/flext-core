@@ -22,17 +22,19 @@ from typing import Any, Self, TypeGuard, cast, override
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
+from flext_core import (
+    FlextContext,
+    FlextDispatcher,
+    FlextLogger,
+    FlextRuntime,
+    FlextSettings,
+    c,
+    m,
+    p,
+    r,
+    t,
+)
 from flext_core._decorators import FactoryDecoratorsDiscovery
-from flext_core.constants import c
-from flext_core.context import FlextContext
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.settings import FlextSettings
-from flext_core.typings import t
 
 
 class FlextContainer(p.DI):

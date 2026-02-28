@@ -26,8 +26,8 @@ from flext_core import (
     FlextSettings,
     FlextUtilities,
     r,
+    t,
 )
-from flext_core.typings import t
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)

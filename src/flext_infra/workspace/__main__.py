@@ -15,7 +15,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime
 
 from flext_infra.output import output
 from flext_infra.workspace.detector import WorkspaceDetector

@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from flext_core.result import FlextResult, r
+from flext_core import FlextResult, r
 
 from flext_infra.constants import c
 from flext_infra.models import m

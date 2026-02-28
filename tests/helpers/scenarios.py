@@ -13,8 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from flext_core.models import m
-from flext_core.typings import t
+from flext_core import m, t
 
 # =========================================================================
 # Scenario Dataclasses

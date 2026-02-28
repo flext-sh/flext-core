@@ -34,8 +34,8 @@ from flext_core import (
     FlextSettings,
     FlextTypes,
     FlextUtilities,
+    t,
 )
-from flext_core.typings import t
 from pydantic import BaseModel as PydanticBaseModel
 
 from tests.test_utils import assertion_helpers

@@ -8,25 +8,24 @@ from typing import cast
 
 import pytest
 from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
-from flext_core.typings import JsonValue
 from pydantic import BaseModel
 
 handlers_module = importlib.import_module("flext_core.handlers")
 
 
-class _Handler(FlextHandlers[JsonValue, JsonValue]):
-    def handle(self, message: JsonValue) -> FlextResult[JsonValue]:
-        return r[JsonValue].ok(message)
+class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
+    def handle(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
+        return r[t.JsonValue].ok(message)
 
 
 class _QueryHandler(_Handler):
-    def validate_query(self, query: JsonValue) -> FlextResult[bool]:
+    def validate_query(self, query: t.JsonValue) -> FlextResult[bool]:
         _ = query
         return r[bool].ok(True)
 
 
 class _EventHandler(_Handler):
-    def validate(self, data: JsonValue) -> FlextResult[bool]:
+    def validate(self, data: t.JsonValue) -> FlextResult[bool]:
         _ = data
         return r[bool].ok(True)
 

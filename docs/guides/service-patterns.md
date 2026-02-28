@@ -235,8 +235,8 @@ ______________________________________________________________________
 Services are called by CQRS handlers for domain operations:
 
 ```python
-from flext_core.handlers import FlextHandlers
-from flext_core.result import r
+from flext_core import FlextHandlers
+from flext_core import r
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:

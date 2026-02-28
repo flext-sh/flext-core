@@ -12,14 +12,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Mapping, Sequence, TypeGuard
+from collections.abc import Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
+from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
+from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 _MetadataInput = (
     FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue] | None
@@ -53,8 +54,9 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             value.root.items() if isinstance(value, t.ConfigMap) else value.items()
         )
     }
-    attrs: Mapping[str, t.MetadataAttributeValue] = normalized_attrs
-    return FlextModelFoundation.Metadata(attributes=attrs)
+    return FlextModelFoundation.Metadata.model_validate({
+        "attributes": normalized_attrs
+    })
 
 
 class FlextModelsContainer:

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.typings import FlextTypes
+from flext_core import FlextTypes
 
 
 class FlextInfraTypes(FlextTypes):

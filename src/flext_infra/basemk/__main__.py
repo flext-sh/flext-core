@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime
 
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator

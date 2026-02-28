@@ -381,7 +381,7 @@ class TestToIOChainsException:
 
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
-        from flext_core.exceptions import e  # noqa: PLC0415
+        from flext_core import e  # noqa: PLC0415
 
         exc = ValueError("conversion error")
         result = r[int].fail("error", exception=exc)

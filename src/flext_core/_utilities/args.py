@@ -23,12 +23,8 @@ from typing import (
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, p, r, t
 
-_ValidatedValueT = TypeVar("_ValidatedValueT")
 _ValidatedParams = ParamSpec("_ValidatedParams")
 _ValidatedReturn = TypeVar("_ValidatedReturn")
 
@@ -104,9 +100,9 @@ class FlextUtilitiesArgs:
         )(func)
 
     @staticmethod
-    def validated_with_result(
-        func: Callable[_ValidatedParams, FlextRuntime.RuntimeResult[_ValidatedValueT]],
-    ) -> Callable[_ValidatedParams, FlextRuntime.RuntimeResult[_ValidatedValueT]]:
+    def validated_with_result[V, **P](
+        func: Callable[P, p.Result[V]],
+    ) -> Callable[P, p.Result[V]]:
         """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
@@ -132,13 +128,15 @@ class FlextUtilitiesArgs:
 
         @wraps(func)
         def wrapper(
-            *args: _ValidatedParams.args,
-            **kwargs: _ValidatedParams.kwargs,
-        ) -> FlextRuntime.RuntimeResult[_ValidatedValueT]:
+            *args: P.args,
+            **kwargs: P.kwargs,
+        ) -> p.Result[V]:
             try:
-                return validated_func(*args, **kwargs)
+                # Type safe call via Pydantic validated_func
+                return validated_func(*args, **kwargs)  # type: ignore[no-any-return]
             except (ValidationError, TypeError, ValueError) as e:
-                return r.fail(str(e))
+                # Return failed result with error message
+                return r[V].fail(str(e))
 
         # wrapper has correct type via @wraps preserving signature
         return wrapper
@@ -151,7 +149,7 @@ class FlextUtilitiesArgs:
     def parse_kwargs[E: StrEnum](
         kwargs: Mapping[str, t.GuardInputValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> r[Mapping[str, t.GuardInputValue]]:
+    ) -> p.Result[Mapping[str, t.GuardInputValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -207,7 +205,7 @@ class FlextUtilitiesArgs:
         except (NameError, TypeError, AttributeError):
             return {}
 
-        enum_params = {}
+        enum_params: dict[str, type[StrEnum]] = {}
 
         for name, hint in hints.items():
             if name == "return":

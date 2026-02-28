@@ -17,9 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.result import r
-from flext_core.service import FlextService
-from flext_core.typings import T
+from flext_core import FlextService, T, r
 
 
 class FlextTestsServiceBase[T]:

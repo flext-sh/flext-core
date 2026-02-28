@@ -12,15 +12,14 @@ from datetime import UTC, datetime, tzinfo
 from typing import cast
 
 import pytest
-from flext_core import m, u
-from flext_core.typings import JsonValue
+from flext_core import m, t, u
 from pydantic import BaseModel
 
 generators_module = importlib.import_module("flext_core._utilities.generators")
 
 
-class _BrokenMapping(Mapping[str, JsonValue]):
-    def __getitem__(self, key: str) -> JsonValue:
+class _BrokenMapping(Mapping[str, t.JsonValue]):
+    def __getitem__(self, key: str) -> t.JsonValue:
         raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
@@ -29,7 +28,7 @@ class _BrokenMapping(Mapping[str, JsonValue]):
     def __len__(self) -> int:
         return 0
 
-    def items(self) -> ItemsView[str, JsonValue]:
+    def items(self) -> ItemsView[str, t.JsonValue]:
         msg = "boom"
         raise TypeError(msg)
 
@@ -50,7 +49,7 @@ def test_normalize_context_to_dict_error_paths() -> None:
     with pytest.raises(TypeError, match="Failed to dump BaseModel"):
         u.Generators._normalize_context_to_dict(
             cast(
-                "Mapping[str, JsonValue] | BaseModel | None",
+                "Mapping[str, t.JsonValue] | BaseModel | None",
                 cast("object", _BrokenModel()),
             ),
         )
@@ -61,7 +60,7 @@ def test_normalize_context_to_dict_error_paths() -> None:
     with pytest.raises(TypeError, match="Failed to dump BaseModel int"):
         u.Generators._normalize_context_to_dict(
             cast(
-                "Mapping[str, JsonValue] | BaseModel | None",
+                "Mapping[str, t.JsonValue] | BaseModel | None",
                 cast("object", 42),
             ),
         )
@@ -168,7 +167,7 @@ def test_generate_special_paths_and_dynamic_subclass(
 
 
 def test_generators_additional_missed_paths() -> None:
-    mapping_ctx: Mapping[str, JsonValue] = {"a": 1}
+    mapping_ctx: Mapping[str, t.JsonValue] = {"a": 1}
     normalized = u.Generators._normalize_context_to_dict(mapping_ctx)
     assert normalized == {"a": 1}
 
@@ -180,8 +179,8 @@ def test_generators_additional_missed_paths() -> None:
 
 
 def test_generators_mapping_non_dict_normalization_path() -> None:
-    class _SimpleMapping(Mapping[str, JsonValue]):
-        def __getitem__(self, key: str) -> JsonValue:
+    class _SimpleMapping(Mapping[str, t.JsonValue]):
+        def __getitem__(self, key: str) -> t.JsonValue:
             if key == "a":
                 return 1
             raise KeyError(key)

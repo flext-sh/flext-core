@@ -7,8 +7,7 @@ import re
 import sys
 from pathlib import Path
 
-from flext_core import r
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger, r
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.constants import c

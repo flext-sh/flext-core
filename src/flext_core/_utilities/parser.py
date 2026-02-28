@@ -20,13 +20,10 @@ from typing import cast, overload
 import structlog
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
+from flext_core import c, m, r, t
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.result import r
-from flext_core.typings import t
 
 
 class FlextUtilitiesParser:
@@ -713,7 +710,7 @@ class FlextUtilitiesParser:
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
-        from flext_core.protocols import p
+        from flext_core import p
             >>> parser = u.Parser()
             >>> # Class/Type
             >>> parser.get_object_key(int)

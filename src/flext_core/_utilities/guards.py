@@ -20,10 +20,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeGuard, TypeIs
 
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import m, p, r, t
 
 
 class FlextUtilitiesGuards:
@@ -190,7 +187,7 @@ class FlextUtilitiesGuards:
             TypeGuard[t.HandlerType]: True if value matches t.HandlerType structure
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core import u
             >>> if u.Guards.is_handler_type(handler):
             ...     # handler is now typed as t.HandlerType
             ...     result = container.register("my_handler", handler)
@@ -236,7 +233,7 @@ class FlextUtilitiesGuards:
             TypeGuard[m.ConfigMap]: True if value matches ConfigurationMapping structure
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core import u
             >>> if u.Guards.is_configuration_mapping(config):
             ...     # config is now typed as m.ConfigMap
             ...     items = config.items()
@@ -267,7 +264,7 @@ class FlextUtilitiesGuards:
             TypeGuard[m.Dict]: True if value matches ConfigurationDict structure
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core import u
             >>> if u.Guards.is_configuration_dict(config):
             ...     # config is now typed as m.Dict
             ...     config["key"] = "value"
@@ -532,7 +529,7 @@ class FlextUtilitiesGuards:
             bool: True if value matches the type specification
 
         Examples:
-            >>> from flext_core.utilities import u
+            >>> from flext_core import u
             >>> # String-based checks
             >>> u.is_type(obj, "config")
             >>> u.is_type(obj, "str")

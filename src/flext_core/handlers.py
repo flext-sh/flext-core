@@ -21,14 +21,7 @@ from datetime import datetime
 from types import ModuleType
 from typing import ClassVar
 
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.mixins import x
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, e, m, p, r, t, u, x
 
 _module_logger = logging.getLogger(__name__)
 
@@ -65,8 +58,8 @@ class FlextHandlers[MessageT_contra, ResultT](
     - ResultT: Covariant result type returned by handler execution
 
     Example Usage:
-        >>> from flext_core.handlers import h
-        >>> from flext_core.result import r
+        >>> from flext_core import h
+        >>> from flext_core import r
         >>>
         >>> class UserCommand:
         ...     user_id: str

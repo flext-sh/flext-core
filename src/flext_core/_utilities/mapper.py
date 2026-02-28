@@ -17,13 +17,9 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel
 
+from flext_core import FlextRuntime, m, p, r, t
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 class _Predicate[T](Protocol):

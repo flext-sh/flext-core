@@ -60,8 +60,8 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 `h` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `FlextResult`-based error handling.
 
 ```python
-from flext_core.handlers import h
-from flext_core.result import r
+from flext_core import h
+from flext_core import r
 
 class CreateUserHandler(h[CreateUserCommand, bool]):
     def handle(self, message: CreateUserCommand) -> r[bool]:
@@ -105,8 +105,8 @@ summary = registry.register_handlers([
 `FlextDecorators` packages common cross-cutting behaviors so handlers stay focused on business logic.
 
 ```python
-from flext_core.decorators import FlextDecorators
-from flext_core.result import r
+from flext_core import FlextDecorators
+from flext_core import r
 
 @FlextDecorators.retry(attempts=3)
 @FlextDecorators.timeout(seconds=2)

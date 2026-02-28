@@ -27,8 +27,7 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextConstants, FlextContainer, FlextResult, r, t
-from flext_core.constants import c
+from flext_core import FlextConstants, FlextContainer, FlextResult, c, r, t
 from flext_tests import tm, u
 from flext_tests.utilities import FlextTestsUtilities
 

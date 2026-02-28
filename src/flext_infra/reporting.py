@@ -21,7 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from flext_core.result import FlextResult, r
+from flext_core import FlextResult, r
 
 REPORTS_DIR_NAME: Final[str] = ".reports"
 # Top-level reports directory name (always `.reports`).

@@ -21,8 +21,7 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import u
-from flext_core.typings import t
+from flext_core import t, u
 
 
 @dataclass(frozen=True, slots=True)

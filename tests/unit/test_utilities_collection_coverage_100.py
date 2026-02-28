@@ -22,8 +22,7 @@ from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from flext_core import FlextRuntime, r, t
-from flext_core.models import m
+from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
 from pydantic import BaseModel, Field
 

@@ -23,8 +23,8 @@ from typing import Literal
 
 from pydantic import Field
 
+from flext_core import t
 from flext_core._models.base import FlextModelFoundation
-from flext_core.typings import t
 
 
 class FlextGenericModels:

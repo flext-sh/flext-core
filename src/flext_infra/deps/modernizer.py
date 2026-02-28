@@ -8,8 +8,7 @@ from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
-from flext_core.loggings import FlextLogger
-from flext_core.typings import t
+from flext_core import FlextLogger, t
 from tomlkit.items import Array, Item, Table
 
 from flext_infra.subprocess import CommandRunner

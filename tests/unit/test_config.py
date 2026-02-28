@@ -27,10 +27,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextSettings
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.utilities import u
+from flext_core import FlextSettings, c, m, u
 from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
 from pydantic import ValidationError

@@ -9,11 +9,9 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import m, p
+from flext_core import c, m, p, t
 from flext_core._utilities.cache import FlextUtilitiesCache as Cache
 from flext_core._utilities.mapper import FlextUtilitiesMapper as Mapper
-from flext_core.constants import c
-from flext_core.typings import t
 from pydantic import BaseModel
 
 

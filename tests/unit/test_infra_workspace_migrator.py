@@ -10,7 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
-from flext_core.result import FlextResult as r
+from flext_core import FlextResult as r
 from flext_infra.models import m as im
 from flext_infra.workspace.migrator import ProjectMigrator
 

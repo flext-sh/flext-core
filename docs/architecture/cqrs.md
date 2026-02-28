@@ -95,8 +95,8 @@ Handlers derive from `FlextHandlers[MessageT, ResultT]` and implement the
 abstract `handle()` method:
 
 ```python
-from flext_core.handlers import FlextHandlers
-from flext_core.result import r
+from flext_core import FlextHandlers
+from flext_core import r
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
@@ -164,7 +164,7 @@ ______________________________________________________________________
 The dispatcher initializes reliability managers internally:
 
 ```python
-from flext_core.dispatcher import FlextDispatcher
+from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
 dispatcher.register_handler(CreateUserCommand, CreateUserHandler())

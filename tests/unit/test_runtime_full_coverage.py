@@ -16,8 +16,7 @@ from typing import ClassVar, Self, cast
 
 import flext_core.runtime as runtime_module
 import pytest
-from flext_core import c, m, r, t, u
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, c, m, r, t, u
 from pydantic import BaseModel
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")

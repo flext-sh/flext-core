@@ -10,8 +10,7 @@ from typing import cast
 
 import flext_core.service as service_mod
 import pytest
-from flext_core import c, m, p, r, t, u
-from flext_core.service import FlextService, FlextSettings
+from flext_core import FlextService, FlextSettings, c, m, p, r, t, u
 
 
 class _Svc(FlextService[bool]):

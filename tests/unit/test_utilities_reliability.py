@@ -21,8 +21,7 @@ from enum import StrEnum
 from typing import Final, Never
 
 import pytest
-from flext_core import FlextRuntime, r
-from flext_core.typings import t
+from flext_core import FlextRuntime, r, t
 from flext_tests import u
 
 

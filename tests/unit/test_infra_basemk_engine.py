@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from _pytest.capture import CaptureFixture
-from flext_core.result import FlextResult as r
+from flext_core import FlextResult as r
 from flext_infra.basemk.__main__ import main as basemk_main
 from flext_infra.basemk.engine import TemplateEngine
 from flext_infra.basemk.generator import BaseMkGenerator

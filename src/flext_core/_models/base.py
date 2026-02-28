@@ -30,8 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core import c, t
 
 
 def _ensure_utc_datetime(v: datetime | None) -> datetime | None:

@@ -11,8 +11,10 @@ from datetime import datetime
 from types import ModuleType, TracebackType
 from typing import (
     TYPE_CHECKING,
+    Any,
     Protocol,
     Self,
+    override,
     runtime_checkable,
 )
 
@@ -20,10 +22,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
-from flext_core.typings import T, t
+from flext_core import T, t
 
 if TYPE_CHECKING:
-    from flext_core.result import r
+    from flext_core import r
 
 
 # =============================================================================
@@ -53,7 +55,7 @@ class _ProtocolIntrospection:
         class_name: str,
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations = (
+        protocol_annotations: dict[str, Any] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[str] | object = (
@@ -79,7 +81,7 @@ class _ProtocolIntrospection:
 
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
-            base_annotations = (
+            base_annotations: dict[str, Any] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -134,7 +136,7 @@ class _ProtocolIntrospection:
         if protocol in registered_protocols:
             return True
 
-        protocol_annotations = (
+        protocol_annotations: dict[str, Any] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[str] | object = (
@@ -171,7 +173,7 @@ def _build_combined_model_meta() -> type:
     )
 
 
-_CombinedModelMeta = _build_combined_model_meta()
+_CombinedModelMeta: Any = _build_combined_model_meta()
 
 
 class FlextProtocols:
@@ -451,6 +453,7 @@ class FlextProtocols:
             """Context manager exit."""
             ...
 
+        @override
         def __repr__(self) -> str:
             """String representation."""
             ...
@@ -1599,8 +1602,8 @@ class FlextProtocols:
                 dict(namespace),
             )
 
-            # Store protocols using setattr (avoids type: ignore)
-            built_cls.__protocols__ = tuple(protocols)
+            # Store protocols using setattr
+            setattr(built_cls, "__protocols__", tuple(protocols))
 
             # Validate protocol compliance at class definition time
             for protocol in protocols:
@@ -1661,11 +1664,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return str(
-                type(self).__name__
-                if hasattr(type(self), "__name__")
-                else "ProtocolModel",
-            )
+            return str(getattr(type(self), "__name__", "ProtocolModel"))
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
@@ -1713,11 +1712,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return str(
-                type(self).__name__
-                if hasattr(type(self), "__name__")
-                else "ProtocolSettings",
-            )
+            return str(getattr(type(self), "__name__", "ProtocolSettings"))
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
@@ -1764,7 +1759,7 @@ class FlextProtocols:
                 )
 
             # Store protocols using setattr (avoids type: ignore)
-            cls.__protocols__ = tuple(protocols)
+            setattr(cls, "__protocols__", tuple(protocols))
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
@@ -1773,13 +1768,13 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            cls.implements_protocol = _instance_implements_protocol
+            setattr(cls, "implements_protocol", _instance_implements_protocol)
 
             # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            cls.get_protocols = classmethod(_class_get_protocols)
+            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
 
             return cls
 

@@ -18,10 +18,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import TypedDict
 
-from flext_core import FlextModels, FlextProtocols, FlextTypes
+from flext_core import FlextModels, FlextProtocols, FlextTypes, m, t
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.models import m
-from flext_core.typings import t
 from flext_tests.models import FlextTestsModels
 
 

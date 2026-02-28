@@ -19,8 +19,7 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Model, U, t
+from flext_core import FlextRuntime, T_Model, U, t
 
 _module_logger = logging.getLogger(__name__)
 

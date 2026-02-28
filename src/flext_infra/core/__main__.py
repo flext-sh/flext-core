@@ -18,7 +18,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime
 
 from flext_infra.core.basemk_validator import BaseMkValidator
 from flext_infra.core.inventory import InventoryService

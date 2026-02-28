@@ -15,9 +15,7 @@ import secrets
 import time
 from collections.abc import Mapping, MutableMapping
 
-from flext_core.constants import c
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import c, r, t
 
 
 class CircuitBreakerManager:

@@ -17,8 +17,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import pytest
-from flext_core import t, u
-from flext_core.models import m
+from flext_core import m, t, u
 from pydantic import BaseModel
 
 from tests.test_utils import assertion_helpers

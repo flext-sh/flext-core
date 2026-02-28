@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import overload
 
+from flext_core import FlextRuntime, p, r, t
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -33,10 +34,6 @@ from flext_core._utilities.result_helpers import (
     ResultHelpers as FlextUtilitiesResultHelpers,
 )
 from flext_core._utilities.text import FlextUtilitiesText
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 class FlextUtilities:

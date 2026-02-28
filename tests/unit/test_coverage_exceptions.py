@@ -21,8 +21,7 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextConstants, FlextExceptions, FlextResult, t
-from flext_core.constants import c
+from flext_core import FlextConstants, FlextExceptions, FlextResult, c, t
 
 from tests.test_utils import assertion_helpers
 

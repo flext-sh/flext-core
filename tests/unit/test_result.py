@@ -25,8 +25,7 @@ from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
-from flext_core import c, m, r, t
-from flext_core.protocols import p
+from flext_core import c, m, p, r, t
 from flext_tests import FlextTestsUtilities, u
 
 from tests.test_utils import assertion_helpers

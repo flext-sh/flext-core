@@ -313,11 +313,11 @@ result.py imports ← config.py
 ```python
 # config.py
 # ❌ ANTI-PATTERN - Imports from higher layer
-from flext_core.result import FlextResult  # config is higher than result
+from flext_core import FlextResult  # config is higher than result
 
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
-from flext_core.settings import FlextSettings  # result is lower than config
+from flext_core import FlextSettings  # result is lower than config
 ```text
 
 **Why it's wrong**:
@@ -341,12 +341,12 @@ Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```python
 # ✅ CORRECT - Respect hierarchy
 # config.py (Layer 4) - can import from all lower layers
-from flext_core.result import FlextResult
-from flext_core.constants import FlextConstants
+from flext_core import FlextResult
+from flext_core import FlextConstants
 
 # result.py (Layer 1) - imports only from Layer 0
-from flext_core.constants import FlextConstants
-from flext_core.typings import t
+from flext_core import FlextConstants
+from flext_core import t
 ```text
 
 ### Anti-Pattern 8: Multiple Exports per Module
@@ -366,7 +366,7 @@ class Value:  # Third export - WRONG!
     pass
 
 # In __init__.py
-from flext_core.models import FlextModels, DomainModel, Value
+from flext_core import FlextModels, DomainModel, Value
 # Violates single class per module rule
 ```text
 
@@ -393,7 +393,7 @@ class FlextModels:
         pass
 
 # In __init__.py
-from flext_core.models import FlextModels
+from flext_core import FlextModels
 # Clear, single responsibility
 ```text
 
