@@ -17,7 +17,7 @@ from pathlib import Path
 from flext_core import FlextResult, r, t
 from yaml import safe_load
 
-from flext_infra import CommandRunner, JsonService, TomlService, c, m
+from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService, FlextInfraTomlService, c, m
 
 _SKILLS_DIR = Path(".claude/skills")
 _REPORT_DEFAULT = ".claude/skills/{skill}/report.json"
@@ -62,9 +62,9 @@ class FlextInfraSkillValidator:
 
     def __init__(self) -> None:
         """Initialize the skill validator."""
-        self._json = JsonService()
-        self._runner = CommandRunner()
-        self._toml = TomlService()
+        self._json = FlextInfraJsonService()
+        self._runner = FlextInfraCommandRunner()
+        self._toml = FlextInfraTomlService()
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
     def validate(
@@ -307,4 +307,4 @@ class FlextInfraSkillValidator:
         return (root / candidate).resolve()
 
 
-__all__ = ["SkillValidator"]
+__all__ = ["FlextInfraSkillValidator"]

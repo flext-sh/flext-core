@@ -3,13 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import Mock, patch
 
-import pytest
 
-from flext_core import r
-from flext_infra.core.inventory import InventoryService
-from flext_infra import m
+from flext_infra.core.inventory import FlextInfraInventoryService
 
 
 class TestFlextInfraInventoryService:
@@ -18,7 +14,7 @@ class TestFlextInfraInventoryService:
     def test_init_creates_service_instance(self) -> None:
         """Test that InventoryService initializes correctly."""
         # Arrange & Act
-        service = InventoryService()
+        service = FlextInfraInventoryService()
 
         # Assert
         assert service is not None
@@ -29,7 +25,7 @@ class TestFlextInfraInventoryService:
     ) -> None:
         """Test that generate returns success for empty workspace."""
         # Arrange
-        service = InventoryService()
+        service = FlextInfraInventoryService()
         workspace_root = tmp_path
 
         # Act
@@ -43,7 +39,7 @@ class TestFlextInfraInventoryService:
     def test_generate_with_output_dir_creates_reports(self, tmp_path: Path) -> None:
         """Test that generate creates reports in output directory."""
         # Arrange
-        service = InventoryService()
+        service = FlextInfraInventoryService()
         workspace_root = tmp_path
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
@@ -57,7 +53,7 @@ class TestFlextInfraInventoryService:
     def test_generate_returns_flextresult(self, tmp_path: Path) -> None:
         """Test that generate returns FlextResult type."""
         # Arrange
-        service = InventoryService()
+        service = FlextInfraInventoryService()
         workspace_root = tmp_path
 
         # Act
@@ -70,7 +66,7 @@ class TestFlextInfraInventoryService:
     def test_generate_with_python_scripts_scans_correctly(self, tmp_path: Path) -> None:
         """Test that generate scans Python scripts."""
         # Arrange
-        service = InventoryService()
+        service = FlextInfraInventoryService()
         workspace_root = tmp_path
 
         # Create a Python script
@@ -88,7 +84,7 @@ class TestFlextInfraInventoryService:
     def test_generate_with_bash_scripts_scans_correctly(self, tmp_path: Path) -> None:
         """Test that generate scans Bash scripts."""
         # Arrange
-        service = InventoryService()
+        service = FlextInfraInventoryService()
         workspace_root = tmp_path
 
         # Create a Bash script

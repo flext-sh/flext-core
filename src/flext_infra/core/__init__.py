@@ -16,31 +16,31 @@ from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.core.__main__ import main
-    from flext_infra.core.basemk_validator import BaseMkValidator
-    from flext_infra.core.inventory import InventoryService
-    from flext_infra.core.pytest_diag import PytestDiagExtractor
-    from flext_infra.core.scanner import TextPatternScanner
-    from flext_infra.core.skill_validator import SkillValidator
-    from flext_infra.core.stub_chain import StubSupplyChain
+    from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
+    from flext_infra.core.inventory import FlextInfraInventoryService
+    from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor
+    from flext_infra.core.scanner import FlextInfraTextPatternScanner
+    from flext_infra.core.skill_validator import FlextInfraSkillValidator
+    from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "BaseMkValidator": ("flext_infra.core.basemk_validator", "BaseMkValidator"),
-    "InventoryService": ("flext_infra.core.inventory", "InventoryService"),
-    "PytestDiagExtractor": ("flext_infra.core.pytest_diag", "PytestDiagExtractor"),
-    "SkillValidator": ("flext_infra.core.skill_validator", "SkillValidator"),
-    "StubSupplyChain": ("flext_infra.core.stub_chain", "StubSupplyChain"),
-    "TextPatternScanner": ("flext_infra.core.scanner", "TextPatternScanner"),
+    "FlextInfraBaseMkValidator": ("flext_infra.core.basemk_validator", "FlextInfraBaseMkValidator"),
+    "FlextInfraInventoryService": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
+    "FlextInfraPytestDiagExtractor": ("flext_infra.core.pytest_diag", "FlextInfraPytestDiagExtractor"),
+    "FlextInfraSkillValidator": ("flext_infra.core.skill_validator", "FlextInfraSkillValidator"),
+    "FlextInfraStubSupplyChain": ("flext_infra.core.stub_chain", "FlextInfraStubSupplyChain"),
+    "FlextInfraTextPatternScanner": ("flext_infra.core.scanner", "FlextInfraTextPatternScanner"),
     "main": ("flext_infra.core.__main__", "main"),
 }
 
 __all__ = [
-    "BaseMkValidator",
-    "InventoryService",
-    "PytestDiagExtractor",
-    "SkillValidator",
-    "StubSupplyChain",
-    "TextPatternScanner",
+    "FlextInfraBaseMkValidator",
+    "FlextInfraInventoryService",
+    "FlextInfraPytestDiagExtractor",
+    "FlextInfraSkillValidator",
+    "FlextInfraStubSupplyChain",
+    "FlextInfraTextPatternScanner",
     "main",
 ]
 

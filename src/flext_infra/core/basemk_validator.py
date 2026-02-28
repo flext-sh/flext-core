@@ -49,7 +49,6 @@ class FlextInfraBaseMkValidator:
                         summary="missing root base.mk",
                     ),
                 )
-
             source_hash = self._sha256(source)
             mismatched: list[str] = []
             checked = 0

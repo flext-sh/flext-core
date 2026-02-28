@@ -20,18 +20,18 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.core.basemk_validator import BaseMkValidator
-from flext_infra.core.inventory import InventoryService
-from flext_infra.core.pytest_diag import PytestDiagExtractor
-from flext_infra.core.scanner import TextPatternScanner
-from flext_infra.core.skill_validator import SkillValidator
-from flext_infra.core.stub_chain import StubSupplyChain
+from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
+from flext_infra.core.inventory import FlextInfraInventoryService
+from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor
+from flext_infra.core.scanner import FlextInfraTextPatternScanner
+from flext_infra.core.skill_validator import FlextInfraSkillValidator
+from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 from flext_infra.output import output
 
 
 def _run_basemk_validate(args: argparse.Namespace) -> int:
     """Execute base.mk sync validation."""
-    validator = BaseMkValidator()
+    validator = FlextInfraBaseMkValidator()
     result = validator.validate(Path(args.root).resolve())
 
     if result.is_success:
@@ -46,7 +46,7 @@ def _run_basemk_validate(args: argparse.Namespace) -> int:
 
 def _run_inventory(args: argparse.Namespace) -> int:
     """Execute scripts inventory generation."""
-    service = InventoryService()
+    service = FlextInfraInventoryService()
     output_dir = Path(args.output_dir).resolve() if args.output_dir else None
     result = service.generate(Path(args.root).resolve(), output_dir=output_dir)
 
@@ -63,7 +63,7 @@ def _run_inventory(args: argparse.Namespace) -> int:
 
 def _run_pytest_diag(args: argparse.Namespace) -> int:
     """Execute pytest diagnostics extraction."""
-    extractor = PytestDiagExtractor()
+    extractor = FlextInfraPytestDiagExtractor()
     result = extractor.extract(Path(args.junit), Path(args.log))
 
     if result.is_success:
@@ -109,7 +109,7 @@ def _run_pytest_diag(args: argparse.Namespace) -> int:
 
 def _run_scan(args: argparse.Namespace) -> int:
     """Execute text pattern scanning."""
-    scanner = TextPatternScanner()
+    scanner = FlextInfraTextPatternScanner()
     result = scanner.scan(
         Path(args.root).resolve(),
         args.pattern,
@@ -128,7 +128,7 @@ def _run_scan(args: argparse.Namespace) -> int:
 
 def _run_skill_validate(args: argparse.Namespace) -> int:
     """Execute skill validation."""
-    validator = SkillValidator()
+    validator = FlextInfraSkillValidator()
     result = validator.validate(
         Path(args.root).resolve(),
         args.skill,
@@ -147,7 +147,7 @@ def _run_skill_validate(args: argparse.Namespace) -> int:
 
 def _run_stub_validate(args: argparse.Namespace) -> int:
     """Execute stub supply chain validation."""
-    chain = StubSupplyChain()
+    chain = FlextInfraStubSupplyChain()
     root = Path(args.root).resolve()
     project_dirs: list[Path] | None = None
     if hasattr(args, "project") and args.project:

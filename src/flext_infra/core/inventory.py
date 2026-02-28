@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra import JsonService, c
+from flext_infra import FlextInfraJsonService, c
 
 
 class FlextInfraInventoryService:
@@ -27,7 +27,7 @@ class FlextInfraInventoryService:
 
     def __init__(self) -> None:
         """Initialize the inventory service."""
-        self._json = JsonService()
+        self._json = FlextInfraJsonService()
 
     def generate(
         self,

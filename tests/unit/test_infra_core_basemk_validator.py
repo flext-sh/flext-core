@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from flext_core import r
-from flext_infra.core.basemk_validator import BaseMkValidator
+from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra import m
 
 
@@ -19,22 +18,23 @@ class TestFlextInfraBaseMkValidator:
     ) -> None:
         """Test that missing root base.mk returns failure result."""
         # Arrange
-        validator = BaseMkValidator()
+        validator = FlextInfraBaseMkValidator()
         workspace_root = tmp_path
 
         # Act
         result = validator.validate(workspace_root)
 
         # Assert
-        assert result.is_failure
-        assert "missing root base.mk" in result.error
+        assert result.is_success
+        assert not result.value.passed
+        assert "missing root base.mk" in result.value.summary
 
     def test_validate_with_matching_basemk_returns_success(
         self, tmp_path: Path
     ) -> None:
         """Test that matching base.mk files return success result."""
         # Arrange
-        validator = BaseMkValidator()
+        validator = FlextInfraBaseMkValidator()
         workspace_root = tmp_path
 
         # Create root base.mk
@@ -59,7 +59,7 @@ class TestFlextInfraBaseMkValidator:
     ) -> None:
         """Test that mismatched base.mk files return failure result."""
         # Arrange
-        validator = BaseMkValidator()
+        validator = FlextInfraBaseMkValidator()
         workspace_root = tmp_path
 
         # Create root base.mk
@@ -69,6 +69,7 @@ class TestFlextInfraBaseMkValidator:
         # Create project with different base.mk
         project_dir = workspace_root / "project1"
         project_dir.mkdir()
+        (project_dir / "pyproject.toml").write_text("[tool.poetry]\n")
         project_basemk = project_dir / "base.mk"
         project_basemk.write_text("# different content")
 
@@ -81,7 +82,7 @@ class TestFlextInfraBaseMkValidator:
     def test_validate_returns_flextresult(self, tmp_path: Path) -> None:
         """Test that validate returns FlextResult type."""
         # Arrange
-        validator = BaseMkValidator()
+        validator = FlextInfraBaseMkValidator()
         workspace_root = tmp_path
         root_basemk = workspace_root / "base.mk"
         root_basemk.write_text("# content")

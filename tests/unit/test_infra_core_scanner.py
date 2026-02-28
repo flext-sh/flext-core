@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
-from flext_core import r
-from flext_infra.core.scanner import TextPatternScanner
-from flext_infra import m
+from flext_infra.core.scanner import FlextInfraTextPatternScanner
 
 
 class TestFlextInfraTextPatternScanner:
@@ -17,7 +14,7 @@ class TestFlextInfraTextPatternScanner:
     def test_init_creates_service_instance(self) -> None:
         """Test that TextPatternScanner initializes correctly."""
         # Arrange & Act
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
 
         # Assert
         assert scanner is not None
@@ -25,7 +22,7 @@ class TestFlextInfraTextPatternScanner:
     def test_scan_with_matching_pattern_returns_success(self, tmp_path: Path) -> None:
         """Test that scan returns success for matching patterns."""
         # Arrange
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
         root = tmp_path
 
         # Create test file with matching pattern
@@ -45,7 +42,7 @@ class TestFlextInfraTextPatternScanner:
     def test_scan_with_no_matches_returns_result(self, tmp_path: Path) -> None:
         """Test that scan returns result when no matches found."""
         # Arrange
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
         root = tmp_path
 
         # Create test file without matching pattern
@@ -65,7 +62,7 @@ class TestFlextInfraTextPatternScanner:
     def test_scan_returns_flextresult(self, tmp_path: Path) -> None:
         """Test that scan returns FlextResult type."""
         # Arrange
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("content")
@@ -84,7 +81,7 @@ class TestFlextInfraTextPatternScanner:
     def test_scan_with_excludes_filters_files(self, tmp_path: Path) -> None:
         """Test that scan respects exclude patterns."""
         # Arrange
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
         root = tmp_path
 
         # Create files
@@ -107,7 +104,7 @@ class TestFlextInfraTextPatternScanner:
     def test_scan_with_present_match_mode(self, tmp_path: Path) -> None:
         """Test scan with present match mode."""
         # Arrange
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("hello")
@@ -126,7 +123,7 @@ class TestFlextInfraTextPatternScanner:
     def test_scan_with_absent_match_mode(self, tmp_path: Path) -> None:
         """Test scan with absent match mode."""
         # Arrange
-        scanner = TextPatternScanner()
+        scanner = FlextInfraTextPatternScanner()
         root = tmp_path
         test_file = root / "test.txt"
         test_file.write_text("goodbye")

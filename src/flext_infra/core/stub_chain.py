@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra import CommandRunner, c, m
+from flext_infra import FlextInfraCommandRunner, c, m
 
 _MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
 _MYPY_HINT_RE = re.compile(r"note:\s+(?:hint|note):\s+.*?`(types-\S+)`")
@@ -24,7 +24,7 @@ _MYPY_STUB_RE = re.compile(r"Library stubs not installed for ['\"](\S+?)['\"]")
 _INTERNAL_PREFIXES = ("flext_", "flext-")
 
 
-class StubSupplyChain:
+class FlextInfraStubSupplyChain:
     """Manages typing stub supply chain for workspace projects.
 
     Coordinates mypy stub hints, pyrefly missing imports, stubgen
@@ -33,7 +33,7 @@ class StubSupplyChain:
 
     def __init__(self) -> None:
         """Initialize the stub supply chain."""
-        self._runner = CommandRunner()
+        self._runner = FlextInfraCommandRunner()
 
     def analyze(
         self,
@@ -207,4 +207,4 @@ class StubSupplyChain:
         return projects
 
 
-__all__ = ["StubSupplyChain"]
+__all__ = ["FlextInfraStubSupplyChain"]
