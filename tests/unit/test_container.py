@@ -370,7 +370,7 @@ class TestFlextContainer:
                 ),
             )
         else:
-            u.Tests.Result.assert_result_failure(typed_result)
+            u.Tests.Result.assert_failure(typed_result)
 
     def test_get_typed_wrong_type(
         self,
@@ -379,7 +379,7 @@ class TestFlextContainer:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
         result = clean_container.get_typed("string_service", dict)
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(
         self,
@@ -679,7 +679,7 @@ class TestFlextContainer:
 
         container.register_factory("failing", failing_factory)
         result: r[t.RegisterableService] = container.get("failing")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
 
 
 __all__ = ["TestFlextContainer"]

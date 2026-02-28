@@ -432,7 +432,8 @@ class FlextUtilitiesMapper:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return bool(
             FlextUtilitiesGuards.is_type(
-                value, (str, int, float, bool, None.__class__)
+                value,
+                (str, int, float, bool, None.__class__),
             ),
         )
 

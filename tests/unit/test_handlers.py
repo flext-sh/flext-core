@@ -601,7 +601,7 @@ class TestFlextHandlers:
         none_message = cast("t.AcceptableMessageType", None)
         handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
         result = handler_typed.validate(cast("str", none_message))
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
         """Test Pydantic model validation."""

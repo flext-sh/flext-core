@@ -298,7 +298,7 @@ class TestsCore:
         u.Tests.Result.assert_success(validation_result)  # Attributes exist
         # But business rules validation should fail
         business_result = service.validate_business_rules()
-        u.Tests.Result.assert_result_failure(business_result)
+        u.Tests.Result.assert_failure(business_result)
 
 
 __all__ = ["TestsCore"]

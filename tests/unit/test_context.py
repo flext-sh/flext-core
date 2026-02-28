@@ -141,7 +141,7 @@ class TestFlextContext:
         """Test context get with default value using monadic operations."""
         context = test_context
         result = context.get("nonexistent_key")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         # context.get() returns ResultProtocol, use is_success/value pattern
         default_value = "default_value"
         # ResultProtocol pattern: use is_success and value directly
@@ -271,7 +271,7 @@ class TestFlextContext:
         """Test context validation failure - empty key returns failure."""
         context = test_context
         result = context.set("", "empty_key")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert result.error is not None and "must be a non-empty string" in result.error
 
     def test_context_thread_safety(self, test_context: FlextContext) -> None:
@@ -309,7 +309,7 @@ class TestFlextContext:
         """Test context error handling with FlextResult pattern."""
         context = test_context
         result = context.set("", "value")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert result.error is not None and "must be a non-empty string" in result.error
 
     @pytest.mark.parametrize(
@@ -487,7 +487,7 @@ class TestFlextContext:
         """Test getting metadata that doesn't exist."""
         context = test_context
         result = context.get_metadata("nonexistent_meta")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert result.error is not None
 
     def test_context_get_metadata_with_default(
@@ -639,7 +639,7 @@ class TestFlextContext:
         """Test context with None value."""
         context = test_context
         result = context.set("key_none", None)
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
 
     def test_context_get_all_scopes(self, test_context: FlextContext) -> None:
         """Test getting all scope registrations."""

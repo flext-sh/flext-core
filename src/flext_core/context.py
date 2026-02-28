@@ -247,7 +247,7 @@ class FlextContext(FlextRuntime):
             )
             return cls(
                 initial_data=m.ContextData(
-                    data=t.Dict(root=initial_data_dict_new.root)
+                    data=t.Dict(root=initial_data_dict_new.root),
                 ),
             )
         return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))

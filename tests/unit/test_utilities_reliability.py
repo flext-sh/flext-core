@@ -225,7 +225,7 @@ class TestFlextUtilitiesReliability:
             )
         else:
             assert error_pattern is not None
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert error_pattern in (result.error or "")
 
     def test_with_timeout_invalid_timeout(self) -> None:
@@ -234,7 +234,7 @@ class TestFlextUtilitiesReliability:
             lambda: r[str].ok("test"),
             -1.0,
         )
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert "Timeout must be positive" in (result.error or "")
 
     def test_retry_succeeds_after_failure(self) -> None:
@@ -259,7 +259,7 @@ class TestFlextUtilitiesReliability:
             lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert "Max attempts must be at least" in (result.error or "")
 
     @pytest.mark.parametrize(

@@ -27,7 +27,6 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import override
 
 from flext_core import FlextLogger, FlextService, r
 
@@ -51,7 +50,6 @@ class PythonVersionEnforcer(FlextService[int]):
     check_only: bool = False
     verbose: bool = False
 
-    @override
     def execute(self, *, check_only: bool = False, verbose: bool = False) -> r[int]:
         """Execute Python version enforcement.
 

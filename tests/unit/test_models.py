@@ -518,7 +518,7 @@ class TestFlextModels:
 
         entity = TestEntity(name="test")
         result = entity.add_domain_event("", m.ConfigMap(root={"data": "value"}))
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         tm.that(result.error, none=False, msg="Failure result must have error message")
         # Type narrowing: error is not None after check
         if result.error is not None:
@@ -744,7 +744,7 @@ class TestFlextModels:
             ("", m.ConfigMap(root={"data": "value"})),
         ]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert (
             result.error is not None and "name must be non-empty string" in result.error
         )
@@ -762,7 +762,7 @@ class TestFlextModels:
             for i in range(max_events + 1)
         ]
         _ = aggregate.add_domain_events_bulk(events)
-        u.Tests.Result.assert_result_failure(_)
+        u.Tests.Result.assert_failure(_)
         assert _.error is not None and "would exceed max events" in _.error
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:

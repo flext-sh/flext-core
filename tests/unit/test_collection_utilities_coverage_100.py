@@ -228,7 +228,7 @@ class TestuCollectionParseSequence:
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
@@ -281,7 +281,7 @@ class TestuCollectionParseMapping:
             assert isinstance(parsed, dict)
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg

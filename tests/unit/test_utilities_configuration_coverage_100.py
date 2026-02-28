@@ -675,7 +675,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 "new_value",
             )
-            _ResultAssertions.assert_result_failure(result)
+            _ResultAssertions.assert_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL
@@ -689,7 +689,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            _ResultAssertions.assert_result_failure(result)
+            _ResultAssertions.assert_failure(result)
             assert result.error is not None
             assert TestConfigConstants.ErrorMessages.IS_NOT_CALLABLE in result.error
 
@@ -700,7 +700,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            _ResultAssertions.assert_result_failure(result)
+            _ResultAssertions.assert_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP
@@ -715,7 +715,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.MISSING.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            _ResultAssertions.assert_result_failure(result)
+            _ResultAssertions.assert_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
@@ -888,7 +888,7 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
 
-            _ResultAssertions.assert_result_success(result)
+            _ResultAssertions.assert_success(result)
             assert result.value.format == expected_format
             assert result.value.indent == expected_indent
 
@@ -907,7 +907,7 @@ class TestFlextUtilitiesConfiguration:
                 sort_keys=TestConfigConstants.TestValues.TEST_SORT_KEYS_TRUE,
             )
 
-            _ResultAssertions.assert_result_success(result)
+            _ResultAssertions.assert_success(result)
             assert result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_XML
             assert result.value.indent == TestConfigConstants.TestValues.TEST_INDENT_8
             assert (
@@ -926,7 +926,7 @@ class TestFlextUtilitiesConfiguration:
                 ),
             )
 
-            _ResultAssertions.assert_result_success(result)
+            _ResultAssertions.assert_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_YAML
             )
@@ -942,7 +942,7 @@ class TestFlextUtilitiesConfiguration:
                 indent=TestConfigConstants.TestValues.TEST_INDENT_6,
             )
 
-            _ResultAssertions.assert_result_success(result)
+            _ResultAssertions.assert_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_TOML
             )
@@ -960,7 +960,7 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
 
-            _ResultAssertions.assert_result_success(result)
+            _ResultAssertions.assert_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_JSON
             )
@@ -977,7 +977,7 @@ class TestFlextUtilitiesConfiguration:
                 format=TestConfigConstants.TestValues.TEST_FORMAT_JSON,
             )
 
-            _ResultAssertions.assert_result_success(result)
+            _ResultAssertions.assert_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_JSON
             )
@@ -991,7 +991,7 @@ class TestFlextUtilitiesConfiguration:
                 value=TestConfigConstants.TestValues.TEST_VALUE_INVALID,
             )
 
-            _ResultAssertions.assert_result_failure(result)
+            _ResultAssertions.assert_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
@@ -1012,7 +1012,7 @@ class TestFlextUtilitiesConfiguration:
                 value="new",
             )
 
-            _ResultAssertions.assert_result_failure(result)
+            _ResultAssertions.assert_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(

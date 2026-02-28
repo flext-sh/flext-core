@@ -41,7 +41,7 @@ class TestContext100Coverage:
 
         # Verify key is removed
         result = context.get("test_key")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
 
     def test_remove_nonexistent_key(self) -> None:
         """Test remove with nonexistent key (idempotent)."""
@@ -52,7 +52,7 @@ class TestContext100Coverage:
 
         # Verify key still doesn't exist
         result = context.get("nonexistent_key")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
 
     def test_clear_removes_all_data(self) -> None:
         """Test clear removes all data."""
@@ -66,8 +66,8 @@ class TestContext100Coverage:
         # Verify all keys are removed
         result1 = context.get("key1")
         result2 = context.get("key2")
-        u.Tests.Result.assert_result_failure(result1)
-        u.Tests.Result.assert_result_failure(result2)
+        u.Tests.Result.assert_failure(result1)
+        u.Tests.Result.assert_failure(result2)
 
     def test_merge_with_dict(self) -> None:
         """Test merge with dictionary."""
@@ -169,7 +169,7 @@ class TestContext100Coverage:
 
         # Get None value should return failure
         result = context.get("none_key")
-        u.Tests.Result.assert_result_failure(result)
+        u.Tests.Result.assert_failure(result)
         assert result.error is not None and "None value" in result.error
 
     def test_get_with_different_scope(self) -> None:

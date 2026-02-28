@@ -85,7 +85,7 @@ class _LazyMetadata:
         from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
 
         # Cache the loaded class on the class itself
-        setattr(objtype or FlextRuntime, "Metadata", Metadata)
+        (objtype or FlextRuntime).Metadata = Metadata
         return Metadata
 
 
@@ -903,7 +903,7 @@ class FlextRuntime:
             configuration_provider = providers.Configuration()
             if config:
                 configuration_provider.from_dict(dict(config))
-            setattr(di_container, "config", configuration_provider)
+            di_container.config = configuration_provider
             return configuration_provider
 
         @staticmethod

@@ -1609,7 +1609,7 @@ class FlextProtocols:
             )
 
             # Store protocols using setattr
-            setattr(built_cls, "__protocols__", tuple(protocols))
+            built_cls.__protocols__ = tuple(protocols)
 
             # Validate protocol compliance at class definition time
             for protocol in protocols:
@@ -1765,7 +1765,7 @@ class FlextProtocols:
                 )
 
             # Store protocols using setattr (avoids type: ignore)
-            setattr(cls, "__protocols__", tuple(protocols))
+            cls.__protocols__ = tuple(protocols)
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
@@ -1774,13 +1774,13 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            setattr(cls, "implements_protocol", _instance_implements_protocol)
+            cls.implements_protocol = _instance_implements_protocol
 
             # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
+            cls.get_protocols = classmethod(_class_get_protocols)
 
             return cls
 

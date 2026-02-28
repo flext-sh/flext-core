@@ -400,7 +400,7 @@ class TestFlextDecorators:
 
             result = failing_operation()
             assert isinstance(result, FlextResult)
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert result.error is not None
             assert "Operation failed" in result.error
 

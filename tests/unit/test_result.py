@@ -307,7 +307,7 @@ class Testr:
                     value,
                 )
             else:
-                u.Tests.Result.assert_result_failure(filtered)
+                u.Tests.Result.assert_failure(filtered)
 
         elif op_type == ResultOperationType.RAILWAY_COMPOSITION:
             assert isinstance(value, int)
@@ -458,7 +458,7 @@ class Testr:
         # Verify failure cases
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
             assert is_success is False
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert error == failure_errors[i]
 
     def test_result_none_handling_limits(self) -> None:

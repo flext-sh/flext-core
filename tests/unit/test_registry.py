@@ -333,7 +333,7 @@ class TestFlextRegistry:
         if test_case.should_succeed:
             u.Tests.Result.assert_success(result)
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
                 # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
                 u.Tests.Result.assert_failure_with_error(
@@ -356,7 +356,7 @@ class TestFlextRegistry:
         else:
             result = registry.register_handlers(handlers)
         u.Tests.Result.assert_success(
-            result
+            result,
         ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
@@ -378,7 +378,7 @@ class TestFlextRegistry:
         else:
             result = registry.register_handlers(handlers)
         u.Tests.Result.assert_success(
-            result
+            result,
         ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
@@ -400,7 +400,7 @@ class TestFlextRegistry:
         else:
             result = registry.register_handlers(handlers)
         u.Tests.Result.assert_success(
-            result
+            result,
         ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
@@ -462,7 +462,7 @@ class TestFlextRegistry:
                     cast("object", None),
                 ),
             )
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
             u.Tests.Result.assert_failure_with_error(
                 result,

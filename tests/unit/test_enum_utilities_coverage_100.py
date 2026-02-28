@@ -279,7 +279,7 @@ class TestuEnumParse:
                 expected_typed,
             )
         else:
-            u.Tests.Result.assert_result_failure(result)
+            u.Tests.Result.assert_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None

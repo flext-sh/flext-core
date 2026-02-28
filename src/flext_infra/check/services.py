@@ -367,7 +367,9 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         self._runner = CommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir = self._reporting.get_report_dir(
-            self._workspace_root, "project", "check"
+            self._workspace_root,
+            "project",
+            "check",
         )
         try:
             report_dir.mkdir(parents=True, exist_ok=True)

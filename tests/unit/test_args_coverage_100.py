@@ -371,7 +371,7 @@ class TestFlextUtilitiesArgs:
                 if scenario.expected_status:
                     assert parsed["status"] == scenario.expected_status
             else:
-                u.Tests.Result.assert_result_failure(result)
+                u.Tests.Result.assert_failure(result)
 
         def test_parse_kwargs_invalid_enum_value(self) -> None:
             """Test parse_kwargs with invalid enum value."""

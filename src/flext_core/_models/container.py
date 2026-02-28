@@ -55,7 +55,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
         )
     }
     return FlextModelFoundation.Metadata.model_validate({
-        "attributes": normalized_attrs
+        "attributes": normalized_attrs,
     })
 
 
