@@ -6,6 +6,7 @@ import io
 import re
 from unittest.mock import patch
 
+import flext_infra
 from flext_infra.output import (
     FlextInfraOutput,
     _should_use_color,
@@ -249,14 +250,10 @@ class TestModuleSingleton:
     """Tests for module-level output singleton."""
 
     def test_output_singleton_importable(self) -> None:
-        from flext_infra import output  # noqa: PLC0415
-
-        assert isinstance(output, FlextInfraOutput)
+        assert isinstance(flext_infra.output, FlextInfraOutput)
 
     def test_output_writes_to_stderr_by_default(self) -> None:
-        from flext_infra import output  # noqa: PLC0415
-
-        assert output._stream is not None
+        assert flext_infra.output._stream is not None
 
 
 class TestInfraOutputEdgeCases:

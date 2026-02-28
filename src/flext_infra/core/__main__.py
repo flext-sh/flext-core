@@ -170,8 +170,6 @@ def main() -> int:
     """Run core infrastructure services."""
     FlextRuntime.ensure_structlog_configured()
     parser = argparse.ArgumentParser(description="Core infrastructure services")
-    """Run core infrastructure services."""
-    parser = argparse.ArgumentParser(description="Core infrastructure services")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # basemk-validate

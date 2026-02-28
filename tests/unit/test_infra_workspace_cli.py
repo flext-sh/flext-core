@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from _pytest.monkeypatch import MonkeyPatch
 from flext_core import FlextResult as r
@@ -18,7 +19,7 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
     def _fake_migrate(
         self: FlextInfraProjectMigrator,
         *,
-        workspace_root: object,
+        workspace_root: Path,
         dry_run: bool,
     ) -> r[list[im.MigrationResult]]:
         del self, workspace_root
@@ -56,7 +57,7 @@ def test_workspace_cli_migrate_output_contains_summary(
     def _fake_migrate(
         self: FlextInfraProjectMigrator,
         *,
-        workspace_root: object,
+        workspace_root: Path,
         dry_run: bool,
     ) -> r[list[im.MigrationResult]]:
         del self, workspace_root, dry_run

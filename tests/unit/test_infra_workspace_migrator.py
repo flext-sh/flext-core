@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, cast
 
 from flext_core import FlextResult as r
 from flext_infra import m as im
@@ -39,14 +38,8 @@ def _build_migrator(project: im.ProjectInfo, base_mk: str) -> FlextInfraProjectM
         del workspace_root
         return r[list[im.ProjectInfo]].ok([project])
 
-    migrator._discovery = cast(
-        "Any",
-        SimpleNamespace(discover_projects=_discover_projects),
-    )
-    migrator._generator = cast(
-        "Any",
-        SimpleNamespace(generate=lambda: r[str].ok(base_mk)),
-    )
+    migrator._discovery = SimpleNamespace(discover_projects=_discover_projects)
+    migrator._generator = SimpleNamespace(generate=lambda: r[str].ok(base_mk))
     return migrator
 
 

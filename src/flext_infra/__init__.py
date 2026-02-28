@@ -52,7 +52,20 @@ if TYPE_CHECKING:
     from flext_infra.versioning import FlextInfraVersioningService
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
+# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "configure_flext_infra_dependencies": (
+        "flext_infra.container",
+        "configure_flext_infra_dependencies",
+    ),
+    "get_flext_infra_container": (
+        "flext_infra.container",
+        "get_flext_infra_container",
+    ),
+    "get_flext_infra_service": (
+        "flext_infra.container",
+        "get_flext_infra_service",
+    ),
     "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "FlextInfraBaseMkGenerator"),
     "FlextInfraBaseMkTemplateEngine": (
         "flext_infra.basemk",
@@ -189,6 +202,9 @@ __all__ = [
     "__version__",
     "__version_info__",
     "c",
+    "configure_flext_infra_dependencies",
+    "get_flext_infra_container",
+    "get_flext_infra_service",
     "m",
     "output",
     "p",

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -26,11 +27,11 @@ def test_run_cli_run_returns_zero_for_pass(monkeypatch: MonkeyPatch) -> None:
         projects: list[str],
         gates: list[str],
         *,
-        reports_dir: object,
+        reports_dir: Path | None,
         fail_fast: bool,
-    ) -> r[list[object]]:
+    ) -> r[list[SimpleNamespace]]:
         del self, projects, gates, reports_dir, fail_fast
-        return r[list[object]].ok([SimpleNamespace(passed=True)])
+        return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
 
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
@@ -49,11 +50,11 @@ def test_run_cli_run_returns_one_for_fail(monkeypatch: MonkeyPatch) -> None:
         projects: list[str],
         gates: list[str],
         *,
-        reports_dir: object,
+        reports_dir: Path | None,
         fail_fast: bool,
-    ) -> r[list[object]]:
+    ) -> r[list[SimpleNamespace]]:
         del self, projects, gates, reports_dir, fail_fast
-        return r[list[object]].ok([SimpleNamespace(passed=False)])
+        return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=False)])
 
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
@@ -72,11 +73,11 @@ def test_run_cli_run_returns_two_for_error(monkeypatch: MonkeyPatch) -> None:
         projects: list[str],
         gates: list[str],
         *,
-        reports_dir: object,
+        reports_dir: Path | None,
         fail_fast: bool,
-    ) -> r[list[object]]:
+    ) -> r[list[SimpleNamespace]]:
         del self, projects, gates, reports_dir, fail_fast
-        return r[list[object]].fail("test error")
+        return r[list[SimpleNamespace]].fail("test error")
 
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
@@ -96,12 +97,12 @@ def test_run_cli_with_multiple_projects(monkeypatch: MonkeyPatch) -> None:
         projects: list[str],
         gates: list[str],
         *,
-        reports_dir: object,
+        reports_dir: Path | None,
         fail_fast: bool,
-    ) -> r[list[object]]:
+    ) -> r[list[SimpleNamespace]]:
         del self, gates, reports_dir, fail_fast
         captured_projects.extend(projects)
-        return r[list[object]].ok([SimpleNamespace(passed=True)])
+        return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
 
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
@@ -131,12 +132,12 @@ def test_run_cli_with_fail_fast_flag(monkeypatch: MonkeyPatch) -> None:
         projects: list[str],
         gates: list[str],
         *,
-        reports_dir: object,
+        reports_dir: Path | None,
         fail_fast: bool,
-    ) -> r[list[object]]:
+    ) -> r[list[SimpleNamespace]]:
         del self, projects, gates, reports_dir
         captured_fail_fast.append(fail_fast)
-        return r[list[object]].ok([SimpleNamespace(passed=True)])
+        return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
 
     _ = monkeypatch.setattr(
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
