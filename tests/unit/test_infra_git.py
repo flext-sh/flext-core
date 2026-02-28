@@ -9,8 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
-
 from flext_core import r
 from flext_infra import FlextInfraGitService
 

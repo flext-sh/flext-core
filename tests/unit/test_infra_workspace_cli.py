@@ -11,12 +11,12 @@ import sys
 from _pytest.monkeypatch import MonkeyPatch
 from flext_core import FlextResult as r
 from flext_infra import __main__ as workspace_cli, m as im
-from flext_infra.workspace.migrator import ProjectMigrator
+from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 
 
 def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
     def _fake_migrate(
-        self: ProjectMigrator,
+        self: FlextInfraProjectMigrator,
         *,
         workspace_root: object,
         dry_run: bool,
@@ -31,7 +31,7 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
             }),
         ])
 
-    _ = monkeypatch.setattr(ProjectMigrator, "migrate", _fake_migrate)
+    _ = monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _fake_migrate)
     _ = monkeypatch.setattr(
         sys,
         "argv",
@@ -54,7 +54,7 @@ def test_workspace_cli_migrate_output_contains_summary(
     monkeypatch: MonkeyPatch,
 ) -> None:
     def _fake_migrate(
-        self: ProjectMigrator,
+        self: FlextInfraProjectMigrator,
         *,
         workspace_root: object,
         dry_run: bool,
@@ -70,7 +70,7 @@ def test_workspace_cli_migrate_output_contains_summary(
             }),
         ])
 
-    _ = monkeypatch.setattr(ProjectMigrator, "migrate", _fake_migrate)
+    _ = monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _fake_migrate)
     _ = monkeypatch.setattr(
         sys,
         "argv",

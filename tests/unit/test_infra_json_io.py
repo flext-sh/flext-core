@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-from pydantic import BaseModel
-
 from flext_infra import FlextInfraJsonService
+from pydantic import BaseModel
 
 
 class SampleModel(BaseModel):

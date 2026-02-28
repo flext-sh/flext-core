@@ -20,11 +20,11 @@ from tomlkit import items
 
 from flext_infra import (
     REPORTS_DIR_NAME,
-    CommandRunner,
-    DiscoveryService,
-    JsonService,
-    PathResolver,
-    ReportingService,
+    FlextInfraCommandRunner,
+    FlextInfraDiscoveryService,
+    FlextInfraJsonService,
+    FlextInfraPathResolver,
+    FlextInfraReportingService,
     c,
     m,
     output,
@@ -361,10 +361,10 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize checker dependencies and default report directory."""
         super().__init__()
-        self._path_resolver = PathResolver()
-        self._reporting = ReportingService()
-        self._json = JsonService()
-        self._runner = CommandRunner()
+        self._path_resolver = FlextInfraPathResolver()
+        self._reporting = FlextInfraReportingService()
+        self._json = FlextInfraJsonService()
+        self._runner = FlextInfraCommandRunner()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
         report_dir = self._reporting.get_report_dir(
             self._workspace_root,
@@ -1263,8 +1263,8 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize fixer dependencies and resolve workspace root."""
         super().__init__()
-        self._path_resolver = PathResolver()
-        self._discovery = DiscoveryService()
+        self._path_resolver = FlextInfraPathResolver()
+        self._discovery = FlextInfraDiscoveryService()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
 
     @override

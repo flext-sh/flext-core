@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 from flext_core import r
-from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra import m
+from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 
 
 class TestFlextInfraBaseMkValidator:

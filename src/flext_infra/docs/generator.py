@@ -15,7 +15,7 @@ from pathlib import Path
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraPatterns, TemplateEngine, c
+from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
@@ -49,7 +49,7 @@ class GenerateReport(BaseModel):
     )
 
 
-class DocGenerator:
+class FlextInfraDocGenerator:
     """Infrastructure service for documentation generation.
 
     Generates project-level docs from workspace SSOT guides and
@@ -321,15 +321,15 @@ class DocGenerator:
         if not items:
             items = ["- No sections found"]
         return (
-            f"{TemplateEngine.TOC_START}\n"
+            f"{FlextInfraTemplateEngine.TOC_START}\n"
             + "\n".join(items)
-            + f"\n{TemplateEngine.TOC_END}"
+            + f"\n{FlextInfraTemplateEngine.TOC_END}"
         )
 
     def _update_toc(self, content: str) -> str:
         """Insert or replace TOC markers in markdown content."""
         toc = self._build_toc(content)
-        if TemplateEngine.TOC_START in content and TemplateEngine.TOC_END in content:
+        if FlextInfraTemplateEngine.TOC_START in content and FlextInfraTemplateEngine.TOC_END in content:
             return re.sub(
                 r"<!-- TOC START -->.*?<!-- TOC END -->",
                 toc,
@@ -366,4 +366,4 @@ class DocGenerator:
         return GeneratedFile(path=path.as_posix(), written=apply)
 
 
-__all__ = ["DocGenerator", "GenerateReport", "GeneratedFile"]
+__all__ = ["FlextInfraDocGenerator", "GenerateReport", "GeneratedFile"]

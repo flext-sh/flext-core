@@ -15,7 +15,12 @@ from pathlib import Path
 from flext_core import FlextResult, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import JsonService, ProjectSelector, TemplateEngine, c
+from flext_infra import (
+    FlextInfraJsonService,
+    FlextInfraProjectSelector,
+    FlextInfraTemplateEngine,
+    c,
+)
 
 
 class SyncOperation(BaseModel):
@@ -32,7 +37,7 @@ class SyncOperation(BaseModel):
 MANAGED_FILES: frozenset[str] = frozenset({"ci.yml"})
 
 
-class WorkflowSyncer:
+class FlextInfraWorkflowSyncer:
     """Infrastructure service for syncing canonical workflow files.
 
     Distributes a source workflow template to all workspace projects,
@@ -41,14 +46,14 @@ class WorkflowSyncer:
 
     def __init__(
         self,
-        selector: ProjectSelector | None = None,
-        json_io: JsonService | None = None,
-        templates: TemplateEngine | None = None,
+        selector: FlextInfraProjectSelector | None = None,
+        json_io: FlextInfraJsonService | None = None,
+        templates: FlextInfraTemplateEngine | None = None,
     ) -> None:
         """Initialize the workflow syncer."""
-        self._selector = selector or ProjectSelector()
-        self._json = json_io or JsonService()
-        self._templates = templates or TemplateEngine()
+        self._selector = selector or FlextInfraProjectSelector()
+        self._json = json_io or FlextInfraJsonService()
+        self._templates = templates or FlextInfraTemplateEngine()
 
     def resolve_source_workflow(
         self,
@@ -277,4 +282,4 @@ class WorkflowSyncer:
         self._json.write(report_path, payload, sort_keys=True)
 
 
-__all__ = ["SyncOperation", "WorkflowSyncer"]
+__all__ = ["FlextInfraWorkflowSyncer", "SyncOperation"]

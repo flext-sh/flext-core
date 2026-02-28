@@ -19,12 +19,12 @@ from typing import override
 from flext_core import FlextLogger, FlextService, r, t
 
 from flext_infra import (
-    CommandRunner,
-    GitService,
-    JsonService,
-    ProjectSelector,
-    ReportingService,
-    VersioningService,
+    FlextInfraCommandRunner,
+    FlextInfraGitService,
+    FlextInfraJsonService,
+    FlextInfraProjectSelector,
+    FlextInfraReportingService,
+    FlextInfraVersioningService,
     c,
 )
 
@@ -34,14 +34,14 @@ _DEFAULT_ENCODING = c.Encoding.DEFAULT
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class ReleaseOrchestrator(FlextService[bool]):
+class FlextInfraReleaseOrchestrator(FlextService[bool]):
     """Service for release lifecycle orchestration.
 
     Composes infrastructure services to manage the full release process
     through four distinct phases: validate, version, build, and publish.
 
     Example:
-        service = ReleaseOrchestrator()
+        service = FlextInfraReleaseOrchestrator()
         result = service.run_release(
             root=Path("."),
             version="1.0.0",
@@ -150,7 +150,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         if dry_run:
             logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
-        return CommandRunner().run_checked(
+        return FlextInfraCommandRunner().run_checked(
             ["make", "validate", "VALIDATE_SCOPE=workspace"],
             cwd=root,
         )
@@ -180,7 +180,7 @@ class ReleaseOrchestrator(FlextService[bool]):
             FlextResult[bool] with True on success.
 
         """
-        versioning = VersioningService()
+        versioning = FlextInfraVersioningService()
         target = f"{version}-dev" if dev_suffix else version
 
         parse_result = versioning.parse_semver(version)
@@ -230,7 +230,7 @@ class ReleaseOrchestrator(FlextService[bool]):
             FlextResult[bool] with True if all builds succeed.
 
         """
-        reporting = ReportingService()
+        reporting = FlextInfraReportingService()
         output_dir = (
             reporting.get_report_dir(root, "project", "release") / f"v{version}"
         )
@@ -268,7 +268,7 @@ class ReleaseOrchestrator(FlextService[bool]):
             "failures": failures,
             "records": records,
         }
-        JsonService().write(
+        FlextInfraJsonService().write(
             output_dir / "build-report.json",
             report,
             sort_keys=True,
@@ -309,7 +309,7 @@ class ReleaseOrchestrator(FlextService[bool]):
             FlextResult[bool] with True on success.
 
         """
-        reporting = ReportingService()
+        reporting = FlextInfraReportingService()
         notes_dir = reporting.get_report_dir(root, "project", "release") / tag
         try:
             notes_dir.mkdir(parents=True, exist_ok=True)
@@ -391,7 +391,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         project_names: list[str],
     ) -> r[bool]:
         """Create local release branches for workspace and projects."""
-        runner = CommandRunner()
+        runner = FlextInfraCommandRunner()
         branch = f"release/{version}"
         result = runner.run_checked(
             ["git", "checkout", "-B", branch],
@@ -400,7 +400,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         if result.is_failure:
             return result
 
-        selector = ProjectSelector()
+        selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
@@ -420,7 +420,7 @@ class ReleaseOrchestrator(FlextService[bool]):
     ) -> list[Path]:
         """Discover pyproject.toml files that need version updates."""
         files: list[Path] = [root / c.Files.PYPROJECT_FILENAME]
-        selector = ProjectSelector()
+        selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
@@ -436,7 +436,7 @@ class ReleaseOrchestrator(FlextService[bool]):
     ) -> list[tuple[str, Path]]:
         """Resolve unique build targets from project names."""
         targets: list[tuple[str, Path]] = [("root", root)]
-        selector = ProjectSelector()
+        selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         if projects_result.is_success:
             targets.extend((p.name, p.path) for p in projects_result.value)
@@ -453,7 +453,7 @@ class ReleaseOrchestrator(FlextService[bool]):
     @staticmethod
     def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
-        result = CommandRunner().run_raw(["make", "-C", str(project_path), verb])
+        result = FlextInfraCommandRunner().run_raw(["make", "-C", str(project_path), verb])
         if result.is_failure:
             return r[tuple[int, str]].fail(result.error or "make execution failed")
 
@@ -475,7 +475,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         changes_result = self._collect_changes(root, previous, tag)
         changes = changes_result.value if changes_result.is_success else ""
 
-        selector = ProjectSelector()
+        selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
         project_list = projects_result.value if projects_result.is_success else []
 
@@ -523,7 +523,7 @@ class ReleaseOrchestrator(FlextService[bool]):
 
     def _previous_tag(self, root: Path, tag: str) -> r[str]:
         """Find the tag immediately preceding the given tag."""
-        runner = CommandRunner()
+        runner = FlextInfraCommandRunner()
         result = runner.capture(
             ["git", "tag", "--sort=-v:refname"],
             cwd=root,
@@ -542,12 +542,12 @@ class ReleaseOrchestrator(FlextService[bool]):
 
     def _collect_changes(self, root: Path, previous: str, tag: str) -> r[str]:
         """Collect Git commit messages between two tags."""
-        git = GitService()
+        git = FlextInfraGitService()
         tag_result = git.tag_exists(root, tag)
         target = tag if (tag_result.is_success and tag_result.value) else "HEAD"
         rev = f"{previous}..{target}" if previous else target
 
-        runner = CommandRunner()
+        runner = FlextInfraCommandRunner()
         result = runner.capture(
             ["git", "log", "--pretty=format:- %h %s (%an)", rev],
             cwd=root,
@@ -608,11 +608,11 @@ class ReleaseOrchestrator(FlextService[bool]):
 
     def _create_tag(self, root: Path, tag: str) -> r[bool]:
         """Create an annotated Git tag if it doesn't exist."""
-        git = GitService()
+        git = FlextInfraGitService()
         exists_result = git.tag_exists(root, tag)
         if exists_result.is_success and exists_result.value:
             return r[bool].ok(True)
-        runner = CommandRunner()
+        runner = FlextInfraCommandRunner()
         return runner.run_checked(
             ["git", "tag", "-a", tag, "-m", f"release: {tag}"],
             cwd=root,
@@ -620,7 +620,7 @@ class ReleaseOrchestrator(FlextService[bool]):
 
     def _push_release(self, root: Path, tag: str) -> r[bool]:
         """Push branch and tag to remote origin."""
-        runner = CommandRunner()
+        runner = FlextInfraCommandRunner()
         result = runner.run_checked(["git", "push", "origin", "HEAD"], cwd=root)
         if result.is_failure:
             return result
@@ -634,7 +634,7 @@ class ReleaseOrchestrator(FlextService[bool]):
         bump: str,
     ) -> r[bool]:
         """Bump to the next development version."""
-        versioning = VersioningService()
+        versioning = FlextInfraVersioningService()
         bump_result = versioning.bump_version(version, bump)
         if bump_result.is_failure:
             return r[bool].fail(bump_result.error or "bump failed")
@@ -650,4 +650,4 @@ class ReleaseOrchestrator(FlextService[bool]):
         return result
 
 
-__all__ = ["ReleaseOrchestrator"]
+__all__ = ["FlextInfraReleaseOrchestrator"]

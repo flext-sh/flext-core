@@ -56,7 +56,7 @@ class AuditReport(BaseModel):
     passed: bool = Field(default=False, description="Whether audit passed.")
 
 
-class DocAuditor:
+class FlextInfraDocAuditor:
     """Infrastructure service for documentation auditing.
 
     Scans markdown documentation for broken internal links and
@@ -332,7 +332,7 @@ def main() -> int:
     _ = parser.add_argument("--strict", type=int, default=1)
     args = parser.parse_args()
 
-    auditor = DocAuditor()
+    auditor = FlextInfraDocAuditor()
     result = auditor.audit(
         root=Path(args.root).resolve(),
         project=args.project,
@@ -354,4 +354,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["AuditIssue", "AuditReport", "DocAuditor"]
+__all__ = ["AuditIssue", "AuditReport", "FlextInfraDocAuditor"]

@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from flext_core import FlextService, r
 
-from flext_infra import CommandRunner, output
+from flext_infra import FlextInfraCommandRunner, output
 
 
 class WorkspaceMode(StrEnum):
@@ -26,7 +26,7 @@ class WorkspaceMode(StrEnum):
     STANDALONE = "standalone"
 
 
-class WorkspaceDetector(FlextService[WorkspaceMode]):
+class FlextInfraWorkspaceDetector(FlextService[WorkspaceMode]):
     """Infrastructure service for detecting workspace mode.
 
     Inspects parent repository origin URL to determine if a project
@@ -37,7 +37,7 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
     def __init__(self) -> None:
         """Initialize the workspace detector."""
         super().__init__()
-        self._runner = CommandRunner()
+        self._runner = FlextInfraCommandRunner()
 
     @override
     def execute(self) -> r[WorkspaceMode]:
@@ -112,6 +112,6 @@ class WorkspaceDetector(FlextService[WorkspaceMode]):
 
 
 __all__ = [
-    "WorkspaceDetector",
+    "FlextInfraWorkspaceDetector",
     "WorkspaceMode",
 ]

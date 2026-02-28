@@ -18,9 +18,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_infra import (
     REPORTS_DIR_NAME,
-    DiscoveryService,
-    JsonService,
-    ReportingService,
+    FlextInfraDiscoveryService,
+    FlextInfraJsonService,
+    FlextInfraReportingService,
     c,
 )
 
@@ -35,9 +35,9 @@ class FlextInfraDocScope(BaseModel):
     report_dir: Path = Field(description="Report output directory for this scope")
 
 
-_discovery = DiscoveryService()
-_json_svc = JsonService()
-_reporting = ReportingService()
+_discovery = FlextInfraDiscoveryService()
+_json_svc = FlextInfraJsonService()
+_reporting = FlextInfraReportingService()
 
 DEFAULT_DOCS_OUTPUT_DIR = f"{REPORTS_DIR_NAME}/docs"
 """Default output directory for documentation reports."""

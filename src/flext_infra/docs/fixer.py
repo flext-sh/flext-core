@@ -16,7 +16,7 @@ from pathlib import Path
 from flext_core import FlextLogger, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraPatterns, TemplateEngine, c
+from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
@@ -47,7 +47,7 @@ class FixReport(BaseModel):
     items: list[FixItem] = Field(default_factory=list, description="List of fix items.")
 
 
-class DocFixer:
+class FlextInfraDocFixer:
     """Infrastructure service for documentation auto-fixing.
 
     Fixes broken markdown links and inserts/updates TOC blocks,
@@ -210,15 +210,15 @@ class DocFixer:
         if not items:
             items = ["- No sections found"]
         return (
-            f"{TemplateEngine.TOC_START}\n"
+            f"{FlextInfraTemplateEngine.TOC_START}\n"
             + "\n".join(items)
-            + f"\n{TemplateEngine.TOC_END}"
+            + f"\n{FlextInfraTemplateEngine.TOC_END}"
         )
 
     def _update_toc(self, content: str) -> tuple[str, int]:
         """Insert or replace the TOC in content, returning (updated, changed)."""
         toc = self._build_toc(content)
-        if TemplateEngine.TOC_START in content and TemplateEngine.TOC_END in content:
+        if FlextInfraTemplateEngine.TOC_START in content and FlextInfraTemplateEngine.TOC_END in content:
             updated = re.sub(
                 r"<!-- TOC START -->.*?<!-- TOC END -->",
                 toc,
@@ -239,4 +239,4 @@ class DocFixer:
         return toc + "\n\n" + content, 1
 
 
-__all__ = ["DocFixer", "FixItem", "FixReport"]
+__all__ = ["FixItem", "FixReport", "FlextInfraDocFixer"]

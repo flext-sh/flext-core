@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import tomlkit
-
 from flext_infra import FlextInfraTomlService
 
 

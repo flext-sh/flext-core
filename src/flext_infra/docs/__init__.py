@@ -14,27 +14,27 @@ from typing import TYPE_CHECKING, Any
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.docs.auditor import DocAuditor
-    from flext_infra.docs.builder import DocBuilder
-    from flext_infra.docs.fixer import DocFixer
-    from flext_infra.docs.generator import DocGenerator
-    from flext_infra.docs.validator import DocValidator
+    from flext_infra.docs.auditor import FlextInfraDocAuditor
+    from flext_infra.docs.builder import FlextInfraDocBuilder
+    from flext_infra.docs.fixer import FlextInfraDocFixer
+    from flext_infra.docs.generator import FlextInfraDocGenerator
+    from flext_infra.docs.validator import FlextInfraDocValidator
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "DocAuditor": ("flext_infra.docs.auditor", "DocAuditor"),
-    "DocBuilder": ("flext_infra.docs.builder", "DocBuilder"),
-    "DocFixer": ("flext_infra.docs.fixer", "DocFixer"),
-    "DocGenerator": ("flext_infra.docs.generator", "DocGenerator"),
-    "DocValidator": ("flext_infra.docs.validator", "DocValidator"),
+    "FlextInfraDocAuditor": ("flext_infra.docs.auditor", "FlextInfraDocAuditor"),
+    "FlextInfraDocBuilder": ("flext_infra.docs.builder", "FlextInfraDocBuilder"),
+    "FlextInfraDocFixer": ("flext_infra.docs.fixer", "FlextInfraDocFixer"),
+    "FlextInfraDocGenerator": ("flext_infra.docs.generator", "FlextInfraDocGenerator"),
+    "FlextInfraDocValidator": ("flext_infra.docs.validator", "FlextInfraDocValidator"),
 }
 
 __all__ = [
-    "DocAuditor",
-    "DocBuilder",
-    "DocFixer",
-    "DocGenerator",
-    "DocValidator",
+    "FlextInfraDocAuditor",
+    "FlextInfraDocBuilder",
+    "FlextInfraDocFixer",
+    "FlextInfraDocGenerator",
+    "FlextInfraDocValidator",
 ]
 
 

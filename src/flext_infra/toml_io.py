@@ -83,11 +83,10 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
                 path.read_text(encoding=c.Encoding.DEFAULT),
             )
             return r[tomlkit.TOMLDocument].ok(doc)
-        except (tomllib.TOMLDecodeError, OSError) as exc:
+        except (tomlkit.exceptions.ParseError, OSError) as exc:
             return r[tomlkit.TOMLDocument].fail(
                 f"TOML document read error: {exc}",
             )
-
 
     def write(
         self,
@@ -224,6 +223,5 @@ class FlextInfraTomlService(FlextService[FlextResult[bool]]):
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
+
 __all__ = ["FlextInfraTomlService"]
-
-

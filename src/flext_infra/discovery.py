@@ -165,6 +165,3 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
 
 
 __all__ = ["FlextInfraDiscoveryService"]
-
-
-

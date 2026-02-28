@@ -16,12 +16,18 @@ from pathlib import Path
 
 from flext_core import r, t
 
-from flext_infra import CommandRunner, GitService, ProjectSelector, ReportingService, c
+from flext_infra import (
+    FlextInfraCommandRunner,
+    FlextInfraGitService,
+    FlextInfraProjectSelector,
+    FlextInfraReportingService,
+    c,
+)
 
 type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.ScalarValue]]]
 
 
-class PrWorkspaceManager:
+class FlextInfraPrWorkspaceManager:
     """Infrastructure service for workspace-wide PR automation.
 
     Orchestrates PR operations (status, create, merge, etc.) across all
@@ -30,16 +36,16 @@ class PrWorkspaceManager:
 
     def __init__(
         self,
-        runner: CommandRunner | None = None,
-        git: GitService | None = None,
-        selector: ProjectSelector | None = None,
-        reporting: ReportingService | None = None,
+        runner: FlextInfraCommandRunner | None = None,
+        git: FlextInfraGitService | None = None,
+        selector: FlextInfraProjectSelector | None = None,
+        reporting: FlextInfraReportingService | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
-        self._runner = runner or CommandRunner()
-        self._git = git or GitService(self._runner)
-        self._selector = selector or ProjectSelector()
-        self._reporting = reporting or ReportingService()
+        self._runner = runner or FlextInfraCommandRunner()
+        self._git = git or FlextInfraGitService(self._runner)
+        self._selector = selector or FlextInfraProjectSelector()
+        self._reporting = reporting or FlextInfraReportingService()
 
     def has_changes(self, repo_root: Path) -> r[bool]:
         """Check if the repository has uncommitted changes.
@@ -364,4 +370,4 @@ class PrWorkspaceManager:
         return command
 
 
-__all__ = ["PrWorkspaceManager"]
+__all__ = ["FlextInfraPrWorkspaceManager"]

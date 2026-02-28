@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest  # noqa: F401
-
 from flext_core import FlextService
 from flext_infra.codegen import FlextInfraLazyInitGenerator
 
@@ -56,8 +55,6 @@ class TestFlextInfraLazyInitGenerator:
 
     def test_generator_is_flext_service(self, tmp_path: Path) -> None:
         """Test that FlextInfraLazyInitGenerator is a FlextService[str]."""
-        from flext_core import FlextService
-
         generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
         # Verify it's an instance of FlextService
         assert isinstance(generator, FlextService)

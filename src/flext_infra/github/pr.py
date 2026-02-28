@@ -18,10 +18,15 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra import CommandRunner, GitService, VersioningService, output
+from flext_infra import (
+    FlextInfraCommandRunner,
+    FlextInfraGitService,
+    FlextInfraVersioningService,
+    output,
+)
 
 
-class PrManager:
+class FlextInfraPrManager:
     """Infrastructure service for pull request lifecycle management.
 
     Provides FlextResult-wrapped PR operations (status, create, merge,
@@ -30,14 +35,14 @@ class PrManager:
 
     def __init__(
         self,
-        runner: CommandRunner | None = None,
-        git: GitService | None = None,
-        versioning: VersioningService | None = None,
+        runner: FlextInfraCommandRunner | None = None,
+        git: FlextInfraGitService | None = None,
+        versioning: FlextInfraVersioningService | None = None,
     ) -> None:
         """Initialize the PR manager."""
-        self._runner = runner or CommandRunner()
-        self._git = git or GitService(self._runner)
-        self._versioning = versioning or VersioningService()
+        self._runner = runner or FlextInfraCommandRunner()
+        self._git = git or FlextInfraGitService(self._runner)
+        self._versioning = versioning or FlextInfraVersioningService()
 
     def open_pr_for_head(
         self,
@@ -386,9 +391,9 @@ def main() -> int:
     """Dispatch requested PR action and return its exit code."""
     args = _parse_args()
     repo_root = args.repo_root.resolve()
-    manager = PrManager()
+    manager = FlextInfraPrManager()
 
-    git = GitService()
+    git = FlextInfraGitService()
     head_result = git.current_branch(repo_root)
     head = args.head or (head_result.value if head_result.is_success else "HEAD")
     base = args.base

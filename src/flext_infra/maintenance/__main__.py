@@ -14,7 +14,7 @@ import sys
 
 from flext_core import FlextRuntime
 
-from flext_infra.maintenance.python_version import PythonVersionEnforcer
+from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 from flext_infra.output import output
 
 
@@ -38,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    service = PythonVersionEnforcer()
+    service = FlextInfraPythonVersionEnforcer()
     result = service.execute(check_only=args.check, verbose=args.verbose)
 
     if result.is_success:

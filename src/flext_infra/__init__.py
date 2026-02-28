@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from flext_infra.paths import FlextInfraPathResolver
     from flext_infra.patterns import FlextInfraPatterns
     from flext_infra.protocols import FlextInfraProtocols, FlextInfraProtocols as p
-    from flext_infra.release import ReleaseOrchestrator
+    from flext_infra.release import FlextInfraReleaseOrchestrator
     from flext_infra.reporting import (
         KNOWN_VERBS,
         REPORTS_DIR_NAME,
@@ -49,12 +49,30 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk", "FlextInfraBaseMkTemplateEngine"),
     "FlextInfraCheckConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
     "FlextInfraCheckWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
-    "FlextInfraBaseMkValidator": ("flext_infra.core.basemk_validator", "FlextInfraBaseMkValidator"),
-    "FlextInfraInventoryService": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
-    "FlextInfraPytestDiagExtractor": ("flext_infra.core.pytest_diag", "FlextInfraPytestDiagExtractor"),
-    "FlextInfraSkillValidator": ("flext_infra.core.skill_validator", "FlextInfraSkillValidator"),
-    "FlextInfraStubSupplyChain": ("flext_infra.core.stub_chain", "FlextInfraStubSupplyChain"),
-    "FlextInfraTextPatternScanner": ("flext_infra.core.scanner", "FlextInfraTextPatternScanner"),
+    "FlextInfraBaseMkValidator": (
+        "flext_infra.core.basemk_validator",
+        "FlextInfraBaseMkValidator",
+    ),
+    "FlextInfraInventoryService": (
+        "flext_infra.core.inventory",
+        "FlextInfraInventoryService",
+    ),
+    "FlextInfraPytestDiagExtractor": (
+        "flext_infra.core.pytest_diag",
+        "FlextInfraPytestDiagExtractor",
+    ),
+    "FlextInfraSkillValidator": (
+        "flext_infra.core.skill_validator",
+        "FlextInfraSkillValidator",
+    ),
+    "FlextInfraStubSupplyChain": (
+        "flext_infra.core.stub_chain",
+        "FlextInfraStubSupplyChain",
+    ),
+    "FlextInfraTextPatternScanner": (
+        "flext_infra.core.scanner",
+        "FlextInfraTextPatternScanner",
+    ),
 
     "FlextInfraCommandRunner": ("flext_infra.subprocess", "FlextInfraCommandRunner"),
     "FlextInfraConstants": ("flext_infra.constants", "FlextInfraConstants"),
@@ -68,7 +86,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraPatterns": ("flext_infra.patterns", "FlextInfraPatterns"),
     "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
     "FlextInfraProtocols": ("flext_infra.protocols", "FlextInfraProtocols"),
-    "FlextInfraReleaseOrchestrator": ("flext_infra.release", "ReleaseOrchestrator"),
+    "FlextInfraReleaseOrchestrator": ("flext_infra.release", "FlextInfraReleaseOrchestrator"),
     "FlextInfraReportingService": ("flext_infra.reporting", "FlextInfraReportingService"),
     "FlextInfraTemplateEngine": ("flext_infra.templates", "FlextInfraTemplateEngine"),
     "FlextInfraTomlService": ("flext_infra.toml_io", "FlextInfraTomlService"),
@@ -77,7 +95,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraVersioningService": ("flext_infra.versioning", "FlextInfraVersioningService"),
     "KNOWN_VERBS": ("flext_infra.reporting", "KNOWN_VERBS"),
     "REPORTS_DIR_NAME": ("flext_infra.reporting", "REPORTS_DIR_NAME"),
-    "ReleaseOrchestrator": ("flext_infra.release", "ReleaseOrchestrator"),
+    "FlextInfraReleaseOrchestrator": ("flext_infra.release", "FlextInfraReleaseOrchestrator"),
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),

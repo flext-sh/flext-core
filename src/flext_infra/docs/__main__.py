@@ -20,16 +20,16 @@ from pathlib import Path
 from flext_core import FlextRuntime
 
 from flext_infra import REPORTS_DIR_NAME, c, output
-from flext_infra.docs.auditor import DocAuditor
-from flext_infra.docs.builder import DocBuilder
-from flext_infra.docs.fixer import DocFixer
-from flext_infra.docs.generator import DocGenerator
-from flext_infra.docs.validator import DocValidator
+from flext_infra.docs.auditor import FlextInfraDocAuditor
+from flext_infra.docs.builder import FlextInfraDocBuilder
+from flext_infra.docs.fixer import FlextInfraDocFixer
+from flext_infra.docs.generator import FlextInfraDocGenerator
+from flext_infra.docs.validator import FlextInfraDocValidator
 
 
 def _run_audit(args: argparse.Namespace) -> int:
     """Execute documentation audit."""
-    auditor = DocAuditor()
+    auditor = FlextInfraDocAuditor()
     result = auditor.audit(
         root=Path(args.root).resolve(),
         project=args.project,
@@ -47,7 +47,7 @@ def _run_audit(args: argparse.Namespace) -> int:
 
 def _run_fix(args: argparse.Namespace) -> int:
     """Execute documentation fix."""
-    fixer = DocFixer()
+    fixer = FlextInfraDocFixer()
     result = fixer.fix(
         root=Path(args.root).resolve(),
         project=args.project,
@@ -63,7 +63,7 @@ def _run_fix(args: argparse.Namespace) -> int:
 
 def _run_build(args: argparse.Namespace) -> int:
     """Execute documentation build."""
-    builder = DocBuilder()
+    builder = FlextInfraDocBuilder()
     result = builder.build(
         root=Path(args.root).resolve(),
         project=args.project,
@@ -80,7 +80,7 @@ def _run_build(args: argparse.Namespace) -> int:
 
 def _run_generate(args: argparse.Namespace) -> int:
     """Execute documentation generation."""
-    generator = DocGenerator()
+    generator = FlextInfraDocGenerator()
     result = generator.generate(
         root=Path(args.root).resolve(),
         project=args.project,
@@ -96,7 +96,7 @@ def _run_generate(args: argparse.Namespace) -> int:
 
 def _run_validate(args: argparse.Namespace) -> int:
     """Execute documentation validation."""
-    validator = DocValidator()
+    validator = FlextInfraDocValidator()
     result = validator.validate(
         root=Path(args.root).resolve(),
         project=args.project,

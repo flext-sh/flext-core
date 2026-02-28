@@ -12,7 +12,7 @@ from typing import Any, cast
 
 from flext_core import FlextResult as r
 from flext_infra import m as im
-from flext_infra.workspace.migrator import ProjectMigrator
+from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 
 
 def _write_project(project_root: Path) -> None:
@@ -32,8 +32,8 @@ def _write_project(project_root: Path) -> None:
     )
 
 
-def _build_migrator(project: im.ProjectInfo, base_mk: str) -> ProjectMigrator:
-    migrator = ProjectMigrator()
+def _build_migrator(project: im.ProjectInfo, base_mk: str) -> FlextInfraProjectMigrator:
+    migrator = FlextInfraProjectMigrator()
 
     def _discover_projects(workspace_root: Path) -> r[list[im.ProjectInfo]]:
         del workspace_root

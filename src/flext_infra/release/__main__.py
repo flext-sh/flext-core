@@ -17,8 +17,8 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra import PathResolver, VersioningService, output
-from flext_infra.release.orchestrator import ReleaseOrchestrator
+from flext_infra import FlextInfraPathResolver, FlextInfraVersioningService, output
+from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 
 def _parse_args() -> argparse.Namespace:
@@ -42,7 +42,7 @@ def _parse_args() -> argparse.Namespace:
 
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     """Determine the target release version based on arguments."""
-    versioning = VersioningService()
+    versioning = FlextInfraVersioningService()
 
     if args.version:
         requested = str(args.version)
@@ -97,7 +97,7 @@ def main() -> int:
     """Orchestrate the release process through configured phases."""
     args = _parse_args()
 
-    resolver = PathResolver()
+    resolver = FlextInfraPathResolver()
     root_result = resolver.workspace_root(args.root)
     if root_result.is_failure:
         output.error(root_result.error or "workspace root resolution failed")
@@ -122,7 +122,7 @@ def main() -> int:
 
     tag = _resolve_tag(args, version)
 
-    service = ReleaseOrchestrator()
+    service = FlextInfraReleaseOrchestrator()
     result = service.run_release(
         root=root,
         version=version,

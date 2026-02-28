@@ -14,15 +14,15 @@ from typing import TYPE_CHECKING, Any
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.release.orchestrator import ReleaseOrchestrator
+    from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "ReleaseOrchestrator": ("flext_infra.release.orchestrator", "ReleaseOrchestrator"),
+    "FlextInfraReleaseOrchestrator": ("flext_infra.release.orchestrator", "FlextInfraReleaseOrchestrator"),
 }
 
 __all__ = [
-    "ReleaseOrchestrator",
+    "FlextInfraReleaseOrchestrator",
 ]
 
 

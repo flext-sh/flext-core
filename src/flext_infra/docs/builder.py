@@ -14,7 +14,7 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import CommandRunner, c
+from flext_infra import FlextInfraCommandRunner, c
 from flext_infra.docs.shared import (
     DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
@@ -35,7 +35,7 @@ class BuildReport(BaseModel):
     site_dir: str = Field(..., description="Path to the generated site directory.")
 
 
-class DocBuilder:
+class FlextInfraDocBuilder:
     """Infrastructure service for documentation building.
 
     Runs MkDocs build for workspace projects and returns
@@ -44,7 +44,7 @@ class DocBuilder:
 
     def __init__(self) -> None:
         """Initialize the documentation builder."""
-        self._runner = CommandRunner()
+        self._runner = FlextInfraCommandRunner()
 
     def build(
         self,
@@ -163,4 +163,4 @@ class DocBuilder:
         )
 
 
-__all__ = ["BuildReport", "DocBuilder"]
+__all__ = ["BuildReport", "FlextInfraDocBuilder"]

@@ -15,10 +15,10 @@ from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra import CommandRunner, JsonService
+from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService
 
 
-class WorkflowLinter:
+class FlextInfraWorkflowLinter:
     """Infrastructure service for GitHub Actions workflow linting.
 
     Delegates to ``actionlint`` for validation and persists JSON reports.
@@ -26,12 +26,12 @@ class WorkflowLinter:
 
     def __init__(
         self,
-        runner: CommandRunner | None = None,
-        json_io: JsonService | None = None,
+        runner: FlextInfraCommandRunner | None = None,
+        json_io: FlextInfraJsonService | None = None,
     ) -> None:
         """Initialize the workflow linter."""
-        self._runner = runner or CommandRunner()
-        self._json = json_io or JsonService()
+        self._runner = runner or FlextInfraCommandRunner()
+        self._json = json_io or FlextInfraJsonService()
 
     def lint(
         self,
@@ -91,4 +91,4 @@ class WorkflowLinter:
         return r[Mapping[str, t.ScalarValue]].ok(payload)
 
 
-__all__ = ["WorkflowLinter"]
+__all__ = ["FlextInfraWorkflowLinter"]

@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
 from types import SimpleNamespace
 
 from _pytest.monkeypatch import MonkeyPatch

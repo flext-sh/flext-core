@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from flext_core import FlextResult as r
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 

@@ -17,12 +17,12 @@ from typing import override
 
 from flext_core import FlextLogger, FlextService, r
 
-from flext_infra import CommandRunner, ReportingService, m, output
+from flext_infra import FlextInfraCommandRunner, FlextInfraReportingService, m, output
 
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class OrchestratorService(FlextService[list[m.CommandOutput]]):
+class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
     """Infrastructure service for multi-project make orchestration.
 
     Executes a make verb across a list of projects sequentially, capturing
@@ -34,8 +34,8 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
     def __init__(self) -> None:
         """Initialize the orchestrator service."""
         super().__init__()
-        self._runner = CommandRunner()
-        self._reporting = ReportingService()
+        self._runner = FlextInfraCommandRunner()
+        self._reporting = FlextInfraReportingService()
 
     @override
     def execute(self) -> r[list[m.CommandOutput]]:
@@ -176,5 +176,5 @@ class OrchestratorService(FlextService[list[m.CommandOutput]]):
 
 
 __all__ = [
-    "OrchestratorService",
+    "FlextInfraOrchestratorService",
 ]

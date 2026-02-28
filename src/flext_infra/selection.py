@@ -38,7 +38,6 @@ class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
         """
         return r[list[m.ProjectInfo]].ok([])
 
-
     def resolve_projects(
         self,
         workspace_root: Path,

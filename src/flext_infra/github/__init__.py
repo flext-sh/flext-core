@@ -14,24 +14,24 @@ from typing import TYPE_CHECKING, Any
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.github.linter import WorkflowLinter
-    from flext_infra.github.pr import PrManager
-    from flext_infra.github.pr_workspace import PrWorkspaceManager
-    from flext_infra.github.workflows import WorkflowSyncer
+    from flext_infra.github.linter import FlextInfraWorkflowLinter
+    from flext_infra.github.pr import FlextInfraPrManager
+    from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
+    from flext_infra.github.workflows import FlextInfraWorkflowSyncer
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "PrManager": ("flext_infra.github.pr", "PrManager"),
-    "PrWorkspaceManager": ("flext_infra.github.pr_workspace", "PrWorkspaceManager"),
-    "WorkflowLinter": ("flext_infra.github.linter", "WorkflowLinter"),
-    "WorkflowSyncer": ("flext_infra.github.workflows", "WorkflowSyncer"),
+    "FlextInfraPrManager": ("flext_infra.github.pr", "FlextInfraPrManager"),
+    "FlextInfraPrWorkspaceManager": ("flext_infra.github.pr_workspace", "FlextInfraPrWorkspaceManager"),
+    "FlextInfraWorkflowLinter": ("flext_infra.github.linter", "FlextInfraWorkflowLinter"),
+    "FlextInfraWorkflowSyncer": ("flext_infra.github.workflows", "FlextInfraWorkflowSyncer"),
 }
 
 __all__ = [
-    "PrManager",
-    "PrWorkspaceManager",
-    "WorkflowLinter",
-    "WorkflowSyncer",
+    "FlextInfraPrManager",
+    "FlextInfraPrWorkspaceManager",
+    "FlextInfraWorkflowLinter",
+    "FlextInfraWorkflowSyncer",
 ]
 
 

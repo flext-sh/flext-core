@@ -43,7 +43,7 @@ class ValidateReport(BaseModel):
     )
 
 
-class DocValidator:
+class FlextInfraDocValidator:
     """Infrastructure service for documentation validation.
 
     Checks ADR skill references and generates validation reports,
@@ -205,4 +205,4 @@ class DocValidator:
         return True
 
 
-__all__ = ["DocValidator", "ValidateReport"]
+__all__ = ["FlextInfraDocValidator", "ValidateReport"]

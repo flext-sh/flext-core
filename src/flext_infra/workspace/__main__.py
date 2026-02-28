@@ -18,15 +18,15 @@ from pathlib import Path
 from flext_core import FlextRuntime
 
 from flext_infra.output import output
-from flext_infra.workspace.detector import WorkspaceDetector
-from flext_infra.workspace.migrator import ProjectMigrator
-from flext_infra.workspace.orchestrator import OrchestratorService
-from flext_infra.workspace.sync import SyncService
+from flext_infra.workspace.detector import FlextInfraWorkspaceDetector
+from flext_infra.workspace.migrator import FlextInfraProjectMigrator
+from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
+from flext_infra.workspace.sync import FlextInfraSyncService
 
 
 def _run_detect(args: argparse.Namespace) -> int:
     """Execute workspace detection."""
-    detector = WorkspaceDetector()
+    detector = FlextInfraWorkspaceDetector()
     result = detector.detect(args.project_root)
 
     if result.is_success:
@@ -37,7 +37,7 @@ def _run_detect(args: argparse.Namespace) -> int:
 
 def _run_sync(args: argparse.Namespace) -> int:
     """Execute base.mk sync."""
-    service = SyncService(canonical_root=args.canonical_root)
+    service = FlextInfraSyncService(canonical_root=args.canonical_root)
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
@@ -53,7 +53,7 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
         output.error("no projects specified")
         return 1
 
-    service = OrchestratorService()
+    service = FlextInfraOrchestratorService()
     result = service.orchestrate(
         projects=projects,
         verb=args.verb,
@@ -70,7 +70,7 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
 
 
 def _run_migrate(args: argparse.Namespace) -> int:
-    service = ProjectMigrator()
+    service = FlextInfraProjectMigrator()
     result = service.migrate(
         workspace_root=args.workspace_root,
         dry_run=args.dry_run,

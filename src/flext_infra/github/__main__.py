@@ -19,10 +19,10 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.github.linter import WorkflowLinter
+from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
-from flext_infra.github.pr_workspace import PrWorkspaceManager
-from flext_infra.github.workflows import WorkflowSyncer
+from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
+from flext_infra.github.workflows import FlextInfraWorkflowSyncer
 from flext_infra.output import output
 
 _MIN_ARGV = 2
@@ -38,7 +38,7 @@ def _run_workflows(argv: list[str]) -> int:
     _ = parser.add_argument("--report", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    syncer = WorkflowSyncer()
+    syncer = FlextInfraWorkflowSyncer()
     result = syncer.sync_workspace(
         workspace_root=args.workspace_root.resolve(),
         apply=args.apply,
@@ -61,7 +61,7 @@ def _run_lint(argv: list[str]) -> int:
     _ = parser.add_argument("--strict", action="store_true", default=False)
     args = parser.parse_args(argv)
 
-    linter = WorkflowLinter()
+    linter = FlextInfraWorkflowLinter()
     result = linter.lint(
         root=args.root.resolve(),
         report_path=args.report,
@@ -117,7 +117,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
         "release_on_merge": str(args.pr_release_on_merge),
     }
 
-    manager = PrWorkspaceManager()
+    manager = FlextInfraPrWorkspaceManager()
     result = manager.orchestrate(
         workspace_root=args.workspace_root.resolve(),
         projects=args.project or None,

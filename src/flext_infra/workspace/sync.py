@@ -30,7 +30,7 @@ _REQUIRED_GITIGNORE_ENTRIES: list[str] = [
 ]
 
 
-class SyncService(FlextService[m.SyncResult]):
+class FlextInfraSyncService(FlextService[m.SyncResult]):
     """Infrastructure service for workspace base.mk synchronization.
 
     Generates a fresh base.mk via ``FlextInfraBaseMkGenerator``, compares its SHA256
@@ -267,7 +267,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    service = SyncService(canonical_root=args.canonical_root)
+    service = FlextInfraSyncService(canonical_root=args.canonical_root)
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:
@@ -280,4 +280,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["SyncService", "main"]
+__all__ = ["FlextInfraSyncService", "main"]

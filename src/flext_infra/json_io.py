@@ -90,6 +90,7 @@ class FlextInfraJsonService(FlextService[FlextResult[bool]]):
             _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
         except (TypeError, OSError) as exc:
             return r[bool].fail(f"JSON write error: {exc}")
+        return r[bool].ok(True)
 
     def execute(self) -> FlextResult[bool]:
         """Execute the service (required by FlextService base class)."""

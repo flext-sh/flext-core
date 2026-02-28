@@ -69,7 +69,7 @@ _GITIGNORE_REQUIRED_PATTERNS: tuple[str, ...] = (
 _PYPROJECT_FILE = c.Files.PYPROJECT_FILENAME
 
 
-class ProjectMigrator(FlextService[list[m.MigrationResult]]):
+class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
     """Migrate projects to standardized base.mk, Makefile, and pyproject structure."""
 
     def __init__(
@@ -415,4 +415,4 @@ class ProjectMigrator(FlextService[list[m.MigrationResult]]):
         return created
 
 
-__all__ = ["ProjectMigrator"]
+__all__ = ["FlextInfraProjectMigrator"]
