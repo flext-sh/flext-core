@@ -11,8 +11,10 @@ from __future__ import annotations
 
 from typing import Final
 
+from flext_core import FlextConstants
 
-class FlextInfraConstants:
+
+class FlextInfraConstants(FlextConstants):
     """Centralized constants for FLEXT infrastructure (Layer 0).
 
     Provides immutable, namespace-organized constants for infrastructure

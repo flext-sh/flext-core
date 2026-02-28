@@ -187,3 +187,7 @@ redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
+
+
+[tool.coverage.report]
+fail_under = 16

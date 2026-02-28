@@ -103,6 +103,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("flext_infra.protocols", "FlextInfraProtocols"),
     "t": ("flext_infra.typings", "FlextInfraTypes"),
     "u": ("flext_infra.utilities", "FlextInfraUtilities"),
+    "output": ("flext_infra.output", "output"),
 }
 
 __all__ = [
@@ -143,6 +144,7 @@ __all__ = [
     "__version_info__",
     "c",
     "m",
+    "output",
     "p",
     "t",
     "u",

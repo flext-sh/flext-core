@@ -11,7 +11,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from flext_core import FlextResult, t
+from flext_core import FlextProtocols, FlextResult, t
 
 type FlextInfraScalar = t.MetadataScalarValue
 type FlextInfraPayload = (
@@ -20,7 +20,7 @@ type FlextInfraPayload = (
 type FlextInfraPayloadMap = Mapping[str, FlextInfraPayload]
 
 
-class FlextInfraProtocols:
+class FlextInfraProtocols(FlextProtocols):
     """Structural contracts for flext-infra services and adapters."""
 
     @runtime_checkable

@@ -36,6 +36,7 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
         sys,
         "argv",
         [
+            "flext-infra",
             "workspace",
             "migrate",
             "--workspace-root",
@@ -73,7 +74,7 @@ def test_workspace_cli_migrate_output_contains_summary(
     _ = monkeypatch.setattr(
         sys,
         "argv",
-        ["workspace", "migrate", "--workspace-root", ".", "--dry-run"],
+        ["flext-infra", "workspace", "migrate", "--workspace-root", ".", "--dry-run"],
     )
 
     exit_code = workspace_cli.main()
