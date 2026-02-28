@@ -81,8 +81,8 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
         flatten=True,
     )
     assert flattened.is_success
-    flat_value = cast("dict[str, t.GeneralValueType]", flattened.value)
-    assert flat_value["results"] == [1, 2]
+    flat_value = flattened.value
+    assert flat_value.results == [1, 2]
 
     collected = u.Collection.batch(
         [1],
@@ -93,10 +93,9 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
         on_error="collect",
     )
     assert collected.is_success
-    collected_value = cast("dict[str, t.GeneralValueType]", collected.value)
-    errors = cast("list[tuple[int, str]]", collected_value["errors"])
-    assert len(errors) == 1
-    assert "err" in errors[0][1]
+    collected_value = collected.value
+    assert len(collected_value.errors) == 1
+    assert "err" in collected_value.errors[0][1]
 
     failed = u.Collection.batch([1], lambda _item: r[int].fail("hard"), on_error="fail")
     assert failed.is_failure
@@ -159,9 +158,8 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
         on_error="collect",
     )
     assert collected.is_success
-    collected_value = cast("dict[str, t.GeneralValueType]", collected.value)
-    errors = cast("list[tuple[int, str]]", collected_value["errors"])
-    assert errors[0][1] == "boom"
+    collected_value = collected.value
+    assert collected_value.errors[0][1] == "boom"
 
     failed = u.Collection.batch([1], lambda _item: _FailureResult(), on_error="fail")
     assert failed.is_failure

@@ -334,11 +334,6 @@ class FlextModelsEntity:
             return self
 
 
-# Resolve forward references created by `from __future__ import annotations`.
-# `Entry.domain_events` references `FlextModelsEntity.DomainEvent` which is
-# unavailable during class body execution. Now that the outer class is fully
-# defined, Pydantic can resolve the ForwardRef from module globals.
-_ = FlextModelsEntity.Entry.model_rebuild()
-_ = FlextModelsEntity.AggregateRoot.model_rebuild()
+
 
 __all__ = ["FlextModelsEntity"]

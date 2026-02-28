@@ -990,7 +990,7 @@ class TestuCollectionBatch:
         result = u.Collection.batch(
             items,
             lambda x: x * 2,
-            _size=2,
+            size=2,
         )
         assertion_helpers.assert_flext_result_success(result)
         data = result.value
