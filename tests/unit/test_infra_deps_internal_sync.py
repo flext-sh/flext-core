@@ -2,21 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 from flext_infra.deps.internal_sync import (
     FlextInfraInternalDependencySyncService,
 )
 
 
 class TestFlextInfraInternalDependencySyncService:
-    """Test suite for FlextInfraInternalDependencySyncService."""
+    """Test FlextInfraInternalDependencySyncService."""
 
     def test_service_initialization(self) -> None:
-        """Test that service initializes without errors."""
+        """Test service initializes without errors."""
         service = FlextInfraInternalDependencySyncService()
         assert service is not None
 
@@ -58,9 +53,3 @@ class TestFlextInfraInternalDependencySyncService:
         https_url = FlextInfraInternalDependencySyncService._ssh_to_https(ssh_url)
         assert https_url.startswith("https://")
         assert "flext-sh/flext" in https_url
-
-    @patch("flext_infra.deps.internal_sync.CommandRunner")
-    def test_service_with_mocked_runner(self, mock_runner: MagicMock) -> None:
-        """Test service with mocked command runner."""
-        service = FlextInfraInternalDependencySyncService()
-        assert service is not None

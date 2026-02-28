@@ -11,7 +11,7 @@ import tomlkit
 from flext_core import FlextLogger, t
 from tomlkit.items import Array, Item, Table
 
-from flext_infra import CommandRunner
+from flext_infra import FlextInfraCommandRunner
 
 _logger = FlextLogger(__name__)
 
@@ -459,14 +459,14 @@ class InjectCommentsPhase:
         return "\n".join(out).rstrip() + "\n", changes
 
 
-class PyprojectModernizer:
+class FlextInfraPyprojectModernizer:
     """Modernize all workspace pyproject.toml files."""
 
     def __init__(self, root: Path | None = None) -> None:
         """Initialize modernizer with workspace root."""
         super().__init__()
         self.root = root or ROOT
-        self._runner = CommandRunner()
+        self._runner = FlextInfraCommandRunner()
 
     def find_pyproject_files(self) -> list[Path]:
         """Find all pyproject.toml files in workspace."""
@@ -594,7 +594,7 @@ def main() -> int:
     """Execute pyproject modernization from command line."""
     parser = _parser()
     args = parser.parse_args()
-    return PyprojectModernizer().run(args)
+    return FlextInfraPyprojectModernizer().run(args)
 
 
 if __name__ == "__main__":

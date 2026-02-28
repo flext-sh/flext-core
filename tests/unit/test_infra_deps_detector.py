@@ -2,59 +2,49 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 from flext_infra.deps.detector import (
-    FlextInfraDependencyDetectorModels,
     FlextInfraRuntimeDevDependencyDetector,
+    ddm,
 )
 
 
-class TestFlextInfraRuntimeDevDependencyDetector:
-    """Test suite for FlextInfraRuntimeDevDependencyDetector."""
+class TestFlextInfraDependencyDetectorModels:
+    """Test FlextInfraDependencyDetectorModels namespace."""
 
-    def test_detector_initialization(self) -> None:
-        """Test that detector initializes without errors."""
-        detector = FlextInfraRuntimeDevDependencyDetector()
-        assert detector is not None
-
-    def test_dependency_limits_info_model(self) -> None:
+    def test_dependency_limits_info_creation(self) -> None:
         """Test DependencyLimitsInfo model creation."""
-        ddm = FlextInfraDependencyDetectorModels
-        info = ddm.DependencyLimitsInfo(
-            python_version="3.11",
-            limits_path="/path/to/limits.toml",
-        )
-        assert info.python_version == "3.11"
-        assert info.limits_path == "/path/to/limits.toml"
+        info = ddm.DependencyLimitsInfo()
+        assert info.python_version is None
+        assert info.limits_path == ""
 
-    def test_pip_check_report_model(self) -> None:
+    def test_pip_check_report_creation(self) -> None:
         """Test PipCheckReport model creation."""
-        ddm = FlextInfraDependencyDetectorModels
-        report = ddm.PipCheckReport(ok=True, lines=[])
+        report = ddm.PipCheckReport()
         assert report.ok is True
         assert report.lines == []
 
-    def test_workspace_dependency_report_model(self) -> None:
+    def test_workspace_dependency_report_creation(self) -> None:
         """Test WorkspaceDependencyReport model creation."""
-        ddm = FlextInfraDependencyDetectorModels
-        report = ddm.WorkspaceDependencyReport(
-            workspace="test-workspace",
-            projects={},
-        )
+        report = ddm.WorkspaceDependencyReport(workspace="test-workspace")
         assert report.workspace == "test-workspace"
         assert report.projects == {}
+        assert report.pip_check is None
+        assert report.dependency_limits is None
 
-    @patch("flext_infra.deps.detector.PathResolver")
-    @patch("flext_infra.deps.detector.ReportingService")
-    def test_detector_with_mocked_services(
-        self,
-        mock_reporting: MagicMock,
-        mock_paths: MagicMock,
-    ) -> None:
-        """Test detector with mocked services."""
+
+class TestFlextInfraRuntimeDevDependencyDetector:
+    """Test FlextInfraRuntimeDevDependencyDetector."""
+
+    def test_detector_initialization(self) -> None:
+        """Test detector initializes without errors."""
         detector = FlextInfraRuntimeDevDependencyDetector()
         assert detector is not None
+
+    def test_detector_has_required_services(self) -> None:
+        """Test detector has all required internal services."""
+        detector = FlextInfraRuntimeDevDependencyDetector()
+        assert hasattr(detector, "_paths")
+        assert hasattr(detector, "_reporting")
+        assert hasattr(detector, "_json")
+        assert hasattr(detector, "_deps")
+        assert hasattr(detector, "_runner")

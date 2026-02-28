@@ -10,13 +10,20 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult, r, t
 from pydantic import Field
 
-from flext_infra import CommandRunner, JsonService, PathResolver, ReportingService, c, m
-from flext_infra.deps.detection import DependencyDetectionService
+from flext_infra import (
+    FlextInfraCommandRunner,
+    FlextInfraJsonService,
+    FlextInfraPathResolver,
+    FlextInfraReportingService,
+    c,
+    m,
+)
+from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class DependencyDetectorModels(m):
+class FlextInfraDependencyDetectorModels(m):
     """Pydantic models for dependency detector reports and configuration."""
 
     class DependencyLimitsInfo(m.ArbitraryTypesModel):
@@ -42,19 +49,19 @@ class DependencyDetectorModels(m):
         dependency_limits: MutableMapping[str, t.ScalarValue] | None = None
 
 
-ddm = DependencyDetectorModels
+ddm = FlextInfraDependencyDetectorModels
 
 
-class RuntimeDevDependencyDetector:
+class FlextInfraRuntimeDevDependencyDetector:
     """CLI tool for detecting runtime vs dev dependencies across workspace."""
 
     def __init__(self) -> None:
         """Initialize the detector with path resolver, reporting, JSON, deps, and runner services."""
-        self._paths = PathResolver()
-        self._reporting = ReportingService()
-        self._json = JsonService()
-        self._deps = DependencyDetectionService()
-        self._runner = CommandRunner()
+        self._paths = FlextInfraPathResolver()
+        self._reporting = FlextInfraReportingService()
+        self._json = FlextInfraJsonService()
+        self._deps = FlextInfraDependencyDetectionService()
+        self._runner = FlextInfraCommandRunner()
 
     @staticmethod
     def _parser(default_limits_path: Path) -> argparse.ArgumentParser:
@@ -303,7 +310,7 @@ class RuntimeDevDependencyDetector:
 
 def main() -> int:
     """Entry point for dependency detector CLI."""
-    result = RuntimeDevDependencyDetector().run()
+    result = FlextInfraRuntimeDevDependencyDetector().run()
     if result.is_failure:
         logger.error("deps_detector_failed", error=result.error or "unknown error")
         return 1
@@ -315,8 +322,8 @@ if __name__ == "__main__":
 
 
 __all__ = [
-    "DependencyDetectorModels",
-    "RuntimeDevDependencyDetector",
+    "FlextInfraDependencyDetectorModels",
+    "FlextInfraRuntimeDevDependencyDetector",
     "ddm",
     "main",
 ]

@@ -10,10 +10,10 @@ import tomlkit
 from flext_core import r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra import PathResolver, TomlService, c, output
+from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, c, output
 from flext_infra.deps.path_sync import extract_dep_name
 
-_resolver = PathResolver()
+_resolver = FlextInfraPathResolver()
 _root_result = _resolver.workspace_root_from_file(__file__)
 ROOT = (
     _root_result.value
@@ -34,6 +34,15 @@ PYRIGHT_BASE_PROJECT = [
     "../typings/generated",
 ]
 MYPY_BASE_PROJECT = [".", "../typings", "../typings/generated", "src"]
+
+
+class FlextInfraExtraPathsManager:
+    """Manager for synchronizing pyright and mypy extraPaths from path dependencies."""
+
+    def __init__(self) -> None:
+        """Initialize the extra paths manager with path resolver and TOML service."""
+        self._resolver = FlextInfraPathResolver()
+        self._toml = FlextInfraTomlService()
 
 
 def _path_dep_paths_pep621(doc: TOMLDocument) -> list[str]:
@@ -119,7 +128,7 @@ def sync_one(
     if not pyproject_path.exists():
         return r[bool].ok(False)
 
-    toml_service = TomlService()
+    toml_service = FlextInfraTomlService()
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
         return r[bool].fail(doc_result.error or f"failed to read {pyproject_path}")

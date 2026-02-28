@@ -12,7 +12,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 
-from flext_infra import CommandRunner, TomlService, c, m, output
+from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, c, m, output
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -23,13 +23,13 @@ GITHUB_REPO_URL_RE = re.compile(
 _PEP621_PATH_RE = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
 
 
-class InternalDependencySyncService:
+class FlextInfraInternalDependencySyncService:
     """Synchronize internal FLEXT dependencies via git clone or workspace symlinks."""
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
-        self._runner = CommandRunner()
-        self._toml = TomlService()
+        self._runner = FlextInfraCommandRunner()
+        self._toml = FlextInfraTomlService()
 
     def _run_git(self, args: list[str], cwd: Path) -> r[m.CommandOutput]:
         return self._runner.run_raw(["git", *args], cwd=cwd)
@@ -408,7 +408,7 @@ def main() -> int:
     args = parser.parse_args()
 
     project_root = args.project_root.resolve()
-    result = InternalDependencySyncService().sync(project_root)
+    result = FlextInfraInternalDependencySyncService().sync(project_root)
     if result.is_success:
         return result.value
 
@@ -421,4 +421,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["InternalDependencySyncService", "main"]
+__all__ = ["FlextInfraInternalDependencySyncService", "main"]

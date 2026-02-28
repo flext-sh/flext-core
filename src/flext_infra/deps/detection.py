@@ -12,10 +12,10 @@ from flext_core import FlextResult, r, t
 from pydantic import Field
 
 from flext_infra import (
-    CommandRunner,
+    FlextInfraCommandRunner,
     FlextInfraPatterns,
-    ProjectSelector,
-    TomlService,
+    FlextInfraProjectSelector,
+    FlextInfraTomlService,
     c,
     m,
 )
@@ -49,7 +49,7 @@ def _to_infra_value(value: t.ConfigMapValue) -> InfraValue | None:
     return None
 
 
-class DependencyDetectionModels(m):
+class FlextInfraDependencyDetectionModels(m):
     """Pydantic models for dependency detection reports and analysis results."""
 
     class DeptryIssueGroups(m.ArbitraryTypesModel):
@@ -73,7 +73,7 @@ class DependencyDetectionModels(m):
         """Project-level dependency report combining deptry results."""
 
         project: str = Field(min_length=1)
-        deptry: DependencyDetectionModels.DeptryReport
+        deptry: FlextInfraDependencyDetectionModels.DeptryReport
 
     class TypingsReport(m.ArbitraryTypesModel):
         """Typing stubs analysis report with required, current, and delta packages."""
@@ -88,10 +88,10 @@ class DependencyDetectionModels(m):
         python_version: str | None = None
 
 
-dm = DependencyDetectionModels
+dm = FlextInfraDependencyDetectionModels
 
 
-class DependencyDetectionService:
+class FlextInfraDependencyDetectionService:
     """Runtime vs dev dependency detector using deptry, pip-check, and mypy stub analysis."""
 
     DEFAULT_MODULE_TO_TYPES_PACKAGE: Mapping[str, str] = {
@@ -114,9 +114,9 @@ class DependencyDetectionService:
 
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
-        self._selector = ProjectSelector()
-        self._toml = TomlService()
-        self._runner = CommandRunner()
+        self._selector = FlextInfraProjectSelector()
+        self._toml = FlextInfraTomlService()
+        self._runner = FlextInfraCommandRunner()
 
     def discover_projects(
         self,
@@ -444,7 +444,7 @@ class DependencyDetectionService:
         return r[dm.TypingsReport].ok(report)
 
 
-_service = DependencyDetectionService()
+_service = FlextInfraDependencyDetectionService()
 
 
 def discover_projects(
@@ -541,8 +541,8 @@ def get_required_typings(
 
 
 __all__ = [
-    "DependencyDetectionModels",
-    "DependencyDetectionService",
+    "FlextInfraDependencyDetectionModels",
+    "FlextInfraDependencyDetectionService",
     "build_project_report",
     "classify_issues",
     "discover_projects",

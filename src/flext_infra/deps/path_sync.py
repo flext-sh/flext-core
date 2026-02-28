@@ -10,7 +10,7 @@ from pathlib import Path
 from flext_core import FlextLogger, r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra import FlextInfraDiscoveryService, TomlService, c, output
+from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, c, output
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -31,6 +31,14 @@ def _workspace_root() -> Path:
 
 
 ROOT = _workspace_root()
+
+
+class FlextInfraDependencyPathSync:
+    """Rewrite internal FLEXT dependency paths for workspace or standalone mode."""
+
+    def __init__(self) -> None:
+        """Initialize the dependency path sync service with TOML service."""
+        self._toml = FlextInfraTomlService()
 
 
 def detect_mode(project_root: Path) -> str:
@@ -148,7 +156,7 @@ def rewrite_dep_paths(
     dry_run: bool = False,
 ) -> r[list[str]]:
     """Rewrite PEP 621 and Poetry dependency paths."""
-    toml_service = TomlService()
+    toml_service = FlextInfraTomlService()
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
         return r[list[str]].fail(doc_result.error or "failed to read TOML document")
@@ -201,7 +209,7 @@ def main() -> int:
         output.info(f"[sync-dep-paths] auto-detected mode: {mode}")
 
     total_changes = 0
-    toml_service = TomlService()
+    toml_service = FlextInfraTomlService()
 
     internal_names: set[str] = set()
     root_pyproject = ROOT / c.Files.PYPROJECT_FILENAME
