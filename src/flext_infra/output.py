@@ -96,7 +96,7 @@ SYM_ARROW: Final[str] = "→" if _USE_UNICODE else "->"
 SYM_BULLET: Final[str] = "•" if _USE_UNICODE else "*"
 
 
-class InfraOutput:
+class FlextInfraOutput:
     """Structured terminal output for infrastructure commands.
 
     All methods write to ``sys.stderr`` so that stdout remains clean for
@@ -293,7 +293,7 @@ class InfraOutput:
         self._write(f"{self._bold}{counter}{self._reset} {project} {verb} ...")
 
 
-output: Final[InfraOutput] = InfraOutput()
+output: Final[FlextInfraOutput] = FlextInfraOutput()
 """Module-level singleton for direct use: ``from flext_infra import output``."""
 
 __all__ = [
@@ -309,6 +309,6 @@ __all__ = [
     "SYM_SKIP",
     "SYM_WARN",
     "YELLOW",
-    "InfraOutput",
+    "FlextInfraOutput",
     "output",
 ]

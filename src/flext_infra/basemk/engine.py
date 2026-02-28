@@ -18,7 +18,7 @@ from jinja2 import (
 from flext_infra import m
 
 
-class TemplateEngine(FlextService[str]):
+class FlextInfraBaseMkTemplateEngine(FlextService[str]):
     """Render base.mk templates with configuration context."""
 
     TEMPLATE_ORDER: ClassVar[tuple[str, ...]] = (
@@ -87,4 +87,4 @@ class TemplateEngine(FlextService[str]):
         return cls._default_config()
 
 
-__all__ = ["TemplateEngine"]
+__all__ = ["FlextInfraBaseMkTemplateEngine"]

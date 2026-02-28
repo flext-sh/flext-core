@@ -65,6 +65,10 @@ class _ResultAssertions:
     def assert_result_failure(result: object) -> None:
         assert hasattr(result, "is_failure") and getattr(result, "is_failure")
 
+    # Short-name aliases used by tests
+    assert_success = assert_result_success
+    assert_failure = assert_result_failure
+
 
 # Test models - module level for forward reference resolution
 class ConfigModelForTest(BaseModel):

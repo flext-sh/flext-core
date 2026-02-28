@@ -13,7 +13,7 @@ import re
 from collections.abc import MutableMapping
 from pathlib import Path
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
 from flext_infra import TomlService, c
 
@@ -22,12 +22,22 @@ _DEV_BRANCH_RE = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
 _VALID_BUMP_TYPES = frozenset({"major", "minor", "patch"})
 
 
-class VersioningService:
+class FlextInfraVersioningService(FlextService[str]):
     """Infrastructure service for semantic versioning operations.
 
     Provides FlextResult-wrapped version parsing, bumping, and
     project version management.
+    project version management.
     """
+
+    def execute(self) -> FlextResult[str]:
+        """Execute versioning (default: empty string).
+
+        Returns:
+            FlextResult with empty string by default.
+
+        """
+        return r[str].ok("")
 
     def __init__(self, toml: TomlService | None = None) -> None:
         """Initialize the versioning service."""
@@ -173,4 +183,4 @@ class VersioningService:
         return r[bool].ok(True)
 
 
-__all__ = ["VersioningService"]
+__all__ = ["FlextInfraVersioningService"]

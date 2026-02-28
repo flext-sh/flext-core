@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
-from flext_infra import DiscoveryService, m
+from flext_infra import FlextInfraDiscoveryService, m
 
 
-class ProjectSelector:
+class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
     """Infrastructure service for project selection and filtering.
 
     Combines project discovery with filtering and resolution capabilities.
@@ -24,10 +24,19 @@ class ProjectSelector:
 
     def __init__(
         self,
-        discovery: DiscoveryService | None = None,
+        discovery: FlextInfraDiscoveryService | None = None,
     ) -> None:
         """Initialize the project selector."""
-        self._discovery = discovery or DiscoveryService()
+        self._discovery = discovery or FlextInfraDiscoveryService()
+
+    def execute(self) -> FlextResult[list[m.ProjectInfo]]:
+        """Execute project selection (default: empty list).
+
+        Returns:
+            FlextResult with empty list by default.
+
+        """
+        return r[list[m.ProjectInfo]].ok([]
 
     def resolve_projects(
         self,
@@ -70,4 +79,4 @@ class ProjectSelector:
         )
 
 
-__all__ = ["ProjectSelector"]
+__all__ = ["FlextInfraProjectSelector"]

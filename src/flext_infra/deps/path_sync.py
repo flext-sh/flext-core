@@ -10,7 +10,7 @@ from pathlib import Path
 from flext_core import FlextLogger, r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra import DiscoveryService, TomlService, c, output
+from flext_infra import FlextInfraDiscoveryService, TomlService, c, output
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -237,7 +237,7 @@ def main() -> int:
                 output.info(change)
             total_changes += len(changes)
 
-    discover_result = DiscoveryService().discover_projects(ROOT)
+    discover_result = FlextInfraDiscoveryService().discover_projects(ROOT)
     if discover_result.is_failure:
         logger.error(
             "sync_dep_paths_discovery_failed",

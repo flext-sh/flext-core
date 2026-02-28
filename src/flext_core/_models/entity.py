@@ -334,6 +334,4 @@ class FlextModelsEntity:
             return self
 
 
-
-
 __all__ = ["FlextModelsEntity"]

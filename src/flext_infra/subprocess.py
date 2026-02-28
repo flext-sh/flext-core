@@ -14,12 +14,12 @@ import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
 from flext_infra import c, m
 
 
-class CommandRunner:
+class FlextInfraCommandRunner(FlextService[FlextResult[m.CommandOutput]]):
     """Infrastructure service for subprocess execution.
 
     Provides FlextResult-wrapped command execution, replacing the bare
@@ -27,6 +27,10 @@ class CommandRunner:
 
     Structurally satisfies ``InfraProtocols.CommandRunnerProtocol``.
     """
+
+    def __init__(self) -> None:
+        """Initialize the command runner."""
+        super().__init__()
 
     def run_raw(
         self,
@@ -194,4 +198,8 @@ class CommandRunner:
         return r[str].fail(result.error or "capture failed")
 
 
-__all__ = ["CommandRunner"]
+__all__ = ["FlextInfraCommandRunner"]
+
+    def execute(self) -> FlextResult[m.CommandOutput]:
+        """Execute the service (required by FlextService base class)."""
+        return r[m.CommandOutput].ok(m.CommandOutput(stdout="", stderr="", exit_code=0))

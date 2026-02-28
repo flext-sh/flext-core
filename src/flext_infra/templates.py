@@ -12,7 +12,7 @@ from __future__ import annotations
 from flext_core import FlextResult, r
 
 
-class TemplateEngine:
+class FlextInfraTemplateEngine:
     """Infrastructure service for text template rendering.
 
     Centralizes template constants and provides safe rendering
@@ -61,4 +61,4 @@ class TemplateEngine:
             return r[str].fail(f"template render error: {exc}")
 
 
-__all__ = ["TemplateEngine"]
+__all__ = ["FlextInfraTemplateEngine"]

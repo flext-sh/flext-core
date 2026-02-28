@@ -21,7 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
 REPORTS_DIR_NAME: Final[str] = ".reports"
 # Top-level reports directory name (always `.reports`).
@@ -40,7 +40,7 @@ KNOWN_VERBS: Final[frozenset[str]] = frozenset({
 # Standard subdirectory verbs under `.reports/`.
 
 
-class ReportingService:
+class FlextInfraReportingService(FlextService[Path]):
     """Infrastructure service for standardized report path management.
 
     Convention::
@@ -53,7 +53,17 @@ class ReportingService:
                 └── {project}.log
 
     Structurally satisfies ``InfraProtocols.ReporterProtocol``.
+    Structurally satisfies ``InfraProtocols.ReporterProtocol``.
     """
+
+    def execute(self) -> FlextResult[Path]:
+        """Execute reporting (default: empty path).
+
+        Returns:
+            FlextResult with empty path by default.
+
+        """
+        return r[Path].ok(Path())
 
     # ------------------------------------------------------------------
     # New standardized API
@@ -103,6 +113,30 @@ class ReportingService:
         """
         return self.get_report_dir(root, scope, verb) / filename
 
+    def ensure_report_dir(
+        self,
+        root: Path | str,
+        scope: str,
+        verb: str,
+    ) -> FlextResult[Path]:
+        """Ensure report directory exists, creating it if necessary.
+
+        Args:
+            root: Workspace or project root.
+            scope: ``"project"`` or ``"workspace"``.
+            verb: Action verb (check, test, validate, docs, …).
+
+        Returns:
+            FlextResult[Path] with the report directory path.
+
+        """
+        try:
+            report_dir = self.get_report_dir(root, scope, verb)
+            report_dir.mkdir(parents=True, exist_ok=True)
+            return r[Path].ok(report_dir)
+        except OSError as exc:
+            return r[Path].fail(f"failed to create report directory: {exc}")
+
     def create_latest_symlink(
         self,
         report_dir: Path,
@@ -128,4 +162,4 @@ class ReportingService:
             return r[Path].fail(f"failed to create latest symlink: {exc}")
 
 
-__all__ = ["KNOWN_VERBS", "REPORTS_DIR_NAME", "ReportingService"]
+__all__ = ["KNOWN_VERBS", "REPORTS_DIR_NAME", "FlextInfraReportingService"]

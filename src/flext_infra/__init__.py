@@ -16,9 +16,8 @@ from flext_core import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
     from flext_infra.basemk import (
-        BaseMkGenerator,
-        BaseMkGenerator as FlextInfraBaseMkGenerator,
-        TemplateEngine as BaseMkTemplateEngine,
+        FlextInfraBaseMkGenerator,
+        FlextInfraBaseMkTemplateEngine,
     )
     from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
     from flext_infra.discovery import (
@@ -28,6 +27,9 @@ if TYPE_CHECKING:
     from flext_infra.git import GitService, GitService as FlextInfraGitService
     from flext_infra.json_io import JsonService, JsonService as FlextInfraJsonService
     from flext_infra.models import FlextInfraModels, FlextInfraModels as m
+    from flext_infra.output import (
+        FlextInfraOutput as FlextInfraOutput,
+    )
     from flext_infra.paths import PathResolver, PathResolver as FlextInfraPathResolver
     from flext_infra.patterns import FlextInfraPatterns
     from flext_infra.protocols import FlextInfraProtocols, FlextInfraProtocols as p
@@ -50,8 +52,7 @@ if TYPE_CHECKING:
         CommandRunner as FlextInfraCommandRunner,
     )
     from flext_infra.templates import (
-        TemplateEngine,
-        TemplateEngine as FlextInfraTemplateEngine,
+        FlextInfraTemplateEngine as FlextInfraTemplateEngine,
     )
     from flext_infra.toml_io import TomlService, TomlService as FlextInfraTomlService
     from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
@@ -63,39 +64,35 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "BaseMkGenerator": ("flext_infra.basemk", "BaseMkGenerator"),
-    "BaseMkTemplateEngine": ("flext_infra.basemk", "TemplateEngine"),
-    "CommandRunner": ("flext_infra.subprocess", "CommandRunner"),
-    "DiscoveryService": ("flext_infra.discovery", "DiscoveryService"),
-    "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "BaseMkGenerator"),
-    "FlextInfraCommandRunner": ("flext_infra.subprocess", "CommandRunner"),
+    "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "FlextInfraBaseMkGenerator"),
+    "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk", "FlextInfraBaseMkTemplateEngine"),
+    "FlextInfraCheckConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
+    "FlextInfraCheckWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
+    "FlextInfraDiscoveryService": ("flext_infra.discovery", "FlextInfraDiscoveryService"),
+    "FlextInfraCommandRunner": ("flext_infra.subprocess", "FlextInfraCommandRunner"),
     "FlextInfraConstants": ("flext_infra.constants", "FlextInfraConstants"),
-    "FlextInfraDiscoveryService": ("flext_infra.discovery", "DiscoveryService"),
-    "FlextInfraGitService": ("flext_infra.git", "GitService"),
-    "FlextInfraJsonService": ("flext_infra.json_io", "JsonService"),
+
+    "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
+    "FlextInfraJsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
-    "FlextInfraPathResolver": ("flext_infra.paths", "PathResolver"),
+    "FlextInfraPathResolver": ("flext_infra.paths", "FlextInfraPathResolver"),
     "FlextInfraPatterns": ("flext_infra.patterns", "FlextInfraPatterns"),
-    "FlextInfraProjectSelector": ("flext_infra.selection", "ProjectSelector"),
+    "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
     "FlextInfraProtocols": ("flext_infra.protocols", "FlextInfraProtocols"),
     "FlextInfraReleaseOrchestrator": ("flext_infra.release", "ReleaseOrchestrator"),
-    "FlextInfraReportingService": ("flext_infra.reporting", "ReportingService"),
-    "FlextInfraTemplateEngine": ("flext_infra.templates", "TemplateEngine"),
-    "FlextInfraTomlService": ("flext_infra.toml_io", "TomlService"),
+    "FlextInfraReportingService": ("flext_infra.reporting", "FlextInfraReportingService"),
+    "FlextInfraTemplateEngine": ("flext_infra.templates", "FlextInfraTemplateEngine"),
+    "FlextInfraTomlService": ("flext_infra.toml_io", "FlextInfraTomlService"),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
-    "FlextInfraVersioningService": ("flext_infra.versioning", "VersioningService"),
-    "GitService": ("flext_infra.git", "GitService"),
-    "JsonService": ("flext_infra.json_io", "JsonService"),
+    "FlextInfraVersioningService": ("flext_infra.versioning", "FlextInfraVersioningService"),
     "KNOWN_VERBS": ("flext_infra.reporting", "KNOWN_VERBS"),
-    "PathResolver": ("flext_infra.paths", "PathResolver"),
-    "ProjectSelector": ("flext_infra.selection", "ProjectSelector"),
+
     "REPORTS_DIR_NAME": ("flext_infra.reporting", "REPORTS_DIR_NAME"),
     "ReleaseOrchestrator": ("flext_infra.release", "ReleaseOrchestrator"),
-    "ReportingService": ("flext_infra.reporting", "ReportingService"),
-    "TemplateEngine": ("flext_infra.templates", "TemplateEngine"),
-    "TomlService": ("flext_infra.toml_io", "TomlService"),
-    "VersioningService": ("flext_infra.versioning", "VersioningService"),
+
+    "FlextInfraOutput": ("flext_infra.output", "FlextInfraOutput"),
+
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),
@@ -104,22 +101,35 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "t": ("flext_infra.typings", "FlextInfraTypes"),
     "u": ("flext_infra.utilities", "FlextInfraUtilities"),
     "output": ("flext_infra.output", "output"),
+    # Short aliases for internal consumers (backward compat)
+    "CommandRunner": ("flext_infra.subprocess", "FlextInfraCommandRunner"),
+    "DiscoveryService": ("flext_infra.discovery", "FlextInfraDiscoveryService"),
+    "GitService": ("flext_infra.git", "FlextInfraGitService"),
+    "JsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
+    "PathResolver": ("flext_infra.paths", "FlextInfraPathResolver"),
+    "ProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
+    "ReportingService": ("flext_infra.reporting", "FlextInfraReportingService"),
+    "TemplateEngine": ("flext_infra.templates", "FlextInfraTemplateEngine"),
+    "TomlService": ("flext_infra.toml_io", "FlextInfraTomlService"),
+    "VersioningService": ("flext_infra.versioning", "FlextInfraVersioningService"),
 }
 
 __all__ = [
     "KNOWN_VERBS",
     "REPORTS_DIR_NAME",
-    "BaseMkGenerator",
-    "BaseMkTemplateEngine",
     "CommandRunner",
     "DiscoveryService",
     "FlextInfraBaseMkGenerator",
+    "FlextInfraBaseMkTemplateEngine",
+    "FlextInfraCheckConfigFixer",
+    "FlextInfraCheckWorkspaceChecker",
     "FlextInfraCommandRunner",
     "FlextInfraConstants",
     "FlextInfraDiscoveryService",
     "FlextInfraGitService",
     "FlextInfraJsonService",
     "FlextInfraModels",
+    "FlextInfraOutput",
     "FlextInfraPathResolver",
     "FlextInfraPatterns",
     "FlextInfraProjectSelector",
@@ -137,7 +147,6 @@ __all__ = [
     "ProjectSelector",
     "ReleaseOrchestrator",
     "ReportingService",
-    "TemplateEngine",
     "TomlService",
     "VersioningService",
     "__version__",
@@ -154,11 +163,6 @@ __all__ = [
 def __getattr__(name: str) -> Any:  # noqa: ANN401
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
 
 
 cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

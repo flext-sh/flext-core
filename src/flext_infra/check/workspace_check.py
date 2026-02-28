@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 
 from flext_infra import REPORTS_DIR_NAME, output
-from flext_infra.check.services import DEFAULT_GATES, WorkspaceChecker
+from flext_infra.check.services import DEFAULT_GATES, FlextInfraWorkspaceChecker
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -22,8 +22,8 @@ def main(argv: list[str] | None = None) -> int:
         output.error("no projects specified")
         return 1
 
-    checker = WorkspaceChecker()
-    gates = WorkspaceChecker.parse_gate_csv(args.gates)
+    checker = FlextInfraWorkspaceChecker()
+    gates = FlextInfraWorkspaceChecker.parse_gate_csv(args.gates)
 
     reports_dir = Path(args.reports_dir).expanduser()
     if not reports_dir.is_absolute():

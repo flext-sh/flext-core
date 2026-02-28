@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import argparse
 
-from flext_infra.check.services import PyreflyConfigFixer
+from flext_infra.check.services import FlextInfraConfigFixer
 from flext_infra.output import output
 
 
@@ -20,7 +20,7 @@ def main(argv: list[str] | None = None) -> int:
     _ = parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
-    fixer = PyreflyConfigFixer()
+    fixer = FlextInfraConfigFixer()
     result = fixer.run(
         projects=args.projects,
         dry_run=args.dry_run,

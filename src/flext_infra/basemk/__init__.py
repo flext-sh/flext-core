@@ -15,19 +15,19 @@ from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.basemk.__main__ import main
-    from flext_infra.basemk.engine import TemplateEngine
-    from flext_infra.basemk.generator import BaseMkGenerator
+    from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
+    from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "BaseMkGenerator": ("flext_infra.basemk.generator", "BaseMkGenerator"),
-    "TemplateEngine": ("flext_infra.basemk.engine", "TemplateEngine"),
+    "FlextInfraBaseMkGenerator": ("flext_infra.basemk.generator", "FlextInfraBaseMkGenerator"),
+    "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk.engine", "FlextInfraBaseMkTemplateEngine"),
     "main": ("flext_infra.basemk.__main__", "main"),
 }
 
 __all__ = [
-    "BaseMkGenerator",
-    "TemplateEngine",
+    "FlextInfraBaseMkGenerator",
+    "FlextInfraBaseMkTemplateEngine",
     "main",
 ]
 

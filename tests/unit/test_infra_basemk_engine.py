@@ -12,8 +12,8 @@ from _pytest.capture import CaptureFixture
 from flext_core import FlextResult as r
 from flext_infra import m as im
 from flext_infra.basemk.__main__ import main as basemk_main
-from flext_infra.basemk.engine import TemplateEngine
-from flext_infra.basemk.generator import BaseMkGenerator
+from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
+from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 
 class _InvalidTemplateEngine:
@@ -23,7 +23,7 @@ class _InvalidTemplateEngine:
 
 
 def test_render_all_generates_large_makefile() -> None:
-    result = TemplateEngine().render_all()
+    result = FlextInfraBaseMkTemplateEngine().render_all()
 
     assert result.is_success
     content = result.value
@@ -31,7 +31,7 @@ def test_render_all_generates_large_makefile() -> None:
 
 
 def test_render_all_has_no_scripts_path_references() -> None:
-    result = TemplateEngine().render_all()
+    result = FlextInfraBaseMkTemplateEngine().render_all()
 
     assert result.is_success
     assert "scripts/" not in result.value
@@ -59,14 +59,14 @@ def test_generator_renders_with_config_override() -> None:
         test_command="pytest",
     )
 
-    result = BaseMkGenerator().generate(config)
+    result = FlextInfraBaseMkGenerator().generate(config)
 
     assert result.is_success
     assert "PROJECT_NAME ?= sample-project" in result.value
 
 
 def test_generator_fails_for_invalid_make_syntax() -> None:
-    result = BaseMkGenerator(template_engine=_InvalidTemplateEngine()).generate()
+    result = FlextInfraBaseMkGenerator(template_engine=_InvalidTemplateEngine()).generate()
 
     assert result.is_failure
     assert result.error is not None
@@ -77,7 +77,7 @@ def test_generator_write_saves_output_file(tmp_path: Path) -> None:
     output_path = tmp_path / "base.mk"
     content = "all:\n\t@true\n"
 
-    result = BaseMkGenerator().write(content, output=output_path)
+    result = FlextInfraBaseMkGenerator().write(content, output=output_path)
 
     assert result.is_success
     assert output_path.read_text(encoding="utf-8") == content

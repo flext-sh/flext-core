@@ -9,14 +9,14 @@ from pathlib import Path
 from flext_core import FlextRuntime
 
 from flext_infra import m, output
-from flext_infra.basemk.engine import TemplateEngine
-from flext_infra.basemk.generator import BaseMkGenerator
+from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
+from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 
 def _build_config(project_name: str | None) -> m.BaseMkConfig | None:
     if project_name is None:
         return None
-    return TemplateEngine.default_config().model_copy(
+    return FlextInfraBaseMkTemplateEngine.default_config().model_copy(
         update={"project_name": project_name},
     )
 
@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 1
 
-    generator = BaseMkGenerator()
+    generator = FlextInfraBaseMkGenerator()
     config = _build_config(args.project_name)
     generated_result = generator.generate(config)
     if generated_result.is_failure:

@@ -14,7 +14,7 @@ from collections.abc import MutableMapping
 from pathlib import Path
 
 import tomlkit
-from flext_core import FlextResult, r, t
+from flext_core import FlextResult, FlextService, r, t
 from tomlkit.items import Table
 
 from flext_infra import c
@@ -33,12 +33,16 @@ def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
     return None
 
 
-class TomlService:
+class FlextInfraTomlService(FlextService[FlextResult[bool]]):
     """Infrastructure service for TOML file I/O.
 
     Provides FlextResult-wrapped TOML read/write operations, replacing
     the bare functions from ``scripts/libs/toml_io.py``.
     """
+
+    def __init__(self) -> None:
+        """Initialize the TOML service."""
+        super().__init__()
 
     def read(self, path: Path) -> FlextResult[TomlMap]:
         """Read and parse a TOML file as a plain dict.
@@ -104,7 +108,6 @@ class TomlService:
                 tomlkit.dumps(doc),
                 encoding=c.Encoding.DEFAULT,
             )
-            return r[bool].ok(True)
         except OSError as exc:
             return r[bool].fail(f"TOML write error: {exc}")
 
@@ -179,5 +182,11 @@ class TomlService:
             del target[key]
             removed.append(path)
 
+    def execute(self) -> FlextResult[bool]:
+        """Execute the service (required by FlextService base class)."""
+        return r[bool].ok(True)
 
-__all__ = ["TomlService"]
+
+__all__ = ["FlextInfraTomlService"]
+
+        """Execute the service (required by FlextService base class)."""

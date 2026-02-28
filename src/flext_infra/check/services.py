@@ -355,7 +355,7 @@ class _SarifReport(BaseModel):
     runs: list[_SarifRun] = Field(default_factory=list, description="SARIF runs")
 
 
-class WorkspaceChecker(FlextService[list[_ProjectResult]]):
+class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
     """Run quality gates across one or more workspace projects."""
 
     def __init__(self, workspace_root: Path | None = None) -> None:
@@ -1257,7 +1257,7 @@ class WorkspaceChecker(FlextService[list[_ProjectResult]]):
         return result.value if result.is_success else Path.cwd().resolve()
 
 
-class PyreflyConfigFixer(FlextService[list[str]]):
+class FlextInfraConfigFixer(FlextService[list[str]]):
     """Repair workspace and project pyrefly configuration blocks."""
 
     def __init__(self, workspace_root: Path | None = None) -> None:
@@ -1509,8 +1509,8 @@ def run_cli(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "run":
-        checker = WorkspaceChecker()
-        gates = WorkspaceChecker.parse_gate_csv(args.gates)
+        checker = FlextInfraWorkspaceChecker()
+        gates = FlextInfraWorkspaceChecker.parse_gate_csv(args.gates)
         reports_dir = Path(args.reports_dir).expanduser()
         if not reports_dir.is_absolute():
             reports_dir = (Path.cwd() / reports_dir).resolve()
@@ -1529,7 +1529,7 @@ def run_cli(argv: list[str] | None = None) -> int:
         return 1 if failed_projects else 0
 
     if args.command == "fix-pyrefly-config":
-        fixer = PyreflyConfigFixer()
+        fixer = FlextInfraConfigFixer()
         fix_result = fixer.run(
             projects=args.projects,
             dry_run=args.dry_run,
@@ -1546,7 +1546,7 @@ def run_cli(argv: list[str] | None = None) -> int:
 
 __all__ = [
     "DEFAULT_GATES",
-    "PyreflyConfigFixer",
-    "WorkspaceChecker",
+    "FlextInfraConfigFixer",
+    "FlextInfraWorkspaceChecker",
     "run_cli",
 ]

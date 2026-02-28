@@ -12,16 +12,27 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
 from flext_infra import c, m
 
 
-class DiscoveryService:
+class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
     """Infrastructure service for discovering workspace projects.
 
     Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
+    Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
     """
+
+    def execute(self) -> FlextResult[list[m.ProjectInfo]]:
+        """Execute discovery of all projects in workspace.
+
+        Returns:
+            FlextResult with list of discovered ProjectInfo models.
+
+        """
+        # Default implementation - subclasses can override
+        return r[list[m.ProjectInfo]].ok([])
 
     def discover_projects(
         self,
@@ -153,4 +164,7 @@ class DiscoveryService:
         )
 
 
-__all__ = ["DiscoveryService"]
+__all__ = ["FlextInfraDiscoveryService"]
+
+
+

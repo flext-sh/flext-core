@@ -13,18 +13,22 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
+from flext_core import FlextResult, FlextService, r, t
 from pydantic import BaseModel
 
 from flext_infra import c
 
 
-class JsonService:
+class FlextInfraJsonService(FlextService[FlextResult[bool]]):
     """Infrastructure service for JSON file I/O.
 
     Provides FlextResult-wrapped JSON read/write operations, replacing
     the bare functions from ``scripts/libs/json_io.py``.
     """
+
+    def __init__(self) -> None:
+        """Initialize the JSON service."""
+        super().__init__()
 
     def read(self, path: Path) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
         """Read and parse a JSON file.
@@ -84,9 +88,14 @@ class JsonService:
                 + "\n"
             )
             _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
-            return r[bool].ok(True)
         except (TypeError, OSError) as exc:
             return r[bool].fail(f"JSON write error: {exc}")
 
+    def execute(self) -> FlextResult[bool]:
+        """Execute the service (required by FlextService base class)."""
+        return r[bool].ok(True)
 
-__all__ = ["JsonService"]
+
+__all__ = ["FlextInfraJsonService"]
+
+        """Execute the service (required by FlextService base class)."""

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
 from flext_infra import c
 
@@ -22,12 +22,16 @@ _WORKSPACE_MARKERS: frozenset[str] = frozenset({
 })
 
 
-class PathResolver:
+class FlextInfraPathResolver(FlextService[Path]):
     """Infrastructure service for workspace path resolution.
 
     Provides FlextResult-wrapped path resolution, replacing the bare
     functions from ``scripts/libs/paths.py``.
     """
+
+    def __init__(self) -> None:
+        """Initialize the path resolver."""
+        super().__init__()
 
     def workspace_root(self, path: str | Path = ".") -> FlextResult[Path]:
         """Resolve and return the absolute path to the workspace root.
@@ -74,5 +78,11 @@ class PathResolver:
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
 
+    def execute(self) -> Path:
+        """Execute the service (required by FlextService base class)."""
+        return Path.cwd()
 
-__all__ = ["PathResolver"]
+
+__all__ = ["FlextInfraPathResolver"]
+
+        """Execute the service (required by FlextService base class)."""

@@ -9,22 +9,31 @@ from typing import Protocol, TextIO, override
 
 from flext_core import FlextService, r, t
 
-from flext_infra import CommandRunner, c, m
-from flext_infra.basemk.engine import TemplateEngine
+from flext_infra.subprocess import FlextInfraCommandRunner
+from flext_infra.constants import FlextInfraConstants as c
+from flext_infra.models import FlextInfraModels as m
+from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 
 
 class _TemplateRenderer(Protocol):
     def render_all(self, config: m.BaseMkConfig | None = None) -> r[str]: ...
 
 
-class BaseMkGenerator(FlextService[str]):
+class FlextInfraBaseMkGenerator(FlextService[str]):
     """Generate base.mk content and write to file or stream."""
 
     def __init__(self, template_engine: _TemplateRenderer | None = None) -> None:
         """Initialize the base.mk generator."""
         super().__init__()
-        self._template_engine = template_engine or TemplateEngine()
-        self._runner = CommandRunner()
+        self._template_engine = template_engine or FlextInfraBaseMkTemplateEngine()
+        self._runner: FlextInfraCommandRunner | None = None
+
+    @property
+    def _get_runner(self) -> FlextInfraCommandRunner:
+        """Lazily initialize the command runner."""
+        if self._runner is None:
+            self._runner = FlextInfraCommandRunner()
+        return self._runner
 
     @override
     def execute(self) -> r[str]:
@@ -75,7 +84,7 @@ class BaseMkGenerator(FlextService[str]):
         config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None,
     ) -> r[m.BaseMkConfig]:
         if config is None:
-            return r[m.BaseMkConfig].ok(TemplateEngine.default_config())
+            return r[m.BaseMkConfig].ok(FlextInfraBaseMkTemplateEngine.default_config())
         if isinstance(config, m.BaseMkConfig):
             return r[m.BaseMkConfig].ok(config)
         try:
@@ -100,7 +109,7 @@ class BaseMkGenerator(FlextService[str]):
                     encoding=c.Encoding.DEFAULT,
                 )
 
-                process_result = self._runner.run(
+                process_result = self._get_runner.run(
                     ["make", "-C", str(temp_dir), "--dry-run", "help"],
                 )
                 if process_result.is_failure:
@@ -114,4 +123,4 @@ class BaseMkGenerator(FlextService[str]):
         return r[str].ok(content)
 
 
-__all__ = ["BaseMkGenerator"]
+__all__ = ["FlextInfraBaseMkGenerator"]

@@ -11,7 +11,7 @@ from flext_core import FlextService, r
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
-from flext_infra import DiscoveryService, c, m
+from flext_infra import FlextInfraDiscoveryService, c, m
 from flext_infra.basemk.generator import BaseMkGenerator
 
 _MAKEFILE_REPLACEMENTS: tuple[tuple[str, str], ...] = (

@@ -11,20 +11,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextResult, r
+from flext_core import FlextResult, FlextService, r
 
-from flext_infra import CommandRunner
+from flext_infra import FlextInfraCommandRunner
 
 
-class GitService:
+class FlextInfraGitService(FlextService[FlextResult[str]]):
     """Infrastructure service for Git operations.
 
-    Delegates to ``CommandRunner`` for subprocess execution.
+    Delegates to ``FlextInfraCommandRunner`` for subprocess execution.
     """
 
-    def __init__(self, runner: CommandRunner | None = None) -> None:
+    def __init__(self, runner: FlextInfraCommandRunner | None = None) -> None:
         """Initialize the Git service."""
-        self._runner = runner or CommandRunner()
+        super().__init__()
+        self._runner = runner or FlextInfraCommandRunner()
 
     def current_branch(self, repo_root: Path) -> FlextResult[str]:
         """Return the name of the current active branch.
@@ -77,5 +78,11 @@ class GitService:
         """
         return self._runner.capture(["git", *cmd], cwd=cwd)
 
+    def execute(self) -> FlextResult[str]:
+        """Execute the service (required by FlextService base class)."""
+        return r[str].ok("git service ready")
 
-__all__ = ["GitService"]
+
+__all__ = ["FlextInfraGitService"]
+
+        """Execute the service (required by FlextService base class)."""

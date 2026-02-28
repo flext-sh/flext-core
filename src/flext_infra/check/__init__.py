@@ -9,21 +9,21 @@ from flext_core import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_infra.check.services import (
         DEFAULT_GATES,
-        PyreflyConfigFixer,
-        WorkspaceChecker,
+        FlextInfraConfigFixer,
+        FlextInfraWorkspaceChecker,
     )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DEFAULT_GATES": ("flext_infra.check.services", "DEFAULT_GATES"),
-    "PyreflyConfigFixer": ("flext_infra.check.services", "PyreflyConfigFixer"),
-    "WorkspaceChecker": ("flext_infra.check.services", "WorkspaceChecker"),
+    "FlextInfraConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
+    "FlextInfraWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
 }
 
 __all__ = [
     "DEFAULT_GATES",
-    "PyreflyConfigFixer",
-    "WorkspaceChecker",
+    "FlextInfraConfigFixer",
+    "FlextInfraWorkspaceChecker",
 ]
 
 
