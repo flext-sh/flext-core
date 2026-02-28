@@ -24,7 +24,7 @@ from collections.abc import (
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-from typing import Protocol
+from typing import Protocol, override
 
 from flext_core import (
     FlextContext,
@@ -1292,6 +1292,7 @@ class FlextTestsUtilities(FlextUtilities):
             class BadConfig:
                 """Config object that raises on attribute access."""
 
+                @override
                 def __getattribute__(self, name: str) -> t.Tests.PayloadValue:
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
@@ -1304,6 +1305,7 @@ class FlextTestsUtilities(FlextUtilities):
             class BadConfigTypeError:
                 """Config object that raises TypeError on attribute access."""
 
+                @override
                 def __getattribute__(self, name: str) -> t.Tests.PayloadValue:
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes

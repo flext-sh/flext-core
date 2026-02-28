@@ -440,7 +440,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return result
         return self
 
-
     @override
     def lash(
         self,
@@ -469,8 +468,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             lash_result._exception = inner_result._exception
             return lash_result
         return self
-
-    or_else = lash
 
     @override
     def tap_error(self, func: Callable[[str], None]) -> Self:
@@ -759,6 +756,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         Satisfies BaseProtocol requirement for ResultLike protocol.
         """
         return "FlextResult"
+
+    # Aliases for compatibility
+    map_error = alt
+    or_else = lash
 
 
 r = FlextResult

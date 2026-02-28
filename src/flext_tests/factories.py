@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Never, TypeVar
+from typing import Never, TypeVar, override
 
 from flext_core import r
 from pydantic import BaseModel
