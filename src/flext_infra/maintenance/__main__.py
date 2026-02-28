@@ -14,8 +14,8 @@ import sys
 
 from flext_core import FlextRuntime
 
-from flext_infra import output
 from flext_infra.maintenance.python_version import PythonVersionEnforcer
+from flext_infra.output import output
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -479,7 +479,7 @@ class TestFlextModels:
             eq=0,
             msg="New entity must have no domain events",
         )
-        _ = entity.add_domain_event("test_event", m.ConfigMap(root={"data": "value"}))
+        result = entity.add_domain_event("test_event", m.ConfigMap(root={"data": "value"}))
         u.Tests.Result.assert_success(result)
         tm.that(
             len(entity.domain_events),
@@ -598,7 +598,7 @@ class TestFlextModels:
         )
         assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
-        _ = aggregate.add_domain_event("test", m.ConfigMap(root={"data": "value"}))
+        result = aggregate.add_domain_event("test", m.ConfigMap(root={"data": "value"}))
         u.Tests.Result.assert_success(result)
 
     def test_aggregate_root_invariants(self) -> None:
@@ -724,7 +724,7 @@ class TestFlextModels:
             ("event2", m.ConfigMap(root={"data": "value2"})),
             ("event3", m.ConfigMap(root={"data": "value3"})),
         ]
-        _ = aggregate.add_domain_events_bulk(events)
+        result = aggregate.add_domain_events_bulk(events)
         u.Tests.Result.assert_success(result)
         assert len(aggregate.domain_events) == 3
         assert all(
@@ -738,7 +738,7 @@ class TestFlextModels:
             name: str
 
         aggregate = TestAggregate(name="test")
-        _ = aggregate.add_domain_events_bulk([])
+        result = aggregate.add_domain_events_bulk([])
         u.Tests.Result.assert_success(result)
         invalid_empty_name = [
             ("", m.ConfigMap(root={"data": "value"})),
@@ -778,7 +778,7 @@ class TestFlextModels:
                 self.handler_data = data
 
         aggregate = TestAggregate(name="test")
-        _ = aggregate.add_domain_event(
+        result = aggregate.add_domain_event(
             "user_action",
             m.ConfigMap(root={"event_type": "test_event", "key": "value"}),
         )
@@ -797,7 +797,7 @@ class TestFlextModels:
                 raise ValueError(error_msg)
 
         aggregate = TestAggregate(name="test")
-        _ = aggregate.add_domain_event(
+        result = aggregate.add_domain_event(
             "failing_event",
             m.ConfigMap(root={"data": "value"}),
         )

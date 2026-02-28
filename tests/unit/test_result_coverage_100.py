@@ -33,12 +33,12 @@ from returns.maybe import Nothing, Some
 
 class _ResultAssertions:
     @staticmethod
-    def assert_result_success(result: object) -> None:
+    def assert_success(result: object) -> None:
         assert isinstance(result, r)
         assert result.is_success
 
     @staticmethod
-    def assert_result_failure(result: object) -> None:
+    def assert_failure(result: object) -> None:
         assert isinstance(result, r)
         assert not result.is_success
 

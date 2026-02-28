@@ -246,6 +246,26 @@ class FlextTestsUtilities(FlextUtilities):
                     assert expected_error in result.error
 
             @staticmethod
+            def assert_result_failure_with_error[T](
+                result: r[T] | p.Result[T],
+                expected_error: str,
+            ) -> None:
+                """Assert result failure with error (compat alias).
+
+                Args:
+                    result: FlextResult or Result protocol to check
+                    expected_error: Expected error substring
+
+                Raises:
+                    AssertionError: If result is not failure or error mismatch
+
+                """
+                FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                    result,
+                    expected_error,
+                )
+
+            @staticmethod
             def create_success_result[T](value: T) -> r[T]:
                 """Create a success result with the given value.
 

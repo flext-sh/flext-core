@@ -21,6 +21,13 @@ from typing import TYPE_CHECKING, Any
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_tests._validator.bypass import FlextValidatorBypass
+    from flext_tests._validator.imports import FlextValidatorImports
+    from flext_tests._validator.layer import FlextValidatorLayer
+    from flext_tests._validator.models import FlextValidatorModels
+    from flext_tests._validator.settings import FlextValidatorSettings
+    from flext_tests._validator.tests import FlextValidatorTests
+    from flext_tests._validator.types import FlextValidatorTypes
     from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s
     from flext_tests.builders import FlextTestsBuilders, tb
     from flext_tests.constants import FlextTestsConstants, FlextTestsConstants as c
@@ -51,6 +58,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsUtilities": ("flext_tests.utilities", "FlextTestsUtilities"),
     "FlextTestsUtilityBase": ("flext_tests.base", "FlextTestsUtilityBase"),
     "FlextTestsValidator": ("flext_tests.validator", "FlextTestsValidator"),
+    "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
+    "FlextValidatorImports": ("flext_tests._validator.imports", "FlextValidatorImports"),
+    "FlextValidatorLayer": ("flext_tests._validator.layer", "FlextValidatorLayer"),
+    "FlextValidatorModels": ("flext_tests._validator.models", "FlextValidatorModels"),
+    "FlextValidatorSettings": ("flext_tests._validator.settings", "FlextValidatorSettings"),
+    "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
+    "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
     "c": ("flext_tests.constants", "FlextTestsConstants"),
     "m": ("flext_tests.models", "FlextTestsModels"),
     "p": ("flext_tests.protocols", "FlextTestsProtocols"),
@@ -79,6 +93,13 @@ __all__ = [
     "FlextTestsUtilities",
     "FlextTestsUtilityBase",
     "FlextTestsValidator",
+    "FlextValidatorBypass",
+    "FlextValidatorImports",
+    "FlextValidatorLayer",
+    "FlextValidatorModels",
+    "FlextValidatorSettings",
+    "FlextValidatorTests",
+    "FlextValidatorTypes",
     "c",
     "m",
     "p",

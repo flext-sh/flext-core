@@ -18,8 +18,9 @@ from typing import override
 
 from flext_core import FlextService, r
 
-from flext_infra import c, m, output
+from flext_infra import c, m
 from flext_infra.basemk.generator import BaseMkGenerator
+from flext_infra.output import output
 
 # Patterns that MUST be in every subproject .gitignore.
 _REQUIRED_GITIGNORE_ENTRIES: list[str] = [
@@ -38,10 +39,16 @@ class SyncService(FlextService[m.SyncResult]):
 
     """
 
-    def __init__(self, generator: BaseMkGenerator | None = None) -> None:
+    def __init__(
+        self,
+        generator: BaseMkGenerator | None = None,
+        *,
+        canonical_root: Path | None = None,
+    ) -> None:
         """Initialize the sync service."""
         super().__init__()
         self._generator = generator or BaseMkGenerator()
+        self._canonical_root = canonical_root
 
     @override
     def execute(self) -> r[m.SyncResult]:
@@ -55,15 +62,18 @@ class SyncService(FlextService[m.SyncResult]):
         *,
         project_root: Path | None = None,
         config: m.BaseMkConfig | None = None,
+        canonical_root: Path | None = None,
     ) -> r[m.SyncResult]:
         """Synchronize base.mk and .gitignore for a project.
 
-        Generates base.mk content, compares SHA256 hashes, writes only if
-        changed, and ensures required .gitignore entries exist.
+        Copies base.mk from canonical root when available, otherwise
+        generates from template. Compares SHA256 hashes and writes only if
+        changed. Also ensures required .gitignore entries exist.
 
         Args:
             project_root: Project root directory. Required.
             config: Optional base.mk generation configuration.
+            canonical_root: Workspace root with canonical base.mk.
 
         Returns:
             FlextResult with SyncResult on success, error message on failure.
@@ -87,8 +97,11 @@ class SyncService(FlextService[m.SyncResult]):
                 try:
                     changed = 0
 
-                    # 1. Generate and deploy base.mk
-                    basemk_result = self._sync_basemk(resolved, config)
+                    # 1. Sync base.mk (copy from canonical or generate)
+                    effective_root = canonical_root or self._canonical_root
+                    basemk_result = self._sync_basemk(
+                        resolved, config, canonical_root=effective_root,
+                    )
                     if basemk_result.is_failure:
                         return r[m.SyncResult].fail(
                             basemk_result.error or "base.mk sync failed",
@@ -122,24 +135,43 @@ class SyncService(FlextService[m.SyncResult]):
         self,
         project_root: Path,
         config: m.BaseMkConfig | None,
+        *,
+        canonical_root: Path | None = None,
     ) -> r[bool]:
-        """Generate base.mk and write only if SHA256 differs."""
-        gen_result = self._generator.generate(config)
-        if gen_result.is_failure:
-            return r[bool].fail(gen_result.error or "base.mk generation failed")
+        """Sync base.mk from canonical root or generate from template.
 
-        generated_content = gen_result.value
+        When canonical_root is provided and contains base.mk, copies it
+        directly to ensure validator alignment. Falls back to generator.
+        """
+        # Prefer canonical root copy over template generation
+        canonical_basemk = (
+            canonical_root / "base.mk"
+            if canonical_root is not None
+            else None
+        )
+        if (
+            canonical_basemk is not None
+            and canonical_basemk.exists()
+            and canonical_basemk.resolve() != (project_root / "base.mk").resolve()
+        ):
+            content = canonical_basemk.read_text(encoding=c.Encoding.DEFAULT)
+        else:
+            gen_result = self._generator.generate(config)
+            if gen_result.is_failure:
+                return r[bool].fail(gen_result.error or "base.mk generation failed")
+            content = gen_result.value
+
         target_path = project_root / "base.mk"
 
         # Compare SHA256 hashes for idempotency
-        generated_hash = self._sha256_content(generated_content)
+        content_hash = self._sha256_content(content)
         if target_path.exists():
             existing_hash = self._sha256_file(target_path)
-            if generated_hash == existing_hash:
+            if content_hash == existing_hash:
                 return r[bool].ok(False)  # No change needed
 
         # Atomic write via temp file + rename
-        return self._atomic_write(target_path, generated_content)
+        return self._atomic_write(target_path, content)
 
     def _ensure_gitignore_entries(
         self,
@@ -235,7 +267,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    service = SyncService()
+    service = SyncService(canonical_root=args.canonical_root)
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:

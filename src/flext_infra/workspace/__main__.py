@@ -17,7 +17,7 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra import output
+from flext_infra.output import output
 from flext_infra.workspace.detector import WorkspaceDetector
 from flext_infra.workspace.migrator import ProjectMigrator
 from flext_infra.workspace.orchestrator import OrchestratorService
@@ -37,7 +37,7 @@ def _run_detect(args: argparse.Namespace) -> int:
 
 def _run_sync(args: argparse.Namespace) -> int:
     """Execute base.mk sync."""
-    service = SyncService()
+    service = SyncService(canonical_root=args.canonical_root)
     result = service.sync(project_root=args.project_root)
 
     if result.is_success:

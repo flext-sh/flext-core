@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import argparse
 
-from flext_infra import output
 from flext_infra.check.services import PyreflyConfigFixer
+from flext_infra.output import output
 
 
 def main(argv: list[str] | None = None) -> int:

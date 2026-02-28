@@ -782,9 +782,5 @@ class FlextModelsContext:
 # Resolve forward references created by `from __future__ import annotations`.
 # Models using `t.GuardInputValue` (recursive PEP 695 type alias `_ContainerValue`)
 # require explicit rebuild so Pydantic can resolve the deferred string annotations.
-_ = FlextModelsContext.ContextScopeData.model_rebuild()
-_ = FlextModelsContext.ContextStatistics.model_rebuild()
-_ = FlextModelsContext.ContextMetadata.model_rebuild()
-_ = FlextModelsContext.ContextDomainData.model_rebuild()
 
 __all__ = ["FlextModelsContext"]
