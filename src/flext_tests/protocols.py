@@ -1060,7 +1060,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 """
 
-                def __lt__(self, other: object, /) -> bool:
+                def __lt__(self, other: Self, /) -> bool:
                     """Less-than comparison operator."""
                     ...
 

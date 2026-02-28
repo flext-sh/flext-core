@@ -1664,7 +1664,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return str(getattr(type(self), "__name__", "ProtocolModel"))
+            return type(self).__name__
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
@@ -1712,7 +1712,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return str(getattr(type(self), "__name__", "ProtocolSettings"))
+            return type(self).__name__
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
