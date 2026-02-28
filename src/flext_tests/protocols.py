@@ -14,7 +14,8 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, T, r
+from flext_core import FlextProtocols, T
+from flext_core.result import FlextResult
 from pydantic import BaseModel
 
 from flext_tests.typings import t
@@ -428,9 +429,9 @@ class FlextTestsProtocols(FlextProtocols):
                     t.Tests.PayloadValue
                     | list[t.Tests.PayloadValue]
                     | Mapping[str, t.Tests.PayloadValue]
-                    | r[t.Tests.PayloadValue]
-                    | r[list[t.Tests.PayloadValue]]
-                    | r[Mapping[str, t.Tests.PayloadValue]]
+                    | FlextResult[t.Tests.PayloadValue]
+                    | FlextResult[list[t.Tests.PayloadValue]]
+                    | FlextResult[Mapping[str, t.Tests.PayloadValue]]
                 ):
                     """Create model instance(s) with optional transformations.
 
@@ -506,7 +507,7 @@ class FlextTestsProtocols(FlextProtocols):
                     source: t.Tests.PayloadValue = "user",
                     # All parameters via kwargs - validated by ListFactoryParams
                     **kwargs: t.Tests.PayloadValue,
-                ) -> list[T] | r[list[T]]:
+                ) -> list[T] | FlextResult[list[T]]:
                     """Create typed list from source.
 
                     Args:
@@ -529,7 +530,7 @@ class FlextTestsProtocols(FlextProtocols):
                     source: (Mapping[K, V] | t.Tests.PayloadValue) = "user",
                     # All parameters via kwargs - validated by DictFactoryParams
                     **kwargs: t.Tests.PayloadValue,
-                ) -> Mapping[K, V] | r[Mapping[K, V]]:
+                ) -> Mapping[K, V] | FlextResult[Mapping[K, V]]:
                     """Create typed dict from source.
 
                     Args:
@@ -561,7 +562,7 @@ class FlextTestsProtocols(FlextProtocols):
                     type_: type[T],
                     # All parameters via kwargs - validated by GenericFactoryParams
                     **kwargs: t.Tests.PayloadValue,
-                ) -> T | list[T] | r[T] | r[list[T]]:
+                ) -> T | list[T] | FlextResult[T] | FlextResult[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
                     Args:
@@ -598,7 +599,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is success and return value."""
                     ...
 
-                def assert_fail(self, result: r[t.ConfigMapValue]) -> str:
+                def assert_fail(self, result: FlextResult[t.ConfigMapValue]) -> str:
                     """Assert result is failure and return error."""
                     ...
 
@@ -938,11 +939,11 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     **kwargs: t.Tests.PayloadValue,
                 ) -> (
-                    r[T]
-                    | r[Mapping[str, t.Tests.PayloadValue]]
-                    | r[BaseModel]
-                    | r[list[T]]
-                    | r[Mapping[str, T]]
+                    FlextResult[T]
+                    | FlextResult[Mapping[str, t.Tests.PayloadValue]]
+                    | FlextResult[BaseModel]
+                    | FlextResult[list[T]]
+                    | FlextResult[Mapping[str, T]]
                     | T
                 ):
                     """Build data wrapped in FlextResult.
