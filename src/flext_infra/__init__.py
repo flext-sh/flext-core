@@ -23,7 +23,15 @@ if TYPE_CHECKING:
     from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
     from flext_infra.discovery import FlextInfraDiscoveryService
     from flext_infra.git import FlextInfraGitService
+    from flext_infra.github import (
+        FlextInfraPrManager,
+        FlextInfraPrWorkspaceManager,
+        FlextInfraWorkflowLinter,
+        FlextInfraWorkflowSyncer,
+        SyncOperation,
+    )
     from flext_infra.json_io import FlextInfraJsonService
+    from flext_infra.maintenance import FlextInfraPythonVersionEnforcer
     from flext_infra.models import FlextInfraModels, FlextInfraModels as m
     from flext_infra.output import FlextInfraOutput
     from flext_infra.paths import FlextInfraPathResolver
@@ -42,20 +50,22 @@ if TYPE_CHECKING:
     from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
     from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
     from flext_infra.versioning import FlextInfraVersioningService
-    from flext_infra.github import (
-        FlextInfraPrManager,
-        FlextInfraPrWorkspaceManager,
-        FlextInfraWorkflowLinter,
-        FlextInfraWorkflowSyncer,
-        SyncOperation,
-    )
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkGenerator": ("flext_infra.basemk", "FlextInfraBaseMkGenerator"),
-    "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk", "FlextInfraBaseMkTemplateEngine"),
-    "FlextInfraCheckConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
-    "FlextInfraCheckWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
+    "FlextInfraBaseMkTemplateEngine": (
+        "flext_infra.basemk",
+        "FlextInfraBaseMkTemplateEngine",
+    ),
+    "FlextInfraCheckConfigFixer": (
+        "flext_infra.check.services",
+        "FlextInfraConfigFixer",
+    ),
+    "FlextInfraCheckWorkspaceChecker": (
+        "flext_infra.check.services",
+        "FlextInfraWorkspaceChecker",
+    ),
     "FlextInfraBaseMkValidator": (
         "flext_infra.core.basemk_validator",
         "FlextInfraBaseMkValidator",
@@ -80,28 +90,53 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.core.scanner",
         "FlextInfraTextPatternScanner",
     ),
-
     "FlextInfraCommandRunner": ("flext_infra.subprocess", "FlextInfraCommandRunner"),
     "FlextInfraConstants": ("flext_infra.constants", "FlextInfraConstants"),
-    "FlextInfraDiscoveryService": ("flext_infra.discovery", "FlextInfraDiscoveryService"),
+    "FlextInfraDiscoveryService": (
+        "flext_infra.discovery",
+        "FlextInfraDiscoveryService",
+    ),
     "FlextInfraGitService": ("flext_infra.git", "FlextInfraGitService"),
     "FlextInfraJsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
-    "FlextInfraLazyInitGenerator": ("flext_infra.codegen", "FlextInfraLazyInitGenerator"),
+    "FlextInfraLazyInitGenerator": (
+        "flext_infra.codegen",
+        "FlextInfraLazyInitGenerator",
+    ),
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
     "FlextInfraOutput": ("flext_infra.output", "FlextInfraOutput"),
     "FlextInfraPathResolver": ("flext_infra.paths", "FlextInfraPathResolver"),
     "FlextInfraPatterns": ("flext_infra.patterns", "FlextInfraPatterns"),
     "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
     "FlextInfraProtocols": ("flext_infra.protocols", "FlextInfraProtocols"),
-    "FlextInfraReleaseOrchestrator": ("flext_infra.release", "FlextInfraReleaseOrchestrator"),
-    "FlextInfraReportingService": ("flext_infra.reporting", "FlextInfraReportingService"),
+    "FlextInfraPythonVersionEnforcer": (
+        "flext_infra.maintenance",
+        "FlextInfraPythonVersionEnforcer",
+    ),
+    "FlextInfraReleaseOrchestrator": (
+        "flext_infra.release",
+        "FlextInfraReleaseOrchestrator",
+    ),
+    "FlextInfraReleaseOrchestrator": (
+        "flext_infra.release",
+        "FlextInfraReleaseOrchestrator",
+    ),
+    "FlextInfraReportingService": (
+        "flext_infra.reporting",
+        "FlextInfraReportingService",
+    ),
     "FlextInfraTemplateEngine": ("flext_infra.templates", "FlextInfraTemplateEngine"),
     "FlextInfraTomlService": ("flext_infra.toml_io", "FlextInfraTomlService"),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
-    "FlextInfraVersioningService": ("flext_infra.versioning", "FlextInfraVersioningService"),
+    "FlextInfraVersioningService": (
+        "flext_infra.versioning",
+        "FlextInfraVersioningService",
+    ),
     "FlextInfraPrManager": ("flext_infra.github", "FlextInfraPrManager"),
-    "FlextInfraPrWorkspaceManager": ("flext_infra.github", "FlextInfraPrWorkspaceManager"),
+    "FlextInfraPrWorkspaceManager": (
+        "flext_infra.github",
+        "FlextInfraPrWorkspaceManager",
+    ),
     "FlextInfraWorkflowLinter": ("flext_infra.github", "FlextInfraWorkflowLinter"),
     "FlextInfraWorkflowSyncer": ("flext_infra.github", "FlextInfraWorkflowSyncer"),
     "SyncOperation": ("flext_infra.github", "SyncOperation"),
@@ -122,36 +157,36 @@ __all__ = [
     "REPORTS_DIR_NAME",
     "FlextInfraBaseMkGenerator",
     "FlextInfraBaseMkTemplateEngine",
+    "FlextInfraBaseMkValidator",
     "FlextInfraCheckConfigFixer",
     "FlextInfraCheckWorkspaceChecker",
-    "FlextInfraBaseMkValidator",
-    "FlextInfraInventoryService",
-    "FlextInfraPytestDiagExtractor",
-    "FlextInfraSkillValidator",
-    "FlextInfraStubSupplyChain",
-    "FlextInfraTextPatternScanner",
-
     "FlextInfraCommandRunner",
     "FlextInfraConstants",
     "FlextInfraDiscoveryService",
     "FlextInfraGitService",
+    "FlextInfraInventoryService",
     "FlextInfraJsonService",
     "FlextInfraLazyInitGenerator",
     "FlextInfraModels",
     "FlextInfraOutput",
     "FlextInfraPathResolver",
     "FlextInfraPatterns",
+    "FlextInfraPrManager",
+    "FlextInfraPrWorkspaceManager",
     "FlextInfraProjectSelector",
     "FlextInfraProtocols",
+    "FlextInfraPytestDiagExtractor",
+    "FlextInfraPythonVersionEnforcer",
     "FlextInfraReleaseOrchestrator",
     "FlextInfraReportingService",
+    "FlextInfraSkillValidator",
+    "FlextInfraStubSupplyChain",
     "FlextInfraTemplateEngine",
+    "FlextInfraTextPatternScanner",
     "FlextInfraTomlService",
     "FlextInfraTypes",
     "FlextInfraUtilities",
     "FlextInfraVersioningService",
-    "FlextInfraPrManager",
-    "FlextInfraPrWorkspaceManager",
     "FlextInfraWorkflowLinter",
     "FlextInfraWorkflowSyncer",
     "SyncOperation",

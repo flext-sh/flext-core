@@ -13,7 +13,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from flext_core import r
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
@@ -35,11 +34,11 @@ class TestFlextInfraReleaseOrchestrator:
         return root
 
     def test_execute_not_implemented(self) -> None:
-        """Test that execute() returns failure (use run_release instead)."""
+        """Test that execute() returns ok(True) (use run_release instead)."""
         orchestrator = FlextInfraReleaseOrchestrator()
         result = orchestrator.execute()
-        assert result.is_failure
-        assert "Use run_release()" in result.error
+        assert result.is_success
+        assert result.value is True
 
     def test_run_release_invalid_phase(
         self,

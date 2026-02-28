@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 
 
@@ -44,11 +43,14 @@ class TestFlextInfraPythonVersionEnforcer:
         workspace_root: Path,
     ) -> None:
         """Test execute with check_only=True returns success."""
-        with patch.object(
-            enforcer,
-            "_discover_projects",
-            return_value=[workspace_root],
-        ), patch("sys.version_info") as mock_version:
+        with (
+            patch.object(
+                enforcer,
+                "_discover_projects",
+                return_value=[workspace_root],
+            ),
+            patch("sys.version_info") as mock_version,
+        ):
             mock_version.minor = 13
             result = enforcer.execute(check_only=True, verbose=False)
 
@@ -61,11 +63,14 @@ class TestFlextInfraPythonVersionEnforcer:
         workspace_root: Path,
     ) -> None:
         """Test execute in enforce mode (not check_only)."""
-        with patch.object(
-            enforcer,
-            "_discover_projects",
-            return_value=[workspace_root],
-        ), patch("sys.version_info") as mock_version:
+        with (
+            patch.object(
+                enforcer,
+                "_discover_projects",
+                return_value=[workspace_root],
+            ),
+            patch("sys.version_info") as mock_version,
+        ):
             mock_version.minor = 13
             result = enforcer.execute(check_only=False, verbose=False)
 
@@ -138,11 +143,14 @@ class TestFlextInfraPythonVersionEnforcer:
         workspace_root: Path,
     ) -> None:
         """Test discovering projects when none exist."""
-        with patch.object(
-            enforcer,
-            "_discover_projects",
-            return_value=[],
-        ), patch("sys.version_info") as mock_version:
+        with (
+            patch.object(
+                enforcer,
+                "_discover_projects",
+                return_value=[],
+            ),
+            patch("sys.version_info") as mock_version,
+        ):
             mock_version.minor = 13
             result = enforcer.execute(check_only=True)
 
@@ -192,11 +200,14 @@ class TestFlextInfraPythonVersionEnforcer:
         workspace_root: Path,
     ) -> None:
         """Test execute with verbose=True logs detailed output."""
-        with patch.object(
-            enforcer,
-            "_discover_projects",
-            return_value=[workspace_root],
-        ), patch("sys.version_info") as mock_version:
+        with (
+            patch.object(
+                enforcer,
+                "_discover_projects",
+                return_value=[workspace_root],
+            ),
+            patch("sys.version_info") as mock_version,
+        ):
             mock_version.minor = 13
             result = enforcer.execute(check_only=True, verbose=True)
 
