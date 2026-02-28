@@ -13,6 +13,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from flext_core import FlextResult as r
+from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 
 
@@ -301,3 +303,53 @@ class TestFlextInfraPythonVersionEnforcer:
             result = enforcer.execute(check_only=True, verbose=False)
 
         assert result.is_failure
+
+    def test_discover_projects_failure_returns_empty_list(
+        self,
+        enforcer: FlextInfraPythonVersionEnforcer,
+        workspace_root: Path,
+    ) -> None:
+        """Test _discover_projects returns empty list when discovery fails (line 167).
+
+        When discovery.discover_projects returns a failure result,
+        _discover_projects should return an empty list.
+        """
+
+        with patch.object(
+            FlextInfraDiscoveryService,
+            "discover_projects",
+            return_value=r[list].fail("discovery error"),
+        ):
+            result = enforcer._discover_projects(workspace_root)
+
+            assert result == []
+
+    def test_ensure_python_version_file_enforce_mode_logs_error(
+        self,
+        enforcer: FlextInfraPythonVersionEnforcer,
+        tmp_path: Path,
+    ) -> None:
+        """Test _ensure_python_version_file logs error in enforce mode (lines 196-202).
+
+        When check_only=False and version mismatch is found,
+        logger.error should be called with mismatch and manual update messages.
+        """
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "pyproject.toml").write_text(
+            'requires-python = ">=3.12"\n',
+            encoding="utf-8",
+        )
+
+        enforcer.check_only = False
+        with patch("flext_infra.maintenance.python_version.logger") as mock_logger:
+            with patch("sys.version_info") as mock_version:
+                mock_version.minor = 13
+                result = enforcer._ensure_python_version_file(
+                    project, required_minor=13
+                )
+
+                # Should return False due to mismatch
+                assert result is False
+                # logger.error should be called twice for enforce mode
+                assert mock_logger.error.call_count >= 2

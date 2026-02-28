@@ -324,3 +324,30 @@ class TestFlextInfraTomlService:
         nested = {"key": {"nested": "value"}}
         result = service.build_table(nested)
         assert result is not None
+
+    def test_sync_mapping_replaces_scalar_with_mapping(self) -> None:
+        """Test sync_mapping replaces scalar with mapping (lines 192-194).
+
+        When canonical has a nested mapping but target has a scalar value,
+        the scalar should be replaced with a new table.
+        """
+        service = FlextInfraTomlService()
+        target = {"section": "scalar_value"}
+        canonical = {"section": {"nested": "value"}}
+        added = []
+        updated = []
+        removed = []
+
+        service.sync_mapping(
+            target,
+            canonical,
+            prune_extras=False,
+            prefix="",
+            added=added,
+            updated=updated,
+            removed=removed,
+        )
+
+        # The scalar should be replaced with a mapping
+        assert isinstance(target["section"], dict)
+        assert "section" in added
