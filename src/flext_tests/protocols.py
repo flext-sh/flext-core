@@ -71,7 +71,7 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     *,
                     force: bool = False,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> None:
                     """Remove the container.
 
@@ -123,8 +123,8 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     *,
                     show_all: bool = False,
-                    filters: Mapping[str, str | Sequence[str]] | None = None,
-                    **kwargs: str | int | bool | None,
+                    filters: Mapping[str, t.Tests.PayloadValue] | None = None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Container]:
                     """List containers with filters.
 
@@ -142,9 +142,9 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     name: str | None = None,
                     detach: bool = True,
-                    ports: Mapping[str, str | int] | None = None,
+                    ports: Mapping[str, t.Tests.PayloadValue] | None = None,
                     environment: Sequence[str] | None = None,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextTestsProtocols.Tests.Docker.Container:
                     """Run a new container.
 
@@ -171,8 +171,8 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     *,
                     show_all: bool = False,
-                    filters: Mapping[str, str | Sequence[str]] | None = None,
-                    **kwargs: str | int | bool | None,
+                    filters: Mapping[str, t.Tests.PayloadValue] | None = None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Image]:
                     """List images with filters.
 
@@ -190,7 +190,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     tag: str | None = None,
                     build_args: Mapping[str, str] | None = None,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextTestsProtocols.Tests.Docker.Image:
                     """Build an image.
 
@@ -231,8 +231,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def list(
                     self,
                     *,
-                    filters: Mapping[str, str | Sequence[str]] | None = None,
-                    **kwargs: str | int | bool | None,
+                    filters: Mapping[str, t.Tests.PayloadValue] | None = None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Network]:
                     """List networks with filters.
 
@@ -248,8 +248,8 @@ class FlextTestsProtocols(FlextProtocols):
                     name: str,
                     *,
                     driver: str = "bridge",
-                    ipam: Mapping[str, str | Sequence[str]] | None = None,
-                    **kwargs: str | int | bool | None,
+                    ipam: Mapping[str, t.Tests.PayloadValue] | None = None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextTestsProtocols.Tests.Docker.Network:
                     """Create a network.
 
@@ -290,8 +290,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def list(
                     self,
                     *,
-                    filters: Mapping[str, str | Sequence[str]] | None = None,
-                    **kwargs: str | int | bool | None,
+                    filters: Mapping[str, t.Tests.PayloadValue] | None = None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Volume]:
                     """List volumes with filters.
 
@@ -308,7 +308,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     driver: str | None = None,
                     driver_opts: Mapping[str, str] | None = None,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextTestsProtocols.Tests.Docker.Volume:
                     """Create a volume.
 
@@ -355,7 +355,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     detach: bool = True,
                     build: bool = False,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> None:
                     """Start compose services.
 
@@ -374,7 +374,7 @@ class FlextTestsProtocols(FlextProtocols):
                     volumes: bool = False,
                     remove_orphans: bool = False,
                     timeout: int | None = None,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> None:
                     """Stop compose services.
 
@@ -392,7 +392,7 @@ class FlextTestsProtocols(FlextProtocols):
                     services: Sequence[str] | None = None,
                     *,
                     timeout: int | None = None,
-                    **kwargs: str | int | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> None:
                     """Restart compose services.
 
@@ -762,7 +762,7 @@ class FlextTestsProtocols(FlextProtocols):
                     content: t.Tests.PayloadValue,
                     name: str = ...,
                     directory: str | None = ...,
-                    **kwargs: str | float | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextProtocols.Result[Path]:
                     """Create file with auto-detection.
 
@@ -777,7 +777,7 @@ class FlextTestsProtocols(FlextProtocols):
                     path: Path | str,
                     *,
                     model_cls: type[BaseModel] | None = ...,
-                    **kwargs: str | float | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Read file with optional model deserialization.
 
@@ -793,7 +793,7 @@ class FlextTestsProtocols(FlextProtocols):
                     file2: Path | str,
                     *,
                     mode: str = ...,
-                    **kwargs: str | float | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextProtocols.Result[bool]:
                     """Compare two files.
 
@@ -809,7 +809,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     compute_hash: bool = ...,
                     detect_fmt: bool = ...,
-                    **kwargs: str | float | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Get comprehensive file information.
 
@@ -827,7 +827,7 @@ class FlextTestsProtocols(FlextProtocols):
                     operation: str = ...,
                     model: type[BaseModel] | None = ...,
                     on_error: str = ...,
-                    **kwargs: str | float | bool | None,
+                    **kwargs: t.Tests.PayloadValue,
                 ) -> FlextProtocols.Result[t.Tests.PayloadValue]:
                     """Batch file operations.
 

@@ -57,7 +57,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # Protocol compliance: BindableLogger._context property
     @override
     @property
-    def _context(self) -> MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]:
+    def _context(self) -> Mapping[str, object]:
         """Context mapping for BindableLogger protocol compliance."""
         return {}
 

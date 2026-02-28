@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from flext_core import FlextResult
+from flext_core.typings import t
 
-type FlextInfraScalar = str | int | float | bool | None
+type FlextInfraScalar = t.MetadataScalarValue
 type FlextInfraPayload = (
     FlextInfraScalar | Mapping[str, FlextInfraScalar] | Sequence[FlextInfraScalar]
 )

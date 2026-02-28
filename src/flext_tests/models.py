@@ -13,7 +13,7 @@ import datetime
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
-from typing import TypeAliasType
+from typing import TypeAliasType, override
 
 from flext_core import FlextModels, r, u
 from flext_core._models.base import FlextModelFoundation
@@ -63,6 +63,7 @@ class FlextTestsModels(FlextModels):
                 image: str
                 container_id: str = ""
 
+                @override
                 def model_post_init(self, __context: t.ConfigMapValue, /) -> None:
                     """Validate container info after initialization."""
                     super().model_post_init(__context)
@@ -80,6 +81,7 @@ class FlextTestsModels(FlextModels):
                 service: str
                 port: int
 
+                @override
                 def model_post_init(self, __context: t.ConfigMapValue, /) -> None:
                     """Validate container config after initialization."""
                     super().model_post_init(__context)
