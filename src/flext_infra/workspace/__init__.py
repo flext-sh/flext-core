@@ -21,7 +21,10 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "OrchestratorService": ("flext_infra.workspace.orchestrator", "OrchestratorService"),
+    "OrchestratorService": (
+        "flext_infra.workspace.orchestrator",
+        "OrchestratorService",
+    ),
     "ProjectMigrator": ("flext_infra.workspace.migrator", "ProjectMigrator"),
     "SyncService": ("flext_infra.workspace.sync", "SyncService"),
     "WorkspaceDetector": ("flext_infra.workspace.detector", "WorkspaceDetector"),

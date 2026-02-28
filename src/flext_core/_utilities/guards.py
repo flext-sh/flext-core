@@ -20,6 +20,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeGuard, TypeIs
 
+from pydantic import BaseModel
+
 from flext_core import m, p, r, t
 
 

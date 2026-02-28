@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import Protocol, Self, TypeIs, overload
+from typing import Self, TypeIs, overload
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -22,13 +22,6 @@ from returns.result import Failure, Result, Success
 from flext_core import FlextRuntime, T_Model, U, t
 
 _module_logger = logging.getLogger(__name__)
-
-
-class _RuntimeResultLike(Protocol):
-    """Protocol for objects that look like RuntimeResult (duck typing)."""
-
-    is_success: bool
-    is_failure: bool
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
