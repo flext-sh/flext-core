@@ -9,9 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
-import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
@@ -20,17 +20,17 @@ if TYPE_CHECKING:
         BaseMkGenerator as FlextInfraBaseMkGenerator,
         TemplateEngine as BaseMkTemplateEngine,
     )
-    from flext_infra.constants import FlextInfraConstants, c
+    from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
     from flext_infra.discovery import (
         DiscoveryService,
         DiscoveryService as FlextInfraDiscoveryService,
     )
     from flext_infra.git import GitService, GitService as FlextInfraGitService
     from flext_infra.json_io import JsonService, JsonService as FlextInfraJsonService
-    from flext_infra.models import FlextInfraModels, m
+    from flext_infra.models import FlextInfraModels, FlextInfraModels as m
     from flext_infra.paths import PathResolver, PathResolver as FlextInfraPathResolver
     from flext_infra.patterns import FlextInfraPatterns
-    from flext_infra.protocols import FlextInfraProtocols, p
+    from flext_infra.protocols import FlextInfraProtocols, FlextInfraProtocols as p
     from flext_infra.release import (
         ReleaseOrchestrator,
         ReleaseOrchestrator as FlextInfraReleaseOrchestrator,
@@ -54,8 +54,8 @@ if TYPE_CHECKING:
         TemplateEngine as FlextInfraTemplateEngine,
     )
     from flext_infra.toml_io import TomlService, TomlService as FlextInfraTomlService
-    from flext_infra.typings import FlextInfraTypes, t
-    from flext_infra.utilities import FlextInfraUtilities, u
+    from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
+    from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
     from flext_infra.versioning import (
         VersioningService,
         VersioningService as FlextInfraVersioningService,
@@ -63,10 +63,6 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    # Version info
-    "__version__": ("flext_infra.__version__", "__version__"),
-    "__version_info__": ("flext_infra.__version__", "__version_info__"),
-    # Facade classes and aliases
     "BaseMkGenerator": ("flext_infra.basemk", "BaseMkGenerator"),
     "BaseMkTemplateEngine": ("flext_infra.basemk", "TemplateEngine"),
     "CommandRunner": ("flext_infra.subprocess", "CommandRunner"),
@@ -100,7 +96,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TemplateEngine": ("flext_infra.templates", "TemplateEngine"),
     "TomlService": ("flext_infra.toml_io", "TomlService"),
     "VersioningService": ("flext_infra.versioning", "VersioningService"),
-    # Aliases
+    "__version__": ("flext_infra.__version__", "__version__"),
+    "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),
     "m": ("flext_infra.models", "FlextInfraModels"),
     "p": ("flext_infra.protocols", "FlextInfraProtocols"),
@@ -152,26 +149,9 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> object:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    This defers all imports until actually needed, reducing startup time
-    from ~1.2s to <50ms for bare `import flext_infra`.
-
-    Handles submodule namespace pollution: when a submodule like
-    flext_infra.__version__ is imported, Python adds it to the parent
-    module's namespace. We need to check _LAZY_IMPORTS first to ensure
-    we return the attribute, not the submodule.
-    """
-    if name in _LAZY_IMPORTS:
-        module_path, attr_name = _LAZY_IMPORTS[name]
-        module = importlib.import_module(module_path)
-        value = getattr(module, attr_name)
-        # Cache in globals() to avoid repeated lookups
-        globals()[name] = value
-        return value
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
+def __getattr__(name: str) -> Any:  # noqa: ANN401
+    """Lazy-load module attributes on first access (PEP 562)."""
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 
 def __dir__() -> list[str]:
@@ -179,44 +159,4 @@ def __dir__() -> list[str]:
     return sorted(__all__)
 
 
-# Clean up submodule namespace pollution
-# When submodules like flext_infra.__version__ are imported, Python adds them
-# to the parent module's namespace. We remove them to force __getattr__ usage.
-def _cleanup_submodule_namespace() -> None:
-    """Remove submodules from namespace to force __getattr__ usage."""
-    # Get the current module
-    current_module = sys.modules[__name__]
-
-    # List of submodule names that might pollute the namespace
-    submodule_names = [
-        "__version__",  # flext_infra.__version__
-        "basemk",
-        "constants",
-        "discovery",
-        "git",
-        "json_io",
-        "models",
-        "paths",
-        "patterns",
-        "protocols",
-        "release",
-        "reporting",
-        "selection",
-        "subprocess",
-        "templates",
-        "toml_io",
-        "typings",
-        "utilities",
-        "versioning",
-    ]
-
-    # Remove submodules from the module's namespace
-    for submodule_name in submodule_names:
-        if hasattr(current_module, submodule_name):
-            attr = getattr(current_module, submodule_name)
-            # Only remove if it's a module (not our lazy-loaded values)
-            if isinstance(attr, type(sys)):
-                delattr(current_module, submodule_name)
-
-
-_cleanup_submodule_namespace()
+cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

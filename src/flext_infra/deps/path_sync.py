@@ -20,7 +20,7 @@ logger = FlextLogger.create_module_logger(__name__)
 FLEXT_DEPS_DIR = ".flext-deps"
 
 _PEP621_PATH_DEP_RE = re.compile(
-    r"^(?P<name>[A-Za-z0-9_.-]+)\s*@\s*(?:file:)?(?P<path>.+)$",
+    r"^(?P<name>[A-Za-z0-9_.-]+)\s*@\s*(?:file:(?://)?)?(?P<path>.+)$",
 )
 _PEP621_NAME_RE = re.compile(r"^\s*(?P<name>[A-Za-z0-9_.-]+)")
 
@@ -46,7 +46,7 @@ def detect_mode(project_root: Path) -> str:
 
 def extract_dep_name(raw_path: str) -> str:
     """Extract dependency name from path string."""
-    normalized = raw_path.strip().removeprefix("./")
+    normalized = raw_path.strip().lstrip("/").removeprefix("./")
     for prefix in (f"{FLEXT_DEPS_DIR}/", "../"):
         normalized = normalized.removeprefix(prefix)
     return normalized
@@ -109,7 +109,7 @@ def _rewrite_pep621(
 
         new_path = _target_path(dep_name, is_root=is_root, mode=mode)
         path_prefix = "./" if is_root else ""
-        new_entry = f"{dep_name} @ {path_prefix}{new_path}{marker}"
+        new_entry = f"{dep_name} @ file:{path_prefix}{new_path}{marker}"
         if item != new_entry:
             changes.append(f"  PEP621: {item} -> {new_entry}")
             deps[index] = new_entry

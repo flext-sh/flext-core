@@ -6,6 +6,7 @@ Usage:
 Groups:
     basemk        Base.mk template generation
     check         Lint gates and pyrefly config management
+    codegen       Code generation (lazy-init, standardization)
     core          Infrastructure validators and diagnostics
     deps          Dependency detection, sync, and modernization
     docs          Documentation audit, fix, build, generate, validate
@@ -34,6 +35,7 @@ _MIN_ARGV = 2
 _GROUPS: Mapping[str, str] = MappingProxyType({
     "basemk": "flext_infra.basemk.__main__",
     "check": "flext_infra.check.__main__",
+    "codegen": "flext_infra.codegen.__main__",
     "core": "flext_infra.core.__main__",
     "deps": "flext_infra.deps.__main__",
     "docs": "flext_infra.docs.__main__",
@@ -50,6 +52,7 @@ def _print_help() -> None:
     descriptions: Mapping[str, str] = {
         "basemk": "Base.mk template generation",
         "check": "Lint gates and pyrefly config management",
+        "codegen": "Code generation (lazy-init, standardization)",
         "core": "Infrastructure validators and diagnostics",
         "deps": "Dependency detection, sync, and modernization",
         "docs": "Documentation audit, fix, build, generate, validate",

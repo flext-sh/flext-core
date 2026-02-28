@@ -23,7 +23,7 @@ from typing import (
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core import FlextRuntime, p, r, t
+from flext_core import p, r, t
 
 _ValidatedParams = ParamSpec("_ValidatedParams")
 _ValidatedReturn = TypeVar("_ValidatedReturn")

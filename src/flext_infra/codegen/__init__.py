@@ -1,6 +1,7 @@
-"""Maintenance services.
+"""Code generation services.
 
-Provides services for workspace maintenance, cleanup, and operational tasks.
+Provides code generation tools for workspace standardization,
+including lazy-import init file generation (PEP 562).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,15 +14,15 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.maintenance.python_version import PythonVersionEnforcer
+    from flext_infra.codegen.lazy_init import LazyInitGenerator
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "PythonVersionEnforcer": ("flext_infra.maintenance.python_version", "PythonVersionEnforcer"),
+    "LazyInitGenerator": ("flext_infra.codegen.lazy_init", "LazyInitGenerator"),
 }
 
 __all__ = [
-    "PythonVersionEnforcer",
+    "LazyInitGenerator",
 ]
 
 
