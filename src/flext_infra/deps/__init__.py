@@ -46,33 +46,18 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "DependencyDetectionModels": (
-        "flext_infra.deps.detection",
-        "DependencyDetectionModels",
-    ),
-    "DependencyDetectionService": (
-        "flext_infra.deps.detection",
-        "DependencyDetectionService",
-    ),
-    "DependencyDetectorModels": (
-        "flext_infra.deps.detector",
-        "DependencyDetectorModels",
-    ),
+    "DependencyDetectionModels": ("flext_infra.deps.detection", "DependencyDetectionModels"),
+    "DependencyDetectionService": ("flext_infra.deps.detection", "DependencyDetectionService"),
+    "DependencyDetectorModels": ("flext_infra.deps.detector", "DependencyDetectorModels"),
     "EXTRA_PATHS_ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
     "FLEXT_DEPS_DIR": ("flext_infra.deps.path_sync", "FLEXT_DEPS_DIR"),
-    "InternalDependencySyncService": (
-        "flext_infra.deps.internal_sync",
-        "InternalDependencySyncService",
-    ),
+    "InternalDependencySyncService": ("flext_infra.deps.internal_sync", "InternalDependencySyncService"),
     "MYPY_BASE_PROJECT": ("flext_infra.deps.extra_paths", "MYPY_BASE_PROJECT"),
     "MYPY_BASE_ROOT": ("flext_infra.deps.extra_paths", "MYPY_BASE_ROOT"),
     "PYRIGHT_BASE_PROJECT": ("flext_infra.deps.extra_paths", "PYRIGHT_BASE_PROJECT"),
     "PYRIGHT_BASE_ROOT": ("flext_infra.deps.extra_paths", "PYRIGHT_BASE_ROOT"),
     "PyprojectModernizer": ("flext_infra.deps.modernizer", "PyprojectModernizer"),
-    "RuntimeDevDependencyDetector": (
-        "flext_infra.deps.detector",
-        "RuntimeDevDependencyDetector",
-    ),
+    "RuntimeDevDependencyDetector": ("flext_infra.deps.detector", "RuntimeDevDependencyDetector"),
     "ddm": ("flext_infra.deps.detector", "ddm"),
     "detect_mode": ("flext_infra.deps.path_sync", "detect_mode"),
     "dm": ("flext_infra.deps.detection", "dm"),

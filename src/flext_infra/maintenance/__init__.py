@@ -17,10 +17,7 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "PythonVersionEnforcer": (
-        "flext_infra.maintenance.python_version",
-        "PythonVersionEnforcer",
-    ),
+    "PythonVersionEnforcer": ("flext_infra.maintenance.python_version", "PythonVersionEnforcer"),
 }
 
 __all__ = [

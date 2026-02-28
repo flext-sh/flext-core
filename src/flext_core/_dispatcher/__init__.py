@@ -25,10 +25,7 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "CircuitBreakerManager": (
-        "flext_core._dispatcher.reliability",
-        "CircuitBreakerManager",
-    ),
+    "CircuitBreakerManager": ("flext_core._dispatcher.reliability", "CircuitBreakerManager"),
     "FlextTypes": ("flext_core", "FlextTypes"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),

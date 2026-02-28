@@ -21,33 +21,19 @@ from typing import TYPE_CHECKING, Any
 from flext_core import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_tests import (
-        FlextTestsBuilders,
-        FlextTestsConstants,
-        FlextTestsConstants as c,
-        FlextTestsDocker,
-        FlextTestsDomains,
-        FlextTestsFactories,
-        FlextTestsFiles,
-        FlextTestsMatchers,
-        FlextTestsModels,
-        FlextTestsModels as m,
-        FlextTestsProtocols,
-        FlextTestsProtocols as p,
-        FlextTestsServiceBase,
-        FlextTestsTypes,
-        FlextTestsTypes as t,
-        FlextTestsUtilities,
-        FlextTestsUtilities as u,
-        FlextTestsUtilityBase,
-        FlextTestsValidator,
-        s,
-        tb,
-        tf,
-        tm,
-        tt,
-        tv,
-    )
+    from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s
+    from flext_tests.builders import FlextTestsBuilders, tb
+    from flext_tests.constants import FlextTestsConstants, FlextTestsConstants as c
+    from flext_tests.docker import FlextTestsDocker
+    from flext_tests.domains import FlextTestsDomains
+    from flext_tests.factories import FlextTestsFactories, tt
+    from flext_tests.files import FlextTestsFiles, tf
+    from flext_tests.matchers import FlextTestsMatchers, tm
+    from flext_tests.models import FlextTestsModels, FlextTestsModels as m
+    from flext_tests.protocols import FlextTestsProtocols, FlextTestsProtocols as p
+    from flext_tests.typings import FlextTestsTypes, FlextTestsTypes as t
+    from flext_tests.utilities import FlextTestsUtilities, FlextTestsUtilities as u
+    from flext_tests.validator import FlextTestsValidator, tv
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

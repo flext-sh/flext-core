@@ -6,7 +6,7 @@ import io
 import re
 from unittest.mock import patch
 
-from flext_infra import (
+from flext_infra.output import (
     InfraOutput,
     _should_use_color,
     _should_use_unicode,

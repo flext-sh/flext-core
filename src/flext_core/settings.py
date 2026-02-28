@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Any, ClassVar, Self, override
+from typing import Any, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -64,7 +64,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
     # p.Config Protocol Implementation (validated at class definition)
     # =========================================================================
 
-    @override
     def _protocol_name(self) -> str:
         return "FlextSettings"
 

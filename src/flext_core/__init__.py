@@ -21,37 +21,27 @@ from typing import TYPE_CHECKING, Any
 from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core import (
+    from flext_core.__version__ import __version__, __version_info__
+    from flext_core.constants import FlextConstants, FlextConstants as c
+    from flext_core.container import FlextContainer
+    from flext_core.context import FlextContext
+    from flext_core.decorators import FlextDecorators, FlextDecorators as d
+    from flext_core.dispatcher import FlextDispatcher
+    from flext_core.exceptions import FlextExceptions, FlextExceptions as e
+    from flext_core.handlers import FlextHandlers, FlextHandlers as h
+    from flext_core.loggings import FlextLogger
+    from flext_core.mixins import FlextMixins, FlextMixins as x
+    from flext_core.models import FlextModels, FlextModels as m
+    from flext_core.protocols import FlextProtocols, FlextProtocols as p
+    from flext_core.registry import FlextRegistry
+    from flext_core.result import FlextResult, FlextResult as r
+    from flext_core.runtime import FlextRuntime
+    from flext_core.service import FlextService, FlextService as s
+    from flext_core.settings import FlextSettings
+    from flext_core.typings import (
         E,
-        FlextConstants,
-        FlextConstants as c,
-        FlextContainer,
-        FlextContext,
-        FlextDecorators,
-        FlextDecorators as d,
-        FlextDispatcher,
-        FlextExceptions,
-        FlextExceptions as e,
-        FlextHandlers,
-        FlextHandlers as h,
-        FlextLogger,
-        FlextMixins,
-        FlextMixins as x,
-        FlextModels,
-        FlextModels as m,
-        FlextProtocols,
-        FlextProtocols as p,
-        FlextRegistry,
-        FlextResult,
-        FlextResult as r,
-        FlextRuntime,
-        FlextService,
-        FlextService as s,
-        FlextSettings,
         FlextTypes,
         FlextTypes as t,
-        FlextUtilities,
-        FlextUtilities as u,
         MessageT_contra,
         P,
         R,
@@ -63,9 +53,8 @@ if TYPE_CHECKING:
         T_Namespace,
         T_Settings,
         U,
-        __version__,
-        __version_info__,
     )
+    from flext_core.utilities import FlextUtilities, FlextUtilities as u
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

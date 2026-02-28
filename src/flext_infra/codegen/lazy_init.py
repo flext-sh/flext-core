@@ -20,7 +20,7 @@ import subprocess  # noqa: S404
 from collections import defaultdict
 from pathlib import Path
 
-from flext_infra import output
+from flext_infra.output import output
 
 _ALIAS_TO_SUFFIX: dict[str, str] = {
     "c": "Constants",

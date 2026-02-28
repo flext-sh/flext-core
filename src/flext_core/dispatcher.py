@@ -14,7 +14,7 @@ import logging
 from collections.abc import MutableMapping
 from typing import Protocol, runtime_checkable
 
-from flext_core import FlextProtocols as p, c, r, t
+from flext_core import c, p, r, t
 
 
 @runtime_checkable
