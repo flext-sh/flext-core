@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import p, r, t
+from flext_core.exceptions import e
 from returns.io import IO, IOSuccess
 
 
@@ -381,7 +382,6 @@ class TestToIOChainsException:
 
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
-        from flext_core import e  # noqa: PLC0415
 
         exc = ValueError("conversion error")
         result = r[int].fail("error", exception=exc)
