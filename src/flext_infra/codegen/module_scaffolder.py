@@ -85,7 +85,7 @@ class FlextInfraModuleScaffolder(FlextService[list[FlextInfraModels.ScaffoldResu
             ScaffoldResult with lists of created and skipped files.
 
         """
-        prefix = FlextInfraNamespaceValidator._derive_prefix(project_path)
+        prefix = FlextInfraNamespaceValidator.derive_prefix(project_path)
         if not prefix:
             return FlextInfraModels.ScaffoldResult(
                 project=project_path.name,

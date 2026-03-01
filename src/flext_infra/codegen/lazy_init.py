@@ -83,6 +83,7 @@ class FlextInfraLazyInitGenerator(FlextService[int]):
             scan_tests: If True, also scan ``tests/**/__init__.py`` files.
 
         Returns the number of files that had unmapped exports (0 = perfect).
+
         """
         patterns = ["src/**/__init__.py"]
         if scan_tests:

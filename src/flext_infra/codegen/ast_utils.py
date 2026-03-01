@@ -45,9 +45,9 @@ class FlextInfraAstUtils:
 
             func = stmt.value.func
             is_typevar = False
-            if isinstance(func, ast.Name) and func.id == "TypeVar":
-                is_typevar = True
-            elif isinstance(func, ast.Attribute) and func.attr == "TypeVar":
+            if (isinstance(func, ast.Name) and func.id == "TypeVar") or (
+                isinstance(func, ast.Attribute) and func.attr == "TypeVar"
+            ):
                 is_typevar = True
 
             if is_typevar and not FlextInfraAstUtils.is_used_in_context(stmt, tree):
@@ -86,9 +86,12 @@ class FlextInfraAstUtils:
                 continue
 
             annotation = stmt.annotation
-            if isinstance(annotation, ast.Name) and annotation.id == "TypeAlias":
-                if not FlextInfraAstUtils.is_used_in_context(stmt, tree):
-                    matches.append(stmt)
+            if (
+                isinstance(annotation, ast.Name)
+                and annotation.id == "TypeAlias"
+                and not FlextInfraAstUtils.is_used_in_context(stmt, tree)
+            ):
+                matches.append(stmt)
         return matches
 
     @staticmethod
@@ -166,9 +169,13 @@ class {class_name}({base_class}):
     @staticmethod
     def run_ruff_fix(path: Path) -> None:
         """Run ruff check --fix and ruff format on a file."""
-        _ = subprocess.run(
-            ["ruff", "check", "--fix", str(path)], check=False, capture_output=True
+        _ = subprocess.run(  # noqa: S603
+            ["ruff", "check", "--fix", str(path)],  # noqa: S607
+            check=False,
+            capture_output=True,
         )
-        _ = subprocess.run(
-            ["ruff", "format", str(path)], check=False, capture_output=True
+        _ = subprocess.run(  # noqa: S603
+            ["ruff", "format", str(path)],  # noqa: S607
+            check=False,
+            capture_output=True,
         )

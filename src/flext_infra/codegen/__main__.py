@@ -14,13 +14,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import sys
 import json
+import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
 
+from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
+from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.codegen.lazy_init import FlextInfraLazyInitGenerator
+from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
 from flext_infra.output import output
 
 
@@ -156,8 +159,6 @@ def _handle_lazy_init(args: argparse.Namespace) -> int:
 
 def _handle_census(args: argparse.Namespace) -> int:
     """Handle the ``census`` subcommand."""
-    from flext_infra.codegen.census import FlextInfraCodegenCensus
-
     census = FlextInfraCodegenCensus(workspace_root=args.workspace.resolve())
     reports = census.run()
 
@@ -184,8 +185,6 @@ def _handle_census(args: argparse.Namespace) -> int:
 
 def _handle_scaffold(args: argparse.Namespace) -> int:
     """Handle the ``scaffold`` subcommand."""
-    from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
-
     scaffolder = FlextInfraModuleScaffolder(workspace_root=args.workspace.resolve())
     if args.dry_run:
         output.info("Dry-run mode: no files will be created")
@@ -195,14 +194,14 @@ def _handle_scaffold(args: argparse.Namespace) -> int:
     for res in results:
         if res.files_created:
             output.info(f"  {res.project}: created {len(res.files_created)} files")
-    output.info(f"Scaffold: {total_created} created, {total_skipped} skipped across {len(results)} projects")
+    output.info(
+        f"Scaffold: {total_created} created, {total_skipped} skipped across {len(results)} projects"
+    )
     return 0
 
 
 def _handle_auto_fix(args: argparse.Namespace) -> int:
     """Handle the ``auto-fix`` subcommand."""
-    from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
-
     fixer = FlextInfraAutoFixer(workspace_root=args.workspace.resolve())
     if args.dry_run:
         output.info("Dry-run mode: no files will be modified")
@@ -211,17 +210,17 @@ def _handle_auto_fix(args: argparse.Namespace) -> int:
     total_skipped = sum(len(res.violations_skipped) for res in results)
     for res in results:
         if res.violations_fixed:
-            output.info(f"  {res.project}: fixed {len(res.violations_fixed)} violations")
-    output.info(f"Auto-fix: {total_fixed} fixed, {total_skipped} skipped across {len(results)} projects")
+            output.info(
+                f"  {res.project}: fixed {len(res.violations_fixed)} violations"
+            )
+    output.info(
+        f"Auto-fix: {total_fixed} fixed, {total_skipped} skipped across {len(results)} projects"
+    )
     return 0
 
 
 def _handle_pipeline(args: argparse.Namespace) -> int:
     """Handle the ``pipeline`` subcommand (full codegen cycle)."""
-    from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
-    from flext_infra.codegen.census import FlextInfraCodegenCensus
-    from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
-
     workspace = args.workspace.resolve()
 
     # Phase 1: Census before

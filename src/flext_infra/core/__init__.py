@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from flext_infra.core.__main__ import main
     from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
     from flext_infra.core.inventory import FlextInfraInventoryService
+    from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
     from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor
     from flext_infra.core.scanner import FlextInfraTextPatternScanner
     from flext_infra.core.skill_validator import FlextInfraSkillValidator
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkValidator": ("flext_infra.core.basemk_validator", "FlextInfraBaseMkValidator"),
     "FlextInfraInventoryService": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
+    "FlextInfraNamespaceValidator": ("flext_infra.core.namespace_validator", "FlextInfraNamespaceValidator"),
     "FlextInfraPytestDiagExtractor": ("flext_infra.core.pytest_diag", "FlextInfraPytestDiagExtractor"),
     "FlextInfraSkillValidator": ("flext_infra.core.skill_validator", "FlextInfraSkillValidator"),
     "FlextInfraStubSupplyChain": ("flext_infra.core.stub_chain", "FlextInfraStubSupplyChain"),
@@ -37,6 +39,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 __all__ = [
     "FlextInfraBaseMkValidator",
     "FlextInfraInventoryService",
+    "FlextInfraNamespaceValidator",
     "FlextInfraPytestDiagExtractor",
     "FlextInfraSkillValidator",
     "FlextInfraStubSupplyChain",

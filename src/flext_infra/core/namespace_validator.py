@@ -146,6 +146,19 @@ class FlextInfraNamespaceValidator:
                 return "".join(part.title() for part in child.name.split("_"))
         return ""
 
+    @staticmethod
+    def derive_prefix(project_root: Path) -> str:
+        """Public wrapper for deriving the class name prefix from a project.
+
+        Args:
+            project_root: Root directory of the project.
+
+        Returns:
+            The PascalCase prefix derived from the package name.
+
+        """
+        return FlextInfraNamespaceValidator._derive_prefix(project_root)
+
     # -- AST helpers ----------------------------------------------------------
 
     def _parse_file(self, path: Path) -> ast.Module | None:

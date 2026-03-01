@@ -75,7 +75,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
             AutoFixResult with lists of fixed and skipped violations.
 
         """
-        prefix = FlextInfraNamespaceValidator._derive_prefix(project_path)
+        prefix = FlextInfraNamespaceValidator.derive_prefix(project_path)
         if not prefix:
             return FlextInfraModels.AutoFixResult(
                 project=project_path.name,
@@ -123,7 +123,6 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
                 source_file=py_file,
                 tree=tree,
                 pkg_dir=pkg_dir,
-                prefix=prefix,
                 violations_fixed=violations_fixed,
                 violations_skipped=violations_skipped,
                 files_modified=files_modified,
@@ -132,7 +131,6 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
                 source_file=py_file,
                 tree=tree,
                 pkg_dir=pkg_dir,
-                prefix=prefix,
                 violations_fixed=violations_fixed,
                 violations_skipped=violations_skipped,
                 files_modified=files_modified,
@@ -151,7 +149,6 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
         source_file: Path,
         tree: ast.Module,
         pkg_dir: Path,
-        prefix: str,
         violations_fixed: list[FlextInfraModels.CensusViolation],
         violations_skipped: list[FlextInfraModels.CensusViolation],
         files_modified: set[str],
@@ -195,7 +192,6 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
         source_file: Path,
         tree: ast.Module,
         pkg_dir: Path,
-        prefix: str,
         violations_fixed: list[FlextInfraModels.CensusViolation],
         violations_skipped: list[FlextInfraModels.CensusViolation],
         files_modified: set[str],
