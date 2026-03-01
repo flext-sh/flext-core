@@ -22,22 +22,9 @@ from pathlib import Path
 from typing import Final
 
 from flext_core import FlextResult, FlextService, r
+from flext_core.constants import KNOWN_VERBS
 
 REPORTS_DIR_NAME: Final[str] = ".reports"
-# Top-level reports directory name (always `.reports`).
-
-KNOWN_VERBS: Final[frozenset[str]] = frozenset({
-    "build",
-    "check",
-    "dependencies",
-    "docs",
-    "preflight",
-    "release",
-    "tests",
-    "validate",
-    "workspace",
-})
-# Standard subdirectory verbs under `.reports/`.
 
 
 class FlextInfraReportingService(FlextService[Path]):
@@ -65,16 +52,7 @@ class FlextInfraReportingService(FlextService[Path]):
         """
         return r[Path].ok(Path())
 
-    # ------------------------------------------------------------------
-    # New standardized API
-    # ------------------------------------------------------------------
-
-    def get_report_dir(
-        self,
-        root: Path | str,
-        scope: str,
-        verb: str,
-    ) -> Path:
+    def get_report_dir(self, root: Path | str, scope: str, verb: str) -> Path:
         """Build a standardized report directory path (no I/O).
 
         Args:
@@ -93,11 +71,7 @@ class FlextInfraReportingService(FlextService[Path]):
         return (base / verb).resolve()
 
     def get_report_path(
-        self,
-        root: Path | str,
-        scope: str,
-        verb: str,
-        filename: str,
+        self, root: Path | str, scope: str, verb: str, filename: str
     ) -> Path:
         """Build a standardized report file path (no I/O).
 
@@ -114,10 +88,7 @@ class FlextInfraReportingService(FlextService[Path]):
         return self.get_report_dir(root, scope, verb) / filename
 
     def ensure_report_dir(
-        self,
-        root: Path | str,
-        scope: str,
-        verb: str,
+        self, root: Path | str, scope: str, verb: str
     ) -> FlextResult[Path]:
         """Ensure report directory exists, creating it if necessary.
 
@@ -137,11 +108,7 @@ class FlextInfraReportingService(FlextService[Path]):
         except OSError as exc:
             return r[Path].fail(f"failed to create report directory: {exc}")
 
-    def create_latest_symlink(
-        self,
-        report_dir: Path,
-        run_id: str,
-    ) -> FlextResult[Path]:
+    def create_latest_symlink(self, report_dir: Path, run_id: str) -> FlextResult[Path]:
         """Create or update a ``latest`` symlink pointing to *run_id*.
 
         Args:

@@ -8,7 +8,6 @@ from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
 T = TypeVar("T")
-R2 = TypeVar("R2")
 
 
 class ResultHelpers:
@@ -26,17 +25,13 @@ class ResultHelpers:
 
     @staticmethod
     def vals(
-        items: Mapping[str, T] | r[Mapping[str, T]],
-        *,
-        default: list[T] | None = None,
+        items: Mapping[str, T] | r[Mapping[str, T]], *, default: list[T] | None = None
     ) -> list[T]:
         if isinstance(items, r):
             if items.is_failure:
                 return default if default is not None else []
             return list(items.value.values())
-        return (
-            list(items.values()) if items else (default if default is not None else [])
-        )
+        return list(items.values()) if items else default if default is not None else []
 
     @staticmethod
     def vals_sequence(results: Sequence[p.Result[T]]) -> list[T]:

@@ -14,36 +14,38 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Literal
 
+KNOWN_VERBS: Final[frozenset[str]] = frozenset({
+    "build",
+    "check",
+    "dependencies",
+    "docs",
+    "preflight",
+    "release",
+    "tests",
+    "validate",
+    "workspace",
+})
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
 _MAX_TIMEOUT_SECONDS: Final[int] = 3600
 _MIN_TIMEOUT_SECONDS: Final[int] = 1
-
 _DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
-
 _DEFAULT_BATCH_SIZE: Final[int] = 1000
-
 _DEFAULT_PAGE_SIZE: Final[int] = 10
 _MAX_PAGE_SIZE: Final[int] = 1000
 _MIN_PAGE_SIZE: Final[int] = 1
-
 _DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = 3
-
 _DEFAULT_WORKERS: Final[int] = 4
-
 _DEFAULT_POOL_SIZE: Final[int] = 10
 _MAX_POOL_SIZE: Final[int] = 100
 _MIN_POOL_SIZE: Final[int] = 1
-
 _MAX_NAME_LENGTH: Final[int] = 100
 _MAX_OPERATION_NAME_LENGTH: Final[int] = 100
-
 _MAX_PORT_NUMBER: Final[int] = 65535
 _MIN_PORT_NUMBER: Final[int] = 1
 _MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = 300.0
 _MAX_RETRY_COUNT_VALIDATION: Final[int] = 10
 _MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = 253
 _MAX_WORKERS_VALIDATION: Final[int] = 100
-
 _ZERO: Final[int] = 0
 _EXPECTED_TUPLE_LENGTH: Final[int] = 2
 _DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
@@ -104,52 +106,41 @@ class FlextConstants:
             WARN = "warn"
             ERROR = "error"
 
-    # Core identifiers
     NAME: Final[str] = "FLEXT"
     ZERO: Final[int] = _ZERO
     INITIAL_TIME: Final[float] = 0.0
-
     DEFAULT_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
     MAX_TIMEOUT_SECONDS: Final[int] = _MAX_TIMEOUT_SECONDS
     MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
-
     DEFAULT_MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
-
     DEFAULT_BATCH_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
-
     DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
     MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
     MIN_PAGE_SIZE: Final[int] = _MIN_PAGE_SIZE
-
     DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
-
     DEFAULT_WORKERS: Final[int] = _DEFAULT_WORKERS
-
     DEFAULT_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
     MAX_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
     MIN_POOL_SIZE: Final[int] = _MIN_POOL_SIZE
-
     MAX_NAME_LENGTH: Final[int] = _MAX_NAME_LENGTH
     MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
-
     MAX_PORT_NUMBER: Final[int] = _MAX_PORT_NUMBER
     MIN_PORT_NUMBER: Final[int] = _MIN_PORT_NUMBER
     MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = _MAX_TIMEOUT_VALIDATION_SECONDS
     MAX_RETRY_COUNT_VALIDATION: Final[int] = _MAX_RETRY_COUNT_VALIDATION
     MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = _MAX_HOSTNAME_LENGTH_VALIDATION
     MAX_WORKERS_VALIDATION: Final[int] = _MAX_WORKERS_VALIDATION
-
     EXPECTED_TUPLE_LENGTH: Final[int] = _EXPECTED_TUPLE_LENGTH
     EVENT_TUPLE_SIZE: Final[int] = 2
-    """Domain event tuple size (event_type, event_data)."""
+    "Domain event tuple size (event_type, event_data)."
     MIN_QUALNAME_PARTS_FOR_WRAPPER: Final[int] = 2
-    """Minimum qualname parts for wrapper detection."""
+    "Minimum qualname parts for wrapper detection."
     PERCENTAGE_MULTIPLIER: Final[int] = 100
-    """Multiplier for percentage calculations (100 = 100%)."""
+    "Multiplier for percentage calculations (100 = 100%)."
     MILLISECONDS_MULTIPLIER: Final[int] = 1000
-    """Multiplier to convert seconds to milliseconds."""
+    "Multiplier to convert seconds to milliseconds."
     MICROSECONDS_MULTIPLIER: Final[int] = 1000000
-    """Multiplier to convert seconds to microseconds."""
+    "Multiplier to convert seconds to microseconds."
     DEFAULT_FAILURE_THRESHOLD: Final[int] = _DEFAULT_FAILURE_THRESHOLD
     PREVIEW_LENGTH: Final[int] = _PREVIEW_LENGTH
     DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = _DEFAULT_RECOVERY_TIMEOUT_SECONDS
@@ -165,7 +156,6 @@ class FlextConstants:
 
         LOOPBACK_IP: Final[str] = "127.0.0.1"
         LOCALHOST: Final[str] = "localhost"
-
         MIN_PORT: Final[int] = _MIN_PORT_NUMBER
         MAX_PORT: Final[int] = _MAX_PORT_NUMBER
         DEFAULT_TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
@@ -199,9 +189,9 @@ class FlextConstants:
         RETRY_COUNT_MAX: Final[int] = 3
         MAX_WORKERS_LIMIT: Final[int] = _MAX_WORKERS_VALIDATION
         MAX_RETRY_STATUS_CODES: Final[int] = 100
-        """Maximum number of HTTP status codes allowed in retry configuration."""
+        "Maximum number of HTTP status codes allowed in retry configuration."
         MAX_CUSTOM_VALIDATORS: Final[int] = 50
-        """Maximum number of custom validator callables allowed."""
+        "Maximum number of custom validator callables allowed."
 
     class Errors:
         """Standardized error codes for system error handling."""
@@ -301,22 +291,22 @@ class FlextConstants:
         """Utility constants."""
 
         DEFAULT_ENCODING: Final[str] = "utf-8"
-        """Default encoding for string operations."""
+        "Default encoding for string operations."
         SERIALIZATION_ISO8601: Final = "iso8601"
-        """ISO8601 format for datetime serialization."""
+        "ISO8601 format for datetime serialization."
         SERIALIZATION_FLOAT: Final = "float"
-        """Float format for datetime serialization."""
+        "Float format for datetime serialization."
         SERIALIZATION_BASE64: Final = "base64"
-        """Base64 format for bytes serialization."""
+        "Base64 format for bytes serialization."
         SERIALIZATION_UTF8: Final = "utf8"
-        """UTF-8 format for bytes serialization."""
+        "UTF-8 format for bytes serialization."
         SERIALIZATION_HEX: Final = "hex"
-        """Hex format for bytes serialization."""
+        "Hex format for bytes serialization."
         MAX_TIMEOUT_SECONDS: Final[int] = _MAX_TIMEOUT_SECONDS
         LONG_UUID_LENGTH: Final[int] = 12
         SHORT_UUID_LENGTH: Final[int] = 8
         VERSION_MODULO: Final[int] = 100
-        CONTROL_CHARS_PATTERN: Final[str] = r"[\x00-\x1F\x7F]"
+        CONTROL_CHARS_PATTERN: Final[str] = "[\\x00-\\x1F\\x7F]"
         CACHE_ATTRIBUTE_NAMES: Final[tuple[str, ...]] = (
             "_cache",
             "_ttl",
@@ -332,13 +322,13 @@ class FlextConstants:
             """
 
             TO_STR = "to_str"
-            """Convert to string."""
+            "Convert to string."
             TO_STR_LIST = "to_str_list"
-            """Convert to list of strings."""
+            "Convert to list of strings."
             NORMALIZE = "normalize"
-            """Normalize value."""
+            "Normalize value."
             JOIN = "join"
-            """Join values."""
+            "Join values."
 
     class Settings:
         """Configuration defaults."""
@@ -372,20 +362,18 @@ class FlextConstants:
         """Pydantic model configuration defaults."""
 
         EXTRA_FORBID: Final = "forbid"
-        """Extra fields behavior: forbid unknown fields."""
+        "Extra fields behavior: forbid unknown fields."
         EXTRA_IGNORE: Final = "ignore"
-        """Extra fields behavior: ignore unknown fields."""
+        "Extra fields behavior: ignore unknown fields."
         EXTRA_ALLOW: Final = "allow"
-        """Extra fields behavior: allow unknown fields."""
+        "Extra fields behavior: allow unknown fields."
 
     class Platform:
         """Platform-specific constants."""
 
         ENV_PREFIX: Final[str] = "FLEXT_"
         ENV_FILE_DEFAULT: Final[str] = ".env"
-        ENV_FILE_ENV_VAR: Final[str] = (
-            "FLEXT_ENV_FILE"  # Env var to customize .env path
-        )
+        ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
         ENV_NESTED_DELIMITER: Final[str] = "__"
         DEFAULT_APP_NAME: Final[str] = "flext"
         FLEXT_API_PORT: Final[int] = 8000
@@ -393,12 +381,12 @@ class FlextConstants:
         DEFAULT_HTTP_PORT: Final[int] = 80
         MIME_TYPE_JSON: Final[str] = "application/json"
         PATTERN_EMAIL: Final[str] = (
-            r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+            "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
         )
         PATTERN_URL: Final[str] = (
-            r"^https?://(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::\d+)?"
+            "^https?://(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\\.)+[A-Z]{2,6}\\.?|localhost|\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})(?::\\d+)?"
         )
-        PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[\d\s\-\(\)]{10,20}$"
+        PATTERN_PHONE_NUMBER: Final[str] = "^\\+?[\\d\\s\\-\\(\\)]{10,20}$"
 
         class Reliability:
             """Reliability constants for system behavior."""
@@ -409,27 +397,23 @@ class FlextConstants:
             HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
 
         PATTERN_UUID: Final[str] = (
-            r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
+            "^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
         )
-        PATTERN_PATH: Final[str] = r'^[^<>"|?*\x00-\x1F]+$'
-        # Identifier patterns (valid names/keys)
-        PATTERN_IDENTIFIER: Final[str] = r"^[a-zA-Z][a-zA-Z0-9_]*$"
-        """Pattern for valid identifiers (handler names, resource types, etc.)."""
-        PATTERN_IDENTIFIER_WITH_UNDERSCORE: Final[str] = r"^[a-zA-Z_][a-zA-Z0-9_]*$"
-        """Pattern for identifiers that can start with underscore (context keys)."""
-        PATTERN_SIMPLE_IDENTIFIER: Final[str] = r"^[a-zA-Z0-9]+$"
-        """Pattern for simple alphanumeric identifiers."""
-        # Path patterns
-        PATTERN_MODULE_PATH: Final[str] = r"^[^:]+:[^:]+$"
-        """Pattern for module:class paths (e.g., 'flext_core.dispatcher:FlextDispatcher')."""
-        # Timestamp patterns
+        PATTERN_PATH: Final[str] = '^[^<>"|?*\\x00-\\x1F]+$'
+        PATTERN_IDENTIFIER: Final[str] = "^[a-zA-Z][a-zA-Z0-9_]*$"
+        "Pattern for valid identifiers (handler names, resource types, etc.)."
+        PATTERN_IDENTIFIER_WITH_UNDERSCORE: Final[str] = "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        "Pattern for identifiers that can start with underscore (context keys)."
+        PATTERN_SIMPLE_IDENTIFIER: Final[str] = "^[a-zA-Z0-9]+$"
+        "Pattern for simple alphanumeric identifiers."
+        PATTERN_MODULE_PATH: Final[str] = "^[^:]+:[^:]+$"
+        "Pattern for module:class paths (e.g., 'flext_core.dispatcher:FlextDispatcher')."
         PATTERN_ISO8601_TIMESTAMP: Final[str] = (
-            r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z+\-][0-9:]*)?$"
+            "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[Z+\\-][0-9:]*)?$"
         )
-        """Pattern for ISO 8601 timestamps (optional, allows empty string)."""
-        # LDAP/DN patterns
-        PATTERN_DN_STRING: Final[str] = r"^(cn|ou|dc)=.*"
-        """Pattern for LDAP DN strings (distinguished names)."""
+        "Pattern for ISO 8601 timestamps (optional, allows empty string)."
+        PATTERN_DN_STRING: Final[str] = "^(cn|ou|dc)=.*"
+        "Pattern for LDAP DN strings (distinguished names)."
         EXT_PYTHON: Final[str] = ".py"
         EXT_YAML: Final[str] = ".yaml"
         EXT_JSON: Final[str] = ".json"
@@ -474,17 +458,11 @@ class FlextConstants:
             MAX_VALIDATION_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
 
         CLI_PERFORMANCE_CRITICAL_MS: Final[float] = 10000.0
-
-        # Time thresholds for recency checks
         RECENT_THRESHOLD_MINUTES: Final[float] = 60.0
         VERY_RECENT_THRESHOLD_MINUTES: Final[float] = 5.0
         RECENT_THRESHOLD_SECONDS: Final[float] = 120.0
-
-        # Version category thresholds
         VERSION_LOW_THRESHOLD: Final[int] = 5
         VERSION_MEDIUM_THRESHOLD: Final[int] = 20
-
-        # Health check thresholds
         HEALTH_CHECK_STALE_MINUTES: Final[float] = 5.0
         FAILURE_RATE_WARNING_THRESHOLD: Final[float] = 0.25
 
@@ -497,13 +475,13 @@ class FlextConstants:
         RETRY_BACKOFF_BASE: Final[float] = 2.0
         RETRY_BACKOFF_MAX: Final[float] = 60.0
         DEFAULT_MAX_DELAY_SECONDS: Final[float] = 300.0
-        """Default maximum delay in seconds for retry operations."""
+        "Default maximum delay in seconds for retry operations."
         RETRY_COUNT_MIN: Final[int] = 1
         DEFAULT_BACKOFF_STRATEGY: Final[str] = "exponential"
         BACKOFF_STRATEGY_EXPONENTIAL: Final[str] = "exponential"
-        """Exponential backoff strategy."""
+        "Exponential backoff strategy."
         BACKOFF_STRATEGY_LINEAR: Final[str] = "linear"
-        """Linear backoff strategy."""
+        "Linear backoff strategy."
         DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
         DEFAULT_TIMEOUT_SECONDS: Final[float] = float(_DEFAULT_TIMEOUT_SECONDS)
@@ -538,7 +516,6 @@ class FlextConstants:
         DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
         DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
         DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
-
         VALID_LEVELS: Final[tuple[str, ...]] = (
             "DEBUG",
             "INFO",
@@ -546,7 +523,6 @@ class FlextConstants:
             "ERROR",
             "CRITICAL",
         )
-
         JSON_OUTPUT_DEFAULT: Final[bool] = False
         DEFAULT_FORMAT: Final[str] = (
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -568,8 +544,6 @@ class FlextConstants:
         ASYNC_QUEUE_SIZE: Final[int] = 10000
         ASYNC_WORKERS: Final[int] = 1
         ASYNC_BLOCK_ON_FULL: Final[bool] = False
-
-        # Log level hierarchy for level-based context filtering
         LEVEL_HIERARCHY: Final[MappingProxyType[str, int]] = MappingProxyType({
             "debug": 10,
             "info": 20,
@@ -577,7 +551,7 @@ class FlextConstants:
             "error": 40,
             "critical": 50,
         })
-        """Numeric log levels for comparison (lower = more verbose)."""
+        "Numeric log levels for comparison (lower = more verbose)."
 
         class ContextOperation(StrEnum):
             """Context operation types enumeration."""
@@ -597,7 +571,6 @@ class FlextConstants:
             FlextConstants.Settings.LogLevel.ERROR,
             FlextConstants.Settings.LogLevel.CRITICAL,
         ]
-
         type EnvironmentLiteral = Literal[
             FlextConstants.Settings.Environment.DEVELOPMENT,
             FlextConstants.Settings.Environment.STAGING,
@@ -605,12 +578,7 @@ class FlextConstants:
             FlextConstants.Settings.Environment.TESTING,
             FlextConstants.Settings.Environment.LOCAL,
         ]
-
-        type RegistrationStatusLiteral = Literal[
-            "active",
-            "inactive",
-        ]
-
+        type RegistrationStatusLiteral = Literal["active", "inactive"]
         type StateLiteral = Literal[
             FlextConstants.Domain.Status.ACTIVE,
             FlextConstants.Domain.Status.INACTIVE,
@@ -626,7 +594,6 @@ class FlextConstants:
             FlextConstants.Cqrs.HealthStatus.DEGRADED,
             FlextConstants.Cqrs.HealthStatus.UNHEALTHY,
         ]
-
         type ActionLiteral = Literal[
             FlextConstants.Cqrs.Action.GET,
             FlextConstants.Cqrs.Action.CREATE,
@@ -634,20 +601,17 @@ class FlextConstants:
             FlextConstants.Cqrs.Action.DELETE,
             FlextConstants.Cqrs.Action.LIST,
         ]
-
         type FailureLevelLiteral = Literal[
             FlextConstants.Exceptions.FailureLevel.STRICT,
             FlextConstants.Exceptions.FailureLevel.WARN,
             FlextConstants.Exceptions.FailureLevel.PERMISSIVE,
         ]
-
         type ProcessingModeLiteral = Literal[
             FlextConstants.Cqrs.ProcessingMode.BATCH,
             FlextConstants.Cqrs.ProcessingMode.STREAM,
             FlextConstants.Cqrs.ProcessingMode.PARALLEL,
             FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL,
         ]
-
         type ProcessingStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.CommonStatus.RUNNING,
@@ -655,25 +619,21 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.FAILED,
             FlextConstants.Cqrs.CommonStatus.CANCELLED,
         ]
-
         type ProcessingPhaseLiteral = Literal[
             FlextConstants.Cqrs.ProcessingPhase.PREPARE,
             FlextConstants.Cqrs.ProcessingPhase.EXECUTE,
             FlextConstants.Cqrs.ProcessingPhase.VALIDATE,
             FlextConstants.Cqrs.ProcessingPhase.COMPLETE,
         ]
-
         type BindTypeLiteral = Literal[
             FlextConstants.Cqrs.BindType.TEMPORARY,
             FlextConstants.Cqrs.BindType.PERMANENT,
         ]
-
         type MergeStrategyLiteral = Literal[
             FlextConstants.Cqrs.MergeStrategy.REPLACE,
             FlextConstants.Cqrs.MergeStrategy.UPDATE,
             FlextConstants.Cqrs.MergeStrategy.MERGE_DEEP,
         ]
-
         type StatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.CommonStatus.RUNNING,
@@ -681,79 +641,67 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.FAILED,
             FlextConstants.Cqrs.CommonStatus.COMPENSATING,
         ]
-
         type HealthStatusLiteral = Literal[
             FlextConstants.Cqrs.HealthStatus.HEALTHY,
             FlextConstants.Cqrs.HealthStatus.DEGRADED,
             FlextConstants.Cqrs.HealthStatus.UNHEALTHY,
         ]
-
         type TokenTypeLiteral = Literal[
             FlextConstants.Cqrs.TokenType.BEARER,
             FlextConstants.Cqrs.TokenType.API_KEY,
             FlextConstants.Cqrs.TokenType.JWT,
         ]
-
         type NotificationStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.SpecialStatus.SENT,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
-
         type TokenStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.CommonStatus.RUNNING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
-
         type CircuitBreakerStateLiteral = Literal[
             FlextConstants.Reliability.CircuitBreakerState.CLOSED,
             FlextConstants.Reliability.CircuitBreakerState.OPEN,
             FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN,
         ]
-
         type CircuitBreakerStatusLiteral = Literal[
             FlextConstants.Cqrs.SpecialStatus.IDLE,
             FlextConstants.Cqrs.CommonStatus.RUNNING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
-
         type BatchStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.SpecialStatus.PROCESSING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
-
         type ExportStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.SpecialStatus.PROCESSING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
-
         type OperationStatusLiteral = Literal[
             FlextConstants.Cqrs.OperationStatus.SUCCESS,
             FlextConstants.Cqrs.OperationStatus.FAILURE,
             FlextConstants.Cqrs.OperationStatus.PARTIAL,
         ]
-
         type SerializationFormatLiteral = Literal[
             FlextConstants.Cqrs.SerializationFormat.JSON,
             FlextConstants.Cqrs.SerializationFormat.YAML,
             FlextConstants.Cqrs.SerializationFormat.TOML,
             FlextConstants.Cqrs.SerializationFormat.MSGPACK,
         ]
-
         type CompressionLiteral = Literal[
             FlextConstants.Cqrs.Compression.NONE,
             FlextConstants.Cqrs.Compression.GZIP,
             FlextConstants.Cqrs.Compression.BZIP2,
             FlextConstants.Cqrs.Compression.LZ4,
         ]
-
         type AggregationLiteral = Literal[
             FlextConstants.Cqrs.Aggregation.SUM,
             FlextConstants.Cqrs.Aggregation.AVG,
@@ -761,36 +709,27 @@ class FlextConstants:
             FlextConstants.Cqrs.Aggregation.MAX,
             FlextConstants.Cqrs.Aggregation.COUNT,
         ]
-
         type PersistenceLevelLiteral = Literal[
             FlextConstants.Cqrs.PersistenceLevel.MEMORY,
             FlextConstants.Cqrs.PersistenceLevel.DISK,
             FlextConstants.Cqrs.PersistenceLevel.DISTRIBUTED,
         ]
-
         type TargetFormatLiteral = Literal[
             FlextConstants.Cqrs.TargetFormat.FULL,
             FlextConstants.Cqrs.TargetFormat.COMPACT,
             FlextConstants.Cqrs.TargetFormat.MINIMAL,
         ]
-
         type WarningLevelLiteral = Literal[
             FlextConstants.Cqrs.WarningLevel.NONE,
             FlextConstants.Cqrs.WarningLevel.WARN,
             FlextConstants.Cqrs.WarningLevel.ERROR,
         ]
-
         type OutputFormatLiteral = Literal[
-            FlextConstants.Cqrs.OutputFormat.DICT,
-            FlextConstants.Cqrs.OutputFormat.JSON,
+            FlextConstants.Cqrs.OutputFormat.DICT, FlextConstants.Cqrs.OutputFormat.JSON
         ]
-
         type ModeLiteral = Literal[
-            FlextConstants.Cqrs.Mode.VALIDATION,
-            FlextConstants.Cqrs.Mode.SERIALIZATION,
+            FlextConstants.Cqrs.Mode.VALIDATION, FlextConstants.Cqrs.Mode.SERIALIZATION
         ]
-
-        # Does not duplicate strings - references the enum member!
         type ErrorTypeLiteral = Literal[
             FlextConstants.Exceptions.ErrorType.VALIDATION,
             FlextConstants.Exceptions.ErrorType.CONFIGURATION,
@@ -809,18 +748,11 @@ class FlextConstants:
             FlextConstants.Exceptions.ErrorType.RUNTIME_ERROR,
             FlextConstants.Exceptions.ErrorType.SYSTEM_ERROR,
         ]
-        """Error type literals for error categorization and type-safe error handling."""
-
+        "Error type literals for error categorization and type-safe error handling."
         type ContextOperationGetLiteral = Literal["get"]
-        type ContextOperationModifyLiteral = Literal[
-            "bind",
-            "unbind",
-            "clear",
-        ]
+        type ContextOperationModifyLiteral = Literal["bind", "unbind", "clear"]
         type ReturnResultTrueLiteral = Literal[True]
         type ReturnResultFalseLiteral = Literal[False]
-
-        # Order status literals for type-safe operations
         type OrderStatusLiteral = Literal[
             FlextConstants.Domain.OrderStatus.PENDING,
             FlextConstants.Domain.OrderStatus.CONFIRMED,
@@ -828,31 +760,21 @@ class FlextConstants:
             FlextConstants.Domain.OrderStatus.DELIVERED,
             FlextConstants.Domain.OrderStatus.CANCELLED,
         ]
-
-        # Active order statuses
         type ActiveOrderStatusLiteral = Literal[
             FlextConstants.Domain.OrderStatus.PENDING,
             FlextConstants.Domain.OrderStatus.CONFIRMED,
             FlextConstants.Domain.OrderStatus.SHIPPED,
         ]
-
-        # Terminal order statuses
         type TerminalOrderStatusLiteral = Literal[
             FlextConstants.Domain.OrderStatus.DELIVERED,
             FlextConstants.Domain.OrderStatus.CANCELLED,
         ]
-
-        # Currency literal for type-safe monetary operations
         type CurrencyLiteral = Literal[
             FlextConstants.Domain.Currency.USD,
             FlextConstants.Domain.Currency.EUR,
             FlextConstants.Domain.Currency.GBP,
             FlextConstants.Domain.Currency.BRL,
         ]
-
-    # ═══════════════════════════════════════════════════════════════════
-    # STRENUM + PYDANTIC 2: DEFINITIVE PATTERN
-    # ═══════════════════════════════════════════════════════════════════
 
     class Domain:
         """Domain-specific constants using StrEnum + Pydantic 2."""
@@ -882,14 +804,9 @@ class FlextConstants:
             CANCELLED = "cancelled"
 
         type ActiveStates = Literal[
-            FlextConstants.Domain.Status.ACTIVE,
-            FlextConstants.Domain.Status.INACTIVE,
+            FlextConstants.Domain.Status.ACTIVE, FlextConstants.Domain.Status.INACTIVE
         ]
         type TerminalStates = Literal[FlextConstants.Domain.Status.ARCHIVED,]
-
-    # ═══════════════════════════════════════════════════════════════════
-    # REFERÊNCIAS A FLEXT-CORE (quando necessário reutilizar)
-    # ═══════════════════════════════════════════════════════════════════
 
     class Inherited:
         """Explicit references to inherited constants from FlextConstants.
@@ -897,9 +814,6 @@ class FlextConstants:
         Use for documenting which constants from FlextConstants are used
         in this domain, without creating aliases.
         """
-
-        # Only references, not aliases
-        # Use FlextConstants.Cqrs.Status directly in code
 
     class Cqrs:
         """CQRS pattern constants."""
@@ -918,18 +832,11 @@ class FlextConstants:
             OPERATION = "operation"
             SAGA = "saga"
 
-        # Type aliases for message type discrimination
-        # (Python 3.13+ PEP 695 best practices)
-        # Using PEP 695 type keyword for better type checking and IDE support
         type CommandMessageTypeLiteral = Literal["command"]
         type QueryMessageTypeLiteral = Literal["query"]
         type EventMessageTypeLiteral = Literal["event"]
         type HandlerTypeLiteral = Literal[
-            "command",
-            "query",
-            "event",
-            "operation",
-            "saga",
+            "command", "query", "event", "operation", "saga"
         ]
 
         class CommonStatus(StrEnum):
@@ -977,8 +884,7 @@ class FlextConstants:
             ServiceMetricCategory.ERRORS,
             ServiceMetricCategory.THROUGHPUT,
         )
-        """Default metric categories for service metrics requests."""
-
+        "Default metric categories for service metrics requests."
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
         class ProcessingMode(StrEnum):
@@ -1046,7 +952,6 @@ class FlextConstants:
             API_KEY = "api_key"
             JWT = "jwt"
 
-        # More specialized status literals from CommonStatus and SpecialStatus
         type NotificationStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
             FlextConstants.Cqrs.SpecialStatus.SENT,
@@ -1179,8 +1084,8 @@ class FlextConstants:
                 single source of truth.
             """
 
-            ACTIVE = "active"  # Matches _Base.CommonStatus.ACTIVE
-            INACTIVE = "inactive"  # Matches _Base.CommonStatus.INACTIVE
+            ACTIVE = "active"
+            INACTIVE = "inactive"
 
         DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
         DEFAULT_TIMESTAMP: Final[str] = ""
@@ -1231,12 +1136,10 @@ class FlextConstants:
             SESSION_ID = "session_id"
             TENANT_ID = "tenant_id"
 
-        # Context operation names for statistics
         OPERATION_SET: Final[str] = "set"
         OPERATION_GET: Final[str] = "get"
         OPERATION_REMOVE: Final[str] = "remove"
         OPERATION_CLEAR: Final[str] = "clear"
-        # Context keys
         KEY_OPERATION_ID: Final[str] = "operation_id"
         KEY_USER_ID: Final[str] = "user_id"
         KEY_CORRELATION_ID: Final[str] = "correlation_id"
@@ -1248,12 +1151,10 @@ class FlextConstants:
         KEY_OPERATION_START_TIME: Final[str] = "operation_start_time"
         KEY_OPERATION_METADATA: Final[str] = "operation_metadata"
         KEY_REQUEST_TIMESTAMP: Final[str] = "request_timestamp"
-        # HTTP headers for context propagation
         HEADER_CORRELATION_ID: Final[str] = "X-Correlation-Id"
         HEADER_PARENT_CORRELATION_ID: Final[str] = "X-Parent-Correlation-Id"
         HEADER_SERVICE_NAME: Final[str] = "X-Service-Name"
         HEADER_USER_ID: Final[str] = "X-User-Id"
-        # Metadata keys for operation timing
         METADATA_KEY_START_TIME: Final[str] = "start_time"
         METADATA_KEY_END_TIME: Final[str] = "end_time"
         METADATA_KEY_DURATION_SECONDS: Final[str] = "duration_seconds"
@@ -1267,17 +1168,17 @@ class FlextConstants:
         MAX_TIMEOUT_SECONDS: Final[int] = 300
         MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
         DEFAULT_MAX_SERVICES: Final[int] = 1000
-        """Default maximum number of services allowed in container."""
+        "Default maximum number of services allowed in container."
         DEFAULT_MAX_FACTORIES: Final[int] = 500
-        """Default maximum number of factories allowed in container."""
+        "Default maximum number of factories allowed in container."
         MAX_FACTORIES: Final[int] = 5000
-        """Maximum number of factories allowed in container."""
+        "Maximum number of factories allowed in container."
 
     class Dispatcher:
         """Message dispatcher constants."""
 
         THREAD_NAME_PREFIX: Final[str] = "flext-dispatcher"
-        """Thread name prefix for dispatcher thread pool executor."""
+        "Thread name prefix for dispatcher thread pool executor."
         HANDLER_MODE_COMMAND: Final[str] = "command"
         HANDLER_MODE_QUERY: Final[str] = "query"
         VALID_HANDLER_MODES: Final[tuple[str, ...]] = (
@@ -1293,11 +1194,11 @@ class FlextConstants:
         MAX_TIMEOUT_SECONDS: Final[int] = 600
         MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
         DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core.dispatcher:FlextDispatcher"
-        """Default dispatcher implementation path."""
+        "Default dispatcher implementation path."
         DEFAULT_SERVICE_NAME: Final[str] = "default_service"
-        """Default service name for service models."""
+        "Default service name for service models."
         DEFAULT_RESOURCE_TYPE: Final[str] = "default_resource"
-        """Default resource type for service models."""
+        "Default resource type for service models."
         MIN_REQUEST_ID_LENGTH: Final[int] = 1
         SINGLE_HANDLER_ARG_COUNT: Final[int] = 1
         TWO_HANDLER_ARG_COUNT: Final[int] = 2
@@ -1312,11 +1213,11 @@ class FlextConstants:
         )
         ERROR_INVALID_REQUEST_ID: Final[str] = "request_id must be non-empty string"
         REGISTRATION_STATUS_ACTIVE: Final[str] = "active"
-        """Registration status: active (matches Cqrs.RegistrationStatus.ACTIVE.value)."""
+        "Registration status: active (matches Cqrs.RegistrationStatus.ACTIVE.value)."
         REGISTRATION_STATUS_INACTIVE: Final[str] = "inactive"
-        """Registration status: inactive (matches Cqrs.RegistrationStatus.INACTIVE.value)."""
+        "Registration status: inactive (matches Cqrs.RegistrationStatus.INACTIVE.value)."
         REGISTRATION_STATUS_ERROR: Final[str] = "error"
-        """Registration status: error (not part of RegistrationStatus StrEnum)."""
+        "Registration status: error (not part of RegistrationStatus StrEnum)."
         VALID_REGISTRATION_STATUSES: Final[tuple[str, ...]] = (
             REGISTRATION_STATUS_ACTIVE,
             REGISTRATION_STATUS_INACTIVE,
@@ -1332,11 +1233,10 @@ class FlextConstants:
         MIN_PAGE_SIZE: Final[int] = _MIN_PAGE_SIZE
         MIN_PAGE_NUMBER: Final[int] = 1
         MAX_PAGE_NUMBER: Final[int] = 10000
-        # Example/default values for pagination utilities
         DEFAULT_PAGE_SIZE_EXAMPLE: Final[int] = 20
-        """Default page size for examples and utilities (different from DEFAULT_PAGE_SIZE)."""
+        "Default page size for examples and utilities (different from DEFAULT_PAGE_SIZE)."
         MAX_PAGE_SIZE_EXAMPLE: Final[int] = 1000
-        """Maximum page size for examples and utilities."""
+        "Maximum page size for examples and utilities."
 
     class Mixins:
         """Constants for mixin operations."""
@@ -1358,9 +1258,9 @@ class FlextConstants:
         FIELD_AGGREGATE_ID: Final[str] = "aggregate_id"
         FIELD_OCCURRED_AT: Final[str] = "occurred_at"
         STATE_ACTIVE: Final[str] = "active"
-        """State: active."""
+        "State: active."
         STATE_INACTIVE: Final[str] = "inactive"
-        """State: inactive."""
+        "State: inactive."
         STATE_SENT: Final[str] = "sent"
         STATE_IDLE: Final[str] = "idle"
         STATE_HEALTHY: Final[str] = "healthy"
@@ -1381,9 +1281,9 @@ class FlextConstants:
         METHOD_EXECUTE: Final[str] = "execute"
         METHOD_PROCESS_COMMAND: Final[str] = "process_command"
         OPERATION_OVERRIDE: Final[str] = "override"
-        """Override operation mode."""
+        "Override operation mode."
         OPERATION_COLLECTION: Final[str] = "collection"
-        """Collection operation mode."""
+        "Collection operation mode."
         AUTH_BEARER: Final[str] = "bearer"
         AUTH_API_KEY: Final[str] = "api_key"
         AUTH_JWT: Final[str] = "jwt"
@@ -1432,11 +1332,10 @@ class FlextConstants:
 
         DEFAULT_MAX_WORKERS: Final[int] = _DEFAULT_WORKERS
         DEFAULT_BATCH_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
-        # Tuple pattern validation constants
         PATTERN_TUPLE_MIN_LENGTH: Final[int] = 2
-        """Minimum length for tuple patterns in parsing operations."""
+        "Minimum length for tuple patterns in parsing operations."
         PATTERN_TUPLE_MAX_LENGTH: Final[int] = 3
-        """Maximum length for tuple patterns in parsing operations."""
+        "Maximum length for tuple patterns in parsing operations."
 
     class Discovery:
         """Constants for auto-discovery of handlers/factories.
@@ -1453,16 +1352,13 @@ class FlextConstants:
         """
 
         HANDLER_ATTR: Final[str] = "_flext_handler_config_"
-        """Attribute name for storing handler decorator configuration on methods."""
-
+        "Attribute name for storing handler decorator configuration on methods."
         FACTORY_ATTR: Final[str] = "_flext_factory_config_"
-        """Attribute name for storing factory decorator configuration on functions."""
-
+        "Attribute name for storing factory decorator configuration on functions."
         DEFAULT_PRIORITY: Final[int] = 0
-        """Default priority for handlers (0 = normal priority)."""
-
+        "Default priority for handlers (0 = normal priority)."
         DEFAULT_TIMEOUT: Final[float | None] = None
-        """Default timeout for handlers (None = no timeout)."""
+        "Default timeout for handlers (None = no timeout)."
 
     class Test:
         """Test constants for unit and integration testing.
@@ -1472,26 +1368,23 @@ class FlextConstants:
         """
 
         DEFAULT_PASSWORD: Final[str] = "test_password"
-        """Default password for test user authentication."""
-
+        "Default password for test user authentication."
         NONEXISTENT_USERNAME: Final[str] = "nonexistent"
-        """Username that should not exist in test scenarios."""
+        "Username that should not exist in test scenarios."
 
-    # Root-level aliases for commonly used constants
     TIMEOUT: Final[int] = Network.DEFAULT_TIMEOUT
-    """Default timeout in seconds."""
+    "Default timeout in seconds."
     VALIDATION_ERROR: Final[str] = Errors.VALIDATION_ERROR
-    """Validation error code."""
+    "Validation error code."
     NOT_FOUND: Final[str] = Errors.NOT_FOUND
-    """Not found error code."""
+    "Not found error code."
     ENCODING: Final[str] = Utilities.DEFAULT_ENCODING
-    """Default encoding."""
+    "Default encoding."
     PAGE_SIZE: Final[int] = Pagination.DEFAULT_PAGE_SIZE
-    """Default page size."""
+    "Default page size."
     MAX_RETRIES: Final[int] = Reliability.MAX_RETRY_ATTEMPTS
-    """Maximum retry attempts."""
+    "Maximum retry attempts."
 
 
 c = FlextConstants
-
 __all__ = ["FlextConstants", "c"]
