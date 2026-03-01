@@ -75,19 +75,29 @@ class FlextInfraLazyInitGenerator(FlextService[int]):
         """Execute the lazy-init generation process."""
         return r[int].ok(self.run(check_only=False))
 
-    def run(self, *, check_only: bool = False) -> int:
+    def run(self, *, check_only: bool = False, scan_tests: bool = False) -> int:
         """Process all ``__init__.py`` files in the workspace.
+
+        Args:
+            check_only: If True, only report unmapped exports without writing.
+            scan_tests: If True, also scan ``tests/**/__init__.py`` files.
 
         Returns the number of files that had unmapped exports (0 = perfect).
         """
-        init_files = sorted(
-            p
-            for p in self._root.rglob("src/**/__init__.py")
-            if not any(
-                part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
-                for part in p.parts
+        patterns = ["src/**/__init__.py"]
+        if scan_tests:
+            patterns.append("tests/**/__init__.py")
+
+        init_files: list[Path] = []
+        for pattern in patterns:
+            init_files.extend(
+                p
+                for p in sorted(self._root.rglob(pattern))
+                if not any(
+                    part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
+                    for part in p.parts
+                )
             )
-        )
 
         total = ok = errors = unmapped_count = 0
         for path in init_files:
