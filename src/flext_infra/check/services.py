@@ -19,7 +19,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_fie
 from tomlkit import items
 
 from flext_infra import (
-    REPORTS_DIR_NAME,
     FlextInfraCommandRunner,
     FlextInfraDiscoveryService,
     FlextInfraJsonService,
@@ -30,7 +29,6 @@ from flext_infra import (
     output,
 )
 
-DEFAULT_GATES = c.Gates.DEFAULT_CSV
 _logger = FlextLogger.create_module_logger(__name__)
 
 
@@ -366,7 +364,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             self._default_reports_dir = report_dir
         except OSError:
             self._default_reports_dir = (
-                self._workspace_root / REPORTS_DIR_NAME / "check"
+                self._workspace_root / c.Infra.Reporting.REPORTS_DIR_NAME / "check"
             )
 
     @override
@@ -1477,9 +1475,9 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser("run", help="Run quality gates")
-    _ = run_parser.add_argument("--gates", default=DEFAULT_GATES)
+    _ = run_parser.add_argument("--gates", default=c.Gates.DEFAULT_CSV)
     _ = run_parser.add_argument("--project", action="append", required=True)
-    _ = run_parser.add_argument("--reports-dir", default=f"{REPORTS_DIR_NAME}/check")
+    _ = run_parser.add_argument("--reports-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check")
     _ = run_parser.add_argument("--fail-fast", action="store_true")
 
     fix_parser = subparsers.add_parser(
@@ -1535,7 +1533,6 @@ def run_cli(argv: list[str] | None = None) -> int:
 
 
 __all__ = [
-    "DEFAULT_GATES",
     "FlextInfraConfigFixer",
     "FlextInfraWorkspaceChecker",
     "run_cli",

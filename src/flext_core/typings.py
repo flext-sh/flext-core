@@ -47,7 +47,7 @@ T_Namespace = TypeVar("T_Namespace")
 "Namespace type - for namespace objects.\nUsed in: config (namespace configuration)."
 T_Settings = TypeVar("T_Settings", bound=BaseSettings)
 "Settings type - for Pydantic settings types (bound to BaseSettings).\nUsed in: config (settings configuration)."
-TModel = TypeVar("TModel")
+TModel = TypeVar("TModel", bound=BaseModel)
 R2 = TypeVar("R2")
 type _ContainerValue = (
     str
@@ -70,9 +70,7 @@ type _ScalarML = str | int | float | bool | datetime | None
 type ScalarValue = _ScalarML
 type PayloadValue = _ContainerValue | BaseModel | Path
 type RegisterableService = (
-    _ContainerValue
-    | BindableLogger
-    | Callable[..., _ContainerValue]
+    _ContainerValue | BindableLogger | Callable[..., _ContainerValue]
 )
 type ServiceInstanceType = _ContainerValue
 type FactoryCallable = Callable[[], RegisterableService]
@@ -91,12 +89,8 @@ class FlextTypes:
     so that basedpyright resolves them as proper class attributes at workspace scope.
     """
 
-    type LaxStr = str | bytes | bytearray
-    "LaxStr compatibility for ldap3 integration."
-    Any: TypeAlias = typing.Any
     TYPE_CHECKING: TypeAlias = bool
     ScalarValue: TypeAlias = _ScalarML
-    ScalarAlias: TypeAlias = ScalarValue
     type MetadataScalarValue = str | int | float | bool | None
     type MetadataListValue = list[str | int | float | bool | None]
     type PydanticConfigValue = (
@@ -106,7 +100,6 @@ class FlextTypes:
     type GeneralListValue = list[str | int | float | bool | datetime | None]
     GuardInputValue: TypeAlias = _ContainerValue
     ConfigMapValue: TypeAlias = _ContainerValue
-    FlexibleValue: TypeAlias = _ContainerValue
     PayloadValue: TypeAlias = PayloadValue
     RegisterableService: TypeAlias = RegisterableService
     type RegistrablePlugin = (
@@ -166,9 +159,7 @@ class FlextTypes:
     JsonDict: TypeAlias = JsonDict
     GeneralValueType: TypeAlias = _ContainerValue
     HandlerCallable: TypeAlias = Callable[[ScalarValue], ScalarValue]
-    type AcceptableMessageType = ScalarValue | BaseModel | Sequence[ScalarValue]
-    type ConditionCallable = Callable[[ScalarValue], bool]
-    type HandlerType = Callable[..., Any] | object
+    type HandlerLike = Callable[..., _ContainerValue | None]
 
     @typing.runtime_checkable
     class _RootDictProtocol[RootValueT](typing.Protocol):

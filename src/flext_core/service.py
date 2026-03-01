@@ -17,7 +17,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import override
+from typing import cast, override
 
 from pydantic import (
     ConfigDict,
@@ -79,19 +79,22 @@ class FlextService[TDomainResult](
         validate_assignment=True,
     )
 
+    _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
+
     @computed_field
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
-        if not hasattr(self, "_execution_result"):
+        if self._execution_result is None:
             # Lazy execution for services without auto_execute
-            execution_result = self.execute()
-            self._execution_result = execution_result
+            self._execution_result = self.execute()
 
-        result = self._execution_result
-        if result.is_success:
-            return result.value
+        execution_result: r[TDomainResult] = self._execution_result
+        if execution_result.is_success:
+            return execution_result.value
         # On failure, raise exception
-        raise FlextExceptions.BaseError(result.error or "Service execution failed")
+        raise FlextExceptions.BaseError(
+            execution_result.error or "Service execution failed"
+        )
 
     @override
     def __init__(self) -> None:

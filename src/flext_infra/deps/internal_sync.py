@@ -14,10 +14,8 @@ from flext_core import FlextLogger, r
 
 from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, m, output
 from flext_infra.constants import c
-from flext_infra.deps._constants import FlextInfraDepsConstants
 
 logger = FlextLogger.create_module_logger(__name__)
-deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 
 class FlextInfraInternalDependencySyncService:
@@ -33,13 +31,13 @@ class FlextInfraInternalDependencySyncService:
 
     @staticmethod
     def _validate_git_ref(ref_name: str) -> r[str]:
-        if not deps_constants.GIT_REF_RE.fullmatch(ref_name):
+        if not c.Infra.Deps.GIT_REF_RE.fullmatch(ref_name):
             return r[str].fail(f"invalid git ref: {ref_name!r}")
         return r[str].ok(ref_name)
 
     @staticmethod
     def _validate_repo_url(repo_url: str) -> r[str]:
-        if not deps_constants.GITHUB_REPO_URL_RE.fullmatch(repo_url):
+        if not c.Infra.Deps.GITHUB_REPO_URL_RE.fullmatch(repo_url):
             return r[str].fail(f"invalid repository URL: {repo_url!r}")
         return r[str].ok(repo_url)
 
@@ -308,7 +306,7 @@ class FlextInfraInternalDependencySyncService:
         for dep in project_deps:
             if not isinstance(dep, str) or " @ " not in dep:
                 continue
-            match = deps_constants.PEP621_PATH_RE.search(dep)
+            match = c.Infra.Deps.PEP621_PATH_RE.search(dep)
             if not match:
                 continue
             repo_name = self._is_internal_path_dep(match.group("path"))

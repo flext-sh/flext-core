@@ -12,10 +12,8 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, output
 from flext_infra.constants import c
-from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.deps.path_sync import extract_dep_name
 
-deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 _resolver = FlextInfraPathResolver()
 _root_result = _resolver.workspace_root_from_file(__file__)
@@ -126,14 +124,14 @@ def sync_one(
 
     dep_paths = get_dep_paths(doc, is_root=is_root)
     pyright_extra = (
-        deps_constants.PYRIGHT_BASE_ROOT + dep_paths
+        c.Infra.Deps.PYRIGHT_BASE_ROOT + dep_paths
         if is_root
-        else deps_constants.PYRIGHT_BASE_PROJECT + dep_paths
+        else c.Infra.Deps.PYRIGHT_BASE_PROJECT + dep_paths
     )
     mypy_path = (
-        deps_constants.MYPY_BASE_ROOT + dep_paths
+        c.Infra.Deps.MYPY_BASE_ROOT + dep_paths
         if is_root
-        else deps_constants.MYPY_BASE_PROJECT + dep_paths
+        else c.Infra.Deps.MYPY_BASE_PROJECT + dep_paths
     )
 
     tool = doc.get("tool")

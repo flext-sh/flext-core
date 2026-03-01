@@ -12,10 +12,8 @@ from tomlkit.items import Array, Item, Table
 
 from flext_infra import FlextInfraCommandRunner
 from flext_infra.constants import c
-from flext_infra.deps._constants import FlextInfraDepsConstants
 
 _logger = FlextLogger(__name__)
-deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 
 def _workspace_root(start: Path) -> Path:
@@ -36,7 +34,7 @@ ROOT = _workspace_root(Path(__file__))
 def _dep_name(spec: str) -> str:
     """Extract normalized dependency name from requirement specification."""
     base = spec.strip().split("@", 1)[0].strip()
-    match = deps_constants.DEP_NAME_RE.match(base)
+    match = c.Infra.Deps.DEP_NAME_RE.match(base)
     if match:
         return match.group(1).lower().replace("_", "-")
     return base.lower().replace("_", "-")
@@ -411,8 +409,8 @@ class InjectCommentsPhase:
             marker = marker_map.get(line.strip())
             if marker:
                 recent = (
-                    out[-deps_constants.RECENT_LINES_FOR_MARKER :]
-                    if len(out) >= deps_constants.RECENT_LINES_FOR_MARKER
+                    out[-c.Infra.Deps.RECENT_LINES_FOR_MARKER :]
+                    if len(out) >= c.Infra.Deps.RECENT_LINES_FOR_MARKER
                     else out
                 )
                 if marker not in recent and marker not in existing_text:
@@ -421,8 +419,8 @@ class InjectCommentsPhase:
 
             if line.strip().startswith("optional-dependencies.dev"):
                 recent = (
-                    out[-deps_constants.RECENT_LINES_FOR_DEV_DEP :]
-                    if len(out) >= deps_constants.RECENT_LINES_FOR_DEV_DEP
+                    out[-c.Infra.Deps.RECENT_LINES_FOR_DEV_DEP :]
+                    if len(out) >= c.Infra.Deps.RECENT_LINES_FOR_DEV_DEP
                     else out
                 )
                 marker = "# [MANAGED] consolidated development dependencies"
@@ -452,7 +450,7 @@ class FlextInfraPyprojectModernizer:
         """Find all pyproject.toml files in workspace."""
         files: list[Path] = []
         for path in self.root.rglob("pyproject.toml"):
-            if any(part in deps_constants.SKIP_DIRS for part in path.parts):
+            if any(part in c.Infra.Deps.SKIP_DIRS for part in path.parts):
                 continue
             files.append(path)
         return sorted(files)

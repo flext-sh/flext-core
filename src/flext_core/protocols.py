@@ -260,7 +260,7 @@ class FlextProtocols:
             key: str,
             value: t.GuardInputValue,
             scope: str = ...,
-        ) -> FlextProtocols.ResultLike[bool]:
+        ) -> r[bool]:
             """Set a context value. Returns Result-like object."""
             ...
 
@@ -268,7 +268,7 @@ class FlextProtocols:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocols.ResultLike[t.GuardInputValue]:
+        ) -> r[t.GuardInputValue]:
             """Get a context value. Returns Result-like object."""
             ...
 
@@ -588,6 +588,24 @@ class FlextProtocols:
         dispatcher_enable_logging: bool
         """Enable logging in dispatcher operations."""
 
+        def model_copy(
+            self,
+            *,
+            update: dict[str, Any] | None = None,
+            deep: bool = False,
+        ) -> Self:
+            """Create a copy of the model, optionally updating fields or deep copying.
+
+            Args:
+                update: Dictionary of values to update in the copied model.
+                deep: If True, perform a deep copy of the model fields.
+
+            Returns:
+                A new instance of the model.
+
+            """
+            ...
+
     # =========================================================================
     # INFRASTRUCTURE PROTOCOLS (DI and Container Management)
     # =========================================================================
@@ -645,7 +663,7 @@ class FlextProtocols:
             self,
             name: str,
             service: t.RegisterableService,
-        ) -> FlextProtocols.ResultLike[bool]:
+        ) -> r[bool]:
             """Register a service instance."""
             ...
 
@@ -653,7 +671,7 @@ class FlextProtocols:
             self,
             name: str,
             factory: t.FactoryCallable,
-        ) -> FlextProtocols.ResultLike[bool]:
+        ) -> r[bool]:
             """Register a service factory returning RegisterableService."""
             ...
 
@@ -676,7 +694,7 @@ class FlextProtocols:
         def get(
             self,
             name: str,
-        ) -> FlextProtocols.ResultLike[t.RegisterableService]:
+        ) -> r[t.RegisterableService]:
             """Get service by name.
 
             Returns the resolved service as RegisterableService. For type-safe
@@ -688,7 +706,7 @@ class FlextProtocols:
             self,
             name: str,
             type_cls: type[T],
-        ) -> FlextProtocols.ResultLike[T]:
+        ) -> r[T]:
             """Get service with type safety and runtime validation.
 
             Reflects real implementations like FlextContainer.get_typed()
@@ -857,7 +875,7 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            handler: t.HandlerType,
+            handler: t.HandlerLike,
             *,
             is_event: bool = False,
         ) -> FlextProtocols.Result[bool]:
@@ -1524,7 +1542,15 @@ class FlextProtocols:
     # - BindableLogger: Logger protocol
     # - Callable: Factories that return PayloadValue
     type RegisterableService = (
-        t.GeneralValueType | BindableLogger | Callable[..., t.GeneralValueType]
+        t.GeneralValueType
+        | BindableLogger
+        | Callable[..., t.GeneralValueType]
+        | Config
+        | Context
+        | DI
+        | Service
+        | CommandBus
+        | Registrable
     )
 
     # ServiceFactory: Factory callable that returns RegisterableService
@@ -1664,7 +1690,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return type(self).__name__
+            return self.__class__.__name__
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
@@ -1712,7 +1738,7 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return type(self).__name__
+            return self.__class__.__name__
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:

@@ -70,7 +70,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         ...         # Implement command handling logic
         ...         return r[bool].ok(True)
         ...
-        ...     def validate(self, data: t.AcceptableMessageType) -> r[bool]:
+        ...     def validate(
+        ...         self, data: t.ScalarValue | BaseModel | Sequence[t.ScalarValue]
+        ...     ) -> r[bool]:
         ...         # Custom validation logic
         ...         if not (UserCommand in data.__class__.__mro__):
         ...             return r[bool].fail("Invalid message type")

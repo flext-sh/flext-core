@@ -100,7 +100,7 @@ class FlextUtilitiesGuards:
             )
 
     @staticmethod
-    def is_flexible_value(value: t.FlexibleValue) -> TypeIs[t.FlexibleValue]:
+    def is_flexible_value(value: t.GuardInputValue) -> TypeIs[t.GuardInputValue]:
         if value is None or isinstance(value, str | int | float | bool | datetime):
             return True
         if isinstance(value, (list, tuple)):
@@ -174,24 +174,24 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_handler_type(
         value: t.GuardInputValue | t.HandlerCallable,
-    ) -> TypeGuard[t.HandlerType]:
-        """Check if value is a valid t.HandlerType.
+    ) -> TypeGuard[t.HandlerLike]:
+        """Check if value is a valid t.HandlerLike.
 
-        t.HandlerType = HandlerCallable | Mapping[str, t.ConfigMapValue] | BaseModel
+        t.HandlerLike = Callable[..., t.GuardInputValue | None]
 
-        This TypeGuard enables type narrowing for t.HandlerType.
+        This TypeGuard enables type narrowing for t.HandlerLike.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[t.HandlerType]: True if value matches t.HandlerType structure
+            TypeGuard[t.HandlerLike]: True if value matches t.HandlerLike structure
 
         Example:
             >>> from flext_core import u
             >>> if u.Guards.is_handler_type(handler):
-            ...     # handler is now typed as t.HandlerType
+            ...     # handler is now typed as t.HandlerLike
             ...     result = container.register("my_handler", handler)
 
         """
@@ -508,7 +508,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_type(
-        value: t.FlexibleValue,
+        value: t.GuardInputValue,
         type_spec: str | type | tuple[type, ...],
     ) -> bool:
         """Generic type checking function that unifies all guard checks.
@@ -587,7 +587,7 @@ class FlextUtilitiesGuards:
             return False
 
     @staticmethod
-    def _check_protocol(value: t.FlexibleValue, name: str) -> bool:
+    def _check_protocol(value: t.GuardInputValue, name: str) -> bool:
         """Check protocol via _PROTOCOL_SPECS mapping."""
         if name == "context":
             return FlextUtilitiesGuards.is_context(value)
@@ -635,7 +635,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _guard_check_type(
-        value: t.FlexibleValue,
+        value: t.GuardInputValue,
         condition: type | tuple[type, ...],
         context_name: str,
         error_msg: str | None,

@@ -630,7 +630,7 @@ class FlextContainer(p.DI):
                     name="config",
                     service=self._config,
                 )
-                _ = self.register("config", self._config)
+                _ = self.register("config", cast("t.RegisterableService", self._config))
             except ValidationError:
                 pass  # Skip registration if validation fails
 
@@ -654,7 +654,7 @@ class FlextContainer(p.DI):
                 )
                 _ = self.register(
                     "context",
-                    self._context,
+                    cast("t.RegisterableService", self._context),
                 )
             except ValidationError:
                 pass  # Skip registration if validation fails
@@ -664,7 +664,7 @@ class FlextContainer(p.DI):
         # Safe to instantiate without triggering container creation
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            _ = self.register("command_bus", dispatcher)
+            _ = self.register("command_bus", cast("t.RegisterableService", dispatcher))
 
     @override
     def configure(

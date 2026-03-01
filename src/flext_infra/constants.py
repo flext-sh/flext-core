@@ -22,6 +22,11 @@ from flext_infra.docs._constants import FlextInfraDocsConstants
 from flext_infra.github._constants import FlextInfraGithubConstants
 from flext_infra.release._constants import FlextInfraReleaseConstants
 from flext_infra.workspace._constants import FlextInfraWorkspaceConstants
+from flext_infra._constants_modules import (
+    FlextInfraPathsConstants,
+    FlextInfraReportingConstants,
+    FlextInfraVersioningConstants,
+)
 
 
 class FlextInfraConstants(FlextConstants):
@@ -185,6 +190,15 @@ class FlextInfraConstants(FlextConstants):
 
         class Workspace(FlextInfraWorkspaceConstants):
             """Workspace constants via MRO."""
+
+        class Paths(FlextInfraPathsConstants):
+            """Paths module constants via MRO."""
+
+        class Versioning(FlextInfraVersioningConstants):
+            """Versioning module constants via MRO."""
+
+        class Reporting(FlextInfraReportingConstants):
+            """Reporting module constants via MRO."""
 
 
 c = FlextInfraConstants

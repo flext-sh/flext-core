@@ -5,16 +5,16 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from flext_infra import REPORTS_DIR_NAME, output
-from flext_infra.check.services import DEFAULT_GATES, FlextInfraWorkspaceChecker
+from flext_infra import c, output
+from flext_infra.check.services import FlextInfraWorkspaceChecker
 
 
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run workspace checks for specified projects."""
     parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
     _ = parser.add_argument("projects", nargs="*")
-    _ = parser.add_argument("--gates", default=DEFAULT_GATES)
-    _ = parser.add_argument("--reports-dir", default=f"{REPORTS_DIR_NAME}/check")
+    _ = parser.add_argument("--gates", default=c.Gates.DEFAULT_CSV)
+    _ = parser.add_argument("--reports-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check")
     _ = parser.add_argument("--fail-fast", action="store_true")
     args = parser.parse_args(argv)
 

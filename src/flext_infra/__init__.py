@@ -56,7 +56,6 @@ if TYPE_CHECKING:
     from flext_infra.release import FlextInfraReleaseOrchestrator
     from flext_infra.reporting import (
         KNOWN_VERBS,
-        REPORTS_DIR_NAME,
         FlextInfraReportingService,
     )
     from flext_infra.selection import FlextInfraProjectSelector
@@ -153,7 +152,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraWorkflowLinter": ("flext_infra.github", "FlextInfraWorkflowLinter"),
     "FlextInfraWorkflowSyncer": ("flext_infra.github", "FlextInfraWorkflowSyncer"),
     "KNOWN_VERBS": ("flext_infra.reporting", "KNOWN_VERBS"),
-    "REPORTS_DIR_NAME": ("flext_infra.reporting", "REPORTS_DIR_NAME"),
     "SyncOperation": ("flext_infra.github", "SyncOperation"),
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
@@ -173,7 +171,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "KNOWN_VERBS",
-    "REPORTS_DIR_NAME",
     "FlextInfraBaseMkGenerator",
     "FlextInfraBaseMkTemplateEngine",
     "FlextInfraBaseMkValidator",

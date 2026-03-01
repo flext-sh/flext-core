@@ -19,7 +19,7 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra import REPORTS_DIR_NAME, c, output
+from flext_infra import c, output
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.fixer import FlextInfraDocFixer
@@ -126,7 +126,7 @@ def main() -> int:
         _ = sub.add_argument("--root", default=".")
         _ = sub.add_argument("--project")
         _ = sub.add_argument("--projects")
-        _ = sub.add_argument("--output-dir", default=f"{REPORTS_DIR_NAME}/docs")
+        _ = sub.add_argument("--output-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs")
 
     # audit
     audit_parser = subparsers.add_parser("audit", help="Audit documentation")

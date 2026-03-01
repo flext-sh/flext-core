@@ -13,14 +13,7 @@ from pathlib import Path
 
 from flext_core import FlextResult, FlextService, r
 
-from flext_infra import c
-
-_WORKSPACE_MARKERS: frozenset[str] = frozenset({
-    ".git",
-    c.Files.MAKEFILE_FILENAME,
-    c.Files.PYPROJECT_FILENAME,
-})
-
+from flext_infra.constants import c
 
 class FlextInfraPathResolver(FlextService[Path]):
     """Infrastructure service for workspace path resolution.
@@ -68,11 +61,11 @@ class FlextInfraPathResolver(FlextService[Path]):
                 current = current.parent
 
             for parent in [current, *list(current.parents)]:
-                if all((parent / marker).exists() for marker in _WORKSPACE_MARKERS):
+                if all((parent / marker).exists() for marker in c.Infra.Paths.WORKSPACE_MARKERS):
                     return r[Path].ok(parent)
 
             return r[Path].fail(
-                f"workspace root not found (looking for {_WORKSPACE_MARKERS}) "
+                f"workspace root not found (looking for {c.Infra.Paths.WORKSPACE_MARKERS}) "
                 f"starting from {file}",
             )
         except (OSError, RuntimeError, TypeError) as exc:

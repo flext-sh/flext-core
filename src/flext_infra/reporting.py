@@ -19,13 +19,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final
 
 from flext_core import FlextResult, FlextService, r
 from flext_core.constants import KNOWN_VERBS
 
-REPORTS_DIR_NAME: Final[str] = ".reports"
-
+from flext_infra.constants import c
 
 class FlextInfraReportingService(FlextService[Path]):
     """Infrastructure service for standardized report path management.
@@ -65,7 +63,7 @@ class FlextInfraReportingService(FlextService[Path]):
 
         """
         root_path = Path(root) if isinstance(root, str) else root
-        base = root_path / REPORTS_DIR_NAME
+        base = root_path / c.Infra.Reporting.REPORTS_DIR_NAME
         if scope == "workspace":
             return (base / "workspace" / verb).resolve()
         return (base / verb).resolve()
@@ -129,4 +127,4 @@ class FlextInfraReportingService(FlextService[Path]):
             return r[Path].fail(f"failed to create latest symlink: {exc}")
 
 
-__all__ = ["KNOWN_VERBS", "REPORTS_DIR_NAME", "FlextInfraReportingService"]
+__all__ = ["KNOWN_VERBS", "FlextInfraReportingService"]

@@ -11,10 +11,8 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, output
 from flext_infra.constants import c
-from flext_infra.deps._constants import FlextInfraDepsConstants
 
 logger = FlextLogger.create_module_logger(__name__)
-deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 
 def _workspace_root() -> Path:
@@ -47,7 +45,7 @@ def detect_mode(project_root: Path) -> str:
 def extract_dep_name(raw_path: str) -> str:
     """Extract dependency name from path string."""
     normalized = raw_path.strip().lstrip("/").removeprefix("./")
-    for prefix in (f"{deps_constants.FLEXT_DEPS_DIR}/", "../"):
+    for prefix in (f"{c.Infra.Deps.FLEXT_DEPS_DIR}/", "../"):
         normalized = normalized.removeprefix(prefix)
     return normalized
 
@@ -56,16 +54,16 @@ def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
     """Compute target path for dependency based on mode and location."""
     if mode == "workspace":
         return dep_name if is_root else f"../{dep_name}"
-    return f"{deps_constants.FLEXT_DEPS_DIR}/{dep_name}"
+    return f"{c.Infra.Deps.FLEXT_DEPS_DIR}/{dep_name}"
 
 
 def _extract_requirement_name(entry: str) -> str | None:
     """Extract requirement name from PEP 621 dependency entry."""
     if " @ " in entry:
-        match = deps_constants.PEP621_PATH_DEP_RE.match(entry)
+        match = c.Infra.Deps.PEP621_PATH_DEP_RE.match(entry)
         if match:
             return match.group("name")
-    match = deps_constants.PEP621_NAME_RE.match(entry)
+    match = c.Infra.Deps.PEP621_NAME_RE.match(entry)
     if not match:
         return None
     return match.group("name")
@@ -101,7 +99,7 @@ def _rewrite_pep621(
             continue
 
         if " @ " in requirement_part:
-            match = deps_constants.PEP621_PATH_DEP_RE.match(requirement_part)
+            match = c.Infra.Deps.PEP621_PATH_DEP_RE.match(requirement_part)
             if not match:
                 continue
             raw_path = match.group("path").strip()

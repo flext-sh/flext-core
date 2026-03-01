@@ -9,18 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import MutableMapping
 from pathlib import Path
 
 from flext_core import FlextResult, FlextService, r
 
-from flext_infra import FlextInfraTomlService, c
-
-_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-dev)?$")
-_DEV_BRANCH_RE = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
-_VALID_BUMP_TYPES = frozenset({"major", "minor", "patch"})
-
+from flext_infra.constants import c
+from flext_infra.toml_io import FlextInfraTomlService
 
 class FlextInfraVersioningService(FlextService[str]):
     """Infrastructure service for semantic versioning operations.
@@ -56,7 +51,7 @@ class FlextInfraVersioningService(FlextService[str]):
             FlextResult with version tuple.
 
         """
-        match = _SEMVER_RE.match(version)
+        match = c.Infra.Versioning.SEMVER_RE.match(version)
         if not match:
             return r[tuple[int, int, int]].fail(
                 f"invalid semver: {version}",
@@ -80,7 +75,7 @@ class FlextInfraVersioningService(FlextService[str]):
             FlextResult[str] with the bumped version.
 
         """
-        if bump_type not in _VALID_BUMP_TYPES:
+        if bump_type not in c.Infra.Versioning.VALID_BUMP_TYPES:
             return r[str].fail(f"invalid bump type: {bump_type}")
 
         result = self.parse_semver(version)
@@ -116,7 +111,7 @@ class FlextInfraVersioningService(FlextService[str]):
         if branch.startswith("release/"):
             tag = f"v{branch.removeprefix('release/')}"
             return r[str].ok(tag)
-        match = _DEV_BRANCH_RE.match(branch)
+        match = c.Infra.Versioning.DEV_BRANCH_RE.match(branch)
         if match:
             return r[str].ok(f"v{match.group(1)}")
         return r[str].fail(

@@ -141,7 +141,7 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
-    def _to_general_value_from_object(value: t.FlexibleValue) -> t.ConfigMapValue:
+    def _to_general_value_from_object(value: t.GuardInputValue) -> t.ConfigMapValue:
         if FlextUtilitiesGuards.is_general_value_type(value):
             return value
         return str(value)

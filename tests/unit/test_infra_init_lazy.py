@@ -181,9 +181,11 @@ class TestFlextInfraInitLazyLoading:
         verbs = flext_infra.KNOWN_VERBS
         assert verbs is not None
 
-    def test_lazy_import_reports_dir_name(self) -> None:
-        """Test lazy loading of REPORTS_DIR_NAME."""
-        dir_name = flext_infra.REPORTS_DIR_NAME
+    def test_reports_dir_name_via_constants(self) -> None:
+        """Test REPORTS_DIR_NAME access via c.Infra.Reporting."""
+        from flext_infra.constants import c
+
+        dir_name = c.Infra.Reporting.REPORTS_DIR_NAME
         assert isinstance(dir_name, str)
 
 
