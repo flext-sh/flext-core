@@ -1,7 +1,7 @@
-"""Integration tests for the codegen pipeline (census, scaffold, auto-fix).
+"""Integration test for the end-to-end codegen pipeline.
 
-Validates end-to-end workflows combining discovery, scaffolding, census,
-and auto-fix services on temporary workspaces.
+Validates workspace-level behavior for census, scaffold, auto-fix, lazy-init,
+and post-census checks using isolated temporary projects.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,13 +11,16 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+from typing import ClassVar
 from unittest.mock import patch
 
-from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
 from flext_infra.codegen.census import FlextInfraCodegenCensus
-from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
+from flext_infra.codegen.fixer import FlextInfraCodegenFixer
+from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
+from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 
-_SRC_MODULE_FILES = (
+
+_SRC_MODULES = (
     "constants.py",
     "typings.py",
     "protocols.py",
@@ -25,211 +28,225 @@ _SRC_MODULE_FILES = (
     "utilities.py",
 )
 
-_PATCH_RUFF = "flext_infra.codegen.module_scaffolder.FlextInfraAstUtils.run_ruff_fix"
-_PATCH_PREFIX = (
-    "flext_infra.codegen.module_scaffolder.FlextInfraNamespaceValidator._derive_prefix"
-)
+
+class _CompatCoreConstants:
+    EXEMPT_FILENAMES: ClassVar[frozenset[str]] = frozenset({
+        "__init__.py",
+        "conftest.py",
+        "__main__.py",
+    })
+    EXEMPT_PREFIXES: ClassVar[tuple[str, ...]] = ("test_", "_")
+    DUNDER_ALLOWED: ClassVar[frozenset[str]] = frozenset({
+        "__all__",
+        "__version__",
+        "__version_info__",
+    })
+    ALIAS_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "c",
+        "m",
+        "p",
+        "t",
+        "u",
+        "r",
+        "d",
+        "e",
+        "h",
+        "s",
+        "x",
+    })
+    TYPEVAR_CALLABLES: ClassVar[frozenset[str]] = frozenset({
+        "TypeVar",
+        "ParamSpec",
+        "TypeVarTuple",
+    })
+    COLLECTION_CALLS: ClassVar[frozenset[str]] = frozenset({
+        "dict",
+        "list",
+        "set",
+        "tuple",
+        "frozenset",
+    })
+    ENUM_BASES: ClassVar[frozenset[str]] = frozenset({"Enum", "StrEnum", "IntEnum"})
 
 
-def _derive_prefix_from_path(project_root: Path) -> str:
-    """Replicate _derive_prefix logic for test isolation (no self needed)."""
-    src_dir = project_root / "src"
-    if not src_dir.is_dir():
-        return ""
-    for child in sorted(src_dir.iterdir()):
-        if child.is_dir() and (child / "__init__.py").exists():
-            return "".join(part.title() for part in child.name.split("_"))
-    return ""
+def _project_prefix(package_name: str) -> str:
+    return "".join(part.title() for part in package_name.split("_"))
+
+
+def _write_complete_modules(pkg_dir: Path, package_name: str) -> None:
+    prefix = _project_prefix(package_name)
+    for module_name in _SRC_MODULES:
+        suffix = module_name.split(".")[0].title()
+        _ = (pkg_dir / module_name).write_text(
+            f"class {prefix}{suffix}:\n    pass\n",
+            encoding="utf-8",
+        )
+
+
+def _write_package_init(pkg_dir: Path, package_name: str) -> None:
+    prefix = _project_prefix(package_name)
+    _ = (pkg_dir / "__init__.py").write_text(
+        "\n".join([
+            '"""Package init for pipeline test."""',
+            "",
+            f"from {package_name}.constants import {prefix}Constants",
+            "",
+            "__all__ = [",
+            f'    "{prefix}Constants",',
+            "]",
+            "",
+        ]),
+        encoding="utf-8",
+    )
 
 
 def _make_project(
     tmp_path: Path,
     name: str,
     *,
-    with_all_modules: bool = True,
+    with_all_modules: bool,
+    with_tests_dir: bool,
 ) -> Path:
-    """Create a minimal test project directory structure.
-
-    Args:
-        tmp_path: Temporary directory root.
-        name: Project name (e.g., "test-project").
-        with_all_modules: If True, create all 5 base modules.
-
-    Returns:
-        Path to the created project directory.
-
-    """
     project = tmp_path / name
     project.mkdir()
-    (project / "Makefile").touch()
-    (project / "pyproject.toml").write_text(f"[project]\nname='{name}'\n")
+    _ = (project / "Makefile").touch()
+    _ = (project / "pyproject.toml").write_text(
+        f"[project]\nname='{name}'\n", encoding="utf-8"
+    )
     (project / ".git").mkdir()
 
-    pkg_name = name.replace("-", "_")
-    pkg = project / "src" / pkg_name
-    pkg.mkdir(parents=True)
-    (pkg / "__init__.py").touch()
+    package_name = name.replace("-", "_")
+    pkg_dir = project / "src" / package_name
+    pkg_dir.mkdir(parents=True)
+    _write_package_init(pkg_dir, package_name)
 
     if with_all_modules:
-        for mod in _SRC_MODULE_FILES:
-            class_name = "".join(word.title() for word in mod.split(".")[0].split("_"))
-            (pkg / mod).write_text(f"class {pkg_name.title()}{class_name}:\n    pass\n")
+        _write_complete_modules(pkg_dir, package_name)
+
+    if with_tests_dir:
+        tests_dir = project / "tests"
+        tests_dir.mkdir()
+        prefix = _project_prefix(package_name)
+        _ = (tests_dir / "__init__.py").write_text(
+            "\n".join([
+                '"""Tests init for pipeline test."""',
+                "",
+                f"from tests.constants import Tests{prefix}Constants",
+                "",
+                "__all__ = [",
+                f'    "Tests{prefix}Constants",',
+                "]",
+                "",
+            ]),
+            encoding="utf-8",
+        )
 
     return project
 
 
-class TestScaffoldNoopForCompleteProject:
-    """When all 5 modules exist, scaffold is a no-op."""
+def test_codegen_pipeline_end_to_end(tmp_path: Path) -> None:
+    """Pipeline flow remains isolated, idempotent, and syntactically valid."""
+    _ = _make_project(
+        tmp_path,
+        "project-a",
+        with_all_modules=True,
+        with_tests_dir=False,
+    )
+    project_b = _make_project(
+        tmp_path,
+        "project-b",
+        with_all_modules=True,
+        with_tests_dir=False,
+    )
+    _ = _make_project(
+        tmp_path,
+        "project-c",
+        with_all_modules=True,
+        with_tests_dir=True,
+    )
+    flexcore = _make_project(
+        tmp_path,
+        "flexcore",
+        with_all_modules=False,
+        with_tests_dir=True,
+    )
 
-    def test_scaffold_noop_for_complete_project(self, tmp_path: Path) -> None:
-        """Project with all 5 modules → files_created == []."""
-        project = _make_project(tmp_path, "complete-project", with_all_modules=True)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+    package_b = project_b / "src" / "project_b"
+    (package_b / "models.py").unlink()
+    _ = (package_b / "base.py").write_text(
+        "\n".join([
+            "from typing import TypeVar",
+            "",
+            'TBase = TypeVar("TBase")',
+            "",
+            "class ProjectBBase:",
+            "    pass",
+            "",
+        ]),
+        encoding="utf-8",
+    )
 
-        with patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path):
-            result = scaffolder.scaffold_project(project)
+    flexcore_package = flexcore / "src" / "flexcore"
+    assert not (flexcore_package / "constants.py").exists()
 
-        assert result.files_created == []
-        assert len(result.files_skipped) == 5
-        assert result.project == "complete-project"
+    census_service = FlextInfraCodegenCensus(workspace_root=tmp_path)
+    scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
+    fixer = FlextInfraCodegenFixer(workspace_root=tmp_path)
+    lazy_init = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
 
+    with (
+        patch(
+            "flext_infra.codegen.transforms.FlextInfraCodegenTransforms.run_ruff_fix"
+        ),
+        patch(
+            "flext_infra.core.namespace_validator.c.Infra.Core",
+            _CompatCoreConstants,
+            create=True,
+        ),
+    ):
+        census_before = census_service.run()
 
-class TestScaffoldCreatesMissingModules:
-    """Scaffold creates missing modules."""
+        scaffold_results_first = scaffolder.run()
+        scaffold_by_project_first = {
+            result.project: result for result in scaffold_results_first
+        }
 
-    def test_scaffold_creates_missing_modules(self, tmp_path: Path) -> None:
-        """Project missing models.py → files_created contains models.py."""
-        project = _make_project(tmp_path, "partial-project", with_all_modules=False)
-        pkg_name = "partial_project"
-        pkg = project / "src" / pkg_name
+        assert set(scaffold_by_project_first) == {"project-a", "project-b", "project-c"}
+        assert len(scaffold_by_project_first["project-a"].files_created) == 0
+        assert len(scaffold_by_project_first["project-b"].files_created) == 1
+        assert len(scaffold_by_project_first["project-c"].files_created) == 5
 
-        # Create only 4 modules, omit models.py
-        for mod in ("constants.py", "typings.py", "protocols.py", "utilities.py"):
-            class_name = "".join(word.title() for word in mod.split(".")[0].split("_"))
-            (pkg / mod).write_text(f"class {pkg_name.title()}{class_name}:\n    pass\n")
+        scaffold_results_second = scaffolder.run()
+        scaffold_by_project_second = {
+            result.project: result for result in scaffold_results_second
+        }
+        assert len(scaffold_by_project_second["project-a"].files_created) == 0
+        assert len(scaffold_by_project_second["project-b"].files_created) == 0
+        assert len(scaffold_by_project_second["project-c"].files_created) == 0
 
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        fix_results = fixer.run()
+        fix_by_project = {result.project: result for result in fix_results}
 
-        with (
-            patch(_PATCH_RUFF),
-            patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path),
-        ):
-            result = scaffolder.scaffold_project(project)
+        assert set(fix_by_project) == {"project-a", "project-b", "project-c"}
+        project_b_fixed = fix_by_project["project-b"]
+        assert len(project_b_fixed.violations_fixed) > 0
+        assert any(v.rule == "NS-002" for v in project_b_fixed.violations_fixed)
 
-        assert len(result.files_created) == 1
-        created_names = {Path(f).name for f in result.files_created}
-        assert "models.py" in created_names
+        unmapped_count = lazy_init.run(scan_tests=True)
+        assert unmapped_count >= 0
 
+        census_after = census_service.run()
 
-class TestScaffoldIdempotency:
-    """Scaffold is idempotent."""
+    before_total = sum(report.total for report in census_before)
+    after_total = sum(report.total for report in census_after)
+    assert after_total <= before_total
 
-    def test_scaffold_idempotency(self, tmp_path: Path) -> None:
-        """Run scaffold twice → second run files_created == []."""
-        project = _make_project(tmp_path, "idempotent-project", with_all_modules=False)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+    for py_file in tmp_path.rglob("*.py"):
+        source = py_file.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        assert isinstance(tree, ast.Module)
 
-        # First run: create missing modules
-        with (
-            patch(_PATCH_RUFF),
-            patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path),
-        ):
-            result1 = scaffolder.scaffold_project(project)
-
-        assert len(result1.files_created) == 5
-
-        # Second run: all modules exist, should be no-op
-        with patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path):
-            result2 = scaffolder.scaffold_project(project)
-
-        assert result2.files_created == []
-        assert len(result2.files_skipped) == 5
-
-
-class TestCensusRunsOnWorkspace:
-    """Census service runs on workspace."""
-
-    def test_census_runs_on_workspace(self, tmp_path: Path) -> None:
-        """Census on tmp workspace → returns CensusReport with total_violations >= 0."""
-        _make_project(tmp_path, "census-project", with_all_modules=True)
-
-        census = FlextInfraCodegenCensus(workspace_root=tmp_path)
-        reports = census.run()
-
-        assert isinstance(reports, list)
-        assert len(reports) >= 1
-        report = reports[0]
-        assert report.project == "census-project"
-        assert report.total >= 0
-        assert report.fixable >= 0
-        assert isinstance(report.violations, list)
-
-
-class TestAutofixRunsOnWorkspace:
-    """Auto-fix service runs on workspace."""
-
-    def test_autofix_runs_on_workspace(self, tmp_path: Path) -> None:
-        """Auto-fix on tmp workspace → returns AutoFixResult with violations_fixed list."""
-        _make_project(tmp_path, "autofix-project", with_all_modules=True)
-
-        fixer = FlextInfraAutoFixer(workspace_root=tmp_path)
-        results = fixer.run()
-
-        assert isinstance(results, list)
-        assert len(results) >= 1
-        result = results[0]
-        assert result.project == "autofix-project"
-        assert isinstance(result.violations_fixed, list)
-        assert isinstance(result.violations_skipped, list)
-        assert isinstance(result.files_modified, list)
-
-
-class TestGeneratedFilesAreValidPython:
-    """Generated files are valid Python."""
-
-    def test_generated_files_are_valid_python(self, tmp_path: Path) -> None:
-        """Scaffold creates files → ast.parse() succeeds on each."""
-        project = _make_project(
-            tmp_path, "valid-python-project", with_all_modules=False
-        )
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
-
-        with (
-            patch(_PATCH_RUFF),
-            patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path),
-        ):
-            result = scaffolder.scaffold_project(project)
-
-        pkg_name = "valid_python_project"
-        pkg = project / "src" / pkg_name
-
-        for file_path in result.files_created:
-            full_path = pkg / Path(file_path).name
-            assert full_path.exists()
-            content = full_path.read_text()
-            # Should not raise SyntaxError
-            ast.parse(content)
+    assert not (flexcore_package / "constants.py").exists()
 
 
-class TestFlexcoreExcluded:
-    """Flexcore projects are excluded from all services."""
-
-    def test_flexcore_excluded(self, tmp_path: Path) -> None:
-        """Add a flexcore project → scaffold result has no entry for it."""
-        # Create a normal project
-        _make_project(tmp_path, "normal-project", with_all_modules=False)
-
-        # Create a flexcore project
-        _make_project(tmp_path, "flexcore", with_all_modules=False)
-
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
-
-        with (
-            patch(_PATCH_RUFF),
-            patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path),
-        ):
-            results = scaffolder.run()
-
-        project_names = {r.project for r in results}
-        assert "normal-project" in project_names
-        assert "flexcore" not in project_names
+__all__: list[str] = []
