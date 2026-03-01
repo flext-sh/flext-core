@@ -91,13 +91,11 @@ class FlextGenericModels:
             version: str | None = Field(default=None, description="Service version")
             status: str = Field(default="active", description="Service status")
             uptime_seconds: float | None = Field(
-                default=None,
-                description="Uptime in seconds",
+                default=None, description="Uptime in seconds"
             )
             start_time: datetime | None = Field(default=None, description="Start time")
             last_health_check: datetime | None = Field(
-                default=None,
-                description="Last health check",
+                default=None, description="Last health check"
             )
             health_status: str = Field(default="unknown", description="Health status")
             port: int | None = Field(default=None, description="Port")
@@ -159,8 +157,7 @@ class FlextGenericModels:
                 description="Service version",
             )
             duration_ms: float | None = Field(
-                default=None,
-                description="Check duration ms",
+                default=None, description="Check duration ms"
             )
             environment: str | None = Field(default=None, description="Environment")
             metadata: t.Dict = Field(
@@ -202,8 +199,7 @@ class FlextGenericModels:
                 description="Last update",
             )
             estimated_total: int | None = Field(
-                default=None,
-                description="Estimated total",
+                default=None, description="Estimated total"
             )
             current_item: str | None = Field(default=None, description="Current item")
             operation_name: str | None = Field(
@@ -274,8 +270,7 @@ class FlextGenericModels:
                 description="Warning messages",
             )
             skipped: list[t.GuardInputValue] = Field(
-                default_factory=list,
-                description="Skipped items",
+                default_factory=list, description="Skipped items"
             )
             start_time: datetime | None = Field(default=None, description="Start time")
             end_time: datetime | None = Field(default=None, description="End time")

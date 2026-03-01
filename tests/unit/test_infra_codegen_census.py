@@ -12,14 +12,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from flext_infra.codegen.census import (
-    FlextInfraCodegenCensus,
     _EXCLUDED_PROJECTS,
     _VIOLATION_PATTERN,
+    FlextInfraCodegenCensus,
 )
 from flext_infra.models import FlextInfraModels
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -17,7 +17,10 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DEFAULT_GATES": ("flext_infra.check.services", "DEFAULT_GATES"),
     "FlextInfraConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
-    "FlextInfraWorkspaceChecker": ("flext_infra.check.services", "FlextInfraWorkspaceChecker"),
+    "FlextInfraWorkspaceChecker": (
+        "flext_infra.check.services",
+        "FlextInfraWorkspaceChecker",
+    ),
 }
 
 __all__ = [

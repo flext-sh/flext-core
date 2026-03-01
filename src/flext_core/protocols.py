@@ -27,7 +27,6 @@ from flext_core import T, t
 if TYPE_CHECKING:
     from flext_core import r
 
-
 # =============================================================================
 # PROTOCOL DETECTION AND VALIDATION HELPERS
 # =============================================================================

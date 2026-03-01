@@ -10,6 +10,6 @@ class FlextTestUtilities:
 
 
 VALID_STATUSES = frozenset({"active", "inactive"})  # VIOLATION — loose frozenset
-DEFAULT_HEADERS = dict(content_type="json")  # VIOLATION — loose dict
+DEFAULT_HEADERS = {"content_type": "json"}  # VIOLATION — loose dict
 u = FlextTestUtilities
 __all__ = ["FlextTestUtilities", "u"]

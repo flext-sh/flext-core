@@ -17,7 +17,6 @@ from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
 
-
 _SRC_MODULE_FILES = (
     "constants.py",
     "typings.py",
@@ -58,6 +57,7 @@ def _make_project(
 
     Returns:
         Path to the created project directory.
+
     """
     project = tmp_path / name
     project.mkdir()
@@ -151,7 +151,7 @@ class TestCensusRunsOnWorkspace:
 
     def test_census_runs_on_workspace(self, tmp_path: Path) -> None:
         """Census on tmp workspace → returns CensusReport with total_violations >= 0."""
-        project = _make_project(tmp_path, "census-project", with_all_modules=True)
+        _make_project(tmp_path, "census-project", with_all_modules=True)
 
         census = FlextInfraCodegenCensus(workspace_root=tmp_path)
         reports = census.run()
@@ -170,7 +170,7 @@ class TestAutofixRunsOnWorkspace:
 
     def test_autofix_runs_on_workspace(self, tmp_path: Path) -> None:
         """Auto-fix on tmp workspace → returns AutoFixResult with violations_fixed list."""
-        project = _make_project(tmp_path, "autofix-project", with_all_modules=True)
+        _make_project(tmp_path, "autofix-project", with_all_modules=True)
 
         fixer = FlextInfraAutoFixer(workspace_root=tmp_path)
         results = fixer.run()
@@ -217,10 +217,10 @@ class TestFlexcoreExcluded:
     def test_flexcore_excluded(self, tmp_path: Path) -> None:
         """Add a flexcore project → scaffold result has no entry for it."""
         # Create a normal project
-        normal = _make_project(tmp_path, "normal-project", with_all_modules=False)
+        _make_project(tmp_path, "normal-project", with_all_modules=False)
 
         # Create a flexcore project
-        flexcore = _make_project(tmp_path, "flexcore", with_all_modules=False)
+        _make_project(tmp_path, "flexcore", with_all_modules=False)
 
         scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
 

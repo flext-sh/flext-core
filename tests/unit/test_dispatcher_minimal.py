@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextDispatcher, c, m, t
+from flext_core import FlextDispatcher, c, t
+from flext_core.models import m
 
 # ---------------------------------------------------------------------------
 # Test handlers

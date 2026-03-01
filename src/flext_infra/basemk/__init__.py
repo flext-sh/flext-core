@@ -20,8 +20,14 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraBaseMkGenerator": ("flext_infra.basemk.generator", "FlextInfraBaseMkGenerator"),
-    "FlextInfraBaseMkTemplateEngine": ("flext_infra.basemk.engine", "FlextInfraBaseMkTemplateEngine"),
+    "FlextInfraBaseMkGenerator": (
+        "flext_infra.basemk.generator",
+        "FlextInfraBaseMkGenerator",
+    ),
+    "FlextInfraBaseMkTemplateEngine": (
+        "flext_infra.basemk.engine",
+        "FlextInfraBaseMkTemplateEngine",
+    ),
     "main": ("flext_infra.basemk.__main__", "main"),
 }
 

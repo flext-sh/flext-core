@@ -15,7 +15,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypeAlias
 
-from flext_core import p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
@@ -27,6 +26,8 @@ from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.mixin import FlextModelsMixin
 from flext_core._models.settings import FlextModelsConfig
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModels:

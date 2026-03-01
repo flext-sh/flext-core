@@ -314,7 +314,6 @@ class TestFlextInfraPythonVersionEnforcer:
         When discovery.discover_projects returns a failure result,
         _discover_projects should return an empty list.
         """
-
         with patch.object(
             FlextInfraDiscoveryService,
             "discover_projects",

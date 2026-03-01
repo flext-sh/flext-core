@@ -15,7 +15,6 @@ from unittest.mock import patch
 
 from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
 
-
 _SRC_MODULE_FILES = (
     "constants.py",
     "typings.py",

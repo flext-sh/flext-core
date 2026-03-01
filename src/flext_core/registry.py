@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, overload, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -305,6 +305,11 @@ class FlextRegistry(s[bool]):
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+    @overload
+    def register_handler(
+        self,
+        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
+    ) -> r[m.HandlerRegistrationDetails]: ...
 
     def register_handler(
         self,

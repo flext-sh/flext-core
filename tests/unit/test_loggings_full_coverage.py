@@ -370,7 +370,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     assert FlextLogger.get_logger("x") is sentinel
 
     class _TraceLogger(_FakeBindable):
-        def debug(self, *_args: object, **_kwargs: object) -> None:
+        def debug(self, *_args: object, **_kwargs: object) -> r[bool]:
             msg = "trace boom"
             raise RuntimeError(msg)
 
@@ -449,7 +449,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     assert FlextLogger._convert_to_relative_path("/tmp/example.py") == "example.py"
 
     class _ErrorLogger(_FakeBindable):
-        def error(self, *_args: object, **_kwargs: object) -> None:
+        def error(self, *_args: object, **_kwargs: object) -> r[bool]:
             msg = "err"
             raise TypeError(msg)
 
