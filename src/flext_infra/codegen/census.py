@@ -9,48 +9,62 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
-from typing import override
+from typing import Final, override
 
 from flext_core import FlextService, r
 
-from flext_infra.constants import c
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.models import FlextInfraModels
 
 __all__ = ["FlextInfraCodegenCensus"]
 
+_VIOLATION_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"\[(?P<rule>NS-\d{3})-\d{3}\]\s+(?P<module>[^:]+):(?P<line>\d+)\s+—\s+(?P<message>.+)"
+)
+
+_EXCLUDED_PROJECTS: Final[frozenset[str]] = frozenset({"flexcore"})
+
 
 class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]]):
     """Read-only census service for namespace violation counting."""
 
-    def __init__(self, workspace_root: Path) -> None:  # noqa: D107
+    def __init__(self, workspace_root: Path) -> None:
         super().__init__()
-        self._workspace_root = workspace_root
+        self._workspace_root: Path = workspace_root
 
     @override
     def execute(self) -> r[list[FlextInfraModels.CensusReport]]:
         """Execute census across all workspace projects."""
         return r[list[FlextInfraModels.CensusReport]].ok(self.run())
 
-    def run(self) -> list[FlextInfraModels.CensusReport]:
+    def run(
+        self,
+        workspace_root: Path | None = None,
+        *,
+        format: str = "json",
+    ) -> list[FlextInfraModels.CensusReport]:
         """Run census on all projects in workspace.
 
         Returns:
             List of CensusReport models, one per scanned project.
 
         """
+        _ = format
+        workspace = (
+            workspace_root if workspace_root is not None else self._workspace_root
+        )
+
         discovery = FlextInfraDiscoveryService()
-        projects_result = discovery.discover_projects(self._workspace_root)
+        projects_result = discovery.discover_projects(workspace)
         if not projects_result.is_success:
             return []
 
         reports: list[FlextInfraModels.CensusReport] = []
         for project in projects_result.unwrap():
-            if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
-                continue
-            if project.stack.startswith("go"):
+            if project.name in _EXCLUDED_PROJECTS:
                 continue
             report = self._census_project(project)
             reports.append(report)
@@ -62,7 +76,7 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
     ) -> FlextInfraModels.CensusReport:
         """Run census on a single project."""
         validator = FlextInfraNamespaceValidator()
-        result = validator.validate(project.path)
+        result = validator.validate(project.path, scan_tests=False)
 
         violations: list[FlextInfraModels.CensusViolation] = []
         if result.is_success:
@@ -84,15 +98,16 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
         violation_str: str,
     ) -> FlextInfraModels.CensusViolation | None:
         """Parse a violation string into a CensusViolation model."""
-        match = c.Infra.Codegen.VIOLATION_PATTERN.match(violation_str)
+        match = _VIOLATION_PATTERN.match(violation_str)
         if match is None:
             return None
 
         rule = match.group("rule")
-        # NS-000 = Rule 0 (module structure) = not auto-fixable
-        # NS-001 = Rule 1 (constants centralization) = fixable
-        # NS-002 = Rule 2 (types centralization) = fixable
-        fixable = rule != "NS-000"
+        fixable = FlextInfraCodegenCensus._is_fixable(
+            rule=rule,
+            module=match.group("module"),
+            message=match.group("message"),
+        )
 
         return FlextInfraModels.CensusViolation(
             module=match.group("module"),
@@ -101,3 +116,14 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
             message=match.group("message"),
             fixable=fixable,
         )
+
+    @staticmethod
+    def _is_fixable(*, rule: str, module: str, message: str) -> bool:
+        _ = message
+        if rule == "NS-000":
+            return False
+        if rule == "NS-001":
+            return True
+        if rule == "NS-002":
+            return not module.endswith("typings.py")
+        return False
