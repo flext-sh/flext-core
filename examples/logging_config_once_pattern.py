@@ -15,6 +15,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import c, m, r, s
 
 
@@ -23,6 +25,7 @@ class DatabaseService(s[m.ConfigMap]):
 
     db_config: m.ConfigMap
 
+    @override
     def model_post_init(self, /, __context: object) -> None:
         """Post-initialization hook.
 
@@ -38,6 +41,7 @@ class DatabaseService(s[m.ConfigMap]):
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
+    @override
     def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
         """Execute database operations.
 
@@ -89,6 +93,7 @@ class MigrationService(s[m.ConfigMap]):
         # ✅ CORRECT: Log config ONCE at initialization
         self._log_config_once(config, message="Migration configuration loaded")
 
+    @override
     def execute(self, **_kwargs: object) -> r[m.ConfigMap]:
         """Execute migration.
 

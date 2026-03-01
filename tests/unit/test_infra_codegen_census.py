@@ -12,11 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_infra.codegen.census import (
-    _EXCLUDED_PROJECTS,
-    _VIOLATION_PATTERN,
-    FlextInfraCodegenCensus,
-)
+from flext_infra.codegen.census import FlextInfraCodegenCensus
+from flext_infra.constants import c
 from flext_infra.models import FlextInfraModels
 
 # ---------------------------------------------------------------------------
@@ -178,10 +175,10 @@ class TestExcludedProjects:
     """Census skips the 'flexcore' project."""
 
     def test_flexcore_in_excluded_set(self) -> None:
-        assert "flexcore" in _EXCLUDED_PROJECTS
+        assert "flexcore" in c.Infra.Codegen.EXCLUDED_PROJECTS
 
     def test_excluded_set_is_frozenset(self) -> None:
-        assert isinstance(_EXCLUDED_PROJECTS, frozenset)
+        assert isinstance(c.Infra.Codegen.EXCLUDED_PROJECTS, frozenset)
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +191,9 @@ class TestViolationPattern:
 
     def test_named_groups_present(self) -> None:
         expected_groups = {"rule", "module", "line", "message"}
-        match = _VIOLATION_PATTERN.match("[NS-001-001] src/file.py:10 \u2014 msg")
+        match = c.Infra.Codegen.VIOLATION_PATTERN.match(
+            "[NS-001-001] src/file.py:10 — msg"
+        )
         assert match is not None
         assert set(match.groupdict().keys()) == expected_groups
 

@@ -304,7 +304,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             inner_result = func(self.value)
             if inner_result.is_success:
                 return FlextResult[U].ok(inner_result.value)
-            result = FlextResult[U].fail(inner_result.error or "")
+            result: FlextResult[U] = FlextResult[U].fail(inner_result.error or "")
             result._exception = inner_result._exception
             return result
         result = FlextResult[U].fail(self.error or "")
@@ -431,7 +431,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_failure:
             transformed_error = func(self.error or "")
-            result = FlextResult[T_co].fail(
+            result: FlextResult[T_co] = FlextResult[T_co].fail(
                 transformed_error,
                 error_code=self.error_code,
                 error_data=self.error_data,
@@ -464,7 +464,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             inner_result = func(self.error or "")
             if inner_result.is_success:
                 return FlextResult[T_co].ok(inner_result.value)
-            lash_result = FlextResult[T_co].fail(inner_result.error or "")
+            lash_result: FlextResult[T_co] = FlextResult[T_co].fail(
+                inner_result.error or ""
+            )
             lash_result._exception = inner_result._exception
             return lash_result
         return self
@@ -678,7 +680,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             for item in items:
                 result = func(item)
                 if result.is_failure:
-                    failure_result = FlextResult[list[U]].fail(
+                    failure_result: FlextResult[list[U]] = FlextResult[list[U]].fail(
                         result.error or "Unknown error",
                     )
                     failure_result._exception = result._exception

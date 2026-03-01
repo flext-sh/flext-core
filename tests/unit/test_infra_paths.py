@@ -144,5 +144,6 @@ class TestFlextInfraPathResolver:
         resolver = FlextInfraPathResolver()
         result = resolver.execute()
 
-        assert isinstance(result, Path)
-        assert result == Path.cwd()
+        assert result.is_success
+        assert isinstance(result.value, Path)
+        assert result.value == Path.cwd()

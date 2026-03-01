@@ -19,8 +19,8 @@ from flext_infra import (
     FlextInfraJsonService,
     FlextInfraProjectSelector,
     FlextInfraTemplateEngine,
-    c,
 )
+from flext_infra.constants import c
 
 
 class SyncOperation(BaseModel):
@@ -32,9 +32,6 @@ class SyncOperation(BaseModel):
     path: str = Field(..., description="File path relative to project root.")
     action: str = Field(..., description="Sync action (create, update, noop, prune).")
     reason: str = Field(..., description="Reason for the action.")
-
-
-MANAGED_FILES: frozenset[str] = frozenset({"ci.yml"})
 
 
 class FlextInfraWorkflowSyncer:
@@ -180,7 +177,7 @@ class FlextInfraWorkflowSyncer:
                     workflows_dir.glob("*.yaml"),
                 )
                 for path in candidates:
-                    if path.name in MANAGED_FILES:
+                    if path.name in c.Infra.Github.MANAGED_FILES:
                         continue
                     if apply:
                         path.unlink()

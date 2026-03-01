@@ -16,9 +16,9 @@ from pathlib import Path
 from flext_core import FlextLogger, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, c
+from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
-    DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
     FlextInfraDocsShared,
 )
@@ -60,7 +60,7 @@ class FlextInfraDocFixer:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
+        output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         apply: bool = False,
     ) -> r[list[FixReport]]:
         """Run documentation fixes across project scopes.

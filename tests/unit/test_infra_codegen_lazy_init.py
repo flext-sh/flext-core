@@ -1,4 +1,4 @@
-"""Tests for FlextInfraLazyInitGenerator.
+"""Tests for FlextInfraCodegenLazyInit.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,7 +13,7 @@ from pathlib import Path
 import flext_infra.codegen as mod
 import pytest
 from flext_core import FlextService
-from flext_infra.codegen import FlextInfraLazyInitGenerator
+from flext_infra.codegen import FlextInfraCodegenLazyInit
 from flext_infra.codegen.lazy_init import (
     _derive_lazy_map,
     _extract_docstring_source,
@@ -29,23 +29,23 @@ from flext_infra.codegen.lazy_init import (
 )
 
 
-class TestFlextInfraLazyInitGenerator:
-    """Test suite for FlextInfraLazyInitGenerator service."""
+class TestFlextInfraCodegenLazyInit:
+    """Test suite for FlextInfraCodegenLazyInit service."""
 
     def test_init_accepts_workspace_root(self, tmp_path: Path) -> None:
         """Test generator initialization with workspace root."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         assert generator is not None
 
     def test_run_with_empty_workspace_returns_zero(self, tmp_path: Path) -> None:
         """Test run() on empty workspace returns 0 (no unmapped exports)."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
         assert result == 0
 
     def test_run_with_check_only_flag(self, tmp_path: Path) -> None:
         """Test run() respects check_only flag without modifying files."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
         assert result == 0
 
@@ -61,7 +61,7 @@ class TestFlextInfraLazyInitGenerator:
             '__all__ = ["TestClass"]\n'
         )
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
 
         # Verify output is in tmp_path, not in actual src/flext_infra/
@@ -70,14 +70,14 @@ class TestFlextInfraLazyInitGenerator:
         assert init_file.exists()
 
     def test_generator_is_flext_service(self, tmp_path: Path) -> None:
-        """Test that FlextInfraLazyInitGenerator is a FlextService[str]."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        """Test that FlextInfraCodegenLazyInit is a FlextService[str]."""
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         # Verify it's an instance of FlextService
         assert isinstance(generator, FlextService)
 
     def test_run_returns_integer_exit_code(self, tmp_path: Path) -> None:
         """Test that run() returns an integer exit code."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=False)
         assert isinstance(result, int)
         assert result >= 0
@@ -144,7 +144,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_with_read_error(self, tmp_path: Path) -> None:
         """Test _process_file handles read errors gracefully."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -160,7 +160,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_with_parse_error(self, tmp_path: Path) -> None:
         """Test _process_file handles parse errors gracefully."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -171,7 +171,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_without_all_returns_none(self, tmp_path: Path) -> None:
         """Test _process_file returns None when __all__ is missing."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -182,7 +182,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_with_empty_all_returns_none(self, tmp_path: Path) -> None:
         """Test _process_file returns None when __all__ is empty."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -193,7 +193,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_check_only_mode(self, tmp_path: Path) -> None:
         """Test _process_file in check_only mode doesn't modify files."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -207,7 +207,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_with_inline_constants(self, tmp_path: Path) -> None:
         """Test _process_file handles inline constants correctly."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -223,7 +223,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_with_existing_lazy_imports(self, tmp_path: Path) -> None:
         """Test _process_file regenerates existing _LAZY_IMPORTS."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -434,7 +434,7 @@ class TestLazyInitEdgeCases:
         inline_constants = {}
 
         content = _generate_file("", exports, filtered, inline_constants, "other_pkg")
-        assert "from flext_core._utilities.lazy import" in content
+        assert "from flext_core.lazy import" in content
 
     def test_generate_file_with_inline_constants(self) -> None:
         """Test _generate_file includes inline constants."""
@@ -465,14 +465,14 @@ class TestLazyInitEdgeCases:
 
     def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:
         """Test execute() method returns FlextResult[int] (line 76)."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.execute()
         assert result.is_success
         assert isinstance(result.value, int)
 
     def test_run_with_errors_increments_error_count(self, tmp_path: Path) -> None:
         """Test run() increments error count on parse errors (line 99)."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -486,7 +486,7 @@ class TestLazyInitEdgeCases:
         self, tmp_path: Path
     ) -> None:
         """Test run() increments unmapped_count when exports are unmapped (lines 101-102)."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"
@@ -501,7 +501,7 @@ class TestLazyInitEdgeCases:
 
     def test_process_file_with_unmapped_exports_message(self, tmp_path: Path) -> None:
         """Test _process_file formats message with unmapped exports (lines 186-189)."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         src_dir = tmp_path / "src" / "test_pkg"
         src_dir.mkdir(parents=True)
         init_file = src_dir / "__init__.py"

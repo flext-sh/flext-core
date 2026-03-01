@@ -78,9 +78,9 @@ class FlextInfraPathResolver(FlextService[Path]):
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
 
-    def execute(self) -> Path:
+    def execute(self) -> FlextResult[Path]:
         """Execute the service (required by FlextService base class)."""
-        return Path.cwd()
+        return r[Path].ok(Path.cwd())
 
 
 __all__ = ["FlextInfraPathResolver"]

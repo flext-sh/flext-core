@@ -9,19 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core import FlextResult, r, t
 
-from flext_infra import FlextInfraCommandRunner, c, m
-
-_MISSING_IMPORT_RE = re.compile(r"Cannot find module `([^`]+)` \[missing-import\]")
-_MYPY_HINT_RE = re.compile(r"note:\s+(?:hint|note):\s+.*?`(types-\S+)`")
-_MYPY_STUB_RE = re.compile(r"Library stubs not installed for ['\"](\S+?)['\"]")
-
-_INTERNAL_PREFIXES = ("flext_", "flext-")
+from flext_infra import FlextInfraCommandRunner, m
+from flext_infra.constants import c
 
 
 class FlextInfraStubSupplyChain:
@@ -149,7 +143,7 @@ class FlextInfraStubSupplyChain:
             output = result.value.stdout
         return sorted({
             m.group(1).strip()
-            for m in _MYPY_HINT_RE.finditer(output)
+            for m in c.Infra.Core.MYPY_HINT_RE.finditer(output)
             if m.group(1).strip()
         })
 
@@ -164,7 +158,7 @@ class FlextInfraStubSupplyChain:
             output = result.value.stdout
         seen: set[str] = set()
         ordered: list[str] = []
-        for match in _MISSING_IMPORT_RE.finditer(output):
+        for match in c.Infra.Core.MISSING_IMPORT_RE.finditer(output):
             name = match.group(1).strip()
             if name and name not in seen:
                 seen.add(name)
@@ -176,7 +170,7 @@ class FlextInfraStubSupplyChain:
         """Check if a module is an internal project module."""
         root_mod = module_name.split(".", 1)[0]
         project_root = project_name.replace("-", "_")
-        if root_mod.startswith(_INTERNAL_PREFIXES):
+        if root_mod.startswith(c.Infra.Core.INTERNAL_PREFIXES):
             return True
         return root_mod == project_root
 

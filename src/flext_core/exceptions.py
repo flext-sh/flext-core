@@ -1236,9 +1236,7 @@ class FlextExceptions:
         metadata: MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None = (
             None
         )
-        model_dump = (
-            metadata_raw.model_dump if hasattr(metadata_raw, "model_dump") else None
-        )
+        model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
         if metadata is None:

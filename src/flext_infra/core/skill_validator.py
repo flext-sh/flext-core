@@ -21,14 +21,9 @@ from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraJsonService,
     FlextInfraTomlService,
-    c,
     m,
 )
-
-_SKILLS_DIR = Path(".claude/skills")
-_REPORT_DEFAULT = ".claude/skills/{skill}/report.json"
-_BASELINE_DEFAULT = ".claude/skills/{skill}/baseline.json"
-_CACHE_TTL_SECONDS = 300
+from flext_infra.constants import c
 
 
 def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
@@ -94,7 +89,7 @@ class FlextInfraSkillValidator:
         """
         try:
             root = workspace_root.resolve()
-            skills_dir = root / _SKILLS_DIR
+            skills_dir = root / c.Infra.Core.SKILLS_DIR
             rules_path = skills_dir / skill_name / "rules.yml"
             if not rules_path.exists():
                 return r[m.ValidationReport].ok(
@@ -167,7 +162,7 @@ class FlextInfraSkillValidator:
                     strategy = str(baseline_obj.get("strategy", "total"))
                     baseline_path = self._render_template(
                         root,
-                        str(baseline_obj.get("file", _BASELINE_DEFAULT)),
+                        str(baseline_obj.get("file", c.Infra.Core.BASELINE_DEFAULT)),
                         skill_name,
                     )
                     if baseline_path.exists():

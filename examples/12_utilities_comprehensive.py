@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import override
 
 from flext_core import (
     FlextConstants,
@@ -58,6 +59,7 @@ TEST_DATA: m.ConfigMap = m.ConfigMap(
 class UtilitiesService(FlextService[m.ConfigMap]):
     """Service demonstrating u comprehensive toolkit."""
 
+    @override
     def execute(
         self,
     ) -> FlextResult[m.ConfigMap]:

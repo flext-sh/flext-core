@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from flext_infra import c
 
 
-class FlextInfraJsonService(FlextService[FlextResult[bool]]):
+class FlextInfraJsonService(FlextService[bool]):
     """Infrastructure service for JSON file I/O.
 
     Provides FlextResult-wrapped JSON read/write operations, replacing

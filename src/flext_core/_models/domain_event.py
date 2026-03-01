@@ -33,6 +33,36 @@ class _ComparableConfigMap(t.ConfigMap):
     __hash__ = t.ConfigMap.__hash__
 
 
+def _normalize_event_data(
+    value: t.GuardInputValue,
+) -> _ComparableConfigMap:
+    """BeforeValidator: normalize event data to _ComparableConfigMap."""
+    if isinstance(value, _ComparableConfigMap):
+        return value
+    if isinstance(value, t.ConfigMap):
+        return _ComparableConfigMap(root=dict(value.items()))
+    if isinstance(value, dict):
+        normalized: t.ConfigMap = t.ConfigMap(
+            root={
+                str(k): FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in value.items()
+            },
+        )
+        return _ComparableConfigMap(root=normalized.root)
+    if isinstance(value, Mapping):
+        normalized = t.ConfigMap(
+            root={
+                str(k): FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in value.items()
+            },
+        )
+        return _ComparableConfigMap(root=normalized.root)
+    if value is None:
+        return _ComparableConfigMap(root={})
+    msg = "Domain event data must be a dictionary or None"
+    raise TypeError(msg)
+
+
 class FlextModelsDomainEvent:
     """Namespace for domain event models.
 
@@ -59,30 +89,7 @@ class FlextModelsDomainEvent:
         value: t.GuardInputValue,
     ) -> _ComparableConfigMap:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
-        if isinstance(value, _ComparableConfigMap):
-            return value
-        if isinstance(value, t.ConfigMap):
-            return _ComparableConfigMap(root=dict(value.items()))
-        if isinstance(value, dict):
-            normalized: t.ConfigMap = t.ConfigMap(
-                root={
-                    str(k): FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in value.items()
-                },
-            )
-            return _ComparableConfigMap(root=normalized.root)
-        if isinstance(value, Mapping):
-            normalized = t.ConfigMap(
-                root={
-                    str(k): FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in value.items()
-                },
-            )
-            return _ComparableConfigMap(root=normalized.root)
-        if value is None:
-            return _ComparableConfigMap(root={})
-        msg = "Domain event data must be a dictionary or None"
-        raise TypeError(msg)
+        return _normalize_event_data(value)
 
     class Entry(
         FlextModelFoundation.ArbitraryTypesModel,
@@ -101,7 +108,7 @@ class FlextModelsDomainEvent:
         aggregate_id: str
         data: Annotated[
             _ComparableConfigMap,
-            BeforeValidator(FlextModelsDomainEvent._normalize_event_data),
+            BeforeValidator(_normalize_event_data),
         ] = Field(
             default_factory=_ComparableConfigMap,
             description="Event data container",

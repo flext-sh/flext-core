@@ -318,11 +318,11 @@ class FlextUtilitiesGuards:
         """Check if object satisfies the Context protocol."""
         return (
             hasattr(obj, "clone")
-            and callable(obj.clone)
+            and callable(getattr(obj, "clone", None))
             and hasattr(obj, "set")
-            and callable(obj.set)
+            and callable(getattr(obj, "set", None))
             and hasattr(obj, "get")
-            and callable(obj.get)
+            and callable(getattr(obj, "get", None))
         )
 
     # =========================================================================

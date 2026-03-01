@@ -14,6 +14,11 @@ from pydantic import BaseModel
 class _FalseConfig:
     app_name = "app"
 
+    def model_copy(
+        self, *, deep: bool = False, update: dict[str, Any] | None = None
+    ) -> _FalseConfig:
+        return self
+
 
 class _ContextNoClone:
     def set(self, _k: str, _v: object) -> None:

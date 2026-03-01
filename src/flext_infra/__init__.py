@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
         FlextInfraConfigFixer as FlextInfraCheckConfigFixer,
         FlextInfraWorkspaceChecker as FlextInfraCheckWorkspaceChecker,
     )
-    from flext_infra.codegen import FlextInfraLazyInitGenerator
+    from flext_infra.codegen import FlextInfraCodegenLazyInit
     from flext_infra.constants import FlextInfraConstants, FlextInfraConstants as c
     from flext_infra.container import (
         configure_flext_infra_dependencies,
@@ -99,9 +99,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraInventoryService",
     ),
     "FlextInfraJsonService": ("flext_infra.json_io", "FlextInfraJsonService"),
-    "FlextInfraLazyInitGenerator": (
+    "FlextInfraCodegenLazyInit": (
         "flext_infra.codegen",
-        "FlextInfraLazyInitGenerator",
+        "FlextInfraCodegenLazyInit",
     ),
     "FlextInfraModels": ("flext_infra.models", "FlextInfraModels"),
     "FlextInfraOutput": ("flext_infra.output", "FlextInfraOutput"),
@@ -179,6 +179,7 @@ __all__ = [
     "FlextInfraBaseMkValidator",
     "FlextInfraCheckConfigFixer",
     "FlextInfraCheckWorkspaceChecker",
+    "FlextInfraCodegenLazyInit",
     "FlextInfraCommandRunner",
     "FlextInfraConstants",
     "FlextInfraDiscoveryService",
@@ -186,7 +187,6 @@ __all__ = [
     "FlextInfraGitService",
     "FlextInfraInventoryService",
     "FlextInfraJsonService",
-    "FlextInfraLazyInitGenerator",
     "FlextInfraModels",
     "FlextInfraOutput",
     "FlextInfraPathResolver",

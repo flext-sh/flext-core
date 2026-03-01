@@ -10,38 +10,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final, override
+from typing import override
 
 from flext_core import FlextService, r
 
-from flext_infra.codegen.ast_utils import FlextInfraAstUtils
+from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
+from flext_infra.constants import c
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.models import FlextInfraModels
 
-__all__ = ["FlextInfraModuleScaffolder"]
-
-_EXCLUDED_PROJECTS: Final[frozenset[str]] = frozenset({"flexcore"})
-
-# Base module definitions: (filename, class_suffix, base_class, docstring_suffix)
-_SRC_MODULES: Final[tuple[tuple[str, str, str, str], ...]] = (
-    ("constants.py", "Constants", "FlextConstants", "Constants"),
-    ("typings.py", "Types", "FlextTypes", "Type aliases"),
-    ("protocols.py", "Protocols", "FlextProtocols", "Protocol definitions"),
-    ("models.py", "Models", "FlextModels", "Domain models"),
-    ("utilities.py", "Utilities", "FlextUtilities", "Utility functions"),
-)
-
-_TESTS_MODULES: Final[tuple[tuple[str, str, str, str], ...]] = (
-    ("constants.py", "Constants", "FlextTestsConstants", "Test constants"),
-    ("typings.py", "Types", "FlextTestsTypes", "Test type aliases"),
-    ("protocols.py", "Protocols", "FlextTestsProtocols", "Test protocols"),
-    ("models.py", "Models", "FlextTestsModels", "Test models"),
-    ("utilities.py", "Utilities", "FlextTestsUtilities", "Test utilities"),
-)
+__all__ = ["FlextInfraCodegenScaffolder"]
 
 
-class FlextInfraModuleScaffolder(FlextService[list[FlextInfraModels.ScaffoldResult]]):
+class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldResult]]):
     """Generates missing base modules in src/ and tests/ directories."""
 
     def __init__(self, workspace_root: Path) -> None:  # noqa: D107
@@ -67,7 +49,7 @@ class FlextInfraModuleScaffolder(FlextService[list[FlextInfraModels.ScaffoldResu
 
         results: list[FlextInfraModels.ScaffoldResult] = []
         for project in projects_result.unwrap():
-            if project.name in _EXCLUDED_PROJECTS:
+            if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue
             if project.stack.startswith("go"):
                 continue
@@ -102,7 +84,7 @@ class FlextInfraModuleScaffolder(FlextService[list[FlextInfraModels.ScaffoldResu
             self._scaffold_dir(
                 target_dir=pkg_dir,
                 prefix=prefix,
-                modules=_SRC_MODULES,
+                modules=c.Infra.Codegen.SRC_MODULES,
                 test_prefix="",
                 files_created=files_created,
                 files_skipped=files_skipped,
@@ -114,7 +96,7 @@ class FlextInfraModuleScaffolder(FlextService[list[FlextInfraModels.ScaffoldResu
             self._scaffold_dir(
                 target_dir=tests_dir,
                 prefix=prefix,
-                modules=_TESTS_MODULES,
+                modules=c.Infra.Codegen.TESTS_MODULES,
                 test_prefix="Tests",
                 files_created=files_created,
                 files_skipped=files_skipped,
@@ -145,14 +127,14 @@ class FlextInfraModuleScaffolder(FlextService[list[FlextInfraModels.ScaffoldResu
 
             class_name = f"{test_prefix}{prefix}{suffix}"
             docstring = f"{doc_suffix} for {prefix.lower()}."
-            content = FlextInfraAstUtils.generate_module_skeleton(
+            content = FlextInfraCodegenTransforms.generate_module_skeleton(
                 class_name=class_name,
                 base_class=base_class,
                 docstring=docstring,
             )
 
             filepath.write_text(content, encoding="utf-8")
-            FlextInfraAstUtils.run_ruff_fix(filepath)
+            FlextInfraCodegenTransforms.run_ruff_fix(filepath)
             files_created.append(str(filepath))
 
     @staticmethod

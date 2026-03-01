@@ -1,4 +1,4 @@
-"""Tests for FlextInfraAutoFixer service.
+"""Tests for FlextInfraCodegenFixer service.
 
 Validates AST-based auto-fix detection for namespace violations:
 - Standalone TypeVar/TypeAlias/Final detection
@@ -16,7 +16,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
+from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -74,9 +74,7 @@ def _to_pascal(snake: str) -> str:
     return "".join(part.title() for part in snake.split("_"))
 
 
-_PATCH_TARGET = (
-    "flext_infra.codegen.auto_fix.FlextInfraNamespaceValidator._derive_prefix"
-)
+_PATCH_TARGET = "flext_infra.codegen.fixer.FlextInfraNamespaceValidator._derive_prefix"
 
 
 # ---------------------------------------------------------------------------
@@ -85,9 +83,9 @@ _PATCH_TARGET = (
 
 
 @pytest.fixture
-def fixer(tmp_path: Path) -> FlextInfraAutoFixer:
+def fixer(tmp_path: Path) -> FlextInfraCodegenFixer:
     """Create a fixer instance rooted at tmp_path."""
-    return FlextInfraAutoFixer(tmp_path)
+    return FlextInfraCodegenFixer(tmp_path)
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +111,7 @@ def test_standalone_typevar_detected_as_fixable(
             ),
         },
     )
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     assert len(result.violations_fixed) >= 1
@@ -144,7 +142,7 @@ def test_in_context_typevar_not_flagged(_mock_prefix: object, tmp_path: Path) ->
             ),
         },
     )
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     # Should NOT appear in violations_fixed
@@ -179,7 +177,7 @@ def test_standalone_final_detected_as_fixable(
             ),
         },
     )
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     final_violations = [v for v in result.violations_fixed if "Final" in v.message]
@@ -212,7 +210,7 @@ def test_standalone_typealias_detected_as_fixable(
             ),
         },
     )
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     alias_violations = [v for v in result.violations_fixed if "TypeAlias" in v.message]
@@ -244,7 +242,7 @@ def test_syntax_error_files_skipped(_mock_prefix: object, tmp_path: Path) -> Non
             ),
         },
     )
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     # Should not crash and should still detect violations in valid files
@@ -289,7 +287,7 @@ def test_flexcore_excluded_from_run(_mock_prefix: object, tmp_path: Path) -> Non
         },
     )
 
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     results = fixer.run()
 
     project_names = [res.project for res in results]
@@ -313,7 +311,7 @@ def test_project_without_src_returns_empty(
     (project / "pyproject.toml").write_text("[project]\nname='no-src-proj'\n")
     (project / ".git").mkdir()
 
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     assert result.project == "no-src-proj"
@@ -345,7 +343,7 @@ def test_files_modified_tracks_affected_files(
             ),
         },
     )
-    fixer = FlextInfraAutoFixer(tmp_path)
+    fixer = FlextInfraCodegenFixer(tmp_path)
     result = fixer.fix_project(project)
 
     assert len(result.files_modified) == 2

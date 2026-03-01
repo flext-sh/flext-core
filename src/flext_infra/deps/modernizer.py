@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import re
 from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
@@ -12,8 +11,11 @@ from flext_core import FlextLogger, t
 from tomlkit.items import Array, Item, Table
 
 from flext_infra import FlextInfraCommandRunner
+from flext_infra.constants import c
+from flext_infra.deps._constants import FlextInfraDepsConstants
 
 _logger = FlextLogger(__name__)
+deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 
 def _workspace_root(start: Path) -> Path:
@@ -29,34 +31,12 @@ def _workspace_root(start: Path) -> Path:
 
 
 ROOT = _workspace_root(Path(__file__))
-SKIP_DIRS = frozenset({
-    ".archive",
-    ".claude.disabled",
-    ".flext-deps",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".sisyphus",
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "htmlcov",
-    "node_modules",
-    "site",
-    "vendor",
-})
-
-_DEP_NAME_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)")
-_RECENT_LINES_FOR_MARKER = 3
-_RECENT_LINES_FOR_DEV_DEP = 4
 
 
 def _dep_name(spec: str) -> str:
     """Extract normalized dependency name from requirement specification."""
     base = spec.strip().split("@", 1)[0].strip()
-    match = _DEP_NAME_RE.match(base)
+    match = deps_constants.DEP_NAME_RE.match(base)
     if match:
         return match.group(1).lower().replace("_", "-")
     return base.lower().replace("_", "-")
@@ -431,8 +411,8 @@ class InjectCommentsPhase:
             marker = marker_map.get(line.strip())
             if marker:
                 recent = (
-                    out[-_RECENT_LINES_FOR_MARKER:]
-                    if len(out) >= _RECENT_LINES_FOR_MARKER
+                    out[-deps_constants.RECENT_LINES_FOR_MARKER :]
+                    if len(out) >= deps_constants.RECENT_LINES_FOR_MARKER
                     else out
                 )
                 if marker not in recent and marker not in existing_text:
@@ -441,8 +421,8 @@ class InjectCommentsPhase:
 
             if line.strip().startswith("optional-dependencies.dev"):
                 recent = (
-                    out[-_RECENT_LINES_FOR_DEV_DEP:]
-                    if len(out) >= _RECENT_LINES_FOR_DEV_DEP
+                    out[-deps_constants.RECENT_LINES_FOR_DEV_DEP :]
+                    if len(out) >= deps_constants.RECENT_LINES_FOR_DEV_DEP
                     else out
                 )
                 marker = "# [MANAGED] consolidated development dependencies"
@@ -472,7 +452,7 @@ class FlextInfraPyprojectModernizer:
         """Find all pyproject.toml files in workspace."""
         files: list[Path] = []
         for path in self.root.rglob("pyproject.toml"):
-            if any(part in SKIP_DIRS for part in path.parts):
+            if any(part in deps_constants.SKIP_DIRS for part in path.parts):
                 continue
             files.append(path)
         return sorted(files)

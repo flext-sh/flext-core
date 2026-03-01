@@ -19,7 +19,7 @@ from flext_core import FlextResult, FlextService, r
 from flext_infra import c, m
 
 
-class FlextInfraCommandRunner(FlextService[FlextResult[m.CommandOutput]]):
+class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
     """Infrastructure service for subprocess execution.
 
     Provides FlextResult-wrapped command execution, replacing the bare

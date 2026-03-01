@@ -31,17 +31,7 @@ from flext_infra import (
 )
 
 DEFAULT_GATES = c.Gates.DEFAULT_CSV
-_REQUIRED_EXCLUDES = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]
-_RUFF_FORMAT_FILE_RE = re.compile(r"^\s*-->\s*(.+?):\d+:\d+\s*$")
-_MARKDOWN_RE = re.compile(
-    r"^(?P<file>.*?):(?P<line>\d+)(?::(?P<col>\d+))?\s+error\s+"
-    r"(?P<code>MD\d+)(?:/[^\s]+)?\s+(?P<msg>.*)$",
-)
-_GO_VET_RE = re.compile(
-    r"^(?P<file>[^:\n]+\.go):(?P<line>\d+)(?::(?P<col>\d+))?:\s*(?P<msg>.*)$",
-)
 _logger = FlextLogger.create_module_logger(__name__)
-_MAX_DISPLAY_ISSUES = 50
 
 
 class _CheckIssue(BaseModel):
@@ -593,11 +583,11 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 ])
                 lines.extend(
                     issue.formatted
-                    for issue in gate_result.issues[:_MAX_DISPLAY_ISSUES]
+                    for issue in gate_result.issues[: c.Infra.Check.MAX_DISPLAY_ISSUES]
                 )
-                if len(gate_result.issues) > _MAX_DISPLAY_ISSUES:
+                if len(gate_result.issues) > c.Infra.Check.MAX_DISPLAY_ISSUES:
                     lines.append(
-                        f"... and {len(gate_result.issues) - _MAX_DISPLAY_ISSUES} more errors",
+                        f"... and {len(gate_result.issues) - c.Infra.Check.MAX_DISPLAY_ISSUES} more errors",
                     )
                 lines.extend(["```", ""])
 
@@ -827,7 +817,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
                 path = line.strip()
                 if not path:
                     continue
-                match = _RUFF_FORMAT_FILE_RE.match(path)
+                match = c.Infra.Check.RUFF_FORMAT_FILE_RE.match(path)
                 if match:
                     file_path = match.group(1).strip()
                     if file_path in seen:
@@ -1132,7 +1122,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         result = self._run(cmd, project_dir)
         issues: list[_CheckIssue] = []
         for line in (result.stdout + "\n" + result.stderr).splitlines():
-            match = _MARKDOWN_RE.match(line.strip())
+            match = c.Infra.Check.MARKDOWN_RE.match(line.strip())
             if not match:
                 continue
             issues.append(
@@ -1185,7 +1175,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
             part for part in (vet_result.stdout, vet_result.stderr) if part
         )
         for line in (vet_result.stdout + "\n" + vet_result.stderr).splitlines():
-            match = _GO_VET_RE.match(line.strip())
+            match = c.Infra.Check.GO_VET_RE.match(line.strip())
             if not match:
                 continue
             issues.append(
@@ -1447,7 +1437,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
         # Check without quotes too just in case
         stripped_to_add = []
-        for glob in _REQUIRED_EXCLUDES:
+        for glob in c.Infra.Check.REQUIRED_EXCLUDES:
             clean_glob = glob.strip('"').strip("'")
             if clean_glob not in current and glob not in current:
                 stripped_to_add.append(clean_glob)

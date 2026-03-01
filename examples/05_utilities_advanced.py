@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
+from typing import override
 
 from flext_core import (
     FlextConstants,
@@ -78,6 +79,7 @@ TEST_DATA: Mapping[str, t.GeneralValueType] = {
 class AdvancedUtilitiesService(s[m.ConfigMap]):
     """Service demonstrating advanced u features."""
 
+    @override
     def execute(
         self,
     ) -> FlextResult[m.ConfigMap]:
@@ -143,15 +145,13 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         result = process_status(status_enum)
         print(f"✅ Validated function: {result}")
 
-        @u.validated_with_result
-        def process_with_result(status: StatusEnum) -> FlextResult[str]:
-            """Process with result validation."""
-            return FlextResult[str].ok(f"Processed: {status.value}")
+        @u.validated
+        def process_with_result(status: StatusEnum) -> str:
+            return f"Processed: {status.value}"
 
         status_enum_pending = StatusEnum.PENDING
-        result_obj = process_with_result(status_enum_pending)
-        if result_obj.is_success:
-            print(f"✅ Validated with result: {result_obj.value}")
+        result_obj = FlextResult[str].ok(process_with_result(status_enum_pending))
+        print(f"✅ Validated with result: {result_obj.value}")
 
     @staticmethod
     def _demonstrate_enum_utilities() -> None:
@@ -172,9 +172,6 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Subset validation - using string value for type guard
         active_states = frozenset({StatusEnum.ACTIVE, StatusEnum.PENDING})
         test_status_str: str = "active"
-        # Business Rule: is_subset accepts enum class (type[E]), frozenset of enum members, and value to check
-        # StatusEnum is the enum class type. Use type() to ensure we pass the class, not an instance.
-        # This pattern ensures type checker understands it's a class type for proper type inference.
         if u.is_subset(type(StatusEnum.ACTIVE), active_states, test_status_str):
             print("✅ Subset validation: 'active' is in active states")
 

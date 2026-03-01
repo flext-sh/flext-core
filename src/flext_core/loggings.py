@@ -21,6 +21,8 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload, override
 
+from structlog.typing import Context
+
 from flext_core import FlextResult, FlextRuntime, FlextSettings, c, m, p, r, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
@@ -57,7 +59,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # Protocol compliance: BindableLogger._context property
     @override
     @property
-    def _context(self) -> Mapping[str, object]:
+    def _context(self) -> Context:
         """Context mapping for BindableLogger protocol compliance."""
         return {}
 
@@ -145,7 +147,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.GET:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            context_map = (
+            context_map: dict[str, t.GeneralValueType] = (
                 {
                     str(k): FlextRuntime.normalize_to_general_value(v)
                     for k, v in dict(context_vars).items()
@@ -824,7 +826,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     **kwargs,
                 )
             return r[bool].ok(value=True)
-            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             # Logger internals must never raise into application flows.
             FlextLogger._report_internal_logging_failure("trace", exc)
@@ -1277,7 +1278,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             error_method = self.logger.error if hasattr(self.logger, "error") else None
             if callable(error_method):
                 _ = error_method(message, *filtered_args, **context_dict.root)
-            return r[bool].ok(value=True)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             # Logger internals must never raise into application flows.

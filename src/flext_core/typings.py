@@ -70,7 +70,9 @@ type _ScalarML = str | int | float | bool | datetime | None
 type ScalarValue = _ScalarML
 type PayloadValue = _ContainerValue | BaseModel | Path
 type RegisterableService = (
-    _ContainerValue | BindableLogger | Callable[..., _ContainerValue]
+    _ContainerValue
+    | BindableLogger
+    | Callable[..., _ContainerValue]
 )
 type ServiceInstanceType = _ContainerValue
 type FactoryCallable = Callable[[], RegisterableService]
@@ -242,9 +244,9 @@ class FlextTypes:
         root: dict[str, int | str | dict[str, int]] = Field(default_factory=dict)
 
     type IncEx = set[str] | Mapping[str, set[str] | bool]
-    FactoryCallable: TypeAlias = FactoryCallable
-    ResourceCallable: TypeAlias = ResourceCallable
-    FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
+    type FactoryCallable = Callable[[], RegisterableService]
+    type ResourceCallable = Callable[[], _ContainerValue]
+    type FactoryRegistrationCallable = Callable[[], _ScalarML | Sequence[_ScalarML]]
 
     class FactoryMap(_RootDictModel[FactoryRegistrationCallable]):
         """Map of factory registration callables.

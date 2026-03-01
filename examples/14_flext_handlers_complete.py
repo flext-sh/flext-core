@@ -17,6 +17,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import override
+
 from flext_core import c, h, m, r, s, u
 
 
@@ -46,6 +49,7 @@ class UserDTO(m.Value):
 class CommandHandler(h[CreateUserCommand, str]):
     """Example command handler."""
 
+    @override
     def handle(self, message: CreateUserCommand) -> r[str]:
         """Handle user creation command using u validation."""
         _ = self.handler_name  # Use self to satisfy ruff
@@ -79,6 +83,7 @@ class CommandHandler(h[CreateUserCommand, str]):
 class QueryHandler(h[GetUserQuery, UserDTO]):
     """Example query handler."""
 
+    @override
     def handle(self, message: GetUserQuery) -> r[UserDTO]:
         """Handle user retrieval query using c error codes."""
         _ = self.handler_name  # Use self to satisfy ruff
@@ -100,6 +105,7 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
 class HandlersService(s[m.ConfigMap]):
     """Service demonstrating CQRS handlers with flext-core."""
 
+    @override
     def execute(
         self,
     ) -> r[m.ConfigMap]:
@@ -235,8 +241,18 @@ def main() -> None:
         handlers = data.get("handlers_demonstrated", [])
         patterns = data.get("cqrs_patterns", [])
 
-        handler_items = handlers if isinstance(handlers, list | tuple) else []
-        pattern_items = patterns if isinstance(patterns, list | tuple) else []
+        handler_items: Sequence[object] = (
+            handlers
+            if isinstance(handlers, Sequence)
+            and not isinstance(handlers, str | bytes | bytearray)
+            else ()
+        )
+        pattern_items: Sequence[object] = (
+            patterns
+            if isinstance(patterns, Sequence)
+            and not isinstance(patterns, str | bytes | bytearray)
+            else ()
+        )
         handler_count = len(handler_items)
         pattern_count = len(pattern_items)
         print(f"\n✅ Demonstrated {handler_count} handler patterns")

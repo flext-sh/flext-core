@@ -22,6 +22,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
+from typing import override
 
 from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
 
@@ -66,6 +67,7 @@ class ContextManagementService(
     collections.abc advanced patterns, and Pydantic 2 StrEnum for type safety.
     """
 
+    @override
     def execute(
         self,
     ) -> r[m.ConfigMap]:
@@ -229,13 +231,15 @@ class ContextManagementService(
         ) as timing_metadata:
             # Simulate work
             start_time = FlextContext.Variables.OperationStartTime.get()
-            operation_metadata = FlextContext.Variables.OperationMetadata.get() or {}
+            operation_metadata = (
+                FlextContext.Variables.OperationMetadata.get() or m.ConfigMap(root={})
+            )
 
             performance_data: m.ConfigMap = m.ConfigMap(
                 root={
                     "operation": operation_name,
                     "start_time": (start_time.isoformat() if start_time else "unknown"),
-                    "metadata": operation_metadata,
+                    "metadata": operation_metadata.root,
                     "timing": timing_metadata,
                 },
             )

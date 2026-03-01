@@ -12,28 +12,23 @@ from __future__ import annotations
 import ast
 import builtins as _builtins_module
 from pathlib import Path
-from typing import Final, override
+from typing import override
 
 from flext_core import FlextService, r
 
-from flext_infra.codegen.ast_utils import FlextInfraAstUtils
+from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
+from flext_infra.constants import c
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.models import FlextInfraModels
 
-__all__ = ["FlextInfraAutoFixer"]
-
-_EXCLUDED_PROJECTS: Final[frozenset[str]] = frozenset({"flexcore"})
-
-_TYPEVAR_CALLABLES: Final[frozenset[str]] = frozenset({
-    "TypeVar",
-    "ParamSpec",
-    "TypeVarTuple",
-})
+__all__ = ["FlextInfraCodegenFixer"]
 
 
-class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
+class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
     """AST-based auto-fixer for namespace violations (Rules 1-2)."""
+
+    _workspace_root: Path
 
     def __init__(self, workspace_root: Path) -> None:  # noqa: D107
         super().__init__()
@@ -58,7 +53,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
 
         results: list[FlextInfraModels.AutoFixResult] = []
         for project in projects_result.unwrap():
-            if project.name in _EXCLUDED_PROJECTS:
+            if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue
             if project.stack.startswith("go"):
                 continue
@@ -116,7 +111,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
             if py_file.name in {"constants.py", "typings.py"}:
                 continue
 
-            tree = FlextInfraAstUtils.parse_module(py_file)
+            tree = FlextInfraCodegenTransforms.parse_module(py_file)
             if tree is None:
                 continue
 
@@ -155,7 +150,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
         files_modified: set[str],
     ) -> None:
         """Fix Rule 1 — move loose Final constants to constants.py."""
-        finals = FlextInfraAstUtils.find_standalone_finals(tree)
+        finals = FlextInfraCodegenTransforms.find_standalone_finals(tree)
         if not finals:
             return
 
@@ -164,7 +159,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
             return
 
         # Parse target file once
-        target_tree = FlextInfraAstUtils.parse_module(target_path)
+        target_tree = FlextInfraCodegenTransforms.parse_module(target_path)
         if target_tree is None:
             return
 
@@ -186,24 +181,12 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
                 violations_skipped.append(violation)
                 continue
 
-            if FlextInfraAstUtils.is_used_in_context(node, tree):
+            if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-001",
                     line=node.lineno,
                     message=f"Final constant '{target_name}' used in-context — skipped",
-                    fixable=False,
-                )
-                violations_skipped.append(violation)
-                continue
-
-            # Check if name is referenced anywhere else in the file (not just classes)
-            if self._is_name_referenced_in_file(target_name, node, tree):
-                violation = FlextInfraModels.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-001",
-                    line=node.lineno,
-                    message=f"Final constant '{target_name}' referenced locally — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
@@ -289,15 +272,15 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
         files_modified: set[str],
     ) -> None:
         """Fix Rule 2 — move loose TypeVars/TypeAliases to typings.py."""
-        typevars = FlextInfraAstUtils.find_standalone_typevars(tree)
-        typealiases = FlextInfraAstUtils.find_standalone_typealiases(tree)
+        typevars = FlextInfraCodegenTransforms.find_standalone_typevars(tree)
+        typealiases = FlextInfraCodegenTransforms.find_standalone_typealiases(tree)
 
         target_path = pkg_dir / "typings.py"
         if not target_path.exists():
             return
 
         # Parse target file once
-        target_tree = FlextInfraAstUtils.parse_module(target_path)
+        target_tree = FlextInfraCodegenTransforms.parse_module(target_path)
         if target_tree is None:
             return
 
@@ -305,7 +288,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
 
         for node in typevars:
             target_name = ""
-            if isinstance(node, ast.Assign) and node.targets:
+            if node.targets:
                 target = node.targets[0]
                 if isinstance(target, ast.Name):
                     target_name = target.id
@@ -322,24 +305,12 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
                 violations_skipped.append(violation)
                 continue
 
-            if FlextInfraAstUtils.is_used_in_context(node, tree):
+            if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
                     line=node.lineno,
                     message=f"TypeVar '{target_name}' used in-context — skipped",
-                    fixable=False,
-                )
-                violations_skipped.append(violation)
-                continue
-
-            # Check if name is referenced anywhere else in the file
-            if self._is_name_referenced_in_file(target_name, node, tree):
-                violation = FlextInfraModels.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=node.lineno,
-                    message=f"TypeVar '{target_name}' referenced locally — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
@@ -364,24 +335,12 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
                 violations_skipped.append(violation)
                 continue
 
-            if FlextInfraAstUtils.is_used_in_context(node, tree):
+            if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
                     line=node.lineno,
                     message=f"TypeAlias '{target_name}' used in-context — skipped",
-                    fixable=False,
-                )
-                violations_skipped.append(violation)
-                continue
-
-            # Check if name is referenced anywhere else in the file
-            if self._is_name_referenced_in_file(target_name, node, tree):
-                violation = FlextInfraModels.CensusViolation(
-                    module=str(source_file),
-                    rule="NS-002",
-                    line=node.lineno,
-                    message=f"TypeAlias '{target_name}' referenced locally — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
@@ -432,14 +391,13 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
             insert_idx = self._find_insert_position(target_tree)
             target_tree.body.insert(insert_idx, node)
 
-            # Add import in source file only if name is used elsewhere
-            if self._is_name_referenced_in_file(target_name, node, tree):
-                self._add_import_to_tree(
-                    tree=tree,
-                    pkg_name=pkg_name,
-                    module_name="typings",
-                    name=target_name,
-                )
+            # Add import in source file
+            self._add_import_to_tree(
+                tree=tree,
+                pkg_name=pkg_name,
+                module_name="typings",
+                name=target_name,
+            )
 
             rule = "NS-002"
             kind = "TypeVar" if isinstance(node, ast.Assign) else "TypeAlias"
@@ -651,7 +609,7 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
             names=[ast.alias(name=name)],
             level=0,
         )
-        ast.fix_missing_locations(new_import)
+        _ = ast.fix_missing_locations(new_import)
 
         # Insert after last import
         last_import_idx = 0
@@ -663,10 +621,10 @@ class FlextInfraAutoFixer(FlextService[list[FlextInfraModels.AutoFixResult]]):
     @staticmethod
     def _write_tree(path: Path, tree: ast.Module) -> None:
         """Write an AST module back to disk and run ruff fix."""
-        ast.fix_missing_locations(tree)
+        _ = ast.fix_missing_locations(tree)
         source = ast.unparse(tree)
-        path.write_text(source, encoding="utf-8")
-        FlextInfraAstUtils.run_ruff_fix(path)
+        _ = path.write_text(source, encoding="utf-8")
+        FlextInfraCodegenTransforms.run_ruff_fix(path)
 
     @staticmethod
     def _find_package_dir(project_root: Path) -> Path | None:

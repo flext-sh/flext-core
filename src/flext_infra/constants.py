@@ -13,6 +13,16 @@ from typing import Final
 
 from flext_core import FlextConstants
 
+from flext_infra.basemk._constants import FlextInfraBasemkConstants
+from flext_infra.check._constants import FlextInfraCheckConstants
+from flext_infra.codegen._constants import FlextInfraCodegenConstants
+from flext_infra.core._constants import FlextInfraCoreConstants
+from flext_infra.deps._constants import FlextInfraDepsConstants
+from flext_infra.docs._constants import FlextInfraDocsConstants
+from flext_infra.github._constants import FlextInfraGithubConstants
+from flext_infra.release._constants import FlextInfraReleaseConstants
+from flext_infra.workspace._constants import FlextInfraWorkspaceConstants
+
 
 class FlextInfraConstants(FlextConstants):
     """Centralized constants for FLEXT infrastructure (Layer 0).
@@ -22,8 +32,9 @@ class FlextInfraConstants(FlextConstants):
 
     Usage:
         >>> from flext_infra import c
-        >>> # Access constants via c.Status.PASS
-        >>> # Access paths via c.Paths.VENV_BIN_REL
+        >>> c.Status.PASS
+        >>> c.Paths.VENV_BIN_REL
+        >>> c.Infra.Codegen.EXCLUDED_PROJECTS
     """
 
     class Paths:
@@ -144,6 +155,36 @@ class FlextInfraConstants(FlextConstants):
 
         DEFAULT: Final[str] = "utf-8"
         """Default text encoding for file operations."""
+
+    class Infra:
+        """Infrastructure domain constants."""
+
+        class Basemk(FlextInfraBasemkConstants):
+            """Basemk constants via MRO."""
+
+        class Codegen(FlextInfraCodegenConstants):
+            """Codegen constants via MRO."""
+
+        class Core(FlextInfraCoreConstants):
+            """Core constants via MRO."""
+
+        class Check(FlextInfraCheckConstants):
+            """Check constants via MRO."""
+
+        class Deps(FlextInfraDepsConstants):
+            """Deps constants via MRO."""
+
+        class Docs(FlextInfraDocsConstants):
+            """Docs constants via MRO."""
+
+        class Github(FlextInfraGithubConstants):
+            """Github constants via MRO."""
+
+        class Release(FlextInfraReleaseConstants):
+            """Release constants via MRO."""
+
+        class Workspace(FlextInfraWorkspaceConstants):
+            """Workspace constants via MRO."""
 
 
 c = FlextInfraConstants

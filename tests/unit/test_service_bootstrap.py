@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, p, r
+from flext_core._models.service import FlextModelsService
 from flext_tests import u
 
 
@@ -27,7 +28,7 @@ class ConcreteTestService(FlextService[bool]):
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
-        return p.RuntimeBootstrapOptions(
+        return FlextModelsService.RuntimeBootstrapOptions(
             config_overrides={"app_name": "test_app"},
             subproject="test",
         )

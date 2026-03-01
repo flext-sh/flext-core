@@ -10,10 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
+from types import ModuleType
 from typing import Annotated, Self
 
 from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings
 
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
@@ -29,6 +31,21 @@ class FlextModelsService:
     # =========================================================================
     # SUPPORTING MODELS - Base classes for dynamic configuration
     # =========================================================================
+
+    class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
+        """Runtime bootstrap options for service initialization."""
+
+        config_type: type[BaseSettings] | None = Field(default=None)
+        config_overrides: Mapping[str, t.ScalarValue] | None = Field(default=None)
+        context: p.Context | None = Field(default=None)
+        subproject: str | None = Field(default=None)
+        services: Mapping[str, t.RegisterableService] | None = Field(default=None)
+        factories: Mapping[str, t.FactoryCallable] | None = Field(default=None)
+        resources: Mapping[str, t.ResourceCallable] | None = Field(default=None)
+        container_overrides: Mapping[str, t.ScalarValue] | None = Field(default=None)
+        wire_modules: Sequence[ModuleType] | None = Field(default=None)
+        wire_packages: Sequence[str] | None = Field(default=None)
+        wire_classes: Sequence[type] | None = Field(default=None)
 
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""

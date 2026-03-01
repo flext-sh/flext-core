@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, override
+from typing import Self, TypeGuard, cast, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -249,7 +249,7 @@ class FlextContainer(p.DI):
                                         name=_factory_name,
                                         service=raw_result,
                                     )
-                                    return raw_result
+                                    return cast("t.RegisterableService", raw_result)
                                 except ValidationError:
                                     msg = (
                                         f"Factory '{_factory_name}' returned unsupported type: "
@@ -511,10 +511,10 @@ class FlextContainer(p.DI):
         # Access namespace registry via FlextSettings (self._config), not ContainerConfig
         # Note: Namespace registry is accessed via FlextSettings class, not ContainerConfig
         # Use getattr to safely access registry if it exists
-        namespace_registry = (
+        namespace_registry: set[str] = (
             self._config.__class__._namespace_registry
             if hasattr(self._config.__class__, "_namespace_registry")
-            else {}
+            else set()
         )
         for namespace in namespace_registry:
             factory_name = f"config.{namespace}"
@@ -1225,17 +1225,16 @@ class FlextContainer(p.DI):
             isolated state that inherits the global configuration by default.
 
         """
-        # Clone base config — config objects are always BaseModel (FlextSettings)
         config_input = config  # Keep original for subproject check
-        if config is not None and isinstance(config, BaseModel):
+        if config is not None:
             base_config: p.Config = config.model_copy(deep=True)
-        elif isinstance(self.config, BaseModel):
+        elif self.config is not None:
             base_config = self.config.model_copy(deep=True)
         else:
             base_config = self._get_default_config()
 
         # Apply subproject suffix to app_name only when config is None
-        if subproject and config_input is None and isinstance(base_config, BaseModel):
+        if subproject and config_input is None:
             base_config = base_config.model_copy(
                 update={"app_name": f"{base_config.app_name}.{subproject}"},
             )

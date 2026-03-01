@@ -10,8 +10,12 @@ import tomlkit
 from flext_core import r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, c, output
+from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, output
+from flext_infra.constants import c
+from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.deps.path_sync import extract_dep_name
+
+deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 _resolver = FlextInfraPathResolver()
 _root_result = _resolver.workspace_root_from_file(__file__)
@@ -20,20 +24,6 @@ ROOT = (
     if _root_result.is_success
     else Path(__file__).resolve().parents[4]
 )
-
-PYRIGHT_BASE_ROOT = ["scripts", "src", "typings", "typings/generated"]
-MYPY_BASE_ROOT = ["typings", "typings/generated", "src"]
-
-PYRIGHT_BASE_PROJECT = [
-    ".",
-    "src",
-    "tests",
-    "examples",
-    "scripts",
-    "../typings",
-    "../typings/generated",
-]
-MYPY_BASE_PROJECT = [".", "../typings", "../typings/generated", "src"]
 
 
 class FlextInfraExtraPathsManager:
@@ -136,9 +126,15 @@ def sync_one(
 
     dep_paths = get_dep_paths(doc, is_root=is_root)
     pyright_extra = (
-        PYRIGHT_BASE_ROOT + dep_paths if is_root else PYRIGHT_BASE_PROJECT + dep_paths
+        deps_constants.PYRIGHT_BASE_ROOT + dep_paths
+        if is_root
+        else deps_constants.PYRIGHT_BASE_PROJECT + dep_paths
     )
-    mypy_path = MYPY_BASE_ROOT + dep_paths if is_root else MYPY_BASE_PROJECT + dep_paths
+    mypy_path = (
+        deps_constants.MYPY_BASE_ROOT + dep_paths
+        if is_root
+        else deps_constants.MYPY_BASE_PROJECT + dep_paths
+    )
 
     tool = doc.get("tool")
     if not isinstance(tool, dict):
@@ -262,10 +258,6 @@ if __name__ == "__main__":
 
 
 __all__ = [
-    "MYPY_BASE_PROJECT",
-    "MYPY_BASE_ROOT",
-    "PYRIGHT_BASE_PROJECT",
-    "PYRIGHT_BASE_ROOT",
     "ROOT",
     "get_dep_paths",
     "main",

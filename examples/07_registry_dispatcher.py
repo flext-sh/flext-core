@@ -19,7 +19,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
+from dataclasses import dataclass
+from typing import override
 
 from flext_core import (
     FlextDispatcher,
@@ -29,7 +30,6 @@ from flext_core import (
     m,
     r,
     s,
-    t,
     u,
 )
 
@@ -56,6 +56,7 @@ class UserCreatedEvent(m.DomainEvent):
 class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
     """Handler for creating users."""
 
+    @override
     def handle(self, message: CreateUserCommand) -> r[UserCreatedEvent]:
         """Handle create user command."""
         user_id = u.generate("entity")
@@ -76,6 +77,7 @@ class GetUserQuery(m.Query):
 class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
     """Handler for getting users."""
 
+    @override
     def handle(
         self,
         message: GetUserQuery,
@@ -92,6 +94,14 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
         )
 
 
+@dataclass(frozen=True, slots=True)
+class _DemoPlugin:
+    name: str
+
+    def _protocol_name(self) -> str:
+        return f"demo-plugin::{self.name}"
+
+
 # ═══════════════════════════════════════════════════════════════════
 # SERVICE IMPLEMENTATION
 # ═══════════════════════════════════════════════════════════════════
@@ -100,6 +110,7 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
 class RegistryDispatcherService(s[m.ConfigMap]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
+    @override
     def execute(
         self,
     ) -> r[m.ConfigMap]:
@@ -146,18 +157,24 @@ class RegistryDispatcherService(s[m.ConfigMap]):
 
         registry = FlextRegistry()
 
-        # Register single handler - Protocol-based handler registration
-        create_handler = cast("t.HandlerCallable", CreateUserHandler())
-        register_result = registry.register_handler(create_handler)
+        create_plugin = _DemoPlugin("create_user")
+        register_result = registry.register_plugin(
+            "handlers",
+            "create_user",
+            create_plugin,
+        )
         if register_result.is_success:
-            print("✅ Handler registered successfully")
+            print("✅ Plugin registered successfully")
 
-        # Batch registration - Protocol-based handler registration
-        get_handler = cast("t.HandlerCallable", GetUserHandler())
-        batch_result = registry.register_handlers([get_handler])
-        if batch_result.is_success:
-            summary = batch_result.value
-            print(f"✅ Batch registration: {len(summary.registered)} handlers")
+        query_plugin = _DemoPlugin("get_user")
+        _ = registry.register_plugin(
+            "handlers",
+            "get_user",
+            query_plugin,
+        )
+        plugins_result = registry.list_plugins("handlers")
+        if plugins_result.is_success:
+            print(f"✅ Plugin catalog: {plugins_result.value}")
 
     @staticmethod
     def _demonstrate_dispatcher() -> None:
@@ -165,14 +182,10 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         print("\n=== Dispatcher Operations ===")
 
         dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        create_handler = CreateUserHandler()
+        _ = dispatcher.register_handler(create_handler)
 
-        # Register handlers - Protocol-based handler registration
-        create_handler = cast("t.HandlerCallable", CreateUserHandler())
-        _ = registry.register_handler(create_handler)
-
-        # Dispatch command - Pydantic models are compatible with t.GeneralValueType
-        command: t.GeneralValueType = CreateUserCommand.model_validate({
+        command = CreateUserCommand.model_validate({
             "name": "Alice",
             "email": "alice@example.com",
         })
@@ -190,13 +203,23 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         print("\n=== Registry/Dispatcher Integration ===")
 
         dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        registry = FlextRegistry()
 
-        # Register handlers - Protocol-based handler registration
-        create_handler = cast("t.HandlerCallable", CreateUserHandler())
-        get_handler = cast("t.HandlerCallable", GetUserHandler())
-        _ = registry.register_handler(create_handler)
-        _ = registry.register_handler(get_handler)
+        _ = registry.register_plugin(
+            "handlers",
+            "create_user",
+            _DemoPlugin("create_user"),
+        )
+        _ = registry.register_plugin(
+            "handlers",
+            "get_user",
+            _DemoPlugin("get_user"),
+        )
+
+        create_handler = CreateUserHandler()
+        get_handler = GetUserHandler()
+        _ = dispatcher.register_handler(create_handler)
+        _ = dispatcher.register_handler(get_handler)
 
         # Dispatch command - Pydantic models as message payload
         command: CreateUserCommand = CreateUserCommand.model_validate({
@@ -212,7 +235,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value
-            if isinstance(user_data, dict):
+            if isinstance(user_data, m.ConfigMap):
                 print(f"✅ Query dispatched: {user_data.get('name')}")
 
 

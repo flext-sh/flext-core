@@ -3,23 +3,18 @@
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
 from flext_core import FlextLogger, r
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, c, output
+from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, output
+from flext_infra.constants import c
+from flext_infra.deps._constants import FlextInfraDepsConstants
 
 logger = FlextLogger.create_module_logger(__name__)
-
-FLEXT_DEPS_DIR = ".flext-deps"
-
-_PEP621_PATH_DEP_RE = re.compile(
-    r"^(?P<name>[A-Za-z0-9_.-]+)\s*@\s*(?:file:(?://)?)?(?P<path>.+)$",
-)
-_PEP621_NAME_RE = re.compile(r"^\s*(?P<name>[A-Za-z0-9_.-]+)")
+deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 
 def _workspace_root() -> Path:
@@ -52,7 +47,7 @@ def detect_mode(project_root: Path) -> str:
 def extract_dep_name(raw_path: str) -> str:
     """Extract dependency name from path string."""
     normalized = raw_path.strip().lstrip("/").removeprefix("./")
-    for prefix in (f"{FLEXT_DEPS_DIR}/", "../"):
+    for prefix in (f"{deps_constants.FLEXT_DEPS_DIR}/", "../"):
         normalized = normalized.removeprefix(prefix)
     return normalized
 
@@ -61,16 +56,16 @@ def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
     """Compute target path for dependency based on mode and location."""
     if mode == "workspace":
         return dep_name if is_root else f"../{dep_name}"
-    return f"{FLEXT_DEPS_DIR}/{dep_name}"
+    return f"{deps_constants.FLEXT_DEPS_DIR}/{dep_name}"
 
 
 def _extract_requirement_name(entry: str) -> str | None:
     """Extract requirement name from PEP 621 dependency entry."""
     if " @ " in entry:
-        match = _PEP621_PATH_DEP_RE.match(entry)
+        match = deps_constants.PEP621_PATH_DEP_RE.match(entry)
         if match:
             return match.group("name")
-    match = _PEP621_NAME_RE.match(entry)
+    match = deps_constants.PEP621_NAME_RE.match(entry)
     if not match:
         return None
     return match.group("name")
@@ -106,7 +101,7 @@ def _rewrite_pep621(
             continue
 
         if " @ " in requirement_part:
-            match = _PEP621_PATH_DEP_RE.match(requirement_part)
+            match = deps_constants.PEP621_PATH_DEP_RE.match(requirement_part)
             if not match:
                 continue
             raw_path = match.group("path").strip()
@@ -329,7 +324,6 @@ if __name__ == "__main__":
 
 
 __all__ = [
-    "FLEXT_DEPS_DIR",
     "detect_mode",
     "extract_dep_name",
     "main",

@@ -19,6 +19,7 @@ class TestFlextInfraPatternsTooling:
     def test_mypy_hint_pattern_captures_package_name(self) -> None:
         text = 'note: Hint: "python3 -m pip install mypy-extensions"'
         match = FlextInfraPatterns.MYPY_HINT_RE.search(text)
+        assert match is not None
         assert match.group(1) == "mypy-extensions"
 
     def test_mypy_hint_pattern_no_match_without_hint(self) -> None:
@@ -35,6 +36,7 @@ class TestFlextInfraPatternsTooling:
     def test_mypy_stub_pattern_captures_library_name(self) -> None:
         text = 'Library stubs not installed for "django"'
         match = FlextInfraPatterns.MYPY_STUB_RE.search(text)
+        assert match is not None
         assert match.group(1) == "django"
 
     def test_mypy_stub_pattern_no_match_without_message(self) -> None:
@@ -62,6 +64,7 @@ class TestFlextInfraPatternsMarkdown:
     def test_markdown_link_pattern_captures_text_and_url(self) -> None:
         text = "[Documentation](./docs/README.md)"
         match = FlextInfraPatterns.MARKDOWN_LINK_RE.search(text)
+        assert match is not None
         assert match.group(1) == "Documentation"
         assert match.group(2) == "./docs/README.md"
 
@@ -81,6 +84,7 @@ class TestFlextInfraPatternsMarkdown:
     def test_markdown_link_url_pattern_ignores_text(self) -> None:
         text = "[Some text](path/to/file.md)"
         match = FlextInfraPatterns.MARKDOWN_LINK_URL_RE.search(text)
+        assert match is not None
         assert match.group(1) == "path/to/file.md"
 
     def test_heading_pattern_matches_h1(self) -> None:
@@ -136,6 +140,7 @@ class TestFlextInfraPatternsMarkdown:
     def test_anchor_link_pattern_captures_text_and_anchor(self) -> None:
         text = "[Back to top](#top)"
         match = FlextInfraPatterns.ANCHOR_LINK_RE.search(text)
+        assert match is not None
         assert match.group(1) == "Back to top"
         assert match.group(2) == "top"
 

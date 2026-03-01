@@ -30,6 +30,7 @@ from flext_core import (
     s,
     t,
 )
+from flext_core._models.service import FlextModelsService
 from flext_tests import u
 
 from ..test_utils import assertion_helpers
@@ -387,7 +388,7 @@ class TestServiceBootstrapWithDI:
         class TestService(s[str]):
             @classmethod
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                return p.RuntimeBootstrapOptions(
+                return FlextModelsService.RuntimeBootstrapOptions(
                     services={"custom_service": "custom_value"},
                     factories={"custom_factory": lambda: {"custom": "data"}},
                 )

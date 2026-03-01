@@ -18,7 +18,7 @@ from typing import (
     runtime_checkable,
 )
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
@@ -272,26 +272,21 @@ class FlextProtocols:
             """Get a context value. Returns Result-like object."""
             ...
 
-    class RuntimeBootstrapOptions(BaseModel):
+    @runtime_checkable
+    class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options for service initialization."""
 
-        model_config = ConfigDict(
-            validate_assignment=True,
-            extra="forbid",
-            arbitrary_types_allowed=True,
-        )
-
-        config_type: type[BaseSettings] | None = Field(default=None)
-        config_overrides: Mapping[str, t.ScalarValue] | None = Field(default=None)
-        context: FlextProtocols.Context | None = Field(default=None)
-        subproject: str | None = Field(default=None)
-        services: Mapping[str, t.RegisterableService] | None = Field(default=None)
-        factories: Mapping[str, t.FactoryCallable] | None = Field(default=None)
-        resources: Mapping[str, t.ResourceCallable] | None = Field(default=None)
-        container_overrides: Mapping[str, t.ScalarValue] | None = Field(default=None)
-        wire_modules: Sequence[ModuleType] | None = Field(default=None)
-        wire_packages: Sequence[str] | None = Field(default=None)
-        wire_classes: Sequence[type] | None = Field(default=None)
+        config_type: type[BaseSettings] | None
+        config_overrides: Mapping[str, t.ScalarValue] | None
+        context: FlextProtocols.Context | None
+        subproject: str | None
+        services: Mapping[str, t.RegisterableService] | None
+        factories: Mapping[str, t.FactoryCallable] | None
+        resources: Mapping[str, t.ResourceCallable] | None
+        container_overrides: Mapping[str, t.ScalarValue] | None
+        wire_modules: Sequence[ModuleType] | None
+        wire_packages: Sequence[str] | None
+        wire_classes: Sequence[type] | None
 
     # =========================================================================
     # CORE PROTOCOLS (Result Handling and Models)

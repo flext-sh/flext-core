@@ -41,6 +41,7 @@ from flext_core import (
     s,
     t,
 )
+from flext_core._models.service import FlextModelsService
 
 
 class RuntimeOperationType(StrEnum):
@@ -946,7 +947,7 @@ class TestFlextRuntime:
                     def counter_factory() -> t.GeneralValueType:
                         return {"count": 1}
 
-                    return p.RuntimeBootstrapOptions(
+                    return FlextModelsService.RuntimeBootstrapOptions(
                         config_overrides={"app_name": "runtime-aware"},
                         services={"preseed": {"enabled": True}},
                         factories={"counter": counter_factory},

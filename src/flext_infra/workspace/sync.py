@@ -18,16 +18,10 @@ from typing import override
 
 from flext_core import FlextService, r
 
-from flext_infra import c, m
+from flext_infra import m
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
+from flext_infra.constants import c
 from flext_infra.output import output
-
-# Patterns that MUST be in every subproject .gitignore.
-_REQUIRED_GITIGNORE_ENTRIES: list[str] = [
-    ".reports/",
-    ".venv/",
-    "__pycache__/",
-]
 
 
 class FlextInfraSyncService(FlextService[m.SyncResult]):
@@ -113,7 +107,7 @@ class FlextInfraSyncService(FlextService[m.SyncResult]):
                     # 2. Ensure .gitignore entries
                     gitignore_result = self._ensure_gitignore_entries(
                         resolved,
-                        _REQUIRED_GITIGNORE_ENTRIES,
+                        c.Infra.Workspace.REQUIRED_GITIGNORE_ENTRIES,
                     )
                     if gitignore_result.is_failure:
                         return r[m.SyncResult].fail(

@@ -336,6 +336,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             be handled separately in the validate() method and executed via execute().
 
         """
+        raise NotImplementedError
 
     def execute(self, message: MessageT_contra) -> r[ResultT]:
         """Execute handler with complete validation and error handling pipeline.

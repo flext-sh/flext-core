@@ -6,10 +6,11 @@ from typing import Final
 
 __all__ = ["FlextTestConstants"]
 
-c = FlextTestConstants  # alias — allowed
-
 
 class FlextTestConstants:
     """Test constants."""
 
     VALUE: Final[int] = 42
+
+
+c = FlextTestConstants  # alias — allowed

@@ -33,7 +33,7 @@ def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
     return None
 
 
-class FlextInfraTomlService(FlextService[FlextResult[bool]]):
+class FlextInfraTomlService(FlextService[bool]):
     """Infrastructure service for TOML file I/O.
 
     Provides FlextResult-wrapped TOML read/write operations, replacing

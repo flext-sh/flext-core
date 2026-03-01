@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
+from typing import override
 
 from flext_core import (
     c,
@@ -77,6 +78,7 @@ class RailwayService(s[DemonstrationResult]):
         super().__init__(**kwargs)
         # Dependencies created directly to avoid serialization issues in handlers
 
+    @override
     def execute(self) -> r[DemonstrationResult]:
         """Execute comprehensive r demonstrations."""
         print("Starting r comprehensive demonstration")

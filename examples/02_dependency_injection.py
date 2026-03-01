@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -203,6 +204,7 @@ class EmailService(m.ArbitraryTypesModel):
 class DependencyInjectionService(s[m.ConfigMap]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute DI demonstrations."""
         self.logger.info("Starting dependency injection demonstration")

@@ -1,4 +1,4 @@
-"""Tests for FlextInfraLazyInitGenerator scan_tests support.
+"""Tests for FlextInfraCodegenLazyInit scan_tests support.
 
 Validates that the ``scan_tests`` parameter in ``run()`` correctly controls
 whether ``tests/**/__init__.py`` files are included in the scan.
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra.codegen.lazy_init import FlextInfraLazyInitGenerator
+from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 
 
 def _create_init_file(directory: Path, content: str) -> Path:
@@ -45,7 +45,7 @@ class TestScanTestsDefaultBehavior:
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         _create_init_file(tmp_path / "tests" / "helpers", _VALID_TESTS_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True, scan_tests=False)
 
         # Only src/ file is scanned; tests/ is ignored.
@@ -58,7 +58,7 @@ class TestScanTestsDefaultBehavior:
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         _create_init_file(tmp_path / "tests" / "helpers", _VALID_TESTS_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
 
         # Both calls should produce the same result
         result_default = generator.run(check_only=True)
@@ -75,7 +75,7 @@ class TestScanTestsDefaultBehavior:
         )
         original_content = tests_init.read_text(encoding="utf-8")
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         generator.run(check_only=False, scan_tests=False)
 
         # tests/ file must remain untouched
@@ -92,7 +92,7 @@ class TestScanTestsEnabled:
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         _create_init_file(tmp_path / "tests" / "helpers", _VALID_TESTS_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
 
         result_without = generator.run(check_only=True, scan_tests=False)
         result_with = generator.run(check_only=True, scan_tests=True)
@@ -114,7 +114,7 @@ class TestScanTestsEnabled:
         )
         original_content = tests_init.read_text(encoding="utf-8")
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         generator.run(check_only=False, scan_tests=True)
 
         # tests/ file should be processed (content may change)
@@ -136,7 +136,7 @@ class TestScanTestsEnabled:
             '__all__ = ["DeepFixture"]\n',
         )
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         generator.run(check_only=False, scan_tests=True)
 
         # Nested tests/ file should be processed
@@ -152,7 +152,7 @@ class TestScanTestsEnabled:
         )
         original_content = tests_init.read_text(encoding="utf-8")
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         generator.run(check_only=True, scan_tests=True)
 
         # check_only=True must not modify any file
@@ -171,7 +171,7 @@ class TestScanTestsWithoutInitPy:
         # Add a regular .py file (not __init__.py)
         (tests_dir / "conftest.py").write_text("# conftest", encoding="utf-8")
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True, scan_tests=True)
 
         # Should not crash; only src/ file is found
@@ -183,7 +183,7 @@ class TestScanTestsWithoutInitPy:
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         (tmp_path / "tests").mkdir(parents=True)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True, scan_tests=True)
 
         assert isinstance(result, int)
@@ -193,7 +193,7 @@ class TestScanTestsWithoutInitPy:
         """Workspace without tests/ directory works fine with scan_tests=True."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True, scan_tests=True)
 
         assert isinstance(result, int)
@@ -209,7 +209,7 @@ class TestSrcBehaviorNoRegression:
         """src/ processing is identical regardless of scan_tests flag when no tests/ exist."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result_false = generator.run(check_only=True, scan_tests=False)
         result_true = generator.run(check_only=True, scan_tests=True)
 
@@ -227,14 +227,14 @@ class TestSrcBehaviorNoRegression:
         # Run with scan_tests=False
         src_dir_a = tmp_path / "a" / "src" / "pkg"
         _create_init_file(src_dir_a, src_content)
-        gen_a = FlextInfraLazyInitGenerator(workspace_root=tmp_path / "a")
+        gen_a = FlextInfraCodegenLazyInit(workspace_root=tmp_path / "a")
         gen_a.run(check_only=False, scan_tests=False)
         content_a = (src_dir_a / "__init__.py").read_text(encoding="utf-8")
 
         # Run with scan_tests=True
         src_dir_b = tmp_path / "b" / "src" / "pkg"
         _create_init_file(src_dir_b, src_content)
-        gen_b = FlextInfraLazyInitGenerator(workspace_root=tmp_path / "b")
+        gen_b = FlextInfraCodegenLazyInit(workspace_root=tmp_path / "b")
         gen_b.run(check_only=False, scan_tests=True)
         content_b = (src_dir_b / "__init__.py").read_text(encoding="utf-8")
 
@@ -244,7 +244,7 @@ class TestSrcBehaviorNoRegression:
         """execute() still works and returns FlextResult[int]."""
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.execute()
 
         assert result.is_success
@@ -256,7 +256,7 @@ class TestSrcBehaviorNoRegression:
         _create_init_file(tmp_path / "tests" / "vendor" / "pkg", _VALID_TESTS_INIT)
         _create_init_file(tmp_path / "tests" / ".venv" / "pkg", _VALID_TESTS_INIT)
 
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         # These should be excluded by the vendor/node_modules/.venv filter
         result = generator.run(check_only=True, scan_tests=True)
         assert isinstance(result, int)
@@ -264,7 +264,7 @@ class TestSrcBehaviorNoRegression:
 
     def test_empty_workspace_returns_zero(self, tmp_path: Path) -> None:
         """Empty workspace returns 0 with any scan_tests value."""
-        generator = FlextInfraLazyInitGenerator(workspace_root=tmp_path)
+        generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
 
         assert generator.run(check_only=True, scan_tests=False) == 0
         assert generator.run(check_only=True, scan_tests=True) == 0

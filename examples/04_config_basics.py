@@ -24,6 +24,7 @@ import os
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextConstants, FlextResult, FlextService, FlextSettings, c, m, t
 from pydantic import Field, ValidationError
@@ -96,6 +97,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
     management with Python 3.13+ advanced patterns.
     """
 
+    @override
     def execute(self) -> FlextResult[m.ConfigMap]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (

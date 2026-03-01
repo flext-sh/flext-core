@@ -14,7 +14,7 @@ import subprocess  # noqa: S404
 from pathlib import Path
 
 
-class FlextInfraAstUtils:
+class FlextInfraCodegenTransforms:
     """Utility helpers for AST-based code transformations."""
 
     @staticmethod
@@ -50,7 +50,9 @@ class FlextInfraAstUtils:
             ):
                 is_typevar = True
 
-            if is_typevar and not FlextInfraAstUtils.is_used_in_context(stmt, tree):
+            if is_typevar and not FlextInfraCodegenTransforms.is_used_in_context(
+                stmt, tree
+            ):
                 matches.append(stmt)
         return matches
 
@@ -64,7 +66,7 @@ class FlextInfraAstUtils:
 
             annotation = stmt.annotation
             if isinstance(annotation, ast.Name) and annotation.id == "Final":
-                if not FlextInfraAstUtils.is_used_in_context(stmt, tree):
+                if not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree):
                     matches.append(stmt)
                 continue
 
@@ -72,7 +74,7 @@ class FlextInfraAstUtils:
                 isinstance(annotation, ast.Subscript)
                 and isinstance(annotation.value, ast.Name)
                 and annotation.value.id == "Final"
-                and not FlextInfraAstUtils.is_used_in_context(stmt, tree)
+                and not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree)
             ):
                 matches.append(stmt)
         return matches
@@ -89,14 +91,14 @@ class FlextInfraAstUtils:
             if (
                 isinstance(annotation, ast.Name)
                 and annotation.id == "TypeAlias"
-                and not FlextInfraAstUtils.is_used_in_context(stmt, tree)
+                and not FlextInfraCodegenTransforms.is_used_in_context(stmt, tree)
             ):
                 matches.append(stmt)
         return matches
 
     @staticmethod
     def is_used_in_context(node: ast.stmt, tree: ast.Module) -> bool:
-        """Check if TypeVar/TypeAlias name is used by a class in same file."""
+        """Check if TypeVar/TypeAlias name is used in class header context."""
         name: str | None = None
         if isinstance(node, ast.Assign):
             for target in node.targets:
@@ -131,10 +133,6 @@ class FlextInfraAstUtils:
                     if isinstance(kw_node, ast.Name) and kw_node.id == name:
                         return True
 
-                for class_node in ast.walk(stmt):
-                    if isinstance(class_node, ast.Name) and class_node.id == name:
-                        return True
-
         return False
 
     @staticmethod
@@ -147,10 +145,22 @@ class FlextInfraAstUtils:
         ]
 
     @staticmethod
+    def _resolve_base_class_import(base_class: str) -> str:
+        """Resolve the import statement for a base class name.
+
+        Maps base class names to their canonical import paths.
+        FlextTests* classes come from flext_tests, others from flext_core.
+        """
+        if base_class.startswith("FlextTests"):
+            return f"from flext_tests import {base_class}"
+        return f"from flext_core import {base_class}"
+
+    @staticmethod
     def generate_module_skeleton(
         class_name: str, base_class: str, docstring: str
     ) -> str:
-        """Generate a minimal base module file."""
+        """Generate a minimal base module file with correct imports."""
+        import_line = FlextInfraCodegenTransforms._resolve_base_class_import(base_class)
         return f'''"""Module skeleton for {class_name}.
 
 {docstring}
@@ -160,6 +170,8 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+{import_line}
 
 
 class {class_name}({base_class}):

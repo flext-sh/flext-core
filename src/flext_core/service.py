@@ -40,6 +40,7 @@ from flext_core import (
     u,
 )
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.service import FlextModelsService
 
 _module_logger = logging.getLogger(__name__)
 
@@ -282,7 +283,7 @@ class FlextService[TDomainResult](
         options_raw: p.RuntimeBootstrapOptions,
     ) -> p.RuntimeBootstrapOptions:
         del cls
-        return p.RuntimeBootstrapOptions.model_validate(options_raw)
+        return FlextModelsService.RuntimeBootstrapOptions.model_validate(options_raw)
 
     @classmethod
     def _normalize_scoped_services(
@@ -329,13 +330,13 @@ class FlextService[TDomainResult](
         Example:
             @classmethod
             def _runtime_bootstrap_options(cls):
-                return p.RuntimeBootstrapOptions(
+                return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "MyApp"},
                     services={"db": my_db_service},
                 )
 
         """
-        return p.RuntimeBootstrapOptions()
+        return FlextModelsService.RuntimeBootstrapOptions()
 
     @computed_field
     def runtime(

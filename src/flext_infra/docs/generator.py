@@ -15,9 +15,9 @@ from pathlib import Path
 from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine, c
+from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
-    DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
     FlextInfraDocsShared,
 )
@@ -62,7 +62,7 @@ class FlextInfraDocGenerator:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
+        output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         apply: bool = False,
     ) -> r[list[GenerateReport]]:
         """Generate docs across project scopes.
@@ -237,7 +237,7 @@ class FlextInfraDocGenerator:
                 f"repo_url: {c.Github.GITHUB_REPO_URL}",
                 f"edit_uri: edit/main/{scope.name}/docs/guides/",
                 "docs_dir: docs/guides",
-                f"site_dir: {DEFAULT_DOCS_OUTPUT_DIR}/site",
+                f"site_dir: {c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR}/site",
                 "",
                 "theme:",
                 "  name: mkdocs",

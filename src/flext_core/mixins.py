@@ -34,6 +34,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core._models.service import FlextModelsService
 
 _module_logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ class FlextMixins(FlextRuntime):
             p.RuntimeBootstrapOptions: Pydantic model with optional runtime configuration options.
 
         """
-        return p.RuntimeBootstrapOptions()
+        return FlextModelsService.RuntimeBootstrapOptions()
 
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""
@@ -238,11 +239,11 @@ class FlextMixins(FlextRuntime):
         options_candidate = (
             runtime_options_callable()
             if callable(runtime_options_callable)
-            else p.RuntimeBootstrapOptions()
+            else FlextModelsService.RuntimeBootstrapOptions()
         )
         try:
             options: p.RuntimeBootstrapOptions = (
-                p.RuntimeBootstrapOptions.model_validate(
+                FlextModelsService.RuntimeBootstrapOptions.model_validate(
                     options_candidate,
                 )
             )
@@ -251,7 +252,7 @@ class FlextMixins(FlextRuntime):
                 "Runtime bootstrap options validation failed",
                 exc_info=exc,
             )
-            options = p.RuntimeBootstrapOptions()
+            options = FlextModelsService.RuntimeBootstrapOptions()
 
         config_type_raw = options.config_type
         config_cls_typed: type[FlextSettings]
@@ -876,11 +877,9 @@ class FlextMixins(FlextRuntime):
             """Check if object satisfies p.Handler protocol."""
             return (
                 hasattr(obj, "handle")
+                and callable(getattr(obj, "handle", None))
                 and hasattr(obj, "validate")
-                and callable(obj.handle if hasattr(obj, "handle") else None)
-                and callable(
-                    obj.validate if hasattr(obj, "validate") else None,
-                )
+                and callable(getattr(obj, "validate", None))
             )
 
         @staticmethod

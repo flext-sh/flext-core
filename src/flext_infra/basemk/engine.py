@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, override
+from typing import override
 
 from flext_core import FlextService, r, t
 from jinja2 import (
@@ -15,21 +15,11 @@ from jinja2 import (
     select_autoescape,
 )
 
-from flext_infra import m
+from flext_infra import c, m
 
 
 class FlextInfraBaseMkTemplateEngine(FlextService[str]):
     """Render base.mk templates with configuration context."""
-
-    TEMPLATE_ORDER: ClassVar[tuple[str, ...]] = (
-        "base_header.mk.j2",
-        "base_detection.mk.j2",
-        "base_venv.mk.j2",
-        "base_preflight.mk.j2",
-        "base_verbs.mk.j2",
-        "base_pr.mk.j2",
-        "base_clean.mk.j2",
-    )
 
     def __init__(self) -> None:
         """Initialize the template engine with Jinja2 environment."""
@@ -58,7 +48,7 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
         sections: list[str] = []
 
         try:
-            for template_name in self.TEMPLATE_ORDER:
+            for template_name in c.Infra.Basemk.TEMPLATE_ORDER:
                 template = self._environment.get_template(template_name)
                 rendered = template.render(**context)
                 sections.append(rendered.rstrip("\n"))

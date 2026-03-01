@@ -12,15 +12,12 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 
-from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, c, m, output
+from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, m, output
+from flext_infra.constants import c
+from flext_infra.deps._constants import FlextInfraDepsConstants
 
 logger = FlextLogger.create_module_logger(__name__)
-
-GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$")
-GITHUB_REPO_URL_RE = re.compile(
-    r"^(?:git@github\.com:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?)$",
-)
-_PEP621_PATH_RE = re.compile(r"@\s*(?:file:)?(?P<path>.+)$")
+deps_constants = getattr(c.Infra, "Deps", FlextInfraDepsConstants)
 
 
 class FlextInfraInternalDependencySyncService:
@@ -36,13 +33,13 @@ class FlextInfraInternalDependencySyncService:
 
     @staticmethod
     def _validate_git_ref(ref_name: str) -> r[str]:
-        if not GIT_REF_RE.fullmatch(ref_name):
+        if not deps_constants.GIT_REF_RE.fullmatch(ref_name):
             return r[str].fail(f"invalid git ref: {ref_name!r}")
         return r[str].ok(ref_name)
 
     @staticmethod
     def _validate_repo_url(repo_url: str) -> r[str]:
-        if not GITHUB_REPO_URL_RE.fullmatch(repo_url):
+        if not deps_constants.GITHUB_REPO_URL_RE.fullmatch(repo_url):
             return r[str].fail(f"invalid repository URL: {repo_url!r}")
         return r[str].ok(repo_url)
 
@@ -311,7 +308,7 @@ class FlextInfraInternalDependencySyncService:
         for dep in project_deps:
             if not isinstance(dep, str) or " @ " not in dep:
                 continue
-            match = _PEP621_PATH_RE.search(dep)
+            match = deps_constants.PEP621_PATH_RE.search(dep)
             if not match:
                 continue
             repo_name = self._is_internal_path_dep(match.group("path"))

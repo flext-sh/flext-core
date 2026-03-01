@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -38,6 +39,7 @@ from flext_core import (
 class DecoratorsService(s[m.ConfigMap]):
     """Service demonstrating FlextDecorators comprehensive features."""
 
+    @override
     def execute(
         self,
     ) -> r[m.ConfigMap]:

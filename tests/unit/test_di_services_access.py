@@ -33,6 +33,7 @@ from flext_core import (
     s,
     t,
 )
+from flext_core._models.service import FlextModelsService
 from flext_tests import tm, u
 
 from tests.test_utils import assertion_helpers
@@ -210,7 +211,7 @@ class TestServicesIntegrationViaDI:
         class ServiceWithDI(s[str]):
             @classmethod
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                return p.RuntimeBootstrapOptions(
+                return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
                     services={
                         "logger": FlextLogger.create_module_logger("service"),

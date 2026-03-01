@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import override
 
 from flext_core import (
     FlextContext,
@@ -49,6 +50,7 @@ class UserService(s[m.ConfigMap]):
         super().__init__(**data)
         # Context now includes: service_type, service_module
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
         return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
@@ -87,6 +89,7 @@ class PaymentService(s[m.ConfigMap]):
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
         return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
@@ -160,6 +163,7 @@ class OrderService(s[m.ConfigMap]):
         """Initialize service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
         order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data.root)
@@ -236,6 +240,7 @@ class AutomationService(s[m.ConfigMap]):
         """Initialize automation service."""
         super().__init__(**data)
 
+    @override
     def execute(
         self,
         **_kwargs: t.GeneralValueType,

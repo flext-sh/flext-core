@@ -20,9 +20,9 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraPatterns, c, output
+from flext_infra import FlextInfraPatterns, output
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
-    DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
     FlextInfraDocsShared,
 )
@@ -69,7 +69,7 @@ class FlextInfraDocAuditor:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
+        output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         check: str = "all",
         strict: bool = True,
     ) -> FlextResult[list[AuditReport]]:
@@ -327,7 +327,9 @@ def main() -> int:
     _ = parser.add_argument("--root", default=".")
     _ = parser.add_argument("--project")
     _ = parser.add_argument("--projects")
-    _ = parser.add_argument("--output-dir", default=DEFAULT_DOCS_OUTPUT_DIR)
+    _ = parser.add_argument(
+        "--output-dir", default=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR
+    )
     _ = parser.add_argument("--check", default="all")
     _ = parser.add_argument("--strict", type=int, default=1)
     args = parser.parse_args()

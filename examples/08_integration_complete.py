@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -67,6 +68,7 @@ class Order(m.AggregateRoot):
 class IntegrationService(s[m.ConfigMap]):
     """Service demonstrating complete flext-core integration."""
 
+    @override
     def execute(
         self,
     ) -> r[m.ConfigMap]:
@@ -214,7 +216,8 @@ class IntegrationService(s[m.ConfigMap]):
         print("\n=== Registry/Dispatcher Integration ===")
 
         dispatcher = FlextDispatcher()
-        _registry = FlextRegistry(dispatcher=dispatcher)
+        _registry = FlextRegistry()
+        _ = dispatcher
         print("✅ Registry/Dispatcher initialized")
 
     @staticmethod

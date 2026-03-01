@@ -14,9 +14,9 @@ from pathlib import Path
 from flext_core import FlextLogger, FlextResult, r
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraCommandRunner, c
+from flext_infra import FlextInfraCommandRunner
+from flext_infra.constants import c
 from flext_infra.docs.shared import (
-    DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
     FlextInfraDocsShared,
 )
@@ -52,7 +52,7 @@ class FlextInfraDocBuilder:
         *,
         project: str | None = None,
         projects: str | None = None,
-        output_dir: str = DEFAULT_DOCS_OUTPUT_DIR,
+        output_dir: str = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
     ) -> FlextResult[list[BuildReport]]:
         """Build MkDocs sites across project scopes.
 
@@ -106,7 +106,9 @@ class FlextInfraDocBuilder:
                 site_dir="",
             )
 
-        site_dir = (scope.path / DEFAULT_DOCS_OUTPUT_DIR / "site").resolve()
+        site_dir = (
+            scope.path / c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR / "site"
+        ).resolve()
         site_dir.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
             "mkdocs",

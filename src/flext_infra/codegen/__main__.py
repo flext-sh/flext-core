@@ -20,10 +20,10 @@ from pathlib import Path
 
 from flext_core import FlextRuntime
 
-from flext_infra.codegen.auto_fix import FlextInfraAutoFixer
 from flext_infra.codegen.census import FlextInfraCodegenCensus
-from flext_infra.codegen.lazy_init import FlextInfraLazyInitGenerator
-from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
+from flext_infra.codegen.fixer import FlextInfraCodegenFixer
+from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
+from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 from flext_infra.output import output
 
 
@@ -150,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
 def _handle_lazy_init(args: argparse.Namespace) -> int:
     """Handle the ``lazy-init`` subcommand."""
     root = args.root.resolve()
-    generator = FlextInfraLazyInitGenerator(workspace_root=root)
+    generator = FlextInfraCodegenLazyInit(workspace_root=root)
     unmapped = generator.run(check_only=args.check, scan_tests=False)
     if args.check and unmapped > 0:
         output.warning(f"{unmapped} files have unmapped exports")
@@ -185,7 +185,7 @@ def _handle_census(args: argparse.Namespace) -> int:
 
 def _handle_scaffold(args: argparse.Namespace) -> int:
     """Handle the ``scaffold`` subcommand."""
-    scaffolder = FlextInfraModuleScaffolder(workspace_root=args.workspace.resolve())
+    scaffolder = FlextInfraCodegenScaffolder(workspace_root=args.workspace.resolve())
     if args.dry_run:
         output.info("Dry-run mode: no files will be created")
     results = scaffolder.run()
@@ -202,7 +202,7 @@ def _handle_scaffold(args: argparse.Namespace) -> int:
 
 def _handle_auto_fix(args: argparse.Namespace) -> int:
     """Handle the ``auto-fix`` subcommand."""
-    fixer = FlextInfraAutoFixer(workspace_root=args.workspace.resolve())
+    fixer = FlextInfraCodegenFixer(workspace_root=args.workspace.resolve())
     if args.dry_run:
         output.info("Dry-run mode: no files will be modified")
     results = fixer.run()
@@ -228,15 +228,15 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
     reports_before = census.run()
 
     # Phase 2: Scaffold
-    scaffolder = FlextInfraModuleScaffolder(workspace_root=workspace)
+    scaffolder = FlextInfraCodegenScaffolder(workspace_root=workspace)
     scaffold_results = scaffolder.run()
 
     # Phase 3: Auto-fix
-    fixer = FlextInfraAutoFixer(workspace_root=workspace)
+    fixer = FlextInfraCodegenFixer(workspace_root=workspace)
     fix_results = fixer.run()
 
     # Phase 4: Lazy-init (with tests)
-    generator = FlextInfraLazyInitGenerator(workspace_root=workspace)
+    generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
     generator.run(check_only=args.dry_run, scan_tests=True)
 
     # Phase 5: Census after

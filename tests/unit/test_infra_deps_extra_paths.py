@@ -8,11 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 import tomlkit
 from flext_core import r
+from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.deps.extra_paths import (
-    MYPY_BASE_PROJECT,
-    MYPY_BASE_ROOT,
-    PYRIGHT_BASE_PROJECT,
-    PYRIGHT_BASE_ROOT,
     FlextInfraExtraPathsManager,
     _path_dep_paths_pep621,
     _path_dep_paths_poetry,
@@ -479,25 +476,25 @@ class TestConstants:
 
     def test_pyright_base_root(self) -> None:
         """Test PYRIGHT_BASE_ROOT constant."""
-        assert isinstance(PYRIGHT_BASE_ROOT, list)
-        assert "scripts" in PYRIGHT_BASE_ROOT
-        assert "src" in PYRIGHT_BASE_ROOT
+        assert isinstance(FlextInfraDepsConstants.PYRIGHT_BASE_ROOT, list)
+        assert "scripts" in FlextInfraDepsConstants.PYRIGHT_BASE_ROOT
+        assert "src" in FlextInfraDepsConstants.PYRIGHT_BASE_ROOT
 
     def test_mypy_base_root(self) -> None:
         """Test MYPY_BASE_ROOT constant."""
-        assert isinstance(MYPY_BASE_ROOT, list)
-        assert "src" in MYPY_BASE_ROOT
+        assert isinstance(FlextInfraDepsConstants.MYPY_BASE_ROOT, list)
+        assert "src" in FlextInfraDepsConstants.MYPY_BASE_ROOT
 
     def test_pyright_base_project(self) -> None:
         """Test PYRIGHT_BASE_PROJECT constant."""
-        assert isinstance(PYRIGHT_BASE_PROJECT, list)
-        assert "." in PYRIGHT_BASE_PROJECT
-        assert "src" in PYRIGHT_BASE_PROJECT
+        assert isinstance(FlextInfraDepsConstants.PYRIGHT_BASE_PROJECT, list)
+        assert "." in FlextInfraDepsConstants.PYRIGHT_BASE_PROJECT
+        assert "src" in FlextInfraDepsConstants.PYRIGHT_BASE_PROJECT
 
     def test_mypy_base_project(self) -> None:
         """Test MYPY_BASE_PROJECT constant."""
-        assert isinstance(MYPY_BASE_PROJECT, list)
-        assert "." in MYPY_BASE_PROJECT
+        assert isinstance(FlextInfraDepsConstants.MYPY_BASE_PROJECT, list)
+        assert "." in FlextInfraDepsConstants.MYPY_BASE_PROJECT
 
 
 class TestSyncExtraPathsEdgeCases:

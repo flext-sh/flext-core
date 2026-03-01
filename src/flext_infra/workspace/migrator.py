@@ -11,62 +11,9 @@ from flext_core import FlextService, r
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
-from flext_infra import FlextInfraDiscoveryService, c, m
+from flext_infra import FlextInfraDiscoveryService, m
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
-
-_MAKEFILE_REPLACEMENTS: tuple[tuple[str, str], ...] = (
-    # scripts/ path → unified CLI: detection
-    (
-        'python3 "$(BASE_MK_DIR)/scripts/mode.py"',
-        "python -m flext_infra workspace detect",
-    ),
-    # scripts/ path → unified CLI: sync
-    (
-        'python3 "$(WORKSPACE_ROOT)/scripts/sync.py"',
-        "python -m flext_infra workspace sync",
-    ),
-    # scripts/ path → unified CLI: deps
-    (
-        'python3 "$(WORKSPACE_ROOT)/scripts/dependencies/sync_internal_deps.py"',
-        "python -m flext_infra deps internal-sync",
-    ),
-    # scripts/ path → unified CLI: check
-    (
-        'python "$(WORKSPACE_ROOT)/scripts/check/fix_pyrefly_config.py"',
-        "python -m flext_infra check fix-pyrefly-config",
-    ),
-    (
-        'python "$(WORKSPACE_ROOT)/scripts/check/workspace_check.py"',
-        "python -m flext_infra check run",
-    ),
-    # scripts/ path → unified CLI: pytest-diag
-    (
-        '$(VENV_PYTHON) "$(BASE_MK_DIR)/scripts/core/pytest_diag_extract.py"',
-        "$(VENV_PYTHON) -m flext_infra core pytest-diag",
-    ),
-    # scripts/ path → unified CLI: pr
-    (
-        'python3 "$(WORKSPACE_ROOT)/scripts/github/pr_manager.py"',
-        "python3 -m flext_infra github pr",
-    ),
-)
-
-_GITIGNORE_REMOVE_EXACT: frozenset[str] = frozenset(
-    {
-        "!scripts/",
-        "!scripts/**",
-        "scripts/",
-        "/scripts/",
-    },
-)
-
-_GITIGNORE_REQUIRED_PATTERNS: tuple[str, ...] = (
-    ".reports/",
-    ".venv/",
-    "__pycache__/",
-)
-
-_PYPROJECT_FILE = c.Files.PYPROJECT_FILENAME
+from flext_infra.constants import c
 
 
 class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
@@ -124,7 +71,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
     def _workspace_root_project(workspace_root: Path) -> m.ProjectInfo | None:
         """Detect workspace root as a project if it has Makefile, pyproject.toml, and .git."""
         has_makefile = (workspace_root / c.Files.MAKEFILE_FILENAME).is_file()
-        has_pyproject = (workspace_root / _PYPROJECT_FILE).is_file()
+        has_pyproject = (workspace_root / c.Files.PYPROJECT_FILENAME).is_file()
         has_git = (workspace_root / ".git").exists()
         if not (has_makefile and has_pyproject and has_git):
             return None
@@ -236,7 +183,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
             return r[str].fail(f"Makefile read failed: {exc}")
 
         updated = original
-        for before, after in _MAKEFILE_REPLACEMENTS:
+        for before, after in c.Infra.Workspace.MAKEFILE_REPLACEMENTS:
             updated = updated.replace(before, after)
 
         if updated == original:
@@ -263,7 +210,7 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         project_name: str,
         dry_run: bool,
     ) -> r[str]:
-        pyproject_path = project_root / _PYPROJECT_FILE
+        pyproject_path = project_root / c.Files.PYPROJECT_FILENAME
         if not pyproject_path.exists():
             if dry_run:
                 return r[str].ok(
@@ -336,13 +283,13 @@ class FlextInfraProjectMigrator(FlextService[list[m.MigrationResult]]):
         filtered = [
             line
             for line in existing_lines
-            if line.strip() not in _GITIGNORE_REMOVE_EXACT
+            if line.strip() not in c.Infra.Workspace.GITIGNORE_REMOVE_EXACT
         ]
 
         existing_patterns = {line.strip() for line in filtered if line.strip()}
         missing = [
             pattern
-            for pattern in _GITIGNORE_REQUIRED_PATTERNS
+            for pattern in c.Infra.Workspace.GITIGNORE_REQUIRED_PATTERNS
             if pattern not in existing_patterns
         ]
 

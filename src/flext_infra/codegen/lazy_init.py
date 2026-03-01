@@ -23,41 +23,11 @@ from typing import override
 
 from flext_core import FlextService, r
 
+from flext_infra.constants import c
 from flext_infra.output import output
 
-_ALIAS_TO_SUFFIX: dict[str, str] = {
-    "c": "Constants",
-    "d": "Decorators",
-    "e": "Exceptions",
-    "h": "Handlers",
-    "m": "Models",
-    "p": "Protocols",
-    "r": "Result",
-    "s": "Service",
-    "t": "Types",
-    "u": "Utilities",
-    "x": "Mixins",
-}
 
-_SKIP_MODULES: frozenset[str] = frozenset({
-    "__future__",
-    "typing",
-    "collections.abc",
-    "abc",
-})
-
-_SKIP_STDLIB: frozenset[str] = frozenset({
-    "sys",
-    "importlib",
-    "typing",
-    "collections",
-    "abc",
-})
-
-_MAX_LINE_LENGTH = 88
-
-
-class FlextInfraLazyInitGenerator(FlextService[int]):
+class FlextInfraCodegenLazyInit(FlextService[int]):
     """Generates ``__init__.py`` with PEP 562 lazy imports.
 
     This service scans ``__init__.py`` files under ``src/`` directories in a
@@ -328,7 +298,7 @@ def _derive_lazy_map(
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
             raw_module = node.module or ""
-            if raw_module in _SKIP_MODULES:
+            if raw_module in c.Infra.Codegen.SKIP_MODULES:
                 continue
             module_path = _resolve_module(raw_module, node.level, current_pkg)
             if module_path == current_pkg:
@@ -341,7 +311,7 @@ def _derive_lazy_map(
             for alias in node.names:
                 name = alias.name
                 asname = alias.asname or name
-                if name in _SKIP_STDLIB:
+                if name in c.Infra.Codegen.SKIP_STDLIB:
                     continue
                 lazy_map[asname] = (name, "")
 
@@ -356,7 +326,7 @@ def _derive_lazy_map(
                         lazy_map[target.id] = (mod, attr)
 
     # Fix single-letter aliases imported alongside facade classes.
-    for alias, suffix in _ALIAS_TO_SUFFIX.items():
+    for alias, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
         if alias not in lazy_map:
             continue
         alias_mod, alias_attr = lazy_map[alias]
@@ -381,8 +351,8 @@ def _resolve_unmapped(
         return
 
     for alias in sorted(unmapped):
-        if alias in _ALIAS_TO_SUFFIX:
-            suffix = _ALIAS_TO_SUFFIX[alias]
+        if alias in c.Infra.Codegen.ALIAS_TO_SUFFIX:
+            suffix = c.Infra.Codegen.ALIAS_TO_SUFFIX[alias]
             for name, (mod, _) in filtered.items():
                 if name.endswith(suffix) and len(name) > 1:
                     filtered[alias] = (mod, name)
@@ -431,7 +401,7 @@ def _generate_type_checking(
 
         joined = ", ".join(parts)
         line = f"    from {mod} import {joined}"
-        if len(line) > _MAX_LINE_LENGTH:
+        if len(line) > c.Infra.Codegen.MAX_LINE_LENGTH:
             lines.append(f"    from {mod} import (")
             lines.extend(f"        {part}," for part in parts)
             lines.append("    )")
@@ -475,7 +445,9 @@ def _generate_file(
             "cleanup_submodule_namespace, lazy_getattr"
         )
     else:
-        lazy_import = "from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr"
+        lazy_import = (
+            "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
+        )
 
     out.extend([
         "from __future__ import annotations",

@@ -1,4 +1,4 @@
-"""Tests for FlextInfraModuleScaffolder service.
+"""Tests for FlextInfraCodegenScaffolder service.
 
 Validates module scaffolding for src/ and tests/ directories,
 idempotency, generated code validity, and naming conventions.
@@ -13,7 +13,7 @@ import ast
 from pathlib import Path
 from unittest.mock import patch
 
-from flext_infra.codegen.module_scaffolder import FlextInfraModuleScaffolder
+from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 
 _SRC_MODULE_FILES = (
     "constants.py",
@@ -23,9 +23,9 @@ _SRC_MODULE_FILES = (
     "utilities.py",
 )
 
-_PATCH_RUFF = "flext_infra.codegen.module_scaffolder.FlextInfraAstUtils.run_ruff_fix"
+_PATCH_RUFF = "flext_infra.codegen.scaffolder.FlextInfraCodegenTransforms.run_ruff_fix"
 _PATCH_PREFIX = (
-    "flext_infra.codegen.module_scaffolder.FlextInfraNamespaceValidator._derive_prefix"
+    "flext_infra.codegen.scaffolder.FlextInfraNamespaceValidator._derive_prefix"
 )
 
 
@@ -64,7 +64,7 @@ class TestScaffoldProjectNoop:
     def test_all_modules_present_creates_nothing(self, tmp_path: Path) -> None:
         """scaffold_project on a project with all 5 modules → zero files created."""
         project = _create_test_project(tmp_path, with_all_modules=True)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path):
             result = scaffolder.scaffold_project(project)
@@ -80,7 +80,7 @@ class TestScaffoldProjectCreatesSrcModules:
     def test_creates_missing_src_modules(self, tmp_path: Path) -> None:
         """Missing src/ modules are generated as skeleton files."""
         project = _create_test_project(tmp_path, with_all_modules=False)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -100,7 +100,7 @@ class TestScaffoldProjectCreatesSrcModules:
         (pkg / "constants.py").write_text("class TestProjectConstants:\n    pass\n")
         (pkg / "models.py").write_text("class TestProjectModels:\n    pass\n")
 
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -123,7 +123,7 @@ class TestScaffoldProjectCreatesTestsModules:
         tests_dir = project / "tests"
         tests_dir.mkdir()
 
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -139,7 +139,7 @@ class TestScaffoldProjectCreatesTestsModules:
     def test_skips_tests_modules_when_no_tests_dir(self, tmp_path: Path) -> None:
         """No tests/ modules are created when tests/ directory is absent."""
         project = _create_test_project(tmp_path, with_all_modules=True)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path):
             result = scaffolder.scaffold_project(project)
@@ -154,7 +154,7 @@ class TestScaffoldProjectIdempotency:
     def test_second_run_is_noop(self, tmp_path: Path) -> None:
         """Idempotency: second scaffold_project call creates zero files."""
         project = _create_test_project(tmp_path, with_all_modules=False)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -174,7 +174,7 @@ class TestGeneratedFilesAreValidPython:
     def test_generated_src_modules_parse_successfully(self, tmp_path: Path) -> None:
         """All generated src/ modules are valid Python (ast.parse succeeds)."""
         project = _create_test_project(tmp_path, with_all_modules=False)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -193,7 +193,7 @@ class TestGeneratedFilesAreValidPython:
         project = _create_test_project(tmp_path, with_all_modules=True)
         tests_dir = project / "tests"
         tests_dir.mkdir()
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -213,7 +213,7 @@ class TestGeneratedClassNamingConvention:
     def test_src_class_names_use_prefix_suffix(self, tmp_path: Path) -> None:
         """Src modules use {Prefix}{Suffix}: TestProject + Constants/Types/etc."""
         project = _create_test_project(tmp_path, with_all_modules=False)
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -244,7 +244,7 @@ class TestGeneratedClassNamingConvention:
         project = _create_test_project(tmp_path, with_all_modules=True)
         tests_dir = project / "tests"
         tests_dir.mkdir()
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with (
             patch(_PATCH_RUFF),
@@ -274,7 +274,7 @@ class TestGeneratedClassNamingConvention:
         project = tmp_path / "empty-project"
         project.mkdir()
         (project / "Makefile").touch()
-        scaffolder = FlextInfraModuleScaffolder(workspace_root=tmp_path)
+        scaffolder = FlextInfraCodegenScaffolder(workspace_root=tmp_path)
 
         with patch(_PATCH_PREFIX, side_effect=_derive_prefix_from_path):
             result = scaffolder.scaffold_project(project)

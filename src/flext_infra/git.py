@@ -16,7 +16,7 @@ from flext_core import FlextResult, FlextService, r
 from flext_infra import FlextInfraCommandRunner
 
 
-class FlextInfraGitService(FlextService[FlextResult[str]]):
+class FlextInfraGitService(FlextService[str]):
     """Infrastructure service for Git operations.
 
     Delegates to ``FlextInfraCommandRunner`` for subprocess execution.

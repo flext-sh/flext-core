@@ -19,7 +19,6 @@ from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 
-
 _SRC_MODULES = (
     "constants.py",
     "typings.py",
@@ -174,15 +173,7 @@ def test_codegen_pipeline_end_to_end(tmp_path: Path) -> None:
     package_b = project_b / "src" / "project_b"
     (package_b / "models.py").unlink()
     _ = (package_b / "base.py").write_text(
-        "\n".join([
-            "from typing import TypeVar",
-            "",
-            'TBase = TypeVar("TBase")',
-            "",
-            "class ProjectBBase:",
-            "    pass",
-            "",
-        ]),
+        'from typing import TypeVar\n\nTBase = TypeVar("TBase")\n\nclass ProjectBBase:\n    pass\n',
         encoding="utf-8",
     )
 

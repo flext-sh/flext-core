@@ -11,6 +11,7 @@ from typing import cast
 import flext_core.service as service_mod
 import pytest
 from flext_core import FlextService, FlextSettings, c, m, p, r, t, u
+from flext_core._models.service import FlextModelsService
 
 
 class _Svc(FlextService[bool]):
@@ -76,7 +77,7 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
     class _CustomSvc(_Svc):
         @classmethod
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-            return service_mod.p.RuntimeBootstrapOptions(
+            return FlextModelsService.RuntimeBootstrapOptions(
                 config_type=_CustomSettings,
             )
 

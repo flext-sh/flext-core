@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from typing import Final
 
 from flext_core import r
 
 from flext_infra import m
+from flext_infra.constants import c
 
 __all__ = ["FlextInfraNamespaceValidator"]
 
@@ -27,40 +27,6 @@ class FlextInfraNamespaceValidator:
     convention, constants are centralized in ``constants.py``, and type
     definitions are centralized in ``typings.py``.
     """
-
-    _EXEMPT_FILENAMES: Final[frozenset[str]] = frozenset({
-        "__init__.py",
-        "conftest.py",
-        "__main__.py",
-    })
-    _EXEMPT_PREFIXES: Final[frozenset[str]] = frozenset({"test_", "_"})
-    _ALIAS_NAMES: Final[frozenset[str]] = frozenset({
-        "c",
-        "t",
-        "m",
-        "p",
-        "u",
-        "r",
-        "d",
-        "e",
-        "h",
-        "s",
-        "x",
-        "tc",
-    })
-    _DUNDER_ALLOWED: Final[frozenset[str]] = frozenset({"__all__", "__version__"})
-    _TYPEVAR_CALLABLES: Final[frozenset[str]] = frozenset({
-        "TypeVar",
-        "ParamSpec",
-        "TypeVarTuple",
-    })
-    _ENUM_BASES: Final[frozenset[str]] = frozenset({"StrEnum", "Enum", "IntEnum"})
-    _COLLECTION_CALLS: Final[frozenset[str]] = frozenset({
-        "frozenset",
-        "tuple",
-        "dict",
-        "list",
-    })
 
     def validate(
         self, project_root: Path, *, scan_tests: bool = False
@@ -127,9 +93,9 @@ class FlextInfraNamespaceValidator:
     def _is_exempt_file(self, filepath: Path) -> bool:
         """Check whether a file should be skipped from validation."""
         name = filepath.name
-        if name in self._EXEMPT_FILENAMES:
+        if name in c.Infra.Core.EXEMPT_FILENAMES:
             return True
-        return any(name.startswith(pfx) for pfx in self._EXEMPT_PREFIXES)
+        return any(name.startswith(pfx) for pfx in c.Infra.Core.EXEMPT_PREFIXES)
 
     @staticmethod
     def _derive_prefix(project_root: Path) -> str:
@@ -186,20 +152,23 @@ class FlextInfraNamespaceValidator:
         # __all__ / __version__ assignments
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id in self._DUNDER_ALLOWED:
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id in c.Infra.Core.DUNDER_ALLOWED
+                ):
                     return True
 
         # Single/two-letter alias assignments (c = FlextConstants, tc = ...)
         if isinstance(node, ast.Assign) and len(node.targets) == 1:
             target = node.targets[0]
-            if isinstance(target, ast.Name) and target.id in self._ALIAS_NAMES:
+            if isinstance(target, ast.Name) and target.id in c.Infra.Core.ALIAS_NAMES:
                 return True
 
         # TypeVar / ParamSpec / TypeVarTuple calls — only in typings.py
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
             func = node.value.func
             func_name = self._get_call_name(func)
-            if func_name in self._TYPEVAR_CALLABLES:
+            if func_name in c.Infra.Core.TYPEVAR_CALLABLES:
                 return filepath.name == "typings.py"
 
         # PEP 695 TypeAlias — only in typings.py
@@ -322,12 +291,12 @@ class FlextInfraNamespaceValidator:
                 # Loose collection constants
                 if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
                     func_name = self._get_call_name(node.value.func)
-                    if func_name in self._COLLECTION_CALLS:
+                    if func_name in c.Infra.Core.COLLECTION_CALLS:
                         target_name = self._get_assign_target_name(node)
                         if (
                             target_name
-                            and target_name not in self._DUNDER_ALLOWED
-                            and target_name not in self._ALIAS_NAMES
+                            and target_name not in c.Infra.Core.DUNDER_ALLOWED
+                            and target_name not in c.Infra.Core.ALIAS_NAMES
                         ):
                             seq += 1
                             violations.append(
@@ -342,7 +311,7 @@ class FlextInfraNamespaceValidator:
                     if isinstance(inner, ast.ClassDef) and any(
                         self._base_contains(b, base)
                         for b in inner.bases
-                        for base in self._ENUM_BASES
+                        for base in c.Infra.Core.ENUM_BASES
                     ):
                         seq += 1
                         violations.append(
@@ -392,7 +361,7 @@ class FlextInfraNamespaceValidator:
                 # TypeVar / ParamSpec / TypeVarTuple calls
                 if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
                     func_name = self._get_call_name(node.value.func)
-                    if func_name in self._TYPEVAR_CALLABLES:
+                    if func_name in c.Infra.Core.TYPEVAR_CALLABLES:
                         target_name = self._get_assign_target_name(node)
                         seq += 1
                         violations.append(

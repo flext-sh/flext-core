@@ -738,7 +738,7 @@ class FlextUtilitiesParser:
         if isinstance(obj, str):
             key = obj
         elif hasattr(obj, "__name__"):
-            dunder_name = obj.__name__
+            dunder_name = getattr(obj, "__name__", None)
             if isinstance(dunder_name, str):
                 key = dunder_name
             else:

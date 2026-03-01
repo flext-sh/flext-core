@@ -382,7 +382,6 @@ class TestToIOChainsException:
 
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
-
         exc = ValueError("conversion error")
         result = r[int].fail("error", exception=exc)
 

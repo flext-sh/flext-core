@@ -11,9 +11,9 @@ import pathlib
 from pathlib import Path
 
 import pytest
+from flext_infra.constants import c
 from flext_infra.docs.auditor import AuditReport
 from flext_infra.docs.shared import (
-    DEFAULT_DOCS_OUTPUT_DIR,
     FlextInfraDocScope,
     FlextInfraDocsShared,
 )
@@ -74,7 +74,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         assert result.is_success or result.is_failure
 
@@ -84,7 +84,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         assert result.is_success
         assert isinstance(result.value, list)
@@ -95,7 +95,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         if result.is_success:
             scopes = result.value
@@ -107,7 +107,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project="test-project",
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         assert result.is_success or result.is_failure
 
@@ -117,7 +117,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects="proj1,proj2,proj3",
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         assert result.is_success or result.is_failure
 
@@ -134,8 +134,8 @@ class TestFlextInfraDocsShared:
 
     def test_default_docs_output_dir_constant(self) -> None:
         """Test DEFAULT_DOCS_OUTPUT_DIR constant is defined."""
-        assert isinstance(DEFAULT_DOCS_OUTPUT_DIR, str)
-        assert len(DEFAULT_DOCS_OUTPUT_DIR) > 0
+        assert isinstance(c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR, str)
+        assert len(c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR) > 0
 
     def test_build_scopes_scope_structure(self, tmp_path: Path) -> None:
         """Test scopes returned have required structure."""
@@ -143,7 +143,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         if result.is_success and result.value:
             scope = result.value[0]
@@ -173,7 +173,7 @@ class TestFlextInfraDocsShared:
     def test_write_markdown_returns_flext_result(self, tmp_path: Path) -> None:
         """Test write_markdown returns FlextResult."""
         md_file = tmp_path / "test.md"
-        result = FlextInfraDocsShared.write_markdown(md_file, "# Test\n\nContent")
+        result = FlextInfraDocsShared.write_markdown(md_file, ["# Test", "", "Content"])
         assert result.is_success or result.is_failure
 
     def test_iter_markdown_files_empty_directory(self, tmp_path: Path) -> None:
@@ -436,6 +436,7 @@ class TestFlextInfraDocsShared:
         monkeypatch.setattr(pathlib.Path, "write_text", mock_write_text)
         result = FlextInfraDocsShared.write_markdown(md_file, ["test"])
         assert result.is_failure
+        assert result.error is not None
         assert "markdown write error" in result.error
 
     def test_build_scopes_skips_missing_projects(self, tmp_path: Path) -> None:
@@ -447,7 +448,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects="missing-proj",
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         # Should succeed but skip the missing project
         assert result.is_success
@@ -460,7 +461,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project="nonexistent_proj",
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         # Should succeed but only include root scope
         assert result.is_success
@@ -474,7 +475,7 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project=None,
             projects="test-proj",
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         assert result.is_success
         scope_names = [s.name for s in result.value]
@@ -497,7 +498,8 @@ class TestFlextInfraDocsShared:
             root=tmp_path,
             project="oserror_proj",
             projects=None,
-            output_dir=DEFAULT_DOCS_OUTPUT_DIR,
+            output_dir=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
         )
         assert result.is_failure
+        assert result.error is not None
         assert "scope resolution failed" in result.error
