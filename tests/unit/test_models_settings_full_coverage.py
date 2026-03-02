@@ -48,6 +48,7 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
     assert "trace_id" in req.context
 
     class _CodeObj:
+        @override
         def __repr__(self) -> str:
             return "503"
 

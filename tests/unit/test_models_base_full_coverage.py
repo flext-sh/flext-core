@@ -27,6 +27,7 @@ class _Timestampable(m.TimestampableMixin):
 class _BrokenDumpModel(BaseModel):
     value: int = 1
 
+    @override
     def __getattribute__(self, name: str) -> object:
         if name == "model_dump":
             return lambda *args, **kwargs: [1]

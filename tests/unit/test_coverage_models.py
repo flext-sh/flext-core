@@ -111,6 +111,7 @@ class TestValues:
                 """Hash based on code value."""
                 return hash(self.code)
 
+            @override
             def __eq__(self, other: object) -> bool:
                 """Equality based on code value."""
                 if not isinstance(other, ISBN):

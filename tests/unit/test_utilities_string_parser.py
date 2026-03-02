@@ -31,7 +31,7 @@ from flext_core import (
     FlextResult as r,
     m,
     t,
-)
+, override)
 from flext_tests import t as tests_t, u
 
 from tests.constants import TestsFlextConstants
@@ -394,6 +394,7 @@ class StringParserTestFactory:
             pass
 
         class NoStr:
+            @override
             def __str__(self) -> str:
                 msg = "Cannot convert to string"
                 raise TypeError(msg)

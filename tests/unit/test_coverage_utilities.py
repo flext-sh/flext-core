@@ -36,7 +36,7 @@ from ..test_utils import assertion_helpers
 # =========================================================================
 
 
-class UtilityOperationType(StrEnum):
+class UtilityOperationType(StrEnum, override):
     """Utility operation types for parametrization."""
 
     TYPE_GUARD_STRING = "type_guard_string"
@@ -187,6 +187,7 @@ class UtilityScenarios:
         """Create custom serializable object."""
 
         class CustomObject:
+            @override
             def __str__(self) -> str:
                 return "custom_object"
 

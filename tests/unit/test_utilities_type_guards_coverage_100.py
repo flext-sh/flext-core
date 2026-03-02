@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_core import t, u
@@ -328,6 +328,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         """Test normalize_to_metadata_value with custom object."""
 
         class CustomObject:
+            @override
             def __str__(self) -> str:
                 return "custom_object"
 

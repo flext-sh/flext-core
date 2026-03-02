@@ -82,6 +82,7 @@ class TestFlextModelsEntity:
             unique_id: str
             name: str
 
+            @override
             def __eq__(self, other: object) -> bool:
                 if not isinstance(other, User):
                     return NotImplemented

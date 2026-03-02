@@ -98,8 +98,8 @@ class TestFlextInfraStubSupplyChain:
             mock_result = Mock()
             mock_result.is_failure = False
             mock_result.value = {
-                "internal_missing": [],
-                "unresolved_missing": [],
+                "internal_missing": list[str](),
+                "unresolved_missing": list[str](),
             }
             mock_analyze.return_value = mock_result
 
@@ -129,8 +129,8 @@ class TestFlextInfraStubSupplyChain:
             mock_result = Mock()
             mock_result.is_failure = False
             mock_result.value = {
-                "internal_missing": [],
-                "unresolved_missing": [],
+                "internal_missing": list[str](),
+                "unresolved_missing": list[str](),
             }
             mock_analyze.return_value = mock_result
 
@@ -151,7 +151,7 @@ class TestFlextInfraStubSupplyChain:
             mock_result.is_failure = False
             mock_result.value = {
                 "internal_missing": ["flext_test.module"],
-                "unresolved_missing": [],
+                "unresolved_missing": list[str](),
             }
             mock_analyze.return_value = mock_result
 
@@ -172,7 +172,7 @@ class TestFlextInfraStubSupplyChain:
             mock_result = Mock()
             mock_result.is_failure = False
             mock_result.value = {
-                "internal_missing": [],
+                "internal_missing": list[str](),
                 "unresolved_missing": ["external_lib"],
             }
             mock_analyze.return_value = mock_result

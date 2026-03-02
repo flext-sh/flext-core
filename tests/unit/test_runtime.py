@@ -41,7 +41,7 @@ from flext_core import (
     r,
     s,
     t,
-)
+, override)
 from flext_core._models.service import FlextModelsService
 
 
@@ -944,6 +944,7 @@ class TestFlextRuntime:
 
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
+                @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                     def counter_factory() -> t.GeneralValueType:
                         return {"count": 1}

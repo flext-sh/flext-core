@@ -14,13 +14,15 @@ from flext_core import c, m, p, r, t, u
 
 
 @runtime_checkable
-class _NamedProtocol(Protocol):
+class _NamedProtocol(Protocol, override):
+    @override
     def _protocol_name(self) -> str: ...
 
 
 class _SettingsModel(p.ProtocolSettings, _NamedProtocol):
     app_name: str = "x"
 
+    @override
     def _protocol_name(self) -> str:
         return "settings"
 
@@ -28,6 +30,7 @@ class _SettingsModel(p.ProtocolSettings, _NamedProtocol):
 class _ProtocolModel(p.ProtocolModel, _NamedProtocol):
     name: str = "ok"
 
+    @override
     def _protocol_name(self) -> str:
         return "model"
 
@@ -52,6 +55,7 @@ def test_implements_decorator_validation_error_message() -> None:
 
 def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
     class _MetaCreated(_NamedProtocol, metaclass=p.ProtocolModelMeta):
+        @override
         def _protocol_name(self) -> str:
             return "meta"
 
@@ -82,6 +86,7 @@ def test_protocol_model_and_settings_methods() -> None:
 def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     @p.implements(_NamedProtocol)
     class _Decorated:
+        @override
         def _protocol_name(self) -> str:
             return "decorated"
 
@@ -106,6 +111,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
     @p.implements(_NamedProtocol)
     class _Thing:
+        @override
         def _protocol_name(self) -> str:
             return "thing"
 
@@ -118,6 +124,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
 def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     class _OnlyRuntime:
+        @override
         def _protocol_name(self) -> str:
             return "runtime"
 

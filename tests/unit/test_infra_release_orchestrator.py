@@ -595,7 +595,7 @@ class TestFlextInfraReleaseOrchestrator:
             "flext_infra.release.orchestrator.FlextInfraProjectSelector"
         ) as mock_sel:
             mock_sel_inst = mock_sel.return_value
-            mock_sel_inst.resolve_projects.return_value = r[list].ok([])
+            mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
             targets = orchestrator._build_targets(workspace_root, [])
             assert targets[0] == ("root", workspace_root)
 
@@ -644,7 +644,7 @@ class TestFlextInfraReleaseOrchestrator:
                     "flext_infra.release.orchestrator.FlextInfraProjectSelector"
                 ) as mock_sel:
                     mock_sel_inst = mock_sel.return_value
-                    mock_sel_inst.resolve_projects.return_value = r[list].ok([])
+                    mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
                     result = orchestrator._generate_notes(
                         workspace_root,
                         "1.0.0",
@@ -671,7 +671,7 @@ class TestFlextInfraReleaseOrchestrator:
                     "flext_infra.release.orchestrator.FlextInfraProjectSelector"
                 ) as mock_sel:
                     mock_sel_inst = mock_sel.return_value
-                    mock_sel_inst.resolve_projects.return_value = r[list].ok([])
+                    mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
                     with patch(
                         "pathlib.Path.write_text",
                         side_effect=OSError("write failed"),
@@ -1093,7 +1093,7 @@ class TestFlextInfraReleaseOrchestrator:
                 mock_project = SimpleNamespace(
                     name="proj1", path=workspace_root / "proj1"
                 )
-                mock_selector.resolve_projects.return_value = r[list].ok([mock_project])
+                mock_selector.resolve_projects.return_value = r[list[str]].ok([mock_project])
 
                 result = orchestrator._create_branches(
                     workspace_root, "1.0.0", ["proj1"]
@@ -1113,7 +1113,7 @@ class TestFlextInfraReleaseOrchestrator:
         ) as mock_selector_cls:
             mock_selector = mock_selector_cls.return_value
             mock_project = SimpleNamespace(name="proj1", path=proj_dir)
-            mock_selector.resolve_projects.return_value = r[list].ok([mock_project])
+            mock_selector.resolve_projects.return_value = r[list[str]].ok([mock_project])
 
             result = orchestrator._version_files(workspace_root, ["proj1"])
 
@@ -1128,7 +1128,7 @@ class TestFlextInfraReleaseOrchestrator:
         ) as mock_selector_cls:
             mock_selector = mock_selector_cls.return_value
             mock_project = SimpleNamespace(name="proj1", path=workspace_root / "proj1")
-            mock_selector.resolve_projects.return_value = r[list].ok([mock_project])
+            mock_selector.resolve_projects.return_value = r[list[str]].ok([mock_project])
 
             result = orchestrator._build_targets(workspace_root, ["proj1"])
 

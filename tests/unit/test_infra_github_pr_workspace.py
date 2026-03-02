@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 from unittest.mock import Mock
 
 from flext_core import r
@@ -334,7 +335,7 @@ class TestOrchestrate:
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list].ok([proj])
+        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
@@ -351,7 +352,7 @@ class TestOrchestrate:
     def test_project_resolution_failure(self, tmp_path: Path) -> None:
         """Test orchestrate when project resolution fails."""
         mock_selector = Mock()
-        mock_selector.resolve_projects.return_value = r[list].fail("no projects")
+        mock_selector.resolve_projects.return_value = r[list[Mock]].fail("no projects")
         manager = FlextInfraPrWorkspaceManager(
             runner=Mock(), git=Mock(), selector=mock_selector, reporting=Mock()
         )
@@ -374,7 +375,7 @@ class TestOrchestrate:
         proj2 = Mock()
         proj2.path = tmp_path / "p2"
         proj2.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list].ok([proj1, proj2])
+        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj1, proj2])
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
@@ -386,7 +387,8 @@ class TestOrchestrate:
             tmp_path, include_root=False, fail_fast=True, checkpoint=False, branch=""
         )
         assert result.is_success
-        assert result.value["fail"] >= 1
+        fail_count = cast("int", result.value.get("fail", 0)) if isinstance(result.value, dict) else 0
+        assert fail_count >= 1
 
     def test_include_root(self, tmp_path: Path) -> None:
         """Test orchestrate includes root repository."""
@@ -398,7 +400,7 @@ class TestOrchestrate:
         mock_runner.capture.return_value = r[str].ok("")
         mock_runner.run.return_value = r[bool].ok(True)
 
-        mock_selector.resolve_projects.return_value = r[list].ok([])
+        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([])
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
@@ -425,7 +427,7 @@ class TestOrchestrate:
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list].ok([proj])
+        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,
@@ -453,7 +455,7 @@ class TestOrchestrate:
         proj = Mock()
         proj.path = tmp_path / "proj"
         proj.path.mkdir()
-        mock_selector.resolve_projects.return_value = r[list].ok([proj])
+        mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
 
         manager = FlextInfraPrWorkspaceManager(
             runner=mock_runner,

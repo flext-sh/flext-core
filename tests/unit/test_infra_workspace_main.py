@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 from unittest.mock import Mock, patch
 
 from flext_infra.workspace import __main__ as workspace_main
@@ -86,7 +87,7 @@ def test_run_orchestrate_success() -> None:
     args.projects = ["project-a", "project-b"]
     args.verb = "check"
     args.fail_fast = False
-    args.make_arg = []
+    args.make_arg = cast("list[str]", [])
 
     with patch(
         "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
@@ -104,10 +105,10 @@ def test_run_orchestrate_success() -> None:
 def test_run_orchestrate_no_projects() -> None:
     """Test _run_orchestrate with no projects specified."""
     args = Mock()
-    args.projects = []
+    args.projects = cast("list[str]", [])
     args.verb = "check"
     args.fail_fast = False
-    args.make_arg = []
+    args.make_arg = cast("list[str]", [])
 
     result = workspace_main._run_orchestrate(args)
     assert result == 1
@@ -119,7 +120,7 @@ def test_run_orchestrate_with_failures() -> None:
     args.projects = ["project-a", "project-b"]
     args.verb = "check"
     args.fail_fast = False
-    args.make_arg = []
+    args.make_arg = cast("list[str]", [])
 
     with patch(
         "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
@@ -140,7 +141,7 @@ def test_run_orchestrate_failure() -> None:
     args.projects = ["project-a"]
     args.verb = "check"
     args.fail_fast = False
-    args.make_arg = []
+    args.make_arg = cast("list[str]", [])
 
     with patch(
         "flext_infra.workspace.__main__.FlextInfraOrchestratorService"
@@ -260,7 +261,7 @@ def test_main_migrate_command(tmp_path: Path) -> None:
 
 def test_main_no_command() -> None:
     """Test main() with no command specified."""
-    argv = []
+    argv: list[str] = []
 
     result = workspace_main.main(argv)
     assert result == 1
@@ -336,7 +337,7 @@ def test_main_entry_point(tmp_path: Path) -> None:
         assert exit_code == 0
 
 
-__all__ = []
+__all__: list[str] = []
 
 
 def test_main_calls_sys_exit(tmp_path: Path) -> None:

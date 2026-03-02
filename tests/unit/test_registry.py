@@ -35,7 +35,7 @@ from flext_core import (
     p,
     r,
     t,
-)
+, override)
 from flext_tests import FlextTestsUtilities, u
 
 
@@ -70,6 +70,7 @@ class RegistryTestCase:
 class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
     """Concrete implementation of h for testing."""
 
+    @override
     def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
         """Handle the message."""
         return r[t.GeneralValueType].ok(f"processed_{message}")
@@ -78,6 +79,7 @@ class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
         """Make handler callable for registry validation."""
         return self.handle(message)
 
+    @override
     def _protocol_name(self) -> str:
         """Return protocol name for registry identification."""
         return "test-handler"

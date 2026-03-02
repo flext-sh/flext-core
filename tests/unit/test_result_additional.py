@@ -26,10 +26,11 @@ class ExplodingGetattr:
     Instead, we create a mock that behaves similarly for testing purposes.
     """
 
-    def __init__(self, value: int) -> None:
+    def __init__(self, value: int, override) -> None:
         """Initialize with a value."""
         self._value = value
 
+    @override
     def __getattribute__(self, name: str) -> object:
         """Raise on attribute access except for class/dict/value."""
         # Allow __class__ and __dict__ for isinstance checks

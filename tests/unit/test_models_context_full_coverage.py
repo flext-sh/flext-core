@@ -13,7 +13,7 @@ from flext_core._models.context import (
     FlextModelsContext,
     _normalize_statistics_before,
     _normalize_to_mapping,
-)
+, override)
 from pydantic import BaseModel
 
 
@@ -25,12 +25,15 @@ class _MappingLike(Mapping[str, t.ConfigMapValue]):
     def __init__(self, data: dict[str, t.ConfigMapValue]) -> None:
         self._data = data
 
+    @override
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
+    @override
     def __len__(self) -> int:
         return len(self._data)
 
+    @override
     def __getitem__(self, key: str) -> t.ConfigMapValue:
         return self._data[key]
 

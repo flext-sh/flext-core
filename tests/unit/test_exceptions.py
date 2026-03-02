@@ -24,7 +24,7 @@ import time
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_core import FlextConstants, FlextRuntime, c, e, m, t
@@ -1269,14 +1269,17 @@ class Teste:
         """Test create with dict-like metadata - tests lines 1376-1379."""
 
         class DictLike(Mapping[str, object]):
+            @override
             def __getitem__(self, key: str) -> object:
                 if key == "key1":
                     return "value1"
                 raise KeyError(key)
 
+            @override
             def __iter__(self) -> Iterator[str]:
                 return iter(["key1"])
 
+            @override
             def __len__(self) -> int:
                 return 1
 
@@ -1436,7 +1439,7 @@ class Teste:
 
     def test_prepare_kwargs_with_specific_params_none(self) -> None:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
-        specific_params_raw = {"field": None}  # None value should not override
+        specific_params_raw: dict[str, None] = {"field": None}  # None value should not override
         # Convert to t.MetadataAttributeDict (None is valid MetadataAttributeValue)
         specific_params: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v)
@@ -1492,6 +1495,7 @@ class Teste:
             def __init__(self) -> None:
                 self._obj = object()
 
+            @override
             def __getitem__(self, key: str) -> object:
                 if key == "key1":
                     return "value1"
@@ -1499,9 +1503,11 @@ class Teste:
                     return self._obj
                 raise KeyError(key)
 
+            @override
             def __iter__(self) -> Iterator[str]:
                 return iter(["key1", "key2"])
 
+            @override
             def __len__(self) -> int:
                 return 2
 
@@ -1532,15 +1538,18 @@ class Teste:
         """Test create iterates dict-like metadata items - tests lines 1378-1379."""
 
         class DictLike(Mapping[str, object]):
+            @override
             def __getitem__(self, key: str) -> object:
                 mapping: dict[str, t.GeneralValueType] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)
 
+            @override
             def __iter__(self) -> Iterator[str]:
                 return iter(["key1", "key2"])
 
+            @override
             def __len__(self) -> int:
                 return 2
 
@@ -1576,14 +1585,17 @@ class Teste:
             def __init__(self) -> None:
                 self._obj = object()
 
+            @override
             def __getitem__(self, key: str) -> object:
                 if key == "key1":
                     return self._obj
                 raise KeyError(key)
 
+            @override
             def __iter__(self) -> Iterator[str]:
                 return iter(["key1"])
 
+            @override
             def __len__(self) -> int:
                 return 1
 
@@ -1773,14 +1785,17 @@ class Teste:
 
         # Test with dict-like metadata
         class DictLike(Mapping[str, object]):
+            @override
             def __getitem__(self, key: str) -> object:
                 if key == "key":
                     return "value"
                 raise KeyError(key)
 
+            @override
             def __iter__(self) -> Iterator[str]:
                 return iter(["key"])
 
+            @override
             def __len__(self) -> int:
                 return 1
 
