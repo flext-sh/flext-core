@@ -11,7 +11,7 @@ Exercises edge/error paths not covered in the base suite:
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import m, r
@@ -26,7 +26,7 @@ class ExplodingGetattr:
     Instead, we create a mock that behaves similarly for testing purposes.
     """
 
-    def __init__(self, value: int, override) -> None:
+    def __init__(self, value: int) -> None:
         """Initialize with a value."""
         self._value = value
 

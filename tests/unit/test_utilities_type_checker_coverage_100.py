@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict as BaseUserDict
-from typing import TypeVar, cast, get_origin
+from typing import TypeVar, cast, get_origin, override
 
 import pytest
 from flext_core import FlextResult, h, t, u
@@ -42,6 +42,7 @@ def _message_type(value: object) -> t.MessageTypeSpecifier:
 class StringHandler(h[str, str]):
     """Handler for string messages."""
 
+    @override
     def handle(self, message: str) -> FlextResult[str]:
         """Handle string message."""
         return FlextResult[str].ok(f"Processed: {message}")
@@ -50,6 +51,7 @@ class StringHandler(h[str, str]):
 class IntHandler(h[int, int]):
     """Handler for int messages."""
 
+    @override
     def handle(self, message: int) -> FlextResult[int]:
         """Handle int message."""
         return FlextResult[int].ok(message * 2)
@@ -58,6 +60,7 @@ class IntHandler(h[int, int]):
 class DictHandler(h[dict[str, t.GeneralValueType], dict[str, t.GeneralValueType]]):
     """Handler for dict messages."""
 
+    @override
     def handle(
         self,
         message: dict[str, t.GeneralValueType],
@@ -72,6 +75,7 @@ class DictHandler(h[dict[str, t.GeneralValueType], dict[str, t.GeneralValueType]
 class ObjectHandler(h[object, object]):
     """Handler for object messages (universal)."""
 
+    @override
     def handle(self, message: object) -> FlextResult[object]:
         """Handle any message."""
         return FlextResult[object].ok(message)

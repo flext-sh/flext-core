@@ -24,14 +24,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import (
     FlextResult as r,
     m,
     t,
-, override)
+)
 from flext_tests import t as tests_t, u
 
 from tests.constants import TestsFlextConstants

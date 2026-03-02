@@ -32,8 +32,8 @@ class _RuntimeContainer:
 
 class _ContainerForLogger:
     def __init__(self, success: bool, logger: object | None = None) -> None:
-        self.success = success
-        self.logger = logger
+        self.success: bool = success
+        self.logger: object | None = logger
         self.factories: dict[str, object] = {}
 
     def get_typed(self, _key: str, _tp: object) -> r[object]:

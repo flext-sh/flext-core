@@ -115,7 +115,7 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
-        names = categories.category_names
+        names: list[str] = categories.category_names
         assert all(name in names for name in ["users", "groups"])
         assert len(names) == 2
 

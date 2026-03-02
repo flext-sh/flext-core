@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import override
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap

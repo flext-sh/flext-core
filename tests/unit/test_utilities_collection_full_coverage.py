@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import UserDict
 from collections.abc import Callable, Iterator, Mapping
 from enum import StrEnum
-from typing import Never, cast
+from typing import Never, cast, override
 
 import pytest
 from flext_core import c, m, r, t, u
@@ -17,13 +17,16 @@ class _Color(StrEnum):
 
 
 class _BadMapping(Mapping[str, str]):
+    @override
     def __iter__(self) -> Iterator[str]:
         msg = "boom"
         raise RuntimeError(msg)
 
+    @override
     def __len__(self) -> int:
         return 0
 
+    @override
     def __getitem__(self, key: str) -> str:
         raise KeyError(key)
 
@@ -35,6 +38,7 @@ class _BadSequence:
 
 
 class _BadCopyDict(UserDict[str, t.GeneralValueType]):
+    @override
     def copy(self) -> dict[str, t.GeneralValueType]:
         msg = "copy failed"
         raise TypeError(msg)
@@ -149,7 +153,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
 ):
     class _FailureResult:
         is_success = False
-        value = None
+        value: None = None
         error = "boom"
 
     collected = u.Collection.batch(

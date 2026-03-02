@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult, r
+from pydantic import BaseModel
 from flext_tests import FlextTestsUtilities
 
 from tests.test_utils import assertion_helpers
@@ -103,10 +104,8 @@ class TestFlextTestsUtilitiesTestContext:
     def test_temporary_attribute_change(self) -> None:
         """Test temporary_attribute changes attribute temporarily."""
 
-        class TestObject:
-            def __init__(self) -> None:
-                super().__init__()
-                self.attribute = "original"
+        class TestObject(BaseModel):
+            attribute: str = "original"
 
         obj = TestObject()
 
@@ -123,7 +122,7 @@ class TestFlextTestsUtilitiesTestContext:
     def test_temporary_attribute_new(self) -> None:
         """Test temporary_attribute adds new attribute temporarily."""
 
-        class TestObject:
+        class TestObject(BaseModel):
             pass
 
         obj = TestObject()
@@ -142,10 +141,8 @@ class TestFlextTestsUtilitiesTestContext:
     def test_temporary_attribute_exception_restores(self) -> None:
         """Test temporary_attribute restores value even when exception occurs."""
 
-        class TestObject:
-            def __init__(self) -> None:
-                super().__init__()
-                self.attribute = "original"
+        class TestObject(BaseModel):
+            attribute: str = "original"
 
         obj = TestObject()
 

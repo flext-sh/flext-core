@@ -305,14 +305,13 @@ class TestRuntimeTypeChecking:
         """Test is_sequence_type with type that is Sequence subclass."""
 
         class MySequence(Sequence[object]):
-            @override
             @overload
-            def __getitem__(self, index: int) -> object: ...
             def __getitem__(self, index: int) -> object: ...
 
             @overload
             def __getitem__(self, index: slice) -> Sequence[object]: ...
 
+            @override
             def __getitem__(self, index: int | slice) -> object | Sequence[object]:
                 return None if isinstance(index, int) else MySequence()
 

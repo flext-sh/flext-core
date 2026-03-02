@@ -275,6 +275,7 @@ class TestFlextHandlers:
         """Test _run_pipeline with dict[str, t.GeneralValueType] message having command_id."""
 
         class DictHandler(h[dict[str, t.GeneralValueType], str]):
+            @override
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
@@ -320,6 +321,7 @@ class TestFlextHandlers:
         """Test _run_pipeline when handler cannot handle message type."""
 
         class RestrictiveHandler(h[str, str]):
+            @override
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
@@ -350,6 +352,7 @@ class TestFlextHandlers:
         """Test _run_pipeline when message validation fails."""
 
         class ValidationFailingHandler(h[str, str]):
+            @override
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
@@ -380,6 +383,7 @@ class TestFlextHandlers:
         """Test _run_pipeline when handler.handle() raises exception."""
 
         class ExceptionHandler(h[str, str]):
+            @override
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 

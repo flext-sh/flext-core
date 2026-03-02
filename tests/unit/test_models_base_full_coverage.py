@@ -5,6 +5,7 @@ from __future__ import annotations
 # mypy: follow_imports=skip, disable-error-code=valid-type
 # pyright: basic, reportMissingImports=false, reportImplicitOverride=false, reportUnknownVariableType=false, reportUnknownLambdaType=false, reportUnusedCallResult=false, reportPrivateUsage=false
 from datetime import UTC, datetime
+from typing import override
 
 import pytest
 from flext_core import c, m, r, u

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
-from typing import cast
+from typing import cast, override
 
 import pytest
 import structlog.contextvars
@@ -13,7 +13,7 @@ from flext_core._models.context import (
     FlextModelsContext,
     _normalize_statistics_before,
     _normalize_to_mapping,
-, override)
+)
 from pydantic import BaseModel
 
 

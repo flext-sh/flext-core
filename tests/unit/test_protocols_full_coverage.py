@@ -7,15 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Protocol, cast, runtime_checkable
+from typing import Protocol, cast, override, runtime_checkable
 
 import pytest
 from flext_core import c, m, p, r, t, u
 
 
 @runtime_checkable
-class _NamedProtocol(Protocol, override):
-    @override
+class _NamedProtocol(Protocol):
+    def _protocol_name(self) -> str: ...
     def _protocol_name(self) -> str: ...
 
 
@@ -86,8 +86,6 @@ def test_protocol_model_and_settings_methods() -> None:
 def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     @p.implements(_NamedProtocol)
     class _Decorated:
-        @override
-        def _protocol_name(self) -> str:
             return "decorated"
 
     obj = _Decorated()
@@ -111,8 +109,6 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
     @p.implements(_NamedProtocol)
     class _Thing:
-        @override
-        def _protocol_name(self) -> str:
             return "thing"
 
     obj = _Thing()
@@ -124,8 +120,6 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
 def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     class _OnlyRuntime:
-        @override
-        def _protocol_name(self) -> str:
             return "runtime"
 
     runtime_obj = _OnlyRuntime()

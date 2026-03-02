@@ -109,7 +109,7 @@ class TestuMapperExtract:
 
     def test_extract_none_path(self) -> None:
         """Test extraction when intermediate path is None."""
-        data = {"a": None}
+        data: dict[str, None] = {"a": None}
         result = u.Mapper.extract(data, "a.b", default="defs")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == "defs"
@@ -196,7 +196,7 @@ class TestuMapperUtils:
 
     def test_flat(self) -> None:
         """Test flat."""
-        items = [[1, 2], [3], []]
+        items: list[list[int]] = [[1, 2], [3], []]
         assert u.Mapper.flat(items) == [1, 2, 3]
 
     def test_agg(self) -> None:
@@ -336,7 +336,7 @@ class TestuMapperBuild:
     def test_fields_multi(self) -> None:
         """Test fields multi extraction."""
         data = {"a": 1, "b": 2}
-        spec = {"a": None, "b": None}
+        spec: dict[str, None] = {"a": None, "b": None}
         res = u.Mapper.fields_multi(data, cast("dict[str, t.GeneralValueType]", spec))
         assert res == {"a": 1, "b": 2}
 
@@ -390,7 +390,7 @@ class TestuMapperAdvanced:
     def test_transform_options(self) -> None:
         """Test build transform options."""
         # Normalize, strip_none, etc.
-        data = {"a": "UPPER", "b": None, "c": ""}
+        data: dict[str, str | None] = {"a": "UPPER", "b": None, "c": ""}
         ops = {
             "transform": {
                 "normalize": True,

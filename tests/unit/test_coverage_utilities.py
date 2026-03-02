@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_core import FlextExceptions, FlextResult, m, p, t, u
@@ -36,7 +36,7 @@ from ..test_utils import assertion_helpers
 # =========================================================================
 
 
-class UtilityOperationType(StrEnum, override):
+class UtilityOperationType(StrEnum):
     """Utility operation types for parametrization."""
 
     TYPE_GUARD_STRING = "type_guard_string"

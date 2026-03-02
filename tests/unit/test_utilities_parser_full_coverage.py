@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from collections import UserString
 from enum import StrEnum
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import c, m, r, t, u
@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 
 class _LenRaises(UserString):
+    @override
     def __len__(self) -> int:
         msg = "len boom"
         raise TypeError(msg)
@@ -26,6 +27,7 @@ class _BoolRaises:
 
 
 class _StrRaises:
+    @override
     def __str__(self) -> str:
         msg = "str boom"
         raise TypeError(msg)
@@ -160,6 +162,7 @@ def test_parser_pipeline_and_pattern_branches(
     )
 
     class _OddNoStr:
+        @override
         def __str__(self) -> str:
             msg = "bad"
             raise TypeError(msg)
@@ -285,11 +288,13 @@ def test_parser_convert_and_norm_branches(
     parser = u.Parser()
 
     class _BadStr:
+        @override
         def __str__(self) -> str:
             msg = "nope"
             raise TypeError(msg)
 
     class _BadConv:
+        @override
         def __str__(self) -> str:
             msg = "nope"
             raise TypeError(msg)

@@ -31,6 +31,7 @@ def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:
     )
     return fn(config)
 
+
 @dataclass(frozen=True, slots=True)
 class ExtractPageParamsScenario:
     """Extract page params test scenario."""

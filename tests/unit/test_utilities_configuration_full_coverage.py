@@ -25,7 +25,7 @@ class _Opts(BaseModel):
 
 
 class _ContainerOK:
-    def register(self, _name: str, _instance: t.JsonValue):
+    def register(self, _name: str, _instance: t.JsonValue) -> r[bool]:
         return r[bool].ok(True)
 
     def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
@@ -33,7 +33,7 @@ class _ContainerOK:
 
 
 class _ContainerFail:
-    def register(self, _name: str, _instance: t.JsonValue):
+    def register(self, _name: str, _instance: t.JsonValue) -> r[bool]:
         return r[bool].fail("reg fail")
 
     def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
@@ -41,7 +41,7 @@ class _ContainerFail:
 
 
 class _ContainerRaise:
-    def register(self, _name: str, _instance: t.JsonValue):
+    def register(self, _name: str, _instance: t.JsonValue) -> r[bool]:
         msg = "reg ex"
         raise RuntimeError(msg)
 

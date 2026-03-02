@@ -24,7 +24,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_core import (
@@ -36,8 +36,6 @@ from flext_core import (
     r,
     t,
 )
-from typing import override
-
 from flext_tests import FlextTestsUtilities, u
 
 

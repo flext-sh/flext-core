@@ -1282,7 +1282,6 @@ class Teste:
             @override
             def __len__(self) -> int:
                 return 1
-
         dict_like = DictLike()
         # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
         # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
@@ -1492,6 +1491,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             _obj: object
 
+            @override
             def __init__(self) -> None:
                 self._obj = object()
 
@@ -1582,6 +1582,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             _obj: object
 
+            @override
             def __init__(self) -> None:
                 self._obj = object()
 

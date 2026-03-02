@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
+from typing import override
 
 from flext_core import FlextResult, t, u
 from flext_tests import FlextTestsUtilities
@@ -148,6 +149,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 msg = "Bad split"
                 raise RuntimeError(msg)
 
+            @override
             def __str__(self) -> str:
                 """Return string representation."""
                 return "bad_split_string"
@@ -165,6 +167,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 msg = "Bad index"
                 raise RuntimeError(msg)
 
+            @override
             def __str__(self) -> str:
                 """Return string representation."""
                 return "bad_index_string"
@@ -177,6 +180,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadStrObject:
             """Object that raises on str() conversion."""
 
+            @override
             def __str__(self) -> str:
                 """Raise error on str() attempt."""
                 msg = "Bad str"
@@ -190,6 +194,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadDict(UserDict[str, t.GeneralValueType]):
             """Dict that raises on get()."""
 
+            @override
             def __getitem__(self, key: str) -> t.GeneralValueType:
                 """Raise error on get attempt."""
                 msg = "Bad dict get"
@@ -198,6 +203,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadList(UserList[t.GeneralValueType]):
             """List that raises on iteration."""
 
+            @override
             def __iter__(self) -> Iterator[t.GeneralValueType]:
                 """Raise error on iteration."""
                 msg = "Bad list iteration"

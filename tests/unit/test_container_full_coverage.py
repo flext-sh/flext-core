@@ -30,7 +30,7 @@ class _BridgeNoProvide:
 
 
 class _BridgeBadProvide:
-    Provide = None
+    Provide: None = None
 
 
 class _BridgeGoodProvide:
@@ -365,7 +365,7 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
         self: FlextContainer,
         name: str,
         factory: Callable[..., object],
-    ):
+    ) -> None:
         captured[name] = factory
         return r[bool].ok(True)
 
@@ -433,7 +433,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
     registered: dict[str, Callable[..., object]] = {}
     c_any.has_service = lambda name: False
 
-    def _register(name: str, factory: Callable[..., object]):
+    def _register(name: str, factory: Callable[..., object]) -> None:
         registered[name] = factory
         return r[bool].ok(True)
 

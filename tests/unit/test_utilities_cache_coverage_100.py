@@ -19,7 +19,7 @@ import math
 from collections import UserDict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_core import t, u
@@ -343,6 +343,7 @@ class TestuCacheNormalizeComponent:
         class CustomObject:
             """Custom object for testing fallback."""
 
+            @override
             def __str__(self) -> str:
                 return "custom_object"
 
@@ -410,7 +411,7 @@ class TestuCacheSortDictKeys:
 
     def test_sort_dict_keys_with_none_values(self) -> None:
         """Test sort_dict_keys converts None values to empty dict."""
-        data = {"key1": "value", "key2": None, "key3": 42}
+        data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
         result = u.Cache.sort_dict_keys(data)
 
         # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
@@ -577,6 +578,7 @@ class TestuCacheClearObjectCache:
             def __init__(self) -> None:
                 self._cache: object = object()  # Object without clear() method
 
+            @override
             def __setattr__(self, name: str, value: object) -> None:
                 # Only raise TypeError when trying to set _cache to None
                 if name == "_cache" and value is None:
@@ -600,6 +602,7 @@ class TestuCacheClearObjectCache:
             def __init__(self) -> None:
                 self._cache: dict[str, str] = {}
 
+            @override
             def __getattribute__(self, name: str) -> object:
                 if name == "_cache":
                     raise ValueError(error_msg)
@@ -618,6 +621,7 @@ class TestuCacheClearObjectCache:
         error_msg = "Cannot clear"
 
         class BadCache(UserDict[str, str]):
+            @override
             def clear(self) -> None:
                 raise KeyError(error_msg)
 

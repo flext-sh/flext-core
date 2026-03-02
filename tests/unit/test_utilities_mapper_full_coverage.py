@@ -63,7 +63,6 @@ class BadString:
 class BadBool:
     """BadBool class."""
 
-    @override
     def __bool__(self) -> bool:
         """__bool__ method."""
         msg = "cannot bool"
@@ -237,7 +236,6 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
 
     class Container:
         field: NotGeneral = NotGeneral()
-        field = NotGeneral()
 
     res_non_general = mapper.extract(
         cast("t.ConfigMap | BaseModel", cast("object", Container())),
@@ -658,7 +656,6 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     class BadPredicate(NamedPredicate):
         @override
         def __call__(self, value: int) -> bool:
-        def __call__(self, value: int) -> bool:
             _ = value
             msg = "x"
             raise ValueError(msg)
@@ -666,15 +663,12 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     class NegativePredicate(NamedPredicate):
         @override
         def __call__(self, value: int) -> bool:
-        def __call__(self, value: int) -> bool:
             return value < 0
 
     class EqualOnePredicate(NamedPredicate):
         @override
         def __call__(self, value: int) -> bool:
-        def __call__(self, value: int) -> bool:
             return value == 1
-
     predicates: dict[str, NamedPredicate] = {
         "bad": BadPredicate(),
         "no": NegativePredicate(),

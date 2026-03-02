@@ -25,7 +25,7 @@ import logging
 from collections.abc import Callable
 from enum import StrEnum
 from types import ModuleType
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 import structlog
@@ -42,9 +42,6 @@ from flext_core import (
     s,
     t,
 )
-from typing import override
-from typing import override
-
 from flext_core._models.service import FlextModelsService
 
 
