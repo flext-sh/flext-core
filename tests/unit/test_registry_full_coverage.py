@@ -10,7 +10,7 @@ from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r,
 
 
 class _Handler(FlextHandlers[t.GeneralValueType, t.GeneralValueType]):
-    _protocol_name: str = "Handler"
+    """Test handler implementation."""
 
     @override
     def handle(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
@@ -18,6 +18,10 @@ class _Handler(FlextHandlers[t.GeneralValueType, t.GeneralValueType]):
 
     def __call__(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
         return self.handle(message)
+
+    def _protocol_name(self) -> str:
+        """Return protocol name for registry identification."""
+        return "Handler"
 
 
 def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
