@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 from unittest.mock import patch
 
 import tomlkit
@@ -995,7 +996,7 @@ class TestWorkspaceCheckerRunMypy:
         with patch.object(checker, "_existing_check_dirs") as mock_dirs:
             with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                 mock_dirs.return_value = ["src"]
-                mock_py_dirs.return_value = []
+                mock_py_dirs.return_value = cast("list[str]", [])
 
                 result = checker._run_mypy(proj_dir)
 
@@ -1091,7 +1092,7 @@ class TestWorkspaceCheckerRunPyright:
         with patch.object(checker, "_existing_check_dirs") as mock_dirs:
             with patch.object(checker, "_dirs_with_py") as mock_py_dirs:
                 mock_dirs.return_value = ["src"]
-                mock_py_dirs.return_value = []
+                mock_py_dirs.return_value = cast("list[str]", [])
 
                 result = checker._run_pyright(proj_dir)
 
@@ -1616,7 +1617,7 @@ class TestConfigFixerEnsureProjectExcludes:
         """Test _ensure_project_excludes_tk adds missing excludes."""
         fixer = FlextInfraConfigFixer(workspace_root=tmp_path)
         pyrefly = tomlkit.document()
-        pyrefly["project-excludes"] = []
+        pyrefly["project-excludes"] = cast("list[str]", [])
 
         fixes = fixer._ensure_project_excludes_tk(pyrefly)
 
@@ -2360,7 +2361,7 @@ class TestWorkspaceCheckerMypyEmptyLines:
         """Test that empty lines in mypy JSON output are skipped (line 981)."""
         # Simulate mypy output with empty lines
         output = '{"file": "a.py", "line": 1}\n\n{"file": "b.py", "line": 2}\n'
-        issues = []
+        issues: list[str] = []
         for raw_line in output.splitlines():
             stripped = raw_line.strip()
             if not stripped:  # This is line 981 behavior
@@ -2376,7 +2377,7 @@ class TestWorkspaceCheckerGoFmtEmptyLines:
         """Test that empty lines in gofmt output are skipped (line 1233)."""
         # Simulate gofmt output with empty lines
         output = "src/file.go\n\nsrc/other.go\n"
-        files = []
+        files: list[str] = []
         for file_name in output.splitlines():
             cleaned = file_name.strip()
             if not cleaned:  # This is line 1233 behavior

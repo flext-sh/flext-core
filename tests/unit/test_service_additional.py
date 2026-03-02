@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import override
 
 import pytest
 from flext_core import e, r, s, t
@@ -13,9 +14,11 @@ class RuntimeCloneService(s[str]):
 
     flag: bool = True
 
+    @override
     def execute(self) -> r[str]:
         return r[str].ok("run")
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         if not self.flag:
             return r[bool].fail("bad flag")
@@ -26,10 +29,12 @@ def test_is_valid_handles_validation_exception() -> None:
     """is_valid should return False when validation raises exceptions."""
 
     class RaisingValidationService(s[str]):
+        @override
         def validate_business_rules(self) -> r[bool]:
             msg = "boom"
             raise RuntimeError(msg)
 
+        @override
         def execute(self) -> r[str]:
             return r[str].ok("x")
 
@@ -41,6 +46,7 @@ def test_result_property_raises_on_failure() -> None:
     """Result property should raise BaseError on failed execution."""
 
     class FailingOnResultService(s[str]):
+        @override
         def execute(self) -> r[str]:
             return r[str].fail("fail_exec")
 
