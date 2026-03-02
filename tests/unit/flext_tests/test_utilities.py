@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult, r
-from pydantic import BaseModel
 from flext_tests import FlextTestsUtilities
+from pydantic import BaseModel
 
 from tests.test_utils import assertion_helpers
 

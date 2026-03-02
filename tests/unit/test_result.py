@@ -636,8 +636,8 @@ class Testr:
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
-        resource_created = []
-        resource_cleaned = []
+        resource_created = list[object]()
+        resource_cleaned = list[object]()
 
         def factory() -> list[str]:
             resource_created.append("created")

@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import count
-from typing import ClassVar
+from typing import ClassVar, override
 
 from flext_core import FlextModels, FlextResult, FlextService, m, t
 
@@ -63,6 +63,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str
 
+    @override
     def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         return FlextResult.ok(
@@ -80,6 +81,7 @@ class ValidatingService(FlextService[str]):
     value_input: str
     min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
@@ -94,6 +96,7 @@ class FailingService(FlextService[str]):
 
     error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Always fails."""
         return FlextResult.fail(self.error_message)

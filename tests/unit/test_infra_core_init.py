@@ -34,4 +34,4 @@ def test_core_lazy_imports_work() -> None:
     assert hasattr(FlextInfraBaseMkValidator, "validate")
 
 
-__all__ = []
+__all__: list[str] = []

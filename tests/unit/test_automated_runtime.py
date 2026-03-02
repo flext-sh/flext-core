@@ -105,7 +105,7 @@ class TestAutomatedFlextRuntime:
         instance = fixture_factory.create_test_runtime_instance()
 
         # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs = [None, dict[str, str](), {"invalid": "data"}, {"malformed": True}]
 
         for error_input in error_inputs:
             result = self._execute_runtime_operation(instance, error_input or {})

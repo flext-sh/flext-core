@@ -17,6 +17,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import (
     FlextConstants,
     FlextContainer,
@@ -132,6 +134,7 @@ class TestMigrationScenario4:
                 super().__init__(**data)
                 self._logger = FlextLogger(__name__)
 
+            @override
             def execute(self, **_kwargs: object) -> FlextResult[None]:
                 """Execute method required by FlextService abstract class."""
                 return FlextResult[None].ok(None)

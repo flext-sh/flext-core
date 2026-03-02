@@ -105,7 +105,7 @@ class TestAutomatedFlextUtilities:
         instance = fixture_factory.create_test_utilities_instance()
 
         # Test various error conditions
-        error_inputs: list[Mapping[str, t.GeneralValueType] | None] = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs: list[Mapping[str, t.GeneralValueType] | None] = [None, dict[str, str](), {"invalid": "data"}, {"malformed": True}]
 
         for error_input in error_inputs:
             result = self._execute_utilities_operation(instance, error_input or {})

@@ -667,7 +667,7 @@ class TestrCoverage:
 
     def test_with_resource_with_cleanup(self) -> None:
         """Test with_resource executes cleanup even on success."""
-        cleanups_called = []
+        cleanups_called = list[object]()
 
         def factory() -> t.ConfigMap:
             return m.ConfigMap(root={"id": 1})

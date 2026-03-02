@@ -10,6 +10,8 @@ from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r,
 
 
 class _Handler(FlextHandlers[t.GeneralValueType, t.GeneralValueType]):
+    _protocol_name: str = "Handler"
+
     @override
     def handle(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
         return r[t.GeneralValueType].ok(message)
@@ -27,7 +29,7 @@ def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
     )
 
 
-def _as_registry_handler(handler: _Handler):
+def _as_registry_handler(handler: _Handler) -> _Handler:
     return handler
 
 

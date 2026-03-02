@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import TypeVar, override
 
 from flext_core import (
     FlextContainer,
@@ -188,6 +188,7 @@ class TestFixtureFactory:
             unique_id: str
             name: str
 
+            @override
             def __eq__(self, other: object) -> bool:
                 if not isinstance(other, TestEntity):
                     return NotImplemented
@@ -269,6 +270,7 @@ class TestFixtureFactory:
         class TestFlextService(FlextService[dict[str, str]]):
             """Concrete test service implementation."""
 
+            @override
             def execute(self) -> r[dict[str, str]]:
                 """Execute test service operation."""
                 return r[dict[str, str]].ok({"result": "test_service_executed"})

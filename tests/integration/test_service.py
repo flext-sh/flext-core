@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import override
 
 import pytest
 from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
@@ -55,6 +56,7 @@ class UserQueryService(FlextService[bool]):
         """Initialize user query service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> FlextResult[bool]:
         """Execute user query service.
 
@@ -138,6 +140,7 @@ class NotificationService(FlextService[str]):
         """Initialize notification service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Execute notification service."""
         if self._should_fail:
@@ -219,6 +222,7 @@ class LifecycleService(FlextService[str]):
         """Initialize lifecycle service."""
         super().__init__(**data)
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Execute lifecycle service."""
         if self._initialized:

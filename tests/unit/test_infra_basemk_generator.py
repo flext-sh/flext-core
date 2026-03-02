@@ -96,6 +96,7 @@ def test_generator_generate_with_dict_config() -> None:
 
     assert result.is_success
 
+
 def test_generator_generate_with_invalid_dict_config() -> None:
     """Test generate() fails with invalid dict configuration."""
     invalid_config = {"invalid_key": "value"}
@@ -230,6 +231,7 @@ def test_generator_normalize_config_with_dict() -> None:
 
     assert result.is_success
     assert isinstance(result.value, im.BaseMkConfig)
+
 
 def test_generator_normalize_config_with_invalid_dict() -> None:
     """Test _normalize_config fails with invalid dict."""

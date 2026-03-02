@@ -29,4 +29,4 @@ def test_codegen_lazy_imports_work() -> None:
     assert hasattr(FlextInfraCodegenLazyInit, "run")
 
 
-__all__ = []
+__all__: list[str] = []

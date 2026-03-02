@@ -317,7 +317,7 @@ class TestFlextInfraPythonVersionEnforcer:
         with patch.object(
             FlextInfraDiscoveryService,
             "discover_projects",
-            return_value=r[list].fail("discovery error"),
+            return_value=r[list[object]].fail("discovery error"),
         ):
             result = enforcer._discover_projects(workspace_root)
 

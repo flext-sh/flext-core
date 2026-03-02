@@ -643,7 +643,7 @@ class TestFlextInfraDocAuditor:
         with patch(
             "flext_infra.docs.auditor.FlextInfraDocsShared.build_scopes"
         ) as mock_build:
-            mock_build.return_value = r[list].fail("scope build error")
+            mock_build.return_value = r[list[object]].fail("scope build error")
             result = auditor.audit(tmp_path)
             assert result.is_failure
             assert isinstance(result.error, str)

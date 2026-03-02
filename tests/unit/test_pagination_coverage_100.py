@@ -16,13 +16,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from pydantic import BaseModel
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from flext_core import t
 from flext_tests import u
+from pydantic import BaseModel
 
 
 def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:

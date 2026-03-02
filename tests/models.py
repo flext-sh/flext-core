@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import TypedDict
+from typing import TypedDict, override
 
 from flext_core import FlextModels, FlextProtocols, FlextTypes, m, t
 from flext_core._models.collections import FlextModelsCollections
@@ -83,6 +83,7 @@ class TestsFlextModels:
                 self.count = count
                 self._frozen = True
 
+            @override
             def __setattr__(self, name: str, value: object) -> None:
                 """Set attribute with frozen state validation."""
                 if getattr(self, "_frozen", False) and name != "_frozen":
@@ -124,6 +125,7 @@ class TestsFlextModels:
                 """Initialize object without __dict__."""
                 object.__setattr__(self, "value", value)
 
+            @override
             def __repr__(self) -> str:
                 """Return string representation."""
                 return f"NoDict({getattr(self, 'value', None)})"
@@ -144,6 +146,7 @@ class TestsFlextModels:
                 """Initialize immutable object."""
                 object.__setattr__(self, "value", value)
 
+            @override
             def __setattr__(self, name: str, value: object) -> None:
                 """Prevent attribute setting if frozen."""
                 if self._frozen:

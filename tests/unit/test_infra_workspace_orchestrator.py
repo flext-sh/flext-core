@@ -236,7 +236,7 @@ def test_orchestrate_run_project_failure_with_fail_fast(
         project: str,
         verb: str,
         idx: int,
-        make_args: list,
+        make_args: list[str],
     ) -> object:
         call_count[0] += 1
         if call_count[0] == 1:

@@ -106,7 +106,7 @@ class TestAutomatedFlextContext:
         instance = fixture_factory.create_test_context_instance()
 
         # Test various error conditions
-        error_inputs: list[Mapping[str, object] | None] = [None, {}, {"invalid": "data"}, {"malformed": True}]
+        error_inputs: list[Mapping[str, object] | None] = [None, dict[str, str](), {"invalid": "data"}, {"malformed": True}]
 
         for error_input in error_inputs:
             result = self._execute_context_operation(instance, error_input or {})

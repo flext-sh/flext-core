@@ -35,19 +35,23 @@ def _service_reg_with_metadata(
     cls: Callable[..., m.Container.ServiceRegistration] = (
         m.Container.ServiceRegistration
     )
-    return cls(name=name, service=service, metadata=metadata)  # type: ignore[arg-type]
+    # Pass through object type; constructor validates
+    kwargs: dict[str, object] = {"name": name, "service": service, "metadata": metadata}
+    return cls(**kwargs)
 
 
 def _factory_reg_with_metadata(
     name: str,
     factory: Callable[[], t.ScalarValue],
-    metadata: m.Metadata | m.ConfigMap | None,
+    metadata: object,
 ) -> m.Container.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
     cls: Callable[..., m.Container.FactoryRegistration] = (
         m.Container.FactoryRegistration
     )
-    return cls(name=name, factory=factory, metadata=metadata)
+    # Pass through object type; constructor validates
+    kwargs: dict[str, object] = {"name": name, "factory": factory, "metadata": metadata}
+    return cls(**kwargs)
 
 
 def _normalize_metadata_obj(value: object) -> m.Metadata:
