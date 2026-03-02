@@ -70,16 +70,14 @@ class RegistryTestCase:
 class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
     """Concrete implementation of h for testing."""
 
-    @override
-    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
+    def handle(self, message: t.GeneralValueType) -> p.Result[t.GeneralValueType]:
         """Handle the message."""
         return r[t.GeneralValueType].ok(f"processed_{message}")
 
-    def __call__(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
+    def __call__(self, message: t.GeneralValueType) -> p.Result[t.GeneralValueType]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
-    @override
     def _protocol_name(self) -> str:
         """Return protocol name for registry identification."""
         return "test-handler"

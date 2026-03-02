@@ -85,6 +85,7 @@ def test_protocol_model_and_settings_methods() -> None:
 def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     @p.implements(_NamedProtocol)
     class _Decorated:
+        def _protocol_name(self) -> str:
             return "decorated"
 
     obj = _Decorated()
@@ -108,6 +109,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
     @p.implements(_NamedProtocol)
     class _Thing:
+        def _protocol_name(self) -> str:
             return "thing"
 
     obj = _Thing()
@@ -119,6 +121,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
 def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     class _OnlyRuntime:
+        def _protocol_name(self) -> str:
             return "runtime"
 
     runtime_obj = _OnlyRuntime()

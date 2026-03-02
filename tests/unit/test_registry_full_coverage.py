@@ -27,8 +27,8 @@ def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
     )
 
 
-def _as_registry_handler(handler: _Handler) -> t.HandlerCallable:
-    return cast("t.HandlerCallable", handler)
+def _as_registry_handler(handler: _Handler) -> p.Handler[t.GeneralValueType, t.GeneralValueType]:
+    return handler
 
 
 def test_summary_properties_and_subclass_storage_reset() -> None:
