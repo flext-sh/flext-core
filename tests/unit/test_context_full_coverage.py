@@ -12,12 +12,12 @@ class _ContainerStub:
     def __init__(self) -> None:
         self.services: dict[str, object] = {}
 
-    def get(self, name: str):
+    def get(self, name: str) -> r[object]:
         if name in self.services:
             return r[object].ok(self.services[name])
         return r[object].fail("missing")
 
-    def with_service(self, name: str, service: object):
+    def with_service(self, name: str, service: object) -> _ContainerStub:
         if name == "bad":
             msg = "bad service"
             raise ValueError(msg)
@@ -72,10 +72,10 @@ def test_set_set_all_get_validation_and_error_paths(
     assert ctx.set_all(m.ConfigMap(root={})).is_success
 
     class _BadVar:
-        def get(self):
+        def get(self) -> dict[str, object]:
             return {}
 
-        def set(self, _v: t.GeneralValueType):
+        def set(self, _v: t.GeneralValueType) -> None:
             msg = "boom"
             raise TypeError(msg)
 
@@ -123,7 +123,7 @@ def test_clear_keys_values_items_and_validate_branches(
     ctx2 = FlextContext()
 
     class _BadVar:
-        def get(self):
+        def get(self) -> None:
             msg = "bad"
             raise TypeError(msg)
 
