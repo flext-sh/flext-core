@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import cast
+from collections.abc import Callable
+from typing import cast, override
 
 import pytest
 from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
 
 
 class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
+    @override
     def handle(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
         return r[t.JsonValue].ok(message)
 
@@ -51,7 +53,7 @@ def test_execute_and_register_handler_failure_paths(
     assert execute_result.is_failure
 
     class _FailDispatcher:
-        def register_handler(self, *_args: object):
+        def register_handler(self, *_args: object) -> r[m.Handler.RegistrationResult]:
             return r[m.Handler.RegistrationResult].fail("dispatcher-fail")
 
     setattr(
@@ -64,7 +66,7 @@ def test_execute_and_register_handler_failure_paths(
     assert reg_result.error == "dispatcher-fail"
 
     class _OkDispatcher:
-        def register_handler(self, *_args: object):
+        def register_handler(self, *_args: object) -> r[m.Handler.RegistrationResult]:
             return r[m.Handler.RegistrationResult].ok(
                 m.Handler.RegistrationResult(
                     handler_name="h",
@@ -93,7 +95,7 @@ def test_create_auto_discover_and_mode_mapping(
 ) -> None:
     discovered_handler = _Handler()
 
-    def fake_scan(_module: object):
+    def fake_scan(_module: object) -> list[tuple[str, Callable[..., object], m.Handler.DecoratorConfig]]:
         cfg = m.Handler.DecoratorConfig(command=str, middleware=[])
         return [("x", discovered_handler.handle, cfg)]
 
@@ -142,11 +144,11 @@ def test_summary_error_paths_and_bindings_failures(
     assert batch.is_failure
 
     class _FailBindingDispatcher:
-        def register_handler(self, *_args: object):
+        def register_handler(self, *_args: object) -> r[m.Handler.RegistrationResult]:
             return r[m.Handler.RegistrationResult].fail("bind-fail")
 
     class _RaiseBindingDispatcher:
-        def register_handler(self, *_args: object):
+        def register_handler(self, *_args: object) -> r[m.Handler.RegistrationResult]:
             msg = "bind-ex"
             raise RuntimeError(msg)
 

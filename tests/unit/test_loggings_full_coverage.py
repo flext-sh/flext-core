@@ -63,7 +63,7 @@ class _ContextVars:
 
 class _StructlogShim:
     def __init__(self) -> None:
-        self.contextvars = _ContextVars()
+        self.contextvars: _ContextVars = _ContextVars()
 
 
 def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -246,7 +246,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
 
     class _NoMarkers:
         def __init__(self, path: Path) -> None:
-            self.path = path
+            self.path: Path = path
 
         @property
         def parent(self) -> _NoMarkers:

@@ -41,7 +41,10 @@ from flext_core import (
     r,
     s,
     t,
-, override)
+)
+from typing import override
+from typing import override
+
 from flext_core._models.service import FlextModelsService
 
 

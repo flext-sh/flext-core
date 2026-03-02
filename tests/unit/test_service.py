@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, override
 
 import pytest
 from flext_core import m, r, s, t
@@ -53,6 +53,7 @@ class ServiceScenario:
 class UserService(s[m.ConfigMap]):
     """Basic user service for standard testing."""
 
+    @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute service and return data."""
         return r[m.ConfigMap].ok(
@@ -72,6 +73,7 @@ class ComplexService(s[str]):
     amount: int = 0
     enabled: bool = True
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules."""
         if not self.name:
@@ -80,6 +82,7 @@ class ComplexService(s[str]):
             return r[bool].fail("Value too low")
         return r[bool].ok(True)
 
+    @override
     def execute(self) -> r[str]:
         """Execute operation."""
         if not self.name:
@@ -90,10 +93,12 @@ class ComplexService(s[str]):
 class FailingService(s[bool]):
     """Service that fails validation."""
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         """Always fail validation."""
         return r[bool].fail("Processing error")
 
+    @override
     def execute(self) -> r[bool]:
         """Execute failing operation."""
         return r[bool].fail("Processing error")
@@ -104,6 +109,7 @@ class ExceptionService(s[str]):
 
     should_raise: bool = False
 
+    @override
     def validate_business_rules(self) -> r[bool]:
         """Validation that can raise exceptions."""
         if self.should_raise:
@@ -111,6 +117,7 @@ class ExceptionService(s[str]):
             raise ValueError(error_msg)
         return r[bool].ok(True)
 
+    @override
     def execute(self) -> r[str]:
         """Execute operation that can raise."""
         if self.should_raise:
@@ -214,6 +221,7 @@ class TestsCore:
         """Test execute method implementation."""
 
         class ConcreteService(s[str]):
+            @override
             def execute(self) -> r[str]:
                 return r[str].ok("test_value")
 

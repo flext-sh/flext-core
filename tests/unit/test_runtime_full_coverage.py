@@ -130,7 +130,7 @@ def test_async_log_writer_paths() -> None:
     class FailingStream(io.StringIO):
         def __init__(self) -> None:
             super().__init__()
-            self.first = True
+            self.first: bool = True
             self.messages: list[str] = []
 
         @override
@@ -148,6 +148,7 @@ def test_async_log_writer_paths() -> None:
 
     class SequenceQueue:
         def __init__(self) -> None:
+            self.calls: int = 0
             self.calls = 0
 
         def get(self, timeout: float = 0.1) -> str | None:
@@ -173,6 +174,7 @@ def test_async_log_writer_paths() -> None:
 
     class EmptyThenSentinelQueue:
         def __init__(self) -> None:
+            self.calls: int = 0
             self.calls = 0
 
         def get(self, timeout: float = 0.1) -> str | None:
@@ -201,6 +203,8 @@ def test_async_log_writer_paths() -> None:
 def test_async_log_writer_shutdown_with_full_queue() -> None:
     class FlushOnlyStream(io.StringIO):
         def __init__(self) -> None:
+            super().__init__()
+            self.flush_calls: int = 0
             super().__init__()
             self.flush_calls = 0
 
@@ -344,7 +348,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     class StatefulModule:
         def __init__(self) -> None:
-            self._print_access = 0
+            self._print_access: int = 0
             self.contextvars = type(
                 "Ctx",
                 (),
@@ -390,16 +394,15 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr(runtime_module, "structlog", fake_module)
 
     class Config:
-        log_level = logging.DEBUG
-        console_renderer = True
+        log_level: int = logging.DEBUG
+        console_renderer: bool = True
         additional_processors: ClassVar[list[Callable[..., object]]] = [
             lambda *_args: {},
         ]
         wrapper_class_factory: Callable[..., object] | None = None
-        logger_factory = staticmethod(lambda: object())
-        cache_logger_on_first_use = True
-        async_logging = True
-
+        logger_factory: Callable[[], object] = staticmethod(lambda: object())
+        cache_logger_on_first_use: bool = True
+        async_logging: bool = True
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast("object", Config())),
     )
@@ -414,14 +417,13 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     setattr(fake_module, "PrintLoggerFactory", lambda **_kwargs: object())
 
     class ConfigNoAsync:
-        log_level = logging.INFO
-        console_renderer = True
+        log_level: int = logging.INFO
+        console_renderer: bool = True
         additional_processors: list[Callable[..., object]] | None = None
         wrapper_class_factory: Callable[..., object] | None = None
         logger_factory: Callable[..., object] | None = None
-        cache_logger_on_first_use = True
-        async_logging = False
-
+        cache_logger_on_first_use: bool = True
+        async_logging: bool = False
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast("object", ConfigNoAsync())),
     )
@@ -432,14 +434,13 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     fake_module._print_access = 0
 
     class ConfigAsyncFallback:
-        log_level = logging.INFO
-        console_renderer = True
+        log_level: int = logging.INFO
+        console_renderer: bool = True
         additional_processors: list[Callable[..., object]] | None = None
         wrapper_class_factory: Callable[..., object] | None = None
         logger_factory: Callable[..., object] | None = None
-        cache_logger_on_first_use = True
-        async_logging = True
-
+        cache_logger_on_first_use: bool = True
+        async_logging: bool = True
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast("object", ConfigAsyncFallback())),
     )
@@ -449,7 +450,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 def test_reconfigure_and_reset_state_paths() -> None:
     class DummyWriter:
         def __init__(self) -> None:
-            self.called = False
+            self.called: bool = False
 
         def shutdown(self) -> None:
             self.called = True
@@ -562,11 +563,10 @@ def test_model_support_and_hash_compare_paths() -> None:
     )
 
     class A:
-        unique_id = "1"
+        unique_id: str = "1"
 
     class B:
-        unique_id = "1"
-
+        unique_id: str = "1"
     assert (
         FlextRuntime.compare_entities_by_id(
             cast("t.GeneralValueType", cast("object", A())),
@@ -737,6 +737,7 @@ def test_configure_structlog_print_logger_factory_fallback(
 ) -> None:
     class FallbackModule:
         def __init__(self) -> None:
+            self.print_calls: int = 0
             self.print_calls = 0
             self.contextvars = type(
                 "Ctx",

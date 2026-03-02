@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from collections import UserDict
 from collections.abc import Mapping, Sequence
-from typing import ClassVar, Never, cast, overload
+from typing import ClassVar, Never, cast, overload, override
 
 import structlog
 from flext_core import FlextRuntime, t
@@ -285,6 +285,7 @@ class TestRuntimeTypeChecking:
 
         # Test with object that raises exception
         class BadType:
+            @override
             def __getattribute__(self, name: str) -> object:
                 if name == "__name__":
                     msg = "Cannot access __name__"
@@ -304,7 +305,9 @@ class TestRuntimeTypeChecking:
         """Test is_sequence_type with type that is Sequence subclass."""
 
         class MySequence(Sequence[object]):
+            @override
             @overload
+            def __getitem__(self, index: int) -> object: ...
             def __getitem__(self, index: int) -> object: ...
 
             @overload
@@ -313,6 +316,7 @@ class TestRuntimeTypeChecking:
             def __getitem__(self, index: int | slice) -> object | Sequence[object]:
                 return None if isinstance(index, int) else MySequence()
 
+            @override
             def __len__(self) -> int:
                 return 0
 
@@ -323,6 +327,7 @@ class TestRuntimeTypeChecking:
 
         # Test with object that raises exception
         class BadType:
+            @override
             def __getattribute__(self, name: str) -> object:
                 if name == "__name__":
                     msg = "Cannot access __name__"

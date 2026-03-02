@@ -9,7 +9,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import ItemsView, Iterator, Mapping
 from datetime import UTC, datetime, tzinfo
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import m, t, u
@@ -19,15 +19,19 @@ generators_module = importlib.import_module("flext_core._utilities.generators")
 
 
 class _BrokenMapping(Mapping[str, t.JsonValue]):
+    @override
     def __getitem__(self, key: str) -> t.JsonValue:
         raise KeyError(key)
 
+    @override
     def __iter__(self) -> Iterator[str]:
         return iter(())
 
+    @override
     def __len__(self) -> int:
         return 0
 
+    @override
     def items(self) -> ItemsView[str, t.JsonValue]:
         msg = "boom"
         raise TypeError(msg)
@@ -180,14 +184,17 @@ def test_generators_additional_missed_paths() -> None:
 
 def test_generators_mapping_non_dict_normalization_path() -> None:
     class _SimpleMapping(Mapping[str, t.JsonValue]):
+        @override
         def __getitem__(self, key: str) -> t.JsonValue:
             if key == "a":
                 return 1
             raise KeyError(key)
 
+        @override
         def __iter__(self) -> Iterator[str]:
             return iter(["a"])
 
+        @override
         def __len__(self) -> int:
             return 1
 

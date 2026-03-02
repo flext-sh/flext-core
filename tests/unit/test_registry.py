@@ -35,7 +35,9 @@ from flext_core import (
     p,
     r,
     t,
-, override)
+)
+from typing import override
+
 from flext_tests import FlextTestsUtilities, u
 
 
