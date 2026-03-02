@@ -10,10 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, TypeGuard, overload
-
-if TYPE_CHECKING:
-    import structlog.stdlib
+from typing import Protocol, TypeGuard, overload
 
 from pydantic import BaseModel
 
@@ -175,7 +172,7 @@ class FlextUtilitiesMapper:
         Returns structlog logger instance (Logger protocol).
         Type annotation omitted to avoid importing structlog.typing here.
         """
-        logger: structlog.stdlib.BoundLogger = FlextRuntime.get_logger(__name__)
+        logger: p.Log.StructlogLogger = FlextRuntime.get_logger(__name__)
         if FlextUtilitiesMapper._is_structlog_logger(logger):
             return logger
         msg = f"Unexpected logger type: {logger.__class__.__name__}"
@@ -1228,7 +1225,9 @@ class FlextUtilitiesMapper:
         """
         try:
             if isinstance(value, target):
-                return FlextUtilitiesMapper._to_general_value_from_object(value)
+                if FlextUtilitiesGuards.is_general_value_type(value):
+                    return FlextUtilitiesMapper._to_general_value_from_object(value)
+                return str(value)
         except TypeError:
             if strict:
                 return default
@@ -1382,7 +1381,9 @@ class FlextUtilitiesMapper:
             # After callable check, field is str, so isinstance is redundant
             field_name: str = field
             for item in items_list:
-                # Extract value using helper method for better type inference
+                # Narrow item to ConfigMapValue via TypeGuard before extraction
+                if not FlextUtilitiesGuards.is_general_value_type(item):
+                    continue
                 val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
                 # Type narrowing: check if value is numeric
                 if isinstance(val_raw, int | float):
@@ -2845,10 +2846,12 @@ class FlextUtilitiesMapper:
             raw_value = item.get(key, default)
             if raw_value is None:
                 values.append(None)
-            else:
+            elif FlextUtilitiesGuards.is_general_value_type(raw_value):
                 values.append(
                     FlextUtilitiesMapper._to_general_value_from_object(raw_value),
                 )
+            else:
+                values.append(str(raw_value))
         return values
 
     @staticmethod

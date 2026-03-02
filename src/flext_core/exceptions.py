@@ -164,10 +164,9 @@ class FlextExceptions:
             return None
         if isinstance(value, str):
             return value
-        try:
-            return e._StrictStringValue(value=value).value
-        except PydanticValidationError:
-            return None
+        # After isinstance checks, remaining types cannot be str
+        # Strict validation would always reject, so return None
+        return None
 
     @staticmethod
     def _safe_bool(value: t.MetadataAttributeValue | None, *, default: bool) -> bool:
@@ -176,10 +175,9 @@ class FlextExceptions:
             return default
         if isinstance(value, bool):
             return value
-        try:
-            return e._StrictBooleanValue(value=value).value
-        except PydanticValidationError:
-            return default
+        # After isinstance checks, remaining types cannot be bool
+        # Strict validation would always reject, so return default
+        return default
 
     @staticmethod
     def _safe_int(value: t.MetadataAttributeValue | None) -> int | None:
@@ -188,10 +186,9 @@ class FlextExceptions:
             return None
         if isinstance(value, int) and not isinstance(value, bool):
             return value
-        try:
-            return e._StrictIntValue(value=value).value
-        except PydanticValidationError:
-            return None
+        # After isinstance checks, remaining types cannot be int
+        # Strict validation would always reject, so return None
+        return None
 
     @staticmethod
     def _safe_number(value: t.MetadataAttributeValue | None) -> int | float | None:
@@ -200,10 +197,9 @@ class FlextExceptions:
             return None
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             return value
-        try:
-            return e._StrictNumberValue(value=value).value
-        except PydanticValidationError:
-            return None
+        # After isinstance checks, remaining types cannot be int|float
+        # Strict validation would always reject, so return None
+        return None
 
     @staticmethod
     def _safe_config_map(

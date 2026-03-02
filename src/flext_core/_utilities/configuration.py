@@ -263,7 +263,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: BaseModel | Mapping[str, t.ConfigMapValue],
+        obj: object,
         parameter: str,
     ) -> tuple[bool, t.ConfigMapValue | None]:
         try:

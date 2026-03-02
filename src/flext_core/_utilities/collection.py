@@ -428,9 +428,13 @@ class FlextUtilitiesCollection:
                     continue
 
                 try:
-                    direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                        result_raw,
-                    )
+                    # Narrow result_raw to GuardInputValue via TypeGuard
+                    if FlextUtilitiesGuards.is_general_value_type(result_raw):
+                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
+                            result_raw,
+                        )
+                    else:
+                        direct_result = str(result_raw)
                 except (TypeError, ValueError):
                     direct_result = str(result_raw)
                 if do_flatten and FlextUtilitiesCollection._is_general_value_list(

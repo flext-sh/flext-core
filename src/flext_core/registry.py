@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, overload, override
+from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -29,7 +29,7 @@ from flext_core import (
     u,
 )
 
-type RegistrablePlugin = p.Registrable
+type RegistrablePlugin = t.RegistrablePlugin
 type RegistryBindingKey = str | type[object]
 
 
@@ -141,14 +141,15 @@ class FlextRegistry(s[bool]):
         super().__init__(**data)
 
         # Create dispatcher instance if not provided
-        self._dispatcher = (
-            dispatcher
-            if dispatcher is not None
-            else FlextContainer
-            .get_global()
-            .get_typed("command_bus", p.CommandBus)
-            .unwrap()
-        )
+        if dispatcher is not None:
+            self._dispatcher = dispatcher
+        else:
+            container_value = FlextContainer.get_global().get("command_bus").unwrap()
+            if isinstance(container_value, FlextDispatcher):
+                self._dispatcher = container_value
+            else:
+                msg = f"Expected CommandBus, got {type(container_value).__name__}"
+                raise TypeError(msg)
 
     @override
     def execute(self) -> r[bool]:
@@ -216,7 +217,8 @@ class FlextRegistry(s[bool]):
                             # Deduplication happens in register_handler() via _registered_keys
                             # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
-                            _ = instance.register_handler(handler_typed)
+                            if isinstance(handler_typed, p.Handler):
+                                _ = instance.register_handler(handler_typed)
 
         return instance
 
@@ -257,15 +259,29 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _to_dispatcher_handler(
         handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType],
-    ) -> m.Handler | t.HandlerType:
-        """Convert handler to dispatcher m.Handler or t.HandlerType."""
-        if isinstance(handler_for_dispatch, m.Handler):
-            return handler_for_dispatch
-        if hasattr(handler_for_dispatch, "handle") or callable(handler_for_dispatch):
-            return handler_for_dispatch
+    ) -> t.HandlerLike:
+        """Convert handler to dispatcher-compatible callable."""
+        # Wrap handler.handle() to return _ContainerValue | None
+        # Wrap handler.handle() to return _ContainerValue | None
+        handler_ref = handler_for_dispatch
 
-        # If we reach here, cast to m.Handler to satisfy type checker
-        return handler_for_dispatch
+        def _dispatch_wrapper(*args: t.GeneralValueType) -> t.GeneralValueType | None:
+            if args:
+                result = handler_ref.handle(args[0])
+                return result.value if result.is_success else None
+            return None
+
+        # Preserve message_type for route discovery via setattr
+        message_type_attr = getattr(handler_for_dispatch, "message_type", None)
+        if message_type_attr is not None:
+            setattr(_dispatch_wrapper, "message_type", message_type_attr)
+        event_type_attr = getattr(handler_for_dispatch, "event_type", None)
+        if event_type_attr is not None:
+            setattr(_dispatch_wrapper, "event_type", event_type_attr)
+        can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
+        if can_handle_attr is not None:
+            setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
+        return _dispatch_wrapper
 
     def _create_registration_details(
         self,
@@ -305,11 +321,6 @@ class FlextRegistry(s[bool]):
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    @overload
-    def register_handler(
-        self,
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
-    ) -> r[m.HandlerRegistrationDetails]: ...
 
     def register_handler(
         self,
@@ -405,8 +416,9 @@ class FlextRegistry(s[bool]):
                     ),
                 )
         else:
+            handler_callable = FlextRegistry._to_dispatcher_handler(handler_for_dispatch)
             protocol_result = self._dispatcher.register_handler(
-                handler_for_dispatch,
+                handler_callable,
             )
             if protocol_result.is_failure:
                 registration_result = r[m.HandlerRegistrationResult].fail(
@@ -638,8 +650,9 @@ class FlextRegistry(s[bool]):
                             f"message_type attribute for protocol-based registration"
                         )
                         raise TypeError(msg)
+                    handler_callable = FlextRegistry._to_dispatcher_handler(handler_for_dispatch)
                     protocol_result = self._dispatcher.register_handler(
-                        handler_for_dispatch,
+                        handler_callable,
                     )
                     if protocol_result.is_failure:
                         reg_result = r[m.HandlerRegistrationResult].fail(
@@ -683,7 +696,7 @@ class FlextRegistry(s[bool]):
         plugin: RegistrablePlugin,
         *,
         validate: Callable[
-            [t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue] | BaseModel],
+            [t.RegistrablePlugin],
             r[bool],
         ]
         | None = None,

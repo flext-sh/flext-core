@@ -769,18 +769,28 @@ class FlextUtilitiesGuards:
         error_msg: str | None,
     ) -> str | None:
         if isinstance(condition, type):
-            return FlextUtilitiesGuards._guard_check_type(
-                value,
-                condition,
-                context_name,
-                error_msg,
+            if FlextUtilitiesGuards.is_general_value_type(value):
+                return FlextUtilitiesGuards._guard_check_type(
+                    value,
+                    condition,
+                    context_name,
+                    error_msg,
+                )
+            return (
+                error_msg
+                or f"{context_name} must be {condition.__name__}, got {value.__class__.__name__}"
             )
         if FlextUtilitiesGuards._is_type_tuple(condition):
-            return FlextUtilitiesGuards._guard_check_type(
-                value,
-                condition,
-                context_name,
-                error_msg,
+            if FlextUtilitiesGuards.is_general_value_type(value):
+                return FlextUtilitiesGuards._guard_check_type(
+                    value,
+                    condition,
+                    context_name,
+                    error_msg,
+                )
+            return (
+                error_msg
+                or f"{context_name} type check failed for {value.__class__.__name__}"
             )
         if isinstance(condition, p.ValidatorSpec):
             if not FlextUtilitiesGuards.is_general_value_type(value):

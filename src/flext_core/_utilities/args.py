@@ -101,8 +101,8 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated_with_result[V, **P](
-        func: Callable[P, p.Result[V]],
-    ) -> Callable[P, p.Result[V]]:
+        func: Callable[P, r[V]],
+    ) -> Callable[P, r[V]]:
         """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
@@ -130,13 +130,13 @@ class FlextUtilitiesArgs:
         def wrapper(
             *args: P.args,
             **kwargs: P.kwargs,
-        ) -> p.Result[V]:
+        ) -> r[V]:
             try:
                 # Type safe call via Pydantic validated_func
                 return validated_func(*args, **kwargs)  # type: ignore[no-any-return]
             except (ValidationError, TypeError, ValueError) as e:
                 # Return failed result with error message
-                return r[V].fail(str(e))
+                return r[V].fail(str(e))  # FlextResult[V] matches return type
 
         # wrapper has correct type via @wraps preserving signature
         return wrapper
@@ -149,7 +149,7 @@ class FlextUtilitiesArgs:
     def parse_kwargs[E: StrEnum](
         kwargs: Mapping[str, t.GuardInputValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> p.Result[Mapping[str, t.GuardInputValue]]:
+    ) -> r[Mapping[str, t.GuardInputValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
