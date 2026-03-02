@@ -87,12 +87,12 @@ class TestOperationStats:
     def test_negative_operation_count_rejected(self) -> None:
         """Negative operation_count must be rejected by ge=0 constraint."""
         with pytest.raises(ValidationError):
-            m.Mixin.OperationStats(operation_count=-1)
+            m.Mixin.OperationStats.model_validate({"operation_count": -1})
 
     def test_negative_error_count_rejected(self) -> None:
         """Negative error_count must be rejected by ge=0 constraint."""
         with pytest.raises(ValidationError):
-            m.Mixin.OperationStats(error_count=-1)
+            m.Mixin.OperationStats.model_validate({"error_count": -1})
 
     def test_negative_duration_rejected(self) -> None:
         """Negative total_duration_ms must be rejected by ge=0.0 constraint."""

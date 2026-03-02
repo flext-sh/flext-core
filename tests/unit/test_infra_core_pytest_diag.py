@@ -78,7 +78,9 @@ class TestFlextInfraPytestDiagExtractor:
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
         assert result.value["failed_count"] == 1
-        assert len(result.value["error_traces"]) > 0
+        error_traces = result.value["error_traces"]
+        assert isinstance(error_traces, list)
+        assert len(error_traces) > 0
 
     def test_extract_with_error_tests_reports_errors(self, tmp_path: Path) -> None:
         """Test that extract reports error tests."""
@@ -127,7 +129,9 @@ class TestFlextInfraPytestDiagExtractor:
 
         result = extractor.extract(junit_xml, log_path)
         assert result.is_success
-        assert len(result.value["slow_entries"]) > 0
+        slow_entries = result.value["slow_entries"]
+        assert isinstance(slow_entries, list)
+        assert len(slow_entries) > 0
 
     def test_extract_with_invalid_junit_xml_uses_log_fallback(
         self, tmp_path: Path
