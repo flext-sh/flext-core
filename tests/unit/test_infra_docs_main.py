@@ -199,7 +199,7 @@ class TestRunFix:
         with patch("flext_infra.docs.__main__.FlextInfraDocFixer") as mock_fixer_class:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
-            mock_fixer.fix.return_value = r[list].ok([])
+            mock_fixer.fix.return_value = r[list[object]].ok([])
 
             result = _run_fix(args)
 
@@ -217,7 +217,7 @@ class TestRunFix:
         with patch("flext_infra.docs.__main__.FlextInfraDocFixer") as mock_fixer_class:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
-            mock_fixer.fix.return_value = r[list].fail("fix error")
+            mock_fixer.fix.return_value = r[list[object]].fail("fix error")
 
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_fix(args)
@@ -236,7 +236,7 @@ class TestRunFix:
         with patch("flext_infra.docs.__main__.FlextInfraDocFixer") as mock_fixer_class:
             mock_fixer = Mock()
             mock_fixer_class.return_value = mock_fixer
-            mock_fixer.fix.return_value = r[list].ok([])
+            mock_fixer.fix.return_value = r[list[object]].ok([])
 
             _run_fix(args)
 
@@ -262,7 +262,7 @@ class TestRunBuild:
             mock_builder_class.return_value = mock_builder
             mock_report = Mock()
             mock_report.result = "OK"
-            mock_builder.build.return_value = r[list].ok([mock_report])
+            mock_builder.build.return_value = r[list[object]].ok([mock_report])
 
             result = _run_build(args)
 
@@ -283,7 +283,7 @@ class TestRunBuild:
             mock_builder_class.return_value = mock_builder
             mock_report = Mock()
             mock_report.result = "FAIL"
-            mock_builder.build.return_value = r[list].ok([mock_report])
+            mock_builder.build.return_value = r[list[object]].ok([mock_report])
 
             result = _run_build(args)
 
@@ -302,7 +302,7 @@ class TestRunBuild:
         ) as mock_builder_class:
             mock_builder = Mock()
             mock_builder_class.return_value = mock_builder
-            mock_builder.build.return_value = r[list].fail("build error")
+            mock_builder.build.return_value = r[list[object]].fail("build error")
 
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_build(args)
@@ -327,7 +327,7 @@ class TestRunGenerate:
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
-            mock_gen.generate.return_value = r[list].ok([])
+            mock_gen.generate.return_value = r[list[object]].ok([])
 
             result = _run_generate(args)
 
@@ -347,7 +347,7 @@ class TestRunGenerate:
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
-            mock_gen.generate.return_value = r[list].fail("generate error")
+            mock_gen.generate.return_value = r[list[object]].fail("generate error")
 
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_generate(args)
@@ -368,7 +368,7 @@ class TestRunGenerate:
         ) as mock_gen_class:
             mock_gen = Mock()
             mock_gen_class.return_value = mock_gen
-            mock_gen.generate.return_value = r[list].ok([])
+            mock_gen.generate.return_value = r[list[object]].ok([])
 
             _run_generate(args)
 
@@ -396,7 +396,7 @@ class TestRunValidate:
             mock_val_class.return_value = mock_val
             mock_report = Mock()
             mock_report.result = "OK"
-            mock_val.validate.return_value = r[list].ok([mock_report])
+            mock_val.validate.return_value = r[list[object]].ok([mock_report])
 
             result = _run_validate(args)
 
@@ -419,7 +419,7 @@ class TestRunValidate:
             mock_val_class.return_value = mock_val
             mock_report = Mock()
             mock_report.result = "FAIL"
-            mock_val.validate.return_value = r[list].ok([mock_report])
+            mock_val.validate.return_value = r[list[object]].ok([mock_report])
 
             result = _run_validate(args)
 
@@ -440,7 +440,7 @@ class TestRunValidate:
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
-            mock_val.validate.return_value = r[list].fail("validate error")
+            mock_val.validate.return_value = r[list[object]].fail("validate error")
 
             with patch("flext_infra.docs.__main__.output.error"):
                 result = _run_validate(args)
@@ -462,7 +462,7 @@ class TestRunValidate:
         ) as mock_val_class:
             mock_val = Mock()
             mock_val_class.return_value = mock_val
-            mock_val.validate.return_value = r[list].ok([])
+            mock_val.validate.return_value = r[list[object]].ok([])
 
             _run_validate(args)
 
@@ -495,7 +495,7 @@ class TestMain:
             ) as mock_fixer_class:
                 mock_fixer = Mock()
                 mock_fixer_class.return_value = mock_fixer
-                mock_fixer.fix.return_value = r[list].ok([])
+                mock_fixer.fix.return_value = r[list[object]].ok([])
 
                 result = main()
 
@@ -509,7 +509,7 @@ class TestMain:
             ) as mock_builder_class:
                 mock_builder = Mock()
                 mock_builder_class.return_value = mock_builder
-                mock_builder.build.return_value = r[list].ok([])
+                mock_builder.build.return_value = r[list[object]].ok([])
 
                 result = main()
 
@@ -523,7 +523,7 @@ class TestMain:
             ) as mock_gen_class:
                 mock_gen = Mock()
                 mock_gen_class.return_value = mock_gen
-                mock_gen.generate.return_value = r[list].ok([])
+                mock_gen.generate.return_value = r[list[object]].ok([])
 
                 result = main()
 
@@ -537,7 +537,7 @@ class TestMain:
             ) as mock_val_class:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
-                mock_val.validate.return_value = r[list].ok([])
+                mock_val.validate.return_value = r[list[object]].ok([])
 
                 result = main()
 
@@ -651,7 +651,7 @@ class TestMain:
             ) as mock_fixer_class:
                 mock_fixer = Mock()
                 mock_fixer_class.return_value = mock_fixer
-                mock_fixer.fix.return_value = r[list].ok([])
+                mock_fixer.fix.return_value = r[list[object]].ok([])
 
                 main()
 
@@ -666,7 +666,7 @@ class TestMain:
             ) as mock_gen_class:
                 mock_gen = Mock()
                 mock_gen_class.return_value = mock_gen
-                mock_gen.generate.return_value = r[list].ok([])
+                mock_gen.generate.return_value = r[list[object]].ok([])
 
                 main()
 
@@ -681,7 +681,7 @@ class TestMain:
             ) as mock_val_class:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
-                mock_val.validate.return_value = r[list].ok([])
+                mock_val.validate.return_value = r[list[object]].ok([])
 
                 main()
 
@@ -711,7 +711,7 @@ class TestMain:
             ) as mock_val_class:
                 mock_val = Mock()
                 mock_val_class.return_value = mock_val
-                mock_val.validate.return_value = r[list].ok([])
+                mock_val.validate.return_value = r[list[object]].ok([])
 
                 main()
 
