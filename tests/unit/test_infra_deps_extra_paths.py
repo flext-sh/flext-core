@@ -48,7 +48,7 @@ class TestPathDepPathsPep621:
     def test_pep621_no_project(self) -> None:
         """Test with missing project section."""
         doc = tomlkit.document()
-        doc["other"] = {}
+        doc["other"] = dict[str, object]()
 
         result = _path_dep_paths_pep621(doc)
         assert result == []
@@ -116,7 +116,7 @@ class TestPathDepPathsPoetry:
     def test_poetry_no_tool(self) -> None:
         """Test with missing tool section."""
         doc = tomlkit.document()
-        doc["project"] = {}
+        doc["project"] = dict[str, object]()
 
         result = _path_dep_paths_poetry(doc)
         assert result == []
@@ -124,7 +124,7 @@ class TestPathDepPathsPoetry:
     def test_poetry_no_poetry_section(self) -> None:
         """Test with tool but no poetry section."""
         doc = tomlkit.document()
-        doc["tool"] = {"other": {}}
+        doc["tool"] = {"other": dict[str, object]()}
 
         result = _path_dep_paths_poetry(doc)
         assert result == []
@@ -280,7 +280,7 @@ class TestSyncOne:
         """Test sync_one with missing pyright section."""
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
-        doc["tool"] = {"other": {}}
+        doc["tool"] = {"other": dict[str, object]()}
         pyproject.write_text(tomlkit.dumps(doc))
         result = sync_one(pyproject)
         assert result.is_success
@@ -304,7 +304,7 @@ class TestSyncOne:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["tool"] = {
-            "pyright": {"extraPaths": []},
+            "pyright": {"extraPaths": list[str]()},
             "mypy": {"mypy_path": ["src"]},
         }
         pyproject.write_text(tomlkit.dumps(doc))
@@ -316,7 +316,7 @@ class TestSyncOne:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["tool"] = {
-            "pyright": {"extraPaths": []},
+            "pyright": {"extraPaths": list[str]()},
             "pyrefly": {"search-path": ["."]},
         }
         pyproject.write_text(tomlkit.dumps(doc))
@@ -360,7 +360,7 @@ class TestSyncOne:
         proj_dir.mkdir()
         pyproject = proj_dir / "pyproject.toml"
         doc = tomlkit.document()
-        doc["tool"] = {"pyright": {"extraPaths": []}}
+        doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
         pyproject.write_text(tomlkit.dumps(doc))
         result = sync_extra_paths(project_dirs=[proj_dir])
         assert result.is_success
@@ -370,7 +370,7 @@ class TestSyncOne:
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             pyproject = tmp_path / "pyproject.toml"
             doc = tomlkit.document()
-            doc["tool"] = {"pyright": {"extraPaths": []}}
+            doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
             pyproject.write_text(tomlkit.dumps(doc))
             result = sync_extra_paths()
             assert result.is_success
@@ -414,7 +414,7 @@ class TestMain:
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             pyproject = tmp_path / "pyproject.toml"
             doc = tomlkit.document()
-            doc["tool"] = {"pyright": {"extraPaths": []}}
+            doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
             pyproject.write_text(tomlkit.dumps(doc))
             with patch("sys.argv", ["extra_paths.py"]):
                 result = main()
@@ -425,7 +425,7 @@ class TestMain:
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             pyproject = tmp_path / "pyproject.toml"
             doc = tomlkit.document()
-            doc["tool"] = {"pyright": {"extraPaths": []}}
+            doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
             pyproject.write_text(tomlkit.dumps(doc))
             with patch("sys.argv", ["extra_paths.py", "--dry-run"]):
                 result = main()
@@ -437,7 +437,7 @@ class TestMain:
         proj_dir.mkdir()
         pyproject = proj_dir / "pyproject.toml"
         doc = tomlkit.document()
-        doc["tool"] = {"pyright": {"extraPaths": []}}
+        doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
         pyproject.write_text(tomlkit.dumps(doc))
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             with patch("sys.argv", ["extra_paths.py", "--project", "proj"]):
@@ -451,7 +451,7 @@ class TestMain:
             proj_dir.mkdir()
             pyproject = proj_dir / "pyproject.toml"
             doc = tomlkit.document()
-            doc["tool"] = {"pyright": {"extraPaths": []}}
+            doc["tool"] = {"pyright": {"extraPaths": list[str]()}}
             pyproject.write_text(tomlkit.dumps(doc))
         with patch("flext_infra.deps.extra_paths.ROOT", tmp_path):
             with patch(

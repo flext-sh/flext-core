@@ -403,7 +403,8 @@ class TestConsolidateGroupsPhase:
     def test_consolidate_groups_creates_dev_group(self) -> None:
         """Test creating consolidated dev group."""
         doc = tomlkit.document()
-        doc["project"] = {"optional-dependencies": {}}
+        doc["project"] = tomlkit.table()
+        doc["project"]["optional-dependencies"] = tomlkit.table()
 
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
@@ -427,7 +428,8 @@ class TestConsolidateGroupsPhase:
     def test_consolidate_groups_merges_poetry_groups(self) -> None:
         """Test merging Poetry groups."""
         doc = tomlkit.document()
-        doc["project"] = {"optional-dependencies": {}}
+        doc["project"] = tomlkit.table()
+        doc["project"]["optional-dependencies"] = tomlkit.table()
         doc["tool"] = {
             "poetry": {
                 "group": {
@@ -444,8 +446,9 @@ class TestConsolidateGroupsPhase:
     def test_consolidate_groups_sets_deptry_config(self) -> None:
         """Test setting deptry configuration."""
         doc = tomlkit.document()
-        doc["project"] = {"optional-dependencies": {}}
-        doc["tool"] = {}
+        doc["project"] = tomlkit.table()
+        doc["project"]["optional-dependencies"] = tomlkit.table()
+        doc["tool"] = tomlkit.table()
 
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
@@ -466,7 +469,7 @@ class TestEnsurePytestConfigPhase:
     def test_ensure_pytest_config_sets_minversion(self) -> None:
         """Test setting pytest minversion."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
@@ -475,7 +478,7 @@ class TestEnsurePytestConfigPhase:
     def test_ensure_pytest_config_sets_python_classes(self) -> None:
         """Test setting python_classes."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
@@ -484,7 +487,7 @@ class TestEnsurePytestConfigPhase:
     def test_ensure_pytest_config_sets_python_files(self) -> None:
         """Test setting python_files."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
@@ -493,7 +496,7 @@ class TestEnsurePytestConfigPhase:
     def test_ensure_pytest_config_sets_addopts(self) -> None:
         """Test setting addopts."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
@@ -502,7 +505,7 @@ class TestEnsurePytestConfigPhase:
     def test_ensure_pytest_config_adds_markers(self) -> None:
         """Test adding pytest markers."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePytestConfigPhase()
         changes = phase.apply(doc)
@@ -537,7 +540,7 @@ class TestEnsurePyreflyConfigPhase:
     def test_ensure_pyrefly_config_sets_python_version(self) -> None:
         """Test setting Python version."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
@@ -546,7 +549,7 @@ class TestEnsurePyreflyConfigPhase:
     def test_ensure_pyrefly_config_enables_ignore_generated(self) -> None:
         """Test enabling ignore-errors-in-generated-code."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
@@ -555,7 +558,7 @@ class TestEnsurePyreflyConfigPhase:
     def test_ensure_pyrefly_config_sets_search_path(self) -> None:
         """Test setting search-path."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
@@ -564,7 +567,7 @@ class TestEnsurePyreflyConfigPhase:
     def test_ensure_pyrefly_config_enables_strict_errors(self) -> None:
         """Test enabling strict error rules."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
@@ -573,7 +576,7 @@ class TestEnsurePyreflyConfigPhase:
     def test_ensure_pyrefly_config_sets_project_excludes(self) -> None:
         """Test setting project-excludes."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=True)
@@ -582,7 +585,7 @@ class TestEnsurePyreflyConfigPhase:
     def test_ensure_pyrefly_config_non_root(self) -> None:
         """Test non-root project configuration."""
         doc = tomlkit.document()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
 
         phase = EnsurePyreflyConfigPhase()
         changes = phase.apply(doc, is_root=False)
@@ -741,7 +744,7 @@ class TestFlextInfraPyprojectModernizer:
         doc["tool"] = {
             "poetry": {
                 "group": {
-                    "empty": {"dependencies": {}},
+                    "empty": {"dependencies": tomlkit.table()},
                 }
             }
         }

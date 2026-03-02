@@ -31,7 +31,7 @@ class TestRunWorkflows:
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list].ok([])
+            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_workflows(argv)
@@ -45,7 +45,7 @@ class TestRunWorkflows:
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list].fail("sync failed")
+            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].fail("sync failed")
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_workflows(argv)
@@ -59,7 +59,7 @@ class TestRunWorkflows:
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list].ok([])
+            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             argv = ["--workspace-root", str(tmp_path), "--apply"]
             result = _run_workflows(argv)
@@ -76,7 +76,7 @@ class TestRunWorkflows:
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list].ok([])
+            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             argv = ["--workspace-root", str(tmp_path), "--prune"]
             result = _run_workflows(argv)
@@ -92,7 +92,7 @@ class TestRunWorkflows:
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list].ok([])
+            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
             report_path = tmp_path / "report.json"
             argv = ["--workspace-root", str(tmp_path), "--report", str(report_path)]
@@ -113,7 +113,7 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict].ok({"status": "ok"})
+            mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
 
             argv = ["--root", str(tmp_path)]
             result = _run_lint(argv)
@@ -127,7 +127,7 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict].fail("lint failed")
+            mock_linter.lint.return_value = r[dict[str, object]].fail("lint failed")
 
             argv = ["--root", str(tmp_path)]
             result = _run_lint(argv)
@@ -141,7 +141,7 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict].ok({"status": "ok"})
+            mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
 
             report_path = tmp_path / "report.json"
             argv = ["--root", str(tmp_path), "--report", str(report_path)]
@@ -158,7 +158,7 @@ class TestRunLint:
         ) as mock_linter_class:
             mock_linter = Mock()
             mock_linter_class.return_value = mock_linter
-            mock_linter.lint.return_value = r[dict].ok({"status": "ok"})
+            mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
 
             argv = ["--root", str(tmp_path), "--strict"]
             result = _run_lint(argv)
@@ -209,7 +209,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_pr_workspace(argv)
@@ -223,7 +223,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].fail("orchestration failed")
+            mock_manager.orchestrate.return_value = r[dict[str, object]].fail("orchestration failed")
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_pr_workspace(argv)
@@ -237,7 +237,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 2})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 2})
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_pr_workspace(argv)
@@ -251,7 +251,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
             argv = [
                 "--workspace-root",
@@ -274,7 +274,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
             argv = ["--workspace-root", str(tmp_path), "--branch", "feature/test"]
             result = _run_pr_workspace(argv)
@@ -290,7 +290,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
             argv = ["--workspace-root", str(tmp_path), "--checkpoint", "1"]
             result = _run_pr_workspace(argv)
@@ -306,7 +306,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
             argv = ["--workspace-root", str(tmp_path), "--fail-fast", "1"]
             result = _run_pr_workspace(argv)
@@ -322,7 +322,7 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+            mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
             argv = [
                 "--workspace-root",
@@ -376,7 +376,7 @@ class TestMain:
             ) as mock_syncer_class:
                 mock_syncer = Mock()
                 mock_syncer_class.return_value = mock_syncer
-                mock_syncer.sync_workspace.return_value = r[list].ok([])
+                mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok([])
 
                 sys.argv = [
                     "flext-infra",
@@ -398,7 +398,7 @@ class TestMain:
             ) as mock_linter_class:
                 mock_linter = Mock()
                 mock_linter_class.return_value = mock_linter
-                mock_linter.lint.return_value = r[dict].ok({"status": "ok"})
+                mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
 
                 sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                 result = main()
@@ -435,7 +435,7 @@ class TestMain:
             ) as mock_manager_class:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
-                mock_manager.orchestrate.return_value = r[dict].ok({"fail": 0})
+                mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
 
                 sys.argv = [
                     "flext-infra",
@@ -468,7 +468,7 @@ class TestMain:
                 ) as mock_linter_class:
                     mock_linter = Mock()
                     mock_linter_class.return_value = mock_linter
-                    mock_linter.lint.return_value = r[dict].ok({"status": "ok"})
+                    mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
 
                     sys.argv = [
                         "flext-infra",
@@ -501,7 +501,7 @@ class TestMain:
                         project="p2", path="ci.yml", action="update", reason="changed"
                     ),
                 ]
-                mock_syncer.sync_workspace.return_value = r[list].ok(ops)
+                mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok(ops)
                 sys.argv = [
                     "flext-infra",
                     "workflows",
