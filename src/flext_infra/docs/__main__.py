@@ -126,7 +126,9 @@ def main() -> int:
         _ = sub.add_argument("--root", default=".")
         _ = sub.add_argument("--project")
         _ = sub.add_argument("--projects")
-        _ = sub.add_argument("--output-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs")
+        _ = sub.add_argument(
+            "--output-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs"
+        )
 
     # audit
     audit_parser = subparsers.add_parser("audit", help="Audit documentation")

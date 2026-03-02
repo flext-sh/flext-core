@@ -17,6 +17,7 @@ from flext_core import FlextResult, FlextService, r
 from flext_infra.constants import c
 from flext_infra.toml_io import FlextInfraTomlService
 
+
 class FlextInfraVersioningService(FlextService[str]):
     """Infrastructure service for semantic versioning operations.
 

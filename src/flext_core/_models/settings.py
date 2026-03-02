@@ -26,6 +26,7 @@ from pydantic import (
 from flext_core import FlextRuntime, c, p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsConfig:
@@ -61,8 +62,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: t.ConfigMap = Field(default_factory=t.ConfigMap)
-        context: t.ConfigMap = Field(default_factory=t.ConfigMap)
+        data: t.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        context: t.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -258,10 +259,10 @@ class FlextModelsConfig:
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
         input_data: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+            default_factory=FlextModelsContainers.ConfigMap,
         )
         execution_context: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+            default_factory=FlextModelsContainers.ConfigMap,
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -298,7 +299,7 @@ class FlextModelsConfig:
         )
         name: str | None = Field(default=None, description="Optional middleware name")
         config: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+            default_factory=FlextModelsContainers.ConfigMap,
             description="Middleware-specific configuration",
         )
 
@@ -604,7 +605,7 @@ class FlextModelsConfig:
             description="Whether to auto-generate correlation ID",
         )
         extra_kwargs: t.Dict = Field(
-            default_factory=t.Dict,
+            default_factory=FlextModelsContainers.Dict,
             description="Additional keyword arguments for metadata",
         )
 
@@ -932,7 +933,7 @@ class FlextModelsConfig:
             description="Positional arguments for function",
         )
         kwargs: t.ConfigMap = Field(
-            default_factory=t.ConfigMap,
+            default_factory=FlextModelsContainers.ConfigMap,
             description="Keyword arguments for function",
         )
         retry_config: FlextModelsConfig.RetryConfiguration | None = Field(

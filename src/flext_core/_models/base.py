@@ -31,6 +31,7 @@ from pydantic import (
 )
 
 from flext_core import c, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
@@ -276,14 +277,14 @@ class FlextModelFoundation:
             if value is None:
                 return {}
             try:
-                result = t.Dict.model_validate(value).root
+                result = FlextModelsContainers.Dict.model_validate(value).root
             except ValidationError:
                 if not isinstance(value, BaseModel):
                     msg = "attributes must be dict-like"
                     raise TypeError(msg) from None
                 dumped = value.model_dump()
                 try:
-                    result = t.Dict.model_validate(dumped).root
+                    result = FlextModelsContainers.Dict.model_validate(dumped).root
                 except ValidationError as exc:
                     msg = "attributes BaseModel must dump to mapping"
                     raise TypeError(msg) from exc
@@ -316,14 +317,14 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: t.Dict = Field(default_factory=t.Dict)
+        data: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: t.Dict = Field(default_factory=t.Dict)
+        filters: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
         pagination: t.Dict | None = None
 
     class EventMessage(BaseModel):
@@ -332,7 +333,7 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: t.Dict = Field(default_factory=t.Dict)
+        data: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )

@@ -237,9 +237,8 @@ class FlextExceptions:
             pass
 
         dumped_map: Mapping[str, t.MetadataAttributeValue] | None = None
-        model_dump = value.model_dump if hasattr(value, "model_dump") else None
-        if callable(model_dump):
-            dumped_candidate = model_dump()
+        if isinstance(value, BaseModel):
+            dumped_candidate = value.model_dump()
             try:
                 dumped_map = e._metadata_map_adapter.validate_python(dumped_candidate)
             except PydanticValidationError:
@@ -253,7 +252,7 @@ class FlextExceptions:
                     k: FlextRuntime.normalize_to_metadata_value(v)
                     for k, v in attrs_map.items()
                 }
-                return m.Metadata(attributes=attrs)
+                return m.Metadata.model_validate({"attributes": attrs})
 
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
@@ -261,7 +260,7 @@ class FlextExceptions:
                 k: FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in attrs_map.items()
             }
-            return m.Metadata(attributes=attrs)
+            return m.Metadata.model_validate({"attributes": attrs})
 
         return None
 
@@ -484,10 +483,12 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-            return m.Metadata(
-                attributes={
-                    k: FlextRuntime.normalize_to_metadata_value(v)
-                    for k, v in merged_attrs.items()
+            return m.Metadata.model_validate(
+                {
+                    "attributes": {
+                        k: FlextRuntime.normalize_to_metadata_value(v)
+                        for k, v in merged_attrs.items()
+                    },
                 },
             )
 
@@ -516,7 +517,7 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata_value(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return m.Metadata(attributes=normalized_attrs)
+                    return m.Metadata.model_validate({"attributes": normalized_attrs})
                 return m.Metadata(attributes={})
 
             metadata_model = e._safe_metadata(metadata)
@@ -530,7 +531,7 @@ class FlextExceptions:
                 }
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
-                return m.Metadata(attributes=merged_attrs)
+                return m.Metadata.model_validate({"attributes": merged_attrs})
 
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:

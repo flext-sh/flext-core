@@ -16,6 +16,7 @@ import time
 from collections.abc import Mapping, MutableMapping
 
 from flext_core import c, r, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class CircuitBreakerManager:
@@ -170,7 +171,7 @@ class CircuitBreakerManager:
             return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data=t.ConfigMap(
+                error_data=FlextModelsContainers.ConfigMap(
                     root={
                         "message_type": message_type,
                         "state": self.get_state(message_type),
@@ -310,7 +311,7 @@ class RateLimiterManager:
             return r[bool].fail(
                 f"Rate limit exceeded for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data=t.ConfigMap(
+                error_data=FlextModelsContainers.ConfigMap(
                     root={
                         "message_type": message_type,
                         "limit": self._max_requests,

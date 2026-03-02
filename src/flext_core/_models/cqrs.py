@@ -26,6 +26,7 @@ from pydantic import (
 
 from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsCqrs:
@@ -128,9 +129,9 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: t.Dict = Field(default_factory=t.Dict)
+        filters: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
         pagination: FlextModelsCqrs.Pagination | t.Dict = Field(
-            default_factory=t.Dict,
+            default_factory=FlextModelsContainers.Dict,
         )
         query_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
@@ -200,7 +201,7 @@ class FlextModelsCqrs:
                 return pagination_cls()
 
             try:
-                if isinstance(parsed_input, t.Dict):
+                if isinstance(parsed_input, FlextModelsContainers.Dict):
                     return pagination_cls.model_validate(parsed_input.root)
                 if isinstance(parsed_input, FlextModelsCqrs.Pagination):
                     return pagination_cls.model_validate(parsed_input.model_dump())
@@ -306,7 +307,7 @@ class FlextModelsCqrs:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
-                self._data: t.Dict = t.Dict(
+                self._data: FlextModelsContainers.Dict = FlextModelsContainers.Dict(
                     root={
                         "handler_type": handler_type,
                         "handler_mode": (
@@ -395,11 +396,11 @@ class FlextModelsCqrs:
             default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
         )
         data: t.Dict = Field(
-            default_factory=t.Dict,
+            default_factory=FlextModelsContainers.Dict,
             description="Event payload data",
         )
         metadata: t.Dict = Field(
-            default_factory=t.Dict,
+            default_factory=FlextModelsContainers.Dict,
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )
 

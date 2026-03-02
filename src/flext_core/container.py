@@ -35,6 +35,7 @@ from flext_core import (
     t,
 )
 from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextContainer(p.DI):
@@ -227,29 +228,25 @@ class FlextContainer(p.DI):
                                 _factory_name: str = factory_name,
                                 _factory_config: m.Container.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
-                                fn_override = (
-                                    _factory_config.fn
-                                    if hasattr(_factory_config, "fn")
-                                    else None
-                                )
-                                if fn_override is not None:
-                                    if callable(fn_override):
-                                        raw_result = fn_override()
-                                    else:
-                                        return ""
-                                else:
-                                    if not callable(_factory_func_ref):
+                                _ = _factory_config
+                                if not callable(_factory_func_ref):
+                                    msg = f"Factory '{_factory_name}' is not callable"
+                                    raise TypeError(msg)
+                                raw_result = _factory_func_ref()
+                                try:
+                                    if not instance._is_registerable_service(
+                                        raw_result
+                                    ):
                                         msg = (
-                                            f"Factory '{_factory_name}' is not callable"
+                                            f"Factory '{_factory_name}' returned unsupported type: "
+                                            f"{raw_result.__class__.__name__}"
                                         )
                                         raise TypeError(msg)
-                                    raw_result = _factory_func_ref()
-                                try:
                                     m.Container.ServiceRegistration(
                                         name=_factory_name,
                                         service=raw_result,
                                     )
-                                    return cast("t.RegisterableService", raw_result)
+                                    return raw_result
                                 except ValidationError:
                                     msg = (
                                         f"Factory '{_factory_name}' returned unsupported type: "
@@ -490,7 +487,7 @@ class FlextContainer(p.DI):
         """
         # L0: Base defaults from FlextSettings
         config_dict_raw = self._global_config.model_dump()
-        config_map = t.ConfigMap(
+        config_map = FlextModelsContainers.ConfigMap(
             root={
                 str(key): FlextRuntime.normalize_to_general_value(value)
                 for key, value in config_dict_raw.items()
@@ -511,40 +508,47 @@ class FlextContainer(p.DI):
         # Access namespace registry via FlextSettings (self._config), not ContainerConfig
         # Note: Namespace registry is accessed via FlextSettings class, not ContainerConfig
         # Use getattr to safely access registry if it exists
-        namespace_registry: set[str] = (
-            self._config.__class__._namespace_registry
-            if hasattr(self._config.__class__, "_namespace_registry")
-            else set()
+        namespace_registry_raw = getattr(
+            self._config.__class__, "_namespace_registry", None
         )
+        if not namespace_registry_raw or not isinstance(
+            namespace_registry_raw, Mapping
+        ):
+            return
+        namespace_registry: dict[str, type[BaseModel]] = {
+            key: value
+            for key, value in namespace_registry_raw.items()
+            if isinstance(key, str)
+            and isinstance(value, type)
+            and issubclass(value, BaseModel)
+        }
+        if not namespace_registry:
+            return
         for namespace in namespace_registry:
             factory_name = f"config.{namespace}"
 
             # Get config class for this namespace from FlextSettings
             # Use getattr to safely access method if it exists
-            get_namespace_config = (
-                self._config.get_namespace_config
-                if hasattr(self._config, "get_namespace_config")
-                else None
-            )
-            if get_namespace_config is None:
-                continue
-            config_class = get_namespace_config(namespace)
+            config_class = getattr(
+                self._config,
+                "get_namespace_config",
+                lambda _ns: None,
+            )(namespace)
             if config_class is None:
                 continue
+            config_class_non_null: type[BaseModel] = config_class
 
             def _create_namespace_config(
                 ns: str = namespace,
-                config_cls: type[BaseModel] = config_class,
+                config_cls: type[BaseModel] = config_class_non_null,
             ) -> BaseModel:
                 """Factory for creating namespace config instance."""
-                get_namespace = (
-                    self._config.get_namespace
-                    if hasattr(self._config, "get_namespace")
-                    else None
-                )
-                if get_namespace is None:
-                    return config_cls()
-                result = get_namespace(ns, config_cls)
+                config_ref = self._config
+                result = getattr(
+                    config_ref,
+                    "get_namespace",
+                    lambda _ns, _cls: config_cls(),
+                )(ns, config_cls)
                 if FlextContainer._is_instance_of(result, BaseModel):
                     return result
                 return config_cls()
@@ -624,15 +628,12 @@ class FlextContainer(p.DI):
         # Note: _di_container.config is the Configuration provider, not the service
         # We need to check if "config" is registered as a service, not just if the attribute exists
         # Type narrowing: FlextSettings extends BaseModel, so u.is_pydantic_model narrows type
-        if not self.has_service("config") and self._config is not None:
-            try:
-                m.Container.ServiceRegistration(
-                    name="config",
-                    service=self._config,
-                )
-                _ = self.register("config", cast("t.RegisterableService", self._config))
-            except ValidationError:
-                pass  # Skip registration if validation fails
+        if (
+            not self.has_service("config")
+            and self._config is not None
+            and self._is_registerable_service(self._config)
+        ):
+            _ = self.register("config", self._config)
 
         # Register logger factory if not already registered
         # ServiceRegistration now uses SkipValidation - can store any service type
@@ -646,18 +647,12 @@ class FlextContainer(p.DI):
 
         # Register context if not already registered
         # ServiceRegistration uses SkipValidation - can register any service type
-        if not self.has_service("context") and self._context is not None:
-            try:
-                m.Container.ServiceRegistration(
-                    name="context",
-                    service=self._context,
-                )
-                _ = self.register(
-                    "context",
-                    cast("t.RegisterableService", self._context),
-                )
-            except ValidationError:
-                pass  # Skip registration if validation fails
+        if (
+            not self.has_service("context")
+            and self._context is not None
+            and self._is_registerable_service(self._context)
+        ):
+            _ = self.register("context", self._context)
 
         # Register dispatcher as command_bus if not already registered
         # FlextDispatcher now standalone (no FlextService inheritance)
@@ -721,7 +716,7 @@ class FlextContainer(p.DI):
     ) -> t.ConfigMap:
         """Return the merged configuration exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
-        return t.ConfigMap(
+        return FlextModelsContainers.ConfigMap(
             root={
                 str(key): FlextRuntime.normalize_to_general_value(value)
                 for key, value in config_dict_raw.items()
@@ -848,7 +843,8 @@ class FlextContainer(p.DI):
                 return r[bool].fail(f"Factory '{name}' already registered")
 
             def normalized_factory() -> t.RegisterableService:
-                raw_result = factory()
+                factory_callable: Callable[[], t.RegisterableService] = factory
+                raw_result = factory_callable()
                 narrowed = FlextContainer._narrow_factory_result(raw_result)
                 if not self._is_registerable_service(narrowed):
                     msg = (
@@ -946,7 +942,10 @@ class FlextContainer(p.DI):
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]
-                resolved = factory_registration.factory()
+                factory_callable: Callable[[], t.RegisterableService] = (
+                    factory_registration.factory
+                )
+                resolved = factory_callable()
                 try:
                     m.Container.ServiceRegistration(
                         name=name,
@@ -964,7 +963,10 @@ class FlextContainer(p.DI):
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
-                resolved = resource_registration.factory()
+                resource_callable: Callable[[], t.RegisterableService] = (
+                    resource_registration.factory
+                )
+                resolved = resource_callable()
                 if not self._is_registerable_service(resolved):
                     return r[t.RegisterableService].fail(
                         f"Resource '{name}' returned unsupported runtime type",
@@ -1040,7 +1042,10 @@ class FlextContainer(p.DI):
         # Try factory with runtime type validation
         if name in self._factories:
             try:
-                resolved = self._factories[name].factory()
+                factory_callable: Callable[[], t.RegisterableService] = self._factories[
+                    name
+                ].factory
+                resolved = factory_callable()
                 if not self._is_instance_of(resolved, type_cls):
                     return r[T].fail(f"Factory '{name}' returned wrong type")
                 # TypeGuard narrows resolved to type T
@@ -1051,7 +1056,10 @@ class FlextContainer(p.DI):
         # Try resource with runtime type validation
         if name in self._resources:
             try:
-                resolved = self._resources[name].factory()
+                resource_callable: Callable[[], t.RegisterableService] = (
+                    self._resources[name].factory
+                )
+                resolved = resource_callable()
                 if not self._is_instance_of(resolved, type_cls):
                     return r[T].fail(f"Resource '{name}' returned wrong type")
                 # TypeGuard narrows resolved to type T

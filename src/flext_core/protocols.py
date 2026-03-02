@@ -1548,7 +1548,7 @@ class FlextProtocols:
         | Config
         | Context
         | DI
-        | Service
+        | Service[t.GeneralValueType]
         | CommandBus
         | Registrable
     )
@@ -1629,7 +1629,7 @@ class FlextProtocols:
             )
 
             # Store protocols using setattr
-            built_cls.__protocols__ = tuple(protocols)
+            setattr(built_cls, "__protocols__", tuple(protocols))
 
             # Validate protocol compliance at class definition time
             for protocol in protocols:
@@ -1690,7 +1690,10 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return self.__class__.__name__
+            class_ref: type = self.__class__
+            return (
+                class_ref.__name__ if hasattr(class_ref, "__name__") else str(class_ref)
+            )
 
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
@@ -1738,7 +1741,10 @@ class FlextProtocols:
                 The class name as protocol name.
 
             """
-            return self.__class__.__name__
+            class_ref: type = self.__class__
+            return (
+                class_ref.__name__ if hasattr(class_ref, "__name__") else str(class_ref)
+            )
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
@@ -1785,7 +1791,7 @@ class FlextProtocols:
                 )
 
             # Store protocols using setattr (avoids type: ignore)
-            cls.__protocols__ = tuple(protocols)
+            setattr(cls, "__protocols__", tuple(protocols))
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
@@ -1794,13 +1800,13 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            cls.implements_protocol = _instance_implements_protocol
+            setattr(cls, "implements_protocol", _instance_implements_protocol)
 
             # Add classmethod for getting protocols
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            cls.get_protocols = classmethod(_class_get_protocols)
+            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
 
             return cls
 

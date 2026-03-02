@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from pathlib import Path
 from typing import Any, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -24,7 +25,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
 
 
-class FlextSettings(p.ProtocolSettings, FlextRuntime):
+def _resolve_env_file() -> str | None:
+    """Resolve .env file path (typed wrapper avoiding has-type on u.resolve_env_file)."""
+    custom = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
+    if custom:
+        custom_path = Path(custom)
+        if custom_path.exists():
+            return str(custom_path.resolve())
+        return custom
+    default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
+    if default_path.exists():
+        return str(default_path.resolve())
+    return c.Platform.ENV_FILE_DEFAULT
+
+
+class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelMeta):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
@@ -64,15 +79,12 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
     # p.Config Protocol Implementation (validated at class definition)
     # =========================================================================
 
-    def _protocol_name(self) -> str:
-        return "FlextSettings"
-
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var
     model_config = SettingsConfigDict(
         env_prefix=c.Platform.ENV_PREFIX,
         env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
-        env_file=u.resolve_env_file(),
+        env_file=_resolve_env_file(),
         env_file_encoding=c.Utilities.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.ModelConfig.EXTRA_IGNORE,
@@ -272,31 +284,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime):
             return
 
         super().__init__(**kwargs)
-
-        # Use runtime bridge for dependency-injector providers (L0.5 pattern)
-        self._di_provider: t.ScalarValue | None = None
-
-        """Initialize config with data.
-
-        Note: BaseSettings handles initialization from environment variables,
-        .env files, and other sources automatically. Kwargs can be passed for
-        testing and explicit configuration (used by model_validate).
-        """
-        # Check if already initialized (singleton pattern)
-        if hasattr(self, "_di_provider"):
-            # Instance already initialized - use setattr to preserve
-            # Pydantic's type coercion (e.g., str -> SecretStr).
-            if kwargs:
-                for key, value in kwargs.items():
-                    if key in self.__class__.model_fields:
-                        setattr(self, key, value)
-            return
-
-        super().__init__()
-        if kwargs:
-            for key, value in kwargs.items():
-                if key in self.__class__.model_fields:
-                    setattr(self, key, value)
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         self._di_provider: t.ScalarValue | None = None

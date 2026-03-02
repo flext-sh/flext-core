@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import flext_core.service as service_mod
 import pytest
 from flext_core import FlextService, FlextSettings, c, m, p, r, t, u
 from flext_core._models.service import FlextModelsService

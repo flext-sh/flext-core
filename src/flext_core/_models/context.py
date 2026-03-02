@@ -25,32 +25,37 @@ from pydantic import (
 
 from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
 
 
-def _normalize_to_mapping(v: t.Any) -> Mapping[str, t.GuardInputValue]:
+def _normalize_to_mapping(v: t.GeneralValueType) -> Mapping[str, t.GuardInputValue]:
     if v is None:
         out: dict[str, t.GuardInputValue] = {}
         return out
     if isinstance(v, Mapping):
         return {str(k): v for k, v in v.items()}
-    if hasattr(v, "model_dump"):
+    if isinstance(v, BaseModel):
         return v.model_dump()
     msg = f"Cannot normalize {type(v)} to Mapping"
     raise ValueError(msg)
 
 
-def _normalize_metadata_before(v: t.Any) -> t.Any:
+def _normalize_metadata_before(v: t.GeneralValueType) -> t.GeneralValueType:
     if v is None:
         return None
     if isinstance(v, FlextModelFoundation.Metadata):
         return v
     if isinstance(v, Mapping):
-        return FlextModelFoundation.Metadata(attributes=dict(v))
+        return FlextModelFoundation.Metadata.model_validate({
+            "attributes": dict(v.items())
+        })
     return v
 
 
-def _normalize_statistics_before(v: t.Any) -> Mapping[str, t.GuardInputValue]:
+def _normalize_statistics_before(
+    v: t.GeneralValueType,
+) -> Mapping[str, t.GuardInputValue]:
     if v is None:
         out: dict[str, t.GuardInputValue] = {}
         return out
@@ -154,7 +159,7 @@ class FlextModelsContext:
             self._key = key
             self._default: T | None = default
 
-        def get(self) -> T | None:
+        def get(self) -> t.ConfigMapValue | None:
             """Get current value from structlog context.
 
             Returns:
@@ -302,7 +307,7 @@ class FlextModelsContext:
         """
 
         data: t.Dict = Field(
-            default_factory=t.Dict,
+            default_factory=FlextModelsContainers.Dict,
             description="Initial context data as key-value pairs",
         )
         metadata: Annotated[

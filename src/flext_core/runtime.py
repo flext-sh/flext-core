@@ -44,6 +44,7 @@ from __future__ import annotations
 import atexit
 import contextlib
 import inspect
+import io
 import json
 import logging
 import queue
@@ -70,6 +71,7 @@ from structlog.processors import (
 from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
+from flext_core._models.containers import FlextModelsContainers
 
 _module_logger = logging.getLogger(__name__)
 
@@ -85,7 +87,7 @@ class _LazyMetadata:
         from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
 
         # Cache the loaded class on the class itself
-        (objtype or FlextRuntime).Metadata = Metadata
+        setattr(objtype or FlextRuntime, "Metadata", Metadata)
         return Metadata
 
 
@@ -167,9 +169,9 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
-    Metadata: ClassVar[type] = _LazyMetadata()
+    Metadata: ClassVar[type | _LazyMetadata] = _LazyMetadata()
 
-    class _AsyncLogWriter:
+    class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread.
 
         Provides non-blocking logging by buffering log messages to a queue
@@ -179,6 +181,13 @@ class FlextRuntime:
         def __init__(self, stream: typing.TextIO) -> None:
             super().__init__()
             self.stream = stream
+            self._stream_mode: str = getattr(stream, "mode", "w")
+            self._stream_name: str = getattr(stream, "name", "<async-log-writer>")
+            self._stream_encoding: str = getattr(stream, "encoding", "utf-8")
+            self._stream_errors: str | None = getattr(stream, "errors", None)
+            self._stream_newlines: str | tuple[str, ...] | None = getattr(
+                stream, "newlines", None
+            )
             self.queue: queue.Queue[str | None] = queue.Queue(
                 maxsize=c.Logging.ASYNC_QUEUE_SIZE,
             )
@@ -191,14 +200,30 @@ class FlextRuntime:
             self.thread.start()
             _ = atexit.register(self.shutdown)
 
-        def write(self, message: str) -> None:
+        @property
+        def line_buffering(self) -> bool:
+            """Return whether line buffering is enabled."""
+            return getattr(self.stream, "line_buffering", False)
+
+        @property
+        def buffer(self) -> typing.BinaryIO:
+            """Return underlying binary buffer."""
+            buf = getattr(self.stream, "buffer", None)
+            if buf is not None:
+                return buf
+            return io.BytesIO()
+
+        @override
+        def write(self, s: str, /) -> int:
             """Write message to queue (non-blocking)."""
             with contextlib.suppress(queue.Full):
                 self.queue.put(
-                    message,
+                    s,
                     block=c.Logging.ASYNC_BLOCK_ON_FULL,
                 )
+            return len(s)
 
+        @override
         def flush(self) -> None:
             """Flush stream (best effort)."""
             if hasattr(self.stream, "flush"):
@@ -344,7 +369,7 @@ class FlextRuntime:
 
         """
         match value:
-            case t.ConfigMap():
+            case FlextModelsContainers.ConfigMap():
                 return True
             case Mapping():
                 return True
@@ -756,6 +781,11 @@ class FlextRuntime:
         never import dependency-injector directly.
         """
 
+        class DynamicContainerWithConfig(containers.DynamicContainer):
+            """Dynamic container with declared configuration provider."""
+
+            config: providers.Configuration = providers.Configuration()
+
         class BridgeContainer(containers.DeclarativeContainer):
             """Declarative container grouping config and resource modules."""
 
@@ -850,7 +880,7 @@ class FlextRuntime:
                 without manual follow-up registration calls.
 
             """
-            di_container = containers.DynamicContainer()
+            di_container = cls.DynamicContainerWithConfig()
 
             if config is not None:
                 _ = cls.bind_configuration(di_container, config)
@@ -903,7 +933,14 @@ class FlextRuntime:
             configuration_provider = providers.Configuration()
             if config:
                 configuration_provider.from_dict(dict(config))
-            di_container.config = configuration_provider
+            if isinstance(
+                di_container,
+                FlextRuntime.DependencyIntegration.DynamicContainerWithConfig,
+            ):
+                configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
+                configured_container.config = configuration_provider
+            else:
+                setattr(di_container, "config", configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -1179,7 +1216,7 @@ class FlextRuntime:
 
         module = structlog
 
-        processors: list[object] = [
+        processors: list[structlog.types.Processor] = [
             module.contextvars.merge_contextvars,
             add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -1190,7 +1227,12 @@ class FlextRuntime:
         if additional_processors:
             # additional_processors is Sequence[object] - structlog processors are callables
             # Add callable processors to the list
-            processors.extend(proc for proc in additional_processors if callable(proc))
+            validated_processors: list[structlog.types.Processor] = [
+                TypeAdapter(structlog.types.Processor).validate_python(proc)
+                for proc in additional_processors
+                if callable(proc)
+            ]
+            processors.extend(validated_processors)
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
@@ -1201,7 +1243,7 @@ class FlextRuntime:
         # Configure structlog with processors and logger factory
         # structlog.configure accepts specific types, but we construct them dynamically
 
-        wrapper_arg: type[p.Log.StructlogLogger] | None = None
+        wrapper_arg: type | None = None
         if wrapper_class_factory is not None:
             wrapper_arg = wrapper_class_factory()
         else:
@@ -1221,13 +1263,13 @@ class FlextRuntime:
             # PrintLoggerFactory accepts file-like objects with write method
             # _AsyncLogWriter has write/flush methods (duck-typed TextIO)
             # Use getattr to call PrintLoggerFactory with duck-typed file arg
-            print_logger_factory = (
-                module.PrintLoggerFactory
-                if hasattr(module, "PrintLoggerFactory")
-                else None
-            )
-            if print_logger_factory is not None:
-                factory_to_use = print_logger_factory(file=cls._async_writer)
+            print_logger_factory_cls = getattr(module, "PrintLoggerFactory", None)
+            if print_logger_factory_cls is not None:
+                # _AsyncLogWriter is duck-typed TextIO (has write/flush)
+                # Call via getattr to bypass mypy's strict TextIO parameter check
+                factory_to_use = print_logger_factory_cls(
+                    file=cls._async_writer,
+                )
             else:
                 factory_to_use = module.PrintLoggerFactory()
         else:
@@ -2018,9 +2060,9 @@ class FlextRuntime:
             Mapping[str, str]: Enriched context with trace fields
 
         """
-        context_dict = t.ConfigMap(root={})
+        context_dict = FlextModelsContainers.ConfigMap(root={})
         if FlextRuntime._is_scalar(context):
-            context_dict = t.ConfigMap(root={})
+            context_dict = FlextModelsContainers.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
         elif FlextRuntime.is_dict_like(context):
@@ -2034,9 +2076,9 @@ class FlextRuntime:
                     "Failed to normalize mapping context fields",
                     exc_info=exc,
                 )
-                context_dict = t.ConfigMap(root={})
+                context_dict = FlextModelsContainers.ConfigMap(root={})
         elif hasattr(context, "items"):
-            context_dict = t.ConfigMap(root={})
+            context_dict = FlextModelsContainers.ConfigMap(root={})
 
         # Convert all values to strings for trace context
         result: MutableMapping[str, str] = {}

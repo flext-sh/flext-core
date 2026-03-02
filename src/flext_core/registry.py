@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, TypeGuard, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -98,7 +98,7 @@ class FlextRegistry(s[bool]):
             return bool(self.errors)
 
     # Private attributes using Pydantic v2 PrivateAttr pattern
-    _dispatcher: p.CommandBus = PrivateAttr()
+    _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=set)
 
     # Class-level storage declarations (created per-subclass via __init_subclass__)
@@ -217,7 +217,7 @@ class FlextRegistry(s[bool]):
                             # Deduplication happens in register_handler() via _registered_keys
                             # Type narrowing: handler_func is callable and not None here
                             handler_typed = handler_func
-                            if isinstance(handler_typed, p.Handler):
+                            if FlextRegistry._is_protocol_handler(handler_typed):
                                 _ = instance.register_handler(handler_typed)
 
         return instance
@@ -255,6 +255,16 @@ class FlextRegistry(s[bool]):
             case_insensitive=True,
         )
         return parse_result.value
+
+    @staticmethod
+    def _is_protocol_handler(
+        value: object,
+    ) -> TypeGuard[p.Handler[t.GeneralValueType, t.GeneralValueType]]:
+        return bool(
+            hasattr(value, "handle")
+            and hasattr(value, "can_handle")
+            and hasattr(value, "_protocol_name")
+        )
 
     @staticmethod
     def _to_dispatcher_handler(
@@ -416,7 +426,9 @@ class FlextRegistry(s[bool]):
                     ),
                 )
         else:
-            handler_callable = FlextRegistry._to_dispatcher_handler(handler_for_dispatch)
+            handler_callable = FlextRegistry._to_dispatcher_handler(
+                handler_for_dispatch
+            )
             protocol_result = self._dispatcher.register_handler(
                 handler_callable,
             )
@@ -650,7 +662,9 @@ class FlextRegistry(s[bool]):
                             f"message_type attribute for protocol-based registration"
                         )
                         raise TypeError(msg)
-                    handler_callable = FlextRegistry._to_dispatcher_handler(handler_for_dispatch)
+                    handler_callable = FlextRegistry._to_dispatcher_handler(
+                        handler_for_dispatch
+                    )
                     protocol_result = self._dispatcher.register_handler(
                         handler_callable,
                     )
@@ -945,8 +959,13 @@ class FlextRegistry(s[bool]):
         # Normalize metadata to dict for internal use
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
+            metadata_source: Mapping[str, t.ConfigMapValue] | m.ConfigMap
+            if isinstance(metadata, m.Metadata):
+                metadata_source = metadata.attributes
+            else:
+                metadata_source = metadata
             validated_metadata = m.ConfigMap.model_validate(
-                (metadata.attributes if hasattr(metadata, "attributes") else metadata),
+                metadata_source,
             )
 
         # Store metadata if provided (for future use)

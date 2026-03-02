@@ -56,13 +56,13 @@ class FlextDispatcher:
         super().__init__()
         self._logger: logging.Logger = logging.getLogger(__name__)
 
-        self._handlers: MutableMapping[str, t.HandlerType] = {}
-        self._auto_handlers: list[t.HandlerType] = []
-        self._event_subscribers: MutableMapping[str, list[t.HandlerType]] = {}
+        self._handlers: MutableMapping[str, t.HandlerLike] = {}
+        self._auto_handlers: list[t.HandlerLike] = []
+        self._event_subscribers: MutableMapping[str, list[t.HandlerLike]] = {}
 
     def register_handler(
         self,
-        handler: t.HandlerType,
+        handler: t.HandlerLike,
         *,
         is_event: bool = False,
     ) -> r[bool]:
@@ -194,7 +194,7 @@ class FlextDispatcher:
 
     def _execute_handler(
         self,
-        handler: t.HandlerType,
+        handler: t.HandlerLike,
         message: p.Routable,
         route_name: str,
     ) -> r[t.PayloadValue]:

@@ -1206,12 +1206,9 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[T] | None:
         """Helper: Try enum parsing, return None if not enum."""
-        # Early return if not a StrEnum subclass
         if not issubclass(target, StrEnum):
             return None
-        # Get members - returns MappingProxyType[str, T]
-        members_proxy = target.__members__ if hasattr(target, "__members__") else {}
-        members: Mapping[str, T] = members_proxy
+        members = TypeAdapter(dict[str, T]).validate_python(target.__members__)
         value_str = str(value)
 
         # Case-insensitive matching
@@ -1306,11 +1303,7 @@ class FlextUtilitiesParser:
                 if bool_result is not None:
                     return bool_result
         except (ValueError, TypeError) as e:
-            target_name = FlextUtilitiesParser._parse_get_attr(
-                target,
-                "__name__",
-                "type",
-            )
+            target_name = getattr(target, "__name__", "type")
             # For error case, return failure wrapped in appropriate type
             if (
                 target is int
@@ -1530,7 +1523,17 @@ class FlextUtilitiesParser:
             # → 3.14
 
         """
-        if isinstance(value, target_type):
+        if (
+            target_type is int
+            and isinstance(value, int)
+            and not isinstance(value, bool)
+        ):
+            return value
+        if target_type is float and isinstance(value, float):
+            return value
+        if target_type is str and isinstance(value, str):
+            return value
+        if target_type is bool and isinstance(value, bool):
             return value
 
         if (
@@ -1644,14 +1647,14 @@ class FlextUtilitiesParser:
 
         """
         if default is None:
-            default = []
+            default = list[str]()
         if value is None:
             return default
         if isinstance(value, list):
             return [str(item) for item in value]
         if isinstance(value, str):
             return [value] if value else default
-        if isinstance(value, tuple | set | frozenset):
+        if isinstance(value, (tuple, set, frozenset)):
             return [str(item) for item in value]
         return [str(value)]
 
@@ -1760,10 +1763,17 @@ class FlextUtilitiesParser:
             Normalized list/set/dict
 
         """
-        if isinstance(items, t.ConfigMap | Mapping):
-            dict_items: Mapping[str, t.ConfigMapValue] = (
-                items.root if isinstance(items, t.ConfigMap) else items
-            )
+        if isinstance(items, t.ConfigMap):
+            dict_items: Mapping[str, t.ConfigMapValue] = items.root
+            if filter_truthy:
+                dict_items = {k: v for k, v in dict_items.items() if v}
+            return {
+                k: FlextUtilitiesParser.norm_str(v, case=case)
+                for k, v in dict_items.items()
+            }
+
+        if isinstance(items, Mapping):
+            dict_items = items
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {

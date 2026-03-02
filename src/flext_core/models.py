@@ -18,6 +18,7 @@ from typing import TypeAlias
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
+from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.decorators import FlextModelsDecorators
@@ -27,7 +28,6 @@ from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.mixin import FlextModelsMixin
 from flext_core._models.settings import FlextModelsConfig
 from flext_core.protocols import p
-from flext_core.typings import t
 
 
 class FlextModels:
@@ -93,17 +93,41 @@ class FlextModels:
         """Progress of conversion with errors/warnings (from Progress namespace)."""
 
     # GENERIC CONTAINERS - Replace dict aliases
-    class ConfigMap(t.ConfigMap):
+    class ConfigMap(FlextModelsContainers.ConfigMap):
         """Configuration map container (replaces ConfigurationDict)."""
 
-    class ServiceMap(t.ServiceMap):
+    class ServiceMap(FlextModelsContainers.ServiceMap):
         """Service registry map container."""
 
-    class ErrorMap(t.ErrorMap):
+    class ErrorMap(FlextModelsContainers.ErrorMap):
         """Error type mapping container."""
 
-    class Dict(t.Dict):
+    class Dict(FlextModelsContainers.Dict):
         """Generic dictionary container."""
+
+    class ObjectList(FlextModelsContainers.ObjectList):
+        """Sequence of container values for batch operations."""
+
+    class FactoryMap(FlextModelsContainers.FactoryMap):
+        """Map of factory registration callables."""
+
+    class ResourceMap(FlextModelsContainers.ResourceMap):
+        """Map of resource callables."""
+
+    class ValidatorCallable(FlextModelsContainers.ValidatorCallable):
+        """Callable validator container."""
+
+    class FieldValidatorMap(FlextModelsContainers.FieldValidatorMap):
+        """Map of field validators."""
+
+    class ConsistencyRuleMap(FlextModelsContainers.ConsistencyRuleMap):
+        """Map of consistency rules."""
+
+    class EventValidatorMap(FlextModelsContainers.EventValidatorMap):
+        """Map of event validators."""
+
+    class BatchResultDict(FlextModelsContainers.BatchResultDict):
+        """Result payload model for batch operation outputs."""
 
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes

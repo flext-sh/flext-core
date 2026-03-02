@@ -1477,7 +1477,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="Run quality gates")
     _ = run_parser.add_argument("--gates", default=c.Gates.DEFAULT_CSV)
     _ = run_parser.add_argument("--project", action="append", required=True)
-    _ = run_parser.add_argument("--reports-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check")
+    _ = run_parser.add_argument(
+        "--reports-dir", default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check"
+    )
     _ = run_parser.add_argument("--fail-fast", action="store_true")
 
     fix_parser = subparsers.add_parser(

@@ -17,9 +17,10 @@ from pydantic import BeforeValidator, Field, model_validator
 
 from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 
-class _ComparableConfigMap(t.ConfigMap):
+class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
     """ConfigMap with equality support for domain event data."""
 
     @override
@@ -30,7 +31,7 @@ class _ComparableConfigMap(t.ConfigMap):
             return self.root == dict(other.items())
         return super().__eq__(other)
 
-    __hash__ = t.ConfigMap.__hash__
+    __hash__ = FlextModelsContainers.ConfigMap.__hash__
 
 
 def _normalize_event_data(
@@ -39,24 +40,24 @@ def _normalize_event_data(
     """BeforeValidator: normalize event data to _ComparableConfigMap."""
     if isinstance(value, _ComparableConfigMap):
         return value
-    if isinstance(value, t.ConfigMap):
+    if isinstance(value, FlextModelsContainers.ConfigMap):
         return _ComparableConfigMap(root=dict(value.items()))
     if isinstance(value, dict):
-        normalized: t.ConfigMap = t.ConfigMap(
+        intermediate = FlextModelsContainers.ConfigMap(
             root={
                 str(k): FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in value.items()
             },
         )
-        return _ComparableConfigMap(root=normalized.root)
+        return _ComparableConfigMap(root=intermediate.root)
     if isinstance(value, Mapping):
-        normalized = t.ConfigMap(
+        intermediate = FlextModelsContainers.ConfigMap(
             root={
                 str(k): FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in value.items()
             },
         )
-        return _ComparableConfigMap(root=normalized.root)
+        return _ComparableConfigMap(root=intermediate.root)
     if value is None:
         return _ComparableConfigMap(root={})
     msg = "Domain event data must be a dictionary or None"

@@ -16,7 +16,7 @@ import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, overload
+from typing import Literal, Protocol, TypeGuard, overload
 
 from flext_core import (
     FlextContainer,
@@ -952,6 +952,16 @@ class FlextDecorators:
 
         return decorator
 
+    class _HasLogger(Protocol):
+        logger: FlextLogger
+
+    @staticmethod
+    def _has_flext_logger(value: object) -> TypeGuard[_HasLogger]:
+        if not hasattr(value, "logger"):
+            return False
+        logger_value = getattr(value, "logger")
+        return isinstance(logger_value, FlextLogger)
+
     @staticmethod
     def _resolve_logger(
         args: tuple[object, ...],
@@ -964,13 +974,10 @@ class FlextDecorators:
 
         """
         first_arg = args[0] if args else None
-        potential_logger: FlextLogger | None = (
-            (first_arg.logger if hasattr(first_arg, "logger") else None)
-            if first_arg is not None
-            else None
-        )
-        if potential_logger is not None:
-            return potential_logger
+        if isinstance(first_arg, FlextLogger):
+            return first_arg
+        if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
+            return first_arg.logger
         # FlextLogger constructor returns FlextLogger
         return FlextLogger(func.__module__)
 
@@ -1112,7 +1119,7 @@ class FlextDecorators:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
         else:
             current_id = FlextContext.Variables.CorrelationId.get()
-            if current_id:
+            if isinstance(current_id, str):
                 correlation_id = current_id
 
         FlextContext.Request.set_operation_name(operation)

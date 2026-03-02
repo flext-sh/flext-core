@@ -24,6 +24,7 @@ from pydantic import (
 
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsHandler:
@@ -255,7 +256,7 @@ class FlextModelsHandler:
         # Use PrivateAttr for internal state (Pydantic v2 pattern)
         # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.Dict | None = PrivateAttr(default=None)
+        _metrics_state: FlextModelsContainers.Dict | None = PrivateAttr(default=None)
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -303,10 +304,10 @@ class FlextModelsHandler:
             """
             if self._metrics_state is None:
                 # Use PrivateAttr for proper Pydantic v2 pattern
-                self._metrics_state = t.Dict(root={})
+                self._metrics_state = FlextModelsContainers.Dict(root={})
             # Type narrowing: _metrics_state is not None after initialization above
             # PrivateAttr type narrowing works after None check and initialization
-            metrics_state_val: t.Dict = self._metrics_state
+            metrics_state_val: FlextModelsContainers.Dict = self._metrics_state
             # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
             # dict implements Mapping, so direct return works without cast
             return metrics_state_val

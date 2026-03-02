@@ -13,6 +13,11 @@ from typing import Final
 
 from flext_core import FlextConstants
 
+from flext_infra._constants_modules import (
+    FlextInfraPathsConstants,
+    FlextInfraReportingConstants,
+    FlextInfraVersioningConstants,
+)
 from flext_infra.basemk._constants import FlextInfraBasemkConstants
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.codegen._constants import FlextInfraCodegenConstants
@@ -22,11 +27,6 @@ from flext_infra.docs._constants import FlextInfraDocsConstants
 from flext_infra.github._constants import FlextInfraGithubConstants
 from flext_infra.release._constants import FlextInfraReleaseConstants
 from flext_infra.workspace._constants import FlextInfraWorkspaceConstants
-from flext_infra._constants_modules import (
-    FlextInfraPathsConstants,
-    FlextInfraReportingConstants,
-    FlextInfraVersioningConstants,
-)
 
 
 class FlextInfraConstants(FlextConstants):

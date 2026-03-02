@@ -15,6 +15,7 @@ from flext_core import FlextResult, FlextService, r
 
 from flext_infra.constants import c
 
+
 class FlextInfraPathResolver(FlextService[Path]):
     """Infrastructure service for workspace path resolution.
 
@@ -61,7 +62,10 @@ class FlextInfraPathResolver(FlextService[Path]):
                 current = current.parent
 
             for parent in [current, *list(current.parents)]:
-                if all((parent / marker).exists() for marker in c.Infra.Paths.WORKSPACE_MARKERS):
+                if all(
+                    (parent / marker).exists()
+                    for marker in c.Infra.Paths.WORKSPACE_MARKERS
+                ):
                     return r[Path].ok(parent)
 
             return r[Path].fail(

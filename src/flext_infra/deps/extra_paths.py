@@ -14,7 +14,6 @@ from flext_infra import FlextInfraPathResolver, FlextInfraTomlService, output
 from flext_infra.constants import c
 from flext_infra.deps.path_sync import extract_dep_name
 
-
 _resolver = FlextInfraPathResolver()
 _root_result = _resolver.workspace_root_from_file(__file__)
 ROOT = (

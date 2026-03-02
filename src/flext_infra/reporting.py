@@ -25,6 +25,7 @@ from flext_core.constants import KNOWN_VERBS
 
 from flext_infra.constants import c
 
+
 class FlextInfraReportingService(FlextService[Path]):
     """Infrastructure service for standardized report path management.
 

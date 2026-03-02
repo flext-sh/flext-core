@@ -107,7 +107,7 @@ class FlextContext(FlextRuntime):
                 context_data = m.ContextData.model_validate(initial_data)
             else:
                 context_data = m.ContextData(
-                    data=t.Dict(root=m.ConfigMap.model_validate(initial_data).root),
+                    data=m.Dict(root=m.ConfigMap.model_validate(initial_data).root),
                 )
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
@@ -229,7 +229,7 @@ class FlextContext(FlextRuntime):
             if metadata is not None:
                 initial_data_dict.update(dict(metadata.items()))
             return cls(
-                initial_data=m.ContextData(data=t.Dict(root=initial_data_dict.root)),
+                initial_data=m.ContextData(data=m.Dict(root=initial_data_dict.root)),
             )
         # Default: use initial_data parameter
         # Auto-generate correlation_id for zero-config setup
@@ -247,10 +247,10 @@ class FlextContext(FlextRuntime):
             )
             return cls(
                 initial_data=m.ContextData(
-                    data=t.Dict(root=initial_data_dict_new.root),
+                    data=m.Dict(root=initial_data_dict_new.root),
                 ),
             )
-        return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))
+        return cls(initial_data=m.ContextData(data=m.Dict(root=data_map.root)))
 
     # =========================================================================
     # PRIVATE HELPERS - Context variable management and FlextLogger delegation
@@ -640,7 +640,7 @@ class FlextContext(FlextRuntime):
                 current,
                 lambda k, _v: k != key,
             )
-            _ = ctx_var.set(m.ConfigMap(root=filtered))
+            _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
             # Note: ContextVar.set() already cleared the key, no need to unbind from logger
             # FlextLogger doesn't have unbind_global_context method
             self._update_statistics(c.Context.OPERATION_REMOVE)
@@ -876,7 +876,7 @@ class FlextContext(FlextRuntime):
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, ContextValue])
-        statistics_mapping: t.Dict = t.Dict(
+        statistics_mapping: m.Dict = m.Dict(
             root=dict((stats_dict_export or m.ConfigMap(root={})).items()),
         )
 
@@ -1275,7 +1275,7 @@ class FlextContext(FlextRuntime):
                 parent_token = FlextContext.Variables.ParentCorrelationId.set(
                     parent_id,
                 )
-            elif current_correlation:
+            elif isinstance(current_correlation, str):
                 # Current correlation becomes parent
                 parent_token = FlextContext.Variables.ParentCorrelationId.set(
                     current_correlation,
@@ -1510,7 +1510,10 @@ class FlextContext(FlextRuntime):
                 c.Context.KEY_REQUEST_ID: context_vars.Request.REQUEST_ID.get(),
                 c.Context.KEY_OPERATION_START_TIME: (
                     st.isoformat()
-                    if (st := context_vars.Performance.OPERATION_START_TIME.get())
+                    if isinstance(
+                        (st := context_vars.Performance.OPERATION_START_TIME.get()),
+                        datetime,
+                    )
                     else None
                 ),
                 c.Context.KEY_OPERATION_METADATA: context_vars.Performance.OPERATION_METADATA.get(),

@@ -17,6 +17,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import FlextRuntime, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsCollections:
@@ -716,7 +717,7 @@ class FlextModelsCollections:
             normalized: dict[str, t.ConfigMapValue] = {}
             for key, value in self.model_dump().items():
                 normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
-            return t.ConfigMap(root=normalized)
+            return FlextModelsContainers.ConfigMap(root=normalized)
 
         @classmethod
         def from_dict(

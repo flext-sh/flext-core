@@ -25,6 +25,7 @@ from pydantic import Field
 
 from flext_core import t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextGenericModels:
@@ -64,7 +65,7 @@ class FlextGenericModels:
             environment: str | None = Field(default=None, description="Environment")
             version: str = Field(default="1.0.0", description="Schema version")
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
+                default_factory=FlextModelsContainers.Dict,
                 description="Additional metadata",
             )
             message: t.ConfigMapValue = Field(
@@ -104,7 +105,7 @@ class FlextGenericModels:
             memory_usage_mb: float | None = Field(default=None, description="Memory MB")
             cpu_usage_percent: float | None = Field(default=None, description="CPU %")
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
+                default_factory=FlextModelsContainers.Dict,
                 description="Service metadata",
             )
 
@@ -115,7 +116,7 @@ class FlextGenericModels:
             """
 
             config: t.Dict = Field(
-                default_factory=t.Dict,
+                default_factory=FlextModelsContainers.Dict,
                 description="Config key-value pairs",
             )
             captured_at: datetime = Field(
@@ -134,7 +135,7 @@ class FlextGenericModels:
                 description="Validation errors",
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
+                default_factory=FlextModelsContainers.Dict,
                 description="Config metadata",
             )
 
@@ -145,8 +146,12 @@ class FlextGenericModels:
             """
 
             healthy: bool = Field(default=True, description="Overall health")
-            checks: t.Dict = Field(default_factory=t.Dict, description="Check results")
-            details: t.Dict = Field(default_factory=t.Dict, description="Check details")
+            checks: t.Dict = Field(
+                default_factory=FlextModelsContainers.Dict, description="Check results"
+            )
+            details: t.Dict = Field(
+                default_factory=FlextModelsContainers.Dict, description="Check details"
+            )
             checked_at: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
                 description="Check timestamp",
@@ -161,7 +166,7 @@ class FlextGenericModels:
             )
             environment: str | None = Field(default=None, description="Environment")
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
+                default_factory=FlextModelsContainers.Dict,
                 description="Health metadata",
             )
 
@@ -207,7 +212,7 @@ class FlextGenericModels:
                 description="Operation name",
             )
             metadata: t.Dict = Field(
-                default_factory=t.Dict,
+                default_factory=FlextModelsContainers.Dict,
                 description="Operation metadata",
             )
 
@@ -280,8 +285,8 @@ class FlextGenericModels:
                 default=None,
                 description="Total input count",
             )
-            metadata: t.Dict = Field(
-                default_factory=t.Dict,
+            metadata: FlextModelsContainers.Dict = Field(
+                default_factory=FlextModelsContainers.Dict,
                 description="Conversion metadata",
             )
 
@@ -355,7 +360,7 @@ class FlextGenericModels:
                 """Mark conversion as completed."""
                 self.end_time = datetime.now(UTC)
 
-    BatchResultDict = t.BatchResultDict
+    BatchResultDict = FlextModelsContainers.BatchResultDict
 
 
 __all__ = ["FlextGenericModels"]

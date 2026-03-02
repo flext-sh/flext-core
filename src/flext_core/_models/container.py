@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validat
 
 from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 _MetadataInput = (
     FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.ScalarValue] | None
@@ -51,7 +52,9 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
     normalized_attrs: dict[str, t.MetadataAttributeValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in (
-            value.root.items() if isinstance(value, t.ConfigMap) else value.items()
+            value.root.items()
+            if isinstance(value, FlextModelsContainers.ConfigMap)
+            else value.items()
         )
     }
     return FlextModelFoundation.Metadata.model_validate({

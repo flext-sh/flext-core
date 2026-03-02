@@ -17,7 +17,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
 from pydantic import (
     ConfigDict,
