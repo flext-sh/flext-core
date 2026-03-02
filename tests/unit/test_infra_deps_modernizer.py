@@ -404,7 +404,9 @@ class TestConsolidateGroupsPhase:
         """Test creating consolidated dev group."""
         doc = tomlkit.document()
         doc["project"] = tomlkit.table()
-        doc["project"]["optional-dependencies"] = tomlkit.table()
+        project = doc["project"]
+        assert isinstance(project, MutableMapping)
+        project["optional-dependencies"] = tomlkit.table()
 
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
@@ -429,7 +431,9 @@ class TestConsolidateGroupsPhase:
         """Test merging Poetry groups."""
         doc = tomlkit.document()
         doc["project"] = tomlkit.table()
-        doc["project"]["optional-dependencies"] = tomlkit.table()
+        project = doc["project"]
+        assert isinstance(project, MutableMapping)
+        project["optional-dependencies"] = tomlkit.table()
         doc["tool"] = {
             "poetry": {
                 "group": {
@@ -447,7 +451,9 @@ class TestConsolidateGroupsPhase:
         """Test setting deptry configuration."""
         doc = tomlkit.document()
         doc["project"] = tomlkit.table()
-        doc["project"]["optional-dependencies"] = tomlkit.table()
+        project = doc["project"]
+        assert isinstance(project, MutableMapping)
+        project["optional-dependencies"] = tomlkit.table()
         doc["tool"] = tomlkit.table()
 
         phase = ConsolidateGroupsPhase()
