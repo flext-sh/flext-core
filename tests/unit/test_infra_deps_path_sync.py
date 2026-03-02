@@ -178,7 +178,7 @@ class TestRewritePep621:
     def test_rewrite_pep621_no_dependencies(self) -> None:
         """Test _rewrite_pep621 with no dependencies."""
         doc = TOMLDocument()
-        doc["project"] = {}
+        doc["project"] = tomlkit.table()
         changes = _rewrite_pep621(
             doc, is_root=True, mode="workspace", internal_names=set()
         )
@@ -285,14 +285,14 @@ class TestRewritePoetry:
     def test_rewrite_poetry_no_poetry(self) -> None:
         """Test _rewrite_poetry with no poetry section."""
         doc = TOMLDocument()
-        doc["tool"] = {}
+        doc["tool"] = tomlkit.table()
         changes = _rewrite_poetry(doc, is_root=True, mode="workspace")
         assert changes == []
 
     def test_rewrite_poetry_no_dependencies(self) -> None:
         """Test _rewrite_poetry with no dependencies."""
         doc = TOMLDocument()
-        doc["tool"] = {"poetry": {}}
+        doc["tool"] = {"poetry": tomlkit.table()}
         changes = _rewrite_poetry(doc, is_root=True, mode="workspace")
         assert changes == []
 
@@ -542,7 +542,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].fail("discovery failed"),
+                return_value=r[list[m.ProjectInfo]].fail("discovery failed"),
             ),
             patch(
                 "sys.argv",
@@ -561,7 +561,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
-                return_value=r[list].fail("rewrite failed"),
+                return_value=r[list[m.ProjectInfo]].fail("rewrite failed"),
             ),
             patch(
                 "sys.argv",
@@ -585,7 +585,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -598,8 +598,8 @@ class TestMain:
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
-                    r[list].ok([]),  # root rewrite succeeds
-                    r[list].fail("project rewrite failed"),  # project rewrite fails
+                    r[list[m.ProjectInfo]].ok([]),  # root rewrite succeeds
+                    r[list[m.ProjectInfo]].fail("project rewrite failed"),  # project rewrite fails
                 ],
             ),
             patch(
@@ -619,7 +619,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([]),
+                return_value=r[list[m.ProjectInfo]].ok([]),
             ),
             patch(
                 "sys.argv",
@@ -643,7 +643,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -656,8 +656,8 @@ class TestMain:
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
-                    r[list].ok([]),  # root rewrite
-                    r[list].ok(["change1"]),  # project rewrite with changes
+                    r[list[m.ProjectInfo]].ok([]),  # root rewrite
+                    r[list[m.ProjectInfo]].ok(["change1"]),  # project rewrite with changes
                 ],
             ),
             patch(
@@ -677,7 +677,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([]),
+                return_value=r[list[m.ProjectInfo]].ok([]),
             ),
             patch(
                 "sys.argv",
@@ -701,7 +701,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -713,7 +713,7 @@ class TestMain:
             ),
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
-                return_value=r[list].ok([]),
+                return_value=r[list[m.ProjectInfo]].ok([]),
             ),
             patch(
                 "sys.argv",
@@ -744,7 +744,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([]),
+                return_value=r[list[m.ProjectInfo]].ok([]),
             ),
             patch(
                 "sys.argv",
@@ -766,7 +766,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -798,7 +798,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -830,7 +830,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -862,7 +862,7 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list].ok([
+                return_value=r[list[m.ProjectInfo]].ok([
                     m.ProjectInfo(
                         path=project_dir,
                         name="flext-core",
@@ -1069,7 +1069,7 @@ def test_main_discovery_failure(tmp_path: Path) -> None:
     """Test main handles discovery failure."""
     with patch(
         "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
-        return_value=r[list].fail("discovery failed"),
+        return_value=r[list[m.ProjectInfo]].fail("discovery failed"),
     ):
         with patch("sys.argv", ["sync-paths"]):
             result = main()
@@ -1081,11 +1081,11 @@ def test_main_no_changes_needed(tmp_path: Path) -> None:
     with patch("sys.argv", ["sync-paths"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
-            return_value=r[list].ok([]),
+            return_value=r[list[m.ProjectInfo]].ok([]),
         ):
             with patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
-                return_value=r[list].ok([]),
+                return_value=r[list[m.ProjectInfo]].ok([]),
             ):
                 result = main()
                 assert result == 0
@@ -1132,11 +1132,11 @@ def test_main_with_changes_and_dry_run(tmp_path: Path) -> None:
     with patch("sys.argv", ["sync-paths", "--dry-run"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
-            return_value=r[list].ok([]),
+            return_value=r[list[m.ProjectInfo]].ok([]),
         ):
             with patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
-                return_value=r[list].ok(["  PEP621: old -> new"]),
+                return_value=r[list[m.ProjectInfo]].ok(["  PEP621: old -> new"]),
             ):
                 with patch("flext_infra.deps.path_sync.output.info") as mock_info:
                     result = main()
@@ -1152,11 +1152,11 @@ def test_main_with_changes_no_dry_run(tmp_path: Path) -> None:
     with patch("sys.argv", ["sync-paths"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
-            return_value=r[list].ok([]),
+            return_value=r[list[m.ProjectInfo]].ok([]),
         ):
             with patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
-                return_value=r[list].ok(["  PEP621: old -> new"]),
+                return_value=r[list[m.ProjectInfo]].ok(["  PEP621: old -> new"]),
             ):
                 with patch("flext_infra.deps.path_sync.output.info") as mock_info:
                     result = main()
@@ -1183,11 +1183,11 @@ def test_main_project_obj_not_dict_first_loop(tmp_path: Path) -> None:
     with patch("sys.argv", ["sync-paths"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
-            return_value=r[list].ok([project_info]),
+            return_value=r[list[m.ProjectInfo]].ok([project_info]),
         ):
             with patch(
                 "flext_infra.deps.path_sync.FlextInfraTomlService.read",
-                return_value=r[dict].ok({"project": "not-a-dict"}),
+                return_value=r[dict[str, object]].ok({"project": "not-a-dict"}),
             ):
                 with patch("flext_infra.deps.path_sync.output.info"):
                     result = main()
@@ -1208,11 +1208,11 @@ def test_main_project_obj_not_dict_second_loop(tmp_path: Path) -> None:
     with patch("sys.argv", ["sync-paths"]):
         with patch(
             "flext_infra.deps.path_sync.FlextInfraDiscoveryService.discover_projects",
-            return_value=r[list].ok([project_info]),
+            return_value=r[list[m.ProjectInfo]].ok([project_info]),
         ):
             with patch(
                 "flext_infra.deps.path_sync.FlextInfraTomlService.read",
-                return_value=r[dict].ok({"project": "not-a-dict"}),
+                return_value=r[dict[str, object]].ok({"project": "not-a-dict"}),
             ):
                 with patch("flext_infra.deps.path_sync.output.info"):
                     result = main()
