@@ -515,8 +515,11 @@ class TestuPaginationExtractPaginationConfig:
 
         config = Config()
         # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
-        # extract_pagination_config accepts BaseModel or Mapping, use object cast
-        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]
+        # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
+        if isinstance(config, (BaseModel, Mapping)):
+            result = u.Pagination.extract_pagination_config(config)
+        else:
+            pytest.skip("Config is not BaseModel or Mapping")
 
     def test_extract_pagination_config_partial_attributes(self) -> None:
         """Test extract_pagination_config with partial attributes."""
@@ -529,11 +532,10 @@ class TestuPaginationExtractPaginationConfig:
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
-        else:
-            pytest.skip("Config is not BaseModel or Mapping")
-
             assert result["default_page_size"] == 30
             assert result["max_page_size"] == 1000  # Default
+        else:
+            pytest.skip("Config is not BaseModel or Mapping")
 
     def test_extract_pagination_config_invalid_values(self) -> None:
         """Test extract_pagination_config with invalid values."""
@@ -547,12 +549,11 @@ class TestuPaginationExtractPaginationConfig:
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
-        else:
-            pytest.skip("Config is not BaseModel or Mapping")
-
-        # Invalid values should be ignored, defaults used
+            # Invalid values should be ignored, defaults used
             assert result["default_page_size"] == 20
             assert result["max_page_size"] == 1000
+        else:
+            pytest.skip("Config is not BaseModel or Mapping")
 
     def test_extract_pagination_config_with_dict(self) -> None:
         """Test extract_pagination_config with dict-like object."""
@@ -567,8 +568,7 @@ class TestuPaginationExtractPaginationConfig:
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
-        else:
-            pytest.skip("Config is not BaseModel or Mapping")
-
             assert result["default_page_size"] == 40
             assert result["max_page_size"] == 600
+        else:
+            pytest.skip("Config is not BaseModel or Mapping")

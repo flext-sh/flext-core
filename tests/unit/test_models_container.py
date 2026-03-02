@@ -36,8 +36,7 @@ def _service_reg_with_metadata(
         m.Container.ServiceRegistration
     )
     # Pass through object type; constructor validates
-    kwargs: dict[str, object] = {"name": name, "service": service, "metadata": metadata}
-    return cls(**kwargs)
+    return cls(name=name, service=service, metadata=metadata)
 
 
 def _factory_reg_with_metadata(
@@ -50,8 +49,7 @@ def _factory_reg_with_metadata(
         m.Container.FactoryRegistration
     )
     # Pass through object type; constructor validates
-    kwargs: dict[str, object] = {"name": name, "factory": factory, "metadata": metadata}
-    return cls(**kwargs)
+    return cls(name=name, factory=factory, metadata=metadata)
 
 
 def _normalize_metadata_obj(value: object) -> m.Metadata:
