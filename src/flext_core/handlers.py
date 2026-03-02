@@ -338,6 +338,10 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         raise NotImplementedError
 
+    def __call__(self, message: MessageT_contra) -> r[ResultT]:
+        """Callable interface for seamless dispatcher integration."""
+        return self.handle(message)
+
     def execute(self, message: MessageT_contra) -> r[ResultT]:
         """Execute handler with complete validation and error handling pipeline.
 

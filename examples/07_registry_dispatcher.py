@@ -19,7 +19,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import override
 
 from flext_core import (
@@ -94,8 +93,9 @@ class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
         )
 
 
-@dataclass(frozen=True, slots=True)
-class _DemoPlugin:
+class _DemoPlugin(m.Value):
+    """Demo plugin for registry demonstration."""
+
     name: str
 
     def _protocol_name(self) -> str:
@@ -157,7 +157,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
 
         registry = FlextRegistry()
 
-        create_plugin = _DemoPlugin("create_user")
+        create_plugin = _DemoPlugin(name="create_user")
         register_result = registry.register_plugin(
             "handlers",
             "create_user",
@@ -166,7 +166,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         if register_result.is_success:
             print("✅ Plugin registered successfully")
 
-        query_plugin = _DemoPlugin("get_user")
+        query_plugin = _DemoPlugin(name="get_user")
         _ = registry.register_plugin(
             "handlers",
             "get_user",
@@ -208,12 +208,12 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         _ = registry.register_plugin(
             "handlers",
             "create_user",
-            _DemoPlugin("create_user"),
+            _DemoPlugin(name="create_user"),
         )
         _ = registry.register_plugin(
             "handlers",
             "get_user",
-            _DemoPlugin("get_user"),
+            _DemoPlugin(name="get_user"),
         )
 
         create_handler = CreateUserHandler()

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -1593,7 +1594,9 @@ class TestConfigFixerRemoveIgnoreSubConfig:
         fixes = fixer._remove_ignore_sub_config_tk(pyrefly)
 
         assert len(fixes) > 0
-        assert len(pyrefly["sub-config"]) == 1
+        sub_config = pyrefly["sub-config"]
+        assert isinstance(sub_config, Sequence)
+        assert len(sub_config) == 1
 
     def test_remove_ignore_sub_config_skips_non_list(self, tmp_path: Path) -> None:
         """Test _remove_ignore_sub_config_tk skips non-list sub-config."""
@@ -1618,7 +1621,9 @@ class TestConfigFixerEnsureProjectExcludes:
         fixes = fixer._ensure_project_excludes_tk(pyrefly)
 
         assert len(fixes) > 0
-        assert len(pyrefly["project-excludes"]) > 0
+        project_excludes = pyrefly["project-excludes"]
+        assert isinstance(project_excludes, Sequence)
+        assert len(project_excludes) > 0
 
     def test_ensure_project_excludes_skips_existing(self, tmp_path: Path) -> None:
         """Test _ensure_project_excludes_tk skips already-present excludes."""
@@ -2262,6 +2267,7 @@ class TestProcessFileReadError:
 
         result = fixer.process_file(pyproject)
         assert result.is_failure
+        assert result.error is not None
         assert "parse" in result.error.lower()
 
     def test_process_file_with_no_tool_section(self, tmp_path: Path) -> None:

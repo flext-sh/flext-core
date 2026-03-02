@@ -22,9 +22,10 @@ from __future__ import annotations
 import threading
 from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
+from datetime import datetime
 from typing import override
 
-from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
+from flext_core import FlextContext, FlextLogger, FlextResult, FlextService, c, m, r, u
 
 
 @contextmanager
@@ -70,7 +71,7 @@ class ContextManagementService(
     @override
     def execute(
         self,
-    ) -> r[m.ConfigMap]:
+    ) -> FlextResult[m.ConfigMap]:
         """Execute comprehensive context demonstrations using railway pattern."""
         self.logger.info("Starting context management demonstration")
 
@@ -231,14 +232,21 @@ class ContextManagementService(
         ) as timing_metadata:
             # Simulate work
             start_time = FlextContext.Variables.OperationStartTime.get()
-            operation_metadata = (
-                FlextContext.Variables.OperationMetadata.get() or m.ConfigMap(root={})
+            operation_metadata_raw = FlextContext.Variables.OperationMetadata.get()
+            operation_metadata: m.ConfigMap = (
+                operation_metadata_raw
+                if isinstance(operation_metadata_raw, m.ConfigMap)
+                else m.ConfigMap(root={})
             )
 
             performance_data: m.ConfigMap = m.ConfigMap(
                 root={
                     "operation": operation_name,
-                    "start_time": (start_time.isoformat() if start_time else "unknown"),
+                    "start_time": (
+                        start_time.isoformat()
+                        if isinstance(start_time, datetime)
+                        else "unknown"
+                    ),
                     "metadata": operation_metadata.root,
                     "timing": timing_metadata,
                 },

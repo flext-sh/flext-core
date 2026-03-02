@@ -25,10 +25,9 @@ from enum import StrEnum
 from typing import override
 
 from flext_core import (
-    FlextConstants,
-    FlextModels,
-    FlextResult,
+    c,
     m,
+    r,
     s,
     t,
     u,
@@ -48,8 +47,8 @@ class StatusEnum(StrEnum):
     INACTIVE = "inactive"
 
 
-class UserModel(FlextModels.ArbitraryTypesModel):
-    """User model for demonstration using FlextModels."""
+class UserModel(m.ArbitraryTypesModel):
+    """User model for demonstration using m."""
 
     name: str = Field(min_length=1)
     status: StatusEnum = StatusEnum.PENDING
@@ -82,7 +81,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     @override
     def execute(
         self,
-    ) -> FlextResult[m.ConfigMap]:
+    ) -> r[m.ConfigMap]:
         """Execute advanced utilities demonstrations."""
         print("Starting advanced utilities demonstration")
 
@@ -97,7 +96,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             self._demonstrate_pagination()
             self._demonstrate_configuration()
 
-            return FlextResult[m.ConfigMap].ok(
+            return r[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
                         "utilities_demonstrated": [
@@ -129,7 +128,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
 
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
-            return FlextResult[m.ConfigMap].fail(error_msg)
+            return r[m.ConfigMap].fail(error_msg)
 
     @staticmethod
     def _demonstrate_args_validation() -> None:
@@ -150,7 +149,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             return f"Processed: {status.value}"
 
         status_enum_pending = StatusEnum.PENDING
-        result_obj = FlextResult[str].ok(process_with_result(status_enum_pending))
+        result_obj = r[str].ok(process_with_result(status_enum_pending))
         print(f"✅ Validated with result: {result_obj.value}")
 
     @staticmethod
@@ -279,7 +278,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: FlextResult[Mapping[str, t.ConfigMapValue]] = FlextResult[
+        map_result: r[Mapping[str, t.ConfigMapValue]] = r[
             Mapping[str, t.ConfigMapValue]
         ].fail("Invalid data types")
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
@@ -337,8 +336,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         page_result = u.extract_page_params(
             query_params,
             default_page=1,
-            default_page_size=FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
-            max_page_size=FlextConstants.Pagination.MAX_PAGE_SIZE,
+            default_page_size=c.Pagination.DEFAULT_PAGE_SIZE,
+            max_page_size=c.Pagination.MAX_PAGE_SIZE,
         )
         if page_result.is_success:
             page, page_size = page_result.value
@@ -348,7 +347,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         validate_result = u.validate_pagination_params(
             page=1,
             page_size=20,
-            max_page_size=FlextConstants.Pagination.MAX_PAGE_SIZE,
+            max_page_size=c.Pagination.MAX_PAGE_SIZE,
         )
         if validate_result.is_success:
             params = validate_result.value

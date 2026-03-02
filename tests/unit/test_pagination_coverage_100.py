@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
@@ -22,6 +23,13 @@ import pytest
 from flext_core import t
 from flext_tests import u
 
+
+def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:
+    """Call extract_pagination_config with arbitrary object for testing."""
+    fn: Callable[[object], Mapping[str, int]] = getattr(
+        u.Pagination, "extract_pagination_config"
+    )
+    return fn(config)
 
 @dataclass(frozen=True, slots=True)
 class ExtractPageParamsScenario:

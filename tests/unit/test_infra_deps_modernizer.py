@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import MutableMapping
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -521,7 +522,13 @@ class TestEnsurePytestConfigPhase:
 
         phase = EnsurePytestConfigPhase()
         _ = phase.apply(doc)
-        assert doc["tool"]["pytest"]["ini_options"]["minversion"] == "8.0"
+        tool = doc["tool"]
+        assert isinstance(tool, MutableMapping)
+        pytest_section = tool["pytest"]
+        assert isinstance(pytest_section, MutableMapping)
+        ini_options = pytest_section["ini_options"]
+        assert isinstance(ini_options, MutableMapping)
+        assert ini_options["minversion"] == "8.0"
 
 
 class TestEnsurePyreflyConfigPhase:
@@ -987,20 +994,28 @@ def test_ensure_pyrefly_config_phase_apply_python_version(tmp_path: Path) -> Non
     """Test EnsurePyreflyConfigPhase sets python-version."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pyrefly"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pyrefly"] = tomlkit.table()
 
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
 
     assert any("python-version set to 3.13" in change for change in changes)
-    assert doc["tool"]["pyrefly"]["python-version"] == "3.13"
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    pyrefly = tool["pyrefly"]
+    assert isinstance(pyrefly, MutableMapping)
+    assert pyrefly["python-version"] == "3.13"
 
 
 def test_ensure_pyrefly_config_phase_apply_ignore_errors(tmp_path: Path) -> None:
     """Test EnsurePyreflyConfigPhase enables ignore-errors-in-generated-code."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pyrefly"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pyrefly"] = tomlkit.table()
 
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
@@ -1008,14 +1023,20 @@ def test_ensure_pyrefly_config_phase_apply_ignore_errors(tmp_path: Path) -> None
     assert any(
         "ignore-errors-in-generated-code enabled" in change for change in changes
     )
-    assert doc["tool"]["pyrefly"]["ignore-errors-in-generated-code"] is True
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    pyrefly = tool["pyrefly"]
+    assert isinstance(pyrefly, MutableMapping)
+    assert pyrefly["ignore-errors-in-generated-code"] is True
 
 
 def test_ensure_pyrefly_config_phase_apply_search_path(tmp_path: Path) -> None:
     """Test EnsurePyreflyConfigPhase sets search-path."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pyrefly"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pyrefly"] = tomlkit.table()
 
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
@@ -1027,7 +1048,9 @@ def test_ensure_pyrefly_config_phase_apply_errors(tmp_path: Path) -> None:
     """Test EnsurePyreflyConfigPhase enables strict errors."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pyrefly"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pyrefly"] = tomlkit.table()
 
     phase = EnsurePyreflyConfigPhase()
     changes = phase.apply(doc, is_root=True)
@@ -1069,10 +1092,14 @@ def test_consolidate_groups_phase_apply_removes_old_groups(tmp_path: Path) -> No
     """Test ConsolidateGroupsPhase removes old optional-dependencies groups."""
     doc = tomlkit.document()
     doc["project"] = tomlkit.table()
-    doc["project"]["optional-dependencies"] = tomlkit.table()
-    doc["project"]["optional-dependencies"]["dev"] = ["pytest"]
-    doc["project"]["optional-dependencies"]["docs"] = ["sphinx"]
-    doc["project"]["optional-dependencies"]["test"] = ["coverage"]
+    project = doc["project"]
+    assert isinstance(project, MutableMapping)
+    project["optional-dependencies"] = tomlkit.table()
+    opt_deps = project["optional-dependencies"]
+    assert isinstance(opt_deps, MutableMapping)
+    opt_deps["dev"] = ["pytest"]
+    opt_deps["docs"] = ["sphinx"]
+    opt_deps["test"] = ["coverage"]
 
     phase = ConsolidateGroupsPhase()
     changes = phase.apply(doc, [])
@@ -1085,22 +1112,36 @@ def test_ensure_pytest_config_phase_apply_minversion(tmp_path: Path) -> None:
     """Test EnsurePytestConfigPhase sets minversion."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pytest"] = tomlkit.table()
-    doc["tool"]["pytest"]["ini_options"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pytest"] = tomlkit.table()
+    pytest_section = tool["pytest"]
+    assert isinstance(pytest_section, MutableMapping)
+    pytest_section["ini_options"] = tomlkit.table()
 
     phase = EnsurePytestConfigPhase()
     changes = phase.apply(doc)
 
     assert any("minversion set to 8.0" in change for change in changes)
-    assert doc["tool"]["pytest"]["ini_options"]["minversion"] == "8.0"
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    pytest_section = tool["pytest"]
+    assert isinstance(pytest_section, MutableMapping)
+    ini_options = pytest_section["ini_options"]
+    assert isinstance(ini_options, MutableMapping)
+    assert ini_options["minversion"] == "8.0"
 
 
 def test_ensure_pytest_config_phase_apply_python_classes(tmp_path: Path) -> None:
     """Test EnsurePytestConfigPhase sets python_classes."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pytest"] = tomlkit.table()
-    doc["tool"]["pytest"]["ini_options"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pytest"] = tomlkit.table()
+    pytest_section = tool["pytest"]
+    assert isinstance(pytest_section, MutableMapping)
+    pytest_section["ini_options"] = tomlkit.table()
 
     phase = EnsurePytestConfigPhase()
     changes = phase.apply(doc)
@@ -1112,8 +1153,12 @@ def test_ensure_pytest_config_phase_apply_markers(tmp_path: Path) -> None:
     """Test EnsurePytestConfigPhase adds standard markers."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
-    doc["tool"]["pytest"] = tomlkit.table()
-    doc["tool"]["pytest"]["ini_options"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
+    tool["pytest"] = tomlkit.table()
+    pytest_section = tool["pytest"]
+    assert isinstance(pytest_section, MutableMapping)
+    pytest_section["ini_options"] = tomlkit.table()
 
     phase = EnsurePytestConfigPhase()
     changes = phase.apply(doc)
@@ -1203,12 +1248,22 @@ class TestModernizerUncoveredLines:
         """Test ConsolidateGroupsPhase removes empty poetry groups (line 426)."""
         doc = tomlkit.document()
         doc["project"] = tomlkit.table()
-        doc["project"]["optional-dependencies"] = tomlkit.table()
+        project = doc["project"]
+        assert isinstance(project, MutableMapping)
+        project["optional-dependencies"] = tomlkit.table()
         doc["tool"] = tomlkit.table()
-        doc["tool"]["poetry"] = tomlkit.table()
-        doc["tool"]["poetry"]["group"] = tomlkit.table()
-        doc["tool"]["poetry"]["group"]["docs"] = tomlkit.table()
-        doc["tool"]["poetry"]["group"]["docs"]["dependencies"] = tomlkit.table()
+        tool = doc["tool"]
+        assert isinstance(tool, MutableMapping)
+        tool["poetry"] = tomlkit.table()
+        poetry = tool["poetry"]
+        assert isinstance(poetry, MutableMapping)
+        poetry["group"] = tomlkit.table()
+        group = poetry["group"]
+        assert isinstance(group, MutableMapping)
+        group["docs"] = tomlkit.table()
+        docs = group["docs"]
+        assert isinstance(docs, MutableMapping)
+        docs["dependencies"] = tomlkit.table()
         phase = ConsolidateGroupsPhase()
         changes = phase.apply(doc, [])
         assert len(changes) > 0
@@ -1236,7 +1291,9 @@ class TestModernizerUncoveredLines:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = tomlkit.table()
-        doc["project"]["name"] = "test"
+        project = doc["project"]
+        assert isinstance(project, MutableMapping)
+        project["name"] = "test"
         pyproject.write_text(tomlkit.dumps(doc))
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
         args = argparse.Namespace(

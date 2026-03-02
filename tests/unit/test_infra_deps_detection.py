@@ -12,6 +12,7 @@ from flext_core import r
 from flext_infra.deps import detection
 from flext_infra.deps.detection import (
     FlextInfraDependencyDetectionService,
+    IssueMap,
     _to_infra_value,
     build_project_report,
     classify_issues,
@@ -106,7 +107,7 @@ class TestToInfraValue:
 
     def test_list_with_unconvertible(self) -> None:
         """Test list with unconvertible item returns None."""
-        result = _to_infra_value([set()])
+        result = _to_infra_value([Path("/tmp")])
         assert result is None
 
     def test_mapping_value(self) -> None:
@@ -117,12 +118,12 @@ class TestToInfraValue:
 
     def test_mapping_with_unconvertible(self) -> None:
         """Test Mapping with unconvertible value returns None."""
-        result = _to_infra_value({"key": set()})
+        result = _to_infra_value({"key": Path("/tmp")})
         assert result is None
 
     def test_unsupported_type(self) -> None:
         """Test unsupported type returns None."""
-        result = _to_infra_value(set())
+        result = _to_infra_value(Path("/tmp"))
         assert result is None
 
     def test_list_with_none_item(self) -> None:
@@ -364,49 +365,49 @@ class TestClassifyIssues:
     def test_classify_dep001(self) -> None:
         """Test DEP001 classification."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": {"code": "DEP001"}, "module": "foo"}]
+        issues: list[IssueMap] = [{"error": {"code": "DEP001"}, "module": "foo"}]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 1
 
     def test_classify_dep002(self) -> None:
         """Test DEP002 classification."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": {"code": "DEP002"}, "module": "bar"}]
+        issues: list[IssueMap] = [{"error": {"code": "DEP002"}, "module": "bar"}]
         result = service.classify_issues(issues)
         assert len(result.dep002) == 1
 
     def test_classify_dep003(self) -> None:
         """Test DEP003 classification."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": {"code": "DEP003"}, "module": "baz"}]
+        issues: list[IssueMap] = [{"error": {"code": "DEP003"}, "module": "baz"}]
         result = service.classify_issues(issues)
         assert len(result.dep003) == 1
 
     def test_classify_dep004(self) -> None:
         """Test DEP004 classification."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": {"code": "DEP004"}, "module": "qux"}]
+        issues: list[IssueMap] = [{"error": {"code": "DEP004"}, "module": "qux"}]
         result = service.classify_issues(issues)
         assert len(result.dep004) == 1
 
     def test_non_dict_error_skipped(self) -> None:
         """Test non-dict error object is skipped."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": "not-a-dict", "module": "foo"}]
+        issues: list[IssueMap] = [{"error": "not-a-dict", "module": "foo"}]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 0
 
     def test_missing_code_skipped(self) -> None:
         """Test missing code in error is skipped."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": {"other": "data"}, "module": "foo"}]
+        issues: list[IssueMap] = [{"error": {"other": "data"}, "module": "foo"}]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 0
 
     def test_unknown_code_skipped(self) -> None:
         """Test unknown error code is skipped."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"error": {"code": "DEP999"}, "module": "foo"}]
+        issues: list[IssueMap] = [{"error": {"code": "DEP999"}, "module": "foo"}]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 0
         assert len(result.dep002) == 0
@@ -416,7 +417,7 @@ class TestClassifyIssues:
     def test_multiple_issues(self) -> None:
         """Test classifying multiple issues across codes."""
         service = FlextInfraDependencyDetectionService()
-        issues = [
+        issues: list[IssueMap] = [
             {"error": {"code": "DEP001"}, "module": "a"},
             {"error": {"code": "DEP002"}, "module": "b"},
             {"error": {"code": "DEP001"}, "module": "c"},
@@ -432,7 +433,7 @@ class TestBuildProjectReport:
     def test_builds_report(self) -> None:
         """Test building a project dependency report."""
         service = FlextInfraDependencyDetectionService()
-        issues = [
+        issues: list[IssueMap] = [
             {"error": {"code": "DEP001"}, "module": "foo"},
             {"error": {"code": "DEP002"}, "module": "bar"},
         ]
@@ -808,7 +809,7 @@ class TestDetectionUncoveredLines:
     def test_classify_issues_with_missing_error_field(self) -> None:
         """Test classify_issues skips issues without error field (line 467)."""
         service = FlextInfraDependencyDetectionService()
-        issues = [{"module": "foo"}]
+        issues: list[IssueMap] = [{"module": "foo"}]
         result = service.classify_issues(issues)
         assert len(result.dep001) == 0
 

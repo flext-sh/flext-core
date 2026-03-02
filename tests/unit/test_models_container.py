@@ -14,7 +14,7 @@ Uses real implementations, FlextTestsUtilities, and advanced pytest patterns.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import ClassVar
 
@@ -26,6 +26,34 @@ _expected_validation_errors: tuple[type[Exception], ...] = (
     ValidationError,
     TypeError,
 )
+
+
+def _service_reg_with_metadata(
+    name: str, service: str, metadata: object
+) -> m.Container.ServiceRegistration:
+    """Create ServiceRegistration with arbitrary metadata for validation testing."""
+    cls: Callable[..., m.Container.ServiceRegistration] = (
+        m.Container.ServiceRegistration
+    )
+    return cls(name=name, service=service, metadata=metadata)
+
+
+def _factory_reg_with_metadata(
+    name: str,
+    factory: Callable[[], t.ScalarValue],
+    metadata: object,
+) -> m.Container.FactoryRegistration:
+    """Create FactoryRegistration with arbitrary metadata for validation testing."""
+    cls: Callable[..., m.Container.FactoryRegistration] = (
+        m.Container.FactoryRegistration
+    )
+    return cls(name=name, factory=factory, metadata=metadata)
+
+
+def _normalize_metadata_obj(value: object) -> m.Metadata:
+    """Call normalize_to_metadata with arbitrary object for error-path testing."""
+    fn: Callable[[object], m.Metadata] = getattr(u.Model, "normalize_to_metadata")
+    return fn(value)
 
 
 class ContainerModelsScenarios:
@@ -91,10 +119,10 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
         if should_pass:
-            registration = m.Container.ServiceRegistration(
-                name="test_service",
-                service="test_value",
-                metadata=metadata_value,
+            registration = _service_reg_with_metadata(
+                "test_service",
+                "test_value",
+                metadata_value,
             )
             # metadata=None triggers validator that creates default Metadata
             # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
@@ -102,10 +130,10 @@ class TestFlextModelsContainer:
             assert isinstance(registration.metadata, m.Metadata)
         else:
             with pytest.raises(_expected_validation_errors):
-                m.Container.ServiceRegistration(
-                    name="test_service",
-                    service="test_value",
-                    metadata=metadata_value,
+                _service_reg_with_metadata(
+                    "test_service",
+                    "test_value",
+                    metadata_value,
                 )
 
     def test_service_registration_defaults(self) -> None:
@@ -159,10 +187,10 @@ class TestFlextModelsContainer:
             return "test"
 
         if should_pass:
-            registration = m.Container.FactoryRegistration(
-                name="test_factory",
-                factory=factory,
-                metadata=metadata_value,
+            registration = _factory_reg_with_metadata(
+                "test_factory",
+                factory,
+                metadata_value,
             )
             # metadata=None triggers validator that creates default Metadata
             # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
@@ -170,10 +198,10 @@ class TestFlextModelsContainer:
             assert isinstance(registration.metadata, m.Metadata)
         else:
             with pytest.raises(_expected_validation_errors):
-                m.Container.FactoryRegistration(
-                    name="test_factory",
-                    factory=factory,
-                    metadata=metadata_value,
+                _factory_reg_with_metadata(
+                    "test_factory",
+                    factory,
+                    metadata_value,
                 )
 
     def test_factory_registration_defaults(self) -> None:
@@ -404,4 +432,4 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata([1, 2, 3])
+            _normalize_metadata_obj([1, 2, 3])

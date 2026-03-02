@@ -309,6 +309,12 @@ class EnsurePyreflyConfigPhase:
         "unannotated-return",
     )
 
+    # Rules explicitly disabled due to known type-checker limitations
+    # bad-override: Pyrefly cannot resolve PEP 695 scoped type params from
+    # stringified annotations (from __future__ import annotations), causing
+    # false positives on generic class method overrides.
+    _DISABLED_ERRORS: tuple[str, ...] = ("bad-override",)
+
     def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
         """Merge standard Pyrefly config into existing, preserving project-specific entries."""
         changes: list[str] = []
@@ -339,6 +345,11 @@ class EnsurePyreflyConfigPhase:
             if _unwrap_item(errors.get(error_rule)) is not True:
                 errors[error_rule] = True
                 changes.append(f"tool.pyrefly.errors.{error_rule} enabled")
+
+        for error_rule in self._DISABLED_ERRORS:
+            if _unwrap_item(errors.get(error_rule)) is not False:
+                errors[error_rule] = False
+                changes.append(f"tool.pyrefly.errors.{error_rule} disabled")
 
         current_excludes = _as_string_list(pyrefly.get("project-excludes"))
         pb2_globs = ["**/*_pb2*.py", "**/*_pb2_grpc*.py"]

@@ -164,17 +164,23 @@ filterwarnings = [
 # [MANAGED] ruff
 
 # [MANAGED] pyrefly
-[tool.pyrefly]
+[tool.coverage.report]
+fail_under = 45
 
-ignore-errors-in-generated-code = true
+[tool.pyrefly]
 python-version = "3.13"
+ignore-errors-in-generated-code = true
 search-path = [
-  ".",
+    ".",
+]
+project-excludes = [
+    "**/*_pb2*.py",
+    "**/*_pb2_grpc*.py",
 ]
 
-project-excludes = [ "**/*_pb2*.py", "**/*_pb2_grpc*.py" ]
 [tool.pyrefly.errors]
 deprecated = true
+redundant-cast = true
 implicit-abstract-class = true
 implicit-any = true
 implicitly-defined-attribute = true
@@ -183,11 +189,6 @@ missing-source = true
 not-required-key-access = true
 open-unpacking = true
 protocol-implicitly-defined-attribute = true
-redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
-
-
-[tool.coverage.report]
-fail_under = 45

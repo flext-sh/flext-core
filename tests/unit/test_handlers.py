@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from flext_core import (
@@ -38,6 +38,14 @@ class ConcreteTestHandler(h[str, str]):
     """Concrete implementation of h for testing."""
 
     def handle(self, message: str) -> FlextResult[str]:
+        """Handle the message."""
+        return FlextResult[str].ok(f"processed_{message}")
+
+
+class ValidationTestHandler(h[object, str]):
+    """Handler that accepts any object for validation testing."""
+
+    def handle(self, message: object) -> FlextResult[str]:
         """Handle the message."""
         return FlextResult[str].ok(f"processed_{message}")
 
@@ -388,13 +396,13 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_basic(self) -> None:
         """Test create_from_callable with basic function."""
 
-        def simple_handler(message: str) -> str:
+        def simple_handler(message: t.ScalarValue) -> t.ScalarValue:
             return f"handled_{message}"
 
         # Business Rule: create_from_callable accepts HandlerCallable compatible callables
         # simple_handler is compatible with HandlerCallable at runtime
         handler = h.create_from_callable(
-            cast("t.HandlerCallable", simple_handler),
+            simple_handler,
             handler_name="simple_handler",
             handler_type=c.Cqrs.HandlerType.COMMAND,
         )
@@ -409,12 +417,12 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_with_flext_result(self) -> None:
         """Test create_from_callable with function returning FlextResult."""
 
-        def result_handler(message: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"result_{message}")
+        def result_handler(message: t.ScalarValue) -> FlextResult[t.ScalarValue]:
+            return FlextResult[t.ScalarValue].ok(f"result_{message}")
 
         # Business Rule: create_from_callable accepts HandlerCallable compatible callables
         handler = h.create_from_callable(
-            cast("t.HandlerCallable", result_handler),
+            result_handler,
             handler_name="result_handler",
             handler_type=c.Cqrs.HandlerType.QUERY,
         )
@@ -428,14 +436,14 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_with_exception(self) -> None:
         """Test create_from_callable with function that raises exception."""
 
-        def failing_handler(message: str) -> str:
+        def failing_handler(message: t.ScalarValue) -> t.ScalarValue:
             _ = message
             error_message = "Handler failed"
             raise ValueError(error_message)
 
         # Business Rule: create_from_callable accepts HandlerCallable compatible callables
         handler = h.create_from_callable(
-            cast("t.HandlerCallable", failing_handler),
+            failing_handler,
             handler_name="failing_handler",
             handler_type=c.Cqrs.HandlerType.COMMAND,
         )
@@ -448,13 +456,13 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_invalid_mode(self) -> None:
         """Test create_from_callable with invalid mode."""
 
-        def invalid_handler(message: str) -> str:
+        def invalid_handler(message: t.ScalarValue) -> t.ScalarValue:
             return f"invalid_{message}"
 
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             # Business Rule: create_from_callable accepts HandlerCallable compatible callables
             h.create_from_callable(
-                cast("t.HandlerCallable", invalid_handler),
+                invalid_handler,
                 handler_name="invalid_handler",
                 mode="invalid_mode",
             )
@@ -532,12 +540,8 @@ class TestFlextHandlers:
             f"test_{type_name}_message",
             f"Test {type_name.title()} Message",
         )
-        handler = ConcreteTestHandler(config=config)
-        # Business Rule: validate accepts AcceptableMessageType compatible objects
-        # object is compatible with AcceptableMessageType at runtime
-        message_typed = cast("t.AcceptableMessageType", message)
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(cast("str", message_typed))
+        handler = ValidationTestHandler(config=config)
+        result = handler.validate(message)
         assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_record_metric(self) -> None:

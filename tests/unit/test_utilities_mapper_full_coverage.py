@@ -9,11 +9,30 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import c, m, p, t
+from flext_core import c, m, p, r, t
 from flext_core._utilities.cache import FlextUtilitiesCache as Cache
 from flext_core._utilities.mapper import FlextUtilitiesMapper as Mapper
 from pydantic import BaseModel
 
+
+def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
+    """Call Mapper.at with arbitrary object for error-path testing."""
+    fn: Callable[..., object] = getattr(Mapper, "at")
+    return fn(items, index, default=default)
+
+
+def _extract_field_obj(item: object, field_name: str) -> object:
+    """Call _extract_field_value with arbitrary object for testing."""
+    fn: Callable[[object, str], object] = getattr(Mapper, "_extract_field_value")
+    return fn(item, field_name)
+
+
+def _build_flags_obj(
+    active_flags: object, flag_mapping: Mapping[str, str],
+) -> r[Mapping[str, bool]]:
+    """Call build_flags_dict with arbitrary object for error-path testing."""
+    fn: Callable[..., r[Mapping[str, bool]]] = getattr(Mapper, "build_flags_dict")
+    return fn(active_flags, flag_mapping)
 
 @dataclass
 class AttrObject:
@@ -248,7 +267,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
 
 def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
     assert mapper.at({"a": 1}, 0, default=5) == 5
-    assert mapper.at(ExplodingLenList([1]), 0, default=7) == 7
+    assert _at_obj(ExplodingLenList([1]), 0, default=7) == 7
 
     model = SampleModel(port=8081)
     assert mapper.take(model, "port") == 8081
@@ -264,8 +283,8 @@ def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
 
 
 def test_extract_field_value_and_ensure_variants(mapper: type[Mapper]) -> None:
-    assert mapper._extract_field_value(AttrObject(name="a", value=2), "value") == 2
-    assert mapper._extract_field_value(AttrObject(), "missing") is None
+    assert _extract_field_obj(AttrObject(name="a", value=2), "value") == 2
+    assert _extract_field_obj(AttrObject(), "missing") is None
 
     assert mapper._build_apply_ensure(5, {"ensure": "str"}) == "5"
     assert mapper._build_apply_ensure(5, {"ensure": "list"}) == [5]
@@ -672,7 +691,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
             msg = "bad iter"
             raise RuntimeError(msg)
 
-    fail_flags = mapper.build_flags_dict(BadIter(), {})
+    fail_flags = _build_flags_obj(BadIter(), {})
     assert fail_flags.is_failure
 
     active = mapper.collect_active_keys({"r": True, "w": False}, {"r": "R", "w": "W"})

@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, TypeGuard, cast, override
+from typing import Annotated, ClassVar, Self, TypeGuard, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -234,7 +234,7 @@ class FlextRegistry(s[bool]):
             case_insensitive=True,
         )
         return (
-            cast("c.Cqrs.HandlerType", parse_result.value)
+            parse_result.value
             if parse_result.is_success
             else c.Cqrs.HandlerType.COMMAND
         )
@@ -255,7 +255,7 @@ class FlextRegistry(s[bool]):
             case_insensitive=True,
         )
         return (
-            cast("c.Cqrs.CommonStatus", parse_result.value)
+            parse_result.value
             if parse_result.is_success
             else c.Cqrs.CommonStatus.RUNNING
         )
@@ -551,9 +551,7 @@ class FlextRegistry(s[bool]):
 
             if result.is_success:
                 # Type narrow: cast guarantees concrete type for Pyrefly
-                registration_details = cast(
-                    "m.HandlerRegistrationDetails", result.value
-                )
+                registration_details = result.value
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 self._add_registration_error(
@@ -790,9 +788,8 @@ class FlextRegistry(s[bool]):
             return r[t.RegisterableService].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
-        plugin_value: t.RegisterableService = cast(
-            "t.RegisterableService",
-            raw_result.value if raw_result.is_success else None,
+        plugin_value: t.RegisterableService = (
+            raw_result.value if raw_result.is_success else None
         )
         return r[t.RegisterableService].ok(plugin_value)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from pathlib import Path
 from unittest.mock import patch
 
@@ -206,7 +207,10 @@ class TestRewritePep621:
         )
         assert len(changes) > 0
         assert len(changes) > 0
-        assert "flext-core @ file:./flext-core" in doc["project"]["dependencies"][0]
+        unwrapped = doc.unwrap()
+        assert (
+            "flext-core @ file:./flext-core" in unwrapped["project"]["dependencies"][0]
+        )
 
     def test_rewrite_pep621_skip_external_dep(self) -> None:
         """Test _rewrite_pep621 skips external dependencies."""
@@ -235,7 +239,8 @@ class TestRewritePep621:
             internal_names={"flext-core"},
         )
         assert len(changes) > 0
-        assert 'python_version >= "3.8"' in doc["project"]["dependencies"][0]
+        unwrapped = doc.unwrap()
+        assert 'python_version >= "3.8"' in unwrapped["project"]["dependencies"][0]
 
     def test_rewrite_pep621_non_string_item(self) -> None:
         """Test _rewrite_pep621 skips non-string items."""
@@ -264,7 +269,8 @@ class TestRewritePep621:
             internal_names={"flext-core"},
         )
         assert len(changes) > 0
-        assert "../flext-core" in doc["project"]["dependencies"][0]
+        unwrapped = doc.unwrap()
+        assert "../flext-core" in unwrapped["project"]["dependencies"][0]
 
 
 class TestRewritePoetry:
@@ -307,9 +313,15 @@ class TestRewritePoetry:
         }
         changes = _rewrite_poetry(doc, is_root=True, mode="workspace")
         assert len(changes) > 0
-        assert (
-            doc["tool"]["poetry"]["dependencies"]["flext-core"]["path"] == "flext-core"
-        )
+        tool = doc["tool"]
+        assert isinstance(tool, MutableMapping)
+        poetry = tool["poetry"]
+        assert isinstance(poetry, MutableMapping)
+        deps = poetry["dependencies"]
+        assert isinstance(deps, MutableMapping)
+        core = deps["flext-core"]
+        assert isinstance(core, MutableMapping)
+        assert core["path"] == "flext-core"
 
     def test_rewrite_poetry_skip_non_path_dep(self) -> None:
         """Test _rewrite_poetry skips non-path dependencies."""
@@ -349,10 +361,15 @@ class TestRewritePoetry:
         }
         changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
         assert len(changes) > 0
-        assert (
-            doc["tool"]["poetry"]["dependencies"]["flext-core"]["path"]
-            == "../flext-core"
-        )
+        tool = doc["tool"]
+        assert isinstance(tool, MutableMapping)
+        poetry = tool["poetry"]
+        assert isinstance(poetry, MutableMapping)
+        deps = poetry["dependencies"]
+        assert isinstance(deps, MutableMapping)
+        core = deps["flext-core"]
+        assert isinstance(core, MutableMapping)
+        assert core["path"] == "../flext-core"
 
 
 class TestRewriteDepPaths:
@@ -984,7 +1001,9 @@ def test_rewrite_pep621_non_string_item(tmp_path: Path) -> None:
     """Test _rewrite_pep621 skips non-string items."""
     doc = tomlkit.document()
     doc["project"] = tomlkit.table()
-    doc["project"]["dependencies"] = [123]  # Non-string
+    project = doc["project"]
+    assert isinstance(project, MutableMapping)
+    project["dependencies"] = [123]  # Non-string
 
     changes = _rewrite_pep621(
         doc,
@@ -1014,8 +1033,10 @@ def test_rewrite_poetry_with_non_dict_value(tmp_path: Path) -> None:
     """Test _rewrite_poetry skips non-dict values."""
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
+    tool = doc["tool"]
+    assert isinstance(tool, MutableMapping)
     poetry = tomlkit.table()
-    doc["tool"]["poetry"] = poetry
+    tool["poetry"] = poetry
     deps = tomlkit.table()
     deps["flext-core"] = "string-value"  # Not a dict
     poetry["dependencies"] = deps
@@ -1089,8 +1110,10 @@ def test_rewrite_pep621_invalid_path_dep_regex(tmp_path: Path) -> None:
     # This tests line 111: continue when regex doesn't match
     doc = tomlkit.document()
     doc["project"] = tomlkit.table()
+    project = doc["project"]
+    assert isinstance(project, MutableMapping)
     # Create a dependency with @ but leading whitespace (breaks regex)
-    doc["project"]["dependencies"] = [
+    project["dependencies"] = [
         "  flext-core @ file://.flext-deps/flext-core"  # Leading whitespace breaks regex
     ]
     changes = _rewrite_pep621(

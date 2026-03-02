@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
@@ -40,8 +39,12 @@ def _build_migrator(project: im.ProjectInfo, base_mk: str) -> FlextInfraProjectM
         del workspace_root
         return r[list[im.ProjectInfo]].ok([project])
 
-    migrator._discovery = SimpleNamespace(discover_projects=_discover_projects)
-    migrator._generator = SimpleNamespace(generate=lambda: r[str].ok(base_mk))
+    discovery_mock = Mock()
+    discovery_mock.discover_projects = _discover_projects
+    migrator._discovery = discovery_mock  # type narrowing: Mock duck-types the service
+    generator_mock = Mock()
+    generator_mock.generate = lambda: r[str].ok(base_mk)
+    migrator._generator = generator_mock  # type narrowing: Mock duck-types the service
     return migrator
 
 
@@ -468,7 +471,7 @@ def test_migrator_makefile_write_failure(tmp_path: Path) -> None:
     # Patch write_text to fail on Makefile
     original_write = Path.write_text
 
-    def mock_write(self: Path, data: str, **kwargs: object) -> int:
+    def mock_write(self: Path, data: str, **kwargs: str | None) -> int:
         if "Makefile" in str(self):
             msg = "Makefile write failed"
             raise OSError(msg)
@@ -559,7 +562,7 @@ def test_migrator_gitignore_read_failure(tmp_path: Path) -> None:
     # Patch read_text to fail on .gitignore
     original_read = Path.read_text
 
-    def mock_read(self: Path, **kwargs: object) -> str:
+    def mock_read(self: Path, **kwargs: str | None) -> str:
         if ".gitignore" in str(self):
             msg = ".gitignore read failed"
             raise OSError(msg)
@@ -624,7 +627,7 @@ def test_migrator_pyproject_write_failure(tmp_path: Path) -> None:
     # Patch write_text to fail on pyproject.toml
     original_write = Path.write_text
 
-    def mock_write(self: Path, data: str, **kwargs: object) -> int:
+    def mock_write(self: Path, data: str, **kwargs: str | None) -> int:
         if "pyproject.toml" in str(self):
             msg = "pyproject write failed"
             raise OSError(msg)
@@ -738,6 +741,7 @@ def test_workspace_migrator_makefile_read_error(
     monkeypatch.setattr(Path, "read_text", mock_read)
     result = migrator._migrate_makefile(tmp_path, dry_run=False)
     assert result.is_failure
+    assert result.error is not None
     assert "read failed" in result.error.lower()
 
 

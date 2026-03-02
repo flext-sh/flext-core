@@ -177,7 +177,7 @@ class TestFlextTestsFiles:
         """Test creating multiple files from dictionary."""
         files: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {
             "file1": "content1",
             "file2": "content2",
@@ -197,7 +197,7 @@ class TestFlextTestsFiles:
         """Test creating file set with custom extension."""
         files: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         extension = ".md"
 
@@ -343,7 +343,7 @@ class TestFlextTestsFiles:
         """Test files classmethod context manager."""
         files: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {
             "file1": "content1",
             "file2": "content2",
@@ -364,7 +364,7 @@ class TestFlextTestsFiles:
         """Test files with custom extension."""
         files: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
 
         with FlextTestsFiles.files(files, ext=".md") as created:
@@ -375,7 +375,7 @@ class TestFlextTestsFiles:
         nested_dir = tmp_path / "nested" / "subdir"
         files: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
 
         with tf.files(files, directory=nested_dir) as created:

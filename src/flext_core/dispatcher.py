@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import Callable, MutableMapping
 from typing import Protocol, TypeAlias, runtime_checkable
 
 from flext_core import c, p, r, t
@@ -44,9 +44,13 @@ class ExecuteProtocol(Protocol):
         ...
 
 
-# Union of all handler types the dispatcher accepts (callables + protocol objects)
+# Union of all handler types the dispatcher accepts
+# Callables returning ResultLike (FlextResult) or PayloadValue, plus protocol objects
 _DispatchableHandler: TypeAlias = (
-    t.HandlerLike | DispatchMessageProtocol | HandleProtocol | ExecuteProtocol
+    Callable[..., p.ResultLike[t.PayloadValue] | t.PayloadValue | None]
+    | DispatchMessageProtocol
+    | HandleProtocol
+    | ExecuteProtocol
 )
 
 
@@ -209,7 +213,7 @@ class FlextDispatcher:
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables.
         """
-        result_raw: t.PayloadValue | None = None
+        result_raw: p.ResultLike[t.PayloadValue] | t.PayloadValue | None = None
         try:
             if isinstance(handler, DispatchMessageProtocol):
                 result_raw = handler.dispatch_message(message)
@@ -227,9 +231,8 @@ class FlextDispatcher:
                 )
 
             # Handle ResultLike returns natively
-            result_raw_any: t.PayloadValue | None = result_raw
-            if isinstance(result_raw_any, p.ResultLike):
-                result_like = result_raw_any
+            if isinstance(result_raw, p.ResultLike):
+                result_like = result_raw
                 if result_like.is_failure:
                     return r[t.PayloadValue].fail(
                         result_like.error or "Handler failed",

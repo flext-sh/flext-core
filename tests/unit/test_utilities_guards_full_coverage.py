@@ -12,6 +12,20 @@ from flext_core import c, m, r, t, u
 from pydantic import BaseModel
 
 
+def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
+    """Call is_type with arbitrary object for negative-case testing."""
+    fn: Callable[[object, str | type | tuple[type, ...]], bool] = getattr(
+        u.Guards, "is_type"
+    )
+    return fn(value, type_spec)
+
+
+def _is_flexible_value_obj(value: object) -> bool:
+    """Call is_flexible_value with arbitrary object for negative-case testing."""
+    fn: Callable[[object], bool] = getattr(u.Guards, "is_flexible_value")
+    return fn(value)
+
+
 class _Model(BaseModel):
     name: str = "x"
 
@@ -128,22 +142,22 @@ def test_is_flexible_value_covers_all_branches() -> None:
     assert u.Guards.is_flexible_value(datetime.now(UTC))
     assert u.Guards.is_flexible_value(["a", 1, None, datetime.now(UTC)])
     assert not u.Guards.is_flexible_value(["a", {"no": "nested"}])
-    assert u.Guards.is_flexible_value({1: "bad_key"})  # Source accepts int keys
+    assert _is_flexible_value_obj({1: "bad_key"})  # Source accepts int keys
     assert not u.Guards.is_flexible_value({"k": {"nested": "bad"}})
     assert u.Guards.is_flexible_value({"k": "v"})
-    assert not u.Guards.is_flexible_value(cast("object", set()))
+    assert not _is_flexible_value_obj(set())
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
 
-    assert not u.is_type(object(), "config")
-    assert not u.is_type(object(), "container")
-    assert not u.is_type(object(), "command_bus")
-    assert not u.is_type(object(), "handler")
-    assert u.is_type(_LoggerLike(), "logger")
-    assert u.is_type(r[int].ok(1), "result")
-    assert not u.is_type(object(), "service")
-    assert not u.is_type(object(), "middleware")
+    assert not _is_type_obj(object(), "config")
+    assert not _is_type_obj(object(), "container")
+    assert not _is_type_obj(object(), "command_bus")
+    assert not _is_type_obj(object(), "handler")
+    assert _is_type_obj(_LoggerLike(), "logger")
+    assert _is_type_obj(r[int].ok(1), "result")
+    assert not _is_type_obj(object(), "service")
+    assert not _is_type_obj(object(), "middleware")
 
     assert u.Guards.is_handler_callable(cast("t.GuardInputValue", _sample_handler))
 
@@ -152,7 +166,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     def _identity(value: t.GeneralValueType) -> t.GeneralValueType:
         return value
 
-    assert u.is_type(_identity, "callable")
+    assert _is_type_obj(_identity, "callable")
     assert u.is_type(3, "int")
     assert u.is_type([1, 2], "list_or_tuple")
     assert u.is_type("abc", "sized")
@@ -172,7 +186,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
 
 
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
-    assert not u.is_type(cast("object", set()), "string_non_empty")
+    assert not _is_type_obj(set(), "string_non_empty")
     assert not u.is_type("x", "unknown_type_name")
     assert u.is_type(3, (int, float))
     assert u.is_type("x", str)
@@ -186,15 +200,14 @@ def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
     # Verify is_type returns False when checking a plain object against protocol specs
-    plain_obj = object()
-    assert not u.is_type(plain_obj, "config")
-    assert not u.is_type(plain_obj, "context")
-    assert not u.is_type(plain_obj, "handler")
-    assert not u.is_type(plain_obj, "service")
-    assert not u.is_type(plain_obj, "middleware")
-    assert not u.is_type(plain_obj, "result")
-    assert not u.is_type(plain_obj, "command_bus")
-    assert not u.is_type(plain_obj, "logger")
+    assert not _is_type_obj(object(), "config")
+    assert not _is_type_obj(object(), "context")
+    assert not _is_type_obj(object(), "handler")
+    assert not _is_type_obj(object(), "service")
+    assert not _is_type_obj(object(), "middleware")
+    assert not _is_type_obj(object(), "result")
+    assert not _is_type_obj(object(), "command_bus")
+    assert not _is_type_obj(object(), "logger")
 
 
 def test_extract_mapping_or_none_branches() -> None:
@@ -274,7 +287,7 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
     # Source catches TypeError from issubclass and returns False
-    assert not u.is_type(_SomeType, "handler")
+    assert not _is_type_obj(_SomeType, "handler")
     assert not u.chk(1, not_in=[1, 2])
     assert not u.chk(1, gt=1)
     assert not u.chk(1, gte=2)
@@ -322,7 +335,7 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
 
     setattr(builtins, "issubclass", _explode)
     try:
-        assert not u.is_type(
+        assert not _is_type_obj(
             _Candidate,
             "handler",
         )  # Source catches TypeError, returns False
@@ -372,7 +385,7 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     monkeypatch.setattr(builtins, "issubclass", _patched_issubclass)
-    assert not u.is_type(_Candidate, "handler")
+    assert not _is_type_obj(_Candidate, "handler")
 
 
 def test_guards_issubclass_success_when_callable_is_patched(
@@ -389,4 +402,4 @@ def test_guards_issubclass_success_when_callable_is_patched(
         return original_callable(value)
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
-    assert u.is_type(_ModelSub, "handler") is False
+    assert _is_type_obj(_ModelSub, "handler") is False

@@ -14,7 +14,7 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager, suppress
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -442,7 +442,7 @@ class FlextMixins(FlextRuntime):
             if logger_result.is_success:
                 # Use .value directly - FlextResult never returns None on success
                 # Explicit annotation: get_typed returns r[FlextLogger] but Pyrefly tracks T generically
-                logger: FlextLogger = cast("FlextLogger", logger_result.value)
+                logger: FlextLogger = logger_result.value
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
@@ -866,9 +866,7 @@ class FlextMixins(FlextRuntime):
 
                 # Use partial to bind validator while passing data through flat_map
                 if result.is_success:
-                    result = validate_and_preserve(
-                        cast("t.ConfigMapValue", result.value), validator
-                    )
+                    result = validate_and_preserve(result.value, validator)
 
             return result
 

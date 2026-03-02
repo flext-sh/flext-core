@@ -6,10 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
+from flext_core import t
 from flext_infra import FlextInfraTomlService
+from tomlkit.items import Table
 
 
 class TestFlextInfraTomlService:
@@ -26,8 +29,12 @@ class TestFlextInfraTomlService:
         result = service.read(toml_file)
 
         assert result.is_success
-        assert result.value["section"]["key"] == "value"
-        assert result.value["section"]["number"] == 42
+        value = result.value
+        assert isinstance(value, Mapping)
+        section = value["section"]
+        assert isinstance(section, Mapping)
+        assert section["key"] == "value"
+        assert section["number"] == 42
 
     def test_read_nonexistent_file(self, tmp_path: Path) -> None:
         """Test reading a nonexistent file returns empty dict."""
@@ -64,7 +71,9 @@ class TestFlextInfraTomlService:
         assert result.is_success
         doc = result.value
         assert isinstance(doc, tomlkit.TOMLDocument)
-        assert doc["section"]["key"] == "value"
+        section = doc["section"]
+        assert isinstance(section, Mapping)
+        assert section["key"] == "value"
 
     def test_read_document_nonexistent_file(self, tmp_path: Path) -> None:
         """Test reading nonexistent file as document returns failure."""
@@ -91,7 +100,9 @@ class TestFlextInfraTomlService:
         """Test writing a dict payload to TOML file."""
         toml_file = tmp_path / "output.toml"
         service = FlextInfraTomlService()
-        payload = {"section": {"key": "value", "number": 42}}
+        payload: dict[str, t.ConfigMapValue] = {
+            "section": {"key": "value", "number": 42}
+        }
 
         result = service.write(toml_file, payload)
 
@@ -105,7 +116,7 @@ class TestFlextInfraTomlService:
         """Test write creates parent directories."""
         toml_file = tmp_path / "nested" / "deep" / "file.toml"
         service = FlextInfraTomlService()
-        payload = {"key": "value"}
+        payload: dict[str, t.ConfigMapValue] = {"key": "value"}
 
         result = service.write(toml_file, payload)
 
@@ -161,9 +172,12 @@ class TestFlextInfraTomlService:
         read_result = service.read_document(toml_file)
         assert read_result.is_success
         doc = read_result.value
+        assert isinstance(doc, tomlkit.TOMLDocument)
 
         # Update
-        doc["section"]["key"] = "new"
+        section = doc["section"]
+        assert isinstance(section, MutableMapping)
+        section["key"] = "new"
 
         # Write back
         write_result = service.write(toml_file, doc)
@@ -172,7 +186,11 @@ class TestFlextInfraTomlService:
         # Verify
         verify_result = service.read(toml_file)
         assert verify_result.is_success
-        assert verify_result.value["section"]["key"] == "new"
+        verify_value = verify_result.value
+        assert isinstance(verify_value, Mapping)
+        verify_section = verify_value["section"]
+        assert isinstance(verify_section, Mapping)
+        assert verify_section["key"] == "new"
 
     def test_value_differs_with_lists(self) -> None:
         """Test value_differs compares lists as strings."""
@@ -193,23 +211,25 @@ class TestFlextInfraTomlService:
     def test_build_table_with_nested_mapping(self, tmp_path: Path) -> None:
         """Test build_table creates nested tomlkit tables."""
         service = FlextInfraTomlService()
-        data = {
+        data: dict[str, t.ConfigMapValue] = {
             "section": {"key": "value", "nested": {"deep": "value"}},
             "simple": "scalar",
         }
         table = service.build_table(data)
-        assert isinstance(table, tomlkit.items.Table)
-        assert table["section"]["key"] == "value"
+        assert isinstance(table, Table)
+        section = table["section"]
+        assert isinstance(section, Mapping)
+        assert section["key"] == "value"
         assert table["simple"] == "scalar"
 
     def test_sync_mapping_adds_new_keys(self, tmp_path: Path) -> None:
         """Test sync_mapping adds missing keys to target."""
         service = FlextInfraTomlService()
-        target = {}
-        canonical = {"new_key": "new_value"}
-        added = []
-        updated = []
-        removed = []
+        target: dict[str, t.ConfigMapValue] = {}
+        canonical: dict[str, t.ConfigMapValue] = {"new_key": "new_value"}
+        added: list[str] = []
+        updated: list[str] = []
+        removed: list[str] = []
 
         service.sync_mapping(
             target,
@@ -227,11 +247,11 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_updates_changed_values(self, tmp_path: Path) -> None:
         """Test sync_mapping updates changed values."""
         service = FlextInfraTomlService()
-        target = {"key": "old_value"}
-        canonical = {"key": "new_value"}
-        added = []
-        updated = []
-        removed = []
+        target: dict[str, t.ConfigMapValue] = {"key": "old_value"}
+        canonical: dict[str, t.ConfigMapValue] = {"key": "new_value"}
+        added: list[str] = []
+        updated: list[str] = []
+        removed: list[str] = []
 
         service.sync_mapping(
             target,
@@ -249,11 +269,11 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_prunes_extras(self, tmp_path: Path) -> None:
         """Test sync_mapping removes extra keys when prune_extras=True."""
         service = FlextInfraTomlService()
-        target = {"keep": "value", "remove": "extra"}
-        canonical = {"keep": "value"}
-        added = []
-        updated = []
-        removed = []
+        target: dict[str, t.ConfigMapValue] = {"keep": "value", "remove": "extra"}
+        canonical: dict[str, t.ConfigMapValue] = {"keep": "value"}
+        added: list[str] = []
+        updated: list[str] = []
+        removed: list[str] = []
 
         service.sync_mapping(
             target,
@@ -271,11 +291,11 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_nested_with_prefix(self, tmp_path: Path) -> None:
         """Test sync_mapping with nested mappings and prefix."""
         service = FlextInfraTomlService()
-        target = {"section": {"key": "old"}}
-        canonical = {"section": {"key": "new"}}
-        added = []
-        updated = []
-        removed = []
+        target: dict[str, t.ConfigMapValue] = {"section": {"key": "old"}}
+        canonical: dict[str, t.ConfigMapValue] = {"section": {"key": "new"}}
+        added: list[str] = []
+        updated: list[str] = []
+        removed: list[str] = []
 
         service.sync_mapping(
             target,
@@ -287,17 +307,19 @@ class TestFlextInfraTomlService:
             removed=removed,
         )
 
-        assert target["section"]["key"] == "new"
+        section = target["section"]
+        assert isinstance(section, Mapping)
+        assert section["key"] == "new"
         assert "config.section.key" in updated
 
     def test_sync_mapping_skips_prune_when_false(self, tmp_path: Path) -> None:
         """Test sync_mapping skips pruning when prune_extras=False."""
         service = FlextInfraTomlService()
-        target = {"keep": "value", "extra": "stays"}
-        canonical = {"keep": "value"}
-        added = []
-        updated = []
-        removed = []
+        target: dict[str, t.ConfigMapValue] = {"keep": "value", "extra": "stays"}
+        canonical: dict[str, t.ConfigMapValue] = {"keep": "value"}
+        added: list[str] = []
+        updated: list[str] = []
+        removed: list[str] = []
 
         service.sync_mapping(
             target,
@@ -324,7 +346,7 @@ class TestFlextInfraTomlService:
         from flext_infra.toml_io import FlextInfraTomlService  # noqa: PLC0415
 
         service = FlextInfraTomlService()
-        nested = {"key": {"nested": "value"}}
+        nested: dict[str, t.ConfigMapValue] = {"key": {"nested": "value"}}
         result = service.build_table(nested)
         assert result is not None
 
@@ -335,11 +357,11 @@ class TestFlextInfraTomlService:
         the scalar should be replaced with a new table.
         """
         service = FlextInfraTomlService()
-        target = {"section": "scalar_value"}
-        canonical = {"section": {"nested": "value"}}
-        added = []
-        updated = []
-        removed = []
+        target: dict[str, t.ConfigMapValue] = {"section": "scalar_value"}
+        canonical: dict[str, t.ConfigMapValue] = {"section": {"nested": "value"}}
+        added: list[str] = []
+        updated: list[str] = []
+        removed: list[str] = []
 
         service.sync_mapping(
             target,
