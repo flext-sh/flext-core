@@ -91,7 +91,7 @@ class FlextTypes:
     type TYPE_CHECKING = bool
     type GuardInputValue = _ContainerValue
     type ConfigMapValue = _ContainerValue
-    type HandlerCallable = Callable[[ScalarValue], ScalarValue]
+    type HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
 
     type ConfigMap = FlextModelsContainers.ConfigMap
     type Dict = FlextModelsContainers.Dict

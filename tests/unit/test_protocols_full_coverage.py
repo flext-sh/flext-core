@@ -16,7 +16,6 @@ from flext_core import c, m, p, r, t, u
 @runtime_checkable
 class _NamedProtocol(Protocol):
     def _protocol_name(self) -> str: ...
-    def _protocol_name(self) -> str: ...
 
 
 class _SettingsModel(p.ProtocolSettings, _NamedProtocol):
