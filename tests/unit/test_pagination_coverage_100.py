@@ -517,7 +517,7 @@ class TestuPaginationExtractPaginationConfig:
         # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
-            result = u.Pagination.extract_pagination_config(config)
+            u.Pagination.extract_pagination_config(config)
         else:
             pytest.skip("Config is not BaseModel or Mapping")
 
