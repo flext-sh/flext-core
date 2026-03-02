@@ -72,15 +72,7 @@ class FlextUtilitiesCache:
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
-        """Get logger instance using FlextRuntime.
-
-        Business Rule: Logger access through FlextRuntime avoids circular
-        imports between cache utilities and logging modules.
-
-        Returns:
-            Structlog logger instance with all logging methods.
-
-        """
+        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod

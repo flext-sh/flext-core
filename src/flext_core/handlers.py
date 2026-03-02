@@ -15,15 +15,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType
 from typing import ClassVar, override
 
 from flext_core import c, e, m, p, r, t, u, x
-
-_module_logger = logging.getLogger(__name__)
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -83,6 +80,7 @@ class FlextHandlers[MessageT_contra, ResultT](
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
     _config_model: m.Handler
+    # self.logger inherited from FlextMixins (x)
 
     _HANDLER_TYPE_LITERALS: ClassVar[
         Mapping[c.Cqrs.HandlerType, c.Cqrs.HandlerTypeLiteral]
@@ -279,7 +277,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     AttributeError,
                     RuntimeError,
                 ) as exc:
-                    _module_logger.debug(
+                    self.logger.debug(
                         "Callable handler execution failed",
                         exc_info=exc,
                     )
@@ -653,7 +651,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             return result
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
-            _module_logger.warning("Critical handler pipeline failure", exc_info=exc)
+            self.logger.warning("Critical handler pipeline failure", exc_info=exc)
             # Record failure metrics
             self._record_execution_metrics(success=False, error=str(exc))
             error_msg = f"Critical handler failure: {exc}"
@@ -911,22 +909,4 @@ class FlextHandlers[MessageT_contra, ResultT](
 h = FlextHandlers
 
 
-def _handler_type_to_literal(
-    handler_type: c.Cqrs.HandlerType,
-) -> c.Cqrs.HandlerTypeLiteral:
-    match handler_type:
-        case c.Cqrs.HandlerType.COMMAND:
-            return "command"
-        case c.Cqrs.HandlerType.QUERY:
-            return "query"
-        case c.Cqrs.HandlerType.EVENT:
-            return "event"
-        case c.Cqrs.HandlerType.OPERATION:
-            return "operation"
-        case c.Cqrs.HandlerType.SAGA:
-            return "saga"
-    msg = f"Unsupported handler type: {handler_type}"
-    raise ValueError(msg)
-
-
-__all__ = ["FlextHandlers", "_handler_type_to_literal", "h"]
+__all__ = ["FlextHandlers", "h"]

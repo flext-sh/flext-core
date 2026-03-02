@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, cast, override
+from typing import Self, TypeGuard, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -659,7 +659,8 @@ class FlextContainer(p.DI):
         # Safe to instantiate without triggering container creation
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            _ = self.register("command_bus", cast("t.RegisterableService", dispatcher))
+            if self._is_registerable_service(dispatcher):
+                _ = self.register("command_bus", dispatcher)
 
     @override
     def configure(

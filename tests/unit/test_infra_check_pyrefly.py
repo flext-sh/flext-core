@@ -30,6 +30,8 @@ class TestFlextInfraConfigFixer:
         result = fixer.execute()
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "Use run()" in result.error
 
     def test_run_with_empty_projects(self, tmp_path: Path) -> None:
@@ -85,6 +87,7 @@ class TestFlextInfraConfigFixer:
         result = fixer.process_file(missing_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "failed to read" in result.error
 
     def test_process_file_with_valid_toml(self, tmp_path: Path) -> None:
@@ -107,6 +110,7 @@ class TestFlextInfraConfigFixer:
         result = fixer.process_file(pyproject)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "failed to parse" in result.error
 
     def test_process_file_with_dry_run(self, tmp_path: Path) -> None:

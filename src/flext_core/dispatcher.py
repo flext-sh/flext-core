@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import MutableMapping
 from typing import Protocol, runtime_checkable
 
 from flext_core import c, p, r, t
+from flext_core.loggings import FlextLogger
 
 
 @runtime_checkable
@@ -54,7 +54,7 @@ class FlextDispatcher:
     def __init__(self) -> None:
         """Initialize dispatcher."""
         super().__init__()
-        self._logger: logging.Logger = logging.getLogger(__name__)
+        self._logger = FlextLogger.create_module_logger(__name__)
 
         self._handlers: MutableMapping[str, t.HandlerLike] = {}
         self._auto_handlers: list[t.HandlerLike] = []
@@ -91,7 +91,7 @@ class FlextDispatcher:
             route_name = self._resolve_route(has_event_type)
         elif callable(has_can_handle):
             self._auto_handlers.append(handler)
-            self._logger.info("Registered auto-discovery handler: %s", handler)
+            self._logger.info("Registered auto-discovery handler", handler=str(handler))
             return r[bool].ok(value=True)
         else:
             return r[bool].fail(
@@ -102,10 +102,10 @@ class FlextDispatcher:
             if route_name not in self._event_subscribers:
                 self._event_subscribers[route_name] = []
             self._event_subscribers[route_name].append(handler)
-            self._logger.info("Registered event subscriber for %s", route_name)
+            self._logger.info("Registered event subscriber", route=route_name)
         else:
             self._handlers[route_name] = handler
-            self._logger.info("Registered handler for %s", route_name)
+            self._logger.info("Registered handler", route=route_name)
 
         return r[bool].ok(value=True)
 
@@ -236,7 +236,7 @@ class FlextDispatcher:
             return r[t.PayloadValue].ok(result_raw)
 
         except Exception as exc:
-            self._logger.exception("Handler execution failed for %s", route_name)
+            self._logger.exception("Handler execution failed", route=route_name)
             return r[t.PayloadValue].fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,

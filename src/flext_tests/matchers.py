@@ -131,7 +131,7 @@ def _check_has_lacks(
                 # Handle RootModel (e.g. ConfigMap) by extracting root dict
                 if isinstance(target_raw, RootModel):
                     target_raw = target_raw.root
-                if not isinstance(target_raw, Mapping | str | list):
+                if not isinstance(target_raw, (Mapping, str, list)):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -177,7 +177,7 @@ def _check_has_lacks(
                 # Handle RootModel (e.g. ConfigMap) by extracting root dict
                 if isinstance(target_raw_2, RootModel):
                     target_raw_2 = target_raw_2.root
-                if not isinstance(target_raw_2, Mapping | str | list):
+                if not isinstance(target_raw_2, (Mapping, str, list)):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
@@ -246,7 +246,7 @@ class FlextTestsMatchers:
     @staticmethod
     def ok[TResult](
         result: r[TResult],
-        **kwargs: str | float | bool | None,
+        **kwargs: t.Tests.Matcher.MatcherKwargValue,
     ) -> TResult | t.Tests.PayloadValue:
         """Enhanced assertion for FlextResult success with optional value validation.
 
@@ -438,7 +438,7 @@ class FlextTestsMatchers:
         # Deep matching (delegate to u.Tests.DeepMatch)
         if params.deep is not None:
             # Type narrow for DeepMatch.match
-            if not isinstance(result_value, BaseModel | Mapping):
+            if not isinstance(result_value, (BaseModel, Mapping)):
                 raise AssertionError(
                     params.msg
                     or f"Deep matching requires dict or model, got {type(result_value).__name__}",
@@ -488,7 +488,7 @@ class FlextTestsMatchers:
     @staticmethod
     def fail[TResult](
         result: r[TResult],
-        **kwargs: str | float | bool | None,
+        **kwargs: t.Tests.Matcher.MatcherKwargValue,
     ) -> str:
         r"""Enhanced assertion for FlextResult failure with optional error validation.
 
@@ -644,7 +644,7 @@ class FlextTestsMatchers:
     @staticmethod
     def that(
         value: object,
-        **kwargs: str | float | bool | None,
+        **kwargs: t.Tests.Matcher.MatcherKwargValue,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 

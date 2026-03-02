@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, override
+from typing import override
 
 from flext_core import FlextDispatcher, FlextService, m, r, t
 from pydantic import Field
@@ -33,7 +33,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class CheckCommand(_BaseInfraCommand):
         """Command to run workspace validation and linting checks."""
 
-        command_type: Literal["flext_infra.check"] = "flext_infra.check"
+        command_type: str = "flext_infra.check"
         action: str = Field(
             default="validate",
             description="Check action (validate, fix, report)",
@@ -46,7 +46,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class BaseMkCommand(_BaseInfraCommand):
         """Command to generate or update base.mk templates."""
 
-        command_type: Literal["flext_infra.basemk"] = "flext_infra.basemk"
+        command_type: str = "flext_infra.basemk"
         action: str = Field(
             default="generate",
             description="BaseMk action (generate, validate, sync)",
@@ -59,7 +59,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class WorkspaceCommand(_BaseInfraCommand):
         """Command to manage workspace detection, sync, and orchestration."""
 
-        command_type: Literal["flext_infra.workspace"] = "flext_infra.workspace"
+        command_type: str = "flext_infra.workspace"
         action: str = Field(
             default="detect",
             description="Workspace action (detect, sync, migrate, orchestrate)",
@@ -72,7 +72,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class ReleaseCommand(_BaseInfraCommand):
         """Command to orchestrate release operations."""
 
-        command_type: Literal["flext_infra.release"] = "flext_infra.release"
+        command_type: str = "flext_infra.release"
         action: str = Field(
             default="plan",
             description="Release action (plan, execute, validate)",
@@ -85,7 +85,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class DocsCommand(_BaseInfraCommand):
         """Command to audit, generate, and validate documentation."""
 
-        command_type: Literal["flext_infra.docs"] = "flext_infra.docs"
+        command_type: str = "flext_infra.docs"
         action: str = Field(
             default="audit",
             description="Docs action (audit, generate, validate, build)",
@@ -98,7 +98,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class GithubCommand(_BaseInfraCommand):
         """Command to manage GitHub workflows and PR automation."""
 
-        command_type: Literal["flext_infra.github"] = "flext_infra.github"
+        command_type: str = "flext_infra.github"
         action: str = Field(
             default="lint",
             description="GitHub action (lint, sync, pr-manage)",
@@ -111,7 +111,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class CoreCommand(_BaseInfraCommand):
         """Command to run infrastructure validators and diagnostics."""
 
-        command_type: Literal["flext_infra.core"] = "flext_infra.core"
+        command_type: str = "flext_infra.core"
         action: str = Field(
             default="validate",
             description="Core action (validate, diagnose, inventory)",
@@ -124,7 +124,7 @@ class FlextInfraDispatcher(FlextService[bool]):
     class DepsCommand(_BaseInfraCommand):
         """Command to detect, sync, and modernize dependencies."""
 
-        command_type: Literal["flext_infra.deps"] = "flext_infra.deps"
+        command_type: str = "flext_infra.deps"
         action: str = Field(
             default="detect",
             description="Deps action (detect, sync, modernize)",

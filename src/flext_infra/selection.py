@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 
@@ -29,6 +30,7 @@ class FlextInfraProjectSelector(FlextService[list[m.ProjectInfo]]):
         """Initialize the project selector."""
         self._discovery = discovery or FlextInfraDiscoveryService()
 
+    @override
     def execute(self) -> FlextResult[list[m.ProjectInfo]]:
         """Execute project selection (default: empty list).
 

@@ -204,7 +204,7 @@ def test_loggings_instance_and_message_format_paths(
 
     logger.trace("%s %s", "a")
 
-    monkeypatch.setattr(logger, "logger", object())
+    monkeypatch.setattr(logger, "_structlog_instance", object())
     logger.trace("x")
 
     assert FlextLogger._format_log_message("%s %s", "a") != ""
@@ -273,7 +273,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
         "x",
         cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
-    logger_boom.logger = cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+    logger_boom._structlog_instance = cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
     monkeypatch.setattr(
         logger_boom.logger,
         "info",

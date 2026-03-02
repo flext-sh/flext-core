@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 from flext_core.constants import KNOWN_VERBS
@@ -42,6 +43,7 @@ class FlextInfraReportingService(FlextService[Path]):
     Structurally satisfies ``InfraProtocols.ReporterProtocol``.
     """
 
+    @override
     def execute(self) -> FlextResult[Path]:
         """Execute reporting (default: empty path).
 

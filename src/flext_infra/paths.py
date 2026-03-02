@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 
@@ -75,6 +76,7 @@ class FlextInfraPathResolver(FlextService[Path]):
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
 
+    @override
     def execute(self) -> FlextResult[Path]:
         """Execute the service (required by FlextService base class)."""
         return r[Path].ok(Path.cwd())

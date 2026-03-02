@@ -292,6 +292,8 @@ class TestFlextInfraDocValidator:
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = validator.validate(tmp_path)
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "Scope error" in result.error
 
     def test_validate_scope_with_adr_check_failure(

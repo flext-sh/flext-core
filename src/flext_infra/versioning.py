@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 
@@ -26,6 +27,7 @@ class FlextInfraVersioningService(FlextService[str]):
     project version management.
     """
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Execute versioning (default: empty string).
 

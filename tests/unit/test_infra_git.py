@@ -37,6 +37,8 @@ class TestFlextInfraGitService:
         result = service.current_branch(tmp_path)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "not a git repo" in result.error
 
     def test_tag_exists_true(self, tmp_path: Path) -> None:

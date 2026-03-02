@@ -164,6 +164,8 @@ def test_migrator_workspace_root_not_exists(tmp_path: Path) -> None:
     migrator = FlextInfraProjectMigrator()
     result = migrator.migrate(workspace_root=tmp_path / "nonexistent", dry_run=False)
     assert result.is_failure
+    assert isinstance(result.error, str)
+    assert isinstance(result.error, str)
     assert "does not exist" in result.error
 
 
@@ -177,6 +179,7 @@ def test_migrator_discovery_failure(tmp_path: Path) -> None:
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "Discovery failed" in result.error
 
 

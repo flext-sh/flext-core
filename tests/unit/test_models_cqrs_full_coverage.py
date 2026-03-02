@@ -101,6 +101,6 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
 
 
 def test_flext_message_type_alias_adapter() -> None:
-    adapter: TypeAdapter[m.Cqrs.FlextMessage] = TypeAdapter(m.Cqrs.FlextMessage)
+    adapter: TypeAdapter[m.Message] = TypeAdapter(m.Message)
     parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
-    assert isinstance(parsed, m.Cqrs.Command)
+    assert isinstance(parsed, m.Command)

@@ -1335,6 +1335,8 @@ class TestEnsureSymlinkEdgeCases:
                 target, source
             )
             assert result.is_failure
+            assert isinstance(result.error, str)
+            assert isinstance(result.error, str)
             assert "failed to ensure symlink" in result.error
 
 
@@ -1353,6 +1355,7 @@ class TestEnsureCheckoutEdgeCases:
                 dep_path, "https://github.com/test/repo.git", "main"
             )
             assert result.is_failure
+            assert isinstance(result.error, str)
             assert "cleanup failed" in result.error
 
 

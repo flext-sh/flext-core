@@ -10,7 +10,7 @@ import shutil
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import FlextLogger, r
+from flext_core import FlextLogger, r, t
 
 from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, m, output
 from flext_infra.constants import c
@@ -280,7 +280,13 @@ class FlextInfraInternalDependencySyncService:
 
         tool = data.get("tool")
         poetry = tool.get("poetry") if isinstance(tool, dict) else None
-        deps = poetry.get("dependencies") if isinstance(poetry, dict) else {}
+        empty_deps: dict[str, t.ConfigMapValue] = {}
+        deps_raw = (
+            poetry.get("dependencies") if isinstance(poetry, dict) else empty_deps
+        )
+        deps: dict[str, t.ConfigMapValue] = (
+            deps_raw if isinstance(deps_raw, dict) else {}
+        )
         if not isinstance(deps, dict):
             deps = {}
 
@@ -297,11 +303,12 @@ class FlextInfraInternalDependencySyncService:
             result[dep_name] = project_root / ".flext-deps" / repo_name
 
         project_obj = data.get("project")
-        project_deps = (
-            project_obj.get("dependencies", []) if isinstance(project_obj, dict) else []
+        project_deps_raw = (
+            project_obj.get("dependencies") if isinstance(project_obj, dict) else None
         )
-        if not isinstance(project_deps, list):
-            project_deps = []
+        project_deps: list[t.ConfigMapValue] = (
+            project_deps_raw if isinstance(project_deps_raw, list) else []
+        )
 
         for dep in project_deps:
             if not isinstance(dep, str) or " @ " not in dep:

@@ -91,6 +91,8 @@ class TestFlextInfraDiscoveryService:
         result = service.discover_projects(nonexistent)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "discovery failed" in result.error
 
     def test_find_all_pyproject_files_happy_path(
@@ -255,6 +257,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         monkeypatch.setattr(Path, "rglob", mock_rglob)
         result = service.find_all_pyproject_files(tmp_path)
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "pyproject file scan failed" in result.error
 
     def test_submodule_names_with_gitmodules_oserror(

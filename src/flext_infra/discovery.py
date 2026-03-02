@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 
@@ -24,6 +25,7 @@ class FlextInfraDiscoveryService(FlextService[list[m.ProjectInfo]]):
     Structurally satisfies ``InfraProtocols.DiscoveryProtocol``.
     """
 
+    @override
     def execute(self) -> FlextResult[list[m.ProjectInfo]]:
         """Execute discovery of all projects in workspace.
 

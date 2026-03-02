@@ -31,6 +31,8 @@ class TestFlextInfraWorkspaceChecker:
         result = checker.execute()
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "Use run()" in result.error or "Use run_projects()" in result.error
 
     def test_resolve_gates_with_valid_gates(self) -> None:

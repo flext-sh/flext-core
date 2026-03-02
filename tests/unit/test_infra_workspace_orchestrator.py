@@ -122,6 +122,8 @@ def test_orchestrator_handles_runner_exception(
 
     result = orchestrator.orchestrate(projects, verb)
     assert result.is_failure
+    assert isinstance(result.error, str)
+    assert isinstance(result.error, str)
     assert "Orchestration failed" in result.error
 
 

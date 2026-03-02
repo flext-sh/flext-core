@@ -1262,4 +1262,4 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
 
 
 tt = FlextTestsFactories
-__all__ = ["FlextTestsFactories", "f", "tt"]
+__all__ = ["FlextTestsFactories", "tt"]

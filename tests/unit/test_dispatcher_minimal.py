@@ -1,19 +1,18 @@
 """Minimal dispatcher flow coverage with real handlers (no mocks).
 
 Tests the strict FlextDispatcher API:
-- register_handler(handler: t.HandlerType) — handler must expose
+- register_handler(handler: t.HandlerLike) — handler must expose
   message_type, event_type, or can_handle.
-- dispatch(message: m.Message) — accepts only CQRS messages.
+- dispatch(message: p.Routable) — accepts only CQRS messages.
 """
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextDispatcher, c, m, t
 
 # ---------------------------------------------------------------------------
-# Test handlers
+# Test handlers — all must satisfy t.HandlerLike (Callable[..., ...])
+# by implementing __call__; keep handle() for HandleProtocol compatibility.
 # ---------------------------------------------------------------------------
 
 
@@ -22,8 +21,11 @@ class EchoHandler:
 
     message_type = "EchoRoute"
 
-    def handle(self, msg: m.Cqrs.Command) -> str:
+    def handle(self, msg: m.Command) -> str:
         return f"handled:{msg.command_type}"
+
+    def __call__(self, msg: m.Command) -> str:
+        return self.handle(msg)
 
 
 class ExplodingHandler:
@@ -31,12 +33,15 @@ class ExplodingHandler:
 
     message_type = "ExplodeRoute"
 
-    def handle(self, _: m.Cqrs.Command) -> str:
+    def handle(self, _: m.Command) -> str:
         msg = "boom"
         raise RuntimeError(msg)
 
+    def __call__(self, msg: m.Command) -> str:
+        return self.handle(msg)
 
-class AutoCommand(m.Cqrs.Command):
+
+class AutoCommand(m.Command):
     """Auto-routed command fixture."""
 
     command_type: str = "AutoRoute"
@@ -52,6 +57,9 @@ class AutoDiscoveryHandler:
     def handle(self, msg: AutoCommand) -> str:
         return f"auto:{msg.command_type}"
 
+    def __call__(self, msg: AutoCommand) -> str:
+        return self.handle(msg)
+
 
 class EventSubscriber:
     """Event handler for publish() testing."""
@@ -60,10 +68,13 @@ class EventSubscriber:
 
     def __init__(self) -> None:
         """Initialize received events list."""
-        self.received: list[m.Cqrs.Event] = []
+        self.received: list[m.Event] = []
 
-    def handle(self, event: m.Cqrs.Event) -> None:
+    def handle(self, event: m.Event) -> None:
         self.received.append(event)
+
+    def __call__(self, event: m.Event) -> None:
+        self.handle(event)
 
 
 # ---------------------------------------------------------------------------
@@ -74,14 +85,14 @@ class EventSubscriber:
 def test_register_handler_with_message_type() -> None:
     """Handler with message_type attribute registers successfully."""
     dispatcher = FlextDispatcher()
-    res = dispatcher.register_handler(cast("t.HandlerType", EchoHandler()))
+    res = dispatcher.register_handler(EchoHandler())
     assert res.is_success
 
 
 def test_register_handler_with_can_handle() -> None:
     """Handler with can_handle registers as auto-discovery handler."""
     dispatcher = FlextDispatcher()
-    res = dispatcher.register_handler(cast("t.HandlerType", AutoDiscoveryHandler()))
+    res = dispatcher.register_handler(AutoDiscoveryHandler())
     assert res.is_success
 
 
@@ -90,10 +101,12 @@ def test_register_handler_without_route_fails() -> None:
     dispatcher = FlextDispatcher()
 
     class BareHandler:
-        def handle(self, msg: object) -> str:
+        """Callable handler lacking routing attributes — should fail registration."""
+
+        def __call__(self, msg: t.GeneralValueType) -> t.GeneralValueType:
             return "bare"
 
-    res = dispatcher.register_handler(cast("t.HandlerType", BareHandler()))
+    res = dispatcher.register_handler(BareHandler())
     assert res.is_failure
     assert "must expose" in (res.error or "")
 
@@ -102,7 +115,7 @@ def test_register_handler_as_event_subscriber() -> None:
     """Handler registered with is_event=True goes to event subscribers."""
     dispatcher = FlextDispatcher()
     subscriber = EventSubscriber()
-    res = dispatcher.register_handler(cast("t.HandlerType", subscriber), is_event=True)
+    res = dispatcher.register_handler(subscriber, is_event=True)
     assert res.is_success
 
 
@@ -114,10 +127,10 @@ def test_register_handler_as_event_subscriber() -> None:
 def test_dispatch_command_success() -> None:
     """Dispatch a Command to its registered handler."""
     dispatcher = FlextDispatcher()
-    dispatcher.register_handler(cast("t.HandlerType", EchoHandler()))
+    dispatcher.register_handler(EchoHandler())
 
-    cmd = m.Cqrs.Command(command_type="EchoRoute")
-    result = dispatcher.dispatch(cast("m.Message", cmd))
+    cmd = m.Command(command_type="EchoRoute")
+    result = dispatcher.dispatch(cmd)
     assert result.is_success
     assert result.value == "handled:EchoRoute"
 
@@ -125,8 +138,8 @@ def test_dispatch_command_success() -> None:
 def test_dispatch_no_handler_fails() -> None:
     """Dispatch with no matching handler returns failure."""
     dispatcher = FlextDispatcher()
-    cmd = m.Cqrs.Command(command_type="UnknownRoute")
-    result = dispatcher.dispatch(cast("m.Message", cmd))
+    cmd = m.Command(command_type="UnknownRoute")
+    result = dispatcher.dispatch(cmd)
     assert result.is_failure
     assert result.error_code == c.Errors.COMMAND_HANDLER_NOT_FOUND
 
@@ -134,10 +147,10 @@ def test_dispatch_no_handler_fails() -> None:
 def test_dispatch_handler_exception_returns_failure() -> None:
     """Handler that raises returns a failure result."""
     dispatcher = FlextDispatcher()
-    dispatcher.register_handler(cast("t.HandlerType", ExplodingHandler()))
+    dispatcher.register_handler(ExplodingHandler())
 
-    cmd = m.Cqrs.Command(command_type="ExplodeRoute")
-    result = dispatcher.dispatch(cast("m.Message", cmd))
+    cmd = m.Command(command_type="ExplodeRoute")
+    result = dispatcher.dispatch(cmd)
     assert result.is_failure
     assert "boom" in (result.error or "")
     assert result.error_code == c.Errors.COMMAND_PROCESSING_FAILED
@@ -146,23 +159,24 @@ def test_dispatch_handler_exception_returns_failure() -> None:
 def test_dispatch_auto_discovery_handler() -> None:
     """Auto-discovery handler is found via can_handle fallback."""
     dispatcher = FlextDispatcher()
-    dispatcher.register_handler(cast("t.HandlerType", AutoDiscoveryHandler()))
+    dispatcher.register_handler(AutoDiscoveryHandler())
 
     cmd = AutoCommand()
-    result = dispatcher.dispatch(cast("m.Message", cmd))
+    result = dispatcher.dispatch(cmd)
     assert result.is_success
     assert result.value == "auto:AutoRoute"
 
 
-def test_dispatch_non_callable_handler_fails() -> None:
-    """A non-callable entry in _handlers should yield failure."""
+def test_dispatch_after_handler_removal_fails() -> None:
+    """Dispatching when handler route is cleared fails gracefully."""
     dispatcher = FlextDispatcher()
-    dispatcher._handlers["BadRoute"] = cast("t.HandlerType", "not_callable")
+    dispatcher.register_handler(EchoHandler())
+    dispatcher._handlers.clear()
 
-    cmd = m.Cqrs.Command(command_type="BadRoute")
-    result = dispatcher.dispatch(cast("m.Message", cmd))
+    cmd = m.Command(command_type="EchoRoute")
+    result = dispatcher.dispatch(cmd)
     assert result.is_failure
-    assert "not callable" in (result.error or "")
+    assert result.error_code == c.Errors.COMMAND_HANDLER_NOT_FOUND
 
 
 # ---------------------------------------------------------------------------
@@ -174,13 +188,13 @@ def test_publish_event_to_subscriber() -> None:
     """Published event is delivered to registered subscriber."""
     dispatcher = FlextDispatcher()
     subscriber = EventSubscriber()
-    dispatcher.register_handler(cast("t.HandlerType", subscriber), is_event=True)
+    dispatcher.register_handler(subscriber, is_event=True)
 
-    event = m.Cqrs.Event(
+    event = m.Event(
         event_type="OrderCreated",
         aggregate_id="order-1",
     )
-    res = dispatcher.publish(cast("m.Message", event))
+    res = dispatcher.publish(event)
     assert res.is_success
     assert len(subscriber.received) == 1
 
@@ -188,9 +202,9 @@ def test_publish_event_to_subscriber() -> None:
 def test_publish_no_subscribers_succeeds() -> None:
     """Publishing with no subscribers succeeds silently."""
     dispatcher = FlextDispatcher()
-    event = m.Cqrs.Event(
+    event = m.Event(
         event_type="NobodyListening",
         aggregate_id="agg-1",
     )
-    res = dispatcher.publish(cast("m.Message", event))
+    res = dispatcher.publish(event)
     assert res.is_success

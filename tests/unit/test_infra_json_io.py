@@ -53,6 +53,8 @@ class TestFlextInfraJsonService:
         result = service.read(json_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "JSON read error" in result.error
 
     def test_read_non_object_root(self, tmp_path: Path) -> None:
@@ -64,6 +66,7 @@ class TestFlextInfraJsonService:
         result = service.read(json_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "must be object" in result.error
 
     def test_write_dict_payload(self, tmp_path: Path) -> None:

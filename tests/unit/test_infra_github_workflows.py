@@ -286,6 +286,8 @@ class TestSyncProject:
                 apply=True,
             )
             assert result.is_failure
+            assert isinstance(result.error, str)
+            assert isinstance(result.error, str)
             assert "sync error" in result.error
 
 

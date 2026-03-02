@@ -1170,7 +1170,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_log_result(
         *,
-        result: p.Result[bool] | FlextRuntime.RuntimeResult[bool],
+        result: r[bool] | p.Result[bool] | FlextRuntime.RuntimeResult[bool],
         logger: FlextLogger,
         fallback_message: str,
         kwargs: m.ConfigMap,

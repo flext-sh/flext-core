@@ -368,4 +368,6 @@ class TestFlextInfraStubSupplyChain:
         ):
             result = chain.analyze(project_dir, tmp_path)
             assert result.is_failure
+            assert isinstance(result.error, str)
+            assert isinstance(result.error, str)
             assert "stub analysis failed" in result.error

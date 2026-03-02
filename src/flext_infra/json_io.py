@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r, t
 from pydantic import BaseModel
@@ -93,6 +94,7 @@ class FlextInfraJsonService(FlextService[bool]):
             return r[bool].fail(f"JSON write error: {exc}")
         return r[bool].ok(True)
 
+    @override
     def execute(self) -> FlextResult[bool]:
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)

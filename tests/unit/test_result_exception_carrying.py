@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from collections.abc import Sized
 from flext_core import m, p, r
 from flext_core.exceptions import e
 from returns.io import IO, IOSuccess
@@ -140,11 +141,18 @@ class TestSafeCarriesException:
     def test_safe_captures_type_error(self) -> None:
         """Verify @safe captures TypeError."""
 
+        class _BrokenSized:
+            """Test helper: implements __len__ but raises TypeError."""
+
+            def __len__(self) -> int:
+                msg = "no length"
+                raise TypeError(msg)
+
         @r.safe
-        def get_length(obj: object) -> int:
+        def get_length(obj: Sized) -> int:
             return len(obj)
 
-        result: r[int] = get_length(42)
+        result: r[int] = get_length(_BrokenSized())
 
         assert result.is_failure
         assert result.exception is not None
@@ -383,7 +391,7 @@ class TestToIOChainsException:
     def test_to_io_chains_exception(self) -> None:
         """Verify to_io() raises on failure."""
         exc = ValueError("conversion error")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
 
         with pytest.raises(e.ValidationError):
             result.to_io()
@@ -395,7 +403,7 @@ class TestErrorOrPatternUnchanged:
     def test_error_or_pattern_unchanged(self) -> None:
         """Verify .error or 'fallback' pattern still works (31 sites)."""
         result_success = r[int].ok(42)
-        result_failure = r[int].fail("error message")
+        result_failure: r[int] = r[int].fail("error message")
 
         error_success = result_success.error or "fallback"
         error_failure = result_failure.error or "fallback"
@@ -406,7 +414,7 @@ class TestErrorOrPatternUnchanged:
     def test_error_or_pattern_with_exception(self) -> None:
         """Verify .error or pattern works with exception carrying."""
         exc = RuntimeError("runtime error")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
 
         error_msg = result.error or "fallback"
 
@@ -466,7 +474,7 @@ class TestMonadicOperationsUnchanged:
     def test_recover_with_exception(self) -> None:
         """Verify recover() works with exception carrying."""
         exc = RuntimeError("recovery needed")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         recovered: r[int] = result.recover(lambda e: 0)
 
         assert recovered.is_success
@@ -475,8 +483,8 @@ class TestMonadicOperationsUnchanged:
     def test_fold_with_exception(self) -> None:
         """Verify fold() works with exception carrying."""
         exc = ValueError("fold error")
-        result = r[int].fail("error", exception=exc)
-        folded: r[str] = result.fold(
+        result: r[int] = r[int].fail("error", exception=exc)
+        folded: str = result.fold(
             on_failure=lambda e: f"failed: {e}",
             on_success=lambda v: f"success: {v}",
         )
@@ -486,7 +494,7 @@ class TestMonadicOperationsUnchanged:
     def test_tap_with_exception(self) -> None:
         """Verify tap() works with exception carrying."""
         exc = RuntimeError("tap error")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         side_effect_called = False
 
         def side_effect(x: int) -> None:
@@ -502,7 +510,7 @@ class TestMonadicOperationsUnchanged:
     def test_tap_error_with_exception(self) -> None:
         """Verify tap_error() works with exception carrying."""
         exc = ValueError("tap_error test")
-        result = r[int].fail("error", exception=exc)
+        result: r[int] = r[int].fail("error", exception=exc)
         side_effect_called = False
 
         def side_effect(e: str) -> None:

@@ -83,17 +83,9 @@ class FlextUtilitiesConfiguration:
     """
 
     @staticmethod
-    def _get_logger() -> logging.Logger:
-        """Get logger instance using FlextRuntime.
-
-        Business Rule: Logger access through FlextRuntime avoids circular
-        imports between configuration and logging modules.
-
-        Returns:
-            Structlog logger instance with all standard logging methods.
-
-        """
-        return logging.getLogger(__name__)
+    def _get_logger() -> p.Log.StructlogLogger:
+        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def resolve_env_file() -> str | None:

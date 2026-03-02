@@ -12,8 +12,10 @@ from __future__ import annotations
 import tomllib
 from collections.abc import MutableMapping
 from pathlib import Path
+from typing import override
 
 import tomlkit
+import tomlkit.exceptions
 from flext_core import FlextResult, FlextService, r, t
 from tomlkit.items import Table
 
@@ -219,6 +221,7 @@ class FlextInfraTomlService(FlextService[bool]):
             del target[key]
             removed.append(path)
 
+    @override
     def execute(self) -> FlextResult[bool]:
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)

@@ -152,7 +152,7 @@ class FlextRegistry(s[bool]):
                 raise TypeError(msg)
 
     @override
-    def execute(self) -> r[bool]:
+    def execute(self) -> r[bool]:  # pyrefly: ignore[bad-override]
         """Validate registry is properly initialized.
 
         Returns:
@@ -233,7 +233,11 @@ class FlextRegistry(s[bool]):
             default=c.Cqrs.HandlerType.COMMAND,
             case_insensitive=True,
         )
-        return parse_result.unwrap_or(c.Cqrs.HandlerType.COMMAND)
+        return (
+            parse_result.value
+            if parse_result.is_success
+            else c.Cqrs.HandlerType.COMMAND
+        )
 
     @staticmethod
     def _safe_get_status(
@@ -250,7 +254,11 @@ class FlextRegistry(s[bool]):
             default=c.Cqrs.CommonStatus.RUNNING,
             case_insensitive=True,
         )
-        return parse_result.unwrap_or(c.Cqrs.CommonStatus.RUNNING)
+        return (
+            parse_result.value
+            if parse_result.is_success
+            else c.Cqrs.CommonStatus.RUNNING
+        )
 
     @staticmethod
     def _is_protocol_handler(
@@ -542,15 +550,8 @@ class FlextRegistry(s[bool]):
             key = FlextRegistry._resolve_handler_key(handler)
 
             if result.is_success:
-                # Type narrow: unwrap_or guarantees concrete type for Pyrefly
-                registration_details = result.unwrap_or(
-                    m.HandlerRegistrationDetails(
-                        registration_id=key,
-                        handler_mode=c.Cqrs.HandlerType.COMMAND,
-                        timestamp="",
-                        status=c.Cqrs.CommonStatus.RUNNING,
-                    ),
-                )
+                # Type narrow: cast guarantees concrete type for Pyrefly
+                registration_details = result.value
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 self._add_registration_error(
@@ -787,7 +788,9 @@ class FlextRegistry(s[bool]):
             return r[t.RegisterableService].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
-        plugin_value: t.RegisterableService = raw_result.unwrap_or(None)
+        plugin_value: t.RegisterableService = (
+            raw_result.value if raw_result.is_success else None
+        )
         return r[t.RegisterableService].ok(plugin_value)
 
     def list_plugins(self, category: str) -> r[list[str]]:

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Final, TextIO
+from typing import Final, TextIO, override
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
@@ -144,6 +144,7 @@ class FlextInfraOutput(BaseModel):
         self._sym_warn = "⚠" if self.use_unicode else "[WARN]"
         self._sym_skip = "–" if self.use_unicode else "[SKIP]"
 
+    @override
     def __setattr__(self, name: str, value: object) -> None:
         """Allow non-field attribute assignment (e.g. unittest.mock.patch)."""
         if name in type(self).model_fields or name.startswith("_"):
@@ -151,6 +152,7 @@ class FlextInfraOutput(BaseModel):
         else:
             object.__setattr__(self, name, value)
 
+    @override
     def __delattr__(self, name: str) -> None:
         """Support unittest.mock.patch teardown for non-field attributes."""
         if name in self.__dict__ and name not in type(self).model_fields:

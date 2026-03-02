@@ -10,13 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import threading
 from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager, suppress
-from functools import partial
 from types import ModuleType
-from typing import ClassVar
+from typing import ClassVar, override
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -35,8 +33,6 @@ from flext_core import (
     u,
 )
 from flext_core._models.service import FlextModelsService
-
-_module_logger = logging.getLogger(__name__)
 
 
 class FlextMixins(FlextRuntime):
@@ -102,8 +98,9 @@ class FlextMixins(FlextRuntime):
     traverse = staticmethod(r.traverse)
     accumulate_errors = staticmethod(r.accumulate_errors)
 
-    @staticmethod
+    @classmethod
     def to_dict(
+        cls,
         obj: BaseModel | Mapping[str, t.ConfigMapValue] | None,
     ) -> m.ConfigMap:
         """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
@@ -113,9 +110,8 @@ class FlextMixins(FlextRuntime):
         if isinstance(obj, m.ConfigMap):
             return obj
 
-        model_dump_callable = obj.model_dump if hasattr(obj, "model_dump") else None
-        if callable(model_dump_callable):
-            model_dump_result = model_dump_callable()
+        if isinstance(obj, BaseModel):
+            model_dump_result = obj.model_dump()
             try:
                 normalized_model_dump: dict[str, t.ConfigMapValue] = {}
                 if isinstance(model_dump_result, Mapping):
@@ -131,7 +127,7 @@ class FlextMixins(FlextRuntime):
                         normalized_model_dump[str(key)] = normalized_value
                 return m.ConfigMap(root=normalized_model_dump)
             except (TypeError, ValueError, AttributeError) as exc:
-                _module_logger.debug(
+                cls._get_or_create_logger().debug(
                     "Model dump normalization fallback to string conversion",
                     exc_info=exc,
                 )
@@ -153,7 +149,7 @@ class FlextMixins(FlextRuntime):
                 return m.ConfigMap.model_validate(normalized_mapping)
             return m.ConfigMap.model_validate(obj)
         except (TypeError, ValueError, AttributeError) as exc:
-            _module_logger.debug(
+            cls._get_or_create_logger().debug(
                 "Object-to-config-map normalization failed",
                 exc_info=exc,
             )
@@ -190,14 +186,15 @@ class FlextMixins(FlextRuntime):
         return self._get_runtime().container
 
     @property
+    @override
+    def logger(self) -> FlextLogger:
+        """Get or create FlextLogger for this component."""
+        return self._get_or_create_logger()
+
+    @property
     def context(self) -> p.Context:
         """Get FlextContext instance for context operations."""
         return self._get_runtime().context
-
-    @property
-    def logger(self) -> FlextLogger:
-        """Get FlextLogger instance (DI-backed with caching)."""
-        return self._get_or_create_logger()
 
     @property
     def config(self) -> p.Config:
@@ -248,7 +245,7 @@ class FlextMixins(FlextRuntime):
                 )
             )
         except (TypeError, ValueError, AttributeError) as exc:
-            _module_logger.debug(
+            self.logger.debug(
                 "Runtime bootstrap options validation failed",
                 exc_info=exc,
             )
@@ -355,7 +352,7 @@ class FlextMixins(FlextRuntime):
                     AttributeError,
                     RuntimeError,
                 ) as exc:
-                    _module_logger.debug(
+                    self.logger.debug(
                         "Tracked operation raised expected exception",
                         exc_info=exc,
                     )
@@ -410,7 +407,11 @@ class FlextMixins(FlextRuntime):
                 raise RuntimeError(error_msg or "Service registration failed")
             return True
 
-        return r[bool].create_from_callable(register)
+        try:
+            result = register()
+            return r[bool].ok(result)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
+            return r[bool].fail(str(e))
 
     @staticmethod
     def _propagate_context(operation_name: str) -> None:
@@ -864,7 +865,8 @@ class FlextMixins(FlextRuntime):
                     return r[t.ConfigMapValue].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
-                result = result.flat_map(partial(validate_and_preserve, v=validator))
+                if result.is_success:
+                    result = validate_and_preserve(result.value, validator)
 
             return result
 

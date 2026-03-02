@@ -121,6 +121,8 @@ class TestWorkspaceCheckerResolveGates:
         """Test invalid gate returns failure."""
         result = FlextInfraWorkspaceChecker.resolve_gates(["invalid"])
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "unknown gate" in result.error
 
     def test_resolve_gates_all_valid_types(self) -> None:
@@ -250,6 +252,7 @@ class TestConfigFixerProcessFile:
         result = fixer.process_file(tmp_path / "missing.toml")
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "failed to read" in result.error
 
     def test_process_file_invalid_toml(self, tmp_path: Path) -> None:
@@ -261,6 +264,7 @@ class TestConfigFixerProcessFile:
         result = fixer.process_file(pyproject)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "failed to parse" in result.error
 
     def test_process_file_no_pyrefly_section(self, tmp_path: Path) -> None:
@@ -778,6 +782,7 @@ class TestWorkspaceCheckerExecute:
         result = checker.execute()
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "Use run()" in result.error
 
 
@@ -1532,6 +1537,7 @@ class TestConfigFixerExecute:
         result = fixer.execute()
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "Use run()" in result.error
 
 
@@ -2017,6 +2023,7 @@ class TestConfigFixerProcessFileErrors:
                 mock_write.side_effect = OSError("write error")
                 result = fixer.process_file(pyproject)
                 assert result.is_failure
+                assert isinstance(result.error, str)
                 assert "write error" in result.error
 
 
@@ -2047,6 +2054,7 @@ class TestJsonWriteFailure:
                 )
                 result = checker.run_projects(["test-project"], ["lint"])
                 assert result.is_failure
+                assert isinstance(result.error, str)
                 assert "write error" in result.error
 
 
@@ -2240,6 +2248,7 @@ class TestProcessFileReadError:
             mock_read.side_effect = OSError("read error")
             result = fixer.process_file(pyproject)
             assert result.is_failure
+            assert isinstance(result.error, str)
             assert "read error" in result.error
 
     def test_process_file_with_parse_error(self, tmp_path: Path) -> None:

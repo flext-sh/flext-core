@@ -260,6 +260,8 @@ class TestFlextInfraVersioningService:
         result = service.current_workspace_version(tmp_path)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "file not found" in result.error or "read" in result.error
 
     def test_current_workspace_version_missing_project_table(
@@ -277,6 +279,7 @@ class TestFlextInfraVersioningService:
         result = service.current_workspace_version(tmp_path)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "version not found" in result.error
 
     def test_current_workspace_version_missing_version_field(
@@ -294,6 +297,7 @@ class TestFlextInfraVersioningService:
         result = service.current_workspace_version(tmp_path)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "version not found" in result.error
 
     def test_current_workspace_version_empty_version(
@@ -311,6 +315,7 @@ class TestFlextInfraVersioningService:
         result = service.current_workspace_version(tmp_path)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "version not found" in result.error
 
     def test_replace_project_version_success(
@@ -344,6 +349,7 @@ class TestFlextInfraVersioningService:
         result = service.replace_project_version(tmp_path, "2.0.0")
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "file not found" in result.error or "read" in result.error
 
     def test_replace_project_version_missing_project_table(
@@ -361,4 +367,5 @@ class TestFlextInfraVersioningService:
         result = service.replace_project_version(tmp_path, "2.0.0")
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "missing [project] table" in result.error

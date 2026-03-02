@@ -104,6 +104,8 @@ def test_generator_generate_with_invalid_dict_config() -> None:
     result = gen.generate(config=invalid_config)
 
     assert result.is_failure
+    assert isinstance(result.error, str)
+    assert isinstance(result.error, str)
     assert "validation failed" in result.error
 
 
@@ -113,6 +115,7 @@ def test_generator_generate_propagates_render_failure() -> None:
     result = gen.generate()
 
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "render error" in result.error
 
 
@@ -161,6 +164,7 @@ def test_generator_write_fails_without_output_or_stream() -> None:
     result = gen.write(content, output=None, stream=None)
 
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "stdout stream is required" in result.error
 
 
@@ -236,6 +240,7 @@ def test_generator_normalize_config_with_invalid_dict() -> None:
     result = gen._normalize_config(invalid_dict)
 
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "validation failed" in result.error
 
 
@@ -256,6 +261,7 @@ def test_generator_write_to_stream_handles_oserror(
     monkeypatch.setattr(stream, "write", mock_write)
     result = gen.write(content, stream=stream)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "stdout write failed" in result.error
 
 
@@ -273,4 +279,5 @@ def test_generator_validate_generated_output_handles_oserror(
     monkeypatch.setattr("tempfile.TemporaryDirectory", mock_tempdir)
     result = gen._validate_generated_output(content)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "validation failed" in result.error

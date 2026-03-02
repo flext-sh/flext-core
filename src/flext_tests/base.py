@@ -9,13 +9,15 @@ does NOT extend FlextService (Pydantic model) because pytest cannot collect
 Pydantic models as test classes.
 
 Utility classes (factories, builders, validators) should use
-FlextTestsUtilityBase (alias: s) which extends FlextService.
+FlextTestsUtilityBase (alias: s) which extends FlextService and provides a default execute().
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from typing import override
 
 from flext_core import FlextService, T, r
 
@@ -81,6 +83,11 @@ class FlextTestsUtilityBase(FlextService[T]):
     - Full FlextService functionality
     - Generic type parameter support
     """
+
+    @override
+    def execute(self) -> r[T]:
+        """Default utility execution — subclasses should override with specific logic."""
+        return r.fail(f"{type(self).__name__} must implement execute()")
 
 
 s = FlextTestsServiceBase

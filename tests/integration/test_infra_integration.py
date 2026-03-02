@@ -133,6 +133,8 @@ class TestContainerIntegration:
 
         # Assert
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "nonexistent_service" in result.error or "not found" in result.error
 
 
@@ -383,6 +385,7 @@ class TestServiceFlextResultChaining:
 
         # Assert
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "intentional error" in result.error
 
     @pytest.mark.integration

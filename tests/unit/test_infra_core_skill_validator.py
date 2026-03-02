@@ -129,6 +129,8 @@ class TestFlextInfraSkillValidator:
 
         result = validator.validate(workspace_root, "test-skill")
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "scan_targets must be a mapping" in result.error
 
     def test_validate_with_invalid_rules_not_list(self, tmp_path: Path) -> None:
@@ -146,6 +148,7 @@ class TestFlextInfraSkillValidator:
 
         result = validator.validate(workspace_root, "test-skill")
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "rules must be a list" in result.error
 
     def test_validate_with_non_dict_rule_object(self, tmp_path: Path) -> None:
@@ -299,6 +302,7 @@ class TestFlextInfraSkillValidator:
 
         result = validator.validate(workspace_root, "test-skill")
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "skill validation failed" in result.error
 
     def test_run_ast_grep_count_with_empty_rule_file(self, tmp_path: Path) -> None:
@@ -712,7 +716,7 @@ class TestFlextInfraSkillValidator:
 
         rule = {"file": str(rule_file)}
         include_globs = ["**/*.py"]
-        exclude_globs = []
+        exclude_globs: list[str] = []
 
         count = validator._run_ast_grep_count(
             rule, skill_dir, project_path, include_globs, exclude_globs
@@ -735,7 +739,7 @@ class TestFlextInfraSkillValidator:
         )
 
         rule = {"file": str(rule_file)}
-        include_globs = []
+        include_globs: list[str] = []
         exclude_globs = ["**/test_*.py"]
 
         count = validator._run_ast_grep_count(

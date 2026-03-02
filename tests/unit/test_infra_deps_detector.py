@@ -500,6 +500,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
             detector = FlextInfraRuntimeDevDependencyDetector()
             result = detector.run([])
             assert result.is_failure
+            assert isinstance(result.error, str)
             assert (
                 "root not found" in result.error
                 or "workspace root resolution failed" in result.error
@@ -529,6 +530,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 detector = FlextInfraRuntimeDevDependencyDetector()
                 result = detector.run([])
                 assert result.is_failure
+                assert isinstance(result.error, str)
                 assert (
                     "discovery failed" in result.error
                     or "project discovery failed" in result.error
@@ -560,6 +562,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                     detector = FlextInfraRuntimeDevDependencyDetector()
                     result = detector.run(["--no-pip-check"])
                     assert result.is_failure
+                    assert isinstance(result.error, str)
                     assert (
                         "deptry failed" in result.error
                         or "deptry run failed" in result.error
@@ -600,6 +603,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                     detector = FlextInfraRuntimeDevDependencyDetector()
                     result = detector.run(["--typings", "--no-pip-check"])
                     assert result.is_failure
+                    assert isinstance(result.error, str)
                     assert (
                         "typing detection failed" in result.error
                         or "typing dependency detection failed" in result.error
@@ -646,6 +650,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                             detector = FlextInfraRuntimeDevDependencyDetector()
                             result = detector.run(["--no-pip-check"])
                             assert result.is_failure
+                            assert isinstance(result.error, str)
                             assert "failed to create report directory" in result.error
 
     def test_run_with_json_write_failure(self, tmp_path: Path) -> None:
@@ -693,6 +698,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                                 detector = FlextInfraRuntimeDevDependencyDetector()
                                 result = detector.run(["--no-pip-check"])
                                 assert result.is_failure
+                                assert isinstance(result.error, str)
                                 assert (
                                     "write failed" in result.error
                                     or "failed to write report" in result.error

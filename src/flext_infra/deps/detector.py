@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import os
-from collections.abc import MutableMapping
 from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, r, t
@@ -42,11 +41,11 @@ class FlextInfraDependencyDetectorModels(m):
         """Workspace-level dependency analysis report aggregating all projects."""
 
         workspace: str
-        projects: MutableMapping[str, MutableMapping[str, t.ConfigMapValue]] = Field(
+        projects: dict[str, dict[str, t.ConfigMapValue]] = Field(
             default_factory=dict,
         )
-        pip_check: MutableMapping[str, t.ScalarValue] | None = None
-        dependency_limits: MutableMapping[str, t.ScalarValue] | None = None
+        pip_check: dict[str, t.ScalarValue] | None = None
+        dependency_limits: dict[str, t.ScalarValue] | None = None
 
 
 ddm = FlextInfraDependencyDetectorModels
@@ -173,7 +172,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         do_typings = bool(args.typings) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
 
-        projects_report: MutableMapping[str, MutableMapping[str, t.ConfigMapValue]] = {}
+        projects_report: dict[str, dict[str, t.ConfigMapValue]] = {}
         report_model = ddm.WorkspaceDependencyReport(
             workspace=str(root),
             projects=projects_report,
@@ -225,7 +224,9 @@ class FlextInfraRuntimeDevDependencyDetector:
                 projects_report[project_name]["typings"] = typing_dict
 
                 to_add_obj = typing_dict.get("to_add")
-                to_add = to_add_obj if isinstance(to_add_obj, list) else []
+                to_add: list[t.ConfigMapValue] = (
+                    to_add_obj if isinstance(to_add_obj, list) else []
+                )
                 if apply_typings and to_add and not args.dry_run:
                     env = {
                         **os.environ,

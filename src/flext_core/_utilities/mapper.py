@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Protocol, TypeGuard, overload
+from typing import Protocol, overload
 
 from pydantic import BaseModel
 
@@ -167,26 +167,8 @@ class FlextUtilitiesMapper:
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
-
-        Returns structlog logger instance (Logger protocol).
-        Type annotation omitted to avoid importing structlog.typing here.
-        """
-        logger: p.Log.StructlogLogger = FlextRuntime.get_logger(__name__)
-        if FlextUtilitiesMapper._is_structlog_logger(logger):
-            return logger
-        msg = f"Unexpected logger type: {logger.__class__.__name__}"
-        raise TypeError(msg)
-
-    @staticmethod
-    def _is_structlog_logger(value: object) -> TypeGuard[p.Log.StructlogLogger]:
-        return bool(
-            hasattr(value, "debug")
-            and hasattr(value, "info")
-            and hasattr(value, "warning")
-            and hasattr(value, "error")
-            and hasattr(value, "exception"),
-        )
+        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def map_dict_keys(

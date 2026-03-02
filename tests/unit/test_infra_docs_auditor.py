@@ -646,6 +646,8 @@ class TestFlextInfraDocAuditor:
             mock_build.return_value = r[list].fail("scope build error")
             result = auditor.audit(tmp_path)
             assert result.is_failure
+            assert isinstance(result.error, str)
+            assert isinstance(result.error, str)
             assert "scope build error" in result.error
 
     def test_broken_link_issues_with_should_skip_target_true(

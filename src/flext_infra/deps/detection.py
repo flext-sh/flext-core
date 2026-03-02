@@ -174,7 +174,9 @@ class FlextInfraDependencyDetectionService:
         if out_file.exists():
             try:
                 raw = out_file.read_text(encoding=c.Encoding.DEFAULT)
-                loaded = json.loads(raw) if raw.strip() else []
+                loaded: list[InfraValue] | dict[str, InfraValue] = (
+                    json.loads(raw) if raw.strip() else []
+                )
                 if isinstance(loaded, list):
                     issues = [
                         {str(key): value for key, value in item.items()}

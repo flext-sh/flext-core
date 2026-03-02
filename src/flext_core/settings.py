@@ -229,7 +229,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: Any) -> Self:
+    def __new__(cls, **_kwargs: t.GeneralValueType) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -266,6 +266,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
+    # Any required: BaseSettings.__init__ has field-specific types; no union satisfies all.
     def __init__(self, **kwargs: Any) -> None:
         """Initialize config with data.
 

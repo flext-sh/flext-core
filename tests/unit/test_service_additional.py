@@ -52,5 +52,5 @@ def test_result_property_raises_on_failure() -> None:
 def test_get_service_info() -> None:
     """Service should return basic service info."""
     service = RuntimeCloneService()
-    info: Mapping[str, t.FlexibleValue] = service.get_service_info()
+    info: Mapping[str, t.GeneralValueType] = service.get_service_info()
     assert info["service_type"] == "RuntimeCloneService"

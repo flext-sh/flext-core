@@ -379,4 +379,6 @@ class TestFlextInfraDocGenerator:
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = generator.generate(tmp_path)
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "Scope error" in result.error

@@ -118,7 +118,7 @@ class FlextUtilitiesArgs:
                  return r.ok(True)
 
         """
-        validated_func = validate_call(
+        validated_func: Callable[P, r[V]] = validate_call(
             config=ConfigDict(
                 arbitrary_types_allowed=True,
                 use_enum_values=False,
@@ -133,7 +133,7 @@ class FlextUtilitiesArgs:
         ) -> r[V]:
             try:
                 # Type safe call via Pydantic validated_func
-                return validated_func(*args, **kwargs)  # type: ignore[no-any-return]
+                return validated_func(*args, **kwargs)
             except (ValidationError, TypeError, ValueError) as e:
                 # Return failed result with error message
                 return r[V].fail(str(e))  # FlextResult[V] matches return type

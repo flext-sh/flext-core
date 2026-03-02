@@ -201,6 +201,7 @@ class TestLazyInitEdgeCases:
         init_file.write_text(original_content)
 
         result = generator._process_file(init_file, check_only=True)  # Line 129-131
+        assert result is not None
         assert result >= 0
         # Verify file wasn't modified
         assert init_file.read_text() == original_content
@@ -219,6 +220,7 @@ class TestLazyInitEdgeCases:
         )  # Lines 135-137
 
         result = generator._process_file(init_file, check_only=False)
+        assert result is not None
         assert result >= 0
 
     def test_process_file_with_existing_lazy_imports(self, tmp_path: Path) -> None:
@@ -234,6 +236,7 @@ class TestLazyInitEdgeCases:
         )  # Line 142
 
         result = generator._process_file(init_file, check_only=False)
+        assert result is not None
         assert result >= 0
 
     def test_infer_package_without_src_directory(self) -> None:
@@ -366,7 +369,7 @@ class TestLazyInitEdgeCases:
     def test_resolve_unmapped_with_version_file(self, tmp_path: Path) -> None:
         """Test _resolve_unmapped resolves __version__ from __version__.py."""
         exports_set = {"__version__"}  # Lines 372-389
-        filtered = {}
+        filtered: dict[str, tuple[str, str]] = {}
         pkg_dir = tmp_path
         version_file = pkg_dir / "__version__.py"
         version_file.write_text('__version__ = "1.0.0"')
@@ -377,7 +380,7 @@ class TestLazyInitEdgeCases:
     def test_resolve_unmapped_with_version_info_file(self, tmp_path: Path) -> None:
         """Test _resolve_unmapped resolves __version_info__ from __version__.py."""
         exports_set = {"__version_info__"}  # Lines 372-389
-        filtered = {}
+        filtered: dict[str, tuple[str, str]] = {}
         pkg_dir = tmp_path
         version_file = pkg_dir / "__version__.py"
         version_file.write_text("__version_info__ = (1, 0, 0)")
@@ -422,7 +425,7 @@ class TestLazyInitEdgeCases:
         """Test _generate_file uses correct lazy import for flext_core."""
         exports = ["Test"]  # Line 462
         filtered = {"Test": ("module", "Test")}
-        inline_constants = {}
+        inline_constants: dict[str, str] = {}
 
         content = _generate_file("", exports, filtered, inline_constants, "flext_core")
         assert "flext_core._utilities.lazy" in content
@@ -431,7 +434,7 @@ class TestLazyInitEdgeCases:
         """Test _generate_file uses correct lazy import for other packages."""
         exports = ["Test"]  # Line 482
         filtered = {"Test": ("module", "Test")}
-        inline_constants = {}
+        inline_constants: dict[str, str] = {}
 
         content = _generate_file("", exports, filtered, inline_constants, "other_pkg")
         assert "from flext_core.lazy import" in content
@@ -450,7 +453,7 @@ class TestLazyInitEdgeCases:
         docstring = '"""Test module."""'
         exports = ["Test"]
         filtered = {"Test": ("module", "Test")}
-        inline_constants = {}
+        inline_constants: dict[str, str] = {}
 
         content = _generate_file(
             docstring, exports, filtered, inline_constants, "test_pkg"
@@ -552,7 +555,6 @@ class TestLazyInitEdgeCases:
     def test_generate_type_checking_with_long_imports(self, tmp_path: Path) -> None:
         """Test _generate_type_checking formats long imports on multiple lines (lines 424-426)."""
         groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-        groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
         groups["module"] = [
             ("VeryLongExportName1", "VeryLongExportName1"),
             ("VeryLongExportName2", "VeryLongExportName2"),
@@ -567,7 +569,6 @@ class TestLazyInitEdgeCases:
         self, tmp_path: Path
     ) -> None:
         """Test _generate_type_checking adds blank lines between module groups (line 435)."""
-        groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
         groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
         groups["module_a"] = [("Test1", "Test1")]
         groups["module_b"] = [("Test2", "Test2")]

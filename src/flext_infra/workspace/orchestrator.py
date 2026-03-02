@@ -13,7 +13,7 @@ import os
 import time
 from collections.abc import Sequence
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextLogger, FlextService, r
 
@@ -104,8 +104,13 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
                         skipped = total - idx
                     continue
 
-                cmd_output: m.CommandOutput = cast(
-                    "m.CommandOutput", output_result.value
+                output_value = output_result.value
+                cmd_output: m.CommandOutput = (
+                    output_value
+                    if isinstance(output_value, m.CommandOutput)
+                    else m.CommandOutput(
+                        stdout="", stderr="unknown", exit_code=1, duration=0.0
+                    )
                 )
                 results.append(cmd_output)
                 if cmd_output.exit_code == 0:
@@ -157,9 +162,8 @@ class FlextInfraOrchestratorService(FlextService[list[m.CommandOutput]]):
             log_path,
             env={"NO_COLOR": "1", **os.environ},
         )
-        return_code: int = (
-            cast("int", proc_result.value) if proc_result.is_success else 1
-        )
+        proc_value = proc_result.value if proc_result.is_success else None
+        return_code: int = proc_value if isinstance(proc_value, int) else 1
         stderr = "" if proc_result.is_success else (proc_result.error or "")
 
         elapsed = time.monotonic() - started

@@ -481,7 +481,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if isinstance(actual_content, Mapping):
                 data = u.Mapper.to_dict(actual_content)
             else:
-                data = {"value": actual_content} if actual_content else {}
+                empty_data: dict[str, t.Tests.PayloadValue] = {}
+                data = {"value": actual_content} if actual_content else empty_data
             _ = file_path.write_text(
                 json.dumps(data, indent=params.indent, ensure_ascii=False),
                 encoding=params.enc,
@@ -491,7 +492,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 data = u.Mapper.to_dict(actual_content)
             else:
                 # Fallback - convert to dict representation
-                data = {"value": actual_content} if actual_content else {}
+                empty_data_y: dict[str, t.Tests.PayloadValue] = {}
+                data = {"value": actual_content} if actual_content else empty_data_y
             yaml_result = _yaml_dump(data, indent=params.indent)
             _ = file_path.write_text(yaml_result, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.CSV:

@@ -11,7 +11,6 @@ from datetime import datetime
 from types import ModuleType, TracebackType
 from typing import (
     TYPE_CHECKING,
-    Any,
     Protocol,
     Self,
     override,
@@ -54,7 +53,7 @@ class _ProtocolIntrospection:
         class_name: str,
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, Any] = (
+        protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[str] | object = (
@@ -85,7 +84,7 @@ class _ProtocolIntrospection:
 
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
-            base_annotations: dict[str, Any] = (
+            base_annotations: dict[str, object] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -140,7 +139,7 @@ class _ProtocolIntrospection:
         if protocol in registered_protocols:
             return True
 
-        protocol_annotations: dict[str, Any] = (
+        protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[str] | object = (
@@ -183,7 +182,7 @@ def _build_combined_model_meta() -> type:
     )
 
 
-_CombinedModelMeta: Any = _build_combined_model_meta()
+_CombinedModelMeta: type = _build_combined_model_meta()
 
 
 class FlextProtocols:
@@ -591,7 +590,7 @@ class FlextProtocols:
         def model_copy(
             self,
             *,
-            update: dict[str, Any] | None = None,
+            update: Mapping[str, t.GeneralValueType] | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.

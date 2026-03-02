@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Literal, TypeGuard
+from typing import Literal, TypeAliasType, TypeGuard
 
 from flext_core import FlextTypes, m, r
 from pydantic import BaseModel, InstanceOf
@@ -378,6 +378,26 @@ class FlextTestsTypes(FlextTypes):
             - All types are documented with docstrings
             """
 
+            type MatcherKwargValue = (
+                _TestPayloadValue
+                | type
+                | tuple[type, ...]
+                | TypeAliasType
+                | set[_TestPayloadValue]
+                | Callable[..., _TestPayloadValue]
+                | Mapping[str, Callable[..., _TestPayloadValue] | _TestPayloadValue]
+            )
+            """Union of all value types accepted by matcher kwargs.
+
+            Covers all field types across OkParams, FailParams, and ThatParams:
+            - _TestPayloadValue: scalar, bytes, BaseModel, Sequence, Mapping
+            - type/tuple[type, ...]: is_, not_ (type checking)
+            - TypeAliasType: eq, ne in OkParams
+            - set: keys, lacks_keys, eq (set values)
+            - Callable: where, all_, any_, sorted (predicates/key functions)
+            - Mapping[str, Callable | Value]: deep (structural matching)
+            """
+
             # =====================================================================
             # Length and Size Specifications
             # =====================================================================
@@ -667,7 +687,7 @@ class FlextTestsTypes(FlextTypes):
                 return True
             if BaseModel in type(value).__mro__:
                 return True
-            return isinstance(value, list | dict)
+            return isinstance(value, (list, dict))
 
         @staticmethod
         def is_sequence(

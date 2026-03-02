@@ -17,13 +17,13 @@ class _SvcModel(BaseModel):
 
 class _RuntimeContainer:
     def __init__(self) -> None:
-        self.configured: dict[str, t.FlexibleValue] | None = None
+        self.configured: dict[str, t.GeneralValueType] | None = None
         self.wired: dict[str, object] | None = None
 
     def scoped(self, **_kwargs: object) -> _RuntimeContainer:
         return self
 
-    def configure(self, overrides: dict[str, t.FlexibleValue]) -> None:
+    def configure(self, overrides: dict[str, t.GeneralValueType]) -> None:
         self.configured = overrides
 
     def wire_modules(self, **kwargs: object) -> None:

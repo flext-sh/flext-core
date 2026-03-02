@@ -60,6 +60,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run_raw(["sleep", "10"], timeout=1)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "timeout" in result.error.lower()
 
     def test_run_raw_invalid_command(self) -> None:
@@ -83,6 +84,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run(["sh", "-c", "exit 1"])
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "command failed" in result.error.lower()
 
     def test_run_with_cwd(self, tmp_path: Path) -> None:
@@ -98,6 +100,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run(["sleep", "10"], timeout=1)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "timeout" in result.error.lower()
 
     def test_capture_success(self) -> None:
@@ -195,6 +198,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run_checked(["sh", "-c", "exit 1"])
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "command failed" in result.error.lower()
 
     def test_run_to_file_success(self, tmp_path: Path) -> None:
@@ -215,6 +219,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run_to_file(["sleep", "10"], output_file, timeout=1)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "timeout" in result.error.lower()
 
     def test_run_to_file_oserror(self, tmp_path: Path) -> None:
@@ -229,6 +234,7 @@ class TestFlextInfraCommandRunner:
         try:
             result = runner.run_to_file(["echo", "test"], output_file)
             assert result.is_failure
+            assert isinstance(result.error, str)
             assert "file output error" in result.error.lower()
         finally:
             readonly_dir.chmod(0o755)
@@ -248,6 +254,7 @@ class TestFlextInfraCommandRunner:
         result = runner.run_to_file(["echo", "test"], output_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "execution error" in result.error.lower()
 
     def test_execute_returns_empty_output(self) -> None:

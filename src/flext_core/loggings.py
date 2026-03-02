@@ -54,11 +54,25 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     _level_contexts: ClassVar[
         MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]
     ] = {}
-    logger: p.Log.StructlogLogger
+
+    # Structlog logger instance (set directly via _structlog_instance)
+    _structlog_instance: p.Log.StructlogLogger | None = None
+
+    @property
+    @override
+    def logger(self) -> p.Log.StructlogLogger:
+        """Wrapped structlog logger instance."""
+        instance = self._structlog_instance
+        if instance is None:
+            instance = FlextRuntime.get_logger(
+                getattr(self, "name", __name__),
+            )
+            self._structlog_instance = instance
+        return instance
 
     # Protocol compliance: BindableLogger._context property
-    @override
     @property
+    @override
     def _context(self) -> Context:
         """Context mapping for BindableLogger protocol compliance."""
         return {}
@@ -344,9 +358,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
             if merge_result.is_success:
                 # merge_result.value is compatible with m.ConfigMap payloads.
+                merged_value = merge_result.value
                 merged_context: dict[str, t.MetadataAttributeValue] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
-                    for key, value in dict(merge_result.value).items()
+                    for key, value in merged_value.items()
                 }
                 cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
@@ -600,7 +615,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 if hasattr(container, "config")
                 else FlextSettings.get_global_instance()
             )
-            level = config.log_level if hasattr(config, "log_level") else "INFO"
+            level = getattr(config, "log_level", "INFO")
         # Create logger with container context
         logger = cls.create_module_logger(f"container_{id(container)}")
         # Bind container context
@@ -703,6 +718,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         name: str,
         *,
         config: p.Config | None = None,
+        _bound_logger: p.Log.StructlogLogger | None = None,
         _level: c.Settings.LogLevel | str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
@@ -712,33 +728,24 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Initialize FlextLogger with name and optional context."""
         super().__init__()
 
+        # Store logger name as public attribute (immutable after initialization)
+        self.name = name
+
+        # Short-circuit for pre-bound logger (used by create_bound_logger/bind/unbind)
+        if _bound_logger is not None:
+            self._structlog_instance = _bound_logger
+            return
+
         # Extract config values (config takes priority over individual params)
         if config is not None:
-            _level = config.level if hasattr(config, "level") else _level
-            _service_name = (
-                config.service_name
-                if hasattr(config, "service_name")
-                else _service_name
-            )
-            _service_version = (
-                config.service_version
-                if hasattr(config, "service_version")
-                else _service_version
-            )
-            _correlation_id = (
-                config.correlation_id
-                if hasattr(config, "correlation_id")
-                else _correlation_id
-            )
-            _force_new = (
-                config.force_new if hasattr(config, "force_new") else _force_new
-            )
+            _level = getattr(config, "level", _level)
+            _service_name = getattr(config, "service_name", _service_name)
+            _service_version = getattr(config, "service_version", _service_version)
+            _correlation_id = getattr(config, "correlation_id", _correlation_id)
+            _force_new = getattr(config, "force_new", _force_new)
 
         # DO NOT configure structlog here - should be done at application startup
         # Application must call FlextRuntime.configure_structlog() explicitly before creating loggers
-
-        # Store logger name as public attribute (immutable after initialization)
-        self.name = name
 
         # Build initial context
         context = {}
@@ -749,12 +756,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         if _correlation_id:
             context["correlation_id"] = _correlation_id
 
-        # Create bound logger with initial context
+        # Initialize structlog instance with context binding
         base_logger = FlextRuntime.get_logger(name)
-        self.logger = base_logger.bind(**context)
-
-        # Initialize optional state variables
-        # Note: _context and _tracking are initialized as needed by methods
+        self._structlog_instance = base_logger.bind(**context) if context else base_logger
 
     @classmethod
     def create_bound_logger(
@@ -763,10 +767,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         bound_logger: p.Log.StructlogLogger,
     ) -> Self:
         """Internal factory for creating logger with pre-bound structlog instance."""
-        instance = cls.__new__(cls)
-        instance.name = name
-        instance.logger = bound_logger
-        return instance
+        return cls(name, _bound_logger=bound_logger)
 
     @override
     def bind(self, **context: t.MetadataAttributeValue) -> Self:
@@ -820,11 +821,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
 
-            if hasattr(self.logger, "bind") and hasattr(self.logger, "info"):
-                self.logger.debug(
-                    formatted_message,
-                    **kwargs,
-                )
+            self.logger.debug(
+                formatted_message,
+                **kwargs,
+            )
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             # Logger internals must never raise into application flows.
@@ -1197,7 +1197,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 strategy="deep",
             )
             if merge_result.is_success:
-                context_dict = m.ConfigMap(root=dict(merge_result.value))
+                merged_value = merge_result.value
+                context_dict = m.ConfigMap(root=dict(merged_value))
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
@@ -1275,9 +1276,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context_dict["exception_type"] = exception_value.__class__.__name__
                 context_dict["exception_message"] = str(exception_value)
 
-            error_method = self.logger.error if hasattr(self.logger, "error") else None
-            if callable(error_method):
-                _ = error_method(message, *filtered_args, **context_dict.root)
+            _ = self.logger.error(message, *filtered_args, **context_dict.root)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             # Logger internals must never raise into application flows.

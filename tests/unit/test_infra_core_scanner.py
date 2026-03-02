@@ -331,4 +331,6 @@ class TestFlextInfraTextPatternScanner:
                 includes=["*.txt"],
             )
             assert result.is_failure
+            assert isinstance(result.error, str)
+            assert isinstance(result.error, str)
             assert "text pattern scan failed" in result.error

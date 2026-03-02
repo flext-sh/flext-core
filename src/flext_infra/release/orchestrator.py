@@ -24,6 +24,7 @@ from flext_infra import (
     FlextInfraProjectSelector,
     FlextInfraReportingService,
     FlextInfraVersioningService,
+    m,
 )
 from flext_infra.constants import c
 
@@ -478,7 +479,9 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
 
         selector = FlextInfraProjectSelector()
         projects_result = selector.resolve_projects(root, project_names)
-        project_list = projects_result.value if projects_result.is_success else []
+        project_list: list[m.ProjectInfo] = (
+            projects_result.value if projects_result.is_success else []
+        )
 
         lines: list[str] = [
             f"# Release {tag}",

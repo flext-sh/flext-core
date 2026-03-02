@@ -17,10 +17,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import overload
 
-import structlog
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import c, m, r, t
+from flext_core import FlextRuntime, c, m, r, t
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -56,7 +55,7 @@ class FlextUtilitiesParser:
     def __init__(self) -> None:
         """Initialize string parser with logging."""
         super().__init__()
-        self.logger = structlog.get_logger(__name__)
+        self.logger = FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def _safe_text_length(text: t.ConfigMapValue) -> str | int:

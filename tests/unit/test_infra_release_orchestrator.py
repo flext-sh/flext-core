@@ -298,6 +298,8 @@ class TestFlextInfraReleaseOrchestrator:
             )
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "branch creation failed" in result.error
 
     def test_run_release_multiple_projects(
@@ -1052,6 +1054,7 @@ class TestFlextInfraReleaseOrchestrator:
         )
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "unknown phase" in result.error
 
     def test_create_branches_failure(self, workspace_root: Path) -> None:

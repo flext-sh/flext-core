@@ -13,8 +13,6 @@ def main() -> int:
     """Execute the check CLI and return exit code."""
     FlextRuntime.ensure_structlog_configured()
     return run_cli()
-    """Execute the check CLI and return exit code."""
-    return run_cli()
 
 
 if __name__ == "__main__":

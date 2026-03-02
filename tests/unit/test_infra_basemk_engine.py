@@ -159,4 +159,6 @@ def test_basemk_engine_render_all_handles_template_error(
     monkeypatch.setattr(engine._environment, "get_template", mock_get_template)
     result = engine.render_all()
     assert result.is_failure
+    assert isinstance(result.error, str)
+    assert isinstance(result.error, str)
     assert "template render failed" in result.error

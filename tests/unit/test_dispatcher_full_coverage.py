@@ -219,4 +219,6 @@ def test_exception_handling_in_dispatch(dispatcher: FlextDispatcher) -> None:
 
     res = dispatcher.dispatch(SampleCommand(payload="x"))
     assert res.is_failure
+    assert isinstance(res.error, str)
+    assert isinstance(res.error, str)
     assert "broken" in res.error

@@ -48,6 +48,8 @@ class TestFlextInfraTomlService:
         result = service.read(toml_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "TOML read error" in result.error
 
     def test_read_document_existing_file(self, tmp_path: Path) -> None:
@@ -72,6 +74,7 @@ class TestFlextInfraTomlService:
         result = service.read_document(toml_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "file not found" in result.error
 
     def test_read_document_invalid_toml(self, tmp_path: Path) -> None:

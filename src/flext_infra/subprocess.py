@@ -13,6 +13,7 @@ import shlex
 import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 
@@ -201,6 +202,7 @@ class FlextInfraCommandRunner(FlextService[m.CommandOutput]):
             return r[str].ok(value.stdout.strip())
         return r[str].fail(result.error or "capture failed")
 
+    @override
     def execute(self) -> FlextResult[m.CommandOutput]:
         """Execute the service (required by FlextService base class)."""
         return r[m.CommandOutput].ok(m.CommandOutput(stdout="", stderr="", exit_code=0))

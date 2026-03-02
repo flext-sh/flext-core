@@ -311,7 +311,7 @@ class FlextTestsBuilders:
                 # Type narrow: dynamic class instantiation results are BuilderValue
                 if isinstance(
                     instance,
-                    str | int | float | bool | list | dict | BaseModel | type(None),
+                    (str, int, float, bool, list, dict, BaseModel, type(None)),
                 ):
                     resolved_value = instance
                 else:
@@ -353,7 +353,10 @@ class FlextTestsBuilders:
 
         # Priority 11: Model instantiation
         elif params.model is not None:
-            data_dict = dict(params.model_data) if params.model_data else {}
+            empty_model_data: dict[str, t.Tests.PayloadValue] = {}
+            data_dict = (
+                dict(params.model_data) if params.model_data else empty_model_data
+            )
             model_kind_str = self._get_model_kind(params.model)
             # Filter data_dict to only TestResultValue types
             filtered_dict: dict[str, t.Tests.TestResultValue] = {}
@@ -393,7 +396,7 @@ class FlextTestsBuilders:
                         resolved_value = dict(result_val)
                 else:
                     resolved_value = None
-            elif isinstance(model_result, list | dict):
+            elif isinstance(model_result, (list, dict)):
                 resolved_value = model_result
 
         # Priority 12: Config shortcuts
@@ -835,10 +838,10 @@ class FlextTestsBuilders:
             return params.map_result(data_for_hooks)
 
         if params.keys_only:
-            return list(data.keys())
+            return [*data.keys()]
 
         if params.values_only:
-            return list(data.values())
+            return [*data.values()]
 
         if params.as_list:
             return list(data.items())

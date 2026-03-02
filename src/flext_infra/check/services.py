@@ -1394,7 +1394,11 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
             if isinstance(p, str) and not (project_dir / p).exists()
         ]
         if nonexistent:
-            remaining: list[str] = [str(p) for p in current_paths if isinstance(p, str) and p not in nonexistent]
+            remaining: list[str] = [
+                str(p)
+                for p in current_paths
+                if isinstance(p, str) and p not in nonexistent
+            ]
             pyrefly["search-path"] = self._to_array(remaining)
             fixes.append(f"removed nonexistent search-path: {', '.join(nonexistent)}")
 
@@ -1409,7 +1413,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         if not isinstance(sub_configs, list):
             return []
 
-        new_configs = []
+        new_configs: list[t.ConfigMapValue] = []
         for conf in sub_configs:
             if isinstance(conf, Mapping) and conf.get("ignore") is True:
                 matches = conf.get("matches", "unknown")
@@ -1429,12 +1433,12 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
         fixes: list[str] = []
         excludes = pyrefly.get("project-excludes")
 
-        current = []
+        current: list[str] = []
         if isinstance(excludes, list):
             current = [str(x) for x in excludes]
 
         # Check without quotes too just in case
-        stripped_to_add = []
+        stripped_to_add: list[str] = []
         for glob in c.Infra.Check.REQUIRED_EXCLUDES:
             clean_glob = glob.strip('"').strip("'")
             if clean_glob not in current and glob not in current:

@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextResult, FlextService, r
 
@@ -78,6 +79,7 @@ class FlextInfraGitService(FlextService[str]):
         """
         return self._runner.capture(["git", *cmd], cwd=cwd)
 
+    @override
     def execute(self) -> FlextResult[str]:
         """Execute the service (required by FlextService base class)."""
         return r[str].ok("")

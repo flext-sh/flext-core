@@ -266,4 +266,6 @@ class TestFlextInfraInventoryService:
         ):
             result = service.generate(workspace_root, output_dir=tmp_path / "reports")
             assert result.is_failure
+            assert isinstance(result.error, str)
+            assert isinstance(result.error, str)
             assert "inventory generation failed" in result.error

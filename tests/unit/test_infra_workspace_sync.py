@@ -91,6 +91,8 @@ def test_sync_service_project_root_required() -> None:
     sync_service = FlextInfraSyncService()
     result = sync_service.sync(project_root=None)
     assert result.is_failure
+    assert isinstance(result.error, str)
+    assert isinstance(result.error, str)
     assert "project_root is required" in result.error
 
 
@@ -99,6 +101,7 @@ def test_sync_service_project_root_not_exists() -> None:
     sync_service = FlextInfraSyncService()
     result = sync_service.sync(project_root=Path("/nonexistent/path"))
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "does not exist" in result.error
 
 
@@ -115,6 +118,7 @@ def test_sync_service_lock_acquisition_failure(
     sync_service = FlextInfraSyncService()
     result = sync_service.sync(project_root=tmp_path)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "lock acquisition failed" in result.error
 
 
@@ -129,6 +133,7 @@ def test_sync_service_basemk_generation_failure(tmp_path: Path) -> None:
 
     result = sync_service.sync(project_root=tmp_path)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "Generation failed" in result.error
 
 
@@ -169,6 +174,7 @@ def test_sync_service_atomic_write_failure(
     target = tmp_path / "test.txt"
     result = FlextInfraSyncService._atomic_write(target, "test content")
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "atomic write failed" in result.error
 
 
@@ -262,6 +268,7 @@ def test_sync_service_ensure_gitignore_entries_write_failure(
     monkeypatch.setattr(Path, "open", mock_open)
     result = sync_service._ensure_gitignore_entries(tmp_path, [".reports/"])
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert ".gitignore update failed" in result.error
 
 
@@ -312,6 +319,7 @@ def test_sync_service_sync_basemk_generation_failure(tmp_path: Path) -> None:
 
     result = sync_service._sync_basemk(tmp_path, None)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert "Generation failed" in result.error
 
 
@@ -330,6 +338,7 @@ def test_sync_service_gitignore_sync_failure(
     )
     result = sync_service.sync(project_root=tmp_path)
     assert result.is_failure
+    assert isinstance(result.error, str)
     assert ".gitignore sync failed" in result.error
 
 

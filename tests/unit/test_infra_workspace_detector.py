@@ -247,4 +247,6 @@ def test_detector_handles_exception_during_detection(
     result = detector.detect(project_root)
 
     assert result.is_failure
+    assert isinstance(result.error, str)
+    assert isinstance(result.error, str)
     assert "Detection failed" in result.error

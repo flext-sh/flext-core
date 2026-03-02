@@ -17,6 +17,7 @@ import re
 from collections.abc import (
     Callable,
     Generator,
+    Iterable,
     Mapping,
     MutableMapping,
     Sized,
@@ -69,7 +70,7 @@ def _to_payload(value: object) -> t.Tests.PayloadValue:
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload(v) for k, v in value.items()}
-    if isinstance(value, Sized) and hasattr(value, "__iter__"):
+    if isinstance(value, Iterable):
         return [_to_payload(item) for item in value]
     return str(value)
 

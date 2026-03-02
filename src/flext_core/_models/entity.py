@@ -17,15 +17,10 @@ from collections.abc import Callable, Sequence
 from typing import ClassVar, Self, override
 
 from pydantic import BaseModel, Field, model_validator
-from structlog.typing import BindableLogger
 
-from flext_core import FlextRuntime, c, r, t
+from flext_core import FlextRuntime, c, p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.domain_event import FlextModelsDomainEvent
-
-# Module-level aliases for the domain event types — avoids nested forward refs.
-_DomainEvent = FlextModelsDomainEvent.Entry
-_to_config_map = FlextModelsDomainEvent.to_config_map
 
 
 class FlextModelsEntity:
@@ -55,7 +50,7 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        domain_events: list[_DomainEvent] = Field(
+        domain_events: list[FlextModelsDomainEvent.Entry] = Field(
             default_factory=list,
             description="List of uncommitted domain events for event sourcing",
         )
@@ -66,8 +61,8 @@ class FlextModelsEntity:
             return self.unique_id
 
         @property
-        def logger(self) -> BindableLogger:
-            """Get logger instance."""
+        def logger(self) -> p.Log.StructlogLogger:
+            """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
             return FlextRuntime.get_logger(__name__)
 
         @override
@@ -88,11 +83,11 @@ class FlextModelsEntity:
             return FlextRuntime.hash_entity_by_id(self)
 
         @property
-        def uncommitted_events(self: Self) -> list[_DomainEvent]:
+        def uncommitted_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
             """Get uncommitted domain events without clearing them."""
             return list(self.domain_events)
 
-        def clear_domain_events(self: Self) -> list[_DomainEvent]:
+        def clear_domain_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
             """Clear and return domain events."""
             events = list(self.domain_events)
             self.domain_events.clear()
@@ -102,7 +97,7 @@ class FlextModelsEntity:
             self: Self,
             event_type: str,
             data: t.ConfigMap | None = None,
-        ) -> r[_DomainEvent]:
+        ) -> r[FlextModelsDomainEvent.Entry]:
             """Add a domain event to this entity.
 
             Args:
@@ -114,17 +109,17 @@ class FlextModelsEntity:
 
             """
             if not event_type:
-                return r[_DomainEvent].fail(
+                return r[FlextModelsDomainEvent.Entry].fail(
                     "Domain event name must be a non-empty string",
                 )
 
             if len(self.domain_events) >= c.Validation.MAX_UNCOMMITTED_EVENTS:
-                return r[_DomainEvent].fail(
+                return r[FlextModelsDomainEvent.Entry].fail(
                     f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
-            data_map = _to_config_map(data)
-            event = _DomainEvent(
+            data_map = FlextModelsDomainEvent.to_config_map(data)
+            event = FlextModelsDomainEvent.Entry(
                 event_type=event_type,
                 aggregate_id=self.unique_id,
                 data=data_map,
@@ -146,12 +141,12 @@ class FlextModelsEntity:
                 with contextlib.suppress(Exception):
                     _ = handler(data_map.root)
 
-            return r[_DomainEvent].ok(event)
+            return r[FlextModelsDomainEvent.Entry].ok(event)
 
         def add_domain_events_bulk(
             self: Self,
             events: Sequence[tuple[str, t.ConfigMap | None]],
-        ) -> r[list[_DomainEvent]]:
+        ) -> r[list[FlextModelsDomainEvent.Entry]]:
             """Add multiple domain events in bulk.
 
             Args:
@@ -163,7 +158,7 @@ class FlextModelsEntity:
             """
             # Validate input is a valid sequence (list or tuple)
             if events.__class__ not in {list, tuple}:
-                return r[list[_DomainEvent]].fail(
+                return r[list[FlextModelsDomainEvent.Entry]].fail(
                     "Events must be a list or tuple",
                 )
 
@@ -173,33 +168,33 @@ class FlextModelsEntity:
             # Check if adding all events would exceed limit
             total_after = len(self.domain_events) + len(event_items)
             if total_after > c.Validation.MAX_UNCOMMITTED_EVENTS:
-                return r[list[_DomainEvent]].fail(
+                return r[list[FlextModelsDomainEvent.Entry]].fail(
                     f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
             # Validate all event names first
             for event_type, _ in event_items:
                 if not event_type:
-                    return r[list[_DomainEvent]].fail(
+                    return r[list[FlextModelsDomainEvent.Entry]].fail(
                         "Event name must be non-empty string",
                     )
 
             # Add all events
-            created_events: list[_DomainEvent] = []
+            created_events: list[FlextModelsDomainEvent.Entry] = []
             for event_type, data in event_items:
-                event = _DomainEvent(
+                event = FlextModelsDomainEvent.Entry(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
-                    data=_to_config_map(data),
+                    data=FlextModelsDomainEvent.to_config_map(data),
                 )
                 self.domain_events.append(event)
                 created_events.append(event)
 
-            return r[list[_DomainEvent]].ok(created_events)
+            return r[list[FlextModelsDomainEvent.Entry]].ok(created_events)
 
         def mark_events_as_committed(
             self: Self,
-        ) -> r[list[_DomainEvent]]:
+        ) -> r[list[FlextModelsDomainEvent.Entry]]:
             """Mark all uncommitted events as committed and return them.
 
             Returns:
@@ -208,7 +203,7 @@ class FlextModelsEntity:
             """
             events = list(self.domain_events)
             self.domain_events.clear()
-            return r[list[_DomainEvent]].ok(events)
+            return r[list[FlextModelsDomainEvent.Entry]].ok(events)
 
     class Value(FlextModelFoundation.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""

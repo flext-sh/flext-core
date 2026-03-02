@@ -29,11 +29,7 @@ class FlextUtilitiesReliability:
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
-
-        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
-        Uses same structure/config as FlextLogger but without circular import.
-        """
+        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod

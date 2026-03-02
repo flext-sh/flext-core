@@ -71,6 +71,8 @@ class TestFlextInfraPathResolver:
         result = resolver.workspace_root_from_file(test_file)
 
         assert result.is_failure
+        assert isinstance(result.error, str)
+        assert isinstance(result.error, str)
         assert "workspace root not found" in result.error
 
     def test_workspace_root_from_directory_file(self, tmp_path: Path) -> None:
@@ -129,6 +131,7 @@ class TestFlextInfraPathResolver:
         result = resolver.workspace_root(None)  # type: ignore[arg-type]
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "failed to resolve" in result.error.lower()
 
     def test_workspace_root_from_file_with_invalid_type(self) -> None:
@@ -137,6 +140,7 @@ class TestFlextInfraPathResolver:
         result = resolver.workspace_root_from_file(None)  # type: ignore[arg-type]
 
         assert result.is_failure
+        assert isinstance(result.error, str)
         assert "failed to resolve" in result.error.lower()
 
     def test_execute_returns_current_directory(self) -> None:

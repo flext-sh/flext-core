@@ -73,8 +73,6 @@ from structlog.stdlib import add_log_level
 from flext_core import T, c, p, t
 from flext_core._models.containers import FlextModelsContainers
 
-_module_logger = logging.getLogger(__name__)
-
 
 class _LazyMetadata:
     """Descriptor for lazy-loading Metadata class."""
@@ -168,6 +166,17 @@ class FlextRuntime:
     """
 
     _structlog_configured: ClassVar[bool] = False
+    _runtime_logger: ClassVar[p.Log.StructlogLogger | None] = None
+
+    @property
+    def logger(self) -> p.Log.StructlogLogger:
+        """Infrastructure logger for FlextRuntime internals (avoids circular imports)."""
+        cls = type(self)
+        logger = cls._runtime_logger
+        if logger is None:
+            logger = structlog.get_logger(__name__)
+            cls._runtime_logger = logger
+        return logger
 
     Metadata: ClassVar[type | _LazyMetadata] = _LazyMetadata()
 
@@ -177,6 +186,8 @@ class FlextRuntime:
         Provides non-blocking logging by buffering log messages to a queue
         and writing them to the destination stream in a background thread.
         """
+
+        _writer_logger: p.Log.StructlogLogger | None = None
 
         def __init__(self, stream: typing.TextIO) -> None:
             super().__init__()
@@ -199,6 +210,16 @@ class FlextRuntime:
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
+            self._writer_logger: p.Log.StructlogLogger | None = None
+
+        @property
+        def _writer_log(self) -> p.Log.StructlogLogger:
+            """Logger for async log writer."""
+            logger = self._writer_logger
+            if logger is None:
+                logger = structlog.get_logger(__name__)
+                self._writer_logger = logger
+            return logger
 
         @property
         def line_buffering(self) -> bool:
@@ -257,7 +278,7 @@ class FlextRuntime:
                         break
                     continue
                 except (OSError, ValueError, TypeError) as exc:
-                    _module_logger.warning(
+                    self._writer_log.warning(
                         "Async log writer stream operation failed",
                         exc_info=exc,
                     )
@@ -1415,6 +1436,7 @@ class FlextRuntime:
             "_error_data",
             "_exception",
             "_is_success",
+            "_result_logger",
             "_value",
         )
 
@@ -1435,6 +1457,16 @@ class FlextRuntime:
             self._error_data = error_data
             self._is_success = is_success
             self._exception: BaseException | None = None
+            self._result_logger: p.Log.StructlogLogger | None = None
+
+        @property
+        def logger(self) -> p.Log.StructlogLogger:
+            """Logger for RuntimeResult."""
+            logger = self._result_logger
+            if logger is None:
+                logger = structlog.get_logger(__name__)
+                self._result_logger = logger
+            return logger
 
         @property
         def value(self) -> T:
@@ -1536,7 +1568,7 @@ class FlextRuntime:
                     AttributeError,
                     RuntimeError,
                 ) as e:
-                    _module_logger.debug(
+                    self.logger.debug(
                         "RuntimeResult.map callable failed",
                         exc_info=e,
                     )
@@ -2041,8 +2073,9 @@ class FlextRuntime:
             else logging.INFO,
         )
 
-    @staticmethod
+    @classmethod
     def ensure_trace_context(
+        cls,
         context: Mapping[str, str] | t.ConfigMapValue,
         *,
         include_correlation_id: bool = False,
@@ -2071,7 +2104,7 @@ class FlextRuntime:
                     val_typed = FlextRuntime.normalize_to_general_value(v_obj)
                     context_dict[key_str] = val_typed
             except (TypeError, ValueError, AttributeError) as exc:
-                _module_logger.debug(
+                logging.getLogger(__name__).debug(
                     "Failed to normalize mapping context fields",
                     exc_info=exc,
                 )
