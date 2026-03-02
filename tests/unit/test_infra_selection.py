@@ -157,7 +157,8 @@ class TestFlextInfraProjectSelector:
         assert isinstance(result, type(r[list[m.ProjectInfo]].ok([])))
         assert result.is_success
         assert isinstance(result.value, list)
-        assert all(isinstance(p, m.ProjectInfo) for p in result.value)
+        for p in result.value:
+            assert isinstance(p, m.ProjectInfo)
 
     def test_selector_with_default_discovery(
         self,

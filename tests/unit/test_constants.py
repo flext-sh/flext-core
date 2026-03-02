@@ -168,7 +168,7 @@ class TestFlextConstants:
         actual = FlextTestsUtilities.Tests.ConstantsHelpers.get_constant_by_path(
             scenario.path,
         )
-        tm.that(actual, eq=scenario.expected)
+        tm.that(str(actual), eq=str(scenario.expected))
 
     @pytest.mark.parametrize("level", ConstantsScenarios.LOG_LEVELS)
     def test_core_logging_enum_levels(self, level: str) -> None:

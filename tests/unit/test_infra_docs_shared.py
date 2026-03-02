@@ -282,7 +282,7 @@ class TestFlextInfraDocsShared:
     def test_write_json_with_dict_payload(self, tmp_path: Path) -> None:
         """Test write_json with dictionary payload."""
         json_file = tmp_path / "test.json"
-        payload = {"key": "value", "nested": {"inner": "data"}}
+        payload: dict[str, str | dict[str, str]] = {"key": "value", "nested": {"inner": "data"}}
         result = FlextInfraDocsShared.write_json(json_file, payload)
         assert result.is_success
 
@@ -414,7 +414,7 @@ class TestFlextInfraDocsShared:
     def test_write_json_file_readable(self, tmp_path: Path) -> None:
         """Test write_json creates readable JSON file."""
         json_file = tmp_path / "readable.json"
-        payload = {"key": "value", "number": 42}
+        payload: dict[str, str | int] = {"key": "value", "number": 42}
         FlextInfraDocsShared.write_json(json_file, payload)
         content = json.loads(json_file.read_text())
         assert content["key"] == "value"

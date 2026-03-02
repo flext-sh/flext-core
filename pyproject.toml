@@ -192,3 +192,4 @@ protocol-implicitly-defined-attribute = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
+bad-override = false

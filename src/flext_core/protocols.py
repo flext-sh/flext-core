@@ -859,7 +859,7 @@ class FlextProtocols:
         def handle(
             self,
             message: MessageT,
-        ) -> FlextProtocols.Result[ResultT]:
+        ) -> r[ResultT]:
             """Handle message - core business logic method.
 
             Reflects real implementations like FlextHandlers.handle() which

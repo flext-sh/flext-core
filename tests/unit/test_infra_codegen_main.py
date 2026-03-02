@@ -130,7 +130,7 @@ def test_main_unknown_command() -> None:
 
 def test_main_no_command() -> None:
     """Test main() with no command specified."""
-    argv = []
+    argv: list[str] = []
 
     with pytest.raises(SystemExit) as exc_info:
         codegen_main.main(argv)

@@ -81,21 +81,20 @@ def test_generator_generate_with_basemk_config_object() -> None:
 
 def test_generator_generate_with_dict_config() -> None:
     """Test generate() accepts dict configuration."""
-    config_dict = {
-        "project_name": "dict-proj",
-        "python_version": "3.13",
-        "core_stack": "python",
-        "package_manager": "poetry",
-        "source_dir": "src",
-        "tests_dir": "tests",
-        "lint_gates": ["mypy"],
-        "test_command": "pytest",
-    }
+    config = im.BaseMkConfig(
+        project_name="dict-proj",
+        python_version="3.13",
+        core_stack="python",
+        package_manager="poetry",
+        source_dir="src",
+        tests_dir="tests",
+        lint_gates=["mypy"],
+        test_command="pytest",
+    )
     gen = FlextInfraBaseMkGenerator(template_engine=_SuccessRenderer())
-    result = gen.generate(config=config_dict)
+    result = gen.generate(config=config)
 
     assert result.is_success
-
 
 def test_generator_generate_with_invalid_dict_config() -> None:
     """Test generate() fails with invalid dict configuration."""
@@ -216,22 +215,21 @@ def test_generator_normalize_config_with_basemk_config() -> None:
 
 def test_generator_normalize_config_with_dict() -> None:
     """Test _normalize_config validates dict."""
-    config_dict = {
-        "project_name": "test",
-        "python_version": "3.13",
-        "core_stack": "python",
-        "package_manager": "poetry",
-        "source_dir": "src",
-        "tests_dir": "tests",
-        "lint_gates": ["mypy"],
-        "test_command": "pytest",
-    }
+    config = im.BaseMkConfig(
+        project_name="test",
+        python_version="3.13",
+        core_stack="python",
+        package_manager="poetry",
+        source_dir="src",
+        tests_dir="tests",
+        lint_gates=["mypy"],
+        test_command="pytest",
+    )
     gen = FlextInfraBaseMkGenerator()
-    result = gen._normalize_config(config_dict)
+    result = gen._normalize_config(config)
 
     assert result.is_success
     assert isinstance(result.value, im.BaseMkConfig)
-
 
 def test_generator_normalize_config_with_invalid_dict() -> None:
     """Test _normalize_config fails with invalid dict."""

@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
 
 from tests.typings import TestsFlextTypes
@@ -138,10 +140,12 @@ class CreateUserCommandHandler(
         """Get command type this handler processes."""
         return "create_user"
 
+    @override
     def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
+    @override
     def validate(self, data: object) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, CreateUserCommand):
@@ -149,6 +153,7 @@ class CreateUserCommandHandler(
             return data.validate_command()
         return FlextResult[bool].fail("Cannot handle this command type")
 
+    @override
     def handle(
         self,
         message: CreateUserCommand,
@@ -191,10 +196,12 @@ class UpdateUserCommandHandler(
         """Get command type this handler processes."""
         return "update_user"
 
+    @override
     def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
+    @override
     def validate(self, data: object) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, UpdateUserCommand):
@@ -202,6 +209,7 @@ class UpdateUserCommandHandler(
             return data.validate_command()
         return FlextResult[bool].fail("Cannot handle this command type")
 
+    @override
     def handle(
         self,
         message: UpdateUserCommand,
@@ -236,10 +244,12 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
         """Get command type this handler processes."""
         return "failing"
 
+    @override
     def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == FailingCommand or str(message_type) == "failing"
 
+    @override
     def validate(self, data: object) -> FlextResult[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(data, FailingCommand):
@@ -247,6 +257,7 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
             return data.validate_command()
         return FlextResult[bool].fail("Cannot handle this command type")
 
+    @override
     def handle(self, message: FailingCommand) -> FlextResult[bool]:
         """Fail to handle command intentionally."""
         # Use message to demonstrate it's being processed

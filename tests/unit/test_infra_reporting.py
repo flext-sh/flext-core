@@ -258,6 +258,6 @@ class TestFlextInfraReportingService:
         try:
             result = service.create_latest_symlink(readonly_dir, "run-id")
             assert result.is_failure
-            assert "symlink" in result.error.lower()
+            assert result.error is not None and "symlink" in result.error.lower()
         finally:
             readonly_dir.chmod(0o755)

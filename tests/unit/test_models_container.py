@@ -35,13 +35,13 @@ def _service_reg_with_metadata(
     cls: Callable[..., m.Container.ServiceRegistration] = (
         m.Container.ServiceRegistration
     )
-    return cls(name=name, service=service, metadata=metadata)
+    return cls(name=name, service=service, metadata=metadata)  # type: ignore[arg-type]
 
 
 def _factory_reg_with_metadata(
     name: str,
     factory: Callable[[], t.ScalarValue],
-    metadata: object,
+    metadata: m.Metadata | m.ConfigMap | None,
 ) -> m.Container.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
     cls: Callable[..., m.Container.FactoryRegistration] = (

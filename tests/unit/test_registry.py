@@ -70,11 +70,12 @@ class RegistryTestCase:
 class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
     """Concrete implementation of h for testing."""
 
-    def handle(self, message: t.GeneralValueType) -> p.Result[t.GeneralValueType]:
+    @override
+    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
         """Handle the message."""
         return r[t.GeneralValueType].ok(f"processed_{message}")
 
-    def __call__(self, message: t.GeneralValueType) -> p.Result[t.GeneralValueType]:
+    def __call__(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
@@ -357,7 +358,7 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         u.Tests.Result.assert_success(
             result,
-        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_failure(
             result,
         )
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -379,7 +380,7 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         u.Tests.Result.assert_success(
             result,
-        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_failure(
             result,
         )
         assert result.value is not None
@@ -401,7 +402,7 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         u.Tests.Result.assert_success(
             result,
-        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_failure(
             result,
         )
         assert result.value is not None

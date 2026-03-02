@@ -155,7 +155,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "repo": {
                 "flext-core": {
                     "ssh_url": "git@github.com:flext-sh/flext-core.git",
@@ -176,7 +176,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].fail("file not found")
+        service._toml.read.return_value = r[dict[str, object]].fail("file not found")
 
         result = service._parse_repo_map(Path("/fake/map.toml"))
 
@@ -188,7 +188,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({"other": "data"})
+        service._toml.read.return_value = r[dict[str, object]].ok({"other": "data"})
 
         result = service._parse_repo_map(Path("/fake/map.toml"))
 
@@ -202,7 +202,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({"repo": "not-a-dict"})
+        service._toml.read.return_value = r[dict[str, object]].ok({"repo": "not-a-dict"})
 
         result = service._parse_repo_map(Path("/fake/map.toml"))
 
@@ -216,7 +216,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "repo": {"flext-core": "string-value"},
         })
 
@@ -232,7 +232,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "repo": {"flext-core": {"other": "val"}},
         })
 
@@ -248,7 +248,7 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "repo": {
                 "flext-core": {"ssh_url": "git@github.com:flext-sh/flext-core.git"},
             },
@@ -981,7 +981,7 @@ class TestCollectInternalDeps:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "tool": {
                 "poetry": {
                     "dependencies": {
@@ -990,7 +990,7 @@ class TestCollectInternalDeps:
                     },
                 },
             },
-            "project": {},
+            "project": dict[str, object](),
         })
 
         (tmp_path / "pyproject.toml").write_text("")
@@ -1007,8 +1007,8 @@ class TestCollectInternalDeps:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
-            "tool": {},
+        service._toml.read.return_value = r[dict[str, object]].ok({
+            "tool": dict[str, object](),
             "project": {
                 "dependencies": [
                     "flext-core @ file:.flext-deps/flext-core",
@@ -1031,7 +1031,7 @@ class TestCollectInternalDeps:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].fail("parse error")
+        service._toml.read.return_value = r[dict[str, object]].fail("parse error")
 
         (tmp_path / "pyproject.toml").write_text("")
 
@@ -1045,7 +1045,7 @@ class TestCollectInternalDeps:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({"project": {}})
+        service._toml.read.return_value = r[dict[str, object]].ok({"project": dict[str, object]()})
 
         (tmp_path / "pyproject.toml").write_text("")
 
@@ -1061,7 +1061,7 @@ class TestCollectInternalDeps:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "tool": {"poetry": {"dependencies": "not-a-dict"}},
             "project": {"dependencies": "not-a-list"},
         })
@@ -1084,7 +1084,7 @@ class TestSync:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({"tool": {}, "project": {}})
+        service._toml.read.return_value = r[dict[str, object]].ok({"tool": dict[str, object](), "project": dict[str, object]()})
 
         (tmp_path / "pyproject.toml").write_text("")
 
@@ -1100,7 +1100,7 @@ class TestSync:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].fail("read error")
+        service._toml.read.return_value = r[dict[str, object]].fail("read error")
 
         (tmp_path / "pyproject.toml").write_text("")
 
@@ -1134,7 +1134,7 @@ class TestSync:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict].ok({
+        service._toml.read.return_value = r[dict[str, object]].ok({
             "tool": {
                 "poetry": {
                     "dependencies": {
@@ -1142,7 +1142,7 @@ class TestSync:
                     },
                 },
             },
-            "project": {},
+            "project": dict[str, object](),
         })
 
         service._runner = Mock()
@@ -1172,7 +1172,7 @@ class TestSync:
 
         service._toml.read.side_effect = [
             # First call: _collect_internal_deps reads pyproject.toml
-            r[dict].ok({
+            r[dict[str, object]].ok({
                 "tool": {
                     "poetry": {
                         "dependencies": {
@@ -1180,10 +1180,10 @@ class TestSync:
                         },
                     },
                 },
-                "project": {},
+                "project": dict[str, object](),
             }),
             # Second call: _parse_repo_map
-            r[dict].ok({"repo": {}}),
+            r[dict[str, object]].ok({"repo": dict[str, object]()}),
         ]
 
         service._runner = Mock()

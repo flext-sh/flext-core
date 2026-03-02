@@ -9,12 +9,12 @@ import pytest
 from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
 
 
-class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
+class _Handler(FlextHandlers[t.GeneralValueType, t.GeneralValueType]):
     @override
-    def handle(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
-        return r[t.JsonValue].ok(message)
+    def handle(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
+        return r[t.GeneralValueType].ok(message)
 
-    def __call__(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
+    def __call__(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
         return self.handle(message)
 
 
@@ -27,7 +27,7 @@ def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
     )
 
 
-def _as_registry_handler(handler: _Handler) -> p.Handler[t.GeneralValueType, t.GeneralValueType]:
+def _as_registry_handler(handler: _Handler):
     return handler
 
 

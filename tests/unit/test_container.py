@@ -365,8 +365,8 @@ class TestFlextContainer:
         if scenario.should_pass:
             u.Tests.Result.assert_success(typed_result)
             tm.that(
-                typed_result.value,
-                eq=scenario.service,
+                str(typed_result.value),
+                eq=str(scenario.service),
                 msg=f"Typed result value must match service for {scenario.name}",
             )
             tm.that(

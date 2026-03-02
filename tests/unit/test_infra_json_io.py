@@ -73,7 +73,7 @@ class TestFlextInfraJsonService:
         """Test writing a dict payload to JSON file."""
         json_file = tmp_path / "output.json"
         service = FlextInfraJsonService()
-        payload = {"key": "value", "number": 42}
+        payload: dict[str, str | int] = {"key": "value", "number": 42}
 
         result = service.write(json_file, payload)
 

@@ -108,7 +108,7 @@ def _make_project(
 ) -> Path:
     project = tmp_path / name
     project.mkdir()
-    _ = (project / "Makefile").touch()
+    (project / "Makefile").touch()
     _ = (project / "pyproject.toml").write_text(
         f"[project]\nname='{name}'\n", encoding="utf-8"
     )

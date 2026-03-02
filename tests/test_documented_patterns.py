@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass, field
-from typing import cast
+from typing import cast, override
 
 import pytest
 
@@ -230,6 +230,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str = ""
 
+    @override
     def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         if self.user_id in {"invalid", ""}:
@@ -250,6 +251,7 @@ class SendEmailService(FlextService[EmailResponse]):
     to: str = ""
     subject: str = ""
 
+    @override
     def execute(self) -> FlextResult[EmailResponse]:
         """Send email."""
         if "@" not in self.to:
@@ -263,6 +265,7 @@ class ValidationService(FlextService[m.ConfigMap]):
 
     value: int = 0
 
+    @override
     def execute(self) -> FlextResult[m.ConfigMap]:
         """Validate value."""
         if self.value < 0:
@@ -280,6 +283,7 @@ class MultiOperationService(FlextService[m.ConfigMap]):
     operation: str = ""
     value: int = 0
 
+    @override
     def execute(self) -> FlextResult[m.ConfigMap]:
         """Execute based on operation."""
         match self.operation:
@@ -722,6 +726,7 @@ class TestAllPatternsIntegration:
         class CustomService(FlextService[User]):
             user_id: str = ""
 
+            @override
             def execute(self) -> FlextResult[User]:
                 return FlextResult.ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com"),

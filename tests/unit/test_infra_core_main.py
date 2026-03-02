@@ -43,7 +43,7 @@ class TestCoreMainBaseMkValidate:
             mock_validator_inst = mock_validator.return_value
             mock_report = MagicMock()
             mock_report.summary = "OK"
-            mock_report.violations = []
+            mock_report.violations = list[object]()
             mock_report.passed = True
             mock_validator_inst.validate.return_value = r[MagicMock].ok(mock_report)
             with patch("flext_infra.core.__main__.output") as mock_output:
@@ -98,7 +98,7 @@ class TestCoreMainInventory:
             "flext_infra.core.__main__.FlextInfraInventoryService"
         ) as mock_service:
             mock_service_inst = mock_service.return_value
-            mock_service_inst.generate.return_value = r[dict].ok({
+            mock_service_inst.generate.return_value = r[dict[str, object]].ok({
                 "reports_written": ["/path/to/report.json"]
             })
             with patch("flext_infra.core.__main__.output") as mock_output:
@@ -115,8 +115,8 @@ class TestCoreMainInventory:
             "flext_infra.core.__main__.FlextInfraInventoryService"
         ) as mock_service:
             mock_service_inst = mock_service.return_value
-            mock_service_inst.generate.return_value = r[dict].ok({
-                "reports_written": []
+            mock_service_inst.generate.return_value = r[dict[str, object]].ok({
+                "reports_written": list[str]()
             })
             with patch("flext_infra.core.__main__.output"):
                 result = _run_inventory(args)
@@ -131,7 +131,7 @@ class TestCoreMainInventory:
             "flext_infra.core.__main__.FlextInfraInventoryService"
         ) as mock_service:
             mock_service_inst = mock_service.return_value
-            mock_service_inst.generate.return_value = r[dict].fail("generation error")
+            mock_service_inst.generate.return_value = r[dict[str, object]].fail("generation error")
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_inventory(args)
                 assert result == 1
@@ -159,12 +159,12 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].ok({
-                "failed_cases": [],
-                "error_traces": [],
-                "warning_lines": [],
-                "slow_entries": [],
-                "skip_cases": [],
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
+                "failed_cases": list[str](),
+                "error_traces": list[str](),
+                "warning_lines": list[str](),
+                "slow_entries": list[str](),
+                "skip_cases": list[str](),
             })
             result = _run_pytest_diag(args)
             assert result == 0
@@ -188,12 +188,12 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].ok({
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
                 "failed_cases": ["test_a", "test_b"],
-                "error_traces": [],
-                "warning_lines": [],
-                "slow_entries": [],
-                "skip_cases": [],
+                "error_traces": list[str](),
+                "warning_lines": list[str](),
+                "slow_entries": list[str](),
+                "skip_cases": list[str](),
             })
             result = _run_pytest_diag(args)
             assert result == 0
@@ -218,12 +218,12 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].ok({
-                "failed_cases": [],
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
+                "failed_cases": list[str](),
                 "error_traces": ["error 1", "error 2"],
-                "warning_lines": [],
-                "slow_entries": [],
-                "skip_cases": [],
+                "warning_lines": list[str](),
+                "slow_entries": list[str](),
+                "skip_cases": list[str](),
             })
             result = _run_pytest_diag(args)
             assert result == 0
@@ -248,12 +248,12 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].ok({
-                "failed_cases": [],
-                "error_traces": [],
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
+                "failed_cases": list[str](),
+                "error_traces": list[str](),
                 "warning_lines": ["warning 1"],
-                "slow_entries": [],
-                "skip_cases": [],
+                "slow_entries": list[str](),
+                "skip_cases": list[str](),
             })
             result = _run_pytest_diag(args)
             assert result == 0
@@ -278,12 +278,12 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].ok({
-                "failed_cases": [],
-                "error_traces": [],
-                "warning_lines": [],
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
+                "failed_cases": list[str](),
+                "error_traces": list[str](),
+                "warning_lines": list[str](),
                 "slow_entries": ["slow_test"],
-                "skip_cases": [],
+                "skip_cases": list[str](),
             })
             result = _run_pytest_diag(args)
             assert result == 0
@@ -308,11 +308,11 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].ok({
-                "failed_cases": [],
-                "error_traces": [],
-                "warning_lines": [],
-                "slow_entries": [],
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].ok({
+                "failed_cases": list[str](),
+                "error_traces": list[str](),
+                "warning_lines": list[str](),
+                "slow_entries": list[str](),
                 "skip_cases": ["skip_test"],
             })
             result = _run_pytest_diag(args)
@@ -337,7 +337,7 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict].fail("extraction error")
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].fail("extraction error")
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_pytest_diag(args)
                 assert result == 1
@@ -353,13 +353,13 @@ class TestCoreMainScan:
         args.root = str(tmp_path)
         args.pattern = "TODO"
         args.include = ["*.py"]
-        args.exclude = []
+        args.exclude = list[str]()
         args.match = "present"
         with patch(
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict].ok({"violation_count": 0})
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({"violation_count": 0})
             result = _run_scan(args)
             assert result == 0
 
@@ -369,13 +369,13 @@ class TestCoreMainScan:
         args.root = str(tmp_path)
         args.pattern = "TODO"
         args.include = ["*.py"]
-        args.exclude = []
+        args.exclude = list[str]()
         args.match = "present"
         with patch(
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict].ok({"violation_count": 5})
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({"violation_count": 5})
             result = _run_scan(args)
             assert result == 1
 
@@ -391,7 +391,7 @@ class TestCoreMainScan:
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict].ok({"violation_count": 0})
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({"violation_count": 0})
             result = _run_scan(args)
             assert result == 0
 
@@ -401,13 +401,13 @@ class TestCoreMainScan:
         args.root = str(tmp_path)
         args.pattern = "TODO"
         args.include = ["*.py"]
-        args.exclude = []
+        args.exclude = list[str]()
         args.match = "present"
         with patch(
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict].fail("scan error")
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].fail("scan error")
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_scan(args)
                 assert result == 1
@@ -429,7 +429,7 @@ class TestCoreMainSkillValidate:
             mock_validator_inst = mock_validator.return_value
             mock_report = MagicMock()
             mock_report.summary = "OK"
-            mock_report.violations = []
+            mock_report.violations = list[object]()
             mock_report.passed = True
             mock_validator_inst.validate.return_value = r[MagicMock].ok(mock_report)
             with patch("flext_infra.core.__main__.output") as mock_output:
@@ -488,7 +488,7 @@ class TestCoreMainStubValidate:
             mock_chain_inst = mock_chain.return_value
             mock_report = MagicMock()
             mock_report.summary = "OK"
-            mock_report.violations = []
+            mock_report.violations = list[object]()
             mock_report.passed = True
             mock_chain_inst.validate.return_value = r[MagicMock].ok(mock_report)
             with patch("flext_infra.core.__main__.output") as mock_output:
@@ -505,7 +505,7 @@ class TestCoreMainStubValidate:
             mock_chain_inst = mock_chain.return_value
             mock_report = MagicMock()
             mock_report.summary = "OK"
-            mock_report.violations = []
+            mock_report.violations = list[object]()
             mock_report.passed = True
             mock_chain_inst.validate.return_value = r[MagicMock].ok(mock_report)
             with patch("flext_infra.core.__main__.output"):
