@@ -8,12 +8,12 @@ import logging
 import queue
 import types
 from collections import UserDict
-from collections.abc import Callable, Generator, Iterator
+from collections.abc import Callable, Generator, ItemsView, Iterator
 from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self, cast, override
 
 import flext_core.runtime as runtime_module
 import pytest
@@ -96,10 +96,12 @@ def test_async_log_writer_paths() -> None:
             self.messages: list[str] = []
             self.flushed = 0
 
+        @override
         def write(self, message: str) -> int:
             self.messages.append(message)
             return len(message)
 
+        @override
         def flush(self) -> None:
             self.flushed += 1
 
@@ -131,6 +133,7 @@ def test_async_log_writer_paths() -> None:
             self.first = True
             self.messages: list[str] = []
 
+        @override
         def write(self, message: str) -> int:
             if self.first:
                 self.first = False
@@ -139,6 +142,7 @@ def test_async_log_writer_paths() -> None:
             self.messages.append(message)
             return len(message)
 
+        @override
         def flush(self) -> None:
             return None
 
@@ -200,6 +204,7 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
             super().__init__()
             self.flush_calls = 0
 
+        @override
         def flush(self) -> None:
             self.flush_calls += 1
 
@@ -242,7 +247,7 @@ def test_runtime_create_instance_failure_branch(
     class FakeObject:
         def __new__(cls) -> Self:
             _ = cls
-            return cast("FakeObject", object())
+            return cast("Self", object())
 
     monkeypatch.setattr(runtime_module, "object", FakeObject, raising=False)
 
@@ -390,7 +395,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         additional_processors: ClassVar[list[Callable[..., object]]] = [
             lambda *_args: {},
         ]
-        wrapper_class_factory = None
+        wrapper_class_factory: Callable[..., object] | None = None
         logger_factory = staticmethod(lambda: object())
         cache_logger_on_first_use = True
         async_logging = True
@@ -411,9 +416,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class ConfigNoAsync:
         log_level = logging.INFO
         console_renderer = True
-        additional_processors = None
-        wrapper_class_factory = None
-        logger_factory = None
+        additional_processors: list[Callable[..., object]] | None = None
+        wrapper_class_factory: Callable[..., object] | None = None
+        logger_factory: Callable[..., object] | None = None
         cache_logger_on_first_use = True
         async_logging = False
 
@@ -429,9 +434,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class ConfigAsyncFallback:
         log_level = logging.INFO
         console_renderer = True
-        additional_processors = None
-        wrapper_class_factory = None
-        logger_factory = None
+        additional_processors: list[Callable[..., object]] | None = None
+        wrapper_class_factory: Callable[..., object] | None = None
+        logger_factory: Callable[..., object] | None = None
         cache_logger_on_first_use = True
         async_logging = True
 
@@ -511,6 +516,7 @@ def test_runtime_result_all_missed_branches() -> None:
     assert failure.recover(lambda _err: 7).value == 7
 
     class NoneValueResult(FlextRuntime.RuntimeResult[int | None]):
+        @override
         @property
         def value(self) -> int | None:
             return None
@@ -585,10 +591,12 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert FlextRuntime.compare_value_objects_by_value([1], [1]) is True
 
     class C:
+        @override
         def __repr__(self) -> str:
             return "same"
 
     class D:
+        @override
         def __repr__(self) -> str:
             return "same"
 
@@ -643,7 +651,8 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     assert trace_from_model["key"] == "value"
 
     class BadDict(UserDict[object, object]):
-        def items(self):
+        @override
+        def items(self) -> ItemsView[object, object]:
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -708,14 +717,15 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert FlextRuntime.normalize_to_metadata_value(Path("/tmp")) == "/tmp"
 
     class Frame:
-        f_back = None
+        f_back: types.FrameType | None = None
 
     monkeypatch.setattr(runtime_module.inspect, "currentframe", lambda: Frame())
     assert FlextRuntime.get_logger(None) is not None
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
-    metadata = FlextRuntime.Metadata()
+    metadata_cls = cast("type", FlextRuntime.Metadata)
+    metadata = metadata_cls()
     assert metadata.version == "1.0.0"
     assert FlextRuntime.structlog() is runtime_module.structlog
     assert FlextRuntime.dependency_providers() is runtime_module.providers
@@ -749,6 +759,7 @@ def test_configure_structlog_print_logger_factory_fallback(
                 {"ConsoleRenderer": staticmethod(lambda **_kw: object())},
             )
 
+        @override
         def __getattribute__(self, name: str) -> object:
             if name == "PrintLoggerFactory":
                 calls = object.__getattribute__(self, "print_calls") + 1
@@ -942,7 +953,7 @@ def test_model_helpers_remaining_paths() -> None:
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
-    payload = {
+    payload: dict[str, t.GeneralValueType] = {
         "none": None,
         "str": "x",
         "int": 1,
