@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import ItemsView, Iterator, Mapping
-from typing import cast
+from typing import cast, override
 
 from flext_core import FlextTypes, FlextUtilities, m
 from flext_tests import tm
@@ -83,6 +83,7 @@ class TestMapperMapDictKeys:
         class BadDict(UserDict[str, FlextTypes.GeneralValueType]):
             """Dict that raises on items()."""
 
+            @override
             def items(self) -> ItemsView[str, FlextTypes.GeneralValueType]:
                 """Raise error on items attempt - test error handling."""
                 msg = "Bad dict items"
@@ -143,6 +144,7 @@ class TestMapperBuildFlagsDict:
         class BadList(UserList[str]):
             """List that raises on iteration."""
 
+            @override
             def __iter__(self) -> Iterator[str]:
                 """Raise error on iteration."""
                 msg = "Bad list iteration"

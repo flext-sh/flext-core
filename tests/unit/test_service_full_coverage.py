@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import FlextService, FlextSettings, c, m, p, r, u
@@ -14,6 +14,7 @@ from flext_core._models.service import FlextModelsService
 
 
 class _Svc(FlextService[bool]):
+    @override
     def execute(self) -> r[bool]:
         return r[bool].ok(True)
 
@@ -75,6 +76,7 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
 
     class _CustomSvc(_Svc):
         @classmethod
+        @override
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return FlextModelsService.RuntimeBootstrapOptions(
                 config_type=_CustomSettings,

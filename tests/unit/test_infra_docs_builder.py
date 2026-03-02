@@ -208,8 +208,8 @@ class TestFlextInfraDocBuilder:
         """Test build returns failure when scope building fails."""
 
         # Mock FlextInfraDocsShared.build_scopes to return failure
-        def mock_build_scopes(*args: object, **kwargs: object) -> r[list]:
-            return r[list].fail("Scope error")
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+            return r[list[object]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = builder.build(tmp_path)

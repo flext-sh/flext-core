@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import r, s, t
 from flext_tests import FlextTestsDomains
 
@@ -29,6 +31,7 @@ class TestService(s[TestDomainResult]):
         """Initialize test service."""
         super().__init__(**data)
 
+    @override
     def execute(self, **_kwargs: t.GeneralValueType) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("success"))
@@ -43,6 +46,7 @@ class TestServiceWithValidation(s[TestDomainResult]):
         """Initialize test service."""
         super().__init__(**data)
 
+    @override
     def execute(self, **_kwargs: t.GeneralValueType) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("validated"))

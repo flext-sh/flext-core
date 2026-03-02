@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import ModuleType
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -387,12 +388,14 @@ class TestServiceBootstrapWithDI:
 
         class TestService(s[str]):
             @classmethod
+            @override
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     services={"custom_service": "custom_value"},
                     factories={"custom_factory": lambda: {"custom": "data"}},
                 )
 
+            @override
             def execute(self) -> r[str]:
                 return r[str].ok("test")
 

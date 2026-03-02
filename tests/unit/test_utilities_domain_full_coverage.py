@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections import UserDict
 from datetime import UTC, datetime
-from typing import cast
+from typing import cast, override
 
 from flext_core import t, u
 from pydantic import BaseModel, ConfigDict
@@ -110,6 +110,7 @@ class TestValidateValueImmutable:
 
 def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
     class _BrokenConfigDict(UserDict[str, bool]):
+        @override
         def get(self, key: str, default: object = None) -> bool:
             _ = key
             _ = default
@@ -120,6 +121,7 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
         model_config: _BrokenConfigDict = _BrokenConfigDict()
 
     class _NoSetattrVisible:
+        @override
         def __getattribute__(self, name: str) -> object:
             if name == "__setattr__":
                 raise AttributeError(name)

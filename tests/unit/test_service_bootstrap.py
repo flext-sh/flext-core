@@ -17,6 +17,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -33,6 +35,7 @@ class ConcreteTestService(FlextService[bool]):
     """Concrete service for testing bootstrap patterns."""
 
     @classmethod
+    @override
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
         return FlextModelsService.RuntimeBootstrapOptions(
@@ -40,6 +43,7 @@ class ConcreteTestService(FlextService[bool]):
             subproject="test",
         )
 
+    @override
     def execute(self) -> r[bool]:
         """Execute service logic."""
         return r[bool].ok(True)

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import inspect
 from collections import UserDict
-from typing import cast
+from typing import cast, override
 
 from flext_core import c, m, r, t, u
 
@@ -28,6 +28,7 @@ class MissingType:
 
 
 class _ExplodingSubclassMeta(type):
+    @override
     def __subclasscheck__(cls, subclass: type) -> bool:
         _ = subclass
         msg = "no subclass check"
@@ -35,6 +36,7 @@ class _ExplodingSubclassMeta(type):
 
 
 class _ExplodingInstanceMeta(type):
+    @override
     def __instancecheck__(cls, instance: object) -> bool:
         _ = instance
         msg = "no instance check"

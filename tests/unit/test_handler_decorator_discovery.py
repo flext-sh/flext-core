@@ -20,7 +20,7 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_core import (
@@ -598,6 +598,7 @@ class _TestServiceForDiscovery(FlextService[str]):
     ) -> r[str]:
         return r[str].ok(f"created_{cmd.name}")
 
+    @override
     def execute(self) -> r[str]:
         return r[str].ok("executed")
 
@@ -613,6 +614,7 @@ class _TestServiceWithMultipleHandlers(FlextService[str]):
     def delete_user(self, cmd: UserDeleteCommand) -> r[str]:
         return r[str].ok(f"deleted_{cmd.user_id}")
 
+    @override
     def execute(self) -> r[str]:
         return r[str].ok("done")
 

@@ -410,9 +410,9 @@ class TestMainStructlogConfiguration:
         """Test main ensures structlog is configured before dispatch."""
         mock_module = Mock()
         mock_module.main = Mock(return_value=0)
-        call_order = []
+        call_order: list[str] = []
 
-        def track_ensure():
+        def track_ensure() -> None:
             call_order.append("ensure")
 
         def track_import(*args: object, **kwargs: object) -> object:

@@ -272,8 +272,8 @@ class TestFlextInfraDocFixer:
     ) -> None:
         """Test fix returns failure when scope building fails."""
 
-        def mock_build_scopes(*args: object, **kwargs: object) -> r[list]:
-            return r[list].fail("Scope error")
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+            return r[list[object]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = fixer.fix(tmp_path)

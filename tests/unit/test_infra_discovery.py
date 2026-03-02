@@ -170,8 +170,9 @@ class TestFlextInfraDiscoveryService:
 
         assert isinstance(result, type(r[list[m.ProjectInfo]].ok([])))
         assert result.is_success
-        assert isinstance(result.value, list)
-        assert all(isinstance(p, m.ProjectInfo) for p in result.value)
+        projects: list[m.ProjectInfo] = result.value
+        for item in projects:
+            assert isinstance(item, m.ProjectInfo)
 
     def test_discover_projects_empty_workspace_v2(
         self, service: FlextInfraDiscoveryService, tmp_path: Path
@@ -250,7 +251,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         """Test find_all_pyproject_files handles OSError from rglob (lines 138-139)."""
         service = FlextInfraDiscoveryService()
 
-        def mock_rglob(self, pattern: str) -> None:  # noqa: ANN001
+        def mock_rglob(self: Path, pattern: str) -> None:
             msg = "permission denied"
             raise OSError(msg)
 
@@ -268,7 +269,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         gitmodules = workspace_root / ".gitmodules"
         gitmodules.touch()
 
-        def mock_read_text(self, encoding: str | None = None) -> None:  # noqa: ANN001
+        def mock_read_text(self: Path, encoding: str | None = None) -> None:
             msg = "permission denied"
             raise OSError(msg)
 

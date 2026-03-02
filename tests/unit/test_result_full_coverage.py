@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-from typing import Never, cast
+from typing import Never, cast, override
 
 from flext_core import FlextRuntime, r, t
 from pydantic import BaseModel
@@ -26,6 +26,7 @@ class _ErrorsModel(BaseModel):
     value: int
 
     @classmethod
+    @override
     def model_validate(
         cls,
         obj: object,
@@ -46,6 +47,7 @@ class _PlainErrorModel(BaseModel):
     value: int
 
     @classmethod
+    @override
     def model_validate(
         cls,
         obj: object,

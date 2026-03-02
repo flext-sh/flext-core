@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import cast
+from typing import cast, override
 
 from flext_core import (
     FlextContainer,
@@ -210,6 +210,7 @@ class TestServicesIntegrationViaDI:
 
         class ServiceWithDI(s[str]):
             @classmethod
+            @override
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
@@ -218,6 +219,7 @@ class TestServicesIntegrationViaDI:
                     },
                 )
 
+            @override
             def execute(self) -> r[str]:
                 # Access config
                 app_name = self.config.app_name
