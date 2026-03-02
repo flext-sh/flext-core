@@ -25,7 +25,6 @@ from flext_core import (
     m,
     r,
     s,
-    t,
 )
 from flext_core._models.base import FlextModelFoundation as F
 from flext_core._models.generic import FlextGenericModels as gm
@@ -47,7 +46,7 @@ def demonstrate_enhanced_generic_models() -> None:
         user_id="user123",
         tenant_id="tenant456",
         environment="development",
-        metadata=t.Dict(root={"session_id": "sess789", "request_id": "req101"}),
+        metadata=m.Dict(root={"session_id": "sess789", "request_id": "req101"}),
     )
 
     print(f"📊 Context: source={context.source}, env={context.environment}")
@@ -78,7 +77,7 @@ def demonstrate_enhanced_generic_models() -> None:
     # Enhanced Health check with detailed monitoring
     health = gm.Snapshot.Health(
         healthy=True,
-        checks=t.Dict(
+        checks=m.Dict(
             root={
                 "database": True,
                 "cache": True,

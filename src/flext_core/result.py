@@ -759,20 +759,27 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         return "FlextResult"
 
-    # Aliases for compatibility
-    map_error = alt
-    or_else = lash
+    @override
+    def map_error(self, func: Callable[[str], str]) -> FlextResult[T_co]:
+        return self.alt(func)
+
+    def or_else(
+        self,
+        func: Callable[[str], FlextResult[T_co]],
+    ) -> FlextResult[T_co]:
+        """Apply fallback result function when current result is failure."""
+        return self.lash(func)
 
 
 r = FlextResult
 
 
-def is_success_result(value: object) -> TypeIs[FlextResult]:
+def is_success_result(value: object) -> TypeIs[FlextResult[t.GeneralValueType]]:
     """Return ``True`` when value is a successful runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 
 
-def is_failure_result(value: object) -> TypeIs[FlextResult]:
+def is_failure_result(value: object) -> TypeIs[FlextResult[t.GeneralValueType]]:
     """Return ``True`` when value is a failed runtime result."""
     return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 

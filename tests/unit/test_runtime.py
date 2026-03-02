@@ -36,6 +36,7 @@ from flext_core import (
     FlextMixins,
     FlextRuntime,
     c,
+    m,
     p,
     r,
     s,
@@ -748,7 +749,7 @@ class TestFlextRuntime:
             di_container = FlextRuntime.DependencyIntegration.create_container()
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
                 di_container,
-                t.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
+                m.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
             )
             assert isinstance(config_provider, providers.Configuration)
             # Type narrowing: di_container.config is providers.Configuration
@@ -856,7 +857,7 @@ class TestFlextRuntime:
             setattr(module, "consume", consume_automation)
 
             di_container = FlextRuntime.DependencyIntegration.create_container(
-                config=t.ConfigMap(root={"flags": {"enabled": True}}),
+                config=m.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
                 factories={"token_factory": token_factory},
                 resources={"api_client": lambda: {"connected": True}},
@@ -1081,7 +1082,7 @@ class TestFlextRuntime:
             FlextRuntime.Integration.track_domain_event(
                 "UserCreated",
                 aggregate_id="user-123",
-                event_data=t.ConfigMap(root={"email": "test@example.com"}),
+                event_data=m.ConfigMap(root={"email": "test@example.com"}),
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -1092,7 +1093,7 @@ class TestFlextRuntime:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_domain_event(
                 "SystemInitialized",
-                event_data=t.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
+                event_data=m.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (

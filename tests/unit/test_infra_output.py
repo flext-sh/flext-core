@@ -253,7 +253,7 @@ class TestModuleSingleton:
         assert isinstance(flext_infra.output, FlextInfraOutput)
 
     def test_output_writes_to_stderr_by_default(self) -> None:
-        assert flext_infra.output._stream is not None
+        assert flext_infra.output.stream is not None
 
 
 class TestInfraOutputEdgeCases:

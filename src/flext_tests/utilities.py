@@ -1348,7 +1348,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = path.split(".")
-                current: t.ConfigMapValue = c
+                current: object = c
                 for part in parts:
                     current = getattr(current, part)
                 return _to_payload(current)
@@ -1366,7 +1366,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = pattern_attr.split(".")
-                current: t.ConfigMapValue = c
+                current: object = c
                 for part in parts:
                     current = getattr(current, part)
                 pattern_str = str(current)

@@ -461,9 +461,23 @@ class FlextUtilities:
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
     err = staticmethod(FlextUtilitiesResultHelpers.err)
-    fail = staticmethod(r.fail)
+
+    @staticmethod
+    def fail[U](
+        error: str | None,
+        error_code: str | None = None,
+        error_data: t.ConfigMap | None = None,
+    ) -> r[U]:
+        """Create failed result with optional code and data."""
+        return r.fail(error, error_code=error_code, error_data=error_data)
+
     not_ = staticmethod(FlextUtilitiesResultHelpers.not_)
-    ok = staticmethod(r.ok)
+
+    @staticmethod
+    def ok[T](value: T) -> r[T]:
+        """Create successful result carrying value."""
+        return r[T].ok(value)
+
     or_ = staticmethod(FlextUtilitiesResultHelpers.or_)
     result_val = staticmethod(FlextUtilitiesResultHelpers.val)
     starts = staticmethod(FlextUtilitiesResultHelpers.starts)

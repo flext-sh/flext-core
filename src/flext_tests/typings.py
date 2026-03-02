@@ -328,6 +328,18 @@ class FlextTestsTypes(FlextTypes):
             ]
             """Type for builder output dict after batch result conversion."""
 
+            # Build output value - value type of BuilderOutputDict (includes r values)
+            type BuildOutputValue = (
+                FlextTestsTypes.Tests.TestPayloadValue
+                | r[FlextTestsTypes.Tests.TestPayloadValue]
+                | list[
+                    FlextTestsTypes.Tests.TestPayloadValue
+                    | r[FlextTestsTypes.Tests.TestPayloadValue]
+                ]
+                | Mapping[str, FlextTestsTypes.Tests.Builders.BuildOutputValue]
+            )
+            """Type for build() output values, including r-wrapped results."""
+
             # Reuse ConfigurationMapping from flext_core - no duplication
             type BuilderMapping = m.ConfigMap
             """Type for builder mappings."""

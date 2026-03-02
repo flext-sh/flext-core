@@ -312,7 +312,7 @@ class FlextTestsDocker:
                 return r[str].ok(f"Container {name} already running")
 
             if status_val in {"exited", "created", "paused"}:
-                _ = container.start()
+                container.start()
                 return r[str].ok(f"Container {name} started")
 
             return r[str].ok(f"Container {name} in state: {status_val}")

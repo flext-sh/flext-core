@@ -5,7 +5,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
-from flext_core import c, m, r, t
+from flext_core import c, m, r
 
 
 def test_operation_progress_start_operation_sets_runtime_fields() -> None:
@@ -77,7 +77,7 @@ def test_conversion_start_and_complete_methods() -> None:
 
 def test_canonical_aliases_are_available() -> None:
     result = r[str].ok("ok")
-    value = t.Dict(root={"k": "v"})
+    value = m.Dict(root={"k": "v"})
     assert result.value == "ok"
     assert value.root == {"k": "v"}
     assert c.Performance.RECENT_THRESHOLD_SECONDS > 0

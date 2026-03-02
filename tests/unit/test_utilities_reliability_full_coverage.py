@@ -6,14 +6,14 @@ from typing import Never
 
 import flext_core._utilities.reliability as reliability_module
 import pytest
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 
 def test_utilities_reliability_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
 
     fail: r[Never] = u.Reliability.retry(
         lambda: r.fail("e"),

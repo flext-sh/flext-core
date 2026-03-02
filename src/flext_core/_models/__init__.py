@@ -13,6 +13,4 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.base import FlextModelFoundation as m
-
-__all__: list[str] = ["m"]
+__all__: list[str] = []

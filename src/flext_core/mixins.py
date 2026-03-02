@@ -16,7 +16,7 @@ from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequenc
 from contextlib import contextmanager, suppress
 from functools import partial
 from types import ModuleType
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -441,7 +441,7 @@ class FlextMixins(FlextRuntime):
             if logger_result.is_success:
                 # Use .value directly - FlextResult never returns None on success
                 # Explicit annotation: get_typed returns r[FlextLogger] but Pyrefly tracks T generically
-                logger: FlextLogger = cast("FlextLogger", logger_result.value)
+                logger: FlextLogger = logger_result.value
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger

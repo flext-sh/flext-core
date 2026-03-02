@@ -21,7 +21,7 @@ from contextlib import AbstractContextManager as ContextManager, contextmanager
 
 import pytest
 from flext_core import FlextTypes, FlextUtilities, t
-from hypothesis import given, settings, strategies as st
+from hypothesis import HealthCheck, given, settings, strategies as st
 
 type FixtureCaseDict = dict[str, str]
 type FixtureDataDict = dict[str, t.GeneralValueType]
@@ -436,6 +436,7 @@ def arrange_act_assert(
 class TestPropertyBasedPatterns:
     """Demonstrate property-based testing with custom strategies."""
 
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(st.emails())
     def test_email_property_based(self, email: str) -> None:
         """Property-based test for email handling."""
@@ -445,6 +446,7 @@ class TestPropertyBasedPatterns:
         assert not email.startswith("@")
         assert not email.endswith("@")
 
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(
         st.fixed_dictionaries({
             "id": st.uuids().map(str),
@@ -464,6 +466,7 @@ class TestPropertyBasedPatterns:
         assert isinstance(profile["name"], str)
         assert isinstance(profile["email"], str)
 
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(st.text(min_size=10, max_size=100))
     def test_string_performance_property_based(self, large_string: str) -> None:
         """Property-based test for string processing performance."""

@@ -15,7 +15,7 @@ from typing import override
 
 import tomlkit
 from flext_core import FlextLogger, FlextService, r, t
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from tomlkit import items
 
 from flext_infra import (
@@ -44,7 +44,6 @@ class _CheckIssue(BaseModel):
     message: str = Field(description="Human-readable issue description")
     severity: str = Field(default="error", description="Issue severity level")
 
-    @computed_field
     @property
     def formatted(self) -> str:
         """Format issue as ``file:line:col [code] message``."""
@@ -78,13 +77,11 @@ class _ProjectResult(BaseModel):
         description="Gate name to execution mapping",
     )
 
-    @computed_field
     @property
     def total_errors(self) -> int:
         """Total issue count across all gates."""
         return sum(len(v.issues) for v in self.gates.values())
 
-    @computed_field
     @property
     def passed(self) -> bool:
         """Whether every gate passed."""
@@ -1387,14 +1384,17 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
                 pyrefly["search-path"] = self._to_array(new_paths)
 
         # Remove nonexistent paths
-        current_paths = list(pyrefly.get("search-path", []))
+        search_raw = pyrefly.get("search-path")
+        current_paths: list[t.ConfigMapValue] = (
+            list(search_raw) if isinstance(search_raw, list) else []
+        )
         nonexistent = [
             p
             for p in current_paths
             if isinstance(p, str) and not (project_dir / p).exists()
         ]
         if nonexistent:
-            remaining = [p for p in current_paths if p not in nonexistent]
+            remaining: list[str] = [str(p) for p in current_paths if isinstance(p, str) and p not in nonexistent]
             pyrefly["search-path"] = self._to_array(remaining)
             fixes.append(f"removed nonexistent search-path: {', '.join(nonexistent)}")
 

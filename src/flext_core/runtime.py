@@ -1569,6 +1569,34 @@ class FlextRuntime:
             """Alias for flat_map to support railway naming conventions."""
             return self.flat_map(func)
 
+        def flow_through[U](
+            self,
+            *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
+        ) -> FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U]:
+            """Chain multiple operations in sequence.
+
+            Returns:
+                RuntimeResult[T] if no funcs provided, value is None, or chain
+                short-circuits on failure. RuntimeResult[U] if all funcs applied.
+
+            """
+            if self.is_failure or not funcs:
+                return self
+
+            current: FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U] = (
+                self
+            )
+            for func in funcs:
+                if current.is_success:
+                    result_value = current.value
+                    if result_value is not None:
+                        current = func(result_value)
+                    else:
+                        break
+                else:
+                    break
+            return current
+
         def fold[U](
             self,
             on_failure: Callable[[str], U],
@@ -1646,35 +1674,6 @@ class FlextRuntime:
                 fallback_value = func(self._error or "")
                 return FlextRuntime.RuntimeResult(value=fallback_value, is_success=True)
             return self
-
-        def flow_through[U](
-            self,
-            *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
-        ) -> FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U]:
-            """Chain multiple operations in sequence.
-
-            Returns:
-                RuntimeResult[T] if chain short-circuits on first failure or no funcs,
-                RuntimeResult[U] if all funcs applied successfully.
-
-            """
-            # Start with self (RuntimeResult[T])
-            current: FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U] = (
-                self
-            )
-            for func in funcs:
-                if current.is_success:
-                    # Use value property - guaranteed to be T | U when is_success is True
-                    result_value = current.value
-                    if result_value is not None:
-                        # func returns RuntimeResult[U]
-                        current = func(result_value)
-                    else:
-                        break
-                else:
-                    break
-            # Return the current result - either T (original/failed) or U (transformed)
-            return current
 
         def __or__(self, default: T) -> T:
             """Operator overload for default values."""

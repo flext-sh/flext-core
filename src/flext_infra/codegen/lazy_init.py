@@ -326,14 +326,14 @@ def _derive_lazy_map(
                         lazy_map[target.id] = (mod, attr)
 
     # Fix single-letter aliases imported alongside facade classes.
-    for alias, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
-        if alias not in lazy_map:
+    for a_name, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
+        if a_name not in lazy_map:
             continue
-        alias_mod, alias_attr = lazy_map[alias]
-        if alias_attr == alias:
+        alias_mod, alias_attr = lazy_map[a_name]
+        if alias_attr == a_name:
             for name, (mod, _) in lazy_map.items():
                 if mod == alias_mod and name.endswith(suffix) and len(name) > 1:
-                    lazy_map[alias] = (mod, name)
+                    lazy_map[a_name] = (mod, name)
                     break
 
     return lazy_map

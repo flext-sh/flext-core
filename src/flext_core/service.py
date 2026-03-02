@@ -90,7 +90,8 @@ class FlextService[TDomainResult](
 
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            return execution_result.value
+            result_value: TDomainResult = execution_result.unwrap()
+            return result_value
         # On failure, raise exception
         raise FlextExceptions.BaseError(
             execution_result.error or "Service execution failed"
@@ -286,7 +287,11 @@ class FlextService[TDomainResult](
         options_raw: p.RuntimeBootstrapOptions,
     ) -> p.RuntimeBootstrapOptions:
         del cls
-        return FlextModelsService.RuntimeBootstrapOptions.model_validate(options_raw)
+        if isinstance(options_raw, FlextModelsService.RuntimeBootstrapOptions):
+            return options_raw
+        model_fields = FlextModelsService.RuntimeBootstrapOptions.model_fields
+        payload = {key: getattr(options_raw, key, None) for key in model_fields}
+        return FlextModelsService.RuntimeBootstrapOptions.model_validate(payload)
 
     @classmethod
     def _normalize_scoped_services(

@@ -29,7 +29,7 @@ def test_conversion_string_and_join_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"a": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
 
     assert u.Conversion.to_str(cast("StrictJsonValue", object())).startswith("<")
     assert u.Conversion.to_str_list(None) == []

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 service_models = __import__(
     "flext_core._models.service",
@@ -20,7 +20,7 @@ def test_service_request_timeout_validator_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
     with pytest.raises(ValueError, match="greater than 0"):

@@ -11,8 +11,6 @@ import pytest
 from flext_core import p, r, t, u
 from pydantic import BaseModel
 
-JsonValue = t.JsonValue
-
 
 class _DumpErrorModel(BaseModel):
     value: int = 1
@@ -27,7 +25,7 @@ class _Opts(BaseModel):
 
 
 class _ContainerOK:
-    def register(self, _name: str, _instance: JsonValue):
+    def register(self, _name: str, _instance: t.JsonValue):
         return r[bool].ok(True)
 
     def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
@@ -35,7 +33,7 @@ class _ContainerOK:
 
 
 class _ContainerFail:
-    def register(self, _name: str, _instance: JsonValue):
+    def register(self, _name: str, _instance: t.JsonValue):
         return r[bool].fail("reg fail")
 
     def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
@@ -43,7 +41,7 @@ class _ContainerFail:
 
 
 class _ContainerRaise:
-    def register(self, _name: str, _instance: JsonValue):
+    def register(self, _name: str, _instance: t.JsonValue):
         msg = "reg ex"
         raise RuntimeError(msg)
 

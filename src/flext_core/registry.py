@@ -233,11 +233,7 @@ class FlextRegistry(s[bool]):
             default=c.Cqrs.HandlerType.COMMAND,
             case_insensitive=True,
         )
-        return (
-            parse_result.value
-            if parse_result.is_success
-            else c.Cqrs.HandlerType.COMMAND
-        )
+        return parse_result.unwrap_or(c.Cqrs.HandlerType.COMMAND)
 
     @staticmethod
     def _safe_get_status(
@@ -254,7 +250,7 @@ class FlextRegistry(s[bool]):
             default=c.Cqrs.CommonStatus.RUNNING,
             case_insensitive=True,
         )
-        return parse_result.value
+        return parse_result.unwrap_or(c.Cqrs.CommonStatus.RUNNING)
 
     @staticmethod
     def _is_protocol_handler(
@@ -546,8 +542,16 @@ class FlextRegistry(s[bool]):
             key = FlextRegistry._resolve_handler_key(handler)
 
             if result.is_success:
-                # Use value directly (it's HandlerRegistrationDetails)
-                self._add_successful_registration(key, result.value, summary)
+                # Type narrow: unwrap_or guarantees concrete type for Pyrefly
+                registration_details = result.unwrap_or(
+                    m.HandlerRegistrationDetails(
+                        registration_id=key,
+                        handler_mode=c.Cqrs.HandlerType.COMMAND,
+                        timestamp="",
+                        status=c.Cqrs.CommonStatus.RUNNING,
+                    ),
+                )
+                self._add_successful_registration(key, registration_details, summary)
             else:
                 self._add_registration_error(
                     key,
@@ -783,7 +787,7 @@ class FlextRegistry(s[bool]):
             return r[t.RegisterableService].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
-        plugin_value = raw_result.value
+        plugin_value: t.RegisterableService = raw_result.unwrap_or(None)
         return r[t.RegisterableService].ok(plugin_value)
 
     def list_plugins(self, category: str) -> r[list[str]]:

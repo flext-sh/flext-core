@@ -14,13 +14,11 @@ from flext_core import FlextRuntime, r, t
 from pydantic import BaseModel
 from returns.io import IOResult, IOSuccess
 
-JsonValue = t.JsonValue
-
 result_module = importlib.import_module("flext_core.result")
 
 
 class _ValidationLikeError(ValueError):
-    def errors(self) -> list[dict[str, JsonValue]]:
+    def errors(self) -> list[dict[str, t.JsonValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 

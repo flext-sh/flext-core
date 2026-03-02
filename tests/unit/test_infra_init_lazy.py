@@ -18,6 +18,7 @@ import flext_infra.maintenance
 import flext_infra.release
 import flext_infra.workspace
 import pytest
+from flext_infra.constants import c
 
 
 class TestFlextInfraInitLazyLoading:
@@ -183,8 +184,6 @@ class TestFlextInfraInitLazyLoading:
 
     def test_reports_dir_name_via_constants(self) -> None:
         """Test REPORTS_DIR_NAME access via c.Infra.Reporting."""
-        from flext_infra.constants import c
-
         dir_name = c.Infra.Reporting.REPORTS_DIR_NAME
         assert isinstance(dir_name, str)
 

@@ -343,16 +343,16 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
             return typed_instances
         typed_instance = instance
         if params.as_dict:
-            inst_id: str | int = u.Tests.Factory.generate_id()
+            single_inst_id: str | int = u.Tests.Factory.generate_id()
             typed_data = typed_instance.model_dump()
             id_value = typed_data.get("id")
             model_id_value = typed_data.get("model_id")
             if id_value is not None:
-                inst_id = id_value
+                single_inst_id = id_value
             elif model_id_value is not None:
-                inst_id = model_id_value
+                single_inst_id = model_id_value
             single_result_dict: MutableMapping[str, BaseModel] = {
-                str(inst_id): typed_instance
+                str(single_inst_id): typed_instance
             }
             if params.as_result:
                 single_dict_result: r[Mapping[str, BaseModel]] = r[
@@ -1169,11 +1169,11 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                     else:
                         override_fields[key] = gv
                 super().__init__()
-                if name_value is not None:
+                if name_value is not None and isinstance(name_value, str):
                     self.name = name_value
-                if amount_value is not None:
+                if amount_value is not None and isinstance(amount_value, int):
                     self.amount = amount_value
-                if enabled_value is not None:
+                if enabled_value is not None and isinstance(enabled_value, bool):
                     self.enabled = enabled_value
                 self._overrides = override_fields
 

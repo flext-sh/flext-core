@@ -35,7 +35,6 @@ from flext_core import (
     t,
 )
 from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
-from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextContainer(p.DI):
@@ -228,11 +227,16 @@ class FlextContainer(p.DI):
                                 _factory_name: str = factory_name,
                                 _factory_config: m.Container.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
-                                _ = _factory_config
-                                if not callable(_factory_func_ref):
+                                config_callable = getattr(_factory_config, "fn", None)
+                                if callable(config_callable):
+                                    raw_result = config_callable()
+                                elif getattr(_factory_config, "fn", None) is not None:
+                                    return ""
+                                elif callable(_factory_func_ref):
+                                    raw_result = _factory_func_ref()
+                                else:
                                     msg = f"Factory '{_factory_name}' is not callable"
                                     raise TypeError(msg)
-                                raw_result = _factory_func_ref()
                                 try:
                                     if not instance._is_registerable_service(
                                         raw_result
@@ -487,7 +491,7 @@ class FlextContainer(p.DI):
         """
         # L0: Base defaults from FlextSettings
         config_dict_raw = self._global_config.model_dump()
-        config_map = FlextModelsContainers.ConfigMap(
+        config_map = m.ConfigMap(
             root={
                 str(key): FlextRuntime.normalize_to_general_value(value)
                 for key, value in config_dict_raw.items()
@@ -515,16 +519,12 @@ class FlextContainer(p.DI):
             namespace_registry_raw, Mapping
         ):
             return
-        namespace_registry: dict[str, type[BaseModel]] = {
-            key: value
-            for key, value in namespace_registry_raw.items()
-            if isinstance(key, str)
-            and isinstance(value, type)
-            and issubclass(value, BaseModel)
-        }
-        if not namespace_registry:
+        namespaces: list[str] = [
+            key for key in namespace_registry_raw if isinstance(key, str)
+        ]
+        if not namespaces:
             return
-        for namespace in namespace_registry:
+        for namespace in namespaces:
             factory_name = f"config.{namespace}"
 
             # Get config class for this namespace from FlextSettings
@@ -716,7 +716,7 @@ class FlextContainer(p.DI):
     ) -> t.ConfigMap:
         """Return the merged configuration exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
-        return FlextModelsContainers.ConfigMap(
+        return m.ConfigMap(
             root={
                 str(key): FlextRuntime.normalize_to_general_value(value)
                 for key, value in config_dict_raw.items()

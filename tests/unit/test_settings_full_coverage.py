@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextSettings, c, m, r, t, u
+from flext_core import FlextSettings, c, m, r, u
 from pydantic_settings import BaseSettings
 
 
@@ -18,7 +18,7 @@ def test_settings_materialize_and_context_overrides() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
     sub = _SubSettings.materialize()

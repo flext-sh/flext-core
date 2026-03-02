@@ -6,6 +6,7 @@ import contextlib
 import io
 import logging
 import queue
+import types
 from collections import UserDict
 from collections.abc import Callable, Generator, Iterator
 from datetime import UTC, datetime
@@ -253,7 +254,7 @@ def test_runtime_create_instance_failure_branch(
 
 
 def test_normalization_edge_branches() -> None:
-    cfg = t.ConfigMap(root={"a": 1})
+    cfg = m.ConfigMap(root={"a": 1})
     normalized_cfg = FlextRuntime.normalize_to_general_value(cfg)
     assert normalized_cfg == {"a": 1}
 
@@ -371,6 +372,8 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             calls.append(kwargs)
 
         def __getattr__(self, name: str) -> object:
+            if name == "types":
+                return types.SimpleNamespace(Processor=object)
             if name != "PrintLoggerFactory":
                 raise AttributeError(name)
             self._print_access += 1
@@ -792,13 +795,13 @@ def test_configure_structlog_print_logger_factory_fallback(
 def test_dependency_integration_and_wiring_paths() -> None:
     bridge, services, resources = (
         FlextRuntime.DependencyIntegration.create_layered_bridge(
-            config=t.ConfigMap(root={"db": {"dsn": "sqlite://"}}),
+            config=m.ConfigMap(root={"db": {"dsn": "sqlite://"}}),
         )
     )
     assert bridge is not None and services is not None and resources is not None
 
     di = FlextRuntime.DependencyIntegration.create_container(
-        config=t.ConfigMap(root={"feature": {"enabled": True}}),
+        config=m.ConfigMap(root={"feature": {"enabled": True}}),
         services={"svc": 1},
         factories={"factory": lambda: 2},
         resources={"resource": lambda: {"ok": True}},
@@ -814,7 +817,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
     provider = runtime_module.providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
         provider,
-        t.ConfigMap(root={"api": {"url": "x"}}),
+        m.ConfigMap(root={"api": {"url": "x"}}),
     )
     assert provider.api.url() == "x"
 
@@ -898,7 +901,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
     FlextRuntime.Integration.track_domain_event(
         "evt",
         aggregate_id="agg",
-        event_data=t.ConfigMap(root={"k": "v"}),
+        event_data=m.ConfigMap(root={"k": "v"}),
     )
     FlextRuntime.Integration.setup_service_infrastructure(
         service_name="svc",

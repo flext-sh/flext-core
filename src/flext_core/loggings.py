@@ -947,7 +947,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             FlextRuntime.structlog().get_logger("flext_core.loggings").warning(
                 "Internal logger operation failed",
                 operation=operation,
-                exception=exc,
+                error=exc,
                 exception_type=exc.__class__.__name__,
                 exception_message=str(exc),
             )

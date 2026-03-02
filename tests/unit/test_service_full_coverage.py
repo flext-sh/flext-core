@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextService, FlextSettings, c, m, p, r, t, u
+from flext_core import FlextService, FlextSettings, c, m, p, r, u
 from flext_core._models.service import FlextModelsService
 
 
@@ -28,7 +28,7 @@ def test_service_init_type_guards_and_properties(
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
     bad_ctx_runtime = m.ServiceRuntime.model_construct(

@@ -25,10 +25,10 @@ from flext_core import (
     FlextContext,
     FlextRuntime,
     FlextSettings,
+    m,
     p,
     r,
     s,
-    t,
 )
 from flext_core._models.service import FlextModelsService
 from flext_tests import u
@@ -88,7 +88,7 @@ class TestDIBridgeRealExecution:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
             FlextRuntime.DependencyIntegration.create_layered_bridge(
-                config=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
+                config=m.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
 

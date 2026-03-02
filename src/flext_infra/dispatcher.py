@@ -11,8 +11,15 @@ from __future__ import annotations
 
 from typing import Literal, override
 
-from flext_core import FlextDispatcher, FlextService, m, p, r, t
+from flext_core import FlextDispatcher, FlextService, m, r, t
 from pydantic import Field
+
+
+class _BaseInfraCommand(m.Command):
+    """Base for flext_infra CLI commands with action and args fields."""
+
+    action: str = Field(default="", description="Command action")
+    args: list[str] = Field(default_factory=list, description="Command arguments")
 
 
 class FlextInfraDispatcher(FlextService[bool]):
@@ -23,7 +30,7 @@ class FlextInfraDispatcher(FlextService[bool]):
         """Execute dispatcher operation - returns success indicator."""
         return r[bool].ok(True)
 
-    class CheckCommand(m.Command):
+    class CheckCommand(_BaseInfraCommand):
         """Command to run workspace validation and linting checks."""
 
         command_type: Literal["flext_infra.check"] = "flext_infra.check"
@@ -36,7 +43,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for check operation",
         )
 
-    class BaseMkCommand(m.Command):
+    class BaseMkCommand(_BaseInfraCommand):
         """Command to generate or update base.mk templates."""
 
         command_type: Literal["flext_infra.basemk"] = "flext_infra.basemk"
@@ -49,7 +56,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for basemk operation",
         )
 
-    class WorkspaceCommand(m.Command):
+    class WorkspaceCommand(_BaseInfraCommand):
         """Command to manage workspace detection, sync, and orchestration."""
 
         command_type: Literal["flext_infra.workspace"] = "flext_infra.workspace"
@@ -62,7 +69,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for workspace operation",
         )
 
-    class ReleaseCommand(m.Command):
+    class ReleaseCommand(_BaseInfraCommand):
         """Command to orchestrate release operations."""
 
         command_type: Literal["flext_infra.release"] = "flext_infra.release"
@@ -75,7 +82,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for release operation",
         )
 
-    class DocsCommand(m.Command):
+    class DocsCommand(_BaseInfraCommand):
         """Command to audit, generate, and validate documentation."""
 
         command_type: Literal["flext_infra.docs"] = "flext_infra.docs"
@@ -88,7 +95,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for docs operation",
         )
 
-    class GithubCommand(m.Command):
+    class GithubCommand(_BaseInfraCommand):
         """Command to manage GitHub workflows and PR automation."""
 
         command_type: Literal["flext_infra.github"] = "flext_infra.github"
@@ -101,7 +108,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for github operation",
         )
 
-    class CoreCommand(m.Command):
+    class CoreCommand(_BaseInfraCommand):
         """Command to run infrastructure validators and diagnostics."""
 
         command_type: Literal["flext_infra.core"] = "flext_infra.core"
@@ -114,7 +121,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             description="Additional arguments for core operation",
         )
 
-    class DepsCommand(m.Command):
+    class DepsCommand(_BaseInfraCommand):
         """Command to detect, sync, and modernize dependencies."""
 
         command_type: Literal["flext_infra.deps"] = "flext_infra.deps"
@@ -128,7 +135,7 @@ class FlextInfraDispatcher(FlextService[bool]):
         )
 
     @classmethod
-    def build_dispatcher(cls) -> p.CommandBus:
+    def build_dispatcher(cls) -> FlextDispatcher:
         """Create a dispatcher instance wired to flext_infra commands.
 
         Returns:
@@ -142,7 +149,7 @@ class FlextInfraDispatcher(FlextService[bool]):
             """Callable handler with message_type attribute for dispatcher routing."""
 
             def __init__(
-                self, message_type_value: str, command_cls: type[m.Command]
+                self, message_type_value: str, command_cls: type[_BaseInfraCommand]
             ) -> None:
                 self.message_type = message_type_value
                 self._command_cls = command_cls

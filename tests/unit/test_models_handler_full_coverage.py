@@ -16,7 +16,7 @@ def test_models_handler_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
     req = m.Handler.RegistrationRequest(
@@ -31,8 +31,8 @@ def test_models_handler_branches() -> None:
     ctx = m.Handler.ExecutionContext.create_for_handler("h1", "command")
     assert ctx.execution_time_ms == pytest.approx(0.0)
     state = ctx.metrics_state
-    assert isinstance(state, t.Dict)
-    ctx.set_metrics_state(t.Dict(root={"x": 1}))
+    assert isinstance(state, m.Dict)
+    ctx.set_metrics_state(m.Dict(root={"x": 1}))
     assert ctx.has_metrics is True
 
 
@@ -43,7 +43,7 @@ def test_models_handler_uncovered_mode_and_reset_paths() -> None:
     assert ctx.is_running is False
     ctx.start_execution()
     assert ctx.is_running
-    ctx.set_metrics_state(t.Dict(root={"count": 1}))
+    ctx.set_metrics_state(m.Dict(root={"count": 1}))
     ctx.reset()
     assert ctx.is_running is False
     assert ctx.has_metrics is False

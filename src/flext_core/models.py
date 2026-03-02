@@ -15,6 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypeAlias
 
+from flext_core import p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
@@ -27,7 +28,6 @@ from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.mixin import FlextModelsMixin
 from flext_core._models.settings import FlextModelsConfig
-from flext_core.protocols import p
 
 
 class FlextModels:
@@ -93,42 +93,41 @@ class FlextModels:
         """Progress of conversion with errors/warnings (from Progress namespace)."""
 
     # GENERIC CONTAINERS - Replace dict aliases
-    class ConfigMap(FlextModelsContainers.ConfigMap):
-        """Configuration map container (replaces ConfigurationDict)."""
+    ConfigMap: TypeAlias = FlextModelsContainers.ConfigMap
+    """Configuration map container (replaces ConfigurationDict)."""
 
-    class ServiceMap(FlextModelsContainers.ServiceMap):
-        """Service registry map container."""
+    ServiceMap: TypeAlias = FlextModelsContainers.ServiceMap
+    """Service registry map container."""
 
-    class ErrorMap(FlextModelsContainers.ErrorMap):
-        """Error type mapping container."""
+    ErrorMap: TypeAlias = FlextModelsContainers.ErrorMap
+    """Error type mapping container."""
 
-    class Dict(FlextModelsContainers.Dict):
-        """Generic dictionary container."""
+    Dict: TypeAlias = FlextModelsContainers.Dict
+    """Generic dictionary container."""
 
-    class ObjectList(FlextModelsContainers.ObjectList):
-        """Sequence of container values for batch operations."""
+    ObjectList: TypeAlias = FlextModelsContainers.ObjectList
+    """Sequence of container values for batch operations."""
 
-    class FactoryMap(FlextModelsContainers.FactoryMap):
-        """Map of factory registration callables."""
+    FactoryMap: TypeAlias = FlextModelsContainers.FactoryMap
+    """Map of factory registration callables."""
 
-    class ResourceMap(FlextModelsContainers.ResourceMap):
-        """Map of resource callables."""
+    ResourceMap: TypeAlias = FlextModelsContainers.ResourceMap
+    """Map of resource callables."""
 
-    class ValidatorCallable(FlextModelsContainers.ValidatorCallable):
-        """Callable validator container."""
+    ValidatorCallable: TypeAlias = FlextModelsContainers.ValidatorCallable
+    """Callable validator container."""
 
-    class FieldValidatorMap(FlextModelsContainers.FieldValidatorMap):
-        """Map of field validators."""
+    FieldValidatorMap: TypeAlias = FlextModelsContainers.FieldValidatorMap
+    """Map of field validators."""
 
-    class ConsistencyRuleMap(FlextModelsContainers.ConsistencyRuleMap):
-        """Map of consistency rules."""
+    ConsistencyRuleMap: TypeAlias = FlextModelsContainers.ConsistencyRuleMap
+    """Map of consistency rules."""
 
-    class EventValidatorMap(FlextModelsContainers.EventValidatorMap):
-        """Map of event validators."""
+    EventValidatorMap: TypeAlias = FlextModelsContainers.EventValidatorMap
+    """Map of event validators."""
 
-    class BatchResultDict(FlextModelsContainers.BatchResultDict):
-        """Result payload model for batch operation outputs."""
-
+    BatchResultDict: TypeAlias = FlextModelsContainers.BatchResultDict
+    """Result payload model for batch operation outputs."""
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes
     # =========================================================================
@@ -377,5 +376,6 @@ class FlextModels:
 
 # Main alias for direct access
 m = FlextModels
+_typing_namespace_t = t
 
 __all__ = ["FlextModels", "m"]

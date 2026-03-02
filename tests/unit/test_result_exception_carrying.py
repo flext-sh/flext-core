@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import p, r, t
+from flext_core import m, p, r
 from flext_core.exceptions import e
 from returns.io import IO, IOSuccess
 
@@ -69,7 +69,7 @@ class TestFailWithException:
     def test_fail_with_exception_and_error_data(self) -> None:
         """Verify fail() carries exception with error_data."""
         error_msg = "Validation failed"
-        error_data = t.ConfigMap({"field": "email", "reason": "invalid format"})
+        error_data = m.ConfigMap({"field": "email", "reason": "invalid format"})
         exc = ValueError("invalid email")
         result: r[dict[str, str]] = r[dict[str, str]].fail(
             error_msg,

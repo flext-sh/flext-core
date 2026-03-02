@@ -16,6 +16,8 @@ import os
 import sys
 from typing import Final, TextIO
 
+from pydantic import BaseModel, ConfigDict, Field, SkipValidation
+
 
 def _should_use_color(stream: TextIO | None = None) -> bool:
     """Detect whether ANSI colors should be used on the given stream.
@@ -96,7 +98,7 @@ SYM_ARROW: Final[str] = "→" if _USE_UNICODE else "->"
 SYM_BULLET: Final[str] = "•" if _USE_UNICODE else "*"
 
 
-class FlextInfraOutput:
+class FlextInfraOutput(BaseModel):
     """Structured terminal output for infrastructure commands.
 
     All methods write to ``sys.stderr`` so that stdout remains clean for
@@ -105,15 +107,13 @@ class FlextInfraOutput:
     The class reads color/unicode settings at construction time but defers
     to the module-level detection functions so behaviour can be overridden
     in tests or downstream code.
-
-    Args:
-        use_color: Override automatic color detection. ``None`` uses the
-            module-level ``_USE_COLOR`` value.
-        use_unicode: Override automatic unicode detection. ``None`` uses
-            the module-level ``_USE_UNICODE`` value.
-        stream: Output stream. Defaults to ``sys.stderr``.
-
     """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    use_color: bool = Field(default_factory=lambda: _USE_COLOR)
+    use_unicode: bool = Field(default_factory=lambda: _USE_UNICODE)
+    stream: SkipValidation[TextIO] = Field(default_factory=lambda: sys.stderr)
 
     def __init__(
         self,
@@ -122,34 +122,46 @@ class FlextInfraOutput:
         use_unicode: bool | None = None,
         stream: TextIO | None = None,
     ) -> None:
-        """Initialize structured terminal output.
+        """Initialize structured terminal output."""
+        data: dict[str, bool | TextIO] = {}
+        if use_color is not None:
+            data["use_color"] = use_color
+        if use_unicode is not None:
+            data["use_unicode"] = use_unicode
+        if stream is not None:
+            data["stream"] = stream
+        super().__init__(**data)
 
-        Args:
-            use_color: Override automatic color detection.
-            use_unicode: Override automatic unicode detection.
-            stream: Output stream. Defaults to sys.stderr.
+        self._reset = "\033[0m" if self.use_color else ""
+        self._red = "\033[31m" if self.use_color else ""
+        self._green = "\033[32m" if self.use_color else ""
+        self._yellow = "\033[33m" if self.use_color else ""
+        self._blue = "\033[34m" if self.use_color else ""
+        self._bold = "\033[1m" if self.use_color else ""
 
-        """
-        self._color: bool = use_color if use_color is not None else _USE_COLOR
-        self._unicode: bool = use_unicode if use_unicode is not None else _USE_UNICODE
-        self._stream: TextIO = stream if stream is not None else sys.stderr
+        self._sym_ok = "✓" if self.use_unicode else "[OK]"
+        self._sym_fail = "✗" if self.use_unicode else "[FAIL]"
+        self._sym_warn = "⚠" if self.use_unicode else "[WARN]"
+        self._sym_skip = "–" if self.use_unicode else "[SKIP]"
 
-        self._reset = "\033[0m" if self._color else ""
-        self._red = "\033[31m" if self._color else ""
-        self._green = "\033[32m" if self._color else ""
-        self._yellow = "\033[33m" if self._color else ""
-        self._blue = "\033[34m" if self._color else ""
-        self._bold = "\033[1m" if self._color else ""
+    def __setattr__(self, name: str, value: object) -> None:
+        """Allow non-field attribute assignment (e.g. unittest.mock.patch)."""
+        if name in type(self).model_fields or name.startswith("_"):
+            super().__setattr__(name, value)
+        else:
+            object.__setattr__(self, name, value)
 
-        self._sym_ok = "✓" if self._unicode else "[OK]"
-        self._sym_fail = "✗" if self._unicode else "[FAIL]"
-        self._sym_warn = "⚠" if self._unicode else "[WARN]"
-        self._sym_skip = "–" if self._unicode else "[SKIP]"
+    def __delattr__(self, name: str) -> None:
+        """Support unittest.mock.patch teardown for non-field attributes."""
+        if name in self.__dict__ and name not in type(self).model_fields:
+            object.__delattr__(self, name)
+        else:
+            super().__delattr__(name)
 
     def _write(self, message: str) -> None:
         """Write a line to the output stream with newline."""
-        self._stream.write(message + "\n")
-        self._stream.flush()
+        self.stream.write(message + "\n")
+        self.stream.flush()
 
     def status(
         self,
@@ -204,7 +216,7 @@ class FlextInfraOutput:
             elapsed: Total duration in seconds.
 
         """
-        sep = "──" if self._unicode else "--"
+        sep = "──" if self.use_unicode else "--"
         header = f"{self._bold}{sep} {verb} summary {sep}{self._reset}"
         self._write("")
         self._write(header)
@@ -267,7 +279,7 @@ class FlextInfraOutput:
             title: Section title text.
 
         """
-        sep = "═" if self._unicode else "="
+        sep = "═" if self.use_unicode else "="
         line = sep * 60
         self._write("")
         self._write(f"{self._bold}{line}{self._reset}")

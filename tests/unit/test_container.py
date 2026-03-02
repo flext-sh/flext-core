@@ -27,7 +27,15 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextConstants, FlextContainer, FlextResult, c, r, t
+from flext_core import (
+    FlextConstants,
+    FlextContainer,
+    FlextResult,
+    c,
+    m,
+    r,
+    t,
+)
 from flext_tests import FlextTestsUtilities, tm, u
 
 
@@ -519,7 +527,7 @@ class TestFlextContainer:
         config_result = container.get_config()
         tm.that(
             config_result,
-            is_=t.ConfigMap,
+            is_=m.ConfigMap,
             none=False,
             msg="Container config must be a ConfigMap",
         )
@@ -539,7 +547,7 @@ class TestFlextContainer:
         config_result = container.get_config()
         tm.that(
             config_result,
-            is_=t.ConfigMap,
+            is_=m.ConfigMap,
             none=False,
             msg="get_config must return a ConfigMap",
         )
@@ -557,7 +565,7 @@ class TestFlextContainer:
         config = container.get_config()
         tm.that(
             config,
-            is_=t.ConfigMap,
+            is_=m.ConfigMap,
             none=False,
             msg="get_config must return ConfigMap",
         )

@@ -127,11 +127,11 @@ def _check_has_lacks(
                     )
             else:
                 check_val = _as_guard_input(item)
-                target = _as_guard_input(value)
+                target_raw = _as_guard_input(value)
                 # Handle RootModel (e.g. ConfigMap) by extracting root dict
-                if isinstance(target, RootModel):
-                    target = target.root
-                if not isinstance(target, Mapping | str | list):
+                if isinstance(target_raw, RootModel):
+                    target_raw = target_raw.root
+                if not isinstance(target_raw, Mapping | str | list):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -140,8 +140,8 @@ def _check_has_lacks(
                         ),
                     )
 
-                if isinstance(target, str):
-                    if str(check_val) not in target:
+                if isinstance(target_raw, str):
+                    if str(check_val) not in target_raw:
                         raise AssertionError(
                             msg
                             or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -149,7 +149,7 @@ def _check_has_lacks(
                                 item=item,
                             ),
                         )
-                elif check_val not in target:
+                elif check_val not in target_raw:
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -173,11 +173,11 @@ def _check_has_lacks(
                     )
             else:
                 check_val = _as_guard_input(item)
-                target = _as_guard_input(value)
+                target_raw_2 = _as_guard_input(value)
                 # Handle RootModel (e.g. ConfigMap) by extracting root dict
-                if isinstance(target, RootModel):
-                    target = target.root
-                if not isinstance(target, Mapping | str | list):
+                if isinstance(target_raw_2, RootModel):
+                    target_raw_2 = target_raw_2.root
+                if not isinstance(target_raw_2, Mapping | str | list):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
@@ -186,8 +186,8 @@ def _check_has_lacks(
                         ),
                     )
 
-                if isinstance(target, str):
-                    if str(check_val) in target:
+                if isinstance(target_raw_2, str):
+                    if str(check_val) in target_raw_2:
                         raise AssertionError(
                             msg
                             or c.Tests.Matcher.ERR_LACKS_FAILED.format(
@@ -195,7 +195,7 @@ def _check_has_lacks(
                                 item=item,
                             ),
                         )
-                elif check_val in target:
+                elif check_val in target_raw_2:
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
@@ -1029,7 +1029,9 @@ class FlextTestsMatchers:
                     # sorted_param is Callable[[object], object] but sorted needs comparable return
                     user_key_fn = sorted_param
 
-                    def comparable_key(x: t.ConfigMapValue) -> tuple[str, str]:
+                    def comparable_key(x: object) -> tuple[str, str]:
+                        """Wrap user key to return comparable tuple."""
+                        result = user_key_fn(_to_test_payload(x))
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         type_name = type(result).__name__

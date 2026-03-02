@@ -22,6 +22,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import c, m, r, t
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 
@@ -1763,7 +1764,7 @@ class FlextUtilitiesParser:
             Normalized list/set/dict
 
         """
-        if isinstance(items, t.ConfigMap):
+        if isinstance(items, FlextModelsContainers.ConfigMap):
             dict_items: Mapping[str, t.ConfigMapValue] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
@@ -1782,7 +1783,7 @@ class FlextUtilitiesParser:
             }
 
         # items is list[str] here
-        list_items = items
+        list_items: list[str] = items
         if filter_truthy:
             list_items = [item for item in list_items if item]
 

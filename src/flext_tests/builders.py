@@ -758,7 +758,11 @@ class FlextTestsBuilders:
     def build(
         self,
         **kwargs: t.Tests.PayloadValue,  # Accept payload values - validated by BuildParams
-    ) -> Self:
+    ) -> (
+        t.Tests.Builders.BuildOutputValue
+        | Sequence[t.Tests.Builders.BuildOutputValue]
+        | Sequence[tuple[str, t.Tests.Builders.BuildOutputValue]]
+    ):
         """Build the dataset with output type control.
 
         Uses Pydantic 2 models for parameter validation and computation.

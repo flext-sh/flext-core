@@ -61,7 +61,7 @@ def test_get_str_from_kwargs_and_merge_metadata_context_paths() -> None:
 
     err = e.BaseError("meta", metadata={"x": 1})
     meta = err.metadata
-    config_attrs = t.ConfigMap.model_validate({"k": 1, "z": "q"})
+    config_attrs = m.ConfigMap.model_validate({"k": 1, "z": "q"})
     object.__setattr__(meta, "attributes", config_attrs)
     e._merge_metadata_into_context(context, meta)
     assert context["k"] == "1"

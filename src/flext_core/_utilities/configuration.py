@@ -50,6 +50,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextUtilitiesConfiguration:
@@ -824,7 +825,7 @@ class FlextUtilitiesConfiguration:
                 valid_field_names = set()
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs = t.ConfigMap(root={})
+            valid_kwargs = FlextModelsContainers.ConfigMap(root={})
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():

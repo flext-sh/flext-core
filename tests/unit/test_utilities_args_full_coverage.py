@@ -6,7 +6,7 @@ from typing import Annotated, cast
 
 import flext_core._utilities.args as args_module
 import pytest
-from flext_core import c, m, p, r, t, u
+from flext_core import c, m, p, r, u
 
 
 def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
@@ -29,7 +29,7 @@ def test_args_get_enum_params_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.Conversion.to_str(1) == "1"
 
     annotated = u.Args.get_enum_params(cast("p.CallableWithHints", _annotated_func))

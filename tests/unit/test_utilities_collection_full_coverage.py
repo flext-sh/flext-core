@@ -44,7 +44,7 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"a": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
 
     not_found = u.Collection.find({"a": 1}, lambda value: value == 2)
     assert not_found is None

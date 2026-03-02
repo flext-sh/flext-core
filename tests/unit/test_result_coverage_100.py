@@ -26,7 +26,7 @@ import math
 from typing import cast
 
 import pytest
-from flext_core import e, p, r, t
+from flext_core import e, m, p, r, t
 from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
@@ -110,7 +110,7 @@ class TestrCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: t.ConfigMap = t.ConfigMap(root={"status": "failed", "count": 5})
+        error_data: t.ConfigMap = m.ConfigMap(root={"status": "failed", "count": 5})
         result: r[str] = r[str].fail("Error", error_data=error_data)
         _ResultAssertions.assert_failure(result)
         assert result.error_data == error_data
@@ -647,14 +647,14 @@ class TestrCoverage:
         resources_created: list[t.ConfigMap] = []
 
         def factory() -> t.ConfigMap:
-            resource: t.ConfigMap = t.ConfigMap(root={"id": 1})
+            resource: t.ConfigMap = m.ConfigMap(root={"id": 1})
             resources_created.append(resource)
             return resource
 
         def operation(
             resource: t.ConfigMap,
         ) -> r[str]:
-            if isinstance(resource, t.ConfigMap):
+            if isinstance(resource, m.ConfigMap):
                 return r[str].ok("success")
             return r[str].fail("Invalid resource")
 
@@ -670,7 +670,7 @@ class TestrCoverage:
         cleanups_called = []
 
         def factory() -> t.ConfigMap:
-            return t.ConfigMap(root={"id": 1})
+            return m.ConfigMap(root={"id": 1})
 
         def operation(
             resource: t.ConfigMap,
@@ -752,7 +752,7 @@ class TestrCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: t.ConfigMap = t.ConfigMap(root={"details": "something"})
+        error_data: t.ConfigMap = m.ConfigMap(root={"details": "something"})
         result: r[str] = r[str].fail(
             "Error",
             error_code="CODE_123",

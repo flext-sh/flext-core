@@ -261,7 +261,7 @@ class TestFlextModelsCollectionsSettings:
         class TestConfig(Config):
             timeout: int = 30
 
-        config_data = t.ConfigMap(root={"timeout": 60})
+        config_data = m.ConfigMap(root={"timeout": 60})
         config: TestConfig = TestConfig.from_dict(config_data)
         assert config.timeout == 60
 

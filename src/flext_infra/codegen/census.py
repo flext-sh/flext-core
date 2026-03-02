@@ -32,6 +32,7 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
     """Read-only census service for namespace violation counting."""
 
     def __init__(self, workspace_root: Path) -> None:
+        """Initialize census service with workspace root."""
         super().__init__()
         self._workspace_root: Path = workspace_root
 
@@ -44,7 +45,7 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
         self,
         workspace_root: Path | None = None,
         *,
-        format: str = "json",
+        output_format: str = "json",
     ) -> list[FlextInfraModels.CensusReport]:
         """Run census on all projects in workspace.
 
@@ -52,7 +53,7 @@ class FlextInfraCodegenCensus(FlextService[list[FlextInfraModels.CensusReport]])
             List of CensusReport models, one per scanned project.
 
         """
-        _ = format
+        _ = output_format
         workspace = (
             workspace_root if workspace_root is not None else self._workspace_root
         )

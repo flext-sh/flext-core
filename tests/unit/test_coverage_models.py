@@ -24,7 +24,7 @@ import math
 from datetime import datetime
 
 import pytest
-from flext_core import m, t
+from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
 from pydantic import ValidationError, field_validator
 
@@ -332,7 +332,7 @@ class TestQueries:
     def test_query_creation(self) -> None:
         """Test creating a query."""
         query = GetUserQuery(
-            filters=t.Dict(root={"user_id": "USER-001"}),
+            filters=m.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",
         )
         assert query.filters["user_id"] == "USER-001"

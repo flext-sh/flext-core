@@ -286,10 +286,10 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
 
         nodes_to_move: list[ast.stmt] = []
 
-        for node in typevars:
+        for tv_node in typevars:
             target_name = ""
-            if node.targets:
-                target = node.targets[0]
+            if tv_node.targets:
+                target = tv_node.targets[0]
                 if isinstance(target, ast.Name):
                     target_name = target.id
 
@@ -298,55 +298,61 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
-                    line=node.lineno,
+                    line=tv_node.lineno,
                     message=f"TypeVar '{target_name}' is private — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
                 continue
 
-            if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
+            if FlextInfraCodegenTransforms.is_used_in_context(tv_node, tree):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
-                    line=node.lineno,
+                    line=tv_node.lineno,
                     message=f"TypeVar '{target_name}' used in-context — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
                 continue
 
-            nodes_to_move.append(node)
+            nodes_to_move.append(tv_node)
 
-        for node in typealiases:
+        for alias_node in typealiases:
             target_name = ""
-            if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-                target_name = node.target.id
+            if isinstance(alias_node, (ast.AnnAssign, ast.Assign)):
+                target = (
+                    alias_node.target
+                    if isinstance(alias_node, ast.AnnAssign)
+                    else alias_node.targets[0]
+                )
+                if isinstance(target, ast.Name):
+                    target_name = target.id
 
             # Skip private names
             if target_name.startswith("_"):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
-                    line=node.lineno,
+                    line=alias_node.lineno,
                     message=f"TypeAlias '{target_name}' is private — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
                 continue
 
-            if FlextInfraCodegenTransforms.is_used_in_context(node, tree):
+            if FlextInfraCodegenTransforms.is_used_in_context(alias_node, tree):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
-                    line=node.lineno,
+                    line=alias_node.lineno,
                     message=f"TypeAlias '{target_name}' used in-context — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
                 continue
 
-            nodes_to_move.append(node)
+            nodes_to_move.append(alias_node)
 
         if not nodes_to_move:
             return
@@ -354,8 +360,8 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
         pkg_name = pkg_dir.name
         actually_moved: list[ast.stmt] = []
 
-        for node in nodes_to_move:
-            target_name = self._get_node_name(node)
+        for move_node in nodes_to_move:
+            target_name = self._get_node_name(move_node)
             if not target_name:
                 continue
 
@@ -364,7 +370,7 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
-                    line=node.lineno,
+                    line=move_node.lineno,
                     message=f"'{target_name}' already in typings.py — skipped",
                     fixable=False,
                 )
@@ -372,24 +378,24 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
                 continue
 
             # Copy required imports from source to target, then verify all deps resolvable
-            self._copy_required_imports(node, tree, target_tree)
-            if not self._all_deps_resolvable(node, target_tree):
+            self._copy_required_imports(move_node, tree, target_tree)
+            if not self._all_deps_resolvable(move_node, target_tree):
                 violation = FlextInfraModels.CensusViolation(
                     module=str(source_file),
                     rule="NS-002",
-                    line=node.lineno,
+                    line=move_node.lineno,
                     message=f"'{target_name}' has unresolvable deps — skipped",
                     fixable=False,
                 )
                 violations_skipped.append(violation)
                 continue
             # Remove from source tree
-            if node in tree.body:
-                tree.body.remove(node)
+            if move_node in tree.body:
+                tree.body.remove(move_node)
 
             # Add to target tree
             insert_idx = self._find_insert_position(target_tree)
-            target_tree.body.insert(insert_idx, node)
+            target_tree.body.insert(insert_idx, move_node)
 
             # Add import in source file
             self._add_import_to_tree(
@@ -400,18 +406,18 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
             )
 
             rule = "NS-002"
-            kind = "TypeVar" if isinstance(node, ast.Assign) else "TypeAlias"
+            kind = "TypeVar" if isinstance(move_node, ast.Assign) else "TypeAlias"
             violation = FlextInfraModels.CensusViolation(
                 module=str(source_file),
                 rule=rule,
-                line=node.lineno,
+                line=move_node.lineno,
                 message=f"{kind} '{target_name}' moved to typings.py",
                 fixable=True,
             )
             violations_fixed.append(violation)
             files_modified.add(str(source_file))
             files_modified.add(str(target_path))
-            actually_moved.append(node)
+            actually_moved.append(move_node)
 
         if actually_moved:
             # Write both files

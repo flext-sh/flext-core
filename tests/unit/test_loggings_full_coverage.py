@@ -101,6 +101,9 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     class _Cfg:
         log_level = "DEBUG"
 
+        def model_dump(self) -> dict[str, t.ScalarValue]:
+            return {"log_level": self.log_level}
+
     class _Container:
         config = _Cfg()
 
@@ -183,6 +186,15 @@ def test_loggings_instance_and_message_format_paths(
         service_version = "1.0"
         correlation_id = "cid"
         force_new = True
+
+        def model_dump(self) -> dict[str, t.ScalarValue]:
+            return {
+                "log_level": self.level,
+                "service_name": self.service_name,
+                "service_version": self.service_version,
+                "correlation_id": self.correlation_id,
+                "force_new": self.force_new,
+            }
 
     logger = FlextLogger("x", config=cast("p.Config", cast("object", _Config())))
     assert logger.name == "x"
