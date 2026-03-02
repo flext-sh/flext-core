@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, override
 
 import pytest
 from flext_core import (
@@ -37,6 +37,7 @@ from tests.test_utils import assertion_helpers
 class ConcreteTestHandler(h[str, str]):
     """Concrete implementation of h for testing."""
 
+    @override
     def handle(self, message: str) -> FlextResult[str]:
         """Handle the message."""
         return FlextResult[str].ok(f"processed_{message}")
@@ -45,6 +46,7 @@ class ConcreteTestHandler(h[str, str]):
 class ValidationTestHandler(h[object, str]):
     """Handler that accepts any object for validation testing."""
 
+    @override
     def handle(self, message: object) -> FlextResult[str]:
         """Handle the message."""
         return FlextResult[str].ok(f"processed_{message}")
@@ -53,6 +55,7 @@ class ValidationTestHandler(h[object, str]):
 class FailingTestHandler(h[str, str]):
     """Concrete implementation that fails for testing error handling."""
 
+    @override
     def handle(self, message: str) -> FlextResult[str]:
         """Handle the message with failure."""
         return FlextResult[str].fail(f"Handler failed for: {message}")
@@ -194,6 +197,7 @@ class TestFlextHandlers:
         """Test handlers with different message and result types."""
 
         class IntHandler(h[int, str]):
+            @override
             def handle(self, message: int) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
@@ -274,6 +278,7 @@ class TestFlextHandlers:
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
+            @override
             def handle(
                 self,
                 message: dict[str, t.GeneralValueType],
@@ -318,10 +323,12 @@ class TestFlextHandlers:
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
+            @override
             def can_handle(self, message_type: object) -> bool:
                 _ = message_type
                 return False
 
+            @override
             def handle(self, message: str) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
@@ -346,10 +353,12 @@ class TestFlextHandlers:
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
+            @override
             def validate_command(self, command: object) -> FlextResult[bool]:
                 _ = command
                 return FlextResult[bool].fail("Validation failed for test")
 
+            @override
             def handle(self, message: str) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
@@ -374,6 +383,7 @@ class TestFlextHandlers:
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
+            @override
             def handle(self, message: str) -> FlextResult[str]:
                 _ = message
                 error_message = "Test exception in handler"
@@ -417,8 +427,8 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_with_flext_result(self) -> None:
         """Test create_from_callable with function returning FlextResult."""
 
-        def result_handler(message: t.ScalarValue) -> FlextResult[t.ScalarValue]:
-            return FlextResult[t.ScalarValue].ok(f"result_{message}")
+        def result_handler(message: t.ScalarValue) -> t.ScalarValue:
+            return FlextResult[t.ScalarValue].ok(f"result_{message}").value
 
         # Business Rule: create_from_callable accepts HandlerCallable compatible callables
         handler = h.create_from_callable(
@@ -561,10 +571,9 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = ConcreteTestHandler(config=config)
-        context = {"user_id": "123", "operation": "test"}
-        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
         context_typed: dict[str, t.GeneralValueType] = {
-            k: cast("t.GeneralValueType", v) for k, v in context.items()
+            "user_id": "123",
+            "operation": "test",
         }
         result = handler.push_context(context_typed)
         u.Tests.Result.assert_success(result)
@@ -598,13 +607,10 @@ class TestFlextHandlers:
             "test_none_message",
             "Test None Message",
         )
-        handler = ConcreteTestHandler(config=config)
-        # Business Rule: validate accepts AcceptableMessageType, but None is passed to test error handling
-        # None is intentionally passed to test error handling - cast to satisfy type checker
-        # The cast allows None to be passed for testing error handling scenarios
-        none_message = cast("t.AcceptableMessageType", None)
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(cast("str", none_message))
+        handler = ValidationTestHandler(config=config)
+        # None is intentionally passed to test error handling
+        # ValidationTestHandler accepts object, so None is valid for testing
+        result = handler.validate(None)
         u.Tests.Result.assert_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
@@ -617,13 +623,10 @@ class TestFlextHandlers:
             "test_pydantic_validation",
             "Test Pydantic Validation",
         )
-        handler = ConcreteTestHandler(config=config)
+        handler = ValidationTestHandler(config=config)
         msg = TestMessage(value="test")
-        # Business Rule: validate accepts Pydantic BaseModel instances compatible with AcceptableMessageType
-        # TestMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast("t.AcceptableMessageType", msg)
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(cast("str", msg_typed))
+        # ValidationTestHandler accepts object, so BaseModel is valid
+        result = handler.validate(msg)
         u.Tests.Result.assert_success(result)
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -638,13 +641,10 @@ class TestFlextHandlers:
             "test_dataclass_message",
             "Test Dataclass Message",
         )
-        handler = ConcreteTestHandler(config=config)
+        handler = ValidationTestHandler(config=config)
         msg = DataClassMessage(value="test", number=42)
-        # Business Rule: validate accepts dataclass instances compatible with AcceptableMessageType
-        # DataClassMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast("t.AcceptableMessageType", cast("object", msg))
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(cast("str", msg_typed))
+        # ValidationTestHandler accepts object, so dataclass is valid
+        result = handler.validate(msg)
         u.Tests.Result.assert_success(result)
 
     def test_handlers_slots_message_validation(self) -> None:
@@ -661,13 +661,10 @@ class TestFlextHandlers:
             "test_slots_message",
             "Test Slots Message",
         )
-        handler = ConcreteTestHandler(config=config)
+        handler = ValidationTestHandler(config=config)
         msg = SlotsMessage(value="test", number=42)
-        # Business Rule: validate accepts __slots__ class instances compatible with AcceptableMessageType
-        # SlotsMessage is compatible with AcceptableMessageType at runtime
-        msg_typed = cast("t.AcceptableMessageType", cast("object", msg))
-        handler_typed = cast("h[t.AcceptableMessageType, str]", handler)
-        result = handler_typed.validate(cast("str", msg_typed))
+        # ValidationTestHandler accepts object, so __slots__ class is valid
+        result = handler.validate(msg)
         u.Tests.Result.assert_success(result)
 
 
