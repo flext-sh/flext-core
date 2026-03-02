@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import c, m, p, r, t
@@ -34,6 +34,7 @@ def _build_flags_obj(
     fn: Callable[..., r[Mapping[str, bool]]] = getattr(Mapper, "build_flags_dict")
     return fn(active_flags, flag_mapping)
 
+
 @dataclass
 class AttrObject:
     """AttrObject class."""
@@ -52,6 +53,7 @@ class SampleModel(BaseModel):
 class BadString:
     """BadString class."""
 
+    @override
     def __str__(self) -> str:
         """__str__ method."""
         msg = "cannot stringify"
@@ -86,6 +88,7 @@ def _identity(value: t.ConfigMapValue) -> t.ConfigMapValue:
 class ExplodingLenList(UserList[object]):
     """ExplodingLenList class."""
 
+    @override
     def __len__(self) -> int:
         """__len__ method."""
         msg = "len exploded"
@@ -95,16 +98,19 @@ class ExplodingLenList(UserList[object]):
 class BadMapping(Mapping[str, t.GeneralValueType]):
     """BadMapping class."""
 
+    @override
     def __getitem__(self, key: str) -> t.GeneralValueType:
         """__getitem__ method."""
         msg = f"missing {key}"
         raise KeyError(msg)
 
+    @override
     def __iter__(self) -> Iterator[str]:
         """__iter__ method."""
         msg = "iter exploded"
         raise RuntimeError(msg)
 
+    @override
     def __len__(self) -> int:
         """__len__ method."""
         return 1
@@ -148,6 +154,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> 
 
 def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
     class Stable:
+        @override
         def __str__(self) -> str:
             return "stable"
 
@@ -223,6 +230,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[Mapper]) -> None:
     assert "Extracted value is None" in str(res_terminal_none.error)
 
     class NotGeneral:
+        @override
         def __str__(self) -> str:
             return "converted"
 
@@ -542,12 +550,15 @@ def test_construct_transform_and_deep_eq_branches(
     assert constructed["literal"] == 5
 
     class ExplodeOnGet(Mapping[str, t.GeneralValueType]):
+        @override
         def __iter__(self) -> Iterator[str]:
             return iter(("field",))
 
+        @override
         def __len__(self) -> int:
             return 1
 
+        @override
         def __getitem__(self, key: str) -> t.GeneralValueType:
             if key == "field":
                 msg = "boom"
@@ -675,7 +686,8 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert mapped.value == {"new": 1, "x": 2}
 
     class BadItems(UserDict[str, t.GeneralValueType]):
-        def items(self):
+        @override
+        def items(self) -> ItemsView[str, t.GeneralValueType]:
             msg = "bad items"
             raise RuntimeError(msg)
 
@@ -687,6 +699,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert flags.value == {"can_read": True, "can_write": False}
 
     class BadIter(UserList[str]):
+        @override
         def __iter__(self) -> Iterator[str]:
             msg = "bad iter"
             raise RuntimeError(msg)
@@ -699,7 +712,8 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert active.value == ["R"]
 
     class BadGet(UserDict[str, bool]):
-        def get(self, key: str, default: object = None):
+        @override
+        def get(self, key: str, default: object = None) -> bool:
             msg = "bad get"
             raise RuntimeError(msg)
 
@@ -713,6 +727,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
 
 def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
     class Plain:
+        @override
         def __str__(self) -> str:
             return "plain"
 
@@ -919,7 +934,7 @@ def test_remaining_uncovered_branches(
     assert terminal_default.value == "fallback"
 
     class HasNone:
-        x = None
+        x: None = None
 
     class MaybeModel(BaseModel):
         x: str | None = None
