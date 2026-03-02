@@ -516,8 +516,8 @@ def test_runtime_result_all_missed_branches() -> None:
     assert failure.recover(lambda _err: 7).value == 7
 
     class NoneValueResult(FlextRuntime.RuntimeResult[int | None]):
-        @override
         @property
+        @override
         def value(self) -> int | None:
             return None
 
@@ -953,7 +953,7 @@ def test_model_helpers_remaining_paths() -> None:
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
-    payload: dict[str, t.GeneralValueType] = {
+    payload: dict[str, object] = {
         "none": None,
         "str": "x",
         "int": 1,
