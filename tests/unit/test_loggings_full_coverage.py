@@ -273,7 +273,9 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
         "x",
         cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
-    logger_boom._structlog_instance = cast("p.Log.StructlogLogger", cast("object", _FakeBindable()))
+    logger_boom._structlog_instance = cast(
+        "p.Log.StructlogLogger", cast("object", _FakeBindable())
+    )
     monkeypatch.setattr(
         logger_boom.logger,
         "info",

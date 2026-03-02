@@ -19,7 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Literal, Self, overload, override
+from typing import ClassVar, Literal, Self, cast, overload, override
 
 from structlog.typing import Context
 
@@ -358,7 +358,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
             if merge_result.is_success:
                 # merge_result.value is compatible with m.ConfigMap payloads.
-                merged_value = merge_result.value
+                merged_value = cast("dict[str, t.GuardInputValue]", merge_result.value)
                 merged_context: dict[str, t.MetadataAttributeValue] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in merged_value.items()
@@ -758,7 +758,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         # Initialize structlog instance with context binding
         base_logger = FlextRuntime.get_logger(name)
-        self._structlog_instance = base_logger.bind(**context) if context else base_logger
+        self._structlog_instance = (
+            base_logger.bind(**context) if context else base_logger
+        )
 
     @classmethod
     def create_bound_logger(
@@ -1197,7 +1199,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 strategy="deep",
             )
             if merge_result.is_success:
-                merged_value = merge_result.value
+                merged_value = cast("dict[str, t.GuardInputValue]", merge_result.value)
                 context_dict = m.ConfigMap(root=dict(merged_value))
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(

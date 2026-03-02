@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Sequence
-from typing import ClassVar, Self, override
+from typing import ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -33,7 +33,7 @@ class FlextModelsEntity:
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    DomainEvent = FlextModelsDomainEvent.Entry
+    DomainEvent: TypeAlias = FlextModelsDomainEvent.Entry
 
     class Entry(
         FlextModelFoundation.TimestampedModel,

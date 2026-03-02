@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import Protocol, runtime_checkable
+from typing import Protocol, TypeAlias, runtime_checkable
 
 from flext_core import c, p, r, t
 from flext_core.loggings import FlextLogger
@@ -44,6 +44,12 @@ class ExecuteProtocol(Protocol):
         ...
 
 
+# Union of all handler types the dispatcher accepts (callables + protocol objects)
+_DispatchableHandler: TypeAlias = (
+    t.HandlerLike | DispatchMessageProtocol | HandleProtocol | ExecuteProtocol
+)
+
+
 class FlextDispatcher:
     """Application-level dispatcher that satisfies the command bus protocol.
 
@@ -56,13 +62,13 @@ class FlextDispatcher:
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
 
-        self._handlers: MutableMapping[str, t.HandlerLike] = {}
-        self._auto_handlers: list[t.HandlerLike] = []
-        self._event_subscribers: MutableMapping[str, list[t.HandlerLike]] = {}
+        self._handlers: MutableMapping[str, _DispatchableHandler] = {}
+        self._auto_handlers: list[_DispatchableHandler] = []
+        self._event_subscribers: MutableMapping[str, list[_DispatchableHandler]] = {}
 
     def register_handler(
         self,
-        handler: t.HandlerLike,
+        handler: _DispatchableHandler,
         *,
         is_event: bool = False,
     ) -> r[bool]:
@@ -194,7 +200,7 @@ class FlextDispatcher:
 
     def _execute_handler(
         self,
-        handler: t.HandlerLike,
+        handler: _DispatchableHandler,
         message: p.Routable,
         route_name: str,
     ) -> r[t.PayloadValue]:

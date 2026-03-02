@@ -20,8 +20,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from collections.abc import Sized
+
+import pytest
 from flext_core import m, p, r
 from flext_core.exceptions import e
 from returns.io import IO, IOSuccess

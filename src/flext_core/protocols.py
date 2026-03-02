@@ -24,6 +24,10 @@ from structlog.typing import BindableLogger
 from flext_core import T, t
 
 if TYPE_CHECKING:
+    from pydantic._internal._model_construction import (
+        ModelMetaclass as _TypeCheckModelMeta,
+    )
+
     from flext_core import r
 
 # =============================================================================
@@ -170,19 +174,25 @@ class _ProtocolIntrospection:
         return all(hasattr(instance, member) for member in required_members)
 
 
-# Define combined metaclasses inheriting from both Pydantic's ModelMetaclass and
+# Combined metaclass inheriting from both Pydantic's ModelMetaclass and
 # typing's Protocol metaclass. Resolve metaclass at runtime from public types
 # to avoid importing private names (_ProtocolMeta, pydantic._internal).
 # BaseSettings uses the same ModelMetaclass as BaseModel.
-def _build_combined_model_meta() -> type:
-    return type(
-        "_CombinedModelMeta",
-        (type(BaseModel), type(Protocol)),
-        {},
-    )
+if TYPE_CHECKING:
 
+    class _CombinedModelMeta(_TypeCheckModelMeta):
+        """TYPE_CHECKING stub: metaclass chain for mypy resolution."""
 
-_CombinedModelMeta: type = _build_combined_model_meta()
+else:
+
+    def _build_combined_model_meta() -> type:
+        return type(
+            "_CombinedModelMeta",
+            (type(BaseModel), type(Protocol)),
+            {},
+        )
+
+    _CombinedModelMeta: type = _build_combined_model_meta()
 
 
 class FlextProtocols:

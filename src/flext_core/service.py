@@ -89,9 +89,7 @@ class FlextService[TDomainResult](
 
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            result_value: TDomainResult = cast(
-                "TDomainResult", execution_result.unwrap()
-            )
+            result_value: TDomainResult = cast(TDomainResult, execution_result.unwrap())  # noqa: TC006
             return result_value
         # On failure, raise exception
         raise FlextExceptions.BaseError(
