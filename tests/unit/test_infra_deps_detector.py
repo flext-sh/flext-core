@@ -178,8 +178,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok((
-            {"missing": [], "unused": []},
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((
+            {"missing": list[str](), "unused": list[str]()},
             0,
         ))
         mock_deps.build_project_report.return_value = Mock(
@@ -215,14 +215,14 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
             Mock(model_dump=Mock(return_value={"to_add": ["types-requests"]}))
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_runner = Mock()
         mock_runner.run_raw.return_value = r[object].ok(Mock(exit_code=0))
@@ -265,7 +265,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
@@ -275,7 +275,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
                 model_dump=Mock(return_value={"to_add": ["types-requests", 123, None]})
             )
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_runner = Mock()
         mock_runner.run_raw.return_value = r[object].ok(Mock(exit_code=0))
@@ -318,14 +318,14 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
             Mock(model_dump=Mock(return_value={"to_add": ["types-requests"]}))
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_runner = Mock()
         # Simulate poetry add failure with non-zero exit code
@@ -369,14 +369,14 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
         mock_deps.get_required_typings.return_value = r[object].ok(
             Mock(model_dump=Mock(return_value={"to_add": ["types-requests"]}))
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_runner = Mock()
         # Simulate poetry add failure with failure result
@@ -415,11 +415,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_json = Mock()
         mock_json.write.return_value = r[str].ok("written")
@@ -463,11 +463,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({"missing": ["pkg"]}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok(({"missing": ["pkg"]}, 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 5}})
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 1))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 1))
 
         with patch(
             "flext_infra.deps.detector.FlextInfraPathResolver",
@@ -548,7 +548,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].fail("deptry failed")
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].fail("deptry failed")
 
         with patch(
             "flext_infra.deps.detector.FlextInfraPathResolver",
@@ -583,7 +583,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
@@ -621,11 +621,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_reporting = Mock()
         mock_reporting.get_report_dir.return_value = tmp_path / "readonly"
@@ -665,11 +665,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         mock_json = Mock()
         mock_json.write.return_value = r[str].fail("write failed")
@@ -716,11 +716,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({"missing": ["pkg"]}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok(({"missing": ["pkg"]}, 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 5}})
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 1))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 1))
 
         with patch(
             "flext_infra.deps.detector.FlextInfraPathResolver",
@@ -748,11 +748,11 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunMethod:
         mock_deps.discover_projects.return_value = r[list[Path]].ok([
             tmp_path / "proj-a"
         ])
-        mock_deps.run_deptry.return_value = r[tuple].ok(({}, 0))
+        mock_deps.run_deptry.return_value = r[tuple[dict[str, list[str]], int]].ok((dict[str, list[str]](), 0))
         mock_deps.build_project_report.return_value = Mock(
             model_dump=Mock(return_value={"deptry": {"raw_count": 0}})
         )
-        mock_deps.run_pip_check.return_value = r[tuple].ok(([], 0))
+        mock_deps.run_pip_check.return_value = r[tuple[list[str], int]].ok((list[str](), 0))
 
         with patch(
             "flext_infra.deps.detector.FlextInfraPathResolver",
