@@ -360,7 +360,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     captured: dict[str, object] = {}
 
-    def _for_container(cls: type[object], _container: object, level: object = None):
+    def _for_container(cls: type[object], _container: object, level: object = None) -> FlextLogger:
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",
@@ -384,6 +384,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     assert FlextLogger.get_logger("x") is sentinel
 
     class _TraceLogger(_FakeBindable):
+        @override
         def debug(self, message: str, *_args: object, **_kwargs: object) -> None:
             msg = "trace boom"
             raise RuntimeError(msg)
@@ -395,7 +396,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     trace_logger.trace("%s", "a")
 
     class _ShortFrame:
-        f_back = None
+        f_back: types.FrameType | None = None
 
     monkeypatch.setattr(
         inspect,
@@ -463,6 +464,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     assert FlextLogger._convert_to_relative_path("/tmp/example.py") == "example.py"
 
     class _ErrorLogger(_FakeBindable):
+        @override
         def error(self, message: str, *_args: object, **_kwargs: object) -> None:
             msg = "err"
             raise TypeError(msg)
@@ -482,7 +484,7 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
 
     captured: dict[str, object] = {}
 
-    def _for_container(cls: type[object], _container: object, level: object = None):
+    def _for_container(cls: type[object], _container: object, level: object = None) -> FlextLogger:
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",
@@ -498,10 +500,12 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
     assert captured["level"] == "DEBUG"
 
     class _StructlogLogger(_FakeBindable):
+        @override
         def debug(self, message: str, *_args: object, **_kwargs: object) -> None:
             msg = "trace"
             raise KeyError(msg)
 
+        @override
         def error(self, message: str, *_args: object, **_kwargs: object) -> None:
             msg = "exception"
             raise RuntimeError(msg)
