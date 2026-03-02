@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping
 from types import SimpleNamespace
-from typing import cast
+from typing import cast, override
 
 import pytest
 from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
@@ -36,16 +36,16 @@ class _ContainerForLogger:
         self.logger = logger
         self.factories: dict[str, object] = {}
 
-    def get_typed(self, _key: str, _tp: object):
+    def get_typed(self, _key: str, _tp: object) -> r[object]:
         if self.success:
             return r[object].ok(self.logger or object())
         return r[object].fail("missing")
 
-    def register_factory(self, key: str, factory: object):
+    def register_factory(self, key: str, factory: object) -> r[bool]:
         self.factories[key] = factory
         return r[bool].ok(True)
 
-    def register(self, _name: str, _value: object):
+    def register(self, _name: str, _value: object) -> r[bool]:
         return r[bool].ok(True)
 
 
@@ -68,12 +68,15 @@ def test_mixins_result_and_model_conversion_paths(
     assert scalar_wrapped.root == {"value": 1}
 
     class _BadMap(Mapping[str, t.GeneralValueType]):
+        @override
         def __iter__(self) -> Iterator[str]:
             return iter(["k"])
 
+        @override
         def __len__(self) -> int:
             return 1
 
+        @override
         def __getitem__(self, _key: str) -> t.GeneralValueType:
             msg = "boom"
             raise RuntimeError(msg)
@@ -92,6 +95,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     )
 
     class _Service(x):
+        @override
         @classmethod
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return cast(
@@ -136,7 +140,7 @@ def test_mixins_container_registration_and_logger_paths(
     assert ok_register.is_success
 
     class _AlreadyContainer:
-        def register(self, _name: str, _value: object):
+        def register(self, _name: str, _value: object) -> r[bool]:
             return r[bool].fail("already registered")
 
     monkeypatch.setattr(
@@ -147,7 +151,7 @@ def test_mixins_container_registration_and_logger_paths(
     assert service._register_in_container("svc").is_success
 
     class _FailContainer:
-        def register(self, _name: str, _value: object):
+        def register(self, _name: str, _value: object) -> r[bool]:
             return r[bool].fail("hard fail")
 
     monkeypatch.setattr(_Service, "container", property(lambda _self: _FailContainer()))
@@ -187,6 +191,7 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
             return None
 
     class _Service(x):
+        @override
         @classmethod
         def _get_or_create_logger(cls) -> FlextLogger:
             return cast("FlextLogger", cast("object", _LocalLogger()))
@@ -306,6 +311,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     class _WireService(x):
+        @override
         @classmethod
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return cast(
@@ -328,7 +334,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, object] = {}
 
     class _RegContainer:
-        def register(self, name: str, value: object):
+        def register(self, name: str, value: object) -> r[bool]:
             captured["name"] = name
             captured["value"] = value
             return r[bool].ok(True)
@@ -346,6 +352,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
             return None
 
     class _WarnService(x):
+        @override
         @classmethod
         def _get_or_create_logger(cls) -> FlextLogger:
             return cast("FlextLogger", cast("object", _WarnLogger()))
@@ -409,7 +416,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "logger" in factory_value
 
     class _BrokenContainer:
-        def get_typed(self, _key: str, _tp: object):
+        def get_typed(self, _key: str, _tp: object) -> r[object]:
             msg = "boom"
             raise RuntimeError(msg)
 
