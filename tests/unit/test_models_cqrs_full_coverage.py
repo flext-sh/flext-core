@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from flext_core import c, m
@@ -28,14 +28,12 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     Wrapper.Query.__module__ = "flext_core.models"
     Wrapper.Query.__qualname__ = "Wrapper.Query"
 
-    monkeypatch.setitem(
-        sys.modules,
-        "flext_core.models",
-        SimpleNamespace(Wrapper=Wrapper),
-    )
+    mock_module: ModuleType = ModuleType("flext_core.models")
+    setattr(mock_module, "Wrapper", Wrapper)
+    monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
 
-    monkeypatch.setitem(sys.modules, "flext_core.models", None)
+    monkeypatch.setitem(sys.modules, "flext_core.models", ModuleType("flext_core.models"))
     assert Wrapper.Query._resolve_pagination_class() is m.Cqrs.Pagination
 
 
@@ -84,11 +82,9 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
 
     Wrapper.Inner.Query.__module__ = "flext_core.models"
     Wrapper.Inner.Query.__qualname__ = "Wrapper.Inner.Query"
-    monkeypatch.setitem(
-        sys.modules,
-        "flext_core.models",
-        SimpleNamespace(Wrapper=Wrapper),
-    )
+    mock_module = ModuleType("flext_core.models")
+    setattr(mock_module, "Wrapper", Wrapper)
+    monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Inner.Query._resolve_pagination_class() is m.Cqrs.Pagination
 
     parsed = m.Query.model_validate({
