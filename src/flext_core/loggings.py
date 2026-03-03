@@ -702,7 +702,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def unbind(self, *keys: str, safe: bool = False) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
         bound_logger = (
-            self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
+            self.logger.unbind(*keys, safe=True) if safe else self.logger.unbind(*keys)
         )
         return self.__class__.create_bound_logger(self.name, bound_logger)
 

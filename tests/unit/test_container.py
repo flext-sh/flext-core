@@ -153,7 +153,7 @@ class TestFlextContainer:
         container = clean_container
         # Cast object to t.ContainerValue | BaseModel for type compatibility
 
-        result = container.with_service(scenario.name, scenario.service)
+        result = container.register(scenario.name, scenario.service)
         tm.that(
             result is container,
             eq=True,
@@ -204,9 +204,8 @@ class TestFlextContainer:
             return_value,
         )
         factory_typed: Callable[[], t.RegisterableService] = factory
-        result = clean_container.register_factory(
-            f"factory_{type(return_value).__name__}",
-            factory_typed,
+        result = clean_container.register(
+            f"factory_{type(return_value).__name__}", factory_typed, kind="factory"
         )
         u.Tests.Result.assert_success_with_value(result, True)
 
@@ -227,9 +226,8 @@ class TestFlextContainer:
         )
         # Cast factory to correct type for with_factory
         factory_typed: Callable[[], t.RegisterableService] = factory
-        result = container.with_factory(
-            f"factory_{type(return_value).__name__}",
-            factory_typed,
+        result = container.register(
+            f"factory_{type(return_value).__name__}", factory_typed, kind="factory"
         )
         tm.that(
             result is container,
@@ -253,7 +251,7 @@ class TestFlextContainer:
             "Callable[[], t.ContainerValue]",
             "not_callable",
         )
-        result = clean_container.register_factory("invalid", non_callable)
+        result = clean_container.register("invalid", non_callable, kind="factory")
         # Source no longer validates callability at registration time;
         # factory wrapping defers the call, so registration succeeds.
         u.Tests.Result.assert_success(result)
@@ -264,9 +262,9 @@ class TestFlextContainer:
     ) -> None:
         """Test that registering duplicate factory name fails using fixtures."""
         factory1 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value1")
-        clean_container.register_factory("factory1", factory1)
+        clean_container.register("factory1", factory1, kind="factory")
         factory2 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value2")
-        result: r[bool] = clean_container.register_factory("factory1", factory2)
+        result: r[bool] = clean_container.register("factory1", factory2, kind="factory")
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="already registered",
@@ -314,7 +312,7 @@ class TestFlextContainer:
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
             factory_result,
         )
-        clean_container.register_factory("factory_service", factory)
+        clean_container.register("factory_service", factory, kind="factory")
         result: r[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_success_with_value(
             result,
@@ -331,7 +329,7 @@ class TestFlextContainer:
                 "service_value",
             )
         )
-        clean_container.register_factory("factory_service", factory)
+        clean_container.register("factory_service", factory, kind="factory")
         result1: r[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
@@ -359,9 +357,8 @@ class TestFlextContainer:
         # Runtime: object is compatible with t.ContainerValue | BaseModel |
 
         container.register(scenario.name, scenario.service)
-        typed_result: FlextResult[t.RegisterableService] = container.get_typed(
-            scenario.name,
-            scenario.expected_type,
+        typed_result: FlextResult[t.RegisterableService] = container.get(
+            scenario.name, type_cls=scenario.expected_type
         )
         if scenario.should_pass:
             u.Tests.Result.assert_success(typed_result)
@@ -387,7 +384,7 @@ class TestFlextContainer:
     ) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result = clean_container.get_typed("string_service", dict)
+        result = clean_container.get("string_service", type_cls=dict)
         u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(
@@ -395,7 +392,7 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.get_typed("nonexistent", dict)
+        result = clean_container.get("nonexistent", type_cls=dict)
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",
@@ -430,7 +427,7 @@ class TestFlextContainer:
         """Test has_service returns True for factories using fixtures."""
         container = clean_container
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value")
-        container.register_factory("factory_service", factory)
+        container.register("factory_service", factory, kind="factory")
         tm.that(
             container.has_service("factory_service"),
             eq=True,
@@ -465,7 +462,7 @@ class TestFlextContainer:
         container.register("service1", "value1")
         container.register("service2", "value2")
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value3")
-        container.register_factory("factory1", factory)
+        container.register("factory1", factory, kind="factory")
         services = container.list_services()
         tm.that(len(services), eq=3, msg="Container must list 3 registered services")
         required_keys = ["service1", "service2", "factory1"]
@@ -492,7 +489,7 @@ class TestFlextContainer:
         name = "test_service"
         if use_factory:
             factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value")
-            container.register_factory(name, factory)
+            container.register(name, factory, kind="factory")
         else:
             container.register(name, "value")
         tm.that(
@@ -539,7 +536,7 @@ class TestFlextContainer:
         config: dict[str, t.Scalar] = {
             "max_workers": c.Container.DEFAULT_WORKERS,
         }
-        result = container.with_config(config)
+        result = container.configure(config)
         tm.that(
             result is container,
             eq=True,
@@ -598,7 +595,7 @@ class TestFlextContainer:
         container.register("service1", "value1")
         container.register("service2", "value2")
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value3")
-        container.register_factory("factory1", factory)
+        container.register("factory1", factory, kind="factory")
         tm.that(
             len(container.list_services()),
             eq=3,
@@ -645,7 +642,7 @@ class TestFlextContainer:
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory({
             "logger": "instance",
         })
-        container.register_factory("logger", factory)
+        container.register("logger", factory, kind="factory")
         required_services = ["db_connection", "cache", "logger"]
         for service_name in required_services:
             tm.that(
@@ -686,7 +683,7 @@ class TestFlextContainer:
         def failing_factory() -> t.Container:
             raise RuntimeError(error_msg)
 
-        container.register_factory("failing", failing_factory)
+        container.register("failing", failing_factory, kind="factory")
         result: r[t.RegisterableService] = container.get("failing")
         u.Tests.Result.assert_failure(result)
 

@@ -310,7 +310,7 @@ class TestFlextDecorators:
             service_instance: TestServiceTyped = TestServiceTyped(
                 value="from_container",
             )
-            container.with_service("service", service_instance)
+            container.register("service", service_instance)
 
             @FlextDecorators.inject(service="service")
             def process(*, service: TestServiceTyped) -> str:
@@ -352,7 +352,7 @@ class TestFlextDecorators:
         """Test track_performance decorator with various scenarios."""
         if test_case.operation == DecoratorOperationType.TRACK_PERFORMANCE_BASIC:
 
-            @FlextDecorators.track_performance("timed_operation")
+            @FlextDecorators.log_operation("timed_operation")
             def timed_function() -> str:
                 time.sleep(0.01)
                 return "completed"
@@ -365,7 +365,7 @@ class TestFlextDecorators:
             # Note: Actual performance tracking validation would require logger capture
         elif test_case.operation == DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION:
 
-            @FlextDecorators.track_performance("failing_operation")
+            @FlextDecorators.log_operation("failing_operation")
             def failing_function() -> None:
                 error_msg = "Timed failure"
                 raise RuntimeError(error_msg)
@@ -552,7 +552,7 @@ class TestFlextDecorators:
         """Test manual decorator stacking."""
 
         @FlextDecorators.log_operation("stacked")
-        @FlextDecorators.track_performance("stacked")
+        @FlextDecorators.log_operation("stacked")
         @FlextDecorators.railway()
         def stacked_operation() -> str:
             return "stacked_result"

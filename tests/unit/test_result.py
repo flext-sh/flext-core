@@ -213,7 +213,7 @@ class Testr:
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
                 result_alt = cast("r[t.ContainerValue]", failure_raw)
-            alt_result = result_alt.alt(lambda e: f"alt_{e}")
+            alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if is_success:
                 u.Tests.Result.assert_success_with_value(
                     alt_result,

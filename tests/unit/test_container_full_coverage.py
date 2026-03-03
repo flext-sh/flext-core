@@ -118,7 +118,7 @@ def test_config_context_properties_and_defaults(
         _ = c.context
 
     monkeypatch.setattr(
-        "flext_core.container.FlextSettings.get_global_instance",
+        "flext_core.container.FlextSettings.get_global",
         lambda: FlextSettings(),
     )
     assert isinstance(c._get_default_config(), FlextSettings)
@@ -211,7 +211,7 @@ def test_configure_with_resource_register_and_factory_error_paths(
         return r[bool].ok(True)
 
     monkeypatch.setattr(c, "register_resource", _register_resource)
-    assert c.with_resource("res", lambda: "x") is c
+    assert c.register("res", lambda: "x", kind="resource") is c
     assert called == ["res"]
     object.__setattr__(c, "register_resource", original_register_resource)
 
@@ -225,17 +225,17 @@ def test_configure_with_resource_register_and_factory_error_paths(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_factory",
         lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("boom")),
     )
-    assert c.register_factory("x2", lambda: "v").is_failure
+    assert c.register("x2", lambda: "v", kind="factory").is_failure
 
     setattr(c._di_resources, "dup", object())
-    assert c.register_resource("dup", lambda: "v").is_failure
+    assert c.register("dup", lambda: "v", kind="resource").is_failure
 
     delattr(c._di_resources, "dup")
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_resource",
         lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("boom")),
     )
-    assert c.register_resource("new", lambda: "v").is_failure
+    assert c.register("new", lambda: "v", kind="resource").is_failure
 
 
 def test_get_and_get_typed_resource_factory_paths() -> None:
@@ -257,12 +257,12 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
     c._factories = {
         "f2": m.Container.FactoryRegistration(name="f2", factory=lambda: "abc"),
     }
-    assert c.get_typed("f2", dict).is_failure
+    assert c.get("f2", type_cls=dict).is_failure
 
     c._resources = {
         "r2": m.Container.ResourceRegistration(name="r2", factory=lambda: "abc"),
     }
-    assert c.get_typed("r2", dict).is_failure
+    assert c.get("r2", type_cls=dict).is_failure
 
     c._factories = {
         "f3": m.Container.FactoryRegistration(
@@ -270,7 +270,7 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
             factory=lambda: (_ for _ in ()).throw(ValueError("err")),
         ),
     }
-    assert c.get_typed("f3", str).is_failure
+    assert c.get("f3", type_cls=str).is_failure
 
     c._resources = {
         "r3": m.Container.ResourceRegistration(
@@ -278,20 +278,20 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
             factory=lambda: (_ for _ in ()).throw(ValueError("err")),
         ),
     }
-    assert c.get_typed("r3", str).is_failure
+    assert c.get("r3", type_cls=str).is_failure
 
 
 def test_misc_unregistration_clear_and_reset() -> None:
     c = FlextContainer.create()
-    _ = c.register_resource("resx", lambda: "ok")
+    _ = c.register("resx", lambda: "ok", kind="resource")
     assert c.create_module_logger().logger is not None
 
     assert c.unregister("resx").is_success
 
-    _ = c.register_resource("r1", lambda: "ok")
+    _ = c.register("r1", lambda: "ok", kind="resource")
     c.clear_all()
 
-    FlextContainer.reset_singleton_for_testing()
+    FlextContainer.reset_for_testing()
     instance = FlextContainer.create()
     assert instance._global_instance is instance
 
@@ -474,8 +474,8 @@ def test_register_existing_providers_full_paths_and_misc_methods() -> None:
 
     c.wire_modules(modules=[])
     assert c.get("r1").is_success
-    assert c.get_typed("f1", str).is_success
-    assert c.get_typed("r1", str).is_success
+    assert c.get("f1", type_cls=str).is_success
+    assert c.get("r1", type_cls=str).is_success
 
 
 def test_create_scoped_instance_and_scoped_additional_branches() -> None:
@@ -524,16 +524,16 @@ def test_additional_container_branches_cover_fluent_and_lookup_paths() -> None:
     global_instance = FlextContainer.get_global()
     assert isinstance(global_instance, FlextContainer)
 
-    assert c.with_config({"enable_factory_caching": True}) is c
-    assert c.with_service("svc-x", "value") is c
-    assert c.with_factory("fac-x", lambda: "v") is c
+    assert c.configure({"enable_factory_caching": True}) is c
+    assert c.register("svc-x", "value") is c
+    assert c.register("fac-x", lambda: "v", kind="factory") is c
 
     assert c.get_config().root
     assert c.register("", "x").is_failure
     assert c.get("svc-x").is_success
     assert c.get("missing-service").is_failure
-    assert c.get_typed("svc-x", str).is_success
-    assert c.get_typed("missing-service", str).is_failure
+    assert c.get("svc-x", type_cls=str).is_success
+    assert c.get("missing-service", type_cls=str).is_failure
 
 
 def test_additional_register_factory_and_unregister_paths() -> None:
@@ -545,15 +545,15 @@ def test_additional_register_factory_and_unregister_paths() -> None:
         max_factories=10,
     )
 
-    assert c.register_factory("fac-ok", lambda: 1).is_success
-    assert c.register_factory("fac-ok", lambda: 2).is_failure
-    assert c.register_factory("fac-bad", cast("Any", 123)).is_success
+    assert c.register("fac-ok", lambda: 1, kind="factory").is_success
+    assert c.register("fac-ok", lambda: 2, kind="factory").is_failure
+    assert c.register("fac-bad", cast("Any", 123), kind="factory").is_success
 
     assert FlextContainer._narrow_factory_result("x") == "x"
 
     _ = c.register("svc-remove", "v")
-    _ = c.register_resource("res-remove", lambda: "r")
-    _ = c.register_factory("fac-remove", lambda: "f")
+    _ = c.register("res-remove", lambda: "r", kind="resource")
+    _ = c.register("fac-remove", lambda: "f", kind="factory")
 
     assert c.unregister("svc-remove").is_success
     assert c.unregister("fac-remove").is_success
@@ -646,7 +646,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
         max_services=10,
         max_factories=10,
     )
-    assert c2.register_factory("fac-call", lambda: "value").is_success
+    assert c2.register("fac-call", lambda: "value", kind="factory").is_success
     assert c2._factories["fac-call"].factory() == "value"
 
     c2._factories = {
@@ -672,7 +672,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
             service_type="str",
         ),
     }
-    assert c2.get_typed("svc-int", int).is_failure
+    assert c2.get("svc-int", type_cls=int).is_failure
 
     executed: list[str] = []
     c_any.has_service = lambda _name: False

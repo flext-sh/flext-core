@@ -660,17 +660,15 @@ class TestFlextServiceIntegration:
         user_service.set_user_data(user_id, user_entity)
 
         # Register services in container
-        _ = clean_container.with_service("user_service", user_service)
-        _ = clean_container.with_service("notification_service", notification_service)
+        _ = clean_container.register("user_service", user_service)
+        _ = clean_container.register("notification_service", notification_service)
 
         # Act - Retrieve and use services
-        user_service_result = clean_container.get_typed(
-            "user_service",
-            UserQueryService,
+        user_service_result = clean_container.get(
+            "user_service", type_cls=UserQueryService
         )
-        notification_service_result = clean_container.get_typed(
-            "notification_service",
-            NotificationService,
+        notification_service_result = clean_container.get(
+            "notification_service", type_cls=NotificationService
         )
 
         assert user_service_result.is_success

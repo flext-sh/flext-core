@@ -371,8 +371,8 @@ def main() -> None:
 
     # Global config singleton demonstration (containers are not global singletons)
     print("\n=== Global Config Pattern ===")
-    global_config = FlextSettings.get_global_instance()
-    another_ref = FlextSettings.get_global_instance()
+    global_config = FlextSettings.get_global()
+    another_ref = FlextSettings.get_global()
     print(f"✅ Global singleton: {global_config is another_ref}")
 
     print("=" * 60)

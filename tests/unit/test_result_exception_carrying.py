@@ -279,7 +279,7 @@ class TestAltPropagatesException:
         """Verify alt() preserves exception when transforming error."""
         exc = ValueError("original")
         result: r[int] = r[int].fail("error", exception=exc)
-        altered: r[int] = result.alt(lambda e: f"transformed: {e}")
+        altered: r[int] = result.map_error(lambda e: f"transformed: {e}")
 
         assert altered.is_failure
         assert altered.exception is exc
@@ -288,7 +288,7 @@ class TestAltPropagatesException:
     def test_alt_success_no_exception(self) -> None:
         """Verify alt() on success has no exception."""
         result: r[int] = r[int].ok(42)
-        altered: r[int] = result.alt(lambda e: f"error: {e}")
+        altered: r[int] = result.map_error(lambda e: f"error: {e}")
 
         assert altered.is_success
         assert altered.value == 42

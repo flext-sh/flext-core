@@ -82,7 +82,9 @@ class _LazyMetadata:
         obj: object,
         objtype: type | None = None,
     ) -> type:
-        from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
+        from flext_core._runtime_metadata import (
+            Metadata,  # JUSTIFIED: Ruff (import-outside-top-level) — https://docs.astral.sh/ruff/rules/import-outside-top-level/
+        )
 
         # Cache the loaded class on the class itself
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
@@ -432,7 +434,7 @@ class FlextRuntime:
     def _is_scalar(
         value: t.Container,
     ) -> TypeGuard[t.Scalar]:
-        """Check if value is a scalar type accepted by t.ScalarValue."""
+        """Check if value is a scalar type accepted by t.Scalar."""
         match value:
             case datetime() | None:
                 return True

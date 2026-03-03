@@ -177,7 +177,7 @@ class TestPhase2FinalCoveragePush:
             """Transform error message."""
             return f"Transformed: {error}"
 
-        transformed = failure.alt(transform_error)
+        transformed = failure.map_error(transform_error)
         assert transformed.is_failure
         assert transformed.error == "Transformed: original_error"
 

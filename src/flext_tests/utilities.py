@@ -41,7 +41,7 @@ from flext_core import (
 from flext_tests import c, m, p, t
 
 
-def _to_scalar(value: object) -> core_t.ScalarValue:
+def _to_scalar(value: object) -> core_t.Scalar:
     """Convert a value to ScalarValue for config overrides.
 
     Args:
@@ -794,7 +794,7 @@ class FlextTestsUtilities(FlextUtilities):
                     New FlextSettings instance
 
                 """
-                scalar_overrides: dict[str, core_t.ScalarValue] = {
+                scalar_overrides: dict[str, core_t.Scalar] = {
                     str(key): _to_scalar(value) for key, value in kwargs.items()
                 }
                 return FlextSettings.materialize(

@@ -629,7 +629,6 @@ class FlextDecorators:
 
         return decorator
 
-
     @staticmethod
     def railway(
         error_code: str | None = None,

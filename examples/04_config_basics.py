@@ -239,7 +239,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
         def test_invalid_config() -> FlextResult[bool]:
             """Test invalid configuration."""
             print("Testing invalid config")
-            AppConfig.reset_global_instance()
+            AppConfig.reset_for_testing()
             try:
                 invalid_data = {
                     "api_timeout": -1.0,
@@ -262,7 +262,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
 
         def test_invalid_log_level() -> FlextResult[bool]:
             """Test invalid log level."""
-            AppConfig.reset_global_instance()
+            AppConfig.reset_for_testing()
             try:
                 invalid_data = {"log_level": "INVALID"}
                 AppConfig.model_validate(invalid_data)

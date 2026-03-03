@@ -949,7 +949,7 @@ class FlextRegistry(s[bool]):
         try:
             # service is already valid registerable type (from method signature)
             # with_service returns Self for fluent chaining, but we don't need the return value
-            _ = self.container.with_service(name, service)
+            _ = self.container.register(name, service)
             return r[bool].ok(value=True)
         except ValueError as e:
             error_str = str(e)

@@ -199,7 +199,7 @@ def test_loggings_instance_and_message_format_paths(
     assert logger.name == "x"
     assert logger.new(a=1).name == "x"
     assert logger.unbind("a").name == "x"
-    assert logger.try_unbind("a").name == "x"
+    assert logger.unbind("a", safe=True).name == "x"
 
     logger.trace("%s %s", "a")
 
@@ -296,7 +296,7 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setattr(
         FlextSettings,
-        "get_global_instance",
+        "get_global",
         classmethod(lambda _cls: (_ for _ in ()).throw(RuntimeError("cfg"))),
     )
     assert logger._should_include_stack_trace() is True

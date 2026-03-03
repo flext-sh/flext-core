@@ -189,7 +189,7 @@ class TestCompleteFlextSystemIntegration:
         container = FlextContainer()
 
         # Registrar serviço
-        register_result = container.with_service("test_service", "test_value")
+        register_result = container.register("test_service", "test_value")
 
         assert register_result is container  # Fluent interface returns Self is True
 

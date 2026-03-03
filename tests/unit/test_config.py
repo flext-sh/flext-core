@@ -285,7 +285,7 @@ class TestFlextSettings:
 
     def test_config_create_and_configure_pattern(self) -> None:
         """Test direct instantiation and configuration pattern."""
-        FlextSettings.reset_global_instance()
+        FlextSettings.reset_for_testing()
         try:
             config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
                 app_name="Test Application",
@@ -299,7 +299,7 @@ class TestFlextSettings:
             assert config2.debug is True
             assert config is config2
         finally:
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
 
     @pytest.mark.parametrize(
         "debug_trace",
@@ -340,16 +340,16 @@ class TestFlextSettings:
 
     def test_global_instance_management(self) -> None:
         """Test global instance management methods with singleton pattern."""
-        original_instance = FlextSettings.get_global_instance()
+        original_instance = FlextSettings.get_global()
         try:
-            assert FlextSettings.get_global_instance() is original_instance
-            FlextSettings.reset_global_instance()
+            assert FlextSettings.get_global() is original_instance
+            FlextSettings.reset_for_testing()
             fresh_config = FlextSettings()
             assert fresh_config is not original_instance
             assert fresh_config.app_name == "flext"
-            assert FlextSettings.get_global_instance() is fresh_config
+            assert FlextSettings.get_global() is fresh_config
         finally:
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
 
 
 class TestFlextSettingsPydantic:
@@ -485,7 +485,7 @@ class TestFlextSettingsPydantic:
             assert config.timeout_seconds == 90
 
             # Reset singleton to test env var precedence
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
             config_no_explicit = FlextSettings()
             assert config_no_explicit.timeout_seconds == 60
 
@@ -493,7 +493,7 @@ class TestFlextSettingsPydantic:
             del os.environ["FLEXT_TIMEOUT_SECONDS"]
 
             # Reset singleton to test .env file precedence
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
             config_no_env = FlextSettings()
             # Note: .env loading may not work if model_config was set at class
             # definition. This test validates the behavior, not necessarily
@@ -514,11 +514,11 @@ class TestFlextSettingsPydantic:
             {"FLEXT_DEBUG": "true"},
             ["FLEXT_DEBUG"],
         ):
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
             config = FlextSettings()
             assert config.debug is True
             os.environ["FLEXT_DEBUG"] = "false"
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
             config_updated = FlextSettings()
             assert config_updated.debug is False
 
@@ -528,20 +528,20 @@ class TestFlextSettingsPydantic:
             {"FLEXT_LOG_LEVEL": "ERROR", "FLEXT_DEBUG": "true"},
             ["FLEXT_LOG_LEVEL", "FLEXT_DEBUG"],
         ):
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
             config = FlextSettings()
             assert config.log_level == "ERROR"
             assert config.debug is True
             os.environ["FLEXT_DEBUG"] = "false"
-            FlextSettings.reset_global_instance()
+            FlextSettings.reset_for_testing()
             config_no_debug = FlextSettings()
             assert config_no_debug.log_level == "ERROR"
             assert config_no_debug.debug is False
 
-    def test_get_global_instance(self) -> None:
-        """Test get_global_instance returns singleton."""
-        instance1 = FlextSettings.get_global_instance()
-        instance2 = FlextSettings.get_global_instance()
+    def test_get_global(self) -> None:
+        """Test get_global returns singleton."""
+        instance1 = FlextSettings.get_global()
+        instance2 = FlextSettings.get_global()
         assert instance1 is instance2
 
     def test_config_with_all_fields(self) -> None:
@@ -561,9 +561,9 @@ class TestFlextSettingsPydantic:
 
     def test_reset_instance(self) -> None:
         """Test _reset_instance method for testing purposes."""
-        config1 = FlextSettings.get_global_instance()
+        config1 = FlextSettings.get_global()
         FlextSettings._reset_instance()
-        config2 = FlextSettings.get_global_instance()
+        config2 = FlextSettings.get_global()
         # After reset, should get new instance
         assert config1 is not config2 or config1 is config2  # Singleton behavior
 

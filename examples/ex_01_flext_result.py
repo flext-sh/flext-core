@@ -73,7 +73,6 @@ class Ex01FlextResult(Examples):
         self.check("prop.failure.is_success", failure.is_success)
         self.check("prop.failure.is_failure", failure.is_failure)
         self.check("prop.success.value", success.value)
-        self.check("prop.success.data", success.data)
         self.check("prop.success.result_self", success.result is success)
         self.check("prop.failure.error", failure.error)
         self.check("prop.failure.error_code", failure.error_code)
@@ -116,11 +115,11 @@ class Ex01FlextResult(Examples):
         )
         self.check(
             "and_then.success",
-            base_ok.and_then(lambda n: r[int].ok(n - 2)).unwrap_or(-1),
+            base_ok.flat_map(lambda n: r[int].ok(n - 2)).unwrap_or(-1),
         )
         self.check(
             "and_then.failure",
-            base_fail.and_then(lambda n: r[int].ok(n)).is_failure,
+            base_fail.flat_map(lambda n: r[int].ok(n)).is_failure,
         )
 
         bind_ok = self.bind_probe(base_ok, 3)
@@ -130,11 +129,11 @@ class Ex01FlextResult(Examples):
 
         self.check(
             "alt.success_unchanged",
-            base_ok.alt(lambda e: f"alt:{e}").unwrap_or(-1),
+            base_ok.map_error(lambda e: f"alt:{e}").unwrap_or(-1),
         )
         self.check(
             "alt.failure_changed",
-            base_fail.alt(lambda e: f"alt:{e}").error,
+            base_fail.map_error(lambda e: f"alt:{e}").error,
         )
         self.check(
             "map_error.failure_changed",
@@ -321,9 +320,8 @@ class Ex01FlextResult(Examples):
             lambda _: r[int].fail("resource op failed"),
             cleanup=clean_handle,
         )
-        no_cleanup_resource = r[int].with_resource(
-            make_handle,
-            lambda handle: r[int].ok(handle.value + 1),
+        no_cleanup_resource = r[int].register(
+            make_handle, lambda handle: r[int].ok(handle.value + 1), kind="resource"
         )
 
         self.check("with_resource.success", success_resource.unwrap_or(-1))

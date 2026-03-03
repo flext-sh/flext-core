@@ -24,7 +24,7 @@ class Ex08FlextContainer(Examples):
         """Exercise get_global/create/builder creation and singleton semantics."""
         self.section("singleton_and_creation")
 
-        FlextContainer.reset_singleton_for_testing()
+        FlextContainer.reset_for_testing()
         root_context = FlextContext()
         root = FlextContainer.get_global(context=root_context)
 
@@ -85,17 +85,19 @@ class Ex08FlextContainer(Examples):
             factory_calls["count"] = int(factory_calls["count"]) + 1
             return int(factory_calls["count"])
 
-        register_factory_ok = container.register_factory(factory_name, _factory_counter)
-        register_factory_dup = container.register_factory(
-            factory_name, _factory_counter
+        register_factory_ok = container.register(
+            factory_name, _factory_counter, kind="factory"
+        )
+        register_factory_dup = container.register(
+            factory_name, _factory_counter, kind="factory"
         )
 
         def _factory_raises() -> int:
             error_message = self.rand_str(10)
             raise RuntimeError(error_message)
 
-        register_factory_bad = container.register_factory(
-            bad_factory_name, _factory_raises
+        register_factory_bad = container.register(
+            bad_factory_name, _factory_raises, kind="factory"
         )
 
         self.check("register.factory.success", register_factory_ok.is_success)
@@ -112,11 +114,11 @@ class Ex08FlextContainer(Examples):
             resource_calls["count"] = int(resource_calls["count"]) + 1
             return {self.rand_str(4): int(resource_calls["count"])}
 
-        register_resource_ok = container.register_resource(
-            resource_name, _resource_data
+        register_resource_ok = container.register(
+            resource_name, _resource_data, kind="resource"
         )
-        register_resource_dup = container.register_resource(
-            resource_name, _resource_data
+        register_resource_dup = container.register(
+            resource_name, _resource_data, kind="resource"
         )
 
         self.check("register.resource.success", register_resource_ok.is_success)
@@ -133,22 +135,22 @@ class Ex08FlextContainer(Examples):
         self.check("get.service.success", get_service.is_success)
         self.check(
             "get.service.value_matches",
-            container.get_typed(service_name, int).unwrap_or(-1) == service_value,
+            container.get(service_name, type_cls=int).unwrap_or(-1) == service_value,
         )
         self.check("get.factory.success", get_factory.is_success)
         self.check(
             "get.factory.value_first_call",
-            container.get_typed(factory_name, int).unwrap_or(-1) == 1,
+            container.get(factory_name, type_cls=int).unwrap_or(-1) == 1,
         )
         self.check("get.resource.success", get_resource.is_success)
         self.check("get.resource.call_count_is_one", resource_calls["count"] == 1)
         self.check("get.missing.failure", get_missing.is_failure)
         self.check("get.bad_factory.failure", get_bad_factory.is_failure)
 
-        get_typed_service = container.get_typed(service_name, int)
-        get_typed_service_bad = container.get_typed(service_name, str)
-        get_typed_factory = container.get_typed(factory_name, int)
-        get_typed_missing = container.get_typed(missing_name, int)
+        get_typed_service = container.get(service_name, type_cls=int)
+        get_typed_service_bad = container.get(service_name, type_cls=str)
+        get_typed_factory = container.get(factory_name, type_cls=int)
+        get_typed_missing = container.get(missing_name, type_cls=int)
 
         self.check("get_typed.service.success", get_typed_service.is_success)
         self.check(
@@ -187,17 +189,16 @@ class Ex08FlextContainer(Examples):
         fluent_resource_value = self.rand_str(10)
         max_factories = self.rand_int(1, 1000)
 
-        with_service_result = container.with_service(
+        with_service_result = container.register(
             fluent_service_name, fluent_service_value
         )
-        with_factory_result = container.with_factory(
-            fluent_factory_name, lambda: fluent_factory_value
+        with_factory_result = container.register(
+            fluent_factory_name, lambda: fluent_factory_value, kind="factory"
         )
-        with_resource_result = container.with_resource(
-            fluent_resource_name,
-            lambda: fluent_resource_value,
+        with_resource_result = container.register(
+            fluent_resource_name, lambda: fluent_resource_value, kind="resource"
         )
-        with_config_result = container.with_config({"max_factories": max_factories})
+        with_config_result = container.configure({"max_factories": max_factories})
 
         self.check("with_service.returns_self", with_service_result is container)
         self.check("with_factory.returns_self", with_factory_result is container)
@@ -231,17 +232,17 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "with_service.get.value_matches",
-            container.get_typed(fluent_service_name, str).unwrap_or("")
+            container.get(fluent_service_name, type_cls=str).unwrap_or("")
             == fluent_service_value,
         )
         self.check(
             "with_factory.get.value_matches",
-            container.get_typed(fluent_factory_name, str).unwrap_or("")
+            container.get(fluent_factory_name, type_cls=str).unwrap_or("")
             == fluent_factory_value,
         )
         self.check(
             "with_resource.get.value_matches",
-            container.get_typed(fluent_resource_name, str).unwrap_or("")
+            container.get(fluent_resource_name, type_cls=str).unwrap_or("")
             == fluent_resource_value,
         )
 
@@ -285,7 +286,9 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.default.get_typed_service_matches",
-            scoped_default.get_typed(self._registered_service_name, int).unwrap_or(-1)
+            scoped_default.get(self._registered_service_name, type_cls=int).unwrap_or(
+                -1
+            )
             == self._registered_service_value,
         )
         self.check(
@@ -308,12 +311,12 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.full.get_service_matches",
-            scoped_full.get_typed(scoped_service_name, str).unwrap_or("")
+            scoped_full.get(scoped_service_name, type_cls=str).unwrap_or("")
             == scoped_service_value,
         )
         self.check(
             "scoped.full.get_factory_matches",
-            scoped_full.get_typed(scoped_factory_name, int).unwrap_or(-1)
+            scoped_full.get(scoped_factory_name, type_cls=int).unwrap_or(-1)
             == scoped_factory_value,
         )
         self.check(
@@ -378,7 +381,7 @@ class Ex08FlextContainer(Examples):
         self.check("clear_all.count", len(container.list_services()))
 
         before_reset = root
-        FlextContainer.reset_singleton_for_testing()
+        FlextContainer.reset_for_testing()
         after_reset = FlextContainer.get_global(context=FlextContext())
         self.check("reset_singleton.new_instance", before_reset is not after_reset)
         self.check(

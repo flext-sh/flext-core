@@ -1381,7 +1381,7 @@ class FlextContext(FlextRuntime):
             try:
                 # Use container.with_service for fluent API
                 # with_service returns Self for fluent chaining, but we don't need the return value
-                _ = container.with_service(service_name, service)
+                _ = container.register(service_name, service)
                 return r[bool].ok(value=True)
             except ValueError as e:
                 return r[bool].fail(str(e))

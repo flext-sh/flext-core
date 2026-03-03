@@ -440,7 +440,7 @@ class TestExceptionFactory:
 
     def test_create_error_by_type(self) -> None:
         """Test creating exception by type name."""
-        error = FlextExceptions.create_error("ValidationError", "Test validation error")
+        error = FlextExceptions.create("ValidationError", "Test validation error")
         assert isinstance(error, FlextExceptions.ValidationError)
         assert "Test validation error" in str(error)
 

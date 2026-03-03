@@ -168,7 +168,7 @@ class TestCoveragePush75Percent:
     def test_container_basic(self) -> None:
         """Test basic container operations."""
         c = FlextContainer()
-        r = c.with_service("test", "value")
+        r = c.register("test", "value")
         assert r is c
         r2 = c.get("test")
         assert r2.is_success
@@ -183,7 +183,7 @@ class TestCoveragePush75Percent:
     def test_container_clear_all(self) -> None:
         """Test container clear_all."""
         c = FlextContainer()
-        c.with_service("test", "value")
+        c.register("test", "value")
         c.clear_all()
         r = c.get("test")
         assert r.is_failure
@@ -191,7 +191,7 @@ class TestCoveragePush75Percent:
     def test_container_unregister(self) -> None:
         """Test container unregister."""
         c = FlextContainer()
-        c.with_service("test", "value")
+        c.register("test", "value")
         c.unregister("test")
         r = c.get("test")
         assert r.is_failure
@@ -199,8 +199,8 @@ class TestCoveragePush75Percent:
     def test_container_register_multiple(self) -> None:
         """Test registering multiple services."""
         c = FlextContainer()
-        c.with_service("svc1", "val1")
-        c.with_service("svc2", "val2")
+        c.register("svc1", "val1")
+        c.register("svc2", "val2")
         assert c.get("svc1").value == "val1"
         assert c.get("svc2").value == "val2"
 

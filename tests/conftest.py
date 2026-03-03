@@ -526,7 +526,7 @@ def _reset_global_container() -> Generator[None]:
     yield  # Run the test
     # After the test completes, reset the global instances
     FlextContainer._global_instance = cast("FlextContainer | None", None)
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
 
 @pytest.fixture

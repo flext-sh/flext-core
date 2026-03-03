@@ -88,21 +88,21 @@ class _TestConfig(FlextSettings):
 def demo_singleton_and_global() -> None:
     """Exercise singleton pattern and global instance management."""
     _section("singleton_and_global")
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
     first = FlextSettings()
     second = FlextSettings()
     _check("constructor.singleton_identity", first is second)
 
-    global_instance = FlextSettings.get_global_instance()
-    _check("get_global_instance.identity", global_instance is first)
+    global_instance = FlextSettings.get_global()
+    _check("get_global.identity", global_instance is first)
 
     getattr(FlextSettings, "_reset_instance")()
     third = FlextSettings()
     _check("_reset_instance.recreates_singleton", third is not first)
 
-    FlextSettings.reset_global_instance()
-    fourth = FlextSettings.get_global_instance()
+    FlextSettings.reset_for_testing()
+    fourth = FlextSettings.get_global()
     _check("reset_global_instance.recreates_global", fourth is not third)
 
     getattr(_TestConfig, "_reset_instance")()
@@ -114,7 +114,7 @@ def demo_singleton_and_global() -> None:
 def demo_configuration_fields_and_validation() -> None:
     """Exercise all configuration fields and validation."""
     _section("configuration_fields_and_validation")
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
     config = FlextSettings(
         app_name="demo-app",
@@ -179,7 +179,7 @@ def demo_configuration_fields_and_validation() -> None:
 def demo_effective_log_level_and_override() -> None:
     """Exercise effective_log_level property and apply_override."""
     _section("effective_log_level_and_override")
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
     config = FlextSettings(
         debug=False, trace=False, log_level=c.Settings.LogLevel.ERROR
@@ -201,9 +201,9 @@ def demo_effective_log_level_and_override() -> None:
 def demo_materialize_and_provider() -> None:
     """Exercise materialize and DI config provider."""
     _section("materialize_and_provider")
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
-    base = FlextSettings.get_global_instance()
+    base = FlextSettings.get_global()
     cloned = FlextSettings.materialize()
     _check("materialize.clone_same_values", cloned.app_name == base.app_name)
     _check("materialize.clone_new_object", cloned is not base)
@@ -221,7 +221,7 @@ def demo_materialize_and_provider() -> None:
 def demo_resolve_env_file_and_auto_config() -> None:
     """Exercise resolve_env_file and AutoConfig."""
     _section("resolve_env_file_and_auto_config")
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
     env_path = Path(sys.prefix) / "flext_settings_example.env"
     _ = env_path.write_text("FLEXT_APP_NAME=from_env_file\n", encoding="utf-8")
@@ -250,7 +250,7 @@ def demo_resolve_env_file_and_auto_config() -> None:
 def demo_namespace_system() -> None:
     """Exercise namespace registration and retrieval."""
     _section("namespace_system")
-    FlextSettings.reset_global_instance()
+    FlextSettings.reset_for_testing()
 
     @FlextSettings.auto_register(namespace="decorated_ns")
     class _DecoratedNamespace(_TestConfig):
@@ -277,7 +277,7 @@ def demo_namespace_system() -> None:
 def demo_context_system() -> None:
     """Exercise context override system."""
     _section("context_system")
-    _TestConfig.reset_global_instance()
+    _TestConfig.reset_for_testing()
 
     _TestConfig.register_context_overrides(
         "worker-a",
@@ -303,8 +303,8 @@ def main() -> None:
     demo_resolve_env_file_and_auto_config()
     demo_namespace_system()
     demo_context_system()
-    FlextSettings.reset_global_instance()
-    _TestConfig.reset_global_instance()
+    FlextSettings.reset_for_testing()
+    _TestConfig.reset_for_testing()
     _verify()
 
 

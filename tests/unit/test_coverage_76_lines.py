@@ -176,14 +176,14 @@ class TestResultTransformations:
     def test_result_alt_on_failure(self) -> None:
         """Test .alt provides alternative on failure."""
         r: FlextResult[int] = FlextResult[int].fail("error")
-        r2 = r.alt(lambda _: "recovered")  # alt transforms error, not value
+        r2 = r.map_error(lambda _: "recovered")  # alt transforms error, not value
         assert r2.is_failure  # still failure but error is transformed
         assert r2.error == "recovered"
 
     def test_result_alt_on_success(self) -> None:
         """Test .alt passes through on success."""
         r = FlextResult[int].ok(42)
-        r2 = r.alt(lambda _: "should not be called")
+        r2 = r.map_error(lambda _: "should not be called")
         assert r2.is_success
         assert r2.value == 42
 

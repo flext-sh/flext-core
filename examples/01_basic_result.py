@@ -273,8 +273,8 @@ class RailwayService(s[DemonstrationResult]):
         def recover_message(error: str) -> str:
             return f"Recovered from: {error}"
 
-        recovered = failure.alt(recover_message)
-        print(f".alt() transform: {recovered.error}")
+        recovered = failure.map_error(recover_message)
+        print(f".map_error() transform: {recovered.error}")
 
         # Lash (error recovery) with fallback
         def provide_fallback(_error: str) -> r[str]:
@@ -392,7 +392,7 @@ def main() -> None:
 
     print(f"\n{separator}")
     print("🎯 Railway patterns: .map(), .flat_map(), .flow_through()")
-    print("🎯 Error recovery: .alt(), .lash()")
+    print("🎯 Error recovery: .map_error(), .lash()")
     print("🎯 Advanced combinators: .traverse(), .filter()")
     print("🎯 Validation integration: u.Validation")
     print("🎯 Type safety: Centralized t with Python 3.13+")

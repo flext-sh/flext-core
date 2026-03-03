@@ -329,12 +329,12 @@ class Ex09FlextDecorators(Examples):
 
         perf_operation_name = self.rand_str(10)
 
-        @d.track_performance(perf_operation_name)
+        @d.log_operation(perf_operation_name)
         def perf_named(value: int) -> tuple[int, str | None]:
             """Return transformed value plus operation name from context."""
             return value * 2, FlextContext.Request.get_operation_name()
 
-        @d.track_performance()
+        @d.log_operation()
         def perf_default() -> str | None:
             """Return default operation name from context."""
             return FlextContext.Request.get_operation_name()

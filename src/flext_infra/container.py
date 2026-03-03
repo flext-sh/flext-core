@@ -88,47 +88,67 @@ def configure_flext_infra_dependencies() -> None:
     container = get_flext_infra_container()
 
     # Register factory services
-    _ = container.register_factory("git_service", lambda: FlextInfraGitService())
-    _ = container.register_factory("json_io", lambda: FlextInfraJsonService())
-    _ = container.register_factory("toml_io", lambda: FlextInfraTomlService())
-    _ = container.register_factory("path_resolver", lambda: FlextInfraPathResolver())
-    _ = container.register_factory("command_runner", lambda: FlextInfraCommandRunner())
-    _ = container.register_factory("discovery", lambda: FlextInfraDiscoveryService())
-    _ = container.register_factory("selection", lambda: FlextInfraProjectSelector())
-    _ = container.register_factory("reporting", lambda: FlextInfraReportingService())
-    _ = container.register_factory("versioning", lambda: FlextInfraVersioningService())
+    _ = container.register(
+        "git_service", lambda: FlextInfraGitService(), kind="factory"
+    )
+    _ = container.register("json_io", lambda: FlextInfraJsonService(), kind="factory")
+    _ = container.register("toml_io", lambda: FlextInfraTomlService(), kind="factory")
+    _ = container.register(
+        "path_resolver", lambda: FlextInfraPathResolver(), kind="factory"
+    )
+    _ = container.register(
+        "command_runner", lambda: FlextInfraCommandRunner(), kind="factory"
+    )
+    _ = container.register(
+        "discovery", lambda: FlextInfraDiscoveryService(), kind="factory"
+    )
+    _ = container.register(
+        "selection", lambda: FlextInfraProjectSelector(), kind="factory"
+    )
+    _ = container.register(
+        "reporting", lambda: FlextInfraReportingService(), kind="factory"
+    )
+    _ = container.register(
+        "versioning", lambda: FlextInfraVersioningService(), kind="factory"
+    )
 
     # Register output singleton instance (not factory)
     _ = container.register("output", output)
 
     # Register basemk services
-    _ = container.register_factory(
-        "basemk_engine", lambda: FlextInfraBaseMkTemplateEngine()
+    _ = container.register(
+        "basemk_engine", lambda: FlextInfraBaseMkTemplateEngine(), kind="factory"
     )
-    _ = container.register_factory(
-        "basemk_generator", lambda: FlextInfraBaseMkGenerator()
+    _ = container.register(
+        "basemk_generator", lambda: FlextInfraBaseMkGenerator(), kind="factory"
     )
 
     # Register workspace services
-    _ = container.register_factory(
-        "workspace_detector", lambda: FlextInfraWorkspaceDetector()
+    _ = container.register(
+        "workspace_detector", lambda: FlextInfraWorkspaceDetector(), kind="factory"
     )
-    _ = container.register_factory(
-        "workspace_migrator", lambda: FlextInfraProjectMigrator()
+    _ = container.register(
+        "workspace_migrator", lambda: FlextInfraProjectMigrator(), kind="factory"
     )
-    _ = container.register_factory(
-        "workspace_orchestrator", lambda: FlextInfraOrchestratorService()
+    _ = container.register(
+        "workspace_orchestrator",
+        lambda: FlextInfraOrchestratorService(),
+        kind="factory",
     )
-    _ = container.register_factory("workspace_sync", lambda: FlextInfraSyncService())
+    _ = container.register(
+        "workspace_sync", lambda: FlextInfraSyncService(), kind="factory"
+    )
 
     # Register release services
-    _ = container.register_factory(
-        "release_orchestrator", lambda: FlextInfraReleaseOrchestrator()
+    _ = container.register(
+        "release_orchestrator", lambda: FlextInfraReleaseOrchestrator(), kind="factory"
     )
 
     # Register maintenance services
-    _ = container.register_factory(
-        "python_version_enforcer", lambda: FlextInfraPythonVersionEnforcer()
+    _ = container.register(
+        "python_version_enforcer",
+        lambda: FlextInfraPythonVersionEnforcer(),
+        kind="factory",
     )
 
 

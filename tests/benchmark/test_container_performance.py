@@ -112,10 +112,7 @@ class PerformanceBenchmark:
         )
         # Perform registrations separately
         [
-            container.register_factory(
-                f"factory_{i}",
-                make_factory(i),
-            )
+            container.register(f"factory_{i}", make_factory(i), kind="factory")
             for i in range(count)
         ]
         return elapsed
@@ -145,10 +142,7 @@ class PerformanceBenchmark:
         )
         # Perform registrations separately
         [
-            container.register_resource(
-                f"resource_{i}",
-                make_resource(i),
-            )
+            container.register(f"resource_{i}", make_resource(i), kind="resource")
             for i in range(count)
         ]
         return elapsed

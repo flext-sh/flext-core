@@ -89,10 +89,7 @@ class TestContainerMemory:
             return lambda: f"value_{captured_i}"
 
         for i in range(100):
-            container.register_factory(
-                f"factory_{i}",
-                make_factory(i),
-            )
+            container.register(f"factory_{i}", make_factory(i), kind="factory")
 
         # Force GC after registration
         gc.collect()

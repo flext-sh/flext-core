@@ -438,7 +438,7 @@ class FlextMixins(FlextRuntime):
             logger_key = f"logger:{logger_name}"
 
             # Attempt to retrieve logger from container
-            logger_result = container.get_typed(logger_key, FlextLogger)
+            logger_result = container.get(logger_key, type_cls=FlextLogger)
 
             if logger_result.is_success:
                 # Use .value directly - FlextResult never returns None on success
@@ -461,9 +461,8 @@ class FlextMixins(FlextRuntime):
                     def logger_factory() -> t.RegisterableService:
                         return {"logger": logger_name}
 
-                    _ = container_impl.register_factory(
-                        logger_key,
-                        logger_factory,
+                    _ = container_impl.register(
+                        logger_key, logger_factory, kind="factory"
                     )
                 else:
                     _ = container_impl.register(logger_key, logger)

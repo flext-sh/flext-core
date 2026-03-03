@@ -57,10 +57,10 @@ class TestFlextInfraTypesImport:
         )
 
     def test_flext_infra_types_has_metadata_scalar_value_type(self) -> None:
-        """Test that FlextInfraTypes has MetadataScalarValue type."""
-        # MetadataScalarValue is inherited from FlextTypes
-        assert hasattr(FlextTypes, "MetadataScalarValue") or hasattr(
-            FlextInfraTypes, "MetadataScalarValue"
+        """Test that FlextInfraTypes has Metadat.Scalar type."""
+        # Metadat.Scalar is inherited from FlextTypes
+        assert hasattr(FlextTypes, "Metadat.Scalar") or hasattr(
+            FlextInfraTypes, "Metadat.Scalar"
         )
 
     def test_flext_infra_types_has_dict_type(self) -> None:

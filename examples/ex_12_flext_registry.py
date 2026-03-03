@@ -317,19 +317,25 @@ class Ex12FlextRegistry(Examples):
         self.check("unregister_plugin.ok", plugin_unreg_ok.is_success)
         self.check("unregister_plugin.missing", plugin_unreg_missing.is_failure)
 
-        class_ok = registry.register_class_plugin(
-            class_ns, class_plugin_name, class_plugin_value
+        class_ok = registry.register_plugin(
+            class_ns, class_plugin_name, class_plugin_value, scope="class"
         )
-        class_dup = registry.register_class_plugin(
-            class_ns, class_plugin_name, class_plugin_value
+        class_dup = registry.register_plugin(
+            class_ns, class_plugin_name, class_plugin_value, scope="class"
         )
-        class_empty = registry.register_class_plugin(class_ns, "", class_plugin_value)
-        class_get_ok = registry.get_class_plugin(class_ns, class_plugin_name)
-        class_get_missing = registry.get_class_plugin(class_ns, class_missing_name)
-        class_list = registry.list_class_plugins(class_ns)
-        class_unreg_ok = registry.unregister_class_plugin(class_ns, class_plugin_name)
-        class_unreg_missing = registry.unregister_class_plugin(
-            class_ns, class_unreg_missing
+        class_empty = registry.register_plugin(
+            class_ns, "", class_plugin_value, scope="class"
+        )
+        class_get_ok = registry.get_plugin(class_ns, class_plugin_name, scope="class")
+        class_get_missing = registry.get_plugin(
+            class_ns, class_missing_name, scope="class"
+        )
+        class_list = registry.list_plugins(class_ns, scope="class")
+        class_unreg_ok = registry.unregister_plugin(
+            class_ns, class_plugin_name, scope="class"
+        )
+        class_unreg_missing = registry.unregister_plugin(
+            class_ns, class_unreg_missing, scope="class"
         )
 
         self.check("register_class_plugin.ok", class_ok.is_success)

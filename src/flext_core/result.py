@@ -309,7 +309,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         result._exception = self._exception
         return result
 
-
     @override
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure with fallback value.

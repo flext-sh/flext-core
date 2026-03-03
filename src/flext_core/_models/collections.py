@@ -35,7 +35,7 @@ class FlextModelsCollections:
             categories.add_entries("groups", [group1])
 
             # Access
-            users = categories.get_entries("users")
+            users = categories.get("users")
             total = categories.total_entries
             names = categories.category_names
 
@@ -69,15 +69,6 @@ class FlextModelsCollections:
 
             """
             return sum(len(entries) for entries in self.categories.values())
-
-        def get_entries(self, category: str) -> list[t.Container]:
-            """Get entries for a category, returns empty list if not found.
-
-            Returns:
-                list[T]: List of entries for the category, or empty list if not found.
-
-            """
-            return self.categories.get(category, [])
 
         def has_category(self, category: str) -> bool:
             """Check if a category exists."""
@@ -119,20 +110,6 @@ class FlextModelsCollections:
                 self.categories[category] = []
             self.categories[category].extend(entries)
 
-        def set_entries(
-            self,
-            category: str,
-            entries: Sequence[t.Container],
-        ) -> None:
-            """Set entries for a category (replaces existing).
-
-            Args:
-                category: Category name
-                entries: Sequence of entries
-
-            """
-            self.categories[category] = list(entries)
-
         def remove_category(self, category: str) -> None:
             """Remove a category and all its entries.
 
@@ -168,26 +145,7 @@ class FlextModelsCollections:
             """
             return list(self.categories.keys())
 
-        @classmethod
-        def from_dict(
-            cls,
-            data: Mapping[str, Sequence[t.Container]],
-        ) -> Self:
-            """Create Categories instance from dictionary.
-
-            Args:
-                data: Dictionary mapping category names to sequences of items
-
-            Returns:
-                Categories instance
-
-            """
-            instance = cls()
-            for category, entries in data.items():
-                instance.add_entries(category, entries)
-            return instance
-
-        def to_dict(self) -> Mapping[str, Sequence[t.Container]]:
+        def to_mapping(self) -> Mapping[str, Sequence[t.Container]]:
             """Convert categories to dictionary representation.
 
             Normalizes list[T] to Sequence[t.Container] for type compatibility.
@@ -263,20 +221,11 @@ class FlextModelsCollections:
             return non_none[-1]
 
         @classmethod
-        def from_dict(
+        def from_mapping(
             cls,
-            data: m.ConfigMap,
+            data: Mapping[str, t.Container],
         ) -> Self:
-            """Create Statistics instance from dictionary.
-
-            Args:
-                data: Dictionary with statistics data
-
-            Returns:
-                Statistics instance
-
-            """
-            return cls.model_validate(data.root)
+            return cls.model_validate(dict(data))
 
         @classmethod
         def aggregate(
@@ -720,25 +669,6 @@ class FlextModelsCollections:
             for key, value in self.model_dump().items():
                 normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
             return FlextModelsContainers.ConfigMap(root=normalized)
-
-        @classmethod
-        def from_dict(
-            cls,
-            data: m.ConfigMap,
-        ) -> Self:
-            """Create Config instance from dictionary.
-
-            Args:
-                data: Dictionary with configuration data
-
-            Returns:
-                Config instance
-
-            """
-            # Pydantic v2: Use model_validate for type-safe creation from dict
-            # Convert Mapping to dict for model_validate
-            data_dict = dict(data)
-            return cls.model_validate(data_dict)
 
         def merge(self, other: Self) -> Self:
             """Merge this config with another config.

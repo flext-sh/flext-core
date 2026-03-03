@@ -14,7 +14,7 @@ Business Rules & Architecture:
    distinguishes "not found" from "value is None".
 
 2. **Singleton Pattern Integration** (get_singleton/set_singleton):
-   - Expects classes with `get_global_instance()` method (FlextSettings pattern)
+   - Expects classes with `get_global()` method (FlextSettings pattern)
    - Returns FlextResult for set operations (railway-oriented error handling)
    - Raises specific exceptions for get operations (fail-fast behavior)
 
@@ -74,7 +74,7 @@ class FlextUtilitiesConfiguration:
     3. **Thread Safety**:
        - Read operations are thread-safe (no shared state mutation)
        - Write operations assume external synchronization when needed
-       - Singleton access uses class-level get_global_instance pattern
+       - Singleton access uses class-level get_global pattern
 
     4. **Protocol-Based Dispatch**:
        - HasModelDump: Pydantic models with model_dump() method
@@ -466,19 +466,19 @@ class FlextUtilitiesConfiguration:
         Business Rule: Singleton Configuration Access (FLEXT Pattern)
         ============================================================
         The FLEXT ecosystem uses a singleton pattern for global configuration
-        via `get_global_instance()` class method. This enables:
+        via `get_global()` class method. This enables:
 
         - Consistent configuration across all services
         - Lazy initialization (instance created on first access)
         - Thread-safe singleton access (handled by FlextSettings implementation)
 
         Expected Interface:
-        - singleton_class.get_global_instance() → Returns singleton instance
+        - singleton_class.get_global() → Returns singleton instance
         - Instance must implement HasModelDump protocol
         - Parameters accessed via get_parameter (precedence chain applies)
 
         Fail-Fast Semantics:
-        - Raises ValidationError if class lacks get_global_instance
+        - Raises ValidationError if class lacks get_global
         - Raises NotFoundError if parameter not found (from get_parameter)
         - This is intentional: missing config is a programming error
 
@@ -494,22 +494,22 @@ class FlextUtilitiesConfiguration:
             The parameter value
 
         Raises:
-            e.ValidationError: If class doesn't have get_global_instance
+            e.ValidationError: If class doesn't have get_global
             e.NotFoundError: If parameter is not defined
 
         """
         # Use getattr to help pyright infer types correctly
-        if hasattr(singleton_class, "get_global_instance"):
-            get_global_instance_attr = getattr(
+        if hasattr(singleton_class, "get_global"):
+            get_global_attr = getattr(
                 singleton_class,
-                "get_global_instance",
+                "get_global",
                 None,
             )
-            if get_global_instance_attr is not None and callable(
-                get_global_instance_attr,
+            if get_global_attr is not None and callable(
+                get_global_attr,
             ):
                 # callable() check ensures this is callable - call directly
-                instance = get_global_instance_attr()
+                instance = get_global_attr()
                 found, value = (
                     FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
                         instance,
@@ -527,9 +527,7 @@ class FlextUtilitiesConfiguration:
                 msg = f"Parameter '{parameter}' is not defined"
                 raise e.NotFoundError(msg)
 
-        msg = (
-            f"Class {singleton_class.__name__} does not have get_global_instance method"
-        )
+        msg = f"Class {singleton_class.__name__} does not have get_global method"
 
         raise e.ValidationError(msg)
 
@@ -551,7 +549,7 @@ class FlextUtilitiesConfiguration:
         - Callers can decide how to handle failures
 
         Validation Chain:
-        1. Check get_global_instance method exists (FlextResult.fail if not)
+        1. Check get_global method exists (FlextResult.fail if not)
         2. Check method is callable (FlextResult.fail if not)
         3. Check instance implements HasModelDump (FlextResult.fail if not)
         4. Delegate to set_parameter for actual mutation
@@ -571,24 +569,24 @@ class FlextUtilitiesConfiguration:
             r[bool] - ok(True) on success, fail(error_msg) on failure
 
         """
-        if not hasattr(singleton_class, "get_global_instance"):
+        if not hasattr(singleton_class, "get_global"):
             return r[bool].fail(
-                f"Class {singleton_class.__name__} does not have get_global_instance method",
+                f"Class {singleton_class.__name__} does not have get_global method",
             )
 
         # Use getattr to help pyright infer types correctly
-        get_global_instance_attr = getattr(
+        get_global_attr = getattr(
             singleton_class,
-            "get_global_instance",
+            "get_global",
             None,
         )
-        if get_global_instance_attr is None or not callable(get_global_instance_attr):
+        if get_global_attr is None or not callable(get_global_attr):
             return r[bool].fail(
-                f"get_global_instance is not callable on {singleton_class.__name__}",
+                f"get_global is not callable on {singleton_class.__name__}",
             )
 
         # callable() check above ensures this is callable - call directly
-        instance = get_global_instance_attr()
+        instance = get_global_attr()
         model_dump_attr = getattr(instance, "model_dump", None)
         if model_dump_attr is None or not callable(model_dump_attr):
             return r[bool].fail(
@@ -919,7 +917,7 @@ class FlextUtilitiesConfiguration:
         """
         try:
             _ = _cache
-            register_result = container.register_factory(name, factory)
+            register_result = container.register(name, factory, kind="factory")
             if register_result.is_failure:
                 return r[bool].fail(
                     register_result.error or "Factory registration failed",

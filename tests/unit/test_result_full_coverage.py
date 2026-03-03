@@ -107,7 +107,7 @@ def test_map_flat_map_and_then_paths() -> None:
     assert flat_fail.is_failure
     assert flat_fail.error == "inner"
 
-    and_then_ok = r[int].ok(3).and_then(lambda v: r[str].ok(str(v)))
+    and_then_ok = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
     assert and_then_ok.is_success
     assert and_then_ok.value == "3"
 

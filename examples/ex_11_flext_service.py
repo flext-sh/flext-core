@@ -588,7 +588,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "RuntimeResult.and_then",
-            rr_ok.and_then(lambda num: s.RuntimeResult[int].ok(num + rr_add)).unwrap_or(
+            rr_ok.flat_map(lambda num: s.RuntimeResult[int].ok(num + rr_add)).unwrap_or(
                 0
             )
             == rr_value + rr_add,
@@ -633,7 +633,9 @@ class Ex11FlextService(Examples):
             "RuntimeResult.filter.pass", rr_ok.filter(lambda num: num > 0).is_success
         )
         self.check("RuntimeResult.filter.fail", rr_ok.filter(lambda num: num < 0).error)
-        self.check("RuntimeResult.alt", rr_fail.alt(lambda err: f"alt:{err}").error)
+        self.check(
+            "RuntimeResult.alt", rr_fail.map_error(lambda err: f"alt:{err}").error
+        )
         self.check(
             "RuntimeResult.lash",
             rr_fail.lash(lambda err: s.RuntimeResult[int].ok(len(err))).unwrap_or(0),

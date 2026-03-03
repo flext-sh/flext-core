@@ -166,7 +166,7 @@ def demo_core_context_methods() -> None:
     payload = scope_var.get()
     set_all_ok = False
     if payload is not None:
-        set_all_ok = ctx.set_all(payload).is_success
+        set_all_ok = ctx.set(payload).is_success
     _check("set_all.success", set_all_ok)
     _check("get.k1", ctx.get("k1").unwrap_or("missing"))
     _check("has.k2", ctx.has("k2"))

@@ -238,10 +238,10 @@ def _exercise_specific_exceptions() -> None:
 def _exercise_factories_and_helpers() -> None:
     _section("factories_helpers")
 
-    created_validation = e.create_error("ValidationError", "factory validation")
+    created_validation = e.create("ValidationError", "factory validation")
     _check("create_error.ValidationError", type(created_validation).__name__)
 
-    created_attribute = e.create_error("AttributeError", "factory attribute")
+    created_attribute = e.create("AttributeError", "factory attribute")
     _check("create_error.AttributeError", type(created_attribute).__name__)
 
     created_dynamic = e.create(

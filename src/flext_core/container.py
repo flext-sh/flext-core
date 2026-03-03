@@ -677,7 +677,7 @@ class FlextContainer(p.DI):
 
         Args:
             config: Mapping of configuration keys to values accepted by
-                ``t.ScalarValue``.
+                ``t.Scalar``.
 
         """
         if config is None:

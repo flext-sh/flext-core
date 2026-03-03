@@ -42,10 +42,10 @@ class TestConfigServiceViaDI:
     """Test FlextSettings accessibility via DI."""
 
     def test_config_via_container_get_global(self) -> None:
-        """Test accessing FlextSettings via container.get_global_instance."""
+        """Test accessing FlextSettings via get_global."""
         # Config is accessible via singleton pattern
-        config1 = FlextSettings.get_global_instance()
-        config2 = FlextSettings.get_global_instance()
+        config1 = FlextSettings.get_global()
+        config2 = FlextSettings.get_global()
         assert config1 is config2
         assert isinstance(config1, FlextSettings)
 
@@ -130,7 +130,9 @@ class TestLoggerServiceViaDI:
             return FlextLogger.create_module_logger("service_logger")
 
         # Register custom logger factory with different name
-        result = container.register_factory("custom_logger", create_custom_logger)
+        result = container.register(
+            "custom_logger", create_custom_logger, kind="factory"
+        )
         assertion_helpers.assert_flext_result_success(result)
 
         # Retrieve custom logger

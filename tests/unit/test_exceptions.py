@@ -547,15 +547,12 @@ class Teste:
         """Test exception factory methods."""
         if scenario.scenario_type == ExceptionScenarioType.FACTORY_METHOD:
             assert scenario.error_factory_type is not None
-            error = e.create_error(
-                scenario.error_factory_type,
-                "Test error",
-            )
+            error = e.create(scenario.error_factory_type, "Test error")
             assert type(error).__name__ == scenario.error_factory_type
             assert error.message == "Test error"
         elif scenario.scenario_type == ExceptionScenarioType.FACTORY_INVALID:
             with pytest.raises(ValueError, match="Unknown error type"):
-                e.create_error("InvalidError", "Test error")
+                e.create("InvalidError", "Test error")
         elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_RAISING:
             error_msg = "Test error"
             with pytest.raises(e.ValidationError) as exc_info:
@@ -993,7 +990,7 @@ class Teste:
     def test_create_error_with_invalid_type(self) -> None:
         """Test create_error with invalid error type - tests lines 1031-1032."""
         with pytest.raises(ValueError, match="Unknown error type"):
-            e.create_error("invalid_type", "message")
+            e.create("invalid_type", "message")
 
     def test_create_with_invalid_type(self) -> None:
         """Test create with invalid error type - tests line 1346."""
@@ -1006,44 +1003,44 @@ class Teste:
         """Test create_error factory methods - tests lines 1014-1033."""
         # Test all factory methods exist and work
         # Note: create_error uses class names, not lowercase types
-        error = e.create_error("ValidationError", "Test message")
+        error = e.create("ValidationError", "Test message")
         assert isinstance(error, e.ValidationError)
         assert error.message == "Test message"
 
-        error = e.create_error("ConfigurationError", "Config error")
+        error = e.create("ConfigurationError", "Config error")
         assert isinstance(error, e.ConfigurationError)
 
-        error = e.create_error("ConnectionError", "Conn error")
+        error = e.create("ConnectionError", "Conn error")
         assert isinstance(error, e.ConnectionError)
 
-        error = e.create_error("TimeoutError", "Timeout error")
+        error = e.create("TimeoutError", "Timeout error")
         assert isinstance(error, e.TimeoutError)
 
-        error = e.create_error("AuthenticationError", "Auth error")
+        error = e.create("AuthenticationError", "Auth error")
         assert isinstance(error, e.AuthenticationError)
 
-        error = e.create_error("AuthorizationError", "Authz error")
+        error = e.create("AuthorizationError", "Authz error")
         assert isinstance(error, e.AuthorizationError)
 
-        error = e.create_error("NotFoundError", "Not found error")
+        error = e.create("NotFoundError", "Not found error")
         assert isinstance(error, e.NotFoundError)
 
-        error = e.create_error("ConflictError", "Conflict error")
+        error = e.create("ConflictError", "Conflict error")
         assert isinstance(error, e.ConflictError)
 
-        error = e.create_error("RateLimitError", "Rate limit error")
+        error = e.create("RateLimitError", "Rate limit error")
         assert isinstance(error, e.RateLimitError)
 
-        error = e.create_error("CircuitBreakerError", "Circuit error")
+        error = e.create("CircuitBreakerError", "Circuit error")
         assert isinstance(error, e.CircuitBreakerError)
 
-        error = e.create_error("TypeError", "Type error")
+        error = e.create("TypeError", "Type error")
         assert isinstance(error, e.TypeError)
 
-        error = e.create_error("OperationError", "Operation error")
+        error = e.create("OperationError", "Operation error")
         assert isinstance(error, e.OperationError)
 
-        error = e.create_error("AttributeError", "Attribute error")
+        error = e.create("AttributeError", "Attribute error")
         assert isinstance(error, e.AttributeAccessError)
 
     def test_create_factory_methods(self) -> None:
@@ -1321,7 +1318,7 @@ class Teste:
         """Test create_error with context parameter - tests lines 1086-1087."""
         # Note: create_error doesn't accept context directly, but we can test
         # the error creation with various parameters
-        error = e.create_error("ValidationError", "Test message")
+        error = e.create("ValidationError", "Test message")
         assert isinstance(error, e.ValidationError)
 
     def test_create_with_dict_like_metadata_normalization(self) -> None:

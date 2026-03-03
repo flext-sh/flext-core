@@ -288,7 +288,7 @@ class TestrCoverage:
 
     def test_alt_maps_error_message(self) -> None:
         """Test alt maps error message on failure."""
-        result: r[str] = r[str].fail("original").alt(lambda e: f"Modified: {e}")
+        result: r[str] = r[str].fail("original").map_error(lambda e: f"Modified: {e}")
         _ResultAssertions.assert_failure_with_error(
             result,
             "Modified: original",
@@ -296,7 +296,7 @@ class TestrCoverage:
 
     def test_alt_skips_on_success(self) -> None:
         """Test that alt skips on success."""
-        result = r[str].ok("test").alt(lambda e: f"Modified: {e}")
+        result = r[str].ok("test").map_error(lambda e: f"Modified: {e}")
         _ResultAssertions.assert_success_with_value(
             result,
             "test",
@@ -615,7 +615,7 @@ class TestrCoverage:
                 return r[str].ok("success")
             return r[str].fail("Invalid resource")
 
-        result = r[str].with_resource(factory, operation)
+        result = r[str].register(factory, operation, kind="resource")
         _ResultAssertions.assert_success_with_value(
             result,
             "success",

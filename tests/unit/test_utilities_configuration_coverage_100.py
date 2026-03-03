@@ -121,7 +121,7 @@ class SingletonClassForTest(BaseModel):
     timeout: int = 30
 
     @classmethod
-    def get_global_instance(cls) -> SingletonClassForTest:
+    def get_global(cls) -> SingletonClassForTest:
         """Get global singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -134,7 +134,7 @@ class SingletonClassForTest(BaseModel):
 
 
 class SingletonWithoutGetGlobalForTest:
-    """Test class without get_global_instance."""
+    """Test class without get_global."""
 
     def __init__(self) -> None:
         """Initialize."""
@@ -142,9 +142,9 @@ class SingletonWithoutGetGlobalForTest:
 
 
 class BadSingletonForTest:
-    """Singleton with non-callable get_global_instance."""
+    """Singleton with non-callable get_global."""
 
-    get_global_instance = "not callable"
+    get_global = "not callable"
 
 
 class SingletonWithoutModelDumpForTest:
@@ -153,7 +153,7 @@ class SingletonWithoutModelDumpForTest:
     _instance: ClassVar[SingletonWithoutModelDumpForTest | None] = None
 
     @classmethod
-    def get_global_instance(cls) -> SingletonWithoutModelDumpForTest:
+    def get_global(cls) -> SingletonWithoutModelDumpForTest:
         """Get global instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -253,7 +253,7 @@ class TestConfigConstants:
         """Error message patterns."""
 
         PARAMETER_NOT_DEFINED: str = "Parameter '{}' is not defined"
-        DOES_NOT_HAVE_GET_GLOBAL: str = "does not have get_global_instance method"
+        DOES_NOT_HAVE_GET_GLOBAL: str = "does not have get_global method"
         IS_NOT_CALLABLE: str = "is not callable"
         DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP: str = (
             "Instance does not implement model_dump() method"
@@ -526,7 +526,7 @@ class TestFlextUtilitiesConfiguration:
             result = FlextUtilitiesConfiguration.set_parameter(
                 config,
                 param_name,
-                cast("t.ScalarValue | m.ConfigMap", value),
+                cast("t.Scalar | m.ConfigMap", value),
             )
             if result:
                 assert getattr(config, param_name) == value
@@ -556,7 +556,7 @@ class TestFlextUtilitiesConfiguration:
             result = FlextUtilitiesConfiguration.set_parameter(
                 config,
                 param_name,
-                cast("t.ScalarValue | m.ConfigMap", value),
+                cast("t.Scalar | m.ConfigMap", value),
             )
             assert result is False
 
@@ -602,7 +602,7 @@ class TestFlextUtilitiesConfiguration:
             result = FlextUtilitiesConfiguration.set_parameter(
                 config,
                 param_name,
-                cast("t.ScalarValue | m.ConfigMap", value),
+                cast("t.Scalar | m.ConfigMap", value),
             )
             assert result is True
             assert getattr(config, param_name) == value
@@ -647,8 +647,8 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.MISSING.value,
             ) in str(exc_info.value)
 
-        def test_get_singleton_no_get_global_instance(self) -> None:
-            """Test get_singleton raises ValidationError for class without get_global_instance."""
+        def test_get_singleton_no_get_global(self) -> None:
+            """Test get_singleton raises ValidationError for class without get_global."""
             with pytest.raises(FlextExceptions.ValidationError) as exc_info:
                 FlextUtilitiesConfiguration.get_singleton(
                     SingletonWithoutGetGlobalForTest,
@@ -660,7 +660,7 @@ class TestFlextUtilitiesConfiguration:
 
         def test_set_singleton_success(self) -> None:
             """Test set_singleton on singleton class."""
-            instance = SingletonClassForTest.get_global_instance()
+            instance = SingletonClassForTest.get_global()
             original_timeout = instance.timeout
 
             result = FlextUtilitiesConfiguration.set_singleton(
@@ -673,8 +673,8 @@ class TestFlextUtilitiesConfiguration:
 
             instance.timeout = original_timeout
 
-        def test_set_singleton_no_get_global_instance(self) -> None:
-            """Test set_singleton fails for class without get_global_instance."""
+        def test_set_singleton_no_get_global(self) -> None:
+            """Test set_singleton fails for class without get_global."""
             result = FlextUtilitiesConfiguration.set_singleton(
                 SingletonWithoutGetGlobalForTest,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -688,7 +688,7 @@ class TestFlextUtilitiesConfiguration:
             )
 
         def test_set_singleton_not_callable(self) -> None:
-            """Test set_singleton fails when get_global_instance is not callable."""
+            """Test set_singleton fails when get_global is not callable."""
             result = FlextUtilitiesConfiguration.set_singleton(
                 BadSingletonForTest,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -714,7 +714,7 @@ class TestFlextUtilitiesConfiguration:
 
         def test_set_singleton_parameter_set_failure(self) -> None:
             """Test set_singleton fails when set_parameter fails."""
-            SingletonClassForTest.get_global_instance()
+            SingletonClassForTest.get_global()
             result = FlextUtilitiesConfiguration.set_singleton(
                 SingletonClassForTest,
                 TestConfigConstants.ParameterNames.MISSING.value,

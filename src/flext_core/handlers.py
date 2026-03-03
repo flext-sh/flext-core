@@ -67,7 +67,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         ...         return r[bool].ok(True)
         ...
         ...     def validate(
-        ...         self, data: t.ScalarValue | BaseModel | Sequence[t.ScalarValue]
+        ...         self, data: t.Scalar | BaseModel | Sequence[t.Scalar]
         ...     ) -> r[bool]:
         ...         # Custom validation logic
         ...         if not (UserCommand in data.__class__.__mro__):
@@ -412,7 +412,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Base validation - accept any AcceptableMessageType
         # Subclasses should override for specific validation rules
         return r[bool].ok(value=True)
-
 
     def can_handle(self, message_type: type) -> bool:
         """Check if handler can handle the specified message type.

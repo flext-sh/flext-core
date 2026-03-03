@@ -88,7 +88,7 @@ class TestLibraryIntegration:
         assert len(entity_id) > 0  # Just verify it's a non-empty string
 
         # Act - Test FlextContainer service registration
-        register_result = clean_container.with_service("test_service", test_value)
+        register_result = clean_container.register("test_service", test_value)
 
         # Assert - Service registration success (fluent interface returns Self)
         assert register_result is clean_container
@@ -138,9 +138,8 @@ class TestLibraryIntegration:
             return process_result.unwrap_or("")
 
         # Act - Register factory in container
-        register_result = clean_container.with_factory(
-            "result_factory",
-            create_result,
+        register_result = clean_container.register(
+            "result_factory", create_result, kind="factory"
         )
 
         # Assert - Factory registration success (fluent interface returns Self)

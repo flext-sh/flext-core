@@ -176,7 +176,7 @@ class IntegrationService(s[m.ConfigMap]):
         """Show FlextSettings integration."""
         print("\n=== FlextSettings Integration ===")
 
-        config = FlextSettings.get_global_instance()
+        config = FlextSettings.get_global()
         log_level = config.log_level
         print(f"✅ Config access: log_level={log_level}")
 

@@ -497,7 +497,7 @@ def test_runtime_result_all_missed_branches() -> None:
 
     flat_mapped = success.flat_map(lambda x: FlextRuntime.RuntimeResult.ok(x + 1))
     assert flat_mapped.value == 2
-    assert success.and_then(lambda x: FlextRuntime.RuntimeResult.ok(x + 2)).value == 3
+    assert success.flat_map(lambda x: FlextRuntime.RuntimeResult.ok(x + 2)).value == 3
 
     assert success.fold(lambda err: err, lambda x: x + 1) == 2
     assert failure.fold(lambda err: f"{err}!", lambda x: x) == "e!"
@@ -516,7 +516,7 @@ def test_runtime_result_all_missed_branches() -> None:
     assert filtered.is_failure
     assert filtered.error == "Filter predicate failed"
 
-    assert failure.alt(lambda err: f"{err}-alt").error == "e-alt"
+    assert failure.map_error(lambda err: f"{err}-alt").error == "e-alt"
     assert failure.lash(lambda _err: FlextRuntime.RuntimeResult.ok(5)).value == 5
     assert failure.recover(lambda _err: 7).value == 7
 
@@ -856,7 +856,7 @@ def test_runtime_result_remaining_paths() -> None:
 
     assert failure.flat_map(lambda x: FlextRuntime.RuntimeResult.ok(x)).is_failure
     assert success.filter(lambda x: x > 0) is success
-    assert success.alt(lambda e: e) is success
+    assert success.map_error(lambda e: e) is success
     assert success.lash(lambda e: FlextRuntime.RuntimeResult.fail(e)) is success
     assert success.recover(lambda _e: 0) is success
 

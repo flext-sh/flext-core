@@ -192,7 +192,7 @@ def demo_instance_methods() -> None:
     unbound = renewed.unbind("stage")
     _check("unbind.type", type(unbound).__name__)
 
-    safe = unbound.try_unbind("missing", "component")
+    safe = unbound.unbind("missing", "component", safe=True)
     _check("try_unbind.type", type(safe).__name__)
 
     adapter = safe.with_result()
@@ -202,7 +202,6 @@ def demo_instance_methods() -> None:
     _check("debug.ok", safe.debug("debug value=%s", 2, key="d").is_success)
     _check("info.ok", safe.info("info value=%s", 3, key="i").is_success)
     _check("warning.ok", safe.warning("warn value=%s", 4, key="w").is_success)
-    _check("warn.ok", safe.warn("warn alias value=%s", 5, key="wa").is_success)
     _check("error.ok", safe.error("error value=%s", 6, key="e").is_success)
     _check("critical.ok", safe.critical("critical value=%s", 7, key="c").is_success)
     _check("log.ok", safe.log("INFO", "log value=%s", 8, key="l").is_success)

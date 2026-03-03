@@ -156,13 +156,13 @@ class Ex10FlextHandlers(Examples):
 
         self.check("validate.none.failure", handler.validate(None).is_failure)
         self.check("validate.ok.success", handler.validate(message_ok).is_success)
-        self.check("validate_command.blocked", handler.validate_command("bad").error)
-        self.check("validate_query.blocked", handler.validate_query("bad").error)
+        self.check("validate.blocked_cmd", handler.validate("bad").error)
+        self.check("validate.blocked_qry", handler.validate("bad").error)
         self.check(
-            "validate_alias.same_behavior",
+            "validate.consistent",
             handler.validate(message_ok).unwrap_or(False)
-            and handler.validate_command(message_ok).unwrap_or(False)
-            and handler.validate_query(message_ok).unwrap_or(False),
+            and handler.validate(message_ok).unwrap_or(False)
+            and handler.validate(message_ok).unwrap_or(False),
         )
 
         self.check("can_handle.expected", handler.can_handle(_Message))
@@ -585,13 +585,13 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "rr.and_then",
-            rr_ok.and_then(lambda n: h.RuntimeResult[int].ok(n - rr_delta)).unwrap_or(
+            rr_ok.flat_map(lambda n: h.RuntimeResult[int].ok(n - rr_delta)).unwrap_or(
                 -1
             )
             == rr_value - rr_delta,
         )
         self.check(
-            "rr.alt", rr_fail.alt(lambda err: f"x:{err}").error == f"x:{rr_error}"
+            "rr.alt", rr_fail.map_error(lambda err: f"x:{err}").error == f"x:{rr_error}"
         )
         self.check(
             "rr.lash",

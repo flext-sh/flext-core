@@ -107,10 +107,7 @@ class TestMigrationScenario2:
         # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
         # Explicit type annotation for container registration
-        registration_result = container.with_service(
-            "test_migration_service",
-            test_service,
-        )
+        registration_result = container.register("test_migration_service", test_service)
         assert registration_result is container  # Fluent interface returns Self
 
         # Use correct API: get() for resolution

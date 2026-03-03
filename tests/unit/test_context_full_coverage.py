@@ -70,7 +70,7 @@ def test_set_set_all_get_validation_and_error_paths(
     _ = ctx.set("k", "v")
     assert ctx.get("k").value == "v"
 
-    assert ctx.set_all(m.ConfigMap(root={})).is_success
+    assert ctx.set(m.ConfigMap(root={})).is_success
 
     class _BadVar:
         def get(self) -> dict[str, object]:
@@ -82,7 +82,7 @@ def test_set_set_all_get_validation_and_error_paths(
 
     monkeypatch.setattr(ctx, "_get_or_create_scope_var", lambda _scope: _BadVar())
     assert ctx.set("x", "y").is_failure
-    assert ctx.set_all(m.ConfigMap(root={"x": "y"})).is_failure
+    assert ctx.set(m.ConfigMap(root={"x": "y"})).is_failure
     assert FlextContext._validate_set_inputs("k", cast("Any", object())).is_failure
 
 
@@ -90,7 +90,7 @@ def test_inactive_and_none_value_paths() -> None:
     ctx = FlextContext()
     ctx._active = False
     assert ctx.set("k", "v").is_failure
-    assert ctx.set_all(m.ConfigMap(root={"k": "v"})).is_failure
+    assert ctx.set(m.ConfigMap(root={"k": "v"})).is_failure
     assert ctx.get("k").is_failure
     assert ctx.has("k") is False
     ctx.remove("k")

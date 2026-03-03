@@ -393,13 +393,13 @@ class Testu:
 
     def test_configuration_get_parameter(self) -> None:
         """Test getting configuration parameter."""
-        config = FlextSettings.get_global_instance()
+        config = FlextSettings.get_global()
         value = u.Configuration.get_parameter(config, "app_name")
         assert value is not None
 
     def test_configuration_set_parameter(self) -> None:
         """Test setting configuration parameter."""
-        config = FlextSettings.get_global_instance()
+        config = FlextSettings.get_global()
         result = u.Configuration.set_parameter(
             config,
             "test_param",

@@ -422,11 +422,11 @@ def test_track_performance_success_and_failure_paths(
         lambda **_kw: None,
     )
 
-    @d.track_performance("perf-op")
+    @d.log_operation("perf-op")
     def ok_fn() -> str:
         return "ok"
 
-    @d.track_performance("perf-op-fail")
+    @d.log_operation("perf-op-fail")
     def fail_fn() -> str:
         msg = "boom"
         raise ValueError(msg)
