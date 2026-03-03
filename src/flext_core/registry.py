@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Self, TypeGuard, override
+from typing import Annotated, ClassVar, Literal, Self, TypeGuard, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -126,7 +126,8 @@ class FlextRegistry(s[bool]):
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
         This enables auto-discovery patterns where plugins registered via
-        register_class_plugin() are visible across all instances of that subclass.
+        register_plugin(..., scope="class") are visible across all instances of that
+        subclass.
         """
         # Filter kwargs - BaseModel.__init_subclass__ expects specific types
         # but we accept broader types for registry customization
@@ -726,6 +727,7 @@ class FlextRegistry(s[bool]):
             r[bool],
         ]
         | None = None,
+        scope: Literal["instance", "class"] = "instance",
     ) -> r[bool]:
         """Register a plugin with optional validation.
 
@@ -757,112 +759,20 @@ class FlextRegistry(s[bool]):
                 return r[bool].fail(f"Validation error: {exc}")
 
         key = f"{category}::{name}"
-        if key in self._registered_keys:
-            self.logger.debug(
-                "Plugin already registered (idempotent)",
-                category=category,
-                name=name,
-            )
+        if scope == "instance":
+            if key in self._registered_keys:
+                self.logger.debug(
+                    "Plugin already registered (idempotent)",
+                    category=category,
+                    name=name,
+                )
+                return r[bool].ok(value=True)
+
+            self.container.register(key, plugin)
+            self._registered_keys.add(key)
+            self.logger.info("Registered %s: %s", category, name)
             return r[bool].ok(value=True)
 
-        # Store plugin in container for retrieval
-        # plugin is from method signature
-        self.container.register(key, plugin)
-        self._registered_keys.add(key)
-        self.logger.info("Registered %s: %s", category, name)
-        return r[bool].ok(value=True)
-
-    def get_plugin(self, category: str, name: str) -> r[t.RegisterableService]:
-        """Get a registered plugin by category and name.
-
-        Returns:
-            Success with plugin (RegisterableService) or failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        if key not in self._registered_keys:
-            available = [
-                k.split("::")[1]
-                for k in self._registered_keys
-                if k.startswith(f"{category}::")
-            ]
-            return r[t.RegisterableService].fail(
-                f"{category} '{name}' not found. Available: {available}",
-            )
-
-        raw_result = self.container.get(key)
-        if raw_result.is_failure:
-            return r[t.RegisterableService].fail(
-                f"Failed to retrieve {category} '{name}': {raw_result.error}",
-            )
-        plugin_value: t.RegisterableService = (
-            raw_result.value if raw_result.is_success else None
-        )
-        return r[t.RegisterableService].ok(plugin_value)
-
-    def list_plugins(self, category: str) -> r[list[str]]:
-        """List all plugins in a category.
-
-        Args:
-            category: Plugin category to list
-
-        Returns:
-            r[list[str]]: Success with list of plugin names.
-
-        """
-        plugins = [
-            k.split("::")[1]
-            for k in self._registered_keys
-            if k.startswith(f"{category}::")
-        ]
-        return r[list[str]].ok(plugins)
-
-    def unregister_plugin(self, category: str, name: str) -> r[bool]:
-        """Unregister a plugin.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
-
-        Returns:
-            r[bool]: Success if unregistered, failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        if key not in self._registered_keys:
-            return r[bool].fail(f"{category} '{name}' not registered")
-
-        self._registered_keys.discard(key)
-        self.logger.info("Unregistered %s: %s", category, name)
-        return r[bool].ok(value=True)
-
-    # ------------------------------------------------------------------
-    # Class-Level Plugin Registry API (for auto-discovery patterns)
-    # ------------------------------------------------------------------
-    def register_class_plugin(
-        self,
-        category: str,
-        name: str,
-        plugin: RegistrablePlugin,
-    ) -> r[bool]:
-        """Register plugin to class-level storage (shared across all instances).
-
-        Use this for auto-discovery patterns where plugins discovered once
-        should be visible to all instances of this registry class.
-
-        Args:
-            category: Plugin category (e.g., "ldif_servers")
-            name: Plugin name within the category
-            plugin: Plugin instance to register
-
-        Returns:
-            r[bool]: Success if registered (idempotent - re-registration is OK).
-
-        """
-        if not name:
-            return r[bool].fail(f"{category} name cannot be empty")
-
-        key = f"{category}::{name}"
         cls = type(self)
         if key in cls._class_registered_keys:
             self.logger.debug(
@@ -877,18 +787,38 @@ class FlextRegistry(s[bool]):
         self.logger.info("Registered class plugin %s: %s", category, name)
         return r[bool].ok(value=True)
 
-    def get_class_plugin(self, category: str, name: str) -> r[t.RegistrablePlugin]:
-        """Get plugin from class-level storage.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
+    def get_plugin(
+        self,
+        category: str,
+        name: str,
+        *,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[t.RegisterableService | t.RegistrablePlugin]:
+        """Get a registered plugin by category and name.
 
         Returns:
-            r[t.RegistrablePlugin]: Success with plugin or failure if not found.
+            Success with plugin (RegisterableService) or failure if not found.
 
         """
         key = f"{category}::{name}"
+        if scope == "instance":
+            if key not in self._registered_keys:
+                available = [
+                    k.split("::")[1]
+                    for k in self._registered_keys
+                    if k.startswith(f"{category}::")
+                ]
+                return r[t.RegisterableService | t.RegistrablePlugin].fail(
+                    f"{category} '{name}' not found. Available: {available}",
+                )
+
+            raw_result = self.container.get(key)
+            if raw_result.is_failure:
+                return r[t.RegisterableService | t.RegistrablePlugin].fail(
+                    f"Failed to retrieve {category} '{name}': {raw_result.error}",
+                )
+            return r[t.RegisterableService | t.RegistrablePlugin].ok(raw_result.value)
+
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [
@@ -896,13 +826,20 @@ class FlextRegistry(s[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.RegistrablePlugin].fail(
+            return r[t.RegisterableService | t.RegistrablePlugin].fail(
                 f"{category} '{name}' not found. Available: {available}",
             )
-        return r[t.RegistrablePlugin].ok(cls._class_plugin_storage[key])
+        return r[t.RegisterableService | t.RegistrablePlugin].ok(
+            cls._class_plugin_storage[key]
+        )
 
-    def list_class_plugins(self, category: str) -> r[list[str]]:
-        """List class-level plugins in category.
+    def list_plugins(
+        self,
+        category: str,
+        *,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[list[str]]:
+        """List all plugins in a category.
 
         Args:
             category: Plugin category to list
@@ -911,15 +848,20 @@ class FlextRegistry(s[bool]):
             r[list[str]]: Success with list of plugin names.
 
         """
-        cls = type(self)
-        return r[list[str]].ok([
-            k.split("::")[1]
-            for k in cls._class_registered_keys
-            if k.startswith(f"{category}::")
-        ])
+        keys = self._registered_keys
+        if scope == "class":
+            keys = self._class_registered_keys
+        plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
+        return r[list[str]].ok(plugins)
 
-    def unregister_class_plugin(self, category: str, name: str) -> r[bool]:
-        """Unregister plugin from class-level storage.
+    def unregister_plugin(
+        self,
+        category: str,
+        name: str,
+        *,
+        scope: Literal["instance", "class"] = "instance",
+    ) -> r[bool]:
+        """Unregister a plugin.
 
         Args:
             category: Plugin category
@@ -930,6 +872,14 @@ class FlextRegistry(s[bool]):
 
         """
         key = f"{category}::{name}"
+        if scope == "instance":
+            if key not in self._registered_keys:
+                return r[bool].fail(f"{category} '{name}' not registered")
+
+            self._registered_keys.discard(key)
+            self.logger.info("Unregistered %s: %s", category, name)
+            return r[bool].ok(value=True)
+
         cls = type(self)
         if key not in cls._class_registered_keys:
             return r[bool].fail(f"{category} '{name}' not registered")
