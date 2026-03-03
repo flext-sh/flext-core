@@ -11,6 +11,7 @@ from datetime import datetime
 from types import ModuleType, TracebackType
 from typing import (
     TYPE_CHECKING,
+    Literal,
     Protocol,
     Self,
     override,
@@ -42,14 +43,10 @@ class _ProtocolIntrospection:
     @staticmethod
     def is_protocol(target_cls: type) -> bool:
         """Check if a class is a typing.Protocol."""
-        if not hasattr(target_cls, "_is_protocol"):
-            return False
-        is_proto = (
-            target_cls._is_protocol  # noqa: SLF001
-            if hasattr(target_cls, "_is_protocol")
-            else False
-        )
-        return bool(is_proto) if not callable(is_proto) else bool(is_proto())
+        is_proto = getattr(target_cls, "_is_protocol", False)
+        if callable(is_proto):
+            return bool(is_proto())
+        return bool(is_proto)
 
     @staticmethod
     def validate_protocol_compliance(
@@ -61,16 +58,16 @@ class _ProtocolIntrospection:
         protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | object = (
-            protocol.__protocol_attrs__
-            if hasattr(protocol, "__protocol_attrs__")
-            else set()
+        raw_attrs: set[t.Container] | t.Container = getattr(
+            protocol,
+            "__protocol_attrs__",
+            set[t.Container](),
         )
-        protocol_methods: set[str] = (
-            {x for x in raw_attrs if isinstance(x, str)}
-            if isinstance(raw_attrs, set)
-            else set()
-        )
+        protocol_methods: set[str] = set()
+        if isinstance(raw_attrs, set):
+            for attr in raw_attrs:
+                if isinstance(attr, str):
+                    protocol_methods.add(attr)
 
         required_members: set[str] = set(protocol_annotations.keys())
         if protocol_methods:
@@ -131,7 +128,19 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        return target_cls.__protocols__ if hasattr(target_cls, "__protocols__") else ()
+        protocols: tuple[t.Container, ...] | t.Container = getattr(
+            target_cls,
+            "__protocols__",
+            (),
+        )
+        if isinstance(protocols, tuple):
+            typed_protocols: list[type] = []
+            for protocol_item in protocols:
+                if not isinstance(protocol_item, type):
+                    return ()
+                typed_protocols.append(protocol_item)
+            return tuple(typed_protocols)
+        return ()
 
     @classmethod
     def check_implements_protocol(
@@ -147,16 +156,16 @@ class _ProtocolIntrospection:
         protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | object = (
-            protocol.__protocol_attrs__
-            if hasattr(protocol, "__protocol_attrs__")
-            else set()
+        raw_attrs: set[t.Container] | t.Container = getattr(
+            protocol,
+            "__protocol_attrs__",
+            set[t.Container](),
         )
-        protocol_methods: set[str] = (
-            {x for x in raw_attrs if isinstance(x, str)}
-            if isinstance(raw_attrs, set)
-            else set()
-        )
+        protocol_methods: set[str] = set()
+        if isinstance(raw_attrs, set):
+            for attr in raw_attrs:
+                if isinstance(attr, str):
+                    protocol_methods.add(attr)
         required_members: set[str] = set(protocol_annotations.keys())
         required_members.update(protocol_methods)
         required_members = {
@@ -398,13 +407,6 @@ class FlextProtocols:
             """Chain multiple operations in a pipeline."""
             ...
 
-        def alt(
-            self,
-            func: Callable[[str], str],
-        ) -> Self:
-            """Apply alternative function on failure."""
-            ...
-
         def lash(
             self,
             func: Callable[[str], FlextProtocols.Result[T]],
@@ -438,16 +440,6 @@ class FlextProtocols:
             *results: FlextProtocols.Result[t.Container],
         ) -> FlextProtocols.Result[list[t.Container]]:
             """Collect all successes, fail if any failure."""
-            ...
-
-        @classmethod
-        def with_resource[TResource](
-            cls,
-            factory: FlextProtocols.ResourceFactory[TResource],
-            op: FlextProtocols.ResourceOperation[TResource, T],
-            cleanup: FlextProtocols.ResourceCleanup[TResource] | None = None,
-        ) -> FlextProtocols.Result[T]:
-            """Resource management with automatic cleanup."""
             ...
 
         def __enter__(self) -> Self:
@@ -565,7 +557,10 @@ class FlextProtocols:
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: Mapping[str, t.Scalar]) -> None:
+        def configure(
+            self,
+            config: t.ConfigurationMapping | None = None,
+        ) -> Self:
             """Configure component with settings."""
             ...
 
@@ -672,56 +667,20 @@ class FlextProtocols:
         def register(
             self,
             name: str,
-            service: t.RegisterableService,
+            impl: t.RegisterableService,
+            *,
+            kind: Literal["service", "factory", "resource"] = "service",
         ) -> r[bool]:
-            """Register a service instance."""
-            ...
-
-        def register_factory(
-            self,
-            name: str,
-            factory: t.FactoryCallable,
-        ) -> r[bool]:
-            """Register a service factory returning RegisterableService."""
-            ...
-
-        def with_service(
-            self,
-            name: str,
-            service: t.RegisterableService,
-        ) -> Self:
-            """Fluent interface for service registration."""
-            ...
-
-        def with_factory(
-            self,
-            name: str,
-            factory: t.FactoryCallable,
-        ) -> Self:
-            """Fluent interface for factory registration."""
+            """Register an implementation by kind."""
             ...
 
         def get(
             self,
             name: str,
+            *,
+            type_cls: type[T] | None = None,
         ) -> r[t.RegisterableService]:
-            """Get service by name.
-
-            Returns the resolved service as RegisterableService. For type-safe
-            resolution with runtime validation, use get_typed[T](name, type_cls).
-            """
-            ...
-
-        def get_typed[T](
-            self,
-            name: str,
-            type_cls: type[T],
-        ) -> r[T]:
-            """Get service with type safety and runtime validation.
-
-            Reflects real implementations like FlextContainer.get_typed()
-            which validates runtime type after resolution.
-            """
+            """Get service by name with optional runtime type validation."""
             ...
 
         def list_services(self) -> Sequence[str]:
@@ -1221,15 +1180,6 @@ class FlextProtocols:
                 **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log warning message."""
-                ...
-
-            def warn(
-                self,
-                msg: str | t.Container,
-                *args: t.Container,
-                **kw: t.Container,
-            ) -> r[bool]:
-                """Log warning message (alias)."""
                 ...
 
             def error(
