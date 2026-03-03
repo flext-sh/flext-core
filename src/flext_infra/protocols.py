@@ -13,9 +13,8 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult, t
 
-type FlextInfraScalar = t.ScalarValue
 type FlextInfraPayload = (
-    FlextInfraScalar | Mapping[str, FlextInfraScalar] | Sequence[FlextInfraScalar]
+    t.ScalarValue | Mapping[str, t.ScalarValue] | Sequence[t.ScalarValue]
 )
 type FlextInfraPayloadMap = Mapping[str, FlextInfraPayload]
 

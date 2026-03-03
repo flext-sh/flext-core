@@ -22,7 +22,8 @@ from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import m, p, r, t
+from flext_core import p, r, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextUtilitiesGuards:

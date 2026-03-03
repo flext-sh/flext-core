@@ -15,6 +15,7 @@ from datetime import datetime
 
 from flext_core import p, t
 from flext_core._models.context import FlextModelsContext
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextUtilitiesContext:

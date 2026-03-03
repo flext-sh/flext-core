@@ -42,22 +42,17 @@ class FlextTypes:
 
     Canonical types:
 
-        ScalarValue     = str | int | float | bool | datetime | None
+        ScalarValue     = str | int | float | bool | datetime
         ContainerValue  = ScalarValue | BaseModel | Path | Sequence | Mapping
-        JsonPrimitive   = str | int | float | bool | None
+        JsonPrimitive   = str | int | float | bool
     """
 
     # ── Scalar ────────────────────────────────────────────────────────
-    type ScalarValue = str | int | float | bool | datetime | None
+    type ScalarValue = str | int | float | bool | datetime
 
     # ── Container (recursive, includes None) ──────────────────────────
     type ContainerValue = (
-        str
-        | int
-        | float
-        | bool
-        | datetime
-        | None
+        FlextTypes.ScalarValue
         | BaseModel
         | Path
         | Sequence[FlextTypes.ContainerValue]
@@ -65,7 +60,7 @@ class FlextTypes:
     )
 
     # ── JSON ──────────────────────────────────────────────────────────
-    type JsonPrimitive = str | int | float | bool | None
+    type JsonPrimitive = FlextTypes.JsonPrimitive
     type JsonValue = (
         JsonPrimitive
         | Sequence[FlextTypes.JsonValue]
@@ -103,10 +98,7 @@ class FlextTypes:
         ScalarValue | BaseModel | Callable[..., ScalarValue | BaseModel]
     )
     type ConstantValue = (
-        str
-        | int
-        | float
-        | bool
+        FlextTypes.JsonPrimitive
         | ConfigDict
         | SettingsConfigDict
         | frozenset[str]

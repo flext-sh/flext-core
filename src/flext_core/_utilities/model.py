@@ -13,8 +13,9 @@ from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime, m, r, t
+from flext_core import FlextRuntime, r, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 

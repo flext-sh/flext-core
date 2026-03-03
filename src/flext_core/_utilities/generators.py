@@ -20,7 +20,8 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, m, t
+from flext_core import FlextRuntime, c, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextUtilitiesGenerators:

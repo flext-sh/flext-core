@@ -14,7 +14,8 @@ from typing import Protocol, overload
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, m, p, r, t
+from flext_core import FlextRuntime, p, r, t
+from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
