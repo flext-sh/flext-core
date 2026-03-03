@@ -529,7 +529,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             config = (
                 container.config
                 if hasattr(container, "config")
-                else FlextSettings.get_global_instance()
+                else FlextSettings.get_global()
             )
             level = getattr(config, "log_level", "INFO")
         # Create logger with container context
@@ -1067,7 +1067,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @staticmethod
     def _should_include_stack_trace() -> bool:
         try:
-            config = FlextSettings.get_global_instance()
+            config = FlextSettings.get_global()
             return config.effective_log_level.upper() == c.Settings.LogLevel.DEBUG.value
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             # Stack-trace policy must fail open to preserve diagnostics.

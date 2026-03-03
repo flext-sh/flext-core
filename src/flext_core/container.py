@@ -453,7 +453,7 @@ class FlextContainer(p.DI):
         self._user_overrides = user_overrides_map
         # Type narrowing: config can be None, but property handles None case
         config_instance: p.Config = (
-            config if config is not None else FlextSettings.get_global_instance()
+            config if config is not None else FlextSettings.get_global()
         )
         self._config = config_instance
         # Type narrowing: context can be None, but property will raise error if accessed
@@ -464,7 +464,7 @@ class FlextContainer(p.DI):
 
     def _get_default_config(self) -> p.Config:
         """Get default configuration instance."""
-        return FlextSettings.get_global_instance()
+        return FlextSettings.get_global()
 
     @staticmethod
     def _create_container_config() -> m.Container.ContainerConfig:
@@ -669,10 +669,9 @@ class FlextContainer(p.DI):
             if self._is_registerable_service(dispatcher):
                 _ = self.register("command_bus", dispatcher)
 
-    @override
     def configure(
         self,
-        config: Mapping[str, t.Scalar],
+        config: t.ConfigurationMapping | None = None,
     ) -> Self:
         """Apply user-provided overrides to container configuration.
 
@@ -681,6 +680,8 @@ class FlextContainer(p.DI):
                 ``t.ScalarValue``.
 
         """
+        if config is None:
+            return self
         processed_dict = m.ConfigMap(root={})
         for key, value in config.items():
             processed_dict[str(key)] = FlextRuntime.normalize_to_general_value(value)
@@ -732,14 +733,13 @@ class FlextContainer(p.DI):
             },
         )
 
-    @override
     def register(
         self,
         name: str,
-        service: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+        impl: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
         *,
         kind: Literal["service", "factory", "resource"] = "service",
-    ) -> r[bool]:
+    ) -> Self:
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts service values for registration,
@@ -749,7 +749,7 @@ class FlextContainer(p.DI):
 
         Args:
             name: Unique key for the registration.
-            service: Concrete instance that produces the service.
+            impl: Concrete instance or callable used for registration.
                 Must be ContainerValue (primitives, BaseModel, callable,
                 sequence, or mapping).
 
@@ -760,44 +760,38 @@ class FlextContainer(p.DI):
 
         """
         if not name:
-            return r[bool].fail("Service name must have at least 1 character")
-        if kind == "service" and not self._is_registerable_service(service):
-            return r[bool].fail(
-                f"Service '{name}' does not satisfy RegisterableService protocol. "
-                f"Expected ContainerValue, protocol implementation, or callable.",
-            )
+            return self
+        if kind == "service" and not self._is_registerable_service(impl):
+            return self
         try:
             if kind == "service":
-                if not self._is_registerable_service(service):
-                    return r[bool].fail(
-                        f"Service '{name}' does not satisfy RegisterableService protocol. "
-                        f"Expected ContainerValue, protocol implementation, or callable.",
-                    )
+                if not self._is_registerable_service(impl):
+                    return self
                 if hasattr(self._di_services, name):
-                    return r[bool].fail(f"Service '{name}' already registered")
+                    return self
                 registration = m.Container.ServiceRegistration(
                     name=name,
-                    service=service,
-                    service_type=service.__class__.__name__,
+                    service=impl,
+                    service_type=impl.__class__.__name__,
                 )
                 self._services[name] = registration
                 provider = FlextRuntime.DependencyIntegration.register_object(
                     self._di_services,
                     name,
-                    service,
+                    impl,
                 )
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
-                return r[bool].ok(value=True)
+                return self
 
             if kind == "factory":
-                if not self._is_factory_callable(service):
-                    return r[bool].fail(f"Factory '{name}' must be callable")
+                if not self._is_factory_callable(impl):
+                    return self
                 if hasattr(self._di_services, name):
-                    return r[bool].fail(f"Factory '{name}' already registered")
+                    return self
 
                 def normalized_factory() -> t.RegisterableService:
-                    raw_result = service()
+                    raw_result = impl()
                     narrowed = FlextContainer._narrow_factory_result(raw_result)
                     if not self._is_registerable_service(narrowed):
                         msg = (
@@ -820,27 +814,28 @@ class FlextContainer(p.DI):
                 )
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
-                return r[bool].ok(value=True)
+                return self
 
-            if not self._is_resource_callable(service):
-                return r[bool].fail(f"Resource '{name}' must be callable")
+            if not self._is_resource_callable(impl):
+                return self
             if hasattr(self._di_resources, name):
-                return r[bool].fail(f"Resource '{name}' already registered")
+                return self
             registration = m.Container.ResourceRegistration(
                 name=name,
-                factory=service,
+                factory=impl,
             )
             self._resources[name] = registration
             provider = FlextRuntime.DependencyIntegration.register_resource(
                 self._di_resources,
                 name,
-                service,
+                impl,
             )
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
-            return r[bool].ok(value=True)
+            return self
         except Exception as e:
-            return r[bool].fail(str(e))
+            _ = e
+            return self
 
     @staticmethod
     def _narrow_factory_result(value: t.RegisterableService) -> t.RegisterableService:
@@ -854,23 +849,22 @@ class FlextContainer(p.DI):
     def _is_resource_callable(value: object) -> TypeGuard[t.ResourceCallable]:
         return callable(value)
 
-    @override
-    def get(
+    def get[T](
         self,
         name: str,
+        *,
+        type_cls: type[T] | None = None,
     ) -> r[t.RegisterableService]:
         """Resolve a registered service or factory by name.
 
-        Returns the resolved service as RegisterableService. For type-safe resolution
-        with runtime type validation, use get_typed() which validates against a
-        specific type class.
+        Returns the resolved service as RegisterableService or, when ``type_cls`` is
+        provided, validates and returns the requested runtime type.
 
         Args:
             name: Service identifier to resolve.
 
         Returns:
-            r[t.RegisterableService]: Success with resolved service, or failure if not found.
-                Caller should use get_typed() or type identity / MRO checks for type narrowing.
+            ``r[t.RegisterableService]`` indicating success or failure.
 
         Example:
             >>> container = FlextContainer()
@@ -893,6 +887,13 @@ class FlextContainer(p.DI):
                 return r[t.RegisterableService].fail(
                     f"Service '{name}' has unsupported runtime type",
                 )
+            if type_cls is not None:
+                service_for_check: object = service
+                if not self._is_instance_of(service_for_check, type_cls):
+                    return r[t.RegisterableService].fail(
+                        f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
+                    )
+                return r[t.RegisterableService].ok(service)
             return r[t.RegisterableService].ok(service)
 
         # Try factory
@@ -912,6 +913,13 @@ class FlextContainer(p.DI):
                     return r[t.RegisterableService].fail(
                         f"Factory '{name}' returned unsupported runtime type",
                     )
+                if type_cls is not None:
+                    resolved_for_check: object = resolved
+                    if not self._is_instance_of(resolved_for_check, type_cls):
+                        return r[t.RegisterableService].fail(
+                            f"Factory '{name}' returned wrong type",
+                        )
+                    return r[t.RegisterableService].ok(resolved)
                 return r[t.RegisterableService].ok(resolved)
             except Exception as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -928,6 +936,13 @@ class FlextContainer(p.DI):
                     return r[t.RegisterableService].fail(
                         f"Resource '{name}' returned unsupported runtime type",
                     )
+                if type_cls is not None:
+                    resolved_for_check: object = resolved
+                    if not self._is_instance_of(resolved_for_check, type_cls):
+                        return r[t.RegisterableService].fail(
+                            f"Resource '{name}' returned wrong type",
+                        )
+                    return r[t.RegisterableService].ok(resolved)
                 return r[t.RegisterableService].ok(resolved)
             except Exception as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -969,62 +984,6 @@ class FlextContainer(p.DI):
         return bool(
             hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get"),
         )
-
-    @override
-    def get_typed[T](self, name: str, type_cls: type[T]) -> r[T]:
-        """Resolve a service by name and validate its runtime type.
-
-        Provides runtime type validation on top of DI resolution. The resolved
-        service is validated against type_cls using isinstance check.
-
-        Args:
-            name: Service identifier to resolve.
-            type_cls: Expected type class for validation.
-
-        Returns:
-            r[T]: Success with type-validated service, or failure if not found
-                or type mismatch.
-
-        """
-        # Try service first with runtime type validation
-        if name in self._services:
-            service = self._services[name].service
-            if not self._is_instance_of(service, type_cls):
-                return r[T].fail(
-                    f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
-                )
-            # TypeGuard narrows service to type T
-            return r[T].ok(service)
-
-        # Try factory with runtime type validation
-        if name in self._factories:
-            try:
-                factory_callable: Callable[[], t.RegisterableService] = self._factories[
-                    name
-                ].factory
-                resolved = factory_callable()
-                if not self._is_instance_of(resolved, type_cls):
-                    return r[T].fail(f"Factory '{name}' returned wrong type")
-                # TypeGuard narrows resolved to type T
-                return r[T].ok(resolved)
-            except Exception as e:
-                return r[T].fail(str(e))
-
-        # Try resource with runtime type validation
-        if name in self._resources:
-            try:
-                resource_callable: Callable[[], t.RegisterableService] = (
-                    self._resources[name].factory
-                )
-                resolved = resource_callable()
-                if not self._is_instance_of(resolved, type_cls):
-                    return r[T].fail(f"Resource '{name}' returned wrong type")
-                # TypeGuard narrows resolved to type T
-                return r[T].ok(resolved)
-            except Exception as e:
-                return r[T].fail(str(e))
-
-        return r[T].fail(f"Service '{name}' not found")
 
     def create_module_logger(self, module_name: str | None = None) -> FlextLogger:
         """Create a FlextLogger instance for the specified module.
@@ -1086,7 +1045,7 @@ class FlextContainer(p.DI):
 
         Business Rule: Clears all registrations but preserves singleton instance.
         Used for test cleanup and container reset scenarios. Does not reset
-        singleton pattern - use reset_singleton_for_testing() for that.
+        singleton pattern - use reset_for_testing() for that.
 
         """
         for name in self.list_services():
@@ -1099,7 +1058,7 @@ class FlextContainer(p.DI):
         self._resources.clear()
 
     @classmethod
-    def reset_singleton_for_testing(cls) -> None:
+    def reset_for_testing(cls) -> None:
         """Reset singleton instance for testing purposes.
 
         Business Rule: Testing-only method to reset singleton state.
