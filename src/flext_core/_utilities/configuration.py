@@ -665,7 +665,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> Mapping[str, t.ScalarValue]:
+    ) -> Mapping[str, t.ScalarValue | None]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration

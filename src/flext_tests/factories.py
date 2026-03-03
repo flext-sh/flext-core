@@ -32,7 +32,7 @@ TValue = TypeVar("TValue")
 
 
 def _to_payload_value(value: t.ContainerValue) -> t.Tests.PayloadValue:
-    if value is None or isinstance(value, t.JsonPrimitive | bytes | BaseModel):
+    if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload_value(v) for k, v in value.items()}
@@ -42,13 +42,15 @@ def _to_payload_value(value: t.ContainerValue) -> t.Tests.PayloadValue:
 
 
 def _to_guard_input(value: t.Tests.PayloadValue) -> t.ContainerValue:
-    if value is None or isinstance(value, t.JsonPrimitive | BaseModel):
+    if value is None or isinstance(value, (str, int, float, bool, BaseModel)):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_guard_input(_to_payload_value(v)) for k, v in value.items()}
     if isinstance(value, bytes):
         return str(value)
-    return [_to_guard_input(_to_payload_value(item)) for item in value]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [_to_guard_input(_to_payload_value(item)) for item in value]
+    return str(value)
 
 
 class FlextTestsFactories(s[t.Tests.PayloadValue]):

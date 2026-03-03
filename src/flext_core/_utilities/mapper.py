@@ -449,7 +449,7 @@ class FlextUtilitiesMapper:
         """
         # Type narrowing: ensure value is PayloadValue (not plain object)
         narrowed_value: t.ContainerValue
-        if isinstance(value, t.JsonPrimitive):
+        if isinstance(value, str | int | float | bool):
             narrowed_value = value
         elif value is None:
             narrowed_value = None

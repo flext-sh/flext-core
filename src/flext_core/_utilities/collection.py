@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
+from datetime import datetime
 from enum import StrEnum
 from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 
@@ -35,7 +36,7 @@ class FlextUtilitiesCollection:
     def _to_batch_scalar(
         value: t.ContainerValue,
     ) -> t.ScalarValue:
-        if value is None or isinstance(value, t.ScalarValue):
+        if isinstance(value, (str, int, float, bool, datetime)):
             return value
         return str(value)
 
@@ -366,7 +367,7 @@ class FlextUtilitiesCollection:
         progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
-    ) -> r[m.BatchResultDict]:
+    ) -> r[FlextModelsContainers.BatchResultDict]:
         """Process items in batches with progress tracking.
 
         Args:
@@ -418,7 +419,7 @@ class FlextUtilitiesCollection:
                     else:
                         error_msg = result_error or "Unknown error"
                         if error_mode == "fail":
-                            return r[m.BatchResultDict].fail(
+                            return r[FlextModelsContainers.BatchResultDict].fail(
                                 f"Batch processing failed: {error_msg}",
                             )
                         if error_mode == "collect":
@@ -447,7 +448,7 @@ class FlextUtilitiesCollection:
                     results.append(direct_result)
             except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
                 if error_mode == "fail":
-                    return r[m.BatchResultDict].fail(
+                    return r[FlextModelsContainers.BatchResultDict].fail(
                         f"Batch processing failed: {e}",
                     )
                 if error_mode == "collect":
@@ -466,7 +467,7 @@ class FlextUtilitiesCollection:
             error_count=len(errors),
             errors=errors,
         )
-        return r[m.BatchResultDict].ok(result_dict)
+        return r[FlextModelsContainers.BatchResultDict].ok(result_dict)
 
     @staticmethod
     def process(
@@ -639,7 +640,7 @@ class FlextUtilitiesCollection:
     ) -> Callable[[t.ConfigurationMapping], dict[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
-        def validator(data: dict[str, t.ContainerValue]) -> dict[str, E]:
+        def validator(data: Mapping[str, t.ContainerValue]) -> dict[str, E]:
             result: dict[str, E] = {}
             for k, v in data.items():
                 if isinstance(v, enum_type):

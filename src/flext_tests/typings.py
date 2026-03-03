@@ -20,6 +20,7 @@ type _TestPayloadValue = (
     t.JsonPrimitive
     | bytes
     | BaseModel
+    | None
     | Sequence[_TestPayloadValue]
     | Mapping[str, _TestPayloadValue]
 )
@@ -717,7 +718,7 @@ class FlextTestsTypes(FlextTypes):
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True
-            if isinstance(value, t.JsonPrimitive):
+            if isinstance(value, str | int | float | bool):
                 return True
             if isinstance(value, (list, tuple)):
                 return True

@@ -53,10 +53,10 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: t.HandlerCallable | t.ContainerValue,
+            v: t.HandlerCallable,
         ) -> t.HandlerCallable:
             if not callable(v):
-                msg = f"Handler must be callable, got {v.__class__.__name__}"
+                msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
             return v
 

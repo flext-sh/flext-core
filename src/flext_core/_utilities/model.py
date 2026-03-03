@@ -348,12 +348,10 @@ class FlextUtilitiesModel:
 
         """
         match value:
-            case None:
-                return None
             case bool() | int() | float() | str():
                 return value
             case list() as items:
-                normalized_items: list[t.JsonPrimitive] = []
+                normalized_items: list[t.ScalarValue] = []
                 for item in items:
                     try:
                         normalized_items.append(
@@ -365,7 +363,7 @@ class FlextUtilitiesModel:
                         normalized_items.append(str(item))
                 return normalized_items
             case tuple() as items:
-                normalized_tuple_items: list[t.JsonPrimitive] = []
+                normalized_tuple_items: list[t.ScalarValue] = []
                 for item in items:
                     try:
                         normalized_tuple_items.append(

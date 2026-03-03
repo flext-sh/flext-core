@@ -229,7 +229,7 @@ class FlextInfraPrWorkspaceManager:
             "status": status,
             "elapsed": elapsed,
             "exit_code": exit_code,
-            "log_path": str(log_path) if log_path else None,
+            "log_path": str(log_path) if log_path else "",
         })
 
     def orchestrate(

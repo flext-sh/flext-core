@@ -22,7 +22,7 @@ from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
 
 
-def _as_toml_mapping(value: t.ContainerValue) -> t.ConfigurationMapping | None:
+def _as_toml_mapping(value: t.ContainerValue) -> MutableMapping[str, t.ContainerValue] | None:
     if isinstance(value, MutableMapping) and all(isinstance(key, str) for key in value):
         return value
     return None
@@ -167,7 +167,7 @@ class FlextInfraTomlService(FlextService[bool]):
 
     def sync_mapping(
         self,
-        target: t.ConfigurationMapping,
+        target: MutableMapping[str, t.ContainerValue],
         canonical: t.ConfigurationMapping,
         *,
         prune_extras: bool,

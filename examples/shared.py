@@ -1,9 +1,9 @@
 """Shared golden-file test harness for flext-core examples.
 
-Provides ``Examples`` — a base class that every ``ex_*.py`` script subclasses.
-Through MRO each subclass inherits ``check``, ``section``, ``ser``, ``verify``,
-the shared models (``Person``, ``Handle``), and probe helpers — without
-duplicating any boilerplate.
+Provides ``Examples`` — a single MRO base class that every ``ex_*.py``
+script subclasses.  Through MRO each subclass inherits ``check``,
+``section``, ``ser``, ``verify``, shared models, and probe helpers —
+without duplicating any boilerplate.
 
 Usage (inside an ``ex_*.py`` file)::
 
@@ -11,20 +11,13 @@ Usage (inside an ``ex_*.py`` file)::
 
 
     class Ex01FlextResult(Examples):
-        def __init__(self) -> None:
-            super().__init__(__file__)
-
-        def factories_and_guards(self) -> None:
+        def exercise(self) -> None:
             self.section("factories_and_guards")
-            self.check("ok.value", ok_result.value)
-
-        def run(self) -> None:
-            self.factories_and_guards()
-            self.verify()
+            self.check("ok.value", r[int].ok(42).value)
 
 
-    def main() -> None:
-        Ex01FlextResult().run()
+    if __name__ == "__main__":
+        Ex01FlextResult(__file__).run()
 """
 
 from __future__ import annotations
@@ -42,18 +35,28 @@ from flext_core import FlextResult, r, t, u
 class Examples:
     """Base class for golden-file example scripts.
 
-    Subclass once per ``ex_*.py`` module to inherit the full test-harness
-    infrastructure via MRO.
+    Subclass once per ``ex_*.py`` module.  Implement ``exercise()`` to
+    record checks, then call ``run()`` which handles verification.
     """
 
     # ------------------------------------------------------------------
-    # Harness state
+    # Lifecycle
     # ------------------------------------------------------------------
 
     def __init__(self, caller_file: str) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
         self._results: list[str] = []
         self._caller = Path(caller_file)
+
+    def exercise(self) -> None:
+        """Override in subclasses to exercise the target class."""
+        msg = "Subclasses must implement exercise()"
+        raise NotImplementedError(msg)
+
+    def run(self) -> None:
+        """Execute exercise → verify lifecycle."""
+        self.exercise()
+        self.verify()
 
     # ------------------------------------------------------------------
     # Recording helpers
@@ -88,7 +91,7 @@ class Examples:
         if isinstance(v, str):
             return repr(v)
         if u.is_list(v):
-            return "[" + ", ".join(self.ser(x) for x in v) + "]"
+            return "[" + ", ".join(self.ser(item) for item in v) + "]"
         if u.is_dict_like(v):
             pairs = ", ".join(
                 f"{self.ser(k)}: {self.ser(val)}"

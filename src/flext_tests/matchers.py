@@ -81,7 +81,7 @@ def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ContainerValu
 
 
 def _to_test_payload(value: object) -> t.Tests.PayloadValue:
-    if value is None or isinstance(value, t.JsonPrimitive | bytes | BaseModel):
+    if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_test_payload(v) for k, v in value.items()}
@@ -90,7 +90,7 @@ def _to_test_payload(value: object) -> t.Tests.PayloadValue:
     return str(value)
 
 
-def _as_guard_input(value: object) -> core_t.GuardInputValue:
+def _as_guard_input(value: object) -> core_t.ContainerValue | None:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -327,7 +327,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}",
                 )
-            extract_source: BaseModel | core_t.ConfigMapValue
+            extract_source: BaseModel | core_t.ContainerValue | None
             if isinstance(result_value, BaseModel):
                 extract_source = result_value
             elif isinstance(result_value, Mapping):

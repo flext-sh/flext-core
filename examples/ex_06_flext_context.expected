@@ -1,7 +1,7 @@
 [core_context_methods]
-create.instance: True
-create.has.operation: True
-create.has.user: True
+create.operation: 'op-demo'
+create.user: 'user-1'
+create.meta: 'v'
 set.success: True
 set_all.success: True
 get.k1: 'v1'

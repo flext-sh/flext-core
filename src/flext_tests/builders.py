@@ -74,10 +74,7 @@ class FlextTestsBuilders:
 
     @staticmethod
     def _to_payload_value(value: object) -> t.Tests.PayloadValue:
-        if value is None or isinstance(
-            value,
-            t.JsonPrimitive | bytes | BaseModel,
-        ):
+        if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
             return value
         if isinstance(value, Mapping):
             return {
@@ -90,7 +87,7 @@ class FlextTestsBuilders:
 
     @staticmethod
     def _to_guard_input(value: t.Tests.PayloadValue) -> t.ContainerValue:
-        if value is None or isinstance(value, t.JsonPrimitive | BaseModel):
+        if value is None or isinstance(value, (str, int, float, bool, BaseModel)):
             return value
         if isinstance(value, Mapping):
             return {
@@ -101,12 +98,14 @@ class FlextTestsBuilders:
             }
         if isinstance(value, bytes):
             return str(value)
-        return [
-            FlextTestsBuilders._to_guard_input(
-                FlextTestsBuilders._to_payload_value(item),
-            )
-            for item in value
-        ]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return [
+                FlextTestsBuilders._to_guard_input(
+                    FlextTestsBuilders._to_payload_value(item),
+                )
+                for item in value
+            ]
+        return str(value)
 
     def __init__(self, **data: t.Tests.PayloadValue) -> None:
         """Initialize builder with optional initial data."""
@@ -626,7 +625,7 @@ class FlextTestsBuilders:
                 typed_current: T = current
                 return typed_current
             return default
-        if isinstance(current, t.JsonPrimitive | bytes | BaseModel):
+        if isinstance(current, (str, int, float, bool, bytes, BaseModel)):
             return current
         if isinstance(current, Mapping):
             return {str(k): self._to_payload_value(v) for k, v in current.items()}

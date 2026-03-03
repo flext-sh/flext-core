@@ -442,14 +442,14 @@ class FlextExceptions:
 
         def to_dict(
             self,
-        ) -> Mapping[str, t.MetadataAttributeValue]:
+        ) -> Mapping[str, t.MetadataAttributeValue | None]:
             """Convert exception to dictionary representation.
 
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: dict[str, t.MetadataAttributeValue] = {
+            result: dict[str, t.MetadataAttributeValue | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -1102,10 +1102,10 @@ class FlextExceptions:
         specific_params: Mapping[str, t.MetadataAttributeValue] | None = None,
     ) -> tuple[
         str | None,
-        t.MetadataAttributeValue,
+        t.MetadataAttributeValue | None,
         bool,
         bool,
-        t.MetadataAttributeValue,
+        t.MetadataAttributeValue | None,
         Mapping[str, t.MetadataAttributeValue],
     ]:
         """Prepare exception kwargs by extracting common parameters."""

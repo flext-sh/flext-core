@@ -219,7 +219,7 @@ class FlextTestsModels(FlextModels):
                     default="ok",
                     description="Result type ('ok', 'fail', 'from_value')",
                 )
-                value: t.Tests.PayloadValue = Field(
+                value: t.Tests.PayloadValue | None = Field(
                     default=None,
                     description="Value for success (required for 'ok')",
                 )
@@ -437,7 +437,7 @@ class FlextTestsModels(FlextModels):
                 """Factory entity class for tests."""
 
                 name: str = ""
-                value: t.Tests.PayloadValue = None
+                value: t.Tests.PayloadValue | None = None
 
             class Value(FlextModels.Value):
                 """Factory value object class for tests."""

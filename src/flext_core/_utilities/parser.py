@@ -76,7 +76,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _to_json_value(value: t.ContainerValue) -> t.JsonValue:
-        if value is None or isinstance(value, t.JsonPrimitive):
+        if value is None or isinstance(value, str | int | float | bool):
             return value
         if isinstance(value, (list, tuple)):
             return str(value)

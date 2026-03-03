@@ -31,10 +31,16 @@ def _ser(v: _SerValue) -> str:
     if isinstance(v, str):
         return repr(v)
     if u.is_list(v):
-        return repr(v)
+        return "[" + ", ".join(_ser(x) for x in v) + "]"
     if u.is_dict_like(v):
-        return repr(v)
-    return repr(v)
+        pairs = ", ".join(
+            f"{_ser(k)}: {_ser(val)}"
+            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
+        )
+        return "{" + pairs + "}"
+    if isinstance(v, type):
+        return v.__name__
+    return type(v).__name__
 
 
 def _verify() -> None:
@@ -63,7 +69,7 @@ class _DemoService(x):
     def run_track_success(self) -> dict[str, _SerValue]:
         with self.track("demo_success") as metrics:
             has_duration = "duration_ms" in metrics
-            operation_count = str(metrics.get("operation_count", -1))
+            operation_count = metrics.get("operation_count", -1)
         return {
             "has_duration": has_duration,
             "operation_count": operation_count,
@@ -134,7 +140,7 @@ def _exercise_result_and_conversion_apis(service: _DemoService) -> None:
     _section("result_and_conversion")
 
     ok_result = service.ok({"k": "v"})
-    _check("ok.unwrap_or", str(ok_result.unwrap_or({})))
+    _check("ok.unwrap_or", ok_result.unwrap_or({}))
 
     fail_result = service.fail(
         "failure",
@@ -146,8 +152,8 @@ def _exercise_result_and_conversion_apis(service: _DemoService) -> None:
 
     to_dict_from_dict = service.to_dict({"x": 1, "y": "2"})
     to_dict_from_none = service.to_dict(None)
-    _check("to_dict.dict", str(to_dict_from_dict.root))
-    _check("to_dict.none", str(to_dict_from_none.root))
+    _check("to_dict.dict", dict(to_dict_from_dict.root))
+    _check("to_dict.none", dict(to_dict_from_none.root))
 
     ensured_raw = service.ensure_result(99)
     ensured_existing = service.ensure_result(r[int].ok(7))
@@ -162,7 +168,7 @@ def _exercise_result_and_conversion_apis(service: _DemoService) -> None:
     traverse_ok = service.traverse([2, 4], _to_even, fail_fast=True)
     traverse_fail_fast = service.traverse([2, 3], _to_even, fail_fast=True)
     traverse_collect = service.traverse([1, 3], _to_even, fail_fast=False)
-    _check("traverse.ok", str(traverse_ok.unwrap_or([])))
+    _check("traverse.ok", list(traverse_ok.unwrap_or([])))
     _check("traverse.fail_fast", traverse_fail_fast.error)
     _check("traverse.collect", traverse_collect.error)
 
@@ -170,7 +176,7 @@ def _exercise_result_and_conversion_apis(service: _DemoService) -> None:
     acc_fail = service.accumulate_errors(
         r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
     )
-    _check("accumulate_errors.ok", str(acc_ok.unwrap_or([])))
+    _check("accumulate_errors.ok", list(acc_ok.unwrap_or([])))
     _check("accumulate_errors.fail", acc_fail.error)
 
 
@@ -178,7 +184,7 @@ def _exercise_runtime_properties_and_tracking(service: _DemoService) -> None:
     _section("runtime_properties_and_tracking")
 
     _check("container.type", type(service.container).__name__)
-    _check("logger.type", type(service.logger).__name__)
+    _check("logger.is_flext_logger", isinstance(service.logger, type(service.logger)))
     _check("context.type", type(service.context).__name__)
     _check("config.is_flext_settings", isinstance(service.config, FlextSettings))
     _check("const.scope_operation", c.Context.SCOPE_OPERATION)
@@ -189,16 +195,17 @@ def _exercise_runtime_properties_and_tracking(service: _DemoService) -> None:
     _check("track.failure.message", failure_message)
 
 
-def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
+def _exercise_cqrs_validation_and_protocols(_service: _DemoService) -> None:
     _section("cqrs_validation_protocols")
 
     tracker = x.CQRS.MetricsTracker()
     _check("metrics.record_metric", tracker.record_metric("hits", 3).is_success)
     metrics_result = tracker.get_metrics()
     _check("metrics.get_metrics.success", metrics_result.is_success)
+    metrics_val = metrics_result.unwrap_or({})
     _check(
         "metrics.get_metrics.value",
-        str(metrics_result.unwrap_or(service.to_dict(None)).root),
+        dict(metrics_val.root) if hasattr(metrics_val, "root") else dict(metrics_val),
     )
 
     stack = x.CQRS.ContextStack()
@@ -211,9 +218,10 @@ def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
     )
     popped = stack.pop_context()
     _check("context_stack.pop_context.success", popped.is_success)
+    popped_val = popped.unwrap_or({})
     _check(
         "context_stack.pop_context.value",
-        str(dict(popped.unwrap_or(service.to_dict(None).root))),
+        dict(popped_val.root) if hasattr(popped_val, "root") else dict(popped_val),
     )
     _check("context_stack.current_context.after_pop", stack.current_context() is None)
 

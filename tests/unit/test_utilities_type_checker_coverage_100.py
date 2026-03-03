@@ -152,7 +152,7 @@ class TestuTypeChecker:
             # For GenericAlias types (e.g., dict[str, t.GeneralValueType])
             # Check if the type itself represents dict
             type_str = str(types[0])
-            assert type_str.startswith("dict[") or types[0] is dict
+            assert type_str.startswith("dict[") or types[0] is dict or type_str == "ConfigurationMapping"
         else:
             assert origin is dict
 

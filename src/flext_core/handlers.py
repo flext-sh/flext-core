@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
 from types import ModuleType
 from typing import ClassVar, override
 
@@ -862,7 +863,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     if not callable(fn_candidate):
                         return ""
                     result = fn_candidate(message)
-                    if isinstance(result, t.ScalarValue) or result is None:
+                    if isinstance(result, str | int | float | bool | datetime) or result is None:
                         return result
                     return ""
 

@@ -1,0 +1,80 @@
+[deprecated]
+deprecated.exists: True
+deprecated.result: 11
+deprecated.warning_count: 1
+deprecated.warning_type: 'DeprecationWarning'
+deprecated.warning_message: 'use new_api instead'
+
+[inject]
+inject.container_resolution: 'token-from-container'
+inject.kwarg_override: 'override-token'
+inject.missing_dependency_default: 'missing-default'
+
+[factory]
+factory.default.name: 'ex09.factory.default'
+factory.default.singleton: False
+factory.default.lazy: True
+factory.custom.name: 'ex09.factory.custom'
+factory.custom.singleton: True
+factory.custom.lazy: False
+factory.default.call: 'default'
+factory.custom.call: 'custom'
+
+[railway]
+railway.alias_r.ok: 9
+railway.ok.is_success: True
+railway.ok.value: 5
+railway.fail.is_failure: True
+railway.fail.error: 'railway-failure'
+railway.fail.error_code: 'E_RAILWAY'
+
+[retry]
+retry.default: 'default-ok'
+retry.linear.result: 'linear-2'
+retry.linear.attempts: 2
+retry.exponential.result: 'exp-2'
+retry.exponential.attempts: 2
+retry.failure.raised: True
+retry.failure.type: 'RuntimeError'
+retry.failure.message: 'retry-exhausted'
+
+[timeout]
+timeout.default.ok: 'default-timeout-ok'
+timeout.explicit.ok: 'explicit-timeout-ok'
+timeout.failure.raised: True
+timeout.failure.type: 'TimeoutError'
+timeout.failure.error_code: 'E_TIMEOUT'
+
+[log_operation]
+log_operation.named: 'named_log_operation'
+log_operation.default_track_perf: 'log_default_perf'
+
+[track_operation]
+track_operation.with_corr.operation: 'tracked_with_corr'
+track_operation.with_corr.has_corr: True
+track_operation.no_corr.operation: 'tracked_without_correlation'
+track_operation.no_corr.has_corr: False
+
+[track_performance]
+track_performance.named.value: 8
+track_performance.named.operation: 'perf_named'
+track_performance.default.operation: 'perf_default'
+
+[with_context]
+with_context.inside.tenant: 'tenant-1'
+with_context.inside.retries: 2
+with_context.inside.enabled: True
+with_context.inside.dropped: 'None'
+with_context.after.tenant: 'None'
+
+[with_correlation]
+with_correlation.created: True
+with_correlation.prefix: True
+
+[combined]
+combined.standard: 'token-from-container|combined_standard'
+combined.railway.ok.is_success: True
+combined.railway.ok.value: 'pong|combined_railway'
+combined.railway.fail.is_failure: True
+combined.railway.fail.error: 'combined-failure'
+combined.railway.fail.error_code: 'E_COMBINED'

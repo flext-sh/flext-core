@@ -62,8 +62,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: m.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
-        context: m.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        data: FlextModelsContainers.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        context: FlextModelsContainers.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -258,10 +258,10 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
-        input_data: m.ConfigMap = Field(
+        input_data: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
         )
-        execution_context: m.ConfigMap = Field(
+        execution_context: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
         )
         timeout_seconds: float = Field(
@@ -298,7 +298,7 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: m.ConfigMap = Field(
+        config: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Middleware-specific configuration",
         )
@@ -369,7 +369,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: m.ConfigMap | None = Field(
+        env: FlextModelsContainers.ConfigMap | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -932,7 +932,7 @@ class FlextModelsConfig:
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        call_kwargs: m.ConfigMap = Field(
+        call_kwargs: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Keyword arguments for function",
         )

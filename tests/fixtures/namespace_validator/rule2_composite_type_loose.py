@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-JsonValue: TypeAlias = t.JsonPrimitive  # VIOLATION
+JsonValue: TypeAlias = t.JsonPrimitive  # VIOLATION  # noqa: F821
 
 
 class FlextTestModels:

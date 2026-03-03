@@ -120,7 +120,7 @@ class FlextMixins(FlextRuntime):
                             FlextRuntime.normalize_to_general_value(value)
                             if isinstance(
                                 value,
-                                t.JsonPrimitive | type(None) | BaseModel,
+                                (str, int, float, bool, type(None), BaseModel),
                             )
                             else str(value)
                         )
@@ -141,7 +141,7 @@ class FlextMixins(FlextRuntime):
                         FlextRuntime.normalize_to_general_value(value)
                         if isinstance(
                             value,
-                            t.JsonPrimitive | type(None) | BaseModel,
+                            (str, int, float, bool, type(None), BaseModel),
                         )
                         else str(value)
                     )

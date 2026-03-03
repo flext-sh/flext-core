@@ -1493,7 +1493,10 @@ class FlextDecorators:
                 try:
                     # Bind context variables to global logging context
                     if context_vars:
-                        bind_result = FlextLogger.bind_global_context(**context_vars)
+                        ctx: dict[str, t.MetadataAttributeValue] = {
+                            k: v for k, v in context_vars.items() if v is not None
+                        }
+                        bind_result = FlextLogger.bind_global_context(**ctx)
                         if bind_result.is_failure:
                             logger.warning(
                                 "global_context_binding_failed",

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import FlextContext, FlextRuntime, c, r, u
+from flext_core import FlextContext, FlextRuntime, c, r, t, u
 
 type _ContainerValue = (
     t.ScalarValue
@@ -98,10 +98,10 @@ class _ContainerStub:
     def context(self):
         return self._context
 
-    def scoped(self, **_kwargs):
+    def scoped(self, **_kwargs: object) -> _ContainerStub:
         return self
 
-    def wire_modules(self, **_kwargs) -> None:
+    def wire_modules(self, **_kwargs: object) -> None:
         return None
 
     def get_config(self):
@@ -110,19 +110,19 @@ class _ContainerStub:
     def has_service(self, name: str) -> bool:
         return name in self._services
 
-    def register(self, name: str, service):
+    def register(self, name: str, service: object) -> r[bool]:
         self._services[name] = service
         return r[bool].ok(True)
 
-    def register_factory(self, name: str, factory):
+    def register_factory(self, name: str, factory: object) -> r[bool]:
         self._services[name] = factory()
         return r[bool].ok(True)
 
-    def with_service(self, name: str, service):
+    def with_service(self, name: str, service: object) -> _ContainerStub:
         self._services[name] = service
         return self
 
-    def with_factory(self, name: str, factory):
+    def with_factory(self, name: str, factory: object) -> _ContainerStub:
         self._services[name] = factory()
         return self
 
@@ -131,7 +131,7 @@ class _ContainerStub:
             return r[_ContainerValue].ok(self._services[name])
         return r[_ContainerValue].fail("missing")
 
-    def get_typed(self, name: str, type_cls):
+    def get_typed(self, name: str, type_cls: type) -> r[object]:
         result = self.get(name)
         if result.is_failure:
             return r[type_cls].fail(result.error or "missing")

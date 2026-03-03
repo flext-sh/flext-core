@@ -20,6 +20,7 @@ from collections.abc import (
     Iterable,
     Mapping,
     MutableMapping,
+    Sequence,
     Sized,
 )
 from contextlib import contextmanager
@@ -41,7 +42,7 @@ from flext_core import (
 from flext_tests import c, m, p, t
 
 
-def _to_scalar(value: object) -> core_t.ScalarValue:
+def _to_scalar(value: object) -> core_t.ScalarValue | None:
     """Convert a value to ScalarValue for config overrides.
 
     Args:
@@ -51,7 +52,7 @@ def _to_scalar(value: object) -> core_t.ScalarValue:
         ScalarValue (str | int | float | bool | datetime | None)
 
     """
-    if value is None or isinstance(value, t.JsonPrimitive):
+    if value is None or isinstance(value, (str, int, float, bool)):
         return value
     return str(value)
 
@@ -66,7 +67,7 @@ def _to_payload(value: object) -> t.Tests.PayloadValue:
         PayloadValue suitable for test assertions
 
     """
-    if value is None or isinstance(value, t.JsonPrimitive | bytes | BaseModel):
+    if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload(v) for k, v in value.items()}
@@ -75,15 +76,17 @@ def _to_payload(value: object) -> t.Tests.PayloadValue:
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
+def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ContainerValue | None:
     """Convert PayloadValue to ConfigMapValue."""
-    if value is None or isinstance(value, t.JsonPrimitive | BaseModel):
+    if value is None or isinstance(value, (str, int, float, bool, BaseModel)):
         return value
     if isinstance(value, bytes):
         return value.decode(errors="ignore")
     if isinstance(value, Mapping):
         return {str(k): _to_config_map_value(v) for k, v in value.items()}
-    return [_to_config_map_value(item) for item in value]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [_to_config_map_value(item) for item in value]
+    return str(value)
 
 
 class _EntityFactory[TEntity](Protocol):
@@ -795,7 +798,9 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 scalar_overrides: dict[str, core_t.ScalarValue] = {
-                    str(key): _to_scalar(value) for key, value in kwargs.items()
+                    str(key): v
+                    for key, value in kwargs.items()
+                    if (v := _to_scalar(value)) is not None
                 }
                 return FlextSettings.materialize(
                     config_overrides=scalar_overrides,

@@ -252,8 +252,7 @@ class FlextModelsCollections:
                         combined.extend(
                             item
                             for item in v
-                            if item is None
-                            or isinstance(
+                            if isinstance(
                                 item,
                                 (str, int, float, bool, datetime),
                             )
@@ -409,8 +408,7 @@ class FlextModelsCollections:
                     combined.extend(
                         item
                         for item in v
-                        if item is None
-                        or isinstance(
+                        if isinstance(
                             item,
                             (str, int, float, bool, datetime),
                         )

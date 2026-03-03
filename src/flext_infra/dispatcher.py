@@ -162,7 +162,7 @@ class FlextInfraDispatcher(FlextService[bool]):
                         "action": command.action,
                         "args": command.args,
                     }
-                return {}
+                return dict[str, t.ContainerValue]()
 
         check_handler = _CommandHandler("flext_infra.check", cls.CheckCommand)
         basemk_handler = _CommandHandler("flext_infra.basemk", cls.BaseMkCommand)

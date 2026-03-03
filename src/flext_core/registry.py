@@ -279,11 +279,14 @@ class FlextRegistry(s[bool]):
         # Wrap handler.handle() to return _ContainerValue | None
         handler_ref = handler_for_dispatch
 
-        def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
+        def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue:
             if args:
                 result = handler_ref.handle(args[0])
-                return result.value if result.is_success else None
-            return None
+                if result.is_success:
+                    val = result.value
+                    if val is not None:
+                        return val
+            return ""
 
         # Preserve message_type for route discovery via setattr
         message_type_attr = getattr(handler_for_dispatch, "message_type", None)
@@ -786,9 +789,13 @@ class FlextRegistry(s[bool]):
             return r[t.RegisterableService].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
-        plugin_value: t.RegisterableService = (
+        plugin_value: t.RegisterableService | None = (
             raw_result.value if raw_result.is_success else None
         )
+        if plugin_value is None:
+            return r[t.RegisterableService].fail(
+                f"Retrieved empty result for {category} '{name}'",
+            )
         return r[t.RegisterableService].ok(plugin_value)
 
     def list_plugins(self, category: str) -> r[list[str]]:

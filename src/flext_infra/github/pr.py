@@ -123,11 +123,11 @@ class FlextInfraPrManager:
             info["status"] = "no-open-pr"
         else:
             info["status"] = "open"
-            info["pr_number"] = pr.get("number")
-            info["pr_title"] = pr.get("title")
-            info["pr_url"] = pr.get("url")
-            info["pr_state"] = pr.get("state")
-            info["pr_draft"] = pr.get("isDraft")
+            info["pr_number"] = pr.get("number", 0)
+            info["pr_title"] = pr.get("title", "")
+            info["pr_url"] = pr.get("url", "")
+            info["pr_state"] = pr.get("state", "")
+            info["pr_draft"] = pr.get("isDraft", False)
         return r[Mapping[str, t.ScalarValue]].ok(info)
 
     def create(
@@ -164,7 +164,7 @@ class FlextInfraPrManager:
         if existing:
             return r[Mapping[str, t.ScalarValue]].ok({
                 "status": "already-open",
-                "pr_url": existing.get("url"),
+                "pr_url": existing.get("url", ""),
             })
 
         command = [

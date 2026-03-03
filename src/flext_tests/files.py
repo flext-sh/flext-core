@@ -1570,10 +1570,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return payload
 
     def _to_payload_value(self, value: object) -> t.Tests.PayloadValue:
-        if value is None or isinstance(
-            value,
-            t.JsonPrimitive | bytes | BaseModel,
-        ):
+        if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
             return value
         if isinstance(value, Path | datetime):
             return str(value)
@@ -1587,7 +1584,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ContainerValue:
         if value is None or isinstance(
             value,
-            t.JsonPrimitive | BaseModel | Path,
+            (str, int, float, bool, BaseModel, Path),
         ):
             return value
         if isinstance(value, bytes):
@@ -1597,9 +1594,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 str(k): self._to_config_map_value(self._to_payload_value(v))
                 for k, v in value.items()
             }
-        return [
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return [
             self._to_config_map_value(self._to_payload_value(item)) for item in value
-        ]
+            ]
+        return str(value)
 
     def _coerce_file_content(
         self,
@@ -1714,7 +1713,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                 else:
                     # YAML parsing
-                    parsed_raw = _yaml_safe_load(text) if text.strip() else {}
+                    parsed_raw = _yaml_safe_load(text) if text.strip() else dict[str, t.ContainerValue]()
 
                 if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(

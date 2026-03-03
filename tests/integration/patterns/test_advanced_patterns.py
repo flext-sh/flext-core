@@ -309,7 +309,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        cast("FixtureCaseDict", kwargs)
+        cast("FixtureCaseDict", kwargs)  # noqa: F821
         return self
 
     def add_success_cases(

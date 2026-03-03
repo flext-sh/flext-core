@@ -368,15 +368,10 @@ class FlextContext(FlextRuntime):
             if callable(hook):
                 # Note: Hooks should not raise exceptions
                 # All exceptions indicate a programming error in hook implementation
-                hook_data: t.ScalarValue
-                if event_data is None or isinstance(
-                    event_data,
-                    (str, int, float, bool, datetime),
-                ):
-                    hook_data = event_data
-                else:
-                    hook_data = str(event_data)
-                _ = hook(hook_data)
+                if isinstance(event_data, (str, int, float, bool, datetime)):
+                    _ = hook(event_data)
+                elif event_data is not None:
+                    _ = hook(str(event_data))
 
     @staticmethod
     def _propagate_to_logger(

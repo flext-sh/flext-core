@@ -102,13 +102,13 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_flexible_value(value: t.ContainerValue) -> TypeIs[t.ContainerValue]:
-        if value is None or isinstance(value, t.ScalarValue):
+        if value is None or isinstance(value, str | int | float | bool | datetime):
             return True
         if isinstance(value, (list, tuple)):
             for item in value:
                 if item is not None and not isinstance(
                     item,
-                    t.ScalarValue,
+                    str | int | float | bool | datetime,
                 ):
                     return False
             return True
@@ -116,7 +116,7 @@ class FlextUtilitiesGuards:
             for item in value.values():
                 if item is not None and not isinstance(
                     item,
-                    t.ScalarValue,
+                    str | int | float | bool | datetime,
                 ):
                     return False
             return True

@@ -296,7 +296,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: m.ConfigMap | None = None
+            handler_config: FlextModelsContainers.ConfigMap | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -358,7 +358,7 @@ class FlextModelsCqrs:
 
             def merge_config(
                 self,
-                config: m.ConfigMap,
+                config: FlextModelsContainers.ConfigMap,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.root.update(config.root)
