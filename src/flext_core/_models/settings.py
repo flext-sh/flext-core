@@ -233,8 +233,10 @@ class FlextModelsConfig:
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
+                description="Ordered list of items to process in this batch; bounded by MAX_ITEMS performance constant.",
+                title="Data Items",
+                examples=[["item-a", "item-b"]],
             ),
-        ]
 
         @model_validator(mode="after")
         def validate_cross_fields(self) -> Self:
