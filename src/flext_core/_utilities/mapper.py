@@ -2474,26 +2474,6 @@ class FlextUtilitiesMapper:
         return transform_result
 
     @staticmethod
-    def to_dict[T](mapping: Mapping[str, T]) -> Mapping[str, T]:
-        """Convert any Mapping to dict safely.
-
-        Generic replacement for: dict(mapping) with type safety.
-
-        Args:
-            mapping: Mapping to convert to dict.
-
-        Returns:
-            Dictionary with same key-value pairs.
-
-        Example:
-            >>> mapping = {"a": 1, "b": 2}
-            >>> result = FlextUtilitiesMapper.to_dict(mapping)
-            >>> # {"a": 1, "b": 2}
-
-        """
-        return dict(mapping)
-
-    @staticmethod
     def deep_eq(
         a: Mapping[str, t.Container],
         b: Mapping[str, t.Container],
