@@ -80,10 +80,10 @@ class TypeScenarios:
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.ContainerValue, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.Container, True),
+        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.Container, True),
+        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.Container, True),
+        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.Container, True),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
@@ -181,11 +181,11 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
-            # CQRS aliases should all be t.Container
+            # CQRS aliases should all be t.ContainerValue
             tm.that(
                 test_case.type_var,
-                eq=t.ContainerValue,
-                msg=f"{test_case.name} must equal t.Container",
+                eq=t.Container,
+                msg=f"{test_case.name} must equal t.ContainerValue",
             )
 
     @pytest.mark.parametrize(
@@ -212,7 +212,7 @@ class TestFlextTypings:
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
         # Verify flat type aliases are accessible
         flat_types = [
-            "GeneralValueType",
+            "ContainerValue",
             "ScalarValue",
             "HandlerCallable",
         ]
@@ -245,19 +245,19 @@ class TestFlextTypings:
                 eq=True,
                 msg="TypeVar must be TypeVar or ParamSpec instance",
             )
-        # Validate CQRS aliases all point to t.Container
+        # Validate CQRS aliases all point to t.ContainerValue
         cqrs_aliases = [
-            t.ContainerValue,  # Command
-            t.ContainerValue,  # Event
-            t.ContainerValue,  # Query
-            t.ContainerValue,  # Message
+            t.Container,  # Command
+            t.Container,  # Event
+            t.Container,  # Query
+            t.Container,  # Message
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
                 alias,
-                eq=t.ContainerValue,
-                msg="CQRS alias must equal t.Container",
+                eq=t.Container,
+                msg="CQRS alias must equal t.ContainerValue",
             )
 
     def test_hostname_validation_success(self) -> None:

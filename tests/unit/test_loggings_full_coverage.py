@@ -71,7 +71,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     shim = _StructlogShim()
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(lambda: shim))
     assert isinstance(c.Settings.LogLevel.DEBUG.value, str)
-    value: t.ContainerValue = "ok"
+    value: t.Container = "ok"
     assert value == "ok"
 
     logger_obj = FlextLogger.create_bound_logger(
@@ -100,7 +100,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     class _Cfg:
         log_level = "DEBUG"
 
-        def model_dump(self) -> dict[str, t.Scalar | None]:
+        def model_dump(self) -> dict[str, t.Scalar]:
             return {"log_level": self.log_level}
 
     class _Container:
@@ -186,7 +186,7 @@ def test_loggings_instance_and_message_format_paths(
         correlation_id = "cid"
         force_new = True
 
-        def model_dump(self) -> dict[str, t.Scalar | None]:
+        def model_dump(self) -> dict[str, t.Scalar]:
             return {
                 "log_level": self.level,
                 "service_name": self.service_name,

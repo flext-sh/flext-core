@@ -66,7 +66,7 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
         is None
     )
 
-    mapping_value: Mapping[str, t.ContainerValue] = {"x": 1}
+    mapping_value: Mapping[str, t.Container] = {"x": 1}
     assert (
         u.Conversion.to_flexible_value(cast("StrictJsonValue", mapping_value)) is None
     )

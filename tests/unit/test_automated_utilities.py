@@ -105,7 +105,7 @@ class TestAutomatedFlextUtilities:
         instance = fixture_factory.create_test_utilities_instance()
 
         # Test various error conditions
-        error_inputs: list[Mapping[str, t.ContainerValue] | None] = [
+        error_inputs: list[Mapping[str, t.Container] | None] = [
             None,
             dict[str, str](),
             {"invalid": "data"},
@@ -160,7 +160,7 @@ class TestAutomatedFlextUtilities:
     def _execute_utilities_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        input_data: Mapping[str, t.Container],
     ) -> r[bool]:
         """Execute a test operation on utilities instance.
 

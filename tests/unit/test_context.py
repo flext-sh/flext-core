@@ -47,7 +47,7 @@ class ContextScenarios:
     """Centralized context test scenarios using FlextConstants."""
 
     SET_GET_CASES: ClassVar[
-        list[tuple[str, tests_t.Tests.PayloadValue, tests_t.Tests.PayloadValue]]
+        list[tuple[str, tests_t.Tests.ContainerValue, tests_t.Tests.ContainerValue]]
     ] = [
         ("string_key", "string_value", "string_value"),
         ("int_key", 42, 42),
@@ -117,20 +117,20 @@ class TestFlextContext:
         self,
         test_context: FlextContext,
         key: str,
-        value: tests_t.Tests.PayloadValue,
-        expected: tests_t.Tests.PayloadValue,
+        value: tests_t.Tests.ContainerValue,
+        expected: tests_t.Tests.ContainerValue,
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
-        # Type narrowing: value must be t.Container compatible
-        converted_value: t.ContainerValue = (
+        # Type narrowing: value must be t.ContainerValue compatible
+        converted_value: t.Container = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
         )
         set_result = context.set(key, converted_value)
         u.Tests.Result.assert_success(set_result)
-        # Convert expected to t.Container for assert_context_get_success
+        # Convert expected to t.ContainerValue for assert_context_get_success
         expected_value = expected
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
@@ -188,8 +188,8 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        # Type narrowing: nested_data must be t.Container compatible
-        nested_data: dict[str, t.ContainerValue] = {
+        # Type narrowing: nested_data must be t.ContainerValue compatible
+        nested_data: dict[str, t.Container] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -202,13 +202,13 @@ class TestFlextContext:
         assert isinstance(retrieved, dict)
         # Type narrowing: retrieved is dict after isinstance check
         # pyright needs explicit type narrowing for nested dict access
-        retrieved_dict: dict[str, t.ContainerValue] = retrieved
+        retrieved_dict: dict[str, t.Container] = retrieved
         user_data = retrieved_dict.get("user")
         assert isinstance(user_data, dict)
-        user_dict: dict[str, t.ContainerValue] = user_data
+        user_dict: dict[str, t.Container] = user_data
         profile_data = user_dict.get("profile")
         assert isinstance(profile_data, dict)
-        profile_dict: dict[str, t.ContainerValue] = profile_data
+        profile_dict: dict[str, t.Container] = profile_data
         assert profile_dict.get("name") == "John Doe"
 
     def test_context_merge(self, test_context: FlextContext) -> None:
@@ -390,8 +390,8 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = test_context
-        # Type narrowing: special_value must be t.Container compatible
-        converted_value: t.ContainerValue = (
+        # Type narrowing: special_value must be t.ContainerValue compatible
+        converted_value: t.Container = (
             special_value
             if isinstance(
                 special_value,

@@ -13,6 +13,12 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult, t
 
+type FlextInfraScalar = t.Scalar
+type FlextInfraPayload = (
+    FlextInfraScalar | Mapping[str, FlextInfraScalar] | Sequence[FlextInfraScalar]
+)
+type FlextInfraPayloadMap = Mapping[str, FlextInfraPayload]
+
 
 class FlextInfraProtocols(FlextProtocols):
     """Structural contracts for flext-infra services and adapters."""
@@ -58,7 +64,7 @@ class FlextInfraProtocols(FlextProtocols):
             self,
             project: str,
             gates: Sequence[str],
-        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+        ) -> FlextResult[FlextInfraPayloadMap]:
             """Execute quality gates for a project."""
             ...
 
@@ -70,7 +76,7 @@ class FlextInfraProtocols(FlextProtocols):
             self,
             source: Path,
             target: Path,
-        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+        ) -> FlextResult[FlextInfraPayloadMap]:
             """Synchronize source and target paths."""
             ...
 
@@ -80,7 +86,7 @@ class FlextInfraProtocols(FlextProtocols):
 
         def generate(
             self,
-            config: Mapping[str, t.ContainerValue],
+            config: FlextInfraPayloadMap,
         ) -> FlextResult[str]:
             """Generate text or artifacts from configuration."""
             ...
@@ -91,7 +97,7 @@ class FlextInfraProtocols(FlextProtocols):
 
         def report(
             self,
-            results: Sequence[FlextResult[Mapping[str, t.ContainerValue]]],
+            results: Sequence[FlextResult[FlextInfraPayloadMap]],
         ) -> FlextResult[Path]:
             """Write validation results to a report file."""
             ...
@@ -112,7 +118,7 @@ class FlextInfraProtocols(FlextProtocols):
             self,
             projects: Sequence[FlextInfraProtocols.ProjectInfoProtocol],
             verb: str,
-        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+        ) -> FlextResult[FlextInfraPayloadMap]:
             """Orchestrate operations across multiple projects."""
             ...
 
@@ -143,6 +149,9 @@ class FlextInfraProtocols(FlextProtocols):
 p = FlextInfraProtocols
 
 __all__ = [
+    "FlextInfraPayload",
+    "FlextInfraPayloadMap",
     "FlextInfraProtocols",
+    "FlextInfraScalar",
     "p",
 ]

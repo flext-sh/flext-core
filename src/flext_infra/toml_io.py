@@ -21,10 +21,15 @@ from tomlkit.items import Table
 from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
 
+type TomlScalar = t.Primitives | None
+type TomlValue = (
+    TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
+)
+type TomlMap = MutableMapping[str, t.Container]
+type TomlMutableMap = MutableMapping[str, t.Container]
 
-def _as_toml_mapping(
-    value: t.ContainerValue,
-) -> MutableMapping[str, t.ContainerValue] | None:
+
+def _as_toml_mapping(value: t.Container) -> TomlMutableMap | None:
     if isinstance(value, MutableMapping) and all(isinstance(key, str) for key in value):
         return value
     return None
@@ -41,7 +46,7 @@ class FlextInfraTomlService(FlextService[bool]):
         """Initialize the TOML service."""
         super().__init__()
 
-    def read(self, path: Path) -> FlextResult[t.ConfigurationMapping]:
+    def read(self, path: Path) -> FlextResult[TomlMap]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
@@ -52,14 +57,14 @@ class FlextInfraTomlService(FlextService[bool]):
 
         """
         if not path.exists():
-            return r[t.ConfigurationMapping].ok({})
+            return r[TomlMap].ok({})
         try:
             data = tomllib.loads(
                 path.read_text(encoding=c.Encoding.DEFAULT),
             )
-            return r[t.ConfigurationMapping].ok(data)
+            return r[TomlMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[t.ConfigurationMapping].fail(f"TOML read error: {exc}")
+            return r[TomlMap].fail(f"TOML read error: {exc}")
 
     def read_document(self, path: Path) -> FlextResult[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
@@ -88,7 +93,7 @@ class FlextInfraTomlService(FlextService[bool]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | MutableMapping[str, t.ContainerValue],
+        payload: tomlkit.TOMLDocument | MutableMapping[str, t.Container],
     ) -> FlextResult[bool]:
         """Write a TOML payload to a file.
 
@@ -146,7 +151,7 @@ class FlextInfraTomlService(FlextService[bool]):
         return r[bool].ok(True)
 
     @staticmethod
-    def value_differs(current: t.ContainerValue, expected: t.ContainerValue) -> bool:
+    def value_differs(current: t.Container, expected: t.Container) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.
@@ -156,7 +161,7 @@ class FlextInfraTomlService(FlextService[bool]):
         return str(current) != str(expected)
 
     @staticmethod
-    def build_table(data: t.ConfigurationMapping) -> Table:
+    def build_table(data: TomlMap) -> Table:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
@@ -169,8 +174,8 @@ class FlextInfraTomlService(FlextService[bool]):
 
     def sync_mapping(
         self,
-        target: MutableMapping[str, t.ContainerValue],
-        canonical: t.ConfigurationMapping,
+        target: TomlMutableMap,
+        canonical: TomlMap,
         *,
         prune_extras: bool,
         prefix: str,

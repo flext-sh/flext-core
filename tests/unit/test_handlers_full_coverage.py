@@ -89,13 +89,11 @@ def test_create_from_callable_branches() -> None:
 
     invalid_general = h.create_from_callable(lambda msg: msg)
     # General handler returns the message as-is wrapped in ok()
-    invalid_general_result = invalid_general.handle(
-        cast("t.Scalar | None", "{1, 2, 3}")
-    )
+    invalid_general_result = invalid_general.handle(cast("t.ScalarValue", "{1, 2, 3}"))
     assert invalid_general_result.is_success
     assert invalid_general_result.value == "{1, 2, 3}"
 
-    tuple_result = invalid_general.handle(cast("t.Scalar | None", "('x', 'y')"))
+    tuple_result = invalid_general.handle(cast("t.ScalarValue", "('x', 'y')"))
     # String input (not a real tuple) succeeds - handler returns as-is
     assert tuple_result.is_success
 
@@ -128,7 +126,7 @@ def test_discovery_narrowed_function_paths() -> None:
     decorator = h.handler(str)
 
     @decorator
-    def exposed(value: t.ContainerValue) -> t.ContainerValue:
+    def exposed(value: t.Container) -> t.Container:
         _ = value
         return 123
 

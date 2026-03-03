@@ -76,14 +76,12 @@ def _is_key_value_pair[TK, TV](
     return isinstance(key_equals, tuple) and len(key_equals) == 2
 
 
-def _is_non_string_sequence(
-    value: t.Tests.Matcher.MatcherKwargValue,
-) -> TypeGuard[Sequence[t.ContainerValue]]:
+def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.Container]]:
     return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
 
-def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue) -> t.Tests.PayloadValue:
-    if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
+def _to_test_payload(value: object) -> t.Tests.ContainerValue:
+    if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_test_payload(v) for k, v in value.items()}
@@ -92,9 +90,7 @@ def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue) -> t.Tests.Payloa
     return str(value)
 
 
-def _as_guard_input(
-    value: t.Tests.Matcher.MatcherKwargValue,
-) -> core_t.ContainerValue | None:
+def _as_guard_input(value: object) -> core_t.Container:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -107,9 +103,9 @@ def _as_guard_input(
 
 
 def _check_has_lacks(
-    value: t.Tests.Matcher.MatcherKwargValue,
-    has: t.ContainerValue | Sequence[t.ContainerValue] | None,
-    lacks: t.ContainerValue | Sequence[t.ContainerValue] | None,
+    value: object,
+    has: t.Container | Sequence[t.Container] | None,
+    lacks: t.Container | Sequence[t.Container] | None,
     msg: str | None,
     *,
     as_str: bool = False,
@@ -251,7 +247,7 @@ class FlextTestsMatchers:
     def ok[TResult](
         result: r[TResult],
         **kwargs: t.Tests.Matcher.MatcherKwargValue,
-    ) -> TResult | t.Tests.PayloadValue:
+    ) -> TResult | t.Tests.ContainerValue:
         """Enhanced assertion for FlextResult success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
@@ -309,8 +305,8 @@ class FlextTestsMatchers:
             raise AssertionError(
                 params.msg or c.Tests.Matcher.ERR_OK_FAILED.format(error=result.error),
             )
-        # Start with TResult, may be reassigned to extracted value (t.Tests.PayloadValue)
-        result_value: TResult | t.Tests.PayloadValue = result.value
+        # Start with TResult, may be reassigned to extracted value (t.Tests.ContainerValue)
+        result_value: TResult | t.Tests.ContainerValue = result.value
 
         # Path extraction first (if specified)
         if params.path is not None:
@@ -331,7 +327,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}",
                 )
-            extract_source: BaseModel | core_t.ContainerValue | None
+            extract_source: BaseModel | core_t.Container
             if isinstance(result_value, BaseModel):
                 extract_source = result_value
             elif isinstance(result_value, Mapping):
@@ -447,7 +443,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Deep matching requires dict or model, got {type(result_value).__name__}",
                 )
-            deep_input: BaseModel | Mapping[str, t.Tests.PayloadValue]
+            deep_input: BaseModel | Mapping[str, t.Tests.ContainerValue]
             if isinstance(result_value, BaseModel):
                 deep_input = result_value
             else:
@@ -616,9 +612,9 @@ class FlextTestsMatchers:
         # Error data validation
         if params.data is not None:
             actual_raw = result.error_data
-            actual_data: MutableMapping[str, t.Tests.PayloadValue] = {}
+            actual_data: MutableMapping[str, t.Tests.ContainerValue] = {}
             if actual_raw is not None:
-                root_value: t.Tests.Matcher.MatcherKwargValue = (
+                root_value: object = (
                     actual_raw.root
                     if isinstance(actual_raw, m.ConfigMap)
                     else actual_raw
@@ -647,7 +643,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def that(
-        value: t.Tests.Matcher.MatcherKwargValue,
+        value: object,
         **kwargs: t.Tests.Matcher.MatcherKwargValue,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
@@ -750,7 +746,7 @@ class FlextTestsMatchers:
 
         # FlextResult auto-detection and handling
         if isinstance(value, r):
-            result_obj: r[t.Tests.PayloadValue] = value
+            result_obj: r[t.Tests.ContainerValue] = value
             if params.ok is not None:
                 if params.ok and not result_obj.is_success:
                     raise AssertionError(
@@ -772,11 +768,11 @@ class FlextTestsMatchers:
             # Use params.has instead of params.error
             # Unwrap FlextResult for further validation
             # value is r[TResult], we need to extract the actual value for validation
-            actual_value: t.Tests.PayloadValue | str
+            actual_value: t.Tests.ContainerValue | str
             if result_obj.is_success:
                 # Type narrowing: .value property returns the actual value
                 # No cast needed - value.value is already the correct type
-                unwrapped_value: t.Tests.PayloadValue = result_obj.value
+                unwrapped_value: t.Tests.ContainerValue = result_obj.value
                 actual_value = unwrapped_value
             # If result is failure, check if we're validating the error
             # params.has (converted from error) means we want to validate the error message
@@ -923,7 +919,7 @@ class FlextTestsMatchers:
 
         # Sequence assertions
         if isinstance(value, (list, tuple)):
-            seq_value: Sequence[t.Tests.PayloadValue] = value
+            seq_value: Sequence[object] = value
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -949,10 +945,7 @@ class FlextTestsMatchers:
             if params.all_ is not None:
                 if isinstance(params.all_, type):
 
-                    def _all_match(
-                        t: type,
-                        seq: Sequence[t.Tests.PayloadValue],
-                    ) -> bool:
+                    def _all_match(t: type, seq: Sequence[object]) -> bool:
                         return all(
                             isinstance(x, t)
                             or (hasattr(type(x), "__mro__") and t in type(x).__mro__)
@@ -1036,7 +1029,7 @@ class FlextTestsMatchers:
                     # sorted_param is Callable[[object], object] but sorted needs comparable return
                     user_key_fn = sorted_param
 
-                    def comparable_key(x: t.Tests.PayloadValue) -> tuple[str, str]:
+                    def comparable_key(x: object) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         """Wrap user key to return comparable tuple."""
@@ -1063,7 +1056,7 @@ class FlextTestsMatchers:
         if isinstance(value, Mapping):
             mapping_value = value
             if params.keys is not None:
-                key_set: set[str] = set(params.keys)
+                key_set: set[object] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
                 if missing:
                     raise AssertionError(
@@ -1072,7 +1065,7 @@ class FlextTestsMatchers:
                     )
 
             if params.lacks_keys is not None:
-                lacks_key_set: set[str] = set(params.lacks_keys)
+                lacks_key_set: set[object] = set(params.lacks_keys)
                 present = lacks_key_set & set(mapping_value.keys())
                 if present:
                     raise AssertionError(
@@ -1103,7 +1096,7 @@ class FlextTestsMatchers:
                             or f"Key {key!r}: expected {expected_val!r}, got {mapping_value[key]!r}",
                         )
                 elif hasattr(params.kv, "keys") and hasattr(params.kv, "items"):
-                    mapping_kv: Mapping[str, t.Tests.PayloadValue] = params.kv
+                    mapping_kv: Mapping[str, object] = params.kv
                     for key, expected_obj in mapping_kv.items():
                         if key not in mapping_value:
                             raise AssertionError(
@@ -1178,7 +1171,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Deep matching requires dict or model, got {type(value).__name__}",
                 )
-            deep_value: BaseModel | Mapping[str, t.Tests.PayloadValue]
+            deep_value: BaseModel | Mapping[str, t.Tests.ContainerValue]
             if isinstance(value, BaseModel):
                 deep_value = value
             elif isinstance(value, Mapping):
@@ -1212,7 +1205,7 @@ class FlextTestsMatchers:
     @staticmethod
     @contextmanager
     def scope(
-        **kwargs: t.Tests.PayloadValue,
+        **kwargs: t.Tests.ContainerValue,
     ) -> Iterator[m.Tests.Matcher.TestScope]:
         """Enhanced isolated test execution scope.
 
@@ -1279,17 +1272,17 @@ class FlextTestsMatchers:
                 )
                 os.chdir(cwd_path)
 
-            # Create scope - use dict[str, t.Tests.PayloadValue] to match TestScope field types
-            cfg: dict[str, t.Tests.PayloadValue] = {}
+            # Create scope - use dict[str, t.Tests.ContainerValue] to match TestScope field types
+            cfg: dict[str, t.Tests.ContainerValue] = {}
             if params.config:
                 cfg = {str(key): value for key, value in params.config.items()}
             # Filter container to payload values - services may be arbitrary objects
-            container_dict: dict[str, t.Tests.PayloadValue] = {
+            container_dict: dict[str, t.Tests.ContainerValue] = {
                 k: v
                 for k, v in (params.container or {}).items()
                 if t.Guards.is_general_value(v)
             }
-            context_map: dict[str, t.Tests.PayloadValue] = {}
+            context_map: dict[str, t.Tests.ContainerValue] = {}
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
 

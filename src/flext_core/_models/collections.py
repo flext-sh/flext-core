@@ -11,15 +11,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
-from typing import Any as JUSTIFIEDAny, Self, override
+from typing import Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import FlextRuntime, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
-
-type _JUSTIFIEDEqOperand = JUSTIFIEDAny
 
 
 class FlextModelsCollections:
@@ -49,7 +47,7 @@ class FlextModelsCollections:
             validate_assignment=True,
         )
 
-        categories: MutableMapping[str, list[t.ContainerValue]] = Field(
+        categories: MutableMapping[str, list[t.Container]] = Field(
             default_factory=dict,
             description="Map of category name to list of items",
         )
@@ -72,7 +70,7 @@ class FlextModelsCollections:
             """
             return sum(len(entries) for entries in self.categories.values())
 
-        def get_entries(self, category: str) -> list[t.ContainerValue]:
+        def get_entries(self, category: str) -> list[t.Container]:
             """Get entries for a category, returns empty list if not found.
 
             Returns:
@@ -88,8 +86,8 @@ class FlextModelsCollections:
         def get(
             self,
             category: str,
-            default: list[t.ContainerValue] | None = None,
-        ) -> list[t.ContainerValue]:
+            default: list[t.Container] | None = None,
+        ) -> list[t.Container]:
             """Get entries for a category with optional default (dict-like interface).
 
             Args:
@@ -108,7 +106,7 @@ class FlextModelsCollections:
         def add_entries(
             self,
             category: str,
-            entries: Sequence[t.ContainerValue],
+            entries: Sequence[t.Container],
         ) -> None:
             """Add entries to a category.
 
@@ -124,7 +122,7 @@ class FlextModelsCollections:
         def set_entries(
             self,
             category: str,
-            entries: Sequence[t.ContainerValue],
+            entries: Sequence[t.Container],
         ) -> None:
             """Set entries for a category (replaces existing).
 
@@ -173,7 +171,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: Mapping[str, Sequence[t.ContainerValue]],
+            data: Mapping[str, Sequence[t.Container]],
         ) -> Self:
             """Create Categories instance from dictionary.
 
@@ -189,22 +187,22 @@ class FlextModelsCollections:
                 instance.add_entries(category, entries)
             return instance
 
-        def to_dict(self) -> Mapping[str, Sequence[t.ContainerValue]]:
+        def to_dict(self) -> Mapping[str, Sequence[t.Container]]:
             """Convert categories to dictionary representation.
 
-            Normalizes list[T] to Sequence[t.GuardInputValue] for type compatibility.
+            Normalizes list[T] to Sequence[t.Container] for type compatibility.
             Uses inline _normalize_to_general_value to avoid circular import.
 
             Returns:
                 CategoryGroupsMapping: Dictionary representation of categories.
 
             """
-            # Normalize list[T] to Sequence[t.GuardInputValue] for type compatibility
-            result: MutableMapping[str, Sequence[t.ContainerValue]] = {}
+            # Normalize list[T] to Sequence[t.Container] for type compatibility
+            result: MutableMapping[str, Sequence[t.Container]] = {}
             for key, value_list in self.categories.items():
-                # Normalize each item in the list to t.GuardInputValue
-                # First convert T to PayloadValue, then normalize
-                normalized_list: list[t.ContainerValue] = []
+                # Normalize each item in the list to t.Container
+                # First convert T to ContainerValue, then normalize
+                normalized_list: list[t.Container] = []
                 for item in value_list:
                     normalized = FlextRuntime.normalize_to_general_value(item)
                     normalized_list.append(normalized)
@@ -217,9 +215,9 @@ class FlextModelsCollections:
         @classmethod
         def _resolve_aggregate_conflict(
             cls,
-            existing: t.ContainerValue,
-            value: t.ContainerValue,
-        ) -> t.ContainerValue:
+            existing: t.Container,
+            value: t.Container,
+        ) -> t.Container:
             """Resolve conflict when aggregating two statistic values.
 
             Args:
@@ -234,7 +232,7 @@ class FlextModelsCollections:
             # Filter out None values for comparison
             non_none = [v for v in [existing, value] if v is not None]
             if not non_none:
-                # None is part of t.GuardInputValue, so this is valid
+                # None is part of t.Container, so this is valid
                 return None
 
             first_val = non_none[0]
@@ -254,7 +252,8 @@ class FlextModelsCollections:
                         combined.extend(
                             item
                             for item in v
-                            if isinstance(
+                            if item is None
+                            or isinstance(
                                 item,
                                 (str, int, float, bool, datetime),
                             )
@@ -266,7 +265,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: FlextModelsContainers.ConfigMap,
+            data: m.ConfigMap,
         ) -> Self:
             """Create Statistics instance from dictionary.
 
@@ -283,7 +282,7 @@ class FlextModelsCollections:
         def aggregate(
             cls,
             stats_list: list[Self],
-        ) -> Mapping[str, t.ContainerValue]:
+        ) -> Mapping[str, t.Container]:
             """Aggregate multiple statistics instances (ConfigurationMapping pattern).
 
             Combines statistics by:
@@ -293,7 +292,7 @@ class FlextModelsCollections:
             - Keeping last value for other types
 
             Returns:
-                t.GuardInputValue: Aggregated statistics dictionary.
+                t.Container: Aggregated statistics dictionary.
 
             Example:
                 stats1 = Stats(count=10, items=['a'])
@@ -306,7 +305,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first stats as base
-            result: MutableMapping[str, t.ContainerValue] = {}
+            result: MutableMapping[str, t.Container] = {}
             for stats in stats_list:
                 stats_dict = stats.model_dump()
                 for key, value in stats_dict.items():
@@ -319,10 +318,10 @@ class FlextModelsCollections:
                             value,
                         )
 
-            # Normalize result dict to PayloadValue's dict type
-            normalized_result: MutableMapping[str, t.ContainerValue] = {}
+            # Normalize result dict to ContainerValue's dict type
+            normalized_result: MutableMapping[str, t.Container] = {}
             for key, value in result.items():
-                # Filter to types matching PayloadValue
+                # Filter to types matching ContainerValue
                 if value is None or value.__class__ in {
                     str,
                     int,
@@ -361,7 +360,7 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: MutableMapping[str, t.ContainerValue] = {}
+            merged_data: MutableMapping[str, t.Container] = {}
             for rule in rules:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
@@ -372,7 +371,7 @@ class FlextModelsCollections:
         @classmethod
         def _sum_numeric_values(
             cls,
-            non_none: list[t.ContainerValue],
+            non_none: list[t.Container],
         ) -> int | float | None:
             """Sum numeric values excluding booleans.
 
@@ -393,7 +392,7 @@ class FlextModelsCollections:
         @classmethod
         def _concatenate_lists(
             cls,
-            non_none: list[t.ContainerValue],
+            non_none: list[t.Container],
         ) -> list[t.Scalar | None]:
             """Concatenate list-like values.
 
@@ -401,7 +400,7 @@ class FlextModelsCollections:
                 non_none: List of non-None values
 
             Returns:
-                Combined list matching PayloadValue's list type
+                Combined list matching ContainerValue's list type
 
             """
             combined: list[t.Scalar | None] = []
@@ -410,7 +409,8 @@ class FlextModelsCollections:
                     combined.extend(
                         item
                         for item in v
-                        if isinstance(
+                        if item is None
+                        or isinstance(
                             item,
                             (str, int, float, bool, datetime),
                         )
@@ -420,18 +420,18 @@ class FlextModelsCollections:
         @classmethod
         def _merge_dicts(
             cls,
-            non_none: list[t.ContainerValue],
-        ) -> Mapping[str, t.ContainerValue]:
+            non_none: list[t.Container],
+        ) -> Mapping[str, t.Container]:
             """Merge dict-like values.
 
             Args:
                 non_none: List of non-None values
 
             Returns:
-                Merged dictionary matching PayloadValue's dict type
+                Merged dictionary matching ContainerValue's dict type
 
             """
-            merged: MutableMapping[str, t.ContainerValue] = {}
+            merged: MutableMapping[str, t.Container] = {}
             for v in non_none:
                 if FlextRuntime.is_dict_like(v):
                     # Explicit check for Mapping - normalize each value
@@ -462,9 +462,9 @@ class FlextModelsCollections:
         @classmethod
         def _resolve_aggregate_conflict(
             cls,
-            existing: t.ContainerValue,
-            value: t.ContainerValue,
-        ) -> t.ContainerValue:
+            existing: t.Container,
+            value: t.Container,
+        ) -> t.Container:
             """Resolve conflict when aggregating two result values.
 
             Args:
@@ -478,11 +478,11 @@ class FlextModelsCollections:
             """
             # Filter out None values for comparison
             # Explicitly type as list to match helper method signatures
-            non_none: list[t.ContainerValue] = [
+            non_none: list[t.Container] = [
                 v for v in [existing, value] if v is not None
             ]
             if not non_none:
-                # None is part of t.GuardInputValue, so this is valid
+                # None is part of t.Container, so this is valid
                 return None
 
             first_val = non_none[0]
@@ -517,13 +517,13 @@ class FlextModelsCollections:
                 Combined results instance
 
             """
-            combined_data: MutableMapping[str, t.ContainerValue] = {}
+            combined_data: MutableMapping[str, t.Container] = {}
             for result in results:
                 combined_data.update(result.model_dump())
             return cls(**combined_data)
 
         @classmethod
-        def aggregate(cls, results_list: list[Self]) -> Mapping[str, t.ContainerValue]:
+        def aggregate(cls, results_list: list[Self]) -> Mapping[str, t.Container]:
             """Aggregate multiple results instances (ConfigurationMapping pattern).
 
             Combines results by:
@@ -533,7 +533,7 @@ class FlextModelsCollections:
             - Keeping last value for other types
 
             Returns:
-                t.GuardInputValue: Aggregated results dictionary.
+                t.Container: Aggregated results dictionary.
 
             Example:
                 result1 = Results(processed=10, errors=['a'])
@@ -546,7 +546,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first result as base
-            result: MutableMapping[str, t.ContainerValue] = {}
+            result: MutableMapping[str, t.Container] = {}
             for res in results_list:
                 res_dict = res.model_dump()
                 for key, value in res_dict.items():
@@ -559,7 +559,7 @@ class FlextModelsCollections:
                             value,
                         )
 
-            # Return result directly - PayloadValue allows Mapping[str, PayloadValue]
+            # Return result directly - ContainerValue allows Mapping[str, ContainerValue]
             return result
 
     class Options(FlextModelFoundation.ArbitraryTypesModel):
@@ -568,9 +568,9 @@ class FlextModelsCollections:
         @classmethod
         def _resolve_merge_conflict(
             cls,
-            existing: t.ContainerValue,
-            value: t.ContainerValue,
-        ) -> t.ContainerValue:
+            existing: t.Container,
+            value: t.Container,
+        ) -> t.Container:
             """Resolve conflict when merging two option values.
 
             Args:
@@ -585,7 +585,7 @@ class FlextModelsCollections:
             # Filter out None values for comparison
             non_none = [v for v in [existing, value] if v is not None]
             if not non_none:
-                # None is part of t.GuardInputValue, so this is valid
+                # None is part of t.Container, so this is valid
                 return None
 
             first_val = non_none[0]
@@ -603,7 +603,7 @@ class FlextModelsCollections:
                     return sum(numeric_values)
             # Concatenate lists
             if FlextRuntime.is_list_like(first_val):
-                combined: list[t.ContainerValue] = []
+                combined: list[t.Container] = []
                 for v in non_none:
                     if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
                         # Explicit check for Sequence (excluding str)
@@ -650,7 +650,7 @@ class FlextModelsCollections:
                 return cls()
 
             # Start with first options as base
-            result: MutableMapping[str, t.ContainerValue] = {}
+            result: MutableMapping[str, t.Container] = {}
             for opt in options:
                 opt_dict = opt.model_dump()
                 for key, value in opt_dict.items():
@@ -660,8 +660,8 @@ class FlextModelsCollections:
                         # Conflict resolution - delegate to helper method
                         result[key] = cls._resolve_merge_conflict(result[key], value)
 
-            # Normalize result dict to t.GuardInputValue and create instance
-            normalized_result: MutableMapping[str, t.ContainerValue] = {}
+            # Normalize result dict to t.Container and create instance
+            normalized_result: MutableMapping[str, t.Container] = {}
             for key, value in result.items():
                 normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             # Create new instance from normalized dict
@@ -693,7 +693,7 @@ class FlextModelsCollections:
         @classmethod
         def from_mapping(
             cls,
-            mapping: FlextModelsContainers.ConfigMap,
+            mapping: m.ConfigMap,
         ) -> Self:
             """Create Config instance from mapping.
 
@@ -709,14 +709,14 @@ class FlextModelsCollections:
             mapping_dict = dict(mapping)
             return cls.model_validate(mapping_dict)
 
-        def to_mapping(self) -> FlextModelsContainers.ConfigMap:
+        def to_mapping(self) -> m.ConfigMap:
             """Convert Config to mapping.
 
             Returns:
                 ConfigurationMapping: Mapping representation
 
             """
-            normalized: dict[str, t.ContainerValue] = {}
+            normalized: dict[str, t.Container] = {}
             for key, value in self.model_dump().items():
                 normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
             return FlextModelsContainers.ConfigMap(root=normalized)
@@ -724,7 +724,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: FlextModelsContainers.ConfigMap,
+            data: m.ConfigMap,
         ) -> Self:
             """Create Config instance from dictionary.
 
@@ -758,7 +758,7 @@ class FlextModelsCollections:
         def diff(
             self,
             other: Self,
-        ) -> Mapping[str, tuple[t.ContainerValue, t.ContainerValue]]:
+        ) -> Mapping[str, tuple[t.Container, t.Container]]:
             """Compute differences between this config and another.
 
             Args:
@@ -773,7 +773,7 @@ class FlextModelsCollections:
             other_dict = other.model_dump()
             differences: MutableMapping[
                 str,
-                tuple[t.ContainerValue, t.ContainerValue],
+                tuple[t.Container, t.Container],
             ] = {}
             all_keys = set(self_dict.keys()) | set(other_dict.keys())
             for key in all_keys:
@@ -783,7 +783,7 @@ class FlextModelsCollections:
                     differences[key] = (self_val, other_val)
             return differences
 
-        def with_updates(self, **updates: t.ContainerValue) -> Self:
+        def with_updates(self, **updates: t.Container) -> Self:
             """Create a new config instance with updated values.
 
             Args:
@@ -798,7 +798,7 @@ class FlextModelsCollections:
             return self.__class__(**updated_dict)
 
         @override
-        def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Compare configs by value.
 
             Args:

@@ -75,7 +75,7 @@ class TestFlextUtilitiesArgs:
         """Parse kwargs test scenario."""
 
         name: str
-        kwargs: dict[str, t.ContainerValue]
+        kwargs: dict[str, t.Container]
         enum_fields: dict[str, type[StrEnum]]
         expected_success: bool
         expected_status: TestFlextUtilitiesArgs.StatusEnum | None = None

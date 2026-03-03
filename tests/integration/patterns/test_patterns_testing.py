@@ -24,10 +24,16 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, t
 
+type FixtureCaseDict = dict[str, str]
+type FixtureDataDict = dict[str, t.Container]
+type FixtureFixturesDict = dict[str, t.Container]
+type FixtureSuiteDict = dict[str, t.Container]
+type MockScenarioData = dict[str, t.Container]
+
 
 def _to_general_mapping(
-    value: t.ContainerValue | None,
-) -> dict[str, FlextTypes.ContainerValue]:
+    value: t.Container | None,
+) -> dict[str, FlextTypes.Container]:
     if not isinstance(value, dict):
         return {}
     return {
@@ -36,13 +42,13 @@ def _to_general_mapping(
     }
 
 
-def _to_string_list(value: t.ContainerValue | None) -> list[str]:
+def _to_string_list(value: t.Container | None) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value]
 
 
-def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
+def _to_string(value: t.Container | None, *, default: str) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -75,7 +81,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, t.ContainerValue]) -> None:
+    def __init__(self, name: str, data: MockScenarioData) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -97,16 +103,16 @@ class GivenWhenThenBuilder:
         """Initialize Given-When-Then builder with test name."""
         super().__init__()
         self.name = name
-        self._given: dict[str, FlextTypes.ContainerValue] = {}
-        self._when: dict[str, FlextTypes.ContainerValue] = {}
-        self._then: dict[str, FlextTypes.ContainerValue] = {}
+        self._given: dict[str, FlextTypes.Container] = {}
+        self._when: dict[str, FlextTypes.Container] = {}
+        self._then: dict[str, FlextTypes.Container] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
     def given(
         self,
         _description: str,
-        **kwargs: FlextTypes.ContainerValue,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
@@ -115,7 +121,7 @@ class GivenWhenThenBuilder:
     def when(
         self,
         _description: str,
-        **kwargs: FlextTypes.ContainerValue,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
@@ -124,7 +130,7 @@ class GivenWhenThenBuilder:
     def then(
         self,
         _description: str,
-        **kwargs: FlextTypes.ContainerValue,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -142,7 +148,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: dict[str, t.ContainerValue] = {
+        data: MockScenarioData = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -158,7 +164,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: dict[str, t.ContainerValue] = {}
+        self._data: FixtureDataDict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -170,7 +176,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: FlextTypes.ContainerValue) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: FlextTypes.Container) -> FlextTestBuilder:
         """Add metadata to the test data."""
         self._data.update(kwargs)
         return self
@@ -192,7 +198,7 @@ class FlextTestBuilder:
         # No-op stub to keep example API; could attach schema metadata here
         return self
 
-    def build(self) -> dict[str, t.ContainerValue]:
+    def build(self) -> FixtureDataDict:
         """Build the final test data dictionary."""
         return self._data
 
@@ -204,9 +210,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterized test builder with test name."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[dict[str, str]] = []
-        self._success_cases: list[dict[str, str]] = []
-        self._failure_cases: list[dict[str, str]] = []
+        self._cases: list[FixtureCaseDict] = []
+        self._success_cases: list[FixtureCaseDict] = []
+        self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
         self,
@@ -214,7 +220,7 @@ class ParameterizedTestBuilder:
         input_value: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        case: dict[str, str] = {}
+        case: FixtureCaseDict = {}
         if email is not None:
             case["email"] = email
         if input_value is not None:
@@ -224,7 +230,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[dict[str, str]],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
@@ -232,13 +238,13 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[dict[str, str]],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[dict[str, str]]:
+    def build(self) -> list[FixtureCaseDict]:
         """Build the list of test cases."""
         return self._cases.copy()
 
@@ -312,7 +318,7 @@ class SuiteBuilder:
         super().__init__()
         self.name = name
         self._scenarios: list[object] = []
-        self._setup_data: dict[str, FlextTypes.ContainerValue] = {}
+        self._setup_data: dict[str, FlextTypes.Container] = {}
         self._tags: list[str] = []
 
     def add_scenarios(self, scenarios: Sequence[object]) -> SuiteBuilder:
@@ -320,7 +326,7 @@ class SuiteBuilder:
         self._scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **kwargs: FlextTypes.ContainerValue) -> SuiteBuilder:
+    def with_setup_data(self, **kwargs: FlextTypes.Container) -> SuiteBuilder:
         """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
@@ -330,9 +336,9 @@ class SuiteBuilder:
         self._tags.append(tag)
         return self
 
-    def build(self) -> dict[str, t.ContainerValue]:
+    def build(self) -> FixtureSuiteDict:
         """Build the test suite configuration."""
-        result: dict[str, t.ContainerValue] = {
+        result: FixtureSuiteDict = {
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
@@ -347,21 +353,21 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: dict[str, t.ContainerValue] = {}
+        self._fixtures: FixtureFixturesDict = {}
         self._setups: list[object] = []
         self._teardowns: list[object] = []
 
-    def with_user(self, **kwargs: FlextTypes.ContainerValue) -> FixtureBuilder:
+    def with_user(self, **kwargs: FlextTypes.Container) -> FixtureBuilder:
         """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
-    def with_request(self, **kwargs: FlextTypes.ContainerValue) -> FixtureBuilder:
+    def with_request(self, **kwargs: FlextTypes.Container) -> FixtureBuilder:
         """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
 
-    def build(self) -> dict[str, t.ContainerValue]:
+    def build(self) -> FixtureFixturesDict:
         """Build the test fixtures configuration."""
         return self._fixtures.copy()
 
@@ -378,7 +384,7 @@ class FixtureBuilder:
     def add_fixture(
         self,
         key: str,
-        value: FlextTypes.ContainerValue,
+        value: FlextTypes.Container,
     ) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
@@ -386,11 +392,11 @@ class FixtureBuilder:
 
     def setup_context(
         self,
-    ) -> Callable[[], ContextManager[dict[str, t.ContainerValue]]]:
+    ) -> Callable[[], ContextManager[FixtureFixturesDict]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[dict[str, t.ContainerValue]]:
+        def _ctx() -> Iterator[FixtureFixturesDict]:
             for f in self._setups:
                 if callable(f):
                     _ = f()
@@ -747,7 +753,7 @@ class TestComprehensiveIntegration:
         scenarios.append(scenario2)
 
         # Build complete test suite
-        # Convert scenarios to list[t.Container] explicitly
+        # Convert scenarios to list[t.ContainerValue] explicitly
         scenario_list: Sequence[object] = scenarios
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
@@ -795,7 +801,7 @@ class TestRealWorldScenarios:
 
         with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
-            test_request: dict[str, FlextTypes.ContainerValue] = {
+            test_request: dict[str, FlextTypes.Container] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -805,8 +811,8 @@ class TestRealWorldScenarios:
 
             # Simulate API processing
             def process_api_request(
-                request: dict[str, FlextTypes.ContainerValue],
-            ) -> dict[str, FlextTypes.ContainerValue]:
+                request: dict[str, FlextTypes.Container],
+            ) -> dict[str, FlextTypes.Container]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -874,7 +880,7 @@ class TestRealWorldScenarios:
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: dict[str, FlextTypes.ContainerValue],
+        config: dict[str, FlextTypes.Container],
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure

@@ -68,15 +68,15 @@ class RegistryTestCase:
     duplicate_registration: bool = False
 
 
-class ConcreteTestHandler(h[t.ContainerValue, t.ContainerValue]):
+class ConcreteTestHandler(h[t.Container, t.Container]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def handle(self, message: t.Container) -> r[t.Container]:
         """Handle the message."""
-        return r[t.ContainerValue].ok(f"processed_{message}")
+        return r[t.Container].ok(f"processed_{message}")
 
-    def __call__(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def __call__(self, message: t.Container) -> r[t.Container]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
@@ -276,17 +276,17 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[p.Handler[t.ContainerValue, t.ContainerValue]]:
+    ) -> list[p.Handler[t.Container, t.Container]]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
+        handlers: Sequence[p.Handler[t.Container, t.Container]],
     ) -> list[
         tuple[
-            type[t.ContainerValue],
-            p.Handler[t.ContainerValue, t.ContainerValue],
+            type[t.Container],
+            p.Handler[t.Container, t.Container],
         ]
     ]:
         """Create test bindings using str message type."""
@@ -294,15 +294,15 @@ class RegistryScenarios:
 
     @staticmethod
     def create_function_map(
-        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
+        handlers: Sequence[p.Handler[t.Container, t.Container]],
     ) -> dict[
-        type[t.ContainerValue],
-        p.Handler[t.ContainerValue, t.ContainerValue],
+        type[t.Container],
+        p.Handler[t.Container, t.Container],
     ]:
         """Create test function map using str message type."""
         result: dict[
-            type[t.ContainerValue],
-            p.Handler[t.ContainerValue, t.ContainerValue],
+            type[t.Container],
+            p.Handler[t.Container, t.Container],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
@@ -323,7 +323,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[t.Container, t.Container]",
+                    "p.Handler[t.ContainerValue, t.ContainerValue]",
                     cast("object", None),
                 ),
             )
@@ -337,7 +337,7 @@ class TestFlextRegistry:
         else:
             u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
-                # Type ignore: RegistrationDetails is not t.Container but test is valid
+                # Type ignore: RegistrationDetails is not t.ContainerValue but test is valid
                 u.Tests.Result.assert_failure_with_error(
                     result,
                     test_case.error_pattern,
@@ -460,12 +460,12 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[t.Container, t.Container]",
+                    "p.Handler[t.ContainerValue, t.ContainerValue]",
                     cast("object", None),
                 ),
             )
             u.Tests.Result.assert_failure(result)
-            # Type ignore: RegistrationDetails is not t.Container but test is valid
+            # Type ignore: RegistrationDetails is not t.ContainerValue but test is valid
             u.Tests.Result.assert_failure_with_error(
                 result,
                 "Handler cannot be None",

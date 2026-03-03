@@ -148,7 +148,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_passes(self) -> None:
         """Test tm.that() with keys parameter for config validation."""
-        config: dict[str, t.ContainerValue] = {
+        config: dict[str, t.Container] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 30,
@@ -178,7 +178,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_zero_timeout(self) -> None:
         """Test tm.that() with zero timeout."""
-        config: dict[str, t.ContainerValue] = {
+        config: dict[str, t.Container] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 0,  # Should be positive
@@ -214,7 +214,7 @@ class TestFlextTestsMatchers:
         result = FlextResult[str].ok("test")
         value = tm.ok(
             result,
-            where=cast("tests_t.Tests.PayloadValue", lambda x: isinstance(x, str)),
+            where=cast("tests_t.Tests.ContainerValue", lambda x: isinstance(x, str)),
         )
         assert value == "test"
 
@@ -224,7 +224,7 @@ class TestFlextTestsMatchers:
         value = tm.ok(
             result,
             where=cast(
-                "tests_t.Tests.PayloadValue",
+                "tests_t.Tests.ContainerValue",
                 lambda x: isinstance(x, str | bytes),
             ),
         )
@@ -262,22 +262,22 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data: dict[str, t.ContainerValue] = {"user": {"name": "John", "age": 30}}
-        result = FlextResult[t.ConfigurationMapping].ok(data)
+        data: dict[str, t.Container] = {"user": {"name": "John", "age": 30}}
+        result = FlextResult[dict[str, t.Container]].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data: dict[str, t.ContainerValue] = {"user": {"email": "test@example.com"}}
-        result = FlextResult[t.ConfigurationMapping].ok(data)
+        data: dict[str, t.Container] = {"user": {"email": "test@example.com"}}
+        result = FlextResult[dict[str, t.Container]].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data: dict[str, t.ContainerValue] = {"user": {"name": "John"}}
-        result = FlextResult[t.ConfigurationMapping].ok(data)
+        data: dict[str, t.Container] = {"user": {"name": "John"}}
+        result = FlextResult[dict[str, t.Container]].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         # path extraction returns the extracted value, not the original
         assert value == "John"
@@ -285,7 +285,7 @@ class TestFlextTestsMatchers:
     def test_ok_with_where_parameter(self) -> None:
         """Test tm.ok() with where parameter."""
         result = FlextResult[int].ok(42)
-        value = tm.ok(result, where=cast("tests_t.Tests.PayloadValue", lambda x: x > 0))
+        value = tm.ok(result, where=cast("tests_t.Tests.ContainerValue", lambda x: x > 0))
         assert value == 42
 
     def test_ok_with_where_parameter_fails(self) -> None:
@@ -294,7 +294,7 @@ class TestFlextTestsMatchers:
         with pytest.raises(AssertionError):
             tm.ok(
                 result,
-                where=cast("tests_t.Tests.PayloadValue", lambda x: x < 0),
+                where=cast("tests_t.Tests.ContainerValue", lambda x: x < 0),
             )
 
     def test_ok_with_starts_parameter(self) -> None:

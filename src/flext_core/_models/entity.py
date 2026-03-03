@@ -14,16 +14,13 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Sequence
-from typing import Any as JUSTIFIEDAny, ClassVar, Self, TypeAlias, override
+from typing import ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, model_validator
 
 from flext_core import FlextRuntime, c, p, r, t
 from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.domain_event import FlextModelsDomainEvent
-
-type _JUSTIFIEDEqOperand = JUSTIFIEDAny
 
 
 class FlextModelsEntity:
@@ -69,13 +66,13 @@ class FlextModelsEntity:
             return FlextRuntime.get_logger(__name__)
 
         @override
-        def model_post_init(self, __context: t.ContainerValue, /) -> None:
+        def model_post_init(self, __context: t.Container, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()
 
         @override
-        def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
@@ -99,7 +96,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: FlextModelsContainers.ConfigMap | None = None,
+            data: m.ConfigMap | None = None,
         ) -> r[FlextModelsDomainEvent.Entry]:
             """Add a domain event to this entity.
 
@@ -148,7 +145,7 @@ class FlextModelsEntity:
 
         def add_domain_events_bulk(
             self: Self,
-            events: Sequence[tuple[str, FlextModelsContainers.ConfigMap | None]],
+            events: Sequence[tuple[str, m.ConfigMap | None]],
         ) -> r[list[FlextModelsDomainEvent.Entry]]:
             """Add multiple domain events in bulk.
 
@@ -212,7 +209,7 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other: _JUSTIFIEDEqOperand) -> bool:
+        def __eq__(self: Self, other: object) -> bool:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented

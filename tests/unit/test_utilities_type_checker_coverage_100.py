@@ -31,7 +31,7 @@ T = TypeVar("T")
 TMessage = TypeVar("TMessage")
 
 
-def _type_origin(value: object) -> t.TypeOriginSpecifier:
+def _type_origin(value: object) -> t.TypeHintSpecifier:
     return cast("t.TypeOriginSpecifier", value)
 
 
@@ -58,16 +58,16 @@ class IntHandler(h[int, int]):
         return FlextResult[int].ok(message * 2)
 
 
-class DictHandler(h[t.ConfigurationMapping, t.ConfigurationMapping]):
+class DictHandler(h[dict[str, t.Container], dict[str, t.Container]]):
     """Handler for dict messages."""
 
     @override
     def handle(
         self,
-        message: dict[str, t.ContainerValue],
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+        message: dict[str, t.Container],
+    ) -> FlextResult[dict[str, t.Container]]:
         """Handle dict message."""
-        return FlextResult[t.ConfigurationMapping].ok({
+        return FlextResult[dict[str, t.Container]].ok({
             "processed": True,
             **message,
         })
@@ -145,18 +145,14 @@ class TestuTypeChecker:
         """Test compute_accepted_message_types with dict handler."""
         types = u.Checker.compute_accepted_message_types(DictHandler)
         assert len(types) == 1
-        # Check that it's a dict type (may be dict or dict[str, t.Container])
+        # Check that it's a dict type (may be dict or dict[str, t.ContainerValue])
         # Generic aliases have origin dict
         origin = get_origin(types[0])
         if origin is None:
-            # For GenericAlias types (e.g., dict[str, t.Container])
+            # For GenericAlias types (e.g., dict[str, t.ContainerValue])
             # Check if the type itself represents dict
             type_str = str(types[0])
-            assert (
-                type_str.startswith("dict[")
-                or types[0] is dict
-                or type_str == "ConfigurationMapping"
-            )
+            assert type_str.startswith("dict[") or types[0] is dict
         else:
             assert origin is dict
 
@@ -189,8 +185,8 @@ class TestuTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
         assert u.Checker.can_handle_message_type(accepted, str) is False
         assert u.Checker.can_handle_message_type(accepted, dict) is True
-        # dict[str, t.Container] should be compatible with dict
-        dict_type: type[dict[str, t.ContainerValue]] = dict
+        # dict[str, t.ContainerValue] should be compatible with dict
+        dict_type: type[dict[str, t.Container]] = dict
         assert u.Checker.can_handle_message_type(accepted, dict_type) is True
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -220,7 +216,7 @@ class TestuTypeChecker:
         # Business Rule: _evaluate_type_compatibility accepts TypeOriginSpecifier
         # object type is compatible with TypeOriginSpecifier at runtime
 
-        object_type: t.TypeOriginSpecifier = cast(
+        object_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             object,
         )
@@ -233,8 +229,8 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         assert u.Checker._evaluate_type_compatibility(_type_origin(dict), dict) is True
-        # dict[str, t.Container] should be compatible with dict
-        dict_type: type[dict[str, t.ContainerValue]] = dict
+        # dict[str, t.ContainerValue] should be compatible with dict
+        dict_type: type[dict[str, t.Container]] = dict
         assert (
             u.Checker._evaluate_type_compatibility(_type_origin(dict), dict_type)
             is True
@@ -264,7 +260,7 @@ class TestuTypeChecker:
     def test_check_object_type_compatibility_object_type(self) -> None:
         """Test _check_object_type_compatibility with object type."""
         # Business Rule: _check_object_type_compatibility accepts TypeOriginSpecifier
-        object_type: t.TypeOriginSpecifier = cast(
+        object_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             object,
         )
@@ -290,7 +286,7 @@ class TestuTypeChecker:
         """Test _check_dict_compatibility with dict subclass."""
 
         # Business Rule: UserDict requires type parameters for generic type
-        class CustomDict(BaseUserDict[str, t.ContainerValue]):
+        class CustomDict(BaseUserDict[str, t.Container]):
             """Custom dict subclass."""
 
         result = u.Checker._check_dict_compatibility(
@@ -389,7 +385,7 @@ class TestuTypeChecker:
         )
         assert "message" in hints
         # Business Rule: Type hints return type objects
-        # hints["message"] is of type t.Container, so we check if it equals str type
+        # hints["message"] is of type t.ContainerValue, so we check if it equals str type
         # Use getattr and name check to avoid mypy comparison-overlap error
         message_type = hints.get("message")
         assert message_type is not None
@@ -437,11 +433,11 @@ class TestuTypeChecker:
             """Derived class."""
 
         # Business Rule: _handle_type_or_origin_check accepts TypeOriginSpecifier
-        base_type: t.TypeOriginSpecifier = cast(
+        base_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             Base,
         )
-        derived_type: t.TypeOriginSpecifier = cast(
+        derived_type: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             Derived,
         )
@@ -482,7 +478,7 @@ class TestuTypeChecker:
         # Business Rule: _handle_instance_check accepts TypeOriginSpecifier
         # object() is an instance, not a type - use type(object) instead
         custom_type = type("CustomType", (), {})
-        custom_type_spec: t.TypeOriginSpecifier = cast(
+        custom_type_spec: t.TypeHintSpecifier = cast(
             "t.TypeOriginSpecifier",
             custom_type,
         )
@@ -504,10 +500,10 @@ class TestuTypeChecker:
         accepted = (str,)
         # This should not crash, but may return False
         # Use cast to handle None case for testing
-        # MessageTypeSpecifier is defined as: str | type[t.Container]
+        # MessageTypeSpecifier is defined as: str | type[t.ContainerValue]
         result = u.Checker.can_handle_message_type(
             accepted,
-            cast("str | type[t.Container]", None),
+            cast("str | type[t.ContainerValue]", None),
         )
         assert isinstance(result, bool)
 

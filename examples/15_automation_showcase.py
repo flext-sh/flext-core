@@ -42,7 +42,7 @@ from flext_core import (
 class UserService(s[m.ConfigMap]):
     """Service demonstrating automatic context enrichment."""
 
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize with automatic context enrichment.
 
         s.__init__ automatically calls:
@@ -86,7 +86,7 @@ class UserService(s[m.ConfigMap]):
 class PaymentService(s[m.ConfigMap]):
     """Service demonstrating correlation ID tracking."""
 
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
@@ -160,16 +160,16 @@ class OrderService(s[m.ConfigMap]):
 
     _order_data: m.ConfigMap = PrivateAttr(default_factory=lambda: m.ConfigMap(root={}))
 
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize service."""
         super().__init__(**data)
 
     @override
     def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
-        order_data_dict: dict[str, t.ContainerValue] = dict(self._order_data.root)
+        order_data_dict: dict[str, t.Container] = dict(self._order_data.root)
         # Simple merge: new values override existing ones
-        merged: dict[str, t.ContainerValue] = dict(order_data_dict)
+        merged: dict[str, t.Container] = dict(order_data_dict)
         merged.update(
             {
                 "order_id": u.get(order_data_dict, "order_id", default="ord_123")
@@ -179,7 +179,7 @@ class OrderService(s[m.ConfigMap]):
         )
         order_data_dict = merged
 
-        def is_string_key(_k: str, _v: t.ContainerValue) -> bool:
+        def is_string_key(_k: str, _v: t.Container) -> bool:
             # k is already typed as str from dict[str, t.Container]
             return True
 
@@ -200,7 +200,7 @@ class OrderService(s[m.ConfigMap]):
         correlation_id: str | None = None,
     ) -> r[m.ConfigMap]:
         """Process order with automatic context enrichment."""
-        order_data_dict: dict[str, t.ContainerValue] = dict(self._order_data.root)
+        order_data_dict: dict[str, t.Container] = dict(self._order_data.root)
         order_data_dict["order_id"] = order_id
         order_data_dict["customer_id"] = customer_id
 
@@ -237,14 +237,14 @@ class AutomationService(s[m.ConfigMap]):
     - unwrap_or pattern: Lazy resource initialization
     """
 
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize automation service."""
         super().__init__(**data)
 
     @override
     def execute(
         self,
-        **_kwargs: t.ContainerValue,
+        **_kwargs: t.Container,
     ) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
         return r[m.ConfigMap].ok(
@@ -515,7 +515,7 @@ class AutomationService(s[m.ConfigMap]):
         """Configuration with Lazy Loading."""
         print("\n--- Configuration with Lazy Loading ---")
 
-        cache: dict[str, t.ContainerValue] = {}
+        cache: dict[str, t.Container] = {}
 
         def load_config() -> m.ConfigMap:
             if not cache:

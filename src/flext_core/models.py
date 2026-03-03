@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar, TypeAlias
+from typing import TypeAlias
 
 from flext_core import p, t
 from flext_core._models.base import FlextModelFoundation
@@ -39,7 +39,7 @@ class FlextModels:
     collect domain events, and validate inputs through Pydantic v2.
 
     Core concepts
-    - Entity: Domain instance with identity and lifecycle controls.
+    - Entity: Domain object with identity and lifecycle controls.
     - Value: Immutable value objects for pure operations.
     - AggregateRoot: Consistency boundary that aggregates events.
     - Command/Query: Message shapes consumed by dispatcher handlers.
@@ -195,7 +195,6 @@ class FlextModels:
     # =========================================================================
 
     Config: TypeAlias = FlextModelsConfig
-
     class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
         """Processing request — real re-export for pydantic-mypy compatibility."""
 
@@ -257,7 +256,6 @@ class FlextModels:
     # =========================================================================
 
     Collections = FlextModelsCollections
-
     class CollectionsCategories(FlextModelsCollections.Categories):
         """Collections categories — real re-export for pydantic-mypy compatibility."""
 
@@ -377,15 +375,32 @@ class FlextModels:
     # BASE CLASSES - Direct access for common usage
     # =========================================================================
 
-    ArbitraryTypesModel = FlextModelFoundation.ArbitraryTypesModel
-    StrictBoundaryModel = FlextModelFoundation.StrictBoundaryModel
-    FrozenStrictModel = FlextModelFoundation.FrozenStrictModel
-    TaggedModel = FlextModelFoundation.TaggedModel
-    IdentifiableMixin = FlextModelFoundation.IdentifiableMixin
-    TimestampableMixin = FlextModelFoundation.TimestampableMixin
-    TimestampedModel = FlextModelFoundation.TimestampedModel
-    VersionableMixin = FlextModelFoundation.VersionableMixin
-    Metadata = FlextModelFoundation.Metadata
+    class ArbitraryTypesModel(FlextModelFoundation.ArbitraryTypesModel):
+        """Arbitrary types model — real re-export for pydantic-mypy compatibility."""
+
+    class StrictBoundaryModel(FlextModelFoundation.StrictBoundaryModel):
+        """Strict boundary model — real re-export for pydantic-mypy compatibility."""
+
+    class FrozenStrictModel(FlextModelFoundation.FrozenStrictModel):
+        """Frozen strict model — real re-export for pydantic-mypy compatibility."""
+
+    class TaggedModel(FlextModelFoundation.TaggedModel):
+        """Tagged model — real re-export for pydantic-mypy compatibility."""
+
+    class IdentifiableMixin(FlextModelFoundation.IdentifiableMixin):
+        """Identifiable mixin — real re-export for pydantic-mypy compatibility."""
+
+    class TimestampableMixin(FlextModelFoundation.TimestampableMixin):
+        """Timestampable mixin — real re-export for pydantic-mypy compatibility."""
+
+    class TimestampedModel(FlextModelFoundation.TimestampedModel):
+        """Timestamped model — real re-export for pydantic-mypy compatibility."""
+
+    class VersionableMixin(FlextModelFoundation.VersionableMixin):
+        """Versionable mixin — real re-export for pydantic-mypy compatibility."""
+
+    class Metadata(FlextModelFoundation.Metadata):
+        """Metadata model — real re-export for pydantic-mypy compatibility."""
 
     # =========================================================================
     # HANDLER MODELS - Direct access for common usage
@@ -394,32 +409,42 @@ class FlextModels:
     class Handler(FlextModelsCqrs.Handler):
         """Handler base class - real inheritance."""
 
-        RegistrationDetails: ClassVar[type[FlextModelsHandler.RegistrationDetails]] = (
-            FlextModelsHandler.RegistrationDetails
-        )
-        RegistrationResult: ClassVar[type[FlextModelsHandler.RegistrationResult]] = (
-            FlextModelsHandler.RegistrationResult
-        )
-        RegistrationRequest: ClassVar[type[FlextModelsHandler.RegistrationRequest]] = (
-            FlextModelsHandler.RegistrationRequest
-        )
-        ExecutionContext: ClassVar[type[FlextModelsHandler.ExecutionContext]] = (
-            FlextModelsHandler.ExecutionContext
-        )
-        DecoratorConfig: ClassVar[type[FlextModelsHandler.DecoratorConfig]] = (
-            FlextModelsHandler.DecoratorConfig
-        )
-        FactoryDecoratorConfig: ClassVar[
-            type[FlextModelsContainer.FactoryDecoratorConfig]
-        ] = FlextModelsContainer.FactoryDecoratorConfig
+        class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
+            """Handler registration details - real inheritance."""
+
+        class RegistrationResult(FlextModelsHandler.RegistrationResult):
+            """Handler registration result - real inheritance."""
+
+        class RegistrationRequest(FlextModelsHandler.RegistrationRequest):
+            """Handler registration request - real inheritance."""
+
+        class ExecutionContext(FlextModelsHandler.ExecutionContext):
+            """Handler execution context - real inheritance."""
+
+        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
+            """Handler decorator configuration - direct class for mypy compatibility."""
+
+        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+            """Handler factory decorator configuration - direct class for mypy compatibility."""
 
     # Direct aliases for top-level access
-    HandlerDecoratorConfig = Handler.DecoratorConfig
-    HandlerFactoryDecoratorConfig = Handler.FactoryDecoratorConfig
-    HandlerRegistrationDetails = Handler.RegistrationDetails
-    HandlerRegistrationResult = Handler.RegistrationResult
-    HandlerExecutionContext = Handler.ExecutionContext
-    HandlerRegistrationRequest = Handler.RegistrationRequest
+    class HandlerDecoratorConfig(Handler.DecoratorConfig):
+        """Handler decorator config — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerFactoryDecoratorConfig(Handler.FactoryDecoratorConfig):
+        """Handler factory decorator config — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerRegistrationDetails(Handler.RegistrationDetails):
+        """Handler registration details — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerRegistrationResult(Handler.RegistrationResult):
+        """Handler registration result — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerExecutionContext(Handler.ExecutionContext):
+        """Handler execution context — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerRegistrationRequest(Handler.RegistrationRequest):
+        """Handler registration request — real re-export for pydantic-mypy compatibility."""
 
     class CqrsHandler(Handler):
         """CQRS handler — real re-export for pydantic-mypy compatibility."""

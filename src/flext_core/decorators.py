@@ -487,7 +487,7 @@ class FlextDecorators:
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, t.Scalar | None] = {
+                    start_extra: dict[str, t.Scalar] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -516,7 +516,7 @@ class FlextDecorators:
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, t.Scalar | None] = {
+                    completion_extra: dict[str, t.Scalar] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -901,8 +901,8 @@ class FlextDecorators:
                     ),
                 )
                 try:
-                    retry_args: tuple[t.Container, ...] = tuple(args)
-                    retry_kwargs: Mapping[str, t.Container] = dict(kwargs)
+                    retry_args: tuple[object, ...] = tuple(args)
+                    retry_kwargs: Mapping[str, object] = dict(kwargs)
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -956,7 +956,7 @@ class FlextDecorators:
         logger: FlextLogger
 
     @staticmethod
-    def _has_flext_logger(value: t.Container) -> TypeGuard[_HasLogger]:
+    def _has_flext_logger(value: object) -> TypeGuard[_HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger")
@@ -964,7 +964,7 @@ class FlextDecorators:
 
     @staticmethod
     def _resolve_logger(
-        args: tuple[t.Container, ...],
+        args: tuple[object, ...],
         func: Callable[P, R],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
@@ -984,8 +984,8 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[t.Container, ...],
-        kwargs: Mapping[str, t.Container],
+        args: tuple[object, ...],
+        kwargs: Mapping[str, object],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -1493,10 +1493,7 @@ class FlextDecorators:
                 try:
                     # Bind context variables to global logging context
                     if context_vars:
-                        ctx: dict[str, t.MetadataValue] = {
-                            k: v for k, v in context_vars.items() if v is not None
-                        }
-                        bind_result = FlextLogger.bind_global_context(**ctx)
+                        bind_result = FlextLogger.bind_global_context(**context_vars)
                         if bind_result.is_failure:
                             logger.warning(
                                 "global_context_binding_failed",

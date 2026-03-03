@@ -157,15 +157,15 @@ class TestAutomatedFlextExceptions:
             cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cast("r[t.Container]", cleanup_result),
+                    cast("r[t.ContainerValue]", cleanup_result),
                     "FlextExceptions cleanup failed",
                 )
 
     def _execute_exceptions_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
-    ) -> r[t.ContainerValue]:
+        input_data: Mapping[str, t.Container],
+    ) -> r[t.Container]:
         """Execute a test operation on exceptions instance.
 
         This method should be customized based on the actual exceptions API.
@@ -175,17 +175,17 @@ class TestAutomatedFlextExceptions:
             # Generic operation - adapt based on actual exceptions interface
             process = getattr(instance, "process", None)
             if callable(process):
-                return cast("r[t.Container]", process(dict(input_data)))
+                return cast("r[t.ContainerValue]", process(dict(input_data)))
             execute = getattr(instance, "execute", None)
             if callable(execute):
-                return cast("r[t.Container]", execute(dict(input_data)))
+                return cast("r[t.ContainerValue]", execute(dict(input_data)))
             handle = getattr(instance, "handle", None)
             if callable(handle):
-                return cast("r[t.Container]", handle(dict(input_data)))
+                return cast("r[t.ContainerValue]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.ContainerValue].ok(cast("t.Container", instance))
+            return r[t.Container].ok(cast("t.ContainerValue", instance))
         except Exception as e:
-            return r[t.ContainerValue].fail(f"FlextExceptions operation failed: {e}")
+            return r[t.Container].fail(f"FlextExceptions operation failed: {e}")
 
     @pytest.fixture
     def test_exceptions_instance(self) -> object:

@@ -10,12 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
-from flext_core import FlextRuntime, p, r, t
-
-if TYPE_CHECKING:
-    from flext_core import m
+from flext_core import FlextRuntime, m, p, r, t
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -314,7 +311,7 @@ class FlextUtilities:
     def get(
         data: p.AccessibleData,
         key: str,
-    ) -> t.ContainerValue | None: ...
+    ) -> t.Container | None: ...
 
     @staticmethod
     @overload
@@ -358,16 +355,16 @@ class FlextUtilities:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.ContainerValue | None,
-    ) -> t.ContainerValue | None: ...
+        default: t.Container | None,
+    ) -> t.Container | None: ...
 
     @staticmethod
     def get(
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.ContainerValue | None = None,
-    ) -> t.ContainerValue | None:
+        default: t.Container | None = None,
+    ) -> t.Container | None:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)
 

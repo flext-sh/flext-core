@@ -41,11 +41,11 @@ class FlextInfraDependencyDetectorModels(m):
         """Workspace-level dependency analysis report aggregating all projects."""
 
         workspace: str
-        projects: dict[str, dict[str, t.ContainerValue]] = Field(
+        projects: dict[str, dict[str, t.Container]] = Field(
             default_factory=dict,
         )
-        pip_check: dict[str, t.Scalar | None] | None = None
-        dependency_limits: dict[str, t.Scalar | None] | None = None
+        pip_check: dict[str, t.Scalar] | None = None
+        dependency_limits: dict[str, t.Scalar] | None = None
 
 
 ddm = FlextInfraDependencyDetectorModels
@@ -172,7 +172,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         do_typings = bool(args.typings) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
 
-        projects_report: dict[str, dict[str, t.ContainerValue]] = {}
+        projects_report: dict[str, dict[str, t.Container]] = {}
         report_model = ddm.WorkspaceDependencyReport(
             workspace=str(root),
             projects=projects_report,
@@ -224,7 +224,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                 projects_report[project_name]["typings"] = typing_dict
 
                 to_add_obj = typing_dict.get("to_add")
-                to_add: list[t.ContainerValue] = (
+                to_add: list[t.Container] = (
                     to_add_obj if isinstance(to_add_obj, list) else []
                 )
                 if apply_typings and to_add and not args.dry_run:

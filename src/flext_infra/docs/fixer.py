@@ -101,7 +101,7 @@ class FlextInfraDocFixer:
                 rel = md.relative_to(scope.path).as_posix()
                 items.append(FixItem(file=rel, links=item.links, toc=item.toc))
 
-        changes_payload: list[Mapping[str, t.ContainerValue]] = [
+        changes_payload: list[Mapping[str, t.Container]] = [
             {
                 "file": item.file,
                 "links": item.links,
@@ -109,7 +109,7 @@ class FlextInfraDocFixer:
             }
             for item in items
         ]
-        payload: Mapping[str, t.ContainerValue] = {
+        payload: Mapping[str, t.Container] = {
             "summary": {
                 "scope": scope.name,
                 "changed_files": len(items),

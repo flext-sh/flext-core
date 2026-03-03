@@ -63,16 +63,16 @@ class ResultHelpers:
         return any(value.startswith(p) for p in (prefix, *prefixes))
 
     @staticmethod
-    def not_(value: t.ContainerValue) -> bool:
+    def not_(value: t.Container) -> bool:
         return not bool(value)
 
     @staticmethod
-    def any_(*values: t.ContainerValue) -> bool:
+    def any_(*values: t.Container) -> bool:
         return any(bool(v) for v in values)
 
     @staticmethod
     def empty(
-        items: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue] | str | None,
+        items: Sequence[t.Container] | Mapping[str, t.Container] | str | None,
     ) -> bool:
         if isinstance(items, r):
             if items.is_failure:
@@ -86,8 +86,8 @@ class ResultHelpers:
 
     @staticmethod
     def count(
-        items: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue],
-        predicate: Callable[[t.ContainerValue], bool] | None = None,
+        items: Sequence[t.Container] | Mapping[str, t.Container],
+        predicate: Callable[[t.Container], bool] | None = None,
     ) -> int:
         if predicate is None:
             return len(items)

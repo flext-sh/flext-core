@@ -30,7 +30,7 @@ class TypeGuardScenario:
     """Type guard test scenario."""
 
     name: str
-    value: t.ContainerValue
+    value: t.Container
     expected_result: bool
 
 
@@ -39,7 +39,7 @@ class NormalizeScenario:
     """Normalize to metadata value test scenario."""
 
     name: str
-    value: t.ContainerValue
+    value: t.Container
     expected_type: type
     expected_value: object | None = None
 
@@ -153,7 +153,7 @@ class TypeGuardsScenarios:
         ),  # Dict becomes JSON string
         NormalizeScenario(
             name="dict_with_non_string_key",
-            value=cast("t.Container", {123: "value"}),
+            value=cast("t.ContainerValue", {123: "value"}),
             expected_type=str,
         ),
         # List types
@@ -182,23 +182,23 @@ class TypeGuardsScenarios:
         ),
         NormalizeScenario(
             name="list_with_complex_object",
-            value=cast("t.Container", [object()]),
+            value=cast("t.ContainerValue", [object()]),
             expected_type=list,
         ),
         # Other types (converted to string)
         NormalizeScenario(
             name="complex_object",
-            value=cast("t.Container", object()),
+            value=cast("t.ContainerValue", object()),
             expected_type=str,
         ),
         NormalizeScenario(
             name="set_value",
-            value=cast("t.Container", cast("object", {1, 2, 3})),
+            value=cast("t.ContainerValue", cast("object", {1, 2, 3})),
             expected_type=str,
         ),
         NormalizeScenario(
             name="tuple_value",
-            value=cast("t.Container", (1, 2, 3)),
+            value=cast("t.ContainerValue", (1, 2, 3)),
             expected_type=str,
         ),
     ]
@@ -267,7 +267,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         """Test normalize_to_metadata_value with dict having non-string keys."""
-        value = cast("t.Container", {123: "value", "key": "test"})
+        value = cast("t.ContainerValue", {123: "value", "key": "test"})
         result = u.normalize_to_metadata_value(value)
 
         # Dicts are now serialized to JSON strings
@@ -284,7 +284,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         TypeError during json.dumps serialization.
         """
         value = cast(
-            "t.Container",
+            "t.ContainerValue",
             {
                 "str": "value",
                 "int": 42,
@@ -300,7 +300,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
     def test_normalize_list_with_complex_items(self) -> None:
         """Test normalize_to_metadata_value with list containing complex items."""
         value = cast(
-            "t.Container",
+            "t.ContainerValue",
             [
                 "string",
                 42,
@@ -315,7 +315,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
 
         assert isinstance(result, list)
         # Type narrowing: result is list after assert_result_matches_expected
-        result_list = cast("list[t.MetadataValue]", result)
+        result_list = cast("list[t.MetadataAttributeValue]", result)
         assert result_list[0] == "string"
         assert result_list[1] == "42"  # int becomes str via _is_scalar
         assert result_list[2] == "True"  # bool becomes str via _is_scalar
@@ -333,7 +333,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             def __str__(self) -> str:
                 return "custom_object"
 
-        value = cast("t.Container", cast("object", CustomObject()))
+        value = cast("t.ContainerValue", cast("object", CustomObject()))
         result = u.normalize_to_metadata_value(value)
 
         assert isinstance(result, str)

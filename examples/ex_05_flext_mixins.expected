@@ -1,54 +1,37 @@
 [result_and_conversion]
-ok.unwrap_or: {'qahf': 'trxcka'}
-ok.value_matches: True
-fail.error: 'fnafqofp'
-fail.error_code: 'vausie'
-fail.error_matches: True
-fail.error_code_matches: True
-to_dict.dict: {'hcgc': 'lvejr', 'psbf': 285}
-to_dict.none: {}
-to_dict.dict_matches: True
-to_dict.none_is_empty: True
-ensure_result.raw: 719
-ensure_result.existing: 960
-ensure_result.raw_matches: True
-ensure_result.existing_matches: True
-traverse.ok: [350, 332]
-traverse.fail_fast: 'odd:37'
-traverse.collect: 'odd:37; odd:311'
-traverse.ok_matches: True
-traverse.fail_fast_matches: True
-traverse.collect_has_both_errors: False
-accumulate_errors.ok: [82, 22]
-accumulate_errors.fail: 'ngmhy; rfitb'
-accumulate_errors.ok_matches: True
-accumulate_errors.fail_matches: False
+ok.unwrap_or: "{'k': 'v'}"
+fail.error: 'failure'
+fail.error_code: 'E_EX'
+to_dict.dict: "{'x': 1, 'y': '2'}"
+to_dict.none: '{}'
+ensure_result.raw: '99'
+ensure_result.existing: '7'
+traverse.ok: '[2, 4]'
+traverse.fail_fast: 'odd:3'
+traverse.collect: 'odd:1; odd:3'
+accumulate_errors.ok: '[1, 2]'
+accumulate_errors.fail: 'e1; e2'
 
 [runtime_properties_and_tracking]
 container.type: 'FlextContainer'
-logger.is_flext_logger: True
+logger.type: 'FlextLogger'
 context.type: 'FlextContext'
 config.is_flext_settings: True
 const.scope_operation: 'operation'
-track.success.metrics: {'has_duration': False, 'operation_count': 1}
-track.failure.message: 'vukbxosf'
-track.failure.matches: True
+track.success.metrics: {'has_duration': False, 'operation_count': '1'}
+track.failure.message: 'boom'
 
 [cqrs_validation_protocols]
 metrics.record_metric: True
 metrics.get_metrics.success: True
-metrics.get_metrics.value: {'mxqdd': 48}
-metrics.get_metrics.matches: True
+metrics.get_metrics.value: "{'hits': 3}"
 context_stack.push_context: True
 context_stack.current_context.before_pop: True
 context_stack.pop_context.success: True
-context_stack.pop_context.value: {'handler_mode': 'query', 'handler_name': 'ogpx'}
-context_stack.pop_context.matches: True
+context_stack.pop_context.value: "{'handler_name': 'Q', 'handler_mode': 'query'}"
 context_stack.current_context.after_pop: True
 validation.ok: True
-validation.fail: 'Validation failed: fzncbcquk'
-validation.ok_matches: True
-validation.fail_matches: False
+validation.fail: 'Validation failed: bad-input'
 protocol.is_handler.good: True
 protocol.is_handler.bad: False
 protocol.is_service: True

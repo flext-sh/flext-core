@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
-from datetime import datetime
 from enum import StrEnum
 from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 
@@ -34,22 +33,22 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _to_batch_scalar(
-        value: t.ContainerValue,
+        value: t.Container,
     ) -> t.Scalar | None:
-        if isinstance(value, (str, int, float, bool, datetime)):
+        if value is None or isinstance(value, t.Scalar):
             return value
         return str(value)
 
     @staticmethod
     def _to_batch_scalars(
-        values: Sequence[t.ContainerValue],
+        values: Sequence[t.Container],
     ) -> list[t.Scalar | None]:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
-    def _coerce_guard_value(value: t.ContainerValue) -> t.ContainerValue:
-        guard_value_adapter: TypeAdapter[t.ContainerValue] = TypeAdapter(
-            t.ContainerValue,
+    def _coerce_guard_value(value: t.Container) -> t.Container:
+        guard_value_adapter: TypeAdapter[t.Container] = TypeAdapter(
+            t.Container,
         )
         try:
             return guard_value_adapter.validate_python(value)
@@ -62,16 +61,16 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _is_general_value_dict(
-        value: t.ContainerValue,
-    ) -> TypeGuard[dict[str, t.ContainerValue]]:
-        """Type guard to narrow dict to PayloadValue dict."""
+        value: t.Container,
+    ) -> TypeGuard[dict[str, t.Container]]:
+        """Type guard to narrow dict to ContainerValue dict."""
         return isinstance(value, dict)
 
     @staticmethod
     def _is_general_value_list(
-        value: t.ContainerValue,
-    ) -> TypeGuard[list[t.ContainerValue]]:
-        """Type guard to narrow list to PayloadValue list."""
+        value: t.Container,
+    ) -> TypeGuard[list[t.Container]]:
+        """Type guard to narrow list to ContainerValue list."""
         return value.__class__ is list
 
     # =========================================================================
@@ -244,9 +243,9 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: MutableMapping[str, t.ContainerValue],
+        result: MutableMapping[str, t.Container],
         key: str,
-        value: t.ContainerValue,
+        value: t.Container,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -270,7 +269,7 @@ class FlextUtilitiesCollection:
         return r[bool].ok(value=True)
 
     @staticmethod
-    def _is_empty_value(value: t.ContainerValue) -> bool:
+    def _is_empty_value(value: t.Container) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
@@ -284,11 +283,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge(
-        base: dict[str, t.ContainerValue],
-        other: dict[str, t.ContainerValue],
+        base: dict[str, t.Container],
+        other: dict[str, t.Container],
         *,
         strategy: str = "deep",
-    ) -> r[dict[str, t.ContainerValue]]:
+    ) -> r[dict[str, t.Container]]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -302,23 +301,23 @@ class FlextUtilitiesCollection:
         """
         try:
             if strategy in {"replace", "override"}:
-                result: dict[str, t.ContainerValue] = dict(base)
+                result: dict[str, t.Container] = dict(base)
                 result.update(other)
-                return r[t.ConfigurationMapping].ok(result)
+                return r[dict[str, t.Container]].ok(result)
 
             if strategy == "filter_none":
                 result = dict(base)
                 for key, value in other.items():
                     if value is not None:
                         result[key] = value
-                return r[t.ConfigurationMapping].ok(result)
+                return r[dict[str, t.Container]].ok(result)
 
             if strategy in {"filter_empty", "filter_both"}:
                 result = dict(base)
                 for key, value in other.items():
                     if not FlextUtilitiesCollection._is_empty_value(value):
                         result[key] = value
-                return r[t.ConfigurationMapping].ok(result)
+                return r[dict[str, t.Container]].ok(result)
 
             if strategy == "append":
                 result = dict(base)
@@ -333,7 +332,7 @@ class FlextUtilitiesCollection:
                         result[key] = current_val + value
                     else:
                         result[key] = value
-                return r[t.ConfigurationMapping].ok(result)
+                return r[dict[str, t.Container]].ok(result)
 
             if strategy == "deep":
                 result = base.copy()
@@ -344,16 +343,16 @@ class FlextUtilitiesCollection:
                         value,
                     )
                     if merge_result.is_failure:
-                        return r[t.ConfigurationMapping].fail(
+                        return r[dict[str, t.Container]].fail(
                             merge_result.error or "Unknown error",
                         )
-                return r[t.ConfigurationMapping].ok(result)
+                return r[dict[str, t.Container]].ok(result)
 
-            return r[t.ConfigurationMapping].fail(
+            return r[dict[str, t.Container]].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         except (TypeError, ValueError, KeyError, AttributeError) as e:
-            return r[t.ConfigurationMapping].fail(f"Merge failed: {e}")
+            return r[dict[str, t.Container]].fail(f"Merge failed: {e}")
 
     @staticmethod
     def batch(
@@ -387,7 +386,7 @@ class FlextUtilitiesCollection:
         _ = progress_interval
         do_flatten = flatten
         error_mode = on_error or "fail"
-        results: list[t.ContainerValue] = []
+        results: list[t.Container] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
 
@@ -429,7 +428,7 @@ class FlextUtilitiesCollection:
                     continue
 
                 try:
-                    # Narrow result_raw to GuardInputValue via TypeGuard
+                    # Narrow result_raw to ContainerValue via TypeGuard
                     if FlextUtilitiesGuards.is_general_value_type(result_raw):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
                             result_raw,
@@ -442,7 +441,7 @@ class FlextUtilitiesCollection:
                     direct_result,
                 ):
                     # Extend results with all items from the list
-                    # Convert each item to PayloadValue
+                    # Convert each item to ContainerValue
                     results.extend(direct_result)
                 else:
                     results.append(direct_result)
@@ -547,26 +546,26 @@ class FlextUtilitiesCollection:
             return r[tuple[StrEnum, ...]].fail(f"Parse sequence failed: {e}")
 
     @staticmethod
-    def _coerce_value_to_str(value: t.ContainerValue) -> str:
+    def _coerce_value_to_str(value: t.Container) -> str:
         """Coerce a value to string."""
         return str(value)
 
     @staticmethod
-    def _coerce_value_to_int(value: t.ContainerValue) -> int:
+    def _coerce_value_to_int(value: t.Container) -> int:
         """Coerce a value to int."""
         if isinstance(value, int) and not isinstance(value, bool):
             return value
         return int(str(value))
 
     @staticmethod
-    def _coerce_value_to_float(value: t.ContainerValue) -> float:
+    def _coerce_value_to_float(value: t.Container) -> float:
         """Coerce a value to float."""
         if isinstance(value, float):
             return value
         return float(str(value))
 
     @staticmethod
-    def _coerce_value_to_bool(value: t.ContainerValue) -> bool:
+    def _coerce_value_to_bool(value: t.Container) -> bool:
         """Coerce a value to bool."""
         if isinstance(value, bool):
             return value
@@ -581,7 +580,7 @@ class FlextUtilitiesCollection:
     ]:
         """Create validator that coerces dict values to str."""
 
-        def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, str]:
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, str]:
             return {
                 k: FlextUtilitiesCollection._coerce_value_to_str(v)
                 for k, v in data.items()
@@ -596,7 +595,7 @@ class FlextUtilitiesCollection:
     ]:
         """Create validator that coerces dict values to int."""
 
-        def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, int]:
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, int]:
             return {
                 k: FlextUtilitiesCollection._coerce_value_to_int(v)
                 for k, v in data.items()
@@ -611,7 +610,7 @@ class FlextUtilitiesCollection:
     ]:
         """Create validator that coerces dict values to float."""
 
-        def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, float]:
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, float]:
             return {
                 k: FlextUtilitiesCollection._coerce_value_to_float(v)
                 for k, v in data.items()
@@ -626,7 +625,7 @@ class FlextUtilitiesCollection:
     ]:
         """Create validator that coerces dict values to bool."""
 
-        def validator(data: Mapping[str, t.ContainerValue]) -> Mapping[str, bool]:
+        def validator(data: Mapping[str, t.Container]) -> Mapping[str, bool]:
             return {
                 k: FlextUtilitiesCollection._coerce_value_to_bool(v)
                 for k, v in data.items()
@@ -637,10 +636,10 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[t.ConfigurationMapping], dict[str, E]]:
+    ) -> Callable[[dict[str, t.Container]], dict[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
-        def validator(data: Mapping[str, t.ContainerValue]) -> dict[str, E]:
+        def validator(data: dict[str, t.Container]) -> dict[str, E]:
             result: dict[str, E] = {}
             for k, v in data.items():
                 if isinstance(v, enum_type):
@@ -657,37 +656,37 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_list_to_str() -> Callable[[Sequence[t.ContainerValue]], list[str]]:
+    def coerce_list_to_str() -> Callable[[Sequence[t.Container]], list[str]]:
         """Create validator that coerces sequence values to str."""
 
-        def validator(data: Sequence[t.ContainerValue]) -> list[str]:
+        def validator(data: Sequence[t.Container]) -> list[str]:
             return [FlextUtilitiesCollection._coerce_value_to_str(v) for v in data]
 
         return validator
 
     @staticmethod
-    def coerce_list_to_int() -> Callable[[Sequence[t.ContainerValue]], list[int]]:
+    def coerce_list_to_int() -> Callable[[Sequence[t.Container]], list[int]]:
         """Create validator that coerces sequence values to int."""
 
-        def validator(data: Sequence[t.ContainerValue]) -> list[int]:
+        def validator(data: Sequence[t.Container]) -> list[int]:
             return [FlextUtilitiesCollection._coerce_value_to_int(v) for v in data]
 
         return validator
 
     @staticmethod
-    def coerce_list_to_float() -> Callable[[Sequence[t.ContainerValue]], list[float]]:
+    def coerce_list_to_float() -> Callable[[Sequence[t.Container]], list[float]]:
         """Create validator that coerces sequence values to float."""
 
-        def validator(data: Sequence[t.ContainerValue]) -> list[float]:
+        def validator(data: Sequence[t.Container]) -> list[float]:
             return [FlextUtilitiesCollection._coerce_value_to_float(v) for v in data]
 
         return validator
 
     @staticmethod
-    def coerce_list_to_bool() -> Callable[[Sequence[t.ContainerValue]], list[bool]]:
+    def coerce_list_to_bool() -> Callable[[Sequence[t.Container]], list[bool]]:
         """Create validator that coerces sequence values to bool."""
 
-        def validator(data: Sequence[t.ContainerValue]) -> list[bool]:
+        def validator(data: Sequence[t.Container]) -> list[bool]:
             return [FlextUtilitiesCollection._coerce_value_to_bool(v) for v in data]
 
         return validator
@@ -695,10 +694,10 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[Sequence[t.ContainerValue]], list[E]]:
+    ) -> Callable[[Sequence[t.Container]], list[E]]:
         """Create validator that coerces sequence values to a StrEnum type."""
 
-        def validator(data: Sequence[t.ContainerValue]) -> list[E]:
+        def validator(data: Sequence[t.Container]) -> list[E]:
             result: list[E] = []
             for v in data:
                 if isinstance(v, enum_type):
@@ -883,7 +882,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.ContainerValue], dict[str, E]]:
+    ) -> Callable[[t.Container], dict[str, E]]:
         """Create validator that coerces dict values to a StrEnum type.
 
         Raises:
@@ -892,13 +891,13 @@ class FlextUtilitiesCollection:
 
         """
 
-        def validator(data: t.ContainerValue) -> dict[str, E]:
+        def validator(data: t.Container) -> dict[str, E]:
             if not isinstance(data, dict):
                 msg = f"Expected dict, got {data.__class__.__name__}"
                 raise TypeError(msg)
 
             result: dict[str, E] = {}
-            # Iterate directly using items() - pyright reports partial unknown for PayloadValue
+            # Iterate directly using items() - pyright reports partial unknown for ContainerValue
             # This is acceptable as we validate each value with isinstance checks
             for k_raw in data:
                 v_raw = data[k_raw]
@@ -927,7 +926,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.ContainerValue], list[E]]:
+    ) -> Callable[[t.Container], list[E]]:
         """Create validator that coerces list values to a StrEnum type.
 
         Raises:
@@ -936,14 +935,14 @@ class FlextUtilitiesCollection:
 
         """
 
-        def validator(data: t.ContainerValue) -> list[E]:
+        def validator(data: t.Container) -> list[E]:
             # Check for sequence type (but not str which is also a sequence)
             if isinstance(data, str) or not isinstance(data, Sequence):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
 
             result: list[E] = []
-            # Iterate directly - pyright reports partial unknown for PayloadValue
+            # Iterate directly - pyright reports partial unknown for ContainerValue
             # This is acceptable as we validate each value with isinstance checks
             for v_raw in data:
                 if isinstance(v_raw, enum_cls):
@@ -1082,12 +1081,12 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_mapping_items[K, V](
-        mapping: Mapping[K, t.ContainerValue],
-    ) -> list[tuple[str, t.ContainerValue]]:
+        mapping: Mapping[K, t.Container],
+    ) -> list[tuple[str, t.Container]]:
         """Extract mapping items as typed list for iteration.
 
         Helper function to properly type narrow Mapping.items() for pyright.
-        Converts keys to strings and values to PayloadValue.
+        Converts keys to strings and values to ContainerValue.
 
         Args:
             mapping: Mapping to extract items from
@@ -1096,7 +1095,7 @@ class FlextUtilitiesCollection:
             List of (key, value) tuples with proper typing
 
         """
-        result: list[tuple[str, t.ContainerValue]] = []
+        result: list[tuple[str, t.Container]] = []
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -1107,8 +1106,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_callable_mapping[K](
-        mapping: Mapping[K, Callable[[], t.ContainerValue]],
-    ) -> dict[str, Callable[[], t.ContainerValue]]:
+        mapping: Mapping[K, Callable[[], t.Container]],
+    ) -> dict[str, Callable[[], t.Container]]:
         """Extract mapping of callables for resources/factories.
 
         Helper function to properly type narrow callable mappings for pyright.
@@ -1121,7 +1120,7 @@ class FlextUtilitiesCollection:
             Dict mapping string keys to callable functions
 
         """
-        result: dict[str, Callable[[], t.ContainerValue]] = {}
+        result: dict[str, Callable[[], t.Container]] = {}
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]

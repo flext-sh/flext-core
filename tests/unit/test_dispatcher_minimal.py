@@ -103,7 +103,7 @@ def test_register_handler_without_route_fails() -> None:
     class BareHandler:
         """Callable handler lacking routing attributes — should fail registration."""
 
-        def __call__(self, msg: t.ContainerValue) -> t.ContainerValue:
+        def __call__(self, msg: t.Container) -> t.Container:
             return "bare"
 
     res = dispatcher.register_handler(BareHandler())

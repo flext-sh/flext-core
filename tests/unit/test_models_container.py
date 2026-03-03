@@ -42,7 +42,7 @@ def _service_reg_with_metadata(
 
 def _factory_reg_with_metadata(
     name: str,
-    factory: Callable[[], t.Scalar | None],
+    factory: Callable[[], t.Scalar],
     metadata: object,
 ) -> m.Container.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
@@ -75,7 +75,7 @@ class ContainerModelsScenarios:
         ([1, 2, 3], False),
     ]
 
-    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, t.ContainerValue]]] = [
+    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, t.Container]]] = [
         {},
         {"enable_singleton": False},
         {"enable_factory_caching": False},
@@ -186,7 +186,7 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test FactoryRegistration metadata validation with various types."""
 
-        def factory() -> t.Scalar | None:
+        def factory() -> t.Scalar:
             return "test"
 
         if should_pass:
@@ -210,7 +210,7 @@ class TestFlextModelsContainer:
     def test_factory_registration_defaults(self) -> None:
         """Test FactoryRegistration default values."""
 
-        def factory() -> t.Scalar | None:
+        def factory() -> t.Scalar:
             return "value"
 
         registration = m.Container.FactoryRegistration(
@@ -231,7 +231,7 @@ class TestFlextModelsContainer:
     def test_factory_registration_with_all_fields(self) -> None:
         """Test FactoryRegistration with all fields populated."""
 
-        def factory() -> t.Scalar | None:
+        def factory() -> t.Scalar:
             return "created"
 
         metadata = m.Metadata(attributes={"type": "factory"})
@@ -257,7 +257,7 @@ class TestFlextModelsContainer:
     )
     def test_container_config_creation(
         self,
-        config_dict: dict[str, t.ContainerValue],
+        config_dict: dict[str, t.Container],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         # ContainerConfig accepts keyword arguments directly
@@ -352,7 +352,7 @@ class TestFlextModelsContainer:
     def test_factory_registration_metadata_none_handling(self) -> None:
         """Test FactoryRegistration handles None metadata correctly."""
 
-        def factory() -> t.Scalar | None:
+        def factory() -> t.Scalar:
             return "value"
 
         registration = m.Container.FactoryRegistration(
@@ -414,7 +414,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             ),
         )
         assert isinstance(result, m.Metadata)
-        # Nested dicts are normalized to t.Container
+        # Nested dicts are normalized to t.ContainerValue
         assert "nested" in result.attributes
 
     def test_normalize_to_metadata_invalid_type(self) -> None:

@@ -77,7 +77,7 @@ class ModelConversionScenario:
 
     name: str
     scenario_type: ModelConversionScenarioType
-    input_value: t.ContainerValue
+    input_value: t.Container
     expected_output: m.ConfigMap
 
 
@@ -87,7 +87,7 @@ class ResultHandlingScenario:
 
     name: str
     scenario_type: ResultHandlingScenarioType
-    input_value: t.ContainerValue
+    input_value: t.Container
 
 
 class MixinScenarios:

@@ -19,7 +19,14 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult, t, u
+from tests.typings import TestsFlextTypes
 
+# TypedDict definitions from consolidated test typings
+FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
+FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
+MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
+
+# Type alias for test functions
 TestFunction = Callable[[object], None]
 
 
@@ -50,7 +57,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, t.ContainerValue]) -> None:
+    def __init__(self, name: str, data: MockScenarioData) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
@@ -68,16 +75,16 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: dict[str, t.ContainerValue] = {}
-        self._when: dict[str, t.ContainerValue] = {}
-        self._then: dict[str, t.ContainerValue] = {}
+        self._given: dict[str, t.Container] = {}
+        self._when: dict[str, t.Container] = {}
+        self._then: dict[str, t.Container] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
     def given(
         self,
         _description: str,
-        **kwargs: t.ContainerValue,
+        **kwargs: t.Container,
     ) -> GivenWhenThenBuilder:
         """Given method.
 
@@ -91,7 +98,7 @@ class GivenWhenThenBuilder:
     def when(
         self,
         _description: str,
-        **kwargs: t.ContainerValue,
+        **kwargs: t.Container,
     ) -> GivenWhenThenBuilder:
         """When method.
 
@@ -105,7 +112,7 @@ class GivenWhenThenBuilder:
     def then(
         self,
         _description: str,
-        **kwargs: t.ContainerValue,
+        **kwargs: t.Container,
     ) -> GivenWhenThenBuilder:
         """Then method.
 
@@ -195,7 +202,7 @@ class GivenWhenThenBuilder:
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
 
-        scenario_data: dict[str, t.ContainerValue] = {
+        scenario_data: MockScenarioData = {
             "given": given_converted,
             "when": when_converted,
             "then": then_converted,
@@ -211,8 +218,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: dict[str, t.ContainerValue] = {}
-        self._validation_rules: dict[str, t.ContainerValue] = {}
+        self._data: dict[str, t.Container] = {}
+        self._validation_rules: dict[str, t.Container] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -234,7 +241,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: t.ContainerValue) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: t.Container) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -266,7 +273,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs: t.ContainerValue) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs: t.Container) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:
@@ -278,7 +285,7 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> dict[str, t.ContainerValue]:
+    def build(self) -> dict[str, t.Container]:
         """Build method.
 
         Returns:
@@ -295,9 +302,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[dict[str, str]] = []
-        self._success_cases: list[dict[str, str]] = []
-        self._failure_cases: list[dict[str, str]] = []
+        self._cases: list[FixtureCaseDict] = []
+        self._success_cases: list[FixtureCaseDict] = []
+        self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(
         self,
@@ -309,12 +316,12 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        cast("FixtureCaseDict", kwargs)  # noqa: F821
+        cast("FixtureCaseDict", kwargs)
         return self
 
     def add_success_cases(
         self,
-        cases: list[dict[str, str]],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -327,7 +334,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[dict[str, str]],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -338,7 +345,7 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[dict[str, str]]:
+    def build(self) -> list[FixtureCaseDict]:
         """Build method.
 
         Returns:
@@ -382,15 +389,18 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[t.ContainerValue]
-        | dict[str, t.ContainerValue]
+        data: list[t.Container]
+        | dict[str, t.Container]
         | str
         | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
         self.data: (
-            list[t.ContainerValue] | t.ConfigurationMapping | str | tuple[object, ...]
+            list[t.Container]
+            | dict[str, t.Container]
+            | str
+            | tuple[object, ...]
         ) = data
         self._assertions: list[Callable[[], None]] = []
 
@@ -448,8 +458,8 @@ class AssertionBuilder:
         self,
         condition: Callable[
             [
-                list[t.ContainerValue]
-                | t.ConfigurationMapping
+                list[t.Container]
+                | dict[str, t.Container]
                 | str
                 | tuple[object, ...],
             ],
@@ -566,7 +576,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, t.ContainerValue] = {
+        test_data: dict[str, t.Container] = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -585,7 +595,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: dict[str, t.ContainerValue] = {
+        scenario_data: MockScenarioData = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},

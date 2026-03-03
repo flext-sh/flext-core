@@ -31,7 +31,7 @@ class FlextInfraJsonService(FlextService[bool]):
         """Initialize the JSON service."""
         super().__init__()
 
-    def read(self, path: Path) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    def read(self, path: Path) -> FlextResult[Mapping[str, t.Container]]:
         """Read and parse a JSON file.
 
         Args:
@@ -45,14 +45,12 @@ class FlextInfraJsonService(FlextService[bool]):
         if not path.exists():
             return r[t.ConfigurationMapping].ok({})
         try:
-            loaded = json.loads(  # JUSTIFIED
-                path.read_text(encoding=c.Encoding.DEFAULT),
-            )
+            loaded = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
             if not isinstance(loaded, dict):
                 return r[t.ConfigurationMapping].fail(
                     "JSON root must be object",
                 )
-            data: Mapping[str, t.ContainerValue] = loaded
+            data: Mapping[str, t.Container] = loaded
             return r[t.ConfigurationMapping].ok(data)
         except (json.JSONDecodeError, OSError) as exc:
             return r[t.ConfigurationMapping].fail(f"JSON read error: {exc}")
@@ -83,7 +81,7 @@ class FlextInfraJsonService(FlextService[bool]):
             path.parent.mkdir(parents=True, exist_ok=True)
             data = payload.model_dump() if isinstance(payload, BaseModel) else payload
             content = (
-                json.dumps(  # JUSTIFIED
+                json.dumps(
                     data,
                     indent=2,
                     sort_keys=sort_keys,

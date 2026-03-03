@@ -33,8 +33,8 @@ class ExceptionCreationScenario:
     name: str
     exception_type: type[FlextExceptions.BaseError]
     message: str
-    kwargs: dict[str, t.ContainerValue | type]
-    expected_attrs: dict[str, t.ContainerValue | type]
+    kwargs: dict[str, t.Container | type]
+    expected_attrs: dict[str, t.Container | type]
 
 
 class ExceptionScenarios:
@@ -164,7 +164,7 @@ class ExceptionScenarios:
     ]
 
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, t.ContainerValue], type[FlextExceptions.BaseError]]]
+        list[tuple[str, dict[str, t.Container], type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -202,7 +202,7 @@ class TestFlextExceptionsHierarchy:
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
-            # Convert dict[str, t.Container] to dict[str, MetadataAttributeValue]
+            # Convert dict[str, t.ContainerValue] to dict[str, MetadataAttributeValue]
             # Separate type values from metadata values for proper type handling
             type_kwargs: dict[str, type] = {}
             metadata_kwargs: dict[str, t.MetadataValue] = {}
@@ -219,9 +219,9 @@ class TestFlextExceptionsHierarchy:
                 ):
                     type_kwargs[key] = value
                 elif isinstance(value, (str, int, float, bool, type(None), list, dict)):
-                    metadata_kwargs[key] = cast("t.MetadataValue", value)
+                    metadata_kwargs[key] = cast("t.MetadataAttributeValue", value)
                 else:
-                    metadata_kwargs[key] = cast("t.MetadataValue", str(value))
+                    metadata_kwargs[key] = cast("t.MetadataAttributeValue", str(value))
             # For TypeError, pass type_kwargs separately, then metadata_kwargs
             if type_kwargs:
                 # Convert type objects to strings for metadata compatibility
@@ -260,11 +260,11 @@ class TestExceptionIntegration:
         """Test exception handling in railway pattern."""
 
         def validate_and_process(
-            data: dict[str, t.ContainerValue],
-        ) -> FlextResult[dict[str, t.ContainerValue]]:
+            data: dict[str, t.Container],
+        ) -> FlextResult[dict[str, t.Container]]:
             if not data.get("id"):
-                return FlextResult[t.ConfigurationMapping].fail("Missing id")
-            return FlextResult[t.ConfigurationMapping].ok(data)
+                return FlextResult[dict[str, t.Container]].fail("Missing id")
+            return FlextResult[dict[str, t.Container]].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success
@@ -371,7 +371,7 @@ class TestExceptionContext:
         }
         # ValidationError accepts metadata via **extra_kwargs: MetadataAttributeValue
         # Cast metadata_dict to correct type
-        metadata_typed = cast("t.MetadataValue", metadata_dict)
+        metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
             metadata=metadata_typed,
@@ -452,13 +452,13 @@ class TestExceptionFactory:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, t.ContainerValue],
+        kwargs: dict[str, t.Container],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        # Convert dict[str, t.Container] to dict[str, MetadataAttributeValue]
+        # Convert dict[str, t.ContainerValue] to dict[str, MetadataAttributeValue]
         converted_kwargs: dict[str, t.MetadataValue] = {
-            k: cast("t.MetadataValue", v) for k, v in kwargs.items()
+            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
         }
         # Type narrowing: all values in converted_kwargs are MetadataAttributeValue
         # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility

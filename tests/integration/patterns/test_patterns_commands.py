@@ -60,7 +60,7 @@ class UpdateUserCommand(FlextModels.Command):
     """Test command for updating users."""
 
     target_user_id: str
-    updates: dict[str, t.ContainerValue]
+    updates: dict[str, t.Container]
 
     def get_payload(self) -> UpdatePayloadDict:
         """Get command payload."""
@@ -111,7 +111,7 @@ def _create_user_command(*, username: str, email: str) -> CreateUserCommand:
 def _update_user_command(
     *,
     target_user_id: str,
-    updates: dict[str, t.ContainerValue],
+    updates: dict[str, t.Container],
 ) -> UpdateUserCommand:
     return UpdateUserCommand.model_validate({
         "target_user_id": target_user_id,
@@ -120,7 +120,7 @@ def _update_user_command(
 
 
 class CreateUserCommandHandler(
-    FlextHandlers[CreateUserCommand, t.ConfigurationMapping],
+    FlextHandlers[CreateUserCommand, dict[str, t.Container]],
 ):
     """Test handler for CreateUserCommand."""
 
@@ -133,7 +133,7 @@ class CreateUserCommandHandler(
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
-        self.created_users: list[dict[str, t.ContainerValue]] = []
+        self.created_users: list[dict[str, t.Container]] = []
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
@@ -156,27 +156,27 @@ class CreateUserCommandHandler(
     def handle(
         self,
         message: CreateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[dict[str, t.Container]]:
         """Handle the create user command."""
-        user_data: dict[str, t.ContainerValue] = {
+        user_data: dict[str, t.Container] = {
             "id": f"user_{len(self.created_users) + 1}",
             "username": message.username,
             "email": message.email,
         }
         self.created_users.append(user_data)
 
-        return FlextResult[t.ConfigurationMapping].ok(user_data)
+        return FlextResult[dict[str, t.Container]].ok(user_data)
 
     def handle_command(
         self,
         command: CreateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[dict[str, t.Container]]:
         """Handle the create user command (alias for handle)."""
         return self.handle(command)
 
 
 class UpdateUserCommandHandler(
-    FlextHandlers[UpdateUserCommand, t.ConfigurationMapping],
+    FlextHandlers[UpdateUserCommand, dict[str, t.Container]],
 ):
     """Test handler for UpdateUserCommand."""
 
@@ -189,7 +189,7 @@ class UpdateUserCommandHandler(
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
-        self.updated_users: dict[str, t.ContainerValue] = {}
+        self.updated_users: dict[str, t.Container] = {}
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
@@ -212,7 +212,7 @@ class UpdateUserCommandHandler(
     def handle(
         self,
         message: UpdateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[dict[str, t.Container]]:
         """Handle the update user command."""
         if message.target_user_id not in self.updated_users:
             self.updated_users[message.target_user_id] = {}
@@ -221,17 +221,17 @@ class UpdateUserCommandHandler(
         if isinstance(user_updates, dict):
             user_updates.update(message.updates)
 
-        result_data: dict[str, t.ContainerValue] = {
+        result_data: dict[str, t.Container] = {
             "target_user_id": message.target_user_id,
             "updated_fields": list(message.updates.keys()),
         }
 
-        return FlextResult[t.ConfigurationMapping].ok(result_data)
+        return FlextResult[dict[str, t.Container]].ok(result_data)
 
     def handle_command(
         self,
         command: UpdateUserCommand,
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> FlextResult[dict[str, t.Container]]:
         """Handle the update user command (alias for handle)."""
         return self.handle(command)
 
@@ -412,7 +412,7 @@ class TestFlextCommandHandler:
         """Test can_handle with wrong command type."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            dict[str, t.Container],
         ] = CreateUserCommandHandler()
 
         if handler.can_handle(UpdateUserCommand):
@@ -425,7 +425,7 @@ class TestFlextCommandHandler:
         """Test can_handle with non-command object."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            dict[str, t.Container],
         ] = CreateUserCommandHandler()
 
         if handler.can_handle(str):
@@ -438,7 +438,7 @@ class TestFlextCommandHandler:
         """Test successful command handling."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            dict[str, t.Container],
         ] = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
             username="john",
@@ -482,7 +482,7 @@ class TestFlextCommandHandler:
         """Test processing with command validation failure."""
         handler: FlextHandlers[
             CreateUserCommand,
-            dict[str, t.ContainerValue],
+            dict[str, t.Container],
         ] = CreateUserCommandHandler()
         command: CreateUserCommand = _create_user_command(
             username="",
@@ -530,10 +530,10 @@ class TestFlextCommandResults:
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
-        result_data: dict[str, t.ContainerValue] = {"id": "123", "username": "test"}
+        result_data: dict[str, t.Container] = {"id": "123", "username": "test"}
 
-        command_result: FlextResult[dict[str, t.ContainerValue]] = FlextResult[
-            t.ConfigurationMapping
+        command_result: FlextResult[dict[str, t.Container]] = FlextResult[
+            dict[str, t.Container]
         ].ok(result_data)
 
         if not command_result.is_success:

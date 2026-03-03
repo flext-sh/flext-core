@@ -164,7 +164,7 @@ class TestAutomatedFlextDispatcher:
     def _execute_dispatcher_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        input_data: Mapping[str, t.Container],
     ) -> r[bool]:
         """Execute a test operation on dispatcher instance.
 

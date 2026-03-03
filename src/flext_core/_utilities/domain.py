@@ -84,8 +84,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.ContainerValue,
-        obj_b: t.ContainerValue,
+        obj_a: t.Container,
+        obj_b: t.Container,
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -116,7 +116,7 @@ class FlextUtilitiesDomain:
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.ContainerValue) -> int:
+    def hash_value_object_by_value(obj: t.Container) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -136,9 +136,9 @@ class FlextUtilitiesDomain:
         try:
             obj_dict = obj.__dict__
             # Filter out non-hashable values and convert to tuple
-            hashable_items: list[tuple[str, t.ContainerValue]] = []
+            hashable_items: list[tuple[str, t.Container]] = []
             for key, value in sorted(obj_dict.items()):
-                # Check for types that are both Hashable and PayloadValue
+                # Check for types that are both Hashable and ContainerValue
                 if value.__class__ in {str, int, float, bool, None.__class__}:
                     hashable_items.append((key, value))
                 elif hasattr(value, "__hash__") and value.__class__ in {
@@ -162,7 +162,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: t.ContainerValue,
+        entity: t.Container,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Validate that entity has a non-None unique ID.
@@ -179,7 +179,7 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: t.ContainerValue) -> bool:
+    def validate_value_object_immutable(obj: t.Container) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:

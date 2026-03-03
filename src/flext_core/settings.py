@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Self
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
@@ -70,7 +70,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     # Used for configuration instance management across the FLEXT ecosystem.
     _instances: ClassVar[MutableMapping[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
-    _di_provider: t.ScalarValue | None = PrivateAttr(default=None)
 
     # Note: implements_protocol() and _protocol_name() are inherited from
     # p.ProtocolSettings. The metaclass ProtocolModelMeta handles protocol
@@ -230,7 +229,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: t.ContainerValue) -> Self:
+    def __new__(cls, **_kwargs: t.Container) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -267,10 +266,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    def __init__(
-        self,
-        **kwargs: Any,
-    ) -> None:
+    # Any required: BaseSettings.__init__ has field-specific types; no union satisfies all.
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -287,10 +284,10 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                         setattr(self, key, value)
             return
 
-        super().__init__(**kwargs)  # type: ignore[arg-type]  # JUSTIFIED: pydantic-settings accepts heterogeneous kwargs
+        super().__init__(**kwargs)
 
-    def model_post_init(self, __context: t.GeneralValueType) -> None:
-        self._di_provider = None
+        # Use runtime bridge for dependency-injector providers (L0.5 pattern)
+        self._di_provider: t.Scalar | None = None
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:
@@ -353,7 +350,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     def materialize(
         cls,
         *,
-        config_overrides: Mapping[str, t.ScalarValue] | None = None,
+        config_overrides: Mapping[str, t.Scalar] | None = None,
     ) -> Self:
         """Factory method to create a config instance with optional overrides.
 
@@ -395,23 +392,21 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
         return instance
 
-    def get_di_config_provider(self) -> t.ScalarValue:
+    def get_di_config_provider(self) -> t.Scalar:
         """Get dependency injection provider for this config.
 
         Returns a providers.Singleton instance via the runtime bridge.
         Type annotation stays framework-level to avoid DI imports in this module.
         """
-        provider = self._di_provider
-        if provider is None:
+        if self._di_provider is None:
             providers_module = FlextRuntime.dependency_providers()
-            provider = providers_module.Singleton(lambda: self)
-            self._di_provider = provider
-        return provider
+            self._di_provider = providers_module.Singleton(lambda: self)
+        return self._di_provider
 
     def apply_override(
         self,
         key: str,
-        value: t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
+        value: t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar],
     ) -> bool:
         """Validate and apply a configuration override.
 
@@ -456,7 +451,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     # strings to configuration classes.
     _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
     _context_overrides: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.ScalarValue]]
+        MutableMapping[str, MutableMapping[str, t.Scalar]]
     ] = {}
 
     @staticmethod
@@ -567,7 +562,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     def for_context(
         cls,
         context_id: str,
-        **overrides: t.ScalarValue,
+        **overrides: t.Scalar,
     ) -> Self:
         """Get configuration instance with context-specific overrides.
 
@@ -600,7 +595,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     def register_context_overrides(
         cls,
         context_id: str,
-        **overrides: t.ScalarValue,
+        **overrides: t.Scalar,
     ) -> None:
         """Register context-specific configuration overrides.
 

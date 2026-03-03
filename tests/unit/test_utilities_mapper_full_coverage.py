@@ -49,7 +49,7 @@ class SampleModel(BaseModel):
     """SampleModel class."""
 
     port: int = c.Platform.DEFAULT_HTTP_PORT
-    nested: dict[str, t.ContainerValue] = {"k": "v"}
+    nested: dict[str, t.Container] = {"k": "v"}
 
 
 class BadString:
@@ -75,15 +75,15 @@ def _parse_int(value: object) -> int:
     return int(cast("str", value))
 
 
-def _plus_one(value: t.ContainerValue) -> t.ContainerValue:
+def _plus_one(value: t.Container) -> t.Container:
     return cast("int", value) + 1
 
 
-def _times_two(value: t.ContainerValue) -> t.ContainerValue:
+def _times_two(value: t.Container) -> t.Container:
     return cast("int", value) * 2
 
 
-def _identity(value: t.ContainerValue) -> t.ContainerValue:
+def _identity(value: t.Container) -> t.Container:
     return value
 
 
@@ -97,11 +97,11 @@ class ExplodingLenList(UserList[object]):
         raise TypeError(msg)
 
 
-class BadMapping(Mapping[str, t.ContainerValue]):
+class BadMapping(t.ConfigurationMapping):
     """BadMapping class."""
 
     @override
-    def __getitem__(self, key: str) -> t.ContainerValue:
+    def __getitem__(self, key: str) -> t.Container:
         """__getitem__ method."""
         msg = f"missing {key}"
         raise KeyError(msg)
@@ -363,8 +363,8 @@ def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
 def test_convert_default_fallback_matrix(
     mapper: type[Mapper],
     convert_spec: Callable[[object], object] | type,
-    value: t.ContainerValue,
-    expected: t.ContainerValue,
+    value: t.Container,
+    expected: t.Container,
 ) -> None:
     result = mapper._build_apply_convert(
         value,
@@ -425,7 +425,7 @@ def test_build_apply_transform_and_process_error_paths(
     }
 
     def explode_transform_steps(
-        _result: dict[str, t.ContainerValue],
+        _result: dict[str, t.Container],
         *,
         normalize: bool,
         map_keys: Mapping[str, str] | None,
@@ -434,7 +434,7 @@ def test_build_apply_transform_and_process_error_paths(
         strip_none: bool,
         strip_empty: bool,
         to_json: bool,
-    ) -> dict[str, t.ContainerValue]:
+    ) -> dict[str, t.Container]:
         _ = (
             normalize,
             map_keys,
@@ -537,7 +537,7 @@ def test_construct_transform_and_deep_eq_branches(
     constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
     assert constructed_none["x"] == 9
 
-    source: dict[str, t.ContainerValue] = {"name": "alice", "n": 3}
+    source: dict[str, t.Container] = {"name": "alice", "n": 3}
     spec = cast(
         "Mapping[str, t.ContainerValue]",
         {
@@ -551,7 +551,7 @@ def test_construct_transform_and_deep_eq_branches(
     assert constructed["n"] == 4
     assert constructed["literal"] == 5
 
-    class ExplodeOnGet(Mapping[str, t.ContainerValue]):
+    class ExplodeOnGet(t.ConfigurationMapping):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(("field",))
@@ -561,7 +561,7 @@ def test_construct_transform_and_deep_eq_branches(
             return 1
 
         @override
-        def __getitem__(self, key: str) -> t.ContainerValue:
+        def __getitem__(self, key: str) -> t.Container:
             if key == "field":
                 msg = "boom"
                 raise RuntimeError(msg)
@@ -604,7 +604,7 @@ def test_process_context_data_and_related_convenience(
     mapper: type[Mapper],
     merge_strategy: str,
 ) -> None:
-    primary: dict[str, t.ContainerValue] = {"a": 1, "drop": "x"}
+    primary: dict[str, t.Container] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
     result = mapper.process_context_data(
         primary_data=primary,
@@ -690,9 +690,9 @@ def test_map_flags_collect_and_invert_branches(mapper: type[Mapper]) -> None:
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
 
-    class BadItems(UserDict[str, t.ContainerValue]):
+    class BadItems(UserDict[str, t.Container]):
         @override
-        def items(self) -> ItemsView[str, t.ContainerValue]:
+        def items(self) -> ItemsView[str, t.Container]:
             msg = "bad items"
             raise RuntimeError(msg)
 
@@ -828,7 +828,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[Mapper]) ->
 
     assert mapper._extract_field_value({"x": 1}, "x") == 1
     assert mapper.agg([{"v": 1}, {"v": 2}], "v") == 3
-    mixed_items: tuple[dict[str, t.ContainerValue], ...] = ({"v": 1}, {"v": "no"})
+    mixed_items: tuple[dict[str, t.Container], ...] = ({"v": 1}, {"v": "no"})
     assert mapper.agg(mixed_items, "v") == 1
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 

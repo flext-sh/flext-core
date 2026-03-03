@@ -36,13 +36,13 @@ class FlextModelsService:
         """Runtime bootstrap options for service initialization."""
 
         config_type: type[BaseSettings] | None = Field(default=None)
-        config_overrides: Mapping[str, t.Scalar | None] | None = Field(default=None)
+        config_overrides: Mapping[str, t.Scalar] | None = Field(default=None)
         context: p.Context | None = Field(default=None)
         subproject: str | None = Field(default=None)
         services: Mapping[str, t.RegisterableService] | None = Field(default=None)
         factories: Mapping[str, t.FactoryCallable] | None = Field(default=None)
         resources: Mapping[str, t.ResourceCallable] | None = Field(default=None)
-        container_overrides: Mapping[str, t.Scalar | None] | None = Field(default=None)
+        container_overrides: Mapping[str, t.Scalar] | None = Field(default=None)
         wire_modules: Sequence[ModuleType] | None = Field(default=None)
         wire_packages: Sequence[str] | None = Field(default=None)
         wire_classes: Sequence[type] | None = Field(default=None)
@@ -234,8 +234,8 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: Callable[
-            [t.ContainerValue],
-            p.ResultLike[t.ContainerValue],
+            [t.Container],
+            p.ResultLike[t.Container],
         ] = Field(
             description="Callable operation returning result",
         )
@@ -265,8 +265,8 @@ class FlextModelsService:
         @classmethod
         def validate_operation_callable(
             cls,
-            v: t.ContainerValue,
-        ) -> t.ContainerValue:
+            v: t.Container,
+        ) -> t.Container:
             """Validate operation is callable."""
             if not callable(v):
                 msg = f"Operation callable must be callable, got {v.__class__.__name__}"

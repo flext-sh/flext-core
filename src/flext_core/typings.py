@@ -1,6 +1,6 @@
 """Type aliases and generics for the FLEXT ecosystem.
 
-Zero internal imports - depends only on stdlib, pydantic, pydantic-settings,
+Zero internal imports — depends only on stdlib, pydantic, pydantic-settings,
 and structlog.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,12 +20,16 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
+# ---------------------------------------------------------------------------
+# TypeVars
+# ---------------------------------------------------------------------------
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
 E = TypeVar("E")
 U = TypeVar("U")
 R = TypeVar("R")
+R2 = TypeVar("R2")
 DictValueT = TypeVar("DictValueT")
 P = ParamSpec("P")
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -34,21 +38,20 @@ T_Model = TypeVar("T_Model", bound=BaseModel)
 T_Namespace = TypeVar("T_Namespace")
 T_Settings = TypeVar("T_Settings", bound=BaseSettings)
 TModel = TypeVar("TModel", bound=BaseModel)
-R2 = TypeVar("R2")
 
 
 class FlextTypes:
     """Type system foundation for FLEXT ecosystem.
 
-    Three core layers - each builds on the previous:
+    Three core layers — each builds on the previous:
 
-        Primitives  <  Scalar  <  Serializable  <  Container
+        Primitives  ⊂  Scalar  ⊂  Serializable  ⊂  Container
 
     ``None`` is **never** baked into definitions.
     Use ``X | None`` at call-sites when needed.
     """
 
-    # - Core type layers ------------------------------------------------
+    # ── Core type layers ──────────────────────────────────────────────
     type Primitives = str | int | float | bool
     type Scalar = Primitives | datetime
     type Serializable = (
@@ -63,28 +66,28 @@ class FlextTypes:
         | None
     )
 
-    # - JSON ------------------------------------------------------------
+    # ── JSON ──────────────────────────────────────────────────────────
     type JsonValue = (
         Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
     )
     type JsonDict = Mapping[str, JsonValue]
 
-    # - Config ----------------------------------------------------------
+    # ── Config ────────────────────────────────────────────────────────
     type ConfigurationMapping = Mapping[str, Container]
 
-    # - Service / DI ----------------------------------------------------
+    # ── Service / DI ──────────────────────────────────────────────────
     type RegisterableService = Container | BindableLogger | Callable[..., Container]
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], Container]
 
-    # - Metadata --------------------------------------------------------
+    # ── Metadata ──────────────────────────────────────────────────────
     type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
 
-    # - Handlers --------------------------------------------------------
+    # ── Handlers ──────────────────────────────────────────────────────
     type HandlerCallable = Callable[[Container], Container]
     type HandlerLike = Callable[..., Container]
 
-    # - Plugin / Constants ----------------------------------------------
+    # ── Plugin / Constants ────────────────────────────────────────────
     type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
     type ConstantValue = (
         Primitives
@@ -99,7 +102,7 @@ class FlextTypes:
         | type
     )
 
-    # - File / misc -----------------------------------------------------
+    # ── File / misc ───────────────────────────────────────────────────
     type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
     type SortableObjectType = str | int | float
     type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]

@@ -170,7 +170,7 @@ class TestContextServiceViaDI:
         custom_context = FlextContext()
         result = container.register(
             "custom_context",
-            cast("t.Container", custom_context),
+            cast("t.ContainerValue", custom_context),
         )
         assertion_helpers.assert_flext_result_success(result)
 
@@ -227,7 +227,7 @@ class TestServicesIntegrationViaDI:
                 # Access container services
                 # Type narrowing: container.get returns r[T], cast to help mypy
                 container_get_result: object = self.container.get("logger")
-                logger_result = cast("r[t.Container]", container_get_result)
+                logger_result = cast("r[t.ContainerValue]", container_get_result)
                 u.Tests.Result.assert_success(logger_result)
                 logger = cast("FlextLogger", logger_result.value)
                 tm.that(
@@ -248,14 +248,14 @@ class TestServicesIntegrationViaDI:
         """Test injecting multiple services via @inject."""
         # Use DependencyIntegration to create container with config and services
         # This ensures config provider is properly configured
-        # Convert services to t.Container-compatible dict for type compatibility
+        # Convert services to t.ContainerValue-compatible dict for type compatibility
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
-        services_raw: dict[str, t.ContainerValue] = {
-            "logger": cast("t.Container", logger_instance),
-            "context": cast("t.Container", context_instance),
+        services_raw: dict[str, t.Container] = {
+            "logger": cast("t.ContainerValue", logger_instance),
+            "context": cast("t.ContainerValue", context_instance),
         }
-        # Cast to t.Container dict - services dict accepts any object
+        # Cast to t.ContainerValue dict - services dict accepts any object
         services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(
             config=m.ConfigMap(root={"app_name": "injected"}),

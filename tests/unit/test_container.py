@@ -91,7 +91,7 @@ class ContainerScenarios:
         TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
     ]
 
-    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.Scalar | None]]] = [
+    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.Scalar]]] = [
         {"max_workers": 8, "timeout_seconds": 60.0},
         {"invalid_key": "value", "another_invalid": 42},
         {},
@@ -151,7 +151,7 @@ class TestFlextContainer:
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
-        # Cast object to t.Container | BaseModel for type compatibility
+        # Cast object to t.ContainerValue | BaseModel for type compatibility
 
         result = container.with_service(scenario.name, scenario.service)
         tm.that(
@@ -249,8 +249,8 @@ class TestFlextContainer:
     ) -> None:
         """Test that registering non-callable is rejected using fixtures."""
         # Intentionally pass non-callable to test error handling
-        non_callable: Callable[[], t.ContainerValue] = cast(
-            "Callable[[], t.Container]",
+        non_callable: Callable[[], t.Container] = cast(
+            "Callable[[], t.ContainerValue]",
             "not_callable",
         )
         result = clean_container.register_factory("invalid", non_callable)
@@ -285,8 +285,8 @@ class TestFlextContainer:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
         result: r[t.RegisterableService] = clean_container.get(scenario.name)
-        expected_value: t.ContainerValue = cast(
-            "t.Container",
+        expected_value: t.Container = cast(
+            "t.ContainerValue",
             scenario.service,
         )
         u.Tests.Result.assert_success_with_value(
@@ -356,7 +356,7 @@ class TestFlextContainer:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         # Cast scenario.service to container.register() compatible type
-        # Runtime: object is compatible with t.Container | BaseModel |
+        # Runtime: object is compatible with t.ContainerValue | BaseModel |
 
         container.register(scenario.name, scenario.service)
         typed_result: FlextResult[t.RegisterableService] = container.get_typed(
@@ -520,7 +520,7 @@ class TestFlextContainer:
         )
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: dict[str, t.Scalar | None]) -> None:
+    def test_configure_container(self, config: dict[str, t.Scalar]) -> None:
         """Test container configuration."""
         container = FlextContainer()
         container.configure(config)
@@ -536,7 +536,7 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: dict[str, t.Scalar | None] = {
+        config: dict[str, t.Scalar] = {
             "max_workers": c.Container.DEFAULT_WORKERS,
         }
         result = container.with_config(config)
@@ -683,7 +683,7 @@ class TestFlextContainer:
         container = clean_container
         error_msg = "Factory failed"
 
-        def failing_factory() -> t.ContainerValue:
+        def failing_factory() -> t.Container:
             raise RuntimeError(error_msg)
 
         container.register_factory("failing", failing_factory)

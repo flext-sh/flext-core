@@ -38,7 +38,7 @@ from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 from tests.utilities import TestsFlextUtilities
 
-_PayloadValue = tests_t.Tests.PayloadValue
+_ContainerValue = tests_t.Tests.ContainerValue
 
 # Test case dataclasses from tests.models
 NormalizeWhitespaceCase = TestsFlextModels.NormalizeWhitespaceCase
@@ -414,7 +414,7 @@ class StringParserTestFactory:
                 description="function",
             ),
             ObjectKeyCase(
-                {},  # Empty dict - valid t.Container, tests dict instance behavior
+                {},  # Empty dict - valid t.ContainerValue, tests dict instance behavior
                 expected_exact="dict",
                 description="instance",
             ),
@@ -492,7 +492,7 @@ class TestuStringParser:
                 return parser.parse_delimited(case.text, case.delimiter)
 
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
-                cast("Callable[[], r[_PayloadValue]]", operation),
+                cast("Callable[[], r[_ContainerValue]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
                 description=case.description,
@@ -509,9 +509,9 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            # Type narrowing: assert_failure expects r[t.Container], r[list[str]] is compatible
+            # Type narrowing: assert_failure expects r[t.ContainerValue], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.Container]", result),
+                cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_PARSE,
                 "exception handling",
             )
@@ -528,7 +528,7 @@ class TestuStringParser:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.PayloadValue]]",
+                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.split_on_char_with_escape(
                         case.text,
                         case.split_char,
@@ -552,9 +552,9 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            # Type narrowing: assert_failure expects r[t.Container], r[list[str]] is compatible
+            # Type narrowing: assert_failure expects r[t.ContainerValue], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.Container]", result),
+                cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_SPLIT,
                 "exception handling",
             )
@@ -574,7 +574,7 @@ class TestuStringParser:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.PayloadValue]]",
+                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.normalize_whitespace(
                         case.text,
                         pattern=case.pattern,
@@ -594,9 +594,9 @@ class TestuStringParser:
             # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
-            # Type narrowing: assert_failure expects r[t.Container], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.ContainerValue], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.Container]", result),
+                cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
                 "exception handling",
             )
@@ -613,7 +613,7 @@ class TestuStringParser:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.PayloadValue]]",
+                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
                 ),
                 expected_value=case.expected,
@@ -630,9 +630,9 @@ class TestuStringParser:
                 invalid_pattern,
             ]  # Runtime allows this
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[t.Container], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.ContainerValue], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.Container]", result),
+                cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.FAILED_PIPELINE,
                 "exception handling",
             )
@@ -643,9 +643,9 @@ class TestuStringParser:
                 (r"[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[t.Container], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.ContainerValue], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.Container]", result),
+                cast("r[t.ContainerValue]", result),
                 TestsFlextConstants.TestErrors.INVALID_REGEX,
                 "invalid pattern",
             )
@@ -657,7 +657,7 @@ class TestuStringParser:
             text = cast("str", cast("object", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.PayloadValue]]",
+                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.apply_regex_pipeline(
                         text,  # Runtime: None, triggers error handling
                         [
@@ -679,7 +679,7 @@ class TestuStringParser:
             text = cast("str", cast("object", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.PayloadValue]]",
+                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
                     lambda: parser.apply_regex_pipeline(
                         text,  # Runtime: 123, triggers error handling
                         [
@@ -714,7 +714,7 @@ class TestuStringParser:
             case: ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(cast("t.Container", case.obj))
+            key = parser.get_object_key(cast("t.ContainerValue", case.obj))
 
             assert isinstance(key, str), f"Key must be string for: {case.description}"
 

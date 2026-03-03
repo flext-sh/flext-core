@@ -129,10 +129,8 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict
-        )
-        pagination: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict = Field(
+        filters: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        pagination: FlextModelsCqrs.Pagination | m.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
         )
         query_id: str = Field(
@@ -162,7 +160,7 @@ class FlextModelsCqrs:
             min_qualname_parts = 2
             if not models_module or len(parts) < min_qualname_parts:
                 return FlextModelsCqrs.Pagination
-            obj: t.ContainerValue | None = getattr(
+            obj: t.Container | None = getattr(
                 models_module,
                 parts[0],
                 None,
@@ -186,22 +184,16 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination
-            | FlextModelsContainers.Dict
-            | Mapping[str, t.Scalar | None]
-            | None,
+            v: FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
             adapter: TypeAdapter[
-                FlextModelsCqrs.Pagination
-                | FlextModelsContainers.Dict
-                | Mapping[str, t.Scalar | None]
-                | None
+                FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None
             ] = TypeAdapter(
                 FlextModelsCqrs.Pagination
-                | FlextModelsContainers.Dict
-                | Mapping[str, t.Scalar | None]
+                | m.Dict
+                | Mapping[str, t.Scalar]
                 | None,
             )
             parsed_input = adapter.validate_python(v)
@@ -296,7 +288,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: FlextModelsContainers.ConfigMap | None = None
+            handler_config: m.ConfigMap | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -358,7 +350,7 @@ class FlextModelsCqrs:
 
             def merge_config(
                 self,
-                config: FlextModelsContainers.ConfigMap,
+                config: m.ConfigMap,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.root.update(config.root)
@@ -403,11 +395,11 @@ class FlextModelsCqrs:
         event_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
         )
-        data: FlextModelsContainers.Dict = Field(
+        data: m.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event payload data",
         )
-        metadata: FlextModelsContainers.Dict = Field(
+        metadata: m.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )
@@ -418,7 +410,7 @@ class FlextModelsCqrs:
     ]
 
     @staticmethod
-    def parse_message(payload: t.ContainerValue) -> FlextMessage:
+    def parse_message(payload: t.Container) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)

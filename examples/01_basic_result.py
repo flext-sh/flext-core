@@ -73,7 +73,7 @@ class RunDemonstrationCommand(m.Command):
 class RailwayService(s[DemonstrationResult]):
     """Advanced service demonstrating railway patterns with comprehensive flext-core integration."""
 
-    def __init__(self, **kwargs: t.ContainerValue) -> None:
+    def __init__(self, **kwargs: t.Container) -> None:
         """Initialize service."""
         super().__init__(**kwargs)
         # Dependencies created directly to avoid serialization issues in handlers

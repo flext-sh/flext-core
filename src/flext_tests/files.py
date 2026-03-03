@@ -53,19 +53,17 @@ TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
 
 
-def _yaml_safe_load(raw: str) -> t.ContainerValue | list[t.ContainerValue]:
+def _yaml_safe_load(raw: str) -> t.Container | list[t.Container]:
     return yaml_safe_load(raw)
 
 
-def _yaml_dump(value: t.ContainerValue, *, indent: int) -> str:
+def _yaml_dump(value: t.Container, *, indent: int) -> str:
     return str(
         yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent),
     )
 
 
-def _is_batch_content(
-    content_raw: t.Container,
-) -> TypeGuard[t.Tests.PayloadValue]:
+def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.ContainerValue]:
     try:
         _ = m.Tests.Files.CreateParams.model_validate(
             {
@@ -109,7 +107,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     @staticmethod
     def _validate_model_content[TModelRead: BaseModel](
         model_cls: type[TModelRead],
-        content: str | bytes | t.ConfigMap | list[list[str]],
+        content: str | bytes | m.ConfigMap | list[list[str]],
     ) -> r[TModelRead]:
         try:
             model_instance: TModelRead = model_cls.model_validate(content)
@@ -126,7 +124,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def __init__(
         self,
         base_dir: Path | None = None,
-        **data: t.Tests.PayloadValue,
+        **data: t.Tests.ContainerValue,
     ) -> None:
         """Initialize file manager with optional base directory.
 
@@ -432,7 +430,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             | m.ConfigMap
             | Sequence[Sequence[str]]
             | BaseModel
-            | Mapping[str, t.Tests.PayloadValue]
+            | Mapping[str, t.Tests.ContainerValue]
         ) = self._coerce_file_content(params.content)
 
         # Convert Pydantic model to dict using u.Model.to_dict()
@@ -445,7 +443,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # Auto-detect format using utilities
         # Build content_for_detect with explicit type handling for pyrefly
         content_for_detect: (
-            str | bytes | Mapping[str, t.Tests.PayloadValue] | list[list[str]]
+            str | bytes | Mapping[str, t.Tests.ContainerValue] | list[list[str]]
         )
         if isinstance(actual_content, str | bytes):
             content_for_detect = actual_content
@@ -483,10 +481,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if isinstance(actual_content, Mapping):
                 data = u.Mapper.to_dict(actual_content)
             else:
-                empty_data: dict[str, t.Tests.PayloadValue] = {}
+                empty_data: dict[str, t.Tests.ContainerValue] = {}
                 data = {"value": actual_content} if actual_content else empty_data
             _ = file_path.write_text(
-                json.dumps(data, indent=params.indent, ensure_ascii=False),  # JUSTIFIED
+                json.dumps(data, indent=params.indent, ensure_ascii=False),
                 encoding=params.enc,
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
@@ -494,7 +492,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 data = u.Mapper.to_dict(actual_content)
             else:
                 # Fallback - convert to dict representation
-                empty_data_y: dict[str, t.Tests.PayloadValue] = {}
+                empty_data_y: dict[str, t.Tests.ContainerValue] = {}
                 data = {"value": actual_content} if actual_content else empty_data_y
             yaml_result = _yaml_dump(data, indent=params.indent)
             _ = file_path.write_text(yaml_result, encoding=params.enc)
@@ -547,7 +545,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
-    ) -> r[str | bytes | t.ConfigMap | list[list[str]]]: ...
+    ) -> r[str | bytes | m.ConfigMap | list[list[str]]]: ...
 
     @overload
     def read(
@@ -645,12 +643,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         try:
             if actual_fmt == c.Tests.Files.Format.BIN:
-                content: str | bytes | t.ConfigMap | list[list[str]] = (
+                content: str | bytes | m.ConfigMap | list[list[str]] = (
                     params.path.read_bytes()
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
                 text = params.path.read_text(encoding=params.enc)
-                parsed_json = json.loads(text)  # JUSTIFIED
+                parsed_json = json.loads(text)
                 content = self._coerce_read_content(parsed_json)
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
@@ -872,13 +870,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content1: str,
         content2: str,
         fmt: str,
-    ) -> tuple[Mapping[str, t.ContainerValue], Mapping[str, t.ContainerValue]] | None:
+    ) -> tuple[Mapping[str, t.Container], Mapping[str, t.Container]] | None:
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:
                 case "json":
-                    dict1_raw = json.loads(content1)  # JUSTIFIED
-                    dict2_raw = json.loads(content2)  # JUSTIFIED
+                    dict1_raw = json.loads(content1)
+                    dict2_raw = json.loads(content2)
                 case "yaml":
                     dict1_raw = _yaml_safe_load(content1)
                     dict2_raw = _yaml_safe_load(content2)
@@ -900,11 +898,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _apply_key_filtering(
         self,
-        dict1: Mapping[str, t.ContainerValue],
-        dict2: Mapping[str, t.ContainerValue],
+        dict1: Mapping[str, t.Container],
+        dict2: Mapping[str, t.Container],
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[Mapping[str, t.ContainerValue], Mapping[str, t.ContainerValue]]:
+    ) -> tuple[Mapping[str, t.Container], Mapping[str, t.Container]]:
         """Apply key filtering to both dicts if specified."""
         if keys is None and exclude_keys is None:
             return dict1, dict2
@@ -1140,7 +1138,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
 
         # Convert BatchFiles to dict - BatchFiles can be Mapping or Sequence
-        files_dict: dict[str, t.Tests.PayloadValue]
+        files_dict: dict[str, t.Tests.ContainerValue]
         if isinstance(params.files, Mapping):
             files_dict = {str(k): v for k, v in params.files.items()}
         elif not isinstance(params.files, str):
@@ -1163,8 +1161,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
 
         def process_one(
-            name_and_content: tuple[str, t.Tests.PayloadValue],
-        ) -> t.ContainerValue | r[t.ContainerValue]:
+            name_and_content: tuple[str, t.Tests.ContainerValue],
+        ) -> t.Container | r[t.Container]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
@@ -1212,7 +1210,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         )
                         return self.create(normalized_content, name, params.directory)
                     except (OSError, TypeError, ValueError, AttributeError) as e:
-                        return r[t.ContainerValue].fail(
+                        return r[t.Container].fail(
                             f"Failed to create {name}: {e}",
                         )
                 case "read":
@@ -1240,16 +1238,16 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         Path(path).unlink(missing_ok=True)
                         return Path(path)
                     except OSError as e:
-                        return r[t.ContainerValue].fail(
+                        return r[t.Container].fail(
                             f"Failed to delete {name}: {e}",
                         )
                 case _:
-                    return r[t.ContainerValue].fail(
+                    return r[t.Container].fail(
                         f"Unknown operation: {params.operation}",
                     )
 
-        items_list: list[tuple[str, t.Tests.PayloadValue]] = list(files_dict.items())
-        results: list[t.ContainerValue] = []
+        items_list: list[tuple[str, t.Tests.ContainerValue]] = list(files_dict.items())
+        results: list[t.Container] = []
         errors: list[tuple[int, str]] = []
         total = len(items_list)
 
@@ -1273,7 +1271,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # Convert results to dict and errors to dict
         # u.Collection.batch() returns results as list of (index, result) tuples
         # We need to map them back to file names
-        results_dict: dict[str, r[Path | t.Tests.PayloadValue]] = {}
+        results_dict: dict[str, r[Path | t.Tests.ContainerValue]] = {}
         failed_dict: dict[str, str] = {}
 
         # Process successful results - map by index to file name
@@ -1281,9 +1279,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if idx < len(items_list):
                 name, _ = items_list[idx]
                 if isinstance(result, Path):
-                    results_dict[name] = r[Path | t.Tests.PayloadValue].ok(result)
+                    results_dict[name] = r[Path | t.Tests.ContainerValue].ok(result)
                 else:
-                    results_dict[name] = r[Path | t.Tests.PayloadValue].ok(
+                    results_dict[name] = r[Path | t.Tests.ContainerValue].ok(
                         self._to_payload_value(result),
                     )
 
@@ -1351,13 +1349,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         cls,
         content: Mapping[
             str,
-            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ],
         *,
         directory: Path | None = None,
         ext: str | None = None,
         extract_result: bool = True,
-        **kwargs: t.Tests.PayloadValue,
+        **kwargs: t.Tests.ContainerValue,
     ) -> Generator[Mapping[str, Path]]:
         """Create temporary files with auto-cleanup.
 
@@ -1393,7 +1391,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             paths: dict[str, Path] = {}
             default_ext = ext or c.Tests.Files.DEFAULT_EXTENSION
             for name, data_raw in content.items():
-                data: t.Tests.PayloadValue = data_raw
+                data: t.Tests.ContainerValue = data_raw
                 filename = name if "." in name else f"{name}{default_ext}"
                 # Determine if we need to adjust extension based on content type
                 if "." not in name and (
@@ -1520,8 +1518,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _is_nested_rows(
         self,
-        value: t.Container,
-    ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
+        value: object,
+    ) -> TypeGuard[Sequence[Sequence[t.Container]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         if len(value) == 0:
@@ -1532,15 +1530,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         )
 
     @staticmethod
-    def _is_mapping(
-        value: t.Container,
-    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
+    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.Container]]:
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
         self,
-        value: t.Container,
-    ) -> str | bytes | t.ConfigMap | list[list[str]]:
+        value: object,
+    ) -> str | bytes | m.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
         if self._is_mapping(value):
@@ -1554,7 +1550,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 },
             )
         if self._is_nested_rows(value):
-            sequence_value: Sequence[t.Container] = (
+            sequence_value: Sequence[object] = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             return [
@@ -1566,16 +1562,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _mapping_to_payload(
         self,
-        mapping: Mapping[str, t.Container],
-    ) -> Mapping[str, t.Tests.PayloadValue]:
-        payload: dict[str, t.Tests.PayloadValue] = {}
+        mapping: Mapping[str, object],
+    ) -> Mapping[str, t.Tests.ContainerValue]:
+        payload: dict[str, t.Tests.ContainerValue] = {}
         for key, value in mapping.items():
             payload[str(key)] = self._to_payload_value(value)
         return payload
 
-    def _to_payload_value(self, value: t.Container) -> t.Tests.PayloadValue:
+    def _to_payload_value(self, value: object) -> t.Tests.ContainerValue:
         if value is None or isinstance(
-            value, (str, int, float, bool, bytes, BaseModel)
+            value,
+            t.Primitives | bytes | BaseModel,
         ):
             return value
         if isinstance(value, Path | datetime):
@@ -1587,10 +1584,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return [self._to_payload_value(item) for item in value]
         return str(value)
 
-    def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ContainerValue:
+    def _to_config_map_value(self, value: t.Tests.ContainerValue) -> t.Container:
         if value is None or isinstance(
             value,
-            (str, int, float, bool, BaseModel, Path),
+            t.Primitives | BaseModel | Path,
         ):
             return value
         if isinstance(value, bytes):
@@ -1600,23 +1597,20 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 str(k): self._to_config_map_value(self._to_payload_value(v))
                 for k, v in value.items()
             }
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            return [
-                self._to_config_map_value(self._to_payload_value(item))
-                for item in value
-            ]
-        return str(value)
+        return [
+            self._to_config_map_value(self._to_payload_value(item)) for item in value
+        ]
 
     def _coerce_file_content(
         self,
-        value: t.Container,
-    ) -> str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel:
+        value: object,
+    ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         if isinstance(value, str | bytes):
             return value
         if isinstance(value, BaseModel):
             return value
         if self._is_mapping(value):
-            mapping_value: Mapping[str, t.ContainerValue] = value
+            mapping_value: Mapping[str, t.Container] = value
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
@@ -1627,7 +1621,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
-            sequence_value: Sequence[t.Container] = (
+            sequence_value: Sequence[object] = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             rows.extend(
@@ -1653,7 +1647,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             | r[BaseModel]
         ),
         extract_result: bool,
-    ) -> str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel:
+    ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         """Extract actual content from FlextResult or return as-is.
 
         Uses u.is_type(content, "result") for type checking and u.val() for extraction.
@@ -1710,21 +1704,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         model_name: str | None = None
 
         # Parse based on format
-        parsed_content: m.ConfigMap | list[t.Tests.PayloadValue] | None = None
+        parsed_content: m.ConfigMap | list[t.Tests.ContainerValue] | None = None
 
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: t.ContainerValue | list[t.ContainerValue] = (
-                        json.loads(text) if text.strip() else {}  # JUSTIFIED
+                    parsed_raw: t.Container | list[t.Container] = (
+                        json.loads(text) if text.strip() else {}
                     )
                 else:
                     # YAML parsing
-                    parsed_raw = (
-                        _yaml_safe_load(text)
-                        if text.strip()
-                        else dict[str, t.ContainerValue]()
-                    )
+                    parsed_raw = _yaml_safe_load(text) if text.strip() else {}
 
                 if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(

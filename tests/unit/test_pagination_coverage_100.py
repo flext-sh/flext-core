@@ -67,7 +67,7 @@ class PreparePaginationDataScenario:
     """Prepare pagination data test scenario."""
 
     name: str
-    data: list[t.ContainerValue] | None
+    data: list[t.Container] | None
     total: int | None
     page: int
     page_size: int
@@ -408,7 +408,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
-        pagination_data: dict[str, t.ContainerValue] = {
+        pagination_data: dict[str, t.Container] = {
             "data": ["item1", "item2"],
             "pagination": {
                 "page": 1,
@@ -433,7 +433,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_no_message(self) -> None:
         """Test build_pagination_response without message."""
-        pagination_data: dict[str, t.ContainerValue] = {
+        pagination_data: dict[str, t.Container] = {
             "data": ["item1"],
             "pagination": {
                 "page": 1,
@@ -455,7 +455,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: dict[str, t.ContainerValue] = {"pagination": {}}
+        pagination_data: dict[str, t.Container] = {"pagination": {}}
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
@@ -466,7 +466,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
-        pagination_data: dict[str, t.ContainerValue] = {"data": []}
+        pagination_data: dict[str, t.Container] = {"data": []}
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
@@ -477,7 +477,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
-        pagination_data: dict[str, t.ContainerValue] = {
+        pagination_data: dict[str, t.Container] = {
             "data": {"key": "value"},  # dict instead of list
             "pagination": {
                 "page": 1,
@@ -491,7 +491,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        # Should still succeed - dict is valid t.Container
+        # Should still succeed - dict is valid t.ContainerValue
         u.Tests.Result.assert_success(result)
         response = result.value
         assert "data" in response
@@ -515,7 +515,7 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.Container
+        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             u.Pagination.extract_pagination_config(config)
@@ -529,7 +529,7 @@ class TestuPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.Container
+        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
@@ -546,7 +546,7 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.Container
+        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
@@ -565,7 +565,7 @@ class TestuPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.Container
+        # extract_pagination_config accepts object with attributes, cast to t.ContainerValue
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)

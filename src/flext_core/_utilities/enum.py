@@ -52,7 +52,7 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _validate_str(value: t.ScalarValue | StrEnum) -> str | None:
+    def _validate_str(value: t.Scalar | StrEnum) -> str | None:
         """Validate strict string input for parsing paths."""
         try:
             return FlextUtilitiesEnum._strict_str_adapter.validate_python(value)
@@ -61,7 +61,7 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def _is_member_by_value[E: StrEnum](
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
         enum_cls: type[E],
     ) -> TypeIs[E]:
         """Check membership by value (internal helper)."""
@@ -105,7 +105,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def is_member[E: StrEnum](
         enum_cls: type[E],
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
     ) -> TypeGuard[E]:
         """Generic TypeGuard for any StrEnum.
 
@@ -127,7 +127,7 @@ class FlextUtilitiesEnum:
     def is_subset[E: StrEnum](
         enum_cls: type[E],
         valid_members: frozenset[E],
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
     ) -> TypeGuard[E]:
         """TypeGuard for subset of a StrEnum.
 
@@ -206,7 +206,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def coerce_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.ScalarValue | E], E]:
+    ) -> Callable[[t.Scalar | E], E]:
         """Create BeforeValidator for automatic coercion in Pydantic.
 
         RECOMMENDED PATTERN for Pydantic fields:
@@ -226,7 +226,7 @@ class FlextUtilitiesEnum:
 
         """
 
-        def _coerce(value: t.ScalarValue | E) -> E:
+        def _coerce(value: t.Scalar | E) -> E:
             if isinstance(value, enum_cls):
                 return value
             if isinstance(value, str):
@@ -243,7 +243,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def coerce_by_name_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.ScalarValue | E], E]:
+    ) -> Callable[[t.Scalar | E], E]:
         """BeforeValidator that accepts name OR value of enum.
 
         Accepts:
@@ -259,7 +259,7 @@ class FlextUtilitiesEnum:
 
         """
 
-        def _coerce(value: t.ScalarValue | E) -> E:
+        def _coerce(value: t.Scalar | E) -> E:
             if isinstance(value, enum_cls):
                 return value
             if isinstance(value, str):
@@ -490,7 +490,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["is_member"] = "is_member",
@@ -500,7 +500,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["is_name"],
@@ -510,7 +510,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["parse"],
@@ -520,7 +520,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["coerce"],
@@ -529,7 +529,7 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def dispatch[E: StrEnum](
-        value: t.ScalarValue | E,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: str = "is_member",

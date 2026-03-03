@@ -24,10 +24,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
 _MetadataInput = (
-    FlextModelFoundation.Metadata
-    | FlextModelsContainers.ConfigMap
-    | Mapping[str, t.Scalar | None]
-    | None
+    FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | Mapping[str, t.Scalar] | None
 )
 
 
@@ -72,7 +69,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: t.ConfigMap for service tracking.
+        Replaces: m.ConfigMap for service tracking.
         """
 
         model_config = ConfigDict(
@@ -98,9 +95,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: (
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
-        ) = Field(
+        metadata: FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -121,10 +116,7 @@ class FlextModelsContainer:
 
         @field_validator("service", mode="before")
         @classmethod
-        def validate_service_type(
-            cls,
-            v: t.Container,
-        ) -> t.Container:
+        def validate_service_type(cls, v: object) -> object:
             """Validate service is a RegisterableService type.
 
             RegisterableService includes: str, int, float, bool, datetime, None,
@@ -157,7 +149,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: t.ConfigMap for factory tracking.
+        Replaces: m.ConfigMap for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -172,7 +164,7 @@ class FlextModelsContainer:
             description="Factory identifier/name",
         )
         # Factory returns RegisterableService for type-safe factory resolution
-        # Supports all registerable types: PayloadValue, protocols, callables
+        # Supports all registerable types: ContainerValue, protocols, callables
         # SkipValidation needed because Pydantic can't validate callable types
         factory: Annotated[t.FactoryCallable, SkipValidation] = Field(
             ...,
@@ -190,9 +182,7 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: (
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
-        ) = Field(
+        metadata: FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -234,9 +224,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
-        metadata: (
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
-        ) = Field(
+        metadata: FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None = Field(
             default=None,
             description="Additional resource metadata (JSON-serializable)",
         )
@@ -250,7 +238,7 @@ class FlextModelsContainer:
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: t.ConfigMap for container configuration storage.
+        Replaces: m.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

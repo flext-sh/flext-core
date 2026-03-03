@@ -288,7 +288,7 @@ def test_normalization_edge_branches() -> None:
             return iter([("x", 1)])
 
     normalized_dict_like = FlextRuntime.normalize_to_general_value(
-        cast("t.Container", cast("object", DictLike())),
+        cast("t.ContainerValue", cast("object", DictLike())),
     )
     assert normalized_dict_like == {"x": 1}
 
@@ -296,12 +296,12 @@ def test_normalization_edge_branches() -> None:
     assert metadata_cfg == '{"a": 1}'
 
     metadata_dict_like = FlextRuntime.normalize_to_metadata_value(
-        cast("t.Container", cast("object", DictLike())),
+        cast("t.ContainerValue", cast("object", DictLike())),
     )
     assert metadata_dict_like == '{"x": 1}'
 
     metadata_list = FlextRuntime.normalize_to_metadata_value(
-        cast("t.Container", ["a", object()]),
+        cast("t.ContainerValue", ["a", object()]),
     )
     assert isinstance(metadata_list, list)
     assert metadata_list[0] == "a"
@@ -406,7 +406,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     FlextRuntime.configure_structlog(
-        config=cast("t.Container", cast("object", Config())),
+        config=cast("t.ContainerValue", cast("object", Config())),
     )
     assert FlextRuntime.is_structlog_configured() is True
     assert calls
@@ -428,7 +428,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = False
 
     FlextRuntime.configure_structlog(
-        config=cast("t.Container", cast("object", ConfigNoAsync())),
+        config=cast("t.ContainerValue", cast("object", ConfigNoAsync())),
     )
     assert FlextRuntime._structlog_configured
 
@@ -446,7 +446,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     FlextRuntime.configure_structlog(
-        config=cast("t.Container", cast("object", ConfigAsyncFallback())),
+        config=cast("t.ContainerValue", cast("object", ConfigAsyncFallback())),
     )
     assert FlextRuntime._structlog_configured
 
@@ -554,13 +554,13 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert (
         FlextRuntime.compare_entities_by_id(
             "a",
-            cast("t.Container", object()),
+            cast("t.ContainerValue", object()),
         )
         is False
     )
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.Container", object()),
+            cast("t.ContainerValue", object()),
             3,
         )
         is False
@@ -574,21 +574,21 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.Container", cast("object", A())),
-            cast("t.Container", cast("object", B())),
+            cast("t.ContainerValue", cast("object", A())),
+            cast("t.ContainerValue", cast("object", B())),
         )
         is False
     )
     # _is_scalar only matches datetime/None; strings fall to hash(id(entity))
     obj = object()
     assert FlextRuntime.hash_entity_by_id(
-        cast("t.Container", obj),
+        cast("t.ContainerValue", obj),
     ) == hash(id(obj))
 
     assert FlextRuntime.compare_value_objects_by_value("a", "a") is True
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.Container", object()),
+            cast("t.ContainerValue", object()),
             1,
         )
         is False
@@ -607,15 +607,15 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.Container", cast("object", C())),
-            cast("t.Container", cast("object", D())),
+            cast("t.ContainerValue", cast("object", C())),
+            cast("t.ContainerValue", cast("object", D())),
         )
         is False
     )
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.Container", cast("object", C())),
-            cast("t.Container", cast("object", C())),
+            cast("t.ContainerValue", cast("object", C())),
+            cast("t.ContainerValue", cast("object", C())),
         )
         is True
     )
@@ -662,7 +662,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
             raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
-        FlextRuntime.ensure_trace_context(cast("t.Container", BadDict()))
+        FlextRuntime.ensure_trace_context(cast("t.ContainerValue", BadDict()))
 
     trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
     assert "trace_id" in trace_from_mapping
@@ -670,7 +670,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     trace_from_other = FlextRuntime.ensure_trace_context(Path())
     assert "trace_id" in trace_from_other
 
-    ok_statuses: list[t.ContainerValue] = [200, "201"]
+    ok_statuses: list[t.Container] = [200, "201"]
     ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
     assert ok_result.is_success and ok_result.value == [200, 201]
 
@@ -679,7 +679,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         bad_range.error or ""
     )
 
-    invalid_statuses: list[t.ContainerValue] = [cast("t.Container", object())]
+    invalid_statuses: list[t.Container] = [cast("t.ContainerValue", object())]
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     assert bad_type.is_failure and "Invalid HTTP status code type" in (
         bad_type.error or ""
@@ -787,7 +787,7 @@ def test_configure_structlog_print_logger_factory_fallback(
     FlextRuntime._structlog_configured = False
     FlextRuntime.configure_structlog(
         config=cast(
-            "t.Container",
+            "t.ContainerValue",
             cast(
                 "object",
                 type(
@@ -940,14 +940,14 @@ def test_model_helpers_remaining_paths() -> None:
     right = Entity("u-1")
     assert (
         FlextRuntime.compare_entities_by_id(
-            cast("t.Container", cast("object", left)),
-            cast("t.Container", cast("object", right)),
+            cast("t.ContainerValue", cast("object", left)),
+            cast("t.ContainerValue", cast("object", right)),
         )
         is True
     )
     assert isinstance(
         FlextRuntime.hash_entity_by_id(
-            cast("t.Container", cast("object", left)),
+            cast("t.ContainerValue", cast("object", left)),
         ),
         int,
     )
@@ -972,7 +972,7 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "callable": lambda: 1,
         "other": object(),
     }
-    result = FlextRuntime.ensure_trace_context(cast("t.Container", payload))
+    result = FlextRuntime.ensure_trace_context(cast("t.ContainerValue", payload))
     assert result["str"] == "x"
     assert result["int"] == "1"
     assert "trace_id" in result and "span_id" in result

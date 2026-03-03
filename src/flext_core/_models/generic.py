@@ -64,11 +64,11 @@ class FlextGenericModels:
             tenant_id: str | None = Field(default=None, description="Tenant ID")
             environment: str | None = Field(default=None, description="Environment")
             version: str = Field(default="1.0.0", description="Schema version")
-            metadata: FlextModelsContainers.Dict = Field(
+            metadata: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Additional metadata",
             )
-            message: t.ContainerValue = Field(
+            message: t.Container = Field(
                 default=None,
                 description="Message payload",
             )
@@ -104,7 +104,7 @@ class FlextGenericModels:
             pid: int | None = Field(default=None, description="Process ID")
             memory_usage_mb: float | None = Field(default=None, description="Memory MB")
             cpu_usage_percent: float | None = Field(default=None, description="CPU %")
-            metadata: FlextModelsContainers.Dict = Field(
+            metadata: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Service metadata",
             )
@@ -115,7 +115,7 @@ class FlextGenericModels:
             Used by: CLI config info, debug, auditing.
             """
 
-            config: FlextModelsContainers.Dict = Field(
+            config: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Config key-value pairs",
             )
@@ -134,7 +134,7 @@ class FlextGenericModels:
                 default_factory=list,
                 description="Validation errors",
             )
-            metadata: FlextModelsContainers.Dict = Field(
+            metadata: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Config metadata",
             )
@@ -146,10 +146,10 @@ class FlextGenericModels:
             """
 
             healthy: bool = Field(default=True, description="Overall health")
-            checks: FlextModelsContainers.Dict = Field(
+            checks: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict, description="Check results"
             )
-            details: FlextModelsContainers.Dict = Field(
+            details: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict, description="Check details"
             )
             checked_at: datetime = Field(
@@ -165,7 +165,7 @@ class FlextGenericModels:
                 default=None, description="Check duration ms"
             )
             environment: str | None = Field(default=None, description="Environment")
-            metadata: FlextModelsContainers.Dict = Field(
+            metadata: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Health metadata",
             )
@@ -211,7 +211,7 @@ class FlextGenericModels:
                 default=None,
                 description="Operation name",
             )
-            metadata: FlextModelsContainers.Dict = Field(
+            metadata: m.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Operation metadata",
             )
@@ -262,7 +262,7 @@ class FlextGenericModels:
             Used by: flext-ldif conversion, data transformations, ETL.
             """
 
-            converted: list[t.ContainerValue] = Field(
+            converted: list[t.Container] = Field(
                 default_factory=list,
                 description="Converted items",
             )
@@ -274,7 +274,7 @@ class FlextGenericModels:
                 default_factory=list,
                 description="Warning messages",
             )
-            skipped: list[t.ContainerValue] = Field(
+            skipped: list[t.Container] = Field(
                 default_factory=list, description="Skipped items"
             )
             start_time: datetime | None = Field(default=None, description="Start time")
@@ -293,7 +293,7 @@ class FlextGenericModels:
             def _append_metadata_item(
                 self,
                 key: Literal["failed_items", "warning_items"],
-                item: t.ContainerValue,
+                item: t.Container,
             ) -> None:
                 if key not in self.metadata.root:
                     self.metadata.root[key] = []
@@ -302,7 +302,7 @@ class FlextGenericModels:
                 items.append(item)
                 self.metadata.root[key] = items
 
-            def _upsert_skip_reason(self, item: t.ContainerValue, reason: str) -> None:
+            def _upsert_skip_reason(self, item: t.Container, reason: str) -> None:
                 raw_reasons = self.metadata.root.get("skip_reasons", {})
                 reasons: dict[str, str] = {}
                 if isinstance(raw_reasons, Mapping):
@@ -310,14 +310,14 @@ class FlextGenericModels:
                 reasons[str(item)] = reason
                 self.metadata.root["skip_reasons"] = reasons
 
-            def add_converted(self, item: t.ContainerValue) -> None:
+            def add_converted(self, item: t.Container) -> None:
                 """Add a successfully converted item."""
                 self.converted.append(item)
 
             def add_error(
                 self,
                 error: str,
-                item: t.ContainerValue | None = None,
+                item: t.Container | None = None,
             ) -> None:
                 """Add an error with optional failed item."""
                 self.errors.append(error)
@@ -327,7 +327,7 @@ class FlextGenericModels:
             def add_warning(
                 self,
                 warning: str,
-                item: t.ContainerValue | None = None,
+                item: t.Container | None = None,
             ) -> None:
                 """Add a warning with optional item."""
                 self.warnings.append(warning)
@@ -336,7 +336,7 @@ class FlextGenericModels:
 
             def add_skipped(
                 self,
-                item: t.ContainerValue,
+                item: t.Container,
                 reason: str | None = None,
             ) -> None:
                 """Add a skipped item with optional reason."""

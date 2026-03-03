@@ -20,12 +20,14 @@ from flext_infra import (
     m,
 )
 
-type InfraValue = t.JsonPrimitive | list[InfraValue] | Mapping[str, InfraValue] | None
+type InfraValue = (
+    t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | None
+)
 
 type IssueMap = Mapping[str, InfraValue]
 
 
-def _to_infra_value(value: t.ContainerValue) -> InfraValue | None:
+def _to_infra_value(value: t.Container) -> InfraValue | None:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, list):
@@ -173,7 +175,7 @@ class FlextInfraDependencyDetectionService:
             try:
                 raw = out_file.read_text(encoding=c.Encoding.DEFAULT)
                 loaded: list[InfraValue] | dict[str, InfraValue] = (
-                    json.loads(raw) if raw.strip() else []  # JUSTIFIED
+                    json.loads(raw) if raw.strip() else []
                 )
                 if isinstance(loaded, list):
                     issues = [

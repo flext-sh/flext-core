@@ -41,7 +41,7 @@ class FlextInfraBaseMkTemplateEngine(FlextService[str]):
     def render_all(self, config: m.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
-        context: Mapping[str, t.ContainerValue] = {
+        context: Mapping[str, t.Container] = {
             "config": active_config,
             "lint_gates_csv": ",".join(active_config.lint_gates),
         }

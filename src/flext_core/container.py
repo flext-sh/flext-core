@@ -82,7 +82,7 @@ class FlextContainer(p.DI):
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
             str,
-            t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
+            t.Scalar | m.ConfigMap | Sequence[t.Scalar],
         ]
         | m.ConfigMap
         | None = None,
@@ -116,7 +116,7 @@ class FlextContainer(p.DI):
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
             str,
-            t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
+            t.Scalar | m.ConfigMap | Sequence[t.Scalar],
         ]
         | m.ConfigMap
         | None = None,
@@ -199,9 +199,7 @@ class FlextContainer(p.DI):
             # Get the caller's frame to discover factories in calling module
             frame = inspect.currentframe()
             if frame and frame.f_back:
-                caller_globals: Mapping[str, t.GeneralValueType] = (
-                    frame.f_back.f_globals
-                )
+                caller_globals: Mapping[str, object] = frame.f_back.f_globals
                 # Get module name from globals
                 module_name_raw = caller_globals.get("__name__", "__main__")
                 module_name = str(module_name_raw) if module_name_raw else "__main__"
@@ -223,8 +221,9 @@ class FlextContainer(p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                _factory_func_ref: Callable[[], t.GeneralValueType]
-                                | None = (factory_func_raw),
+                                _factory_func_ref: Callable[[], object] | None = (
+                                    factory_func_raw
+                                ),
                                 _factory_name: str = factory_name,
                                 _factory_config: m.Container.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
@@ -428,7 +427,7 @@ class FlextContainer(p.DI):
         global_config: m.Container.ContainerConfig | None = None,
         user_overrides: Mapping[
             str,
-            t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
+            t.Scalar | m.ConfigMap | Sequence[t.Scalar],
         ]
         | m.ConfigMap
         | None = None,
@@ -666,7 +665,7 @@ class FlextContainer(p.DI):
     @override
     def configure(
         self,
-        config: Mapping[str, t.ScalarValue],
+        config: Mapping[str, t.Scalar],
     ) -> None:
         """Apply user-provided overrides to container configuration.
 
@@ -727,7 +726,7 @@ class FlextContainer(p.DI):
 
     def with_config(
         self,
-        config: Mapping[str, t.ScalarValue],
+        config: Mapping[str, t.Scalar],
     ) -> Self:
         """Fluently apply configuration values and return this instance."""
         self.configure(config)
@@ -741,7 +740,7 @@ class FlextContainer(p.DI):
     ) -> Self:
         """Register a service and return the container for fluent chaining.
 
-        Accepts service value (PayloadValue, protocols, callables);
+        Accepts service value (ContainerValue, protocols, callables);
         values are wrapped in a ``ServiceRegistration`` with configuration from
         ``FlextSettings`` and user overrides.
         """
@@ -776,14 +775,14 @@ class FlextContainer(p.DI):
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts service values for registration,
-        including PayloadValue, protocols (Config, Ctx, DI, Service, Log,
+        including ContainerValue, protocols (Config, Ctx, DI, Service, Log,
         Handler, Registry), and callables. This enables dependency injection of
         typed service instances and protocol implementations.
 
         Args:
             name: Unique key for the registration.
             service: Concrete instance that produces the service.
-                Must be PayloadValue (primitives, BaseModel, callable,
+                Must be ContainerValue (primitives, BaseModel, callable,
                 sequence, or mapping).
 
         Returns:
@@ -797,7 +796,7 @@ class FlextContainer(p.DI):
         if not self._is_registerable_service(service):
             return r[bool].fail(
                 f"Service '{name}' does not satisfy RegisterableService protocol. "
-                f"Expected PayloadValue, protocol implementation, or callable.",
+                f"Expected ContainerValue, protocol implementation, or callable.",
             )
         try:
             if hasattr(self._di_services, name):
@@ -832,7 +831,7 @@ class FlextContainer(p.DI):
         """Register a factory used to build services on demand.
 
         Accepts factories returning RegisterableService (including protocols
-        like Log, Ctx, Config, etc.) not just PayloadValue.
+        like Log, Ctx, Config, etc.) not just ContainerValue.
 
         Returns:
             ``FlextResult`` signaling whether the factory was stored. Failure
@@ -851,7 +850,7 @@ class FlextContainer(p.DI):
                 if not self._is_registerable_service(narrowed):
                     msg = (
                         f"Factory '{name}' returned value that does not satisfy "
-                        f"RegisterableService protocol. Expected PayloadValue, protocol, or callable."
+                        f"RegisterableService protocol. Expected ContainerValue, protocol, or callable."
                     )
                     raise ValueError(msg)
                 return narrowed
@@ -980,9 +979,7 @@ class FlextContainer(p.DI):
         return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @staticmethod
-    def _is_instance_of[T](
-        value: t.GeneralValueType, type_cls: type[T]
-    ) -> TypeGuard[T]:
+    def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
         """Type guard to narrow object to specific type T.
 
         Uses isinstance for type narrowing with MRO support.
@@ -990,9 +987,7 @@ class FlextContainer(p.DI):
         return isinstance(value, type_cls) or type_cls in type(value).__mro__
 
     @staticmethod
-    def _is_registerable_service(
-        value: t.GeneralValueType,
-    ) -> TypeGuard[t.RegisterableService]:
+    def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:
         # Use isinstance for proper type narrowing
         if isinstance(value, (str, int, float, bool, type(None))):
             return True
@@ -1014,7 +1009,7 @@ class FlextContainer(p.DI):
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def _is_context_protocol(value: t.GeneralValueType) -> TypeGuard[p.Context]:
+    def _is_context_protocol(value: object) -> TypeGuard[p.Context]:
         return bool(
             hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get"),
         )
@@ -1296,7 +1291,7 @@ class FlextContainer(p.DI):
 
         for name, service in (services or {}).items():
             # Type narrowing: service is compatible with ServiceRegistration.service type
-            # ServiceRegistration.service accepts: t.ConfigMapValue | BaseModel | p.VariadicCallable[t.ConfigMapValue] | t.ConfigMapValue
+            # ServiceRegistration.service accepts: t.Container | BaseModel | p.VariadicCallable[t.Container] | t.Container
             # The service parameter matches this union type
             cloned_services[name] = m.Container.ServiceRegistration(
                 name=name,

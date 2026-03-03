@@ -32,7 +32,7 @@ class FlextInfraStubSupplyChain:
         self,
         project_dir: Path,
         workspace_root: Path,
-    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
+    ) -> FlextResult[Mapping[str, t.Container]]:
         """Analyze a project for missing stubs and type packages.
 
         Runs mypy for hints and pyrefly for missing imports, then
@@ -59,7 +59,7 @@ class FlextInfraStubSupplyChain:
             ]
             unresolved = [m for m in external if not self._stub_exists(m, root)]
 
-            result: MutableMapping[str, t.ContainerValue] = {
+            result: MutableMapping[str, t.Container] = {
                 "project": proj.name,
                 "mypy_hints": mypy_hints,
                 "internal_missing": internal,

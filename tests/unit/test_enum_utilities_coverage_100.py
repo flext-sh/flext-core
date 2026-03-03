@@ -86,7 +86,7 @@ class CoerceValidatorScenario:
     """Coerce validator test scenario."""
 
     name: str
-    value: t.JsonPrimitive | Status | None
+    value: t.Primitives | Status | None
     expected_success: bool
     expected_status: Status | None
     expected_error: str | None
@@ -225,7 +225,7 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        value_typed: t.JsonPrimitive | Status | None = (
+        value_typed: t.Primitives | Status | None = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
             else str(scenario.value)
@@ -240,7 +240,7 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        value_typed: t.JsonPrimitive | Status | None = (
+        value_typed: t.Primitives | Status | None = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
             else str(scenario.value)
@@ -262,19 +262,19 @@ class TestuEnumParse:
         result = u.Enum.parse(Status, scenario.value)
 
         if scenario.expected_success:
-            # Type annotation: Status is StrEnum, compatible with t.Container
+            # Type annotation: Status is StrEnum, compatible with t.ContainerValue
             # Use explicit type annotation to help mypy infer TValue
-            expected_status_cast: t.ContainerValue = cast(
-                "t.Container",
+            expected_status_cast: t.Container = cast(
+                "t.ContainerValue",
                 scenario.expected_status,
             )
             # Type annotation: mypy cannot infer TValue from StrEnum, specify explicitly
-            # Cast result to r[t.Container] and expected_value to t.Container
-            result_typed: r[t.ContainerValue] = cast(
-                "r[t.Container]",
+            # Cast result to r[t.ContainerValue] and expected_value to t.ContainerValue
+            result_typed: r[t.Container] = cast(
+                "r[t.ContainerValue]",
                 result,
             )
-            expected_typed: t.ContainerValue = expected_status_cast
+            expected_typed: t.Container = expected_status_cast
             u.Tests.Result.assert_success_with_value(
                 result_typed,
                 expected_typed,

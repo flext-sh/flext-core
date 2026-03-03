@@ -157,7 +157,7 @@ class TestAutomatedFlextRuntime:
     def _execute_runtime_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        input_data: Mapping[str, t.Container],
     ) -> r[bool]:
         """Execute a test operation on runtime instance.
 

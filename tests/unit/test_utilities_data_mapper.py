@@ -79,11 +79,11 @@ class TestMapperMapDictKeys:
     def test_exception_handling(self) -> None:
         """Test exception handling with bad dict."""
 
-        class BadDict(UserDict[str, FlextTypes.ContainerValue]):
+        class BadDict(UserDict[str, FlextTypes.Container]):
             """Dict that raises on items()."""
 
             @override
-            def items(self) -> ItemsView[str, FlextTypes.ContainerValue]:
+            def items(self) -> ItemsView[str, FlextTypes.Container]:
                 """Raise error on items attempt - test error handling."""
                 msg = "Bad dict items"
                 raise RuntimeError(msg)

@@ -592,7 +592,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
     def generate_sarif_report(
         results: list[_ProjectResult],
         gates: list[str],
-    ) -> Mapping[str, t.ContainerValue]:
+    ) -> Mapping[str, t.Container]:
         """Render gate results as a SARIF 2.1.0 payload."""
         tool_info = {
             c.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
@@ -775,7 +775,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         issues: list[_CheckIssue] = []
         try:
-            for entry in json.loads(result.stdout or "[]"):  # JUSTIFIED
+            for entry in json.loads(result.stdout or "[]"):
                 parsed = _RuffLintError.model_validate(entry)
                 issues.append(
                     _CheckIssue(
@@ -870,9 +870,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         issues: list[_CheckIssue] = []
         if json_file.exists():
             try:
-                raw = json.loads(  # JUSTIFIED
-                    json_file.read_text(encoding=c.Encoding.DEFAULT),
-                )
+                raw = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
                 if isinstance(raw, dict):
                     output = _PyreflyOutput.model_validate(raw)
                     pyrefly_errors = output.errors
@@ -1358,7 +1356,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
     def _fix_search_paths_tk(
         self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        pyrefly: MutableMapping[str, t.Container],
         project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
@@ -1387,7 +1385,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
         # Remove nonexistent paths
         search_raw = pyrefly.get("search-path")
-        current_paths: list[t.ContainerValue] = (
+        current_paths: list[t.Container] = (
             list(search_raw) if isinstance(search_raw, list) else []
         )
         nonexistent = [
@@ -1408,14 +1406,14 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
     def _remove_ignore_sub_config_tk(
         self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        pyrefly: MutableMapping[str, t.Container],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get("sub-config")
         if not isinstance(sub_configs, list):
             return []
 
-        new_configs: list[t.ContainerValue] = []
+        new_configs: list[t.Container] = []
         for conf in sub_configs:
             if isinstance(conf, Mapping) and conf.get("ignore") is True:
                 matches = conf.get("matches", "unknown")
@@ -1430,7 +1428,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
     def _ensure_project_excludes_tk(
         self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        pyrefly: MutableMapping[str, t.Container],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get("project-excludes")

@@ -57,10 +57,10 @@ class _ProtocolIntrospection:
         class_name: str,
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, t.TypeHintSpecifier] = (
+        protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | t.Container = (
+        raw_attrs: set[str] | object = (
             protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
@@ -88,7 +88,7 @@ class _ProtocolIntrospection:
 
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
-            base_annotations: dict[str, t.TypeHintSpecifier] = (
+            base_annotations: dict[str, object] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -135,7 +135,7 @@ class _ProtocolIntrospection:
     @classmethod
     def check_implements_protocol(
         cls,
-        instance: t.ContainerValue,
+        instance: t.Container,
         protocol: type,
     ) -> bool:
         """Check if an instance implements a protocol."""
@@ -143,10 +143,10 @@ class _ProtocolIntrospection:
         if protocol in registered_protocols:
             return True
 
-        protocol_annotations: dict[str, t.TypeHintSpecifier] = (
+        protocol_annotations: dict[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | t.Container = (
+        raw_attrs: set[str] | object = (
             protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
@@ -243,7 +243,7 @@ class FlextProtocols:
     class RoutableType(Protocol):
         """Protocol for message types (classes) with route information."""
 
-        model_fields: Mapping[str, t.Scalar | None]
+        model_fields: Mapping[str, t.Scalar]
 
     # =========================================================================
     # CONTEXT: Context Management Protocols
@@ -256,8 +256,8 @@ class FlextProtocols:
         Defined in protocols.py to keep all protocol definitions together.
         Full context protocol p.Context extends this minimal interface.
 
-        Methods use generic return types for structural compatibility
-        with p.Context which uses ResultLike[T].
+        Methods use generic return types (object) for structural compatibility
+        with p.Context which uses ResultLike[T] (also covariant with object).
         """
 
         def clone(self) -> Self:
@@ -267,7 +267,7 @@ class FlextProtocols:
         def set(
             self,
             key: str,
-            value: t.ContainerValue,
+            value: t.Container,
             scope: str = ...,
         ) -> r[bool]:
             """Set a context value. Returns Result-like object."""
@@ -277,7 +277,7 @@ class FlextProtocols:
             self,
             key: str,
             scope: str = ...,
-        ) -> r[t.ContainerValue]:
+        ) -> r[t.Container]:
             """Get a context value. Returns Result-like object."""
             ...
 
@@ -286,13 +286,13 @@ class FlextProtocols:
         """Runtime bootstrap options for service initialization."""
 
         config_type: type[BaseSettings] | None
-        config_overrides: Mapping[str, t.Scalar | None] | None
+        config_overrides: Mapping[str, t.Scalar] | None
         context: FlextProtocols.Context | None
         subproject: str | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None
         resources: Mapping[str, t.ResourceCallable] | None
-        container_overrides: Mapping[str, t.Scalar | None] | None
+        container_overrides: Mapping[str, t.Scalar] | None
         wire_modules: Sequence[ModuleType] | None
         wire_packages: Sequence[str] | None
         wire_classes: Sequence[type] | None
@@ -349,7 +349,7 @@ class FlextProtocols:
             ...
 
         @property
-        def result(self) -> t.ContainerValue:
+        def result(self) -> t.Container:
             """Access internal Result for advanced operations."""
             ...
 
@@ -434,8 +434,8 @@ class FlextProtocols:
         @classmethod
         def accumulate_errors(
             cls,
-            *results: FlextProtocols.Result[t.ContainerValue],
-        ) -> FlextProtocols.Result[list[t.ContainerValue]]:
+            *results: FlextProtocols.Result[t.Container],
+        ) -> FlextProtocols.Result[list[t.Container]]:
             """Collect all successes, fail if any failure."""
             ...
 
@@ -528,7 +528,7 @@ class FlextProtocols:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> Mapping[str, t.Scalar | None]:
+        def model_dump(self) -> Mapping[str, t.Scalar]:
             """Dump model data to dictionary."""
             ...
 
@@ -541,7 +541,7 @@ class FlextProtocols:
         """
 
         @property
-        def model_fields(self) -> Mapping[str, t.Scalar | None]:
+        def model_fields(self) -> Mapping[str, t.Scalar]:
             """Model fields mapping."""
             ...
 
@@ -564,7 +564,7 @@ class FlextProtocols:
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: Mapping[str, t.Scalar | None]) -> None:
+        def configure(self, config: Mapping[str, t.Scalar]) -> None:
             """Configure component with settings."""
             ...
 
@@ -600,7 +600,7 @@ class FlextProtocols:
         def model_copy(
             self,
             *,
-            update: Mapping[str, t.ContainerValue] | None = None,
+            update: Mapping[str, t.Container] | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.
@@ -769,7 +769,7 @@ class FlextProtocols:
             """
             ...
 
-        def get_service_info(self) -> Mapping[str, t.Scalar | None]:
+        def get_service_info(self) -> Mapping[str, t.Scalar]:
             """Get service metadata and configuration information.
 
             Reflects real implementations like FlextService which provide
@@ -819,7 +819,7 @@ class FlextProtocols:
             Supports any callable that accepts a value and returns bool.
             """
 
-            def __call__(self, value: t.ContainerValue) -> bool:  # INTERFACE
+            def __call__(self, value: t.Container) -> bool:  # INTERFACE
                 """Evaluate predicate on value."""
                 ...
 
@@ -898,7 +898,7 @@ class FlextProtocols:
         def dispatch(
             self,
             message: FlextProtocols.Routable,
-        ) -> FlextProtocols.Result[t.ContainerValue]:
+        ) -> FlextProtocols.Result[t.Container]:
             """Dispatch a CQRS message to its registered handler."""
             ...
 
@@ -931,7 +931,7 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            handler: FlextProtocols.Handler[t.ContainerValue, t.ContainerValue],
+            handler: FlextProtocols.Handler[t.Container, t.Container],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
@@ -943,7 +943,7 @@ class FlextProtocols:
         def register_handlers(
             self,
             handlers: Sequence[
-                FlextProtocols.Handler[t.ContainerValue, t.ContainerValue]
+                FlextProtocols.Handler[t.Container, t.Container]
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
@@ -957,7 +957,7 @@ class FlextProtocols:
             self,
             bindings: Mapping[
                 t.MessageTypeSpecifier,
-                FlextProtocols.Handler[t.ContainerValue, t.ContainerValue],
+                FlextProtocols.Handler[t.Container, t.Container],
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
@@ -993,7 +993,7 @@ class FlextProtocols:
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> list[tuple[str, t.ContainerValue]]:
+        ) -> list[tuple[str, t.Container]]:
             """Scan class for handler-decorated methods.
 
             Introspects the class to find all methods with handler configuration
@@ -1011,14 +1011,14 @@ class FlextProtocols:
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, t.HandlerCallable, t.ContainerValue]]:
+        ) -> list[tuple[str, t.HandlerCallable, t.Container]]:
             """Scan module for handler-decorated functions.
 
             Introspects the module to find all functions with handler configuration
             metadata, returning them sorted by priority for consistent ordering.
 
             Args:
-                module: Module instance to scan for handler decorators
+                module: Module object to scan for handler decorators
 
             Returns:
                 List of tuples (function_name, function, config) sorted by priority
@@ -1050,7 +1050,7 @@ class FlextProtocols:
             the @handler() decorator without scanning all items.
 
             Args:
-                module: Module instance to check for handlers
+                module: Module object to check for handlers
 
             Returns:
                 True if module has at least one handler, False otherwise
@@ -1064,9 +1064,9 @@ class FlextProtocols:
 
         def process[TResult](
             self,
-            command: t.Scalar | None,
+            command: t.Scalar,
             next_handler: FlextProtocols.ResourceOperation[
-                t.Scalar | None,
+                t.Scalar,
                 TResult,
             ],
         ) -> FlextProtocols.Result[TResult]:
@@ -1079,10 +1079,10 @@ class FlextProtocols:
 
         Processors can be objects with a process() method that takes data
         and returns a result (which will be normalized to Result).
-        Accepts t.GuardInputValue, BaseModel, or Result for processing.
+        Accepts t.Container, BaseModel, or Result for processing.
 
         The return type is flexible to support:
-        - Direct values (t.GuardInputValue)
+        - Direct values (t.Container)
         - BaseModel instances (Pydantic models)
         - Result instances (structural typing)
         - Objects with is_success/is_failure properties (FlextResult compatibility)
@@ -1091,13 +1091,13 @@ class FlextProtocols:
         def process(
             self,
             data: (
-                t.ContainerValue | BaseModel | FlextProtocols.Result[t.ContainerValue]
+                t.Container | BaseModel | FlextProtocols.Result[t.Container]
             ),
-        ) -> t.ContainerValue | BaseModel | FlextProtocols.Result[t.ContainerValue]:
+        ) -> t.Container | BaseModel | FlextProtocols.Result[t.Container]:
             """Process data and return result.
 
             Returns can be:
-            - Direct value (t.GuardInputValue)
+            - Direct value (t.Container)
             - BaseModel instance (Pydantic model)
             - Result (structural typing compatible)
             """
@@ -1114,7 +1114,7 @@ class FlextProtocols:
         def record_metric(
             self,
             name: str,
-            value: t.ContainerValue,
+            value: t.Container,
         ) -> FlextProtocols.Result[bool]:
             """Record a metric value.
 
@@ -1147,7 +1147,7 @@ class FlextProtocols:
 
         def push_context(
             self,
-            ctx: t.ContainerValue,
+            ctx: t.Container,
         ) -> FlextProtocols.Result[bool]:
             """Push execution context onto the stack.
 
@@ -1169,7 +1169,7 @@ class FlextProtocols:
             """
             ...
 
-        def current_context(self) -> t.ContainerValue | None:
+        def current_context(self) -> t.Container | None:
             """Get current execution context without popping.
 
             Returns:
@@ -1201,63 +1201,63 @@ class FlextProtocols:
 
             def debug(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue | Exception,
-                **kw: t.ContainerValue | Exception,
+                msg: str | t.Container,
+                *args: t.Container | Exception,
+                **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log debug message."""
                 ...
 
             def info(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
+                msg: str | t.Container,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log info message."""
                 ...
 
             def warning(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
+                msg: str | t.Container,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log warning message."""
                 ...
 
             def warn(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue,
+                msg: str | t.Container,
+                *args: t.Container,
+                **kw: t.Container,
             ) -> r[bool]:
                 """Log warning message (alias)."""
                 ...
 
             def error(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
+                msg: str | t.Container,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log error message."""
                 ...
 
             def critical(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
+                msg: str | t.Container,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log critical message."""
                 ...
 
             def exception(
                 self,
-                msg: str | t.ContainerValue,
-                *args: t.ContainerValue,
-                **kw: t.ContainerValue | Exception,
+                msg: str | t.Container,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool]:
                 """Log exception with traceback."""
                 ...
@@ -1319,8 +1319,8 @@ class FlextProtocols:
 
         def __call__(
             self,
-            *args: t.Scalar | None,
-            **kwargs: t.Scalar | None,
+            *args: t.Scalar,
+            **kwargs: t.Scalar,
         ) -> T_co:
             """Call the function with any arguments, returning T_co."""
             ...
@@ -1374,7 +1374,7 @@ class FlextProtocols:
 
         """
 
-        def __call__(self, value: t.ContainerValue) -> bool:
+        def __call__(self, value: t.Container) -> bool:
             """Validate value, return True if valid."""
             ...
 
@@ -1459,7 +1459,7 @@ class FlextProtocols:
             """Entry attributes as immutable mapping."""
             ...
 
-        def to_dict(self) -> Mapping[str, t.Scalar | None]:
+        def to_dict(self) -> Mapping[str, t.Scalar]:
             """Convert to dictionary representation."""
             ...
 
@@ -1525,7 +1525,7 @@ class FlextProtocols:
     # =========================================================================
 
     # Type for data sources that get() can access
-    # Supports: ConfigurationDict (PayloadValue), JsonValue dicts, and object dicts
+    # Supports: ConfigurationDict (ContainerValue), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
         m.ConfigMap
@@ -1547,17 +1547,17 @@ class FlextProtocols:
     # This replaces object/dict usage in DI container methods.
     # Type for services registerable in FlextContainer.
     # Union of all protocol types that can be registered as DI services:
-    # - PayloadValue: Primitives, BaseModel, sequences, mappings
+    # - ContainerValue: Primitives, BaseModel, sequences, mappings
     # - BindableLogger: Logger protocol
-    # - Callable: Factories that return PayloadValue
+    # - Callable: Factories that return ContainerValue
     type RegisterableService = (
-        t.ContainerValue
+        t.Container
         | BindableLogger
-        | Callable[..., t.ContainerValue]
+        | Callable[..., t.Container]
         | Config
         | Context
         | DI
-        | Service[t.ContainerValue]
+        | Service[t.Container]
         | CommandBus
         | Registrable
     )
@@ -1566,7 +1566,7 @@ class FlextProtocols:
     type ServiceFactory = t.FactoryCallable
     """Factory callable returning any registerable service type.
 
-    Broader than t.FactoryCallable (which returns PayloadValue).
+    Broader than t.FactoryCallable (which returns ContainerValue).
     Supports factories that create protocols like Log,             ..., Config, etc.
 
     Usage:
@@ -1605,8 +1605,8 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, t.Container],
-            **_kwargs: t.ContainerValue,
+            namespace: Mapping[str, object],
+            **_kwargs: t.Container,
         ) -> type:
             """Create a new class with protocol validation.
 
@@ -1804,7 +1804,7 @@ class FlextProtocols:
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
-                self: t.ContainerValue,
+                self: t.Container,
                 protocol: type,
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
@@ -1828,11 +1828,11 @@ class FlextProtocols:
         return _ProtocolIntrospection.is_protocol(target_cls)
 
     @staticmethod
-    def check_implements_protocol(instance: t.ContainerValue, protocol: type) -> bool:
+    def check_implements_protocol(instance: t.Container, protocol: type) -> bool:
         """Check if an instance's class implements a protocol.
 
         Args:
-            instance: The instance to check.
+            instance: The object to check.
             protocol: The protocol to check against.
 
         Returns:

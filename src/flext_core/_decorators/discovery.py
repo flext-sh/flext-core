@@ -36,7 +36,7 @@ class FactoryDecoratorsDiscovery:
         metadata, returning them sorted by name for consistent ordering.
 
         Args:
-            module: Module instance to scan for factory decorators
+            module: Module object to scan for factory decorators
 
         Returns:
             List of tuples (function_name, FactoryDecoratorConfig) sorted by name

@@ -39,7 +39,7 @@ def test_circuit_breaker_transitions_and_metrics() -> None:
     assert cb.get_state(message_type) == c.Reliability.CircuitBreakerState.CLOSED
 
     metrics = cb.get_metrics()
-    # Type narrowing: metrics values are t.Container, need to check for int
+    # Type narrowing: metrics values are t.ContainerValue, need to check for int
     failures_val = metrics.get("failures")
     total_ops_val = metrics.get("total_operations")
     assert isinstance(failures_val, int) and failures_val >= 1

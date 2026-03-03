@@ -38,7 +38,7 @@ class _BadSequence:
         raise TypeError(msg)
 
 
-class _BadCopyDict(UserDict[str, t.ContainerValue]):
+class _BadCopyDict(UserDict[str, t.Container]):
     @override
     def copy(self) -> _BadCopyDict:
         msg = "copy failed"
@@ -69,7 +69,7 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert deep.is_success
 
     broken = u.Collection.merge(
-        cast("dict[str, t.Container]", None),
+        cast("dict[str, t.ContainerValue]", None),
         {"x": 1},
         strategy="deep",
     )

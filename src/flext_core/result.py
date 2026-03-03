@@ -237,7 +237,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_io_result[U](
         cls,
-        io_result: IOResult[U, str],
+        io_result: IOResult[U, str] | t.Container,
     ) -> FlextResult[U | IO[U]]:
         """Build result from IOResult by unwrapping value or failure message."""
         if not hasattr(io_result, "unwrap") or not hasattr(io_result, "failure"):
@@ -342,7 +342,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def create_from_callable(
         cls,
-        func: Callable[[], T_co],
+        func: Callable[[], T_co | None],
         error_code: str | None = None,
     ) -> FlextResult[T_co]:
         """Create result from callable, catching exceptions."""
@@ -360,7 +360,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_validation(
         cls: type[FlextResult[T_Model]],
-        data: t.ContainerValue,
+        data: t.Container,
         model: type[T_Model],
     ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.

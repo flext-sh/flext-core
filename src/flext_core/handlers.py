@@ -15,8 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from datetime import datetime
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import ClassVar, override
 
@@ -94,7 +93,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def __init_subclass__(
         cls,
-        **kwargs: t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
+        **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
     ) -> None:
         """Validate non-abstract subclasses implement a handle() method.
 
@@ -182,7 +181,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: dict[str, t.ContainerValue] = {}
+        self._metrics: dict[str, t.Container] = {}
         self._stack: list[m.Handler.ExecutionContext | m.ConfigMap] = []
 
     @property
@@ -199,14 +198,14 @@ class FlextHandlers[MessageT_contra, ResultT](
     def create_from_callable(
         cls,
         handler_callable: Callable[
-            [t.ScalarValue],
-            t.ScalarValue,
+            [t.Scalar],
+            t.Scalar,
         ],
         handler_name: str | None = None,
         handler_type: c.Cqrs.HandlerType | None = None,
         mode: c.Cqrs.HandlerType | str | None = None,
         handler_config: m.Handler | None = None,
-    ) -> FlextHandlers[t.ScalarValue, t.ScalarValue]:
+    ) -> FlextHandlers[t.Scalar, t.Scalar]:
         """Create a handler instance from a callable function.
 
         Factory method that wraps a callable function in a h instance,
@@ -220,7 +219,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             handler_config: Optional m.Handler configuration
 
         Returns:
-            FlextHandlers[t.ConfigMapValue, t.ConfigMapValue]: Handler instance wrapping the callable
+            FlextHandlers[t.Container, t.Container]: Handler instance wrapping the callable
 
         Raises:
             e.ValidationError: If invalid mode is provided
@@ -235,20 +234,20 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         # Create a concrete handler class dynamically
         class CallableHandler(
-            FlextHandlers[t.ScalarValue, t.ScalarValue],
+            FlextHandlers[t.Scalar, t.Scalar],
         ):
             """Dynamic handler created from callable."""
 
             _handler_fn: Callable[
-                [t.ScalarValue],
-                t.ScalarValue,
+                [t.Scalar],
+                t.Scalar,
             ]
 
             def __init__(
                 self,
                 handler_fn: Callable[
-                    [t.ScalarValue],
-                    t.ScalarValue,
+                    [t.Scalar],
+                    t.Scalar,
                 ],
                 config: m.Handler | None = None,
             ) -> None:
@@ -257,19 +256,19 @@ class FlextHandlers[MessageT_contra, ResultT](
                 self._handler_fn = handler_fn
 
             @override
-            def handle(self, message: t.ScalarValue) -> r[t.ScalarValue]:
+            def handle(self, message: t.Scalar) -> r[t.Scalar]:
                 """Execute the wrapped callable."""
                 if isinstance(message, tuple):
-                    return r[t.ScalarValue].fail("Unexpected message type")
+                    return r[t.Scalar].fail("Unexpected message type")
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
                         return result
                     if isinstance(result, set):
-                        return r[t.ScalarValue].fail(
-                            "Result must be compatible with GeneralValueType",
+                        return r[t.Scalar].fail(
+                            "Result must be compatible with ContainerValue",
                         )
-                    return r[t.ScalarValue].ok(result)
+                    return r[t.Scalar].ok(result)
                 except (
                     ValueError,
                     TypeError,
@@ -281,7 +280,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                         "Callable handler execution failed",
                         exc_info=exc,
                     )
-                    return r[t.ScalarValue].fail(str(exc))
+                    return r[t.Scalar].fail(str(exc))
 
         # Use handler_config if provided
         if handler_config is not None:
@@ -501,14 +500,14 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         return self._config_model.handler_mode
 
-    def record_metric(self, name: str, value: t.ContainerValue) -> r[bool]:
+    def record_metric(self, name: str, value: t.Container) -> r[bool]:
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
         return r[bool].ok(value=True)
 
     def push_context(
         self,
-        ctx: m.Handler.ExecutionContext | t.ConfigurationMapping,
+        ctx: m.Handler.ExecutionContext | dict[str, t.Container],
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.Handler.ExecutionContext | m.ConfigMap):
@@ -824,7 +823,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             metadata, returning them sorted by priority for consistent ordering.
 
             Args:
-                module: Module instance to scan for handler decorators
+                module: Module object to scan for handler decorators
 
             Returns:
                 List of tuples (function_name, function, DecoratorConfig) sorted by priority
@@ -852,21 +851,19 @@ class FlextHandlers[MessageT_contra, ResultT](
                     func,
                     c.Discovery.HANDLER_ATTR,
                 )
-                callable_func: Callable[..., t.GeneralValueType] = func
+                callable_func: Callable[..., object] = func
 
                 def narrowed_func(
-                    message: t.ContainerValue,
-                    captured_callable: Callable[
-                        ..., t.GeneralValueType
-                    ] = callable_func,
-                    **kwargs: t.ContainerValue,
-                ) -> t.ContainerValue:
+                    message: t.Container,
+                    captured_callable: Callable[..., object] = callable_func,
+                    **kwargs: t.Container,
+                ) -> t.Container:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""
                     result = fn_candidate(message)
                     if (
-                        isinstance(result, str | int | float | bool | datetime)
+                        isinstance(result, t.Scalar)
                         or result is None
                     ):
                         return result
@@ -894,7 +891,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             the @handler() decorator without scanning all items.
 
             Args:
-                module: Module instance to check for handlers
+                module: Module object to check for handlers
 
             Returns:
                 True if module has at least one handler, False otherwise

@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Annotated, Any as JUSTIFIEDAny, ClassVar, Literal, Self, override
+from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import (
     AfterValidator,
@@ -32,8 +32,6 @@ from pydantic import (
 
 from flext_core import c, t
 from flext_core._models.containers import FlextModelsContainers
-
-type _JUSTIFIEDEqOperand = JUSTIFIEDAny
 
 
 def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
@@ -53,14 +51,14 @@ class FlextModelFoundation:
         """Pydantic v2 validators - single namespace for all field validators."""
 
         _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[list[t.ContainerValue]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[list[t.Container]] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
         _metadata_map_adapter: ClassVar[
             TypeAdapter[dict[str, t.MetadataValue]] | None
         ] = None
-        _config_adapter: ClassVar[TypeAdapter[dict[str, t.ContainerValue]] | None] = (
+        _config_adapter: ClassVar[TypeAdapter[dict[str, t.Container]] | None] = (
             None
         )
 
@@ -72,10 +70,10 @@ class FlextModelFoundation:
             return cls._tags_adapter
 
         @classmethod
-        def list_adapter(cls) -> TypeAdapter[list[t.ContainerValue]]:
+        def list_adapter(cls) -> TypeAdapter[list[t.Container]]:
             """Lazy-load list TypeAdapter on first access."""
             if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(list[t.ContainerValue])
+                cls._list_adapter = TypeAdapter(list[t.Container])
             return cls._list_adapter
 
         @classmethod
@@ -101,10 +99,10 @@ class FlextModelFoundation:
             return cls._metadata_map_adapter
 
         @classmethod
-        def config_adapter(cls) -> TypeAdapter[dict[str, t.ContainerValue]]:
+        def config_adapter(cls) -> TypeAdapter[dict[str, t.Container]]:
             """Lazy-load config TypeAdapter on first access."""
             if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(t.ConfigurationMapping)
+                cls._config_adapter = TypeAdapter(dict[str, t.Container])
             return cls._config_adapter
 
         @staticmethod
@@ -118,7 +116,7 @@ class FlextModelFoundation:
             return v.strip()
 
         @staticmethod
-        def normalize_to_list(v: t.ContainerValue) -> list[t.ContainerValue]:
+        def normalize_to_list(v: t.Container) -> list[t.Container]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -127,8 +125,8 @@ class FlextModelFoundation:
 
         @staticmethod
         def validate_config_dict(
-            v: t.ContainerValue,
-        ) -> Mapping[str, t.ContainerValue]:
+            v: t.Container,
+        ) -> Mapping[str, t.Container]:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
@@ -137,7 +135,7 @@ class FlextModelFoundation:
             except ValidationError as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: dict[str, t.ContainerValue] = {}
+            out: dict[str, t.Container] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -146,7 +144,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.ContainerValue) -> list[str]:
+        def validate_tags_list(v: t.Container) -> list[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags = (
@@ -263,7 +261,7 @@ class FlextModelFoundation:
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
         attributes: Mapping[str, t.MetadataValue] = Field(default_factory=dict)
-        metadata_value: t.Scalar | None = Field(
+        metadata_value: t.Scalar = Field(
             default=None,
             description="Scalar metadata value.",
         )
@@ -272,7 +270,9 @@ class FlextModelFoundation:
         @classmethod
         def _validate_attributes(
             cls,
-            value: t.MetadataValue | Mapping[str, t.MetadataValue] | None,
+            value: t.MetadataValue
+            | Mapping[str, t.MetadataValue]
+            | None,
         ) -> Mapping[str, t.MetadataValue]:
             if value is None:
                 return {}
@@ -300,10 +300,7 @@ class FlextModelFoundation:
 
         @field_validator("metadata_value", mode="before")
         @classmethod
-        def validate_scalar_value(
-            cls,
-            v: t.Container,
-        ) -> t.Scalar | None:
+        def validate_scalar_value(cls, v: object) -> t.Scalar:
             """Validate metadata value is a scalar type."""
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
@@ -320,19 +317,15 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict
-        )
+        data: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict
-        )
-        pagination: FlextModelsContainers.Dict | None = None
+        filters: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        pagination: m.Dict | None = None
 
     class EventMessage(BaseModel):
         """Event message with discriminated union support."""
@@ -340,9 +333,7 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict
-        )
+        data: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )
@@ -356,7 +347,7 @@ class FlextModelFoundation:
         """Success result for discriminated union."""
 
         result_type: Literal["success"] = "success"
-        value: t.ContainerValue
+        value: t.Container
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )
@@ -373,7 +364,7 @@ class FlextModelFoundation:
         """Partial result for discriminated union."""
 
         result_type: Literal["partial"] = "partial"
-        value: t.ContainerValue
+        value: t.Container
         warnings: list[str] = Field(default_factory=list)
         partial_success_rate: float
 
@@ -386,7 +377,7 @@ class FlextModelFoundation:
         """Valid validation outcome."""
 
         outcome_type: Literal["valid"] = "valid"
-        validated_data: t.ContainerValue
+        validated_data: t.Container
         validation_time_ms: float
 
     class InvalidOutcome(BaseModel):
@@ -400,7 +391,7 @@ class FlextModelFoundation:
         """Warning validation outcome."""
 
         outcome_type: Literal["warning"] = "warning"
-        validated_data: t.ContainerValue
+        validated_data: t.Container
         warnings: list[str]
         validation_time_ms: float
 
@@ -436,7 +427,7 @@ class FlextModelFoundation:
         """Value model with equality/hash by value."""
 
         @override
-        def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
+        def __eq__(self, other: object) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
             return bool(self.model_dump() == other.model_dump())

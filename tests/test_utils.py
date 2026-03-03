@@ -40,7 +40,7 @@ class StandardTestCase:
     """Standardized test case structure for parametrized tests."""
 
     description: str
-    input_data: dict[str, t.ContainerValue]
+    input_data: dict[str, t.Container]
     expected_result: object
     expected_success: bool = True
     error_contains: str | None = None
@@ -53,16 +53,16 @@ class TestDataFactory:
     def create_entity_data(
         unique_id: str,
         name: str,
-        **kwargs: t.ContainerValue,
-    ) -> dict[str, t.ContainerValue]:
+        **kwargs: t.Container,
+    ) -> dict[str, t.Container]:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
     def create_value_object_data(
-        value: t.ContainerValue,
-        **kwargs: t.ContainerValue,
-    ) -> dict[str, t.ContainerValue]:
+        value: t.Container,
+        **kwargs: t.Container,
+    ) -> dict[str, t.Container]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -70,8 +70,8 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: dict[str, t.ContainerValue],
-        expected_result: t.ContainerValue,
+        input_data: dict[str, t.Container],
+        expected_result: t.Container,
         *,
         expected_success: bool = True,
         error_contains: str | None = None,
@@ -128,7 +128,7 @@ class AssertionHelpers:
     @staticmethod
     def assert_entity_properties(
         entity: object,
-        expected_props: dict[str, t.ContainerValue],
+        expected_props: dict[str, t.Container],
         context: str = "",
     ) -> None:
         """Assert entity has expected properties."""
@@ -141,10 +141,10 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[[], FlextResult[t.ContainerValue]],
+        operation_func: Callable[[], FlextResult[t.Container]],
         test_case: StandardTestCase,
         context: str = "",
-    ) -> t.ContainerValue:
+    ) -> t.Container:
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()
@@ -233,7 +233,7 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_handlers_instance() -> type[
-        FlextHandlers[t.ContainerValue, t.ContainerValue]
+        FlextHandlers[t.Container, t.Container]
     ]:
         """Create test handlers fixture."""
         return FlextHandlers
@@ -254,7 +254,7 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[FlextResult[t.ContainerValue]]:
+    def create_test_result_instance() -> type[FlextResult[t.Container]]:
         """Create test result fixture."""
         return FlextResult
 

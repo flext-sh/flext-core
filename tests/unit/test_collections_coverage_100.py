@@ -45,7 +45,7 @@ class CategoryOperationScenario:
     category: str
     entries: list[str]
     operation: str
-    expected_result: t.ContainerValue
+    expected_result: t.Container
 
 
 def _scenario_id(scenario: CategoryOperationScenario) -> str:
@@ -327,7 +327,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10)
         result2 = TestResult(processed=20)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.Container, but we know it's a dict
+        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
@@ -341,7 +341,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.Container, but we know it's a dict
+        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
@@ -355,7 +355,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.Container, but we know it's a dict
+        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
@@ -371,7 +371,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, errors=["a"], status="ok")
         result2 = TestResult(processed=20, errors=["b"], status="done")
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.Container, but we know it's a dict
+        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
@@ -388,7 +388,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, status="ok")
         result2 = TestResult(processed=None, status=None)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns t.Container, but we know it's a dict
+        # Type narrowing: aggregate returns t.ContainerValue, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
         aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 10

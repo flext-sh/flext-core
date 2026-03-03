@@ -35,7 +35,7 @@ class UtilityScenarios:
     TYPE_GUARD_CASES: ClassVar[
         dict[
             str,
-            list[tuple[str, t.ContainerValue, bool]],
+            list[tuple[str, t.Container, bool]],
         ]
     ] = {
         "string": [
@@ -92,7 +92,7 @@ class UtilityScenarios:
     ]
 
     CACHE_NORMALIZE_CASES: ClassVar[
-        list[tuple[t.ContainerValue, type | tuple[type, ...]]]
+        list[tuple[t.Container, type | tuple[type, ...]]]
     ] = [
         ({"a": 1, "b": 2}, dict),
         ([1, 2, 3], list),
@@ -147,7 +147,7 @@ class Testu:
     def test_type_guard_string(
         self,
         description: str,
-        value: t.ContainerValue,
+        value: t.Container,
         expected: bool,
     ) -> None:
         """Test string type guards."""
@@ -161,7 +161,7 @@ class Testu:
     def test_type_guard_dict(
         self,
         description: str,
-        value: t.ContainerValue,
+        value: t.Container,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
@@ -175,7 +175,7 @@ class Testu:
     def test_type_guard_list(
         self,
         description: str,
-        value: t.ContainerValue,
+        value: t.Container,
         expected: bool,
     ) -> None:
         """Test list type guards."""
@@ -295,7 +295,7 @@ class Testu:
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.ContainerValue,
+        input_data: t.Container,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
@@ -344,9 +344,9 @@ class Testu:
                 _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
 
             cache_obj = TestWithCache()
-            # Cast to t.Container for type checker - test class is valid object
+            # Cast to t.ContainerValue for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.Container", cast("object", cache_obj)),
+                cast("t.ContainerValue", cast("object", cache_obj)),
             )
             assert result is expected
         else:
@@ -355,9 +355,9 @@ class Testu:
                 pass
 
             no_cache_obj = TestNoCache()
-            # Cast to t.Container for type checker - test class is valid object
+            # Cast to t.ContainerValue for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.Container", cast("object", no_cache_obj)),
+                cast("t.ContainerValue", cast("object", no_cache_obj)),
             )
             assert result is expected
 

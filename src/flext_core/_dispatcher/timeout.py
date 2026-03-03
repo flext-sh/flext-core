@@ -76,7 +76,7 @@ class TimeoutEnforcer:
             )
         return self._executor
 
-    def get_executor_status(self) -> Mapping[str, t.Scalar | None]:
+    def get_executor_status(self) -> Mapping[str, t.Scalar]:
         """Return executor status metadata for diagnostics and metrics.
 
         Returns:

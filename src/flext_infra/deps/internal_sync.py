@@ -279,11 +279,11 @@ class FlextInfraInternalDependencySyncService:
 
         tool = data.get("tool")
         poetry = tool.get("poetry") if isinstance(tool, dict) else None
-        empty_deps: dict[str, t.ContainerValue] = {}
+        empty_deps: dict[str, t.Container] = {}
         deps_raw = (
             poetry.get("dependencies") if isinstance(poetry, dict) else empty_deps
         )
-        deps: dict[str, t.ContainerValue] = (
+        deps: dict[str, t.Container] = (
             deps_raw if isinstance(deps_raw, dict) else {}
         )
         if not isinstance(deps, dict):
@@ -305,7 +305,7 @@ class FlextInfraInternalDependencySyncService:
         project_deps_raw = (
             project_obj.get("dependencies") if isinstance(project_obj, dict) else None
         )
-        project_deps: list[t.ContainerValue] = (
+        project_deps: list[t.Container] = (
             project_deps_raw if isinstance(project_deps_raw, list) else []
         )
 

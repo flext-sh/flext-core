@@ -26,12 +26,12 @@ class TestService(s[TestDomainResult]):
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
     @override
-    def execute(self, **_kwargs: t.ContainerValue) -> r[TestDomainResult]:
+    def execute(self, **_kwargs: t.Container) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("success"))
 
@@ -41,12 +41,12 @@ class TestServiceWithValidation(s[TestDomainResult]):
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: t.Container) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
     @override
-    def execute(self, **_kwargs: t.ContainerValue) -> r[TestDomainResult]:
+    def execute(self, **_kwargs: t.Container) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("validated"))
 

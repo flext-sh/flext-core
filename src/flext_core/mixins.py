@@ -87,9 +87,9 @@ class FlextMixins(FlextRuntime):
         error: str | None,
         error_code: str | None = None,
         error_data: m.ConfigMap | None = None,
-    ) -> r[t.ContainerValue]:
+    ) -> r[t.Container]:
         """Create failed result with error message."""
-        return r[t.ContainerValue].fail(
+        return r[t.Container].fail(
             error,
             error_code=error_code,
             error_data=error_data,
@@ -113,18 +113,17 @@ class FlextMixins(FlextRuntime):
         if isinstance(obj, BaseModel):
             model_dump_result = obj.model_dump()
             try:
-                normalized_model_dump: dict[str, t.ContainerValue] = {}
-                if isinstance(model_dump_result, Mapping):
-                    for key, value in model_dump_result.items():
-                        normalized_value: t.ContainerValue = (
-                            FlextRuntime.normalize_to_general_value(value)
-                            if isinstance(
-                                value,
-                                (str, int, float, bool, type(None), BaseModel),
-                            )
-                            else str(value)
+                normalized_model_dump: dict[str, t.Container] = {}
+                for key, value in model_dump_result.items():
+                    normalized_value: t.Container = (
+                        FlextRuntime.normalize_to_general_value(value)
+                        if isinstance(
+                            value,
+                            t.Primitives | type(None) | BaseModel,
                         )
-                        normalized_model_dump[str(key)] = normalized_value
+                        else str(value)
+                    )
+                    normalized_model_dump[str(key)] = normalized_value
                 return m.ConfigMap(root=normalized_model_dump)
             except (TypeError, ValueError, AttributeError) as exc:
                 cls._get_or_create_logger().debug(
@@ -134,20 +133,18 @@ class FlextMixins(FlextRuntime):
                 return m.ConfigMap(root={"value": str(model_dump_result)})
 
         try:
-            if isinstance(obj, Mapping):
-                normalized_mapping: dict[str, t.ContainerValue] = {}
-                for key, value in obj.items():
-                    normalized_mapping_value: t.ContainerValue = (
-                        FlextRuntime.normalize_to_general_value(value)
-                        if isinstance(
-                            value,
-                            (str, int, float, bool, type(None), BaseModel),
-                        )
-                        else str(value)
+            normalized_mapping: dict[str, t.Container] = {}
+            for key, value in obj.items():
+                normalized_mapping_value: t.Container = (
+                    FlextRuntime.normalize_to_general_value(value)
+                    if isinstance(
+                        value,
+                        t.Primitives | type(None) | BaseModel,
                     )
-                    normalized_mapping[str(key)] = normalized_mapping_value
-                return m.ConfigMap.model_validate(normalized_mapping)
-            return m.ConfigMap.model_validate(obj)
+                    else str(value)
+                )
+                normalized_mapping[str(key)] = normalized_mapping_value
+            return m.ConfigMap.model_validate(normalized_mapping)
         except (TypeError, ValueError, AttributeError) as exc:
             cls._get_or_create_logger().debug(
                 "Object-to-config-map normalization failed",
@@ -156,11 +153,13 @@ class FlextMixins(FlextRuntime):
             return m.ConfigMap(root={})
 
     @staticmethod
-    def ensure_result[T](value: T | r[T]) -> r[T]:
+    def ensure_result(
+        value: t.Container | r[t.Container],
+    ) -> r[t.Container]:
         """Wrap value in r if not already wrapped. Use x.ensure_result at call sites."""
         if isinstance(value, FlextResult):
             return value
-        return r[T].ok(value)
+        return r[t.Container].ok(value)
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
@@ -173,7 +172,7 @@ class FlextMixins(FlextRuntime):
 
     def __init_subclass__(
         cls,
-        **kwargs: t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
+        **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
     ) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
@@ -303,7 +302,7 @@ class FlextMixins(FlextRuntime):
     def track(
         self,
         operation_name: str,
-    ) -> Iterator[Mapping[str, t.ContainerValue]]:
+    ) -> Iterator[Mapping[str, t.Container]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats_attr = f"_stats_{operation_name}"
         stats: m.ConfigMap = (
@@ -323,7 +322,7 @@ class FlextMixins(FlextRuntime):
 
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: dict[str, t.ContainerValue] = (
+                metrics_map: dict[str, t.Container] = (
                     dict(metrics.items()) if hasattr(metrics, "items") else {}
                 )
                 # Add aggregated stats to metrics for visibility
@@ -352,10 +351,12 @@ class FlextMixins(FlextRuntime):
                     AttributeError,
                     RuntimeError,
                 ) as exc:
-                    self.logger.debug(
-                        "Tracked operation raised expected exception",
-                        exc_info=exc,
-                    )
+                    log_debug = getattr(self.logger, "debug", None)
+                    if callable(log_debug):
+                        log_debug(
+                            "Tracked operation raised expected exception",
+                            exc_info=exc,
+                        )
                     # Failure - increment error count
                     err_raw = u.get(stats, "error_count", default=0)
                     stats["error_count"] = int(err_raw) + 1
@@ -485,7 +486,7 @@ class FlextMixins(FlextRuntime):
         self,
         level: str,
         message: str,
-        **extra: t.MetadataAttributeValue,
+        **extra: t.MetadataValue,
     ) -> None:
         """Log message with automatic context data inclusion."""
         correlation_id = FlextContext.Correlation.get_correlation_id()
@@ -541,7 +542,7 @@ class FlextMixins(FlextRuntime):
     # CONTEXT ENRICHMENT METHODS - Automatic Context Management
     # =========================================================================
 
-    def _enrich_context(self, **context_data: t.ContainerValue) -> None:
+    def _enrich_context(self, **context_data: t.Container) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
         # Build service context for logging using correct types
         # Use dict for mutability
@@ -565,8 +566,8 @@ class FlextMixins(FlextRuntime):
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
-        # Convert config to t.ConfigMapValue for logging
-        # ConfigurationMapping is Mapping[str, t.ConfigMapValue], convert to dict
+        # Convert config to t.Container for logging
+        # ConfigurationMapping is Mapping[str, t.Container], convert to dict
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
         # Log configuration as single event, not bound to context
         self.logger.info(message, config=config_typed.root)
@@ -574,7 +575,7 @@ class FlextMixins(FlextRuntime):
     @staticmethod
     def _with_operation_context(
         operation_name: str,
-        **operation_data: t.ContainerValue,
+        **operation_data: t.Container,
     ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         # Propagate context using inherited Context mixin method
@@ -592,7 +593,7 @@ class FlextMixins(FlextRuntime):
                 "error_details",
             }
 
-            # Separate data by level - preserve t.ConfigMapValue from operation_data
+            # Separate data by level - preserve t.Container from operation_data
             # Use dict for mutability
             debug_data: m.ConfigMap = m.ConfigMap(
                 root={k: v for k, v in operation_data.items() if k in debug_keys},
@@ -621,13 +622,13 @@ class FlextMixins(FlextRuntime):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                metadata_context: dict[str, t.MetadataAttributeValue] = {
+                metadata_context: dict[str, t.MetadataValue] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
-                normal_metadata_context: dict[str, t.MetadataAttributeValue] = {
+                normal_metadata_context: dict[str, t.MetadataValue] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in normal_data.root.items()
                 }
@@ -652,12 +653,12 @@ class FlextMixins(FlextRuntime):
             """Tracks handler execution metrics."""
 
             # Type annotation for type checker
-            _metrics: ClassVar[MutableMapping[str, t.ContainerValue]] = {}
+            _metrics: ClassVar[MutableMapping[str, t.Container]] = {}
 
             def __init__(
                 self,
-                *args: t.ContainerValue,
-                **kwargs: t.ContainerValue,
+                *args: t.Container,
+                **kwargs: t.Container,
             ) -> None:
                 """Initialize metrics tracker with empty metrics dict."""
                 super().__init__(*args, **kwargs)
@@ -668,7 +669,7 @@ class FlextMixins(FlextRuntime):
             def record_metric(
                 self,
                 name: str,
-                value: t.ContainerValue,
+                value: t.Container,
             ) -> r[bool]:
                 """Record a metric value.
 
@@ -703,24 +704,26 @@ class FlextMixins(FlextRuntime):
 
             # Type annotation for type checker
             _stack: ClassVar[
-                list[m.Handler.ExecutionContext | m.ConfigMap | t.ConfigurationMapping]
+                list[
+                    m.Handler.ExecutionContext
+                    | m.ConfigMap
+                    | dict[str, t.Container]
+                ]
             ] = []
 
             def __init__(
                 self,
-                *args: t.ContainerValue,
-                **kwargs: t.ContainerValue,
+                *args: t.Container,
+                **kwargs: t.Container,
             ) -> None:
                 """Initialize context stack with empty list."""
                 super().__init__(*args, **kwargs)
                 # Initialize _stack as instance attribute (not PrivateAttr for mixin compatibility)
-                object.__setattr__(  # JUSTIFIED: low-level set during mixin initialization
-                    self, "_stack", []
-                )  # JUSTIFIED: bypass custom setattr during init
+                object.__setattr__(self, "_stack", [])
 
             def push_context(
                 self,
-                ctx: t.ContainerValue,
+                ctx: t.Container,
             ) -> r[bool]:
                 """Push execution context onto the stack.
 
@@ -769,7 +772,7 @@ class FlextMixins(FlextRuntime):
                 self._stack.append(execution_ctx)
                 return r[bool].ok(value=True)
 
-            def pop_context(self) -> r[Mapping[str, t.ContainerValue]]:
+            def pop_context(self) -> r[Mapping[str, t.Container]]:
                 """Pop execution context from the stack.
 
                 Returns:
@@ -789,16 +792,16 @@ class FlextMixins(FlextRuntime):
                                     "handler_mode": execution_ctx.handler_mode,
                                 },
                             )
-                            return r[t.ConfigurationMapping].ok(context_dict.root)
+                            return r[dict[str, t.Container]].ok(context_dict.root)
                         case m.ConfigMap() as popped_dict:
-                            return r[t.ConfigurationMapping].ok(popped_dict.root)
+                            return r[dict[str, t.Container]].ok(popped_dict.root)
                         case dict() as popped_plain:
-                            return r[t.ConfigurationMapping].ok(
+                            return r[dict[str, t.Container]].ok(
                                 dict(popped_plain),
                             )
-                return r[t.ConfigurationMapping].ok({})
+                return r[dict[str, t.Container]].ok({})
 
-            def current_context(self) -> t.ContainerValue | None:
+            def current_context(self) -> t.Container | None:
                 """Get current execution context without popping.
 
                 Returns:
@@ -822,18 +825,18 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_with_result(
-            data: t.ContainerValue,
-            validators: list[Callable[[t.ContainerValue], r[bool]]],
-        ) -> r[t.ContainerValue]:
+            data: t.Container,
+            validators: list[Callable[[t.Container], r[bool]]],
+        ) -> r[t.Container]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: r[t.ContainerValue] = r[t.ContainerValue].ok(data)
+            result: r[t.Container] = r[t.Container].ok(data)
 
             for validator in validators:
                 # Create helper function with proper closure to validate and preserve data
                 def validate_and_preserve(
-                    data: t.ContainerValue,
-                    v: Callable[[t.ContainerValue], r[bool]],
-                ) -> r[t.ContainerValue]:
+                    data: t.Container,
+                    v: Callable[[t.Container], r[bool]],
+                ) -> r[t.Container]:
                     validation_result = v(data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -842,17 +845,17 @@ class FlextMixins(FlextRuntime):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        return r[t.ContainerValue].fail(
+                        return r[t.Container].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=validation_result.error_data,
                         )
                     # Check that validation returned True
                     if validation_result.value is not True:
-                        return r[t.ContainerValue].fail(
+                        return r[t.Container].fail(
                             f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}",
                         )
-                    return r[t.ContainerValue].ok(data)
+                    return r[t.Container].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
                 if result.is_success:
@@ -865,7 +868,7 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def is_handler(
-            obj: t.ContainerValue,
+            obj: t.Container,
         ) -> bool:
             """Check if object satisfies p.Handler protocol."""
             return (
@@ -877,11 +880,11 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def is_service(
-            _obj: p.Service[t.ContainerValue],
+            _obj: p.Service[t.Container],
         ) -> bool:
-            """Check if instance satisfies p.Service protocol.
+            """Check if object satisfies p.Service protocol.
 
-            Uses structural typing - any instance implementing Service protocol
+            Uses structural typing - any object implementing Service protocol
             will pass this check, including FlextService instances.
             """
             return True
@@ -893,10 +896,10 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def validate_protocol_compliance(
-            _obj: p.Handler[t.ContainerValue, t.ContainerValue]
-            | p.Service[t.ContainerValue]
+            _obj: p.Handler[t.Container, t.Container]
+            | p.Service[t.Container]
             | p.CommandBus
-            | p.Repository[t.ContainerValue]
+            | p.Repository[t.Container]
             | p.Configurable,
             protocol_name: str,
         ) -> r[bool]:

@@ -16,8 +16,9 @@ from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
 from flext_core import t
 
+type StrictJsonScalar = t.Scalar | None
 type StrictJsonValue = (
-    t.ScalarValue | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
+    StrictJsonScalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
 )
 
 
@@ -25,7 +26,7 @@ class _StrictJsonScalarModel(BaseModel):
     """Strict scalar wrapper for narrow value validation."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
-    value: t.ScalarValue
+    value: StrictJsonScalar
 
 
 class FlextUtilitiesConversion:
@@ -44,8 +45,8 @@ class FlextUtilitiesConversion:
     _strict_json_list_adapter: TypeAdapter[list[StrictJsonValue]] = TypeAdapter(
         list[StrictJsonValue],
     )
-    _strict_json_scalar_adapter: TypeAdapter[t.ScalarValue] = TypeAdapter(
-        t.ScalarValue,
+    _strict_json_scalar_adapter: TypeAdapter[StrictJsonScalar] = TypeAdapter(
+        StrictJsonScalar,
     )
     _float_adapter = TypeAdapter(float)
     _str_adapter = TypeAdapter(str)
@@ -269,7 +270,7 @@ class FlextUtilitiesConversion:
         return value
 
     @staticmethod
-    def to_flexible_value(value: StrictJsonValue) -> t.ScalarValue | None:
+    def to_flexible_value(value: StrictJsonValue) -> StrictJsonScalar | None:
         """Convert strict value to strict scalar if compatible.
 
         Strict scalar is a subset of strict value that excludes

@@ -111,7 +111,7 @@ class TestFlextTestsBuilders:
         data = _as_builder_dict(builder.build())
 
         assert "validation_fields" in data
-        fields = cast("dict[str, t.Container]", data["validation_fields"])
+        fields = cast("dict[str, t.ContainerValue]", data["validation_fields"])
 
         valid_emails = cast("list[str]", fields["valid_emails"])
         assert len(valid_emails) == 5
@@ -132,7 +132,7 @@ class TestFlextTestsBuilders:
         data = _as_builder_dict(builder.build())
 
         validation_fields = cast(
-            "dict[str, t.Container]",
+            "dict[str, t.ContainerValue]",
             data["validation_fields"],
         )
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
@@ -230,7 +230,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("error", result_fail="Failed", result_code="E001")
         data = _as_builder_dict(builder.build())
-        result = cast("r[t.Container]", cast("object", data["error"]))
+        result = cast("r[t.ContainerValue]", cast("object", data["error"]))
         assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
@@ -240,7 +240,7 @@ class TestFlextTestsBuilders:
         builder.add(
             "doubled",
             items=[1, 2, 3],
-            items_map=cast("t_test.Tests.PayloadValue", lambda x: cast("int", x) * 2),
+            items_map=cast("t_test.Tests.ContainerValue", lambda x: cast("int", x) * 2),
         )
         data = _as_builder_dict(builder.build())
         doubled = cast("list[int]", data["doubled"])
@@ -253,7 +253,7 @@ class TestFlextTestsBuilders:
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
             entries_filter=cast(
-                "t_test.Tests.PayloadValue",
+                "t_test.Tests.ContainerValue",
                 cast("object", {"a", "c"}),
             ),
         )
@@ -268,7 +268,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("users", factory="users", count=3)
         data = _as_builder_dict(builder.build())
-        users = cast("list[dict[str, t.Container]]", data["users"])
+        users = cast("list[dict[str, t.ContainerValue]]", data["users"])
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
@@ -276,7 +276,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("config", mapping={"env": "test", "debug": True})
         data = _as_builder_dict(builder.build())
-        config = cast("dict[str, t.Container]", data["config"])
+        config = cast("dict[str, t.ContainerValue]", data["config"])
         assert config["env"] == "test"
         assert config["debug"] is True
 
@@ -307,7 +307,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("a", 1).add("b", 2)
         result = builder.build(as_list=True)
-        items = cast("list[tuple[str, t.Container]]", result)
+        items = cast("list[tuple[str, t.ContainerValue]]", result)
         assert len(items) == 2
         assert ("a", 1) in items
         assert ("b", 2) in items
@@ -337,7 +337,7 @@ class TestFlextTestsBuilders:
         # flatten is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
         flattened_raw = builder.build(flatten=True)
-        flattened = cast("dict[str, t.Container]", flattened_raw)
+        flattened = cast("dict[str, t.ContainerValue]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
@@ -349,7 +349,7 @@ class TestFlextTestsBuilders:
         # filter_none is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
         filtered_raw = builder.build(filter_none=True)
-        filtered = cast("dict[str, t.Container]", filtered_raw)
+        filtered = cast("dict[str, t.ContainerValue]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered
@@ -371,11 +371,11 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("count", 5)
         # validate_with is a special kwarg processed by BuildParams
-        # Type ignore needed because validate_with is Callable, not t.Container
+        # Type ignore needed because validate_with is Callable, not t.ContainerValue
         # build() accepts **kwargs: object, validated by BuildParams
         build_result = builder.build(
             validate_with=cast(
-                "t_test.Tests.PayloadValue",
+                "t_test.Tests.ContainerValue",
                 lambda d: (
                     cast("t_test.Tests.Builders.BuilderOutputDict", d)["count"] == 5
                 ),
@@ -396,10 +396,10 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # map_result is a special kwarg processed by BuildParams
-        # Type ignore needed because map_result is Callable, not t.Container
+        # Type ignore needed because map_result is Callable, not t.ContainerValue
         build_result = builder.build(
             map_result=cast(
-                "t_test.Tests.PayloadValue",
+                "t_test.Tests.ContainerValue",
                 lambda d: (
                     cast("int", cast("t_test.Tests.Builders.BuilderOutputDict", d)["x"])
                     * 2
@@ -458,13 +458,13 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("count", 5)
         # validate is a special kwarg processed by ToResultParams
-        # Type ignore needed because validate is Callable, not t.Container
+        # Type ignore needed because validate is Callable, not t.ContainerValue
         # Type annotation matches actual return type from to_result()
         # validate is Callable, validated by ToResultParams
         # Actual return type is more specific, use explicit type annotation with cast
         result_raw = builder.to_result(
             validate=cast(
-                "t_test.Tests.PayloadValue",
+                "t_test.Tests.ContainerValue",
                 lambda d: cast("t_test.Tests.Builders.BuilderDict", d)["count"] == 5,
             ),
         )
@@ -518,7 +518,7 @@ class TestFlextTestsBuilders:
             [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = _as_builder_dict(builder.build())
-        cases = cast("list[t.Container]", data["cases"])
+        cases = cast("list[t.ContainerValue]", data["cases"])
         assert len(cases) == 2
 
     def test_batch_with_results(self) -> None:
@@ -558,7 +558,7 @@ class TestFlextTestsBuilders:
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error", code="E001")
+        result_raw: r[t.Container] = tb.Tests.Result.fail("Error", code="E001")
         result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
@@ -731,7 +731,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         # Result.fail() delegates to tt.res("fail", error=...)
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error")
+        result_raw: r[t.Container] = tb.Tests.Result.fail("Error")
         result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
@@ -776,10 +776,10 @@ class TestFlextTestsBuilders:
     def test_result_assert_failure_delegates_to_tu(self) -> None:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
         # Result.assert_failure() delegates to tu.Tests.Result.assert_failure()
-        result: r[t_test.Tests.PayloadValue] = r[t_test.Tests.PayloadValue].fail(
+        result: r[t_test.Tests.ContainerValue] = r[t_test.Tests.ContainerValue].fail(
             "Error",
         )
-        # Type narrowing: assert_failure accepts r[t.Container], r[int] is compatible
+        # Type narrowing: assert_failure accepts r[t.ContainerValue], r[int] is compatible
         error: str = tb.Tests.Result.assert_failure(
             result,
         )

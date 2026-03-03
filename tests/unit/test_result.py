@@ -54,9 +54,9 @@ class ResultScenario:
 
     name: str
     operation_type: ResultOperationType
-    value: t.ContainerValue
+    value: t.Container
     is_success_expected: bool = True
-    expected_result: t.ContainerValue = None
+    expected_result: t.Container = None
 
 
 class ResultScenarios:
@@ -144,25 +144,25 @@ class Testr:
 
         if op_type == ResultOperationType.CREATION_SUCCESS:
             # Use generic helper to replace 10+ lines of result creation code
-            creation_result: r[t.ContainerValue] = (
+            creation_result: r[t.Container] = (
                 u.Tests.GenericHelpers.create_result_from_value(
                     value,
                     error_on_none="Value cannot be None",
                 )
             )
-            # value is already t.Container from ResultScenario
+            # value is already t.ContainerValue from ResultScenario
             u.Tests.Result.assert_success_with_value(
                 creation_result,
                 value,
             )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
-            # create_failure_result returns r[object], cast to r[t.Container]
+            # create_failure_result returns r[object], cast to r[t.ContainerValue]
             failure_result_raw = u.Tests.Result.create_failure_result(
                 str(value),
             )
-            failure_result: r[t.ContainerValue] = cast(
-                "r[t.Container]",
+            failure_result: r[t.Container] = cast(
+                "r[t.ContainerValue]",
                 failure_result_raw,
             )
             u.Tests.Result.assert_failure_with_error(
@@ -171,14 +171,14 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.UNWRAP_OR:
-            # value is already t.Container from ResultScenario
+            # value is already t.ContainerValue from ResultScenario
             if is_success:
-                unwrap_result: r[t.ContainerValue] = (
+                unwrap_result: r[t.Container] = (
                     u.Tests.Result.create_success_result(value)
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                unwrap_result = cast("r[t.Container]", failure_raw)
+                unwrap_result = cast("r[t.ContainerValue]", failure_raw)
             default = "default"
             assert unwrap_result.unwrap_or(default) == (
                 value if is_success else default
@@ -194,8 +194,8 @@ class Testr:
 
         elif op_type == ResultOperationType.FLAT_MAP:
             failure_raw = u.Tests.Result.create_failure_result(str(value))
-            flat_map_result: r[t.ContainerValue] = cast(
-                "r[t.Container]",
+            flat_map_result: r[t.Container] = cast(
+                "r[t.ContainerValue]",
                 failure_raw,
             )
             flat_mapped = flat_map_result.flat_map(
@@ -207,14 +207,14 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.ALT:
-            # value is already t.Container from ResultScenario
+            # value is already t.ContainerValue from ResultScenario
             if is_success:
-                result_alt: r[t.ContainerValue] = u.Tests.Result.create_success_result(
-                    value
+                result_alt: r[t.Container] = (
+                    u.Tests.Result.create_success_result(value)
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_alt = cast("r[t.Container]", failure_raw)
+                result_alt = cast("r[t.ContainerValue]", failure_raw)
             alt_result = result_alt.alt(lambda e: f"alt_{e}")
             if is_success:
                 u.Tests.Result.assert_success_with_value(
@@ -248,14 +248,14 @@ class Testr:
                 )
 
         elif op_type == ResultOperationType.OR_OPERATOR:
-            # value is already t.Container from ResultScenario
+            # value is already t.ContainerValue from ResultScenario
             if is_success:
-                result_or: r[t.ContainerValue] = u.Tests.Result.create_success_result(
+                result_or: r[t.Container] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_or = cast("r[t.Container]", failure_raw)
+                result_or = cast("r[t.ContainerValue]", failure_raw)
             default = "default"
             assert (result_or | default) == (value if is_success else default)
 
@@ -433,7 +433,7 @@ class Testr:
         Replaces 10+ lines of manual test case creation.
         """
         # Use generic helper to create parametrized cases
-        success_values: list[t.Tests.PayloadValue] = ["value1", "value2", "value3"]
+        success_values: list[t.Tests.ContainerValue] = ["value1", "value2", "value3"]
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
 
@@ -844,7 +844,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: dict[str, t.ContainerValue] = result.fold(
+        response: dict[str, t.Container] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

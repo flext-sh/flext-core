@@ -130,7 +130,7 @@ class TestMigrationScenario4:
         class UserService(FlextService[None]):
             """User service extending FlextService."""
 
-            def __init__(self, **data: FlextTypes.ContainerValue) -> None:
+            def __init__(self, **data: FlextTypes.Container) -> None:
                 super().__init__(**data)
                 self._logger = FlextLogger(__name__)
 
@@ -263,19 +263,19 @@ class TestMigrationComplexity:
             def process_data(
                 self,
                 data: dict[str, str],
-            ) -> FlextResult[dict[str, t.ContainerValue]]:
+            ) -> FlextResult[dict[str, t.Container]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[t.ConfigurationMapping].fail(
+                    return FlextResult[dict[str, t.Container]].fail(
                         "Data required",
                     )
 
                 self.logger.info("Processing data", extra={"size": len(data)})
-                processed: dict[str, t.ContainerValue] = {
+                processed: dict[str, t.Container] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return FlextResult[t.ConfigurationMapping].ok(processed)
+                return FlextResult[dict[str, t.Container]].ok(processed)
 
         # Test application works correctly
         app = ApplicationExample()

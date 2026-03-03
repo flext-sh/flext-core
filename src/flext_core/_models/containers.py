@@ -10,29 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, ItemsView, KeysView, Mapping, Sequence, ValuesView
-from datetime import datetime
-from pathlib import Path
+from collections.abc import Callable, ItemsView, KeysView, Mapping, ValuesView
 from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-type GeneralValueType = (
-    str
-    | int
-    | float
-    | bool
-    | datetime
-    | BaseModel
-    | Path
-    | Sequence[GeneralValueType]
-    | Mapping[str, GeneralValueType]
-    | None
-)
-type _ContainerValue = GeneralValueType
-type _ScalarML = str | int | float | bool | datetime | None
-type _FactoryRegistrationCallable = Callable[[], _ScalarML | Sequence[_ScalarML]]
-type _ResourceCallable = Callable[[], _ContainerValue]
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContainers:
@@ -43,10 +26,10 @@ class FlextModelsContainers:
     Access via ``m.ConfigMap``, ``m.Dict``, etc.
     """
 
-    class ObjectList(RootModel[list[_ContainerValue]]):
+    class ObjectList(RootModel[list[t.ContainerValue]]):
         """Sequence of container values for batch operations."""
 
-        root: list[_ContainerValue]
+        root: list[t.ContainerValue]
 
     @typing.runtime_checkable
     class _RootDictProtocol[RootValueT](typing.Protocol):
@@ -95,20 +78,20 @@ class FlextModelsContainers:
         def setdefault(self, key: str, default: DictValueT) -> DictValueT:
             return self.root.setdefault(key, default)
 
-    class Dict(_RootDictModel[_ContainerValue]):
+    class Dict(_RootDictModel[t.ContainerValue]):
         """Generic dictionary container. Use ``m.Dict``."""
 
-        root: dict[str, _ContainerValue] = Field(default_factory=dict)
+        root: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
-    class ConfigMap(_RootDictModel[_ContainerValue]):
+    class ConfigMap(_RootDictModel[t.ContainerValue]):
         """Configuration map container. Use ``m.ConfigMap``."""
 
-        root: dict[str, _ContainerValue] = Field(default_factory=dict)
+        root: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
-    class ServiceMap(_RootDictModel[_ContainerValue]):
+    class ServiceMap(_RootDictModel[t.ContainerValue]):
         """Service registry map container. Use ``m.ServiceMap``."""
 
-        root: dict[str, _ContainerValue] = Field(default_factory=dict)
+        root: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
     class ErrorMap(_RootDictModel[int | str | dict[str, int]]):
         """Error type mapping container.
@@ -118,76 +101,89 @@ class FlextModelsContainers:
 
         root: dict[str, int | str | dict[str, int]] = Field(default_factory=dict)
 
-    class FactoryMap(_RootDictModel[_FactoryRegistrationCallable]):
+    class FactoryMap(_RootDictModel[t.FactoryCallable]):
         """Map of factory registration callables.
 
         Replaces: Mapping[str, FactoryRegistrationCallable]
         """
 
-        root: dict[str, _FactoryRegistrationCallable] = Field(default_factory=dict)
+        root: dict[str, t.FactoryCallable] = Field(default_factory=dict)
 
-    class ResourceMap(_RootDictModel[_ResourceCallable]):
+    class ResourceMap(_RootDictModel[t.ResourceCallable]):
         """Map of resource callables.
 
         Replaces: Mapping[str, ResourceCallable]
         """
 
-        root: dict[str, _ResourceCallable] = Field(default_factory=dict)
+        root: dict[str, t.ResourceCallable] = Field(default_factory=dict)
 
     class ValidatorCallable(
-        RootModel[Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]]
+        RootModel[Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]]
     ):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
-        root: Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+        root: Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
 
-        def __call__(self, value: _ScalarML | BaseModel) -> _ScalarML | BaseModel:
+        def __call__(
+            self, value: t.Scalar | BaseModel | None
+        ) -> t.Scalar | BaseModel | None:
             """Execute validator."""
             return self.root(value)
 
     class _RootValidatorMapModel(
-        RootModel[dict[str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]]]
+        RootModel[
+            dict[
+                str,
+                Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
+            ]
+        ]
     ):
         """Shared API for validator map containers."""
 
         def items(
             self,
-        ) -> ItemsView[str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]]:
+        ) -> ItemsView[
+            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+        ]:
             """Get validator items."""
             validated: dict[
-                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+                str,
+                Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.items()
 
         def values(
             self,
-        ) -> ValuesView[Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel],]:
+        ) -> ValuesView[
+            Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
+        ]:
             """Get validator values."""
             validated: dict[
-                str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]
+                str,
+                Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.values()
 
     class FieldValidatorMap(_RootValidatorMapModel):
         """Map of field validators."""
 
-        root: dict[str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]] = (
-            Field(default_factory=dict)
-        )
+        root: dict[
+            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+        ] = Field(default_factory=dict)
 
     class ConsistencyRuleMap(_RootValidatorMapModel):
         """Map of consistency rules."""
 
-        root: dict[str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]] = (
-            Field(default_factory=dict)
-        )
+        root: dict[
+            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+        ] = Field(default_factory=dict)
 
     class EventValidatorMap(_RootValidatorMapModel):
         """Map of event validators."""
 
-        root: dict[str, Callable[[_ScalarML | BaseModel], _ScalarML | BaseModel]] = (
-            Field(default_factory=dict)
-        )
+        root: dict[
+            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+        ] = Field(default_factory=dict)
 
     class BatchResultDict(BaseModel):
         """Result payload model for batch operation outputs."""
@@ -195,7 +191,7 @@ class FlextModelsContainers:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True, extra="forbid"
         )
-        results: list[_ScalarML] = []
+        results: list[t.Scalar | None] = []
         errors: list[tuple[int, str]] = []
         total: int = Field(default=0)
         success_count: int = Field(default=0)

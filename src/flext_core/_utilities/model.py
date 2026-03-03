@@ -13,9 +13,8 @@ from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime, r, t
+from flext_core import FlextRuntime, m, r, t
 from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 
@@ -37,8 +36,8 @@ class FlextUtilitiesModel:
 
     """
 
-    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.JsonPrimitive]] = TypeAdapter(
-        t.JsonPrimitive
+    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.Primitives | None]] = (
+        TypeAdapter(t.Primitives | None)
     )
 
     @staticmethod
@@ -70,7 +69,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
-        **kwargs: t.ScalarValue,
+        **kwargs: t.Scalar,
     ) -> r[M]:
         """Create Pydantic model from kwargs with r.
 
@@ -153,7 +152,7 @@ class FlextUtilitiesModel:
         *,
         by_alias: bool = False,
         exclude_none: bool = False,
-    ) -> Mapping[str, t.ScalarValue]:
+    ) -> Mapping[str, t.Scalar]:
         """Convert model to dict (simple wrapper).
 
         Example:
@@ -169,10 +168,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_metadata(
-        value: t.ScalarValue
-        | FlextModelsContainers.ConfigMap
-        | FlextModelFoundation.Metadata
-        | None,
+        value: t.Scalar | m.ConfigMap | FlextModelFoundation.Metadata | None,
     ) -> FlextModelFoundation.Metadata:  # Returns m.Metadata at runtime
         """Normalize any value to FlextModelFoundation.Metadata.
 
@@ -182,7 +178,7 @@ class FlextUtilitiesModel:
         fallbacks by centralizing all metadata normalization logic.
 
         Args:
-            value: None, dict, Mapping, Metadata, or any t.ConfigMapValue
+            value: None, dict, Mapping, Metadata, or any t.Container
 
         Returns:
             FlextModelFoundation.Metadata: Normalized metadata (empty attributes
@@ -235,7 +231,7 @@ class FlextUtilitiesModel:
         exclude_defaults: bool = False,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
-    ) -> Mapping[str, t.ScalarValue]:
+    ) -> Mapping[str, t.Scalar]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -276,7 +272,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def load[T_Model: BaseModel](
         model_cls: type[T_Model],
-        data: FlextModelsContainers.ConfigMap,
+        data: m.ConfigMap,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 
@@ -303,18 +299,18 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_pydantic_dict(
-        data: FlextModelsContainers.ConfigMap | None,
-    ) -> Mapping[str, t.PydanticConfigValue]:
+        data: m.ConfigMap | None,
+    ) -> Mapping[str, t.Scalar]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
-        Normalizes PayloadValue values to the restricted PydanticConfigValue type
+        Normalizes ContainerValue values to the restricted PydanticConfigValue type
         that Pydantic can generate schemas for without recursion issues.
 
         Args:
-            data: EventDataMapping (Mapping[str, PayloadValue]) or None
+            data: EventDataMapping (Mapping[str, ContainerValue]) or None
 
         Returns:
-            Mapping[str, t.ConfigMapValue]: Mapping with Pydantic-safe values
+            Mapping[str, t.Container]: Mapping with Pydantic-safe values
 
         Example:
             >>> u.Model.normalize_to_pydantic_dict(None)
@@ -334,24 +330,26 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: t.ContainerValue,
-    ) -> t.PydanticConfigValue:
-        """Normalize PayloadValue to Pydantic-safe PydanticConfigValue.
+        value: t.Container,
+    ) -> t.Scalar:
+        """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
 
         Args:
-            value: PayloadValue value to normalize
+            value: ContainerValue value to normalize
 
         Returns:
             t.PydanticConfigValue: Pydantic-safe value
 
         """
         match value:
+            case None:
+                return None
             case bool() | int() | float() | str():
                 return value
             case list() as items:
-                normalized_items: list[t.ScalarValue] = []
+                normalized_items: list[t.Primitives | None] = []
                 for item in items:
                     try:
                         normalized_items.append(
@@ -363,7 +361,7 @@ class FlextUtilitiesModel:
                         normalized_items.append(str(item))
                 return normalized_items
             case tuple() as items:
-                normalized_tuple_items: list[t.ScalarValue] = []
+                normalized_tuple_items: list[t.Primitives | None] = []
                 for item in items:
                     try:
                         normalized_tuple_items.append(

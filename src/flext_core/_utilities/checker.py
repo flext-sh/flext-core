@@ -12,11 +12,9 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import TypeVar, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core import FlextRuntime, c, p, t
-
-_R = TypeVar("_R")
 
 
 class FlextUtilitiesChecker:
@@ -98,7 +96,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: Callable[..., _R],
+        handle_method: Callable[..., object],
     ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
@@ -111,9 +109,9 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: Callable[..., _R],
+        handle_method: Callable[..., object],
         handler_class: type,
-    ) -> Mapping[str, t.ContainerValue]:
+    ) -> Mapping[str, t.Container]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -128,14 +126,14 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: Mapping[str, t.ContainerValue],
+        type_hints: Mapping[str, t.Container],
         param_name: str,
     ) -> t.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
         if param_name in type_hints:
             # Return the type hint directly (plain types, generic aliases, etc.)
             hint = type_hints[param_name]
-            # Type narrowing: MessageTypeSpecifier = str | type[t.GuardInputValue]
+            # Type narrowing: MessageTypeSpecifier = str | type[t.Container]
             # Check what hint is and return appropriately
             if hint is None:
                 return None
@@ -183,7 +181,7 @@ class FlextUtilitiesChecker:
         handle_method_raw = getattr(handler_class, c.Mixins.METHOD_HANDLE)
         if not callable(handle_method_raw):
             return None
-        handle_method = handle_method_raw
+        handle_method: Callable[..., object] = handle_method_raw
 
         signature = cls._get_method_signature(handle_method)
         if signature is None:
@@ -226,7 +224,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _check_object_type_compatibility(
         cls,
-        expected_type: t.TypeOriginSpecifier,
+        expected_type: t.TypeHintSpecifier,
     ) -> bool | None:
         """Check if expected type is object (universal compatibility).
 
@@ -246,10 +244,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _check_dict_compatibility(
         cls,
-        expected_type: t.TypeOriginSpecifier,
+        expected_type: t.TypeHintSpecifier,
         message_type: t.MessageTypeSpecifier,
-        origin_type: t.TypeOriginSpecifier,
-        message_origin: t.TypeOriginSpecifier,
+        origin_type: t.TypeHintSpecifier,
+        message_origin: t.TypeHintSpecifier,
     ) -> bool | None:
         """Check dict type compatibility.
 
@@ -292,7 +290,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _evaluate_type_compatibility(
         cls,
-        expected_type: t.TypeOriginSpecifier,
+        expected_type: t.TypeHintSpecifier,
         message_type: t.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
@@ -339,10 +337,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _handle_type_or_origin_check(
         cls,
-        expected_type: t.TypeOriginSpecifier,
-        message_type: t.TypeOriginSpecifier,
-        origin_type: t.TypeOriginSpecifier,
-        message_origin: t.TypeOriginSpecifier,
+        expected_type: t.TypeHintSpecifier,
+        message_type: t.TypeHintSpecifier,
+        origin_type: t.TypeHintSpecifier,
+        message_origin: t.TypeHintSpecifier,
     ) -> bool:
         """Handle type checking for types or objects with __origin__.
 
@@ -368,8 +366,8 @@ class FlextUtilitiesChecker:
     @classmethod
     def _handle_instance_check(
         cls,
-        message_type: t.TypeOriginSpecifier,
-        origin_type: t.TypeOriginSpecifier,
+        message_type: t.TypeHintSpecifier,
+        origin_type: t.TypeHintSpecifier,
     ) -> bool:
         """Handle instance checking for non-type objects.
 

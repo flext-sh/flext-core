@@ -256,7 +256,7 @@ def _parse_existing_lazy_imports(tree: ast.Module) -> dict[str, tuple[str, str]]
     result: dict[str, tuple[str, str]] = {}
 
     def _extract(d: ast.expr) -> None:
-        if not isinstance(d, asm.Dict):
+        if not isinstance(d, ast.Dict):
             return
         for key, val in zip(d.keys, d.values, strict=False):
             if (
@@ -380,8 +380,9 @@ def _generate_type_checking(
     Groups imports by top-level package with blank lines between groups,
     following isort conventions.
     """
-    lines: list[str] = ["if TYPE_CHECKING:", "    from flext_core import t"]
+    lines: list[str] = ["if TYPE_CHECKING:"]
     if not groups:
+        lines.append("    pass")
         return lines
 
     def _emit_module(mod: str) -> None:
@@ -450,7 +451,7 @@ def _generate_file(
     out.extend([
         "from __future__ import annotations",
         "",
-        "from typing import TYPE_CHECKING",
+        "from typing import TYPE_CHECKING, Any",
         "",
         lazy_import,
         "",
@@ -479,7 +480,7 @@ def _generate_file(
     out.extend(["]", "", ""])
 
     out.extend([
-        "def __getattr__(name: str) -> t.Container:",
+        "def __getattr__(name: str) -> Any:  # noqa: ANN401",
         '    """Lazy-load module attributes on first access (PEP 562)."""',
         "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
         "",

@@ -47,7 +47,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401, JUSTIFIED: lazy export surface is heterogeneous
+def __getattr__(name: str) -> Any:  # noqa: ANN401
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

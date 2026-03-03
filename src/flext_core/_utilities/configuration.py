@@ -49,7 +49,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, p, r, t
+from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
 from flext_core._models.containers import FlextModelsContainers
 
 
@@ -186,9 +186,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | t.ContainerValue,
+        obj: p.HasModelDump | object,
         parameter: str,
-    ) -> tuple[bool, t.ScalarValue | FlextModelsContainers.ConfigMap | None]:
+    ) -> tuple[bool, t.Scalar | m.ConfigMap | None]:
         """Try to get attribute value from object via hasattr/getattr.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -200,7 +200,7 @@ class FlextUtilitiesConfiguration:
 
         Type Safety:
         - Uses hasattr() before getattr() to avoid AttributeError
-        - Cast to t.ConfigMapValue preserves union type safety
+        - Cast to t.Container preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
@@ -219,7 +219,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue | None]:
+    ) -> tuple[bool, t.Container | None]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -256,9 +256,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: t.ContainerValue,
+        obj: object,
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue | None]:
+    ) -> tuple[bool, t.Container | None]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
@@ -277,9 +277,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.ContainerValue],
+        obj: Mapping[str, t.Container],
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue | None]:
+    ) -> tuple[bool, t.Container | None]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -315,7 +315,7 @@ class FlextUtilitiesConfiguration:
     def get_parameter(
         obj: p.HasModelDump | t.ConfigurationMapping,
         parameter: str,
-    ) -> t.ContainerValue:
+    ) -> t.Container:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -395,9 +395,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: p.HasModelDump | t.ContainerValue,
+        obj: p.HasModelDump | object,
         parameter: str,
-        value: t.ScalarValue | FlextModelsContainers.ConfigMap,
+        value: t.Scalar | m.ConfigMap,
     ) -> bool:
         """Set parameter value on a configuration object with validation.
 
@@ -460,7 +460,7 @@ class FlextUtilitiesConfiguration:
     def get_singleton(
         singleton_class: type,
         parameter: str,
-    ) -> t.ContainerValue:
+    ) -> t.Container:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)
@@ -537,7 +537,7 @@ class FlextUtilitiesConfiguration:
     def set_singleton(
         singleton_class: type,
         parameter: str,
-        value: t.ScalarValue | FlextModelsContainers.ConfigMap,
+        value: t.Scalar | m.ConfigMap,
     ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -665,7 +665,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> Mapping[str, t.ScalarValue | None]:
+    ) -> Mapping[str, t.Scalar]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -715,7 +715,7 @@ class FlextUtilitiesConfiguration:
         model_class: type[T_Model],
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
-        **kwargs: t.ScalarValue,
+        **kwargs: t.Scalar,
     ) -> FlextRuntime.RuntimeResult[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
@@ -757,7 +757,7 @@ class FlextUtilitiesConfiguration:
                 self,
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
-                **format_kwargs: t.ConfigMapValue,
+                **format_kwargs: t.Container,
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)
                 def get_ldif_config_default() -> WriteFormatOptions:
@@ -874,9 +874,7 @@ class FlextUtilitiesConfiguration:
     def register_singleton(
         container: p.DI,
         name: str,
-        instance: t.ScalarValue
-        | FlextModelsContainers.ConfigMap
-        | FlextModelsContainers.Dict,
+        instance: t.Scalar | m.ConfigMap | m.Dict,
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -903,12 +901,7 @@ class FlextUtilitiesConfiguration:
     def register_factory(
         container: p.DI,
         name: str,
-        factory: Callable[
-            [],
-            t.ScalarValue
-            | FlextModelsContainers.ConfigMap
-            | FlextModelsContainers.Dict,
-        ],
+        factory: Callable[[], t.Scalar | m.ConfigMap | m.Dict],
         *,
         _cache: bool = False,
     ) -> r[bool]:
@@ -940,12 +933,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def bulk_register(
         container: p.DI,
-        registrations: Mapping[
-            str,
-            t.ScalarValue
-            | FlextModelsContainers.ConfigMap
-            | FlextModelsContainers.Dict,
-        ],
+        registrations: Mapping[str, t.Scalar | m.ConfigMap | m.Dict],
     ) -> r[int]:
         """Register multiple services at once.
 

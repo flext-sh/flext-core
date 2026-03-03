@@ -18,13 +18,13 @@ class _SvcModel(BaseModel):
 
 class _RuntimeContainer:
     def __init__(self) -> None:
-        self.configured: dict[str, t.ContainerValue] | None = None
+        self.configured: dict[str, t.Container] | None = None
         self.wired: dict[str, object] | None = None
 
     def scoped(self, **_kwargs: object) -> _RuntimeContainer:
         return self
 
-    def configure(self, overrides: dict[str, t.ContainerValue]) -> None:
+    def configure(self, overrides: dict[str, t.Container]) -> None:
         self.configured = overrides
 
     def wire_modules(self, **kwargs: object) -> None:
@@ -78,12 +78,12 @@ def test_mixins_result_and_model_conversion_paths(
             return 1
 
         @override
-        def __getitem__(self, _key: str) -> t.ContainerValue:
+        def __getitem__(self, _key: str) -> t.Container:
             msg = "boom"
             raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
-        x.to_dict(cast("Mapping[str, t.Container]", _BadMap()))
+        x.to_dict(cast("Mapping[str, t.ContainerValue]", _BadMap()))
 
 
 def test_mixins_runtime_bootstrap_and_track_paths(
@@ -119,7 +119,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     assert runtime_container.wired is not None
 
     with service.track("op") as metrics:
-        cast("dict[str, t.Container]", metrics)["duration_ms"] = 2.0
+        cast("dict[str, t.ContainerValue]", metrics)["duration_ms"] = 2.0
     assert hasattr(service, "_stats_op")
 
     try:
@@ -225,13 +225,13 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mixins_validation_and_protocol_paths() -> None:
-    validators: list[Callable[[t.ContainerValue], r[bool]]] = [
+    validators: list[Callable[[t.Container], r[bool]]] = [
         lambda _v: r[bool].ok(False),
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
 
-    fail_validators: list[Callable[[t.ContainerValue], r[bool]]] = [
+    fail_validators: list[Callable[[t.Container], r[bool]]] = [
         lambda _v: r[bool].fail("no"),
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)
@@ -248,7 +248,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service[t.Container]", cast("object", SimpleNamespace())),
+            cast("p.Service[t.ContainerValue]", cast("object", SimpleNamespace())),
         )
         is True
     )
@@ -256,14 +256,14 @@ def test_mixins_validation_and_protocol_paths() -> None:
 
     unknown = x.ProtocolValidation.validate_protocol_compliance(
         cast(
-            "p.Handler[t.Container, t.Container]",
+            "p.Handler[t.ContainerValue, t.ContainerValue]",
             cast("object", SimpleNamespace()),
         ),
         "Nope",
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
         cast(
-            "p.Handler[t.Container, t.Container]",
+            "p.Handler[t.ContainerValue, t.ContainerValue]",
             cast("object", SimpleNamespace()),
         ),
         "Service",

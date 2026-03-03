@@ -48,7 +48,7 @@ class ServiceScenario:
     name: str
     scenario_type: ServiceScenarioType
     is_valid_expected: bool
-    service_kwargs: Mapping[str, t.Scalar | None] | None = None
+    service_kwargs: Mapping[str, t.Scalar] | None = None
 
 
 class UserService(s[m.ConfigMap]):
@@ -158,7 +158,7 @@ class ServiceScenarios:
         scenario: ServiceScenario,
     ) -> s[m.ConfigMap] | s[str] | s[bool]:
         """Create service instance for scenario."""
-        kwargs_raw: Mapping[str, t.Scalar | None] = scenario.service_kwargs or {}
+        kwargs_raw: Mapping[str, t.Scalar] = scenario.service_kwargs or {}
 
         if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
             return UserService()

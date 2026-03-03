@@ -13,8 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from flext_core import p, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core import m, p, t
 from flext_core._models.context import FlextModelsContext
 
 
@@ -86,8 +85,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: FlextModelsContainers.ConfigMap | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[FlextModelsContainers.ConfigMap]:
+        default: m.ConfigMap | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[m.ConfigMap]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -98,7 +97,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[t.ConfigMap] instance
+            StructlogProxyContextVar[m.ConfigMap] instance
 
         Example:
             >>> var = u.Context.create_dict_proxy("metadata")
@@ -107,13 +106,11 @@ class FlextUtilitiesContext:
 
         """
         # Explicit instantiation with full type
-        proxy: FlextModelsContext.StructlogProxyContextVar[
-            FlextModelsContainers.ConfigMap
-        ] = FlextModelsContext.StructlogProxyContextVar[
-            FlextModelsContainers.ConfigMap
-        ](
-            key,
-            default=default,
+        proxy: FlextModelsContext.StructlogProxyContextVar[m.ConfigMap] = (
+            FlextModelsContext.StructlogProxyContextVar[m.ConfigMap](
+                key,
+                default=default,
+            )
         )
         return proxy
 
@@ -122,7 +119,7 @@ class FlextUtilitiesContext:
         runtime: T,
         *,
         context: p.Context | None = None,
-        config_overrides: FlextModelsContainers.ConfigMap | None = None,
+        config_overrides: m.ConfigMap | None = None,
     ) -> T:
         """Clone runtime with optional overrides.
 
@@ -164,7 +161,7 @@ class FlextUtilitiesContext:
         container: p.DI,
         *,
         scope_id: str | None = None,
-        overrides: Mapping[str, t.ContainerValue] | None = None,
+        overrides: Mapping[str, t.Container] | None = None,
     ) -> p.DI:
         """Clone container with scoping.
 

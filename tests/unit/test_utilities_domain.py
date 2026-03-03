@@ -43,7 +43,7 @@ SimpleValue = TestsFlextModels.Core.SimpleValue
 
 
 # Module-level helper functions (must be defined before class for @pytest.mark.parametrize)
-type TestPayload = t.Tests.PayloadValue
+type TestPayload = t.Tests.ContainerValue
 type TestCaseMap = Mapping[str, TestPayload]
 type InputPayloadMap = dict[str, object]
 
@@ -57,13 +57,13 @@ def _build_domain_test_entity(
 
 
 def _convert_to_general_value(obj: object) -> TestPayload:
-    """Convert object to t.Container (handles Pydantic models).
+    """Convert object to t.ContainerValue (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
 
     Returns:
-        t.Container-compatible value
+        t.ContainerValue-compatible value
 
     """
     if isinstance(obj, BaseModel):
@@ -90,17 +90,17 @@ def _convert_to_general_value(obj: object) -> TestPayload:
 def _convert_expected_result(
     expected: object,
 ) -> TestPayload:
-    """Convert expected result to t.Container (handles type objects).
+    """Convert expected result to t.ContainerValue (handles type objects).
 
     Args:
         expected: Expected result (type, value, or other)
 
     Returns:
-        t.Container-compatible value
+        t.ContainerValue-compatible value
 
     """
     if isinstance(expected, type):
-        # Type objects are not t.Container, convert to string
+        # Type objects are not t.ContainerValue, convert to string
         return expected.__name__
     if isinstance(expected, (str, int, float, bool, type(None))):
         return expected
@@ -553,8 +553,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
-        # Cast lambda return type to t.Container for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
+        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -602,8 +602,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
-        # Cast lambda return type to t.Container for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
+        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -628,8 +628,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
-        # Cast lambda return type to t.Container for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
+        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -649,8 +649,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test validate_entity_has_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
-        # Cast lambda return type to t.Container for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
+        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -673,8 +673,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test validate_value_object_immutable using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
-        # Cast lambda return type to t.Container for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.ContainerValue
+        # Cast lambda return type to t.ContainerValue for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),

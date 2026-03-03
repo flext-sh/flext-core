@@ -23,7 +23,7 @@ from flext_infra import (
     c,
 )
 
-type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.Scalar | None]]]
+type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.Scalar]]]
 
 
 class FlextInfraPrWorkspaceManager:
@@ -181,7 +181,7 @@ class FlextInfraPrWorkspaceManager:
         repo_root: Path,
         workspace_root: Path,
         pr_args: Mapping[str, str],
-    ) -> r[Mapping[str, t.Scalar | None]]:
+    ) -> r[Mapping[str, t.Scalar]]:
         """Execute a PR operation on a single repository.
 
         Args:
@@ -210,26 +210,26 @@ class FlextInfraPrWorkspaceManager:
         if log_path is not None:
             to_file_result = self._runner.run_to_file(command, log_path)
             if to_file_result.is_failure:
-                return r[Mapping[str, t.Scalar | None]].fail(
+                return r[Mapping[str, t.Scalar]].fail(
                     to_file_result.error or "command execution error",
                 )
             exit_code: int = to_file_result.value
         else:
             raw_result = self._runner.run_raw(command)
             if raw_result.is_failure:
-                return r[Mapping[str, t.Scalar | None]].fail(
+                return r[Mapping[str, t.Scalar]].fail(
                     raw_result.error or "command execution error",
                 )
             exit_code = raw_result.value.exit_code
 
         elapsed = int(time.monotonic() - started)
         status = c.Status.OK if exit_code == 0 else c.Status.FAIL
-        return r[Mapping[str, t.Scalar | None]].ok({
+        return r[Mapping[str, t.Scalar]].ok({
             "display": display,
             "status": status,
             "elapsed": elapsed,
             "exit_code": exit_code,
-            "log_path": str(log_path) if log_path else "",
+            "log_path": str(log_path) if log_path else None,
         })
 
     def orchestrate(
@@ -273,7 +273,7 @@ class FlextInfraPrWorkspaceManager:
 
         effective_args = pr_args or {"action": "status", "base": "main"}
         failures = 0
-        results: list[Mapping[str, t.Scalar | None]] = []
+        results: list[Mapping[str, t.Scalar]] = []
 
         for repo_root in repos:
             self.checkout_branch(repo_root, branch)

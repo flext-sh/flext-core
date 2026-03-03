@@ -48,7 +48,7 @@ class _LoggerLike:
         return None
 
 
-def _sample_handler(value: t.ContainerValue) -> t.ContainerValue:
+def _sample_handler(value: t.Container) -> t.Container:
     return value
 
 
@@ -75,7 +75,7 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
 def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type({"a": 1})
     assert u.Guards.is_handler_type(_Model())
-    assert u.Guards.is_handler_type(cast("t.GuardInputValue", _sample_handler))
+    assert u.Guards.is_handler_type(cast("t.ContainerValue", _sample_handler))
 
     class _BaseModelSubclass(BaseModel):
         value: str = "ok"
@@ -86,8 +86,8 @@ def test_is_handler_type_branches() -> None:
         def handle(self, _value: object) -> object:
             return None
 
-    assert u.Guards.is_handler_type(cast("t.GuardInputValue", _BaseModelSubclass))
-    assert u.Guards.is_handler_type(cast("t.GuardInputValue", _DuckHandler()))
+    assert u.Guards.is_handler_type(cast("t.ContainerValue", _BaseModelSubclass))
+    assert u.Guards.is_handler_type(cast("t.ContainerValue", _DuckHandler()))
 
 
 def test_non_empty_and_normalize_branches() -> None:
@@ -102,17 +102,17 @@ def test_non_empty_and_normalize_branches() -> None:
     # normalize_to_metadata_value({"k": object()}) raises TypeError (not JSON serializable)
     with pytest.raises(TypeError):
         u.normalize_to_metadata_value(
-            cast("t.Container", {"k": object()}),
+            cast("t.ContainerValue", {"k": object()}),
         )
     list_out = u.normalize_to_metadata_value(
-        cast("t.Container", [1, object()]),
+        cast("t.ContainerValue", [1, object()]),
     )
     assert isinstance(list_out, list)
     assert list_out[0] == "1"  # Source: int not scalar, stringified
     assert isinstance(list_out[1], str)
     assert isinstance(
         u.normalize_to_metadata_value(
-            cast("t.Container", cast("object", {1, 2})),
+            cast("t.ContainerValue", cast("object", {1, 2})),
         ),
         str,
     )
@@ -125,15 +125,15 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_value_dict: dict[str, object] = {"k": {1}}
 
     # Source accepts int keys in mappings
-    assert u.Guards.is_configuration_mapping(cast("t.GuardInputValue", bad_key_mapping))
+    assert u.Guards.is_configuration_mapping(cast("t.ContainerValue", bad_key_mapping))
     assert not u.Guards.is_configuration_mapping(
-        cast("t.GuardInputValue", bad_value_mapping),
+        cast("t.ContainerValue", bad_value_mapping),
     )
     assert not u.Guards.is_configuration_dict([])
     assert u.Guards.is_configuration_dict(
-        cast("t.GuardInputValue", {1: "v"}),
+        cast("t.ContainerValue", {1: "v"}),
     )  # Source accepts int keys
-    assert not u.Guards.is_configuration_dict(cast("t.GuardInputValue", bad_value_dict))
+    assert not u.Guards.is_configuration_dict(cast("t.ContainerValue", bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
 
 
@@ -160,11 +160,11 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert not _is_type_obj(object(), "service")
     assert not _is_type_obj(object(), "middleware")
 
-    assert u.Guards.is_handler_callable(cast("t.GuardInputValue", _sample_handler))
+    assert u.Guards.is_handler_callable(cast("t.ContainerValue", _sample_handler))
 
     assert u.Guards.is_mapping({"k": "v"})
 
-    def _identity(value: t.ContainerValue) -> t.ContainerValue:
+    def _identity(value: t.Container) -> t.Container:
         return value
 
     assert _is_type_obj(_identity, "callable")
@@ -214,7 +214,7 @@ def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> 
 def test_extract_mapping_or_none_branches() -> None:
     assert u.extract_mapping_or_none({"k": "v"}) == {"k": "v"}
     # Source accepts int keys in dicts as configuration_mapping
-    assert u.extract_mapping_or_none(cast("t.GuardInputValue", {1: "v"})) == {1: "v"}
+    assert u.extract_mapping_or_none(cast("t.ContainerValue", {1: "v"})) == {1: "v"}
     assert u.extract_mapping_or_none([1, 2, 3]) is None
 
 

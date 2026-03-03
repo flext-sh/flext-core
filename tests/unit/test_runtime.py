@@ -101,8 +101,8 @@ class RuntimeTestCase:
     name: str
     operation: RuntimeOperationType
     # Business Rule: test_input supports both values and types for comprehensive testing
-    # t.Container | type[object] | None allows testing runtime type checking with various inputs
-    test_input: t.ContainerValue | type[object] | None = None
+    # t.ContainerValue | type[object] | None allows testing runtime type checking with various inputs
+    test_input: t.Container | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
 
@@ -572,13 +572,13 @@ class TestFlextRuntime:
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
 
-        Business Rule: is_dict_like accepts t.Container compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.Container
+        Business Rule: is_dict_like accepts t.ContainerValue compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.ContainerValue
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to t.Container for type compatibility
-        # None and various types are compatible with t.Container at runtime
-        test_input_typed = cast("t.Container", test_case.test_input)
+        # Business Rule: Cast to t.ContainerValue for type compatibility
+        # None and various types are compatible with t.ContainerValue at runtime
+        test_input_typed = cast("t.ContainerValue", test_case.test_input)
         result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -590,13 +590,13 @@ class TestFlextRuntime:
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
 
-        Business Rule: is_list_like accepts t.Container compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.Container
+        Business Rule: is_list_like accepts t.ContainerValue compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.ContainerValue
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to t.Container for type compatibility
-        # None and various types are compatible with t.Container at runtime
-        test_input_typed = cast("t.Container", test_case.test_input)
+        # Business Rule: Cast to t.ContainerValue for type compatibility
+        # None and various types are compatible with t.ContainerValue at runtime
+        test_input_typed = cast("t.ContainerValue", test_case.test_input)
         result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -612,7 +612,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_json(
-            cast("t.Container", test_case.test_input),
+            cast("t.ContainerValue", test_case.test_input),
         )
         assert result == test_case.expected_result
 
@@ -628,7 +628,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_identifier(
-            cast("t.Container", test_case.test_input),
+            cast("t.ContainerValue", test_case.test_input),
         )
         assert result == test_case.expected_result
 
@@ -645,9 +645,9 @@ class TestFlextRuntime:
                 attr = "value"
 
             test_obj = TestObj()
-            # Type narrowing: TestObj is compatible with t.Container
-            test_obj_cast: t.ContainerValue = cast(
-                "t.Container",
+            # Type narrowing: TestObj is compatible with t.ContainerValue
+            test_obj_cast: t.Container = cast(
+                "t.ContainerValue",
                 cast("object", test_obj),
             )
             result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
@@ -661,9 +661,9 @@ class TestFlextRuntime:
                 pass
 
             test_obj_default_obj = TestObjDefault()
-            # Type narrowing: TestObjDefault is compatible with t.Container
-            test_obj_default_cast: t.ContainerValue = cast(
-                "t.Container",
+            # Type narrowing: TestObjDefault is compatible with t.ContainerValue
+            test_obj_default_cast: t.Container = cast(
+                "t.ContainerValue",
                 cast("object", test_obj_default_obj),
             )
             result = FlextRuntime.safe_get_attribute(
@@ -680,10 +680,10 @@ class TestFlextRuntime:
             class TestObjNoDefault:
                 pass
 
-            # Business Rule: TestObjNoDefault instances are compatible with t.Container at runtime
-            # Cast to t.Container for type compatibility
+            # Business Rule: TestObjNoDefault instances are compatible with t.ContainerValue at runtime
+            # Cast to t.ContainerValue for type compatibility
             test_obj_no_default = cast(
-                "t.Container",
+                "t.ContainerValue",
                 cast("object", TestObjNoDefault()),
             )
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
@@ -947,7 +947,7 @@ class TestFlextRuntime:
                 @classmethod
                 @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                    def counter_factory() -> t.ContainerValue:
+                    def counter_factory() -> t.Container:
                         return {"count": 1}
 
                     return FlextModelsService.RuntimeBootstrapOptions(
@@ -970,12 +970,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            service_result_raw: r[t.ContainerValue] = cast(
-                "r[t.Container]",
+            service_result_raw: r[t.Container] = cast(
+                "r[t.ContainerValue]",
                 component.container.get("preseed"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            service_result: r[t.ContainerValue] = service_result_raw
+            service_result: r[t.Container] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
 
@@ -984,12 +984,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            factory_result_raw: r[t.ContainerValue] = cast(
-                "r[t.Container]",
+            factory_result_raw: r[t.Container] = cast(
+                "r[t.ContainerValue]",
                 component.container.get("counter"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            factory_result: r[t.ContainerValue] = factory_result_raw
+            factory_result: r[t.Container] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 
@@ -1026,15 +1026,15 @@ class TestFlextRuntime:
             def custom_processor(
                 logger: object,
                 method_name: str,
-                event_dict: dict[str, t.ContainerValue],
-            ) -> dict[str, t.ContainerValue]:
+                event_dict: dict[str, t.Container],
+            ) -> dict[str, t.Container]:
                 event_dict["custom"] = True
                 return event_dict
 
-            # Business Rule: Callable processors are compatible with t.Container at runtime
+            # Business Rule: Callable processors are compatible with t.ContainerValue at runtime
             # structlog accepts callable processors for custom processing
-            processor_typed: t.ContainerValue = cast(
-                "t.Container",
+            processor_typed: t.Container = cast(
+                "t.ContainerValue",
                 custom_processor,
             )
             FlextRuntime.configure_structlog(additional_processors=[processor_typed])

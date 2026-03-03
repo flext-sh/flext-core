@@ -649,7 +649,7 @@ class FlextTestsConstants(FlextConstants):
                     "CRITICAL",
                     "# type: ignore comment",
                 )
-                TYPE_002: Final[tuple[str, str]] = ("CRITICAL", "ANY type annotation")
+                TYPE_002: Final[tuple[str, str]] = ("CRITICAL", "Any type annotation")
                 TYPE_003: Final[tuple[str, str]] = ("MEDIUM", "Unapproved  usage")
 
                 # Test rules (TEST-001 to TEST-003)
@@ -767,8 +767,8 @@ class FlextTestsConstants(FlextConstants):
                 CONFIG_IGNORE: Final[str] = "ignore_errors = true for module '{module}'"
                 CONFIG_RUFF: Final[str] = "Custom ruff ignore: {code}"
                 TEST_MONKEYPATCH: Final[str] = "monkeypatch usage in function '{func}'"
-                TYPE_ANY_ARG: Final[str] = "ANY type in argument '{arg}'"
-                TYPE_ANY_RETURN: Final[str] = "ANY type in return type"
+                TYPE_ANY_ARG: Final[str] = "Any type in argument '{arg}'"
+                TYPE_ANY_RETURN: Final[str] = "Any type in return type"
                 BYPASS_EXCEPTION: Final[str] = "Exception swallowing: {pattern}"
                 BYPASS_BARE_EXCEPT: Final[str] = "bare except"
                 BYPASS_ONLY_PASS: Final[str] = "except with only pass"

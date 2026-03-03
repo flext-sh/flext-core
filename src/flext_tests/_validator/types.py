@@ -1,6 +1,6 @@
 """Type validation for FLEXT architecture.
 
-Detects type violations: type:ignore comments, ANY types, unapproved  usage.
+Detects type violations: type:ignore comments, Any types, unapproved  usage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -79,7 +79,7 @@ class FlextValidatorTypes:
         except SyntaxError:
             return violations
 
-        # Check for ANY type annotations
+        # Check for Any type annotations
         violations.extend(cls._check_any_types(file_path, tree, lines, approved))
 
         # Check for unapproved  usage
@@ -123,7 +123,7 @@ class FlextValidatorTypes:
         lines: list[str],
         approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
-        """Detect ANY type annotations."""
+        """Detect Any type annotations."""
         if u.Tests.Validator.is_approved("TYPE-002", file_path, approved):
             return []
 
