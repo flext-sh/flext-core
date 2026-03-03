@@ -1144,12 +1144,10 @@ class FlextUtilitiesParser:
             else:
                 scalar_data[dict_key] = str(dict_value)
 
-        result = FlextUtilitiesModel.from_dict(target, scalar_data, strict=strict)
-        if result.is_success:
-            return r.ok(result.value)
-        return r.fail(
-            FlextUtilitiesParser._parse_result_error(result, "Model parse failed"),
-        )
+        try:
+            return r.ok(target.model_validate(scalar_data, strict=strict))
+        except (ValidationError, TypeError, ValueError) as exc:
+            return r.fail(f"Model parse failed: {exc}")
 
     @staticmethod
     def _coerce_to_int(value: t.Container) -> r[int] | None:

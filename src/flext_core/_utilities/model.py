@@ -41,32 +41,6 @@ class FlextUtilitiesModel:
     )
 
     @staticmethod
-    def from_dict[M: BaseModel](
-        model_cls: type[M],
-        data: Mapping[str, t.JsonValue],
-        *,
-        strict: bool = False,
-    ) -> r[M]:
-        """Create Pydantic model from dict with r.
-
-        Example:
-             result = u.Model.from_dict(
-                 UserModel,
-                 {"status": "active", "name": "John"},
-             )
-             if result.is_success:
-                 user: UserModel = result.value
-
-        """
-        try:
-            # model_validate returns M (the model type)
-            instance = model_cls.model_validate(data, strict=strict)
-            # Type narrowing: instance is M from model_validate return type
-            return r[M].ok(instance)
-        except (ValidationError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model validation failed: {e}")
-
-    @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
         **kwargs: t.Scalar,
@@ -121,7 +95,11 @@ class FlextUtilitiesModel:
 
         """
         merged = {**defaults, **overrides}
-        return FlextUtilitiesModel.from_dict(model_cls, merged)
+        try:
+            instance = model_cls.model_validate(merged)
+            return r[M].ok(instance)
+        except (ValidationError, TypeError, ValueError) as e:
+            return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
     def update[M: BaseModel](
@@ -145,26 +123,6 @@ class FlextUtilitiesModel:
             return r[M].ok(updated_instance)
         except (AttributeError, TypeError, ValueError) as e:
             return r[M].fail(f"Model update failed: {e}")
-
-    @staticmethod
-    def to_dict(
-        instance: BaseModel,
-        *,
-        by_alias: bool = False,
-        exclude_none: bool = False,
-    ) -> Mapping[str, t.Scalar]:
-        """Convert model to dict (simple wrapper).
-
-        Example:
-             user = UserModel(status=Status.ACTIVE, name="John")
-             data = u.Model.to_dict(user)
-             # data = {"status": "active", "name": "John"}
-
-        """
-        return instance.model_dump(
-            by_alias=by_alias,
-            exclude_none=exclude_none,
-        )
 
     @staticmethod
     def normalize_to_metadata(
