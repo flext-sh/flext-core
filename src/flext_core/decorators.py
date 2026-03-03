@@ -487,7 +487,7 @@ class FlextDecorators:
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, t.MetadataScalarValue] = {
+                    start_extra: dict[str, t.ScalarValue] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -516,7 +516,7 @@ class FlextDecorators:
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, t.MetadataScalarValue] = {
+                    completion_extra: dict[str, t.ScalarValue] = {
                         "function": func.__name__,
                         "success": True,
                     }

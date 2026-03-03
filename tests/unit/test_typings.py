@@ -80,10 +80,10 @@ class TypeScenarios:
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.GeneralValueType, True),
+        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.ContainerValue, True),
+        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.ContainerValue, True),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
@@ -184,7 +184,7 @@ class TestFlextTypings:
             # CQRS aliases should all be t.GeneralValueType
             tm.that(
                 test_case.type_var,
-                eq=t.GeneralValueType,
+                eq=t.ContainerValue,
                 msg=f"{test_case.name} must equal t.GeneralValueType",
             )
 
@@ -247,16 +247,16 @@ class TestFlextTypings:
             )
         # Validate CQRS aliases all point to t.GeneralValueType
         cqrs_aliases = [
-            t.GeneralValueType,  # Command
-            t.GeneralValueType,  # Event
-            t.GeneralValueType,  # Query
-            t.GeneralValueType,  # Message
+            t.ContainerValue,  # Command
+            t.ContainerValue,  # Event
+            t.ContainerValue,  # Query
+            t.ContainerValue,  # Message
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
                 alias,
-                eq=t.GeneralValueType,
+                eq=t.ContainerValue,
                 msg="CQRS alias must equal t.GeneralValueType",
             )
 

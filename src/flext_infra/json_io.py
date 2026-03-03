@@ -31,7 +31,7 @@ class FlextInfraJsonService(FlextService[bool]):
         """Initialize the JSON service."""
         super().__init__()
 
-    def read(self, path: Path) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
+    def read(self, path: Path) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Read and parse a JSON file.
 
         Args:
@@ -43,22 +43,22 @@ class FlextInfraJsonService(FlextService[bool]):
 
         """
         if not path.exists():
-            return r[Mapping[str, t.ConfigMapValue]].ok({})
+            return r[Mapping[str, t.ContainerValue]].ok({})
         try:
             loaded = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
             if not isinstance(loaded, dict):
-                return r[Mapping[str, t.ConfigMapValue]].fail(
+                return r[Mapping[str, t.ContainerValue]].fail(
                     "JSON root must be object",
                 )
-            data: Mapping[str, t.ConfigMapValue] = loaded
-            return r[Mapping[str, t.ConfigMapValue]].ok(data)
+            data: Mapping[str, t.ContainerValue] = loaded
+            return r[Mapping[str, t.ContainerValue]].ok(data)
         except (json.JSONDecodeError, OSError) as exc:
-            return r[Mapping[str, t.ConfigMapValue]].fail(f"JSON read error: {exc}")
+            return r[Mapping[str, t.ContainerValue]].fail(f"JSON read error: {exc}")
 
     def write(
         self,
         path: Path,
-        payload: BaseModel | Mapping[str, t.ConfigMapValue],
+        payload: BaseModel | Mapping[str, t.ContainerValue],
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,

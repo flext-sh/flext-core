@@ -33,7 +33,7 @@ class FlextInfraInventoryService:
         workspace_root: Path,
         *,
         output_dir: Path | None = None,
-    ) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
+    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Build and write scripts inventory reports.
 
         Args:
@@ -58,24 +58,24 @@ class FlextInfraInventoryService:
                 )
 
             now = datetime.now(UTC).isoformat()
-            inventory: Mapping[str, t.ConfigMapValue] = {
+            inventory: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
                 "repo_root": str(root),
                 "total_scripts": len(scripts),
                 "scripts": scripts,
             }
-            wiring: Mapping[str, t.ConfigMapValue] = {
+            wiring: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
                 "root_makefile": [c.Files.MAKEFILE_FILENAME],
                 "unwired_scripts": [],
             }
-            external: Mapping[str, t.ConfigMapValue] = {
+            external: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
                 "candidates": [],
             }
 
             reports_dir = output_dir or (root / ".reports")
-            outputs: Mapping[Path, Mapping[str, t.ConfigMapValue]] = {
+            outputs: Mapping[Path, Mapping[str, t.ContainerValue]] = {
                 reports_dir / "scripts-infra--json--scripts-inventory.json": inventory,
                 reports_dir / "scripts-infra--json--scripts-wiring.json": wiring,
                 reports_dir
@@ -90,18 +90,18 @@ class FlextInfraInventoryService:
                     sort_keys=True,
                 )
                 if write_result.is_failure:
-                    return r[Mapping[str, t.ConfigMapValue]].fail(
+                    return r[Mapping[str, t.ContainerValue]].fail(
                         write_result.error or "write failed",
                     )
                 written.append(str(path))
 
-            result: MutableMapping[str, t.ConfigMapValue] = {
+            result: MutableMapping[str, t.ContainerValue] = {
                 "total_scripts": len(scripts),
                 "reports_written": written,
             }
-            return r[Mapping[str, t.ConfigMapValue]].ok(result)
+            return r[Mapping[str, t.ContainerValue]].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[Mapping[str, t.ConfigMapValue]].fail(
+            return r[Mapping[str, t.ContainerValue]].fail(
                 f"inventory generation failed: {exc}",
             )
 

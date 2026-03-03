@@ -45,7 +45,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.ConfigMapValue,
+        *parts: t.ContainerValue,
         length: int = c.Utilities.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
@@ -110,14 +110,14 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _is_config_mapping(
-        value: t.ConfigMapValue,
-    ) -> TypeGuard[Mapping[str, t.ConfigMapValue]]:
+        value: t.ContainerValue,
+    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: Mapping[str, t.ConfigMapValue] | BaseModel | None,
-    ) -> Mapping[str, t.ConfigMapValue]:
+        context: Mapping[str, t.ContainerValue] | BaseModel | None,
+    ) -> Mapping[str, t.ContainerValue]:
         """Normalize context to dict - fast fail validation.
 
         Args:
@@ -190,7 +190,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: Mapping[str, t.ConfigMapValue] | BaseModel | None,
+        context: Mapping[str, t.ContainerValue] | BaseModel | None,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -246,9 +246,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.GeneralValueType | None,
-        default: Mapping[str, t.ConfigMapValue] | None = None,
-    ) -> Mapping[str, t.ConfigMapValue]:
+        value: t.ContainerValue | None,
+        default: Mapping[str, t.ContainerValue] | None = None,
+    ) -> Mapping[str, t.ContainerValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -362,7 +362,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.ConfigMapValue, ...] | None = None,
+        parts: tuple[t.ContainerValue, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -404,7 +404,7 @@ class FlextUtilitiesGenerators:
         # Generate prefixed ID
         if actual_prefix is not None:
             # Build parts list
-            all_parts: list[t.ConfigMapValue] = []
+            all_parts: list[t.ContainerValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
@@ -437,7 +437,7 @@ class FlextUtilitiesGenerators:
         return FlextUtilitiesGenerators._generate_id()
 
     @staticmethod
-    def generate_operation_id(message_type: str, message: t.ConfigMapValue) -> str:
+    def generate_operation_id(message_type: str, message: t.ContainerValue) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:
@@ -456,7 +456,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: m.ConfigMap | Mapping[str, t.ConfigMapValue],
+        attributes: m.ConfigMap | Mapping[str, t.ContainerValue],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

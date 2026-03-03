@@ -26,7 +26,7 @@ from flext_infra import (
 from flext_infra.constants import c
 
 
-def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
+def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
     """Load YAML file safely, returning empty mapping on missing/invalid."""
     raw = path.read_text(encoding=c.Encoding.DEFAULT)
     parsed = safe_load(raw)
@@ -38,7 +38,7 @@ def _safe_load_yaml(path: Path) -> Mapping[str, t.ConfigMapValue]:
     return dict(parsed)
 
 
-def _normalize_string_list(value: t.ConfigMapValue, field: str) -> list[str]:
+def _normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:
     """Validate and normalize a list[str] config field."""
     if value is None:
         return []
@@ -201,7 +201,7 @@ class FlextInfraSkillValidator:
 
     def _run_ast_grep_count(
         self,
-        rule: Mapping[str, t.ConfigMapValue],
+        rule: Mapping[str, t.ContainerValue],
         skill_dir: Path,
         project_path: Path,
         include_globs: list[str],
@@ -250,7 +250,7 @@ class FlextInfraSkillValidator:
 
     def _run_custom_count(
         self,
-        rule: Mapping[str, t.ConfigMapValue],
+        rule: Mapping[str, t.ContainerValue],
         skill_dir: Path,
         project_path: Path,
         mode: str,

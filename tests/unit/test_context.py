@@ -123,7 +123,7 @@ class TestFlextContext:
         """Test context set/get value operations."""
         context = test_context
         # Type narrowing: value must be t.GeneralValueType compatible
-        converted_value: t.GeneralValueType = (
+        converted_value: t.ContainerValue = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -189,7 +189,7 @@ class TestFlextContext:
         """Test context with nested data structures."""
         context = test_context
         # Type narrowing: nested_data must be t.GeneralValueType compatible
-        nested_data: dict[str, t.GeneralValueType] = {
+        nested_data: dict[str, t.ContainerValue] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -202,13 +202,13 @@ class TestFlextContext:
         assert isinstance(retrieved, dict)
         # Type narrowing: retrieved is dict after isinstance check
         # pyright needs explicit type narrowing for nested dict access
-        retrieved_dict: dict[str, t.GeneralValueType] = retrieved
+        retrieved_dict: dict[str, t.ContainerValue] = retrieved
         user_data = retrieved_dict.get("user")
         assert isinstance(user_data, dict)
-        user_dict: dict[str, t.GeneralValueType] = user_data
+        user_dict: dict[str, t.ContainerValue] = user_data
         profile_data = user_dict.get("profile")
         assert isinstance(profile_data, dict)
-        profile_dict: dict[str, t.GeneralValueType] = profile_data
+        profile_dict: dict[str, t.ContainerValue] = profile_data
         assert profile_dict.get("name") == "John Doe"
 
     def test_context_merge(self, test_context: FlextContext) -> None:
@@ -391,7 +391,7 @@ class TestFlextContext:
         """Test context with special values."""
         context = test_context
         # Type narrowing: special_value must be t.GeneralValueType compatible
-        converted_value: t.GeneralValueType = (
+        converted_value: t.ContainerValue = (
             special_value
             if isinstance(
                 special_value,

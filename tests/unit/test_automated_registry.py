@@ -19,7 +19,7 @@ from tests.test_utils import assertion_helpers, fixture_factory
 
 @runtime_checkable
 class _ProcessCapable(Protocol):
-    def process(self, input_data: Mapping[str, t.GeneralValueType]) -> object: ...
+    def process(self, input_data: Mapping[str, t.ContainerValue]) -> object: ...
 
 
 @runtime_checkable
@@ -29,7 +29,7 @@ class _ExecuteCapable(Protocol):
 
 @runtime_checkable
 class _HandleCapable(Protocol):
-    def handle(self, input_data: Mapping[str, t.GeneralValueType]) -> object: ...
+    def handle(self, input_data: Mapping[str, t.ContainerValue]) -> object: ...
 
 
 @runtime_checkable
@@ -180,7 +180,7 @@ class TestAutomatedFlextRegistry:
     def _execute_registry_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.GeneralValueType],
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on registry instance.
 

@@ -56,7 +56,7 @@ class UtilityTestCase:
     """Test case for utility operations."""
 
     operation: UtilityOperationType
-    input_data: t.GeneralValueType | None = None
+    input_data: t.ContainerValue | None = None
     expected_type: type | None = None
     should_succeed: bool = True
     description: str = ""
@@ -154,10 +154,10 @@ class UtilityScenarios:
 
     @staticmethod
     def create_mock_config(
-        **kwargs: t.GeneralValueType,
+        **kwargs: t.ContainerValue,
     ) -> p.HasModelDump:
         """Create mock config object."""
-        result: dict[str, t.GeneralValueType] = {}
+        result: dict[str, t.ContainerValue] = {}
         for key, value in kwargs.items():
             result[str(key)] = value
         return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
@@ -352,7 +352,7 @@ class Testu:
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.GeneralValueType | None,
+        input_data: t.ContainerValue | None,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
@@ -388,7 +388,7 @@ class Testu:
             result = u.Cache.clear_object_cache(obj)
         else:
             # For non-BaseModel objects, convert to dict-like structure
-            obj_dict: dict[str, t.GeneralValueType] = {}
+            obj_dict: dict[str, t.ContainerValue] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (
@@ -407,7 +407,7 @@ class Testu:
         obj = UtilityScenarios.create_mock_cached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
         # Cast to t.GeneralValueType for type checker
-        obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
+        obj_typed: t.ContainerValue = cast("t.GeneralValueType", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
@@ -415,7 +415,7 @@ class Testu:
         obj = UtilityScenarios.create_mock_uncached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
         # Cast to t.GeneralValueType for type checker
-        obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
+        obj_typed: t.ContainerValue = cast("t.GeneralValueType", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is False
 
     # =====================================================================

@@ -38,8 +38,8 @@ class ConfigTestCase:
     """Factory for configuration test cases."""
 
     test_name: str
-    config_data: dict[str, t.GeneralValueType]
-    expected_values: dict[str, t.GeneralValueType] = field(default_factory=dict)
+    config_data: dict[str, t.ContainerValue]
+    expected_values: dict[str, t.ContainerValue] = field(default_factory=dict)
     file_format: str = "json"
     env_vars: dict[str, str] = field(default_factory=dict)
     description: str = field(default="", compare=False)

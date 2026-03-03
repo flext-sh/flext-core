@@ -342,10 +342,10 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose: t.ConfigMapValue
+                compose: t.ContainerValue
                 """Compose API access (python-on-whales style)."""
 
-                client_config: Mapping[str, t.ConfigMapValue]
+                client_config: Mapping[str, t.ContainerValue]
                 """Client configuration (python-on-whales style)."""
 
                 def up(
@@ -598,7 +598,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is success and return value."""
                     ...
 
-                def assert_fail(self, result: FlextResult[t.ConfigMapValue]) -> str:
+                def assert_fail(self, result: FlextResult[t.ContainerValue]) -> str:
                     """Assert result is failure and return error."""
                     ...
 
@@ -649,7 +649,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def validate(
                     self,
-                    value: t.ConfigMapValue,
+                    value: t.ContainerValue,
                     spec: int | tuple[int, int],
                 ) -> bool:
                     """Validate length against spec.
@@ -685,13 +685,13 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def eq(
                     self,
-                    expected: t.ConfigMapValue,
+                    expected: t.ContainerValue,
                     msg: str | None = None,
                 ) -> Self:
                     """Assert value equals expected."""
                     ...
 
-                def has(self, item: t.ConfigMapValue, msg: str | None = None) -> Self:
+                def has(self, item: t.ContainerValue, msg: str | None = None) -> Self:
                     """Assert value/error contains item."""
                     ...
 
@@ -730,7 +730,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def exit_scope(self, scope: t.ConfigMapValue) -> None:
+                def exit_scope(self, scope: t.ContainerValue) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:

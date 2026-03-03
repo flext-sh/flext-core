@@ -20,8 +20,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
-from flext_core._models.containers import FlextModelsContainers
-
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
@@ -40,9 +38,20 @@ R2 = TypeVar("R2")
 
 
 class FlextTypes:
-    """Type system foundation for FLEXT ecosystem."""
+    """Type system foundation for FLEXT ecosystem.
 
-    type _ContainerValue = (
+    Canonical types:
+
+        ScalarValue     = str | int | float | bool | datetime | None
+        ContainerValue  = ScalarValue | BaseModel | Path | Sequence | Mapping
+        JsonPrimitive   = str | int | float | bool | None
+    """
+
+    # ── Scalar ────────────────────────────────────────────────────────
+    type ScalarValue = str | int | float | bool | datetime | None
+
+    # ── Container (recursive, includes None) ──────────────────────────
+    type ContainerValue = (
         str
         | int
         | float
@@ -51,63 +60,45 @@ class FlextTypes:
         | None
         | BaseModel
         | Path
-        | Sequence[FlextTypes._ContainerValue]
-        | Mapping[str, FlextTypes._ContainerValue]
+        | Sequence[FlextTypes.ContainerValue]
+        | Mapping[str, FlextTypes.ContainerValue]
     )
-    type _ScalarML = str | int | float | bool | datetime | None
 
+    # ── JSON ──────────────────────────────────────────────────────────
     type JsonPrimitive = str | int | float | bool | None
     type JsonValue = (
-        JsonPrimitive | Sequence[_ContainerValue] | Mapping[str, _ContainerValue]
+        JsonPrimitive
+        | Sequence[FlextTypes.JsonValue]
+        | Mapping[str, FlextTypes.JsonValue]
     )
     type JsonDict = Mapping[str, JsonValue]
-    type StrictJsonScalar = str | int | float | bool | datetime | None
     type StrictJsonValue = (
-        StrictJsonScalar
+        ScalarValue
         | list[FlextTypes.StrictJsonValue]
         | Mapping[str, FlextTypes.StrictJsonValue]
     )
 
-    type ScalarValue = _ScalarML
-    type PayloadValue = _ContainerValue | BaseModel | Path
+    # ── Service / DI ──────────────────────────────────────────────────
     type RegisterableService = (
-        _ContainerValue | BindableLogger | Callable[..., _ContainerValue]
+        ContainerValue | BindableLogger | Callable[..., ContainerValue]
     )
-    type ServiceInstanceType = _ContainerValue
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], _ContainerValue]
-    type FactoryRegistrationCallable = Callable[[], _ScalarML | Sequence[_ScalarML]]
-    type GeneralValueType = _ContainerValue
+    type ResourceCallable = Callable[[], ContainerValue]
+    type FactoryRegistrationCallable = Callable[[], ScalarValue | Sequence[ScalarValue]]
 
-    type MetadataScalarValue = str | int | float | bool | None
-    type MetadataListValue = list[str | int | float | bool | None]
-    type PydanticConfigValue = (
-        str | int | float | bool | None | list[str | int | float | bool | None]
+    # ── Metadata ──────────────────────────────────────────────────────
+    type MetadataAttributeValue = (
+        ScalarValue | Mapping[str, ScalarValue | list[ScalarValue]] | list[ScalarValue]
     )
-    type GeneralScalarValue = str | int | float | bool | datetime | None
-    type GeneralListValue = list[str | int | float | bool | datetime | None]
-    type ExceptionKwargsType = str | int | float | bool | datetime | None
 
-    type TYPE_CHECKING = bool
-    type GuardInputValue = _ContainerValue
-    type ConfigMapValue = _ContainerValue
-    type HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+    # ── Configuration ─────────────────────────────────────────────────
+    type ConfigurationMapping = Mapping[str, ContainerValue]
 
-    type ConfigMap = FlextModelsContainers.ConfigMap
-    type Dict = FlextModelsContainers.Dict
-    type ServiceMap = FlextModelsContainers.ServiceMap
-    type ErrorMap = FlextModelsContainers.ErrorMap
-    type ObjectList = FlextModelsContainers.ObjectList
-    type FactoryMap = FlextModelsContainers.FactoryMap
-    type ResourceMap = FlextModelsContainers.ResourceMap
-    type ValidatorCallable = FlextModelsContainers.ValidatorCallable
-    type FieldValidatorMap = FlextModelsContainers.FieldValidatorMap
-    type ConsistencyRuleMap = FlextModelsContainers.ConsistencyRuleMap
-    type EventValidatorMap = FlextModelsContainers.EventValidatorMap
-    type ConfigurationMapping = Mapping[str, _ContainerValue]
-    type ConfigurationDict = Mapping[str, _ContainerValue]
-    type BatchResultDict = FlextModelsContainers.BatchResultDict
+    # ── Handlers ──────────────────────────────────────────────────────
+    type HandlerCallable = Callable[[ContainerValue], ContainerValue]
+    type HandlerLike = Callable[..., ContainerValue | None]
 
+    # ── Plugin / Constants ────────────────────────────────────────────
     type RegistrablePlugin = (
         ScalarValue | BaseModel | Callable[..., ScalarValue | BaseModel]
     )
@@ -127,39 +118,22 @@ class FlextTypes:
         | type
     )
 
+    # ── File / misc ───────────────────────────────────────────────────
     type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
     type SortableObjectType = str | int | float
     type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
-
-    type MetadataAttributeValue = (
-        str
-        | int
-        | float
-        | bool
-        | datetime
-        | None
-        | Mapping[
-            str,
-            str
-            | int
-            | float
-            | bool
-            | datetime
-            | list[str | int | float | bool | datetime | None]
-            | None,
-        ]
-        | list[str | int | float | bool | datetime | None]
-    )
     type TypeHintSpecifier = type | str | Callable[[ScalarValue], ScalarValue]
     type GenericTypeArgument = str | type[ScalarValue]
     type MessageTypeSpecifier = str | type
     type TypeOriginSpecifier = (
         str | type[ScalarValue] | Callable[[ScalarValue], ScalarValue]
     )
-    type HandlerLike = Callable[..., _ContainerValue | None]
-
     type IncEx = set[str] | Mapping[str, set[str] | bool]
+    type PydanticConfigValue = ScalarValue | list[ScalarValue]
 
+    type TYPE_CHECKING = bool
+
+    # ── Validation (Pydantic-annotated) ───────────────────────────────
     class Validation:
         """Validation type aliases with Pydantic constraints."""
 
@@ -182,6 +156,7 @@ __all__ = [
     "MessageT_contra",
     "P",
     "R",
+    "R2",
     "ResultT",
     "T",
     "T_Model",

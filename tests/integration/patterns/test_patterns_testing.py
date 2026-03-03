@@ -25,15 +25,15 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 from flext_core import FlextTypes, FlextUtilities, t
 
 type FixtureCaseDict = dict[str, str]
-type FixtureDataDict = dict[str, t.GeneralValueType]
-type FixtureFixturesDict = dict[str, t.GeneralValueType]
-type FixtureSuiteDict = dict[str, t.GeneralValueType]
-type MockScenarioData = dict[str, t.GeneralValueType]
+type FixtureDataDict = dict[str, t.ContainerValue]
+type FixtureFixturesDict = dict[str, t.ContainerValue]
+type FixtureSuiteDict = dict[str, t.ContainerValue]
+type MockScenarioData = dict[str, t.ContainerValue]
 
 
 def _to_general_mapping(
-    value: t.ConfigMapValue | None,
-) -> dict[str, FlextTypes.GeneralValueType]:
+    value: t.ContainerValue | None,
+) -> dict[str, FlextTypes.ContainerValue]:
     if not isinstance(value, dict):
         return {}
     return {
@@ -42,13 +42,13 @@ def _to_general_mapping(
     }
 
 
-def _to_string_list(value: t.ConfigMapValue | None) -> list[str]:
+def _to_string_list(value: t.ContainerValue | None) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value]
 
 
-def _to_string(value: t.ConfigMapValue | None, *, default: str) -> str:
+def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -103,16 +103,16 @@ class GivenWhenThenBuilder:
         """Initialize Given-When-Then builder with test name."""
         super().__init__()
         self.name = name
-        self._given: dict[str, FlextTypes.GeneralValueType] = {}
-        self._when: dict[str, FlextTypes.GeneralValueType] = {}
-        self._then: dict[str, FlextTypes.GeneralValueType] = {}
+        self._given: dict[str, FlextTypes.ContainerValue] = {}
+        self._when: dict[str, FlextTypes.ContainerValue] = {}
+        self._then: dict[str, FlextTypes.ContainerValue] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
     def given(
         self,
         _description: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
@@ -121,7 +121,7 @@ class GivenWhenThenBuilder:
     def when(
         self,
         _description: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
@@ -130,7 +130,7 @@ class GivenWhenThenBuilder:
     def then(
         self,
         _description: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -176,7 +176,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: FlextTypes.GeneralValueType) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: FlextTypes.ContainerValue) -> FlextTestBuilder:
         """Add metadata to the test data."""
         self._data.update(kwargs)
         return self
@@ -318,7 +318,7 @@ class SuiteBuilder:
         super().__init__()
         self.name = name
         self._scenarios: list[object] = []
-        self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
+        self._setup_data: dict[str, FlextTypes.ContainerValue] = {}
         self._tags: list[str] = []
 
     def add_scenarios(self, scenarios: Sequence[object]) -> SuiteBuilder:
@@ -326,7 +326,7 @@ class SuiteBuilder:
         self._scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **kwargs: FlextTypes.GeneralValueType) -> SuiteBuilder:
+    def with_setup_data(self, **kwargs: FlextTypes.ContainerValue) -> SuiteBuilder:
         """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
@@ -357,12 +357,12 @@ class FixtureBuilder:
         self._setups: list[object] = []
         self._teardowns: list[object] = []
 
-    def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
+    def with_user(self, **kwargs: FlextTypes.ContainerValue) -> FixtureBuilder:
         """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
-    def with_request(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
+    def with_request(self, **kwargs: FlextTypes.ContainerValue) -> FixtureBuilder:
         """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
@@ -384,7 +384,7 @@ class FixtureBuilder:
     def add_fixture(
         self,
         key: str,
-        value: FlextTypes.GeneralValueType,
+        value: FlextTypes.ContainerValue,
     ) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
@@ -801,7 +801,7 @@ class TestRealWorldScenarios:
 
         with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
-            test_request: dict[str, FlextTypes.GeneralValueType] = {
+            test_request: dict[str, FlextTypes.ContainerValue] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -811,8 +811,8 @@ class TestRealWorldScenarios:
 
             # Simulate API processing
             def process_api_request(
-                request: dict[str, FlextTypes.GeneralValueType],
-            ) -> dict[str, FlextTypes.GeneralValueType]:
+                request: dict[str, FlextTypes.ContainerValue],
+            ) -> dict[str, FlextTypes.ContainerValue]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -880,7 +880,7 @@ class TestRealWorldScenarios:
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: dict[str, FlextTypes.GeneralValueType],
+        config: dict[str, FlextTypes.ContainerValue],
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure

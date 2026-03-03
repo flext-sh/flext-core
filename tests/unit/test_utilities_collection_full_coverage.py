@@ -38,7 +38,7 @@ class _BadSequence:
         raise TypeError(msg)
 
 
-class _BadCopyDict(UserDict[str, t.GeneralValueType]):
+class _BadCopyDict(UserDict[str, t.ContainerValue]):
     @override
     def copy(self) -> _BadCopyDict:
         msg = "copy failed"

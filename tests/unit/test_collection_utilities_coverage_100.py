@@ -57,7 +57,7 @@ class CoerceListValidatorScenario:
     """Coerce list validator test scenario."""
 
     name: str
-    value: t.GeneralValueType
+    value: t.ContainerValue
     expected_success: bool
     expected_error: str | None
 

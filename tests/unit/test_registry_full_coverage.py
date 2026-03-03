@@ -10,14 +10,14 @@ import pytest
 from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
 
 
-class _Handler(FlextHandlers[t.GeneralValueType, t.GeneralValueType]):
+class _Handler(FlextHandlers[t.ContainerValue, t.ContainerValue]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
-        return r[t.GeneralValueType].ok(message)
+    def handle(self, message: t.ContainerValue) -> FlextResult[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
 
-    def __call__(self, message: t.GeneralValueType) -> FlextResult[t.GeneralValueType]:
+    def __call__(self, message: t.ContainerValue) -> FlextResult[t.ContainerValue]:
         return self.handle(message)
 
     def _protocol_name(self) -> str:

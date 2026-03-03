@@ -36,8 +36,8 @@ class FlextUtilitiesModel:
 
     """
 
-    _pydantic_scalar_adapter: ClassVar[TypeAdapter[str | int | float | bool | None]] = (
-        TypeAdapter(str | int | float | bool | None)
+    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.JsonPrimitive]] = (
+        TypeAdapter(t.JsonPrimitive)
     )
 
     @staticmethod
@@ -330,7 +330,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: t.ConfigMapValue,
+        value: t.ContainerValue,
     ) -> t.PydanticConfigValue:
         """Normalize PayloadValue to Pydantic-safe PydanticConfigValue.
 
@@ -349,7 +349,7 @@ class FlextUtilitiesModel:
             case bool() | int() | float() | str():
                 return value
             case list() as items:
-                normalized_items: list[str | int | float | bool | None] = []
+                normalized_items: list[t.JsonPrimitive] = []
                 for item in items:
                     try:
                         normalized_items.append(
@@ -361,7 +361,7 @@ class FlextUtilitiesModel:
                         normalized_items.append(str(item))
                 return normalized_items
             case tuple() as items:
-                normalized_tuple_items: list[str | int | float | bool | None] = []
+                normalized_tuple_items: list[t.JsonPrimitive] = []
                 for item in items:
                     try:
                         normalized_tuple_items.append(

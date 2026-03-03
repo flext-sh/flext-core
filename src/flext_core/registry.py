@@ -263,7 +263,7 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _is_protocol_handler(
         value: object,
-    ) -> TypeGuard[p.Handler[t.GeneralValueType, t.GeneralValueType]]:
+    ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
         return bool(
             hasattr(value, "handle")
             and hasattr(value, "can_handle")
@@ -272,14 +272,14 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _to_dispatcher_handler(
-        handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType],
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> t.HandlerLike:
         """Convert handler to dispatcher-compatible callable."""
         # Wrap handler.handle() to return _ContainerValue | None
         # Wrap handler.handle() to return _ContainerValue | None
         handler_ref = handler_for_dispatch
 
-        def _dispatch_wrapper(*args: t.GeneralValueType) -> t.GeneralValueType | None:
+        def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
             if args:
                 result = handler_ref.handle(args[0])
                 return result.value if result.is_success else None
@@ -338,7 +338,7 @@ class FlextRegistry(s[bool]):
 
     def register_handler(
         self,
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
+        handler: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -405,7 +405,7 @@ class FlextRegistry(s[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
-        handler_for_dispatch: p.Handler[t.GeneralValueType, t.GeneralValueType] = (
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = (
             handler
         )
         registration_result: r[m.HandlerRegistrationResult]
@@ -528,7 +528,7 @@ class FlextRegistry(s[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -566,7 +566,7 @@ class FlextRegistry(s[bool]):
         self,
         bindings: Mapping[
             RegistryBindingKey,
-            p.Handler[t.GeneralValueType, t.GeneralValueType],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
@@ -613,8 +613,8 @@ class FlextRegistry(s[bool]):
                     )
                     continue
                 handler_for_dispatch: p.Handler[
-                    t.GeneralValueType,
-                    t.GeneralValueType,
+                    t.ContainerValue,
+                    t.ContainerValue,
                 ] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
@@ -937,7 +937,7 @@ class FlextRegistry(s[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: p.Handler[t.GeneralValueType, t.GeneralValueType],
+        handler: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = getattr(handler, "handler_id", None)
@@ -966,7 +966,7 @@ class FlextRegistry(s[bool]):
         # Normalize metadata to dict for internal use
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
-            metadata_source: Mapping[str, t.ConfigMapValue] | m.ConfigMap
+            metadata_source: Mapping[str, t.ContainerValue] | m.ConfigMap
             if isinstance(metadata, m.Metadata):
                 metadata_source = metadata.attributes
             else:

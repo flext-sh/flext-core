@@ -258,7 +258,7 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             })
             logger.info("release_phase_build_project", project=name, exit_code=code)
 
-        report: Mapping[str, t.ConfigMapValue] = {
+        report: Mapping[str, t.ContainerValue] = {
             "version": version,
             "total": len(records),
             "failures": failures,

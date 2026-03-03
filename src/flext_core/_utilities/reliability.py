@@ -209,7 +209,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def calculate_delay(
         attempt: int,
-        config: Mapping[str, t.ConfigMapValue] | None,
+        config: Mapping[str, t.ContainerValue] | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -331,10 +331,10 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def pipe(
-        value: t.ConfigMapValue,
-        *operations: Callable[[t.ConfigMapValue], t.ConfigMapValue],
+        value: t.ContainerValue,
+        *operations: Callable[[t.ContainerValue], t.ContainerValue],
         on_error: str = "stop",
-    ) -> r[t.ConfigMapValue]:
+    ) -> r[t.ContainerValue]:
         """Functional pipeline with railway-oriented error handling.
 
         Business Rule: Chains operations sequentially, unwrapping r
@@ -365,7 +365,7 @@ class FlextUtilitiesReliability:
 
         # Type annotation: current starts as object (value parameter)
         # Will be updated through pipeline operations
-        current: t.ConfigMapValue = value
+        current: t.ContainerValue = value
         for i, op in enumerate(operations):
             try:
                 op_result = op(current)
@@ -400,9 +400,9 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def chain(
-        value: t.ConfigMapValue,
-        *funcs: Callable[[t.ConfigMapValue], t.ConfigMapValue],
-    ) -> t.ConfigMapValue:
+        value: t.ContainerValue,
+        *funcs: Callable[[t.ContainerValue], t.ContainerValue],
+    ) -> t.ContainerValue:
         """Chain operations (mnemonic: chain = pipeline).
 
         Business Rule: Execute a sequence of functions in order, passing each
@@ -426,17 +426,17 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: t.ConfigMapValue = value
+        current: t.ContainerValue = value
         for func in funcs:
             current = func(current)
         return current
 
     @staticmethod
     def flow(
-        value: t.ConfigMapValue,
-        *ops: Mapping[str, t.ConfigMapValue]
-        | Callable[[t.ConfigMapValue], t.ConfigMapValue],
-    ) -> t.ConfigMapValue:
+        value: t.ContainerValue,
+        *ops: Mapping[str, t.ContainerValue]
+        | Callable[[t.ContainerValue], t.ContainerValue],
+    ) -> t.ContainerValue:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
         Generic replacement for: build() + chain() combinations
@@ -458,7 +458,7 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: t.ConfigMapValue = value
+        current: t.ContainerValue = value
         for op in ops:
             if isinstance(op, Mapping):
                 op_dict = op
@@ -475,36 +475,36 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _is_match_predicate(
-        value: type | t.ConfigMapValue | Callable[[t.ConfigMapValue], bool],
-    ) -> TypeGuard[Callable[[t.ConfigMapValue], bool]]:
+        value: type | t.ContainerValue | Callable[[t.ContainerValue], bool],
+    ) -> TypeGuard[Callable[[t.ContainerValue], bool]]:
         return callable(value) and not isinstance(value, type)
 
     @staticmethod
     def _is_match_mapper(
-        value: t.ConfigMapValue | Callable[[t.ConfigMapValue], t.ConfigMapValue],
-    ) -> TypeGuard[Callable[[t.ConfigMapValue], t.ConfigMapValue]]:
+        value: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
+    ) -> TypeGuard[Callable[[t.ContainerValue], t.ContainerValue]]:
         return callable(value)
 
     @staticmethod
     def _resolve_match_output(
-        candidate: t.ConfigMapValue | Callable[[t.ConfigMapValue], t.ConfigMapValue],
-        value: t.ConfigMapValue,
-    ) -> t.ConfigMapValue:
-        resolved: t.ConfigMapValue | object
+        candidate: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
+        value: t.ContainerValue,
+    ) -> t.ContainerValue:
+        resolved: t.ContainerValue | object
         if FlextUtilitiesReliability._is_match_mapper(candidate):
             resolved = candidate(value)
         else:
             resolved = candidate
         try:
-            return TypeAdapter(t.ConfigMapValue).validate_python(resolved)
+            return TypeAdapter(t.ContainerValue).validate_python(resolved)
         except ValidationError:
             return str(resolved)
 
     @staticmethod
     def compose(
-        *funcs: Callable[[t.ConfigMapValue], t.ConfigMapValue],
+        *funcs: Callable[[t.ContainerValue], t.ContainerValue],
         mode: str = "pipe",
-    ) -> Callable[[t.ConfigMapValue], t.ConfigMapValue | r[t.ConfigMapValue]]:
+    ) -> Callable[[t.ContainerValue], t.ContainerValue | r[t.ContainerValue]]:
         """Compose multiple functions into a single function.
 
         Unifies pipe/chain/flow patterns into a single super-method.
@@ -528,8 +528,8 @@ class FlextUtilitiesReliability:
         if mode == "pipe":
 
             def piped(
-                value: t.ConfigMapValue,
-            ) -> t.ConfigMapValue | r[t.ConfigMapValue]:
+                value: t.ContainerValue,
+            ) -> t.ContainerValue | r[t.ContainerValue]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
                 return result.value if result.is_success else result
 
@@ -689,15 +689,15 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def match(
-        value: t.ConfigMapValue,
+        value: t.ContainerValue,
         *cases: tuple[
-            type | t.ConfigMapValue | Callable[[t.ConfigMapValue], bool],
-            t.ConfigMapValue | Callable[[t.ConfigMapValue], t.ConfigMapValue],
+            type | t.ContainerValue | Callable[[t.ContainerValue], bool],
+            t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
         ],
-        default: t.ConfigMapValue
-        | Callable[[t.ConfigMapValue], t.ConfigMapValue]
+        default: t.ContainerValue
+        | Callable[[t.ContainerValue], t.ContainerValue]
         | None = None,
-    ) -> t.ConfigMapValue:
+    ) -> t.ContainerValue:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:
@@ -737,7 +737,7 @@ class FlextUtilitiesReliability:
             'big'
 
         """
-        input_value: t.ConfigMapValue = value
+        input_value: t.ContainerValue = value
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
                 return FlextUtilitiesReliability._resolve_match_output(result, value)

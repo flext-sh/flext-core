@@ -21,15 +21,15 @@ from tomlkit.items import Table
 from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
 
-type TomlScalar = str | int | float | bool | None
+type TomlScalar = t.JsonPrimitive
 type TomlValue = (
     TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
 )
-type TomlMap = MutableMapping[str, t.ConfigMapValue]
-type TomlMutableMap = MutableMapping[str, t.ConfigMapValue]
+type TomlMap = MutableMapping[str, t.ContainerValue]
+type TomlMutableMap = MutableMapping[str, t.ContainerValue]
 
 
-def _as_toml_mapping(value: t.ConfigMapValue) -> TomlMutableMap | None:
+def _as_toml_mapping(value: t.ContainerValue) -> TomlMutableMap | None:
     if isinstance(value, MutableMapping) and all(isinstance(key, str) for key in value):
         return value
     return None
@@ -93,7 +93,7 @@ class FlextInfraTomlService(FlextService[bool]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | MutableMapping[str, t.ConfigMapValue],
+        payload: tomlkit.TOMLDocument | MutableMapping[str, t.ContainerValue],
     ) -> FlextResult[bool]:
         """Write a TOML payload to a file.
 
@@ -151,7 +151,7 @@ class FlextInfraTomlService(FlextService[bool]):
         return r[bool].ok(True)
 
     @staticmethod
-    def value_differs(current: t.ConfigMapValue, expected: t.ConfigMapValue) -> bool:
+    def value_differs(current: t.ContainerValue, expected: t.ContainerValue) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.

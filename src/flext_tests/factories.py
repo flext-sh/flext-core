@@ -31,7 +31,7 @@ from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
 TValue = TypeVar("TValue")
 
 
-def _to_payload_value(value: t.ConfigMapValue) -> t.Tests.PayloadValue:
+def _to_payload_value(value: t.ContainerValue) -> t.Tests.PayloadValue:
     if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
@@ -41,7 +41,7 @@ def _to_payload_value(value: t.ConfigMapValue) -> t.Tests.PayloadValue:
     return str(value)
 
 
-def _to_guard_input(value: t.Tests.PayloadValue) -> t.GuardInputValue:
+def _to_guard_input(value: t.Tests.PayloadValue) -> t.ContainerValue:
     if value is None or isinstance(value, str | int | float | bool | BaseModel):
         return value
     if isinstance(value, Mapping):

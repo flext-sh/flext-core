@@ -670,7 +670,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     trace_from_other = FlextRuntime.ensure_trace_context(Path())
     assert "trace_id" in trace_from_other
 
-    ok_statuses: list[t.GeneralValueType] = [200, "201"]
+    ok_statuses: list[t.ContainerValue] = [200, "201"]
     ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
     assert ok_result.is_success and ok_result.value == [200, 201]
 
@@ -679,7 +679,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         bad_range.error or ""
     )
 
-    invalid_statuses: list[t.GeneralValueType] = [cast("t.GeneralValueType", object())]
+    invalid_statuses: list[t.ContainerValue] = [cast("t.GeneralValueType", object())]
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     assert bad_type.is_failure and "Invalid HTTP status code type" in (
         bad_type.error or ""

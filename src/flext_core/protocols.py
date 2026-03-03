@@ -135,7 +135,7 @@ class _ProtocolIntrospection:
     @classmethod
     def check_implements_protocol(
         cls,
-        instance: t.GuardInputValue,
+        instance: t.ContainerValue,
         protocol: type,
     ) -> bool:
         """Check if an instance implements a protocol."""
@@ -267,7 +267,7 @@ class FlextProtocols:
         def set(
             self,
             key: str,
-            value: t.GuardInputValue,
+            value: t.ContainerValue,
             scope: str = ...,
         ) -> r[bool]:
             """Set a context value. Returns Result-like object."""
@@ -277,7 +277,7 @@ class FlextProtocols:
             self,
             key: str,
             scope: str = ...,
-        ) -> r[t.GuardInputValue]:
+        ) -> r[t.ContainerValue]:
             """Get a context value. Returns Result-like object."""
             ...
 
@@ -349,7 +349,7 @@ class FlextProtocols:
             ...
 
         @property
-        def result(self) -> t.GuardInputValue:
+        def result(self) -> t.ContainerValue:
             """Access internal Result for advanced operations."""
             ...
 
@@ -434,8 +434,8 @@ class FlextProtocols:
         @classmethod
         def accumulate_errors(
             cls,
-            *results: FlextProtocols.Result[t.GuardInputValue],
-        ) -> FlextProtocols.Result[list[t.GuardInputValue]]:
+            *results: FlextProtocols.Result[t.ContainerValue],
+        ) -> FlextProtocols.Result[list[t.ContainerValue]]:
             """Collect all successes, fail if any failure."""
             ...
 
@@ -600,7 +600,7 @@ class FlextProtocols:
         def model_copy(
             self,
             *,
-            update: Mapping[str, t.GeneralValueType] | None = None,
+            update: Mapping[str, t.ContainerValue] | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.
@@ -819,7 +819,7 @@ class FlextProtocols:
             Supports any callable that accepts a value and returns bool.
             """
 
-            def __call__(self, value: t.GuardInputValue) -> bool:  # INTERFACE
+            def __call__(self, value: t.ContainerValue) -> bool:  # INTERFACE
                 """Evaluate predicate on value."""
                 ...
 
@@ -898,7 +898,7 @@ class FlextProtocols:
         def dispatch(
             self,
             message: FlextProtocols.Routable,
-        ) -> FlextProtocols.Result[t.PayloadValue]:
+        ) -> FlextProtocols.Result[t.ContainerValue]:
             """Dispatch a CQRS message to its registered handler."""
             ...
 
@@ -931,7 +931,7 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            handler: FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue],
+            handler: FlextProtocols.Handler[t.ContainerValue, t.ContainerValue],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
@@ -943,7 +943,7 @@ class FlextProtocols:
         def register_handlers(
             self,
             handlers: Sequence[
-                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue]
+                FlextProtocols.Handler[t.ContainerValue, t.ContainerValue]
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
@@ -957,7 +957,7 @@ class FlextProtocols:
             self,
             bindings: Mapping[
                 t.MessageTypeSpecifier,
-                FlextProtocols.Handler[t.GuardInputValue, t.GuardInputValue],
+                FlextProtocols.Handler[t.ContainerValue, t.ContainerValue],
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
@@ -993,7 +993,7 @@ class FlextProtocols:
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> list[tuple[str, t.GeneralValueType]]:
+        ) -> list[tuple[str, t.ContainerValue]]:
             """Scan class for handler-decorated methods.
 
             Introspects the class to find all methods with handler configuration
@@ -1011,7 +1011,7 @@ class FlextProtocols:
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, t.HandlerCallable, t.GeneralValueType]]:
+        ) -> list[tuple[str, t.HandlerCallable, t.ContainerValue]]:
             """Scan module for handler-decorated functions.
 
             Introspects the module to find all functions with handler configuration
@@ -1091,9 +1091,9 @@ class FlextProtocols:
         def process(
             self,
             data: (
-                t.GuardInputValue | BaseModel | FlextProtocols.Result[t.GuardInputValue]
+                t.ContainerValue | BaseModel | FlextProtocols.Result[t.ContainerValue]
             ),
-        ) -> t.GuardInputValue | BaseModel | FlextProtocols.Result[t.GuardInputValue]:
+        ) -> t.ContainerValue | BaseModel | FlextProtocols.Result[t.ContainerValue]:
             """Process data and return result.
 
             Returns can be:
@@ -1114,7 +1114,7 @@ class FlextProtocols:
         def record_metric(
             self,
             name: str,
-            value: t.ConfigMapValue,
+            value: t.ContainerValue,
         ) -> FlextProtocols.Result[bool]:
             """Record a metric value.
 
@@ -1147,7 +1147,7 @@ class FlextProtocols:
 
         def push_context(
             self,
-            ctx: t.GuardInputValue,
+            ctx: t.ContainerValue,
         ) -> FlextProtocols.Result[bool]:
             """Push execution context onto the stack.
 
@@ -1160,7 +1160,7 @@ class FlextProtocols:
             """
             ...
 
-        def pop_context(self) -> FlextProtocols.Result[Mapping[str, t.ConfigMapValue]]:
+        def pop_context(self) -> FlextProtocols.Result[Mapping[str, t.ContainerValue]]:
             """Pop execution context from the stack.
 
             Returns:
@@ -1169,7 +1169,7 @@ class FlextProtocols:
             """
             ...
 
-        def current_context(self) -> t.GuardInputValue | None:
+        def current_context(self) -> t.ContainerValue | None:
             """Get current execution context without popping.
 
             Returns:
@@ -1201,63 +1201,63 @@ class FlextProtocols:
 
             def debug(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue | Exception,
-                **kw: t.GuardInputValue | Exception,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue | Exception,
+                **kw: t.ContainerValue | Exception,
             ) -> r[bool]:
                 """Log debug message."""
                 ...
 
             def info(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue,
-                **kw: t.GuardInputValue | Exception,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
             ) -> r[bool]:
                 """Log info message."""
                 ...
 
             def warning(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue,
-                **kw: t.GuardInputValue | Exception,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
             ) -> r[bool]:
                 """Log warning message."""
                 ...
 
             def warn(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue,
-                **kw: t.GuardInputValue,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue,
             ) -> r[bool]:
                 """Log warning message (alias)."""
                 ...
 
             def error(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue,
-                **kw: t.GuardInputValue | Exception,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
             ) -> r[bool]:
                 """Log error message."""
                 ...
 
             def critical(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue,
-                **kw: t.GuardInputValue | Exception,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
             ) -> r[bool]:
                 """Log critical message."""
                 ...
 
             def exception(
                 self,
-                msg: str | t.GuardInputValue,
-                *args: t.GuardInputValue,
-                **kw: t.GuardInputValue | Exception,
+                msg: str | t.ContainerValue,
+                *args: t.ContainerValue,
+                **kw: t.ContainerValue | Exception,
             ) -> r[bool]:
                 """Log exception with traceback."""
                 ...
@@ -1374,7 +1374,7 @@ class FlextProtocols:
 
         """
 
-        def __call__(self, value: t.GuardInputValue) -> bool:
+        def __call__(self, value: t.ContainerValue) -> bool:
             """Validate value, return True if valid."""
             ...
 
@@ -1530,7 +1530,7 @@ class FlextProtocols:
     type AccessibleData = (
         t.ConfigMap
         | Mapping[str, t.JsonValue]
-        | Mapping[str, t.GuardInputValue]
+        | Mapping[str, t.ContainerValue]
         | BaseModel
         | "FlextProtocols.HasModelDump"
         | "FlextProtocols.ValidatorSpec"
@@ -1551,13 +1551,13 @@ class FlextProtocols:
     # - BindableLogger: Logger protocol
     # - Callable: Factories that return PayloadValue
     type RegisterableService = (
-        t.GeneralValueType
+        t.ContainerValue
         | BindableLogger
-        | Callable[..., t.GeneralValueType]
+        | Callable[..., t.ContainerValue]
         | Config
         | Context
         | DI
-        | Service[t.GeneralValueType]
+        | Service[t.ContainerValue]
         | CommandBus
         | Registrable
     )
@@ -1606,7 +1606,7 @@ class FlextProtocols:
             name: str,
             bases: tuple[type, ...],
             namespace: Mapping[str, object],
-            **_kwargs: t.GuardInputValue,
+            **_kwargs: t.ContainerValue,
         ) -> type:
             """Create a new class with protocol validation.
 
@@ -1804,7 +1804,7 @@ class FlextProtocols:
 
             # Add helper method for instance protocol checking
             def _instance_implements_protocol(
-                self: t.GuardInputValue,
+                self: t.ContainerValue,
                 protocol: type,
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
@@ -1828,7 +1828,7 @@ class FlextProtocols:
         return _ProtocolIntrospection.is_protocol(target_cls)
 
     @staticmethod
-    def check_implements_protocol(instance: t.GuardInputValue, protocol: type) -> bool:
+    def check_implements_protocol(instance: t.ContainerValue, protocol: type) -> bool:
         """Check if an instance's class implements a protocol.
 
         Args:

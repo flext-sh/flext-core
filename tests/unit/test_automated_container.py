@@ -161,8 +161,8 @@ class TestAutomatedFlextContainer:
     def _execute_container_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.GeneralValueType],
-    ) -> r[t.GeneralValueType]:
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on container instance.
 
         This method should be customized based on the actual container API.
@@ -180,9 +180,9 @@ class TestAutomatedFlextContainer:
             if callable(handle):
                 return cast("r[t.GeneralValueType]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(cast("t.GeneralValueType", instance))
+            return r[t.ContainerValue].ok(cast("t.GeneralValueType", instance))
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextContainer operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextContainer operation failed: {e}")
 
     @pytest.fixture
     def test_container_instance(self) -> object:

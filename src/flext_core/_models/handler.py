@@ -53,7 +53,7 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: t.HandlerCallable | t.GuardInputValue,
+            v: t.HandlerCallable | t.ContainerValue,
         ) -> t.HandlerCallable:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
@@ -104,7 +104,7 @@ class FlextModelsHandler:
             "message_type",
         })
 
-        def __getitem__(self, key: str) -> t.GuardInputValue:
+        def __getitem__(self, key: str) -> t.ContainerValue:
             if key in self._GETITEM_FIELDS:
                 return getattr(self, key)
             raise KeyError(key)
@@ -118,7 +118,7 @@ class FlextModelsHandler:
 
         handler: (
             t.HandlerCallable
-            | p.Handler[t.GuardInputValue, t.GuardInputValue]
+            | p.Handler[t.ContainerValue, t.ContainerValue]
             | BaseModel
         ) = Field(
             description="Handler instance (callable, object, or FlextHandlers)",

@@ -36,7 +36,7 @@ class FlextTestsModels(FlextModels):
 
     def __init_subclass__(
         cls,
-        **kwargs: Mapping[str, t.ConfigMapValue],
+        **kwargs: Mapping[str, t.ContainerValue],
     ) -> None:
         """Warn when FlextTestsModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
@@ -63,7 +63,7 @@ class FlextTestsModels(FlextModels):
                 container_id: str = ""
 
                 @override
-                def model_post_init(self, __context: t.ConfigMapValue, /) -> None:
+                def model_post_init(self, __context: t.ContainerValue, /) -> None:
                     """Validate container info after initialization."""
                     super().model_post_init(__context)
                     if not self.name:
@@ -81,7 +81,7 @@ class FlextTestsModels(FlextModels):
                 port: int
 
                 @override
-                def model_post_init(self, __context: t.ConfigMapValue, /) -> None:
+                def model_post_init(self, __context: t.ContainerValue, /) -> None:
                     """Validate container config after initialization."""
                     super().model_post_init(__context)
                     if not self.compose_file.exists():

@@ -234,8 +234,8 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: Callable[
-            [t.ConfigMapValue],
-            p.ResultLike[t.ConfigMapValue],
+            [t.ContainerValue],
+            p.ResultLike[t.ContainerValue],
         ] = Field(
             description="Callable operation returning result",
         )
@@ -265,8 +265,8 @@ class FlextModelsService:
         @classmethod
         def validate_operation_callable(
             cls,
-            v: t.ConfigMapValue,
-        ) -> t.ConfigMapValue:
+            v: t.ContainerValue,
+        ) -> t.ContainerValue:
             """Validate operation is callable."""
             if not callable(v):
                 msg = f"Operation callable must be callable, got {v.__class__.__name__}"

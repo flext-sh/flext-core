@@ -65,7 +65,7 @@ class CoerceListScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: t.GeneralValueType
+    value: t.ContainerValue
     expected_success: bool
     expected_count: int | None = None
     error_type: type[Exception] | None = None
@@ -90,7 +90,7 @@ class CoerceDictScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: t.GeneralValueType
+    value: t.ContainerValue
     expected_success: bool
     expected_keys: list[str] | None = None
     error_type: type[Exception] | None = None
@@ -175,9 +175,9 @@ class ChunkScenario:
     """Chunk method test scenario."""
 
     name: str
-    items: list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]
+    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...]
     size: int
-    expected_result: list[list[t.GeneralValueType]]
+    expected_result: list[list[t.ContainerValue]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,7 +185,7 @@ class BatchScenario:
     """Batch method test scenario."""
 
     name: str
-    items: list[t.GeneralValueType]
+    items: list[t.ContainerValue]
     operation: Callable[[object], object]
     expected_result: object
     size: int = 100

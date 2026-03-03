@@ -126,7 +126,7 @@ def test_discovery_narrowed_function_paths() -> None:
     decorator = h.handler(str)
 
     @decorator
-    def exposed(value: t.GeneralValueType) -> t.GeneralValueType:
+    def exposed(value: t.ContainerValue) -> t.ContainerValue:
         _ = value
         return 123
 

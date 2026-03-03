@@ -35,7 +35,7 @@ class UtilityScenarios:
     TYPE_GUARD_CASES: ClassVar[
         dict[
             str,
-            list[tuple[str, t.GeneralValueType, bool]],
+            list[tuple[str, t.ContainerValue, bool]],
         ]
     ] = {
         "string": [
@@ -92,7 +92,7 @@ class UtilityScenarios:
     ]
 
     CACHE_NORMALIZE_CASES: ClassVar[
-        list[tuple[t.GeneralValueType, type | tuple[type, ...]]]
+        list[tuple[t.ContainerValue, type | tuple[type, ...]]]
     ] = [
         ({"a": 1, "b": 2}, dict),
         ([1, 2, 3], list),
@@ -147,7 +147,7 @@ class Testu:
     def test_type_guard_string(
         self,
         description: str,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         expected: bool,
     ) -> None:
         """Test string type guards."""
@@ -161,7 +161,7 @@ class Testu:
     def test_type_guard_dict(
         self,
         description: str,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
@@ -175,7 +175,7 @@ class Testu:
     def test_type_guard_list(
         self,
         description: str,
-        value: t.GeneralValueType,
+        value: t.ContainerValue,
         expected: bool,
     ) -> None:
         """Test list type guards."""
@@ -295,7 +295,7 @@ class Testu:
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.GeneralValueType,
+        input_data: t.ContainerValue,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""

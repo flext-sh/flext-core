@@ -161,7 +161,7 @@ class FlextUtilitiesContext:
         container: p.DI,
         *,
         scope_id: str | None = None,
-        overrides: Mapping[str, t.ConfigMapValue] | None = None,
+        overrides: Mapping[str, t.ContainerValue] | None = None,
     ) -> p.DI:
         """Clone container with scoping.
 

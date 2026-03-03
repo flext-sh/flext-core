@@ -219,7 +219,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.ConfigMapValue | None]:
+    ) -> tuple[bool, t.ContainerValue | None]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -258,7 +258,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_duck_model_dump(
         obj: object,
         parameter: str,
-    ) -> tuple[bool, t.ConfigMapValue | None]:
+    ) -> tuple[bool, t.ContainerValue | None]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
@@ -277,9 +277,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.ConfigMapValue],
+        obj: Mapping[str, t.ContainerValue],
         parameter: str,
-    ) -> tuple[bool, t.ConfigMapValue | None]:
+    ) -> tuple[bool, t.ContainerValue | None]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -313,9 +313,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: p.HasModelDump | Mapping[str, t.ConfigMapValue],
+        obj: p.HasModelDump | Mapping[str, t.ContainerValue],
         parameter: str,
-    ) -> t.ConfigMapValue:
+    ) -> t.ContainerValue:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -460,7 +460,7 @@ class FlextUtilitiesConfiguration:
     def get_singleton(
         singleton_class: type,
         parameter: str,
-    ) -> t.ConfigMapValue:
+    ) -> t.ContainerValue:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)

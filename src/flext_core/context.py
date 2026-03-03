@@ -25,7 +25,7 @@ from flext_core._models.context import FlextModelsContext
 _logger = FlextLogger(__name__)
 
 # Concrete value type for context storage
-type ContextValue = t.ConfigMapValue
+type ContextValue = t.ContainerValue
 
 
 class FlextContext(FlextRuntime):
@@ -49,15 +49,15 @@ class FlextContext(FlextRuntime):
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | Mapping[str, t.ConfigMapValue] | None,
-    ) -> dict[str, t.ConfigMapValue]:
+        ctx_value: m.ConfigMap | Mapping[str, t.ContainerValue] | None,
+    ) -> dict[str, t.ContainerValue]:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
             return {}
         if not hasattr(ctx_value, "items"):
             return {}
         try:
-            normalized: dict[str, t.ConfigMapValue] = {}
+            normalized: dict[str, t.ContainerValue] = {}
             for key, value in ctx_value.items():
                 if str(key) != key:
                     return {}
@@ -88,7 +88,7 @@ class FlextContext(FlextRuntime):
 
     def __init__(
         self,
-        initial_data: m.ContextData | Mapping[str, t.ConfigMapValue] | None = None,
+        initial_data: m.ContextData | Mapping[str, t.ContainerValue] | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -579,7 +579,7 @@ class FlextContext(FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
-        def normalize_plain(raw_value: t.ConfigMapValue) -> t.ConfigMapValue:
+        def normalize_plain(raw_value: t.ContainerValue) -> t.ContainerValue:
             mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
             try:
                 normalized_map = m.ConfigMap.model_validate(mapped_value)
@@ -700,7 +700,7 @@ class FlextContext(FlextRuntime):
 
     def merge(
         self,
-        other: FlextContext | Mapping[str, t.ConfigMapValue],
+        other: FlextContext | Mapping[str, t.ContainerValue],
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -831,7 +831,7 @@ class FlextContext(FlextRuntime):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | dict[str, t.ConfigMapValue]:
+    ) -> m.ContextExport | dict[str, t.ContainerValue]:
         """Export context data for serialization or debugging.
 
         Args:
@@ -855,7 +855,7 @@ class FlextContext(FlextRuntime):
             stats_dict_export = m.ConfigMap(root=self._statistics.model_dump())
 
         # Collect metadata if requested
-        metadata_dict_export: dict[str, t.ConfigMapValue] | None = None
+        metadata_dict_export: dict[str, t.ContainerValue] | None = None
         if include_metadata:
             metadata_dict_export = self._get_all_metadata()
 
@@ -863,9 +863,9 @@ class FlextContext(FlextRuntime):
         metadata_for_model: m.ConfigMap | None = None
         if metadata_dict_export:
             # Convert ConfigurationDict to MetadataAttributeDict
-            normalized_metadata_map: dict[str, t.ConfigMapValue] = {}
+            normalized_metadata_map: dict[str, t.ContainerValue] = {}
             for k, v in metadata_dict_export.items():
-                metadata_value: t.ConfigMapValue = v
+                metadata_value: t.ContainerValue = v
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap.model_validate(v)
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_general_value(
@@ -881,7 +881,7 @@ class FlextContext(FlextRuntime):
 
         # Return as dict if requested
         if as_dict:
-            result_dict: dict[str, t.ConfigMapValue] = dict(all_scopes.items())
+            result_dict: dict[str, t.ContainerValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
@@ -998,7 +998,7 @@ class FlextContext(FlextRuntime):
         """Set all metadata for the context (used internally for cloning)."""
         self._metadata = metadata
 
-    def _get_all_metadata(self) -> dict[str, t.ConfigMapValue]:
+    def _get_all_metadata(self) -> dict[str, t.ContainerValue]:
         """Get all metadata from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1011,7 +1011,7 @@ class FlextContext(FlextRuntime):
         # Convert Pydantic model to dict
         data = dict(self._metadata.model_dump().items())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: dict[str, t.ConfigMapValue] = {}
+        custom_fields_dict: dict[str, t.ContainerValue] = {}
         try:
             custom_fields_dict = dict(
                 m.ConfigMap.model_validate(custom_fields_raw).items(),
@@ -1019,7 +1019,7 @@ class FlextContext(FlextRuntime):
         except (TypeError, ValueError, AttributeError) as exc:
             _logger.debug("Custom metadata field normalization failed", exc_info=exc)
             custom_fields_dict = {}
-        result: dict[str, t.ConfigMapValue] = {}
+        result: dict[str, t.ContainerValue] = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue
@@ -1030,7 +1030,7 @@ class FlextContext(FlextRuntime):
         result.update(custom_fields_dict)
         return result
 
-    def _get_all_scopes(self) -> dict[str, dict[str, t.ConfigMapValue]]:
+    def _get_all_scopes(self) -> dict[str, dict[str, t.ContainerValue]]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1041,7 +1041,7 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return {}
-        scopes: dict[str, dict[str, t.ConfigMapValue]] = {}
+        scopes: dict[str, dict[str, t.ContainerValue]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -1478,7 +1478,7 @@ class FlextContext(FlextRuntime):
         """Context serialization and deserialization utilities."""
 
         @staticmethod
-        def get_full_context() -> dict[str, t.ConfigMapValue]:
+        def get_full_context() -> dict[str, t.ContainerValue]:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             return {

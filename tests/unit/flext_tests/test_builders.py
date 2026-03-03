@@ -558,7 +558,7 @@ class TestFlextTestsBuilders:
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[t.GeneralValueType] = tb.Tests.Result.fail("Error", code="E001")
+        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error", code="E001")
         result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
@@ -731,7 +731,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         # Result.fail() delegates to tt.res("fail", error=...)
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[t.GeneralValueType] = tb.Tests.Result.fail("Error")
+        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error")
         result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 

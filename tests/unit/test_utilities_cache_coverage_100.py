@@ -50,7 +50,7 @@ class NormalizeComponentScenario:
     """Normalize component test scenario."""
 
     name: str
-    component: t.GeneralValueType | BaseModel
+    component: t.ContainerValue | BaseModel
     expected_type: type
     expected_value: object | None = None
 
@@ -316,7 +316,7 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component_raw: list[t.GeneralValueType] = [
+        component_raw: list[t.ContainerValue] = [
             1,
             "test",
             {"nested": "dict"},
@@ -324,7 +324,7 @@ class TestuCacheNormalizeComponent:
         ]
         # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
         # ObjectList is Sequence[t.GeneralValueType], use that type directly
-        component: Sequence[t.GeneralValueType] = cast(
+        component: Sequence[t.ContainerValue] = cast(
             "Sequence[t.GeneralValueType]",
             component_raw,
         )
@@ -440,7 +440,7 @@ class TestuCacheSortDictKeys:
         # Type narrowing: nested value is also dict
         nested = result_dict["z"]
         assert isinstance(nested, dict)
-        nested_dict: dict[str, t.GeneralValueType] = nested
+        nested_dict: dict[str, t.ContainerValue] = nested
         assert list(nested_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_non_dict(self) -> None:
@@ -667,7 +667,7 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, t.GeneralValueType] = {}
+                self._cache: dict[str, t.ContainerValue] = {}
 
         obj = TestObject()
         # Cast to t.GeneralValueType for type checker
@@ -689,8 +689,8 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, t.GeneralValueType] = {}
-                self.cache: dict[str, t.GeneralValueType] = {}
+                self._cache: dict[str, t.ContainerValue] = {}
+                self.cache: dict[str, t.ContainerValue] = {}
 
         obj = TestObject()
         # Cast to t.GeneralValueType for type checker

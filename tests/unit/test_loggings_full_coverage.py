@@ -71,7 +71,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     shim = _StructlogShim()
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(lambda: shim))
     assert isinstance(c.Settings.LogLevel.DEBUG.value, str)
-    value: t.GeneralValueType = "ok"
+    value: t.ContainerValue = "ok"
     assert value == "ok"
 
     logger_obj = FlextLogger.create_bound_logger(

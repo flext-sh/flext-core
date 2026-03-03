@@ -66,7 +66,7 @@ class FlextModelsEntity:
             return FlextRuntime.get_logger(__name__)
 
         @override
-        def model_post_init(self, __context: t.GuardInputValue, /) -> None:
+        def model_post_init(self, __context: t.ContainerValue, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()

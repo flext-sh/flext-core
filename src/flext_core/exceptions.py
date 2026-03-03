@@ -205,9 +205,9 @@ class FlextExceptions:
     def _safe_config_map(
         value: MetadataProtocol
         | m.Metadata
-        | Mapping[str, t.ConfigMapValue]
+        | Mapping[str, t.ContainerValue]
         | m.ConfigMap
-        | t.ConfigMapValue
+        | t.ContainerValue
         | None,
     ) -> Mapping[str, t.MetadataAttributeValue] | None:
         """Extract ConfigMap when value is mapping-compatible."""
@@ -222,9 +222,9 @@ class FlextExceptions:
     def _safe_metadata(
         value: MetadataProtocol
         | m.Metadata
-        | Mapping[str, t.ConfigMapValue]
+        | Mapping[str, t.ContainerValue]
         | m.ConfigMap
-        | t.ConfigMapValue
+        | t.ContainerValue
         | None,
     ) -> MetadataProtocol | None:
         """Normalize supported metadata inputs to runtime metadata model."""

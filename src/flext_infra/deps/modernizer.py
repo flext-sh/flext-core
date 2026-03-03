@@ -50,7 +50,7 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
     return [seen[k] for k in sorted(seen)]
 
 
-def _unwrap_item(value: t.ConfigMapValue | Item | None) -> t.ConfigMapValue | None:
+def _unwrap_item(value: t.ContainerValue | Item | None) -> t.ContainerValue | None:
     """Unwrap a tomlkit Item to get the underlying value."""
     if isinstance(value, Item):
         unwrapped = value.unwrap()
@@ -58,7 +58,7 @@ def _unwrap_item(value: t.ConfigMapValue | Item | None) -> t.ConfigMapValue | No
     return value
 
 
-def _as_string_list(value: t.ConfigMapValue | Item | None) -> list[str]:
+def _as_string_list(value: t.ContainerValue | Item | None) -> list[str]:
     """Convert TOML value to list of strings."""
     if value is None or isinstance(value, (str, Mapping)):
         return []

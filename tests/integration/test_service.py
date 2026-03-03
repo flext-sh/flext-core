@@ -51,7 +51,7 @@ class UserQueryService(FlextService[bool]):
 
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize user query service."""
         super().__init__(**data)
@@ -135,7 +135,7 @@ class NotificationService(FlextService[str]):
 
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize notification service."""
         super().__init__(**data)
@@ -217,7 +217,7 @@ class LifecycleService(FlextService[str]):
 
     def __init__(
         self,
-        **data: t.GeneralValueType,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize lifecycle service."""
         super().__init__(**data)

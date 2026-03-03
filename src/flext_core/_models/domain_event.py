@@ -35,7 +35,7 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
 
 
 def _normalize_event_data(
-    value: t.GuardInputValue,
+    value: t.ContainerValue,
 ) -> _ComparableConfigMap:
     """BeforeValidator: normalize event data to _ComparableConfigMap."""
     if isinstance(value, _ComparableConfigMap):
@@ -87,7 +87,7 @@ class FlextModelsDomainEvent:
 
     @staticmethod
     def _normalize_event_data(
-        value: t.GuardInputValue,
+        value: t.ContainerValue,
     ) -> _ComparableConfigMap:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
         return _normalize_event_data(value)

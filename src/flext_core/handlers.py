@@ -182,7 +182,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: dict[str, t.ConfigMapValue] = {}
+        self._metrics: dict[str, t.ContainerValue] = {}
         self._stack: list[m.Handler.ExecutionContext | m.ConfigMap] = []
 
     @property
@@ -501,14 +501,14 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         return self._config_model.handler_mode
 
-    def record_metric(self, name: str, value: t.ConfigMapValue) -> r[bool]:
+    def record_metric(self, name: str, value: t.ContainerValue) -> r[bool]:
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
         return r[bool].ok(value=True)
 
     def push_context(
         self,
-        ctx: m.Handler.ExecutionContext | dict[str, t.ConfigMapValue],
+        ctx: m.Handler.ExecutionContext | dict[str, t.ContainerValue],
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.Handler.ExecutionContext | m.ConfigMap):
@@ -855,10 +855,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                 callable_func: Callable[..., object] = func
 
                 def narrowed_func(
-                    message: t.GeneralValueType,
+                    message: t.ContainerValue,
                     captured_callable: Callable[..., object] = callable_func,
-                    **kwargs: t.GeneralValueType,
-                ) -> t.GeneralValueType:
+                    **kwargs: t.ContainerValue,
+                ) -> t.ContainerValue:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""

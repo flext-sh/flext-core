@@ -52,11 +52,11 @@ class TestsFlextModels:
 
     # Type aliases for domain test input
     type DomainInputValue = (
-        FlextTypes.GeneralValueType | FlextProtocols.HasModelDump | object
+        FlextTypes.ContainerValue | FlextProtocols.HasModelDump | object
     )
     type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
     type DomainExpectedResult = (
-        FlextTypes.GeneralValueType | type[FlextTypes.GeneralValueType]
+        FlextTypes.ContainerValue | type[FlextTypes.ContainerValue]
     )
 
     class Core:
@@ -65,7 +65,7 @@ class TestsFlextModels:
         class DomainTestEntity:
             """Test entity for domain tests."""
 
-            def __init__(self, name: str, value: t.GeneralValueType) -> None:
+            def __init__(self, name: str, value: t.ContainerValue) -> None:
                 """Initialize test entity with name and value."""
                 self.name = name
                 self.value = value
@@ -228,7 +228,7 @@ class AutomatedTestScenario(TypedDict):
     """TypedDict for automated test scenarios."""
 
     description: str
-    input: dict[str, t.GeneralValueType]
+    input: dict[str, t.ContainerValue]
     expected_success: bool
 
 

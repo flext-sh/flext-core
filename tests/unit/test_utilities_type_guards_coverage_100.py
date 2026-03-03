@@ -30,7 +30,7 @@ class TypeGuardScenario:
     """Type guard test scenario."""
 
     name: str
-    value: t.GeneralValueType
+    value: t.ContainerValue
     expected_result: bool
 
 
@@ -39,7 +39,7 @@ class NormalizeScenario:
     """Normalize to metadata value test scenario."""
 
     name: str
-    value: t.GeneralValueType
+    value: t.ContainerValue
     expected_type: type
     expected_value: object | None = None
 

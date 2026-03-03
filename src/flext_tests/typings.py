@@ -17,11 +17,7 @@ from pydantic import BaseModel, InstanceOf
 from flext_core import FlextTypes, m, r
 
 type _TestPayloadValue = (
-    str
-    | int
-    | float
-    | bool
-    | None
+    t.JsonPrimitive
     | bytes
     | BaseModel
     | Sequence[_TestPayloadValue]
@@ -47,7 +43,7 @@ class FlextTestsTypes(FlextTypes):
         Use specific types instead of TestPayloadValue where possible.
         """
 
-        type TestPayloadScalar = str | int | float | bool | None
+        type TestPayloadScalar = t.JsonPrimitive
         type TestPayloadValue = _TestPayloadValue
 
         # File content type for test operations

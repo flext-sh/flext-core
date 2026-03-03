@@ -45,7 +45,7 @@ class CategoryOperationScenario:
     category: str
     entries: list[str]
     operation: str
-    expected_result: t.GeneralValueType
+    expected_result: t.ContainerValue
 
 
 def _scenario_id(scenario: CategoryOperationScenario) -> str:

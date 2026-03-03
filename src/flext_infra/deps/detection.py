@@ -27,7 +27,7 @@ type InfraValue = (
 type IssueMap = Mapping[str, InfraValue]
 
 
-def _to_infra_value(value: t.ConfigMapValue) -> InfraValue | None:
+def _to_infra_value(value: t.ContainerValue) -> InfraValue | None:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, list):

@@ -360,7 +360,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_validation(
         cls: type[FlextResult[T_Model]],
-        data: t.ConfigMapValue,
+        data: t.ContainerValue,
         model: type[T_Model],
     ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.
@@ -713,12 +713,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self.alt(func)
 
     @staticmethod
-    def is_success_result(value: object) -> TypeIs[FlextResult[t.GeneralValueType]]:
+    def is_success_result(value: object) -> TypeIs[FlextResult[t.ContainerValue]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 
     @staticmethod
-    def is_failure_result(value: object) -> TypeIs[FlextResult[t.GeneralValueType]]:
+    def is_failure_result(value: object) -> TypeIs[FlextResult[t.ContainerValue]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 

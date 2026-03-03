@@ -592,7 +592,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
     def generate_sarif_report(
         results: list[_ProjectResult],
         gates: list[str],
-    ) -> Mapping[str, t.ConfigMapValue]:
+    ) -> Mapping[str, t.ContainerValue]:
         """Render gate results as a SARIF 2.1.0 payload."""
         tool_info = {
             c.Gates.LINT: ("Ruff Linter", "https://docs.astral.sh/ruff/"),
@@ -1356,7 +1356,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
     def _fix_search_paths_tk(
         self,
-        pyrefly: MutableMapping[str, t.ConfigMapValue],
+        pyrefly: MutableMapping[str, t.ContainerValue],
         project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
@@ -1385,7 +1385,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
         # Remove nonexistent paths
         search_raw = pyrefly.get("search-path")
-        current_paths: list[t.ConfigMapValue] = (
+        current_paths: list[t.ContainerValue] = (
             list(search_raw) if isinstance(search_raw, list) else []
         )
         nonexistent = [
@@ -1406,14 +1406,14 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
     def _remove_ignore_sub_config_tk(
         self,
-        pyrefly: MutableMapping[str, t.ConfigMapValue],
+        pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get("sub-config")
         if not isinstance(sub_configs, list):
             return []
 
-        new_configs: list[t.ConfigMapValue] = []
+        new_configs: list[t.ContainerValue] = []
         for conf in sub_configs:
             if isinstance(conf, Mapping) and conf.get("ignore") is True:
                 matches = conf.get("matches", "unknown")
@@ -1428,7 +1428,7 @@ class FlextInfraConfigFixer(FlextService[list[str]]):
 
     def _ensure_project_excludes_tk(
         self,
-        pyrefly: MutableMapping[str, t.ConfigMapValue],
+        pyrefly: MutableMapping[str, t.ContainerValue],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get("project-excludes")

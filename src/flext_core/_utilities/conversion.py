@@ -14,7 +14,7 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
-type StrictJsonScalar = str | int | float | bool | datetime | None
+type StrictJsonScalar = t.ScalarValue
 type StrictJsonValue = (
     StrictJsonScalar | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
 )

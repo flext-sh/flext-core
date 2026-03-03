@@ -72,7 +72,7 @@ class HandlerConfigScenario:
     handler_mode: str | None = None
     command_timeout: int | None = None
     max_command_retries: int | None = None
-    metadata: dict[str, t.GeneralValueType] | None = None
+    metadata: dict[str, t.ContainerValue] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -274,7 +274,7 @@ class TestFlextHandlers:
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
         """Test _run_pipeline with dict[str, t.GeneralValueType] message having command_id."""
 
-        class DictHandler(h[dict[str, t.GeneralValueType], str]):
+        class DictHandler(h[dict[str, t.ContainerValue], str]):
             @override
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
@@ -282,7 +282,7 @@ class TestFlextHandlers:
             @override
             def handle(
                 self,
-                message: dict[str, t.GeneralValueType],
+                message: dict[str, t.ContainerValue],
             ) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
@@ -295,7 +295,7 @@ class TestFlextHandlers:
         # Cast to m.CqrsHandler for type compatibility
         config = config_raw
         handler = DictHandler(config=config)
-        dict_message: dict[str, t.GeneralValueType] = {
+        dict_message: dict[str, t.ContainerValue] = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -575,7 +575,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = ConcreteTestHandler(config=config)
-        context_typed: dict[str, t.GeneralValueType] = {
+        context_typed: dict[str, t.ContainerValue] = {
             "user_id": "123",
             "operation": "test",
         }

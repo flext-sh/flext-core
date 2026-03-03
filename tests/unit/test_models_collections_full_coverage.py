@@ -25,12 +25,12 @@ class _Rules(m.Rules):
 
 class _Results(m.CollectionsResults):
     value: int | bool | None = None
-    data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+    data: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
 
 class _Options(m.CollectionsOptions):
     score: int | float | bool | None = None
-    tags: list[t.GeneralValueType] = Field(default_factory=list)
+    tags: list[t.ContainerValue] = Field(default_factory=list)
 
 
 class _Config(m.CollectionsConfig):

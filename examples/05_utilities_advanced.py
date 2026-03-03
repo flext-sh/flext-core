@@ -60,7 +60,7 @@ class UserModel(m.ArbitraryTypesModel):
 # SAMPLE DATA
 # ═══════════════════════════════════════════════════════════════════
 
-TEST_DATA: Mapping[str, t.GeneralValueType] = {
+TEST_DATA: Mapping[str, t.ContainerValue] = {
     "name": "John Doe",
     "status": "active",
     "age": 30,
@@ -279,8 +279,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: r[Mapping[str, t.ConfigMapValue]] = r[
-            Mapping[str, t.ConfigMapValue]
+        map_result: r[Mapping[str, t.ContainerValue]] = r[
+            Mapping[str, t.ContainerValue]
         ].fail("Invalid data types")
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
             source_dict = {str(k): v for k, v in source_value.items()}

@@ -77,8 +77,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def normalize_component(
-        component: t.GuardInputValue | BaseModel,
-    ) -> t.GuardInputValue:
+        component: t.ContainerValue | BaseModel,
+    ) -> t.ContainerValue:
         """Normalize a component recursively for consistent representation.
 
         Business Rule: Recursive Component Normalization
@@ -115,7 +115,7 @@ class FlextUtilitiesCache:
         if FlextRuntime.is_dict_like(component):
             # Type narrowing: component is now Mapping[str, t.GuardInputValue]
             # Convert to dict for consistent iteration
-            dict_component: Mapping[str, t.GuardInputValue] = dict(component.items())
+            dict_component: Mapping[str, t.ContainerValue] = dict(component.items())
             # dict_component has mapping semantics for normalized iteration
             # so v is t.GuardInputValue
             return {
@@ -129,7 +129,7 @@ class FlextUtilitiesCache:
         if isinstance(component, set):
             # Type narrowing: component is set[t.GuardInputValue]
             # Convert set to tuple for hashability - normalize each item
-            normalized_items: list[t.GuardInputValue] = [
+            normalized_items: list[t.ContainerValue] = [
                 FlextUtilitiesCache.normalize_component(item) for item in component
             ]
             return tuple(normalized_items)
@@ -175,8 +175,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def sort_dict_keys(
-        data: t.GuardInputValue,
-    ) -> t.GuardInputValue:
+        data: t.ContainerValue,
+    ) -> t.ContainerValue:
         """Sort dictionary keys recursively for consistent representations.
 
         Business Rule: Recursive Key Sorting for Cache Consistency
@@ -208,7 +208,7 @@ class FlextUtilitiesCache:
         """
         if FlextRuntime.is_dict_like(data):
             # Type narrowing: data is now Mapping[str, t.GuardInputValue]
-            result: dict[str, t.GuardInputValue] = {}
+            result: dict[str, t.ContainerValue] = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 # Handle None values - convert to empty dict for consistency
@@ -223,7 +223,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def clear_object_cache(
-        obj: t.GuardInputValue | BaseModel,
+        obj: t.ContainerValue | BaseModel,
     ) -> r[bool]:
         """Clear cache-like attributes on an object.
 
@@ -283,7 +283,7 @@ class FlextUtilitiesCache:
             return r[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def has_cache_attributes(obj: t.GuardInputValue) -> bool:
+    def has_cache_attributes(obj: t.ContainerValue) -> bool:
         """Check if an object exposes any known cache-related attributes.
 
         Business Rule: Cache Detection
@@ -304,8 +304,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def generate_cache_key(
-        *args: t.GuardInputValue,
-        **kwargs: t.GuardInputValue,
+        *args: t.ContainerValue,
+        **kwargs: t.ContainerValue,
     ) -> str:
         """Generate a deterministic cache key from arguments.
 
@@ -342,7 +342,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def generate_cache_key_for_command(
-        command: t.ConfigMapValue | None,
+        command: t.ContainerValue | None,
         command_type: type,
     ) -> str:
         if isinstance(command, Mapping):

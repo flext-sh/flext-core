@@ -89,7 +89,7 @@ class FlextTestsBuilders:
         return str(value)
 
     @staticmethod
-    def _to_guard_input(value: t.Tests.PayloadValue) -> t.GuardInputValue:
+    def _to_guard_input(value: t.Tests.PayloadValue) -> t.ContainerValue:
         if value is None or isinstance(value, str | int | float | bool | BaseModel):
             return value
         if isinstance(value, Mapping):
@@ -607,7 +607,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: t.ConfigMapValue = self._data
+        current: t.ContainerValue = self._data
 
         for part in parts:
             if not isinstance(current, Mapping):

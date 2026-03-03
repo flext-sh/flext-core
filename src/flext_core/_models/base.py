@@ -51,14 +51,14 @@ class FlextModelFoundation:
         """Pydantic v2 validators - single namespace for all field validators."""
 
         _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[list[t.GuardInputValue]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[list[t.ContainerValue]] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
         _metadata_map_adapter: ClassVar[
             TypeAdapter[dict[str, t.MetadataAttributeValue]] | None
         ] = None
-        _config_adapter: ClassVar[TypeAdapter[dict[str, t.GuardInputValue]] | None] = (
+        _config_adapter: ClassVar[TypeAdapter[dict[str, t.ContainerValue]] | None] = (
             None
         )
 
@@ -70,10 +70,10 @@ class FlextModelFoundation:
             return cls._tags_adapter
 
         @classmethod
-        def list_adapter(cls) -> TypeAdapter[list[t.GuardInputValue]]:
+        def list_adapter(cls) -> TypeAdapter[list[t.ContainerValue]]:
             """Lazy-load list TypeAdapter on first access."""
             if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(list[t.GuardInputValue])
+                cls._list_adapter = TypeAdapter(list[t.ContainerValue])
             return cls._list_adapter
 
         @classmethod
@@ -99,10 +99,10 @@ class FlextModelFoundation:
             return cls._metadata_map_adapter
 
         @classmethod
-        def config_adapter(cls) -> TypeAdapter[dict[str, t.GuardInputValue]]:
+        def config_adapter(cls) -> TypeAdapter[dict[str, t.ContainerValue]]:
             """Lazy-load config TypeAdapter on first access."""
             if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(dict[str, t.GuardInputValue])
+                cls._config_adapter = TypeAdapter(dict[str, t.ContainerValue])
             return cls._config_adapter
 
         @staticmethod
@@ -116,7 +116,7 @@ class FlextModelFoundation:
             return v.strip()
 
         @staticmethod
-        def normalize_to_list(v: t.GuardInputValue) -> list[t.GuardInputValue]:
+        def normalize_to_list(v: t.ContainerValue) -> list[t.ContainerValue]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -125,8 +125,8 @@ class FlextModelFoundation:
 
         @staticmethod
         def validate_config_dict(
-            v: t.GuardInputValue,
-        ) -> Mapping[str, t.GuardInputValue]:
+            v: t.ContainerValue,
+        ) -> Mapping[str, t.ContainerValue]:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
@@ -135,7 +135,7 @@ class FlextModelFoundation:
             except ValidationError as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: dict[str, t.GuardInputValue] = {}
+            out: dict[str, t.ContainerValue] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -144,7 +144,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.GuardInputValue) -> list[str]:
+        def validate_tags_list(v: t.ContainerValue) -> list[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags = (
@@ -261,7 +261,7 @@ class FlextModelFoundation:
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
         attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
-        metadata_value: t.MetadataScalarValue = Field(
+        metadata_value: t.ScalarValue = Field(
             default=None,
             description="Scalar metadata value.",
         )
@@ -300,7 +300,7 @@ class FlextModelFoundation:
 
         @field_validator("metadata_value", mode="before")
         @classmethod
-        def validate_scalar_value(cls, v: object) -> t.MetadataScalarValue:
+        def validate_scalar_value(cls, v: object) -> t.ScalarValue:
             """Validate metadata value is a scalar type."""
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
@@ -347,7 +347,7 @@ class FlextModelFoundation:
         """Success result for discriminated union."""
 
         result_type: Literal["success"] = "success"
-        value: t.GuardInputValue
+        value: t.ContainerValue
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )
@@ -364,7 +364,7 @@ class FlextModelFoundation:
         """Partial result for discriminated union."""
 
         result_type: Literal["partial"] = "partial"
-        value: t.GuardInputValue
+        value: t.ContainerValue
         warnings: list[str] = Field(default_factory=list)
         partial_success_rate: float
 
@@ -377,7 +377,7 @@ class FlextModelFoundation:
         """Valid validation outcome."""
 
         outcome_type: Literal["valid"] = "valid"
-        validated_data: t.GuardInputValue
+        validated_data: t.ContainerValue
         validation_time_ms: float
 
     class InvalidOutcome(BaseModel):
@@ -391,7 +391,7 @@ class FlextModelFoundation:
         """Warning validation outcome."""
 
         outcome_type: Literal["warning"] = "warning"
-        validated_data: t.GuardInputValue
+        validated_data: t.ContainerValue
         warnings: list[str]
         validation_time_ms: float
 

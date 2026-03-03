@@ -164,8 +164,8 @@ class TestAutomatedFlextDecorators:
     def _execute_decorators_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.GeneralValueType],
-    ) -> r[t.GeneralValueType]:
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on decorators instance.
 
         This method should be customized based on the actual decorators API.
@@ -183,9 +183,9 @@ class TestAutomatedFlextDecorators:
             if callable(handle):
                 return cast("r[t.GeneralValueType]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(cast("t.GeneralValueType", instance))
+            return r[t.ContainerValue].ok(cast("t.GeneralValueType", instance))
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextDecorators operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextDecorators operation failed: {e}")
 
     @pytest.fixture
     def test_decorators_instance(self) -> object:

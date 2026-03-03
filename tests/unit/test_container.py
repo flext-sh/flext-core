@@ -249,7 +249,7 @@ class TestFlextContainer:
     ) -> None:
         """Test that registering non-callable is rejected using fixtures."""
         # Intentionally pass non-callable to test error handling
-        non_callable: Callable[[], t.GeneralValueType] = cast(
+        non_callable: Callable[[], t.ContainerValue] = cast(
             "Callable[[], t.GeneralValueType]",
             "not_callable",
         )
@@ -285,7 +285,7 @@ class TestFlextContainer:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
         result: r[t.RegisterableService] = clean_container.get(scenario.name)
-        expected_value: t.GeneralValueType = cast(
+        expected_value: t.ContainerValue = cast(
             "t.GeneralValueType",
             scenario.service,
         )
@@ -683,7 +683,7 @@ class TestFlextContainer:
         container = clean_container
         error_msg = "Factory failed"
 
-        def failing_factory() -> t.GeneralValueType:
+        def failing_factory() -> t.ContainerValue:
             raise RuntimeError(error_msg)
 
         container.register_factory("failing", failing_factory)

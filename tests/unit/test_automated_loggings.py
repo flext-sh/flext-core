@@ -161,8 +161,8 @@ class TestAutomatedFlextLoggings:
     def _execute_loggings_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.GeneralValueType],
-    ) -> r[t.GeneralValueType]:
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on loggings instance.
 
         This method should be customized based on the actual loggings API.
@@ -176,23 +176,23 @@ class TestAutomatedFlextLoggings:
                 # Check if result is FlextResult or needs wrapping
                 if isinstance(result, r):
                     return cast("r[t.GeneralValueType]", result)
-                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", result))
+                return r[t.ContainerValue].ok(cast("t.GeneralValueType", result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
                     return cast("r[t.GeneralValueType]", result)
-                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", result))
+                return r[t.ContainerValue].ok(cast("t.GeneralValueType", result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
                     return cast("r[t.GeneralValueType]", result)
-                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", result))
+                return r[t.ContainerValue].ok(cast("t.GeneralValueType", result))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.GeneralValueType].ok(cast("t.GeneralValueType", instance))
+            return r[t.ContainerValue].ok(cast("t.GeneralValueType", instance))
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextLoggings operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
     def test_loggings_instance(self) -> object:

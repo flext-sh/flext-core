@@ -131,14 +131,14 @@ class FlextInfraDocAuditor:
             issues.extend(self._forbidden_term_issues(scope))
 
         # Write reports
-        summary: Mapping[str, t.ConfigMapValue] = {
+        summary: Mapping[str, t.ContainerValue] = {
             "scope": scope.name,
             "issues": len(issues),
             "checks": sorted(checks),
             "strict": strict,
             "report_dir": scope.report_dir.as_posix(),
         }
-        issues_payload: list[Mapping[str, t.ConfigMapValue]] = [
+        issues_payload: list[Mapping[str, t.ContainerValue]] = [
             {
                 "file": issue.file,
                 "issue_type": issue.issue_type,
@@ -147,7 +147,7 @@ class FlextInfraDocAuditor:
             }
             for issue in issues
         ]
-        summary_payload: Mapping[str, t.ConfigMapValue] = {
+        summary_payload: Mapping[str, t.ContainerValue] = {
             "summary": summary,
             "issues": issues_payload,
         }

@@ -9,7 +9,7 @@ from flext_core import FlextRuntime, FlextSettings, c, r, u, x
 
 _RESULTS: list[str] = []
 type _SerValue = (
-    str | int | float | bool | None | list["_SerValue"] | dict[str, "_SerValue"]
+    t.JsonPrimitive | list["_SerValue"] | dict[str, "_SerValue"]
 )
 
 

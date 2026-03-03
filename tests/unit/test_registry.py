@@ -68,15 +68,15 @@ class RegistryTestCase:
     duplicate_registration: bool = False
 
 
-class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
+class ConcreteTestHandler(h[t.ContainerValue, t.ContainerValue]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
+    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         """Handle the message."""
-        return r[t.GeneralValueType].ok(f"processed_{message}")
+        return r[t.ContainerValue].ok(f"processed_{message}")
 
-    def __call__(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
+    def __call__(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
@@ -276,17 +276,17 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[p.Handler[t.GeneralValueType, t.GeneralValueType]]:
+    ) -> list[p.Handler[t.ContainerValue, t.ContainerValue]]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
     ) -> list[
         tuple[
-            type[t.GeneralValueType],
-            p.Handler[t.GeneralValueType, t.GeneralValueType],
+            type[t.ContainerValue],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ]
     ]:
         """Create test bindings using str message type."""
@@ -294,15 +294,15 @@ class RegistryScenarios:
 
     @staticmethod
     def create_function_map(
-        handlers: Sequence[p.Handler[t.GeneralValueType, t.GeneralValueType]],
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
     ) -> dict[
-        type[t.GeneralValueType],
-        p.Handler[t.GeneralValueType, t.GeneralValueType],
+        type[t.ContainerValue],
+        p.Handler[t.ContainerValue, t.ContainerValue],
     ]:
         """Create test function map using str message type."""
         result: dict[
-            type[t.GeneralValueType],
-            p.Handler[t.GeneralValueType, t.GeneralValueType],
+            type[t.ContainerValue],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler

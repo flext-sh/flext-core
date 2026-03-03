@@ -76,7 +76,7 @@ def _is_key_value_pair[TK, TV](
     return isinstance(key_equals, tuple) and len(key_equals) == 2
 
 
-def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ConfigMapValue]]:
+def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ContainerValue]]:
     return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
 
@@ -104,8 +104,8 @@ def _as_guard_input(value: object) -> core_t.GuardInputValue:
 
 def _check_has_lacks(
     value: object,
-    has: t.ConfigMapValue | Sequence[t.ConfigMapValue] | None,
-    lacks: t.ConfigMapValue | Sequence[t.ConfigMapValue] | None,
+    has: t.ContainerValue | Sequence[t.ContainerValue] | None,
+    lacks: t.ContainerValue | Sequence[t.ContainerValue] | None,
     msg: str | None,
     *,
     as_str: bool = False,

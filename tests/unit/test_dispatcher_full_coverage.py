@@ -19,7 +19,7 @@ def _force_handler(obj: object) -> _DispatchableHandler:
 
     def _wrapper(
         *_args: object, **_kwargs: object
-    ) -> p.ResultLike[t.PayloadValue] | t.PayloadValue | None:
+    ) -> p.ResultLike[t.ContainerValue] | t.ContainerValue | None:
         return None
 
     return _wrapper
@@ -72,7 +72,7 @@ class SampleHandler:
 
     message_type = SampleCommand
 
-    def handle(self, message: p.Routable) -> t.PayloadValue:
+    def handle(self, message: p.Routable) -> t.ContainerValue:
         """Handle the message."""
         payload = getattr(message, "payload", "")
         return f"handled:{payload}"
@@ -86,7 +86,7 @@ class QueryHandler:
 
     message_type = SampleQuery
 
-    def handle(self, message: p.Routable) -> t.PayloadValue:
+    def handle(self, message: p.Routable) -> t.ContainerValue:
         """Handle the query."""
         query_id = getattr(message, "query_id", None)
         return {
@@ -103,7 +103,7 @@ class EventHandler:
 
     message_type = SampleEvent
 
-    def handle(self, message: p.Routable) -> t.PayloadValue:
+    def handle(self, message: p.Routable) -> t.ContainerValue:
         """Handle the event."""
         return True
 
@@ -188,7 +188,7 @@ def test_handler_attribute_discovery(dispatcher: FlextDispatcher) -> None:
         def can_handle(self, msg_type: type) -> bool:
             return msg_type is SampleCommand
 
-        def handle(self, message: p.Routable) -> t.PayloadValue:
+        def handle(self, message: p.Routable) -> t.ContainerValue:
             return "ok"
 
     res = dispatcher.register_handler(PredicateHandler())

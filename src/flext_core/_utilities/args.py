@@ -147,9 +147,9 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.GuardInputValue],
+        kwargs: Mapping[str, t.ContainerValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> r[Mapping[str, t.GuardInputValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -178,10 +178,10 @@ class FlextUtilitiesArgs:
                     errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
-            return r[Mapping[str, t.GuardInputValue]].fail(
+            return r[Mapping[str, t.ContainerValue]].fail(
                 f"Invalid values: {'; '.join(errors)}",
             )
-        return r[Mapping[str, t.GuardInputValue]].ok(parsed)
+        return r[Mapping[str, t.ContainerValue]].ok(parsed)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing

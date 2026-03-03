@@ -12,12 +12,7 @@ from pydantic import BaseModel
 from flext_core import FlextContext, FlextRuntime, c, r, u
 
 type _ContainerValue = (
-    str
-    | int
-    | float
-    | bool
-    | datetime
-    | None
+    t.ScalarValue
     | BaseModel
     | Path
     | Sequence[_ContainerValue]

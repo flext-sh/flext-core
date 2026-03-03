@@ -54,9 +54,9 @@ class ResultScenario:
 
     name: str
     operation_type: ResultOperationType
-    value: t.GeneralValueType
+    value: t.ContainerValue
     is_success_expected: bool = True
-    expected_result: t.GeneralValueType = None
+    expected_result: t.ContainerValue = None
 
 
 class ResultScenarios:
@@ -144,7 +144,7 @@ class Testr:
 
         if op_type == ResultOperationType.CREATION_SUCCESS:
             # Use generic helper to replace 10+ lines of result creation code
-            creation_result: r[t.GeneralValueType] = (
+            creation_result: r[t.ContainerValue] = (
                 u.Tests.GenericHelpers.create_result_from_value(
                     value,
                     error_on_none="Value cannot be None",
@@ -161,7 +161,7 @@ class Testr:
             failure_result_raw = u.Tests.Result.create_failure_result(
                 str(value),
             )
-            failure_result: r[t.GeneralValueType] = cast(
+            failure_result: r[t.ContainerValue] = cast(
                 "r[t.GeneralValueType]",
                 failure_result_raw,
             )
@@ -173,7 +173,7 @@ class Testr:
         elif op_type == ResultOperationType.UNWRAP_OR:
             # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                unwrap_result: r[t.GeneralValueType] = (
+                unwrap_result: r[t.ContainerValue] = (
                     u.Tests.Result.create_success_result(value)
                 )
             else:
@@ -194,7 +194,7 @@ class Testr:
 
         elif op_type == ResultOperationType.FLAT_MAP:
             failure_raw = u.Tests.Result.create_failure_result(str(value))
-            flat_map_result: r[t.GeneralValueType] = cast(
+            flat_map_result: r[t.ContainerValue] = cast(
                 "r[t.GeneralValueType]",
                 failure_raw,
             )
@@ -209,7 +209,7 @@ class Testr:
         elif op_type == ResultOperationType.ALT:
             # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                result_alt: r[t.GeneralValueType] = (
+                result_alt: r[t.ContainerValue] = (
                     u.Tests.Result.create_success_result(value)
                 )
             else:
@@ -250,7 +250,7 @@ class Testr:
         elif op_type == ResultOperationType.OR_OPERATOR:
             # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                result_or: r[t.GeneralValueType] = u.Tests.Result.create_success_result(
+                result_or: r[t.ContainerValue] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
@@ -844,7 +844,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: dict[str, t.GeneralValueType] = result.fold(
+        response: dict[str, t.ContainerValue] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

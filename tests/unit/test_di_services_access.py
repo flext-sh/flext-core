@@ -251,7 +251,7 @@ class TestServicesIntegrationViaDI:
         # Convert services to t.GeneralValueType-compatible dict for type compatibility
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
-        services_raw: dict[str, t.GeneralValueType] = {
+        services_raw: dict[str, t.ContainerValue] = {
             "logger": cast("t.GeneralValueType", logger_instance),
             "context": cast("t.GeneralValueType", context_instance),
         }

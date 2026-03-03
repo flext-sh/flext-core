@@ -300,7 +300,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: t.ConfigMapValue,
+                target: t.ContainerValue,
                 attribute: str,
                 value: t.Tests.PayloadValue,
             ) -> Generator[None]:

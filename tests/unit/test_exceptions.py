@@ -1379,7 +1379,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             @override
             def __getitem__(self, key: str) -> object:
-                mapping: dict[str, t.GeneralValueType] = {"key1": "value1", "key2": 123}
+                mapping: dict[str, t.ContainerValue] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)

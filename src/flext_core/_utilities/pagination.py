@@ -103,12 +103,12 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def prepare_pagination_data(
-        data: Sequence[t.ConfigMapValue] | None,
+        data: Sequence[t.ContainerValue] | None,
         total: int | None,
         *,
         page: int,
         page_size: int,
-    ) -> r[Mapping[str, t.ConfigMapValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Prepare pagination data structure.
 
         Args:
@@ -130,19 +130,19 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r[Mapping[str, t.ConfigMapValue]].fail(
+            return r[Mapping[str, t.ContainerValue]].fail(
                 f"Page {page} exceeds total pages {total_pages}",
             )
 
         has_next = page < total_pages
         has_prev = page > 1
 
-        data_list: list[t.ConfigMapValue] = []
+        data_list: list[t.ContainerValue] = []
         for item in data:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
 
-        return r[Mapping[str, t.ConfigMapValue]].ok({
+        return r[Mapping[str, t.ContainerValue]].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -156,9 +156,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: Mapping[str, t.ConfigMapValue],
+        pagination_data: Mapping[str, t.ContainerValue],
         message: str | None = None,
-    ) -> r[Mapping[str, t.ConfigMapValue]]:
+    ) -> r[Mapping[str, t.ContainerValue]]:
         """Build paginated response dictionary.
 
         Args:
@@ -173,7 +173,7 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r[Mapping[str, t.ConfigMapValue]].fail(
+            return r[Mapping[str, t.ContainerValue]].fail(
                 "Invalid pagination data structure",
             )
 
@@ -182,7 +182,7 @@ class FlextUtilitiesPagination:
         if not FlextRuntime.is_dict_like(pagination):
             pagination = str(pagination)
 
-        response: Mapping[str, t.ConfigMapValue] = {
+        response: Mapping[str, t.ContainerValue] = {
             "data": data,
             "pagination": pagination,
         }
@@ -190,11 +190,11 @@ class FlextUtilitiesPagination:
         if message is not None:
             response = {**response, "message": message}
 
-        return r[Mapping[str, t.ConfigMapValue]].ok(response)
+        return r[Mapping[str, t.ContainerValue]].ok(response)
 
     @staticmethod
     def extract_pagination_config(
-        config: BaseModel | Mapping[str, t.ConfigMapValue] | None,
+        config: BaseModel | Mapping[str, t.ContainerValue] | None,
     ) -> Mapping[str, int]:
         """Extract pagination configuration values - no fallbacks.
 

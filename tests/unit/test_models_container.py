@@ -75,7 +75,7 @@ class ContainerModelsScenarios:
         ([1, 2, 3], False),
     ]
 
-    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, t.GeneralValueType]]] = [
+    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, t.ContainerValue]]] = [
         {},
         {"enable_singleton": False},
         {"enable_factory_caching": False},
@@ -257,7 +257,7 @@ class TestFlextModelsContainer:
     )
     def test_container_config_creation(
         self,
-        config_dict: dict[str, t.GeneralValueType],
+        config_dict: dict[str, t.ContainerValue],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         # ContainerConfig accepts keyword arguments directly

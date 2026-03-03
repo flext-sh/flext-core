@@ -53,11 +53,11 @@ TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
 
 
-def _yaml_safe_load(raw: str) -> t.ConfigMapValue | list[t.ConfigMapValue]:
+def _yaml_safe_load(raw: str) -> t.ContainerValue | list[t.ContainerValue]:
     return yaml_safe_load(raw)
 
 
-def _yaml_dump(value: t.ConfigMapValue, *, indent: int) -> str:
+def _yaml_dump(value: t.ContainerValue, *, indent: int) -> str:
     return str(
         yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent),
     )
@@ -870,7 +870,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content1: str,
         content2: str,
         fmt: str,
-    ) -> tuple[Mapping[str, t.ConfigMapValue], Mapping[str, t.ConfigMapValue]] | None:
+    ) -> tuple[Mapping[str, t.ContainerValue], Mapping[str, t.ContainerValue]] | None:
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:
@@ -898,11 +898,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _apply_key_filtering(
         self,
-        dict1: Mapping[str, t.ConfigMapValue],
-        dict2: Mapping[str, t.ConfigMapValue],
+        dict1: Mapping[str, t.ContainerValue],
+        dict2: Mapping[str, t.ContainerValue],
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[Mapping[str, t.ConfigMapValue], Mapping[str, t.ConfigMapValue]]:
+    ) -> tuple[Mapping[str, t.ContainerValue], Mapping[str, t.ContainerValue]]:
         """Apply key filtering to both dicts if specified."""
         if keys is None and exclude_keys is None:
             return dict1, dict2
@@ -1162,7 +1162,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         def process_one(
             name_and_content: tuple[str, t.Tests.PayloadValue],
-        ) -> t.GuardInputValue | r[t.GuardInputValue]:
+        ) -> t.ContainerValue | r[t.ContainerValue]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
@@ -1210,7 +1210,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         )
                         return self.create(normalized_content, name, params.directory)
                     except (OSError, TypeError, ValueError, AttributeError) as e:
-                        return r[t.GuardInputValue].fail(
+                        return r[t.ContainerValue].fail(
                             f"Failed to create {name}: {e}",
                         )
                 case "read":
@@ -1238,16 +1238,16 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         Path(path).unlink(missing_ok=True)
                         return Path(path)
                     except OSError as e:
-                        return r[t.GuardInputValue].fail(
+                        return r[t.ContainerValue].fail(
                             f"Failed to delete {name}: {e}",
                         )
                 case _:
-                    return r[t.GuardInputValue].fail(
+                    return r[t.ContainerValue].fail(
                         f"Unknown operation: {params.operation}",
                     )
 
         items_list: list[tuple[str, t.Tests.PayloadValue]] = list(files_dict.items())
-        results: list[t.GuardInputValue] = []
+        results: list[t.ContainerValue] = []
         errors: list[tuple[int, str]] = []
         total = len(items_list)
 
@@ -1519,7 +1519,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _is_nested_rows(
         self,
         value: object,
-    ) -> TypeGuard[Sequence[Sequence[t.ConfigMapValue]]]:
+    ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         if len(value) == 0:
@@ -1530,7 +1530,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         )
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.ConfigMapValue]]:
+    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
@@ -1584,7 +1584,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return [self._to_payload_value(item) for item in value]
         return str(value)
 
-    def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ConfigMapValue:
+    def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ContainerValue:
         if value is None or isinstance(
             value,
             str | int | float | bool | BaseModel | Path,
@@ -1610,7 +1610,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, BaseModel):
             return value
         if self._is_mapping(value):
-            mapping_value: Mapping[str, t.ConfigMapValue] = value
+            mapping_value: Mapping[str, t.ContainerValue] = value
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
@@ -1709,7 +1709,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: t.ConfigMapValue | list[t.ConfigMapValue] = (
+                    parsed_raw: t.ContainerValue | list[t.ContainerValue] = (
                         json.loads(text) if text.strip() else {}
                     )
                 else:

@@ -247,7 +247,7 @@ class FlextInfraPrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> FlextResult[Mapping[str, t.ConfigMapValue]]:
+    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -294,12 +294,12 @@ class FlextInfraPrManager:
         if result.is_failure:
             return r[Mapping[str, t.ScalarValue]].fail(result.error or "merge failed")
 
-        info: MutableMapping[str, t.ConfigMapValue] = {"status": "merged"}
+        info: MutableMapping[str, t.ContainerValue] = {"status": "merged"}
         if release_on_merge:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
                 info["release"] = release_result.value
-        return r[Mapping[str, t.ConfigMapValue]].ok(info)
+        return r[Mapping[str, t.ContainerValue]].ok(info)
 
     def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
         """Close a PR.

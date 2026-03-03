@@ -68,7 +68,7 @@ class FlextGenericModels:
                 default_factory=FlextModelsContainers.Dict,
                 description="Additional metadata",
             )
-            message: t.ConfigMapValue = Field(
+            message: t.ContainerValue = Field(
                 default=None,
                 description="Message payload",
             )
@@ -262,7 +262,7 @@ class FlextGenericModels:
             Used by: flext-ldif conversion, data transformations, ETL.
             """
 
-            converted: list[t.GuardInputValue] = Field(
+            converted: list[t.ContainerValue] = Field(
                 default_factory=list,
                 description="Converted items",
             )
@@ -274,7 +274,7 @@ class FlextGenericModels:
                 default_factory=list,
                 description="Warning messages",
             )
-            skipped: list[t.GuardInputValue] = Field(
+            skipped: list[t.ContainerValue] = Field(
                 default_factory=list, description="Skipped items"
             )
             start_time: datetime | None = Field(default=None, description="Start time")
@@ -293,7 +293,7 @@ class FlextGenericModels:
             def _append_metadata_item(
                 self,
                 key: Literal["failed_items", "warning_items"],
-                item: t.ConfigMapValue,
+                item: t.ContainerValue,
             ) -> None:
                 if key not in self.metadata.root:
                     self.metadata.root[key] = []
@@ -302,7 +302,7 @@ class FlextGenericModels:
                 items.append(item)
                 self.metadata.root[key] = items
 
-            def _upsert_skip_reason(self, item: t.ConfigMapValue, reason: str) -> None:
+            def _upsert_skip_reason(self, item: t.ContainerValue, reason: str) -> None:
                 raw_reasons = self.metadata.root.get("skip_reasons", {})
                 reasons: dict[str, str] = {}
                 if isinstance(raw_reasons, Mapping):
@@ -310,14 +310,14 @@ class FlextGenericModels:
                 reasons[str(item)] = reason
                 self.metadata.root["skip_reasons"] = reasons
 
-            def add_converted(self, item: t.GuardInputValue) -> None:
+            def add_converted(self, item: t.ContainerValue) -> None:
                 """Add a successfully converted item."""
                 self.converted.append(item)
 
             def add_error(
                 self,
                 error: str,
-                item: t.ConfigMapValue | None = None,
+                item: t.ContainerValue | None = None,
             ) -> None:
                 """Add an error with optional failed item."""
                 self.errors.append(error)
@@ -327,7 +327,7 @@ class FlextGenericModels:
             def add_warning(
                 self,
                 warning: str,
-                item: t.ConfigMapValue | None = None,
+                item: t.ContainerValue | None = None,
             ) -> None:
                 """Add a warning with optional item."""
                 self.warnings.append(warning)
@@ -336,7 +336,7 @@ class FlextGenericModels:
 
             def add_skipped(
                 self,
-                item: t.GuardInputValue,
+                item: t.ContainerValue,
                 reason: str | None = None,
             ) -> None:
                 """Add a skipped item with optional reason."""

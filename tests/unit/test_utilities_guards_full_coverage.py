@@ -48,7 +48,7 @@ class _LoggerLike:
         return None
 
 
-def _sample_handler(value: t.GeneralValueType) -> t.GeneralValueType:
+def _sample_handler(value: t.ContainerValue) -> t.ContainerValue:
     return value
 
 
@@ -164,7 +164,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
 
     assert u.Guards.is_mapping({"k": "v"})
 
-    def _identity(value: t.GeneralValueType) -> t.GeneralValueType:
+    def _identity(value: t.ContainerValue) -> t.ContainerValue:
         return value
 
     assert _is_type_obj(_identity, "callable")

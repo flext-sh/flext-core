@@ -22,8 +22,8 @@ class _ModelWithNoCallableDump:
     model_dump = "bad"
 
 
-class _MappingLike(Mapping[str, t.ConfigMapValue]):
-    def __init__(self, data: dict[str, t.ConfigMapValue]) -> None:
+class _MappingLike(Mapping[str, t.ContainerValue]):
+    def __init__(self, data: dict[str, t.ContainerValue]) -> None:
         self._data = data
 
     @override
@@ -35,7 +35,7 @@ class _MappingLike(Mapping[str, t.ConfigMapValue]):
         return len(self._data)
 
     @override
-    def __getitem__(self, key: str) -> t.ConfigMapValue:
+    def __getitem__(self, key: str) -> t.ContainerValue:
         return self._data[key]
 
 

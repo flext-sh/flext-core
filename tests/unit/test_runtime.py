@@ -102,7 +102,7 @@ class RuntimeTestCase:
     operation: RuntimeOperationType
     # Business Rule: test_input supports both values and types for comprehensive testing
     # t.GeneralValueType | type[object] | None allows testing runtime type checking with various inputs
-    test_input: t.GeneralValueType | type[object] | None = None
+    test_input: t.ContainerValue | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
 
@@ -646,7 +646,7 @@ class TestFlextRuntime:
 
             test_obj = TestObj()
             # Type narrowing: TestObj is compatible with t.GeneralValueType
-            test_obj_cast: t.GeneralValueType = cast(
+            test_obj_cast: t.ContainerValue = cast(
                 "t.GeneralValueType",
                 cast("object", test_obj),
             )
@@ -662,7 +662,7 @@ class TestFlextRuntime:
 
             test_obj_default_obj = TestObjDefault()
             # Type narrowing: TestObjDefault is compatible with t.GeneralValueType
-            test_obj_default_cast: t.GeneralValueType = cast(
+            test_obj_default_cast: t.ContainerValue = cast(
                 "t.GeneralValueType",
                 cast("object", test_obj_default_obj),
             )
@@ -947,7 +947,7 @@ class TestFlextRuntime:
                 @classmethod
                 @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                    def counter_factory() -> t.GeneralValueType:
+                    def counter_factory() -> t.ContainerValue:
                         return {"count": 1}
 
                     return FlextModelsService.RuntimeBootstrapOptions(
@@ -970,12 +970,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            service_result_raw: r[t.GeneralValueType] = cast(
+            service_result_raw: r[t.ContainerValue] = cast(
                 "r[t.GeneralValueType]",
                 component.container.get("preseed"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            service_result: r[t.GeneralValueType] = service_result_raw
+            service_result: r[t.ContainerValue] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
 
@@ -984,12 +984,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            factory_result_raw: r[t.GeneralValueType] = cast(
+            factory_result_raw: r[t.ContainerValue] = cast(
                 "r[t.GeneralValueType]",
                 component.container.get("counter"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            factory_result: r[t.GeneralValueType] = factory_result_raw
+            factory_result: r[t.ContainerValue] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 
@@ -1026,14 +1026,14 @@ class TestFlextRuntime:
             def custom_processor(
                 logger: object,
                 method_name: str,
-                event_dict: dict[str, t.GeneralValueType],
-            ) -> dict[str, t.GeneralValueType]:
+                event_dict: dict[str, t.ContainerValue],
+            ) -> dict[str, t.ContainerValue]:
                 event_dict["custom"] = True
                 return event_dict
 
             # Business Rule: Callable processors are compatible with t.GeneralValueType at runtime
             # structlog accepts callable processors for custom processing
-            processor_typed: t.GeneralValueType = cast(
+            processor_typed: t.ContainerValue = cast(
                 "t.GeneralValueType",
                 custom_processor,
             )
