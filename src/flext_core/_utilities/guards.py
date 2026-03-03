@@ -59,6 +59,20 @@ class FlextUtilitiesGuards:
             raise AttributeError(msg)
         return value
 
+    # ── Runtime type-layer guards ─────────────────────────────────────────
+    # Single source of truth for isinstance checks against t.Primitives / t.Scalar.
+    # Call sites MUST use these guards — never raw isinstance with type aliases.
+
+    @staticmethod
+    def is_primitive(value: object) -> TypeGuard[t.Primitives]:
+        """Check if value is a primitive type (str, int, float, bool)."""
+        return isinstance(value, (str, int, float, bool))
+
+    @staticmethod
+    def is_scalar(value: object) -> TypeGuard[t.Scalar]:
+        """Check if value is a scalar type (str, int, float, bool, datetime)."""
+        return isinstance(value, (str, int, float, bool, datetime))
+
     @staticmethod
     def is_string_non_empty(value: t.Container) -> TypeGuard[str]:
         """Check if value is a non-empty string using duck typing."""
@@ -101,21 +115,19 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_flexible_value(value: t.Container) -> TypeIs[t.Container]:
-        if value is None or isinstance(value, t.Scalar):
+        if value is None or FlextUtilitiesGuards.is_scalar(value):
             return True
         if isinstance(value, (list, tuple)):
             for item in value:
-                if item is not None and not isinstance(
+                if item is not None and not FlextUtilitiesGuards.is_scalar(
                     item,
-                    t.Scalar,
                 ):
                     return False
             return True
         if isinstance(value, Mapping):
             for item in value.values():
-                if item is not None and not isinstance(
+                if item is not None and not FlextUtilitiesGuards.is_scalar(
                     item,
-                    t.Scalar,
                 ):
                     return False
             return True

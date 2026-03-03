@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import override
 
 from flext_core import FlextRuntime, FlextSettings, c, r, t, u, x
 
@@ -82,6 +83,7 @@ class _HandlerLike(FlextSettings):
         return _data
 
     @classmethod
+    @override
     def validate(cls, value: object) -> _HandlerLike:
         return cls.model_validate(value)
 
@@ -133,7 +135,7 @@ def _exercise_result_and_conversion_apis(service: _DemoService) -> None:
     _section("result_and_conversion")
 
     ok_result = service.ok({"k": "v"})
-    _check("ok.unwrap_or", str(ok_result.unwrap_or({})))
+    _check("ok.unwrap_or", str(ok_result.map_or("{}")))
 
     fail_result = service.fail(
         "failure",
@@ -150,8 +152,12 @@ def _exercise_result_and_conversion_apis(service: _DemoService) -> None:
 
     ensured_raw = service.ensure_result(99)
     ensured_existing = service.ensure_result(r[int].ok(7))
-    _check("ensure_result.raw", str(ensured_raw.unwrap_or(-1)))
-    _check("ensure_result.existing", str(ensured_existing.unwrap_or(-1)))
+    raw_str: str = str(ensured_raw.value) if ensured_raw.is_success else "-1"
+    existing_str: str = (
+        str(ensured_existing.value) if ensured_existing.is_success else "-1"
+    )
+    _check("ensure_result.raw", raw_str)
+    _check("ensure_result.existing", existing_str)
 
     def _to_even(value: int) -> r[int]:
         if value % 2 == 0:
@@ -195,9 +201,12 @@ def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
     _check("metrics.record_metric", tracker.record_metric("hits", 3).is_success)
     metrics_result = tracker.get_metrics()
     _check("metrics.get_metrics.success", metrics_result.is_success)
+    metrics_value_str: str = (
+        str(metrics_result.value.root) if metrics_result.is_success else "{}"
+    )
     _check(
         "metrics.get_metrics.value",
-        str(metrics_result.unwrap_or(service.to_dict(None)).root),
+        metrics_value_str,
     )
 
     stack = x.CQRS.ContextStack()
@@ -210,9 +219,14 @@ def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
     )
     popped = stack.pop_context()
     _check("context_stack.pop_context.success", popped.is_success)
+    popped_value_str: str = (
+        str(dict(popped.value.items()) if hasattr(popped.value, "items") else {})
+        if popped.is_success
+        else "{}"
+    )
     _check(
         "context_stack.pop_context.value",
-        str(dict(popped.unwrap_or(service.to_dict(None).root))),
+        popped_value_str,
     )
     _check("context_stack.current_context.after_pop", stack.current_context() is None)
 

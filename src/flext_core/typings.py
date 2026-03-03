@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
-from typing import Annotated, Literal, ParamSpec, TypeVar
+from typing import Annotated, Literal, ParamSpec, TypeAlias, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -52,12 +52,14 @@ class FlextTypes:
     """
 
     # ── Core type layers ──────────────────────────────────────────────
-    type Primitives = str | int | float | bool
-    type Scalar = Primitives | datetime
+    # Non-recursive types use TypeAlias (runtime-safe: isinstance + subclass OK).
+    # Recursive types use `type` statement (annotation-only, no isinstance).
+    Primitives: TypeAlias = str | int | float | bool
+    Scalar: TypeAlias = str | int | float | bool | datetime
+    Container: TypeAlias = str | int | float | bool | datetime | BaseModel | Path
     type Serializable = (
         Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
     )
-    type Container = Serializable | BaseModel | Path
 
     type ContainerValue = (
         Container
@@ -70,26 +72,32 @@ class FlextTypes:
     type JsonValue = (
         Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
     )
-    type JsonDict = Mapping[str, JsonValue]
+    JsonDict: TypeAlias = Mapping[str, JsonValue]
 
     # ── Config ────────────────────────────────────────────────────────
-    type ConfigurationMapping = Mapping[str, Container]
+    ConfigurationMapping: TypeAlias = Mapping[str, Container]
 
     # ── Service / DI ──────────────────────────────────────────────────
-    type RegisterableService = Container | BindableLogger | Callable[..., Container]
-    type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], Container]
+    RegisterableService: TypeAlias = (
+        Container | BindableLogger | Callable[..., Container]
+    )
+    FactoryCallable: TypeAlias = Callable[[], RegisterableService]
+    ResourceCallable: TypeAlias = Callable[[], Container]
 
     # ── Metadata ──────────────────────────────────────────────────────
-    type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
+    MetadataValue: TypeAlias = (
+        Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
+    )
 
     # ── Handlers ──────────────────────────────────────────────────────
-    type HandlerCallable = Callable[[Container], Container]
-    type HandlerLike = Callable[..., Container]
+    HandlerCallable: TypeAlias = Callable[[Container], Container]
+    HandlerLike: TypeAlias = Callable[..., Container]
 
     # ── Plugin / Constants ────────────────────────────────────────────
-    type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
-    type ConstantValue = (
+    RegistrablePlugin: TypeAlias = (
+        Scalar | BaseModel | Callable[..., Scalar | BaseModel]
+    )
+    ConstantValue: TypeAlias = (
         Primitives
         | ConfigDict
         | SettingsConfigDict
@@ -103,15 +111,15 @@ class FlextTypes:
     )
 
     # ── File / misc ───────────────────────────────────────────────────
-    type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
-    type SortableObjectType = str | int | float
-    type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
-    type TypeHintSpecifier = type | str | Callable[[Scalar], Scalar]
-    type GenericTypeArgument = str | type[Scalar]
-    type MessageTypeSpecifier = str | type
-    type IncEx = set[str] | Mapping[str, set[str] | bool]
+    FileContent: TypeAlias = str | bytes | BaseModel | Sequence[Sequence[str]]
+    SortableObjectType: TypeAlias = str | int | float
+    ConversionMode: TypeAlias = Literal["to_str", "to_str_list", "normalize", "join"]
+    TypeHintSpecifier: TypeAlias = type | str | Callable[[Scalar], Scalar]
+    GenericTypeArgument: TypeAlias = str | type[Scalar]
+    MessageTypeSpecifier: TypeAlias = str | type
+    IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
 
-    type TYPE_CHECKING = bool
+    TYPE_CHECKING: TypeAlias = bool
 
     # ── Validation (Pydantic-annotated) ───────────────────────────────
     class Validation:

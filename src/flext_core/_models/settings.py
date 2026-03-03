@@ -237,6 +237,7 @@ class FlextModelsConfig:
                 title="Data Items",
                 examples=[["item-a", "item-b"]],
             ),
+        ]
 
         @model_validator(mode="after")
         def validate_cross_fields(self) -> Self:

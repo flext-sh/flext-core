@@ -1454,8 +1454,8 @@ class FlextRuntime:
             if error_data is not None and not isinstance(
                 error_data, FlextModelsContainers.ConfigMap
             ):
-                self._error_data: FlextModelsContainers.ConfigMap | None = FlextModelsContainers.ConfigMap(
-                    root=dict(error_data)
+                self._error_data: FlextModelsContainers.ConfigMap | None = (
+                    FlextModelsContainers.ConfigMap(root=dict(error_data))
                 )
             else:
                 self._error_data = error_data
