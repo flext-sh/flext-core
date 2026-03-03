@@ -25,7 +25,7 @@ __all__ = ["FlextInfraCodegenScaffolder"]
 class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldResult]]):
     """Generates missing base modules in src/ and tests/ directories."""
 
-    def __init__(self, workspace_root: Path) -> None:  # noqa: D107
+    def __init__(self, workspace_root: Path) -> None:  # noqa: D107  # JUSTIFIED: pydocstyle allows __init__ omission in internal service classes — https://docs.astral.sh/ruff/rules/undocumented-public-init/
         super().__init__()
         self._workspace_root = workspace_root
 
@@ -48,8 +48,6 @@ class FlextInfraCodegenScaffolder(FlextService[list[FlextInfraModels.ScaffoldRes
 
         results: list[FlextInfraModels.ScaffoldResult] = []
         projects = projects_result.unwrap()
-        if not isinstance(projects, list):
-            return results
         for project in projects:
             if project.name in c.Infra.Codegen.EXCLUDED_PROJECTS:
                 continue

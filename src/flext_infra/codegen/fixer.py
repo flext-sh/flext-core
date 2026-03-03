@@ -29,7 +29,7 @@ class FlextInfraCodegenFixer(FlextService[list[FlextInfraModels.AutoFixResult]])
 
     _workspace_root: Path
 
-    def __init__(self, workspace_root: Path) -> None:  # noqa: D107
+    def __init__(self, workspace_root: Path) -> None:  # noqa: D107  # JUSTIFIED: pydocstyle allows __init__ omission in internal service classes — https://docs.astral.sh/ruff/rules/undocumented-public-init/
         super().__init__()
         self._workspace_root = workspace_root
 

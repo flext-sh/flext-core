@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import ast
 import contextlib
-import subprocess  # noqa: S404
+import subprocess  # noqa: S404  # JUSTIFIED: Python stdlib subprocess needed for ruff invocation — https://bandit.readthedocs.io/en/latest/plugins/b404_import_subprocess.html
 from collections import defaultdict
 from pathlib import Path
 from typing import override
@@ -34,7 +34,7 @@ class FlextInfraCodegenLazyInit(FlextService[int]):
     using ``flext_core.lazy`` utilities.
     """
 
-    def __init__(self, workspace_root: Path) -> None:  # noqa: D107
+    def __init__(self, workspace_root: Path) -> None:  # noqa: D107  # JUSTIFIED: pydocstyle allows __init__ omission in internal service classes — https://docs.astral.sh/ruff/rules/undocumented-public-init/
         super().__init__()
         self._root: Path = workspace_root
 
@@ -254,6 +254,7 @@ def _parse_existing_lazy_imports(tree: ast.Module) -> dict[str, tuple[str, str]]
     ``_LAZY_IMPORTS: dict[str, tuple[str, str]] = {...}``.
     """
     result: dict[str, tuple[str, str]] = {}
+    lazy_import_pair_size = 2
 
     def _extract(d: ast.expr) -> None:
         if not isinstance(d, ast.Dict):
@@ -262,7 +263,7 @@ def _parse_existing_lazy_imports(tree: ast.Module) -> dict[str, tuple[str, str]]
             if (
                 isinstance(key, ast.Constant)
                 and isinstance(val, ast.Tuple)
-                and len(val.elts) == 2  # noqa: PLR2004
+                and len(val.elts) == lazy_import_pair_size
                 and isinstance(val.elts[0], ast.Constant)
                 and isinstance(val.elts[1], ast.Constant)
             ):
@@ -480,7 +481,7 @@ def _generate_file(
     out.extend(["]", "", ""])
 
     out.extend([
-        "def __getattr__(name: str) -> Any:  # noqa: ANN401",
+        "def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/",
         '    """Lazy-load module attributes on first access (PEP 562)."""',
         "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
         "",
@@ -500,8 +501,8 @@ def _generate_file(
 def _run_ruff_fix(path: Path) -> None:
     """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
     with contextlib.suppress(FileNotFoundError):
-        subprocess.run(  # noqa: S603
-            ["ruff", "check", "--fix", "--quiet", str(path)],  # noqa: S607
+        subprocess.run(  # noqa: S603  # JUSTIFIED: fixed argv, shell=False for local tooling — https://bandit.readthedocs.io/en/latest/plugins/b603_subprocess_without_shell_equals_true.html
+            ["ruff", "check", "--fix", "--quiet", str(path)],  # noqa: S607  # JUSTIFIED: ruff resolved from controlled dev environment PATH — https://bandit.readthedocs.io/en/latest/plugins/b607_start_process_with_partial_path.html
             check=False,
             capture_output=True,
         )

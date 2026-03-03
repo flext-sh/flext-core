@@ -167,7 +167,7 @@ def _handle_census(args: argparse.Namespace) -> int:
             "total_violations": sum(rpt.total for rpt in reports),
             "total_fixable": sum(rpt.fixable for rpt in reports),
         }
-        print(json.dumps(data, indent=2))  # noqa: T201
+        print(json.dumps(data, indent=2))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         total_v = sum(rpt.total for rpt in reports)
         total_f = sum(rpt.fixable for rpt in reports)
@@ -260,7 +260,7 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
                 "total_fixable": sum(r.fixable for r in reports_after),
             },
         }
-        print(json.dumps(data, indent=2))  # noqa: T201
+        print(json.dumps(data, indent=2))  # noqa: T201  # JUSTIFIED: CLI JSON output contract requires stdout printing — https://docs.astral.sh/ruff/rules/print/
     else:
         before_v = sum(r.total for r in reports_before)
         after_v = sum(r.total for r in reports_after)
