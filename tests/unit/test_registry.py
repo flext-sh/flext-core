@@ -27,6 +27,7 @@ from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
+
 from flext_core import (
     FlextRegistry,
     c,

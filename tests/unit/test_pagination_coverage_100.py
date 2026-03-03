@@ -20,9 +20,10 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel
+
 from flext_core import t
 from flext_tests import u
-from pydantic import BaseModel
 
 
 def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:

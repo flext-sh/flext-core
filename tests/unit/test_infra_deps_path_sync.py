@@ -7,6 +7,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import tomlkit
+from tomlkit.toml_document import TOMLDocument
+
 from flext_core import r
 from flext_infra import m
 from flext_infra.deps.path_sync import (
@@ -21,7 +23,6 @@ from flext_infra.deps.path_sync import (
     main,
     rewrite_dep_paths,
 )
-from tomlkit.toml_document import TOMLDocument
 
 
 class TestFlextInfraDependencyPathSync:
@@ -599,7 +600,9 @@ class TestMain:
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
                     r[list[m.ProjectInfo]].ok([]),  # root rewrite succeeds
-                    r[list[m.ProjectInfo]].fail("project rewrite failed"),  # project rewrite fails
+                    r[list[m.ProjectInfo]].fail(
+                        "project rewrite failed"
+                    ),  # project rewrite fails
                 ],
             ),
             patch(
@@ -657,7 +660,9 @@ class TestMain:
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
                     r[list[m.ProjectInfo]].ok([]),  # root rewrite
-                    r[list[m.ProjectInfo]].ok(["change1"]),  # project rewrite with changes
+                    r[list[m.ProjectInfo]].ok([
+                        "change1"
+                    ]),  # project rewrite with changes
                 ],
             ),
             patch(

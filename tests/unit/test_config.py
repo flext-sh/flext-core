@@ -27,10 +27,11 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_core import FlextSettings, c, m, u
-from flext_tests import FlextTestsUtilities, tm
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
+
+from flext_core import FlextSettings, c, m, u
+from flext_tests import FlextTestsUtilities, tm
 
 # cast is already imported at top level
 

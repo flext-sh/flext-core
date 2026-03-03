@@ -8,6 +8,7 @@ from enum import StrEnum
 from typing import Never, cast, override
 
 import pytest
+
 from flext_core import c, m, r, t, u
 
 

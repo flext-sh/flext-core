@@ -27,13 +27,13 @@ from collections.abc import Callable
 from typing import cast, override
 
 import pytest
+
 from flext_core import (
     FlextResult as r,
     m,
     t,
 )
 from flext_tests import t as tests_t, u
-
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 from tests.utilities import TestsFlextUtilities

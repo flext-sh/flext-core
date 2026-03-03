@@ -14,9 +14,9 @@ import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
 from yaml import safe_load
 
+from flext_core import FlextResult, r, t
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraJsonService,

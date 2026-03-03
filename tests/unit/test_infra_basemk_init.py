@@ -5,8 +5,9 @@ Tests lazy loading and __getattr__ fallthrough behavior.
 
 from __future__ import annotations
 
-import flext_infra.basemk
 import pytest
+
+import flext_infra.basemk
 from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
 
 

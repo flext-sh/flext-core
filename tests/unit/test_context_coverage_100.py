@@ -12,6 +12,8 @@ from __future__ import annotations
 from collections import UserDict as UserDictBase
 
 import pytest
+from pydantic import BaseModel, ValidationError
+
 from flext_core import (
     FlextConstants,
     FlextContext,
@@ -21,8 +23,6 @@ from flext_core import (
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
 from flext_tests import u
-from pydantic import BaseModel, ValidationError
-
 from tests.test_utils import assertion_helpers
 
 # ==================== COVERAGE TESTS ====================
@@ -331,9 +331,8 @@ class TestContext100Coverage:
         """Test ContextData.validate_dict_serializable with non-dict."""
         # Test with non-dict value for metadata (which uses validate_metadata)
         invalid_metadata: t.GeneralValueType = 123
-        with pytest.raises(
-            (TypeError, ValidationError),
-        ):
+        exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
+        with pytest.raises(exc_types):
             FlextModelsContext.ContextData.model_validate({
                 "metadata": invalid_metadata,
             })

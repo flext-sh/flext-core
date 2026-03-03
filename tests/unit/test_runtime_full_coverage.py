@@ -15,10 +15,11 @@ from pathlib import Path
 from types import MappingProxyType, ModuleType
 from typing import ClassVar, Self, cast, override
 
-import flext_core.runtime as runtime_module
 import pytest
-from flext_core import FlextRuntime, c, m, r, t, u
 from pydantic import BaseModel
+
+import flext_core.runtime as runtime_module
+from flext_core import FlextRuntime, c, m, r, t, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module(
@@ -403,6 +404,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         logger_factory: Callable[[], object] = staticmethod(lambda: object())
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
+
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast("object", Config())),
     )
@@ -424,6 +426,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         logger_factory: Callable[..., object] | None = None
         cache_logger_on_first_use: bool = True
         async_logging: bool = False
+
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast("object", ConfigNoAsync())),
     )
@@ -441,6 +444,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         logger_factory: Callable[..., object] | None = None
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
+
     FlextRuntime.configure_structlog(
         config=cast("t.GeneralValueType", cast("object", ConfigAsyncFallback())),
     )
@@ -567,6 +571,7 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     class B:
         unique_id: str = "1"
+
     assert (
         FlextRuntime.compare_entities_by_id(
             cast("t.GeneralValueType", cast("object", A())),

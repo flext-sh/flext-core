@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import override
 
 import pytest
+
 from flext_core import e, r, s, t
 
 

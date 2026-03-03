@@ -147,6 +147,7 @@ class FlextModelsCollections:
             self.categories.clear()
 
         @computed_field
+        @property
         def total_entries(self) -> int:
             """Get total number of entries across all categories.
 
@@ -157,6 +158,7 @@ class FlextModelsCollections:
             return sum(len(entries) for entries in self.categories.values())
 
         @computed_field
+        @property
         def category_names(self) -> list[str]:
             """Get list of all category names.
 

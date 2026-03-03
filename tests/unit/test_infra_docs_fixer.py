@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from flext_core import r
 from flext_infra.docs.fixer import FixItem, FixReport, FlextInfraDocFixer
 from flext_infra.docs.shared import FlextInfraDocScope, FlextInfraDocsShared

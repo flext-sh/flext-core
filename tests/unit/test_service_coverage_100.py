@@ -13,7 +13,6 @@ from typing import override
 
 from flext_core import r, s, t
 from flext_tests import FlextTestsDomains
-
 from tests.test_utils import assertion_helpers
 
 # ==================== REAL SERVICE CLASSES ====================

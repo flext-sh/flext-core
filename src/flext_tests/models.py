@@ -15,8 +15,6 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import TypeAliasType, override
 
-from flext_core import FlextModels, r, u
-from flext_core._models.base import FlextModelFoundation
 from pydantic import (
     AliasChoices,
     BaseModel,
@@ -27,6 +25,8 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core import FlextModels, r, u
+from flext_core._models.base import FlextModelFoundation
 from flext_tests import c, t
 
 
@@ -386,7 +386,7 @@ class FlextTestsModels(FlextModels):
                     default=None,
                     description="Positional arguments for constructor",
                 )
-                kwargs: Mapping[str, t.Tests.PayloadValue] | None = Field(
+                call_kwargs: Mapping[str, t.Tests.PayloadValue] | None = Field(
                     default=None,
                     description="Keyword arguments for constructor",
                 )

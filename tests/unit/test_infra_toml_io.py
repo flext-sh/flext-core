@@ -10,9 +10,10 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
+from tomlkit.items import Table
+
 from flext_core import t
 from flext_infra import FlextInfraTomlService
-from tomlkit.items import Table
 
 
 class TestFlextInfraTomlService:

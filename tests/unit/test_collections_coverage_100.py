@@ -19,14 +19,22 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from flext_core import FlextRuntime, m, t
 from pydantic import Field
+
+from flext_core import FlextRuntime, m, t
 
 # Use actual classes, not type aliases, for inheritance
 Statistics = m.CollectionsStatistics
 Config = m.CollectionsConfig
 Results = m.CollectionsResults
 Options = m.CollectionsOptions
+
+
+class _TestConfig(Config):
+    """Module-level test config for pydantic mypy plugin compatibility."""
+
+    timeout: int = 30
+    retries: int = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,7 +123,7 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
-        names: list[str] = categories.category_names()
+        names: list[str] = categories.category_names
         assert all(name in names for name in ["users", "groups"])
         assert len(names) == 2
 
@@ -244,60 +252,37 @@ class TestFlextModelsCollectionsSettings:
 
     def test_config_merge(self) -> None:
         """Test merge method."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-            retries: int = 3
-
-        config1 = TestConfig(timeout=30, retries=3)
-        config2 = TestConfig(timeout=60)
-        merged: TestConfig = config1.merge(config2)
+        config1 = _TestConfig.model_validate({"timeout": 30, "retries": 3})
+        config2 = _TestConfig.model_validate({"timeout": 60})
+        merged: _TestConfig = config1.merge(config2)
         assert merged.timeout == 60
         assert merged.retries == 3
 
     def test_config_from_dict(self) -> None:
         """Test from_dict class method."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-
         config_data = m.ConfigMap(root={"timeout": 60})
-        config: TestConfig = TestConfig.from_dict(config_data)
+        config: _TestConfig = _TestConfig.from_dict(config_data)
         assert config.timeout == 60
 
     def test_config_to_dict(self) -> None:
         """Test to_mapping method (to_dict was renamed to to_mapping)."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-
-        config = TestConfig(timeout=60)
+        config = _TestConfig.model_validate({"timeout": 60})
         # Config uses to_mapping() method, not to_dict()
         config_dict = config.to_mapping()
         assert config_dict["timeout"] == 60
 
     def test_config_with_updates(self) -> None:
         """Test with_updates method."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-            retries: int = 3
-
-        config = TestConfig(timeout=30, retries=3)
-        updated: TestConfig = config.with_updates(timeout=60)
+        config = _TestConfig.model_validate({"timeout": 30, "retries": 3})
+        updated: _TestConfig = config.with_updates(timeout=60)
         assert updated.timeout == 60
         assert updated.retries == 3
         assert config.timeout == 30
 
     def test_config_diff(self) -> None:
         """Test diff method."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-            retries: int = 3
-
-        config1 = TestConfig(timeout=30, retries=3)
-        config2 = TestConfig(timeout=60, retries=3)
+        config1 = _TestConfig.model_validate({"timeout": 30, "retries": 3})
+        config2 = _TestConfig.model_validate({"timeout": 60, "retries": 3})
         diff = config1.diff(config2)
         assert "timeout" in diff
         assert diff["timeout"] == (30, 60)
@@ -305,13 +290,8 @@ class TestFlextModelsCollectionsSettings:
 
     def test_config_diff_all_different(self) -> None:
         """Test diff with all fields different."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-            retries: int = 3
-
-        config1 = TestConfig(timeout=30, retries=3)
-        config2 = TestConfig(timeout=60, retries=5)
+        config1 = _TestConfig.model_validate({"timeout": 30, "retries": 3})
+        config2 = _TestConfig.model_validate({"timeout": 60, "retries": 5})
         diff = config1.diff(config2)
         assert len(diff) == 2
         assert diff["timeout"] == (30, 60)
@@ -319,13 +299,9 @@ class TestFlextModelsCollectionsSettings:
 
     def test_config_eq(self) -> None:
         """Test __eq__ method."""
-
-        class TestConfig(Config):
-            timeout: int = 30
-
-        config1 = TestConfig(timeout=30)
-        config2 = TestConfig(timeout=30)
-        config3 = TestConfig(timeout=60)
+        config1 = _TestConfig.model_validate({"timeout": 30})
+        config2 = _TestConfig.model_validate({"timeout": 30})
+        config3 = _TestConfig.model_validate({"timeout": 60})
         assert config1 == config2
         assert config1 != config3
         assert config1 != "not a config"

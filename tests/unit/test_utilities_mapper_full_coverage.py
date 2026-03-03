@@ -9,10 +9,11 @@ from pathlib import Path
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
+
 from flext_core import c, m, p, r, t
 from flext_core._utilities.cache import FlextUtilitiesCache as Cache
 from flext_core._utilities.mapper import FlextUtilitiesMapper as Mapper
-from pydantic import BaseModel
 
 
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
@@ -28,7 +29,8 @@ def _extract_field_obj(item: object, field_name: str) -> object:
 
 
 def _build_flags_obj(
-    active_flags: object, flag_mapping: Mapping[str, str],
+    active_flags: object,
+    flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
     fn: Callable[..., r[Mapping[str, bool]]] = getattr(Mapper, "build_flags_dict")
@@ -669,6 +671,7 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
         @override
         def __call__(self, value: int) -> bool:
             return value == 1
+
     predicates: dict[str, NamedPredicate] = {
         "bad": BadPredicate(),
         "no": NegativePredicate(),

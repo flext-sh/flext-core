@@ -10,9 +10,10 @@ from __future__ import annotations
 import importlib
 from typing import Never, cast, override
 
-from flext_core import FlextRuntime, r, t
 from pydantic import BaseModel
 from returns.io import IOResult, IOSuccess
+
+from flext_core import FlextRuntime, r, t
 
 result_module = importlib.import_module("flext_core.result")
 

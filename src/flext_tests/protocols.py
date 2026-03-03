@@ -14,9 +14,9 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocols, FlextResult, T
 from pydantic import BaseModel
 
+from flext_core import FlextProtocols, FlextResult, T
 from flext_tests import t
 
 

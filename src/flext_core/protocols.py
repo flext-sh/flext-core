@@ -856,8 +856,6 @@ class FlextProtocols:
         - ResultT: Type of result returned by handler
         """
 
-
-
         def handle(
             self,
             message: MessageT,

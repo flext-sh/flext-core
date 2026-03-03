@@ -9,6 +9,7 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.maintenance.__main__ import main
 

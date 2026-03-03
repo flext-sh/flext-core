@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from flext_core import FlextService, r
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Table
 
+from flext_core import FlextService, r
 from flext_infra import FlextInfraDiscoveryService, m
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.constants import c

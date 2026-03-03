@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 
 from flext_core import FlextRuntime
-
 from flext_infra.check.services import run_cli
 
 

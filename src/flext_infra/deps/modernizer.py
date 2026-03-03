@@ -7,9 +7,9 @@ from collections.abc import Iterable, Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
-from flext_core import FlextLogger, t
 from tomlkit.items import Array, Item, Table
 
+from flext_core import FlextLogger, t
 from flext_infra import FlextInfraCommandRunner
 from flext_infra.constants import c
 
@@ -287,6 +287,171 @@ class EnsurePytestConfigPhase:
         return changes
 
 
+class EnsureMypyConfigPhase:
+    """Ensure standard mypy configuration with pydantic plugin across all projects."""
+
+    _PLUGINS: tuple[str, ...] = ("pydantic.mypy",)
+    _DISABLED_ERROR_CODES: tuple[str, ...] = ("prop-decorator",)
+
+    def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
+        """Merge standard mypy config into existing, preserving project-specific entries."""
+        changes: list[str] = []
+
+        tool = doc.get("tool")
+        if not isinstance(tool, Table):
+            tool = tomlkit.table()
+            doc["tool"] = tool
+
+        mypy = _ensure_table(tool, "mypy")
+
+        # Ensure Python version
+        if _unwrap_item(mypy.get("python_version")) != "3.13":
+            mypy["python_version"] = "3.13"
+            changes.append("tool.mypy.python_version set to 3.13")
+
+        # Ensure pydantic plugin is always active
+        current_plugins = _as_string_list(mypy.get("plugins"))
+        needed_plugins = [p for p in self._PLUGINS if p not in current_plugins]
+        if needed_plugins:
+            mypy["plugins"] = _array(sorted(set(current_plugins) | set(self._PLUGINS)))
+            changes.append(f"tool.mypy.plugins added {', '.join(needed_plugins)}")
+
+        # Ensure disabled error codes
+        current_disabled = _as_string_list(mypy.get("disable_error_code"))
+        needed_disabled = [
+            c for c in self._DISABLED_ERROR_CODES if c not in current_disabled
+        ]
+        if needed_disabled:
+            mypy["disable_error_code"] = _array(
+                sorted(set(current_disabled) | set(self._DISABLED_ERROR_CODES)),
+            )
+            changes.append(
+                f"tool.mypy.disable_error_code added {', '.join(needed_disabled)}"
+            )
+
+        return changes
+
+
+class EnsurePydanticMypyConfigPhase:
+    """Ensure standard pydantic-mypy configuration for strict model typing."""
+
+    _SETTINGS: tuple[tuple[str, bool], ...] = (
+        ("init_forbid_extra", True),
+        ("init_typed", True),
+        ("warn_required_dynamic_aliases", True),
+    )
+
+    def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
+        """Merge standard pydantic-mypy config into existing."""
+        changes: list[str] = []
+
+        tool = doc.get("tool")
+        if not isinstance(tool, Table):
+            tool = tomlkit.table()
+            doc["tool"] = tool
+
+        pydantic_mypy = _ensure_table(tool, "pydantic-mypy")
+
+        for key, value in self._SETTINGS:
+            if _unwrap_item(pydantic_mypy.get(key)) is not value:
+                pydantic_mypy[key] = value
+                changes.append(f"tool.pydantic-mypy.{key} set to {value}")
+
+        return changes
+
+
+class EnsurePyrightConfigPhase:
+    """Ensure standard Pyright configuration for strict type checking."""
+
+    _STRICT_SETTINGS: tuple[tuple[str, str], ...] = (
+        ("pythonVersion", "3.13"),
+        ("pythonPlatform", "Linux"),
+        ("typeCheckingMode", "strict"),
+    )
+
+    def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
+        """Merge standard Pyright config into existing, preserving project-specific entries."""
+        changes: list[str] = []
+
+        tool = doc.get("tool")
+        if not isinstance(tool, Table):
+            tool = tomlkit.table()
+            doc["tool"] = tool
+
+        pyright = _ensure_table(tool, "pyright")
+
+        if is_root:
+            # Root has extensive config (140+ keys); only verify strict mode exists
+            if _unwrap_item(pyright.get("typeCheckingMode")) != "strict":
+                pyright["typeCheckingMode"] = "strict"
+                changes.append("tool.pyright.typeCheckingMode set to strict")
+            return changes
+
+        # Sub-projects: ensure minimal strict settings
+        for key, value in self._STRICT_SETTINGS:
+            if _unwrap_item(pyright.get(key)) != value:
+                pyright[key] = value
+                changes.append(f"tool.pyright.{key} set to {value}")
+
+        return changes
+
+
+class EnsureRuffConfigPhase:
+    """Ensure standard Ruff configuration with extend and known-first-party."""
+
+    def apply(
+        self,
+        doc: tomlkit.TOMLDocument,
+        *,
+        path: Path,
+        is_root: bool,
+    ) -> list[str]:
+        """Merge standard Ruff config into existing, preserving project-specific entries."""
+        changes: list[str] = []
+
+        # Root has its own ruff config (extend = "./ruff-shared.toml") - never touch it
+        if is_root:
+            return changes
+
+        tool = doc.get("tool")
+        if not isinstance(tool, Table):
+            tool = tomlkit.table()
+            doc["tool"] = tool
+
+        ruff = _ensure_table(tool, "ruff")
+
+        # Ensure extend points to shared config
+        expected_extend = "../ruff-shared.toml"
+        if _unwrap_item(ruff.get("extend")) != expected_extend:
+            ruff["extend"] = expected_extend
+            changes.append(f"tool.ruff.extend set to {expected_extend}")
+
+        # Auto-detect first-party packages from src/ directory
+        src_dir = path.parent / "src"
+        if src_dir.is_dir():
+            detected_packages = sorted(
+                subdir.name
+                for subdir in src_dir.iterdir()
+                if subdir.is_dir()
+                and (subdir / "__init__.py").exists()
+                and subdir.name != "__pycache__"
+            )
+
+            if detected_packages:
+                # Create nested tables: ruff.lint.isort
+                lint = _ensure_table(ruff, "lint")
+                isort = _ensure_table(lint, "isort")
+
+                current_kfp = _as_string_list(isort.get("known-first-party"))
+                if not current_kfp:
+                    isort["known-first-party"] = _array(detected_packages)
+                    changes.append(
+                        f"tool.ruff.lint.isort.known-first-party set to {detected_packages}"
+                    )
+
+        return changes
+
+
 class EnsurePyreflyConfigPhase:
     """Ensure standard Pyrefly configuration for max-strict typing."""
 
@@ -385,6 +550,7 @@ class InjectCommentsPhase:
         ("[tool.pytest]", "# [MANAGED] pytest"),
         ("[tool.coverage]", "# [MANAGED] coverage"),
         ("[tool.mypy]", "# [MANAGED] mypy"),
+        ("[tool.pydantic-mypy]", "# [MANAGED] pydantic-mypy"),
         ("[tool.pyrefly]", "# [MANAGED] pyrefly"),
         ("[tool.pyright]", "# [MANAGED] pyright"),
     )
@@ -484,6 +650,10 @@ class FlextInfraPyprojectModernizer:
         changes = ConsolidateGroupsPhase().apply(doc, canonical_dev)
         changes.extend(EnsurePytestConfigPhase().apply(doc))
         changes.extend(EnsurePyreflyConfigPhase().apply(doc, is_root=is_root))
+        changes.extend(EnsureMypyConfigPhase().apply(doc))
+        changes.extend(EnsurePydanticMypyConfigPhase().apply(doc))
+        changes.extend(EnsureRuffConfigPhase().apply(doc, path=path, is_root=is_root))
+        changes.extend(EnsurePyrightConfigPhase().apply(doc, is_root=is_root))
 
         tool = doc.get("tool")
         if isinstance(tool, Table):

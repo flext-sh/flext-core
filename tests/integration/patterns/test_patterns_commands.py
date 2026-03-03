@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult, t
-
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings

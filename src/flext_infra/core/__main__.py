@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra.core.inventory import FlextInfraInventoryService
 from flext_infra.core.pytest_diag import FlextInfraPytestDiagExtractor

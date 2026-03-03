@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextService, r, t
 from jinja2 import (
     Environment,
     FileSystemLoader,
@@ -15,6 +14,7 @@ from jinja2 import (
     select_autoescape,
 )
 
+from flext_core import FlextService, r, t
 from flext_infra import c, m
 
 

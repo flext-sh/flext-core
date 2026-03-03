@@ -11,8 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import m
 from pydantic import ValidationError
+
+from flext_core import m
 
 
 class TestMixinNamespace:

@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import Final
 
 from flext_core import FlextConstants
-
 from flext_infra._constants_modules import (
     FlextInfraPathsConstants,
     FlextInfraReportingConstants,

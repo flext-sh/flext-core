@@ -11,6 +11,7 @@ import pathlib
 from pathlib import Path
 
 import pytest
+
 from flext_infra.constants import c
 from flext_infra.docs.auditor import AuditReport
 from flext_infra.docs.shared import (
@@ -282,7 +283,10 @@ class TestFlextInfraDocsShared:
     def test_write_json_with_dict_payload(self, tmp_path: Path) -> None:
         """Test write_json with dictionary payload."""
         json_file = tmp_path / "test.json"
-        payload: dict[str, str | dict[str, str]] = {"key": "value", "nested": {"inner": "data"}}
+        payload: dict[str, str | dict[str, str]] = {
+            "key": "value",
+            "nested": {"inner": "data"},
+        }
         result = FlextInfraDocsShared.write_json(json_file, payload)
         assert result.is_success
 

@@ -13,8 +13,9 @@ from collections import UserDict
 from datetime import UTC, datetime
 from typing import cast, override
 
-from flext_core import t, u
 from pydantic import BaseModel, ConfigDict
+
+from flext_core import t, u
 
 
 class _SampleEntity(BaseModel):

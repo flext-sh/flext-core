@@ -11,8 +11,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDispatcher, FlextService, m, r, t
 from pydantic import Field
+
+from flext_core import FlextDispatcher, FlextService, m, r, t
 
 
 class _BaseInfraCommand(m.Command):

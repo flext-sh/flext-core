@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.constants import c
 from flext_infra.models import FlextInfraModels

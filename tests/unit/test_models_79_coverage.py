@@ -15,7 +15,6 @@ from typing import override
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
-
 from tests.test_utils import assertion_helpers
 
 

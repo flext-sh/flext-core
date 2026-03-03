@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextLogger, FlextService, r
-
 from flext_infra import FlextInfraDiscoveryService, c
 
 logger = FlextLogger.create_module_logger(__name__)

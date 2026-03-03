@@ -27,6 +27,8 @@ from pathlib import Path
 from re import Pattern
 from typing import Protocol, override
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextContext,
     FlextRegistry,
@@ -36,8 +38,6 @@ from flext_core import (
     r,
     t as core_t,
 )
-from pydantic import BaseModel
-
 from flext_tests import c, m, p, t
 
 
@@ -319,14 +319,14 @@ class FlextTestsUtilities(FlextUtilities):
                 original_value: t.Tests.PayloadValue | None = None
                 if attribute_existed:
                     original_value = target.__getattribute__(attribute)
-                setattr(target, attribute, value)
+                object.__setattr__(target, attribute, value)
                 try:
                     yield
                 finally:
                     if attribute_existed:
-                        setattr(target, attribute, original_value)
+                        object.__setattr__(target, attribute, original_value)
                     else:
-                        delattr(target, attribute)
+                        object.__delattr__(target, attribute)
 
         class Factory:
             """Factory helpers for test data creation."""

@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.deps.internal_sync import (
     FlextInfraInternalDependencySyncService,
@@ -202,7 +203,9 @@ class TestParseRepoMap:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict[str, object]].ok({"repo": "not-a-dict"})
+        service._toml.read.return_value = r[dict[str, object]].ok({
+            "repo": "not-a-dict"
+        })
 
         result = service._parse_repo_map(Path("/fake/map.toml"))
 
@@ -1045,7 +1048,9 @@ class TestCollectInternalDeps:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict[str, object]].ok({"project": dict[str, object]()})
+        service._toml.read.return_value = r[dict[str, object]].ok({
+            "project": dict[str, object]()
+        })
 
         (tmp_path / "pyproject.toml").write_text("")
 
@@ -1084,7 +1089,10 @@ class TestSync:
 
         service._toml = Mock()
 
-        service._toml.read.return_value = r[dict[str, object]].ok({"tool": dict[str, object](), "project": dict[str, object]()})
+        service._toml.read.return_value = r[dict[str, object]].ok({
+            "tool": dict[str, object](),
+            "project": dict[str, object](),
+        })
 
         (tmp_path / "pyproject.toml").write_text("")
 

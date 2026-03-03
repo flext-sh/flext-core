@@ -8,6 +8,7 @@ from typing import Any, cast
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.core.skill_validator import (
     FlextInfraSkillValidator,
@@ -229,7 +230,9 @@ class TestFlextInfraSkillValidator:
         baseline_file.write_text('{"counts": {"group1": 5}}')  # Lines 174-187
 
         with patch.object(validator, "_json") as mock_json:
-            mock_json.read.return_value = r[dict[str, object]].ok({"counts": {"group1": 5}})
+            mock_json.read.return_value = r[dict[str, object]].ok({
+                "counts": {"group1": 5}
+            })
             result = validator.validate(workspace_root, "test-skill")
             assert result.is_success
 
@@ -486,7 +489,10 @@ class TestFlextInfraSkillValidator:
         script = skill_dir / "check.py"
         script.write_text("print('test')")  # Lines 264-304
 
-        rule = cast("Mapping[str, Any]", {"id": "test", "type": "custom", "script": "check.py", "pass_mode": True})
+        rule = cast(
+            "Mapping[str, Any]",
+            {"id": "test", "type": "custom", "script": "check.py", "pass_mode": True},
+        )
 
         mock_result = Mock()
         mock_result.exit_code = 0
@@ -952,7 +958,9 @@ class TestFlextInfraSkillValidatorUncoveredLines:
 
         with patch.object(validator, "_run_ast_grep_count", return_value=0):
             with patch.object(validator, "_json") as mock_json:
-                mock_json.read.return_value = r[dict[str, object]].ok({"counts": {"group1": 10}})
+                mock_json.read.return_value = r[dict[str, object]].ok({
+                    "counts": {"group1": 10}
+                })
                 result = validator.validate(workspace_root, "test-skill")
                 assert result.is_success
                 assert result.value.passed

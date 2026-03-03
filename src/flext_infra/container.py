@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextContainer, FlextResult, t
-
 from flext_infra.basemk import (
     FlextInfraBaseMkGenerator,
     FlextInfraBaseMkTemplateEngine,

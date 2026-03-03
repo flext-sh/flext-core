@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextService, r
-
 from flext_infra.constants import c
 from flext_infra.output import output
 

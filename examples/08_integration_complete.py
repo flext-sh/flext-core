@@ -22,6 +22,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import override
 
+from pydantic import Field
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -36,7 +38,6 @@ from flext_core import (
     s,
     u,
 )
-from pydantic import Field
 
 # ═══════════════════════════════════════════════════════════════════
 # DOMAIN MODELS

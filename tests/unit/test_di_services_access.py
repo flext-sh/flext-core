@@ -35,7 +35,6 @@ from flext_core import (
 )
 from flext_core._models.service import FlextModelsService
 from flext_tests import tm, u
-
 from tests.test_utils import assertion_helpers
 
 

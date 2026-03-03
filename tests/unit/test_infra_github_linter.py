@@ -45,7 +45,10 @@ class TestFlextInfraWorkflowLinter:
 
         assert result.is_success
         assert result.value["status"] == "skipped"
-        assert isinstance(result.value["reason"], str) and "actionlint not installed" in result.value["reason"]
+        assert (
+            isinstance(result.value["reason"], str)
+            and "actionlint not installed" in result.value["reason"]
+        )
 
     def test_lint_with_report_path(self, tmp_path: Path) -> None:
         """Test linting with JSON report output."""

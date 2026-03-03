@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from typing import ClassVar, cast, override
 
 import pytest
+
 from flext_core import t, u
 
 

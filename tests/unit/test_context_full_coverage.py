@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 import pytest
+
 from flext_core import FlextContext, c, m, r, t
 
 

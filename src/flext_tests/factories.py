@@ -23,9 +23,9 @@ import builtins
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Never, TypeVar, override
 
-from flext_core import r
 from pydantic import BaseModel
 
+from flext_core import r
 from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
 
 TValue = TypeVar("TValue")
@@ -1010,14 +1010,16 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
 
         """
         try:
-            params = m.Tests.Factory.GenericFactoryParams.model_validate({
-                "type_": type_,
-                **kwargs,
-            })
+            validate_data: dict[str, object] = {"type_": type_, **kwargs}
+            if "kwargs" in validate_data:
+                validate_data["call_kwargs"] = validate_data.pop("kwargs")
+            params = m.Tests.Factory.GenericFactoryParams.model_validate(
+                validate_data,
+            )
         except (TypeError, ValueError, AttributeError) as exc:
             return r[T].fail(f"Invalid parameters: {exc}")
         args = params.args or ()
-        kwargs_dict = params.kwargs or {}
+        kwargs_dict = params.call_kwargs or {}
 
         def _create_instance() -> T:
             type_cls: type[T] = params.type_

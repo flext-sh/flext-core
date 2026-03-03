@@ -26,8 +26,9 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextConstants, FlextResult, FlextService, FlextSettings, c, m, t
 from pydantic import Field, ValidationError
+
+from flext_core import FlextConstants, FlextResult, FlextService, FlextSettings, c, m, t
 
 
 class AppConfig(FlextSettings):

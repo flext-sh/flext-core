@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextResult, r
-from flext_tests import FlextTestsUtilities
 from pydantic import BaseModel
 
+from flext_core import FlextResult, r
+from flext_tests import FlextTestsUtilities
 from tests.test_utils import assertion_helpers
 
 

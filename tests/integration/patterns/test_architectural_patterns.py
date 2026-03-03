@@ -13,8 +13,8 @@ from __future__ import annotations
 import time
 
 import pytest
-from flext_core import FlextConstants, FlextResult, m, t
 
+from flext_core import FlextConstants, FlextResult, m, t
 from tests.test_utils import assertion_helpers
 
 

@@ -11,7 +11,6 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core import FlextLogger, r, t
-
 from flext_infra import FlextInfraCommandRunner, FlextInfraTomlService, m, output
 from flext_infra.constants import c
 

@@ -30,6 +30,7 @@ from typing import ClassVar, cast, override
 import pytest
 import structlog
 from dependency_injector import containers, providers
+
 from flext_core import (
     FlextContainer,
     FlextContext,

@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pytest
+
 import flext_infra
 import flext_infra.basemk
 import flext_infra.check
@@ -17,7 +19,6 @@ import flext_infra.github
 import flext_infra.maintenance
 import flext_infra.release
 import flext_infra.workspace
-import pytest
 from flext_infra.constants import c
 
 

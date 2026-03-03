@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextService, r
-
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.constants import c
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator

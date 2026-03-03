@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from typing import ClassVar, override
 
 import pytest
+from pydantic import BaseModel
+
 from flext_core import (
     FlextExceptions,
     FlextResult,
@@ -29,8 +31,6 @@ from flext_core import (
     x,
 )
 from flext_tests import FlextTestsUtilities, u
-from pydantic import BaseModel
-
 from tests.test_utils import assertion_helpers
 
 

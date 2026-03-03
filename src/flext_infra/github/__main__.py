@@ -18,7 +18,6 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import FlextRuntime
-
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager

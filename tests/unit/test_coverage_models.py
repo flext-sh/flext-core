@@ -25,9 +25,10 @@ from datetime import datetime
 from typing import override
 
 import pytest
+from pydantic import ValidationError, field_validator
+
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
-from pydantic import ValidationError, field_validator
 
 FlextModelsCqrs = m.Cqrs
 

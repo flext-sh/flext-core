@@ -23,7 +23,6 @@ from typing import override
 
 from flext_core import FlextResult, FlextService, r
 from flext_core.constants import KNOWN_VERBS
-
 from flext_infra.constants import c
 
 

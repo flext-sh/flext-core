@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+
 from flext_core import FlextContainer, FlextContext, m, t
 from flext_tests import FlextTestsUtilities, t as tests_t, u
 

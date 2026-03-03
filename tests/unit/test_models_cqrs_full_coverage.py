@@ -6,8 +6,9 @@ import sys
 from types import ModuleType
 
 import pytest
-from flext_core import c, m
 from pydantic import TypeAdapter
+
+from flext_core import c, m
 
 
 def test_command_pagination_limit() -> None:
@@ -33,7 +34,9 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
 
-    monkeypatch.setitem(sys.modules, "flext_core.models", ModuleType("flext_core.models"))
+    monkeypatch.setitem(
+        sys.modules, "flext_core.models", ModuleType("flext_core.models")
+    )
     assert Wrapper.Query._resolve_pagination_class() is m.Cqrs.Pagination
 
 
@@ -99,4 +102,6 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
 def test_flext_message_type_alias_adapter() -> None:
     adapter: TypeAdapter[m.Message] = TypeAdapter(m.Message)
     parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
-    assert isinstance(parsed, m.Command)
+    # Discriminated union produces base CQRS model, not FlextModels wrapper
+    assert type(parsed).__name__ == "Command"
+    assert parsed.message_type == "command"

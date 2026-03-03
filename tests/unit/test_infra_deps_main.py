@@ -5,9 +5,10 @@ from __future__ import annotations
 import sys
 from unittest.mock import Mock, patch
 
+import pytest
+
 # Ensure modules are imported for coverage
 import flext_infra.deps.__main__  # noqa: F401
-import pytest
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main, main as main_func
 
 

@@ -193,3 +193,39 @@ unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
 bad-override = false
+
+# [MANAGED] mypy
+[tool.mypy]
+plugins = [
+    "pydantic.mypy",
+]
+disable_error_code = [
+    "prop-decorator",
+]
+python_version = "3.13"
+
+# [MANAGED] pydantic-mypy
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.ruff]
+extend = "../ruff-shared.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "flext_core",
+    "flext_infra",
+    "flext_tests",
+]
+
+# [MANAGED] pyright
+[tool.pyright]
+pythonVersion = "3.13"
+pythonPlatform = "Linux"
+typeCheckingMode = "strict"
+[dependency-groups]
+dev = [
+    "types-defusedxml (>=0.7.0.20250822,<0.8.0.0)"
+]

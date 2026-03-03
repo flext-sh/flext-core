@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
 
 # ============================================================================
 # Test Models and Factories
@@ -41,8 +42,6 @@ from flext_core import (
     FlextSettings,
     m,
 )
-from pydantic import BaseModel
-
 from tests.test_utils import assertion_helpers
 
 

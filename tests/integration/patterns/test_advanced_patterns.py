@@ -17,8 +17,8 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
-from flext_core import FlextResult, t, u
 
+from flext_core import FlextResult, t, u
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings

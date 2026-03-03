@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+
 from flext_core._dispatcher.timeout import TimeoutEnforcer
 
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+
 from flext_core import FlextResult, m, t
 from flext_tests import c, t as tests_t, tm
 

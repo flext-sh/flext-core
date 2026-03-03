@@ -20,6 +20,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+
 from flext_core import t
 from flext_tests import u
 

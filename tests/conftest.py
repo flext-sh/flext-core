@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import TypeVar, cast
 
 import pytest
+from pydantic import ConfigDict
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -25,8 +27,6 @@ from flext_core import (
     r,
     t,
 )
-from pydantic import ConfigDict
-
 from tests.helpers.scenarios import (
     ParserScenario,
     ParserScenarios,

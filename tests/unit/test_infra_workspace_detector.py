@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 
 

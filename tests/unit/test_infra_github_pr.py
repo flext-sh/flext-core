@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.github.pr import FlextInfraPrManager, _parse_args, _selector, main
 
@@ -470,7 +471,9 @@ class TestMainFunction:
             mock_git.current_branch.return_value = r[str].ok("feature")
             mock_git_cls.return_value = mock_git
             mock_manager = Mock()
-            mock_manager.status.return_value = r[dict[str, object]].ok({"status": "open"})
+            mock_manager.status.return_value = r[dict[str, object]].ok({
+                "status": "open"
+            })
             mock_cls.return_value = mock_manager
             result = main()
         assert result == 0
@@ -519,7 +522,9 @@ class TestMainFunction:
             mock_git.current_branch.return_value = r[str].ok("feature")
             mock_git_cls.return_value = mock_git
             mock_manager = Mock()
-            mock_manager.create.return_value = r[dict[str, object]].ok({"status": "created"})
+            mock_manager.create.return_value = r[dict[str, object]].ok({
+                "status": "created"
+            })
             mock_cls.return_value = mock_manager
             result = main()
         assert result == 0
@@ -566,7 +571,9 @@ class TestMainFunction:
             mock_git.current_branch.return_value = r[str].ok("feature")
             mock_git_cls.return_value = mock_git
             mock_manager = Mock()
-            mock_manager.checks.return_value = r[dict[str, object]].ok({"status": "checks-passed"})
+            mock_manager.checks.return_value = r[dict[str, object]].ok({
+                "status": "checks-passed"
+            })
             mock_cls.return_value = mock_manager
             result = main()
         assert result == 0
@@ -593,7 +600,9 @@ class TestMainFunction:
             mock_git.current_branch.return_value = r[str].ok("feature")
             mock_git_cls.return_value = mock_git
             mock_manager = Mock()
-            mock_manager.merge.return_value = r[dict[str, object]].ok({"status": "merged"})
+            mock_manager.merge.return_value = r[dict[str, object]].ok({
+                "status": "merged"
+            })
             mock_cls.return_value = mock_manager
             result = main()
         assert result == 0
@@ -686,7 +695,9 @@ class TestMainFunction:
             mock_git.current_branch.return_value = r[str].ok("feature")
             mock_git_cls.return_value = mock_git
             mock_manager = Mock()
-            mock_manager.checks.return_value = r[dict[str, object]].fail("checks failed")
+            mock_manager.checks.return_value = r[dict[str, object]].fail(
+                "checks failed"
+            )
             mock_cls.return_value = mock_manager
             result = main()
         assert result == 1
@@ -712,7 +723,9 @@ class TestMainFunction:
             mock_git.current_branch.return_value = r[str].ok("feature")
             mock_git_cls.return_value = mock_git
             mock_manager = Mock()
-            mock_manager.create.return_value = r[dict[str, object]].fail("create failed")
+            mock_manager.create.return_value = r[dict[str, object]].fail(
+                "create failed"
+            )
             mock_cls.return_value = mock_manager
             result = main()
         assert result == 1

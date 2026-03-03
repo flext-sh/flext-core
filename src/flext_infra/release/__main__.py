@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-
 from flext_infra import FlextInfraPathResolver, FlextInfraVersioningService, output
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 

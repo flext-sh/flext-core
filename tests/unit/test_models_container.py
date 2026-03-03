@@ -19,8 +19,9 @@ from datetime import datetime
 from typing import ClassVar
 
 import pytest
-from flext_core import m, t, u
 from pydantic import ValidationError
+
+from flext_core import m, t, u
 
 _expected_validation_errors: tuple[type[Exception], ...] = (
     ValidationError,
@@ -32,11 +33,11 @@ def _service_reg_with_metadata(
     name: str, service: str, metadata: object
 ) -> m.Container.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
-    cls: Callable[..., m.Container.ServiceRegistration] = (
-        m.Container.ServiceRegistration
-    )
-    # Pass through object type; constructor validates
-    return cls(name=name, service=service, metadata=metadata)
+    return m.Container.ServiceRegistration.model_validate({
+        "name": name,
+        "service": service,
+        "metadata": metadata,
+    })
 
 
 def _factory_reg_with_metadata(
@@ -45,11 +46,11 @@ def _factory_reg_with_metadata(
     metadata: object,
 ) -> m.Container.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
-    cls: Callable[..., m.Container.FactoryRegistration] = (
-        m.Container.FactoryRegistration
-    )
-    # Pass through object type; constructor validates
-    return cls(name=name, factory=factory, metadata=metadata)
+    return m.Container.FactoryRegistration.model_validate({
+        "name": name,
+        "factory": factory,
+        "metadata": metadata,
+    })
 
 
 def _normalize_metadata_obj(value: object) -> m.Metadata:

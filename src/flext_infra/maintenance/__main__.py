@@ -13,7 +13,6 @@ import argparse
 import sys
 
 from flext_core import FlextRuntime
-
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 from flext_infra.output import output
 

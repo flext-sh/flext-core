@@ -13,7 +13,6 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
-
 from flext_tests import c, m, t, u
 
 

@@ -45,7 +45,9 @@ class TestRunWorkflows:
         ) as mock_syncer_class:
             mock_syncer = Mock()
             mock_syncer_class.return_value = mock_syncer
-            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].fail("sync failed")
+            mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].fail(
+                "sync failed"
+            )
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_workflows(argv)
@@ -223,7 +225,9 @@ class TestRunPrWorkspace:
         ) as mock_manager_class:
             mock_manager = Mock()
             mock_manager_class.return_value = mock_manager
-            mock_manager.orchestrate.return_value = r[dict[str, object]].fail("orchestration failed")
+            mock_manager.orchestrate.return_value = r[dict[str, object]].fail(
+                "orchestration failed"
+            )
 
             argv = ["--workspace-root", str(tmp_path)]
             result = _run_pr_workspace(argv)
@@ -398,7 +402,9 @@ class TestMain:
             ) as mock_linter_class:
                 mock_linter = Mock()
                 mock_linter_class.return_value = mock_linter
-                mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
+                mock_linter.lint.return_value = r[dict[str, object]].ok({
+                    "status": "ok"
+                })
 
                 sys.argv = ["flext-infra", "lint", "--root", str(tmp_path)]
                 result = main()
@@ -435,7 +441,9 @@ class TestMain:
             ) as mock_manager_class:
                 mock_manager = Mock()
                 mock_manager_class.return_value = mock_manager
-                mock_manager.orchestrate.return_value = r[dict[str, object]].ok({"fail": 0})
+                mock_manager.orchestrate.return_value = r[dict[str, object]].ok({
+                    "fail": 0
+                })
 
                 sys.argv = [
                     "flext-infra",
@@ -468,7 +476,9 @@ class TestMain:
                 ) as mock_linter_class:
                     mock_linter = Mock()
                     mock_linter_class.return_value = mock_linter
-                    mock_linter.lint.return_value = r[dict[str, object]].ok({"status": "ok"})
+                    mock_linter.lint.return_value = r[dict[str, object]].ok({
+                        "status": "ok"
+                    })
 
                     sys.argv = [
                         "flext-infra",

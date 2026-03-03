@@ -27,6 +27,7 @@ from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
+
 from flext_core import FlextConstants, FlextRuntime, c, e, m, t
 from flext_tests import u
 
@@ -1282,6 +1283,7 @@ class Teste:
             @override
             def __len__(self) -> int:
                 return 1
+
         dict_like = DictLike()
         # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
         # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
@@ -1438,7 +1440,9 @@ class Teste:
 
     def test_prepare_kwargs_with_specific_params_none(self) -> None:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
-        specific_params_raw: dict[str, None] = {"field": None}  # None value should not override
+        specific_params_raw: dict[str, None] = {
+            "field": None
+        }  # None value should not override
         # Convert to t.MetadataAttributeDict (None is valid MetadataAttributeValue)
         specific_params: dict[str, t.MetadataAttributeValue] = {
             k: cast("t.MetadataAttributeValue", v)

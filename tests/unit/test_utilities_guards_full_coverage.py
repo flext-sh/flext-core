@@ -8,8 +8,9 @@ from datetime import UTC, datetime
 from typing import cast
 
 import pytest
-from flext_core import c, m, r, t, u
 from pydantic import BaseModel
+
+from flext_core import c, m, r, t, u
 
 
 def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> bool:

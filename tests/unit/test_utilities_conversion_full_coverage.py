@@ -12,9 +12,10 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast
 
+from pydantic import BaseModel
+
 from flext_core import c, m, r, t, u
 from flext_core._utilities.conversion import StrictJsonValue
-from pydantic import BaseModel
 
 
 class _SeqLike(UserList[int]):

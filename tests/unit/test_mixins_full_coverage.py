@@ -7,8 +7,9 @@ from types import SimpleNamespace
 from typing import cast, override
 
 import pytest
-from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
 from pydantic import BaseModel
+
+from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
 
 
 class _SvcModel(BaseModel):

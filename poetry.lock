@@ -4135,6 +4135,18 @@ files = [
 types-setuptools = "*"
 
 [[package]]
+name = "types-defusedxml"
+version = "0.7.0.20250822"
+description = "Typing stubs for defusedxml"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "types_defusedxml-0.7.0.20250822-py3-none-any.whl", hash = "sha256:5ee219f8a9a79c184773599ad216123aedc62a969533ec36737ec98601f20dcf"},
+    {file = "types_defusedxml-0.7.0.20250822.tar.gz", hash = "sha256:ba6c395105f800c973bba8a25e41b215483e55ec79c8ca82b6fe90ba0bc3f8b2"},
+]
+
+[[package]]
 name = "types-docker"
 version = "7.1.0.20260109"
 description = "Typing stubs for docker"
@@ -4610,4 +4622,4 @@ dev = ["autoflake", "bandit", "beartype", "black", "codespell", "deptry", "detec
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "3c95cfcbdc91cdc98682b509298c3c4440565739da40ac01b7216fb8f2cf1e9f"
+content-hash = "10b9c3d8cf95f35cc0a7bc74b6dcfbff212a91e17ae50ea7088448c720a7c9aa"

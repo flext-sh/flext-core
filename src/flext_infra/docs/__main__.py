@@ -18,7 +18,6 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-
 from flext_infra import c, output
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_infra.docs.builder import FlextInfraDocBuilder

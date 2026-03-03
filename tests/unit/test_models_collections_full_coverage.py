@@ -9,8 +9,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import c, m, r, t, u
 from pydantic import Field
+
+from flext_core import c, m, r, t, u
 
 
 class _Stats(m.CollectionsStatistics):

@@ -33,10 +33,10 @@ from pathlib import Path
 from types import TracebackType
 from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, overload
 
-from flext_core import FlextRuntime, r
 from pydantic import BaseModel
 from yaml import YAMLError, dump as yaml_dump, safe_load as yaml_safe_load
 
+from flext_core import FlextRuntime, r
 from flext_tests import c, m, s, t, u
 
 # TypeVar for Pydantic model loading (after imports for proper BaseModel reference)

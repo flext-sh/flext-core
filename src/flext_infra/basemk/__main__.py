@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-
 from flext_infra import m, output
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator

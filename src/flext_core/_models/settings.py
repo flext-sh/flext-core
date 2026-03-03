@@ -932,7 +932,7 @@ class FlextModelsConfig:
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        kwargs: t.ConfigMap = Field(
+        call_kwargs: t.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Keyword arguments for function",
         )

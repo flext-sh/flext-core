@@ -7,8 +7,9 @@ from collections.abc import Callable
 from typing import Any, ClassVar, cast
 
 import pytest
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
 from pydantic import BaseModel
+
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
 
 
 class _FalseConfig:

@@ -855,10 +855,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                 callable_func: Callable[..., object] = func
 
                 def narrowed_func(
-                    message: t.ScalarValue,
+                    message: t.GeneralValueType,
                     captured_callable: Callable[..., object] = callable_func,
-                    **kwargs: t.ScalarValue,
-                ) -> t.ScalarValue:
+                    **kwargs: t.GeneralValueType,
+                ) -> t.GeneralValueType:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""

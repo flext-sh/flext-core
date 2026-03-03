@@ -12,8 +12,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, TypeAliasType, TypeGuard
 
-from flext_core import FlextTypes, m, r
 from pydantic import BaseModel, InstanceOf
+
+from flext_core import FlextTypes, m, r
 
 type _TestPayloadValue = (
     str

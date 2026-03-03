@@ -7,6 +7,7 @@ from enum import StrEnum
 from typing import cast, override
 
 import pytest
+
 from flext_core import u
 
 

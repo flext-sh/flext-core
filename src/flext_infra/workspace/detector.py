@@ -15,7 +15,6 @@ from typing import override
 from urllib.parse import urlparse
 
 from flext_core import FlextService, r
-
 from flext_infra import FlextInfraCommandRunner, output
 
 

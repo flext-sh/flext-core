@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from flext_core import FlextResult as r
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer

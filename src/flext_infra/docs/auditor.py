@@ -17,9 +17,9 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core import FlextLogger, FlextResult, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import FlextLogger, FlextResult, r, t
 from flext_infra import FlextInfraPatterns, output
 from flext_infra.constants import c
 from flext_infra.docs.shared import (

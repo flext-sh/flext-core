@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextLogger, FlextService, r, t
-
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraGitService,

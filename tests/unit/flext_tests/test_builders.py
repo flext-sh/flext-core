@@ -11,10 +11,10 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
-from flext_core import FlextConstants, FlextResult as r, t
-from flext_tests import FlextTestsBuilders, t as t_test, tb
 from pydantic import BaseModel, ValidationError
 
+from flext_core import FlextConstants, FlextResult as r, t
+from flext_tests import FlextTestsBuilders, t as t_test, tb
 from tests.test_utils import assertion_helpers
 
 

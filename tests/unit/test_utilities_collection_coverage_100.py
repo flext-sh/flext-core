@@ -22,10 +22,10 @@ from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from flext_core import FlextRuntime, m, r, t
-from flext_tests import u
 from pydantic import BaseModel, Field
 
+from flext_core import FlextRuntime, m, r, t
+from flext_tests import u
 from tests.test_utils import assertion_helpers
 
 

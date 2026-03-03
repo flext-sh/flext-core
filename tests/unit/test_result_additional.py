@@ -14,9 +14,10 @@ from collections.abc import Callable
 from typing import cast, override
 
 import pytest
+from returns.io import IOFailure
+
 from flext_core import m, r
 from flext_tests import u
-from returns.io import IOFailure
 
 
 class ExplodingGetattr:

@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from flext_core import FlextLogger, FlextService, r, t
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from tomlkit import items
 
+from flext_core import FlextLogger, FlextService, r, t
 from flext_infra import (
     FlextInfraCommandRunner,
     FlextInfraDiscoveryService,

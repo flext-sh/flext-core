@@ -12,9 +12,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from flext_core import FlextLogger, r
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import FlextLogger, r
 from flext_infra import FlextInfraPatterns, FlextInfraTemplateEngine
 from flext_infra.constants import c
 from flext_infra.docs.shared import (

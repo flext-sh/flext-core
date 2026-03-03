@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Final, override
 
 from flext_core import FlextService, r
-
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 from flext_infra.discovery import FlextInfraDiscoveryService
 from flext_infra.models import FlextInfraModels

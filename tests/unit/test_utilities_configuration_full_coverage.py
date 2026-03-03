@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import p, r, t, u
 from pydantic import BaseModel
+
+from flext_core import p, r, t, u
 
 
 class _DumpErrorModel(BaseModel):

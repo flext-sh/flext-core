@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Never
 
-import flext_core._utilities.reliability as reliability_module
 import pytest
+
+import flext_core._utilities.reliability as reliability_module
 from flext_core import c, m, r, u
 
 

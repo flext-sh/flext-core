@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
+
 from flext_core import c
 from flext_tests import FlextTestsUtilities, tm
 
@@ -57,7 +58,7 @@ class ConstantsScenarios:
         ConstantPathScenario("Validation.MAX_EMAIL_LENGTH", 254),
         ConstantPathScenario("Validation.MIN_PHONE_DIGITS", 10),
         ConstantPathScenario("Defaults.TIMEOUT", 30),
-        ConstantPathScenario("Reliability.DEFAULT_TIMEOUT_SECONDS", 30),
+        ConstantPathScenario("Reliability.DEFAULT_TIMEOUT_SECONDS", 30.0),
         ConstantPathScenario("Utilities.MAX_TIMEOUT_SECONDS", 3600),
         ConstantPathScenario("Logging.DEFAULT_LEVEL", "INFO"),
         ConstantPathScenario("Platform.FLEXT_API_PORT", 8000),

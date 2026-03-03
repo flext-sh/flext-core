@@ -387,7 +387,11 @@ class TestOrchestrate:
             tmp_path, include_root=False, fail_fast=True, checkpoint=False, branch=""
         )
         assert result.is_success
-        fail_count = cast("int", result.value.get("fail", 0)) if isinstance(result.value, dict) else 0
+        fail_count = (
+            cast("int", result.value.get("fail", 0))
+            if isinstance(result.value, dict)
+            else 0
+        )
         assert fail_count >= 1
 
     def test_include_root(self, tmp_path: Path) -> None:

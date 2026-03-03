@@ -6,9 +6,9 @@ import argparse
 import sys
 from pathlib import Path
 
-from flext_core import FlextLogger, r
 from tomlkit.toml_document import TOMLDocument
 
+from flext_core import FlextLogger, r
 from flext_infra import FlextInfraDiscoveryService, FlextInfraTomlService, output
 from flext_infra.constants import c
 

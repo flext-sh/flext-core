@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
 
@@ -271,7 +272,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class _NoFallback:
-        logger = None
+        logger: None = None
 
     d._handle_log_result(
         result=r[bool].fail("x"),
@@ -398,7 +399,7 @@ def test_with_correlation_with_context_track_operation_and_factory(
     assert tracked() == "done"
 
     @d.factory(name="svc.factory", singleton=True, lazy=False)
-    def build(_value: t.ScalarValue) -> t.ScalarValue:
+    def build(_value: t.GeneralValueType) -> t.GeneralValueType:
         return 7
 
     assert hasattr(build, c.Discovery.FACTORY_ATTR)

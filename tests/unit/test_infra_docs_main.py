@@ -9,6 +9,7 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.docs.__main__ import (
     _run_audit,

@@ -10,6 +10,7 @@ from collections.abc import Callable
 from typing import Protocol, cast, override, runtime_checkable
 
 import pytest
+
 from flext_core import c, m, p, r, t, u
 
 

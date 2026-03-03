@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from typing import override
 
 import pytest
-from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
 from pydantic import PrivateAttr
 
+from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService

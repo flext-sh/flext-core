@@ -10,8 +10,9 @@ import ast
 from collections import defaultdict
 from pathlib import Path
 
-import flext_infra.codegen as mod
 import pytest
+
+import flext_infra.codegen as mod
 from flext_core import FlextService
 from flext_infra.codegen import FlextInfraCodegenLazyInit
 from flext_infra.codegen.lazy_init import (

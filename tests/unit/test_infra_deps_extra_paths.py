@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import tomlkit
+
 from flext_core import r
 from flext_infra.deps._constants import FlextInfraDepsConstants
 from flext_infra.deps.extra_paths import (

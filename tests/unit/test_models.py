@@ -29,6 +29,8 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import Field, ValidationError, field_validator
+
 from flext_core import (
     c,
     m,
@@ -36,7 +38,6 @@ from flext_core import (
 )
 from flext_core._models.domain_event import _ComparableConfigMap
 from flext_tests import tm, u
-from pydantic import Field, ValidationError, field_validator
 
 
 class ModelType(StrEnum):
@@ -858,7 +859,7 @@ class TestFlextModels:
     def test_handler_registration_model_creation(self) -> None:
         """Test HandlerRegistration model with correct fields."""
 
-        def dummy_handler(value: t.ScalarValue) -> t.ScalarValue:
+        def dummy_handler(value: t.GeneralValueType) -> t.GeneralValueType:
             return value
 
         reg = m.HandlerRegistration(

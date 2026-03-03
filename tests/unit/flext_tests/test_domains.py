@@ -10,6 +10,7 @@ from __future__ import annotations
 import operator
 
 import pytest
+
 from flext_core import (
     u,
 )

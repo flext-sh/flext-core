@@ -12,8 +12,9 @@ from datetime import UTC, datetime, tzinfo
 from typing import cast, override
 
 import pytest
-from flext_core import m, t, u
 from pydantic import BaseModel
+
+from flext_core import m, t, u
 
 generators_module = importlib.import_module("flext_core._utilities.generators")
 

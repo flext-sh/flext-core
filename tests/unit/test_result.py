@@ -11,7 +11,7 @@ Tests r functionality including:
 - Operators (|) and boolean conversion
 - Railway composition patterns
 
-Uses Python 3.13 patterns, FlextTestsUtilities, c,
+Uses Python 3.13 patterns, u, c,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -25,9 +25,9 @@ from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
-from flext_core import c, m, p, r, t
-from flext_tests import FlextTestsUtilities, u
 
+from flext_core import c, m, p, r
+from flext_tests import t, u
 from tests.test_utils import assertion_helpers
 
 
@@ -129,7 +129,7 @@ class ResultScenarios:
 
 
 class Testr:
-    """Comprehensive test suite for r using FlextTestsUtilities."""
+    """Comprehensive test suite for r using u."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -145,7 +145,7 @@ class Testr:
         if op_type == ResultOperationType.CREATION_SUCCESS:
             # Use generic helper to replace 10+ lines of result creation code
             creation_result: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
+                u.Tests.GenericHelpers.create_result_from_value(
                     value,
                     error_on_none="Value cannot be None",
                 )
@@ -324,7 +324,7 @@ class Testr:
                 cast("r[Never]", res2),
                 cast("r[Never]", res3),
             ]
-            FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
+            u.Tests.GenericHelpers.assert_result_chain(
                 result_list,
                 expected_success_count=3,
                 expected_failure_count=0,
@@ -362,7 +362,7 @@ class Testr:
         initial_value = 5
 
         # Step 1: Initial value
-        res1 = FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
+        res1 = u.Tests.GenericHelpers.create_result_from_value(
             initial_value,
             error_on_none="Initial value cannot be None",
         )
@@ -377,7 +377,7 @@ class Testr:
         results.append(res3)
 
         # Validate entire chain using generic helper (replaces 10+ lines)
-        FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
+        u.Tests.GenericHelpers.assert_result_chain(
             results,
             expected_success_count=3,
             expected_failure_count=0,
@@ -421,7 +421,7 @@ class Testr:
         results.append(res4)
 
         # Validate chain - should still be all successful
-        FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
+        u.Tests.GenericHelpers.assert_result_chain(
             results,
             expected_success_count=4,
             expected_failure_count=0,
@@ -433,12 +433,12 @@ class Testr:
         Replaces 10+ lines of manual test case creation.
         """
         # Use generic helper to create parametrized cases
-        success_values: list[str] = ["value1", "value2", "value3"]
+        success_values: list[t.Tests.PayloadValue] = ["value1", "value2", "value3"]
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
 
-        cases = FlextTestsUtilities.Tests.GenericHelpers.create_parametrized_cases(
-            cast("list", success_values),
+        cases = u.Tests.GenericHelpers.create_parametrized_cases(
+            success_values,
             failure_errors,
             error_codes=error_codes,
         )
@@ -466,11 +466,9 @@ class Testr:
         # Test with None and default
         # Business Rule: create_result_from_value infers type from default_on_none
         # When value is None and default_on_none is provided, type is inferred from default
-        result1: r[str] = (
-            FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
-                None,
-                default_on_none="default_value",
-            )
+        result1: r[str] = u.Tests.GenericHelpers.create_result_from_value(
+            None,
+            default_on_none="default_value",
         )
         u.Tests.Result.assert_success_with_value(
             result1,
@@ -478,11 +476,9 @@ class Testr:
         )
 
         # Test with None and error
-        result2: r[str | None] = (
-            FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
-                None,
-                error_on_none="Value is None",
-            )
+        result2: r[str | None] = u.Tests.GenericHelpers.create_result_from_value(
+            None,
+            error_on_none="Value is None",
         )
         u.Tests.Result.assert_failure_with_error(
             result2,
@@ -490,7 +486,7 @@ class Testr:
         )
 
         # Test with actual value
-        result3 = FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
+        result3 = u.Tests.GenericHelpers.create_result_from_value(
             "actual_value",
         )
         u.Tests.Result.assert_success_with_value(

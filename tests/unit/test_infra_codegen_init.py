@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import flext_infra.codegen as codegen_module
 import pytest
+
+import flext_infra.codegen as codegen_module
 from flext_infra.codegen import FlextInfraCodegenLazyInit
 
 

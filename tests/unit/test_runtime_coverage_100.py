@@ -15,6 +15,7 @@ from collections.abc import Mapping, Sequence
 from typing import ClassVar, Never, cast, overload, override
 
 import structlog
+
 from flext_core import FlextRuntime, t
 
 

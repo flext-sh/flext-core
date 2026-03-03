@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_core import FlextResult as r
 from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator

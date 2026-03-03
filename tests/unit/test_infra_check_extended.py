@@ -13,6 +13,7 @@ from typing import cast
 from unittest.mock import patch
 
 import tomlkit
+
 from flext_core import FlextResult as r
 from flext_infra import m
 from flext_infra.check.__main__ import main as check_main

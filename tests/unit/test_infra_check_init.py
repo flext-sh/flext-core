@@ -5,8 +5,9 @@ Tests lazy loading and __getattr__ fallthrough behavior.
 
 from __future__ import annotations
 
-import flext_infra.check
 import pytest
+
+import flext_infra.check
 
 
 class TestFlextInfraCheck:

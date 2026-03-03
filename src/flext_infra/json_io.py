@@ -14,9 +14,9 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, r, t
 from pydantic import BaseModel
 
+from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
 
 

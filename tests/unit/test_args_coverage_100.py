@@ -21,9 +21,9 @@ from enum import StrEnum
 from typing import Annotated, Final, cast
 
 import pytest
+
 from flext_core import p, r, t
 from flext_tests import u
-
 from tests.test_utils import assertion_helpers
 
 
@@ -343,7 +343,7 @@ class TestFlextUtilitiesArgs:
             )
             result = process(status_val)
             u.Tests.Result.assert_failure_with_error(
-                cast("r[str]", result),
+                result,
                 expected_error=errors.INTERNAL_ERROR,
             )
 

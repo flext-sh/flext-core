@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.core.__main__ import (
     _run_basemk_validate,
@@ -131,7 +132,9 @@ class TestCoreMainInventory:
             "flext_infra.core.__main__.FlextInfraInventoryService"
         ) as mock_service:
             mock_service_inst = mock_service.return_value
-            mock_service_inst.generate.return_value = r[dict[str, object]].fail("generation error")
+            mock_service_inst.generate.return_value = r[dict[str, object]].fail(
+                "generation error"
+            )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_inventory(args)
                 assert result == 1
@@ -337,7 +340,9 @@ class TestCoreMainPytestDiag:
             "flext_infra.core.__main__.FlextInfraPytestDiagExtractor"
         ) as mock_extractor:
             mock_extractor_inst = mock_extractor.return_value
-            mock_extractor_inst.extract.return_value = r[dict[str, object]].fail("extraction error")
+            mock_extractor_inst.extract.return_value = r[dict[str, object]].fail(
+                "extraction error"
+            )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_pytest_diag(args)
                 assert result == 1
@@ -359,7 +364,9 @@ class TestCoreMainScan:
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({"violation_count": 0})
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({
+                "violation_count": 0
+            })
             result = _run_scan(args)
             assert result == 0
 
@@ -375,7 +382,9 @@ class TestCoreMainScan:
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({"violation_count": 5})
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({
+                "violation_count": 5
+            })
             result = _run_scan(args)
             assert result == 1
 
@@ -391,7 +400,9 @@ class TestCoreMainScan:
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({"violation_count": 0})
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].ok({
+                "violation_count": 0
+            })
             result = _run_scan(args)
             assert result == 0
 
@@ -407,7 +418,9 @@ class TestCoreMainScan:
             "flext_infra.core.__main__.FlextInfraTextPatternScanner"
         ) as mock_scanner:
             mock_scanner_inst = mock_scanner.return_value
-            mock_scanner_inst.scan.return_value = r[dict[str, object]].fail("scan error")
+            mock_scanner_inst.scan.return_value = r[dict[str, object]].fail(
+                "scan error"
+            )
             with patch("flext_infra.core.__main__.output") as mock_output:
                 result = _run_scan(args)
                 assert result == 1

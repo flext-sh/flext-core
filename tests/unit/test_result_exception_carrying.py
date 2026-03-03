@@ -23,9 +23,10 @@ from __future__ import annotations
 from collections.abc import Sized
 
 import pytest
+from returns.io import IO, IOSuccess
+
 from flext_core import m, p, r
 from flext_core.exceptions import e
-from returns.io import IO, IOSuccess
 
 
 class TestFailNoExceptionBackwardCompat:
@@ -39,7 +40,8 @@ class TestFailNoExceptionBackwardCompat:
         assert result.is_failure
         assert result.error == error_msg
         assert result.exception is None
-        assert isinstance(result, p.Result)
+        result_as_obj: object = result
+        assert isinstance(result_as_obj, p.Result)
 
 
 class TestFailWithException:

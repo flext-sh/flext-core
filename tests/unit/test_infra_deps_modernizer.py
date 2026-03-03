@@ -7,9 +7,11 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import tomlkit
+from tomlkit.items import Array, Table
+
 # Ensure modules are imported for coverage
 import flext_infra.deps.modernizer  # noqa: F401
-import tomlkit
 from flext_infra.deps.modernizer import (
     ConsolidateGroupsPhase,
     EnsurePyreflyConfigPhase,
@@ -29,7 +31,6 @@ from flext_infra.deps.modernizer import (
     _workspace_root,
     main,
 )
-from tomlkit.items import Array, Table
 
 
 class TestDepName:

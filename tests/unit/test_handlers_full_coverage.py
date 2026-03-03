@@ -7,8 +7,9 @@ from types import ModuleType
 from typing import cast, override
 
 import pytest
-from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
 from pydantic import BaseModel
+
+from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
 
 handlers_module = importlib.import_module("flext_core.handlers")
 
@@ -43,12 +44,12 @@ class _MsgWithMessageId(BaseModel):
 
 def test_handler_type_literal_and_invalid() -> None:
     assert (
-        handlers_module._handler_type_to_literal(c.Cqrs.HandlerType.OPERATION)
+        FlextHandlers._handler_type_to_literal(c.Cqrs.HandlerType.OPERATION)
         == "operation"
     )
-    assert handlers_module._handler_type_to_literal(c.Cqrs.HandlerType.SAGA) == "saga"
+    assert FlextHandlers._handler_type_to_literal(c.Cqrs.HandlerType.SAGA) == "saga"
     with pytest.raises(ValueError, match="Unsupported handler type"):
-        handlers_module._handler_type_to_literal(cast("object", "bad"))
+        FlextHandlers._handler_type_to_literal(cast("c.Cqrs.HandlerType", "bad"))
 
 
 def test_invalid_handler_mode_init_raises() -> None:
@@ -56,7 +57,7 @@ def test_invalid_handler_mode_init_raises() -> None:
         handler_id="h1",
         handler_name="bad",
         handler_type=c.Cqrs.HandlerType.COMMAND,
-        handler_mode=cast("object", "invalid"),
+        handler_mode=cast("c.Cqrs.HandlerType", "invalid"),
         command_timeout=10,
         max_command_retries=1,
         metadata=None,
@@ -125,7 +126,7 @@ def test_discovery_narrowed_function_paths() -> None:
     decorator = h.handler(str)
 
     @decorator
-    def exposed(value: t.ScalarValue) -> t.ScalarValue:
+    def exposed(value: t.GeneralValueType) -> t.GeneralValueType:
         _ = value
         return 123
 

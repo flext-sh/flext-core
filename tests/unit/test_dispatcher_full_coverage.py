@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from flext_core import FlextDispatcher, m, p, t
 from flext_core.dispatcher import _DispatchableHandler
 

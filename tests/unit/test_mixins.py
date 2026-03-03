@@ -27,6 +27,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+
 from flext_core import FlextContext, m, t, x
 from flext_tests import u
 

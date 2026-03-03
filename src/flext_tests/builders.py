@@ -15,9 +15,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Literal, Self, TypeGuard, overload
 
-from flext_core import r
 from pydantic import BaseModel
 
+from flext_core import r
 from flext_tests import c, m, t, tt, u
 
 

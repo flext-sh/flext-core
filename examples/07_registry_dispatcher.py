@@ -61,6 +61,7 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
         user_id = u.generate("entity")
         return r[UserCreatedEvent].ok(
             UserCreatedEvent(
+                event_type="user_created",
                 aggregate_id=user_id,
                 name=message.name,
             ),

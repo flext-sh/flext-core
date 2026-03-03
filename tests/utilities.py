@@ -19,7 +19,6 @@ from typing import override
 
 from flext_core import FlextResult, t, u
 from flext_tests import FlextTestsUtilities
-
 from tests.test_utils import assertion_helpers
 
 

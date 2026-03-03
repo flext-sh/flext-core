@@ -342,8 +342,12 @@ class TestSyncWorkspace:
         )
         # Make the file unreadable after resolution
         # Instead, mock render_template to fail
-        object.__setattr__(syncer, 'render_template', Mock(return_value=r[str].fail("render error")))
-        object.__setattr__(syncer, 'resolve_source_workflow', Mock(return_value=r[Path].ok(ci)))
+        object.__setattr__(
+            syncer, "render_template", Mock(return_value=r[str].fail("render error"))
+        )
+        object.__setattr__(
+            syncer, "resolve_source_workflow", Mock(return_value=r[Path].ok(ci))
+        )
 
         result = syncer.sync_workspace(tmp_path)
         assert result.is_failure

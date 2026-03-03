@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated, cast
 
-import flext_core._utilities.args as args_module
 import pytest
+
+import flext_core._utilities.args as args_module
 from flext_core import c, m, p, r, u
 
 

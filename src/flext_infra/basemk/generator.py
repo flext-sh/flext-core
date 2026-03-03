@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Protocol, TextIO, override
 
 from flext_core import FlextService, r, t
-
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.models import FlextInfraModels as m

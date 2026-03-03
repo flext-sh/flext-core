@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 
 import pytest
+
 from flext_core import c
 from flext_core._dispatcher.reliability import (
     CircuitBreakerManager,

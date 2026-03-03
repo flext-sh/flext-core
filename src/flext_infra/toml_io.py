@@ -16,9 +16,9 @@ from typing import override
 
 import tomlkit
 import tomlkit.exceptions
-from flext_core import FlextResult, FlextService, r, t
 from tomlkit.items import Table
 
+from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
 
 type TomlScalar = str | int | float | bool | None

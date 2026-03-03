@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import cast, override
 
 import pytest
+
 from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
 
 
@@ -101,7 +102,9 @@ def test_create_auto_discover_and_mode_mapping(
 ) -> None:
     discovered_handler = _Handler()
 
-    def fake_scan(_module: object) -> list[tuple[str, Callable[..., object], m.Handler.DecoratorConfig]]:
+    def fake_scan(
+        _module: object,
+    ) -> list[tuple[str, Callable[..., object], m.Handler.DecoratorConfig]]:
         cfg = m.Handler.DecoratorConfig(command=str, middleware=[])
         return [("x", discovered_handler.handle, cfg)]
 

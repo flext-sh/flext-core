@@ -8,8 +8,9 @@ from datetime import UTC, datetime
 from typing import override
 
 import pytest
-from flext_core import c, m, r, u
 from pydantic import BaseModel, ValidationError
+
+from flext_core import c, m, r, u
 
 
 class _FrozenValue(m.FrozenStrictModel):

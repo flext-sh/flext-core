@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import ClassVar, cast, override
 
 import pytest
+
 from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r, t, u
 
 
@@ -360,7 +361,9 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     captured: dict[str, object] = {}
 
-    def _for_container(cls: type[object], _container: object, level: object = None) -> FlextLogger:
+    def _for_container(
+        cls: type[object], _container: object, level: object = None
+    ) -> FlextLogger:
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",
@@ -484,7 +487,9 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
 
     captured: dict[str, object] = {}
 
-    def _for_container(cls: type[object], _container: object, level: object = None) -> FlextLogger:
+    def _for_container(
+        cls: type[object], _container: object, level: object = None
+    ) -> FlextLogger:
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",

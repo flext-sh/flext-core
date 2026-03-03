@@ -403,10 +403,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             self._di_provider = providers_module.Singleton(lambda: self)
         return self._di_provider
 
-    def update_from_env(self) -> None:
-        """Update configuration from current environment variables."""
-        # Implementation would reload from env
-
     def validate_override(
         self,
         key: str,

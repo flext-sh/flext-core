@@ -16,7 +16,6 @@ from itertools import count
 from typing import ClassVar, override
 
 from flext_core import FlextModels, FlextResult, FlextService, m, t
-
 from tests.constants import TestsFlextConstants
 
 # =========================================================================

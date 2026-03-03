@@ -16,6 +16,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from flext_infra.codegen.fixer import FlextInfraCodegenFixer
 
 # ---------------------------------------------------------------------------

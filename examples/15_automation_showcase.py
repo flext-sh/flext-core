@@ -22,6 +22,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
+from pydantic import PrivateAttr
+
 from flext_core import (
     FlextContext,
     c,
@@ -31,7 +33,6 @@ from flext_core import (
     t,
     u,
 )
-from pydantic import PrivateAttr
 
 # =============================================================================
 # EXAMPLE 1: Service with Context Enrichment

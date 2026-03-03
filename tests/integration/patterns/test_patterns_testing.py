@@ -20,8 +20,9 @@ from collections.abc import Callable, Container, Iterator, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 
 import pytest
-from flext_core import FlextTypes, FlextUtilities, t
 from hypothesis import HealthCheck, given, settings, strategies as st
+
+from flext_core import FlextTypes, FlextUtilities, t
 
 type FixtureCaseDict = dict[str, str]
 type FixtureDataDict = dict[str, t.GeneralValueType]

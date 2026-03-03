@@ -14,7 +14,6 @@ from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 from flext_core import FlextResult, r, t
-
 from flext_infra import FlextInfraCommandRunner, FlextInfraJsonService
 
 

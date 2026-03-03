@@ -24,6 +24,8 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import override
 
+from pydantic import Field
+
 from flext_core import (
     c,
     m,
@@ -32,7 +34,6 @@ from flext_core import (
     t,
     u,
 )
-from pydantic import Field
 
 # ═══════════════════════════════════════════════════════════════════
 # TYPE DEFINITIONS (Python 3.13+ PEP 695 strict)

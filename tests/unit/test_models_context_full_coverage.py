@@ -7,6 +7,8 @@ from typing import cast, override
 
 import pytest
 import structlog.contextvars
+from pydantic import BaseModel
+
 from flext_core import m, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import (
@@ -14,7 +16,6 @@ from flext_core._models.context import (
     _normalize_statistics_before,
     _normalize_to_mapping,
 )
-from pydantic import BaseModel
 
 
 class _ModelWithNoCallableDump:

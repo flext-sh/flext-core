@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import override
 
+from pydantic import BaseModel as PydanticBaseModel
+
 from flext_core import (
     FlextConstants,
     FlextContainer,
@@ -38,8 +40,6 @@ from flext_core import (
     FlextUtilities,
     t,
 )
-from pydantic import BaseModel as PydanticBaseModel
-
 from tests.test_utils import assertion_helpers
 
 

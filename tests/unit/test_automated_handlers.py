@@ -13,8 +13,8 @@ import time
 from typing import cast
 
 import pytest
-from flext_core import FlextHandlers, r, t
 
+from flext_core import FlextHandlers, r, t
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 

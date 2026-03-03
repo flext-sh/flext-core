@@ -8,9 +8,10 @@ from enum import StrEnum
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
+
 from flext_core import c, m, r, t, u
 from flext_core._utilities.parser import FlextUtilitiesParser
-from pydantic import BaseModel
 
 
 class _LenRaises(UserString):

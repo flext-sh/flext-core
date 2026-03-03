@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from flext_core import r
 from flext_infra.docs.auditor import AuditIssue, AuditReport, FlextInfraDocAuditor, main
 from flext_infra.docs.shared import FlextInfraDocScope

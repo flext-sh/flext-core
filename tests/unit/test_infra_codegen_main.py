@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+
 from flext_infra.codegen import __main__ as codegen_main
 
 
@@ -186,4 +187,4 @@ def test_main_entry_point_via_sys_exit() -> None:
     assert "lazy-init" in result.stdout
 
 
-__all__ = []
+__all__: list[str] = []

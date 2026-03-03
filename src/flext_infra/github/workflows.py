@@ -12,9 +12,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from pathlib import Path
 
-from flext_core import FlextResult, r, t
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import FlextResult, r, t
 from flext_infra import (
     FlextInfraJsonService,
     FlextInfraProjectSelector,
