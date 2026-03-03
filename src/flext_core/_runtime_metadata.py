@@ -27,7 +27,27 @@ class Metadata(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True, validate_assignment=True)
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    version: str = Field(default="1.0.0")
-    attributes: Mapping[str, t.MetadataValue] = Field(default_factory=dict)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="UTC timestamp recording when this metadata object was created.",
+        title="Created At",
+        examples=["2026-01-01T00:00:00Z"],
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="UTC timestamp indicating the last metadata update time.",
+        title="Updated At",
+        examples=["2026-01-01T00:05:00Z"],
+    )
+    version: str = Field(
+        default="1.0.0",
+        description="Semantic version for the metadata schema payload.",
+        title="Schema Version",
+        examples=["1.0.0"],
+    )
+    attributes: Mapping[str, t.MetadataValue] = Field(
+        default_factory=dict,
+        description="Flexible key-value metadata attributes attached to the owning entity.",
+        title="Attributes",
+        examples=[{"service": "billing", "region": "us-east-1"}],
+    )

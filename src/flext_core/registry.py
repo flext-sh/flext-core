@@ -59,7 +59,10 @@ class FlextRegistry(s[bool]):
                 default_factory=list,
                 description="Successfully registered handlers with registration details",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(
+            default_factory=list,
+            description="Successfully registered handlers with registration details.",
+        )
         skipped: Annotated[
             list[str],
             Field(
@@ -67,7 +70,10 @@ class FlextRegistry(s[bool]):
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = Field(default_factory=list)
+        ] = Field(
+            default_factory=list,
+            description="Handler identifiers skipped because they were already registered.",
+        )
         errors: Annotated[
             list[str],
             Field(
@@ -75,7 +81,10 @@ class FlextRegistry(s[bool]):
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = Field(default_factory=list)
+        ] = Field(
+            default_factory=list,
+            description="Error messages captured for failed handler registrations.",
+        )
 
         @computed_field
         def is_success(self) -> bool:

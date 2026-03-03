@@ -433,7 +433,12 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         )
 
         config_class: type[BaseSettings]
-        env_prefix: str = Field(default=c.Platform.ENV_PREFIX)
+        env_prefix: str = Field(
+            default=c.Platform.ENV_PREFIX,
+            description="Environment variable prefix used to resolve configuration keys.",
+            title="Environment Prefix",
+            examples=["FLEXT_"],
+        )
         env_file: str | None = None
 
         def create_config(self) -> BaseSettings:
