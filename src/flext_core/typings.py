@@ -87,6 +87,7 @@ class FlextTypes:
     type FactoryRegistrationCallable = Callable[[], ScalarValue | Sequence[ScalarValue]]
 
     # ── Metadata ──────────────────────────────────────────────────────
+    type MetadataScalarValue = ScalarValue
     type MetadataAttributeValue = (
         ScalarValue | Mapping[str, ScalarValue | list[ScalarValue]] | list[ScalarValue]
     )
