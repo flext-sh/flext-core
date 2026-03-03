@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from types import ModuleType
 from typing import ClassVar, override
@@ -94,7 +94,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def __init_subclass__(
         cls,
-        **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        **kwargs: t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Validate non-abstract subclasses implement a handle() method.
 

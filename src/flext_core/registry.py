@@ -14,7 +14,7 @@ import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Self, TypeGuard, override
 
-from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
+from pydantic import Field, PrivateAttr, ValidationError, computed_field
 
 from flext_core import (
     FlextContainer,
@@ -111,7 +111,7 @@ class FlextRegistry(s[bool]):
 
     def __init_subclass__(
         cls,
-        **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        **kwargs: t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -129,7 +129,7 @@ class FlextRegistry(s[bool]):
     def __init__(
         self,
         dispatcher: p.CommandBus | None = None,
-        **data: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        **data: t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
@@ -971,7 +971,7 @@ class FlextRegistry(s[bool]):
         # Normalize metadata to dict for internal use
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
-            metadata_source: Mapping[str, t.ContainerValue] | m.ConfigMap
+            metadata_source: Mapping[str, t.ContainerValue] | t.ConfigMap
             if isinstance(metadata, m.Metadata):
                 metadata_source = metadata.attributes
             else:

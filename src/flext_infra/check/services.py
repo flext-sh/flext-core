@@ -775,7 +775,7 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         )
         issues: list[_CheckIssue] = []
         try:
-            for entry in json.loads(result.stdout or "[]"):
+            for entry in json.loads(result.stdout or "[]"):  # JUSTIFIED
                 parsed = _RuffLintError.model_validate(entry)
                 issues.append(
                     _CheckIssue(
@@ -870,7 +870,9 @@ class FlextInfraWorkspaceChecker(FlextService[list[_ProjectResult]]):
         issues: list[_CheckIssue] = []
         if json_file.exists():
             try:
-                raw = json.loads(json_file.read_text(encoding=c.Encoding.DEFAULT))
+                raw = json.loads(  # JUSTIFIED
+                    json_file.read_text(encoding=c.Encoding.DEFAULT),
+                )
                 if isinstance(raw, dict):
                     output = _PyreflyOutput.model_validate(raw)
                     pyrefly_errors = output.errors

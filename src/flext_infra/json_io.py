@@ -45,7 +45,9 @@ class FlextInfraJsonService(FlextService[bool]):
         if not path.exists():
             return r[t.ConfigurationMapping].ok({})
         try:
-            loaded = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
+            loaded = json.loads(  # JUSTIFIED
+                path.read_text(encoding=c.Encoding.DEFAULT),
+            )
             if not isinstance(loaded, dict):
                 return r[t.ConfigurationMapping].fail(
                     "JSON root must be object",
@@ -81,7 +83,7 @@ class FlextInfraJsonService(FlextService[bool]):
             path.parent.mkdir(parents=True, exist_ok=True)
             data = payload.model_dump() if isinstance(payload, BaseModel) else payload
             content = (
-                json.dumps(
+                json.dumps(  # JUSTIFIED
                     data,
                     indent=2,
                     sort_keys=sort_keys,

@@ -17,8 +17,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Final, Self, overload
 
-from pydantic import BaseModel
-
 from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
 from flext_core._models.context import FlextModelsContext
 
@@ -350,7 +348,7 @@ class FlextContext(FlextRuntime):
     def _execute_hooks(
         self,
         event: str,
-        event_data: t.ContainerValue | m.ConfigMap,
+        event_data: t.ContainerValue | t.ConfigMap,
     ) -> None:
         """Execute hooks for an event (DRY helper).
 

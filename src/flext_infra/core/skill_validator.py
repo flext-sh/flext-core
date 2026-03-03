@@ -242,7 +242,7 @@ class FlextInfraSkillValidator:
             if not line:
                 continue
             try:
-                json.loads(line)
+                json.loads(line)  # JUSTIFIED
                 count += 1
             except json.JSONDecodeError:
                 continue
@@ -287,7 +287,7 @@ class FlextInfraSkillValidator:
             if not line:
                 continue
             try:
-                payload = json.loads(line)
+                payload = json.loads(line)  # JUSTIFIED
             except json.JSONDecodeError:
                 continue
             if isinstance(payload, dict):

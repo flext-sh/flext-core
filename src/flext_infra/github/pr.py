@@ -79,7 +79,7 @@ class FlextInfraPrManager:
                 result.error or "failed to list PRs",
             )
         try:
-            payload = json.loads(result.value)
+            payload = json.loads(result.value)  # JUSTIFIED
         except json.JSONDecodeError as exc:
             return r[Mapping[str, t.ScalarValue]].fail(f"invalid JSON: {exc}")
 

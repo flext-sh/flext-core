@@ -173,7 +173,7 @@ class FlextMixins(FlextRuntime):
 
     def __init_subclass__(
         cls,
-        **kwargs: t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+        **kwargs: t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
     ) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)

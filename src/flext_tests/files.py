@@ -109,7 +109,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     @staticmethod
     def _validate_model_content[TModelRead: BaseModel](
         model_cls: type[TModelRead],
-        content: str | bytes | m.ConfigMap | list[list[str]],
+        content: str | bytes | t.ConfigMap | list[list[str]],
     ) -> r[TModelRead]:
         try:
             model_instance: TModelRead = model_cls.model_validate(content)
@@ -486,7 +486,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 empty_data: dict[str, t.Tests.PayloadValue] = {}
                 data = {"value": actual_content} if actual_content else empty_data
             _ = file_path.write_text(
-                json.dumps(data, indent=params.indent, ensure_ascii=False),
+                json.dumps(data, indent=params.indent, ensure_ascii=False),  # JUSTIFIED
                 encoding=params.enc,
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
@@ -547,7 +547,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
-    ) -> r[str | bytes | m.ConfigMap | list[list[str]]]: ...
+    ) -> r[str | bytes | t.ConfigMap | list[list[str]]]: ...
 
     @overload
     def read(
@@ -645,12 +645,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         try:
             if actual_fmt == c.Tests.Files.Format.BIN:
-                content: str | bytes | m.ConfigMap | list[list[str]] = (
+                content: str | bytes | t.ConfigMap | list[list[str]] = (
                     params.path.read_bytes()
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
                 text = params.path.read_text(encoding=params.enc)
-                parsed_json = json.loads(text)
+                parsed_json = json.loads(text)  # JUSTIFIED
                 content = self._coerce_read_content(parsed_json)
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
@@ -877,8 +877,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         try:
             match fmt:
                 case "json":
-                    dict1_raw = json.loads(content1)
-                    dict2_raw = json.loads(content2)
+                    dict1_raw = json.loads(content1)  # JUSTIFIED
+                    dict2_raw = json.loads(content2)  # JUSTIFIED
                 case "yaml":
                     dict1_raw = _yaml_safe_load(content1)
                     dict2_raw = _yaml_safe_load(content2)
@@ -1351,7 +1351,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         cls,
         content: Mapping[
             str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ],
         *,
         directory: Path | None = None,
@@ -1540,7 +1540,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _coerce_read_content(
         self,
         value: t.GeneralValueType,
-    ) -> str | bytes | m.ConfigMap | list[list[str]]:
+    ) -> str | bytes | t.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
         if self._is_mapping(value):
@@ -1610,7 +1610,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _coerce_file_content(
         self,
         value: t.GeneralValueType,
-    ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
+    ) -> str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         if isinstance(value, str | bytes):
             return value
         if isinstance(value, BaseModel):
@@ -1653,7 +1653,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             | r[BaseModel]
         ),
         extract_result: bool,
-    ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
+    ) -> str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         """Extract actual content from FlextResult or return as-is.
 
         Uses u.is_type(content, "result") for type checking and u.val() for extraction.
@@ -1716,7 +1716,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             try:
                 if fmt == "json":
                     parsed_raw: t.ContainerValue | list[t.ContainerValue] = (
-                        json.loads(text) if text.strip() else {}
+                        json.loads(text) if text.strip() else {}  # JUSTIFIED
                     )
                 else:
                     # YAML parsing

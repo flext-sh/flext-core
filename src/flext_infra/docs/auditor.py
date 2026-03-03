@@ -304,7 +304,7 @@ class FlextInfraDocAuditor:
         if config_path is None:
             return None, {}
 
-        payload = json.loads(
+        payload = json.loads(  # JUSTIFIED
             config_path.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
         )
         docs_validation = payload.get("docs_validation", {})

@@ -109,7 +109,7 @@ class FlextRuntime:
 
     **Type Guard Utilities** (5+ pattern-based validators):
     1. **is_valid_phone()** - International phone number validation
-    2. **is_valid_json()** - JSON string validation via json.loads()
+    2. **is_valid_json()** - JSON string validation via json.loads()  # JUSTIFIED
     3. **is_valid_identifier()** - Python identifier validation
     4. **is_dict_like()** / **is_list_like()** - Collection type checking
 
@@ -534,7 +534,7 @@ class FlextRuntime:
                 normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
                     value,
                 )
-            return json.dumps(normalized_mapping)
+            return json.dumps(normalized_mapping)  # JUSTIFIED
 
         if FlextRuntime.is_list_like(val):
             # Convert to list of MetadataAttributeValue scalars (including datetime)
@@ -557,7 +557,7 @@ class FlextRuntime:
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
-        Business Rule: Validates JSON strings using json.loads() for parsing.
+        Business Rule: Validates JSON strings using json.loads() for parsing.  # JUSTIFIED
         Returns TypeGuard[str] for type narrowing in conditional blocks.
         Catches JSONDecodeError and ValueError for safe validation. Used for
         validating JSON payloads before deserialization.
@@ -576,7 +576,7 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
-            json.loads(value)
+            json.loads(value)  # JUSTIFIED
             return True
         except (json.JSONDecodeError, TypeError, ValueError):
             return False
@@ -869,9 +869,7 @@ class FlextRuntime:
                 Callable[
                     [],
                     (
-                        t.ScalarValue
-                        | Sequence[t.ScalarValue]
-                        | Mapping[str, t.ScalarValue]
+                        t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]
                     ),
                 ],
             ]

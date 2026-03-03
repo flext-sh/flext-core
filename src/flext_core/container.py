@@ -82,7 +82,7 @@ class FlextContainer(p.DI):
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
             str,
-            t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+            t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -116,7 +116,7 @@ class FlextContainer(p.DI):
         _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
             str,
-            t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+            t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,
@@ -428,7 +428,7 @@ class FlextContainer(p.DI):
         global_config: m.Container.ContainerConfig | None = None,
         user_overrides: Mapping[
             str,
-            t.ScalarValue | m.ConfigMap | Sequence[t.ScalarValue],
+            t.ScalarValue | t.ConfigMap | Sequence[t.ScalarValue],
         ]
         | m.ConfigMap
         | None = None,

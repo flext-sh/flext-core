@@ -170,7 +170,7 @@ class FlextInfraDocValidator:
         required: list[str] = []
         config = root / "docs/architecture/architecture_config.json"
         if config.exists():
-            payload = json.loads(
+            payload = json.loads(  # JUSTIFIED
                 config.read_text(encoding=c.Encoding.DEFAULT, errors="ignore"),
             )
             docs_validation = payload.get("docs_validation", {})

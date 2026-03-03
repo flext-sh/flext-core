@@ -267,7 +267,7 @@ class FlextExceptions:
     @staticmethod
     def _build_context_map(
         context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+        extra_kwargs: Mapping[str, t.MetadataAttributeValue] | t.ConfigMap,
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> m.ConfigMap:
         """Build normalized context map from context and kwargs."""
@@ -290,7 +290,7 @@ class FlextExceptions:
     @staticmethod
     def _build_param_map(
         context: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+        extra_kwargs: Mapping[str, t.MetadataAttributeValue] | t.ConfigMap,
         keys: set[str] | frozenset[str],
     ) -> m.ConfigMap:
         """Build unnormalized parameter map for strict params validation."""
@@ -467,8 +467,8 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
-            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+            metadata_dict: Mapping[str, t.MetadataAttributeValue] | t.ConfigMap,
+            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | t.ConfigMap,
         ) -> MetadataProtocol:
             """Normalize metadata from dict-like object."""
             # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
@@ -499,7 +499,7 @@ class FlextExceptions:
             | m.ConfigMap
             | t.MetadataAttributeValue
             | None,
-            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+            merged_kwargs: Mapping[str, t.MetadataAttributeValue] | t.ConfigMap,
         ) -> MetadataProtocol:
             """Normalize metadata from various input types to m.Metadata model.
 
@@ -1307,7 +1307,7 @@ class FlextExceptions:
         metadata_obj: (
             MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None
         ),
-        kwargs: Mapping[str, t.MetadataAttributeValue] | m.ConfigMap,
+        kwargs: Mapping[str, t.MetadataAttributeValue] | t.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""
         error_context: m.ConfigMap = m.ConfigMap(root={})
