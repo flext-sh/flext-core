@@ -1270,7 +1270,7 @@ class FlextExceptions:
             self.attribute_context = resolved.attribute_context
 
     @staticmethod
-    def prepare_exception_kwargs(
+    def _prepare_exception_kwargs(
         kwargs: MutableMapping[str, t.MetadataValue],
         specific_params: Mapping[str, t.MetadataValue] | None = None,
     ) -> tuple[
@@ -1312,7 +1312,7 @@ class FlextExceptions:
         )
 
     @staticmethod
-    def extract_common_kwargs(
+    def _extract_common_kwargs(
         kwargs: Mapping[str, t.MetadataValue],
     ) -> tuple[
         str | None,
@@ -1332,30 +1332,6 @@ class FlextExceptions:
         if metadata is None:
             metadata = e._safe_config_map(metadata_raw)
         return (correlation_id, metadata)
-
-    @staticmethod
-    def create_error(error_type: str, message: str) -> e.BaseError:
-        """Create an exception instance based on error type."""
-        error_classes: dict[str, type[e.BaseError]] = {
-            "ValidationError": e.ValidationError,
-            "ConfigurationError": e.ConfigurationError,
-            "ConnectionError": e.ConnectionError,
-            "TimeoutError": e.TimeoutError,
-            "AuthenticationError": e.AuthenticationError,
-            "AuthorizationError": e.AuthorizationError,
-            "NotFoundError": e.NotFoundError,
-            "ConflictError": e.ConflictError,
-            "RateLimitError": e.RateLimitError,
-            "CircuitBreakerError": e.CircuitBreakerError,
-            "TypeError": e.TypeError,
-            "OperationError": e.OperationError,
-            "AttributeError": e.AttributeAccessError,
-        }
-        error_class = error_classes.get(error_type)
-        if error_class is None:
-            msg = f"Unknown error type: {error_type}"
-            raise ValueError(msg)
-        return error_class(message)
 
     @staticmethod
     def _determine_error_type(
@@ -1495,9 +1471,9 @@ class FlextExceptions:
         **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
-        correlation_id_obj, metadata_obj = e.extract_common_kwargs(kwargs)
+        correlation_id_obj, metadata_obj = e._extract_common_kwargs(kwargs)
         error_type = e._determine_error_type(kwargs)
-        # correlation_id_obj is already str | None from extract_common_kwargs
+        # correlation_id_obj is already str | None from _extract_common_kwargs
         correlation_id: str | None = correlation_id_obj
 
         error_context = e._build_error_context(correlation_id, metadata_obj, kwargs)
