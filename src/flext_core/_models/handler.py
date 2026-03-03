@@ -192,7 +192,12 @@ class FlextModelsHandler:
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = Field(default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP)
+        ] = Field(
+            default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
+            description="ISO 8601 timestamp recording when the registration entry was created.",
+            title="Registration Timestamp",
+            examples=["2025-01-01T00:00:00Z"],
+        )
         status: Annotated[
             c.Cqrs.CommonStatus,
             Field(

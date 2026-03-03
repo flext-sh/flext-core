@@ -41,7 +41,7 @@ def _normalize_to_mapping(v: t.Container) -> Mapping[str, t.Container]:
     raise ValueError(msg)
 
 
-def _normalize_metadata_before(v: t.Container) -> t.Container:
+def _normalize_metadata_before(v: t.Container | None) -> t.Container | None:
     if v is None:
         return None
     if isinstance(v, FlextModelFoundation.Metadata):
@@ -306,12 +306,12 @@ class FlextModelsContext:
 
         """
 
-        data: m.Dict = Field(
+        data: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Initial context data as key-value pairs",
         )
         metadata: Annotated[
-            FlextModelFoundation.Metadata | m.Dict | None,
+            FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(_normalize_metadata_before),
         ] = Field(
             default=None,
@@ -380,7 +380,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: m.Dict | t.ConfigurationMapping | BaseModel | None,
+            v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
         ) -> Mapping[str, t.Container]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
@@ -397,8 +397,12 @@ class FlextModelsContext:
                 return {}
 
             if isinstance(v, FlextModelFoundation.Metadata):
+                dumped_metadata = v.model_dump()
+                attrs_dict: dict[str, t.Container] = dict(
+                    dumped_metadata.get("attributes", {}),
+                )
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v.attributes,
+                    attrs_dict,
                 )
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
@@ -410,9 +414,10 @@ class FlextModelsContext:
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
                     dump_dict,
                 )
-            elif FlextRuntime.is_dict_like(v):
+            elif isinstance(v, Mapping):
+                mapping_dict: dict[str, t.Container] = dict(v)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v,
+                    mapping_dict,
                 )
             else:
                 type_name = v.__class__.__name__
@@ -471,7 +476,7 @@ class FlextModelsContext:
             description="All context data from all scopes",
         )
         metadata: Annotated[
-            FlextModelFoundation.Metadata | m.Dict | None,
+            FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(_normalize_metadata_before),
         ] = Field(
             default=None,
@@ -489,7 +494,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: m.Dict | t.ConfigurationMapping | BaseModel | None,
+            v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
         ) -> Mapping[str, t.Container]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
@@ -507,8 +512,12 @@ class FlextModelsContext:
                 return {}
 
             if isinstance(v, FlextModelFoundation.Metadata):
+                dumped_metadata = v.model_dump()
+                attrs_dict: dict[str, t.Container] = dict(
+                    dumped_metadata.get("attributes", {}),
+                )
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v.attributes,
+                    attrs_dict,
                 )
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
@@ -520,9 +529,10 @@ class FlextModelsContext:
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
                     dump_dict,
                 )
-            elif FlextRuntime.is_dict_like(v):
+            elif isinstance(v, Mapping):
+                mapping_dict: dict[str, t.Container] = dict(v)
                 normalized = FlextModelsContext.ContextData.normalize_to_general_value(
-                    v,
+                    mapping_dict,
                 )
             else:
                 type_name = v.__class__.__name__
@@ -653,7 +663,10 @@ class FlextModelsContext:
                 default_factory=dict,
                 description="Extensible operation/metrics counts",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Additional metric counters and timing values grouped by metric key.",
+        )
 
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
@@ -743,7 +756,10 @@ class FlextModelsContext:
                 default_factory=dict,
                 description="Extensible custom metadata fields",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Custom metadata attributes for caller-specific tracing and context.",
+        )
 
         @model_validator(mode="after")
         def validate_context_protocol(self) -> FlextModelsContext.ContextMetadata:
@@ -777,11 +793,17 @@ class FlextModelsContext:
         domain_data: Annotated[
             Mapping[str, t.Container],
             Field(default_factory=dict, description="Domain-specific data"),
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Domain payload values scoped to the current business context.",
+        )
         domain_metadata: Annotated[
             Mapping[str, t.Container],
             Field(default_factory=dict, description="Domain metadata"),
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Domain metadata attributes describing origin and processing state.",
+        )
 
 
 # Resolve forward references created by `from __future__ import annotations`.

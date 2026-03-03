@@ -252,13 +252,48 @@ class FlextModelFoundation:
             arbitrary_types_allowed=True,
         )
 
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        version: str = Field(default="1.0.0")
-        created_by: str | None = Field(default=None)
-        modified_by: str | None = Field(default=None)
-        tags: list[str] = Field(default_factory=list)
-        attributes: Mapping[str, t.MetadataValue] = Field(default_factory=dict)
+        created_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="Timestamp when the metadata record was first created in UTC.",
+            title="Created At",
+            examples=["2026-03-03T10:00:00+00:00"],
+        )
+        updated_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="Timestamp of the most recent metadata update in UTC.",
+            title="Updated At",
+            examples=["2026-03-03T10:05:00+00:00"],
+        )
+        version: str = Field(
+            default="1.0.0",
+            description="Semantic version string representing the metadata schema revision.",
+            title="Metadata Version",
+            examples=["1.0.0", "1.2.3"],
+        )
+        created_by: str | None = Field(
+            default=None,
+            description="Identifier of the actor that originally created this metadata.",
+            title="Created By",
+            examples=["system", "user-123"],
+        )
+        modified_by: str | None = Field(
+            default=None,
+            description="Identifier of the actor that last modified this metadata.",
+            title="Modified By",
+            examples=["system", "user-456"],
+        )
+        tags: list[str] = Field(
+            default_factory=list,
+            description="Normalized labels used to classify and filter this metadata.",
+            title="Tags",
+            examples=[["billing", "critical"]],
+        )
+        attributes: Mapping[str, t.MetadataValue] = Field(
+            default_factory=dict,
+            description="Arbitrary metadata attributes stored as key-value pairs.",
+            title="Attributes",
+            examples=[{"source": "api", "priority": "high"}],
+        )
         metadata_value: t.Scalar = Field(
             default=None,
             description="Scalar metadata value.",
@@ -313,14 +348,20 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        data: m.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Command payload containing input data required for execution.",
+        )
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        filters: m.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Filter criteria used to constrain query results.",
+        )
         pagination: m.Dict | None = None
 
     class EventMessage(BaseModel):
@@ -329,9 +370,13 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        data: m.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Event payload with domain data describing what happened.",
+        )
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
+            description="Structured metadata associated with this event message.",
         )
 
     MessageUnion = Annotated[
@@ -346,6 +391,7 @@ class FlextModelFoundation:
         value: t.Container
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
+            description="Structured metadata attached to a successful operation result.",
         )
 
     class FailureResult(BaseModel):
@@ -361,7 +407,10 @@ class FlextModelFoundation:
 
         result_type: Literal["partial"] = "partial"
         value: t.Container
-        warnings: list[str] = Field(default_factory=list)
+        warnings: list[str] = Field(
+            default_factory=list,
+            description="Non-fatal warning messages generated during partial processing.",
+        )
         partial_success_rate: float
 
     OperationResult = Annotated[
@@ -381,7 +430,10 @@ class FlextModelFoundation:
 
         outcome_type: Literal["invalid"] = "invalid"
         errors: list[str]
-        error_codes: list[str] = Field(default_factory=list)
+        error_codes: list[str] = Field(
+            default_factory=list,
+            description="Machine-readable error codes that classify validation failures.",
+        )
 
     class WarningOutcome(BaseModel):
         """Warning validation outcome."""

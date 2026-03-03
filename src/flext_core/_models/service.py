@@ -35,23 +35,86 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Runtime bootstrap options for service initialization."""
 
-        config_type: type[BaseSettings] | None = Field(default=None)
-        config_overrides: Mapping[str, t.Scalar] | None = Field(default=None)
-        context: p.Context | None = Field(default=None)
-        subproject: str | None = Field(default=None)
-        services: Mapping[str, t.RegisterableService] | None = Field(default=None)
-        factories: Mapping[str, t.FactoryCallable] | None = Field(default=None)
-        resources: Mapping[str, t.ResourceCallable] | None = Field(default=None)
-        container_overrides: Mapping[str, t.Scalar] | None = Field(default=None)
-        wire_modules: Sequence[ModuleType] | None = Field(default=None)
-        wire_packages: Sequence[str] | None = Field(default=None)
-        wire_classes: Sequence[type] | None = Field(default=None)
+        config_type: type[BaseSettings] | None = Field(
+            default=None,
+            description="Settings model class used to bootstrap runtime configuration.",
+            title="Config Type",
+            examples=["AppSettings"],
+        )
+        config_overrides: Mapping[str, t.Scalar] | None = Field(
+            default=None,
+            description="Configuration key overrides applied before runtime initialization.",
+            title="Config Overrides",
+            examples=[{"LOG_LEVEL": "DEBUG"}],
+        )
+        context: p.Context | None = Field(
+            default=None,
+            description="Initial context object injected into the service runtime scope.",
+            title="Runtime Context",
+        )
+        subproject: str | None = Field(
+            default=None,
+            description="Subproject identifier used to scope runtime dependencies and settings.",
+            title="Subproject",
+            examples=["flext-core"],
+        )
+        services: Mapping[str, t.RegisterableService] | None = Field(
+            default=None,
+            description="Pre-registered service instances keyed by service name.",
+            title="Services",
+            examples=[{"logger": "service-instance"}],
+        )
+        factories: Mapping[str, t.FactoryCallable] | None = Field(
+            default=None,
+            description="Factory callables used to lazily create service instances.",
+            title="Factories",
+            examples=[{"db": "factory-callable"}],
+        )
+        resources: Mapping[str, t.ResourceCallable] | None = Field(
+            default=None,
+            description="Resource factory callables for lifecycle-managed dependencies.",
+            title="Resources",
+            examples=[{"redis": "resource-callable"}],
+        )
+        container_overrides: Mapping[str, t.Scalar] | None = Field(
+            default=None,
+            description="Dependency container configuration overrides applied at bootstrap.",
+            title="Container Overrides",
+            examples=[{"max_services": 256}],
+        )
+        wire_modules: Sequence[ModuleType] | None = Field(
+            default=None,
+            description="Python modules to wire for dependency injection.",
+            title="Wire Modules",
+        )
+        wire_packages: Sequence[str] | None = Field(
+            default=None,
+            description="Package names to scan and wire for dependency injection.",
+            title="Wire Packages",
+            examples=[["app.api", "app.services"]],
+        )
+        wire_classes: Sequence[type] | None = Field(
+            default=None,
+            description="Concrete classes to wire explicitly in the dependency container.",
+            title="Wire Classes",
+            examples=[["UserService", "OrderService"]],
+        )
 
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""
 
-        trace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        span_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        trace_id: str = Field(
+            default_factory=lambda: str(uuid.uuid4()),
+            description="Distributed trace identifier shared across related service calls.",
+            title="Trace Id",
+            examples=["c8f2d73e-9870-4cba-b873-5b4a3f7b95f4"],
+        )
+        span_id: str = Field(
+            default_factory=lambda: str(uuid.uuid4()),
+            description="Span identifier for the current service operation within a trace.",
+            title="Span Id",
+            examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
+        )
         parent_span_id: str | None = None
 
     class RetryConfiguration(
@@ -63,6 +126,9 @@ class FlextModelsService:
         exponential_base: float = Field(
             default=c.Reliability.RETRY_BACKOFF_BASE,
             ge=1.0,
+            description="Exponential backoff base used to calculate retry delay growth.",
+            title="Exponential Base",
+            examples=[2.0],
         )
         retry_on_timeout: bool = True
 
@@ -117,7 +183,12 @@ class FlextModelsService:
     class BatchOperation(FlextModelFoundation.ArbitraryTypesModel):
         """Single operation in a batch."""
 
-        operation_name: str = Field(min_length=1)
+        operation_name: str = Field(
+            min_length=1,
+            description="Operation name executed as part of the batch request.",
+            title="Operation Name",
+            examples=["create_user", "sync_records"],
+        )
         parameters: FlextModelsService.ServiceParameters | None = None
 
         @model_validator(mode="after")
@@ -136,6 +207,9 @@ class FlextModelsService:
             default_factory=list,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             max_length=c.Performance.MAX_BATCH_OPERATIONS,
+            description="Ordered batch operations to execute for the target service.",
+            title="Batch Operations",
+            examples=[[{"operation_name": "validate"}, {"operation_name": "persist"}]],
         )
         parallel_execution: bool = False
         stop_on_error: bool = True
@@ -164,8 +238,16 @@ class FlextModelsService:
         time_range_seconds: int = c.Performance.DEFAULT_TIME_RANGE_SECONDS
         aggregation: str = Field(
             default=c.Cqrs.Aggregation.AVG,
+            description="Aggregation strategy applied when summarizing metric values.",
+            title="Aggregation",
+            examples=["avg", "sum", "max"],
         )
-        group_by: list[str] = Field(default_factory=list)
+        group_by: list[str] = Field(
+            default_factory=list,
+            description="Metric dimensions used to group the resulting metric series.",
+            title="Group By",
+            examples=[["service_name", "handler_mode"]],
+        )
         filters: FlextModelsService.ServiceFilters | None = None
 
         @model_validator(mode="after")
@@ -183,10 +265,24 @@ class FlextModelsService:
         resource_type: str = Field(
             c.Dispatcher.DEFAULT_RESOURCE_TYPE,
             pattern=c.Platform.PATTERN_IDENTIFIER,
+            description="Logical resource type targeted by the request, validated as an identifier.",
+            title="Resource Type",
+            examples=["user", "invoice", "job"],
         )
         resource_id: str | None = None
-        resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
-        action: str = Field(default=c.Cqrs.Action.GET)
+        resource_limit: int = Field(
+            c.Performance.MAX_BATCH_SIZE,
+            gt=c.ZERO,
+            description="Maximum number of resources to retrieve or process in this request.",
+            title="Resource Limit",
+            examples=[100, 500],
+        )
+        action: str = Field(
+            default=c.Cqrs.Action.GET,
+            description="Requested operation to perform on the target resource type.",
+            title="Action",
+            examples=["get", "create", "update", "delete"],
+        )
         data: FlextModelsService.ServiceData | None = None
         filters: FlextModelsService.ServiceFilters | None = None
 

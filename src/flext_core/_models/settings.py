@@ -62,8 +62,18 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: m.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
-        context: m.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        data: m.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
+            description="Primary request payload passed to the processing operation.",
+            title="Processing Data",
+            examples=[{"record_id": "123", "status": "pending"}],
+        )
+        context: m.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap,
+            description="Execution context metadata used for traceability and request scoping.",
+            title="Processing Context",
+            examples=[{"correlation_id": "corr-123"}],
+        )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -257,12 +267,23 @@ class FlextModelsConfig:
     class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""
 
-        handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
+        handler_name: str = Field(
+            pattern=c.Platform.PATTERN_IDENTIFIER,
+            description="Handler identifier used to route execution in the dispatcher.",
+            title="Handler Name",
+            examples=["process_order", "sync_inventory"],
+        )
         input_data: m.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
+            description="Input payload supplied to the handler during execution.",
+            title="Input Data",
+            examples=[{"order_id": "ord-1001"}],
         )
         execution_context: m.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
+            description="Context values provided to the handler for tracing and runtime behavior.",
+            title="Execution Context",
+            examples=[{"correlation_id": "corr-abc"}],
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,

@@ -81,17 +81,26 @@ class FlextModelsContainers:
     class Dict(_RootDictModel[t.ContainerValue]):
         """Generic dictionary container. Use ``m.Dict``."""
 
-        root: dict[str, t.ContainerValue] = Field(default_factory=dict)
+        root: dict[str, t.ContainerValue] = Field(
+            default_factory=dict,
+            description="Dictionary payload storing generic container values by key.",
+        )
 
     class ConfigMap(_RootDictModel[t.ContainerValue]):
         """Configuration map container. Use ``m.ConfigMap``."""
 
-        root: dict[str, t.ContainerValue] = Field(default_factory=dict)
+        root: dict[str, t.ContainerValue] = Field(
+            default_factory=dict,
+            description="Configuration entries keyed by normalized setting names.",
+        )
 
     class ServiceMap(_RootDictModel[t.ContainerValue]):
         """Service registry map container. Use ``m.ServiceMap``."""
 
-        root: dict[str, t.ContainerValue] = Field(default_factory=dict)
+        root: dict[str, t.ContainerValue] = Field(
+            default_factory=dict,
+            description="Service registry entries keyed by service identifiers.",
+        )
 
     class ErrorMap(_RootDictModel[int | str | dict[str, int]]):
         """Error type mapping container.
@@ -99,7 +108,10 @@ class FlextModelsContainers:
         Replaces: ErrorTypeMapping
         """
 
-        root: dict[str, int | str | dict[str, int]] = Field(default_factory=dict)
+        root: dict[str, int | str | dict[str, int]] = Field(
+            default_factory=dict,
+            description="Error catalog mapping keys to codes, messages, or nested code maps.",
+        )
 
     class FactoryMap(_RootDictModel[t.FactoryCallable]):
         """Map of factory registration callables.
@@ -107,7 +119,10 @@ class FlextModelsContainers:
         Replaces: Mapping[str, FactoryRegistrationCallable]
         """
 
-        root: dict[str, t.FactoryCallable] = Field(default_factory=dict)
+        root: dict[str, t.FactoryCallable] = Field(
+            default_factory=dict,
+            description="Factory callables keyed by registration name.",
+        )
 
     class ResourceMap(_RootDictModel[t.ResourceCallable]):
         """Map of resource callables.
@@ -115,7 +130,10 @@ class FlextModelsContainers:
         Replaces: Mapping[str, ResourceCallable]
         """
 
-        root: dict[str, t.ResourceCallable] = Field(default_factory=dict)
+        root: dict[str, t.ResourceCallable] = Field(
+            default_factory=dict,
+            description="Lifecycle resource factories keyed by resource name.",
+        )
 
     class ValidatorCallable(
         RootModel[Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]]
@@ -169,21 +187,30 @@ class FlextModelsContainers:
 
         root: dict[
             str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Field-level validators keyed by field name.",
+        )
 
     class ConsistencyRuleMap(_RootValidatorMapModel):
         """Map of consistency rules."""
 
         root: dict[
             str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Consistency rule callables keyed by rule identifier.",
+        )
 
     class EventValidatorMap(_RootValidatorMapModel):
         """Map of event validators."""
 
         root: dict[
             str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
-        ] = Field(default_factory=dict)
+        ] = Field(
+            default_factory=dict,
+            description="Event validator callables keyed by event type or alias.",
+        )
 
     class BatchResultDict(BaseModel):
         """Result payload model for batch operation outputs."""
@@ -193,9 +220,18 @@ class FlextModelsContainers:
         )
         results: list[t.Scalar | None] = []
         errors: list[tuple[int, str]] = []
-        total: int = Field(default=0)
-        success_count: int = Field(default=0)
-        error_count: int = Field(default=0)
+        total: int = Field(
+            default=0,
+            description="Total number of batch items processed.",
+        )
+        success_count: int = Field(
+            default=0,
+            description="Number of batch items processed successfully.",
+        )
+        error_count: int = Field(
+            default=0,
+            description="Number of batch items that failed with errors.",
+        )
 
 
 __all__ = ["FlextModelsContainers"]

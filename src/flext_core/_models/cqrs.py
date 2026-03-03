@@ -55,6 +55,9 @@ class FlextModelsCqrs:
         )
         command_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"),
+            description="Unique command identifier used for tracing and idempotency checks.",
+            title="Command Id",
+            examples=["cmd_01HZX7Q0P5N6M2"],
         )
         issuer_id: str | None = None
 
@@ -129,12 +132,23 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: m.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        filters: m.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Filter values that restrict which records are returned by the query.",
+            title="Query Filters",
+            examples=[{"status": "active", "tenant": "acme"}],
+        )
         pagination: FlextModelsCqrs.Pagination | m.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
+            description="Pagination settings controlling page number and page size for query results.",
+            title="Pagination",
+            examples=[{"page": 1, "size": 50}],
         )
         query_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
+            description="Unique query identifier used for tracing and cache correlation.",
+            title="Query Id",
+            examples=["query_01HZX7Q0P5N6M2"],
         )
         query_type: str | None = None
 
@@ -391,6 +405,9 @@ class FlextModelsCqrs:
         )
         event_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
+            description="Unique event identifier used for deduplication and observability.",
+            title="Event Id",
+            examples=["evt_01HZX7Q0P5N6M2"],
         )
         data: m.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
