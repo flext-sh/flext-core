@@ -51,13 +51,9 @@ class TestsFlextModels:
     Collections = FlextModels.Collections
 
     # Type aliases for domain test input
-    type DomainInputValue = (
-        FlextTypes.Container | FlextProtocols.HasModelDump | object
-    )
+    type DomainInputValue = FlextTypes.Container | FlextProtocols.HasModelDump | object
     type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
-    type DomainExpectedResult = (
-        FlextTypes.Container | type[FlextTypes.Container]
-    )
+    type DomainExpectedResult = FlextTypes.Container | type[FlextTypes.Container]
 
     class Core:
         """flext-core-specific test models namespace."""

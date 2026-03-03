@@ -191,10 +191,7 @@ class FlextModelsCqrs:
             adapter: TypeAdapter[
                 FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None
             ] = TypeAdapter(
-                FlextModelsCqrs.Pagination
-                | m.Dict
-                | Mapping[str, t.Scalar]
-                | None,
+                FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None,
             )
             parsed_input = adapter.validate_python(v)
             if parsed_input is None:

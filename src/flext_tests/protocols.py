@@ -622,7 +622,8 @@ class FlextTestsProtocols(FlextProtocols):
                     obj: T,
                     spec: Mapping[
                         str,
-                        t.Tests.ContainerValue | Callable[[t.Tests.ContainerValue], bool],
+                        t.Tests.ContainerValue
+                        | Callable[[t.Tests.ContainerValue], bool],
                     ],
                     *,
                     path_sep: str = ".",

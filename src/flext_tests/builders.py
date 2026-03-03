@@ -1564,7 +1564,9 @@ class FlextTestsBuilders:
                 )
                 # Convert to (test_id, data) format
                 # Store result as metadata dict, not FlextResult directly
-                parametrized: list[tuple[str, Mapping[str, t.Tests.ContainerValue]]] = []
+                parametrized: list[
+                    tuple[str, Mapping[str, t.Tests.ContainerValue]]
+                ] = []
                 for i, (_res, is_success, value, error) in enumerate(cases):
                     test_id = f"case_{i}"
                     # Store result metadata - FlextResult stored as its components

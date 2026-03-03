@@ -862,10 +862,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     if not callable(fn_candidate):
                         return ""
                     result = fn_candidate(message)
-                    if (
-                        isinstance(result, t.Scalar)
-                        or result is None
-                    ):
+                    if isinstance(result, t.Scalar) or result is None:
                         return result
                     return ""
 

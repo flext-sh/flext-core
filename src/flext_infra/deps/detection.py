@@ -20,9 +20,7 @@ from flext_infra import (
     m,
 )
 
-type InfraValue = (
-    t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | None
-)
+type InfraValue = t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | None
 
 type IssueMap = Mapping[str, InfraValue]
 

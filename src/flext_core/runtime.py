@@ -70,7 +70,7 @@ from structlog.processors import (
 )
 from structlog.stdlib import add_log_level
 
-from flext_core import T, c, m, p, t
+from flext_core import T, c, p, t
 from flext_core._models.containers import FlextModelsContainers
 
 
@@ -375,7 +375,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.Container,
-    ) -> TypeGuard[m.ConfigMap]:
+    ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Type guard to check if value is dict-like.
 
         Note:
@@ -445,8 +445,8 @@ class FlextRuntime:
     ) -> t.Container:
         """Normalize any value to t.Container recursively.
 
-        Converts arbitrary objects, m.ConfigMap, list[t.Container], and other types
-        to m.ConfigMap, Sequence[t.Container], etc.
+        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.Container], and other types
+        to FlextModelsContainers.ConfigMap, Sequence[t.Container], etc.
         This is the central conversion function for type safety.
 
         Args:
@@ -820,7 +820,7 @@ class FlextRuntime:
         @classmethod
         def create_layered_bridge(
             cls,
-            config: m.ConfigMap | None = None,
+            config: FlextModelsContainers.ConfigMap | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -857,17 +857,13 @@ class FlextRuntime:
         def create_container(
             cls,
             *,
-            config: m.ConfigMap | None = None,
+            config: FlextModelsContainers.ConfigMap | None = None,
             services: Mapping[str, t.RegisterableService] | None = None,
             factories: Mapping[
                 str,
                 Callable[
                     [],
-                    (
-                        t.Scalar
-                        | Sequence[t.Scalar]
-                        | Mapping[str, t.Scalar]
-                    ),
+                    (t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar]),
                 ],
             ]
             | None = None,
@@ -943,7 +939,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            config: m.ConfigMap | None,
+            config: FlextModelsContainers.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -967,7 +963,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            config: m.ConfigMap | None,
+            config: FlextModelsContainers.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
@@ -1458,7 +1454,7 @@ class FlextRuntime:
             if error_data is not None and not isinstance(
                 error_data, FlextModelsContainers.ConfigMap
             ):
-                self._error_data: m.ConfigMap | None = FlextModelsContainers.ConfigMap(
+                self._error_data: FlextModelsContainers.ConfigMap | None = FlextModelsContainers.ConfigMap(
                     root=dict(error_data)
                 )
             else:
@@ -1533,7 +1529,7 @@ class FlextRuntime:
             return self._error_code
 
         @property
-        def error_data(self) -> m.ConfigMap | None:
+        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
             """Get the error data."""
             return self._error_data
 
@@ -1882,7 +1878,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: m.ConfigMap | None = None,
+            event_data: FlextModelsContainers.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

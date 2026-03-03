@@ -536,11 +536,9 @@ class FlextModelsConfig:
             default=None,
             description="Optional container services (alias for services)",
         )
-        container_factories: Mapping[str, Callable[[], t.Container]] | None = (
-            Field(
-                default=None,
-                description="Optional container factories (alias for factories)",
-            )
+        container_factories: Mapping[str, Callable[[], t.Container]] | None = Field(
+            default=None,
+            description="Optional container factories (alias for factories)",
         )
 
     class NestedExecutionOptions(FlextModelsCollections.Config):
@@ -570,11 +568,9 @@ class FlextModelsConfig:
             default=None,
             description="Optional container services mapping",
         )
-        container_factories: Mapping[str, Callable[[], t.Container]] | None = (
-            Field(
-                default=None,
-                description="Optional container factories mapping",
-            )
+        container_factories: Mapping[str, Callable[[], t.Container]] | None = Field(
+            default=None,
+            description="Optional container factories mapping",
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):
@@ -796,9 +792,7 @@ class FlextModelsConfig:
             description="Additional context for error",
         )
         metadata: (
-            FlextModelFoundation.Metadata
-            | Mapping[str, t.MetadataValue]
-            | None
+            FlextModelFoundation.Metadata | Mapping[str, t.MetadataValue] | None
         ) = Field(
             default=None,
             description="Metadata for error",

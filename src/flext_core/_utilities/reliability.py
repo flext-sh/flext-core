@@ -434,8 +434,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def flow(
         value: t.Container,
-        *ops: Mapping[str, t.Container]
-        | Callable[[t.Container], t.Container],
+        *ops: Mapping[str, t.Container] | Callable[[t.Container], t.Container],
     ) -> t.Container:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
@@ -694,9 +693,7 @@ class FlextUtilitiesReliability:
             type | t.Container | Callable[[t.Container], bool],
             t.Container | Callable[[t.Container], t.Container],
         ],
-        default: t.Container
-        | Callable[[t.Container], t.Container]
-        | None = None,
+        default: t.Container | Callable[[t.Container], t.Container] | None = None,
     ) -> t.Container:
         """Pattern match on a value with type, value, or predicate matching.
 

@@ -17,7 +17,8 @@ from pydantic import BaseModel, InstanceOf
 from flext_core import FlextTypes, m, r
 
 type _TestContainerValue = (
-    t.Primitives | None
+    t.Primitives
+    | None
     | bytes
     | BaseModel
     | Sequence[_TestContainerValue]
@@ -356,7 +357,9 @@ class FlextTestsTypes(FlextTypes):
             ]
             """Type for transformation functions."""
 
-            type ValidateFunc = Callable[[FlextTestsTypes.Tests.TestContainerValue], bool]
+            type ValidateFunc = Callable[
+                [FlextTestsTypes.Tests.TestContainerValue], bool
+            ]
             """Type for validation functions."""
 
             type ResultBuilder[T] = Callable[[], r[T]]

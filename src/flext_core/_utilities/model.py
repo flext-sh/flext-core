@@ -36,8 +36,8 @@ class FlextUtilitiesModel:
 
     """
 
-    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.Primitives | None]] = (
-        TypeAdapter(t.Primitives | None)
+    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.Primitives | None]] = TypeAdapter(
+        t.Primitives | None
     )
 
     @staticmethod

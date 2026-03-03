@@ -116,12 +116,10 @@ class FlextModelsHandler:
         legacy dictionary-based configuration.
         """
 
-        handler: (
-            t.HandlerCallable
-            | p.Handler[t.Container, t.Container]
-            | BaseModel
-        ) = Field(
-            description="Handler instance (callable, object, or FlextHandlers)",
+        handler: t.HandlerCallable | p.Handler[t.Container, t.Container] | BaseModel = (
+            Field(
+                description="Handler instance (callable, object, or FlextHandlers)",
+            )
         )
         message_type: t.MessageTypeSpecifier | None = Field(
             default=None,

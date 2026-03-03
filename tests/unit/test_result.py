@@ -173,8 +173,8 @@ class Testr:
         elif op_type == ResultOperationType.UNWRAP_OR:
             # value is already t.ContainerValue from ResultScenario
             if is_success:
-                unwrap_result: r[t.Container] = (
-                    u.Tests.Result.create_success_result(value)
+                unwrap_result: r[t.Container] = u.Tests.Result.create_success_result(
+                    value
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
@@ -209,9 +209,7 @@ class Testr:
         elif op_type == ResultOperationType.ALT:
             # value is already t.ContainerValue from ResultScenario
             if is_success:
-                result_alt: r[t.Container] = (
-                    u.Tests.Result.create_success_result(value)
-                )
+                result_alt: r[t.Container] = u.Tests.Result.create_success_result(value)
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
                 result_alt = cast("r[t.ContainerValue]", failure_raw)

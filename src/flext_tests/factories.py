@@ -242,8 +242,8 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                     else c.Tests.Factory.DEFAULT_MAX_RETRIES,
                 }
                 if params.overrides:
-                    config_overrides: MutableMapping[str, t.Tests.ContainerValue] = dict(
-                        params.overrides
+                    config_overrides: MutableMapping[str, t.Tests.ContainerValue] = (
+                        dict(params.overrides)
                     )
                     merge_result = u.merge(
                         {k: _to_guard_input(v) for k, v in config_data.items()},
@@ -469,7 +469,9 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
             if params.errors:
                 for err in params.errors:
                     result_list.append(
-                        r[t.Tests.ContainerValue].fail(err, error_code=params.error_code)
+                        r[t.Tests.ContainerValue].fail(
+                            err, error_code=params.error_code
+                        )
                     )
             if params.count > 1 and (not params.values) and (not params.errors):
                 for _ in range(params.count):
@@ -488,7 +490,9 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
             if params.value is not None:
                 empty_case_val = params.value
                 return [r[t.Tests.ContainerValue].ok(empty_case_val)]
-            return [r[t.Tests.ContainerValue].fail(params.error_on_none or params.error)]
+            return [
+                r[t.Tests.ContainerValue].fail(params.error_on_none or params.error)
+            ]
         if params.kind == "ok":
             if params.value is None:
                 return r[t.Tests.ContainerValue].fail(
@@ -726,7 +730,9 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         | Callable[[], t.Tests.ContainerValue]
         | t.Tests.Factory.ModelKind = "user",
         **kwargs: t.Tests.TestResultValue,
-    ) -> builtins.list[t.Tests.ContainerValue] | r[builtins.list[t.Tests.ContainerValue]]:
+    ) -> (
+        builtins.list[t.Tests.ContainerValue] | r[builtins.list[t.Tests.ContainerValue]]
+    ):
         """Create typed list from source.
 
         This is the preferred way to create lists of test data.

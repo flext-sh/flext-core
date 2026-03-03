@@ -58,9 +58,7 @@ class FlextModelFoundation:
         _metadata_map_adapter: ClassVar[
             TypeAdapter[dict[str, t.MetadataValue]] | None
         ] = None
-        _config_adapter: ClassVar[TypeAdapter[dict[str, t.Container]] | None] = (
-            None
-        )
+        _config_adapter: ClassVar[TypeAdapter[dict[str, t.Container]] | None] = None
 
         @classmethod
         def tags_adapter(cls) -> TypeAdapter[list[str]]:
@@ -270,9 +268,7 @@ class FlextModelFoundation:
         @classmethod
         def _validate_attributes(
             cls,
-            value: t.MetadataValue
-            | Mapping[str, t.MetadataValue]
-            | None,
+            value: t.MetadataValue | Mapping[str, t.MetadataValue] | None,
         ) -> Mapping[str, t.MetadataValue]:
             if value is None:
                 return {}

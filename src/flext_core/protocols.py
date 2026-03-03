@@ -21,7 +21,8 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
-from flext_core import T, m, t
+from flext_core import T, t
+from flext_core._models.containers import FlextModelsContainers
 
 if TYPE_CHECKING:
     from pydantic._internal._model_construction import (
@@ -339,7 +340,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> m.ConfigMap | None:
+        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
             """Error metadata (optional)."""
             ...
 
@@ -508,7 +509,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> m.ConfigMap | None:
+        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
             """Error data."""
             ...
 
@@ -660,7 +661,7 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-        def get_config(self) -> m.ConfigMap:
+        def get_config(self) -> FlextModelsContainers.ConfigMap:
             """Return the merged configuration exposed by this container."""
             ...
 
@@ -942,9 +943,7 @@ class FlextProtocols:
 
         def register_handlers(
             self,
-            handlers: Sequence[
-                FlextProtocols.Handler[t.Container, t.Container]
-            ],
+            handlers: Sequence[FlextProtocols.Handler[t.Container, t.Container]],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
 
@@ -1090,9 +1089,7 @@ class FlextProtocols:
 
         def process(
             self,
-            data: (
-                t.Container | BaseModel | FlextProtocols.Result[t.Container]
-            ),
+            data: (t.Container | BaseModel | FlextProtocols.Result[t.Container]),
         ) -> t.Container | BaseModel | FlextProtocols.Result[t.Container]:
             """Process data and return result.
 
@@ -1128,7 +1125,7 @@ class FlextProtocols:
             """
             ...
 
-        def get_metrics(self) -> FlextProtocols.Result[m.ConfigMap]:
+        def get_metrics(self) -> FlextProtocols.Result[FlextModelsContainers.ConfigMap]:
             """Get current metrics dictionary.
 
             Returns:
@@ -1282,7 +1279,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def attributes(self) -> m.ConfigMap:
+            def attributes(self) -> FlextModelsContainers.ConfigMap:
                 """Metadata attributes."""
                 ...
 
@@ -1528,7 +1525,7 @@ class FlextProtocols:
     # Supports: ConfigurationDict (ContainerValue), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        m.ConfigMap
+        FlextModelsContainers.ConfigMap
         | Mapping[str, t.JsonValue]
         | t.ConfigurationMapping
         | BaseModel

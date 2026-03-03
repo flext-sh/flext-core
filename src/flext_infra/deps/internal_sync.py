@@ -283,9 +283,7 @@ class FlextInfraInternalDependencySyncService:
         deps_raw = (
             poetry.get("dependencies") if isinstance(poetry, dict) else empty_deps
         )
-        deps: dict[str, t.Container] = (
-            deps_raw if isinstance(deps_raw, dict) else {}
-        )
+        deps: dict[str, t.Container] = deps_raw if isinstance(deps_raw, dict) else {}
         if not isinstance(deps, dict):
             deps = {}
 

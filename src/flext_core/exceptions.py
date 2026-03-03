@@ -37,9 +37,9 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    _metadata_map_adapter: ClassVar[
-        TypeAdapter[dict[str, t.MetadataValue]]
-    ] = TypeAdapter(dict[str, t.MetadataValue])
+    _metadata_map_adapter: ClassVar[TypeAdapter[dict[str, t.MetadataValue]]] = (
+        TypeAdapter(dict[str, t.MetadataValue])
+    )
 
     class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
@@ -382,9 +382,7 @@ class FlextExceptions:
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataValue]
-            | m.ConfigMap
-            | None = None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
             **extra_kwargs: t.MetadataValue,
         ) -> None:
             """Initialize base error with message and optional metadata.
@@ -1152,9 +1150,7 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id = e._safe_optional_str(correlation_id_raw)
         metadata_raw = kwargs.get("metadata")
-        metadata: MetadataProtocol | Mapping[str, t.MetadataValue] | None = (
-            None
-        )
+        metadata: MetadataProtocol | Mapping[str, t.MetadataValue] | None = None
         model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
@@ -1282,9 +1278,7 @@ class FlextExceptions:
     @staticmethod
     def _merge_metadata_into_context(
         context: m.ConfigMap,
-        metadata_obj: (
-            MetadataProtocol | Mapping[str, t.MetadataValue] | None
-        ),
+        metadata_obj: (MetadataProtocol | Mapping[str, t.MetadataValue] | None),
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
@@ -1304,9 +1298,7 @@ class FlextExceptions:
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: (
-            MetadataProtocol | Mapping[str, t.MetadataValue] | None
-        ),
+        metadata_obj: (MetadataProtocol | Mapping[str, t.MetadataValue] | None),
         kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""

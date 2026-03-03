@@ -262,10 +262,7 @@ class Ex01FlextResult(Examples):
 
         self.check(
             "to_model.success",
-            r[dict[str, t.Container]]
-            .ok(valid_data)
-            .to_model(self.Person)
-            .value.age,
+            r[dict[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
         )
         self.check(
             "to_model.from_failure",
@@ -273,10 +270,7 @@ class Ex01FlextResult(Examples):
         )
         self.check(
             "to_model.validation_failure",
-            r[dict[str, t.Container]]
-            .ok(invalid_data)
-            .to_model(self.Person)
-            .is_failure,
+            r[dict[str, t.Container]].ok(invalid_data).to_model(self.Person).is_failure,
         )
 
     def collections_and_resource(self) -> None:

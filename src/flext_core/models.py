@@ -195,6 +195,7 @@ class FlextModels:
     # =========================================================================
 
     Config: TypeAlias = FlextModelsConfig
+
     class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
         """Processing request — real re-export for pydantic-mypy compatibility."""
 
@@ -256,6 +257,7 @@ class FlextModels:
     # =========================================================================
 
     Collections = FlextModelsCollections
+
     class CollectionsCategories(FlextModelsCollections.Categories):
         """Collections categories — real re-export for pydantic-mypy compatibility."""
 

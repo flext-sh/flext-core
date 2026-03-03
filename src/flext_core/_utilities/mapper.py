@@ -1047,12 +1047,7 @@ class FlextUtilitiesMapper:
         as_type: type | None = None,
         default: t.Container | None = None,
         from_start: bool = True,
-    ) -> (
-        t.ConfigurationMapping
-        | list[t.Container]
-        | t.Container
-        | None
-    ):
+    ) -> t.ConfigurationMapping | list[t.Container] | t.Container | None:
         """Unified take function (generalized from take_n).
 
         Generic replacement for: list slicing, dict slicing
@@ -1692,11 +1687,9 @@ class FlextUtilitiesMapper:
     ) -> Mapping[str, t.Container]:
         """Apply map keys step."""
         if map_keys:
-            mapped: r[Mapping[str, t.Container]] = (
-                FlextUtilitiesMapper.map_dict_keys(
-                    result,
-                    map_keys,
-                )
+            mapped: r[Mapping[str, t.Container]] = FlextUtilitiesMapper.map_dict_keys(
+                result,
+                map_keys,
             )
             if mapped.is_success:
                 mapped_value = mapped.value

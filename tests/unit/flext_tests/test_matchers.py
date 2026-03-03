@@ -285,7 +285,9 @@ class TestFlextTestsMatchers:
     def test_ok_with_where_parameter(self) -> None:
         """Test tm.ok() with where parameter."""
         result = FlextResult[int].ok(42)
-        value = tm.ok(result, where=cast("tests_t.Tests.ContainerValue", lambda x: x > 0))
+        value = tm.ok(
+            result, where=cast("tests_t.Tests.ContainerValue", lambda x: x > 0)
+        )
         assert value == 42
 
     def test_ok_with_where_parameter_fails(self) -> None:

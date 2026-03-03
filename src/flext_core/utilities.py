@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import overload
 
-from flext_core import FlextRuntime, m, p, r, t
+from flext_core import FlextRuntime, p, r, t
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -466,7 +466,7 @@ class FlextUtilities:
     def fail[U](
         error: str | None,
         error_code: str | None = None,
-        error_data: m.ConfigMap | None = None,
+        error_data: t.ConfigurationMapping = None,
     ) -> r[U]:
         """Create failed result with optional code and data."""
         return r.fail(error, error_code=error_code, error_data=error_data)

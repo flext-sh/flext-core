@@ -405,9 +405,7 @@ class FlextRegistry(s[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.Container | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.Container
-        handler_for_dispatch: p.Handler[t.Container, t.Container] = (
-            handler
-        )
+        handler_for_dispatch: p.Handler[t.Container, t.Container] = handler
         registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(

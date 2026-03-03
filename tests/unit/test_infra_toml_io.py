@@ -101,9 +101,7 @@ class TestFlextInfraTomlService:
         """Test writing a dict payload to TOML file."""
         toml_file = tmp_path / "output.toml"
         service = FlextInfraTomlService()
-        payload: dict[str, t.Container] = {
-            "section": {"key": "value", "number": 42}
-        }
+        payload: dict[str, t.Container] = {"section": {"key": "value", "number": 42}}
 
         result = service.write(toml_file, payload)
 

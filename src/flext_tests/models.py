@@ -1137,7 +1137,9 @@ class FlextTestsModels(FlextModels):
                     description="Assertion function that raises on invalid data",
                 )
                 map_result: (
-                    Callable[[t.Tests.Builders.BuilderOutputDict], t.Tests.ContainerValue]
+                    Callable[
+                        [t.Tests.Builders.BuilderOutputDict], t.Tests.ContainerValue
+                    ]
                     | None
                 ) = Field(
                     default=None,

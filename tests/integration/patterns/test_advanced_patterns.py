@@ -389,18 +389,12 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[t.Container]
-        | dict[str, t.Container]
-        | str
-        | tuple[object, ...],
+        data: list[t.Container] | dict[str, t.Container] | str | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
         self.data: (
-            list[t.Container]
-            | dict[str, t.Container]
-            | str
-            | tuple[object, ...]
+            list[t.Container] | dict[str, t.Container] | str | tuple[object, ...]
         ) = data
         self._assertions: list[Callable[[], None]] = []
 
@@ -458,10 +452,7 @@ class AssertionBuilder:
         self,
         condition: Callable[
             [
-                list[t.Container]
-                | dict[str, t.Container]
-                | str
-                | tuple[object, ...],
+                list[t.Container] | dict[str, t.Container] | str | tuple[object, ...],
             ],
             bool,
         ],

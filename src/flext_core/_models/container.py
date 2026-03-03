@@ -24,7 +24,10 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
 _MetadataInput = (
-    FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | Mapping[str, t.Scalar] | None
+    FlextModelFoundation.Metadata
+    | FlextModelsContainers.ConfigMap
+    | Mapping[str, t.Scalar]
+    | None
 )
 
 
@@ -95,7 +98,9 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None = Field(
+        metadata: (
+            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
+        ) = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -182,7 +187,9 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None = Field(
+        metadata: (
+            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
+        ) = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -224,7 +231,9 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
-        metadata: FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None = Field(
+        metadata: (
+            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
+        ) = Field(
             default=None,
             description="Additional resource metadata (JSON-serializable)",
         )

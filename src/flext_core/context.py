@@ -939,8 +939,8 @@ class FlextContext(FlextRuntime):
 
         """
         # Normalize value to MetadataAttributeValue before setting
-        normalized_value: t.MetadataValue = (
-            FlextRuntime.normalize_to_metadata_value(value)
+        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata_value(
+            value
         )
         # Directly update attributes dict to avoid deprecation warning
         # and object recreation
