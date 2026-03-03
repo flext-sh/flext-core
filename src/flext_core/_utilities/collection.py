@@ -36,7 +36,7 @@ class FlextUtilitiesCollection:
     def _to_batch_scalar(
         value: t.ContainerValue,
     ) -> t.ScalarValue:
-        if value is None or isinstance(value, str | int | float | bool | datetime):
+        if value is None or isinstance(value, t.ScalarValue):
             return value
         return str(value)
 
@@ -304,21 +304,21 @@ class FlextUtilitiesCollection:
             if strategy in {"replace", "override"}:
                 result: dict[str, t.ContainerValue] = dict(base)
                 result.update(other)
-                return r[dict[str, t.ContainerValue]].ok(result)
+                return r[t.ConfigurationMapping].ok(result)
 
             if strategy == "filter_none":
                 result = dict(base)
                 for key, value in other.items():
                     if value is not None:
                         result[key] = value
-                return r[dict[str, t.ContainerValue]].ok(result)
+                return r[t.ConfigurationMapping].ok(result)
 
             if strategy in {"filter_empty", "filter_both"}:
                 result = dict(base)
                 for key, value in other.items():
                     if not FlextUtilitiesCollection._is_empty_value(value):
                         result[key] = value
-                return r[dict[str, t.ContainerValue]].ok(result)
+                return r[t.ConfigurationMapping].ok(result)
 
             if strategy == "append":
                 result = dict(base)
@@ -333,7 +333,7 @@ class FlextUtilitiesCollection:
                         result[key] = current_val + value
                     else:
                         result[key] = value
-                return r[dict[str, t.ContainerValue]].ok(result)
+                return r[t.ConfigurationMapping].ok(result)
 
             if strategy == "deep":
                 result = base.copy()
@@ -344,16 +344,16 @@ class FlextUtilitiesCollection:
                         value,
                     )
                     if merge_result.is_failure:
-                        return r[dict[str, t.ContainerValue]].fail(
+                        return r[t.ConfigurationMapping].fail(
                             merge_result.error or "Unknown error",
                         )
-                return r[dict[str, t.ContainerValue]].ok(result)
+                return r[t.ConfigurationMapping].ok(result)
 
-            return r[dict[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         except (TypeError, ValueError, KeyError, AttributeError) as e:
-            return r[dict[str, t.ContainerValue]].fail(f"Merge failed: {e}")
+            return r[t.ConfigurationMapping].fail(f"Merge failed: {e}")
 
     @staticmethod
     def batch(
@@ -367,7 +367,7 @@ class FlextUtilitiesCollection:
         progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
-    ) -> r[t.BatchResultDict]:
+    ) -> r[m.BatchResultDict]:
         """Process items in batches with progress tracking.
 
         Args:
@@ -419,7 +419,7 @@ class FlextUtilitiesCollection:
                     else:
                         error_msg = result_error or "Unknown error"
                         if error_mode == "fail":
-                            return r[t.BatchResultDict].fail(
+                            return r[m.BatchResultDict].fail(
                                 f"Batch processing failed: {error_msg}",
                             )
                         if error_mode == "collect":
@@ -448,7 +448,7 @@ class FlextUtilitiesCollection:
                     results.append(direct_result)
             except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
                 if error_mode == "fail":
-                    return r[t.BatchResultDict].fail(
+                    return r[m.BatchResultDict].fail(
                         f"Batch processing failed: {e}",
                     )
                 if error_mode == "collect":
@@ -467,7 +467,7 @@ class FlextUtilitiesCollection:
             error_count=len(errors),
             errors=errors,
         )
-        return r[t.BatchResultDict].ok(result_dict)
+        return r[m.BatchResultDict].ok(result_dict)
 
     @staticmethod
     def process(
@@ -576,7 +576,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_str() -> Callable[
-        [Mapping[str, t.ContainerValue]],
+        [t.ConfigurationMapping],
         Mapping[str, str],
     ]:
         """Create validator that coerces dict values to str."""
@@ -591,7 +591,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_int() -> Callable[
-        [Mapping[str, t.ContainerValue]],
+        [t.ConfigurationMapping],
         Mapping[str, int],
     ]:
         """Create validator that coerces dict values to int."""
@@ -606,7 +606,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_float() -> Callable[
-        [Mapping[str, t.ContainerValue]],
+        [t.ConfigurationMapping],
         Mapping[str, float],
     ]:
         """Create validator that coerces dict values to float."""
@@ -621,7 +621,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_bool() -> Callable[
-        [Mapping[str, t.ContainerValue]],
+        [t.ConfigurationMapping],
         Mapping[str, bool],
     ]:
         """Create validator that coerces dict values to bool."""
@@ -637,7 +637,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[dict[str, t.ContainerValue]], dict[str, E]]:
+    ) -> Callable[[t.ConfigurationMapping], dict[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
         def validator(data: dict[str, t.ContainerValue]) -> dict[str, E]:

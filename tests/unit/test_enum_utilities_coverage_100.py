@@ -86,7 +86,7 @@ class CoerceValidatorScenario:
     """Coerce validator test scenario."""
 
     name: str
-    value: str | int | float | bool | Status | None
+    value: t.JsonPrimitive | Status | None
     expected_success: bool
     expected_status: Status | None
     expected_error: str | None
@@ -225,7 +225,7 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        value_typed: str | int | float | bool | Status | None = (
+        value_typed: t.JsonPrimitive | Status | None = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
             else str(scenario.value)
@@ -240,7 +240,7 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        value_typed: str | int | float | bool | Status | None = (
+        value_typed: t.JsonPrimitive | Status | None = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None), Status))
             else str(scenario.value)

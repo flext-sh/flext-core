@@ -36,7 +36,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ConfigMap | None = None,
+        error_data: m.ConfigMap | None = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
@@ -115,7 +115,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigMap | None = None,
+        error_data: m.ConfigMap | None = None,
         exception: BaseException | None = None,
     ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.

@@ -96,7 +96,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: t.ConfigMap | None = None,
+            data: m.ConfigMap | None = None,
         ) -> r[FlextModelsDomainEvent.Entry]:
             """Add a domain event to this entity.
 
@@ -145,7 +145,7 @@ class FlextModelsEntity:
 
         def add_domain_events_bulk(
             self: Self,
-            events: Sequence[tuple[str, t.ConfigMap | None]],
+            events: Sequence[tuple[str, m.ConfigMap | None]],
         ) -> r[list[FlextModelsDomainEvent.Entry]]:
             """Add multiple domain events in bulk.
 

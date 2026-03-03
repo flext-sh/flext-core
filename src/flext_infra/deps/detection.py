@@ -21,7 +21,7 @@ from flext_infra import (
 )
 
 type InfraValue = (
-    str | int | float | bool | list[InfraValue] | Mapping[str, InfraValue] | None
+    t.JsonPrimitive | list[InfraValue] | Mapping[str, InfraValue] | None
 )
 
 type IssueMap = Mapping[str, InfraValue]

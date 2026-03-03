@@ -90,7 +90,7 @@ class FlextInfraInventoryService:
                     sort_keys=True,
                 )
                 if write_result.is_failure:
-                    return r[Mapping[str, t.ContainerValue]].fail(
+                    return r[t.ConfigurationMapping].fail(
                         write_result.error or "write failed",
                     )
                 written.append(str(path))
@@ -99,9 +99,9 @@ class FlextInfraInventoryService:
                 "total_scripts": len(scripts),
                 "reports_written": written,
             }
-            return r[Mapping[str, t.ContainerValue]].ok(result)
+            return r[t.ConfigurationMapping].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"inventory generation failed: {exc}",
             )
 

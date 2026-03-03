@@ -123,7 +123,7 @@ class FlextUtilitiesCache:
                 for k, v in dict_component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
-        if isinstance(component, str | int | float | bool) or component is None:
+        if isinstance(component, t.JsonPrimitive) or component is None:
             return component
         # Handle collections
         if isinstance(component, set):

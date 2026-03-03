@@ -101,7 +101,7 @@ class FlextMixins(FlextRuntime):
     @classmethod
     def to_dict(
         cls,
-        obj: BaseModel | Mapping[str, t.ContainerValue] | None,
+        obj: BaseModel | t.ConfigurationMapping | None,
     ) -> m.ConfigMap:
         """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
         if obj is None:
@@ -120,7 +120,7 @@ class FlextMixins(FlextRuntime):
                             FlextRuntime.normalize_to_general_value(value)
                             if isinstance(
                                 value,
-                                str | int | float | bool | type(None) | BaseModel,
+                                t.JsonPrimitive | type(None) | BaseModel,
                             )
                             else str(value)
                         )
@@ -141,7 +141,7 @@ class FlextMixins(FlextRuntime):
                         FlextRuntime.normalize_to_general_value(value)
                         if isinstance(
                             value,
-                            str | int | float | bool | type(None) | BaseModel,
+                            t.JsonPrimitive | type(None) | BaseModel,
                         )
                         else str(value)
                     )
@@ -706,7 +706,7 @@ class FlextMixins(FlextRuntime):
                 list[
                     m.Handler.ExecutionContext
                     | m.ConfigMap
-                    | dict[str, t.ContainerValue]
+                    | t.ConfigurationMapping
                 ]
             ] = []
 
@@ -791,14 +791,14 @@ class FlextMixins(FlextRuntime):
                                     "handler_mode": execution_ctx.handler_mode,
                                 },
                             )
-                            return r[dict[str, t.ContainerValue]].ok(context_dict.root)
+                            return r[t.ConfigurationMapping].ok(context_dict.root)
                         case m.ConfigMap() as popped_dict:
-                            return r[dict[str, t.ContainerValue]].ok(popped_dict.root)
+                            return r[t.ConfigurationMapping].ok(popped_dict.root)
                         case dict() as popped_plain:
-                            return r[dict[str, t.ContainerValue]].ok(
+                            return r[t.ConfigurationMapping].ok(
                                 dict(popped_plain),
                             )
-                return r[dict[str, t.ContainerValue]].ok({})
+                return r[t.ConfigurationMapping].ok({})
 
             def current_context(self) -> t.ContainerValue | None:
                 """Get current execution context without popping.

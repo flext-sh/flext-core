@@ -43,22 +43,22 @@ class FlextInfraJsonService(FlextService[bool]):
 
         """
         if not path.exists():
-            return r[Mapping[str, t.ContainerValue]].ok({})
+            return r[t.ConfigurationMapping].ok({})
         try:
             loaded = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
             if not isinstance(loaded, dict):
-                return r[Mapping[str, t.ContainerValue]].fail(
+                return r[t.ConfigurationMapping].fail(
                     "JSON root must be object",
                 )
             data: Mapping[str, t.ContainerValue] = loaded
-            return r[Mapping[str, t.ContainerValue]].ok(data)
+            return r[t.ConfigurationMapping].ok(data)
         except (json.JSONDecodeError, OSError) as exc:
-            return r[Mapping[str, t.ContainerValue]].fail(f"JSON read error: {exc}")
+            return r[t.ConfigurationMapping].fail(f"JSON read error: {exc}")
 
     def write(
         self,
         path: Path,
-        payload: BaseModel | Mapping[str, t.ContainerValue],
+        payload: BaseModel | t.ConfigurationMapping,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,

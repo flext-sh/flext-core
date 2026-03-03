@@ -76,7 +76,7 @@ class FlextTestsBuilders:
     def _to_payload_value(value: object) -> t.Tests.PayloadValue:
         if value is None or isinstance(
             value,
-            str | int | float | bool | bytes | BaseModel,
+            t.JsonPrimitive | bytes | BaseModel,
         ):
             return value
         if isinstance(value, Mapping):
@@ -90,7 +90,7 @@ class FlextTestsBuilders:
 
     @staticmethod
     def _to_guard_input(value: t.Tests.PayloadValue) -> t.ContainerValue:
-        if value is None or isinstance(value, str | int | float | bool | BaseModel):
+        if value is None or isinstance(value, t.JsonPrimitive | BaseModel):
             return value
         if isinstance(value, Mapping):
             return {
@@ -626,7 +626,7 @@ class FlextTestsBuilders:
                 typed_current: T = current
                 return typed_current
             return default
-        if isinstance(current, str | int | float | bool | bytes | BaseModel):
+        if isinstance(current, t.JsonPrimitive | bytes | BaseModel):
             return current
         if isinstance(current, Mapping):
             return {str(k): self._to_payload_value(v) for k, v in current.items()}
@@ -1478,7 +1478,7 @@ class FlextTestsBuilders:
             def fail[T](
                 error: str,
                 code: str | None = None,
-                data: t.ConfigMap | None = None,
+                data: m.ConfigMap | None = None,
                 expected_type: type[T] | None = None,
             ) -> r[T]:
                 """Create failure result using r[T] directly."""

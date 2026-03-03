@@ -64,7 +64,7 @@ class FlextGenericModels:
             tenant_id: str | None = Field(default=None, description="Tenant ID")
             environment: str | None = Field(default=None, description="Environment")
             version: str = Field(default="1.0.0", description="Schema version")
-            metadata: t.Dict = Field(
+            metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Additional metadata",
             )
@@ -104,7 +104,7 @@ class FlextGenericModels:
             pid: int | None = Field(default=None, description="Process ID")
             memory_usage_mb: float | None = Field(default=None, description="Memory MB")
             cpu_usage_percent: float | None = Field(default=None, description="CPU %")
-            metadata: t.Dict = Field(
+            metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Service metadata",
             )
@@ -115,7 +115,7 @@ class FlextGenericModels:
             Used by: CLI config info, debug, auditing.
             """
 
-            config: t.Dict = Field(
+            config: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Config key-value pairs",
             )
@@ -134,7 +134,7 @@ class FlextGenericModels:
                 default_factory=list,
                 description="Validation errors",
             )
-            metadata: t.Dict = Field(
+            metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Config metadata",
             )
@@ -146,10 +146,10 @@ class FlextGenericModels:
             """
 
             healthy: bool = Field(default=True, description="Overall health")
-            checks: t.Dict = Field(
+            checks: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict, description="Check results"
             )
-            details: t.Dict = Field(
+            details: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict, description="Check details"
             )
             checked_at: datetime = Field(
@@ -165,7 +165,7 @@ class FlextGenericModels:
                 default=None, description="Check duration ms"
             )
             environment: str | None = Field(default=None, description="Environment")
-            metadata: t.Dict = Field(
+            metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Health metadata",
             )
@@ -211,7 +211,7 @@ class FlextGenericModels:
                 default=None,
                 description="Operation name",
             )
-            metadata: t.Dict = Field(
+            metadata: FlextModelsContainers.Dict = Field(
                 default_factory=FlextModelsContainers.Dict,
                 description="Operation metadata",
             )

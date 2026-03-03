@@ -398,7 +398,7 @@ class AssertionBuilder:
         super().__init__()
         self.data: (
             list[t.ContainerValue]
-            | dict[str, t.ContainerValue]
+            | t.ConfigurationMapping
             | str
             | tuple[object, ...]
         ) = data
@@ -459,7 +459,7 @@ class AssertionBuilder:
         condition: Callable[
             [
                 list[t.ContainerValue]
-                | dict[str, t.ContainerValue]
+                | t.ConfigurationMapping
                 | str
                 | tuple[object, ...],
             ],

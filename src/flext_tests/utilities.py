@@ -51,7 +51,7 @@ def _to_scalar(value: object) -> core_t.ScalarValue:
         ScalarValue (str | int | float | bool | datetime | None)
 
     """
-    if value is None or isinstance(value, str | int | float | bool):
+    if value is None or isinstance(value, t.JsonPrimitive):
         return value
     return str(value)
 
@@ -66,7 +66,7 @@ def _to_payload(value: object) -> t.Tests.PayloadValue:
         PayloadValue suitable for test assertions
 
     """
-    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
+    if value is None or isinstance(value, t.JsonPrimitive | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload(v) for k, v in value.items()}
@@ -77,7 +77,7 @@ def _to_payload(value: object) -> t.Tests.PayloadValue:
 
 def _to_config_map_value(value: t.Tests.PayloadValue) -> core_t.ConfigMapValue:
     """Convert PayloadValue to ConfigMapValue."""
-    if value is None or isinstance(value, str | int | float | bool | BaseModel):
+    if value is None or isinstance(value, t.JsonPrimitive | BaseModel):
         return value
     if isinstance(value, bytes):
         return value.decode(errors="ignore")

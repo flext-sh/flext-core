@@ -274,7 +274,7 @@ class TestFlextHandlers:
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
         """Test _run_pipeline with dict[str, t.GeneralValueType] message having command_id."""
 
-        class DictHandler(h[dict[str, t.ContainerValue], str]):
+        class DictHandler(h[t.ConfigurationMapping, str]):
             @override
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)

@@ -1572,7 +1572,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _to_payload_value(self, value: object) -> t.Tests.PayloadValue:
         if value is None or isinstance(
             value,
-            str | int | float | bool | bytes | BaseModel,
+            t.JsonPrimitive | bytes | BaseModel,
         ):
             return value
         if isinstance(value, Path | datetime):
@@ -1587,7 +1587,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     def _to_config_map_value(self, value: t.Tests.PayloadValue) -> t.ContainerValue:
         if value is None or isinstance(
             value,
-            str | int | float | bool | BaseModel | Path,
+            t.JsonPrimitive | BaseModel | Path,
         ):
             return value
         if isinstance(value, bytes):

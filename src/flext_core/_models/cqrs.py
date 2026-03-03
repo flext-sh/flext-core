@@ -129,8 +129,8 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
-        pagination: FlextModelsCqrs.Pagination | t.Dict = Field(
+        filters: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        pagination: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
         )
         query_id: str = Field(
@@ -184,15 +184,15 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.ScalarValue] | None,
+            v: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict | Mapping[str, t.ScalarValue] | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
             adapter: TypeAdapter[
-                FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.ScalarValue] | None
+                FlextModelsCqrs.Pagination | FlextModelsContainers.Dict | Mapping[str, t.ScalarValue] | None
             ] = TypeAdapter(
                 FlextModelsCqrs.Pagination
-                | t.Dict
+                | FlextModelsContainers.Dict
                 | Mapping[str, t.ScalarValue]
                 | None,
             )
@@ -288,7 +288,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: t.ConfigMap | None = None
+            handler_config: m.ConfigMap | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -350,7 +350,7 @@ class FlextModelsCqrs:
 
             def merge_config(
                 self,
-                config: t.ConfigMap,
+                config: m.ConfigMap,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.root.update(config.root)
@@ -395,11 +395,11 @@ class FlextModelsCqrs:
         event_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
         )
-        data: t.Dict = Field(
+        data: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event payload data",
         )
-        metadata: t.Dict = Field(
+        metadata: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )

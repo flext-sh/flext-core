@@ -456,7 +456,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: m.ConfigMap | Mapping[str, t.ContainerValue],
+        attributes: FlextModelsContainers.ConfigMap | t.ConfigurationMapping,
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

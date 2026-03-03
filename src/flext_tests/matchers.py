@@ -81,7 +81,7 @@ def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ContainerValu
 
 
 def _to_test_payload(value: object) -> t.Tests.PayloadValue:
-    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
+    if value is None or isinstance(value, t.JsonPrimitive | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_test_payload(v) for k, v in value.items()}

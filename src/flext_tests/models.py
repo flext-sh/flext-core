@@ -1173,7 +1173,7 @@ class FlextTestsModels(FlextModels):
                     min_length=1,
                     description="Error code for failure result",
                 )
-                error_data: t.ConfigMap | None = Field(
+                error_data: m.ConfigMap | None = Field(
                     default=None,
                     description="Error metadata dictionary for failure result",
                 )

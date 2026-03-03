@@ -263,8 +263,8 @@ class TestExceptionIntegration:
             data: dict[str, t.ContainerValue],
         ) -> FlextResult[dict[str, t.ContainerValue]]:
             if not data.get("id"):
-                return FlextResult[dict[str, t.ContainerValue]].fail("Missing id")
-            return FlextResult[dict[str, t.ContainerValue]].ok(data)
+                return FlextResult[t.ConfigurationMapping].fail("Missing id")
+            return FlextResult[t.ConfigurationMapping].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success

@@ -280,7 +280,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
         map_result: r[Mapping[str, t.ContainerValue]] = r[
-            Mapping[str, t.ContainerValue]
+            t.ConfigurationMapping
         ].fail("Invalid data types")
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
             source_dict = {str(k): v for k, v in source_value.items()}

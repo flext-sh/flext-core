@@ -266,7 +266,7 @@ class TestMigrationComplexity:
             ) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict[str, t.ContainerValue]].fail(
+                    return FlextResult[t.ConfigurationMapping].fail(
                         "Data required",
                     )
 
@@ -275,7 +275,7 @@ class TestMigrationComplexity:
                     "original": str(data),
                     "processed": True,
                 }
-                return FlextResult[dict[str, t.ContainerValue]].ok(processed)
+                return FlextResult[t.ConfigurationMapping].ok(processed)
 
         # Test application works correctly
         app = ApplicationExample()

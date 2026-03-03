@@ -714,7 +714,7 @@ class FlextContainer(p.DI):
     @override
     def get_config(
         self,
-    ) -> t.ConfigMap:
+    ) -> m.ConfigMap:
         """Return the merged configuration exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
         return m.ConfigMap(

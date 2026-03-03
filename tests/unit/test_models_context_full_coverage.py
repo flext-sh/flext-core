@@ -22,7 +22,7 @@ class _ModelWithNoCallableDump:
     model_dump = "bad"
 
 
-class _MappingLike(Mapping[str, t.ContainerValue]):
+class _MappingLike(t.ConfigurationMapping):
     def __init__(self, data: dict[str, t.ContainerValue]) -> None:
         self._data = data
 

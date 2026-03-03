@@ -263,21 +263,21 @@ class TestFlextTestsMatchers:
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
         data: dict[str, t.ContainerValue] = {"user": {"name": "John", "age": 30}}
-        result = FlextResult[dict[str, t.ContainerValue]].ok(data)
+        result = FlextResult[t.ConfigurationMapping].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
         data: dict[str, t.ContainerValue] = {"user": {"email": "test@example.com"}}
-        result = FlextResult[dict[str, t.ContainerValue]].ok(data)
+        result = FlextResult[t.ConfigurationMapping].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
         data: dict[str, t.ContainerValue] = {"user": {"name": "John"}}
-        result = FlextResult[dict[str, t.ContainerValue]].ok(data)
+        result = FlextResult[t.ConfigurationMapping].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         # path extraction returns the extracted value, not the original
         assert value == "John"

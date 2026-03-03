@@ -101,13 +101,13 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_flexible_value(value: t.ContainerValue) -> TypeIs[t.ContainerValue]:
-        if value is None or isinstance(value, str | int | float | bool | datetime):
+        if value is None or isinstance(value, t.ScalarValue):
             return True
         if isinstance(value, (list, tuple)):
             for item in value:
                 if item is not None and not isinstance(
                     item,
-                    str | int | float | bool | datetime,
+                    t.ScalarValue,
                 ):
                     return False
             return True
@@ -115,7 +115,7 @@ class FlextUtilitiesGuards:
             for item in value.values():
                 if item is not None and not isinstance(
                     item,
-                    str | int | float | bool | datetime,
+                    t.ScalarValue,
                 ):
                     return False
             return True
@@ -220,7 +220,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_configuration_mapping(
         value: t.ContainerValue,
-    ) -> TypeGuard[m.ConfigMap]:
+    ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
         m.ConfigMap = Mapping[str, t.GuardInputValue]
@@ -253,7 +253,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_configuration_dict(
         value: t.ContainerValue,
-    ) -> TypeGuard[m.Dict]:
+    ) -> TypeGuard[FlextModelsContainers.Dict]:
         """Check if value is a valid m.Dict mapping.
 
         This TypeGuard enables explicit narrowing for m.Dict values.
@@ -366,7 +366,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, str)
 
     @staticmethod
-    def _is_dict(value: t.ContainerValue) -> TypeGuard[m.Dict]:
+    def _is_dict(value: t.ContainerValue) -> TypeGuard[FlextModelsContainers.Dict]:
         """Check if value is a dict-like mapping."""
         return isinstance(value, dict)
 
@@ -610,7 +610,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def extract_mapping_or_none(
         value: t.ContainerValue,
-    ) -> m.ConfigMap | None:
+    ) -> FlextModelsContainers.ConfigMap | None:
         """Extract a mapping from a value or return None.
 
         Used for type narrowing when a generic parameter could be a Mapping
@@ -924,7 +924,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _ensure_to_dict(
-        value: t.ContainerValue | Mapping[str, t.ContainerValue] | None,
+        value: t.ContainerValue | t.ConfigurationMapping | None,
         default: Mapping[str, t.ContainerValue] | None,
     ) -> Mapping[str, t.ContainerValue]:
         if value is None:
@@ -941,9 +941,9 @@ class FlextUtilitiesGuards:
         target_type: str = "auto",
         default: str
         | list[t.ContainerValue]
-        | Mapping[str, t.ContainerValue]
+        | t.ConfigurationMapping
         | None = None,
-    ) -> str | list[t.ContainerValue] | Mapping[str, t.ContainerValue]:
+    ) -> str | list[t.ContainerValue] | t.ConfigurationMapping:
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
             return (

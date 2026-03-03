@@ -287,7 +287,7 @@ class FlextModelsHandler:
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
-        def metrics_state(self) -> t.Dict:
+        def metrics_state(self) -> FlextModelsContainers.Dict:
             """Get current metrics state.
 
             Returns:
@@ -314,7 +314,7 @@ class FlextModelsHandler:
 
         def set_metrics_state(
             self,
-            state: t.Dict,
+            state: FlextModelsContainers.Dict,
         ) -> None:
             """Set metrics state."""
             # Use PrivateAttr for proper Pydantic v2 pattern

@@ -111,7 +111,7 @@ class TestrCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: t.ConfigMap = m.ConfigMap(root={"status": "failed", "count": 5})
+        error_data: m.ConfigMap = m.ConfigMap(root={"status": "failed", "count": 5})
         result: r[str] = r[str].fail("Error", error_data=error_data)
         _ResultAssertions.assert_failure(result)
         assert result.error_data == error_data
@@ -601,15 +601,15 @@ class TestrCoverage:
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: list[t.ConfigMap] = []
+        resources_created: list[m.ConfigMap] = []
 
-        def factory() -> t.ConfigMap:
-            resource: t.ConfigMap = m.ConfigMap(root={"id": 1})
+        def factory() -> m.ConfigMap:
+            resource: m.ConfigMap = m.ConfigMap(root={"id": 1})
             resources_created.append(resource)
             return resource
 
         def operation(
-            resource: t.ConfigMap,
+            resource: m.ConfigMap,
         ) -> r[str]:
             if isinstance(resource, m.ConfigMap):
                 return r[str].ok("success")
@@ -626,11 +626,11 @@ class TestrCoverage:
         """Test with_resource executes cleanup even on success."""
         cleanups_called = list[object]()
 
-        def factory() -> t.ConfigMap:
+        def factory() -> m.ConfigMap:
             return m.ConfigMap(root={"id": 1})
 
         def operation(
-            resource: t.ConfigMap,
+            resource: m.ConfigMap,
         ) -> r[str]:
             return r[str].ok("success")
 
@@ -709,7 +709,7 @@ class TestrCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: t.ConfigMap = m.ConfigMap(root={"details": "something"})
+        error_data: m.ConfigMap = m.ConfigMap(root={"details": "something"})
         result: r[str] = r[str].fail(
             "Error",
             error_code="CODE_123",

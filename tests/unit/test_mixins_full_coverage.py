@@ -68,7 +68,7 @@ def test_mixins_result_and_model_conversion_paths(
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
 
-    class _BadMap(Mapping[str, t.ContainerValue]):
+    class _BadMap(t.ConfigurationMapping):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(["k"])

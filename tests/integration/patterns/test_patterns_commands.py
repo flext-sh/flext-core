@@ -120,7 +120,7 @@ def _update_user_command(
 
 
 class CreateUserCommandHandler(
-    FlextHandlers[CreateUserCommand, dict[str, t.ContainerValue]],
+    FlextHandlers[CreateUserCommand, t.ConfigurationMapping],
 ):
     """Test handler for CreateUserCommand."""
 
@@ -165,7 +165,7 @@ class CreateUserCommandHandler(
         }
         self.created_users.append(user_data)
 
-        return FlextResult[dict[str, t.ContainerValue]].ok(user_data)
+        return FlextResult[t.ConfigurationMapping].ok(user_data)
 
     def handle_command(
         self,
@@ -176,7 +176,7 @@ class CreateUserCommandHandler(
 
 
 class UpdateUserCommandHandler(
-    FlextHandlers[UpdateUserCommand, dict[str, t.ContainerValue]],
+    FlextHandlers[UpdateUserCommand, t.ConfigurationMapping],
 ):
     """Test handler for UpdateUserCommand."""
 
@@ -226,7 +226,7 @@ class UpdateUserCommandHandler(
             "updated_fields": list(message.updates.keys()),
         }
 
-        return FlextResult[dict[str, t.ContainerValue]].ok(result_data)
+        return FlextResult[t.ConfigurationMapping].ok(result_data)
 
     def handle_command(
         self,
@@ -533,7 +533,7 @@ class TestFlextCommandResults:
         result_data: dict[str, t.ContainerValue] = {"id": "123", "username": "test"}
 
         command_result: FlextResult[dict[str, t.ContainerValue]] = FlextResult[
-            dict[str, t.ContainerValue]
+            t.ConfigurationMapping
         ].ok(result_data)
 
         if not command_result.is_success:

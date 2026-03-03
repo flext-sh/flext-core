@@ -32,7 +32,7 @@ TValue = TypeVar("TValue")
 
 
 def _to_payload_value(value: t.ContainerValue) -> t.Tests.PayloadValue:
-    if value is None or isinstance(value, str | int | float | bool | bytes | BaseModel):
+    if value is None or isinstance(value, t.JsonPrimitive | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload_value(v) for k, v in value.items()}
@@ -42,7 +42,7 @@ def _to_payload_value(value: t.ContainerValue) -> t.Tests.PayloadValue:
 
 
 def _to_guard_input(value: t.Tests.PayloadValue) -> t.ContainerValue:
-    if value is None or isinstance(value, str | int | float | bool | BaseModel):
+    if value is None or isinstance(value, t.JsonPrimitive | BaseModel):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_guard_input(_to_payload_value(v)) for k, v in value.items()}

@@ -119,7 +119,7 @@ class FlextInfraDocsShared:
     @staticmethod
     def write_json(
         path: Path,
-        payload: BaseModel | Mapping[str, t.ContainerValue],
+        payload: BaseModel | t.ConfigurationMapping,
     ) -> r[bool]:
         """Write JSON payload to path."""
         return _json_svc.write(path, payload)

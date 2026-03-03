@@ -178,10 +178,10 @@ class FlextUtilitiesArgs:
                     errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"Invalid values: {'; '.join(errors)}",
             )
-        return r[Mapping[str, t.ContainerValue]].ok(parsed)
+        return r[t.ConfigurationMapping].ok(parsed)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing

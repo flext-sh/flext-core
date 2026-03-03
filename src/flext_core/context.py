@@ -49,7 +49,7 @@ class FlextContext(FlextRuntime):
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | Mapping[str, t.ContainerValue] | None,
+        ctx_value: m.ConfigMap | t.ConfigurationMapping | None,
     ) -> dict[str, t.ContainerValue]:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
@@ -88,7 +88,7 @@ class FlextContext(FlextRuntime):
 
     def __init__(
         self,
-        initial_data: m.ContextData | Mapping[str, t.ContainerValue] | None = None,
+        initial_data: m.ContextData | t.ConfigurationMapping | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -700,7 +700,7 @@ class FlextContext(FlextRuntime):
 
     def merge(
         self,
-        other: FlextContext | Mapping[str, t.ContainerValue],
+        other: FlextContext | t.ConfigurationMapping,
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -831,7 +831,7 @@ class FlextContext(FlextRuntime):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | dict[str, t.ContainerValue]:
+    ) -> m.ContextExport | t.ConfigurationMapping:
         """Export context data for serialization or debugging.
 
         Args:
@@ -1163,7 +1163,7 @@ class FlextContext(FlextRuntime):
                 FlextModelsContext.StructlogProxyContextVar[datetime]
             ] = u.Context.create_datetime_proxy("operation_start_time", default=None)
             OPERATION_METADATA: Final[
-                FlextModelsContext.StructlogProxyContextVar[t.ConfigMap]
+                FlextModelsContext.StructlogProxyContextVar[m.ConfigMap]
             ] = u.Context.create_dict_proxy(
                 "operation_metadata",
                 default=None,
@@ -1203,7 +1203,7 @@ class FlextContext(FlextRuntime):
             FlextModelsContext.StructlogProxyContextVar[datetime]
         ] = Performance.OPERATION_START_TIME
         OperationMetadata: Final[
-            FlextModelsContext.StructlogProxyContextVar[t.ConfigMap]
+            FlextModelsContext.StructlogProxyContextVar[m.ConfigMap]
         ] = Performance.OPERATION_METADATA
 
     # =========================================================================

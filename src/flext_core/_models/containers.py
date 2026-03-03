@@ -23,14 +23,14 @@ type GeneralValueType = (
     | float
     | bool
     | datetime
+    | None
     | BaseModel
     | Path
     | Sequence[GeneralValueType]
     | Mapping[str, GeneralValueType]
-    | None
 )
 type _ContainerValue = GeneralValueType
-type _ScalarML = t.ScalarValue
+type _ScalarML = str | int | float | bool | datetime | None
 type _FactoryRegistrationCallable = Callable[[], _ScalarML | Sequence[_ScalarML]]
 type _ResourceCallable = Callable[[], _ContainerValue]
 

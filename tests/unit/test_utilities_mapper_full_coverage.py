@@ -97,7 +97,7 @@ class ExplodingLenList(UserList[object]):
         raise TypeError(msg)
 
 
-class BadMapping(Mapping[str, t.ContainerValue]):
+class BadMapping(t.ConfigurationMapping):
     """BadMapping class."""
 
     @override
@@ -551,7 +551,7 @@ def test_construct_transform_and_deep_eq_branches(
     assert constructed["n"] == 4
     assert constructed["literal"] == 5
 
-    class ExplodeOnGet(Mapping[str, t.ContainerValue]):
+    class ExplodeOnGet(t.ConfigurationMapping):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(("field",))

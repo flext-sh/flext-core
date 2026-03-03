@@ -58,7 +58,7 @@ class IntHandler(h[int, int]):
         return FlextResult[int].ok(message * 2)
 
 
-class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
+class DictHandler(h[t.ConfigurationMapping, t.ConfigurationMapping]):
     """Handler for dict messages."""
 
     @override
@@ -67,7 +67,7 @@ class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
         message: dict[str, t.ContainerValue],
     ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle dict message."""
-        return FlextResult[dict[str, t.ContainerValue]].ok({
+        return FlextResult[t.ConfigurationMapping].ok({
             "processed": True,
             **message,
         })

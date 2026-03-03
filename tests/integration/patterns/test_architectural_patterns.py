@@ -95,11 +95,11 @@ class TestEnterprisePatterns:
             def build(self) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[dict[str, t.ContainerValue]].fail(
+                    return FlextResult[t.ConfigurationMapping].fail(
                         "Configuration cannot be empty",
                     )
 
-                return FlextResult[dict[str, t.ContainerValue]].ok(
+                return FlextResult[t.ConfigurationMapping].ok(
                     self._config.copy(),
                 )
 

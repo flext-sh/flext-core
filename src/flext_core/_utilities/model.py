@@ -168,7 +168,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_metadata(
-        value: t.ScalarValue | m.ConfigMap | FlextModelFoundation.Metadata | None,
+        value: t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelFoundation.Metadata | None,
     ) -> FlextModelFoundation.Metadata:  # Returns m.Metadata at runtime
         """Normalize any value to FlextModelFoundation.Metadata.
 
@@ -272,7 +272,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def load[T_Model: BaseModel](
         model_cls: type[T_Model],
-        data: t.ConfigMap,
+        data: FlextModelsContainers.ConfigMap,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 
@@ -299,7 +299,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_pydantic_dict(
-        data: t.ConfigMap | None,
+        data: FlextModelsContainers.ConfigMap | None,
     ) -> Mapping[str, t.PydanticConfigValue]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 

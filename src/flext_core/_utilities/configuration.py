@@ -188,7 +188,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_attr(
         obj: p.HasModelDump | object,
         parameter: str,
-    ) -> tuple[bool, t.ScalarValue | m.ConfigMap | None]:
+    ) -> tuple[bool, t.ScalarValue | FlextModelsContainers.ConfigMap | None]:
         """Try to get attribute value from object via hasattr/getattr.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -313,7 +313,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: p.HasModelDump | Mapping[str, t.ContainerValue],
+        obj: p.HasModelDump | t.ConfigurationMapping,
         parameter: str,
     ) -> t.ContainerValue:
         """Get parameter value from a configuration object.
@@ -397,7 +397,7 @@ class FlextUtilitiesConfiguration:
     def set_parameter(
         obj: p.HasModelDump | object,
         parameter: str,
-        value: t.ScalarValue | m.ConfigMap,
+        value: t.ScalarValue | FlextModelsContainers.ConfigMap,
     ) -> bool:
         """Set parameter value on a configuration object with validation.
 
@@ -537,7 +537,7 @@ class FlextUtilitiesConfiguration:
     def set_singleton(
         singleton_class: type,
         parameter: str,
-        value: t.ScalarValue | m.ConfigMap,
+        value: t.ScalarValue | FlextModelsContainers.ConfigMap,
     ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -874,7 +874,7 @@ class FlextUtilitiesConfiguration:
     def register_singleton(
         container: p.DI,
         name: str,
-        instance: t.ScalarValue | m.ConfigMap | m.Dict,
+        instance: t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelsContainers.Dict,
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -901,7 +901,7 @@ class FlextUtilitiesConfiguration:
     def register_factory(
         container: p.DI,
         name: str,
-        factory: Callable[[], t.ScalarValue | m.ConfigMap | m.Dict],
+        factory: Callable[[], t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelsContainers.Dict],
         *,
         _cache: bool = False,
     ) -> r[bool]:
@@ -933,7 +933,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def bulk_register(
         container: p.DI,
-        registrations: Mapping[str, t.ScalarValue | m.ConfigMap | m.Dict],
+        registrations: Mapping[str, t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelsContainers.Dict],
     ) -> r[int]:
         """Register multiple services at once.
 

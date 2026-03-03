@@ -466,7 +466,7 @@ class FlextUtilities:
     def fail[U](
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigMap | None = None,
+        error_data: m.ConfigMap | None = None,
     ) -> r[U]:
         """Create failed result with optional code and data."""
         return r.fail(error, error_code=error_code, error_data=error_data)

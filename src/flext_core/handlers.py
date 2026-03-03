@@ -508,7 +508,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def push_context(
         self,
-        ctx: m.Handler.ExecutionContext | dict[str, t.ContainerValue],
+        ctx: m.Handler.ExecutionContext | t.ConfigurationMapping,
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.Handler.ExecutionContext | m.ConfigMap):
@@ -864,7 +864,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                         return ""
                     result = fn_candidate(message)
                     if (
-                        isinstance(result, str | int | float | bool | datetime)
+                        isinstance(result, t.ScalarValue)
                         or result is None
                     ):
                         return result

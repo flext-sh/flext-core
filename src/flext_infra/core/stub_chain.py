@@ -66,9 +66,9 @@ class FlextInfraStubSupplyChain:
                 "unresolved_missing": unresolved,
                 "total_missing": len(missing_imports),
             }
-            return r[Mapping[str, t.ContainerValue]].ok(result)
+            return r[t.ConfigurationMapping].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"stub analysis failed for {project_dir.name}: {exc}",
             )
 

@@ -102,7 +102,7 @@ class FlextModelFoundation:
         def config_adapter(cls) -> TypeAdapter[dict[str, t.ContainerValue]]:
             """Lazy-load config TypeAdapter on first access."""
             if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(dict[str, t.ContainerValue])
+                cls._config_adapter = TypeAdapter(t.ConfigurationMapping)
             return cls._config_adapter
 
         @staticmethod
@@ -317,15 +317,15 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        data: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
-        pagination: t.Dict | None = None
+        filters: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        pagination: FlextModelsContainers.Dict | None = None
 
     class EventMessage(BaseModel):
         """Event message with discriminated union support."""
@@ -333,7 +333,7 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: t.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        data: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )

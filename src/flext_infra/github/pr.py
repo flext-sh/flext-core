@@ -299,7 +299,7 @@ class FlextInfraPrManager:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
                 info["release"] = release_result.value
-        return r[Mapping[str, t.ContainerValue]].ok(info)
+        return r[t.ConfigurationMapping].ok(info)
 
     def close(self, repo_root: Path, selector: str) -> FlextResult[bool]:
         """Close a PR.

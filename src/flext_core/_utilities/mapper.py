@@ -92,14 +92,14 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_configuration_mapping(value: t.ContainerValue) -> m.ConfigMap:
+    def _narrow_to_configuration_mapping(value: t.ContainerValue) -> FlextModelsContainers.ConfigMap:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
-        if isinstance(value, m.ConfigMap):
+        if isinstance(value, FlextModelsContainers.ConfigMap):
             return value
         if isinstance(value, Mapping):
             # Coerce to ConfigMap (Pydantic will validate keys are strings)
-            coerced_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(
+            coerced_result = r[FlextModelsContainers.ConfigMap].create_from_callable(
+                lambda: FlextModelsContainers.ConfigMap(
                     root=FlextUtilitiesMapper._narrow_to_configuration_dict(value),
                 ),
             )
@@ -211,11 +211,11 @@ class FlextUtilitiesMapper:
 
             return result
 
-        mapped_result = r[Mapping[str, t.ContainerValue]].create_from_callable(
+        mapped_result = r[t.ConfigurationMapping].create_from_callable(
             _map_keys,
         )
         if mapped_result.is_failure:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"Failed to map dict keys: {mapped_result.error}",
             )
         return mapped_result
@@ -446,7 +446,7 @@ class FlextUtilitiesMapper:
         """
         # Type narrowing: ensure value is PayloadValue (not plain object)
         narrowed_value: t.ContainerValue
-        if isinstance(value, str | int | float | bool):
+        if isinstance(value, t.JsonPrimitive):
             narrowed_value = value
         elif value is None:
             narrowed_value = None
@@ -648,7 +648,7 @@ class FlextUtilitiesMapper:
     ) -> tuple[t.ContainerValue | None, bool]:
         """Helper: Get raw value from dict/object/model."""
         if isinstance(current, Mapping):
-            current_mapping: m.ConfigMap = (
+            current_mapping: FlextModelsContainers.ConfigMap = (
                 FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
             )
             if key_part in current_mapping.root:
@@ -703,7 +703,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def extract(
-        data: m.ConfigMap | BaseModel | t.ContainerValue,
+        data: FlextModelsContainers.ConfigMap | BaseModel | t.ContainerValue,
         path: str,
         *,
         default: t.ContainerValue | None = None,
@@ -934,7 +934,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[m.ConfigMap | BaseModel], t.ContainerValue]:
+    ) -> Callable[[FlextModelsContainers.ConfigMap | BaseModel], t.ContainerValue]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.
@@ -956,7 +956,7 @@ class FlextUtilitiesMapper:
         """
 
         def accessor(
-            obj: m.ConfigMap | BaseModel,
+            obj: FlextModelsContainers.ConfigMap | BaseModel,
         ) -> t.ContainerValue:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
@@ -1048,7 +1048,7 @@ class FlextUtilitiesMapper:
         default: t.ContainerValue | None = None,
         from_start: bool = True,
     ) -> (
-        Mapping[str, t.ContainerValue]
+        t.ConfigurationMapping
         | list[t.ContainerValue]
         | t.ContainerValue
         | None
@@ -1861,11 +1861,11 @@ class FlextUtilitiesMapper:
             to_json_bool,
         ) = FlextUtilitiesMapper._extract_transform_options(transform_opts)
         # Narrow current to ConfigurationMapping
-        current_dict: m.ConfigMap = (
+        current_dict: FlextModelsContainers.ConfigMap = (
             FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
         )
         # Implement transform logic directly using available utilities
-        transform_result = r[Mapping[str, t.ContainerValue]].create_from_callable(
+        transform_result = r[t.ConfigurationMapping].create_from_callable(
             lambda: FlextUtilitiesMapper.apply_transform_steps(
                 dict(current_dict),
                 normalize=normalize_bool,
@@ -2311,7 +2311,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def construct(
         spec: Mapping[str, t.ContainerValue],
-        source: m.ConfigMap | BaseModel | None = None,
+        source: FlextModelsContainers.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
     ) -> Mapping[str, t.ContainerValue]:
@@ -2428,7 +2428,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform(
-        source: Mapping[str, t.ContainerValue] | m.ConfigMap,
+        source: Mapping[str, t.ContainerValue] | FlextModelsContainers.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -2462,7 +2462,7 @@ class FlextUtilitiesMapper:
             >>> transformed = result.map_or({})  # {"new": "value"}
 
         """
-        transform_result = r[Mapping[str, t.ContainerValue]].create_from_callable(
+        transform_result = r[t.ConfigurationMapping].create_from_callable(
             lambda: FlextUtilitiesMapper._apply_transform_steps(
                 dict(source),
                 normalize=normalize,
@@ -2475,7 +2475,7 @@ class FlextUtilitiesMapper:
             ),
         )
         if transform_result.is_failure:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"Transform failed: {transform_result.error}",
             )
         return transform_result
@@ -2594,8 +2594,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def process_context_data(
-        primary_data: m.ConfigMap | t.ContainerValue | None = None,
-        secondary_data: m.ConfigMap | t.ContainerValue | None = None,
+        primary_data: FlextModelsContainers.ConfigMap | t.ContainerValue | None = None,
+        secondary_data: FlextModelsContainers.ConfigMap | t.ContainerValue | None = None,
         *,
         transformer: Callable[[t.ContainerValue], t.ContainerValue] | None = None,
         field_overrides: Mapping[str, t.ContainerValue] | None = None,
@@ -2660,7 +2660,7 @@ class FlextUtilitiesMapper:
         # Process primary data
         if primary_data is not None:
             primary_source: Mapping[str, t.ContainerValue] | None = None
-            if isinstance(primary_data, m.ConfigMap):
+            if isinstance(primary_data, FlextModelsContainers.ConfigMap):
                 primary_source = primary_data.root
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_general_value_type(
@@ -2683,7 +2683,7 @@ class FlextUtilitiesMapper:
         # Process secondary data based on merge strategy
         if secondary_data is not None and merge_strategy != "primary_only":
             secondary_source: Mapping[str, t.ContainerValue] | None = None
-            if isinstance(secondary_data, m.ConfigMap):
+            if isinstance(secondary_data, FlextModelsContainers.ConfigMap):
                 secondary_source = secondary_data.root
             else:
                 secondary_general = FlextUtilitiesMapper.narrow_to_general_value_type(
@@ -2736,8 +2736,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def normalize_context_values(
-        context: m.ConfigMap | None,
-        extra_kwargs: m.ConfigMap,
+        context: FlextModelsContainers.ConfigMap | None,
+        extra_kwargs: FlextModelsContainers.ConfigMap,
         **specific_fields: t.MetadataAttributeValue,
     ) -> Mapping[str, t.MetadataAttributeValue]:
         """Normalize and merge context values for exception handling.
@@ -2863,8 +2863,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields(
-        obj: m.ConfigMap | Mapping[str, t.ContainerValue] | t.ContainerValue,
-        *field_names: str | Mapping[str, t.ContainerValue],
+        obj: FlextModelsContainers.ConfigMap | t.ConfigurationMapping | t.ContainerValue,
+        *field_names: str | t.ConfigurationMapping,
     ) -> Mapping[str, t.ContainerValue]:
         """Extract specified fields from object.
 
@@ -2892,7 +2892,7 @@ class FlextUtilitiesMapper:
         """
         result: dict[str, t.ContainerValue] = {}
 
-        spec_item: str | Mapping[str, t.ContainerValue]
+        spec_item: str | t.ConfigurationMapping
         for spec_item in field_names:
             # DSL pattern: dict with field specifications
             if isinstance(spec_item, Mapping):

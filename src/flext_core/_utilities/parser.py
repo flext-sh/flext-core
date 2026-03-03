@@ -76,7 +76,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _to_json_value(value: t.ContainerValue) -> t.JsonValue:
-        if value is None or isinstance(value, str | int | float | bool):
+        if value is None or isinstance(value, t.JsonPrimitive):
             return value
         if isinstance(value, (list, tuple)):
             return str(value)
@@ -635,7 +635,7 @@ class FlextUtilitiesParser:
         """
         try:
             mapping_data: Mapping[str, t.ContainerValue] = TypeAdapter(
-                Mapping[str, t.ContainerValue],
+                t.ConfigurationMapping,
             ).validate_python(obj)
         except ValidationError:
             return None
@@ -996,7 +996,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_get_attr(
-        obj: BaseModel | Mapping[str, t.ContainerValue],
+        obj: BaseModel | t.ConfigurationMapping,
         attr: str,
         default: t.ContainerValue = None,
     ) -> t.ContainerValue:
@@ -1121,7 +1121,7 @@ class FlextUtilitiesParser:
         """Parse Pydantic BaseModel. Returns None if not model."""
         try:
             mapping_value: Mapping[str, t.ContainerValue] = TypeAdapter(
-                Mapping[str, t.ContainerValue],
+                t.ConfigurationMapping,
             ).validate_python(value)
         except ValidationError:
             return r.fail(
@@ -1743,12 +1743,12 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | t.ConfigMap | Mapping[str, t.ContainerValue],
+        items: list[str] | FlextModelsContainers.ConfigMap | t.ConfigurationMapping,
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | t.ConfigMap | dict[str, str]:
+    ) -> list[str] | set[str] | FlextModelsContainers.ConfigMap | dict[str, str]:
         """Normalize list/dict (builder: norm().list()).
 
         Mnemonic: norm = normalize, list = list[str]
@@ -1817,7 +1817,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: list[str] | m.ConfigMap | Mapping[str, t.ContainerValue],
+        items: list[str] | FlextModelsContainers.ConfigMap | t.ConfigurationMapping,
         *,
         case: str | None = None,
     ) -> bool:
@@ -1835,7 +1835,7 @@ class FlextUtilitiesParser:
 
         """
         items_to_check: list[str]
-        if isinstance(items, m.ConfigMap):
+        if isinstance(items, FlextModelsContainers.ConfigMap):
             items_to_check = [str(k) for k in items.root]
         elif isinstance(items, Mapping):
             items_to_check = [str(k) for k in items]

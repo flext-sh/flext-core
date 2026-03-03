@@ -62,8 +62,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: t.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
-        context: t.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        data: m.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        context: m.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -258,10 +258,10 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
-        input_data: t.ConfigMap = Field(
+        input_data: m.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
         )
-        execution_context: t.ConfigMap = Field(
+        execution_context: m.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
         )
         timeout_seconds: float = Field(
@@ -298,7 +298,7 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: t.ConfigMap = Field(
+        config: m.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Middleware-specific configuration",
         )
@@ -369,7 +369,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: t.ConfigMap | None = Field(
+        env: m.ConfigMap | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -604,7 +604,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: t.Dict = Field(
+        extra_kwargs: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Additional keyword arguments for metadata",
         )
@@ -932,7 +932,7 @@ class FlextModelsConfig:
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        call_kwargs: t.ConfigMap = Field(
+        call_kwargs: m.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Keyword arguments for function",
         )

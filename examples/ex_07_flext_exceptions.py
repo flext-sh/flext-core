@@ -8,7 +8,7 @@ from pathlib import Path
 from flext_core import FlextExceptions, c, e, r, u
 
 type _SerValue = (
-    str | int | float | bool | list[_SerValue] | dict[str, _SerValue] | None
+    t.JsonPrimitive | list[_SerValue] | dict[str, _SerValue] | None
 )
 
 _RESULTS: list[str] = []

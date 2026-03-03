@@ -205,7 +205,7 @@ class FlextExceptions:
     def _safe_config_map(
         value: MetadataProtocol
         | m.Metadata
-        | Mapping[str, t.ContainerValue]
+        | t.ConfigurationMapping
         | m.ConfigMap
         | t.ContainerValue
         | None,
@@ -222,7 +222,7 @@ class FlextExceptions:
     def _safe_metadata(
         value: MetadataProtocol
         | m.Metadata
-        | Mapping[str, t.ContainerValue]
+        | t.ConfigurationMapping
         | m.ConfigMap
         | t.ContainerValue
         | None,

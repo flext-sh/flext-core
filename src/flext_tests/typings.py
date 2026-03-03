@@ -717,7 +717,7 @@ class FlextTestsTypes(FlextTypes):
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True
-            if isinstance(value, str | int | float | bool):
+            if isinstance(value, t.JsonPrimitive):
                 return True
             if isinstance(value, (list, tuple)):
                 return True

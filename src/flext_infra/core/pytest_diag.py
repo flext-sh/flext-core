@@ -91,9 +91,9 @@ class FlextInfraPytestDiagExtractor:
                 "skip_cases": diag.skip_cases,
                 "slow_entries": diag.slow_entries,
             }
-            return r[Mapping[str, t.ContainerValue]].ok(result)
+            return r[t.ConfigurationMapping].ok(result)
         except (OSError, TypeError, ValueError) as exc:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"pytest diagnostics extraction failed: {exc}",
             )
 

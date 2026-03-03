@@ -130,7 +130,7 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 f"Page {page} exceeds total pages {total_pages}",
             )
 
@@ -142,7 +142,7 @@ class FlextUtilitiesPagination:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
 
-        return r[Mapping[str, t.ContainerValue]].ok({
+        return r[t.ConfigurationMapping].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -173,7 +173,7 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[t.ConfigurationMapping].fail(
                 "Invalid pagination data structure",
             )
 
@@ -190,11 +190,11 @@ class FlextUtilitiesPagination:
         if message is not None:
             response = {**response, "message": message}
 
-        return r[Mapping[str, t.ContainerValue]].ok(response)
+        return r[t.ConfigurationMapping].ok(response)
 
     @staticmethod
     def extract_pagination_config(
-        config: BaseModel | Mapping[str, t.ContainerValue] | None,
+        config: BaseModel | t.ConfigurationMapping | None,
     ) -> Mapping[str, int]:
         """Extract pagination configuration values - no fallbacks.
 

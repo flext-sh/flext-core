@@ -339,7 +339,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> t.ConfigMap | None:
+        def error_data(self) -> m.ConfigMap | None:
             """Error metadata (optional)."""
             ...
 
@@ -508,7 +508,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> t.ConfigMap | None:
+        def error_data(self) -> m.ConfigMap | None:
             """Error data."""
             ...
 
@@ -660,7 +660,7 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-        def get_config(self) -> t.ConfigMap:
+        def get_config(self) -> m.ConfigMap:
             """Return the merged configuration exposed by this container."""
             ...
 
@@ -1128,7 +1128,7 @@ class FlextProtocols:
             """
             ...
 
-        def get_metrics(self) -> FlextProtocols.Result[t.ConfigMap]:
+        def get_metrics(self) -> FlextProtocols.Result[m.ConfigMap]:
             """Get current metrics dictionary.
 
             Returns:
@@ -1160,7 +1160,7 @@ class FlextProtocols:
             """
             ...
 
-        def pop_context(self) -> FlextProtocols.Result[Mapping[str, t.ContainerValue]]:
+        def pop_context(self) -> FlextProtocols.Result[t.ConfigurationMapping]:
             """Pop execution context from the stack.
 
             Returns:
@@ -1282,7 +1282,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def attributes(self) -> t.ConfigMap:
+            def attributes(self) -> m.ConfigMap:
                 """Metadata attributes."""
                 ...
 
@@ -1528,9 +1528,9 @@ class FlextProtocols:
     # Supports: ConfigurationDict (PayloadValue), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        t.ConfigMap
+        m.ConfigMap
         | Mapping[str, t.JsonValue]
-        | Mapping[str, t.ContainerValue]
+        | t.ConfigurationMapping
         | BaseModel
         | "FlextProtocols.HasModelDump"
         | "FlextProtocols.ValidatorSpec"

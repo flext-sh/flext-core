@@ -306,12 +306,12 @@ class FlextModelsContext:
 
         """
 
-        data: t.Dict = Field(
+        data: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Initial context data as key-value pairs",
         )
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.Dict | None,
+            FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(_normalize_metadata_before),
         ] = Field(
             default=None,
@@ -380,7 +380,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None,
+            v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
         ) -> Mapping[str, t.ContainerValue]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
@@ -471,7 +471,7 @@ class FlextModelsContext:
             description="All context data from all scopes",
         )
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.Dict | None,
+            FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(_normalize_metadata_before),
         ] = Field(
             default=None,
@@ -489,7 +489,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None,
+            v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
         ) -> Mapping[str, t.ContainerValue]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
