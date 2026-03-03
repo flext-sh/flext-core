@@ -76,11 +76,13 @@ def _is_key_value_pair[TK, TV](
     return isinstance(key_equals, tuple) and len(key_equals) == 2
 
 
-def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ContainerValue]]:
+def _is_non_string_sequence(
+    value: t.Tests.Matcher.MatcherKwargValue,
+) -> TypeGuard[Sequence[t.ContainerValue]]:
     return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
 
-def _to_test_payload(value: object) -> t.Tests.PayloadValue:
+def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue) -> t.Tests.PayloadValue:
     if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -90,7 +92,9 @@ def _to_test_payload(value: object) -> t.Tests.PayloadValue:
     return str(value)
 
 
-def _as_guard_input(value: object) -> core_t.ContainerValue | None:
+def _as_guard_input(
+    value: t.Tests.Matcher.MatcherKwargValue,
+) -> core_t.ContainerValue | None:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -103,7 +107,7 @@ def _as_guard_input(value: object) -> core_t.ContainerValue | None:
 
 
 def _check_has_lacks(
-    value: object,
+    value: t.Tests.Matcher.MatcherKwargValue,
     has: t.ContainerValue | Sequence[t.ContainerValue] | None,
     lacks: t.ContainerValue | Sequence[t.ContainerValue] | None,
     msg: str | None,
@@ -614,7 +618,7 @@ class FlextTestsMatchers:
             actual_raw = result.error_data
             actual_data: MutableMapping[str, t.Tests.PayloadValue] = {}
             if actual_raw is not None:
-                root_value: object = (
+                root_value: t.Tests.Matcher.MatcherKwargValue = (
                     actual_raw.root
                     if isinstance(actual_raw, m.ConfigMap)
                     else actual_raw
@@ -643,7 +647,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def that(
-        value: object,
+        value: t.Tests.Matcher.MatcherKwargValue,
         **kwargs: t.Tests.Matcher.MatcherKwargValue,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
@@ -919,7 +923,7 @@ class FlextTestsMatchers:
 
         # Sequence assertions
         if isinstance(value, (list, tuple)):
-            seq_value: Sequence[object] = value
+            seq_value: Sequence[t.Tests.PayloadValue] = value
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -945,7 +949,10 @@ class FlextTestsMatchers:
             if params.all_ is not None:
                 if isinstance(params.all_, type):
 
-                    def _all_match(t: type, seq: Sequence[object]) -> bool:
+                    def _all_match(
+                        t: type,
+                        seq: Sequence[t.Tests.PayloadValue],
+                    ) -> bool:
                         return all(
                             isinstance(x, t)
                             or (hasattr(type(x), "__mro__") and t in type(x).__mro__)
@@ -1029,7 +1036,7 @@ class FlextTestsMatchers:
                     # sorted_param is Callable[[object], object] but sorted needs comparable return
                     user_key_fn = sorted_param
 
-                    def comparable_key(x: object) -> tuple[str, str]:
+                    def comparable_key(x: t.Tests.PayloadValue) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         """Wrap user key to return comparable tuple."""
@@ -1056,7 +1063,7 @@ class FlextTestsMatchers:
         if isinstance(value, Mapping):
             mapping_value = value
             if params.keys is not None:
-                key_set: set[object] = set(params.keys)
+                key_set: set[str] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
                 if missing:
                     raise AssertionError(
@@ -1065,7 +1072,7 @@ class FlextTestsMatchers:
                     )
 
             if params.lacks_keys is not None:
-                lacks_key_set: set[object] = set(params.lacks_keys)
+                lacks_key_set: set[str] = set(params.lacks_keys)
                 present = lacks_key_set & set(mapping_value.keys())
                 if present:
                     raise AssertionError(
@@ -1096,7 +1103,7 @@ class FlextTestsMatchers:
                             or f"Key {key!r}: expected {expected_val!r}, got {mapping_value[key]!r}",
                         )
                 elif hasattr(params.kv, "keys") and hasattr(params.kv, "items"):
-                    mapping_kv: Mapping[str, object] = params.kv
+                    mapping_kv: Mapping[str, t.Tests.PayloadValue] = params.kv
                     for key, expected_obj in mapping_kv.items():
                         if key not in mapping_value:
                             raise AssertionError(

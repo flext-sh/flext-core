@@ -63,7 +63,9 @@ def _yaml_dump(value: t.ContainerValue, *, indent: int) -> str:
     )
 
 
-def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.PayloadValue]:
+def _is_batch_content(
+    content_raw: t.GeneralValueType,
+) -> TypeGuard[t.Tests.PayloadValue]:
     try:
         _ = m.Tests.Files.CreateParams.model_validate(
             {
@@ -1518,7 +1520,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _is_nested_rows(
         self,
-        value: object,
+        value: t.GeneralValueType,
     ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
@@ -1530,12 +1532,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         )
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.ContainerValue]]:
+    def _is_mapping(
+        value: t.GeneralValueType,
+    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
         self,
-        value: object,
+        value: t.GeneralValueType,
     ) -> str | bytes | m.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
@@ -1550,7 +1554,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 },
             )
         if self._is_nested_rows(value):
-            sequence_value: Sequence[object] = (
+            sequence_value: Sequence[t.GeneralValueType] = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             return [
@@ -1562,15 +1566,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _mapping_to_payload(
         self,
-        mapping: Mapping[str, object],
+        mapping: Mapping[str, t.GeneralValueType],
     ) -> Mapping[str, t.Tests.PayloadValue]:
         payload: dict[str, t.Tests.PayloadValue] = {}
         for key, value in mapping.items():
             payload[str(key)] = self._to_payload_value(value)
         return payload
 
-    def _to_payload_value(self, value: object) -> t.Tests.PayloadValue:
-        if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
+    def _to_payload_value(self, value: t.GeneralValueType) -> t.Tests.PayloadValue:
+        if value is None or isinstance(
+            value, (str, int, float, bool, bytes, BaseModel)
+        ):
             return value
         if isinstance(value, Path | datetime):
             return str(value)
@@ -1596,13 +1602,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             }
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             return [
-            self._to_config_map_value(self._to_payload_value(item)) for item in value
+                self._to_config_map_value(self._to_payload_value(item))
+                for item in value
             ]
         return str(value)
 
     def _coerce_file_content(
         self,
-        value: object,
+        value: t.GeneralValueType,
     ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         if isinstance(value, str | bytes):
             return value
@@ -1620,7 +1627,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
-            sequence_value: Sequence[object] = (
+            sequence_value: Sequence[t.GeneralValueType] = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             rows.extend(
@@ -1713,7 +1720,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                 else:
                     # YAML parsing
-                    parsed_raw = _yaml_safe_load(text) if text.strip() else dict[str, t.ContainerValue]()
+                    parsed_raw = (
+                        _yaml_safe_load(text)
+                        if text.strip()
+                        else dict[str, t.ContainerValue]()
+                    )
 
                 if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(

@@ -69,12 +69,26 @@ class FlextTestsBuilders:
     _data: t.Tests.Builders.BuilderDict
 
     @staticmethod
-    def _is_result_obj(value: object) -> TypeGuard[r[t.Tests.PayloadValue]]:
+    def _is_result_obj(
+        value: (
+            t.Tests.Builders.BuilderValue
+            | r[t.Tests.PayloadValue]
+            | builtins.list[BaseModel]
+            | Mapping[str, BaseModel]
+            | r[BaseModel]
+            | r[builtins.list[BaseModel]]
+            | r[Mapping[str, BaseModel]]
+        ),
+    ) -> TypeGuard[r[t.Tests.PayloadValue]]:
         return isinstance(value, r)
 
     @staticmethod
-    def _to_payload_value(value: object) -> t.Tests.PayloadValue:
-        if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
+    def _to_payload_value(
+        value: t.Tests.Builders.BuilderValue | r[t.Tests.PayloadValue],
+    ) -> t.Tests.PayloadValue:
+        if value is None or isinstance(
+            value, (str, int, float, bool, bytes, BaseModel)
+        ):
             return value
         if isinstance(value, Mapping):
             return {
@@ -244,13 +258,13 @@ class FlextTestsBuilders:
 
             # Type guards for Entity and Value classes
             def is_entity_class(
-                cls: type[object],
+                cls: type[t.Tests.PayloadValue],
             ) -> TypeGuard[type[m.Tests.Factory.Entity]]:
                 """Type guard to check if class is Entity subclass."""
                 return issubclass(cls, m.Tests.Factory.Entity)
 
             def is_value_class(
-                cls: type[object],
+                cls: type[t.Tests.PayloadValue],
             ) -> TypeGuard[type[m.Tests.Factory.Value]]:
                 """Type guard to check if class is Value subclass."""
                 return issubclass(cls, m.Tests.Factory.Value)

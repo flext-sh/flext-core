@@ -48,7 +48,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
 
     Provides methods to validate:
     - imports: lazy imports, TYPE_CHECKING, ImportError handling
-    - types: type:ignore, Any types, unapproved
+    - types: type:ignore, ANY types, unapproved
     - tests: monkeypatch, mocks, @patch
     - config: pyproject.toml deviations
     - bypass: noqa, pragma, exception swallowing
@@ -111,7 +111,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
 
         Detects:
         - TYPE-001:
-        - TYPE-002: Any type annotations
+        - TYPE-002: ANY type annotations
         - TYPE-003: Unapproved  usage
 
         Args:

@@ -520,7 +520,10 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
         *,
         error_message: str = c.Tests.Factory.ERROR_DEFAULT,
         result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
-    ) -> Callable[..., object]:
+    ) -> (
+        Callable[..., t.Tests.TestResultValue]
+        | Callable[..., r[t.Tests.TestResultValue]]
+    ):
         """Unified operation factory - creates callable test operations.
 
         This is the preferred way to create test operations. Use tt.op() instead of
@@ -830,7 +833,7 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
                     raw_items.append(final_item)
         items.extend(raw_items)
         if params.unique and items:
-            seen: set[object] = set()
+            seen: set[int] = set()
             unique_items: builtins.list[t.Tests.PayloadValue] = []
             for item in items:
                 item_hash = (
@@ -1012,7 +1015,10 @@ class FlextTestsFactories(s[t.Tests.PayloadValue]):
 
         """
         try:
-            validate_data: dict[str, object] = {"type_": type_, **kwargs}
+            validate_data: dict[str, t.Tests.PayloadValue | type[T]] = {
+                "type_": type_,
+                **kwargs,
+            }
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
             params = m.Tests.Factory.GenericFactoryParams.model_validate(

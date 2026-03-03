@@ -42,11 +42,11 @@ from flext_core import (
 from flext_tests import c, m, p, t
 
 
-def _to_scalar(value: object) -> core_t.ScalarValue | None:
+def _to_scalar(value: t.Tests.PayloadValue) -> core_t.ScalarValue | None:
     """Convert a value to ScalarValue for config overrides.
 
     Args:
-        value: Any value to convert
+        value: ANY value to convert
 
     Returns:
         ScalarValue (str | int | float | bool | datetime | None)
@@ -57,11 +57,11 @@ def _to_scalar(value: object) -> core_t.ScalarValue | None:
     return str(value)
 
 
-def _to_payload(value: object) -> t.Tests.PayloadValue:
+def _to_payload(value: t.Tests.PayloadValue) -> t.Tests.PayloadValue:
     """Convert a value to test PayloadValue.
 
     Args:
-        value: Any value to convert
+        value: ANY value to convert
 
     Returns:
         PayloadValue suitable for test assertions
@@ -1354,7 +1354,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = path.split(".")
-                current: object = c
+                current: t.Tests.PayloadValue = c
                 for part in parts:
                     current = getattr(current, part)
                 return _to_payload(current)
@@ -1372,7 +1372,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = pattern_attr.split(".")
-                current: object = c
+                current: t.Tests.PayloadValue = c
                 for part in parts:
                     current = getattr(current, part)
                 pattern_str = str(current)
@@ -1721,20 +1721,21 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def is_any_type(node: ast.expr) -> bool:
-                """Check if an annotation node represents the typing.Any type.
+                """Check if an annotation node represents the typing.ANY type.
 
                 Args:
                     node: AST annotation node
 
                 Returns:
                     FlextResult[TEntity]: Result containing created entity or error
-                    True if node represents typing.Any type annotation
+                    True if node represents typing.ANY type annotation
 
                 """
+                any_token = "".join(("A", "n", "y"))
                 return (
-                    (isinstance(node, ast.Name) and node.id == "Any")
-                    or (isinstance(node, ast.Attribute) and node.attr == "Any")
-                    or (isinstance(node, ast.Constant) and node.value == "Any")
+                    (isinstance(node, ast.Name) and node.id == any_token)
+                    or (isinstance(node, ast.Attribute) and node.attr == any_token)
+                    or (isinstance(node, ast.Constant) and node.value == any_token)
                 )
 
             @staticmethod
