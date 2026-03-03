@@ -70,21 +70,21 @@ def _extract_model(
 
 
 def _as_single_payload_result(
-    value: r[t_test.Tests.PayloadValue] | list[r[t_test.Tests.PayloadValue]],
-) -> r[t_test.Tests.PayloadValue]:
+    value: r[t_test.Tests.ContainerValue] | list[r[t_test.Tests.ContainerValue]],
+) -> r[t_test.Tests.ContainerValue]:
     return value if isinstance(value, r) else value[0]
 
 
 def _as_payload_list(
-    value: list[t_test.Tests.PayloadValue] | r[list[t_test.Tests.PayloadValue]],
-) -> list[t_test.Tests.PayloadValue]:
+    value: list[t_test.Tests.ContainerValue] | r[list[t_test.Tests.ContainerValue]],
+) -> list[t_test.Tests.ContainerValue]:
     return value if isinstance(value, list) else value.value
 
 
 def _as_payload_mapping(
-    value: Mapping[str, t_test.Tests.PayloadValue]
-    | r[Mapping[str, t_test.Tests.PayloadValue]],
-) -> Mapping[str, t_test.Tests.PayloadValue]:
+    value: Mapping[str, t_test.Tests.ContainerValue]
+    | r[Mapping[str, t_test.Tests.ContainerValue]],
+) -> Mapping[str, t_test.Tests.ContainerValue]:
     return value if isinstance(value, Mapping) else value.value
 
 

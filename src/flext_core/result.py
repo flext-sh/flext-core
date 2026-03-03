@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Self, TypeIs, overload, override
+from typing import Self, TypeIs, overload, override
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -20,9 +20,6 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import FlextRuntime, T_Model, U, t
-
-if TYPE_CHECKING:
-    from flext_core import m
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
@@ -39,7 +36,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: m.ConfigMap | None = None,
+        error_data: t.ConfigurationMapping = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
@@ -118,7 +115,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: m.ConfigMap | None = None,
+        error_data: t.ConfigurationMapping = None,
         exception: BaseException | None = None,
     ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.
@@ -716,16 +713,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self.alt(func)
 
     @staticmethod
-    def is_success_result(
-        value: t.GeneralValueType,
-    ) -> TypeIs[FlextResult[t.ContainerValue]]:
+    def is_success_result(value: object) -> TypeIs[FlextResult[t.Container]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 
     @staticmethod
-    def is_failure_result(
-        value: t.GeneralValueType,
-    ) -> TypeIs[FlextResult[t.ContainerValue]]:
+    def is_failure_result(value: object) -> TypeIs[FlextResult[t.Container]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 

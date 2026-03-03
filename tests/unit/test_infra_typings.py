@@ -33,10 +33,10 @@ class TestFlextInfraTypesImport:
         )
 
     def test_flext_infra_types_has_general_value_type(self) -> None:
-        """Test that FlextInfraTypes has GeneralValueType type."""
-        # GeneralValueType is inherited from FlextTypes
-        assert hasattr(FlextTypes, "GeneralValueType") or hasattr(
-            FlextInfraTypes, "GeneralValueType"
+        """Test that FlextInfraTypes has ContainerValue type."""
+        # ContainerValue is inherited from FlextTypes
+        assert hasattr(FlextTypes, "ContainerValue") or hasattr(
+            FlextInfraTypes, "ContainerValue"
         )
 
     def test_flext_infra_types_has_config_map_type(self) -> None:

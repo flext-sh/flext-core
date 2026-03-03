@@ -180,7 +180,7 @@ class OrderService(s[m.ConfigMap]):
         order_data_dict = merged
 
         def is_string_key(_k: str, _v: t.ContainerValue) -> bool:
-            # k is already typed as str from dict[str, t.GeneralValueType]
+            # k is already typed as str from dict[str, t.Container]
             return True
 
         # Use u.filter to filter dict items with string keys

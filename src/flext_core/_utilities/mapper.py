@@ -115,7 +115,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_sequence(value: t.ContainerValue) -> Sequence[t.ContainerValue]:
-        """Safely narrow object to Sequence[t.ConfigMapValue]."""
+        """Safely narrow object to Sequence[t.ContainerValue]."""
         if isinstance(value, (list, tuple)):
             # Explicit type annotation for narrowing items
             narrowed_items: list[t.ContainerValue] = []
@@ -129,15 +129,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_general_value_type(value: t.ContainerValue) -> t.ContainerValue:
-        """Safely narrow object to t.ConfigMapValue.
+        """Safely narrow object to t.ContainerValue.
 
         Uses TypeGuard-based validation to ensure type safety.
-        If value is not a valid t.ConfigMapValue, returns string representation.
+        If value is not a valid t.ContainerValue, returns string representation.
         """
         # Use TypeGuard for proper type narrowing
         if FlextUtilitiesGuards.is_general_value_type(value):
             return value
-        # Fallback: convert to string (str is a valid t.ConfigMapValue)
+        # Fallback: convert to string (str is a valid t.ContainerValue)
         return str(value)
 
     @staticmethod
@@ -435,7 +435,7 @@ class FlextUtilitiesMapper:
             4. Other → convert to str()
 
         Args:
-            value: t.ConfigMapValue value to convert
+            value: t.ContainerValue value to convert
 
         Returns:
             JSON-compatible value (str, int, float, bool, None, dict, list)
@@ -1412,7 +1412,7 @@ class FlextUtilitiesMapper:
                 return str(current) if current is not None else default_val
             case "list":
                 if isinstance(current, list):
-                    # Type narrowing: current is list, convert items to t.ConfigMapValue
+                    # Type narrowing: current is list, convert items to t.ContainerValue
                     list_current: list[t.ContainerValue] = current
                     return [
                         FlextUtilitiesMapper.narrow_to_general_value_type(item)
@@ -1425,7 +1425,7 @@ class FlextUtilitiesMapper:
                 )
             case "str_list":
                 if isinstance(current, list):
-                    # Type narrowing: current is list[t.ConfigMapValue], convert each to str
+                    # Type narrowing: current is list[t.ContainerValue], convert each to str
                     list_current_str: list[t.ContainerValue] = current
                     return [
                         str(FlextUtilitiesMapper.narrow_to_general_value_type(x))
@@ -1468,7 +1468,7 @@ class FlextUtilitiesMapper:
         # filter_pred returns PayloadValue, used as truthy check in filter context
         # Handle collections
         if isinstance(current, (list, tuple)):
-            # Type narrowing: current is Sequence[object], x is t.ConfigMapValue
+            # Type narrowing: current is Sequence[object], x is t.ContainerValue
             seq_current: Sequence[t.ContainerValue] = current
             return [
                 FlextUtilitiesMapper.narrow_to_general_value_type(x)
@@ -1507,7 +1507,7 @@ class FlextUtilitiesMapper:
             )
 
         if isinstance(current, (list, tuple)):
-            # Type narrowing: current is Sequence, items are t.ConfigMapValue
+            # Type narrowing: current is Sequence, items are t.ContainerValue
             seq_current: Sequence[t.ContainerValue] = current
             return [
                 map_func(FlextUtilitiesMapper._to_general_value_from_object(x))
@@ -1518,9 +1518,9 @@ class FlextUtilitiesMapper:
             current_dict: Mapping[str, t.ContainerValue] = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
-            # ConfigurationDict values are t.ConfigMapValue, so map_func works directly
+            # ConfigurationDict values are t.ContainerValue, so map_func works directly
             return {k: map_func(v) for k, v in current_dict.items()}
-        # Single value case - narrow to t.ConfigMapValue before mapping
+        # Single value case - narrow to t.ContainerValue before mapping
         current_general = FlextUtilitiesMapper.narrow_to_general_value_type(current)
         return map_func(current_general)
 
@@ -1536,7 +1536,7 @@ class FlextUtilitiesMapper:
         if isinstance(current, str):
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
-            # Type narrowing: current is Sequence, items are t.ConfigMapValue
+            # Type narrowing: current is Sequence, items are t.ContainerValue
             seq_current: Sequence[t.ContainerValue] = current
             result: list[t.ContainerValue] = []
             for x in seq_current:
@@ -1903,7 +1903,7 @@ class FlextUtilitiesMapper:
 
         def _process_current() -> t.ContainerValue:
             if isinstance(current, (list, tuple)):
-                # Type narrowing: current is Sequence, items are t.ConfigMapValue
+                # Type narrowing: current is Sequence, items are t.ContainerValue
                 seq_current: Sequence[t.ContainerValue] = current
                 return [
                     process_func(FlextUtilitiesMapper._to_general_value_from_object(x))
@@ -1914,9 +1914,9 @@ class FlextUtilitiesMapper:
                 current_dict: Mapping[str, t.ContainerValue] = (
                     FlextUtilitiesMapper._narrow_to_configuration_dict(current)
                 )
-                # ConfigurationDict values are t.ConfigMapValue, so process_func works directly
+                # ConfigurationDict values are t.ContainerValue, so process_func works directly
                 return {k: process_func(v) for k, v in current_dict.items()}
-            # Single value case - narrow to t.ConfigMapValue before processing
+            # Single value case - narrow to t.ContainerValue before processing
             current_general = FlextUtilitiesMapper.narrow_to_general_value_type(
                 current,
             )
@@ -2368,7 +2368,7 @@ class FlextUtilitiesMapper:
                     field_default = target_spec_mapping.get("default")
                     field_ops = target_spec_mapping.get("ops")
                 else:
-                    # After type checks, target_spec is t.ConfigMapValue
+                    # After type checks, target_spec is t.ContainerValue
                     constructed[target_key] = target_spec
                     continue
 
@@ -2407,7 +2407,7 @@ class FlextUtilitiesMapper:
                 else:
                     extracted = extracted_raw
 
-                # Narrow extracted to t.ConfigMapValue for type safety
+                # Narrow extracted to t.ContainerValue for type safety
                 final_value: t.ContainerValue = (
                     FlextUtilitiesMapper.narrow_to_general_value_type(
                         extracted if extracted is not None else field_default,
@@ -2738,8 +2738,8 @@ class FlextUtilitiesMapper:
     def normalize_context_values(
         context: FlextModelsContainers.ConfigMap | None,
         extra_kwargs: FlextModelsContainers.ConfigMap,
-        **specific_fields: t.MetadataAttributeValue,
-    ) -> Mapping[str, t.MetadataAttributeValue]:
+        **specific_fields: t.MetadataValue,
+    ) -> Mapping[str, t.MetadataValue]:
         """Normalize and merge context values for exception handling.
 
         Convenience method for exception context processing.
@@ -2767,7 +2767,7 @@ class FlextUtilitiesMapper:
         )
         # Transformer ensures all values are MetadataAttributeValue
         # Build result with explicit type
-        result: dict[str, t.MetadataAttributeValue] = {}
+        result: dict[str, t.MetadataValue] = {}
         for k, v in raw_result.items():
             result[k] = FlextRuntime.normalize_to_metadata_value(v)
         return result

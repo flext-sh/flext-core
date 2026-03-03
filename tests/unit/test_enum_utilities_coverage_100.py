@@ -262,16 +262,16 @@ class TestuEnumParse:
         result = u.Enum.parse(Status, scenario.value)
 
         if scenario.expected_success:
-            # Type annotation: Status is StrEnum, compatible with t.GeneralValueType
+            # Type annotation: Status is StrEnum, compatible with t.Container
             # Use explicit type annotation to help mypy infer TValue
             expected_status_cast: t.ContainerValue = cast(
-                "t.GeneralValueType",
+                "t.Container",
                 scenario.expected_status,
             )
             # Type annotation: mypy cannot infer TValue from StrEnum, specify explicitly
-            # Cast result to r[t.GeneralValueType] and expected_value to t.GeneralValueType
+            # Cast result to r[t.Container] and expected_value to t.Container
             result_typed: r[t.ContainerValue] = cast(
-                "r[t.GeneralValueType]",
+                "r[t.Container]",
                 result,
             )
             expected_typed: t.ContainerValue = expected_status_cast

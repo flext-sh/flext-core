@@ -151,7 +151,7 @@ class TestAutomatedFlextMixins:
             cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cast("r[t.GeneralValueType]", cleanup_result),
+                    cast("r[t.Container]", cleanup_result),
                     "FlextMixins cleanup failed",
                 )
 
@@ -168,15 +168,15 @@ class TestAutomatedFlextMixins:
         try:
             process = getattr(instance, "process", None)
             if callable(process):
-                return cast("r[t.GeneralValueType]", process(dict(input_data)))
+                return cast("r[t.Container]", process(dict(input_data)))
             execute = getattr(instance, "execute", None)
             if callable(execute):
-                return cast("r[t.GeneralValueType]", execute(dict(input_data)))
+                return cast("r[t.Container]", execute(dict(input_data)))
             handle = getattr(instance, "handle", None)
             if callable(handle):
-                return cast("r[t.GeneralValueType]", handle(dict(input_data)))
+                return cast("r[t.Container]", handle(dict(input_data)))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.ContainerValue].ok(cast("t.GeneralValueType", instance))
+            return r[t.ContainerValue].ok(cast("t.Container", instance))
         except Exception as e:
             return r[t.ContainerValue].fail(f"FlextMixins operation failed: {e}")
 

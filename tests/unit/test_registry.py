@@ -323,7 +323,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+                    "p.Handler[t.Container, t.Container]",
                     cast("object", None),
                 ),
             )
@@ -337,7 +337,7 @@ class TestFlextRegistry:
         else:
             u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
-                # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
+                # Type ignore: RegistrationDetails is not t.Container but test is valid
                 u.Tests.Result.assert_failure_with_error(
                     result,
                     test_case.error_pattern,
@@ -460,12 +460,12 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+                    "p.Handler[t.Container, t.Container]",
                     cast("object", None),
                 ),
             )
             u.Tests.Result.assert_failure(result)
-            # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
+            # Type ignore: RegistrationDetails is not t.Container but test is valid
             u.Tests.Result.assert_failure_with_error(
                 result,
                 "Handler cannot be None",

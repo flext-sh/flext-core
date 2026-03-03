@@ -86,18 +86,18 @@ def test_context_data_normalize_and_json_checks() -> None:
     assert isinstance(normalized, dict)
 
     FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.GeneralValueType", {"k": [1, "x"]}),
+        cast("t.Container", {"k": [1, "x"]}),
     )
 
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.GeneralValueType", {"bad": object()}),
+            cast("t.Container", {"bad": object()}),
         )
 
     obj = object()
     assert (
         FlextModelsContext.ContextData.normalize_to_general_value(
-            cast("t.GeneralValueType", obj),
+            cast("t.Container", obj),
         )
         is obj
     )
@@ -107,7 +107,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
         FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
+                "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
             ),
         )
@@ -115,7 +115,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
         FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
+                "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             ),
         )
@@ -162,17 +162,17 @@ def test_context_data_validator_forces_non_dict_normalized_branch(
 
 def test_context_export_serializable_and_validators() -> None:
     FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.GeneralValueType", {"k": [1, True]}),
+        cast("t.Container", {"k": [1, True]}),
     )
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.GeneralValueType", {"x": object()}),
+            cast("t.Container", {"x": object()}),
         )
 
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
         FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
+                "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             ),
         )
@@ -193,7 +193,7 @@ def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
     with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
         FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, t.ConfigMapValue] | BaseModel | None",
+                "t.Dict | Mapping[str, t.ContainerValue] | BaseModel | None",
                 cast("object", 123),
             ),
         )

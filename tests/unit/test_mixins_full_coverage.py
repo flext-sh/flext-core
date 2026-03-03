@@ -83,7 +83,7 @@ def test_mixins_result_and_model_conversion_paths(
             raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
-        x.to_dict(cast("Mapping[str, t.GeneralValueType]", _BadMap()))
+        x.to_dict(cast("Mapping[str, t.Container]", _BadMap()))
 
 
 def test_mixins_runtime_bootstrap_and_track_paths(
@@ -119,7 +119,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     assert runtime_container.wired is not None
 
     with service.track("op") as metrics:
-        cast("dict[str, t.GeneralValueType]", metrics)["duration_ms"] = 2.0
+        cast("dict[str, t.Container]", metrics)["duration_ms"] = 2.0
     assert hasattr(service, "_stats_op")
 
     try:
@@ -240,7 +240,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     assert (
         x.ProtocolValidation.is_handler(
             cast(
-                "t.ConfigMapValue",
+                "t.ContainerValue",
                 cast("object", SimpleNamespace(handle=lambda *_a, **_k: None)),
             ),
         )
@@ -248,7 +248,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service[t.GeneralValueType]", cast("object", SimpleNamespace())),
+            cast("p.Service[t.Container]", cast("object", SimpleNamespace())),
         )
         is True
     )
@@ -256,14 +256,14 @@ def test_mixins_validation_and_protocol_paths() -> None:
 
     unknown = x.ProtocolValidation.validate_protocol_compliance(
         cast(
-            "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+            "p.Handler[t.Container, t.Container]",
             cast("object", SimpleNamespace()),
         ),
         "Nope",
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
         cast(
-            "p.Handler[t.GeneralValueType, t.GeneralValueType]",
+            "p.Handler[t.Container, t.Container]",
             cast("object", SimpleNamespace()),
         ),
         "Service",

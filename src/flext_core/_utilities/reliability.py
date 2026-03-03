@@ -222,7 +222,7 @@ class FlextUtilitiesReliability:
 
         """
         # Extract configuration values safely with proper type conversion
-        # config is Mapping[str, t.ConfigMapValue] | None, use dict.get() instead of getattr()
+        # config is Mapping[str, t.ContainerValue] | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
         # Type narrowing: ensure values are numeric before conversion

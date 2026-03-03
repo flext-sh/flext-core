@@ -102,17 +102,17 @@ def test_non_empty_and_normalize_branches() -> None:
     # normalize_to_metadata_value({"k": object()}) raises TypeError (not JSON serializable)
     with pytest.raises(TypeError):
         u.normalize_to_metadata_value(
-            cast("t.GeneralValueType", {"k": object()}),
+            cast("t.Container", {"k": object()}),
         )
     list_out = u.normalize_to_metadata_value(
-        cast("t.GeneralValueType", [1, object()]),
+        cast("t.Container", [1, object()]),
     )
     assert isinstance(list_out, list)
     assert list_out[0] == "1"  # Source: int not scalar, stringified
     assert isinstance(list_out[1], str)
     assert isinstance(
         u.normalize_to_metadata_value(
-            cast("t.GeneralValueType", cast("object", {1, 2})),
+            cast("t.Container", cast("object", {1, 2})),
         ),
         str,
     )

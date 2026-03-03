@@ -21,8 +21,7 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
-from flext_core import T, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core import T, m, t
 
 if TYPE_CHECKING:
     from pydantic._internal._model_construction import (
@@ -61,7 +60,7 @@ class _ProtocolIntrospection:
         protocol_annotations: dict[str, t.TypeHintSpecifier] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | t.GeneralValueType = (
+        raw_attrs: set[str] | t.Container = (
             protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
@@ -147,7 +146,7 @@ class _ProtocolIntrospection:
         protocol_annotations: dict[str, t.TypeHintSpecifier] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | t.GeneralValueType = (
+        raw_attrs: set[str] | t.Container = (
             protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
@@ -244,7 +243,7 @@ class FlextProtocols:
     class RoutableType(Protocol):
         """Protocol for message types (classes) with route information."""
 
-        model_fields: Mapping[str, t.ScalarValue]
+        model_fields: Mapping[str, t.Scalar | None]
 
     # =========================================================================
     # CONTEXT: Context Management Protocols
@@ -287,13 +286,13 @@ class FlextProtocols:
         """Runtime bootstrap options for service initialization."""
 
         config_type: type[BaseSettings] | None
-        config_overrides: Mapping[str, t.ScalarValue] | None
+        config_overrides: Mapping[str, t.Scalar | None] | None
         context: FlextProtocols.Context | None
         subproject: str | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None
         resources: Mapping[str, t.ResourceCallable] | None
-        container_overrides: Mapping[str, t.ScalarValue] | None
+        container_overrides: Mapping[str, t.Scalar | None] | None
         wire_modules: Sequence[ModuleType] | None
         wire_packages: Sequence[str] | None
         wire_classes: Sequence[type] | None
@@ -340,7 +339,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
+        def error_data(self) -> m.ConfigMap | None:
             """Error metadata (optional)."""
             ...
 
@@ -509,7 +508,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
+        def error_data(self) -> m.ConfigMap | None:
             """Error data."""
             ...
 
@@ -529,7 +528,7 @@ class FlextProtocols:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> Mapping[str, t.ScalarValue]:
+        def model_dump(self) -> Mapping[str, t.Scalar | None]:
             """Dump model data to dictionary."""
             ...
 
@@ -542,7 +541,7 @@ class FlextProtocols:
         """
 
         @property
-        def model_fields(self) -> Mapping[str, t.ScalarValue]:
+        def model_fields(self) -> Mapping[str, t.Scalar | None]:
             """Model fields mapping."""
             ...
 
@@ -565,7 +564,7 @@ class FlextProtocols:
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: Mapping[str, t.ScalarValue]) -> None:
+        def configure(self, config: Mapping[str, t.Scalar | None]) -> None:
             """Configure component with settings."""
             ...
 
@@ -661,7 +660,7 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-        def get_config(self) -> FlextModelsContainers.ConfigMap:
+        def get_config(self) -> m.ConfigMap:
             """Return the merged configuration exposed by this container."""
             ...
 
@@ -770,7 +769,7 @@ class FlextProtocols:
             """
             ...
 
-        def get_service_info(self) -> Mapping[str, t.ScalarValue]:
+        def get_service_info(self) -> Mapping[str, t.Scalar | None]:
             """Get service metadata and configuration information.
 
             Reflects real implementations like FlextService which provide
@@ -1065,9 +1064,9 @@ class FlextProtocols:
 
         def process[TResult](
             self,
-            command: t.ScalarValue,
+            command: t.Scalar | None,
             next_handler: FlextProtocols.ResourceOperation[
-                t.ScalarValue,
+                t.Scalar | None,
                 TResult,
             ],
         ) -> FlextProtocols.Result[TResult]:
@@ -1129,7 +1128,7 @@ class FlextProtocols:
             """
             ...
 
-        def get_metrics(self) -> FlextProtocols.Result[FlextModelsContainers.ConfigMap]:
+        def get_metrics(self) -> FlextProtocols.Result[m.ConfigMap]:
             """Get current metrics dictionary.
 
             Returns:
@@ -1283,7 +1282,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def attributes(self) -> FlextModelsContainers.ConfigMap:
+            def attributes(self) -> m.ConfigMap:
                 """Metadata attributes."""
                 ...
 
@@ -1320,8 +1319,8 @@ class FlextProtocols:
 
         def __call__(
             self,
-            *args: t.ScalarValue,
-            **kwargs: t.ScalarValue,
+            *args: t.Scalar | None,
+            **kwargs: t.Scalar | None,
         ) -> T_co:
             """Call the function with any arguments, returning T_co."""
             ...
@@ -1460,7 +1459,7 @@ class FlextProtocols:
             """Entry attributes as immutable mapping."""
             ...
 
-        def to_dict(self) -> Mapping[str, t.ScalarValue]:
+        def to_dict(self) -> Mapping[str, t.Scalar | None]:
             """Convert to dictionary representation."""
             ...
 
@@ -1529,7 +1528,7 @@ class FlextProtocols:
     # Supports: ConfigurationDict (PayloadValue), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        FlextModelsContainers.ConfigMap
+        m.ConfigMap
         | Mapping[str, t.JsonValue]
         | t.ConfigurationMapping
         | BaseModel
@@ -1606,7 +1605,7 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, t.GeneralValueType],
+            namespace: Mapping[str, t.Container],
             **_kwargs: t.ContainerValue,
         ) -> type:
             """Create a new class with protocol validation.

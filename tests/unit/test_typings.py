@@ -181,11 +181,11 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
-            # CQRS aliases should all be t.GeneralValueType
+            # CQRS aliases should all be t.Container
             tm.that(
                 test_case.type_var,
                 eq=t.ContainerValue,
-                msg=f"{test_case.name} must equal t.GeneralValueType",
+                msg=f"{test_case.name} must equal t.Container",
             )
 
     @pytest.mark.parametrize(
@@ -245,7 +245,7 @@ class TestFlextTypings:
                 eq=True,
                 msg="TypeVar must be TypeVar or ParamSpec instance",
             )
-        # Validate CQRS aliases all point to t.GeneralValueType
+        # Validate CQRS aliases all point to t.Container
         cqrs_aliases = [
             t.ContainerValue,  # Command
             t.ContainerValue,  # Event
@@ -257,7 +257,7 @@ class TestFlextTypings:
             tm.that(
                 alias,
                 eq=t.ContainerValue,
-                msg="CQRS alias must equal t.GeneralValueType",
+                msg="CQRS alias must equal t.Container",
             )
 
     def test_hostname_validation_success(self) -> None:

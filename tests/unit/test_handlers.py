@@ -272,7 +272,7 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        """Test _run_pipeline with dict[str, t.GeneralValueType] message having command_id."""
+        """Test _run_pipeline with dict[str, t.Container] message having command_id."""
 
         class DictHandler(h[t.ConfigurationMapping, str]):
             @override
@@ -410,7 +410,7 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_basic(self) -> None:
         """Test create_from_callable with basic function."""
 
-        def simple_handler(message: t.ScalarValue) -> t.ScalarValue:
+        def simple_handler(message: t.Scalar | None) -> t.Scalar | None:
             return f"handled_{message}"
 
         # Business Rule: create_from_callable accepts HandlerCallable compatible callables
@@ -431,8 +431,8 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_with_flext_result(self) -> None:
         """Test create_from_callable with function returning FlextResult."""
 
-        def result_handler(message: t.ScalarValue) -> t.ScalarValue:
-            return FlextResult[t.ScalarValue].ok(f"result_{message}").value
+        def result_handler(message: t.Scalar | None) -> t.Scalar | None:
+            return FlextResult[t.Scalar | None].ok(f"result_{message}").value
 
         # Business Rule: create_from_callable accepts HandlerCallable compatible callables
         handler = h.create_from_callable(
@@ -450,7 +450,7 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_with_exception(self) -> None:
         """Test create_from_callable with function that raises exception."""
 
-        def failing_handler(message: t.ScalarValue) -> t.ScalarValue:
+        def failing_handler(message: t.Scalar | None) -> t.Scalar | None:
             _ = message
             error_message = "Handler failed"
             raise ValueError(error_message)
@@ -470,7 +470,7 @@ class TestFlextHandlers:
     def test_handlers_create_from_callable_invalid_mode(self) -> None:
         """Test create_from_callable with invalid mode."""
 
-        def invalid_handler(message: t.ScalarValue) -> t.ScalarValue:
+        def invalid_handler(message: t.Scalar | None) -> t.Scalar | None:
             return f"invalid_{message}"
 
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
@@ -589,7 +589,7 @@ class TestFlextHandlers:
             "Test Pop Context",
         )
         handler = ConcreteTestHandler(config=config)
-        # Business Rule: push_context accepts dict[str, t.GeneralValueType] compatible mappings
+        # Business Rule: push_context accepts dict[str, t.Container] compatible mappings
         # dict literal is compatible at runtime
         handler.push_context({"test": "data"})
         result = handler.pop_context()

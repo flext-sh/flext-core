@@ -1336,7 +1336,7 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[T]:
         """Helper: Try direct type call."""
-        # Guard: t.ConfigMapValue type doesn't accept constructor arguments
+        # Guard: t.ContainerValue type doesn't accept constructor arguments
         if target is object:
             return FlextUtilitiesParser._parse_with_default(
                 default,
@@ -1601,7 +1601,7 @@ class FlextUtilitiesParser:
         default: T,
     ) -> T:
         """Fallback: try direct type constructor."""
-        # Guard: t.ConfigMapValue type doesn't accept constructor arguments
+        # Guard: t.ContainerValue type doesn't accept constructor arguments
         return default
 
     # =========================================================================

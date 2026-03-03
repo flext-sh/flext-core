@@ -399,7 +399,7 @@ class FlextTestsModels(FlextModels):
                     default=False,
                     description="Wrap result in FlextResult",
                 )
-                validate_fn: Callable[[t.GeneralValueType], bool] | None = Field(
+                validate_fn: Callable[[t.Container], bool] | None = Field(
                     default=None,
                     alias="validate",
                     description="Validation predicate (must return True for success)",

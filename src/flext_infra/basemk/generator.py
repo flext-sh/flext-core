@@ -40,7 +40,7 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
     def generate(
         self,
-        config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None = None,
+        config: m.BaseMkConfig | Mapping[str, t.Scalar | None] | None = None,
     ) -> r[str]:
         """Generate base.mk content from configuration."""
         config_result = self._normalize_config(config)
@@ -80,7 +80,7 @@ class FlextInfraBaseMkGenerator(FlextService[str]):
 
     def _normalize_config(
         self,
-        config: m.BaseMkConfig | Mapping[str, t.ScalarValue] | None,
+        config: m.BaseMkConfig | Mapping[str, t.Scalar | None] | None,
     ) -> r[m.BaseMkConfig]:
         if config is None:
             return r[m.BaseMkConfig].ok(FlextInfraBaseMkTemplateEngine.default_config())

@@ -655,11 +655,11 @@ class Teste:
         })
         # ValidationError accepts metadata via extra_kwargs, but BaseError.__init__ accepts it
         # Pass metadata via extra_kwargs - ValidationError.__init__ pops it and passes to BaseError
-        # extra_kwargs accepts t.MetadataAttributeValue, and m.Metadata is compatible
+        # extra_kwargs accepts t.MetadataValue, and m.Metadata is compatible
         exc = e.ValidationError(
             "Validation failed",
             error_code="INVALID_INPUT",
-            metadata=cast("t.MetadataAttributeValue", metadata_obj),
+            metadata=cast("t.MetadataValue", metadata_obj),
         )
         if hasattr(exc, "to_dict"):
             result = exc.to_dict()
@@ -687,7 +687,7 @@ class Teste:
         """Test _normalize_metadata fallback path - tests line 219."""
         # Test with non-Mapping, non-Metadata value
         result = e.BaseError._normalize_metadata(
-            12345,  # int is t.GeneralValueType but not Mapping/Metadata
+            12345,  # int is t.Container but not Mapping/Metadata
             {},
         )
         assert hasattr(result, "attributes")
@@ -701,7 +701,7 @@ class Teste:
         metadata = {"key1": "value1"}
         merged_kwargs = {"key2": "value2"}
         # Cast merged_kwargs to MetadataAttributeValue for type compatibility
-        merged_kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", merged_kwargs)
+        merged_kwargs_cast = cast("dict[str, t.MetadataValue]", merged_kwargs)
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
         assert hasattr(result, "attributes")
         assert result.attributes["key1"] == "value1"
@@ -710,10 +710,10 @@ class Teste:
     def test_validation_error_with_context(self) -> None:
         """Test ValidationError with context - tests lines 243-244."""
         context_raw = {"key1": "value1", "key2": 123}
-        # Convert to Mapping[str, t.MetadataAttributeValue] using normalize_to_metadata_value
-        # All values in context_raw are already t.GeneralValueType (str, int)
-        context: dict[str, t.MetadataAttributeValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
+        # Convert to Mapping[str, t.MetadataValue] using normalize_to_metadata_value
+        # All values in context_raw are already t.Container (str, int)
+        context: dict[str, t.MetadataValue] = {
+            k: FlextRuntime.normalize_to_metadata_value(cast("t.Container", v))
             for k, v in context_raw.items()
         }
         error = e.ValidationError(
@@ -756,10 +756,10 @@ class Teste:
             "auto_log": True,  # Reserved key, should be excluded
             "auto_correlation": True,  # Reserved key, should be excluded
         }
-        # Convert to Mapping[str, t.MetadataAttributeValue]
-        # All values are already t.GeneralValueType compatible
-        context: dict[str, t.MetadataAttributeValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
+        # Convert to Mapping[str, t.MetadataValue]
+        # All values are already t.Container compatible
+        context: dict[str, t.MetadataValue] = {
+            k: FlextRuntime.normalize_to_metadata_value(cast("t.Container", v))
             for k, v in context_raw.items()
         }
         error = e.NotFoundError(
@@ -877,8 +877,8 @@ class Teste:
         # Convert to t.MetadataAttributeDict
         # _normalize_type accepts t.MetadataAttributeDict but at runtime can handle type objects
         # Mypy limitation: type objects not in MetadataAttributeValue union, but method handles them
-        extra_kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v)  # str is ScalarValue
+        extra_kwargs: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v)  # str is ScalarValue
             for k, v in extra_kwargs_raw.items()
         }
         result = e.TypeError._normalize_type(
@@ -896,8 +896,8 @@ class Teste:
         # Type objects need special handling - _normalize_type accepts t.MetadataAttributeDict
         # but at runtime can handle type objects (defensive programming)
         # Mypy limitation: type objects not in MetadataAttributeValue union
-        extra_kwargs_type: dict[str, t.MetadataAttributeValue] = cast(
-            "dict[str, t.MetadataAttributeValue]",
+        extra_kwargs_type: dict[str, t.MetadataValue] = cast(
+            "dict[str, t.MetadataValue]",
             extra_kwargs_type_raw,
         )
         result = e.TypeError._normalize_type(
@@ -1091,12 +1091,12 @@ class Teste:
     def test_create_with_metadata_metadata_object(self) -> None:
         """Test create with metadata as Metadata object - tests lines 1369-1371."""
         metadata_obj = m.Metadata(attributes={"key1": "value1"})
-        # create accepts **kwargs: t.MetadataAttributeValue
+        # create accepts **kwargs: t.MetadataValue
         # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", cast("object", metadata_obj)),
+            metadata=cast("t.MetadataValue", cast("object", metadata_obj)),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1120,22 +1120,22 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
+        # Convert DictLike to Mapping[str, t.MetadataValue] for metadata parameter
+        # create accepts **kwargs: t.MetadataValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.GeneralValueType (string), then normalize
-        dict_like_converted: dict[str, t.MetadataAttributeValue] = {
+        # First convert object values to t.Container (string), then normalize
+        dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.GeneralValueType", v),
+                else cast("t.Container", v),
             )
             for k, v in dict_like.items()
         }
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", dict_like_converted),
+            metadata=cast("t.MetadataValue", dict_like_converted),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1212,9 +1212,8 @@ class Teste:
         """Test prepare_exception_kwargs - tests lines 945-970."""
         specific_params_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        specific_params: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v)
-            for k, v in specific_params_raw.items()
+        specific_params: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in specific_params_raw.items()
         }
         kwargs_raw = {
             "correlation_id": "test-id",
@@ -1226,8 +1225,8 @@ class Teste:
             "custom": "value",
         }
         # Convert to t.MetadataAttributeDict
-        kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
+        kwargs: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in kwargs_raw.items()
         }
         # Note: The order of arguments in prepare_exception_kwargs in exceptions.py is (kwargs, specific_params)
         result = e.prepare_exception_kwargs(kwargs, specific_params)
@@ -1251,8 +1250,8 @@ class Teste:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""
         kwargs_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
+        kwargs: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, {})
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
@@ -1263,11 +1262,10 @@ class Teste:
         """Test prepare_exception_kwargs setdefault behavior - tests line 948."""
         specific_params_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        specific_params: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v)
-            for k, v in specific_params_raw.items()
+        specific_params: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in specific_params_raw.items()
         }
-        kwargs: dict[str, t.MetadataAttributeValue] = {}  # field not in kwargs
+        kwargs: dict[str, t.MetadataValue] = {}  # field not in kwargs
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
         assert "field" in extra
@@ -1279,14 +1277,13 @@ class Teste:
             "field": None
         }  # None value should not override
         # Convert to t.MetadataAttributeDict (None is valid MetadataAttributeValue)
-        specific_params: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v)
-            for k, v in specific_params_raw.items()
+        specific_params: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in specific_params_raw.items()
         }
         kwargs_raw = {"field": "test_field"}
         # Convert to t.MetadataAttributeDict
-        kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
+        kwargs: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
@@ -1297,8 +1294,8 @@ class Teste:
     def test_prepare_exception_kwargs_with_non_string_correlation_id(self) -> None:
         """Test prepare_exception_kwargs with non-string correlation_id - tests lines 961-966."""
         kwargs = {"correlation_id": 123}  # Not a string
-        # Cast kwargs to dict[str, t.MetadataAttributeValue] for type compatibility
-        kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
+        # Cast kwargs to dict[str, t.MetadataValue] for type compatibility
+        kwargs_cast = cast("dict[str, t.MetadataValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         corr_id, _metadata, _auto_log, _auto_corr, _config, _extra = result
         assert corr_id is None  # Should be None for non-string
@@ -1306,8 +1303,8 @@ class Teste:
     def test_prepare_exception_kwargs_return_tuple(self) -> None:
         """Test prepare_exception_kwargs returns correct tuple - tests lines 967-970."""
         kwargs = {"field": "test"}
-        # Cast kwargs to dict[str, t.MetadataAttributeValue] for type compatibility
-        kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
+        # Cast kwargs to dict[str, t.MetadataValue] for type compatibility
+        kwargs_cast = cast("dict[str, t.MetadataValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         assert len(result) == 6
         corr_id, metadata, auto_log, auto_corr, _metadata_val, extra = result
@@ -1351,22 +1348,22 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
+        # Convert DictLike to Mapping[str, t.MetadataValue] for metadata parameter
+        # create accepts **kwargs: t.MetadataValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.GeneralValueType (string), then normalize
-        dict_like_converted: dict[str, t.MetadataAttributeValue] = {
+        # First convert object values to t.Container (string), then normalize
+        dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.GeneralValueType", v),
+                else cast("t.Container", v),
             )
             for k, v in dict_like.items()
         }
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", dict_like_converted),
+            metadata=cast("t.MetadataValue", dict_like_converted),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1393,22 +1390,22 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
+        # Convert DictLike to Mapping[str, t.MetadataValue] for metadata parameter
+        # create accepts **kwargs: t.MetadataValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.GeneralValueType (string), then normalize
-        dict_like_converted: dict[str, t.MetadataAttributeValue] = {
+        # First convert object values to t.Container (string), then normalize
+        dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.GeneralValueType", v),
+                else cast("t.Container", v),
             )
             for k, v in dict_like.items()
         }
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", dict_like_converted),
+            metadata=cast("t.MetadataValue", dict_like_converted),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1440,22 +1437,22 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
-        # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
+        # Convert DictLike to Mapping[str, t.MetadataValue] for metadata parameter
+        # create accepts **kwargs: t.MetadataValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to t.GeneralValueType (string), then normalize
-        dict_like_converted: dict[str, t.MetadataAttributeValue] = {
+        # First convert object values to t.Container (string), then normalize
+        dict_like_converted: dict[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.GeneralValueType", v),
+                else cast("t.Container", v),
             )
             for k, v in dict_like.items()
         }
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", dict_like_converted),
+            metadata=cast("t.MetadataValue", dict_like_converted),
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1484,9 +1481,9 @@ class Teste:
             "Test message",
             error_code="TEST_ERROR",
             field="test_field",
-            value=123,  # int is already t.MetadataAttributeValue (ScalarValue)
+            value=123,  # int is already t.MetadataValue (ScalarValue)
             custom_obj=cast(
-                "t.MetadataAttributeValue",
+                "t.MetadataValue",
                 str(object()),
             ),  # object needs to be converted to string
         )
@@ -1521,7 +1518,7 @@ class Teste:
         """Test create_error instance method normalization loop - tests lines 1454-1455."""
         error_factory = e()
         # Test that all kwargs are normalized in the loop
-        # Note: calling create() which accepts kwargs: t.MetadataAttributeValue
+        # Note: calling create() which accepts kwargs: t.MetadataValue
         # Convert all values to MetadataAttributeValue
         # create() normalizes values internally, but we need to pass compatible types
         error = error_factory.create(
@@ -1589,7 +1586,7 @@ class Teste:
             "metadata": m.Metadata(attributes={"key": "value"}),
             "field": "test_field",
         }
-        kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
+        kwargs_cast = cast("dict[str, t.MetadataValue]", kwargs)
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
         assert corr_id == "test-id"
         assert isinstance(metadata, m.Metadata)
@@ -1600,13 +1597,13 @@ class Teste:
             "metadata": {"key": "value"},
             "field": "test_field",
         }
-        # Convert to Mapping[str, t.MetadataAttributeValue] for extract_common_kwargs
-        kwargs_dict: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v)
+        # Convert to Mapping[str, t.MetadataValue] for extract_common_kwargs
+        kwargs_dict: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v)
             if not isinstance(v, dict)
             else cast(
-                "t.MetadataAttributeValue",
-                {str(k2): cast("t.MetadataAttributeValue", v2) for k2, v2 in v.items()},
+                "t.MetadataValue",
+                {str(k2): cast("t.MetadataValue", v2) for k2, v2 in v.items()},
             )
             for k, v in kwargs_dict_raw.items()
         }
@@ -1636,21 +1633,21 @@ class Teste:
             "metadata": dict_like_obj,
             "field": "test_field",
         }
-        # Convert to Mapping[str, t.MetadataAttributeValue] for extract_common_kwargs
+        # Convert to Mapping[str, t.MetadataValue] for extract_common_kwargs
         # DictLike is Mapping[str, object], need to convert values
-        kwargs_dict_like: dict[str, t.MetadataAttributeValue] = {}
+        kwargs_dict_like: dict[str, t.MetadataValue] = {}
         for k, v in kwargs_dict_like_raw.items():
             if k == "metadata" and isinstance(v, DictLike):
-                # Convert DictLike to dict[str, t.MetadataAttributeValue]
-                dict_like_dict: dict[str, t.MetadataAttributeValue] = {
+                # Convert DictLike to dict[str, t.MetadataValue]
+                dict_like_dict: dict[str, t.MetadataValue] = {
                     k2: str(v2)
                     if not isinstance(v2, (str, int, float, bool, type(None)))
-                    else cast("t.MetadataAttributeValue", v2)
+                    else cast("t.MetadataValue", v2)
                     for k2, v2 in v.items()
                 }
-                kwargs_dict_like[k] = cast("t.MetadataAttributeValue", dict_like_dict)
+                kwargs_dict_like[k] = cast("t.MetadataValue", dict_like_dict)
             else:
-                kwargs_dict_like[k] = cast("t.MetadataAttributeValue", v)
+                kwargs_dict_like[k] = cast("t.MetadataValue", v)
         corr_id_dl, metadata_dl = e.extract_common_kwargs(kwargs_dict_like)
         assert corr_id_dl == "test-id"
         # Dict-like metadata is converted to dict

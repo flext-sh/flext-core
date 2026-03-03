@@ -35,7 +35,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _to_batch_scalar(
         value: t.ContainerValue,
-    ) -> t.ScalarValue:
+    ) -> t.Scalar | None:
         if isinstance(value, (str, int, float, bool, datetime)):
             return value
         return str(value)
@@ -43,7 +43,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _to_batch_scalars(
         values: Sequence[t.ContainerValue],
-    ) -> list[t.ScalarValue]:
+    ) -> list[t.Scalar | None]:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod

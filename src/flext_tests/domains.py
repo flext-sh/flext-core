@@ -59,8 +59,8 @@ class FlextTestsDomains:
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: t.Tests.PayloadValue,
-    ) -> MutableMapping[str, t.Tests.PayloadValue]:
+        **overrides: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test configuration data using factories.
 
         Args:
@@ -78,7 +78,7 @@ class FlextTestsDomains:
             environment=environment,
         )
         # Extract attributes using getattr with defaults for type safety
-        base_config: MutableMapping[str, t.Tests.PayloadValue] = {
+        base_config: MutableMapping[str, t.Tests.ContainerValue] = {
             "service_type": getattr(config_result, "service_type", service_type),
             "environment": getattr(config_result, "environment", environment),
             "debug": getattr(config_result, "debug", False),
@@ -96,8 +96,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: t.Tests.PayloadValue,
-    ) -> MutableMapping[str, t.Tests.PayloadValue]:
+        **custom_fields: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test payload data.
 
         Args:
@@ -108,7 +108,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: MutableMapping[str, Mapping[str, t.Tests.PayloadValue]] = {
+        payloads: MutableMapping[str, Mapping[str, t.Tests.ContainerValue]] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -139,8 +139,8 @@ class FlextTestsDomains:
         status: str = "success",
         *,
         include_data: bool | None = None,
-        **custom_fields: t.Tests.PayloadValue,
-    ) -> MutableMapping[str, t.Tests.PayloadValue]:
+        **custom_fields: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create API response test data.
 
         Args:
@@ -152,7 +152,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: MutableMapping[str, t.Tests.PayloadValue] = {
+        response: MutableMapping[str, t.Tests.ContainerValue] = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -191,8 +191,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: t.Tests.PayloadValue,
-    ) -> MutableMapping[str, t.Tests.PayloadValue]:
+        **config: t.Tests.ContainerValue,
+    ) -> MutableMapping[str, t.Tests.ContainerValue]:
         """Create test service configuration.
 
         Args:
@@ -203,7 +203,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: MutableMapping[str, t.Tests.PayloadValue] = {
+        base_service: MutableMapping[str, t.Tests.ContainerValue] = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,

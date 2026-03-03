@@ -42,7 +42,7 @@ def _service_reg_with_metadata(
 
 def _factory_reg_with_metadata(
     name: str,
-    factory: Callable[[], t.ScalarValue],
+    factory: Callable[[], t.Scalar | None],
     metadata: object,
 ) -> m.Container.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
@@ -186,7 +186,7 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test FactoryRegistration metadata validation with various types."""
 
-        def factory() -> t.ScalarValue:
+        def factory() -> t.Scalar | None:
             return "test"
 
         if should_pass:
@@ -210,7 +210,7 @@ class TestFlextModelsContainer:
     def test_factory_registration_defaults(self) -> None:
         """Test FactoryRegistration default values."""
 
-        def factory() -> t.ScalarValue:
+        def factory() -> t.Scalar | None:
             return "value"
 
         registration = m.Container.FactoryRegistration(
@@ -231,7 +231,7 @@ class TestFlextModelsContainer:
     def test_factory_registration_with_all_fields(self) -> None:
         """Test FactoryRegistration with all fields populated."""
 
-        def factory() -> t.ScalarValue:
+        def factory() -> t.Scalar | None:
             return "created"
 
         metadata = m.Metadata(attributes={"type": "factory"})
@@ -352,7 +352,7 @@ class TestFlextModelsContainer:
     def test_factory_registration_metadata_none_handling(self) -> None:
         """Test FactoryRegistration handles None metadata correctly."""
 
-        def factory() -> t.ScalarValue:
+        def factory() -> t.Scalar | None:
             return "value"
 
         registration = m.Container.FactoryRegistration(
@@ -414,7 +414,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             ),
         )
         assert isinstance(result, m.Metadata)
-        # Nested dicts are normalized to t.GeneralValueType
+        # Nested dicts are normalized to t.Container
         assert "nested" in result.attributes
 
     def test_normalize_to_metadata_invalid_type(self) -> None:

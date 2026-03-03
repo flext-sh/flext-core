@@ -134,7 +134,7 @@ class TestLibraryIntegration:
         def create_result() -> str:
             # Use functional service processing - real behavior
             process_result = mock_external_service.process(input_data)
-            # Unwrap FlextResult to return t.GeneralValueType (str)
+            # Unwrap FlextResult to return t.Container (str)
             return process_result.unwrap_or("")
 
         # Act - Register factory in container
@@ -154,8 +154,8 @@ class TestLibraryIntegration:
         # Assert - Factory retrieval success
         assert factory_result.is_success is True
 
-        # Act - Verify factory produced string value (t.GeneralValueType)
-        # Type narrowing: factory returns str, which is t.GeneralValueType
+        # Act - Verify factory produced string value (t.Container)
+        # Type narrowing: factory returns str, which is t.Container
         result_value = factory_result.value
         assert isinstance(result_value, str)
 

@@ -435,7 +435,7 @@ class TestFlextUtilitiesConfiguration:
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
             config_cast = cast(
-                "p.HasModelDump | Mapping[str, t.ConfigMapValue]",
+                "p.HasModelDump | Mapping[str, t.ContainerValue]",
                 cast("object", config),
             )
             result = FlextUtilitiesConfiguration.get_parameter(config_cast, param_name)
@@ -447,7 +447,7 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
             )
             config_cast = cast(
-                "p.HasModelDump | Mapping[str, t.ConfigMapValue]",
+                "p.HasModelDump | Mapping[str, t.ContainerValue]",
                 cast("object", config),
             )
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
@@ -526,7 +526,7 @@ class TestFlextUtilitiesConfiguration:
             result = FlextUtilitiesConfiguration.set_parameter(
                 config,
                 param_name,
-                cast("t.ScalarValue | m.ConfigMap", value),
+                cast("t.Scalar | None | m.ConfigMap", value),
             )
             if result:
                 assert getattr(config, param_name) == value
@@ -556,7 +556,7 @@ class TestFlextUtilitiesConfiguration:
             result = FlextUtilitiesConfiguration.set_parameter(
                 config,
                 param_name,
-                cast("t.ScalarValue | m.ConfigMap", value),
+                cast("t.Scalar | None | m.ConfigMap", value),
             )
             assert result is False
 
@@ -566,7 +566,7 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
-            config_cast = cast("t.GeneralValueType | object", config)
+            config_cast = cast("t.Container | object", config)
             result = FlextUtilitiesConfiguration.set_parameter(
                 config_cast,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -602,7 +602,7 @@ class TestFlextUtilitiesConfiguration:
             result = FlextUtilitiesConfiguration.set_parameter(
                 config,
                 param_name,
-                cast("t.ScalarValue | m.ConfigMap", value),
+                cast("t.Scalar | None | m.ConfigMap", value),
             )
             assert result is True
             assert getattr(config, param_name) == value

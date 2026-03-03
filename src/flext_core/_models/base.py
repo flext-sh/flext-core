@@ -58,7 +58,7 @@ class FlextModelFoundation:
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
         _metadata_map_adapter: ClassVar[
-            TypeAdapter[dict[str, t.MetadataAttributeValue]] | None
+            TypeAdapter[dict[str, t.MetadataValue]] | None
         ] = None
         _config_adapter: ClassVar[TypeAdapter[dict[str, t.ContainerValue]] | None] = (
             None
@@ -92,11 +92,11 @@ class FlextModelFoundation:
         @classmethod
         def metadata_map_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, t.MetadataAttributeValue]]:
+        ) -> TypeAdapter[dict[str, t.MetadataValue]]:
             """Lazy-load metadata map TypeAdapter on first access."""
             if cls._metadata_map_adapter is None:
                 cls._metadata_map_adapter = TypeAdapter(
-                    dict[str, t.MetadataAttributeValue],
+                    dict[str, t.MetadataValue],
                 )
             return cls._metadata_map_adapter
 
@@ -262,8 +262,8 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
-        metadata_value: t.ScalarValue | None = Field(
+        attributes: Mapping[str, t.MetadataValue] = Field(default_factory=dict)
+        metadata_value: t.Scalar | None = Field(
             default=None,
             description="Scalar metadata value.",
         )
@@ -272,10 +272,8 @@ class FlextModelFoundation:
         @classmethod
         def _validate_attributes(
             cls,
-            value: t.MetadataAttributeValue
-            | Mapping[str, t.MetadataAttributeValue]
-            | None,
-        ) -> Mapping[str, t.MetadataAttributeValue]:
+            value: t.MetadataValue | Mapping[str, t.MetadataValue] | None,
+        ) -> Mapping[str, t.MetadataValue]:
             if value is None:
                 return {}
             try:
@@ -304,8 +302,8 @@ class FlextModelFoundation:
         @classmethod
         def validate_scalar_value(
             cls,
-            v: t.GeneralValueType,
-        ) -> t.ScalarValue | None:
+            v: t.Container,
+        ) -> t.Scalar | None:
             """Validate metadata value is a scalar type."""
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v

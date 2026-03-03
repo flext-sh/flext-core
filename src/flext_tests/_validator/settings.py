@@ -127,18 +127,18 @@ class FlextValidatorSettings:
     def _check_mypy_settings(
         cls,
         file_path: Path,
-        data: Mapping[str, t.Tests.PayloadValue],
+        data: Mapping[str, t.Tests.ContainerValue],
         lines: list[str],
         approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Check mypy configuration for violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
-        tool_data_raw: t.Tests.PayloadValue = data.get("tool", {})
+        tool_data_raw: t.Tests.ContainerValue = data.get("tool", {})
         if not isinstance(tool_data_raw, dict):
             return violations
         tool_data = tool_data_raw
-        mypy_config_raw: t.Tests.PayloadValue = tool_data.get("mypy", {})
+        mypy_config_raw: t.Tests.ContainerValue = tool_data.get("mypy", {})
         if not isinstance(mypy_config_raw, dict):
             return violations
         mypy_config = mypy_config_raw
@@ -161,14 +161,14 @@ class FlextValidatorSettings:
 
         # Check per-module overrides
         # Type annotations for .get() results to help pyright inference
-        overrides_raw: t.Tests.PayloadValue = mypy_config.get("overrides", [])
+        overrides_raw: t.Tests.ContainerValue = mypy_config.get("overrides", [])
         if not isinstance(overrides_raw, list):
             return violations
-        overrides: list[t.Tests.PayloadValue] = overrides_raw
+        overrides: list[t.Tests.ContainerValue] = overrides_raw
         for override in overrides:
             if not isinstance(override, dict):
                 continue
-            override_dict: Mapping[str, t.Tests.PayloadValue] = override
+            override_dict: Mapping[str, t.Tests.ContainerValue] = override
             module_raw = override_dict.get("module", "unknown")
             module: str = str(module_raw) if module_raw is not None else "unknown"
             is_approved = u.Tests.Validator.is_approved(
@@ -233,7 +233,7 @@ class FlextValidatorSettings:
     def _check_ruff_settings(
         cls,
         file_path: Path,
-        data: Mapping[str, t.Tests.PayloadValue],
+        data: Mapping[str, t.Tests.ContainerValue],
         lines: list[str],
         approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
@@ -283,7 +283,7 @@ class FlextValidatorSettings:
     def _check_pyright_settings(
         cls,
         file_path: Path,
-        data: Mapping[str, t.Tests.PayloadValue],
+        data: Mapping[str, t.Tests.ContainerValue],
         lines: list[str],
         approved: Mapping[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:

@@ -35,7 +35,7 @@ class FlextInfraTextPatternScanner:
         includes: list[str],
         excludes: list[str] | None = None,
         match_mode: str = "present",
-    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
+    ) -> FlextResult[Mapping[str, t.Scalar | None]]:
         """Scan files under root for regex matches.
 
         Args:
@@ -52,15 +52,15 @@ class FlextInfraTextPatternScanner:
         """
         try:
             if not root.exists() or not root.is_dir():
-                return r[Mapping[str, t.ScalarValue]].fail(
+                return r[Mapping[str, t.Scalar | None]].fail(
                     f"root directory does not exist: {root}",
                 )
             if not includes:
-                return r[Mapping[str, t.ScalarValue]].fail(
+                return r[Mapping[str, t.Scalar | None]].fail(
                     "at least one include glob required",
                 )
             if match_mode not in {"present", "absent"}:
-                return r[Mapping[str, t.ScalarValue]].fail(
+                return r[Mapping[str, t.Scalar | None]].fail(
                     f"invalid match_mode: {match_mode}",
                 )
 
@@ -72,16 +72,18 @@ class FlextInfraTextPatternScanner:
                 matches if match_mode == "present" else (0 if matches > 0 else 1)
             )
 
-            result: MutableMapping[str, t.ScalarValue] = {
+            result: MutableMapping[str, t.Scalar | None] = {
                 "violation_count": violation_count,
                 "match_count": matches,
                 "files_scanned": len(files),
             }
-            return r[Mapping[str, t.ScalarValue]].ok(result)
+            return r[Mapping[str, t.Scalar | None]].ok(result)
         except re.error as exc:
-            return r[Mapping[str, t.ScalarValue]].fail(f"invalid regex pattern: {exc}")
+            return r[Mapping[str, t.Scalar | None]].fail(
+                f"invalid regex pattern: {exc}"
+            )
         except (OSError, ValueError, TypeError) as exc:
-            return r[Mapping[str, t.ScalarValue]].fail(
+            return r[Mapping[str, t.Scalar | None]].fail(
                 f"text pattern scan failed: {exc}",
             )
 

@@ -125,11 +125,11 @@ class CacheScenarios:
             expected_value=None,
         ),
         # Sets - test that normalize_component converts set to tuple
-        # Cast to t.GeneralValueType | BaseModel for type checker
+        # Cast to t.Container | BaseModel for type checker
         NormalizeComponentScenario(
             name="set_of_ints",
             component=cast(
-                "t.GeneralValueType | BaseModel",
+                "t.Container | BaseModel",
                 {1, 2, 3},
             ),  # Set will be converted to tuple by normalize_component
             expected_type=tuple,
@@ -137,7 +137,7 @@ class CacheScenarios:
         NormalizeComponentScenario(
             name="set_of_strings",
             component=cast(
-                "t.GeneralValueType | BaseModel",
+                "t.Container | BaseModel",
                 {"a", "b", "c"},
             ),  # Set will be converted to tuple by normalize_component
             expected_type=tuple,
@@ -145,7 +145,7 @@ class CacheScenarios:
         NormalizeComponentScenario(
             name="empty_set",
             component=cast(
-                "t.GeneralValueType | BaseModel",
+                "t.Container | BaseModel",
                 set(),
             ),  # Set will be converted to tuple by normalize_component
             expected_type=tuple,
@@ -173,10 +173,10 @@ class CacheScenarios:
             component={"a": {"b": {"c": 123}}},
             expected_type=dict,
         ),
-        # Fallback (other types) - convert to string for t.GeneralValueType compatibility
+        # Fallback (other types) - convert to string for t.Container compatibility
         NormalizeComponentScenario(
             name="custom_object",
-            component=str(object()),  # Convert object to string for t.GeneralValueType
+            component=str(object()),  # Convert object to string for t.Container
             expected_type=str,
         ),
     ]
@@ -261,7 +261,7 @@ class TestuCacheNormalizeComponent:
 
         assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result_dict = cast("dict[str, t.Container]", result)
         assert result_dict["name"] == "test"
         assert result_dict["value"] == 42
 
@@ -272,9 +272,9 @@ class TestuCacheNormalizeComponent:
 
         assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result_dict = cast("dict[str, t.Container]", result)
         assert isinstance(result_dict["inner"], dict)
-        inner_dict = cast("dict[str, t.GeneralValueType]", result_dict["inner"])
+        inner_dict = cast("dict[str, t.Container]", result_dict["inner"])
         assert inner_dict["name"] == "inner"
         assert inner_dict["value"] == 10
         assert result_dict["count"] == 5
@@ -282,15 +282,15 @@ class TestuCacheNormalizeComponent:
     def test_normalize_set_preserves_order(self) -> None:
         """Test normalize_component converts set to tuple."""
         component = {3, 1, 2}
-        # Cast to t.GeneralValueType | BaseModel for type checker
+        # Cast to t.Container | BaseModel for type checker
         # normalize_component will convert set to tuple at runtime
         result = u.Cache.normalize_component(
-            cast("t.GeneralValueType | BaseModel", component),
+            cast("t.Container | BaseModel", component),
         )
 
         assert isinstance(result, tuple)
         # Type narrowing: result is tuple after assert_result_matches_expected
-        result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
+        result_tuple = cast("tuple[t.Container, ...]", result)
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
         tm.that(
             set(result_tuple),
@@ -302,10 +302,10 @@ class TestuCacheNormalizeComponent:
         """Test normalize_component with set containing nested values."""
         component = {1, "test", math.pi, None}
         result = u.Cache.normalize_component(
-            cast("t.GeneralValueType | BaseModel", component),
+            cast("t.Container | BaseModel", component),
         )
         tm.that(result, is_=tuple, none=False, msg="Result must be tuple")
-        result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
+        result_tuple = cast("tuple[t.Container, ...]", result)
         tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
         # Verify all values are present (order may vary in sets)
         result_set = set(result_tuple)
@@ -322,15 +322,15 @@ class TestuCacheNormalizeComponent:
             {"nested": "dict"},
             [1, 2, 3],
         ]
-        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
-        # ObjectList is Sequence[t.GeneralValueType], use that type directly
+        # Convert list[t.Container] to Sequence[t.Container] for type compatibility
+        # ObjectList is Sequence[t.Container], use that type directly
         component: Sequence[t.ContainerValue] = cast(
-            "Sequence[t.GeneralValueType]",
+            "Sequence[t.Container]",
             component_raw,
         )
         result = u.Cache.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")
-        result_list = cast("list[t.GeneralValueType]", result)
+        result_list = cast("list[t.Container]", result)
         tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
         tm.that(result_list[0], eq=1, msg="First item must be 1")
         tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
@@ -348,10 +348,10 @@ class TestuCacheNormalizeComponent:
                 return "custom_object"
 
         obj = CustomObject()
-        # Cast to t.GeneralValueType | BaseModel to test fallback behavior
+        # Cast to t.Container | BaseModel to test fallback behavior
         # Runtime will handle non-BaseModel objects by converting to string
         result = u.Cache.normalize_component(
-            cast("t.GeneralValueType | BaseModel", obj),
+            cast("t.Container | BaseModel", obj),
         )
 
         assert isinstance(result, str)
@@ -406,7 +406,7 @@ class TestuCacheSortDictKeys:
 
         assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result_dict = cast("dict[str, t.Container]", result)
         assert list(result_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_with_none_values(self) -> None:
@@ -414,11 +414,11 @@ class TestuCacheSortDictKeys:
         data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
         result = u.Cache.sort_dict_keys(data)
 
-        # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
+        # Type narrowing: sort_dict_keys returns t.Container, but for
         # dict input it returns dict
         assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result_dict = cast("dict[str, t.Container]", result)
         assert result_dict["key1"] == "value"
         assert result_dict["key2"] == {}  # None converted to empty dict
         assert result_dict["key3"] == 42
@@ -431,11 +431,11 @@ class TestuCacheSortDictKeys:
         }
         result = u.Cache.sort_dict_keys(data)
 
-        # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
+        # Type narrowing: sort_dict_keys returns t.Container, but for
         # dict input it returns dict
         assert isinstance(result, dict)
         # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result_dict = cast("dict[str, t.Container]", result)
         assert list(result_dict.keys()) == ["a", "z"]
         # Type narrowing: nested value is also dict
         nested = result_dict["z"]
@@ -563,9 +563,9 @@ class TestuCacheClearObjectCache:
                 raise RuntimeError(error_msg)
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
+        # Cast to t.Container | BaseModel for type checker
         # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
+        result = u.Cache.clear_object_cache(cast("t.Container | BaseModel", obj))
 
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
@@ -586,9 +586,9 @@ class TestuCacheClearObjectCache:
                 super().__setattr__(name, value)
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
+        # Cast to t.Container | BaseModel for type checker
         # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
+        result = u.Cache.clear_object_cache(cast("t.Container | BaseModel", obj))
 
         # Should handle TypeError gracefully and return failure
         assertion_helpers.assert_flext_result_failure(result)
@@ -609,9 +609,9 @@ class TestuCacheClearObjectCache:
                 return super().__getattribute__(name)
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
+        # Cast to t.Container | BaseModel for type checker
         # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
+        result = u.Cache.clear_object_cache(cast("t.Container | BaseModel", obj))
 
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
@@ -630,9 +630,9 @@ class TestuCacheClearObjectCache:
                 self._cache = BadCache({"key": "value"})
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
+        # Cast to t.Container | BaseModel for type checker
         # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
+        result = u.Cache.clear_object_cache(cast("t.Container | BaseModel", obj))
 
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
@@ -670,8 +670,8 @@ class TestuCacheHasCacheAttributes:
                 self._cache: dict[str, t.ContainerValue] = {}
 
         obj = TestObject()
-        # Cast to t.GeneralValueType for type checker
-        assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is True
+        # Cast to t.Container for type checker
+        assert u.Cache.has_cache_attributes(cast("t.Container", obj)) is True
 
     def test_has_cache_attributes_false(self) -> None:
         """Test has_cache_attributes returns False when no cache."""
@@ -681,8 +681,8 @@ class TestuCacheHasCacheAttributes:
                 self.data = "value"
 
         obj = TestObject()
-        # Cast to t.GeneralValueType for type checker
-        assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is False
+        # Cast to t.Container for type checker
+        assert u.Cache.has_cache_attributes(cast("t.Container", obj)) is False
 
     def test_has_cache_attributes_multiple(self) -> None:
         """Test has_cache_attributes with multiple cache attributes."""
@@ -693,8 +693,8 @@ class TestuCacheHasCacheAttributes:
                 self.cache: dict[str, t.ContainerValue] = {}
 
         obj = TestObject()
-        # Cast to t.GeneralValueType for type checker
-        assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is True
+        # Cast to t.Container for type checker
+        assert u.Cache.has_cache_attributes(cast("t.Container", obj)) is True
 
 
 class TestuCacheGenerateCacheKey:

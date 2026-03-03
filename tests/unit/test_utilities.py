@@ -344,9 +344,9 @@ class Testu:
                 _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
 
             cache_obj = TestWithCache()
-            # Cast to t.GeneralValueType for type checker - test class is valid object
+            # Cast to t.Container for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.GeneralValueType", cast("object", cache_obj)),
+                cast("t.Container", cast("object", cache_obj)),
             )
             assert result is expected
         else:
@@ -355,9 +355,9 @@ class Testu:
                 pass
 
             no_cache_obj = TestNoCache()
-            # Cast to t.GeneralValueType for type checker - test class is valid object
+            # Cast to t.Container for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.GeneralValueType", cast("object", no_cache_obj)),
+                cast("t.Container", cast("object", no_cache_obj)),
             )
             assert result is expected
 

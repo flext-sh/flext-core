@@ -168,13 +168,13 @@ class FlextService[TDomainResult](
         cls,
         *,
         config_type: type[FlextSettings] | None = None,
-        config_overrides: Mapping[str, t.ScalarValue] | None = None,
+        config_overrides: Mapping[str, t.Scalar | None] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.RegisterableService] | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
-        container_overrides: Mapping[str, t.ScalarValue] | None = None,
+        container_overrides: Mapping[str, t.Scalar | None] | None = None,
         wire_modules: Sequence[ModuleType] | None = None,
         wire_packages: Sequence[str] | None = None,
         wire_classes: Sequence[type] | None = None,
@@ -323,8 +323,8 @@ class FlextService[TDomainResult](
         Override to customize:
         - config_overrides: Dict of config values to override
         - services: Mapping[str, t.RegisterableService] to register as singletons
-        - factories: Mapping[str, Callable[..., t.ConfigMapValue]] to register as factories
-        - resources: Mapping[str, Callable[[], t.ConfigMapValue]] to register as resources
+        - factories: Mapping[str, Callable[..., t.ContainerValue]] to register as factories
+        - resources: Mapping[str, Callable[[], t.ContainerValue]] to register as resources
         - wire_modules: List of modules to wire for @inject
         - wire_packages: List of packages to wire
         - wire_classes: List of classes to wire
@@ -451,7 +451,7 @@ class FlextService[TDomainResult](
             # Validation failed due to exception - consider invalid
             return False
 
-    def get_service_info(self) -> Mapping[str, t.ScalarValue]:
+    def get_service_info(self) -> Mapping[str, t.Scalar | None]:
         """Get service metadata and configuration information."""
         return {
             "service_type": self.__class__.__name__,

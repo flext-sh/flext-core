@@ -133,7 +133,7 @@ def test_type_guards_and_narrowing_failures(mapper: type[Mapper]) -> None:
 
 def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
-        cast("t.ConfigMapValue", {1: "x", "b": object()}),
+        cast("t.ContainerValue", {1: "x", "b": object()}),
     )
     assert "1" in converted
     assert isinstance(converted["b"], str)
@@ -147,7 +147,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[Mapper]) -> 
 
     with pytest.raises(TypeError, match="Cannot coerce"):
         _ = mapper._narrow_to_configuration_mapping(
-            cast("t.ConfigMapValue", {1: BadString()}),
+            cast("t.ContainerValue", {1: BadString()}),
         )
 
     with pytest.raises(TypeError, match="Cannot narrow"):
@@ -162,7 +162,7 @@ def test_general_value_helpers_and_logger(mapper: type[Mapper]) -> None:
 
     assert (
         mapper.narrow_to_general_value_type(
-            cast("t.ConfigMapValue", cast("object", Stable())),
+            cast("t.ContainerValue", cast("object", Stable())),
         )
         == "stable"
     )
@@ -192,7 +192,7 @@ def test_invert_and_json_conversion_branches(mapper: type[Mapper]) -> None:
     assert as_json["x"] == Path("/tmp")
 
     list_json = mapper.convert_list_to_json(
-        cast("Sequence[t.ConfigMapValue]", [{"a": 1}, {"b": object()}]),
+        cast("Sequence[t.ContainerValue]", [{"a": 1}, {"b": object()}]),
     )
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
@@ -284,7 +284,7 @@ def test_at_take_and_as_branches(mapper: type[Mapper]) -> None:
     assert mapper.take(123, "port", default="d") == "d"
     assert mapper.take({"port": None}, "port", default="x") == "x"
     assert (
-        mapper.take(cast("Mapping[str, t.ConfigMapValue]", cast("object", 123)), 2)
+        mapper.take(cast("Mapping[str, t.ContainerValue]", cast("object", 123)), 2)
         is None
     )
 
@@ -304,12 +304,12 @@ def test_extract_field_value_and_ensure_variants(mapper: type[Mapper]) -> None:
 
 
 def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
-    plus_one = cast("Callable[[t.ConfigMapValue], t.ConfigMapValue]", _plus_one)
-    times_two = cast("Callable[[t.ConfigMapValue], t.ConfigMapValue]", _times_two)
+    plus_one = cast("Callable[[t.ContainerValue], t.ContainerValue]", _plus_one)
+    times_two = cast("Callable[[t.ContainerValue], t.ContainerValue]", _times_two)
     assert mapper._build_apply_filter(1, {"filter": 1}, 0) == 1
     assert mapper._build_apply_filter(
         {"a": 1, "b": 0},
-        cast("Mapping[str, t.ConfigMapValue]", {"filter": bool}),
+        cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
         0,
     ) == {
         "a": 1,
@@ -317,7 +317,7 @@ def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
     assert (
         mapper._build_apply_filter(
             0,
-            cast("Mapping[str, t.ConfigMapValue]", {"filter": bool}),
+            cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
             "d",
         )
         == "d"
@@ -326,12 +326,12 @@ def test_filter_map_normalize_convert_helpers(mapper: type[Mapper]) -> None:
     assert mapper._build_apply_map(1, {"map": 1}) == 1
     assert mapper._build_apply_map(
         {"a": 1},
-        cast("Mapping[str, t.ConfigMapValue]", {"map": plus_one}),
+        cast("Mapping[str, t.ContainerValue]", {"map": plus_one}),
     ) == {"a": 2}
     assert (
         mapper._build_apply_map(
             2,
-            cast("Mapping[str, t.ConfigMapValue]", {"map": times_two}),
+            cast("Mapping[str, t.ContainerValue]", {"map": times_two}),
         )
         == 4
     )
@@ -368,7 +368,7 @@ def test_convert_default_fallback_matrix(
 ) -> None:
     result = mapper._build_apply_convert(
         value,
-        cast("Mapping[str, t.ConfigMapValue]", {"convert": convert_spec}),
+        cast("Mapping[str, t.ContainerValue]", {"convert": convert_spec}),
     )
     assert result == expected
 
@@ -376,7 +376,7 @@ def test_convert_default_fallback_matrix(
 def test_convert_sequence_branch_returns_tuple(mapper: type[Mapper]) -> None:
     converted = mapper._build_apply_convert(
         ("bad",),
-        cast("Mapping[str, t.ConfigMapValue]", {"convert": int}),
+        cast("Mapping[str, t.ContainerValue]", {"convert": int}),
     )
     assert converted == (0,)
 
@@ -395,7 +395,7 @@ def test_transform_option_extract_and_step_helpers(
         "to_json": True,
     }
     extracted = mapper._extract_transform_options(
-        cast("Mapping[str, t.ConfigMapValue]", opts),
+        cast("Mapping[str, t.ContainerValue]", opts),
     )
     assert extracted[3] == {"1": "one", "a": "b"}
 
@@ -461,14 +461,14 @@ def test_build_apply_transform_and_process_error_paths(
 
     assert mapper._build_apply_process(1, {"process": 1}, 0, "stop") == 1
     process_map_ops = cast(
-        "Mapping[str, t.ConfigMapValue]",
+        "Mapping[str, t.ContainerValue]",
         {"process": lambda x: x + 1},
     )
     assert mapper._build_apply_process({"a": 1}, process_map_ops, 0, "stop") == {
         "a": 2,
     }
     process_fail_ops = cast(
-        "Mapping[str, t.ConfigMapValue]",
+        "Mapping[str, t.ContainerValue]",
         {"process": lambda _x: (_ for _ in ()).throw(ValueError("x"))},
     )
     assert mapper._build_apply_process(1, process_fail_ops, 7, "stop") == 7
@@ -492,7 +492,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[Mapper]) -> None:
     assert isinstance(sorted_with_scalar, list)
 
     bad_sort_ops = cast(
-        "Mapping[str, t.ConfigMapValue]",
+        "Mapping[str, t.ContainerValue]",
         {"sort": lambda _x: (_ for _ in ()).throw(ValueError("x"))},
     )
     bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)
@@ -539,7 +539,7 @@ def test_construct_transform_and_deep_eq_branches(
 
     source: dict[str, t.ContainerValue] = {"name": "alice", "n": 3}
     spec = cast(
-        "Mapping[str, t.ConfigMapValue]",
+        "Mapping[str, t.ContainerValue]",
         {
             "name": {"field": "name", "ops": "skip-ops"},
             "n": {"field": "n", "ops": {"map": lambda x: x + 1}},
@@ -641,7 +641,7 @@ def test_small_mapper_convenience_methods(mapper: type[Mapper]) -> None:
     assert fields_from_mapping["age"] == 1
 
     fields_from_object = mapper.fields(
-        cast("t.ConfigMapValue", cast("object", AttrObject(name="obj", value=4))),
+        cast("t.ContainerValue", cast("object", AttrObject(name="obj", value=4))),
         "name",
     )
     assert fields_from_object == {"name": "obj"}
@@ -737,14 +737,14 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
             return "plain"
 
     assert (
-        mapper.convert_to_json_value(cast("t.ConfigMapValue", cast("object", Plain())))
+        mapper.convert_to_json_value(cast("t.ContainerValue", cast("object", Plain())))
         == "plain"
     )
     assert mapper.convert_to_json_value(
-        cast("t.ConfigMapValue", cast("object", {1: Plain()})),
+        cast("t.ContainerValue", cast("object", {1: Plain()})),
     ) == {"1": "plain"}
     assert mapper.convert_to_json_value(
-        cast("t.ConfigMapValue", cast("object", [1, {"k": Plain()}])),
+        cast("t.ContainerValue", cast("object", [1, {"k": Plain()}])),
     ) == [1, {"k": "plain"}]
 
     assert mapper.ensure_str(None, "d") == "d"
@@ -760,14 +760,14 @@ def test_conversion_and_extract_success_branches(mapper: type[Mapper]) -> None:
         a: int = 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())),
+        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
         "a",
     )
     assert found is True
     assert value == 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ConfigMapValue | BaseModel", cast("object", DumpOnly())),
+        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
         "missing",
     )
     assert found is False
@@ -840,25 +840,25 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
 
     assert mapper._build_apply_filter(
         [1, 2, 0],
-        cast("Mapping[str, t.ConfigMapValue]", {"filter": bool}),
+        cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
         0,
     ) == [1, 2]
     assert mapper._build_apply_map(
         [1, 2],
-        cast("Mapping[str, t.ConfigMapValue]", {"map": lambda x: x + 1}),
+        cast("Mapping[str, t.ContainerValue]", {"map": lambda x: x + 1}),
     ) == [2, 3]
     assert mapper._apply_map_keys({"a": 1}, map_keys={"b": "B"}) == {"a": 1}
     assert mapper._apply_strip_none({"a": None, "b": 1}, strip_none=True) == {"b": 1}
     assert mapper._apply_strip_empty({"a": "", "b": 1}, strip_empty=True) == {"b": 1}
     process_list_ops = cast(
-        "Mapping[str, t.ConfigMapValue]",
+        "Mapping[str, t.ContainerValue]",
         {"process": lambda x: x + 1},
     )
     assert mapper._build_apply_process([1, 2], process_list_ops, 0, "stop") == [2, 3]
 
     grouped_call = mapper._build_apply_group(
         ["aa", "b"],
-        cast("Mapping[str, t.ConfigMapValue]", {"group": len}),
+        cast("Mapping[str, t.ContainerValue]", {"group": len}),
     )
     assert grouped_call == {"2": ["aa"], "1": ["b"]}
     grouped_skip = mapper._build_apply_group([{"kind": None}, 1], {"group": "kind"})
@@ -866,7 +866,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
 
     sorted_ok = mapper._build_apply_sort(
         [3, 1, 2],
-        cast("Mapping[str, t.ConfigMapValue]", {"sort": lambda x: x}),
+        cast("Mapping[str, t.ContainerValue]", {"sort": lambda x: x}),
     )
     assert sorted_ok == [1, 2, 3]
     assert mapper._build_apply_sort([3, 1], {"sort": True}) == [1, 3]
@@ -901,9 +901,9 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
             return ["y"]
 
     context = mapper.process_context_data(
-        primary_data=cast("t.ConfigMapValue", cast("object", DictLikeOnly())),
+        primary_data=cast("t.ContainerValue", cast("object", DictLikeOnly())),
         secondary_data=cast(
-            "t.ConfigMapValue",
+            "t.ContainerValue",
             cast("object", DictLikeOnlySecondary()),
         ),
         merge_strategy="merge",
@@ -911,7 +911,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
     assert context == {}
 
     fields_obj = mapper.fields(
-        cast("t.ConfigMapValue", object()),
+        cast("t.ContainerValue", object()),
         {"x": {"default": 1}},
     )
     assert fields_obj == {"x": 1}
@@ -973,12 +973,12 @@ def test_remaining_uncovered_branches(
     # CallableDictLike is not subscriptable, so dict() conversion fails
     with pytest.raises(TypeError):
         mapper.process_context_data(
-            primary_data=cast("t.ConfigMapValue", cast("object", CallableDictLike())),
-            secondary_data=cast("t.ConfigMapValue", cast("object", CallableDictLike())),
+            primary_data=cast("t.ContainerValue", cast("object", CallableDictLike())),
+            secondary_data=cast("t.ContainerValue", cast("object", CallableDictLike())),
         )
 
     obj_fields = mapper.fields(
-        cast("t.ConfigMapValue", cast("object", AttrObject(name="n", value=3))),
+        cast("t.ContainerValue", cast("object", AttrObject(name="n", value=3))),
         {"name": 0, "missing": 7},
     )
     assert obj_fields == {"name": "n"}

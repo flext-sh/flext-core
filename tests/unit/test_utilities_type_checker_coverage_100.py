@@ -145,11 +145,11 @@ class TestuTypeChecker:
         """Test compute_accepted_message_types with dict handler."""
         types = u.Checker.compute_accepted_message_types(DictHandler)
         assert len(types) == 1
-        # Check that it's a dict type (may be dict or dict[str, t.GeneralValueType])
+        # Check that it's a dict type (may be dict or dict[str, t.Container])
         # Generic aliases have origin dict
         origin = get_origin(types[0])
         if origin is None:
-            # For GenericAlias types (e.g., dict[str, t.GeneralValueType])
+            # For GenericAlias types (e.g., dict[str, t.Container])
             # Check if the type itself represents dict
             type_str = str(types[0])
             assert (
@@ -189,7 +189,7 @@ class TestuTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
         assert u.Checker.can_handle_message_type(accepted, str) is False
         assert u.Checker.can_handle_message_type(accepted, dict) is True
-        # dict[str, t.GeneralValueType] should be compatible with dict
+        # dict[str, t.Container] should be compatible with dict
         dict_type: type[dict[str, t.ContainerValue]] = dict
         assert u.Checker.can_handle_message_type(accepted, dict_type) is True
 
@@ -233,7 +233,7 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         assert u.Checker._evaluate_type_compatibility(_type_origin(dict), dict) is True
-        # dict[str, t.GeneralValueType] should be compatible with dict
+        # dict[str, t.Container] should be compatible with dict
         dict_type: type[dict[str, t.ContainerValue]] = dict
         assert (
             u.Checker._evaluate_type_compatibility(_type_origin(dict), dict_type)
@@ -389,7 +389,7 @@ class TestuTypeChecker:
         )
         assert "message" in hints
         # Business Rule: Type hints return type objects
-        # hints["message"] is of type t.GeneralValueType, so we check if it equals str type
+        # hints["message"] is of type t.Container, so we check if it equals str type
         # Use getattr and name check to avoid mypy comparison-overlap error
         message_type = hints.get("message")
         assert message_type is not None
@@ -504,10 +504,10 @@ class TestuTypeChecker:
         accepted = (str,)
         # This should not crash, but may return False
         # Use cast to handle None case for testing
-        # MessageTypeSpecifier is defined as: str | type[t.GeneralValueType]
+        # MessageTypeSpecifier is defined as: str | type[t.Container]
         result = u.Checker.can_handle_message_type(
             accepted,
-            cast("str | type[t.GeneralValueType]", None),
+            cast("str | type[t.Container]", None),
         )
         assert isinstance(result, bool)
 

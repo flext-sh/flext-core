@@ -188,7 +188,7 @@ class FlextModelsCqrs:
             cls,
             v: FlextModelsCqrs.Pagination
             | FlextModelsContainers.Dict
-            | Mapping[str, t.ScalarValue]
+            | Mapping[str, t.Scalar | None]
             | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
@@ -196,12 +196,12 @@ class FlextModelsCqrs:
             adapter: TypeAdapter[
                 FlextModelsCqrs.Pagination
                 | FlextModelsContainers.Dict
-                | Mapping[str, t.ScalarValue]
+                | Mapping[str, t.Scalar | None]
                 | None
             ] = TypeAdapter(
                 FlextModelsCqrs.Pagination
                 | FlextModelsContainers.Dict
-                | Mapping[str, t.ScalarValue]
+                | Mapping[str, t.Scalar | None]
                 | None,
             )
             parsed_input = adapter.validate_python(v)

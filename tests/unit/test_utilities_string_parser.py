@@ -414,7 +414,7 @@ class StringParserTestFactory:
                 description="function",
             ),
             ObjectKeyCase(
-                {},  # Empty dict - valid t.GeneralValueType, tests dict instance behavior
+                {},  # Empty dict - valid t.Container, tests dict instance behavior
                 expected_exact="dict",
                 description="instance",
             ),
@@ -509,9 +509,9 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[list[str]] is compatible
+            # Type narrowing: assert_failure expects r[t.Container], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.GeneralValueType]", result),
+                cast("r[t.Container]", result),
                 TestsFlextConstants.TestErrors.FAILED_PARSE,
                 "exception handling",
             )
@@ -552,9 +552,9 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[list[str]] is compatible
+            # Type narrowing: assert_failure expects r[t.Container], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.GeneralValueType]", result),
+                cast("r[t.Container]", result),
                 TestsFlextConstants.TestErrors.FAILED_SPLIT,
                 "exception handling",
             )
@@ -594,9 +594,9 @@ class TestuStringParser:
             # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
-            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.Container], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.GeneralValueType]", result),
+                cast("r[t.Container]", result),
                 TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
                 "exception handling",
             )
@@ -630,9 +630,9 @@ class TestuStringParser:
                 invalid_pattern,
             ]  # Runtime allows this
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.Container], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.GeneralValueType]", result),
+                cast("r[t.Container]", result),
                 TestsFlextConstants.TestErrors.FAILED_PIPELINE,
                 "exception handling",
             )
@@ -643,9 +643,9 @@ class TestuStringParser:
                 (r"[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.Container], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                cast("r[t.GeneralValueType]", result),
+                cast("r[t.Container]", result),
                 TestsFlextConstants.TestErrors.INVALID_REGEX,
                 "invalid pattern",
             )
@@ -714,7 +714,7 @@ class TestuStringParser:
             case: ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(cast("t.GeneralValueType", case.obj))
+            key = parser.get_object_key(cast("t.Container", case.obj))
 
             assert isinstance(key, str), f"Key must be string for: {case.description}"
 

@@ -30,4 +30,4 @@ class Metadata(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     version: str = Field(default="1.0.0")
-    attributes: Mapping[str, t.MetadataAttributeValue] = Field(default_factory=dict)
+    attributes: Mapping[str, t.MetadataValue] = Field(default_factory=dict)

@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 def lazy_getattr(
     name: str,
     lazy_imports: dict[str, tuple[str, str]],
-    module_globals: dict[str, t.GeneralValueType],
+    module_globals: dict[str, t.Container],
     module_name: str,
-) -> t.GeneralValueType:
+) -> t.Container:
     """Lazy-load a module attribute on first access (PEP 562).
 
     Args:

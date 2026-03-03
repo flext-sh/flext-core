@@ -346,7 +346,7 @@ class FlextUtilitiesGuards:
     def is_mapping(
         value: t.ContainerValue,
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
-        """Check if value is ConfigurationMapping (Mapping[str, t.ConfigMapValue])."""
+        """Check if value is ConfigurationMapping (Mapping[str, t.ContainerValue])."""
         return isinstance(value, Mapping)
 
     @staticmethod

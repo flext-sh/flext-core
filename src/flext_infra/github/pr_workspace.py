@@ -23,7 +23,7 @@ from flext_infra import (
     c,
 )
 
-type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.ScalarValue]]]
+type OrchestrationSummary = Mapping[str, int | list[Mapping[str, t.Scalar | None]]]
 
 
 class FlextInfraPrWorkspaceManager:
@@ -181,7 +181,7 @@ class FlextInfraPrWorkspaceManager:
         repo_root: Path,
         workspace_root: Path,
         pr_args: Mapping[str, str],
-    ) -> r[Mapping[str, t.ScalarValue]]:
+    ) -> r[Mapping[str, t.Scalar | None]]:
         """Execute a PR operation on a single repository.
 
         Args:
@@ -210,21 +210,21 @@ class FlextInfraPrWorkspaceManager:
         if log_path is not None:
             to_file_result = self._runner.run_to_file(command, log_path)
             if to_file_result.is_failure:
-                return r[Mapping[str, t.ScalarValue]].fail(
+                return r[Mapping[str, t.Scalar | None]].fail(
                     to_file_result.error or "command execution error",
                 )
             exit_code: int = to_file_result.value
         else:
             raw_result = self._runner.run_raw(command)
             if raw_result.is_failure:
-                return r[Mapping[str, t.ScalarValue]].fail(
+                return r[Mapping[str, t.Scalar | None]].fail(
                     raw_result.error or "command execution error",
                 )
             exit_code = raw_result.value.exit_code
 
         elapsed = int(time.monotonic() - started)
         status = c.Status.OK if exit_code == 0 else c.Status.FAIL
-        return r[Mapping[str, t.ScalarValue]].ok({
+        return r[Mapping[str, t.Scalar | None]].ok({
             "display": display,
             "status": status,
             "elapsed": elapsed,
@@ -273,7 +273,7 @@ class FlextInfraPrWorkspaceManager:
 
         effective_args = pr_args or {"action": "status", "base": "main"}
         failures = 0
-        results: list[Mapping[str, t.ScalarValue]] = []
+        results: list[Mapping[str, t.Scalar | None]] = []
 
         for repo_root in repos:
             self.checkout_branch(repo_root, branch)

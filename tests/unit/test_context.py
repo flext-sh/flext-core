@@ -122,7 +122,7 @@ class TestFlextContext:
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
-        # Type narrowing: value must be t.GeneralValueType compatible
+        # Type narrowing: value must be t.Container compatible
         converted_value: t.ContainerValue = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
@@ -130,7 +130,7 @@ class TestFlextContext:
         )
         set_result = context.set(key, converted_value)
         u.Tests.Result.assert_success(set_result)
-        # Convert expected to t.GeneralValueType for assert_context_get_success
+        # Convert expected to t.Container for assert_context_get_success
         expected_value = expected
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
@@ -188,7 +188,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        # Type narrowing: nested_data must be t.GeneralValueType compatible
+        # Type narrowing: nested_data must be t.Container compatible
         nested_data: dict[str, t.ContainerValue] = {
             "user": {
                 "id": "123",
@@ -390,7 +390,7 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = test_context
-        # Type narrowing: special_value must be t.GeneralValueType compatible
+        # Type narrowing: special_value must be t.Container compatible
         converted_value: t.ContainerValue = (
             special_value
             if isinstance(

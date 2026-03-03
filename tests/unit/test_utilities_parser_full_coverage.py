@@ -157,7 +157,7 @@ def test_parser_pipeline_and_pattern_branches(
 
     assert (
         u.Parser()._extract_key_from_str_conversion(
-            cast("t.ConfigMapValue", cast("object", _StrRaises())),
+            cast("t.ContainerValue", cast("object", _StrRaises())),
         )
         is None
     )
@@ -180,10 +180,10 @@ def test_parser_pipeline_and_pattern_branches(
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast("t.ConfigMapValue", object()),
+        cast("t.ContainerValue", object()),
     )
     assert (
-        parser3.get_object_key(cast("t.ConfigMapValue", cast("object", _OddNoStr())))
+        parser3.get_object_key(cast("t.ContainerValue", cast("object", _OddNoStr())))
         == "_OddNoStr"
     )
 
@@ -217,7 +217,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert parser._parse_result_error(r[int].ok(1), default="fallback") == "fallback"
 
     model_result = parser._parse_model(
-        cast("t.ConfigMapValue", {"name": "ok", "count": 2, "payload": "obj"}),
+        cast("t.ContainerValue", {"name": "ok", "count": 2, "payload": "obj"}),
         _Model,
         "field: ",
         strict=False,
@@ -307,7 +307,7 @@ def test_parser_convert_and_norm_branches(
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            cast("t.ConfigMapValue", cast("object", _BadStr())),
+            cast("t.ContainerValue", cast("object", _BadStr())),
             default="d",
         )
         == "d"
@@ -315,7 +315,7 @@ def test_parser_convert_and_norm_branches(
     assert parser._convert_to_bool(True, default=False) is True
     assert (
         parser._convert_to_bool(
-            cast("t.ConfigMapValue", object()),
+            cast("t.ContainerValue", object()),
             default=True,
         )
         is True
@@ -324,7 +324,7 @@ def test_parser_convert_and_norm_branches(
 
     assert (
         parser.conv_str(
-            cast("t.ConfigMapValue", cast("object", _BadConv())),
+            cast("t.ContainerValue", cast("object", _BadConv())),
             default="d",
         )
         == "d"
@@ -389,7 +389,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
 
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
-        cast("t.ConfigMapValue", cast("object", type("Obj", (), {"id": "x1"})())),
+        cast("t.ContainerValue", cast("object", type("Obj", (), {"id": "x1"})())),
     )
     assert mapped == "n1"
     assert attrs == "x1"
@@ -452,7 +452,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
     assert parser._convert_to_float(
-        cast("t.ConfigMapValue", object()),
+        cast("t.ContainerValue", object()),
         default=1.5,
     ) == pytest.approx(1.5)
     assert parser._convert_fallback("x", str, "d") == "d"

@@ -747,7 +747,7 @@ class TestComprehensiveIntegration:
         scenarios.append(scenario2)
 
         # Build complete test suite
-        # Convert scenarios to list[t.GeneralValueType] explicitly
+        # Convert scenarios to list[t.Container] explicitly
         scenario_list: Sequence[object] = scenarios
         suite = (
             SuiteBuilder("comprehensive_operation_tests")

@@ -1052,7 +1052,7 @@ class FlextTestsProtocols(FlextProtocols):
                 functions used with sorted().
 
                 Example:
-                    def get_id(obj: t.ConfigMapValue) -> int:
+                    def get_id(obj: t.ContainerValue) -> int:
                         return obj.id  # int supports __lt__
 
                     sorted(items, key=get_id)  # OK - int satisfies SupportsLessThan

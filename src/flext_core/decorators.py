@@ -487,7 +487,7 @@ class FlextDecorators:
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: dict[str, t.ScalarValue] = {
+                    start_extra: dict[str, t.Scalar | None] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -516,7 +516,7 @@ class FlextDecorators:
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: dict[str, t.ScalarValue] = {
+                    completion_extra: dict[str, t.Scalar | None] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -544,7 +544,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, t.MetadataAttributeValue] = {
+                    failure_extra: dict[str, t.MetadataValue] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -687,7 +687,7 @@ class FlextDecorators:
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: dict[str, t.MetadataAttributeValue] = {
+                    success_extra: dict[str, t.MetadataValue] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -706,7 +706,7 @@ class FlextDecorators:
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: dict[str, t.MetadataAttributeValue] = {
+                    failure_extra: dict[str, t.MetadataValue] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -901,8 +901,8 @@ class FlextDecorators:
                     ),
                 )
                 try:
-                    retry_args: tuple[t.GeneralValueType, ...] = tuple(args)
-                    retry_kwargs: Mapping[str, t.GeneralValueType] = dict(kwargs)
+                    retry_args: tuple[t.Container, ...] = tuple(args)
+                    retry_kwargs: Mapping[str, t.Container] = dict(kwargs)
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -956,7 +956,7 @@ class FlextDecorators:
         logger: FlextLogger
 
     @staticmethod
-    def _has_flext_logger(value: t.GeneralValueType) -> TypeGuard[_HasLogger]:
+    def _has_flext_logger(value: t.Container) -> TypeGuard[_HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger")
@@ -964,7 +964,7 @@ class FlextDecorators:
 
     @staticmethod
     def _resolve_logger(
-        args: tuple[t.GeneralValueType, ...],
+        args: tuple[t.Container, ...],
         func: Callable[P, R],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
@@ -984,8 +984,8 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[t.GeneralValueType, ...],
-        kwargs: Mapping[str, t.GeneralValueType],
+        args: tuple[t.Container, ...],
+        kwargs: Mapping[str, t.Container],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -1493,7 +1493,7 @@ class FlextDecorators:
                 try:
                     # Bind context variables to global logging context
                     if context_vars:
-                        ctx: dict[str, t.MetadataAttributeValue] = {
+                        ctx: dict[str, t.MetadataValue] = {
                             k: v for k, v in context_vars.items() if v is not None
                         }
                         bind_result = FlextLogger.bind_global_context(**ctx)

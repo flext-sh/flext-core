@@ -44,8 +44,8 @@ class FlextInfraDependencyDetectorModels(m):
         projects: dict[str, dict[str, t.ContainerValue]] = Field(
             default_factory=dict,
         )
-        pip_check: dict[str, t.ScalarValue] | None = None
-        dependency_limits: dict[str, t.ScalarValue] | None = None
+        pip_check: dict[str, t.Scalar | None] | None = None
+        dependency_limits: dict[str, t.Scalar | None] | None = None
 
 
 ddm = FlextInfraDependencyDetectorModels

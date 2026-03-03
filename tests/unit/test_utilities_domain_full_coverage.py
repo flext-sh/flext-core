@@ -98,7 +98,7 @@ class TestValidateValueImmutable:
         # PlainObj uses object.__setattr__ → mutable
         assert (
             u.Domain.validate_value_object_immutable(
-                cast("t.ConfigMapValue", cast("object", obj)),
+                cast("t.ContainerValue", cast("object", obj)),
             )
             is False
         )
@@ -130,13 +130,13 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     assert (
         u.Domain.validate_value_object_immutable(
-            cast("t.ConfigMapValue", cast("object", _BrokenConfig())),
+            cast("t.ContainerValue", cast("object", _BrokenConfig())),
         )
         is False
     )
     assert (
         u.Domain.validate_value_object_immutable(
-            cast("t.ConfigMapValue", cast("object", _NoSetattrVisible())),
+            cast("t.ContainerValue", cast("object", _NoSetattrVisible())),
         )
         is False
     )

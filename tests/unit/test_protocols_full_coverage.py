@@ -99,7 +99,7 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     assert get_protocols() == (_NamedProtocol,)
     assert p.is_protocol(_NamedProtocol) is True
     assert (
-        p.check_implements_protocol(cast("t.GuardInputValue", obj), _NamedProtocol)
+        p.check_implements_protocol(cast("t.ContainerValue", obj), _NamedProtocol)
         is True
     )
 
@@ -115,7 +115,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
     obj = _Thing()
     assert (
-        p.check_implements_protocol(cast("t.GuardInputValue", obj), _NotAProtocol)
+        p.check_implements_protocol(cast("t.ContainerValue", obj), _NotAProtocol)
         is False
     )
 
@@ -128,7 +128,7 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     runtime_obj = _OnlyRuntime()
     assert (
         p.check_implements_protocol(
-            cast("t.GuardInputValue", runtime_obj),
+            cast("t.ContainerValue", runtime_obj),
             _NamedProtocol,
         )
         is True

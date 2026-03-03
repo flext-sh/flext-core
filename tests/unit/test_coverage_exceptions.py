@@ -202,10 +202,10 @@ class TestFlextExceptionsHierarchy:
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
-            # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue]
+            # Convert dict[str, t.Container] to dict[str, MetadataAttributeValue]
             # Separate type values from metadata values for proper type handling
             type_kwargs: dict[str, type] = {}
-            metadata_kwargs: dict[str, t.MetadataAttributeValue] = {}
+            metadata_kwargs: dict[str, t.MetadataValue] = {}
             for key, value in scenario.kwargs.items():
                 # For TypeError, preserve type objects for expected_type and actual_type
                 if (
@@ -219,9 +219,9 @@ class TestFlextExceptionsHierarchy:
                 ):
                     type_kwargs[key] = value
                 elif isinstance(value, (str, int, float, bool, type(None), list, dict)):
-                    metadata_kwargs[key] = cast("t.MetadataAttributeValue", value)
+                    metadata_kwargs[key] = cast("t.MetadataValue", value)
                 else:
-                    metadata_kwargs[key] = cast("t.MetadataAttributeValue", str(value))
+                    metadata_kwargs[key] = cast("t.MetadataValue", str(value))
             # For TypeError, pass type_kwargs separately, then metadata_kwargs
             if type_kwargs:
                 # Convert type objects to strings for metadata compatibility
@@ -364,14 +364,14 @@ class TestExceptionContext:
         """Test exception with contextual information via metadata."""
         # ValidationError accepts metadata via **extra_kwargs as MetadataAttributeValue
         # Convert Metadata to dict for extra_kwargs
-        metadata_dict: dict[str, t.MetadataAttributeValue] = {
+        metadata_dict: dict[str, t.MetadataValue] = {
             "user_id": "123",
             "operation": "create_user",
             "timestamp": 1234567890,
         }
         # ValidationError accepts metadata via **extra_kwargs: MetadataAttributeValue
         # Cast metadata_dict to correct type
-        metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
+        metadata_typed = cast("t.MetadataValue", metadata_dict)
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
             metadata=metadata_typed,
@@ -456,9 +456,9 @@ class TestExceptionFactory:
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue]
-        converted_kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
+        # Convert dict[str, t.Container] to dict[str, MetadataAttributeValue]
+        converted_kwargs: dict[str, t.MetadataValue] = {
+            k: cast("t.MetadataValue", v) for k, v in kwargs.items()
         }
         # Type narrowing: all values in converted_kwargs are MetadataAttributeValue
         # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility
@@ -467,7 +467,7 @@ class TestExceptionFactory:
         # Mypy limitation: dict unpacking to **kwargs not fully supported
         # The dict[str, MetadataAttributeValue] is compatible with **kwargs: MetadataAttributeValue
         # Use type ignore for dict unpacking (runtime behavior is correct)
-        kwargs_typed: dict[str, t.MetadataAttributeValue] = converted_kwargs
+        kwargs_typed: dict[str, t.MetadataValue] = converted_kwargs
         create_error = cast(
             "Callable[..., FlextExceptions.BaseError]",
             FlextExceptions.create,

@@ -75,7 +75,7 @@ class TestContext100Coverage:
         context1.set("key1", "value1").value
 
         merge_data: dict[str, t.ContainerValue] = {"key2": "value2", "key3": "value3"}
-        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
+        # Convert dict[str, t.Container] to dict[str, t.Container]
         converted_data: dict[str, t.ContainerValue] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))

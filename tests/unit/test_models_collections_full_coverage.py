@@ -63,7 +63,7 @@ def test_rules_merge_combines_model_dump_values() -> None:
 def test_results_internal_conflict_paths_and_combine() -> None:
     merged_dict = _Results._merge_dicts(
         cast(
-            "list[t.ConfigMapValue]",
+            "list[t.ContainerValue]",
             [
                 {"ok": "v", "xs": [1, "a", object()]},
                 {"ys": [2, None, 3.5]},

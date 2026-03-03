@@ -111,7 +111,7 @@ def test_clear_keys_values_items_and_validate_branches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
-    cast("dict[str, t.GeneralValueType]", ctx._statistics.operations)[
+    cast("dict[str, t.Container]", ctx._statistics.operations)[
         c.Context.OPERATION_CLEAR
     ] = 1
     ctx.clear()
@@ -140,7 +140,7 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
-    cast("dict[str, t.GeneralValueType]", ctx._statistics.operations)[
+    cast("dict[str, t.Container]", ctx._statistics.operations)[
         c.Context.OPERATION_GET
     ] = 1
     ctx._update_statistics(c.Context.OPERATION_GET)

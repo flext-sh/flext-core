@@ -38,7 +38,7 @@ class FlextInfraWorkflowLinter:
         *,
         report_path: Path | None = None,
         strict: bool = False,
-    ) -> FlextResult[Mapping[str, t.ScalarValue]]:
+    ) -> FlextResult[Mapping[str, t.Scalar | None]]:
         """Run actionlint on the repository and return results.
 
         Args:
@@ -52,19 +52,19 @@ class FlextInfraWorkflowLinter:
         """
         actionlint = shutil.which("actionlint")
         if actionlint is None:
-            payload_skipped: MutableMapping[str, t.ScalarValue] = {
+            payload_skipped: MutableMapping[str, t.Scalar | None] = {
                 "status": "skipped",
                 "reason": "actionlint not installed",
             }
             if report_path is not None:
                 self._json.write(report_path, payload_skipped, sort_keys=True)
-            return r[Mapping[str, t.ScalarValue]].ok(payload_skipped)
+            return r[Mapping[str, t.Scalar | None]].ok(payload_skipped)
 
         result = self._runner.run([actionlint], cwd=root)
 
         if result.is_success:
             output = result.value
-            payload: MutableMapping[str, t.ScalarValue] = {
+            payload: MutableMapping[str, t.Scalar | None] = {
                 "status": "ok",
                 "exit_code": output.exit_code,
                 "stdout": output.stdout,
@@ -83,11 +83,11 @@ class FlextInfraWorkflowLinter:
             self._json.write(report_path, payload, sort_keys=True)
 
         if payload.get("status") == "fail" and strict:
-            return r[Mapping[str, t.ScalarValue]].fail(
+            return r[Mapping[str, t.Scalar | None]].fail(
                 result.error or "actionlint found issues",
             )
 
-        return r[Mapping[str, t.ScalarValue]].ok(payload)
+        return r[Mapping[str, t.Scalar | None]].ok(payload)
 
 
 __all__ = ["FlextInfraWorkflowLinter"]

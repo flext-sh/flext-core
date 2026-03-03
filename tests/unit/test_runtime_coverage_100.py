@@ -37,9 +37,9 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: BadDictLike instances are compatible with t.Container at runtime
         obj = BadDictLike()
-        obj_typed = cast("t.GeneralValueType", cast("object", obj))
+        obj_typed = cast("t.Container", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -58,9 +58,9 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: BadDictLike instances are compatible with t.Container at runtime
         obj = BadDictLike()
-        obj_typed = cast("t.GeneralValueType", cast("object", obj))
+        obj_typed = cast("t.Container", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -76,9 +76,9 @@ class TestRuntimeDictLike:
         class NotDictLike:
             pass
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.Container at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", cast("object", obj))
+        obj_typed = cast("t.Container", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -92,9 +92,9 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.Container at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", cast("object", obj))
+        obj_typed = cast("t.Container", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -108,9 +108,9 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.Container at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", cast("object", obj))
+        obj_typed = cast("t.Container", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -124,9 +124,9 @@ class TestRuntimeDictLike:
             def items(self) -> list[tuple[object, object]]:
                 return []
 
-        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.Container at runtime
         obj = NotDictLike()
-        obj_typed = cast("t.GeneralValueType", cast("object", obj))
+        obj_typed = cast("t.Container", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -225,20 +225,20 @@ class TestRuntimeTypeChecking:
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
+        # Convert list[t.Container] to Sequence[t.Container] for type compatibility
         additional_processors_typed: Sequence[t.ContainerValue] = (
-            cast("Sequence[t.GeneralValueType]", config.additional_processors)
+            cast("Sequence[t.Container]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to t.GeneralValueType | None for type compatibility
+        # Convert object | None to t.Container | None for type compatibility
         wrapper_class_factory_typed: t.ContainerValue | None = (
-            cast("t.GeneralValueType", config.wrapper_class_factory)
+            cast("t.Container", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
             else None
         )
         logger_factory_typed: t.ContainerValue | None = (
-            cast("t.GeneralValueType", config.logger_factory)
+            cast("t.Container", config.logger_factory)
             if config.logger_factory is not None
             else None
         )
@@ -387,20 +387,20 @@ class TestRuntimeTypeChecking:
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
+        # Convert list[t.Container] to Sequence[t.Container] for type compatibility
         additional_processors_typed: Sequence[t.ContainerValue] = (
-            cast("Sequence[t.GeneralValueType]", config.additional_processors)
+            cast("Sequence[t.Container]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to t.GeneralValueType | None for type compatibility
+        # Convert object | None to t.Container | None for type compatibility
         wrapper_class_factory_typed: t.ContainerValue | None = (
-            cast("t.GeneralValueType", config.wrapper_class_factory)
+            cast("t.Container", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
             else None
         )
         logger_factory_typed: t.ContainerValue | None = (
-            cast("t.GeneralValueType", config.logger_factory)
+            cast("t.Container", config.logger_factory)
             if config.logger_factory is not None
             else None
         )

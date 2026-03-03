@@ -204,7 +204,7 @@ class CircuitBreakerManager:
         self._recovery_failures.clear()
         self._total_successes.clear()
 
-    def get_metrics(self) -> Mapping[str, t.ScalarValue]:
+    def get_metrics(self) -> Mapping[str, t.Scalar | None]:
         """Collect circuit breaker metrics, including recovery statistics.
 
         Returns:

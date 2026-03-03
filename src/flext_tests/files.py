@@ -64,7 +64,7 @@ def _yaml_dump(value: t.ContainerValue, *, indent: int) -> str:
 
 
 def _is_batch_content(
-    content_raw: t.GeneralValueType,
+    content_raw: t.Container,
 ) -> TypeGuard[t.Tests.PayloadValue]:
     try:
         _ = m.Tests.Files.CreateParams.model_validate(
@@ -1520,7 +1520,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _is_nested_rows(
         self,
-        value: t.GeneralValueType,
+        value: t.Container,
     ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
@@ -1533,13 +1533,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     @staticmethod
     def _is_mapping(
-        value: t.GeneralValueType,
+        value: t.Container,
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     def _coerce_read_content(
         self,
-        value: t.GeneralValueType,
+        value: t.Container,
     ) -> str | bytes | t.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
@@ -1554,7 +1554,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 },
             )
         if self._is_nested_rows(value):
-            sequence_value: Sequence[t.GeneralValueType] = (
+            sequence_value: Sequence[t.Container] = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             return [
@@ -1566,14 +1566,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _mapping_to_payload(
         self,
-        mapping: Mapping[str, t.GeneralValueType],
+        mapping: Mapping[str, t.Container],
     ) -> Mapping[str, t.Tests.PayloadValue]:
         payload: dict[str, t.Tests.PayloadValue] = {}
         for key, value in mapping.items():
             payload[str(key)] = self._to_payload_value(value)
         return payload
 
-    def _to_payload_value(self, value: t.GeneralValueType) -> t.Tests.PayloadValue:
+    def _to_payload_value(self, value: t.Container) -> t.Tests.PayloadValue:
         if value is None or isinstance(
             value, (str, int, float, bool, bytes, BaseModel)
         ):
@@ -1609,7 +1609,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _coerce_file_content(
         self,
-        value: t.GeneralValueType,
+        value: t.Container,
     ) -> str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         if isinstance(value, str | bytes):
             return value
@@ -1627,7 +1627,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
-            sequence_value: Sequence[t.GeneralValueType] = (
+            sequence_value: Sequence[t.Container] = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             rows.extend(

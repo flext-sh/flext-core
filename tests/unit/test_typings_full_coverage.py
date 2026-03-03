@@ -100,7 +100,7 @@ class TestValidatorCallable:
     def test_validator_callable_invocation(self) -> None:
         """ValidatorCallable can be called (line 457)."""
 
-        def upper(v: t.ScalarValue | BaseModel) -> t.ScalarValue | BaseModel:
+        def upper(v: t.Scalar | None | BaseModel) -> t.Scalar | None | BaseModel:
             return str(v).upper() if isinstance(v, str) else v
 
         vc = m.ValidatorCallable(root=upper)
@@ -113,7 +113,7 @@ class TestValidatorMapMixin:
     def test_items(self) -> None:
         """items() returns validator items (line 470)."""
 
-        def noop(v: t.ScalarValue | BaseModel) -> t.ScalarValue | BaseModel:
+        def noop(v: t.Scalar | None | BaseModel) -> t.Scalar | None | BaseModel:
             return v
 
         fvm = m.FieldValidatorMap(root={"field1": noop})
@@ -124,7 +124,7 @@ class TestValidatorMapMixin:
     def test_values(self) -> None:
         """values() returns validator values (line 476)."""
 
-        def noop(v: t.ScalarValue | BaseModel) -> t.ScalarValue | BaseModel:
+        def noop(v: t.Scalar | None | BaseModel) -> t.Scalar | None | BaseModel:
             return v
 
         fvm = m.FieldValidatorMap(root={"field1": noop})

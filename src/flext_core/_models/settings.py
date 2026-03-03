@@ -133,7 +133,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(
             cls,
-            v: list[int] | list[t.ScalarValue],
+            v: list[int] | list[t.Scalar | None],
         ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             codes_for_validation: list[int] = []
@@ -416,7 +416,7 @@ class FlextModelsConfig:
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: list[p.VariadicCallable[t.GeneralValueType]] = Field(
+        additional_processors: list[p.VariadicCallable[t.Container]] = Field(
             default_factory=list,
             description="Optional extra processors after standard FLEXT processors",
         )
@@ -795,14 +795,12 @@ class FlextModelsConfig:
             default=None,
             description="Actual type class",
         )
-        context: Mapping[str, t.MetadataAttributeValue] | None = Field(
+        context: Mapping[str, t.MetadataValue] | None = Field(
             default=None,
             description="Additional context for error",
         )
         metadata: (
-            FlextModelFoundation.Metadata
-            | Mapping[str, t.MetadataAttributeValue]
-            | None
+            FlextModelFoundation.Metadata | Mapping[str, t.MetadataValue] | None
         ) = Field(
             default=None,
             description="Metadata for error",

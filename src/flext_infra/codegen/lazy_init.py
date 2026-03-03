@@ -256,7 +256,7 @@ def _parse_existing_lazy_imports(tree: ast.Module) -> dict[str, tuple[str, str]]
     result: dict[str, tuple[str, str]] = {}
 
     def _extract(d: ast.expr) -> None:
-        if not isinstance(d, ast.Dict):
+        if not isinstance(d, asm.Dict):
             return
         for key, val in zip(d.keys, d.values, strict=False):
             if (
@@ -479,7 +479,7 @@ def _generate_file(
     out.extend(["]", "", ""])
 
     out.extend([
-        "def __getattr__(name: str) -> t.GeneralValueType:",
+        "def __getattr__(name: str) -> t.Container:",
         '    """Lazy-load module attributes on first access (PEP 562)."""',
         "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
         "",

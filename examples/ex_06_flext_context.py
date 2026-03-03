@@ -11,7 +11,8 @@ from shared import Examples
 from flext_core import FlextContext, FlextRuntime, FlextSettings, c, r, t
 
 type _ContainerValue = (
-    t.ScalarValue
+    t.Scalar
+    | None
     | BaseModel
     | Path
     | Sequence[_ContainerValue]
@@ -32,7 +33,7 @@ class _ContainerStub:
     def _protocol_name(self) -> str:
         return "DI"
 
-    def configure(self, config: Mapping[str, t.ScalarValue]) -> None:
+    def configure(self, config: Mapping[str, t.Scalar | None]) -> None:
         _ = config
 
     @property

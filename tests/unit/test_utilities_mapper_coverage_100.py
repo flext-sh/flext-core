@@ -280,7 +280,7 @@ class TestuMapperBuild:
         # Map (x*2): [6, 8]
         res = u.Mapper.build(
             [1, 2, 3, 4],
-            ops=cast("dict[str, t.GeneralValueType] | None", ops),
+            ops=cast("dict[str, t.Container] | None", ops),
         )
         assert res == [6, 8]
 
@@ -299,7 +299,7 @@ class TestuMapperBuild:
         }
         res = u.Mapper.build(
             input_data,
-            ops=cast("dict[str, t.GeneralValueType] | None", ops),
+            ops=cast("dict[str, t.Container] | None", ops),
         )
         assert res == [25, 35]
 
@@ -307,7 +307,7 @@ class TestuMapperBuild:
         """Test build normalize."""
         res = u.Mapper.build(
             ["A", "b"],
-            ops=cast("dict[str, t.GeneralValueType] | None", {"normalize": "lower"}),
+            ops=cast("dict[str, t.Container] | None", {"normalize": "lower"}),
         )
         assert res == ["a", "b"]
 
@@ -315,7 +315,7 @@ class TestuMapperBuild:
         """Test build group - keys are converted to strings for ConfigurationDict."""
         res = u.Mapper.build(
             ["cat", "dog", "ant"],
-            ops=cast("dict[str, t.GeneralValueType] | None", {"group": len}),
+            ops=cast("dict[str, t.Container] | None", {"group": len}),
         )
         # Keys are converted to strings because result is ConfigurationDict
         assert res == {"3": ["cat", "dog", "ant"]}
@@ -324,7 +324,7 @@ class TestuMapperBuild:
         """Test build chunk."""
         res = u.Mapper.build(
             [1, 2, 3, 4],
-            ops=cast("dict[str, t.GeneralValueType] | None", {"chunk": 2}),
+            ops=cast("dict[str, t.Container] | None", {"chunk": 2}),
         )
         assert res == [[1, 2], [3, 4]]
 
@@ -337,7 +337,7 @@ class TestuMapperBuild:
         """Test fields multi extraction."""
         data = {"a": 1, "b": 2}
         spec: dict[str, None] = {"a": None, "b": None}
-        res = u.Mapper.fields_multi(data, cast("dict[str, t.GeneralValueType]", spec))
+        res = u.Mapper.fields_multi(data, cast("dict[str, t.Container]", spec))
         assert res == {"a": 1, "b": 2}
 
     def test_construct(self) -> None:
@@ -349,8 +349,8 @@ class TestuMapperBuild:
             "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
         }
         res = u.Mapper.construct(
-            cast("dict[str, t.ConfigMapValue]", spec),
-            m.ConfigMap(root=cast("dict[str, t.ConfigMapValue]", source)),
+            cast("dict[str, t.ContainerValue]", spec),
+            m.ConfigMap(root=cast("dict[str, t.ContainerValue]", source)),
         )
         assert res == {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
 
@@ -373,7 +373,7 @@ class TestuMapperAdvanced:
         # Convert fails -> returns default (which is convert_type() -> int() -> 0)
         res = u.Mapper.build(
             "invalid",
-            ops=cast("dict[str, t.GeneralValueType] | None", {"convert": int}),
+            ops=cast("dict[str, t.Container] | None", {"convert": int}),
         )
         assert res == 0
 
@@ -381,7 +381,7 @@ class TestuMapperAdvanced:
         res = u.Mapper.build(
             "invalid",
             ops=cast(
-                "dict[str, t.GeneralValueType] | None",
+                "dict[str, t.Container] | None",
                 {"convert": int, "convert_default": 10},
             ),
         )
@@ -400,7 +400,7 @@ class TestuMapperAdvanced:
         }
         res = u.Mapper.build(
             data,
-            ops=cast("dict[str, t.GeneralValueType] | None", ops),
+            ops=cast("dict[str, t.Container] | None", ops),
         )
         # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
         assert res == {"a": "UPPER"}
@@ -410,14 +410,14 @@ class TestuMapperAdvanced:
         data = [{"a": 2}, {"a": 1}]
         res = u.Mapper.build(
             data,
-            ops=cast("dict[str, t.GeneralValueType] | None", {"sort": "a"}),
+            ops=cast("dict[str, t.Container] | None", {"sort": "a"}),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
         res = u.Mapper.build(
             data,
             ops=cast(
-                "dict[str, t.GeneralValueType] | None",
+                "dict[str, t.Container] | None",
                 {"sort": operator.itemgetter("a")},
             ),
         )

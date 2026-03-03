@@ -382,7 +382,7 @@ class Testu:
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        # Type narrowing: obj is object, but clear_object_cache expects t.GeneralValueType
+        # Type narrowing: obj is object, but clear_object_cache expects t.Container
         # Since obj has model_dump, it's compatible
         if isinstance(obj, BaseModel):
             result = u.Cache.clear_object_cache(obj)
@@ -406,16 +406,16 @@ class Testu:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to t.GeneralValueType for type checker
-        obj_typed: t.ContainerValue = cast("t.GeneralValueType", obj)
+        # Cast to t.Container for type checker
+        obj_typed: t.ContainerValue = cast("t.Container", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to t.GeneralValueType for type checker
-        obj_typed: t.ContainerValue = cast("t.GeneralValueType", obj)
+        # Cast to t.Container for type checker
+        obj_typed: t.ContainerValue = cast("t.Container", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is False
 
     # =====================================================================
@@ -468,7 +468,7 @@ class Testu:
 
     def test_type_checker_object_accepts_all(self) -> None:
         """Test type checking with object (accepts all)."""
-        # MessageTypeSpecifier = str | type[t.GeneralValueType]
+        # MessageTypeSpecifier = str | type[t.Container]
         # object is not a valid MessageTypeSpecifier, use str instead
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         assert u.Checker.can_handle_message_type(accepted, str) is True

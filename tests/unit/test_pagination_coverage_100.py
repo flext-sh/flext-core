@@ -491,7 +491,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        # Should still succeed - dict is valid t.GeneralValueType
+        # Should still succeed - dict is valid t.Container
         u.Tests.Result.assert_success(result)
         response = result.value
         assert "data" in response
@@ -515,7 +515,7 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.Container
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             u.Pagination.extract_pagination_config(config)
@@ -529,7 +529,7 @@ class TestuPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.Container
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
@@ -546,7 +546,7 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.Container
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)
@@ -565,7 +565,7 @@ class TestuPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.Container
         # extract_pagination_config accepts BaseModel or Mapping, use isinstance check
         if isinstance(config, (BaseModel, Mapping)):
             result = u.Pagination.extract_pagination_config(config)

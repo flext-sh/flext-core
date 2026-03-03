@@ -247,7 +247,7 @@ class FlextTestsTypes(FlextTypes):
             """File-specific type definitions for test file operations (tf)."""
 
             # Reuse ScalarValue from flext_core - no duplication
-            type ScalarValue = t.ScalarValue
+            type ScalarValue = t.Scalar | None
             """Scalar values that can be serialized directly."""
 
             # Reuse JsonValue from flext_core - no duplication

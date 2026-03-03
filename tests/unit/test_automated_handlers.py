@@ -158,7 +158,7 @@ class TestAutomatedFlextHandlers:
             cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cast("r[t.GeneralValueType]", cleanup_result),
+                    cast("r[t.Container]", cleanup_result),
                     "FlextHandlers cleanup failed",
                 )
 
@@ -178,7 +178,7 @@ class TestAutomatedFlextHandlers:
                 return r[t.ContainerValue].fail("Invalid handlers instance type")
 
             # instance is the FlextHandlers class itself
-            def test_handler(msg: t.ScalarValue) -> t.ScalarValue:
+            def test_handler(msg: t.Scalar | None) -> t.Scalar | None:
                 """Test handler callable."""
                 return msg
 

@@ -111,7 +111,7 @@ class TestFlextTestsBuilders:
         data = _as_builder_dict(builder.build())
 
         assert "validation_fields" in data
-        fields = cast("dict[str, t.GeneralValueType]", data["validation_fields"])
+        fields = cast("dict[str, t.Container]", data["validation_fields"])
 
         valid_emails = cast("list[str]", fields["valid_emails"])
         assert len(valid_emails) == 5
@@ -132,7 +132,7 @@ class TestFlextTestsBuilders:
         data = _as_builder_dict(builder.build())
 
         validation_fields = cast(
-            "dict[str, t.GeneralValueType]",
+            "dict[str, t.Container]",
             data["validation_fields"],
         )
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
@@ -230,7 +230,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("error", result_fail="Failed", result_code="E001")
         data = _as_builder_dict(builder.build())
-        result = cast("r[t.GeneralValueType]", cast("object", data["error"]))
+        result = cast("r[t.Container]", cast("object", data["error"]))
         assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
@@ -268,7 +268,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("users", factory="users", count=3)
         data = _as_builder_dict(builder.build())
-        users = cast("list[dict[str, t.GeneralValueType]]", data["users"])
+        users = cast("list[dict[str, t.Container]]", data["users"])
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
@@ -276,7 +276,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("config", mapping={"env": "test", "debug": True})
         data = _as_builder_dict(builder.build())
-        config = cast("dict[str, t.GeneralValueType]", data["config"])
+        config = cast("dict[str, t.Container]", data["config"])
         assert config["env"] == "test"
         assert config["debug"] is True
 
@@ -307,7 +307,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("a", 1).add("b", 2)
         result = builder.build(as_list=True)
-        items = cast("list[tuple[str, t.GeneralValueType]]", result)
+        items = cast("list[tuple[str, t.Container]]", result)
         assert len(items) == 2
         assert ("a", 1) in items
         assert ("b", 2) in items
@@ -337,7 +337,7 @@ class TestFlextTestsBuilders:
         # flatten is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
         flattened_raw = builder.build(flatten=True)
-        flattened = cast("dict[str, t.GeneralValueType]", flattened_raw)
+        flattened = cast("dict[str, t.Container]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
@@ -349,7 +349,7 @@ class TestFlextTestsBuilders:
         # filter_none is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
         filtered_raw = builder.build(filter_none=True)
-        filtered = cast("dict[str, t.GeneralValueType]", filtered_raw)
+        filtered = cast("dict[str, t.Container]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered
@@ -371,7 +371,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("count", 5)
         # validate_with is a special kwarg processed by BuildParams
-        # Type ignore needed because validate_with is Callable, not t.GeneralValueType
+        # Type ignore needed because validate_with is Callable, not t.Container
         # build() accepts **kwargs: object, validated by BuildParams
         build_result = builder.build(
             validate_with=cast(
@@ -396,7 +396,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # map_result is a special kwarg processed by BuildParams
-        # Type ignore needed because map_result is Callable, not t.GeneralValueType
+        # Type ignore needed because map_result is Callable, not t.Container
         build_result = builder.build(
             map_result=cast(
                 "t_test.Tests.PayloadValue",
@@ -458,7 +458,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("count", 5)
         # validate is a special kwarg processed by ToResultParams
-        # Type ignore needed because validate is Callable, not t.GeneralValueType
+        # Type ignore needed because validate is Callable, not t.Container
         # Type annotation matches actual return type from to_result()
         # validate is Callable, validated by ToResultParams
         # Actual return type is more specific, use explicit type annotation with cast
@@ -518,7 +518,7 @@ class TestFlextTestsBuilders:
             [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = _as_builder_dict(builder.build())
-        cases = cast("list[t.GeneralValueType]", data["cases"])
+        cases = cast("list[t.Container]", data["cases"])
         assert len(cases) == 2
 
     def test_batch_with_results(self) -> None:
@@ -779,7 +779,7 @@ class TestFlextTestsBuilders:
         result: r[t_test.Tests.PayloadValue] = r[t_test.Tests.PayloadValue].fail(
             "Error",
         )
-        # Type narrowing: assert_failure accepts r[t.GeneralValueType], r[int] is compatible
+        # Type narrowing: assert_failure accepts r[t.Container], r[int] is compatible
         error: str = tb.Tests.Result.assert_failure(
             result,
         )

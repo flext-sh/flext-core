@@ -154,7 +154,7 @@ class TestAutomatedFlextLoggings:
             cleanup_result = cleanup()
             if cleanup_result:
                 assertion_helpers.assert_flext_result_success(
-                    cast("r[t.GeneralValueType]", cleanup_result),
+                    cast("r[t.Container]", cleanup_result),
                     "FlextLoggings cleanup failed",
                 )
 
@@ -175,22 +175,22 @@ class TestAutomatedFlextLoggings:
                 result = process(dict(input_data))
                 # Check if result is FlextResult or needs wrapping
                 if isinstance(result, r):
-                    return cast("r[t.GeneralValueType]", result)
-                return r[t.ContainerValue].ok(cast("t.GeneralValueType", result))
+                    return cast("r[t.Container]", result)
+                return r[t.ContainerValue].ok(cast("t.Container", result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
-                    return cast("r[t.GeneralValueType]", result)
-                return r[t.ContainerValue].ok(cast("t.GeneralValueType", result))
+                    return cast("r[t.Container]", result)
+                return r[t.ContainerValue].ok(cast("t.Container", result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
-                    return cast("r[t.GeneralValueType]", result)
-                return r[t.ContainerValue].ok(cast("t.GeneralValueType", result))
+                    return cast("r[t.Container]", result)
+                return r[t.ContainerValue].ok(cast("t.Container", result))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.ContainerValue].ok(cast("t.GeneralValueType", instance))
+            return r[t.ContainerValue].ok(cast("t.Container", instance))
         except Exception as e:
             return r[t.ContainerValue].fail(f"FlextLoggings operation failed: {e}")
 

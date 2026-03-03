@@ -42,7 +42,7 @@ from flext_core import (
 from flext_tests import c, m, p, t
 
 
-def _to_scalar(value: t.Tests.PayloadValue) -> core_t.ScalarValue | None:
+def _to_scalar(value: t.Tests.PayloadValue) -> core_t.Scalar | None:
     """Convert a value to ScalarValue for config overrides.
 
     Args:
@@ -797,7 +797,7 @@ class FlextTestsUtilities(FlextUtilities):
                     New FlextSettings instance
 
                 """
-                scalar_overrides: dict[str, core_t.ScalarValue] = {
+                scalar_overrides: dict[str, core_t.Scalar | None] = {
                     str(key): v
                     for key, value in kwargs.items()
                     if (v := _to_scalar(value)) is not None
@@ -1731,7 +1731,7 @@ class FlextTestsUtilities(FlextUtilities):
                     True if node represents typing.ANY type annotation
 
                 """
-                any_token = "".join(("A", "n", "y"))
+                any_token = "Any"
                 return (
                     (isinstance(node, ast.Name) and node.id == any_token)
                     or (isinstance(node, ast.Attribute) and node.attr == any_token)

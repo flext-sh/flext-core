@@ -26,7 +26,7 @@ from flext_core._models.containers import FlextModelsContainers
 _MetadataInput = (
     FlextModelFoundation.Metadata
     | FlextModelsContainers.ConfigMap
-    | Mapping[str, t.ScalarValue]
+    | Mapping[str, t.Scalar | None]
     | None
 )
 
@@ -52,7 +52,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             f"got {value.__class__.__name__}"
         )
         raise TypeError(msg)
-    normalized_attrs: dict[str, t.MetadataAttributeValue] = {
+    normalized_attrs: dict[str, t.MetadataValue] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in (
             value.root.items()
@@ -123,8 +123,8 @@ class FlextModelsContainer:
         @classmethod
         def validate_service_type(
             cls,
-            v: t.GeneralValueType,
-        ) -> t.GeneralValueType:
+            v: t.Container,
+        ) -> t.Container:
             """Validate service is a RegisterableService type.
 
             RegisterableService includes: str, int, float, bool, datetime, None,

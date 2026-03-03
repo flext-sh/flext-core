@@ -150,19 +150,19 @@ class Testr:
                     error_on_none="Value cannot be None",
                 )
             )
-            # value is already t.GeneralValueType from ResultScenario
+            # value is already t.Container from ResultScenario
             u.Tests.Result.assert_success_with_value(
                 creation_result,
                 value,
             )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
-            # create_failure_result returns r[object], cast to r[t.GeneralValueType]
+            # create_failure_result returns r[object], cast to r[t.Container]
             failure_result_raw = u.Tests.Result.create_failure_result(
                 str(value),
             )
             failure_result: r[t.ContainerValue] = cast(
-                "r[t.GeneralValueType]",
+                "r[t.Container]",
                 failure_result_raw,
             )
             u.Tests.Result.assert_failure_with_error(
@@ -171,14 +171,14 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.UNWRAP_OR:
-            # value is already t.GeneralValueType from ResultScenario
+            # value is already t.Container from ResultScenario
             if is_success:
                 unwrap_result: r[t.ContainerValue] = (
                     u.Tests.Result.create_success_result(value)
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                unwrap_result = cast("r[t.GeneralValueType]", failure_raw)
+                unwrap_result = cast("r[t.Container]", failure_raw)
             default = "default"
             assert unwrap_result.unwrap_or(default) == (
                 value if is_success else default
@@ -195,7 +195,7 @@ class Testr:
         elif op_type == ResultOperationType.FLAT_MAP:
             failure_raw = u.Tests.Result.create_failure_result(str(value))
             flat_map_result: r[t.ContainerValue] = cast(
-                "r[t.GeneralValueType]",
+                "r[t.Container]",
                 failure_raw,
             )
             flat_mapped = flat_map_result.flat_map(
@@ -207,14 +207,14 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.ALT:
-            # value is already t.GeneralValueType from ResultScenario
+            # value is already t.Container from ResultScenario
             if is_success:
                 result_alt: r[t.ContainerValue] = u.Tests.Result.create_success_result(
                     value
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_alt = cast("r[t.GeneralValueType]", failure_raw)
+                result_alt = cast("r[t.Container]", failure_raw)
             alt_result = result_alt.alt(lambda e: f"alt_{e}")
             if is_success:
                 u.Tests.Result.assert_success_with_value(
@@ -248,14 +248,14 @@ class Testr:
                 )
 
         elif op_type == ResultOperationType.OR_OPERATOR:
-            # value is already t.GeneralValueType from ResultScenario
+            # value is already t.Container from ResultScenario
             if is_success:
                 result_or: r[t.ContainerValue] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_or = cast("r[t.GeneralValueType]", failure_raw)
+                result_or = cast("r[t.Container]", failure_raw)
             default = "default"
             assert (result_or | default) == (value if is_success else default)
 

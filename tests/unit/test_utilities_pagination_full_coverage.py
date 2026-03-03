@@ -23,7 +23,7 @@ def test_pagination_response_string_fallbacks() -> None:
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
 
     pagination_data = cast(
-        "Mapping[str, t.ConfigMapValue]",
+        "Mapping[str, t.ContainerValue]",
         {"data": _Obj(), "pagination": _Obj()},
     )
     response = u.Pagination.build_pagination_response(pagination_data, message="ok")

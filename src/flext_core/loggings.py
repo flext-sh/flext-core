@@ -45,13 +45,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # Scoped context tracking
     # Format: {scope_name: {context_key: context_value}}
     _scoped_contexts: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]
+        MutableMapping[str, MutableMapping[str, t.MetadataValue]]
     ] = {}
 
     # Level-based context tracking
     # Format: {log_level: {context_key: context_value}}
     _level_contexts: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.MetadataAttributeValue]]
+        MutableMapping[str, MutableMapping[str, t.MetadataValue]]
     ] = {}
 
     # Structlog logger instance (set directly via _structlog_instance)
@@ -91,7 +91,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @classmethod
     def bind_global_context(
         cls,
-        **context: t.MetadataAttributeValue,
+        **context: t.MetadataValue,
     ) -> r[bool]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
@@ -204,7 +204,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def bind_context(
         cls,
         scope: str,
-        **context: t.MetadataAttributeValue,
+        **context: t.MetadataValue,
     ) -> r[bool]:
         """Bind context variables to a specific scope.
 
@@ -275,7 +275,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if merge_result.is_success:
                 # merge_result.value is compatible with m.ConfigMap payloads.
                 merged_value: dict[str, t.ContainerValue] = merge_result.value
-                merged_context: dict[str, t.MetadataAttributeValue] = {
+                merged_context: dict[str, t.MetadataValue] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in merged_value.items()
                 }
@@ -330,7 +330,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def scoped_context(
         cls,
         scope: str,
-        **context: t.MetadataAttributeValue,
+        **context: t.MetadataValue,
     ) -> Iterator[None]:
         """Context manager for automatic scoped context cleanup.
 
@@ -376,7 +376,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def bind_context_for_level(
         cls,
         level: str,
-        **context: t.MetadataAttributeValue,
+        **context: t.MetadataValue,
     ) -> r[bool]:
         """Bind context variables that only appear in logs at specified level or higher.
 
@@ -501,7 +501,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         container: p.DI,
         level: str | None = None,
-        **context: t.MetadataAttributeValue,
+        **context: t.MetadataValue,
     ) -> FlextLogger:
         """Create logger configured for a specific container.
 
@@ -545,7 +545,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         container: p.DI,
         level: c.Settings.LogLevel | str | None = None,
-        **context: t.MetadataAttributeValue,
+        **context: t.MetadataValue,
     ) -> Iterator[FlextLogger]:
         """Context manager for container-scoped logging.
 
@@ -688,13 +688,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return cls(name, _bound_logger=bound_logger)
 
     @override
-    def bind(self, **context: t.MetadataAttributeValue) -> Self:
+    def bind(self, **context: t.MetadataValue) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**context)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
     @override
-    def new(self, **context: t.MetadataAttributeValue) -> Self:
+    def new(self, **context: t.MetadataValue) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
         return self.bind(**context)
 
@@ -1271,8 +1271,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             self,
             method_name: str,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             log_method = getattr(self._base_logger, method_name)
             log_method(message, *args, **kwargs)
@@ -1289,7 +1289,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         def bind(
             self,
-            **context: t.MetadataAttributeValue,
+            **context: t.MetadataValue,
         ) -> FlextLogger.ResultAdapter:
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
@@ -1297,8 +1297,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def trace(
             self,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log trace message returning FlextResult."""
             return self._log_and_wrap("trace", message, *args, **kwargs)
@@ -1306,8 +1306,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def debug(
             self,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log debug message returning FlextResult."""
             return self._log_and_wrap("debug", message, *args, **kwargs)
@@ -1315,8 +1315,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def info(
             self,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log info message returning FlextResult."""
             return self._log_and_wrap("info", message, *args, **kwargs)
@@ -1324,8 +1324,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def warning(
             self,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log warning message returning FlextResult."""
             return self._log_and_wrap("warning", message, *args, **kwargs)
@@ -1333,8 +1333,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def error(
             self,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log error message returning FlextResult."""
             return self._log_and_wrap("error", message, *args, **kwargs)
@@ -1342,8 +1342,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def critical(
             self,
             message: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
+            *args: t.MetadataValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log critical message returning FlextResult."""
             return self._log_and_wrap("critical", message, *args, **kwargs)
@@ -1354,7 +1354,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             *,
             exception: BaseException | None = None,
             exc_info: bool = True,
-            **kwargs: t.MetadataAttributeValue,
+            **kwargs: t.MetadataValue,
         ) -> r[bool]:
             """Log exception with traceback returning FlextResult.
 

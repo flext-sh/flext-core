@@ -248,7 +248,7 @@ class FlextModelsCollections:
                 return sum(numeric_values)
             # Concatenate lists
             if FlextRuntime.is_list_like(first_val):
-                combined: list[t.ScalarValue] = []
+                combined: list[t.Scalar | None] = []
                 for v in non_none:
                     if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
                         combined.extend(
@@ -394,7 +394,7 @@ class FlextModelsCollections:
         def _concatenate_lists(
             cls,
             non_none: list[t.ContainerValue],
-        ) -> list[t.ScalarValue]:
+        ) -> list[t.Scalar | None]:
             """Concatenate list-like values.
 
             Args:
@@ -404,7 +404,7 @@ class FlextModelsCollections:
                 Combined list matching PayloadValue's list type
 
             """
-            combined: list[t.ScalarValue] = []
+            combined: list[t.Scalar | None] = []
             for v in non_none:
                 if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
                     combined.extend(

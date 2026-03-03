@@ -305,7 +305,7 @@ class FlextContext(FlextRuntime):
         updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized_context: dict[str, t.MetadataAttributeValue] = {
+            normalized_context: dict[str, t.MetadataValue] = {
                 key: FlextRuntime.normalize_to_metadata_value(value)
                 for key, value in data.items()
             }
@@ -929,8 +929,8 @@ class FlextContext(FlextRuntime):
 
         """
         # Normalize value to MetadataAttributeValue before setting
-        normalized_value: t.MetadataAttributeValue = (
-            FlextRuntime.normalize_to_metadata_value(value)
+        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata_value(
+            value
         )
         # Directly update attributes dict to avoid deprecation warning
         # and object recreation
@@ -1297,9 +1297,7 @@ class FlextContext(FlextRuntime):
             container: p.DI = FlextContext.get_container()
             # Container.get returns p.ResultLike[RegisterableService]
             # We need to convert to r[PayloadValue]
-            service_result: p.ResultLike[t.GeneralValueType] = container.get(
-                service_name
-            )
+            service_result: p.ResultLike[t.Container] = container.get(service_name)
             # Convert protocol result to concrete FlextResult
             if service_result.is_success:
                 # Service value might be RegisterableService

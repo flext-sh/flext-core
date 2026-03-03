@@ -1,7 +1,7 @@
 """Type aliases and generics for the FLEXT ecosystem.
 
-Centralizes TypeVar declarations and type aliases for CQRS messages, handlers,
-utilities, logging, and validation across the FLEXT ecosystem.
+Zero internal imports - depends only on stdlib, pydantic, pydantic-settings,
+and structlog.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,11 +19,6 @@ from typing import Annotated, Literal, ParamSpec, TypeVar
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
-
-from flext_core._models.containers import (
-    FlextModelsContainers as _FlextModelsContainers,
-    GeneralValueType as _GeneralValueType,
-)
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -45,77 +40,54 @@ R2 = TypeVar("R2")
 class FlextTypes:
     """Type system foundation for FLEXT ecosystem.
 
-    Canonical types:
+    Three core layers - each builds on the previous:
 
-        ScalarValue     = str | int | float | bool | datetime
-        ContainerValue  = ScalarValue | BaseModel | Path | Sequence | Mapping
-        JsonPrimitive   = str | int | float | bool
+        Primitives  <  Scalar  <  Serializable  <  Container
+
+    ``None`` is **never** baked into definitions.
+    Use ``X | None`` at call-sites when needed.
     """
 
-    # ── Scalar ────────────────────────────────────────────────────────
-    type ScalarValue = str | int | float | bool | datetime
+    # - Core type layers ------------------------------------------------
+    type Primitives = str | int | float | bool
+    type Scalar = Primitives | datetime
+    type Serializable = (
+        Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
+    )
+    type Container = Serializable | BaseModel | Path
 
-    # ── Container (recursive) ──────────────────────────
     type ContainerValue = (
-        FlextTypes.ScalarValue
-        | BaseModel
-        | Path
+        Container
         | Sequence[FlextTypes.ContainerValue]
         | Mapping[str, FlextTypes.ContainerValue]
+        | None
     )
 
-    # ── JSON ──────────────────────────────────────────────────────────
-    type JsonPrimitive = str | int | float | bool
+    # - JSON ------------------------------------------------------------
     type JsonValue = (
-        JsonPrimitive
-        | Sequence[FlextTypes.JsonValue]
-        | Mapping[str, FlextTypes.JsonValue]
+        Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
     )
     type JsonDict = Mapping[str, JsonValue]
-    type StrictJsonValue = (
-        ScalarValue
-        | list[FlextTypes.StrictJsonValue]
-        | Mapping[str, FlextTypes.StrictJsonValue]
-    )
 
-    # ── Service / DI ──────────────────────────────────────────────────
-    type RegisterableService = (
-        ContainerValue | BindableLogger | Callable[..., ContainerValue]
-    )
+    # - Config ----------------------------------------------------------
+    type ConfigurationMapping = Mapping[str, Container]
+
+    # - Service / DI ----------------------------------------------------
+    type RegisterableService = Container | BindableLogger | Callable[..., Container]
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], ContainerValue]
-    type FactoryRegistrationCallable = Callable[[], ScalarValue | Sequence[ScalarValue]]
+    type ResourceCallable = Callable[[], Container]
 
-    # ── Metadata ──────────────────────────────────────────────────────
-    type MetadataScalarValue = ScalarValue
-    type MetadataAttributeValue = (
-        ScalarValue | Mapping[str, ScalarValue | list[ScalarValue]] | list[ScalarValue]
-    )
+    # - Metadata --------------------------------------------------------
+    type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
 
-    # ── Configuration ─────────────────────────────────────────────────
-    type ConfigurationMapping = Mapping[str, ContainerValue]
-    type ConfigMapValue = _GeneralValueType
-    type GeneralValueType = _GeneralValueType
+    # - Handlers --------------------------------------------------------
+    type HandlerCallable = Callable[[Container], Container]
+    type HandlerLike = Callable[..., Container]
 
-    type Dict = _FlextModelsContainers.Dict
-    type ConfigMap = _FlextModelsContainers.ConfigMap
-    type ServiceMap = _FlextModelsContainers.ServiceMap
-    type ObjectList = _FlextModelsContainers.ObjectList
-    type ErrorMap = _FlextModelsContainers.ErrorMap
-    type FactoryMap = _FlextModelsContainers.FactoryMap
-    type ResourceMap = _FlextModelsContainers.ResourceMap
-    type FieldValidatorMap = _FlextModelsContainers.FieldValidatorMap
-
-    # ── Handlers ──────────────────────────────────────────────────────
-    type HandlerCallable = Callable[[ContainerValue], ContainerValue]
-    type HandlerLike = Callable[..., ContainerValue]
-
-    # ── Plugin / Constants ────────────────────────────────────────────
-    type RegistrablePlugin = (
-        ScalarValue | BaseModel | Callable[..., ScalarValue | BaseModel]
-    )
+    # - Plugin / Constants ----------------------------------------------
+    type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
     type ConstantValue = (
-        FlextTypes.JsonPrimitive
+        Primitives
         | ConfigDict
         | SettingsConfigDict
         | frozenset[str]
@@ -127,18 +99,14 @@ class FlextTypes:
         | type
     )
 
-    # ── File / misc ───────────────────────────────────────────────────
+    # - File / misc -----------------------------------------------------
     type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
     type SortableObjectType = str | int | float
     type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
-    type TypeHintSpecifier = type | str | Callable[[ScalarValue], ScalarValue]
-    type GenericTypeArgument = str | type[ScalarValue]
+    type TypeHintSpecifier = type | str | Callable[[Scalar], Scalar]
+    type GenericTypeArgument = str | type[Scalar]
     type MessageTypeSpecifier = str | type
-    type TypeOriginSpecifier = (
-        str | type[ScalarValue] | Callable[[ScalarValue], ScalarValue]
-    )
     type IncEx = set[str] | Mapping[str, set[str] | bool]
-    type PydanticConfigValue = ScalarValue | list[ScalarValue]
 
     type TYPE_CHECKING = bool
 

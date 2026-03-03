@@ -125,7 +125,7 @@ class FlextUtilitiesGenerators:
             context: Context to normalize
 
         Returns:
-            Mapping[str, t.ConfigMapValue]: Normalized context dict
+            Mapping[str, t.ContainerValue]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -268,7 +268,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            Mapping[str, t.ConfigMapValue]: Normalized dict or default
+            Mapping[str, t.ContainerValue]: Normalized dict or default
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards

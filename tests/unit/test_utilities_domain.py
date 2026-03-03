@@ -57,13 +57,13 @@ def _build_domain_test_entity(
 
 
 def _convert_to_general_value(obj: object) -> TestPayload:
-    """Convert object to t.GeneralValueType (handles Pydantic models).
+    """Convert object to t.Container (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
 
     Returns:
-        t.GeneralValueType-compatible value
+        t.Container-compatible value
 
     """
     if isinstance(obj, BaseModel):
@@ -90,17 +90,17 @@ def _convert_to_general_value(obj: object) -> TestPayload:
 def _convert_expected_result(
     expected: object,
 ) -> TestPayload:
-    """Convert expected result to t.GeneralValueType (handles type objects).
+    """Convert expected result to t.Container (handles type objects).
 
     Args:
         expected: Expected result (type, value, or other)
 
     Returns:
-        t.GeneralValueType-compatible value
+        t.Container-compatible value
 
     """
     if isinstance(expected, type):
-        # Type objects are not t.GeneralValueType, convert to string
+        # Type objects are not t.Container, convert to string
         return expected.__name__
     if isinstance(expected, (str, int, float, bool, type(None))):
         return expected
@@ -553,8 +553,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
-        # Cast lambda return type to t.GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
+        # Cast lambda return type to t.Container for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -602,8 +602,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
-        # Cast lambda return type to t.GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
+        # Cast lambda return type to t.Container for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -628,8 +628,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
-        # Cast lambda return type to t.GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
+        # Cast lambda return type to t.Container for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -649,8 +649,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test validate_entity_has_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
-        # Cast lambda return type to t.GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
+        # Cast lambda return type to t.Container for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -673,8 +673,8 @@ class TestuDomain:
         test_case: TestCaseMap,
     ) -> None:
         """Test validate_value_object_immutable using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
-        # Cast lambda return type to t.GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.Container
+        # Cast lambda return type to t.Container for type checker
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -692,7 +692,7 @@ class TestuDomain:
         """Test validation with config that raises TypeError using u.Domain directly."""
         obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
-            obj_value = cast("t.ConfigMapValue", cast("object", obj))
+            obj_value = cast("t.ContainerValue", cast("object", obj))
             result = u.Domain.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:
