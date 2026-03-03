@@ -89,13 +89,11 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     assert clear_result.is_success
 
     monkeypatch.setattr(
-        FlextLogger,
-        "_execute_context_op",
-        classmethod(
-            lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
-        ),
+        shim.contextvars,
+        "bind_contextvars",
+        lambda **_kw: (_ for _ in ()).throw(RuntimeError("boom")),
     )
-    failed_ctx = FlextLogger._context_operation("bind", x="y")
+    failed_ctx = FlextLogger.bind_global_context(x="y")
     assert isinstance(failed_ctx, r)
     assert failed_ctx.is_failure
 
@@ -334,13 +332,6 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     tracker.__exit__(RuntimeError, RuntimeError("x"), None)
 
     adapter = logger.with_result()
-    assert adapter.track_performance("op") is None
-    assert adapter.log_result(r[str].ok("v")) is None
-    bound_ctx = adapter.bind_context(a="b")
-    assert bound_ctx is not None
-    assert adapter.get_context() is None
-    assert adapter.start_tracking() is None
-    assert adapter.stop_tracking() is None
 
     assert adapter.trace("x").is_success
     assert adapter.debug("x").is_success

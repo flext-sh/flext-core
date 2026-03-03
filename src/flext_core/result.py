@@ -116,7 +116,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigMap | None = None,
-        expected_type: type[U] | None = None,
         exception: BaseException | None = None,
     ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.
@@ -143,7 +142,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             Failed FlextResult instance
 
         """
-        _ = expected_type
         error_msg = error if error is not None else ""
         result = FlextResult[U](
             error_code=error_code,
@@ -195,7 +193,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self.value
 
     @property
-    def returns_result(self) -> Result[T_co, str]:
+    def _returns_result(self) -> Result[T_co, str]:
         """Access the internal returns library Result[T_co, str] for advanced operations."""
         if self._result is None:
             if self.is_success:
@@ -507,25 +505,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return self.value
         return default
 
-    def get_or_else(self, default: T_co) -> T_co:
-        """Return value on success or default on failure.
-
-        Alias for unwrap_or - provides Haskell/Scala-style naming.
-
-        Args:
-            default: Default value to return on failure.
-
-        Returns:
-            Value on success, or default on failure.
-
-        Example:
-            value = result.get_or_else("default")
-
-        """
-        if self.is_success and self.value is not None:
-            return self.value
-        return default
-
     @overload
     def map_or(
         self,
@@ -721,37 +700,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if cleanup:
                 cleanup(resource)
 
-    @classmethod
-    def parallel_map[T, U2](
-        cls,
-        items: Sequence[T],
-        func: Callable[[T], FlextResult[U2]],
-        *,
-        fail_fast: bool = True,
-    ) -> FlextResult[list[U2]]:
-        """Map function over items, collecting results.
-
-        Args:
-            items: Items to process
-            func: Function returning FlextResult for each item
-            fail_fast: If True, stop on first failure
-
-        Returns:
-            FlextResult with list of successes or combined errors
-
-        """
-        if fail_fast:
-            results: list[U2] = []
-            for item in items:
-                result = func(item)
-                if result.is_failure:
-                    return FlextResult[list[U2]].fail(result.error or "")
-                results.append(result.value)
-            return FlextResult[list[U2]](value=results, is_success=True)
-        # Collect all results and accumulate errors
-        all_results = [func(item) for item in items]
-        return cls.accumulate_errors(*all_results)
-
     @override
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection.
@@ -763,13 +711,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @override
     def map_error(self, func: Callable[[str], str]) -> FlextResult[T_co]:
         return self.alt(func)
-
-    def or_else(
-        self,
-        func: Callable[[str], FlextResult[T_co]],
-    ) -> FlextResult[T_co]:
-        """Apply fallback result function when current result is failure."""
-        return self.lash(func)
 
 
 r = FlextResult

@@ -628,10 +628,10 @@ class TestFlextSettingsPydantic:
         provider2 = config.get_di_config_provider()
         assert provider is provider2
 
-    def test_validate_override_invalid_key(self) -> None:
-        """Test validate_override returns False for invalid key."""
+    def test_apply_override_invalid_key(self) -> None:
+        """Test apply_override returns False for invalid key."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
-        assert config.validate_override("invalid_key", "value") is False
+        assert config.apply_override("invalid_key", "value") is False
 
     def test_apply_override(self) -> None:
         """Test apply_override applies validated override."""

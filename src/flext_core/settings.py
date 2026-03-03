@@ -403,23 +403,25 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             self._di_provider = providers_module.Singleton(lambda: self)
         return self._di_provider
 
-    def validate_override(
-        self,
-        key: str,
-        _value: t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
-    ) -> bool:
-        """Validate if an override is acceptable."""
-        # Basic validation - could be extended
-        return key in self.__class__.model_fields
-
     def apply_override(
         self,
         key: str,
         value: t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
-    ) -> None:
-        """Apply a validated configuration override."""
-        if self.validate_override(key, value):
-            setattr(self, key, value)
+    ) -> bool:
+        """Validate and apply a configuration override.
+
+        Args:
+            key: Configuration key to override
+            value: New value to set
+
+        Returns:
+            True if override was valid and applied, False otherwise.
+
+        """
+        if key not in self.__class__.model_fields:
+            return False
+        setattr(self, key, value)
+        return True
 
     class AutoConfig(BaseModel):
         """Auto-configuration model for dynamic config creation."""

@@ -796,7 +796,7 @@ class Testr:
         assert "Callable failed" in error_msg
 
     # =========================================================================
-    # New Advanced Methods Tests (map_or, fold, get_or_else)
+    # New Advanced Methods Tests (map_or, fold)
     # =========================================================================
 
     def test_map_or_success_without_func(self) -> None:
@@ -849,18 +849,6 @@ class Testr:
             on_failure=lambda e: {"status": 400, "error": e},
         )
         assert response == {"status": 200, "data": "hello"}
-
-    def test_get_or_else_success(self) -> None:
-        """Test get_or_else returns value on success."""
-        result: r[str] = r[str].ok("hello")
-        value = result.get_or_else("default")
-        assert value == "hello"
-
-    def test_get_or_else_failure(self) -> None:
-        """Test get_or_else returns default on failure."""
-        result: r[str] = r[str].fail("error")
-        value = result.get_or_else("default")
-        assert value == "default"
 
 
 __all__ = ["Testr"]

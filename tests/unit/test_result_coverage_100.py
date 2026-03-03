@@ -460,7 +460,7 @@ class TestrCoverage:
         _ResultAssertions.assert_failure(result)
 
     # =====================================================================
-    # Utility Methods Tests - safe, traverse, accumulate_errors, parallel_map
+    # Utility Methods Tests - safe, traverse, accumulate_errors
     # =====================================================================
 
     def test_safe_decorator_success(self) -> None:
@@ -594,50 +594,6 @@ class TestrCoverage:
         assert combined.error is not None
         assert "error1" in combined.error
         assert "error2" in combined.error
-
-    def test_parallel_map_success_fail_fast(self) -> None:
-        """Test parallel_map with fail_fast=True."""
-
-        def double(x: object) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x * 2)
-            return r[int].fail("Not int")
-
-        items = [1, 2, 3]
-        result = r[list[int]].parallel_map(items, double, fail_fast=True)
-        _ResultAssertions.assert_success_with_value(
-            result,
-            [2, 4, 6],
-        )
-
-    def test_parallel_map_failure_fail_fast(self) -> None:
-        """Test parallel_map stops on first failure with fail_fast."""
-
-        def check(x: object) -> r[int]:
-            if isinstance(x, int):
-                if x == 2:
-                    return r[int].fail("Found 2")
-                return r[int].ok(x)
-            return r[int].fail("Not int")
-
-        items = [1, 2, 3]
-        result = r[list[int]].parallel_map(items, check, fail_fast=True)
-        _ResultAssertions.assert_failure(result)
-
-    def test_parallel_map_accumulate_errors(self) -> None:
-        """Test parallel_map with fail_fast=False accumulates errors."""
-
-        def check(x: object) -> r[int]:
-            if isinstance(x, int):
-                if x == 2:
-                    return r[int].fail("Found 2")
-                return r[int].ok(x)
-            return r[int].fail("Not int")
-
-        items = [1, 2, 3]
-        result = r[list[int]].parallel_map(items, check, fail_fast=False)
-        _ResultAssertions.assert_failure(result)
-        assert result.error is not None and "Found 2" in result.error
 
     # =====================================================================
     # Resource Management Tests - with_resource

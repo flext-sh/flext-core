@@ -19,12 +19,11 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Literal, Self, overload, override
+from typing import ClassVar, Self, override
 
 from structlog.typing import Context
 
-from flext_core import FlextResult, FlextRuntime, FlextSettings, c, m, p, r, t, u
-from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core import FlextRuntime, FlextSettings, c, m, p, r, t, u
 
 
 class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
@@ -85,103 +84,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # Applications must call FlextRuntime.configure_structlog() explicitly at startup
     # This eliminates wrapper indirection and makes configuration responsibility clear
 
-    # ═══════════════════════════════════════════════════════════════════
-    # NESTED OPERATION GROUPS (Organization via Composition)
-    # ═══════════════════════════════════════════════════════════════════
-
-    class Context:
-        """Context management: bind_context, bind_context_for_level, unbind_context_for_level."""
-
-    class Factory:
-        """Logger factory: create_service_logger, create_module_logger."""
-
-    class Performance:
-        """Performance tracking: start_tracking, stop_tracking, track_performance."""
-
-    class Result:
-        """Result logging: log_result, with_result."""
-
     # =========================================================================
     # ADVANCED FEATURES - Global context management via contextvars
     # =========================================================================
-
-    @classmethod
-    @overload
-    def _context_operation(
-        cls,
-        operation: Literal["bind", "unbind", "clear"],
-        **kwargs: t.MetadataAttributeValue,
-    ) -> r[bool]: ...
-
-    @classmethod
-    @overload
-    def _context_operation(
-        cls,
-        operation: Literal["get"],
-        **kwargs: t.MetadataAttributeValue,
-    ) -> m.ConfigMap: ...
-
-    @classmethod
-    def _context_operation(
-        cls,
-        operation: Literal["get", "bind", "unbind", "clear"],
-        **kwargs: t.MetadataAttributeValue,
-    ) -> r[bool] | m.ConfigMap:
-        """Generic context operation handler using mapping for DRY."""
-        try:
-            return cls._execute_context_op(operation, kwargs)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return cls._handle_context_error(operation, e)
-
-    @classmethod
-    def _execute_context_op(
-        cls,
-        operation: str,
-        kwargs: Mapping[str, t.MetadataAttributeValue],
-    ) -> r[bool] | m.ConfigMap:
-        """Execute context operation by name."""
-        # Compare with StrEnum values directly - StrEnum comparison works with strings
-        if operation == c.Logging.ContextOperation.BIND:
-            FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
-            return r[bool].ok(value=True)
-        if operation == c.Logging.ContextOperation.UNBIND:
-            keys_value = kwargs.get("keys")
-            if isinstance(keys_value, str):
-                unbind_keys = [keys_value]
-            elif isinstance(keys_value, (list, tuple)):
-                unbind_keys = [str(key) for key in keys_value]
-            else:
-                return r[bool].ok(value=True)
-
-            if unbind_keys:
-                FlextRuntime.structlog().contextvars.unbind_contextvars(*unbind_keys)
-            return r[bool].ok(value=True)
-        if operation == c.Logging.ContextOperation.CLEAR:
-            FlextRuntime.structlog().contextvars.clear_contextvars()
-            return r[bool].ok(value=True)
-        if operation == c.Logging.ContextOperation.GET:
-            context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            context_map: dict[str, t.GeneralValueType] = (
-                {
-                    str(k): FlextRuntime.normalize_to_general_value(v)
-                    for k, v in dict(context_vars).items()
-                }
-                if context_vars
-                else {}
-            )
-            return m.ConfigMap(root=context_map)
-        return r[bool].fail(f"Unknown operation: {operation}")
-
-    @classmethod
-    def _handle_context_error(
-        cls,
-        operation: str,
-        exc: Exception,
-    ) -> r[bool] | m.ConfigMap:
-        """Handle context operation error."""
-        if operation == c.Logging.ContextOperation.GET:
-            return m.ConfigMap(root={})
-        return r[bool].fail(f"Failed to {operation} global context: {exc}")
 
     @classmethod
     def bind_global_context(
@@ -215,7 +120,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             ... )
 
         """
-        return cls._context_operation("bind", **context)
+        try:
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to bind global context: {exc}")
 
     @classmethod
     def clear_global_context(cls) -> r[bool]:
@@ -235,7 +144,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             >>> # All global context cleared
 
         """
-        return cls._context_operation("clear")
+        try:
+            FlextRuntime.structlog().contextvars.clear_contextvars()
+            return r[bool].ok(value=True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to clear global context: {exc}")
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> r[bool]:
@@ -269,20 +182,23 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @classmethod
     def _get_global_context(cls) -> m.ConfigMap:
         """Get current global context (internal use only)."""
-        return cls._context_operation("get")
+        try:
+            context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
+            context_map: dict[str, t.GeneralValueType] = (
+                {
+                    str(k): FlextRuntime.normalize_to_general_value(v)
+                    for k, v in dict(context_vars).items()
+                }
+                if context_vars
+                else {}
+            )
+            return m.ConfigMap(root=context_map)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            return m.ConfigMap(root={})
 
     # =========================================================================
     # SCOPED CONTEXT MANAGEMENT - Three-tier context system
     # =========================================================================
-
-    # Scoped context mapping for DRY binding
-    _SCOPE_BINDERS: ClassVar[m.ConfigMap] = m.ConfigMap(
-        root={
-            c.Context.SCOPE_APPLICATION: c.Context.SCOPE_APPLICATION,
-            c.Context.SCOPE_REQUEST: c.Context.SCOPE_REQUEST,
-            c.Context.SCOPE_OPERATION: c.Context.SCOPE_OPERATION,
-        },
-    )
 
     @classmethod
     def bind_context(
@@ -1351,24 +1267,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             super().__init__()
             self._base_logger = base_logger
 
-        def _call_optional(
-            self,
-            method_name: str,
-            *args: t.MetadataAttributeValue | FlextResult[t.MetadataAttributeValue],
-            **kwargs: t.GuardInputValue,
-        ) -> t.GuardInputValue | None:
-            method = (
-                getattr(self._base_logger, method_name)
-                if hasattr(self._base_logger, method_name)
-                else None
-            )
-            if callable(method):
-                result = method(*args, **kwargs)
-                if FlextUtilitiesGuards.is_general_value_type(result):
-                    return FlextRuntime.normalize_to_general_value(result)
-                return str(result)
-            return None
-
         def _log_and_wrap(
             self,
             method_name: str,
@@ -1384,62 +1282,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def name(self) -> str:
             """Get logger name - delegate to base logger."""
             return self._base_logger.name
-
-        # Explicit wrapper methods for common operations
-        # Use getattr for optional methods that may not exist on base logger
-        def track_performance(
-            self,
-            operation_name: str,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
-        ) -> t.GuardInputValue | None:
-            """Track performance metrics - delegate to base logger."""
-            return self._call_optional(
-                "track_performance",
-                operation_name,
-                *args,
-                **kwargs,
-            )
-
-        def log_result(
-            self,
-            result: FlextResult[t.MetadataAttributeValue],
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
-        ) -> t.GuardInputValue | None:
-            """Log result - delegate to base logger."""
-            return self._call_optional("log_result", result, *args, **kwargs)
-
-        def bind_context(
-            self,
-            **context: t.MetadataAttributeValue,
-        ) -> t.GuardInputValue | None:
-            """Bind context - delegate to base logger."""
-            return self._call_optional("bind_context", "default", **context)
-
-        def get_context(
-            self,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
-        ) -> t.GuardInputValue | None:
-            """Get context - delegate to base logger."""
-            return self._call_optional("get_context", *args, **kwargs)
-
-        def start_tracking(
-            self,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
-        ) -> t.GuardInputValue | None:
-            """Start tracking - delegate to base logger."""
-            return self._call_optional("start_tracking", *args, **kwargs)
-
-        def stop_tracking(
-            self,
-            *args: t.MetadataAttributeValue,
-            **kwargs: t.MetadataAttributeValue,
-        ) -> t.GuardInputValue | None:
-            """Stop tracking - delegate to base logger."""
-            return self._call_optional("stop_tracking", *args, **kwargs)
 
         def with_result(self) -> FlextLogger.ResultAdapter:
             """Return self (idempotent)."""
