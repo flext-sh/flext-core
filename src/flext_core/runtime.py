@@ -1514,11 +1514,6 @@ class FlextRuntime:
             return not self._is_success
 
         @property
-        def data(self) -> T:
-            """Return success data alias for protocol compatibility."""
-            return self.value
-
-        @property
         def error(self) -> str | None:
             """Get the error message."""
             return self._error
@@ -1598,13 +1593,6 @@ class FlextRuntime:
                 is_success=False,
             )
 
-        def and_then[U](
-            self,
-            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
-        ) -> FlextRuntime.RuntimeResult[U]:
-            """Alias for flat_map to support railway naming conventions."""
-            return self.flat_map(func)
-
         def flow_through[U](
             self,
             *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
@@ -1680,17 +1668,6 @@ class FlextRuntime:
             if self.is_success and not predicate(self.value):
                 return FlextRuntime.RuntimeResult(
                     error="Filter predicate failed",
-                    is_success=False,
-                )
-            return self
-
-        def alt(self, func: Callable[[str], str]) -> FlextRuntime.RuntimeResult[T]:
-            """Apply alternative function on failure."""
-            if not self._is_success:
-                return FlextRuntime.RuntimeResult(
-                    error=func(self._error or ""),
-                    error_code=self._error_code,
-                    error_data=self._error_data,
                     is_success=False,
                 )
             return self
