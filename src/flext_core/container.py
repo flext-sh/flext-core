@@ -937,8 +937,8 @@ class FlextContainer(p.DI):
                         f"Resource '{name}' returned unsupported runtime type",
                     )
                 if type_cls is not None:
-                    resolved_for_check: object = resolved
-                    if not self._is_instance_of(resolved_for_check, type_cls):
+                    resource_for_check: object = resolved
+                    if not self._is_instance_of(resource_for_check, type_cls):
                         return r[t.RegisterableService].fail(
                             f"Resource '{name}' returned wrong type",
                         )
