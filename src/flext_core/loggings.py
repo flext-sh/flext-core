@@ -699,15 +699,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self.bind(**context)
 
     @override
-    def unbind(self, *keys: str) -> Self:
+    def unbind(self, *keys: str, safe: bool = False) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
-        bound_logger = self.logger.unbind(*keys)
-        return self.__class__.create_bound_logger(self.name, bound_logger)
-
-    @override
-    def try_unbind(self, *keys: str) -> Self:
-        """Try to unbind keys from logger - implements BindableLogger protocol."""
-        bound_logger = self.logger.try_unbind(*keys)
+        bound_logger = (
+            self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
+        )
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
     def with_result(self) -> FlextLogger.ResultAdapter:
@@ -1010,16 +1006,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         identification. All warning messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
-
-    @override
-    def warn(
-        self,
-        msg: str | t.Container,
-        *args: t.Container,
-        **kw: t.Container,
-    ) -> r[bool]:
-        """Alias for warning() - implements p.Log.StructlogLogger protocol."""
         return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
 
     @override
