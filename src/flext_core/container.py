@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Self, TypeGuard, override
+from typing import Literal, Self, TypeGuard, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -259,9 +259,10 @@ class FlextContainer(p.DI):
                                     raise TypeError(msg) from None
 
                             # Register using the name from decorator config
-                            _ = instance.register_factory(
+                            _ = instance.register(
                                 factory_config.name,
                                 factory_wrapper,
+                                kind="factory",
                             )
 
         return instance
@@ -281,7 +282,9 @@ class FlextContainer(p.DI):
            from flext_core import FlextContainer, inject
 
            container = FlextContainer.get_global()
-           container.register_factory("token_factory", lambda: {"token": "abc123"})
+           container.register(
+               "token_factory", lambda: {"token": "abc123"}, kind="factory"
+           )
 
 
            @inject
@@ -555,7 +558,11 @@ class FlextContainer(p.DI):
 
             # Only register if not already registered
             if not self.has_service(factory_name):
-                _ = self.register_factory(factory_name, _create_namespace_config)
+                _ = self.register(
+                    factory_name,
+                    _create_namespace_config,
+                    kind="factory",
+                )
 
     def register_existing_providers(self) -> None:
         """Hydrate the dynamic container with current registrations."""
@@ -666,7 +673,7 @@ class FlextContainer(p.DI):
     def configure(
         self,
         config: Mapping[str, t.Scalar],
-    ) -> None:
+    ) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
@@ -694,6 +701,7 @@ class FlextContainer(p.DI):
                 deep=True,
             )
         self.sync_config_to_di()
+        return self
 
     @override
     def wire_modules(
@@ -724,53 +732,13 @@ class FlextContainer(p.DI):
             },
         )
 
-    def with_config(
-        self,
-        config: Mapping[str, t.Scalar],
-    ) -> Self:
-        """Fluently apply configuration values and return this instance."""
-        self.configure(config)
-        return self
-
-    @override
-    def with_service(
-        self,
-        name: str,
-        service: t.RegisterableService,
-    ) -> Self:
-        """Register a service and return the container for fluent chaining.
-
-        Accepts service value (ContainerValue, protocols, callables);
-        values are wrapped in a ``ServiceRegistration`` with configuration from
-        ``FlextSettings`` and user overrides.
-        """
-        _ = self.register(name, service)
-        return self
-
-    @override
-    def with_factory(
-        self,
-        name: str,
-        factory: t.FactoryCallable,
-    ) -> Self:
-        """Register a factory and return the container for fluent chaining."""
-        _ = self.register_factory(name, factory)
-        return self
-
-    def with_resource(
-        self,
-        name: str,
-        factory: t.ResourceCallable,
-    ) -> Self:
-        """Register a lifecycle-managed resource for fluent chaining."""
-        _ = self.register_resource(name, factory)
-        return self
-
     @override
     def register(
         self,
         name: str,
-        service: t.RegisterableService,
+        service: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+        *,
+        kind: Literal["service", "factory", "resource"] = "service",
     ) -> r[bool]:
         """Register a service instance for dependency resolution.
 
@@ -793,22 +761,78 @@ class FlextContainer(p.DI):
         """
         if not name:
             return r[bool].fail("Service name must have at least 1 character")
-        if not self._is_registerable_service(service):
+        if kind == "service" and not self._is_registerable_service(service):
             return r[bool].fail(
                 f"Service '{name}' does not satisfy RegisterableService protocol. "
                 f"Expected ContainerValue, protocol implementation, or callable.",
             )
         try:
-            if hasattr(self._di_services, name):
-                return r[bool].fail(f"Service '{name}' already registered")
-            registration = m.Container.ServiceRegistration(
+            if kind == "service":
+                if not self._is_registerable_service(service):
+                    return r[bool].fail(
+                        f"Service '{name}' does not satisfy RegisterableService protocol. "
+                        f"Expected ContainerValue, protocol implementation, or callable.",
+                    )
+                if hasattr(self._di_services, name):
+                    return r[bool].fail(f"Service '{name}' already registered")
+                registration = m.Container.ServiceRegistration(
+                    name=name,
+                    service=service,
+                    service_type=service.__class__.__name__,
+                )
+                self._services[name] = registration
+                provider = FlextRuntime.DependencyIntegration.register_object(
+                    self._di_services,
+                    name,
+                    service,
+                )
+                setattr(self._di_bridge, name, provider)
+                setattr(self._di_container, name, provider)
+                return r[bool].ok(value=True)
+
+            if kind == "factory":
+                if not self._is_factory_callable(service):
+                    return r[bool].fail(f"Factory '{name}' must be callable")
+                if hasattr(self._di_services, name):
+                    return r[bool].fail(f"Factory '{name}' already registered")
+
+                def normalized_factory() -> t.RegisterableService:
+                    raw_result = service()
+                    narrowed = FlextContainer._narrow_factory_result(raw_result)
+                    if not self._is_registerable_service(narrowed):
+                        msg = (
+                            f"Factory '{name}' returned value that does not satisfy "
+                            "RegisterableService protocol. Expected ContainerValue, protocol, or callable."
+                        )
+                        raise ValueError(msg)
+                    return narrowed
+
+                registration = m.Container.FactoryRegistration(
+                    name=name,
+                    factory=normalized_factory,
+                )
+                self._factories[name] = registration
+                provider = FlextRuntime.DependencyIntegration.register_factory(
+                    self._di_services,
+                    name,
+                    normalized_factory,
+                    cache=self._global_config.enable_factory_caching,
+                )
+                setattr(self._di_bridge, name, provider)
+                setattr(self._di_container, name, provider)
+                return r[bool].ok(value=True)
+
+            if not self._is_resource_callable(service):
+                return r[bool].fail(f"Resource '{name}' must be callable")
+            if hasattr(self._di_resources, name):
+                return r[bool].fail(f"Resource '{name}' already registered")
+            registration = m.Container.ResourceRegistration(
                 name=name,
-                service=service,
-                service_type=service.__class__.__name__,
+                factory=service,
             )
-            self._services[name] = registration
-            provider = FlextRuntime.DependencyIntegration.register_object(
-                self._di_services,
+            self._resources[name] = registration
+            provider = FlextRuntime.DependencyIntegration.register_resource(
+                self._di_resources,
                 name,
                 service,
             )
@@ -822,81 +846,13 @@ class FlextContainer(p.DI):
     def _narrow_factory_result(value: t.RegisterableService) -> t.RegisterableService:
         return value
 
-    @override
-    def register_factory(
-        self,
-        name: str,
-        factory: t.FactoryCallable,
-    ) -> r[bool]:
-        """Register a factory used to build services on demand.
+    @staticmethod
+    def _is_factory_callable(value: object) -> TypeGuard[t.FactoryCallable]:
+        return callable(value)
 
-        Accepts factories returning RegisterableService (including protocols
-        like Log, Ctx, Config, etc.) not just ContainerValue.
-
-        Returns:
-            ``FlextResult`` signaling whether the factory was stored. Failure
-            occurs when the name already exists or the factory raises during
-            registration.
-
-        """
-        try:
-            if hasattr(self._di_services, name):
-                return r[bool].fail(f"Factory '{name}' already registered")
-
-            def normalized_factory() -> t.RegisterableService:
-                factory_callable: Callable[[], t.RegisterableService] = factory
-                raw_result = factory_callable()
-                narrowed = FlextContainer._narrow_factory_result(raw_result)
-                if not self._is_registerable_service(narrowed):
-                    msg = (
-                        f"Factory '{name}' returned value that does not satisfy "
-                        f"RegisterableService protocol. Expected ContainerValue, protocol, or callable."
-                    )
-                    raise ValueError(msg)
-                return narrowed
-
-            registration = m.Container.FactoryRegistration(
-                name=name,
-                factory=normalized_factory,
-            )
-            self._factories[name] = registration
-            provider = FlextRuntime.DependencyIntegration.register_factory(
-                self._di_services,
-                name,
-                normalized_factory,
-                cache=self._global_config.enable_factory_caching,
-            )
-            setattr(self._di_bridge, name, provider)
-            setattr(self._di_container, name, provider)
-            return r[bool].ok(value=True)
-        except Exception as e:
-            return r[bool].fail(str(e))
-
-    def register_resource(
-        self,
-        name: str,
-        factory: t.ResourceCallable,
-    ) -> r[bool]:
-        """Register a dependency-injector Resource provider."""
-        try:
-            if hasattr(self._di_resources, name):
-                return r[bool].fail(f"Resource '{name}' already registered")
-            # factory is already ResourceCallable (Callable[[], object])
-            registration = m.Container.ResourceRegistration(
-                name=name,
-                factory=factory,
-            )
-            self._resources[name] = registration
-            provider = FlextRuntime.DependencyIntegration.register_resource(
-                self._di_resources,
-                name,
-                factory,
-            )
-            setattr(self._di_bridge, name, provider)
-            setattr(self._di_container, name, provider)
-            return r[bool].ok(value=True)
-        except Exception as e:
-            return r[bool].fail(str(e))
+    @staticmethod
+    def _is_resource_callable(value: object) -> TypeGuard[t.ResourceCallable]:
+        return callable(value)
 
     @override
     def get(

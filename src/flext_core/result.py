@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, overload, override
+from types import MappingProxyType
+from typing import Self, TypeIs, cast, overload, override
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -36,13 +37,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping = None,
+        error_data: t.ConfigurationMapping = MappingProxyType({}),
         *,
         value: T_co | None = None,
         error: str | None = None,
         is_success: bool = True,
     ) -> None:
         """Initialize FlextResult from value/error/is_success only (direct typing, no Result unwrap)."""
+        normalized_error_data: t.ConfigurationMapping = error_data
         if source is not None and value is None and error is None:
             self._result = source
             try:
@@ -51,7 +53,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 super().__init__(
                     value=source.unwrap(),
                     error_code=error_code,
-                    error_data=error_data,
+                    error_data=normalized_error_data,
                     is_success=True,
                 )
                 self.logger.debug(
@@ -61,7 +63,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return
             super().__init__(
                 error_code=error_code,
-                error_data=error_data,
+                error_data=normalized_error_data,
                 error=str(failure_value),
                 is_success=False,
             )
@@ -72,7 +74,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             value=value,
             error=error,
             error_code=error_code,
-            error_data=error_data,
+            error_data=normalized_error_data,
             is_success=is_success,
         )
 
@@ -115,7 +117,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping = None,
+        error_data: t.ConfigurationMapping = MappingProxyType({}),
         exception: BaseException | None = None,
     ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.
@@ -143,9 +145,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         error_msg = error if error is not None else ""
+        normalized_error_data: t.ConfigurationMapping = error_data
         result = FlextResult[U](
             error_code=error_code,
-            error_data=error_data,
+            error_data=normalized_error_data,
             error=error_msg,
             is_success=False,
         )
@@ -187,7 +190,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     @property
-    @override
     def data(self) -> T_co:
         """Return success data alias for protocol compatibility."""
         return self.value
@@ -237,17 +239,19 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_io_result[U](
         cls,
-        io_result: IOResult[U, str] | t.Container,
+        io_result: IOResult[U, str],
     ) -> FlextResult[U | IO[U]]:
         """Build result from IOResult by unwrapping value or failure message."""
-        if not hasattr(io_result, "unwrap") or not hasattr(io_result, "failure"):
+        unwrap = getattr(io_result, "unwrap", None)
+        failure = getattr(io_result, "failure", None)
+        if not callable(unwrap) or not callable(failure):
             return cls.fail("Invalid IOResult structure")
         try:
-            io_value = io_result.unwrap()
-            return cls.ok(io_value)
+            io_value = cast(U | IO[U], unwrap())
+            return FlextResult[U | IO[U]](value=io_value, is_success=True)
         except UnwrapFailedError as exc:
             logging.getLogger(__name__).debug("Failed to unwrap IOResult", exc_info=exc)
-            io_error = io_result.failure()
+            io_error = failure()
             return cls.fail(str(io_error), exception=exc)
 
     # error_code and error_data properties are inherited from RuntimeResult
@@ -310,7 +314,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         result._exception = self._exception
         return result
 
-    @override
     def and_then[U](
         self,
         func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
@@ -422,7 +425,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     # alt and lash are inherited from RuntimeResult
     # But we override to return FlextResult for type consistency
-    @override
     def alt(self, func: Callable[[str], str]) -> FlextResult[T_co]:
         """Apply alternative function on failure.
 
@@ -433,7 +435,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             result: FlextResult[T_co] = FlextResult[T_co].fail(
                 transformed_error,
                 error_code=self.error_code,
-                error_data=self.error_data,
             )
             result._exception = self._exception
             return result

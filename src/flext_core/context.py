@@ -27,6 +27,9 @@ _logger = FlextLogger(__name__)
 # Concrete value type for context storage
 type ContextValue = t.Container
 
+# Sentinel to detect when 'value' is not provided in unified set()
+_SENTINEL: Final[object] = object()
+
 
 class FlextContext(FlextRuntime):
     """Context manager for correlation, request data, and timing metadata.
@@ -433,20 +436,43 @@ class FlextContext(FlextRuntime):
             return r[bool].fail("Value must be serializable")
         return r[bool].ok(value=True)
 
+    @overload
     def set(
         self,
-        key: str,
+        key_or_data: str,
         value: ContextValue,
+        *,
+        scope: str = ...,
+    ) -> r[bool]: ...
+
+    @overload
+    def set(
+        self,
+        key_or_data: m.ConfigMap,
+        value: None = ...,
+        *,
+        scope: str = ...,
+    ) -> r[bool]: ...
+
+    def set(
+        self,
+        key_or_data: str | m.ConfigMap,
+        value: ContextValue | None = _SENTINEL,
+        *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:
-        """Set a value in the context.
+        """Set one or many values in the context.
+
+        Supports two calling conventions:
+        - Single key-value: ``ctx.set("key", value)``
+        - Bulk: ``ctx.set(config_map)``
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
         FlextLogger for logging integration (global scope only).
 
         Args:
-            key: The key to set
-            value: The value to set
+            key_or_data: A string key for single-value mode, or a ConfigMap for bulk mode
+            value: The value to set (required for single-key mode, omit for bulk mode)
             scope: The scope for the value (global, user, session)
 
         Returns:
@@ -455,6 +481,20 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return r[bool].fail("Context is not active")
+
+        if isinstance(key_or_data, m.ConfigMap):
+            return self._set_bulk(key_or_data, scope)
+        return self._set_single(key_or_data, value, scope)
+
+    def _set_single(
+        self,
+        key: str,
+        value: ContextValue | None,
+        scope: str,
+    ) -> r[bool]:
+        """Set a single key-value pair in the context."""
+        if value is _SENTINEL or value is None:
+            return r[bool].fail("Value is required for single-key set")
 
         validation_result = FlextContext._validate_set_inputs(key, value)
         if validation_result.is_failure:
@@ -481,24 +521,12 @@ class FlextContext(FlextRuntime):
             )
             return r[bool].fail(error_msg)
 
-    def set_all(
+    def _set_bulk(
         self,
         data: m.ConfigMap,
-        scope: str = c.Context.SCOPE_GLOBAL,
+        scope: str,
     ) -> r[bool]:
-        """Set multiple values in the context.
-
-        Args:
-            data: Dictionary of key-value pairs to set
-            scope: The scope for the values (global, user, session)
-
-        Returns:
-            r[bool]: Success with True if all set, failure with error message
-
-        """
-        if not self._active:
-            return r[bool].fail("Context is not active")
-
+        """Set multiple values in the context from a ConfigMap."""
         if not data:
             return r[bool].ok(value=True)
 
@@ -769,9 +797,9 @@ class FlextContext(FlextRuntime):
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 # Set all key-value pairs in the cloned context for this scope
-                result = cloned.set_all(
+                result = cloned.set(
                     m.ConfigMap.model_validate(scope_dict),
-                    scope_name,
+                    scope=scope_name,
                 )
                 if not result:
                     # If setting fails, log warning but continue cloning
