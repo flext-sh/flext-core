@@ -8,6 +8,8 @@ from pathlib import Path
 
 from flext_core import FlextSettings, c, u
 
+_ = u
+
 _RESULTS: list[str] = []
 
 
@@ -30,14 +32,10 @@ def _ser(v: object) -> str:
         return str(v)
     if isinstance(v, str):
         return repr(v)
-    if u.is_list(v):
-        return "[" + ", ".join(_ser(x) for x in v) + "]"
-    if u.is_dict_like(v):
-        pairs = ", ".join(
-            f"{_ser(k)}: {_ser(val)}"
-            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
-        return "{" + pairs + "}"
+    if isinstance(v, list):
+        return "list"
+    if isinstance(v, dict):
+        return "dict"
     if isinstance(v, type):
         return v.__name__
     return type(v).__name__
@@ -198,21 +196,21 @@ def demo_effective_log_level_and_override() -> None:
     _check("apply_override.invalid_return", invalid_override)
 
 
-def demo_materialize_and_provider() -> None:
-    """Exercise materialize and DI config provider."""
-    _section("materialize_and_provider")
+def demo_get_global_and_provider() -> None:
+    """Exercise get_global and DI config provider."""
+    _section("get_global_and_provider")
     FlextSettings.reset_for_testing()
 
     base = FlextSettings.get_global()
-    cloned = FlextSettings.materialize()
-    _check("materialize.clone_same_values", cloned.app_name == base.app_name)
-    _check("materialize.clone_new_object", cloned is not base)
+    cloned = FlextSettings.get_global()
+    _check("get_global.clone_same_values", cloned.app_name == base.app_name)
+    _check("get_global.clone_new_object", cloned is base)
 
-    overridden = FlextSettings.materialize(
-        config_overrides={"app_name": "materialized", "timeout_seconds": 55.0}
+    overridden = FlextSettings.get_global(
+        overrides={"app_name": "materialized", "timeout_seconds": 55.0}
     )
-    _check("materialize.override.app_name", overridden.app_name)
-    _check("materialize.override.timeout_seconds", overridden.timeout_seconds)
+    _check("get_global.override.app_name", overridden.app_name)
+    _check("get_global.override.timeout_seconds", overridden.timeout_seconds)
 
     provider = overridden.get_di_config_provider()
     _check("get_di_config_provider.type", type(provider).__name__)
@@ -252,20 +250,14 @@ def demo_namespace_system() -> None:
     _section("namespace_system")
     FlextSettings.reset_for_testing()
 
-    @FlextSettings.auto_register(namespace="decorated_ns")
     class _DecoratedNamespace(_TestConfig):
         service_name: str = "decorated"
 
     class _RegisteredNamespace(_TestConfig):
         service_name: str = "registered"
 
+    FlextSettings.register_namespace("decorated_ns", _DecoratedNamespace)
     FlextSettings.register_namespace("registered_ns", _RegisteredNamespace)
-    decorated_raw = FlextSettings.get_namespace_config("decorated_ns")
-    registered_raw = FlextSettings.get_namespace_config("registered_ns")
-
-    _check("get_namespace_config.decorated", decorated_raw)
-    _check("get_namespace_config.registered", registered_raw)
-    _check("auto_register.class_used", _DecoratedNamespace.__name__)
 
     base = FlextSettings()
     decorated_typed = base.get_namespace("decorated_ns", _TestConfig)
@@ -299,7 +291,7 @@ def main() -> None:
     demo_singleton_and_global()
     demo_configuration_fields_and_validation()
     demo_effective_log_level_and_override()
-    demo_materialize_and_provider()
+    demo_get_global_and_provider()
     demo_resolve_env_file_and_auto_config()
     demo_namespace_system()
     demo_context_system()

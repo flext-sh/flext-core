@@ -62,13 +62,13 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: m.ConfigMap = Field(
+        data: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Primary request payload passed to the processing operation.",
             title="Processing Data",
             examples=[{"record_id": "123", "status": "pending"}],
         )
-        context: m.ConfigMap = Field(
+        context: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Execution context metadata used for traceability and request scoping.",
             title="Processing Context",
@@ -272,13 +272,13 @@ class FlextModelsConfig:
             title="Handler Name",
             examples=["process_order", "sync_inventory"],
         )
-        input_data: m.ConfigMap = Field(
+        input_data: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Input payload supplied to the handler during execution.",
             title="Input Data",
             examples=[{"order_id": "ord-1001"}],
         )
-        execution_context: m.ConfigMap = Field(
+        execution_context: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Context values provided to the handler for tracing and runtime behavior.",
             title="Execution Context",
@@ -318,7 +318,7 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: m.ConfigMap = Field(
+        config: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Middleware-specific configuration",
         )
@@ -389,7 +389,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: m.ConfigMap | None = Field(
+        env: FlextModelsContainers.ConfigMap | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -620,7 +620,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: m.Dict = Field(
+        extra_kwargs: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Additional keyword arguments for metadata",
         )
@@ -946,7 +946,7 @@ class FlextModelsConfig:
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        call_kwargs: m.ConfigMap = Field(
+        call_kwargs: FlextModelsContainers.ConfigMap = Field(
             default_factory=FlextModelsContainers.ConfigMap,
             description="Keyword arguments for function",
         )

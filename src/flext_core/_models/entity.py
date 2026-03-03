@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field, computed_field, model_validator
 
 from flext_core import FlextRuntime, c, p, r, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.domain_event import FlextModelsDomainEvent
 
 
@@ -98,7 +99,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: m.ConfigMap | None = None,
+            data: FlextModelsContainers.ConfigMap | None = None,
         ) -> r[FlextModelsDomainEvent.Entry]:
             """Add a domain event to this entity.
 
@@ -147,7 +148,7 @@ class FlextModelsEntity:
 
         def add_domain_events_bulk(
             self: Self,
-            events: Sequence[tuple[str, m.ConfigMap | None]],
+            events: Sequence[tuple[str, FlextModelsContainers.ConfigMap | None]],
         ) -> r[list[FlextModelsDomainEvent.Entry]]:
             """Add multiple domain events in bulk.
 

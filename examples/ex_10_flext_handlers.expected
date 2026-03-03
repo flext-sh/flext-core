@@ -5,9 +5,9 @@ handler.name_matches: True
 handler.mode: 'command'
 validate.none.failure: True
 validate.ok.success: True
-validate_command.blocked: 'blocked'
-validate_query.blocked: 'blocked'
-validate_alias.same_behavior: True
+validate.blocked_cmd: 'blocked'
+validate.blocked_qry: 'blocked'
+validate.consistent: True
 can_handle.expected: True
 can_handle.derived: True
 can_handle.other: False

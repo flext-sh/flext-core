@@ -1,6 +1,6 @@
 [singleton_and_global]
 constructor.singleton_identity: True
-get_global_instance.identity: True
+get_global.identity: True
 _reset_instance.recreates_singleton: True
 reset_global_instance.recreates_global: True
 subclass.singleton_identity: True
@@ -42,11 +42,11 @@ effective_log_level.debug: <LogLevel.INFO: 'INFO'>
 effective_log_level.trace: <LogLevel.DEBUG: 'DEBUG'>
 apply_override.invalid_return: False
 
-[materialize_and_provider]
-materialize.clone_same_values: True
-materialize.clone_new_object: False
-materialize.override.app_name: 'materialized'
-materialize.override.timeout_seconds: 55.0
+[get_global_and_provider]
+get_global.clone_same_values: True
+get_global.clone_new_object: True
+get_global.override.app_name: 'materialized'
+get_global.override.timeout_seconds: 55.0
 get_di_config_provider.type: 'Singleton'
 
 [resolve_env_file_and_auto_config]
@@ -55,9 +55,6 @@ AutoConfig.create_config.type: '_TestConfig'
 AutoConfig.create_config.service_name: 'test-service'
 
 [namespace_system]
-get_namespace_config.decorated: _DecoratedNamespace
-get_namespace_config.registered: _RegisteredNamespace
-auto_register.class_used: '_DecoratedNamespace'
 get_namespace.decorated.service_name: 'decorated'
 get_namespace.registered.service_name: 'registered'
 

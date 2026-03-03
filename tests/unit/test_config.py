@@ -649,8 +649,8 @@ class TestFlextSettingsPydantic:
         assert isinstance(instance, FlextSettings)
 
     def test_auto_register_decorator(self) -> None:
-        """Test auto_register decorator registers namespace."""
-        FlextSettings.auto_register("test_namespace")(FlextSettings)
+        """Test register_namespace registers a namespace class."""
+        FlextSettings.register_namespace("test_namespace", FlextSettings)
 
         assert "test_namespace" in FlextSettings._namespace_registry
         assert FlextSettings._namespace_registry["test_namespace"] == FlextSettings
@@ -670,8 +670,7 @@ class TestFlextSettingsPydantic:
         """Test get_namespace raises ValueError for unregistered namespace."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
 
-        # get_namespace calls get_namespace_config internally
-        assert config.get_namespace_config("nonexistent") is None
+        # get_namespace raises ValueError for unregistered namespace
 
         # Now test get_namespace which should raise ValueError
         with pytest.raises(ValueError, match="Namespace 'nonexistent' not registered"):

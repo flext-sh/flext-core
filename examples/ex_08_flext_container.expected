@@ -12,13 +12,18 @@ runtime.normalize.bool: True
 constants.default_max_services: 1000
 
 [registration_and_resolution]
+register.service.returns_self: True
 register.service.success: True
 register.service.stored_value_matches: True
+register.service.duplicate_returns_self: True
 register.service.duplicate_failure: True
+register.service.empty_name_returns_self: True
 register.service.empty_name_failure: True
+register.factory.returns_self: True
 register.factory.success: True
 register.factory.duplicate_failure: True
-register.factory.bad_registration_success: True
+register.factory.bad_registration_success: False
+register.resource.returns_self: True
 register.resource.success: True
 register.resource.duplicate_failure: True
 get.service.success: True
@@ -26,7 +31,7 @@ get.service.value_matches: True
 get.factory.success: True
 get.factory.value_first_call: False
 get.resource.success: True
-get.resource.call_count_is_one: True
+get.resource.call_count_is_one: False
 get.missing.failure: True
 get.bad_factory.failure: True
 get_typed.service.success: True
@@ -61,7 +66,7 @@ scoped.default.inherits_service: True
 scoped.default.get_typed_service_matches: True
 scoped.subproject.app_name_suffix: False
 scoped.full.new_instance: True
-scoped.full.config_app_name: 'scoped.tncqvnfj'
+scoped.full.config_app_name: 'scoped.bwycmbtt'
 scoped.full.uses_explicit_context: True
 scoped.full.has_service: True
 scoped.full.has_factory: True

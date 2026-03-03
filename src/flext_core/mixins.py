@@ -256,8 +256,8 @@ class FlextMixins(FlextRuntime):
             config_cls_typed = config_type_raw
         else:
             config_cls_typed = FlextSettings
-        runtime_config = config_cls_typed.materialize(
-            config_overrides=options.config_overrides,
+        runtime_config = config_cls_typed.get_global(
+            overrides=options.config_overrides,
         )
 
         runtime_context: p.Context = (

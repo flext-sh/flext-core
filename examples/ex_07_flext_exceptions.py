@@ -257,37 +257,6 @@ def _exercise_factories_and_helpers() -> None:
     _check("create.metadata.caller", created_dynamic.metadata.attributes.get("caller"))
     _check("create.correlation_id", created_dynamic.correlation_id)
 
-    prepared = e.prepare_exception_kwargs(
-        {
-            "correlation_id": "corr-prep",
-            "metadata": {"k": "v"},
-            "auto_log": True,
-            "auto_correlation": True,
-            "config": "cfg-a",
-            "field": "existing",
-            "custom": "x",
-        },
-        {"field": "forced"},
-    )
-    prep_corr, prep_metadata, prep_auto_log, prep_auto_corr, prep_config, prep_extra = (
-        prepared
-    )
-    _check("prepare.correlation_id", prep_corr)
-    _check("prepare.metadata_type", type(prep_metadata).__name__)
-    _check("prepare.auto_log", prep_auto_log)
-    _check("prepare.auto_correlation", prep_auto_corr)
-    _check("prepare.config", prep_config)
-    _check("prepare.extra.field", prep_extra.get("field"))
-    _check("prepare.extra.custom", prep_extra.get("custom"))
-
-    extracted_corr, extracted_meta = e.extract_common_kwargs({
-        "correlation_id": "corr-ext",
-        "metadata": {"x": "1"},
-        "field": "f",
-    })
-    _check("extract.correlation_id", extracted_corr)
-    _check("extract.metadata.kind", type(extracted_meta).__name__)
-
     instance_factory = FlextExceptions()
     instance_created = instance_factory(
         "from __call__",

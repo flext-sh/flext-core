@@ -132,13 +132,13 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: m.Dict = Field(
+        filters: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Filter values that restrict which records are returned by the query.",
             title="Query Filters",
             examples=[{"status": "active", "tenant": "acme"}],
         )
-        pagination: FlextModelsCqrs.Pagination | m.Dict = Field(
+        pagination: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Pagination settings controlling page number and page size for query results.",
             title="Pagination",
@@ -198,14 +198,23 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None,
+            v: FlextModelsCqrs.Pagination
+            | FlextModelsContainers.Dict
+            | Mapping[str, t.Scalar]
+            | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
             adapter: TypeAdapter[
-                FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None
+                FlextModelsCqrs.Pagination
+                | FlextModelsContainers.Dict
+                | Mapping[str, t.Scalar]
+                | None
             ] = TypeAdapter(
-                FlextModelsCqrs.Pagination | m.Dict | Mapping[str, t.Scalar] | None,
+                FlextModelsCqrs.Pagination
+                | FlextModelsContainers.Dict
+                | Mapping[str, t.Scalar]
+                | None,
             )
             parsed_input = adapter.validate_python(v)
             if parsed_input is None:
@@ -299,7 +308,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: m.ConfigMap | None = None
+            handler_config: FlextModelsContainers.ConfigMap | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -361,7 +370,7 @@ class FlextModelsCqrs:
 
             def merge_config(
                 self,
-                config: m.ConfigMap,
+                config: FlextModelsContainers.ConfigMap,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.root.update(config.root)
@@ -409,11 +418,11 @@ class FlextModelsCqrs:
             title="Event Id",
             examples=["evt_01HZX7Q0P5N6M2"],
         )
-        data: m.Dict = Field(
+        data: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event payload data",
         )
-        metadata: m.Dict = Field(
+        metadata: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event metadata (timestamps, correlation IDs, etc.)",
         )

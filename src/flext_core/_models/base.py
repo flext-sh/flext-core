@@ -339,7 +339,7 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: m.Dict = Field(
+        data: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Command payload containing input data required for execution.",
         )
@@ -349,11 +349,11 @@ class FlextModelFoundation:
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: m.Dict = Field(
+        filters: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Filter criteria used to constrain query results.",
         )
-        pagination: m.Dict | None = None
+        pagination: FlextModelsContainers.Dict | None = None
 
     class EventMessage(BaseModel):
         """Event message with discriminated union support."""
@@ -361,7 +361,7 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: m.Dict = Field(
+        data: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Event payload with domain data describing what happened.",
         )

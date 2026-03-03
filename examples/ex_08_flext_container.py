@@ -69,15 +69,34 @@ class Ex08FlextContainer(Examples):
         empty_name_value = self.rand_int(1, 1000)
 
         register_ok = container.register(service_name, service_value)
+        service_before_dup = container.has_service(service_name)
         register_dup = container.register(service_name, self.rand_int(1, 1000))
+        service_after_dup = container.has_service(service_name)
+        empty_before_register = container.has_service("")
         register_empty = container.register("", empty_name_value)
+        empty_after_register = container.has_service("")
 
-        self.check("register.service.success", register_ok.is_success)
+        self.check("register.service.returns_self", register_ok is container)
+        self.check("register.service.success", container.get(service_name).is_success)
         self.check(
-            "register.service.stored_value_matches", register_ok.unwrap_or(False)
+            "register.service.stored_value_matches",
+            container.get(service_name, type_cls=int).unwrap_or(-1) == service_value,
         )
-        self.check("register.service.duplicate_failure", register_dup.is_failure)
-        self.check("register.service.empty_name_failure", register_empty.is_failure)
+        self.check("register.service.duplicate_returns_self", register_dup is container)
+        self.check(
+            "register.service.duplicate_failure",
+            service_before_dup
+            and service_after_dup
+            and container.get(service_name, type_cls=int).unwrap_or(-1)
+            == service_value,
+        )
+        self.check(
+            "register.service.empty_name_returns_self", register_empty is container
+        )
+        self.check(
+            "register.service.empty_name_failure",
+            (not empty_before_register) and (not empty_after_register),
+        )
 
         factory_calls = {"count": 0}
 
@@ -100,12 +119,17 @@ class Ex08FlextContainer(Examples):
             bad_factory_name, _factory_raises, kind="factory"
         )
 
-        self.check("register.factory.success", register_factory_ok.is_success)
+        self.check("register.factory.returns_self", register_factory_ok is container)
+        self.check("register.factory.success", container.get(factory_name).is_success)
         self.check(
-            "register.factory.duplicate_failure", register_factory_dup.is_failure
+            "register.factory.duplicate_failure",
+            register_factory_dup is container
+            and container.get(factory_name).is_success,
         )
         self.check(
-            "register.factory.bad_registration_success", register_factory_bad.is_success
+            "register.factory.bad_registration_success",
+            register_factory_bad is container
+            and container.get(bad_factory_name).is_success,
         )
 
         resource_calls = {"count": 0}
@@ -121,9 +145,12 @@ class Ex08FlextContainer(Examples):
             resource_name, _resource_data, kind="resource"
         )
 
-        self.check("register.resource.success", register_resource_ok.is_success)
+        self.check("register.resource.returns_self", register_resource_ok is container)
+        self.check("register.resource.success", container.get(resource_name).is_success)
         self.check(
-            "register.resource.duplicate_failure", register_resource_dup.is_failure
+            "register.resource.duplicate_failure",
+            register_resource_dup is container
+            and container.get(resource_name).is_success,
         )
 
         get_service = container.get(service_name)

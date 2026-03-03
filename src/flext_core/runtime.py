@@ -82,7 +82,9 @@ class _LazyMetadata:
         obj: object,
         objtype: type | None = None,
     ) -> type:
-        from flext_core._runtime_metadata import Metadata  # noqa: PLC0415  # JUSTIFIED: lazy import avoids runtime circular import at module import time — https://docs.astral.sh/ruff/rules/import-outside-top-level/
+        from flext_core._runtime_metadata import (
+            Metadata,  # JUSTIFIED: lazy import avoids runtime circular import at module import time — https://docs.astral.sh/ruff/rules/import-outside-top-level/
+        )
 
         # Cache the loaded class on the class itself
         setattr(objtype or FlextRuntime, "Metadata", Metadata)
@@ -471,10 +473,7 @@ class FlextRuntime:
             return str(val)
 
         if isinstance(val, BaseModel):
-            dumped_value: t.Container = TypeAdapter(
-                t.Container,
-            ).validate_python(val.model_dump())
-            return FlextRuntime.normalize_to_general_value(dumped_value)
+            return FlextRuntime.normalize_to_general_value(val.model_dump())
 
         if FlextRuntime.is_dict_like(val):
             dict_v = getattr(val, "root", val)
@@ -517,10 +516,7 @@ class FlextRuntime:
             return result_scalar
 
         if isinstance(val, BaseModel):
-            dumped_value: t.Container = TypeAdapter(
-                t.Container,
-            ).validate_python(val.model_dump())
-            return FlextRuntime.normalize_to_metadata_value(dumped_value)
+            return FlextRuntime.normalize_to_metadata_value(val.model_dump())
 
         if FlextRuntime.is_dict_like(val):
             raw_mapping = getattr(val, "root", val)

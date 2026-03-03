@@ -797,8 +797,8 @@ class FlextTestsUtilities(FlextUtilities):
                 scalar_overrides: dict[str, core_t.Scalar] = {
                     str(key): _to_scalar(value) for key, value in kwargs.items()
                 }
-                return FlextSettings.materialize(
-                    config_overrides=scalar_overrides,
+                return FlextSettings.get_global(
+                    overrides=scalar_overrides,
                 )
 
             @staticmethod
