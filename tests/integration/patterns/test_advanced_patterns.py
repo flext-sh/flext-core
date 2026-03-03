@@ -21,10 +21,7 @@ import pytest
 from flext_core import FlextResult, t, u
 from tests.typings import TestsFlextTypes
 
-# TypedDict definitions from consolidated test typings
-dict[str, str] = TestsFlextTypes.Fixtures.dict[str, str]
-dict[str, t.ContainerValue] = TestsFlextTypes.Fixtures.dict[str, t.ContainerValue]
-dict[str, t.ContainerValue] = TestsFlextTypes.Fixtures.dict[str, t.ContainerValue]
+# Type aliases removed — use dict[str, str] / dict[str, t.ContainerValue] inline
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]

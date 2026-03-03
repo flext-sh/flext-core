@@ -74,7 +74,9 @@ class FlextModelsDomainEvent:
     ComparableConfigMap = _ComparableConfigMap
 
     @staticmethod
-    def to_config_map(data: m.ConfigMap | None) -> _ComparableConfigMap:
+    def to_config_map(
+        data: FlextModelsContainers.ConfigMap | None,
+    ) -> _ComparableConfigMap:
         """Convert optional ConfigMap to a comparable variant."""
         if not data:
             return _ComparableConfigMap(root={})
