@@ -1352,7 +1352,7 @@ class FlextProtocols:
         2. Decorator phase: Return a decorator function
         3. Wrapper phase: Return a wrapper that executes with added behavior
 
-        All FLEXT decorators (@inject, @log_operation, @track_performance,
+        All FLEXT decorators (@inject, @log_operation,
         @railway, @retry, @timeout, @with_correlation, @combined) follow
         this structural pattern.
 

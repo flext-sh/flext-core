@@ -294,7 +294,7 @@ class FlextModelFoundation:
             title="Attributes",
             examples=[{"source": "api", "priority": "high"}],
         )
-        metadata_value: t.Scalar = Field(
+        metadata_value: t.Scalar | None = Field(
             default=None,
             description="Scalar metadata value.",
         )
@@ -328,15 +328,6 @@ class FlextModelFoundation:
                     result,
                 )
             )
-
-        @field_validator("metadata_value", mode="before")
-        @classmethod
-        def validate_scalar_value(cls, v: object) -> t.Scalar:
-            """Validate metadata value is a scalar type."""
-            if isinstance(v, (str, int, float, bool, type(None))):
-                return v
-            msg = f"Metadata value must be scalar, got {type(v).__name__}"
-            raise ValueError(msg)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # DISCRIMINATED UNIONS

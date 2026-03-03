@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 from tomlkit import items
 
 from flext_core import FlextLogger, FlextService, r, t
@@ -44,6 +44,7 @@ class _CheckIssue(BaseModel):
     message: str = Field(description="Human-readable issue description")
     severity: str = Field(default="error", description="Issue severity level")
 
+    @computed_field
     @property
     def formatted(self) -> str:
         """Format issue as ``file:line:col [code] message``."""
@@ -77,11 +78,13 @@ class _ProjectResult(BaseModel):
         description="Gate name to execution mapping",
     )
 
+    @computed_field
     @property
     def total_errors(self) -> int:
         """Total issue count across all gates."""
         return sum(len(v.issues) for v in self.gates.values())
 
+    @computed_field
     @property
     def passed(self) -> bool:
         """Whether every gate passed."""

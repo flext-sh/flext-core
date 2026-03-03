@@ -216,6 +216,7 @@ class FlextModelsConfig:
 
         batch_size: int = Field(
             default=c.Performance.MAX_BATCH_SIZE,
+            le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
             description=("Batch size from c (Constants default)"),
         )
         max_workers: int = Field(
@@ -241,11 +242,6 @@ class FlextModelsConfig:
 
         @model_validator(mode="after")
         def validate_cross_fields(self) -> Self:
-            max_batch_size = c.Performance.BatchProcessing.MAX_VALIDATION_SIZE
-            if self.batch_size > max_batch_size:
-                msg = f"Batch size cannot exceed {max_batch_size}"
-                raise ValueError(msg)
-
             adjusted_workers = min(self.max_workers, self.batch_size)
             self.max_workers = adjusted_workers
 

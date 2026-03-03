@@ -413,50 +413,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Subclasses should override for specific validation rules
         return r[bool].ok(value=True)
 
-    def validate_command(
-        self,
-        command: MessageT_contra,
-    ) -> r[bool]:
-        """Validate command message with command-specific rules.
-
-        Convenience method for command validation that delegates to the base
-        validate() method. Commands typically have stricter validation requirements
-        than queries or events. Subclasses can override this method for command-specific
-        validation logic.
-
-        Args:
-            command: Command message to validate
-
-        Returns:
-            r[bool]: Success if command is valid, failure with error details
-
-        Note:
-            By default delegates to validate(). Override for command-specific validation.
-
-        """
-        return self.validate(command)
-
-    def validate_query(
-        self,
-        query: MessageT_contra,
-    ) -> r[bool]:
-        """Validate query message with query-specific rules.
-
-        Convenience method for query validation that delegates to the base
-        validate() method. Queries typically have different validation requirements
-        than commands (e.g., read permissions vs write permissions).
-
-        Args:
-            query: Query message to validate
-
-        Returns:
-            r[bool]: Success if query is valid, failure with error details
-
-        Note:
-            By default delegates to validate(). Override for query-specific validation.
-
-        """
-        return self.validate(query)
 
     def can_handle(self, message_type: type) -> bool:
         """Check if handler can handle the specified message type.
@@ -626,12 +582,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
         # Validate message based on operation type
-        if operation == c.Dispatcher.HANDLER_MODE_COMMAND:
-            validation = self.validate_command(message)
-        elif operation == c.Dispatcher.HANDLER_MODE_QUERY:
-            validation = self.validate_query(message)
-        else:
-            validation = self.validate(message)
+        validation = self.validate(message)
 
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"

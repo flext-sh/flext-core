@@ -2,7 +2,7 @@
 
 This module contains configuration models for decorators that require
 structured validation and serialization. Simple decorators (inject, log_operation,
-track_performance, railway, combined) do not need models and use built-in types.
+railway, combined) do not need models and use built-in types.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -190,11 +190,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     @property
-    def data(self) -> T_co:
-        """Return success data alias for protocol compatibility."""
-        return self.value
-
-    @property
     def _returns_result(self) -> Result[T_co, str]:
         """Access the internal returns library Result[T_co, str] for advanced operations."""
         if self._result is None:
@@ -314,12 +309,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         result._exception = self._exception
         return result
 
-    def and_then[U](
-        self,
-        func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
-    ) -> FlextResult[U]:
-        """Alias for ``flat_map`` to support railway naming conventions."""
-        return self.flat_map(func)
 
     @override
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
@@ -423,22 +412,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             self.logger.debug("Model conversion failed", exc_info=e)
             return FlextResult.fail(f"Model conversion failed: {e!s}", exception=e)
 
-    # alt and lash are inherited from RuntimeResult
+    # lash is inherited from RuntimeResult
     # But we override to return FlextResult for type consistency
-    def alt(self, func: Callable[[str], str]) -> FlextResult[T_co]:
-        """Apply alternative function on failure.
-
-        Overrides RuntimeResult.alt to return FlextResult for type consistency.
-        """
-        if self.is_failure:
-            transformed_error = func(self.error or "")
-            result: FlextResult[T_co] = FlextResult[T_co].fail(
-                transformed_error,
-                error_code=self.error_code,
-            )
-            result._exception = self._exception
-            return result
-        return self
 
     @override
     def lash(
@@ -711,7 +686,19 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @override
     def map_error(self, func: Callable[[str], str]) -> FlextResult[T_co]:
-        return self.alt(func)
+        """Apply transformation function to error message on failure.
+
+        Overrides RuntimeResult.map_error to return FlextResult for type consistency.
+        """
+        if self.is_failure:
+            transformed_error = func(self.error or "")
+            result: FlextResult[T_co] = FlextResult[T_co].fail(
+                transformed_error,
+                error_code=self.error_code,
+            )
+            result._exception = self._exception
+            return result
+        return self
 
     @staticmethod
     def is_success_result(value: object) -> TypeIs[FlextResult[t.Container]]:

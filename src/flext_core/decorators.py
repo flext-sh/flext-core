@@ -67,11 +67,10 @@ class FlextDecorators:
        - Defensive cleanup via context.suppress() to ensure unbinding
        - Integration with FlextLogger for context propagation
 
-    3. **@track_performance**: Automatic performance tracking and metrics
-       - Tracks operation duration (milliseconds and seconds)
-       - Logs performance metrics with success/failure status
-       - Error-aware timing (tracks duration even on exceptions)
-       - Integration with FlextLogger for metrics collection
+    3. **@railway**: Automatic exception-to-FlextResult wrapping
+       - Converts exceptions to FlextResult.fail() automatically
+       - Preserves type safety via generic return type
+       - Integration with FlextResult for monadic error handling
 
     4. **@railway**: Automatic railway pattern wrapping with FlextResult
        - Converts exceptions to FlextResult.fail()
@@ -98,7 +97,7 @@ class FlextDecorators:
        - No-op if correlation ID already set
 
         return func(*args, **kwargs)
-       - Combines @inject, @log_operation, @track_performance, @railway
+       - Combines @inject, @log_operation, @railway
        - Single-line configuration for maximum automation
        - Correct wrapper ordering for proper exception propagation
        - Balances automation with code clarity
@@ -126,7 +125,7 @@ class FlextDecorators:
     ```
     @railway (outermost - converts exceptions to FlextResult)
     @inject (provides dependencies)
-    @track_performance (tracks execution time)
+    @log_operation (logs operations)
     @log_operation (logs operations)
     (function)
     ```
@@ -161,14 +160,14 @@ class FlextDecorators:
         ...         # Start/completion/failure automatically logged
         ...         return self._process_order(order_data)
 
-    3. Performance tracking:
-        >>> class ReportService:
-        ...     @FlextDecorators.track_performance("generate_report")
-        ...     def generate_report(self, params: dict) -> r[Report]:
-        ...         # Duration and metrics automatically tracked
-        ...         return self._generate(params)
+    3. Railway pattern wrapping:
+        >>> from pydantic import EmailStr
+        >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
+        ... def process_user_email(email: EmailStr) -> str:
+        ...     # Pydantic v2 EmailStr validates email format natively
+        ...     return email.lower()
 
-    4. Railway pattern wrapping:
+    4. Context management:
         >>> from pydantic import EmailStr
         >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
         ... def process_user_email(email: EmailStr) -> str:
@@ -630,127 +629,6 @@ class FlextDecorators:
 
         return decorator
 
-    @staticmethod
-    def track_performance(
-        operation_name: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to automatically track operation performance metrics.
-
-        Tracks operation duration and logs performance metrics with structured
-        logging, enabling performance monitoring without manual timing code.
-
-        Args:
-            operation_name: Name for the operation (defaults to function name)
-
-        Returns:
-            Decorated function with automatic performance tracking
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators, FlextResult
-
-
-            class MyService:
-                @FlextDecorators.track_performance("heavy_computation")
-                def compute(self, data: list) -> r[float]:
-                    # Automatic timing and performance logging
-                    return self._expensive_calculation(data)
-            ```
-
-        Note:
-            Performance metrics are logged to structured logging context and
-            can be used with track() for metrics collection.
-
-        """
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Fast fail: explicit default value instead of 'or' fallback
-                op_name: str = (
-                    operation_name if operation_name is not None else func.__name__
-                )
-
-                # Get logger from self if available, otherwise create one
-                logger = FlextDecorators._resolve_logger(args, func)
-
-                start_time = time.perf_counter()
-
-                correlation_id = FlextDecorators._bind_operation_context(
-                    operation=op_name,
-                    logger=logger,
-                    function_name=func.__name__,
-                    ensure_correlation=True,
-                )
-
-                try:
-                    result = func(*args, **kwargs)
-                    duration = time.perf_counter() - start_time
-
-                    success_extra: dict[str, t.MetadataValue] = {
-                        "operation": op_name,
-                        "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
-                        "duration_seconds": duration,
-                        "success": True,
-                    }
-                    if correlation_id is not None:
-                        success_extra["correlation_id"] = correlation_id
-                    logger.info("operation_completed", **success_extra)
-                    return result
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as e:
-                    duration = time.perf_counter() - start_time
-
-                    failure_extra: dict[str, t.MetadataValue] = {
-                        "operation": op_name,
-                        "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
-                        "duration_seconds": duration,
-                        "success": False,
-                        "error": str(e),
-                        "error_type": e.__class__.__name__,
-                    }
-                    if correlation_id is not None:
-                        failure_extra["correlation_id"] = correlation_id
-                    if correlation_id is not None:
-                        logger.exception(
-                            "operation_failed",
-                            operation=op_name,
-                            duration_ms=duration * c.MILLISECONDS_MULTIPLIER,
-                            duration_seconds=duration,
-                            success=False,
-                            error=str(e),
-                            error_type=e.__class__.__name__,
-                            correlation_id=correlation_id,
-                        )
-                    else:
-                        logger.exception(
-                            "operation_failed",
-                            operation=op_name,
-                            duration_ms=duration * c.MILLISECONDS_MULTIPLIER,
-                            duration_seconds=duration,
-                            success=False,
-                            error=str(e),
-                            error_type=e.__class__.__name__,
-                        )
-                    raise
-                finally:
-                    # CRITICAL: Clear operation context (defensive cleanup)
-                    # Use suppress to ensure cleanup never fails
-                    with suppress(Exception):
-                        FlextDecorators._clear_operation_scope(
-                            logger=logger,
-                            function_name=func.__name__,
-                            operation=op_name,
-                        )
-
-            return wrapper
-
-        return decorator
 
     @staticmethod
     def railway(

@@ -11,9 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, Self, override
+from typing import Annotated, override
 
-from pydantic import BeforeValidator, Field, model_validator
+from pydantic import BeforeValidator, Field
 
 from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
@@ -105,8 +105,8 @@ class FlextModelsDomainEvent:
             description="Message type discriminator for union routing - always 'event'",
         )
 
-        event_type: str
-        aggregate_id: str
+        event_type: str = Field(min_length=c.Reliability.RETRY_COUNT_MIN)
+        aggregate_id: str = Field(min_length=c.Reliability.RETRY_COUNT_MIN)
         data: Annotated[
             _ComparableConfigMap,
             BeforeValidator(_normalize_event_data),
@@ -114,16 +114,6 @@ class FlextModelsDomainEvent:
             default_factory=_ComparableConfigMap,
             description="Event data container",
         )
-
-        @model_validator(mode="after")
-        def validate_domain_event(self) -> Self:
-            if not self.event_type:
-                msg = "Domain event event_type must be a non-empty string"
-                raise ValueError(msg)
-            if not self.aggregate_id:
-                msg = "Domain event aggregate_id must be a non-empty string"
-                raise ValueError(msg)
-            return self
 
 
 __all__ = ["FlextModelsDomainEvent"]
