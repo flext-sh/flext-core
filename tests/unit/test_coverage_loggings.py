@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextSettings, m, p
+from flext_core import FlextLogger, FlextResult, FlextSettings, m
 from tests.test_utils import assertion_helpers
 
 
@@ -95,51 +95,25 @@ class TestGlobalContextManagement:
         context = FlextLogger._get_global_context()
         assert isinstance(context, m.ConfigMap)
 
-    def test_unbind_global_context_with_non_sequence_keys(self) -> None:
-        """Test unbind with non-sequence keys (covers line 121-124)."""
+    def test_unbind_global_context(self) -> None:
+        """Test unbind_global_context with valid keys."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123")
-        # Pass non-sequence keys (int is not Sequence) - should handle gracefully
-        result = FlextLogger._context_operation(
-            "unbind",
-            keys=42,  # int is not Sequence, so isinstance check fails
-        )
-        assert (
-            result.is_success
-        )  # Should still succeed (skips unbind but returns success)
+        result = FlextLogger.unbind_global_context("request_id")
+        assert result.is_success
 
-    def test_context_operation_unknown_operation(self) -> None:
-        """Test context operation with unknown operation (covers line 131)."""
-        # _execute_context_op returns ResultProtocol[bool] | dict[str, t.GeneralValueType]
-        # For unknown operations, it returns ResultProtocol[bool] via result_fail
-        result = FlextLogger._execute_context_op("unknown_operation", {})
-        # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
-        # RuntimeResult implements p.Result protocol
-        assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
-        assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None
-        assert (
-            "Unknown operation" in result.error or "unknown_operation" in result.error
-        )
-
-    def test_context_operation_get_with_empty_context(self) -> None:
-        """Test GET operation with empty context (covers line 130)."""
+    def test_get_global_context_empty(self) -> None:
+        """Test _get_global_context with empty context."""
         FlextLogger.clear_global_context()
-        result = FlextLogger._context_operation(
-            "get",
-        )
-        # Should return empty dict when context is empty
+        result = FlextLogger._get_global_context()
         assert isinstance(result, m.ConfigMap)
         assert result.root == {}
 
-    def test_context_operation_get_with_context(self) -> None:
-        """Test GET operation with existing context (covers line 129-130)."""
+    def test_get_global_context_with_values(self) -> None:
+        """Test _get_global_context with existing context."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
-        result = FlextLogger._context_operation(
-            "get",
-        )
-        # Should return dict with context
+        result = FlextLogger._get_global_context()
         assert isinstance(result, m.ConfigMap)
         assert "test_key" in result.root
         assert result.root["test_key"] == "test_value"
