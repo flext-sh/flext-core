@@ -20,6 +20,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
+from flext_core._models.containers import (
+    FlextModelsContainers as _FlextModelsContainers,
+    GeneralValueType as _GeneralValueType,
+)
+
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
@@ -88,6 +93,17 @@ class FlextTypes:
 
     # ── Configuration ─────────────────────────────────────────────────
     type ConfigurationMapping = Mapping[str, ContainerValue]
+    type ConfigMapValue = _GeneralValueType
+    type GeneralValueType = _GeneralValueType
+
+    type Dict = _FlextModelsContainers.Dict
+    type ConfigMap = _FlextModelsContainers.ConfigMap
+    type ServiceMap = _FlextModelsContainers.ServiceMap
+    type ObjectList = _FlextModelsContainers.ObjectList
+    type ErrorMap = _FlextModelsContainers.ErrorMap
+    type FactoryMap = _FlextModelsContainers.FactoryMap
+    type ResourceMap = _FlextModelsContainers.ResourceMap
+    type FieldValidatorMap = _FlextModelsContainers.FieldValidatorMap
 
     # ── Handlers ──────────────────────────────────────────────────────
     type HandlerCallable = Callable[[ContainerValue], ContainerValue]
