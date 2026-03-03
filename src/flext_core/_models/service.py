@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Annotated, Self
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 from flext_core import c, p, t
@@ -356,15 +356,3 @@ class FlextModelsService:
             if self.retry_config is None:
                 self.retry_config = FlextModelsService.RetryConfiguration()
             return self
-
-        @field_validator("operation_callable", mode="before")
-        @classmethod
-        def validate_operation_callable(
-            cls,
-            v: t.Container,
-        ) -> t.Container:
-            """Validate operation is callable."""
-            if not callable(v):
-                msg = f"Operation callable must be callable, got {v.__class__.__name__}"
-                raise TypeError(msg)
-            return v

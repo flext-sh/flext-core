@@ -51,9 +51,18 @@ class FlextTypes:
     Use ``X | None`` at call-sites when needed.
     """
 
+    # ╔══════════════════════════════════════════════════════════════════╗
+    # ║  ⚠️  AGENT STOP — READ BEFORE EDITING ANY TYPE ALIAS BELOW  ⚠️  ║
+    # ║                                                                ║
+    # ║  Non-recursive aliases MUST use `X: TypeAlias = ...`           ║
+    # ║  DO NOT convert to `type X = ...` (PEP 695).                   ║
+    # ║  PEP 695 creates TypeAliasType → isinstance() CRASHES.         ║
+    # ║  See CLAUDE.md §3 AXIOMATIC rule. VIOLATION = REJECTION.       ║
+    # ║                                                                ║
+    # ║  Recursive aliases (Serializable, ContainerValue, JsonValue)   ║
+    # ║  MUST use `type` statement — they need forward references.     ║
+    # ╚══════════════════════════════════════════════════════════════════╝
     # ── Core type layers ──────────────────────────────────────────────
-    # Non-recursive types use TypeAlias (runtime-safe: isinstance + subclass OK).
-    # Recursive types use `type` statement (annotation-only, no isinstance).
     Primitives: TypeAlias = str | int | float | bool
     Scalar: TypeAlias = str | int | float | bool | datetime
     Container: TypeAlias = str | int | float | bool | datetime | BaseModel | Path

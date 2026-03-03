@@ -7,7 +7,7 @@ include base.mk
 endif
 
 # === PROJECT-SPECIFIC TARGETS ===
-.PHONY: docs-serve diagnose doctor deps-update deps-show
+.PHONY: docs-serve diagnose doctor deps-update deps-show validate-typings
 
 docs-serve: ## Serve documentation
 	$(Q)$(POETRY) run mkdocs serve
@@ -25,4 +25,6 @@ deps-update: ## Update dependencies
 deps-show: ## Show dependency tree
 	$(Q)$(POETRY) show --tree
 
+validate-typings: ## Validate TypeAlias syntax rules in typings.py
+	$(Q)bash scripts/validate_typings.sh
 .DEFAULT_GOAL := help

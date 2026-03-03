@@ -247,7 +247,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if not callable(unwrap) or not callable(failure):
             return cls.fail("Invalid IOResult structure")
         try:
-            io_value = cast(U | IO[U], unwrap())
+            io_value = cast("U | IO[U]", unwrap())
             return FlextResult[U | IO[U]](value=io_value, is_success=True)
         except UnwrapFailedError as exc:
             logging.getLogger(__name__).debug("Failed to unwrap IOResult", exc_info=exc)

@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
@@ -326,6 +326,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
         return self
 
+    @computed_field
     @property
     def effective_log_level(self) -> c.Settings.LogLevel:
         """Get effective log level based on debug/trace flags."""

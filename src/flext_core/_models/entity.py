@@ -16,7 +16,7 @@ import contextlib
 from collections.abc import Callable, Sequence
 from typing import ClassVar, Self, TypeAlias, override
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 from flext_core import FlextRuntime, c, p, r, t
 from flext_core._models.base import FlextModelFoundation
@@ -55,6 +55,7 @@ class FlextModelsEntity:
             description="List of uncommitted domain events for event sourcing",
         )
 
+        @computed_field
         @property
         def entity_id(self) -> str:
             """Entity identifier property - alias for unique_id."""
@@ -82,6 +83,7 @@ class FlextModelsEntity:
             """Identity-based hash for entities."""
             return FlextRuntime.hash_entity_by_id(self)
 
+        @computed_field
         @property
         def uncommitted_events(self: Self) -> list[FlextModelsDomainEvent.Entry]:
             """Get uncommitted domain events without clearing them."""
