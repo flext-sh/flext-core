@@ -339,46 +339,21 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         return self.log_level
 
     @classmethod
-    def get_global_instance(cls) -> Self:
-        """Get the global singleton instance."""
+    def get_global(
+        cls,
+        *,
+        overrides: t.ConfigurationMapping | None = None,
+    ) -> Self:
+        """Get global settings, optionally materialized with overrides."""
         log_level = os.environ.get("FLEXT_LOG_LEVEL")
         if log_level and log_level.islower():
             os.environ["FLEXT_LOG_LEVEL"] = log_level.upper()
-        return cls()
+        if overrides is None:
+            return cls()
 
-    @classmethod
-    def materialize(
-        cls,
-        *,
-        config_overrides: Mapping[str, t.Scalar] | None = None,
-    ) -> Self:
-        """Factory method to create a config instance with optional overrides.
-
-        This is the preferred way to create a configuration instance for
-        services that need to apply runtime overrides. It respects Clean
-        Architecture principles where each class owns its own instantiation.
-
-        For FlextSettings (base class): clones from the global instance to
-        preserve environment-derived values while allowing overrides.
-        For subclasses: creates a new instance directly.
-
-        Args:
-            config_overrides: Optional mapping of field names to override values.
-
-        Returns:
-            New configuration instance with applied overrides.
-
-        Example:
-            >>> config = FlextSettings.materialize(
-            ...     config_overrides={"app_name": "myapp"}
-            ... )
-            >>> config.app_name
-            'myapp'
-
-        """
         # For FlextSettings itself, clone from global instance
         if cls is FlextSettings:
-            global_config = cls.get_global_instance()
+            global_config = cls.get_global()
             # Use model_copy to clone the instance properly
             # This ensures Pydantic internal state (__pydantic_fields_set__, etc.) is properly initialized
             instance = global_config.model_copy(deep=True)
@@ -387,8 +362,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             instance = cls()
 
         # Apply overrides if provided
-        if config_overrides:
-            instance = instance.model_copy(update=config_overrides, deep=True)
+        if overrides:
+            instance = instance.model_copy(update=overrides, deep=True)
 
         return instance
 
@@ -401,7 +376,11 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         if self._di_provider is None:
             providers_module = FlextRuntime.dependency_providers()
             self._di_provider = providers_module.Singleton(lambda: self)
-        return self._di_provider
+        provider = self._di_provider
+        if provider is None:
+            msg = "DI provider not initialized"
+            raise RuntimeError(msg)
+        return provider
 
     def apply_override(
         self,
@@ -452,73 +431,48 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     # to be modified at runtime (registering namespace config classes).
     #
     # Audit Implication: This registry tracks namespace configuration classes for
-    # auto-registration pattern. Used by @auto_register decorator to map namespace
+    # dynamic registration pattern. Used by register_namespace() to map namespace
     # strings to configuration classes.
     _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
     _context_overrides: ClassVar[
         MutableMapping[str, MutableMapping[str, t.Scalar]]
     ] = {}
 
-    @staticmethod
-    def auto_register(
-        namespace: str,
-    ) -> Callable[[type[T_Settings]], type[T_Settings]]:
-        """Decorator for auto-registering configuration classes.
-
-        Business Rule: Decorator pattern for auto-registering configuration classes
-        in namespace registry. Uses TypeVar to preserve the original class type through
-        the decorator, ensuring type checkers (pyright/mypy) see the specific class type,
-        not BaseSettings. Registers class in _namespace_registry for dynamic namespace
-        resolution.
-
-        WARNING: Registered classes should use FlextSettings.resolve_env_file()
-        in their model_config.env_file to respect FLEXT_ENV_FILE environment variable.
-        Hardcoded '.env' values will trigger a deprecation warning.
-
-        Audit Implication: Auto-registration enables dynamic namespace configuration
-        resolution, ensuring audit trail completeness for namespace-based configurations.
-        All namespace configurations are registered before being used in production systems.
-
-        Args:
-            namespace: Namespace identifier for the configuration
-
-        Returns:
-            Decorator function that registers the class while preserving its type
-
-        """
-
-        def decorator(cls: type[T_Settings]) -> type[T_Settings]:
-            """Register the configuration class while preserving type."""
-            # Note: Previous validation for env_file=".env" was removed because
-            # it cannot distinguish between:
-            # 1. Hardcoded ".env" (incorrect)
-            # 2. FlextSettings.resolve_env_file() returning ".env" (correct)
-            # The documentation warns about proper usage of resolve_env_file().
-            # Register in namespace registry (namespace stored in registry key, not on class)
-            FlextSettings._namespace_registry[namespace] = cls
-            return cls
-
-        return decorator
-
     @classmethod
     def register_namespace(
         cls,
         namespace: str,
-        config_class: type[BaseSettings],
-    ) -> None:
+        config_class: type[BaseSettings] | None = None,
+        *,
+        decorator: bool = False,
+    ) -> Callable[[type[T_Settings]], type[T_Settings]] | None:
         """Register a configuration class for a namespace.
+
+        When ``decorator=True``, returns a decorator that registers the class.
 
         Args:
             namespace: Namespace identifier
             config_class: Configuration class to register
+            decorator: If True, return a decorator-style registrar
 
         """
-        cls._namespace_registry[namespace] = config_class
+        if decorator:
 
-    @classmethod
-    def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
-        """Get configuration class for a namespace."""
-        return cls._namespace_registry.get(namespace)
+            def namespace_decorator(
+                class_to_register: type[T_Settings],
+            ) -> type[T_Settings]:
+                """Register the configuration class while preserving type."""
+                cls._namespace_registry[namespace] = class_to_register
+                return class_to_register
+
+            return namespace_decorator
+
+        if config_class is None:
+            msg = "config_class is required when decorator=False"
+            raise ValueError(msg)
+
+        cls._namespace_registry[namespace] = config_class
+        return None
 
     def get_namespace(
         self,
@@ -548,7 +502,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             TypeError: If type mismatch
 
         """
-        config_class_raw = self.get_namespace_config(namespace)
+        config_class_raw = self._namespace_registry.get(namespace)
         if config_class_raw is None:
             msg = f"Namespace '{namespace}' not registered"
             raise ValueError(msg)
@@ -588,7 +542,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
         """
         # Get base instance
-        base = cls.get_global_instance()
+        base = cls.get_global()
         # Apply context overrides
         context_overrides = cls._context_overrides.get(context_id, {})
         all_overrides = {**context_overrides, **overrides}
@@ -623,7 +577,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         cls._context_overrides[context_id].update(overrides)
 
     @classmethod
-    def reset_global_instance(cls) -> None:
+    def reset_for_testing(cls) -> None:
         """Reset the global singleton instance for testing."""
         cls._instances.clear()
         cls._context_overrides.clear()
