@@ -320,8 +320,8 @@ class Ex01FlextResult(Examples):
             lambda _: r[int].fail("resource op failed"),
             cleanup=clean_handle,
         )
-        no_cleanup_resource = r[int].register(
-            make_handle, lambda handle: r[int].ok(handle.value + 1), kind="resource"
+        no_cleanup_resource = r[int].with_resource(
+            make_handle, lambda handle: r[int].ok(handle.value + 1)
         )
 
         self.check("with_resource.success", success_resource.unwrap_or(-1))

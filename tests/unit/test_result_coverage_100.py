@@ -615,7 +615,7 @@ class TestrCoverage:
                 return r[str].ok("success")
             return r[str].fail("Invalid resource")
 
-        result = r[str].register(factory, operation, kind="resource")
+        result = r[str].with_resource(factory, operation)
         _ResultAssertions.assert_success_with_value(
             result,
             "success",

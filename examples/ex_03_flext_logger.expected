@@ -38,7 +38,6 @@ trace.ok: True
 debug.ok: True
 info.ok: True
 warning.ok: True
-warn.ok: True
 error.ok: True
 critical.ok: True
 log.ok: True

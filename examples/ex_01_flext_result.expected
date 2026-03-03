@@ -19,7 +19,6 @@ prop.success.is_failure: False
 prop.failure.is_success: False
 prop.failure.is_failure: True
 prop.success.value: 'value'
-prop.success.data: 'value'
 prop.success.result_self: True
 prop.failure.error: 'missing'
 prop.failure.error_code: 'E_PROP'
