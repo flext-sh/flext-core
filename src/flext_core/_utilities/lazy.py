@@ -11,14 +11,18 @@ from __future__ import annotations
 
 import importlib
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 def lazy_getattr(
     name: str,
     lazy_imports: dict[str, tuple[str, str]],
-    module_globals: dict[str, object],
+    module_globals: dict[str, t.GeneralValueType],
     module_name: str,
-) -> object:
+) -> t.GeneralValueType:
     """Lazy-load a module attribute on first access (PEP 562).
 
     Args:
