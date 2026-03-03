@@ -2,67 +2,12 @@
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextDispatcher, r, u
+from shared import Examples
 
-_RESULTS: list[str] = []
-
-
-def _check(label: str, value: object) -> None:
-    _RESULTS.append(f"{label}: {_ser(value)}")
-
-
-def _section(name: str) -> None:
-    if _RESULTS:
-        _RESULTS.append("")
-    _RESULTS.append(f"[{name}]")
-
-
-def _ser(v: object) -> str:
-    if v is None:
-        return "None"
-    if isinstance(v, bool):
-        return str(v)
-    if isinstance(v, (int, float)):
-        return str(v)
-    if isinstance(v, str):
-        return repr(v)
-    if u.is_list(v):
-        return "[" + ", ".join(_ser(x) for x in v) + "]"
-    if u.is_dict_like(v):
-        pairs = ", ".join(
-            f"{_ser(k)}: {_ser(val)}"
-            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
-        return "{" + pairs + "}"
-    if isinstance(v, type):
-        return v.__name__
-    return type(v).__name__
-
-
-def _verify() -> None:
-    actual = "\n".join(_RESULTS).strip() + "\n"
-    me = Path(__file__)
-    expected_path = me.with_suffix(".expected")
-    n = sum(1 for line in _RESULTS if ": " in line and not line.startswith("["))
-    if expected_path.exists():
-        expected = expected_path.read_text(encoding="utf-8")
-        if actual == expected:
-            sys.stdout.write(f"PASS: {me.stem} ({n} checks)\n")
-        else:
-            actual_path = me.with_suffix(".actual")
-            actual_path.write_text(actual, encoding="utf-8")
-            sys.stdout.write(
-                f"FAIL: {me.stem} — diff {expected_path.name} {actual_path.name}\n"
-            )
-            sys.exit(1)
-    else:
-        expected_path.write_text(actual, encoding="utf-8")
-        sys.stdout.write(f"GENERATED: {expected_path.name} ({n} checks)\n")
+from flext_core import FlextDispatcher, r, t
 
 
 @dataclass(slots=True)
@@ -142,7 +87,7 @@ class CreateUserHandler:
 
     message_type = CreateUser
 
-    def handle(self, message: object) -> str:
+    def handle(self, message: t.ContainerValue) -> str:
         """Return confirmation for a supported create command."""
         if isinstance(message, CreateUser):
             return f"created:{message.username}"
@@ -154,7 +99,7 @@ class GetUserDispatcher:
 
     message_type = GetUser
 
-    def dispatch_message(self, message: object) -> dict[str, str]:
+    def dispatch_message(self, message: t.ContainerValue) -> dict[str, str]:
         """Return a synthetic user payload for supported query."""
         if isinstance(message, GetUser):
             return {"state": "active", "username": message.username}
@@ -166,7 +111,7 @@ class DeleteExecutor:
 
     message_type = DeleteUser
 
-    def execute(self, message: object) -> str:
+    def execute(self, message: t.ContainerValue) -> str:
         """Return deletion status for supported command."""
         if isinstance(message, DeleteUser):
             return f"deleted:{message.username}"
@@ -178,7 +123,7 @@ class FailingDeleteCallable:
 
     message_type = FailingDelete
 
-    def __call__(self, message: object) -> r[str]:
+    def __call__(self, message: t.ContainerValue) -> r[str]:
         """Reject deletion to exercise dispatcher failure handling."""
         if isinstance(message, FailingDelete):
             return r[str].fail(f"deletion blocked for {message.username}")
@@ -190,7 +135,7 @@ class PingCallable:
 
     message_type = Ping
 
-    def __call__(self, message: object) -> str:
+    def __call__(self, message: t.ContainerValue) -> str:
         """Return a bare pong value to test automatic wrapping."""
         if isinstance(message, Ping):
             return f"pong:{message.value}"
@@ -200,13 +145,13 @@ class PingCallable:
 class AutoHandler:
     """Auto-discovery handler selected through can_handle."""
 
-    def can_handle(self, message: object) -> bool:
+    def can_handle(self, message: t.ContainerValue) -> bool:
         """Report support for AutoCommand class or instance."""
         if isinstance(message, type):
             return issubclass(message, AutoCommand)
         return isinstance(message, AutoCommand)
 
-    def handle(self, message: object) -> str:
+    def handle(self, message: t.ContainerValue) -> str:
         """Handle discovered command and return a synthetic payload."""
         if isinstance(message, AutoCommand):
             return f"auto:{message.payload}"
@@ -222,7 +167,7 @@ class UserCreatedSubscriber:
         """Create an in-memory event sink."""
         self.events: list[str] = []
 
-    def handle(self, message: object) -> bool:
+    def handle(self, message: t.ContainerValue) -> bool:
         """Store event entries when receiving UserCreated."""
         if isinstance(message, UserCreated):
             self.events.append(f"user:{message.username}")
@@ -238,126 +183,179 @@ class AuditSubscriber:
         """Create an in-memory audit sink."""
         self.events: list[str] = []
 
-    def dispatch_message(self, message: object) -> bool:
+    def dispatch_message(self, message: t.ContainerValue) -> bool:
         """Store audit entries when receiving UserCreated."""
         if isinstance(message, UserCreated):
             self.events.append(f"audit:{message.username}")
         return True
 
 
-def invalid_handler(message: object) -> str:
+def invalid_handler(message: t.ContainerValue) -> str:
     """Return a value but lacks route metadata for registration."""
     return type(message).__name__
 
 
-def demo_register_and_dispatch() -> None:
-    """Cover constructor, register_handler and dispatch happy paths."""
-    _section("register_and_dispatch")
+class Ex04FlextDispatcher(Examples):
+    """Exercise FlextDispatcher public API."""
 
-    dispatcher = FlextDispatcher()
-    _check("constructor.type", type(dispatcher))
+    def exercise(self) -> None:
+        """Run all scenarios and verify against golden file."""
+        self._exercise_register_and_dispatch()
+        self._exercise_auto_discovery()
+        self._exercise_error_cases()
+        self._exercise_event_publishing()
 
-    reg_handle = dispatcher.register_handler(CreateUserHandler())
-    _check("register(HandleProtocol).is_success", reg_handle.is_success)
+    def _exercise_register_and_dispatch(self) -> None:
+        """Cover constructor, register_handler and dispatch happy paths."""
+        self.section("register_and_dispatch")
 
-    reg_dispatch_msg = dispatcher.register_handler(GetUserDispatcher(), is_event=False)
-    _check("register(DispatchMessageProtocol).is_success", reg_dispatch_msg.is_success)
+        dispatcher = FlextDispatcher()
+        self.check("constructor.type", type(dispatcher).__name__)
 
-    reg_execute = dispatcher.register_handler(DeleteExecutor())
-    _check("register(ExecuteProtocol).is_success", reg_execute.is_success)
+        reg_handle = dispatcher.register_handler(CreateUserHandler())
+        self.check("register(HandleProtocol).is_success", reg_handle.is_success)
 
-    reg_callable = dispatcher.register_handler(PingCallable())
-    _check("register(callable).is_success", reg_callable.is_success)
+        reg_dispatch_msg = dispatcher.register_handler(
+            GetUserDispatcher(), is_event=False
+        )
+        self.check(
+            "register(DispatchMessageProtocol).is_success", reg_dispatch_msg.is_success
+        )
 
-    create_r = dispatcher.dispatch(CreateUser(username="alice"))
-    _check("dispatch(command).is_success", create_r.is_success)
-    _check("dispatch(command).value", create_r.value)
+        reg_execute = dispatcher.register_handler(DeleteExecutor())
+        self.check("register(ExecuteProtocol).is_success", reg_execute.is_success)
 
-    get_r = dispatcher.dispatch(GetUser(username="alice"))
-    _check("dispatch(query).is_success", get_r.is_success)
-    _check("dispatch(query).value", get_r.value)
+        reg_callable = dispatcher.register_handler(PingCallable())
+        self.check("register(callable).is_success", reg_callable.is_success)
 
-    delete_r = dispatcher.dispatch(DeleteUser(username="alice"))
-    _check("dispatch(execute).is_success", delete_r.is_success)
-    _check("dispatch(execute).value", delete_r.value)
+        username = self.rand_str(6)
+        ping_value = self.rand_str(5)
 
-    ping_r = dispatcher.dispatch(Ping(value="x"))
-    _check("dispatch(callable).is_success", ping_r.is_success)
-    _check("dispatch(callable).value", ping_r.value)
+        create_r = dispatcher.dispatch(CreateUser(username=username))
+        self.check("dispatch(command).is_success", create_r.is_success)
+        self.check("dispatch(command).value", create_r.value)
+        self.check(
+            "dispatch(command).value_matches", create_r.value == f"created:{username}"
+        )
 
+        get_r = dispatcher.dispatch(GetUser(username=username))
+        self.check("dispatch(query).is_success", get_r.is_success)
+        self.check("dispatch(query).value", get_r.value)
+        self.check(
+            "dispatch(query).value_matches",
+            get_r.value == {"state": "active", "username": username},
+        )
 
-def demo_auto_discovery() -> None:
-    """Cover can_handle route discovery for dispatch fallback."""
-    _section("auto_discovery")
+        delete_r = dispatcher.dispatch(DeleteUser(username=username))
+        self.check("dispatch(execute).is_success", delete_r.is_success)
+        self.check("dispatch(execute).value", delete_r.value)
+        self.check(
+            "dispatch(execute).value_matches", delete_r.value == f"deleted:{username}"
+        )
 
-    dispatcher = FlextDispatcher()
+        ping_r = dispatcher.dispatch(Ping(value=ping_value))
+        self.check("dispatch(callable).is_success", ping_r.is_success)
+        self.check("dispatch(callable).value", ping_r.value)
+        self.check(
+            "dispatch(callable).value_matches", ping_r.value == f"pong:{ping_value}"
+        )
 
-    reg_auto = dispatcher.register_handler(AutoHandler())
-    _check("register(can_handle).is_success", reg_auto.is_success)
+    def _exercise_auto_discovery(self) -> None:
+        """Cover can_handle route discovery for dispatch fallback."""
+        self.section("auto_discovery")
 
-    auto_r = dispatcher.dispatch(AutoCommand(payload="fallback"))
-    _check("dispatch(auto_discovery).is_success", auto_r.is_success)
-    _check("dispatch(auto_discovery).value", auto_r.value)
+        dispatcher = FlextDispatcher()
 
+        reg_auto = dispatcher.register_handler(AutoHandler())
+        self.check("register(can_handle).is_success", reg_auto.is_success)
 
-def demo_error_cases() -> None:
-    """Cover registration and dispatch failure paths."""
-    _section("error_cases")
+        payload = self.rand_str(7)
+        auto_r = dispatcher.dispatch(AutoCommand(payload=payload))
+        self.check("dispatch(auto_discovery).is_success", auto_r.is_success)
+        self.check("dispatch(auto_discovery).value", auto_r.value)
+        self.check(
+            "dispatch(auto_discovery).value_matches", auto_r.value == f"auto:{payload}"
+        )
 
-    dispatcher = FlextDispatcher()
+    def _exercise_error_cases(self) -> None:
+        """Cover registration and dispatch failure paths."""
+        self.section("error_cases")
 
-    reg_invalid = dispatcher.register_handler(invalid_handler)
-    _check("register(no_route_attrs).is_failure", reg_invalid.is_failure)
+        dispatcher = FlextDispatcher()
 
-    no_handler_r = dispatcher.dispatch(UnknownQuery(payload="none"))
-    _check("dispatch(no_handler).is_failure", no_handler_r.is_failure)
+        reg_invalid = dispatcher.register_handler(invalid_handler)
+        self.check("register(no_route_attrs).is_failure", reg_invalid.is_failure)
 
-    reg_fail_handler = dispatcher.register_handler(FailingDeleteCallable())
-    _check("register(failing_callable).is_success", reg_fail_handler.is_success)
+        unknown_payload = self.rand_str(6)
+        no_handler_r = dispatcher.dispatch(UnknownQuery(payload=unknown_payload))
+        self.check("dispatch(no_handler).is_failure", no_handler_r.is_failure)
+        self.check("dispatch(no_handler).has_error", no_handler_r.error is not None)
 
-    failing_r = dispatcher.dispatch(FailingDelete(username="alice"))
-    _check("dispatch(handler_returns_fail).is_failure", failing_r.is_failure)
+        reg_fail_handler = dispatcher.register_handler(FailingDeleteCallable())
+        self.check("register(failing_callable).is_success", reg_fail_handler.is_success)
 
+        failing_username = self.rand_str(6)
+        failing_r = dispatcher.dispatch(FailingDelete(username=failing_username))
+        self.check("dispatch(handler_returns_fail).is_failure", failing_r.is_failure)
+        self.check(
+            "dispatch(handler_returns_fail).error_matches",
+            failing_r.error == f"deletion blocked for {failing_username}",
+        )
 
-def demo_event_publishing() -> None:
-    """Cover event registration and publish paths."""
-    _section("event_publishing")
+    def _exercise_event_publishing(self) -> None:
+        """Cover event registration and publish paths."""
+        self.section("event_publishing")
 
-    dispatcher = FlextDispatcher()
-    subscriber = UserCreatedSubscriber()
-    audit_subscriber = AuditSubscriber()
+        dispatcher = FlextDispatcher()
+        subscriber = UserCreatedSubscriber()
+        audit_subscriber = AuditSubscriber()
 
-    reg_user = dispatcher.register_handler(subscriber, is_event=True)
-    _check("register(event_subscriber).is_success", reg_user.is_success)
+        reg_user = dispatcher.register_handler(subscriber, is_event=True)
+        self.check("register(event_subscriber).is_success", reg_user.is_success)
 
-    reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
-    _check("register(audit_subscriber).is_success", reg_audit.is_success)
+        reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
+        self.check("register(audit_subscriber).is_success", reg_audit.is_success)
 
-    pub_one = dispatcher.publish(UserCreated(username="alice"))
-    _check("publish(single).is_success", pub_one.is_success)
+        username_one = self.rand_str(6)
+        username_two = self.rand_str(6)
+        username_three = self.rand_str(6)
+        pub_one = dispatcher.publish(UserCreated(username=username_one))
+        self.check("publish(single).is_success", pub_one.is_success)
+        self.check("publish(single).value", pub_one.value)
 
-    pub_many = dispatcher.publish([
-        UserCreated(username="bruno"),
-        UserCreated(username="carla"),
-    ])
-    _check("publish(list).is_success", pub_many.is_success)
+        pub_many = dispatcher.publish([
+            UserCreated(username=username_two),
+            UserCreated(username=username_three),
+        ])
+        self.check("publish(list).is_success", pub_many.is_success)
+        self.check("publish(list).value", pub_many.value)
 
-    _check("subscriber.events", subscriber.events)
-    _check("audit_subscriber.events", audit_subscriber.events)
+        self.check("subscriber.events", subscriber.events)
+        self.check("audit_subscriber.events", audit_subscriber.events)
+        self.check(
+            "subscriber.events_matches",
+            subscriber.events
+            == [
+                f"user:{username_one}",
+                f"user:{username_two}",
+                f"user:{username_three}",
+            ],
+        )
+        self.check(
+            "audit_subscriber.events_matches",
+            audit_subscriber.events
+            == [
+                f"audit:{username_one}",
+                f"audit:{username_two}",
+                f"audit:{username_three}",
+            ],
+        )
 
-    pub_none = dispatcher.publish(NoSubscriberEvent(marker="ok"))
-    _check("publish(no_subscribers).is_success", pub_none.is_success)
-    _check("publish(no_subscribers).value", pub_none.value)
-
-
-def main() -> None:
-    """Run all scenarios and verify against golden file."""
-    demo_register_and_dispatch()
-    demo_auto_discovery()
-    demo_error_cases()
-    demo_event_publishing()
-    _verify()
+        marker = self.rand_str(4)
+        pub_none = dispatcher.publish(NoSubscriberEvent(marker=marker))
+        self.check("publish(no_subscribers).is_success", pub_none.is_success)
+        self.check("publish(no_subscribers).value", pub_none.value)
 
 
 if __name__ == "__main__":
-    main()
+    Ex04FlextDispatcher(__file__).run()

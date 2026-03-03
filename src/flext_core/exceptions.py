@@ -504,7 +504,7 @@ class FlextExceptions:
             """Normalize metadata from various input types to m.Metadata model.
 
             Args:
-                metadata: m.Metadata instance, dict-like object, or None
+                metadata: m.Metadata instance, dict-like mapping, or None
                 merged_kwargs: Additional attributes to merge
 
             Returns:

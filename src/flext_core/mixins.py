@@ -714,7 +714,9 @@ class FlextMixins(FlextRuntime):
                 """Initialize context stack with empty list."""
                 super().__init__(*args, **kwargs)
                 # Initialize _stack as instance attribute (not PrivateAttr for mixin compatibility)
-                object.__setattr__(self, "_stack", [])
+                object.__setattr__(  # JUSTIFIED: low-level set during mixin initialization
+                    self, "_stack", []
+                )  # JUSTIFIED: bypass custom setattr during init
 
             def push_context(
                 self,
@@ -877,9 +879,9 @@ class FlextMixins(FlextRuntime):
         def is_service(
             _obj: p.Service[t.ContainerValue],
         ) -> bool:
-            """Check if object satisfies p.Service protocol.
+            """Check if instance satisfies p.Service protocol.
 
-            Uses structural typing - any object implementing Service protocol
+            Uses structural typing - any instance implementing Service protocol
             will pass this check, including FlextService instances.
             """
             return True

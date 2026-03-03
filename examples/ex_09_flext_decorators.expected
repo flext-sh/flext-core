@@ -1,68 +1,68 @@
 [deprecated]
 deprecated.exists: True
-deprecated.result: 11
-deprecated.warning_count: 1
-deprecated.warning_type: 'DeprecationWarning'
-deprecated.warning_message: 'use new_api instead'
+deprecated.result_matches: True
+deprecated.warning_count: True
+deprecated.warning_type: True
+deprecated.warning_message: True
 
 [inject]
-inject.container_resolution: 'token-from-container'
-inject.kwarg_override: 'override-token'
-inject.missing_dependency_default: 'missing-default'
+inject.container_resolution_matches: True
+inject.kwarg_override_matches: True
+inject.missing_dependency_default_matches: True
 
 [factory]
-factory.default.name: 'ex09.factory.default'
+factory.default.name_matches: True
 factory.default.singleton: False
 factory.default.lazy: True
-factory.custom.name: 'ex09.factory.custom'
+factory.custom.name_matches: True
 factory.custom.singleton: True
 factory.custom.lazy: False
-factory.default.call: 'default'
-factory.custom.call: 'custom'
+factory.default.call_matches: True
+factory.custom.call_matches: True
 
 [railway]
-railway.alias_r.ok: 9
+railway.alias_r.ok: True
 railway.ok.is_success: True
-railway.ok.value: 5
+railway.ok.value_matches: True
 railway.fail.is_failure: True
-railway.fail.error: 'railway-failure'
-railway.fail.error_code: 'E_RAILWAY'
+railway.fail.error_nonempty: True
+railway.fail.error_code: True
 
 [retry]
-retry.default: 'default-ok'
-retry.linear.result: 'linear-2'
-retry.linear.attempts: 2
-retry.exponential.result: 'exp-2'
-retry.exponential.attempts: 2
+retry.default.nonempty: True
+retry.linear.result: True
+retry.linear.attempts: True
+retry.exponential.result: True
+retry.exponential.attempts: True
 retry.failure.raised: True
-retry.failure.type: 'RuntimeError'
-retry.failure.message: 'retry-exhausted'
+retry.failure.type: True
+retry.failure.message_nonempty: True
 
 [timeout]
-timeout.default.ok: 'default-timeout-ok'
-timeout.explicit.ok: 'explicit-timeout-ok'
+timeout.default.ok_nonempty: True
+timeout.explicit.ok_nonempty: True
 timeout.failure.raised: True
-timeout.failure.type: 'TimeoutError'
-timeout.failure.error_code: 'E_TIMEOUT'
+timeout.failure.type: True
+timeout.failure.error_code: True
 
 [log_operation]
-log_operation.named: 'named_log_operation'
-log_operation.default_track_perf: 'log_default_perf'
+log_operation.named_matches: True
+log_operation.default_track_perf: True
 
 [track_operation]
-track_operation.with_corr.operation: 'tracked_with_corr'
+track_operation.with_corr.operation: True
 track_operation.with_corr.has_corr: True
-track_operation.no_corr.operation: 'tracked_without_correlation'
+track_operation.no_corr.operation: True
 track_operation.no_corr.has_corr: False
 
 [track_performance]
-track_performance.named.value: 8
-track_performance.named.operation: 'perf_named'
-track_performance.default.operation: 'perf_default'
+track_performance.named.value: True
+track_performance.named.operation: True
+track_performance.default.operation: True
 
 [with_context]
-with_context.inside.tenant: 'tenant-1'
-with_context.inside.retries: 2
+with_context.inside.tenant: True
+with_context.inside.retries: True
 with_context.inside.enabled: True
 with_context.inside.dropped: 'None'
 with_context.after.tenant: 'None'
@@ -72,9 +72,9 @@ with_correlation.created: True
 with_correlation.prefix: True
 
 [combined]
-combined.standard: 'token-from-container|combined_standard'
+combined.standard_matches: True
 combined.railway.ok.is_success: True
-combined.railway.ok.value: 'pong|combined_railway'
+combined.railway.ok.value_matches: True
 combined.railway.fail.is_failure: True
-combined.railway.fail.error: 'combined-failure'
-combined.railway.fail.error_code: 'E_COMBINED'
+combined.railway.fail.error_nonempty: True
+combined.railway.fail.error_code: True

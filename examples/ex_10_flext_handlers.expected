@@ -1,6 +1,7 @@
 [handler_core]
 handle.not_implemented_pattern: 'NotImplementedError:'
-handler.handler_name: 'DemoHandler'
+handler.handler_name: 'afqofpvaus'
+handler.name_matches: True
 handler.mode: 'command'
 validate.none.failure: True
 validate.ok.success: True
@@ -18,17 +19,24 @@ dispatch.pipeline_exception: 'Handler cannot handle message type str'
 record_metric.ok: True
 push_context.mapping: True
 push_context.execution: True
-pop_context.1: 'h2'
-pop_context.2: 'h1'
+pop_context.1: 'srbqng'
+pop_context.2: 'jlvejr'
 
 [create_from_callable]
-callable.default: 'default:x'
-callable.named.handler_name: 'NamedCallable'
+callable.default: 'default:mhyrfi'
+callable.default.matches: True
+callable.named.handler_name: 'twderpkpmg'
+callable.named.name_matches: True
 callable.named.mode: 'query'
+callable.named.value_matches: True
 callable.mode_enum: 'event'
+callable.mode_enum.value_matches: True
 callable.mode_str: 'query'
-callable.handler_config.name: 'ConfiguredCallable'
+callable.mode_str.value_matches: True
+callable.handler_config.name: 'heassztncq'
 callable.handler_config.mode: 'saga'
+callable.handler_config.name_matches: True
+callable.handler_config.value_matches: True
 callable.invalid_mode: 'ValidationError:[VALIDATION_ERROR] Invalid handler mode: invalid'
 
 [discovery]
@@ -45,22 +53,22 @@ has_handlers_module.false: False
 [namespaces_and_mixins]
 bootstrap.create_instance: '_NoArgs'
 cqrs.record_metric: True
-cqrs.get_metrics: 2
+cqrs.get_metrics: 5
 cqrs.push_context.mapping: True
-cqrs.current_context: 'ctx'
-cqrs.pop_context: 'ctx'
+cqrs.current_context: 'ggoctv'
+cqrs.pop_context: 'ggoctv'
 di.bind_configuration_exists: True
 di.register_object: True
 di.register_factory.cached: True
 di.register_resource: True
-di.duplicate_error: "ValueError:Provider 'obj' is already registered"
+di.duplicate_error: "ValueError:Provider 'npzyt' is already registered"
 di.layered.bridge: 'DynamicContainer'
 di.layered.services: 'DynamicContainer'
 di.layered.resources: 'DynamicContainer'
 di.wire.noop: True
 integration.calls: True
-metadata.version: '2.0.0'
-metadata.attributes: {'tag': 'v2'}
+metadata.version: '9.1.0'
+metadata.attributes: {'tag': 'qoac'}
 protocol.is_handler.true: True
 protocol.is_handler.false: False
 protocol.is_service: True
@@ -75,19 +83,19 @@ validation.chain.fail: 'Validator must return r[bool].ok(True) for success, got 
 [runtime_result_and_utilities]
 rr.is_success: True
 rr.is_failure: True
-rr.unwrap_or: 9
-rr.map: 7
-rr.flat_map: 15
-rr.and_then: 4
-rr.alt: 'x:boom'
-rr.lash: 42
-rr.recover: 17
-rr.fold: 'ok:5'
-mixin.ok: 'v'
-mixin.fail: 'E2'
-mixin.ensure_result.value: 8
-mixin.ensure_result.result: 9
-mixin.to_dict: {'a': 1}
+rr.unwrap_or: True
+rr.map: True
+rr.flat_map: True
+rr.and_then: True
+rr.alt: True
+rr.lash: True
+rr.recover: True
+rr.fold: True
+mixin.ok: True
+mixin.fail: True
+mixin.ensure_result.value: True
+mixin.ensure_result.result: True
+mixin.to_dict: {'lh': 1}
 runtime.generate_id.length: True
 runtime.generate_id.unique: True
 runtime.generate_prefixed_id.default: True
@@ -99,7 +107,7 @@ runtime.hash_entity: True
 runtime.compare_value_objects.scalar: True
 runtime.compare_value_objects.model: False
 runtime.hash_value_object: True
-runtime.ensure_trace_context.source: 'test'
+runtime.ensure_trace_context.source: 'vhryd'
 runtime.ensure_trace_context.keys: [True, True, True, True]
 runtime.get_log_level: True
 runtime.validate_http.success: [200, 404]
@@ -113,9 +121,9 @@ runtime.is_valid_json.true: True
 runtime.is_valid_json.false: False
 runtime.is_valid_identifier.true: True
 runtime.is_valid_identifier.false: False
-runtime.safe_get_attribute: 'abc'
+runtime.safe_get_attribute: True
 runtime.extract_generic_args: True
 runtime.is_sequence_type.true: True
 runtime.is_sequence_type.false: False
-runtime.normalize_general: {'n': 1}
+runtime.normalize_general: {'lh': 1}
 runtime.normalize_metadata: '{"k": [1, 2]}'

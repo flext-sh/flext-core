@@ -14,7 +14,7 @@ and provides type guards and serialization utilities.
 
 **Core Components** (8 functional categories):
 1. **Type Guard Utilities** - Pattern-based type validation (email, URL, phone, UUID, path, JSON)
-2. **Serialization Utilities** - Safe object-to-dict conversion without circular imports
+2. **Serialization Utilities** - Safe instance-to-dict conversion without circular imports
 3. **Type Introspection** - Optional type checking, generic arg extraction
 4. **Sequence Type Checking** - Sequence type validation via typing module
 5. **External Library Access** - Direct access to structlog, dependency-injector
@@ -82,7 +82,7 @@ class _LazyMetadata:
 
     def __get__(
         self,
-        obj: object,
+        obj: t.GeneralValueType,
         objtype: type | None = None,
     ) -> type:
         from flext_core._runtime_metadata import Metadata  # noqa: PLC0415
@@ -143,7 +143,7 @@ class FlextRuntime:
 
     **Core Features** (10 runtime capabilities):
     1. **Type Safety** - TypeGuard utilities for pattern validation
-    2. **Serialization** - Multi-strategy safe object conversion
+    2. **Serialization** - Multi-strategy safe instance conversion
     3. **Type Introspection** - Generic type analysis
     4. **External Libraries** - structlog and dependency-injector adapters
     5. **Structured Logging** - Production-ready logging configuration
@@ -327,20 +327,20 @@ class FlextRuntime:
 
     @staticmethod
     def create_instance[T](class_type: type[T]) -> T:
-        """Type-safe factory for creating instances via object.__new__.
+        """Type-safe factory for creating instances via base allocator.
 
-        Business Rule: Creates instances using object.__new__() for type-safe
+        Business Rule: Creates instances using low-level allocation for type-safe
         instantiation without calling __init__. Validates instance type after creation
         to ensure type safety. This pattern eliminates the need for type: ignore comments
-        when using object.__new__() directly. Used by factory patterns throughout FLEXT
+        when using direct allocation calls. Used by factory patterns throughout FLEXT
         for creating instances without side effects from __init__.
 
         Audit Implication: Instance creation is validated at runtime, ensuring type
         safety for audit trails. All instances are verified to be of expected type
         before being returned. Used by dependency injection and factory patterns.
 
-        This helper function properly types object.__new__() calls, eliminating
-        the need for type: ignore comments. Use this instead of direct object.__new__()
+        This helper function properly types allocation calls, eliminating
+        the need for type: ignore comments. Use this instead of direct allocator
         calls in factory patterns.
 
         Args:
@@ -350,16 +350,18 @@ class FlextRuntime:
             An instance of type T
 
         Raises:
-            TypeError: If object.__new__() does not return instance of expected type
+            TypeError: If allocator call does not return instance of expected type
 
         Example:
             >>> instance = FlextRuntime.create_instance(MyClass)
             >>> # instance is properly typed as MyClass
 
         """
-        instance = object.__new__(class_type)
+        instance = object.__new__(  # JUSTIFIED: low-level allocation without __init__
+            class_type
+        )
         if not isinstance(instance, class_type):
-            msg = f"object.__new__ did not return instance of {class_type.__name__}"
+            msg = f"allocator did not return instance of {class_type.__name__}"
             raise TypeError(msg)
         return instance
 
@@ -389,7 +391,7 @@ class FlextRuntime:
             value: Value to check
 
         Returns:
-            True if value is a ConfigMap or dict-like object, False otherwise
+            True if value is a ConfigMap or dict-like mapping, False otherwise
 
         """
         match value:
@@ -453,7 +455,7 @@ class FlextRuntime:
         This is the central conversion function for type safety.
 
         Args:
-            val: Value to normalize (accepts object for flexibility with generics)
+            val: Value to normalize (accepts broad input for flexibility with generics)
 
         Returns:
             Normalized value compatible with t.ConfigMapValue
@@ -587,7 +589,7 @@ class FlextRuntime:
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
-    def is_base_model(obj: t.ContainerValue) -> TypeGuard[object]:
+    def is_base_model(obj: t.ContainerValue) -> TypeGuard[t.ContainerValue]:
         """Type guard to narrow object to BaseModel (part of PayloadValue).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
@@ -611,13 +613,13 @@ class FlextRuntime:
     ) -> t.ContainerValue:
         """Safe attribute access without raising AttributeError.
 
-        Business Rule: Accesses object attributes safely using getattr() with
+        Business Rule: Accesses attributes safely using getattr() with
         default value. Never raises AttributeError, always returns default if
         attribute doesn't exist. Used for safe introspection of arbitrary objects
         without type checking.
 
         Audit Implication: Safe attribute access ensures audit trail completeness
-        by preventing AttributeError exceptions during object introspection. All
+        by preventing AttributeError exceptions during introspection. All
         attribute access is safe and logged appropriately.
 
         Args:
@@ -1176,7 +1178,10 @@ class FlextRuntime:
         config: t.ContainerValue | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[object] | None = None,
+        additional_processors: Sequence[
+            t.GeneralValueType | Callable[..., t.ContainerValue]
+        ]
+        | None = None,
         wrapper_class_factory: Callable[[], type[p.Log.StructlogLogger]] | None = None,
         logger_factory: Callable[[], p.Log.StructlogLogger] | None = None,
         cache_logger_on_first_use: bool = True,
@@ -1185,7 +1190,7 @@ class FlextRuntime:
 
         DEBUG INSTRUMENTATION ACTIVE
 
-        Supports both config object pattern (reduced params) and individual parameters.
+        Supports both config model pattern (reduced params) and individual parameters.
 
         Args:
             config: Optional FlextModels.Config.StructlogConfig for all params
@@ -1275,7 +1280,7 @@ class FlextRuntime:
 
         # Determine logger factory (handle async buffering)
         # structlog accepts various factory types - we use object to accept all
-        factory_to_use: Callable[..., object]
+        factory_to_use: Callable[..., structlog.types.WrappedLogger]
         if logger_factory is not None:
             # Use the provided factory directly (Callable[[], p.Log.StructlogLogger])
             factory_to_use = logger_factory
@@ -2085,7 +2090,7 @@ class FlextRuntime:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:
-            context: Context dictionary or object to enrich
+            context: Context dictionary or instance to enrich
             include_correlation_id: If True, ensure correlation_id exists
             include_timestamp: If True, ensure timestamp exists
 

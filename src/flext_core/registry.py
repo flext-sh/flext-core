@@ -30,7 +30,7 @@ from flext_core import (
 )
 
 type RegistrablePlugin = t.RegistrablePlugin
-type RegistryBindingKey = str | type[object]
+type RegistryBindingKey = str | type[t.ContainerValue]
 
 
 class FlextRegistry(s[bool]):
@@ -262,7 +262,7 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _is_protocol_handler(
-        value: object,
+        value: t.GeneralValueType,
     ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
         return bool(
             hasattr(value, "handle")

@@ -380,9 +380,8 @@ def _generate_type_checking(
     Groups imports by top-level package with blank lines between groups,
     following isort conventions.
     """
-    lines: list[str] = ["if TYPE_CHECKING:"]
+    lines: list[str] = ["if TYPE_CHECKING:", "    from flext_core import t"]
     if not groups:
-        lines.append("    pass")
         return lines
 
     def _emit_module(mod: str) -> None:
@@ -451,7 +450,7 @@ def _generate_file(
     out.extend([
         "from __future__ import annotations",
         "",
-        "from typing import TYPE_CHECKING, Any",
+        "from typing import TYPE_CHECKING",
         "",
         lazy_import,
         "",
@@ -480,7 +479,7 @@ def _generate_file(
     out.extend(["]", "", ""])
 
     out.extend([
-        "def __getattr__(name: str) -> Any:  # noqa: ANN401",
+        "def __getattr__(name: str) -> t.GeneralValueType:",
         '    """Lazy-load module attributes on first access (PEP 562)."""',
         "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
         "",

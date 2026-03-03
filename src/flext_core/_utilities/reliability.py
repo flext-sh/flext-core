@@ -490,7 +490,7 @@ class FlextUtilitiesReliability:
         candidate: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
         value: t.ContainerValue,
     ) -> t.ContainerValue:
-        resolved: t.ContainerValue | object
+        resolved: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue]
         if FlextUtilitiesReliability._is_match_mapper(candidate):
             resolved = candidate(value)
         else:

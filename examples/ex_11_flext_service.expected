@@ -1,6 +1,7 @@
 [service_core_api]
 alias.FlextService_is_s: True
 execute.unwrap: 'echo:ok'
+execute.unwrap.matches: True
 result.property: 'echo:ok'
 runtime.type: 'ModelPrivateAttr'
 runtime.has_config_attr: False
@@ -27,39 +28,39 @@ auto_execute.execute_count_after_result: 1
 create_runtime.default.context: 'FlextContext'
 create_runtime.full.container: 'FlextContainer'
 create_runtime.full.config: 'FlextSettings'
-to_dict.none: ConfigMap(root={})
-to_dict.mapping: ConfigMap(root={'a': 1, 'b': 'x'})
-to_dict.model: ConfigMap(root={'text': 'hello', 'count': 2})
+to_dict.none: {}
+to_dict.mapping: {'gpo': 8, 'ssk': 'pvau'}
+to_dict.model: {'count': 4, 'text': 'trxcka'}
 model_dump.type: 'dict'
 model_dump.has_result: True
 model_dump_json.type: 'str'
 
 [mixins_and_runtime_methods]
-ok.unwrap: 123
-fail.error: 'broken'
-ensure_result.raw: 'wrapped'
-ensure_result.result: 'already'
+ok.unwrap: True
+fail.error: True
+ensure_result.raw: True
+ensure_result.result: True
 generate_id.length: 36
 generate_prefixed_id.prefix: True
-generate_prefixed_id.length: 12
+generate_prefixed_id.length: 17
 generate_datetime_utc.tz: True
 track.context.type: 'dict'
 track.has_operation_count: True
 track.has_success_rate: True
-traverse.success: sequence
-traverse.fail_fast: 'odd:3'
+traverse.success: [10, 32]
+traverse.fail_fast: 'odd:7'
 accumulate_errors.ok: True
-accumulate_errors.fail: 'e1; e2'
+accumulate_errors.fail: 'ukbx; osfm'
 
 [namespace_bootstrap_cqrs_validation]
 Bootstrap.create_instance.type: '_TinyType'
 Bootstrap.create_instance.init_called: False
 CQRS.MetricsTracker.record: True
-CQRS.MetricsTracker.get: 5
+CQRS.MetricsTracker.get: True
 CQRS.ContextStack.push.dict: True
 CQRS.ContextStack.current.type: 'ExecutionContext'
-CQRS.ContextStack.pop.handler_name: 'demo'
-CQRS.ContextStack.pop.empty: mapping
+CQRS.ContextStack.pop.handler_name: 'gpxkfz'
+CQRS.ContextStack.pop.empty: {}
 ProtocolValidation.is_handler: True
 ProtocolValidation.is_service: True
 ProtocolValidation.is_command_bus: True
@@ -67,50 +68,50 @@ ProtocolValidation.protocol_ok: True
 ProtocolValidation.protocol_unknown: 'Unknown protocol: UnknownProto. Supported: Handler, Service, CommandBus, Repository, Configurable'
 ProtocolValidation.processor_ok: True
 ProtocolValidation.processor_bad: "Processor _ProcessorProtocolBad missing required method 'process()'. Processors must implement: process, validate"
-Validation.validate_with_result.ok: 'ABC'
+Validation.validate_with_result.ok: 'NCB'
 Validation.validate_with_result.fail: 'Validation failed: too-short'
 
 [namespace_runtime_and_integration]
 Metadata.version: '1.0.0'
-Metadata.attributes: mapping
+Metadata.attributes: {'service': 'svc.ukbjzn'}
 Integration.calls: 'ok'
-DependencyIntegration.service: 'obj'
-DependencyIntegration.factory: 'factory'
+DependencyIntegration.service: True
+DependencyIntegration.factory: True
 DependencyIntegration.resource.type: 'ConfigMap'
 DependencyIntegration.bridge.type: 'DynamicContainer'
 DependencyIntegration.service_module.type: 'DynamicContainer'
 DependencyIntegration.resource_module.type: 'DynamicContainer'
 RuntimeResult.is_success: True
 RuntimeResult.is_failure: True
-RuntimeResult.value: 5
-RuntimeResult.error: 'bad'
-RuntimeResult.error_code: 'E_BAD'
-RuntimeResult.unwrap_or: 99
-RuntimeResult.unwrap_or_else: 11
-RuntimeResult.map: 7
-RuntimeResult.flat_map: 15
-RuntimeResult.and_then: 6
-RuntimeResult.flow_through: 12
-RuntimeResult.fold.success: 's:5'
-RuntimeResult.fold.failure: 'f:bad'
+RuntimeResult.value: 32
+RuntimeResult.error: 'fdyomu'
+RuntimeResult.error_code: 'uecl'
+RuntimeResult.unwrap_or: True
+RuntimeResult.unwrap_or_else: True
+RuntimeResult.map: True
+RuntimeResult.flat_map: True
+RuntimeResult.and_then: True
+RuntimeResult.flow_through: True
+RuntimeResult.fold.success: 's:32'
+RuntimeResult.fold.failure: 'f:fdyomu'
 RuntimeResult.tap: True
 RuntimeResult.tap_error: True
-RuntimeResult.tap.values: sequence
-RuntimeResult.tap_error.values: sequence
-RuntimeResult.map_error: 'x:bad'
+RuntimeResult.tap.values: [32]
+RuntimeResult.tap_error.values: ['fdyomu']
+RuntimeResult.map_error: 'x:fdyomu'
 RuntimeResult.filter.pass: True
 RuntimeResult.filter.fail: 'Filter predicate failed'
-RuntimeResult.alt: 'alt:bad'
-RuntimeResult.lash: 3
-RuntimeResult.recover: 3
-RuntimeResult.operator_or: 77
+RuntimeResult.alt: 'alt:fdyomu'
+RuntimeResult.lash: 6
+RuntimeResult.recover: 6
+RuntimeResult.operator_or: 87
 RuntimeResult.bool.success: True
 RuntimeResult.bool.failure: False
-RuntimeResult.repr.success: 'r.ok(5)'
-RuntimeResult.repr.failure: "r.fail('bad')"
-RuntimeResult.context_manager: 5
+RuntimeResult.repr.success: 'r.ok(32)'
+RuntimeResult.repr.failure: "r.fail('fdyomu')"
+RuntimeResult.context_manager: 32
 RuntimeResult.ok.none_raises: True
-RuntimeResult.ok.none_type: 'ValueError'
+RuntimeResult.ok.none_type: 'str'
 compare_entities_by_id.true: True
 compare_entities_by_id.false: False
 hash_entity_by_id.type: 'int'
@@ -119,5 +120,5 @@ hash_value_object_by_value.type: 'int'
 ensure_trace_context.has_trace_id: True
 ensure_trace_context.has_span_id: True
 ensure_trace_context.has_correlation_id: True
-validate_http_status_codes.ok: sequence
+validate_http_status_codes.ok: [200, 201]
 validate_http_status_codes.fail: 'Invalid HTTP status code: 99 (must be 100-599)'

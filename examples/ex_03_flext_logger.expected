@@ -1,7 +1,10 @@
 [factory_methods]
 create_module_logger.type: 'FlextLogger'
+create_module_logger.type_matches: True
 get_logger.type: 'BoundLoggerLazyProxy'
+get_logger.type_matches: False
 create_bound_logger.type: 'FlextLogger'
+create_bound_logger.type_matches: True
 
 [global_context]
 bind_global_context.ok: True
@@ -25,15 +28,21 @@ unbind_context_for_level.ok: True
 
 [container]
 for_container.type: 'FlextLogger'
+for_container.type_matches: True
 for_container.debug.ok: True
 with_container_context.info.ok: True
 
 [instance_methods]
 bind.type: 'FlextLogger'
+bind.type_matches: True
 new.type: 'FlextLogger'
+new.type_matches: True
 unbind.type: 'FlextLogger'
+unbind.type_matches: True
 try_unbind.type: 'FlextLogger'
+try_unbind.type_matches: True
 with_result.type: 'ResultAdapter'
+with_result.type_matches: True
 trace.ok: True
 debug.ok: True
 info.ok: True
@@ -43,15 +52,17 @@ error.ok: True
 critical.ok: True
 log.ok: True
 build_exception_context.type: 'ConfigMap'
+build_exception_context.type_matches: False
 exception.ok: True
 
 [performance_tracker]
 performance_tracker.body.ok: True
 
 [result_adapter]
-adapter.name: 'examples.ex_03.adapter'
+adapter.name: 'examples.ex_03.auqgto'
 adapter.with_result.idempotent: True
 adapter.bind.type: 'ResultAdapter'
+adapter.bind.type_matches: True
 adapter.trace.ok: True
 adapter.debug.ok: True
 adapter.info.ok: True

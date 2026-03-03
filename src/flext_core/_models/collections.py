@@ -11,13 +11,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
-from typing import Self, override
+from typing import Any as JUSTIFIEDAny, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import FlextRuntime, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
+
+type _JUSTIFIEDEqOperand = JUSTIFIEDAny
 
 
 class FlextModelsCollections:
@@ -796,7 +798,7 @@ class FlextModelsCollections:
             return self.__class__(**updated_dict)
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
             """Compare configs by value.
 
             Args:

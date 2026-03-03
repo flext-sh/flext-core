@@ -6,36 +6,57 @@ reset_global_instance.recreates_global: True
 subclass.singleton_identity: True
 
 [configuration_fields_and_validation]
-field.app_name: 'demo-app'
-field.version: '9.8.7'
-field.debug: True
+field.app_name: 'qahftrxc'
+field.app_name_matches: True
+field.version: '7.0.0'
+field.version_matches: True
+field.debug: False
+field.debug_matches: True
 field.trace: False
+field.trace_matches: True
 field.log_level: <LogLevel.INFO: 'INFO'>
+field.log_level_matches: True
 field.async_logging: False
 field.enable_caching: False
-field.cache_ttl: 321
-field.database_url: 'sqlite:///tmp/demo.db'
-field.database_pool_size: 11
-field.circuit_breaker_threshold: 4
-field.rate_limit_max_requests: 77
-field.rate_limit_window_seconds: 42
-field.retry_delay: 5
-field.max_retry_attempts: 6
+field.cache_ttl: 239
+field.cache_ttl_matches: True
+field.database_url: 'sqlite:///tmp/ldxchqxj.db'
+field.database_url_matches: True
+field.database_pool_size: 33
+field.database_pool_size_matches: True
+field.circuit_breaker_threshold: 10
+field.circuit_breaker_threshold_matches: True
+field.rate_limit_max_requests: 7
+field.rate_limit_max_requests_matches: True
+field.rate_limit_window_seconds: 72
+field.rate_limit_window_seconds_matches: True
+field.retry_delay: 7
+field.retry_delay_matches: True
+field.max_retry_attempts: 9
+field.max_retry_attempts_matches: True
 field.enable_timeout_executor: False
 field.dispatcher_enable_logging: False
 field.dispatcher_auto_context: False
-field.dispatcher_timeout_seconds: 2.5
+field.dispatcher_timeout_seconds: 14.0
+field.dispatcher_timeout_seconds_matches: True
 field.dispatcher_enable_metrics: False
-field.executor_workers: 3
-field.timeout_seconds: 13.0
-field.max_workers: 7
-field.max_batch_size: 29
-field.api_key: 'demo-key'
+field.executor_workers: 8
+field.executor_workers_matches: True
+field.timeout_seconds: 58.0
+field.timeout_seconds_matches: True
+field.max_workers: 36
+field.max_workers_matches: True
+field.max_batch_size: 2
+field.max_batch_size_matches: True
+field.api_key: 'tekhftcjjigb'
+field.api_key_matches: True
 field.exception_failure_level: <FailureLevel.PERMISSIVE: 'permissive'>
-validate_configuration.indirect_via_model_validate: 'demo-app'
+validate_configuration.indirect_via_model_validate: 'qahftrxc'
+validate_configuration.indirect_via_model_validate_matches: True
 
 [effective_log_level_and_override]
 effective_log_level.base: <LogLevel.ERROR: 'ERROR'>
+effective_log_level.base_matches: True
 apply_override.valid_return: True
 apply_override.valid_applied: True
 effective_log_level.debug: <LogLevel.INFO: 'INFO'>
@@ -45,24 +66,37 @@ apply_override.invalid_return: False
 [materialize_and_provider]
 materialize.clone_same_values: True
 materialize.clone_new_object: False
-materialize.override.app_name: 'materialized'
-materialize.override.timeout_seconds: 55.0
+materialize.override.app_name: 'zwwjlvejrs'
+materialize.override.app_name_matches: True
+materialize.override.timeout_seconds: 97.0
+materialize.override.timeout_seconds_matches: True
 get_di_config_provider.type: 'Singleton'
+get_di_config_provider.type_matches: False
 
 [resolve_env_file_and_auto_config]
-resolve_env_file.custom_path: '/home/marlonsc/flext/.venv/flext_settings_example.env'
+resolve_env_file.custom_path: '/home/marlonsc/flext/.venv/qpesejzqor.env'
+resolve_env_file.custom_path_matches: False
 AutoConfig.create_config.type: '_TestConfig'
+AutoConfig.create_config.type_matches: True
 AutoConfig.create_config.service_name: 'test-service'
+AutoConfig.create_config.service_name_matches: True
 
 [namespace_system]
-get_namespace_config.decorated: _DecoratedNamespace
-get_namespace_config.registered: _RegisteredNamespace
+get_namespace_config.decorated: '_DecoratedNamespace'
+get_namespace_config.registered: '_RegisteredNamespace'
 auto_register.class_used: '_DecoratedNamespace'
-get_namespace.decorated.service_name: 'decorated'
-get_namespace.registered.service_name: 'registered'
+auto_register.class_used_matches: True
+get_namespace.decorated.service_name: 'rkxlggogp'
+get_namespace.decorated.service_name_matches: True
+get_namespace.registered.service_name: 'xkfzncbcq'
+get_namespace.registered.service_name_matches: True
 
 [context_system]
-register_context_overrides.service_name: 'worker-service'
-for_context.registered.timeout_seconds: 41.0
-for_context.registered.max_workers: 2
+register_context_overrides.service_name: 'cllywgnexwhq'
+register_context_overrides.service_name_matches: True
+for_context.registered.timeout_seconds: 82.0
+for_context.registered.timeout_seconds_matches: True
+for_context.registered.max_workers: 4
+for_context.registered.max_workers_matches: True
 for_context.runtime_override.feature_enabled: False
+for_context.runtime_override.feature_enabled_matches: True

@@ -2,352 +2,501 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
+from shared import Examples
 
-from flext_core import FlextExceptions, c, e, r, t, u
-
-type _SerValue = t.JsonPrimitive | list[_SerValue] | dict[str, _SerValue] | None
-
-_RESULTS: list[str] = []
+from flext_core import FlextExceptions, c, e, r
 
 
-def _check(label: str, value: _SerValue) -> None:
-    _RESULTS.append(f"{label}: {_ser(value)}")
+class Ex07FlextExceptions(Examples):
+    """Exercise FlextExceptions public API."""
 
+    def _exercise_base_error(self) -> None:
+        """Exercise BaseError construction and serialization helpers."""
+        self.section("base_error")
 
-def _section(name: str) -> None:
-    if _RESULTS:
-        _RESULTS.append("")
-    _RESULTS.append(f"[{name}]")
+        base_message = self.rand_str(10)
+        base_error_code = f"E_{self.rand_str(6).upper()}"
+        base_scope = self.rand_str(6)
+        base_channel = self.rand_str(6)
+        base_corr = f"corr-{self.rand_str(8)}"
+        base_operation = self.rand_str(8)
 
-
-def _ser(v: _SerValue) -> str:
-    if v is None:
-        return "None"
-    if isinstance(v, bool):
-        return str(v)
-    if isinstance(v, (int, float)):
-        return str(v)
-    if isinstance(v, str):
-        return repr(v)
-    if u.is_list(v):
-        return "[" + ", ".join(_ser(item) for item in v) + "]"
-    if u.is_dict_like(v):
-        pairs = ", ".join(
-            f"{_ser(k)}: {_ser(value)}"
-            for k, value in sorted(v.items(), key=lambda kv: str(kv[0]))
+        base = e.BaseError(
+            base_message,
+            error_code=base_error_code,
+            context={"scope": base_scope},
+            metadata={"channel": base_channel},
+            correlation_id=base_corr,
+            auto_correlation=False,
+            auto_log=False,
+            operation=base_operation,
         )
-        return "{" + pairs + "}"
-    return type(v).__name__
-
-
-def _verify() -> None:
-    actual = "\n".join(_RESULTS).strip() + "\n"
-    me = Path(__file__)
-    expected_path = me.with_suffix(".expected")
-    checks = sum(1 for line in _RESULTS if ": " in line and not line.startswith("["))
-    if expected_path.exists():
-        expected = expected_path.read_text(encoding="utf-8")
-        if expected == actual:
-            sys.stdout.write(f"PASS: {me.stem} ({checks} checks)\n")
-            return
-        actual_path = me.with_suffix(".actual")
-        actual_path.write_text(actual, encoding="utf-8")
-        sys.stdout.write(
-            f"FAIL: {me.stem} — diff {expected_path.name} {actual_path.name}\n"
+        self.check("base.class", type(base).__name__)
+        self.check("base.message_matches", base.message == base_message)
+        self.check("base.error_code_matches", base.error_code == base_error_code)
+        self.check("base.correlation_id_matches", base.correlation_id == base_corr)
+        self.check("base.auto_log", base.auto_log)
+        self.check(
+            "base.meta.scope_matches",
+            base.metadata.attributes.get("scope") == base_scope,
         )
-        sys.exit(1)
-    expected_path.write_text(actual, encoding="utf-8")
-    sys.stdout.write(f"GENERATED: {expected_path.name} ({checks} checks)\n")
-
-
-def _exercise_base_error() -> None:
-    _section("base_error")
-
-    base = e.BaseError(
-        "base boom",
-        error_code="E_BASE",
-        context={"scope": "demo"},
-        metadata={"channel": "example"},
-        correlation_id="corr-base-1",
-        auto_correlation=False,
-        auto_log=False,
-        operation="create",
-    )
-    _check("base.class", type(base).__name__)
-    _check("base.message", base.message)
-    _check("base.error_code", base.error_code)
-    _check("base.correlation_id", base.correlation_id)
-    _check("base.auto_log", base.auto_log)
-    _check("base.meta.scope", base.metadata.attributes.get("scope"))
-    _check("base.meta.channel", base.metadata.attributes.get("channel"))
-    _check("base.meta.operation", base.metadata.attributes.get("operation"))
-
-    payload = base.to_dict()
-    _check("base.to_dict.type", payload.get("error_type"))
-    _check("base.to_dict.message", payload.get("message"))
-    _check("base.to_dict.error_code", payload.get("error_code"))
-    _check("base.to_dict.has_timestamp", "timestamp" in payload)
-
-    auto_corr = e.BaseError(
-        "auto corr",
-        error_code="E_AUTO",
-        auto_correlation=True,
-        auto_log=False,
-    )
-    _check(
-        "base.auto_corr.prefix",
-        auto_corr.correlation_id is not None
-        and auto_corr.correlation_id.startswith("exc_"),
-    )
-
-
-def _exercise_specific_exceptions() -> None:
-    _section("subclasses")
-
-    msg = "invalid"
-    try:
-        raise e.ValidationError(msg, field="email", value="bad")
-    except e.ValidationError as exc:
-        _check("ValidationError.field", exc.field)
-        _check("ValidationError.value", exc.value)
-
-    msg = "bad cfg"
-    try:
-        raise e.ConfigurationError(
-            msg,
-            config_key="db.host",
-            config_source="env",
+        self.check(
+            "base.meta.channel_matches",
+            base.metadata.attributes.get("channel") == base_channel,
         )
-    except e.ConfigurationError as exc:
-        _check("ConfigurationError.config_key", exc.config_key)
-        _check("ConfigurationError.config_source", exc.config_source)
-
-    msg = "down"
-    try:
-        raise e.ConnectionError(msg, host="127.0.0.1", port=5432, timeout=3.5)
-    except e.ConnectionError as exc:
-        _check("ConnectionError.host", exc.host)
-        _check("ConnectionError.port", exc.port)
-        _check("ConnectionError.timeout", exc.timeout)
-
-    msg = "late"
-    try:
-        raise e.TimeoutError(msg, timeout_seconds=2.0, operation="sync")
-    except e.TimeoutError as exc:
-        _check("TimeoutError.timeout_seconds", exc.timeout_seconds)
-        _check("TimeoutError.operation", exc.operation)
-
-    msg = "auth fail"
-    try:
-        raise e.AuthenticationError(msg, auth_method="token", user_id="u-1")
-    except e.AuthenticationError as exc:
-        _check("AuthenticationError.auth_method", exc.auth_method)
-        _check("AuthenticationError.user_id", exc.user_id)
-
-    msg = "nope"
-    try:
-        raise e.AuthorizationError(
-            msg,
-            user_id="u-2",
-            resource="invoice:7",
-            permission="read",
-        )
-    except e.AuthorizationError as exc:
-        _check("AuthorizationError.user_id", exc.user_id)
-        _check("AuthorizationError.resource", exc.resource)
-        _check("AuthorizationError.permission", exc.permission)
-
-    msg = "missing"
-    try:
-        raise e.NotFoundError(msg, resource_type="User", resource_id="404")
-    except e.NotFoundError as exc:
-        _check("NotFoundError.resource_type", exc.resource_type)
-        _check("NotFoundError.resource_id", exc.resource_id)
-
-    msg = "conflict"
-    try:
-        raise e.ConflictError(
-            msg,
-            resource_type="User",
-            resource_id="13",
-            conflict_reason="duplicate",
-        )
-    except e.ConflictError as exc:
-        _check("ConflictError.resource_type", exc.resource_type)
-        _check("ConflictError.resource_id", exc.resource_id)
-        _check("ConflictError.conflict_reason", exc.conflict_reason)
-
-    msg = "slow down"
-    try:
-        raise e.RateLimitError(
-            msg,
-            limit=100,
-            window_seconds=60,
-            retry_after=1.5,
-        )
-    except e.RateLimitError as exc:
-        _check("RateLimitError.limit", exc.limit)
-        _check("RateLimitError.window_seconds", exc.window_seconds)
-        _check("RateLimitError.retry_after", exc.retry_after)
-
-    msg = "open"
-    try:
-        raise e.CircuitBreakerError(
-            msg,
-            service_name="billing",
-            failure_count=5,
-            reset_timeout=30.0,
-        )
-    except e.CircuitBreakerError as exc:
-        _check("CircuitBreakerError.service_name", exc.service_name)
-        _check("CircuitBreakerError.failure_count", exc.failure_count)
-        _check("CircuitBreakerError.reset_timeout", exc.reset_timeout)
-
-    msg = "wrong type"
-    try:
-        raise e.TypeError(msg, expected_type=str, actual_type=int)
-    except e.TypeError as exc:
-        _check(
-            "TypeError.expected_type",
-            exc.expected_type.__name__ if exc.expected_type is not None else None,
-        )
-        _check(
-            "TypeError.actual_type",
-            exc.actual_type.__name__ if exc.actual_type is not None else None,
+        self.check(
+            "base.meta.operation_matches",
+            base.metadata.attributes.get("operation") == base_operation,
         )
 
-    msg = "failed op"
-    try:
-        raise e.OperationError(msg, operation="publish", reason="quota")
-    except e.OperationError as exc:
-        _check("OperationError.operation", exc.operation)
-        _check("OperationError.reason", exc.reason)
-
-    msg = "bad attr"
-    try:
-        raise e.AttributeAccessError(
-            msg,
-            attribute_name="secret",
-            attribute_context="UserModel",
+        payload = base.to_dict()
+        self.check(
+            "base.to_dict.type_matches", payload.get("error_type") == "BaseError"
         )
-    except e.AttributeAccessError as exc:
-        _check("AttributeAccessError.attribute_name", exc.attribute_name)
-        _check("AttributeAccessError.attribute_context", exc.attribute_context)
+        self.check(
+            "base.to_dict.message_matches", payload.get("message") == base_message
+        )
+        self.check(
+            "base.to_dict.error_code_matches",
+            payload.get("error_code") == base_error_code,
+        )
+        self.check("base.to_dict.has_timestamp", "timestamp" in payload)
 
+        auto_message = self.rand_str(10)
+        auto_error_code = f"E_{self.rand_str(6).upper()}"
 
-def _exercise_factories_and_helpers() -> None:
-    _section("factories_helpers")
+        auto_corr = e.BaseError(
+            auto_message,
+            error_code=auto_error_code,
+            auto_correlation=True,
+            auto_log=False,
+        )
+        self.check(
+            "base.auto_corr.prefix",
+            auto_corr.correlation_id is not None
+            and auto_corr.correlation_id.startswith("exc_"),
+        )
 
-    created_validation = e.create_error("ValidationError", "factory validation")
-    _check("create_error.ValidationError", type(created_validation).__name__)
+    def _exercise_specific_exceptions(self) -> None:
+        """Exercise specialized exception subclasses."""
+        self.section("subclasses")
 
-    created_attribute = e.create_error("AttributeError", "factory attribute")
-    _check("create_error.AttributeError", type(created_attribute).__name__)
+        msg = self.rand_str(10)
+        field = self.rand_str(7)
+        field_value = self.rand_str(7)
+        try:
+            raise e.ValidationError(msg, field=field, value=field_value)
+        except e.ValidationError as exc:
+            self.check("ValidationError.message_matches", str(exc) == msg)
+            self.check("ValidationError.field_matches", exc.field == field)
+            self.check("ValidationError.value_matches", exc.value == field_value)
 
-    created_dynamic = e.create(
-        "dynamic",
-        error_code="E_DYNAMIC",
-        field="username",
-        value="",
-        metadata={"caller": "example"},
-        correlation_id="corr-dyn-1",
-    )
-    _check("create.type", type(created_dynamic).__name__)
-    _check("create.error_code", created_dynamic.error_code)
-    _check("create.metadata.caller", created_dynamic.metadata.attributes.get("caller"))
-    _check("create.correlation_id", created_dynamic.correlation_id)
+        msg = self.rand_str(10)
+        config_key = self.rand_str(10)
+        config_source = self.rand_str(8)
+        try:
+            raise e.ConfigurationError(
+                msg,
+                config_key=config_key,
+                config_source=config_source,
+            )
+        except e.ConfigurationError as exc:
+            self.check("ConfigurationError.message_matches", str(exc) == msg)
+            self.check(
+                "ConfigurationError.config_key_matches", exc.config_key == config_key
+            )
+            self.check(
+                "ConfigurationError.config_source_matches",
+                exc.config_source == config_source,
+            )
 
-    prepared = e.prepare_exception_kwargs(
-        {
-            "correlation_id": "corr-prep",
-            "metadata": {"k": "v"},
-            "auto_log": True,
-            "auto_correlation": True,
-            "config": "cfg-a",
-            "field": "existing",
-            "custom": "x",
-        },
-        {"field": "forced"},
-    )
-    prep_corr, prep_metadata, prep_auto_log, prep_auto_corr, prep_config, prep_extra = (
-        prepared
-    )
-    _check("prepare.correlation_id", prep_corr)
-    _check("prepare.metadata_type", type(prep_metadata).__name__)
-    _check("prepare.auto_log", prep_auto_log)
-    _check("prepare.auto_correlation", prep_auto_corr)
-    _check("prepare.config", prep_config)
-    _check("prepare.extra.field", prep_extra.get("field"))
-    _check("prepare.extra.custom", prep_extra.get("custom"))
+        msg = self.rand_str(10)
+        host = self.rand_str(8)
+        port = self.rand_int(1, 65000)
+        timeout = self.rand_float(0.1, 10.0)
+        try:
+            raise e.ConnectionError(msg, host=host, port=port, timeout=timeout)
+        except e.ConnectionError as exc:
+            self.check("ConnectionError.message_matches", str(exc) == msg)
+            self.check("ConnectionError.host_matches", exc.host == host)
+            self.check("ConnectionError.port_matches", exc.port == port)
+            self.check("ConnectionError.timeout_matches", exc.timeout == timeout)
 
-    extracted_corr, extracted_meta = e.extract_common_kwargs({
-        "correlation_id": "corr-ext",
-        "metadata": {"x": "1"},
-        "field": "f",
-    })
-    _check("extract.correlation_id", extracted_corr)
-    _check("extract.metadata.kind", type(extracted_meta).__name__)
+        msg = self.rand_str(10)
+        timeout_seconds = self.rand_float(0.1, 10.0)
+        operation = self.rand_str(9)
+        try:
+            raise e.TimeoutError(
+                msg, timeout_seconds=timeout_seconds, operation=operation
+            )
+        except e.TimeoutError as exc:
+            self.check("TimeoutError.message_matches", str(exc) == msg)
+            self.check(
+                "TimeoutError.timeout_seconds_matches",
+                exc.timeout_seconds == timeout_seconds,
+            )
+            self.check("TimeoutError.operation_matches", exc.operation == operation)
 
-    instance_factory = FlextExceptions()
-    instance_created = instance_factory(
-        "from __call__",
-        error_code="E_CALL",
-        field="title",
-        value="",
-    )
-    _check("__call__.type", type(instance_created).__name__)
-    _check("__call__.error_code", instance_created.error_code)
+        msg = self.rand_str(10)
+        auth_method = self.rand_str(8)
+        user_id = self.rand_str(8)
+        try:
+            raise e.AuthenticationError(msg, auth_method=auth_method, user_id=user_id)
+        except e.AuthenticationError as exc:
+            self.check("AuthenticationError.message_matches", str(exc) == msg)
+            self.check(
+                "AuthenticationError.auth_method_matches",
+                exc.auth_method == auth_method,
+            )
+            self.check("AuthenticationError.user_id_matches", exc.user_id == user_id)
 
+        msg = self.rand_str(10)
+        user_id = self.rand_str(8)
+        resource = self.rand_str(10)
+        permission = self.rand_str(8)
+        try:
+            raise e.AuthorizationError(
+                msg,
+                user_id=user_id,
+                resource=resource,
+                permission=permission,
+            )
+        except e.AuthorizationError as exc:
+            self.check("AuthorizationError.message_matches", str(exc) == msg)
+            self.check("AuthorizationError.user_id_matches", exc.user_id == user_id)
+            self.check("AuthorizationError.resource_matches", exc.resource == resource)
+            self.check(
+                "AuthorizationError.permission_matches",
+                exc.permission == permission,
+            )
 
-def _exercise_metrics() -> None:
-    _section("metrics")
+        msg = self.rand_str(10)
+        resource_type = self.rand_str(7)
+        resource_id = self.rand_str(7)
+        try:
+            raise e.NotFoundError(
+                msg, resource_type=resource_type, resource_id=resource_id
+            )
+        except e.NotFoundError as exc:
+            self.check("NotFoundError.message_matches", str(exc) == msg)
+            self.check(
+                "NotFoundError.resource_type_matches",
+                exc.resource_type == resource_type,
+            )
+            self.check(
+                "NotFoundError.resource_id_matches", exc.resource_id == resource_id
+            )
 
-    e.clear_metrics()
-    e.record_exception(e.ValidationError)
-    e.record_exception(e.ValidationError)
-    e.record_exception(e.ConfigurationError)
+        msg = self.rand_str(10)
+        resource_type = self.rand_str(7)
+        resource_id = self.rand_str(7)
+        conflict_reason = self.rand_str(9)
+        try:
+            raise e.ConflictError(
+                msg,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                conflict_reason=conflict_reason,
+            )
+        except e.ConflictError as exc:
+            self.check("ConflictError.message_matches", str(exc) == msg)
+            self.check(
+                "ConflictError.resource_type_matches",
+                exc.resource_type == resource_type,
+            )
+            self.check(
+                "ConflictError.resource_id_matches", exc.resource_id == resource_id
+            )
+            self.check(
+                "ConflictError.conflict_reason_matches",
+                exc.conflict_reason == conflict_reason,
+            )
 
-    metrics = e.get_metrics()
-    metric_map = metrics.root
-    _check("metrics.total_exceptions", metric_map.get("total_exceptions"))
-    counts_obj = metric_map.get("exception_counts")
-    if u.is_dict_like(counts_obj):
-        counts_map = dict(counts_obj)
-        _check("metrics.validation_count", counts_map.get("ValidationError"))
-        _check("metrics.configuration_count", counts_map.get("ConfigurationError"))
-    else:
-        _check("metrics.validation_count", "missing")
-        _check("metrics.configuration_count", "missing")
+        msg = self.rand_str(10)
+        limit = self.rand_int(1, 1000)
+        window_seconds = self.rand_int(1, 1000)
+        retry_after = self.rand_float(0.1, 10.0)
+        try:
+            raise e.RateLimitError(
+                msg,
+                limit=limit,
+                window_seconds=window_seconds,
+                retry_after=retry_after,
+            )
+        except e.RateLimitError as exc:
+            self.check("RateLimitError.message_matches", str(exc) == msg)
+            self.check("RateLimitError.limit_matches", exc.limit == limit)
+            self.check(
+                "RateLimitError.window_seconds_matches",
+                exc.window_seconds == window_seconds,
+            )
+            self.check(
+                "RateLimitError.retry_after_matches", exc.retry_after == retry_after
+            )
 
-    _check("metrics.summary_nonempty", bool(metric_map.get("exception_counts_summary")))
-    _check("metrics.unique_types", metric_map.get("unique_exception_types"))
+        msg = self.rand_str(10)
+        service_name = self.rand_str(8)
+        failure_count = self.rand_int(1, 100)
+        reset_timeout = self.rand_float(0.1, 60.0)
+        try:
+            raise e.CircuitBreakerError(
+                msg,
+                service_name=service_name,
+                failure_count=failure_count,
+                reset_timeout=reset_timeout,
+            )
+        except e.CircuitBreakerError as exc:
+            self.check("CircuitBreakerError.message_matches", str(exc) == msg)
+            self.check(
+                "CircuitBreakerError.service_name_matches",
+                exc.service_name == service_name,
+            )
+            self.check(
+                "CircuitBreakerError.failure_count_matches",
+                exc.failure_count == failure_count,
+            )
+            self.check(
+                "CircuitBreakerError.reset_timeout_matches",
+                exc.reset_timeout == reset_timeout,
+            )
 
-    e.clear_metrics()
-    after_clear = e.get_metrics().root
-    _check("metrics.cleared_total", after_clear.get("total_exceptions"))
+        msg = self.rand_str(10)
+        expected_type = str
+        actual_type = int
+        try:
+            raise e.TypeError(msg, expected_type=expected_type, actual_type=actual_type)
+        except e.TypeError as exc:
+            self.check("TypeError.message_matches", str(exc) == msg)
+            self.check(
+                "TypeError.expected_type_matches",
+                exc.expected_type is expected_type,
+            )
+            self.check(
+                "TypeError.actual_type_matches",
+                exc.actual_type is actual_type,
+            )
 
+        msg = self.rand_str(10)
+        operation = self.rand_str(8)
+        reason = self.rand_str(8)
+        try:
+            raise e.OperationError(msg, operation=operation, reason=reason)
+        except e.OperationError as exc:
+            self.check("OperationError.message_matches", str(exc) == msg)
+            self.check("OperationError.operation_matches", exc.operation == operation)
+            self.check("OperationError.reason_matches", exc.reason == reason)
 
-def main() -> None:
-    """Run all sections and validate the golden output."""
-    _section("imports")
-    _check("import.e_is_FlextExceptions", e is FlextExceptions)
-    _check("import.r_ok", r[str].ok("ok").is_success)
-    _check("import.constant", c.Errors.UNKNOWN_ERROR)
+        msg = self.rand_str(10)
+        attribute_name = self.rand_str(8)
+        attribute_context = self.rand_str(10)
+        try:
+            raise e.AttributeAccessError(
+                msg,
+                attribute_name=attribute_name,
+                attribute_context=attribute_context,
+            )
+        except e.AttributeAccessError as exc:
+            self.check("AttributeAccessError.message_matches", str(exc) == msg)
+            self.check(
+                "AttributeAccessError.attribute_name_matches",
+                exc.attribute_name == attribute_name,
+            )
+            self.check(
+                "AttributeAccessError.attribute_context_matches",
+                exc.attribute_context == attribute_context,
+            )
 
-    msg = "boom"
-    try:
-        raise ValueError(msg)
-    except ValueError as exc:
-        _check("style.raise_msg", str(exc))
+    def _exercise_factories_and_helpers(self) -> None:
+        """Exercise factory helpers and kwargs extraction APIs."""
+        self.section("factories_helpers")
 
-    _exercise_base_error()
-    _exercise_specific_exceptions()
-    _exercise_factories_and_helpers()
-    _exercise_metrics()
-    _verify()
+        validation_msg = self.rand_str(10)
+        created_validation = e.create_error("ValidationError", validation_msg)
+        self.check(
+            "create_error.ValidationError.type_matches",
+            type(created_validation).__name__ == "ValidationError",
+        )
+        self.check(
+            "create_error.ValidationError.message_matches",
+            str(created_validation) == validation_msg,
+        )
+
+        attribute_msg = self.rand_str(10)
+        created_attribute = e.create_error("AttributeError", attribute_msg)
+        self.check(
+            "create_error.AttributeError.type_matches",
+            type(created_attribute).__name__ == "AttributeError",
+        )
+        self.check(
+            "create_error.AttributeError.message_matches",
+            str(created_attribute) == attribute_msg,
+        )
+
+        dynamic_message = self.rand_str(10)
+        dynamic_error_code = f"E_{self.rand_str(6).upper()}"
+        dynamic_field = self.rand_str(7)
+        dynamic_value = self.rand_str(7)
+        dynamic_caller = self.rand_str(8)
+        dynamic_corr = f"corr-{self.rand_str(8)}"
+
+        created_dynamic = e.create(
+            dynamic_message,
+            error_code=dynamic_error_code,
+            field=dynamic_field,
+            value=dynamic_value,
+            metadata={"caller": dynamic_caller},
+            correlation_id=dynamic_corr,
+        )
+        self.check(
+            "create.type_matches", type(created_dynamic).__name__ == "ValidationError"
+        )
+        self.check(
+            "create.error_code_matches",
+            created_dynamic.error_code == dynamic_error_code,
+        )
+        self.check(
+            "create.metadata.caller_matches",
+            created_dynamic.metadata.attributes.get("caller") == dynamic_caller,
+        )
+        self.check(
+            "create.correlation_id_matches",
+            created_dynamic.correlation_id == dynamic_corr,
+        )
+
+        prep_corr_input = f"corr-{self.rand_str(8)}"
+        prep_meta_key = self.rand_str(6)
+        prep_meta_value = self.rand_str(6)
+        prep_config = self.rand_str(7)
+        prep_field_existing = self.rand_str(7)
+        prep_custom = self.rand_str(7)
+        prep_field_forced = self.rand_str(7)
+
+        prepared = e.prepare_exception_kwargs(
+            {
+                "correlation_id": prep_corr_input,
+                "metadata": {prep_meta_key: prep_meta_value},
+                "auto_log": True,
+                "auto_correlation": True,
+                "config": prep_config,
+                "field": prep_field_existing,
+                "custom": prep_custom,
+            },
+            {"field": prep_field_forced},
+        )
+        (
+            prep_corr,
+            prep_metadata,
+            prep_auto_log,
+            prep_auto_corr,
+            prep_config_out,
+            prep_extra,
+        ) = prepared
+        self.check("prepare.correlation_id_matches", prep_corr == prep_corr_input)
+        self.check("prepare.metadata_type", type(prep_metadata).__name__)
+        self.check("prepare.auto_log", prep_auto_log)
+        self.check("prepare.auto_correlation", prep_auto_corr)
+        self.check("prepare.config_matches", prep_config_out == prep_config)
+        self.check(
+            "prepare.extra.field_matches", prep_extra.get("field") == prep_field_forced
+        )
+        self.check(
+            "prepare.extra.custom_matches", prep_extra.get("custom") == prep_custom
+        )
+
+        extract_corr_in = f"corr-{self.rand_str(8)}"
+        extract_meta_key = self.rand_str(6)
+        extract_meta_value = self.rand_str(6)
+        extracted_corr, extracted_meta = e.extract_common_kwargs({
+            "correlation_id": extract_corr_in,
+            "metadata": {extract_meta_key: extract_meta_value},
+            "field": self.rand_str(5),
+        })
+        self.check("extract.correlation_id_matches", extracted_corr == extract_corr_in)
+        self.check("extract.metadata.kind", type(extracted_meta).__name__)
+
+        instance_factory = FlextExceptions()
+        call_message = self.rand_str(10)
+        call_error_code = f"E_{self.rand_str(6).upper()}"
+        call_field = self.rand_str(7)
+        call_value = self.rand_str(7)
+        instance_created = instance_factory(
+            call_message,
+            error_code=call_error_code,
+            field=call_field,
+            value=call_value,
+        )
+        self.check(
+            "__call__.type_matches",
+            type(instance_created).__name__ == "ValidationError",
+        )
+        self.check(
+            "__call__.error_code_matches",
+            instance_created.error_code == call_error_code,
+        )
+        self.check("__call__.message_matches", str(instance_created) == call_message)
+
+    def _exercise_metrics(self) -> None:
+        """Exercise exception metrics recording and reset APIs."""
+        self.section("metrics")
+
+        e.clear_metrics()
+        e.record_exception(e.ValidationError)
+        e.record_exception(e.ValidationError)
+        e.record_exception(e.ConfigurationError)
+
+        metrics = e.get_metrics()
+        metric_map = metrics.root
+        self.check(
+            "metrics.total_exceptions_matches", metric_map.get("total_exceptions") == 3
+        )
+        counts_obj = metric_map.get("exception_counts")
+        if isinstance(counts_obj, dict):
+            counts_map = dict(counts_obj)
+            self.check(
+                "metrics.validation_count_matches",
+                counts_map.get("ValidationError") == 2,
+            )
+            self.check(
+                "metrics.configuration_count_matches",
+                counts_map.get("ConfigurationError") == 1,
+            )
+        else:
+            self.check("metrics.validation_count", "missing")
+            self.check("metrics.configuration_count", "missing")
+
+        self.check(
+            "metrics.summary_nonempty", bool(metric_map.get("exception_counts_summary"))
+        )
+        self.check(
+            "metrics.unique_types_matches",
+            metric_map.get("unique_exception_types") == 2,
+        )
+
+        e.clear_metrics()
+        after_clear = e.get_metrics().root
+        self.check(
+            "metrics.cleared_total_matches", after_clear.get("total_exceptions") == 0
+        )
+
+    def exercise(self) -> None:
+        """Run all sections for golden-file verification."""
+        self.section("imports")
+        self.check("import.e_is_FlextExceptions", e is FlextExceptions)
+        import_value = self.rand_str(8)
+        self.check("import.r_ok", r[str].ok(import_value).value == import_value)
+        self.check("import.constant", c.Errors.UNKNOWN_ERROR)
+
+        msg = self.rand_str(10)
+        try:
+            raise ValueError(msg)
+        except ValueError as exc:
+            self.check("style.raise_msg_matches", str(exc) == msg)
+
+        self._exercise_base_error()
+        self._exercise_specific_exceptions()
+        self._exercise_factories_and_helpers()
+        self._exercise_metrics()
 
 
 if __name__ == "__main__":
-    main()
+    Ex07FlextExceptions(__file__).run()

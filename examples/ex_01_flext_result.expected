@@ -1,97 +1,161 @@
 [factories_and_guards]
-ok.value: 10
-fail.error: 'boom'
-fail.error_code: 'E_DEMO'
-fail.error_data: {'stage': 'factory'}
-safe.success.unwrap_or: 42
-safe.failure.error: "invalid literal for int() with base 10: 'x'"
-create_from_callable.success: 'created'
-create_from_callable.failure.code: 'E_CALL'
+ok.value: 309
+ok.value_matches_input: True
+fail.error: 'ctgdctopac'
+fail.error_matches_input: True
+fail.error_code: 'gpossk'
+fail.error_code_matches_input: True
+fail.error_data: {'lhwt': 20, 'siey': 43}
+fail.error_data_matches_input: True
+safe.success.unwrap_or: 1292
+safe.success.matches_input: True
+safe.failure.error: "invalid literal for int() with base 10: 'ovqwpsb'"
+safe.failure.is_failure: True
+create_from_callable.success: 'fhcgchqjjfgy'
+create_from_callable.success_matches_input: True
+create_from_callable.failure.code: 'ufaigf'
+create_from_callable.failure.code_matches_input: True
 create_from_callable.none.error: 'Callable returned None'
+create_from_callable.none.code_matches_input: True
 is_success_result.ok: True
+is_success_result.ok_matches: True
 is_success_result.fail: False
+is_success_result.fail_matches: True
 is_failure_result.fail: True
+is_failure_result.fail_matches: True
 is_failure_result.string: False
+is_failure_result.string_matches: True
 
 [properties_and_unwrap]
 prop.success.is_success: True
 prop.success.is_failure: False
 prop.failure.is_success: False
 prop.failure.is_failure: True
-prop.success.value: 'value'
-prop.success.data: 'value'
+prop.success.value: 'ncbcqukbj'
+prop.success.value_matches: True
+prop.success.data: 'ncbcqukbj'
+prop.success.data_matches: True
 prop.success.result_self: True
-prop.failure.error: 'missing'
-prop.failure.error_code: 'E_PROP'
-prop.failure.error_data: {'x': 1}
-unwrap.success: 'value'
+prop.failure.error: 'znzwasrngq'
+prop.failure.error_matches: True
+prop.failure.error_code: 'cllywg'
+prop.failure.error_code_matches: True
+prop.failure.error_data: {'nexw': 38, 'vnfj': 20}
+prop.failure.error_data_matches: True
+unwrap.success: 'ncbcqukbj'
+unwrap.success_matches: True
 unwrap.failure.raises: True
 unwrap.failure.type: 'RuntimeError'
-unwrap_or.success: 'value'
-unwrap_or.failure: 'default'
+unwrap_or.success: 'ncbcqukbj'
+unwrap_or.success_matches: True
+unwrap_or.failure: 'ounaiayw'
+unwrap_or.failure_matches: True
 
 [transform_chain_and_recover]
-map.success: 6
+map.success: 856
+map.success_matches: True
 map.failure: True
-map.exception_to_failure: 'map exploded'
-flat_map.success: 10
-flat_map.failure: 'flat failed'
-and_then.success: 3
+map.exception_to_failure: 'dmogwlfosfiz'
+map.exception_to_failure_matches: True
+flat_map.success: 3412
+flat_map.success_matches: True
+flat_map.failure: 'lndfipffbq'
+flat_map.failure_matches: True
+and_then.success: 849
+and_then.success_matches: True
 and_then.failure: True
 bind.success: "AttributeError:'FlextResult' object has no attribute 'bind'"
 bind.failure: "AttributeError:'FlextResult' object has no attribute 'bind'"
-alt.success_unchanged: 5
-alt.failure_changed: 'alt:bad-number'
-map_error.failure_changed: 'mapped:bad-number'
-map_error.success_unchanged: 5
-lash.failure_recovered: 10
-lash.success_unchanged: 5
-recover.failure: 10
-recover.success: 5
+alt.success_unchanged: 853
+alt.success_unchanged_matches: True
+alt.failure_changed: 'alt:uggoctvzn'
+alt.failure_changed_matches: True
+map_error.failure_changed: 'mapped:uggoctvzn'
+map_error.failure_changed_matches: True
+map_error.success_unchanged: 853
+map_error.success_unchanged_matches: True
+lash.failure_recovered: 9
+lash.failure_recovered_matches: True
+lash.success_unchanged: 853
+lash.success_unchanged_matches: True
+recover.failure: 9
+recover.failure_matches: True
+recover.success: 853
+recover.success_matches: True
 
 [side_effects_and_folds]
 tap.success: True
 tap.failure: True
-tap.log: [7]
+tap.log: [73]
+tap.log_matches: True
 tap_error.failure: True
 tap_error.success: True
-tap_error.log: ['oops']
-map_or.success_default: 7
-map_or.failure_default: 0
-map_or.success_func: 'n=7'
-map_or.failure_func: 'none'
-fold.success: 'ok:7'
-fold.failure: 'fail:oops'
+tap_error.log: ['nhmoswog']
+tap_error.log_matches: True
+map_or.success_default: 73
+map_or.success_default_matches: True
+map_or.failure_default: 485
+map_or.failure_default_matches: True
+map_or.success_func: 'uecl:73'
+map_or.success_func_matches: True
+map_or.failure_func: 'lmsrzck'
+map_or.failure_func_matches: True
+fold.success: 'iwg:73'
+fold.success_matches: True
+fold.failure: 'elk:nhmoswog'
+fold.failure_matches: True
 filter.success_pass: True
 filter.success_fail: True
 filter.failure_stays: True
 
 [conversions_and_models]
-to_maybe.success: 8
-to_maybe.failure: 123
-from_maybe.some: 'x'
-from_maybe.nothing: 'empty'
+to_maybe.success: 286
+to_maybe.success_matches: True
+to_maybe.failure: 16
+to_maybe.failure_matches: True
+from_maybe.some: 'zywem'
+from_maybe.some_matches: True
+from_maybe.nothing: 'fkbjzgu'
+from_maybe.nothing_matches: True
 to_io.success.type: 'IO'
+to_io.success.type_matches: False
 to_io.failure.raises: True
 to_io.failure.type: 'ValidationError'
 to_io_result.success.type: 'IOSuccess'
+to_io_result.success.type_matches: True
 to_io_result.failure.type: 'IOFailure'
+to_io_result.failure.type_matches: True
 from_io_result.success: True
-from_io_result.failure: '<IO: x>'
+from_io_result.success_matches: False
+from_io_result.failure: '<IO: hssurm>'
+from_io_result.failure_matches: False
 from_io_result.invalid: 'Invalid IOResult structure'
+from_io_result.invalid_is_failure: True
 from_validation.success: True
 from_validation.failure: True
-to_model.success: 30
-to_model.from_failure: 'missing'
+from_validation.success_matches: True
+to_model.success: 73
+to_model.success_matches: True
+to_model.from_failure: 'pnyfsgkrhi'
+to_model.from_failure_matches: True
 to_model.validation_failure: True
 
 [collections_and_resource]
-traverse.success: [2, 4, 6]
-traverse.fail_fast: 'odd:3'
-traverse.collect: 'odd:1; odd:3; odd:5'
-accumulate_errors.success: [1, 2]
-accumulate_errors.failure: 'e1; e2'
-with_resource.success: 42
-with_resource.failure: 'resource op failed'
-with_resource.no_cleanup: 22
-with_resource.cleanup_calls: [21, 21]
+traverse.success: [194, 196, 198]
+traverse.success_matches: True
+traverse.fail_fast: 'odd:195'
+traverse.fail_fast_matches: True
+traverse.collect: 'odd:195; odd:197; odd:199'
+traverse.collect_is_failure: True
+accumulate_errors.success: [5, 51]
+accumulate_errors.success_matches: True
+accumulate_errors.failure: 'lzzb; fgyw'
+accumulate_errors.failure_is_failure: True
+with_resource.success: 126
+with_resource.success_matches: True
+with_resource.failure: 'jevspzravhr'
+with_resource.failure_matches: True
+with_resource.no_cleanup: 64
+with_resource.no_cleanup_matches: True
+with_resource.cleanup_calls: [63, 63]
+with_resource.cleanup_calls_matches: True

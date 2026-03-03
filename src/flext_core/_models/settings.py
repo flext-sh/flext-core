@@ -62,8 +62,12 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: FlextModelsContainers.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
-        context: FlextModelsContainers.ConfigMap = Field(default_factory=FlextModelsContainers.ConfigMap)
+        data: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap
+        )
+        context: FlextModelsContainers.ConfigMap = Field(
+            default_factory=FlextModelsContainers.ConfigMap
+        )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -412,7 +416,7 @@ class FlextModelsConfig:
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: list[p.VariadicCallable[object]] = Field(
+        additional_processors: list[p.VariadicCallable[t.GeneralValueType]] = Field(
             default_factory=list,
             description="Optional extra processors after standard FLEXT processors",
         )

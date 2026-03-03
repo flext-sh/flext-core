@@ -1299,7 +1299,9 @@ class FlextContext(FlextRuntime):
             container: p.DI = FlextContext.get_container()
             # Container.get returns p.ResultLike[RegisterableService]
             # We need to convert to r[PayloadValue]
-            service_result: p.ResultLike[object] = container.get(service_name)
+            service_result: p.ResultLike[t.GeneralValueType] = container.get(
+                service_name
+            )
             # Convert protocol result to concrete FlextResult
             if service_result.is_success:
                 # Service value might be RegisterableService

@@ -1,70 +1,15 @@
-# pyright: reportGeneralTypeIssues=false, reportArgumentType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportIncompatibleMethodOverride=false, reportUnusedImport=false, reportUnnecessaryComparison=false, reportUnreachable=false, reportIncompatibleVariableOverride=false, reportAttributeAccessIssue=false
 """Golden-file example for FlextHandlers (h) public APIs."""
 
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, override
 
+from shared import Examples
+
 from flext_core import FlextHandlers, c, e, h, m, r, t, u
-
-_RESULTS: list[str] = []
-
-
-def _check(label: str, value: t.ContainerValue | type) -> None:
-    _RESULTS.append(f"{label}: {_ser(value)}")
-
-
-def _section(name: str) -> None:
-    if _RESULTS:
-        _RESULTS.append("")
-    _RESULTS.append(f"[{name}]")
-
-
-def _ser(v: t.ContainerValue | type) -> str:
-    if v is None:
-        return "None"
-    if isinstance(v, bool):
-        return str(v)
-    if isinstance(v, (int, float)):
-        return str(v)
-    if isinstance(v, str):
-        return repr(v)
-    if u.is_list(v):
-        return "[" + ", ".join(_ser(item) for item in v) + "]"
-    if u.is_dict_like(v):
-        pairs = ", ".join(
-            f"{_ser(k)}: {_ser(val)}"
-            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
-        return "{" + pairs + "}"
-    if isinstance(v, type):
-        return v.__name__
-    return type(v).__name__
-
-
-def _verify() -> None:
-    actual = "\n".join(_RESULTS).strip() + "\n"
-    me = Path(__file__)
-    expected_path = me.with_suffix(".expected")
-    n = sum(1 for line in _RESULTS if ": " in line and not line.startswith("["))
-    if expected_path.exists():
-        expected = expected_path.read_text(encoding="utf-8")
-        if actual == expected:
-            sys.stdout.write(f"PASS: {me.stem} ({n} checks)\n")
-        else:
-            actual_path = me.with_suffix(".actual")
-            actual_path.write_text(actual, encoding="utf-8")
-            sys.stdout.write(
-                f"FAIL: {me.stem} — diff {expected_path.name} {actual_path.name}\n"
-            )
-            sys.exit(1)
-    else:
-        expected_path.write_text(actual, encoding="utf-8")
-        sys.stdout.write(f"GENERATED: {expected_path.name} ({n} checks)\n")
 
 
 class _Message(m.Command):
@@ -168,437 +113,622 @@ class _DemoHandler(h[t.ContainerValue, str]):
         return r[bool].ok(True)
 
 
-def demo_handler_core() -> None:
-    _section("handler_core")
+class Ex10FlextHandlers(Examples):
+    """Exercise FlextHandlers public API."""
 
-    pattern_handler = _NotImplementedPatternHandler()
-    try:
-        pattern_handler.handle("x")
-        pattern_value: t.ContainerValue = "no-error"
-    except NotImplementedError as exc:
-        pattern_value = f"{type(exc).__name__}:{exc}"
-    _check("handle.not_implemented_pattern", pattern_value)
+    def exercise(self) -> None:
+        """Run all FlextHandlers example sections."""
+        self.demo_handler_core()
+        self.demo_create_from_callable()
+        self.demo_discovery()
+        self.demo_namespaces_and_mixins()
+        self.demo_runtime_result_and_utilities()
 
-    handler = _DemoHandler(
-        config=m.Handler(handler_id="demo", handler_name="DemoHandler")
-    )
-    _check("handler.handler_name", handler.handler_name)
-    _check("handler.mode", handler.mode.value)
+    def demo_handler_core(self) -> None:
+        """Exercise base handler operations and validation paths."""
+        self.section("handler_core")
 
-    _check("validate.none.failure", handler.validate(None).is_failure)
-    _check("validate.ok.success", handler.validate("ok").is_success)
-    _check("validate_command.blocked", handler.validate_command("bad").error)
-    _check("validate_query.blocked", handler.validate_query("bad").error)
-    _check(
-        "validate_alias.same_behavior",
-        handler.validate("ok").unwrap_or(False)
-        and handler.validate_command("ok").unwrap_or(False)
-        and handler.validate_query("ok").unwrap_or(False),
-    )
+        pattern_probe = self.rand_str(4)
+        handler_id = self.rand_str(8)
+        handler_name = self.rand_str(10)
+        message_ok = self.rand_str(6)
+        payload_text = self.rand_str(6)
+        dispatch_text = self.rand_str(6)
+        metric_key = self.rand_str(6)
+        metric_value = self.rand_int(1, 9)
+        context_name_1 = self.rand_str(6)
+        context_name_2 = self.rand_str(6)
 
-    _check("can_handle.expected", handler.can_handle(_Message))
-    _check("can_handle.derived", handler.can_handle(_DerivedMessage))
-    _check("can_handle.other", handler.can_handle(str))
+        pattern_handler = _NotImplementedPatternHandler()
+        try:
+            pattern_handler.handle(pattern_probe)
+            pattern_value: t.ContainerValue = "no-error"
+        except NotImplementedError as exc:
+            pattern_value = f"{type(exc).__name__}:{exc}"
+        self.check("handle.not_implemented_pattern", pattern_value)
 
-    execute_value = handler.execute(_Message(text="ping")).unwrap_or("-")
-    _check(
-        "execute.success.value",
-        str(execute_value).startswith("msg:message_type='command'"),
-    )
-    _check("execute.validation_failure", handler.execute("bad").error)
+        handler = _DemoHandler(
+            config=m.Handler(handler_id=handler_id, handler_name=handler_name)
+        )
+        self.check("handler.handler_name", handler.handler_name)
+        self.check("handler.name_matches", handler.handler_name == handler_name)
+        self.check("handler.mode", handler.mode.value)
 
-    dispatch_value = handler.dispatch_message(_Message(text="go")).unwrap_or("-")
-    _check(
-        "dispatch.success",
-        str(dispatch_value).startswith("msg:message_type='command'"),
-    )
-    _check(
-        "dispatch.mode_mismatch",
-        handler.dispatch_message(
-            _Message(text="go"), operation=c.Dispatcher.HANDLER_MODE_QUERY
-        ).error,
-    )
-    _check(
-        "dispatch.pipeline_exception",
-        handler.dispatch_message(
-            "explode", operation=c.Dispatcher.HANDLER_MODE_COMMAND
-        ).error,
-    )
+        self.check("validate.none.failure", handler.validate(None).is_failure)
+        self.check("validate.ok.success", handler.validate(message_ok).is_success)
+        self.check("validate_command.blocked", handler.validate_command("bad").error)
+        self.check("validate_query.blocked", handler.validate_query("bad").error)
+        self.check(
+            "validate_alias.same_behavior",
+            handler.validate(message_ok).unwrap_or(False)
+            and handler.validate_command(message_ok).unwrap_or(False)
+            and handler.validate_query(message_ok).unwrap_or(False),
+        )
 
-    _check("record_metric.ok", handler.record_metric("k", 1).is_success)
-    _check(
-        "push_context.mapping",
-        handler.push_context({
-            "handler_name": "h1",
-            "handler_mode": "query",
-        }).is_success,
-    )
-    _check(
-        "push_context.execution",
-        handler.push_context(
-            m.Handler.ExecutionContext.create_for_handler(
-                handler_name="h2",
-                handler_mode="event",
+        self.check("can_handle.expected", handler.can_handle(_Message))
+        self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
+        self.check("can_handle.other", handler.can_handle(str))
+
+        execute_value = handler.execute(_Message(text=payload_text)).unwrap_or("-")
+        self.check(
+            "execute.success.value",
+            payload_text in str(execute_value),
+        )
+        self.check("execute.validation_failure", handler.execute("bad").error)
+
+        dispatch_value = handler.dispatch_message(
+            _Message(text=dispatch_text)
+        ).unwrap_or("-")
+        self.check(
+            "dispatch.success",
+            dispatch_text in str(dispatch_value),
+        )
+        self.check(
+            "dispatch.mode_mismatch",
+            handler.dispatch_message(
+                _Message(text="go"), operation=c.Dispatcher.HANDLER_MODE_QUERY
+            ).error,
+        )
+        self.check(
+            "dispatch.pipeline_exception",
+            handler.dispatch_message(
+                "explode", operation=c.Dispatcher.HANDLER_MODE_COMMAND
+            ).error,
+        )
+
+        self.check(
+            "record_metric.ok",
+            handler.record_metric(metric_key, metric_value).is_success,
+        )
+        self.check(
+            "push_context.mapping",
+            handler.push_context({
+                "handler_name": context_name_1,
+                "handler_mode": "query",
+            }).is_success,
+        )
+        self.check(
+            "push_context.execution",
+            handler.push_context(
+                m.Handler.ExecutionContext.create_for_handler(
+                    handler_name=context_name_2,
+                    handler_mode="event",
+                )
+            ).is_success,
+        )
+        self.check(
+            "pop_context.1",
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
+        )
+        self.check(
+            "pop_context.2",
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
+        )
+
+    def demo_create_from_callable(self) -> None:
+        """Exercise FlextHandlers.create_from_callable variants."""
+        self.section("create_from_callable")
+
+        probe_default = self.rand_str(6)
+        probe_named = self.rand_str(6)
+        probe_enum = self.rand_str(6)
+        probe_str = self.rand_str(6)
+        probe_cfg = self.rand_str(6)
+        named_handler_name = self.rand_str(10)
+        cfg_handler_id = self.rand_str(8)
+        cfg_handler_name = self.rand_str(10)
+
+        default_h = FlextHandlers.create_from_callable(
+            lambda message: f"default:{message}"
+        )
+        default_value = default_h.handle(probe_default).unwrap_or("-")
+        self.check("callable.default", default_value)
+        self.check(
+            "callable.default.matches", default_value == f"default:{probe_default}"
+        )
+
+        named_h = FlextHandlers.create_from_callable(
+            lambda message: f"named:{message}",
+            handler_name=named_handler_name,
+            handler_type=c.Cqrs.HandlerType.QUERY,
+        )
+        self.check("callable.named.handler_name", named_h.handler_name)
+        self.check(
+            "callable.named.name_matches", named_h.handler_name == named_handler_name
+        )
+        self.check("callable.named.mode", named_h.mode.value)
+        self.check(
+            "callable.named.value_matches",
+            named_h.handle(probe_named).unwrap_or("-") == f"named:{probe_named}",
+        )
+
+        mode_enum_h = FlextHandlers.create_from_callable(
+            lambda message: f"enum:{message}",
+            mode=c.Cqrs.HandlerType.EVENT,
+        )
+        self.check("callable.mode_enum", mode_enum_h.mode.value)
+        self.check(
+            "callable.mode_enum.value_matches",
+            mode_enum_h.handle(probe_enum).unwrap_or("-") == f"enum:{probe_enum}",
+        )
+
+        mode_str_h = FlextHandlers.create_from_callable(
+            lambda message: f"str:{message}",
+            mode="query",
+        )
+        self.check("callable.mode_str", mode_str_h.mode.value)
+        self.check(
+            "callable.mode_str.value_matches",
+            mode_str_h.handle(probe_str).unwrap_or("-") == f"str:{probe_str}",
+        )
+
+        config_h = FlextHandlers.create_from_callable(
+            lambda message: f"cfg:{message}",
+            handler_config=m.Handler(
+                handler_id=cfg_handler_id,
+                handler_name=cfg_handler_name,
+                handler_mode=c.Cqrs.HandlerType.SAGA,
+                handler_type=c.Cqrs.HandlerType.SAGA,
+            ),
+        )
+        self.check("callable.handler_config.name", config_h.handler_name)
+        self.check("callable.handler_config.mode", config_h.mode.value)
+        self.check(
+            "callable.handler_config.name_matches",
+            config_h.handler_name == cfg_handler_name,
+        )
+        self.check(
+            "callable.handler_config.value_matches",
+            config_h.handle(probe_cfg).unwrap_or("-") == f"cfg:{probe_cfg}",
+        )
+
+        try:
+            FlextHandlers.create_from_callable(lambda message: message, mode="invalid")
+            invalid_mode: t.ContainerValue = "no-error"
+        except e.ValidationError as exc:
+            invalid_mode = f"{type(exc).__name__}:{exc}"
+        self.check("callable.invalid_mode", invalid_mode)
+
+    def demo_discovery(self) -> None:
+        """Exercise class/module discovery and handler scans."""
+        self.section("discovery")
+
+        mod_priority = self.rand_int(1, 20)
+        module_text = self.rand_str(5)
+
+        class _Service:
+            @staticmethod
+            @h.handler(_Message, priority=2)
+            def high(_message: t.ContainerValue) -> t.ContainerValue:
+                return "high"
+
+            @staticmethod
+            @h.handler(_Message, priority=1, timeout=3.0, middleware=[])
+            def low(_message: t.ContainerValue) -> t.ContainerValue:
+                return "low"
+
+        class_scan = h.Discovery.scan_class(_Service)
+        self.check("scan_class.count", len(class_scan))
+        self.check("scan_class.first", class_scan[0][0] if class_scan else "none")
+        self.check("has_handlers.class", h.Discovery.has_handlers(_Service))
+        self.check("has_handlers.class_none", h.Discovery.has_handlers(_NoArgs))
+
+        module = ModuleType("ex10_handlers_module")
+
+        @h.handler(_Message, priority=mod_priority)
+        def mod_handler(message: t.ContainerValue) -> t.ContainerValue:
+            return f"module:{message}"
+
+        def plain_function(_message: t.ContainerValue) -> t.ContainerValue:
+            return "plain"
+
+        setattr(module, "mod_handler", mod_handler)
+        setattr(module, "plain_function", plain_function)
+
+        module_scan = h.Discovery.scan_module(module)
+        self.check("scan_module.count", len(module_scan))
+        self.check("scan_module.name", module_scan[0][0] if module_scan else "none")
+        wrapped_result = (
+            module_scan[0][1](_Message(text=module_text)) if module_scan else "none"
+        )
+        self.check(
+            "scan_module.wrapped_result",
+            module_text in str(wrapped_result),
+        )
+        self.check("has_handlers_module.true", h.Discovery.has_handlers_module(module))
+        self.check(
+            "has_handlers_module.false",
+            h.Discovery.has_handlers_module(ModuleType("empty")),
+        )
+
+    def demo_namespaces_and_mixins(self) -> None:
+        """Exercise namespaces, protocol validation, and mixins."""
+        self.section("namespaces_and_mixins")
+
+        hit_key = self.rand_str(5)
+        hit_value = self.rand_int(1, 9)
+        ctx_name = self.rand_str(6)
+        env_value = self.rand_str(6)
+        obj_key = self.rand_str(5)
+        obj_value = self.rand_int(1, 99)
+        factory_key = self.rand_str(5)
+        factory_value = self.rand_str(5)
+        resource_key = self.rand_str(5)
+        resource_value = self.rand_str(5)
+        service_name = f"svc.{self.rand_str(6)}"
+        error_message = self.rand_str(8)
+        event_name = self.rand_str(6)
+        aggregate_id = self.rand_str(8)
+        metadata_version = (
+            f"{self.rand_int(1, 9)}.{self.rand_int(0, 9)}.{self.rand_int(0, 9)}"
+        )
+        metadata_tag = self.rand_str(4)
+        positive_token = self.rand_str(4)
+
+        created = h.Bootstrap.create_instance(_NoArgs)
+        self.check("bootstrap.create_instance", created.__class__.__name__)
+
+        tracker = h.CQRS.MetricsTracker()
+        self.check(
+            "cqrs.record_metric", tracker.record_metric(hit_key, hit_value).is_success
+        )
+        self.check(
+            "cqrs.get_metrics",
+            tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get(hit_key, -1),
+        )
+
+        stack = h.CQRS.ContextStack()
+        self.check(
+            "cqrs.push_context.mapping",
+            stack.push_context({
+                "handler_name": ctx_name,
+                "handler_mode": "command",
+            }).is_success,
+        )
+        current_context = stack.current_context()
+        self.check(
+            "cqrs.current_context", getattr(current_context, "handler_name", "-")
+        )
+        self.check(
+            "cqrs.pop_context",
+            stack
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
+        )
+
+        di = h.DependencyIntegration
+        di_container = di.create_container(config=m.ConfigMap(root={"env": env_value}))
+        self.check("di.bind_configuration_exists", hasattr(di_container, "config"))
+        self.check(
+            "di.register_object",
+            di.register_object(di_container, obj_key, obj_value)() == obj_value,
+        )
+        self.check(
+            "di.register_factory.cached",
+            di.register_factory(
+                di_container, factory_key, lambda: factory_value, cache=True
+            )()
+            == factory_value,
+        )
+        resource_provider = di.register_resource(
+            di_container,
+            resource_key,
+            lambda: m.ConfigMap(root={resource_key: resource_value}),
+        )
+        self.check(
+            "di.register_resource",
+            resource_provider().get(resource_key, "-") == resource_value,
+        )
+        try:
+            di.register_object(di_container, obj_key, self.rand_int(100, 200))
+            duplicate_error: t.ContainerValue = "no-error"
+        except ValueError as exc:
+            duplicate_error = f"{type(exc).__name__}:{exc}"
+        self.check("di.duplicate_error", duplicate_error)
+
+        bridge, services_mod, resources_mod = di.create_layered_bridge(
+            m.ConfigMap(root={self.rand_str(2): self.rand_str(2)})
+        )
+        self.check("di.layered.bridge", bridge.__class__.__name__)
+        self.check("di.layered.services", services_mod.__class__.__name__)
+        self.check("di.layered.resources", resources_mod.__class__.__name__)
+        di.wire(di_container, modules=[])
+        self.check("di.wire.noop", True)
+
+        h.Integration.track_service_resolution(service_name, resolved=True)
+        h.Integration.track_service_resolution(
+            service_name, resolved=False, error_message=error_message
+        )
+        h.Integration.track_domain_event(
+            event_name,
+            aggregate_id=aggregate_id,
+            event_data=m.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
+        )
+        h.Integration.setup_service_infrastructure(
+            service_name=service_name,
+            service_version=f"{self.rand_int(1, 9)}.{self.rand_int(0, 9)}.{self.rand_int(0, 9)}",
+            enable_context_correlation=True,
+        )
+        self.check("integration.calls", True)
+
+        meta = h.Metadata(version=metadata_version, attributes={"tag": metadata_tag})
+        self.check("metadata.version", meta.version)
+        self.check("metadata.attributes", meta.attributes)
+
+        protocol_handler = _ProtocolHandler()
+        self.check(
+            "protocol.is_handler.true",
+            h.ProtocolValidation.is_handler(protocol_handler),
+        )
+        self.check(
+            "protocol.is_handler.false",
+            h.ProtocolValidation.is_handler(m.ConfigMap(root={})),
+        )
+        self.check(
+            "protocol.is_service", h.ProtocolValidation.is_service(_ServiceStub())
+        )
+        self.check("protocol.is_command_bus", h.ProtocolValidation.is_command_bus())
+        self.check(
+            "protocol.validate_known",
+            h.ProtocolValidation.validate_protocol_compliance(
+                protocol_handler, "Handler"
+            ).is_success,
+        )
+        self.check(
+            "protocol.validate_unknown",
+            h.ProtocolValidation.validate_protocol_compliance(
+                protocol_handler, "Unknown"
+            ).error,
+        )
+        self.check(
+            "protocol.validate_processor.good",
+            h.ProtocolValidation.validate_processor_protocol(
+                _ProcessorGood()
+            ).is_success,
+        )
+        self.check(
+            "protocol.validate_processor.bad",
+            h.ProtocolValidation.validate_processor_protocol(_ProcessorBad()).error,
+        )
+
+        def positive_validator(item: t.ContainerValue) -> r[bool]:
+            return r[bool].ok(item == positive_token)
+
+        def strict_validator(item: t.ContainerValue) -> r[bool]:
+            return r[bool].ok(bool(item))
+
+        def fail_validator(_item: t.ContainerValue) -> r[bool]:
+            return r[bool].fail("rule-failed")
+
+        self.check(
+            "validation.chain.ok",
+            h.Validation.validate_with_result(
+                positive_token,
+                [positive_validator, strict_validator],
+            ).is_success,
+        )
+        self.check(
+            "validation.chain.fail",
+            h.Validation.validate_with_result(
+                "x",
+                [positive_validator, fail_validator],
+            ).error,
+        )
+
+    def demo_runtime_result_and_utilities(self) -> None:
+        """Exercise RuntimeResult API and utility helpers."""
+        self.section("runtime_result_and_utilities")
+
+        rr_value = self.rand_int(1, 20)
+        rr_delta = self.rand_int(1, 10)
+        rr_multiplier = self.rand_int(2, 5)
+        rr_error = self.rand_str(6)
+        rr_error_code = self.rand_str(4)
+        mixin_value = self.rand_str(4)
+        mixin_error = self.rand_str(5)
+        mixin_error_code = self.rand_str(4)
+        ensured_raw = self.rand_int(1, 20)
+        ensured_result = self.rand_int(1, 20)
+        entity_id = self.rand_str(8)
+        other_entity_id = self.rand_str(8)
+        scalar_value = self.rand_str(3)
+        model_text = self.rand_str(5)
+        source_value = self.rand_str(5)
+        valid_identifier = f"{self.rand_str(1)}_{self.rand_str(4)}"
+        invalid_identifier = f"{self.rand_int(1, 9)}{self.rand_str(4)}"
+        attr_fallback = self.rand_str(3)
+        dict_key = self.rand_str(2)
+        dict_value = self.rand_int(1, 9)
+
+        rr_ok = h.RuntimeResult[int].ok(rr_value)
+        rr_fail = h.RuntimeResult[int].fail(rr_error, error_code=rr_error_code)
+        self.check("rr.is_success", rr_ok.is_success)
+        self.check("rr.is_failure", rr_fail.is_failure)
+        self.check("rr.unwrap_or", rr_fail.unwrap_or(rr_delta) == rr_delta)
+        self.check(
+            "rr.map",
+            rr_ok.map(lambda n: n + rr_delta).unwrap_or(-1) == rr_value + rr_delta,
+        )
+        self.check(
+            "rr.flat_map",
+            rr_ok.flat_map(
+                lambda n: h.RuntimeResult[int].ok(n * rr_multiplier)
+            ).unwrap_or(-1)
+            == rr_value * rr_multiplier,
+        )
+        self.check(
+            "rr.and_then",
+            rr_ok.and_then(lambda n: h.RuntimeResult[int].ok(n - rr_delta)).unwrap_or(
+                -1
             )
-        ).is_success,
-    )
-    _check(
-        "pop_context.1",
-        handler.pop_context().unwrap_or(m.ConfigMap(root={})).get("handler_name", "-"),
-    )
-    _check(
-        "pop_context.2",
-        handler.pop_context().unwrap_or(m.ConfigMap(root={})).get("handler_name", "-"),
-    )
+            == rr_value - rr_delta,
+        )
+        self.check(
+            "rr.alt", rr_fail.alt(lambda err: f"x:{err}").error == f"x:{rr_error}"
+        )
+        self.check(
+            "rr.lash",
+            rr_fail.lash(lambda _err: h.RuntimeResult[int].ok(rr_value)).unwrap_or(-1)
+            == rr_value,
+        )
+        self.check(
+            "rr.recover",
+            rr_fail.recover(lambda _err: rr_delta).unwrap_or(-1) == rr_delta,
+        )
+        self.check(
+            "rr.fold",
+            rr_ok.fold(lambda err: err, lambda n: f"ok:{n}") == f"ok:{rr_value}",
+        )
 
+        self.check("mixin.ok", h.ok(mixin_value).unwrap_or("-") == mixin_value)
+        self.check(
+            "mixin.fail",
+            h.fail(mixin_error, error_code=mixin_error_code).error_code
+            == mixin_error_code,
+        )
+        self.check(
+            "mixin.ensure_result.value",
+            h.ensure_result(ensured_raw).unwrap_or(-1) == ensured_raw,
+        )
+        self.check(
+            "mixin.ensure_result.result",
+            h.ensure_result(r[int].ok(ensured_result)).unwrap_or(-1) == ensured_result,
+        )
+        self.check("mixin.to_dict", h.to_dict(m.ConfigMap(root={dict_key: dict_value})))
 
-def demo_create_from_callable() -> None:
-    _section("create_from_callable")
+        generated_a = h.generate_id()
+        generated_b = h.generate_id()
+        self.check(
+            "runtime.generate_id.length", len(generated_a) == len(generated_b) == 36
+        )
+        self.check("runtime.generate_id.unique", generated_a != generated_b)
+        self.check(
+            "runtime.generate_prefixed_id.default",
+            h.generate_prefixed_id("cmd").startswith("cmd_"),
+        )
+        self.check(
+            "runtime.generate_prefixed_id.length",
+            len(h.generate_prefixed_id("q", length=8).split("_")[1]) == 8,
+        )
+        self.check(
+            "runtime.generate_datetime_utc",
+            h.generate_datetime_utc().tzinfo is not None,
+        )
 
-    default_h = FlextHandlers.create_from_callable(lambda message: f"default:{message}")
-    _check("callable.default", default_h.handle("x").unwrap_or("-"))
+        e1 = _Entity(unique_id=entity_id)
+        e2 = _Entity(unique_id=entity_id)
+        e3 = _Entity(unique_id=other_entity_id)
+        self.check("runtime.compare_entities.true", h.compare_entities_by_id(e1, e2))
+        self.check("runtime.compare_entities.false", h.compare_entities_by_id(e1, e3))
+        self.check("runtime.hash_entity", h.hash_entity_by_id(e1) != 0)
 
-    named_h = FlextHandlers.create_from_callable(
-        lambda message: f"named:{message}",
-        handler_name="NamedCallable",
-        handler_type=c.Cqrs.HandlerType.QUERY,
-    )
-    _check("callable.named.handler_name", named_h.handler_name)
-    _check("callable.named.mode", named_h.mode.value)
+        self.check(
+            "runtime.compare_value_objects.scalar",
+            h.compare_value_objects_by_value(scalar_value, scalar_value),
+        )
+        self.check(
+            "runtime.compare_value_objects.model",
+            h.compare_value_objects_by_value(
+                _Message(text=model_text), _Message(text=model_text)
+            ),
+        )
+        self.check(
+            "runtime.hash_value_object",
+            h.hash_value_object_by_value(_Message(text=model_text)) != 0,
+        )
 
-    mode_enum_h = FlextHandlers.create_from_callable(
-        lambda message: f"enum:{message}",
-        mode=c.Cqrs.HandlerType.EVENT,
-    )
-    _check("callable.mode_enum", mode_enum_h.mode.value)
+        trace_context = h.ensure_trace_context(
+            {"source": source_value},
+            include_correlation_id=True,
+            include_timestamp=True,
+        )
+        self.check(
+            "runtime.ensure_trace_context.source", trace_context.get("source", "-")
+        )
+        self.check(
+            "runtime.ensure_trace_context.keys",
+            [
+                "trace_id" in trace_context,
+                "span_id" in trace_context,
+                "correlation_id" in trace_context,
+                "timestamp" in trace_context,
+            ],
+        )
+        self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
 
-    mode_str_h = FlextHandlers.create_from_callable(
-        lambda message: f"str:{message}",
-        mode="query",
-    )
-    _check("callable.mode_str", mode_str_h.mode.value)
+        self.check(
+            "runtime.validate_http.success",
+            h.validate_http_status_codes([200, "404"]).unwrap_or([]),
+        )
+        self.check(
+            "runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error
+        )
+        self.check(
+            "runtime.validate_http.type_fail",
+            h.validate_http_status_codes([Path("x")]).error,
+        )
 
-    config_h = FlextHandlers.create_from_callable(
-        lambda message: f"cfg:{message}",
-        handler_config=m.Handler(
-            handler_id="cfg_id",
-            handler_name="ConfiguredCallable",
-            handler_mode=c.Cqrs.HandlerType.SAGA,
-            handler_type=c.Cqrs.HandlerType.SAGA,
-        ),
-    )
-    _check("callable.handler_config.name", config_h.handler_name)
-    _check("callable.handler_config.mode", config_h.mode.value)
-
-    try:
-        FlextHandlers.create_from_callable(lambda message: message, mode="invalid")
-        invalid_mode: t.ContainerValue = "no-error"
-    except e.ValidationError as exc:
-        invalid_mode = f"{type(exc).__name__}:{exc}"
-    _check("callable.invalid_mode", invalid_mode)
-
-
-def demo_discovery() -> None:
-    _section("discovery")
-
-    class _Service:
-        @staticmethod
-        @h.handler(_Message, priority=2)
-        def high(_message: t.ContainerValue) -> t.ContainerValue:
-            return "high"
-
-        @staticmethod
-        @h.handler(_Message, priority=1, timeout=3.0, middleware=[])
-        def low(_message: t.ContainerValue) -> t.ContainerValue:
-            return "low"
-
-    class_scan = h.Discovery.scan_class(_Service)
-    _check("scan_class.count", len(class_scan))
-    _check("scan_class.first", class_scan[0][0] if class_scan else "none")
-    _check("has_handlers.class", h.Discovery.has_handlers(_Service))
-    _check("has_handlers.class_none", h.Discovery.has_handlers(_NoArgs))
-
-    module = ModuleType("ex10_handlers_module")
-
-    @h.handler(_Message, priority=9)
-    def mod_handler(message: t.ContainerValue) -> t.ContainerValue:
-        return f"module:{message}"
-
-    def plain_function(_message: t.ContainerValue) -> t.ContainerValue:
-        return "plain"
-
-    setattr(module, "mod_handler", mod_handler)
-    setattr(module, "plain_function", plain_function)
-
-    module_scan = h.Discovery.scan_module(module)
-    _check("scan_module.count", len(module_scan))
-    _check("scan_module.name", module_scan[0][0] if module_scan else "none")
-    wrapped_result = module_scan[0][1](_Message(text="m")) if module_scan else "none"
-    _check(
-        "scan_module.wrapped_result",
-        str(wrapped_result).startswith("module:message_type='command'"),
-    )
-    _check("has_handlers_module.true", h.Discovery.has_handlers_module(module))
-    _check(
-        "has_handlers_module.false",
-        h.Discovery.has_handlers_module(ModuleType("empty")),
-    )
-
-
-def demo_namespaces_and_mixins() -> None:
-    _section("namespaces_and_mixins")
-
-    created = h.Bootstrap.create_instance(_NoArgs)
-    _check("bootstrap.create_instance", created.__class__.__name__)
-
-    tracker = h.CQRS.MetricsTracker()
-    _check("cqrs.record_metric", tracker.record_metric("hits", 2).is_success)
-    _check(
-        "cqrs.get_metrics",
-        tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get("hits", -1),
-    )
-
-    stack = h.CQRS.ContextStack()
-    _check(
-        "cqrs.push_context.mapping",
-        stack.push_context({
-            "handler_name": "ctx",
-            "handler_mode": "command",
-        }).is_success,
-    )
-    current_context = stack.current_context()
-    _check("cqrs.current_context", getattr(current_context, "handler_name", "-"))
-    _check(
-        "cqrs.pop_context",
-        stack.pop_context().unwrap_or(m.ConfigMap(root={})).get("handler_name", "-"),
-    )
-
-    di = h.DependencyIntegration
-    di_container = di.create_container(config=m.ConfigMap(root={"env": "test"}))
-    _check("di.bind_configuration_exists", hasattr(di_container, "config"))
-    _check("di.register_object", di.register_object(di_container, "obj", 3)() == 3)
-    _check(
-        "di.register_factory.cached",
-        di.register_factory(di_container, "factory", lambda: "v", cache=True)() == "v",
-    )
-    resource_provider = di.register_resource(
-        di_container,
-        "res",
-        lambda: m.ConfigMap(root={"k": "v"}),
-    )
-    _check("di.register_resource", resource_provider().get("k", "-") == "v")
-    try:
-        di.register_object(di_container, "obj", 4)
-        duplicate_error: t.ContainerValue = "no-error"
-    except ValueError as exc:
-        duplicate_error = f"{type(exc).__name__}:{exc}"
-    _check("di.duplicate_error", duplicate_error)
-
-    bridge, services_mod, resources_mod = di.create_layered_bridge(
-        m.ConfigMap(root={"x": "1"})
-    )
-    _check("di.layered.bridge", bridge.__class__.__name__)
-    _check("di.layered.services", services_mod.__class__.__name__)
-    _check("di.layered.resources", resources_mod.__class__.__name__)
-    di.wire(di_container, modules=[])
-    _check("di.wire.noop", True)
-
-    h.Integration.track_service_resolution("svc", resolved=True)
-    h.Integration.track_service_resolution(
-        "svc", resolved=False, error_message="not-found"
-    )
-    h.Integration.track_domain_event(
-        "evt",
-        aggregate_id="agg-1",
-        event_data=m.ConfigMap(root={"n": 1}),
-    )
-    h.Integration.setup_service_infrastructure(
-        service_name="svc",
-        service_version="1.2.3",
-        enable_context_correlation=True,
-    )
-    _check("integration.calls", True)
-
-    meta = h.Metadata(version="2.0.0", attributes={"tag": "v2"})
-    _check("metadata.version", meta.version)
-    _check("metadata.attributes", meta.attributes)
-
-    protocol_handler = _ProtocolHandler()
-    _check(
-        "protocol.is_handler.true", h.ProtocolValidation.is_handler(protocol_handler)
-    )
-    _check(
-        "protocol.is_handler.false",
-        h.ProtocolValidation.is_handler(m.ConfigMap(root={})),
-    )
-    _check("protocol.is_service", h.ProtocolValidation.is_service(_ServiceStub()))
-    _check("protocol.is_command_bus", h.ProtocolValidation.is_command_bus())
-    _check(
-        "protocol.validate_known",
-        h.ProtocolValidation.validate_protocol_compliance(
-            protocol_handler, "Handler"
-        ).is_success,
-    )
-    _check(
-        "protocol.validate_unknown",
-        h.ProtocolValidation.validate_protocol_compliance(
-            protocol_handler, "Unknown"
-        ).error,
-    )
-    _check(
-        "protocol.validate_processor.good",
-        h.ProtocolValidation.validate_processor_protocol(_ProcessorGood()).is_success,
-    )
-    _check(
-        "protocol.validate_processor.bad",
-        h.ProtocolValidation.validate_processor_protocol(_ProcessorBad()).error,
-    )
-
-    def positive_validator(item: t.ContainerValue) -> r[bool]:
-        return r[bool].ok(item == "ok")
-
-    def strict_validator(item: t.ContainerValue) -> r[bool]:
-        return r[bool].ok(bool(item))
-
-    def fail_validator(_item: t.ContainerValue) -> r[bool]:
-        return r[bool].fail("rule-failed")
-
-    _check(
-        "validation.chain.ok",
-        h.Validation.validate_with_result(
-            "ok",
-            [positive_validator, strict_validator],
-        ).is_success,
-    )
-    _check(
-        "validation.chain.fail",
-        h.Validation.validate_with_result(
-            "x",
-            [positive_validator, fail_validator],
-        ).error,
-    )
-
-
-def demo_runtime_result_and_utilities() -> None:
-    _section("runtime_result_and_utilities")
-
-    rr_ok = h.RuntimeResult[int].ok(5)
-    rr_fail = h.RuntimeResult[int].fail("boom", error_code="E1")
-    _check("rr.is_success", rr_ok.is_success)
-    _check("rr.is_failure", rr_fail.is_failure)
-    _check("rr.unwrap_or", rr_fail.unwrap_or(9))
-    _check("rr.map", rr_ok.map(lambda n: n + 2).unwrap_or(-1))
-    _check(
-        "rr.flat_map",
-        rr_ok.flat_map(lambda n: h.RuntimeResult[int].ok(n * 3)).unwrap_or(-1),
-    )
-    _check(
-        "rr.and_then",
-        rr_ok.and_then(lambda n: h.RuntimeResult[int].ok(n - 1)).unwrap_or(-1),
-    )
-    _check("rr.alt", rr_fail.alt(lambda err: f"x:{err}").error)
-    _check(
-        "rr.lash",
-        rr_fail.lash(lambda _err: h.RuntimeResult[int].ok(42)).unwrap_or(-1),
-    )
-    _check("rr.recover", rr_fail.recover(lambda _err: 17).unwrap_or(-1))
-    _check("rr.fold", rr_ok.fold(lambda err: err, lambda n: f"ok:{n}"))
-
-    _check("mixin.ok", h.ok("v").unwrap_or("-"))
-    _check("mixin.fail", h.fail("err", error_code="E2").error_code)
-    _check("mixin.ensure_result.value", h.ensure_result(8).unwrap_or(-1))
-    _check("mixin.ensure_result.result", h.ensure_result(r[int].ok(9)).unwrap_or(-1))
-    _check("mixin.to_dict", h.to_dict(m.ConfigMap(root={"a": 1})))
-
-    generated_a = h.generate_id()
-    generated_b = h.generate_id()
-    _check("runtime.generate_id.length", len(generated_a) == len(generated_b) == 36)
-    _check("runtime.generate_id.unique", generated_a != generated_b)
-    _check(
-        "runtime.generate_prefixed_id.default",
-        h.generate_prefixed_id("cmd").startswith("cmd_"),
-    )
-    _check(
-        "runtime.generate_prefixed_id.length",
-        len(h.generate_prefixed_id("q", length=8).split("_")[1]) == 8,
-    )
-    _check(
-        "runtime.generate_datetime_utc", h.generate_datetime_utc().tzinfo is not None
-    )
-
-    e1 = _Entity(unique_id="abc")
-    e2 = _Entity(unique_id="abc")
-    e3 = _Entity(unique_id="xyz")
-    _check("runtime.compare_entities.true", h.compare_entities_by_id(e1, e2))
-    _check("runtime.compare_entities.false", h.compare_entities_by_id(e1, e3))
-    _check("runtime.hash_entity", h.hash_entity_by_id(e1) != 0)
-
-    _check(
-        "runtime.compare_value_objects.scalar",
-        h.compare_value_objects_by_value("a", "a"),
-    )
-    _check(
-        "runtime.compare_value_objects.model",
-        h.compare_value_objects_by_value(_Message(text="x"), _Message(text="x")),
-    )
-    _check(
-        "runtime.hash_value_object",
-        h.hash_value_object_by_value(_Message(text="x")) != 0,
-    )
-
-    trace_context = h.ensure_trace_context(
-        {"source": "test"},
-        include_correlation_id=True,
-        include_timestamp=True,
-    )
-    _check("runtime.ensure_trace_context.source", trace_context.get("source", "-"))
-    _check(
-        "runtime.ensure_trace_context.keys",
-        [
-            "trace_id" in trace_context,
-            "span_id" in trace_context,
-            "correlation_id" in trace_context,
-            "timestamp" in trace_context,
-        ],
-    )
-    _check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
-
-    _check(
-        "runtime.validate_http.success",
-        h.validate_http_status_codes([200, "404"]).unwrap_or([]),
-    )
-    _check("runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error)
-    _check(
-        "runtime.validate_http.type_fail",
-        h.validate_http_status_codes([Path("x")]).error,
-    )
-
-    _check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))
-    _check("runtime.is_dict_like.false", h.is_dict_like([1, 2]))
-    _check("runtime.is_list_like.true", h.is_list_like([1, 2]))
-    _check("runtime.is_list_like.false", h.is_list_like("ab"))
-    _check("runtime.is_valid_json.true", h.is_valid_json(json.dumps({"a": 1})))
-    _check("runtime.is_valid_json.false", h.is_valid_json("{bad"))
-    _check("runtime.is_valid_identifier.true", h.is_valid_identifier("valid_name"))
-    _check("runtime.is_valid_identifier.false", h.is_valid_identifier("1bad"))
-    _check("runtime.safe_get_attribute", h.safe_get_attribute(e1, "unique_id", "-"))
-    _check(
-        "runtime.extract_generic_args", len(h.extract_generic_args(dict[str, int])) >= 1
-    )
-    _check("runtime.is_sequence_type.true", h.is_sequence_type(list[int]))
-    _check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
-    _check("runtime.normalize_general", h.normalize_to_general_value({"n": 1}))
-    _check("runtime.normalize_metadata", h.normalize_to_metadata_value({"k": [1, 2]}))
-
-
-def main() -> None:
-    demo_handler_core()
-    demo_create_from_callable()
-    demo_discovery()
-    demo_namespaces_and_mixins()
-    demo_runtime_result_and_utilities()
-    _verify()
+        self.check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))
+        self.check("runtime.is_dict_like.false", h.is_dict_like([1, 2]))
+        self.check("runtime.is_list_like.true", h.is_list_like([1, 2]))
+        self.check("runtime.is_list_like.false", h.is_list_like("ab"))
+        self.check(
+            "runtime.is_valid_json.true",
+            h.is_valid_json(json.dumps({dict_key: dict_value})),
+        )
+        self.check("runtime.is_valid_json.false", h.is_valid_json("{bad"))
+        self.check(
+            "runtime.is_valid_identifier.true", h.is_valid_identifier(valid_identifier)
+        )
+        self.check(
+            "runtime.is_valid_identifier.false",
+            h.is_valid_identifier(invalid_identifier),
+        )
+        self.check(
+            "runtime.safe_get_attribute",
+            h.safe_get_attribute(e1, "unique_id", attr_fallback) == entity_id,
+        )
+        self.check(
+            "runtime.extract_generic_args",
+            len(h.extract_generic_args(dict[str, int])) >= 1,
+        )
+        self.check("runtime.is_sequence_type.true", h.is_sequence_type(list[int]))
+        self.check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
+        self.check(
+            "runtime.normalize_general",
+            h.normalize_to_general_value({dict_key: dict_value}),
+        )
+        self.check(
+            "runtime.normalize_metadata", h.normalize_to_metadata_value({"k": [1, 2]})
+        )
 
 
 if __name__ == "__main__":
-    main()
+    Ex10FlextHandlers(__file__).run()

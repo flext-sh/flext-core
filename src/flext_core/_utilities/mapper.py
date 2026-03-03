@@ -2799,7 +2799,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def pluck(
-        items: Sequence[Mapping[str, object]],
+        items: Sequence[Mapping[str, t.ContainerValue]],
         key: str,
         default: t.ContainerValue | None = None,
     ) -> list[t.ContainerValue | None]:
@@ -2934,7 +2934,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def cast_generic[T](
         value: t.ContainerValue,
-        target_type: Callable[[object], T] | None = None,
+        target_type: Callable[[t.ContainerValue], T] | None = None,
         *,
         default: T | None = None,
     ) -> T | t.ContainerValue:

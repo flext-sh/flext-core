@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Sequence
-from typing import ClassVar, Self, TypeAlias, override
+from typing import Any as JUSTIFIEDAny, ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -22,6 +22,8 @@ from flext_core import FlextRuntime, c, p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.domain_event import FlextModelsDomainEvent
+
+type _JUSTIFIEDEqOperand = JUSTIFIEDAny
 
 
 class FlextModelsEntity:
@@ -73,7 +75,7 @@ class FlextModelsEntity:
                 self.updated_at = FlextRuntime.generate_datetime_utc()
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
@@ -210,7 +212,7 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other: object) -> bool:
+        def __eq__(self: Self, other: _JUSTIFIEDEqOperand) -> bool:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented

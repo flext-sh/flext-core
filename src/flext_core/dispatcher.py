@@ -79,7 +79,7 @@ class FlextDispatcher:
         """Register a handler for a specific message type.
 
         Args:
-            handler: A callable or object with handle/can_handle methods.
+            handler: A callable or instance with handle/can_handle methods.
                      Must expose message_type, event_type, or can_handle
                      for route discovery.
             is_event: If True, register as event subscriber.

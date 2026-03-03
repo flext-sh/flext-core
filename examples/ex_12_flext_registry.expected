@@ -7,7 +7,7 @@ decorated_handler.type: 'str'
 execute.success: True
 validate_business_rules.success: True
 is_valid: True
-service_info: "{'service_type': 'FlextRegistry'}"
+service_info: {'service_type': 'FlextRegistry'}
 result_property: True
 runtime.type: 'ModelPrivateAttr'
 context.type: 'FlextContext'
@@ -19,14 +19,14 @@ summary.ok.success: True
 summary.ok.failure: False
 summary.fail.success: False
 summary.fail.failure: True
-mixin.ok.unwrap_or: 'value'
-mixin.fail.error: 'boom'
-mixin.fail.error_code: 'E_REG'
-ensure_result.raw: 99
-ensure_result.existing: 5
-to_dict.none: '{}'
-to_dict.mapping: "{'a': 1, 'b': 'x'}"
-to_dict.basemodel: "{'handler_id': 'id-1', 'handler_name': 'h', 'handler_type': 'command', 'handler_mode': 'command', 'command_timeout': 0, 'max_command_retries': 0, 'metadata': None}"
+mixin.ok.unwrap_or: True
+mixin.fail.error: True
+mixin.fail.error_code: True
+ensure_result.raw: True
+ensure_result.existing: True
+to_dict.none: {}
+to_dict.mapping: {'ovq': 1, 'wps': 'ruz'}
+to_dict.basemodel: {'command_timeout': 0, 'handler_id': 'jrsrbqng', 'handler_mode': 'command', 'handler_name': 'wwjlve', 'handler_type': 'command', 'max_command_retries': 0, 'metadata': None}
 generate_id.len: 36
 generate_prefixed_id: True
 generate_datetime_utc.type: 'datetime'
@@ -42,9 +42,9 @@ register_handlers.success: True
 register_handlers.registered_len: 3
 register_handlers.errors_len: 0
 dispatch.a.success: False
-dispatch.a.value: ''
+dispatch.a.value: False
 dispatch.b.success: False
-dispatch.b.value: ''
+dispatch.b.value: False
 
 [bindings_and_plugins]
 register_bindings.success: True
@@ -55,17 +55,17 @@ register_plugin.empty_name: True
 register_plugin.validated: True
 register_plugin.validate_fail: True
 register_plugin.validate_exc: True
-get_plugin.ok: 'plugin-http'
+get_plugin.ok: True
 get_plugin.missing: True
-list_plugins.transports: "['grpc', 'http']"
+list_plugins.transports: ['hqpdto', 'rngqcl']
 unregister_plugin.ok: True
 unregister_plugin.missing: True
 register_class_plugin.ok: True
 register_class_plugin.dup: True
 register_class_plugin.empty_name: True
-get_class_plugin.ok: 'class-jwt'
+get_class_plugin.ok: True
 get_class_plugin.missing: True
-list_class_plugins.auth: "['jwt']"
+list_class_plugins.auth: ['pffbqf']
 unregister_class_plugin.ok: True
 unregister_class_plugin.missing: True
 

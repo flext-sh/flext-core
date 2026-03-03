@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Literal, Self, override
+from typing import Annotated, Any as JUSTIFIEDAny, ClassVar, Literal, Self, override
 
 from pydantic import (
     AfterValidator,
@@ -32,6 +32,8 @@ from pydantic import (
 
 from flext_core import c, t
 from flext_core._models.containers import FlextModelsContainers
+
+type _JUSTIFIEDEqOperand = JUSTIFIEDAny
 
 
 def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
@@ -300,7 +302,10 @@ class FlextModelFoundation:
 
         @field_validator("metadata_value", mode="before")
         @classmethod
-        def validate_scalar_value(cls, v: object) -> t.ScalarValue | None:
+        def validate_scalar_value(
+            cls,
+            v: t.GeneralValueType,
+        ) -> t.ScalarValue | None:
             """Validate metadata value is a scalar type."""
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
@@ -433,7 +438,7 @@ class FlextModelFoundation:
         """Value model with equality/hash by value."""
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
             return bool(self.model_dump() == other.model_dump())

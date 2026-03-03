@@ -901,8 +901,8 @@ class FlextDecorators:
                     ),
                 )
                 try:
-                    retry_args: tuple[object, ...] = tuple(args)
-                    retry_kwargs: Mapping[str, object] = dict(kwargs)
+                    retry_args: tuple[t.GeneralValueType, ...] = tuple(args)
+                    retry_kwargs: Mapping[str, t.GeneralValueType] = dict(kwargs)
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -956,7 +956,7 @@ class FlextDecorators:
         logger: FlextLogger
 
     @staticmethod
-    def _has_flext_logger(value: object) -> TypeGuard[_HasLogger]:
+    def _has_flext_logger(value: t.GeneralValueType) -> TypeGuard[_HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger")
@@ -964,7 +964,7 @@ class FlextDecorators:
 
     @staticmethod
     def _resolve_logger(
-        args: tuple[object, ...],
+        args: tuple[t.GeneralValueType, ...],
         func: Callable[P, R],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
@@ -984,8 +984,8 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[object, ...],
-        kwargs: Mapping[str, object],
+        args: tuple[t.GeneralValueType, ...],
+        kwargs: Mapping[str, t.GeneralValueType],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,

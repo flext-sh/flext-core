@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, Self, override
+from typing import Annotated, Any as JUSTIFIEDAny, Self, override
 
 from pydantic import BeforeValidator, Field, model_validator
 
@@ -19,12 +19,14 @@ from flext_core import FlextRuntime, c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
+type _JUSTIFIEDEqOperand = JUSTIFIEDAny
+
 
 class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
     """ConfigMap with equality support for domain event data."""
 
     @override
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: _JUSTIFIEDEqOperand) -> bool:
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):

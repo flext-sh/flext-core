@@ -2,82 +2,9 @@
 
 from __future__ import annotations
 
-import sys
-from collections.abc import Mapping, Sequence
-from datetime import datetime
-from pathlib import Path
+from shared import Examples
 
-from pydantic import BaseModel
-
-from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t, u
-
-_RESULTS: list[str] = []
-
-
-def _check(label: str, value: object) -> None:
-    normalized = _normalize_for_ser(value)
-    _RESULTS.append(f"{label}: {_ser(normalized)}")
-
-
-def _section(name: str) -> None:
-    if _RESULTS:
-        _RESULTS.append("")
-    _RESULTS.append(f"[{name}]")
-
-
-def _normalize_for_ser(value: object) -> t.ContainerValue | None:
-    if value is None:
-        return None
-    if isinstance(value, bool | int | float | str | datetime | Path):
-        return value
-    if isinstance(value, BaseModel):
-        return str(value.model_dump())
-    return str(value)
-
-
-def _ser(v: t.ContainerValue | None) -> str:
-    if v is None:
-        return "None"
-    if isinstance(v, bool):
-        return str(v)
-    if isinstance(v, (int, float)):
-        return str(v)
-    if isinstance(v, str):
-        return repr(v)
-    if (
-        u.is_list(v)
-        and isinstance(v, Sequence)
-        and not isinstance(v, str | bytes | bytearray)
-    ):
-        return "[" + ", ".join(_ser(item) for item in v) + "]"
-    if u.is_dict_like(v) and isinstance(v, Mapping):
-        pairs = ", ".join(
-            f"{_ser(key)}: {_ser(val)}"
-            for key, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
-        return "{" + pairs + "}"
-    return type(v).__name__
-
-
-def _verify() -> None:
-    actual = "\n".join(_RESULTS).strip() + "\n"
-    me = Path(__file__)
-    expected_path = me.with_suffix(".expected")
-    n = sum(1 for line in _RESULTS if ": " in line and not line.startswith("["))
-    if expected_path.exists():
-        expected = expected_path.read_text(encoding="utf-8")
-        if actual == expected:
-            sys.stdout.write(f"PASS: {me.stem} ({n} checks)\n")
-        else:
-            actual_path = me.with_suffix(".actual")
-            actual_path.write_text(actual, encoding="utf-8")
-            sys.stdout.write(
-                f"FAIL: {me.stem} — diff {expected_path.name} {actual_path.name}\n"
-            )
-            sys.exit(1)
-    else:
-        expected_path.write_text(actual, encoding="utf-8")
-        sys.stdout.write(f"GENERATED: {expected_path.name} ({n} checks)\n")
+from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t
 
 
 class _CommandA(m.Command):
@@ -89,7 +16,7 @@ class _CommandB(m.Command):
 
 
 class _ProtocolHandler:
-    def __init__(self, label: str, message_type: type[object]) -> None:
+    def __init__(self, label: str, message_type: type[t.ContainerValue]) -> None:
         self._label = label
         self.message_type = message_type
 
@@ -113,240 +40,348 @@ def _discovered_handler(_message: t.ContainerValue) -> t.ContainerValue:
     return "decorated"
 
 
-def _exercise_create_and_service_methods() -> tuple[FlextRegistry, FlextDispatcher]:
-    _section("create_and_service_methods")
+class Ex12FlextRegistry(Examples):
+    """Exercise FlextRegistry public API."""
 
-    dispatcher = FlextDispatcher()
-    reg_default = FlextRegistry.create()
-    reg_explicit = FlextRegistry.create(dispatcher=None)
-    reg_auto_false = FlextRegistry.create(auto_discover_handlers=False)
-    reg_auto_true = FlextRegistry.create(auto_discover_handlers=True)
+    def exercise(self) -> None:
+        """Run all FlextRegistry example sections."""
+        registry, dispatcher = self._exercise_create_and_service_methods()
+        self._exercise_summary_and_mixins(registry)
+        handler_a, handler_b = self._exercise_registration_and_dispatch(
+            registry, dispatcher
+        )
+        self._exercise_bindings_and_plugin_apis(registry, handler_a, handler_b)
+        self._exercise_register_method_and_tracking(registry)
 
-    _check("create.default.type", type(reg_default).__name__)
-    _check("create.explicit.type", type(reg_explicit).__name__)
-    _check("create.auto_false.type", type(reg_auto_false).__name__)
-    _check("create.auto_true.type", type(reg_auto_true).__name__)
-    _check(
-        "decorated_handler.type",
-        type(_discovered_handler(_CommandA(value="d"))).__name__,
-    )
-    _check("execute.success", reg_explicit.execute().is_success)
-    _check(
-        "validate_business_rules.success",
-        reg_explicit.validate_business_rules().is_success,
-    )
-    _check("is_valid", reg_explicit.is_valid())
-    _check("service_info", reg_explicit.get_service_info())
-    _check("result_property", reg_explicit.result)
-    _check("runtime.type", type(reg_explicit.runtime).__name__)
-    _check("context.type", type(reg_explicit.context).__name__)
-    _check("config.type", type(reg_explicit.config).__name__)
-    _check("container.type", type(reg_explicit.container).__name__)
+    def _exercise_create_and_service_methods(
+        self,
+    ) -> tuple[FlextRegistry, FlextDispatcher]:
+        self.section("create_and_service_methods")
 
-    return reg_explicit, dispatcher
+        discovered_value = self.rand_str(4)
 
+        dispatcher = FlextDispatcher()
+        reg_default = FlextRegistry.create()
+        reg_explicit = FlextRegistry.create(dispatcher=None)
+        reg_auto_false = FlextRegistry.create(auto_discover_handlers=False)
+        reg_auto_true = FlextRegistry.create(auto_discover_handlers=True)
 
-def _exercise_summary_and_mixins(registry: FlextRegistry) -> None:
-    _section("summary_and_mixins")
+        self.check("create.default.type", type(reg_default).__name__)
+        self.check("create.explicit.type", type(reg_explicit).__name__)
+        self.check("create.auto_false.type", type(reg_auto_false).__name__)
+        self.check("create.auto_true.type", type(reg_auto_true).__name__)
+        self.check(
+            "decorated_handler.type",
+            type(_discovered_handler(_CommandA(value=discovered_value))).__name__,
+        )
+        self.check("execute.success", reg_explicit.execute().is_success)
+        self.check(
+            "validate_business_rules.success",
+            reg_explicit.validate_business_rules().is_success,
+        )
+        self.check("is_valid", reg_explicit.is_valid())
+        self.check("service_info", reg_explicit.get_service_info())
+        self.check("result_property", reg_explicit.result is not None)
+        self.check("runtime.type", type(reg_explicit.runtime).__name__)
+        self.check("context.type", type(reg_explicit.context).__name__)
+        self.check("config.type", type(reg_explicit.config).__name__)
+        self.check("container.type", type(reg_explicit.container).__name__)
 
-    summary_ok = FlextRegistry.Summary()
-    summary_fail = FlextRegistry.Summary(errors=["e1"])
+        return reg_explicit, dispatcher
 
-    _check("summary.ok.success", summary_ok.is_success)
-    _check("summary.ok.failure", summary_ok.is_failure)
-    _check("summary.fail.success", summary_fail.is_success)
-    _check("summary.fail.failure", summary_fail.is_failure)
+    def _exercise_summary_and_mixins(self, registry: FlextRegistry) -> None:
+        self.section("summary_and_mixins")
 
-    ok_result = registry.ok("value")
-    fail_result = registry.fail(
-        "boom", error_code="E_REG", error_data=m.ConfigMap(root={"k": "v"})
-    )
-    _check("mixin.ok.unwrap_or", ok_result.unwrap_or("x"))
-    _check("mixin.fail.error", fail_result.error)
-    _check("mixin.fail.error_code", fail_result.error_code)
+        summary_error = self.rand_str(5)
+        ok_value = self.rand_str(6)
+        fail_message = self.rand_str(7)
+        fail_code = self.rand_str(5)
+        fail_data_key = self.rand_str(3)
+        fail_data_value = self.rand_str(4)
+        ensured_raw = self.rand_int(1, 200)
+        ensured_existing = self.rand_int(1, 200)
+        map_key_a = self.rand_str(3)
+        map_key_b = self.rand_str(3)
+        map_val_a = self.rand_int(1, 9)
+        map_val_b = self.rand_str(3)
+        handler_name = self.rand_str(6)
+        handler_id = self.rand_str(8)
+        prefix = f"reg.{self.rand_str(4)}"
 
-    _check("ensure_result.raw", registry.ensure_result(99).unwrap_or(0))
-    _check("ensure_result.existing", registry.ensure_result(r[int].ok(5)).unwrap_or(0))
-    _check("to_dict.none", registry.to_dict(None))
-    _check("to_dict.mapping", registry.to_dict({"a": 1, "b": "x"}))
-    _check(
-        "to_dict.basemodel",
-        registry.to_dict(m.Handler(handler_name="h", handler_id="id-1")),
-    )
+        summary_ok = FlextRegistry.Summary()
+        summary_fail = FlextRegistry.Summary(errors=[summary_error])
 
-    _check("generate_id.len", len(registry.generate_id()))
-    _check(
-        "generate_prefixed_id",
-        registry.generate_prefixed_id("reg", 6).startswith("reg_"),
-    )
-    _check(
-        "generate_datetime_utc.type", type(registry.generate_datetime_utc()).__name__
-    )
+        ok_success_attr = summary_ok.is_success
+        summary_ok_success = (
+            ok_success_attr() if callable(ok_success_attr) else ok_success_attr
+        )
+        ok_failure_attr = summary_ok.is_failure
+        summary_ok_failure = (
+            ok_failure_attr() if callable(ok_failure_attr) else ok_failure_attr
+        )
+        fail_success_attr = summary_fail.is_success
+        summary_fail_success = (
+            fail_success_attr() if callable(fail_success_attr) else fail_success_attr
+        )
+        fail_failure_attr = summary_fail.is_failure
+        summary_fail_failure = (
+            fail_failure_attr() if callable(fail_failure_attr) else fail_failure_attr
+        )
 
+        self.check("summary.ok.success", summary_ok_success)
+        self.check("summary.ok.failure", summary_ok_failure)
+        self.check("summary.fail.success", summary_fail_success)
+        self.check("summary.fail.failure", summary_fail_failure)
 
-def _exercise_registration_and_dispatch(
-    registry: FlextRegistry,
-    dispatcher: FlextDispatcher,
-) -> tuple[_ProtocolHandler, _ProtocolHandler]:
-    _section("registration_and_dispatch")
+        ok_result = registry.ok(ok_value)
+        fail_result = registry.fail(
+            fail_message,
+            error_code=fail_code,
+            error_data=m.ConfigMap(root={fail_data_key: fail_data_value}),
+        )
+        self.check("mixin.ok.unwrap_or", ok_result.unwrap_or("") == ok_value)
+        self.check("mixin.fail.error", fail_result.error == fail_message)
+        self.check("mixin.fail.error_code", fail_result.error_code == fail_code)
 
-    handler_a = _ProtocolHandler("A", _CommandA)
-    handler_b = _ProtocolHandler("B", _CommandB)
-    handler_mode = FlextHandlers.create_from_callable(
-        lambda msg: f"C:{msg}",
-        handler_name="mode-handler",
-        mode=c.Cqrs.HandlerType.COMMAND,
-    )
+        self.check(
+            "ensure_result.raw",
+            registry.ensure_result(ensured_raw).unwrap_or(0) == ensured_raw,
+        )
+        self.check(
+            "ensure_result.existing",
+            registry.ensure_result(r[int].ok(ensured_existing)).unwrap_or(0)
+            == ensured_existing,
+        )
+        self.check("to_dict.none", registry.to_dict(None))
+        self.check(
+            "to_dict.mapping",
+            registry.to_dict({map_key_a: map_val_a, map_key_b: map_val_b}),
+        )
+        self.check(
+            "to_dict.basemodel",
+            registry.to_dict(
+                m.Handler(handler_name=handler_name, handler_id=handler_id)
+            ),
+        )
 
-    reg_one = registry.register_handler(handler_a)
-    reg_dup = registry.register_handler(handler_a)
-    reg_two = registry.register_handler(handler_b)
-    reg_mode = registry.register_handler(handler_a)
+        self.check("generate_id.len", len(registry.generate_id()))
+        self.check(
+            "generate_prefixed_id",
+            registry.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
+        )
+        self.check(
+            "generate_datetime_utc.type",
+            type(registry.generate_datetime_utc()).__name__,
+        )
 
-    _check("register_handler.a.success", reg_one.is_success)
-    _check(
-        "register_handler.a.id",
-        reg_one.value.registration_id if reg_one.is_success else "",
-    )
-    _check("register_handler.duplicate.success", reg_dup.is_success)
-    _check("register_handler.b.success", reg_two.is_success)
-    _check("register_handler.mode.success", reg_mode.is_success)
-    _check("create_from_callable.type", type(handler_mode).__name__)
+    def _exercise_registration_and_dispatch(
+        self,
+        registry: FlextRegistry,
+        dispatcher: FlextDispatcher,
+    ) -> tuple[_ProtocolHandler, _ProtocolHandler]:
+        self.section("registration_and_dispatch")
 
-    batch = registry.register_handlers([handler_a, handler_b, handler_a])
-    _check("register_handlers.success", batch.is_success)
-    _check(
-        "register_handlers.registered_len",
-        len(batch.value.registered) if batch.is_success else -1,
-    )
-    _check(
-        "register_handlers.errors_len",
-        len(batch.value.errors) if batch.is_success else -1,
-    )
+        label_a = self.rand_str(3)
+        label_b = self.rand_str(3)
+        callable_prefix = self.rand_str(3)
+        callable_name = self.rand_str(10)
+        cmd_a_value = self.rand_str(6)
+        cmd_b_value = self.rand_int(1, 100)
 
-    cmd_a = _CommandA(value="alpha")
-    dispatch_a = dispatcher.dispatch(cmd_a)
-    _check("dispatch.a.success", dispatch_a.is_success)
-    _check("dispatch.a.value", dispatch_a.unwrap_or(""))
+        handler_a = _ProtocolHandler(label_a, _CommandA)
+        handler_b = _ProtocolHandler(label_b, _CommandB)
+        handler_mode = FlextHandlers.create_from_callable(
+            lambda msg: f"{callable_prefix}:{msg}",
+            handler_name=callable_name,
+            mode=c.Cqrs.HandlerType.COMMAND,
+        )
 
-    cmd_b = _CommandB(amount=7)
-    dispatch_b = dispatcher.dispatch(cmd_b)
-    _check("dispatch.b.success", dispatch_b.is_success)
-    _check("dispatch.b.value", dispatch_b.unwrap_or(""))
+        reg_one = registry.register_handler(handler_a)
+        reg_dup = registry.register_handler(handler_a)
+        reg_two = registry.register_handler(handler_b)
+        reg_mode = registry.register_handler(handler_a)
 
-    return handler_a, handler_b
+        self.check("register_handler.a.success", reg_one.is_success)
+        self.check(
+            "register_handler.a.id",
+            reg_one.value.registration_id if reg_one.is_success else "",
+        )
+        self.check("register_handler.duplicate.success", reg_dup.is_success)
+        self.check("register_handler.b.success", reg_two.is_success)
+        self.check("register_handler.mode.success", reg_mode.is_success)
+        self.check("create_from_callable.type", type(handler_mode).__name__)
 
+        batch = registry.register_handlers([handler_a, handler_b, handler_a])
+        self.check("register_handlers.success", batch.is_success)
+        self.check(
+            "register_handlers.registered_len",
+            len(batch.value.registered) if batch.is_success else -1,
+        )
+        self.check(
+            "register_handlers.errors_len",
+            len(batch.value.errors) if batch.is_success else -1,
+        )
 
-def _exercise_bindings_and_plugin_apis(
-    registry: FlextRegistry,
-    handler_a: _ProtocolHandler,
-    handler_b: _ProtocolHandler,
-) -> None:
-    _section("bindings_and_plugins")
+        cmd_a = _CommandA(value=cmd_a_value)
+        dispatch_a = dispatcher.dispatch(cmd_a)
+        self.check("dispatch.a.success", dispatch_a.is_success)
+        self.check(
+            "dispatch.a.value", dispatch_a.unwrap_or("") == f"{label_a}:{cmd_a_value}"
+        )
 
-    bindings_result = registry.register_bindings({
-        _CommandA: handler_a,
-        "custom-binding": handler_b,
-    })
-    _check("register_bindings.success", bindings_result.is_success)
-    _check(
-        "register_bindings.registered_len",
-        len(bindings_result.value.registered) if bindings_result.is_success else -1,
-    )
+        cmd_b = _CommandB(amount=cmd_b_value)
+        dispatch_b = dispatcher.dispatch(cmd_b)
+        self.check("dispatch.b.success", dispatch_b.is_success)
+        self.check(
+            "dispatch.b.value", dispatch_b.unwrap_or("") == f"{label_b}:{cmd_b_value}"
+        )
 
-    plugin_ok = registry.register_plugin("transports", "http", "plugin-http")
-    plugin_dup = registry.register_plugin("transports", "http", "plugin-http")
-    plugin_empty = registry.register_plugin("transports", "", "plugin-http")
-    plugin_validated = registry.register_plugin(
-        "transports",
-        "grpc",
-        "plugin-grpc",
-        validate=lambda pval: r[bool].ok(bool(pval)),
-    )
-    plugin_validate_fail = registry.register_plugin(
-        "transports",
-        "bad",
-        "x",
-        validate=lambda _pval: r[bool].fail("invalid"),
-    )
-    plugin_validate_exc = registry.register_plugin(
-        "transports",
-        "explode",
-        "x",
-        validate=lambda _pval: (_ for _ in ()).throw(RuntimeError("boom")),
-    )
+        return handler_a, handler_b
 
-    _check("register_plugin.ok", plugin_ok.is_success)
-    _check("register_plugin.dup", plugin_dup.is_success)
-    _check("register_plugin.empty_name", plugin_empty.is_failure)
-    _check("register_plugin.validated", plugin_validated.is_success)
-    _check("register_plugin.validate_fail", plugin_validate_fail.is_failure)
-    _check("register_plugin.validate_exc", plugin_validate_exc.is_failure)
+    def _exercise_bindings_and_plugin_apis(
+        self,
+        registry: FlextRegistry,
+        handler_a: _ProtocolHandler,
+        handler_b: _ProtocolHandler,
+    ) -> None:
+        self.section("bindings_and_plugins")
 
-    plugin_get_ok = registry.get_plugin("transports", "http")
-    plugin_get_missing = registry.get_plugin("transports", "missing")
-    plugin_list = registry.list_plugins("transports")
-    plugin_unreg_ok = registry.unregister_plugin("transports", "http")
-    plugin_unreg_missing = registry.unregister_plugin("transports", "missing")
+        custom_binding_name = self.rand_str(8)
+        plugin_ns = f"svc.{self.rand_str(6)}"
+        plugin_name_a = self.rand_str(6)
+        plugin_value_a = self.rand_str(8)
+        plugin_name_b = self.rand_str(6)
+        plugin_value_b = self.rand_str(8)
+        plugin_bad_name = self.rand_str(6)
+        plugin_bad_value = self.rand_str(3)
+        plugin_missing_name = self.rand_str(6)
+        plugin_unreg_missing = self.rand_str(6)
+        class_ns = f"cls.{self.rand_str(6)}"
+        class_plugin_name = self.rand_str(6)
+        class_plugin_value = self.rand_str(8)
+        class_missing_name = self.rand_str(6)
+        class_unreg_missing = self.rand_str(6)
+        invalid_error = self.rand_str(7)
+        boom_message = self.rand_str(7)
 
-    _check("get_plugin.ok", plugin_get_ok.unwrap_or(""))
-    _check("get_plugin.missing", plugin_get_missing.is_failure)
-    _check("list_plugins.transports", sorted(plugin_list.unwrap_or([])))
-    _check("unregister_plugin.ok", plugin_unreg_ok.is_success)
-    _check("unregister_plugin.missing", plugin_unreg_missing.is_failure)
+        bindings_result = registry.register_bindings({
+            _CommandA: handler_a,
+            custom_binding_name: handler_b,
+        })
+        self.check("register_bindings.success", bindings_result.is_success)
+        self.check(
+            "register_bindings.registered_len",
+            len(bindings_result.value.registered) if bindings_result.is_success else -1,
+        )
 
-    class_ok = registry.register_class_plugin("auth", "jwt", "class-jwt")
-    class_dup = registry.register_class_plugin("auth", "jwt", "class-jwt")
-    class_empty = registry.register_class_plugin("auth", "", "class-jwt")
-    class_get_ok = registry.get_class_plugin("auth", "jwt")
-    class_get_missing = registry.get_class_plugin("auth", "missing")
-    class_list = registry.list_class_plugins("auth")
-    class_unreg_ok = registry.unregister_class_plugin("auth", "jwt")
-    class_unreg_missing = registry.unregister_class_plugin("auth", "missing")
+        plugin_ok = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
+        plugin_dup = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
+        plugin_empty = registry.register_plugin(plugin_ns, "", plugin_value_a)
+        plugin_validated = registry.register_plugin(
+            plugin_ns,
+            plugin_name_b,
+            plugin_value_b,
+            validate=lambda pval: r[bool].ok(bool(pval)),
+        )
+        plugin_validate_fail = registry.register_plugin(
+            plugin_ns,
+            plugin_bad_name,
+            plugin_bad_value,
+            validate=lambda _pval: r[bool].fail(invalid_error),
+        )
+        plugin_validate_exc = registry.register_plugin(
+            plugin_ns,
+            self.rand_str(6),
+            self.rand_str(3),
+            validate=lambda _pval: (_ for _ in ()).throw(RuntimeError(boom_message)),
+        )
 
-    _check("register_class_plugin.ok", class_ok.is_success)
-    _check("register_class_plugin.dup", class_dup.is_success)
-    _check("register_class_plugin.empty_name", class_empty.is_failure)
-    _check("get_class_plugin.ok", class_get_ok.unwrap_or(""))
-    _check("get_class_plugin.missing", class_get_missing.is_failure)
-    _check("list_class_plugins.auth", class_list.unwrap_or([]))
-    _check("unregister_class_plugin.ok", class_unreg_ok.is_success)
-    _check("unregister_class_plugin.missing", class_unreg_missing.is_failure)
+        self.check("register_plugin.ok", plugin_ok.is_success)
+        self.check("register_plugin.dup", plugin_dup.is_success)
+        self.check("register_plugin.empty_name", plugin_empty.is_failure)
+        self.check("register_plugin.validated", plugin_validated.is_success)
+        self.check("register_plugin.validate_fail", plugin_validate_fail.is_failure)
+        self.check("register_plugin.validate_exc", plugin_validate_exc.is_failure)
 
+        plugin_get_ok = registry.get_plugin(plugin_ns, plugin_name_a)
+        plugin_get_missing = registry.get_plugin(plugin_ns, plugin_missing_name)
+        plugin_list = registry.list_plugins(plugin_ns)
+        plugin_unreg_ok = registry.unregister_plugin(plugin_ns, plugin_name_a)
+        plugin_unreg_missing = registry.unregister_plugin(
+            plugin_ns, plugin_unreg_missing
+        )
 
-def _exercise_register_method_and_tracking(registry: FlextRegistry) -> None:
-    _section("register_method_and_tracking")
+        self.check("get_plugin.ok", plugin_get_ok.unwrap_or("") == plugin_value_a)
+        self.check("get_plugin.missing", plugin_get_missing.is_failure)
+        self.check("list_plugins.transports", sorted(plugin_list.unwrap_or([])))
+        self.check("unregister_plugin.ok", plugin_unreg_ok.is_success)
+        self.check("unregister_plugin.missing", plugin_unreg_missing.is_failure)
 
-    meta_dict = m.ConfigMap(root={"team": "core", "version": "1"})
-    meta_model = m.Metadata(attributes={"owner": "registry", "enabled": True})
+        class_ok = registry.register_class_plugin(
+            class_ns, class_plugin_name, class_plugin_value
+        )
+        class_dup = registry.register_class_plugin(
+            class_ns, class_plugin_name, class_plugin_value
+        )
+        class_empty = registry.register_class_plugin(class_ns, "", class_plugin_value)
+        class_get_ok = registry.get_class_plugin(class_ns, class_plugin_name)
+        class_get_missing = registry.get_class_plugin(class_ns, class_missing_name)
+        class_list = registry.list_class_plugins(class_ns)
+        class_unreg_ok = registry.unregister_class_plugin(class_ns, class_plugin_name)
+        class_unreg_missing = registry.unregister_class_plugin(
+            class_ns, class_unreg_missing
+        )
 
-    reg_plain = registry.register("svc.plain", "value")
-    reg_meta_dict = registry.register("svc.dict", "payload", metadata=meta_dict)
-    reg_meta_model = registry.register(
-        "svc.meta",
-        lambda: "callable-service",
-        metadata=meta_model,
-    )
-    reg_bad = registry.register("", "bad")
+        self.check("register_class_plugin.ok", class_ok.is_success)
+        self.check("register_class_plugin.dup", class_dup.is_success)
+        self.check("register_class_plugin.empty_name", class_empty.is_failure)
+        self.check(
+            "get_class_plugin.ok",
+            class_get_ok.unwrap_or("") == class_plugin_value,
+        )
+        self.check("get_class_plugin.missing", class_get_missing.is_failure)
+        self.check("list_class_plugins.auth", class_list.unwrap_or([]))
+        self.check("unregister_class_plugin.ok", class_unreg_ok.is_success)
+        self.check("unregister_class_plugin.missing", class_unreg_missing.is_failure)
 
-    _check("register.service.plain", reg_plain.is_success)
-    _check("register.service.meta_dict", reg_meta_dict.is_success)
-    _check("register.service.meta_model", reg_meta_model.is_success)
-    _check("register.service.bad", reg_bad.is_failure)
+    def _exercise_register_method_and_tracking(self, registry: FlextRegistry) -> None:
+        self.section("register_method_and_tracking")
 
-    with registry.track("example_track") as metrics:
-        _check("track.has_operation_count", "operation_count" in metrics)
-        _check("track.operation_count", metrics.get("operation_count", -1))
+        team_value = self.rand_str(5)
+        version_value = str(self.rand_int(1, 9))
+        owner_value = self.rand_str(7)
+        svc_plain_name = f"svc.{self.rand_str(6)}"
+        svc_plain_value = self.rand_str(6)
+        svc_dict_name = f"svc.{self.rand_str(6)}"
+        svc_dict_value = self.rand_str(7)
+        svc_meta_name = f"svc.{self.rand_str(6)}"
+        callable_value = self.rand_str(10)
+        bad_value = self.rand_str(4)
+        track_name = self.rand_str(8)
 
+        meta_dict = m.ConfigMap(root={"team": team_value, "version": version_value})
+        meta_model = m.Metadata(attributes={"owner": owner_value, "enabled": True})
 
-def main() -> None:
-    registry, dispatcher = _exercise_create_and_service_methods()
-    _exercise_summary_and_mixins(registry)
-    handler_a, handler_b = _exercise_registration_and_dispatch(registry, dispatcher)
-    _exercise_bindings_and_plugin_apis(registry, handler_a, handler_b)
-    _exercise_register_method_and_tracking(registry)
-    _verify()
+        reg_plain = registry.register(svc_plain_name, svc_plain_value)
+        reg_meta_dict = registry.register(
+            svc_dict_name, svc_dict_value, metadata=meta_dict
+        )
+        reg_meta_model = registry.register(
+            svc_meta_name,
+            lambda: callable_value,
+            metadata=meta_model,
+        )
+        reg_bad = registry.register("", bad_value)
+
+        self.check("register.service.plain", reg_plain.is_success)
+        self.check("register.service.meta_dict", reg_meta_dict.is_success)
+        self.check("register.service.meta_model", reg_meta_model.is_success)
+        self.check("register.service.bad", reg_bad.is_failure)
+
+        with registry.track(track_name) as metrics:
+            self.check("track.has_operation_count", "operation_count" in metrics)
+            self.check("track.operation_count", metrics.get("operation_count", -1))
 
 
 if __name__ == "__main__":
-    main()
+    Ex12FlextRegistry(__file__).run()

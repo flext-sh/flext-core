@@ -80,7 +80,9 @@ class FlextUtilitiesGuards:
         )
 
     @staticmethod
-    def is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ContainerValue]]:
+    def is_result_like[T](
+        value: T,
+    ) -> TypeGuard[p.ResultLike[t.ContainerValue]]:
         """Check if value implements ResultLike protocol (has is_success, value, error).
 
         Uses try/except to avoid triggering property getters that may raise
@@ -128,7 +130,7 @@ class FlextUtilitiesGuards:
     # These functions enable type narrowing without  - zero tolerance typing
 
     @staticmethod
-    def is_general_value_type(value: object) -> TypeGuard[t.ContainerValue]:
+    def is_general_value_type[T](value: T) -> TypeGuard[t.ContainerValue]:
         """Check if value is a valid t.GuardInputValue.
 
         t.GuardInputValue = ScalarValue | Sequence[t.GuardInputValue] | Mapping[str, t.GuardInputValue]
@@ -443,32 +445,39 @@ class FlextUtilitiesGuards:
 
     # Protocol specs: name -> check function (returns bool)
     # Replaces 9 TypeCheck* Pydantic classes + _PROTOCOL_CATEGORY_MAP + _is_* methods
-    _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
-        "config": lambda v: (
-            hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
-        ),
-        "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
-        "container": lambda v: (
-            hasattr(v, "register") and callable(getattr(v, "register", None))
-        ),
-        "command_bus": lambda v: (
-            hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
-        ),
-        "handler": lambda v: (
-            hasattr(v, "handle") and callable(getattr(v, "handle", None))
-        ),
-        "logger": lambda v: all(
-            hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
-        ),
-        "result": lambda v: all(
-            hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
-        ),
-        "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run", None)),
-        "middleware": lambda v: (
-            hasattr(v, "before_dispatch")
-            and callable(getattr(v, "before_dispatch", None))
-        ),
-    })
+    _PROTOCOL_SPECS: Mapping[str, Callable[[t.ContainerValue], bool]] = (
+        MappingProxyType({
+            "config": lambda v: (
+                hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
+            ),
+            "context": lambda v: (
+                hasattr(v, "request_id") or hasattr(v, "correlation_id")
+            ),
+            "container": lambda v: (
+                hasattr(v, "register") and callable(getattr(v, "register", None))
+            ),
+            "command_bus": lambda v: (
+                hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
+            ),
+            "handler": lambda v: (
+                hasattr(v, "handle") and callable(getattr(v, "handle", None))
+            ),
+            "logger": lambda v: all(
+                hasattr(v, a)
+                for a in ("debug", "info", "warning", "error", "exception")
+            ),
+            "result": lambda v: all(
+                hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
+            ),
+            "service": lambda v: (
+                hasattr(v, "run") and callable(getattr(v, "run", None))
+            ),
+            "middleware": lambda v: (
+                hasattr(v, "before_dispatch")
+                and callable(getattr(v, "before_dispatch", None))
+            ),
+        })
+    )
 
     _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
         p.Config: "config",
@@ -654,7 +663,7 @@ class FlextUtilitiesGuards:
         return None
 
     @staticmethod
-    def _is_type_tuple(value: object) -> TypeGuard[tuple[type, ...]]:
+    def _is_type_tuple[T](value: T) -> TypeGuard[tuple[type, ...]]:
         return isinstance(value, tuple) and all(
             isinstance(item, type) for item in value
         )

@@ -12,9 +12,11 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import get_origin, get_type_hints
+from typing import TypeVar, get_origin, get_type_hints
 
 from flext_core import FlextRuntime, c, p, t
+
+_R = TypeVar("_R")
 
 
 class FlextUtilitiesChecker:
@@ -96,7 +98,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: Callable[..., object],
+        handle_method: Callable[..., _R],
     ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
@@ -109,7 +111,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: Callable[..., object],
+        handle_method: Callable[..., _R],
         handler_class: type,
     ) -> Mapping[str, t.ContainerValue]:
         """Safely extract type hints from handle method."""
@@ -181,7 +183,7 @@ class FlextUtilitiesChecker:
         handle_method_raw = getattr(handler_class, c.Mixins.METHOD_HANDLE)
         if not callable(handle_method_raw):
             return None
-        handle_method: Callable[..., object] = handle_method_raw
+        handle_method = handle_method_raw
 
         signature = cls._get_method_signature(handle_method)
         if signature is None:

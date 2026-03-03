@@ -199,7 +199,9 @@ class FlextContainer(p.DI):
             # Get the caller's frame to discover factories in calling module
             frame = inspect.currentframe()
             if frame and frame.f_back:
-                caller_globals: Mapping[str, object] = frame.f_back.f_globals
+                caller_globals: Mapping[str, t.GeneralValueType] = (
+                    frame.f_back.f_globals
+                )
                 # Get module name from globals
                 module_name_raw = caller_globals.get("__name__", "__main__")
                 module_name = str(module_name_raw) if module_name_raw else "__main__"
@@ -221,9 +223,8 @@ class FlextContainer(p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                _factory_func_ref: Callable[[], object] | None = (
-                                    factory_func_raw
-                                ),
+                                _factory_func_ref: Callable[[], t.GeneralValueType]
+                                | None = (factory_func_raw),
                                 _factory_name: str = factory_name,
                                 _factory_config: m.Container.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
@@ -979,7 +980,9 @@ class FlextContainer(p.DI):
         return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @staticmethod
-    def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
+    def _is_instance_of[T](
+        value: t.GeneralValueType, type_cls: type[T]
+    ) -> TypeGuard[T]:
         """Type guard to narrow object to specific type T.
 
         Uses isinstance for type narrowing with MRO support.
@@ -987,7 +990,9 @@ class FlextContainer(p.DI):
         return isinstance(value, type_cls) or type_cls in type(value).__mro__
 
     @staticmethod
-    def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:
+    def _is_registerable_service(
+        value: t.GeneralValueType,
+    ) -> TypeGuard[t.RegisterableService]:
         # Use isinstance for proper type narrowing
         if isinstance(value, (str, int, float, bool, type(None))):
             return True
@@ -1009,7 +1014,7 @@ class FlextContainer(p.DI):
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def _is_context_protocol(value: object) -> TypeGuard[p.Context]:
+    def _is_context_protocol(value: t.GeneralValueType) -> TypeGuard[p.Context]:
         return bool(
             hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get"),
         )

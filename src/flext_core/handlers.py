@@ -824,7 +824,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             metadata, returning them sorted by priority for consistent ordering.
 
             Args:
-                module: Module object to scan for handler decorators
+                module: Module instance to scan for handler decorators
 
             Returns:
                 List of tuples (function_name, function, DecoratorConfig) sorted by priority
@@ -852,18 +852,23 @@ class FlextHandlers[MessageT_contra, ResultT](
                     func,
                     c.Discovery.HANDLER_ATTR,
                 )
-                callable_func: Callable[..., object] = func
+                callable_func: Callable[..., t.GeneralValueType] = func
 
                 def narrowed_func(
                     message: t.ContainerValue,
-                    captured_callable: Callable[..., object] = callable_func,
+                    captured_callable: Callable[
+                        ..., t.GeneralValueType
+                    ] = callable_func,
                     **kwargs: t.ContainerValue,
                 ) -> t.ContainerValue:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""
                     result = fn_candidate(message)
-                    if isinstance(result, str | int | float | bool | datetime) or result is None:
+                    if (
+                        isinstance(result, str | int | float | bool | datetime)
+                        or result is None
+                    ):
                         return result
                     return ""
 
@@ -889,7 +894,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             the @handler() decorator without scanning all items.
 
             Args:
-                module: Module object to check for handlers
+                module: Module instance to check for handlers
 
             Returns:
                 True if module has at least one handler, False otherwise

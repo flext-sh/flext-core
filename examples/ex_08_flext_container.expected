@@ -7,13 +7,13 @@ create.false.same_instance: True
 create.true.same_instance: True
 builder.create.false.same_instance: True
 builder.create.true.same_instance: True
-result.ok.unwrap_or: 7
+result.ok.roundtrip: True
 runtime.normalize.bool: True
 constants.default_max_services: 1000
 
 [registration_and_resolution]
 register.service.success: True
-register.service.value: True
+register.service.stored_value_matches: True
 register.service.duplicate_failure: True
 register.service.empty_name_failure: True
 register.factory.success: True
@@ -22,15 +22,15 @@ register.factory.bad_registration_success: True
 register.resource.success: True
 register.resource.duplicate_failure: True
 get.service.success: True
-get.service.value: 41
+get.service.value_matches: True
 get.factory.success: True
-get.factory.value: 2
+get.factory.value_first_call: False
 get.resource.success: True
-get.resource.call_count: 1
+get.resource.call_count_is_one: True
 get.missing.failure: True
 get.bad_factory.failure: True
 get_typed.service.success: True
-get_typed.service.value: 41
+get_typed.service.value_matches: True
 get_typed.service.type_mismatch_failure: True
 get_typed.factory.success: True
 get_typed.resource_via_get.success: True
@@ -39,35 +39,35 @@ has_service.service.true: True
 has_service.factory.true: True
 has_service.resource.true: True
 has_service.missing.false: False
-list_services.contains.svc_number: True
-list_services.contains.factory_counter: True
-list_services.contains.resource_data: True
+list_services.contains.service: True
+list_services.contains.factory: True
+list_services.contains.resource: True
 
 [fluent_and_config]
 with_service.returns_self: True
 with_factory.returns_self: True
 with_resource.returns_self: True
 with_config.returns_self: True
-configure.get_config.max_services: 222
-configure.get_config.enable_factory_caching: True
-with_service.get.value: 'ready'
-with_factory.get.value: 'from-factory'
-with_resource.get.value: 'from-resource'
+configure.get_config.max_services_matches: True
+configure.get_config.enable_factory_caching_matches: True
+with_service.get.value_matches: True
+with_factory.get.value_matches: True
+with_resource.get.value_matches: True
 
 [wiring_and_scoped]
 wire_modules.calls_completed: True
 scoped.default.new_instance: True
 scoped.default.inherits_service: True
-scoped.default.get_typed_service: 41
+scoped.default.get_typed_service_matches: True
 scoped.subproject.app_name_suffix: False
 scoped.full.new_instance: True
-scoped.full.config_app_name: 'scoped.explicit'
+scoped.full.config_app_name: 'scoped.tncqvnfj'
 scoped.full.uses_explicit_context: True
 scoped.full.has_service: True
 scoped.full.has_factory: True
 scoped.full.has_resource: True
-scoped.full.get_service: 'scoped'
-scoped.full.get_factory: 700
+scoped.full.get_service_matches: True
+scoped.full.get_factory_matches: True
 scoped.full.get_resource.success: True
 
 [internal_and_cleanup]

@@ -186,7 +186,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | object,
+        obj: p.HasModelDump | t.ContainerValue,
         parameter: str,
     ) -> tuple[bool, t.ScalarValue | FlextModelsContainers.ConfigMap | None]:
         """Try to get attribute value from object via hasattr/getattr.
@@ -256,7 +256,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: object,
+        obj: t.ContainerValue,
         parameter: str,
     ) -> tuple[bool, t.ContainerValue | None]:
         try:
@@ -395,7 +395,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: p.HasModelDump | object,
+        obj: p.HasModelDump | t.ContainerValue,
         parameter: str,
         value: t.ScalarValue | FlextModelsContainers.ConfigMap,
     ) -> bool:

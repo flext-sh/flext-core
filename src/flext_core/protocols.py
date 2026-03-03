@@ -58,10 +58,10 @@ class _ProtocolIntrospection:
         class_name: str,
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, object] = (
+        protocol_annotations: dict[str, t.TypeHintSpecifier] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | object = (
+        raw_attrs: set[str] | t.GeneralValueType = (
             protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
@@ -89,7 +89,7 @@ class _ProtocolIntrospection:
 
         all_annotations: set[str] = set()
         for base in target_cls.__mro__:
-            base_annotations: dict[str, object] = (
+            base_annotations: dict[str, t.TypeHintSpecifier] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -144,10 +144,10 @@ class _ProtocolIntrospection:
         if protocol in registered_protocols:
             return True
 
-        protocol_annotations: dict[str, object] = (
+        protocol_annotations: dict[str, t.TypeHintSpecifier] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | object = (
+        raw_attrs: set[str] | t.GeneralValueType = (
             protocol.__protocol_attrs__
             if hasattr(protocol, "__protocol_attrs__")
             else set()
@@ -257,8 +257,8 @@ class FlextProtocols:
         Defined in protocols.py to keep all protocol definitions together.
         Full context protocol p.Context extends this minimal interface.
 
-        Methods use generic return types (object) for structural compatibility
-        with p.Context which uses ResultLike[T] (also covariant with object).
+        Methods use generic return types for structural compatibility
+        with p.Context which uses ResultLike[T].
         """
 
         def clone(self) -> Self:
@@ -1019,7 +1019,7 @@ class FlextProtocols:
             metadata, returning them sorted by priority for consistent ordering.
 
             Args:
-                module: Module object to scan for handler decorators
+                module: Module instance to scan for handler decorators
 
             Returns:
                 List of tuples (function_name, function, config) sorted by priority
@@ -1051,7 +1051,7 @@ class FlextProtocols:
             the @handler() decorator without scanning all items.
 
             Args:
-                module: Module object to check for handlers
+                module: Module instance to check for handlers
 
             Returns:
                 True if module has at least one handler, False otherwise
@@ -1606,7 +1606,7 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, object],
+            namespace: Mapping[str, t.GeneralValueType],
             **_kwargs: t.ContainerValue,
         ) -> type:
             """Create a new class with protocol validation.
@@ -1833,7 +1833,7 @@ class FlextProtocols:
         """Check if an instance's class implements a protocol.
 
         Args:
-            instance: The object to check.
+            instance: The instance to check.
             protocol: The protocol to check against.
 
         Returns:

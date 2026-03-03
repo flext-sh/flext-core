@@ -1,9 +1,14 @@
 """Shared golden-file test harness for flext-core examples.
 
 Provides ``Examples`` — a single MRO base class that every ``ex_*.py``
-script subclasses.  Through MRO each subclass inherits ``check``,
-``section``, ``ser``, ``verify``, shared models, and probe helpers —
-without duplicating any boilerplate.
+script subclasses.  Through MRO each subclass inherits:
+
+- ``check`` / ``section`` / ``ser`` / ``verify`` — golden-file recording
+- ``rand_int`` / ``rand_float`` / ``rand_str`` / ``rand_bool`` — deterministic
+  random value generators (fixed seed for reproducible golden-file output)
+- ``rand_person`` / ``rand_dict`` — composite random generators
+- ``Person`` / ``Handle`` — shared Pydantic/dataclass models
+- ``bind_probe`` / ``bind_status`` — FlextResult probe helpers
 
 Usage (inside an ``ex_*.py`` file)::
 
@@ -12,8 +17,9 @@ Usage (inside an ``ex_*.py`` file)::
 
     class Ex01FlextResult(Examples):
         def exercise(self) -> None:
-            self.section("factories_and_guards")
-            self.check("ok.value", r[int].ok(42).value)
+            val = self.rand_int()
+            result = r[int].ok(val)
+            self.check("ok.value_matches", result.value == val)
 
 
     if __name__ == "__main__":
@@ -22,6 +28,8 @@ Usage (inside an ``ex_*.py`` file)::
 
 from __future__ import annotations
 
+import random
+import string
 import sys
 from dataclasses import dataclass
 from datetime import datetime
@@ -36,17 +44,23 @@ class Examples:
     """Base class for golden-file example scripts.
 
     Subclass once per ``ex_*.py`` module.  Implement ``exercise()`` to
-    record checks, then call ``run()`` which handles verification.
+    record checks via randomised inputs, then call ``run()`` to verify.
+
+    All random generators use a fixed seed (``SEED = 42``) so the output
+    is fully deterministic and golden-file comparison works reliably.
     """
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
+    SEED: int = 42
+
     def __init__(self, caller_file: str) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
         self._results: list[str] = []
         self._caller = Path(caller_file)
+        self._rng = random.Random(self.SEED)  # noqa: S311
 
     def exercise(self) -> None:
         """Override in subclasses to exercise the target class."""
@@ -59,10 +73,38 @@ class Examples:
         self.verify()
 
     # ------------------------------------------------------------------
+    # Random value generators (deterministic via fixed seed)
+    # ------------------------------------------------------------------
+
+    def rand_int(self, lo: int = -1000, hi: int = 1000) -> int:
+        """Return a deterministic pseudo-random integer in ``[lo, hi]``."""
+        return self._rng.randint(lo, hi)
+
+    def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
+        """Return a deterministic pseudo-random float rounded to 4 decimals."""
+        return round(self._rng.uniform(lo, hi), 4)
+
+    def rand_str(self, length: int = 8) -> str:
+        """Return a deterministic pseudo-random lowercase ASCII string."""
+        return "".join(self._rng.choices(string.ascii_lowercase, k=length))
+
+    def rand_bool(self) -> bool:
+        """Return a deterministic pseudo-random boolean."""
+        return bool(self._rng.randint(0, 1))
+
+    def rand_person(self) -> Person:
+        """Return a ``Person`` with random name (6 chars) and age (1–99)."""
+        return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
+
+    def rand_dict(self, n: int = 3) -> dict[str, int]:
+        """Return a dict with ``n`` random string keys → int values."""
+        return {self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+
+    # ------------------------------------------------------------------
     # Recording helpers
     # ------------------------------------------------------------------
 
-    def check(self, label: str, value: t.ContainerValue) -> None:
+    def check(self, label: str, value: t.ContainerValue | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         self._results.append(f"{label}: {self.ser(value)}")
 
@@ -76,7 +118,7 @@ class Examples:
     # Serialisation
     # ------------------------------------------------------------------
 
-    def ser(self, v: t.ContainerValue) -> str:
+    def ser(self, v: t.ContainerValue | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Handles ``None``, bools, numbers, strings, lists, dicts, types,
