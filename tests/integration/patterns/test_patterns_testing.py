@@ -24,12 +24,6 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, t
 
-type FixtureCaseDict = dict[str, str]
-type FixtureDataDict = dict[str, t.ContainerValue]
-type FixtureFixturesDict = dict[str, t.ContainerValue]
-type FixtureSuiteDict = dict[str, t.ContainerValue]
-type MockScenarioData = dict[str, t.ContainerValue]
-
 
 def _to_general_mapping(
     value: t.ContainerValue | None,
@@ -81,7 +75,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: MockScenarioData) -> None:
+    def __init__(self, name: str, data: dict[str, t.ContainerValue]) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -148,7 +142,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: MockScenarioData = {
+        data: dict[str, t.ContainerValue] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -164,7 +158,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: FixtureDataDict = {}
+        self._data: dict[str, t.ContainerValue] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -198,7 +192,7 @@ class FlextTestBuilder:
         # No-op stub to keep example API; could attach schema metadata here
         return self
 
-    def build(self) -> FixtureDataDict:
+    def build(self) -> dict[str, t.ContainerValue]:
         """Build the final test data dictionary."""
         return self._data
 
@@ -210,9 +204,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterized test builder with test name."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FixtureCaseDict] = []
-        self._success_cases: list[FixtureCaseDict] = []
-        self._failure_cases: list[FixtureCaseDict] = []
+        self._cases: list[dict[str, str]] = []
+        self._success_cases: list[dict[str, str]] = []
+        self._failure_cases: list[dict[str, str]] = []
 
     def add_case(
         self,
@@ -220,7 +214,7 @@ class ParameterizedTestBuilder:
         input_value: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        case: FixtureCaseDict = {}
+        case: dict[str, str] = {}
         if email is not None:
             case["email"] = email
         if input_value is not None:
@@ -230,7 +224,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[FixtureCaseDict],
+        cases: list[dict[str, str]],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
@@ -238,13 +232,13 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FixtureCaseDict],
+        cases: list[dict[str, str]],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FixtureCaseDict]:
+    def build(self) -> list[dict[str, str]]:
         """Build the list of test cases."""
         return self._cases.copy()
 
@@ -336,9 +330,9 @@ class SuiteBuilder:
         self._tags.append(tag)
         return self
 
-    def build(self) -> FixtureSuiteDict:
+    def build(self) -> dict[str, t.ContainerValue]:
         """Build the test suite configuration."""
-        result: FixtureSuiteDict = {
+        result: dict[str, t.ContainerValue] = {
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
@@ -353,7 +347,7 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: FixtureFixturesDict = {}
+        self._fixtures: dict[str, t.ContainerValue] = {}
         self._setups: list[object] = []
         self._teardowns: list[object] = []
 
@@ -367,7 +361,7 @@ class FixtureBuilder:
         self._fixtures["request"] = kwargs
         return self
 
-    def build(self) -> FixtureFixturesDict:
+    def build(self) -> dict[str, t.ContainerValue]:
         """Build the test fixtures configuration."""
         return self._fixtures.copy()
 
@@ -392,11 +386,11 @@ class FixtureBuilder:
 
     def setup_context(
         self,
-    ) -> Callable[[], ContextManager[FixtureFixturesDict]]:
+    ) -> Callable[[], ContextManager[dict[str, t.ContainerValue]]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[FixtureFixturesDict]:
+        def _ctx() -> Iterator[dict[str, t.ContainerValue]]:
             for f in self._setups:
                 if callable(f):
                     _ = f()

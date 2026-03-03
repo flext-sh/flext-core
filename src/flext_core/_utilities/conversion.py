@@ -14,6 +14,8 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
 
+from flext_core import t
+
 type StrictJsonValue = (
     t.ScalarValue | list[StrictJsonValue] | Mapping[str, StrictJsonValue]
 )

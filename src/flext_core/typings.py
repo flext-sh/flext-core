@@ -50,7 +50,7 @@ class FlextTypes:
     # ── Scalar ────────────────────────────────────────────────────────
     type ScalarValue = str | int | float | bool | datetime
 
-    # ── Container (recursive, includes None) ──────────────────────────
+    # ── Container (recursive) ──────────────────────────
     type ContainerValue = (
         FlextTypes.ScalarValue
         | BaseModel
@@ -60,7 +60,7 @@ class FlextTypes:
     )
 
     # ── JSON ──────────────────────────────────────────────────────────
-    type JsonPrimitive = FlextTypes.JsonPrimitive
+    type JsonPrimitive = str | int | float | bool
     type JsonValue = (
         JsonPrimitive
         | Sequence[FlextTypes.JsonValue]
@@ -91,7 +91,7 @@ class FlextTypes:
 
     # ── Handlers ──────────────────────────────────────────────────────
     type HandlerCallable = Callable[[ContainerValue], ContainerValue]
-    type HandlerLike = Callable[..., ContainerValue | None]
+    type HandlerLike = Callable[..., ContainerValue]
 
     # ── Plugin / Constants ────────────────────────────────────────────
     type RegistrablePlugin = (
@@ -144,11 +144,11 @@ class FlextTypes:
 
 
 __all__ = [
+    "R2",
     "FlextTypes",
     "MessageT_contra",
     "P",
     "R",
-    "R2",
     "ResultT",
     "T",
     "T_Model",

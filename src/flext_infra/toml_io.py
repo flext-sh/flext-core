@@ -21,15 +21,8 @@ from tomlkit.items import Table
 from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
 
-type TomlScalar = t.JsonPrimitive
-type TomlValue = (
-    TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
-)
-type TomlMap = MutableMapping[str, t.ContainerValue]
-type TomlMutableMap = MutableMapping[str, t.ContainerValue]
 
-
-def _as_toml_mapping(value: t.ContainerValue) -> TomlMutableMap | None:
+def _as_toml_mapping(value: t.ContainerValue) -> t.ConfigurationMapping | None:
     if isinstance(value, MutableMapping) and all(isinstance(key, str) for key in value):
         return value
     return None
@@ -46,7 +39,7 @@ class FlextInfraTomlService(FlextService[bool]):
         """Initialize the TOML service."""
         super().__init__()
 
-    def read(self, path: Path) -> FlextResult[TomlMap]:
+    def read(self, path: Path) -> FlextResult[t.ConfigurationMapping]:
         """Read and parse a TOML file as a plain dict.
 
         Args:
@@ -57,14 +50,14 @@ class FlextInfraTomlService(FlextService[bool]):
 
         """
         if not path.exists():
-            return r[TomlMap].ok({})
+            return r[t.ConfigurationMapping].ok({})
         try:
             data = tomllib.loads(
                 path.read_text(encoding=c.Encoding.DEFAULT),
             )
-            return r[TomlMap].ok(data)
+            return r[t.ConfigurationMapping].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[TomlMap].fail(f"TOML read error: {exc}")
+            return r[t.ConfigurationMapping].fail(f"TOML read error: {exc}")
 
     def read_document(self, path: Path) -> FlextResult[tomlkit.TOMLDocument]:
         """Read and parse a TOML file as a tomlkit document.
@@ -161,7 +154,7 @@ class FlextInfraTomlService(FlextService[bool]):
         return str(current) != str(expected)
 
     @staticmethod
-    def build_table(data: TomlMap) -> Table:
+    def build_table(data: t.ConfigurationMapping) -> Table:
         """Build a tomlkit Table from a nested dict."""
         table = tomlkit.table()
         for key, value in data.items():
@@ -174,8 +167,8 @@ class FlextInfraTomlService(FlextService[bool]):
 
     def sync_mapping(
         self,
-        target: TomlMutableMap,
-        canonical: TomlMap,
+        target: t.ConfigurationMapping,
+        canonical: t.ConfigurationMapping,
         *,
         prune_extras: bool,
         prefix: str,

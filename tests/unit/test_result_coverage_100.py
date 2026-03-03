@@ -29,7 +29,7 @@ import pytest
 from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
-from flext_core import e, m, p, r, t
+from flext_core import e, m, p, r
 
 
 class _ResultAssertions:

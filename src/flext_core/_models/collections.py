@@ -265,7 +265,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: m.ConfigMap,
+            data: FlextModelsContainers.ConfigMap,
         ) -> Self:
             """Create Statistics instance from dictionary.
 
@@ -693,7 +693,7 @@ class FlextModelsCollections:
         @classmethod
         def from_mapping(
             cls,
-            mapping: m.ConfigMap,
+            mapping: FlextModelsContainers.ConfigMap,
         ) -> Self:
             """Create Config instance from mapping.
 
@@ -709,7 +709,7 @@ class FlextModelsCollections:
             mapping_dict = dict(mapping)
             return cls.model_validate(mapping_dict)
 
-        def to_mapping(self) -> m.ConfigMap:
+        def to_mapping(self) -> FlextModelsContainers.ConfigMap:
             """Convert Config to mapping.
 
             Returns:
@@ -724,7 +724,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: m.ConfigMap,
+            data: FlextModelsContainers.ConfigMap,
         ) -> Self:
             """Create Config instance from dictionary.
 

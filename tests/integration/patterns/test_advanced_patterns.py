@@ -22,9 +22,9 @@ from flext_core import FlextResult, t, u
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
-FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
-FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
-MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
+dict[str, str] = TestsFlextTypes.Fixtures.dict[str, str]
+dict[str, t.ContainerValue] = TestsFlextTypes.Fixtures.dict[str, t.ContainerValue]
+dict[str, t.ContainerValue] = TestsFlextTypes.Fixtures.dict[str, t.ContainerValue]
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]
@@ -57,7 +57,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: MockScenarioData) -> None:
+    def __init__(self, name: str, data: dict[str, t.ContainerValue]) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
@@ -202,7 +202,7 @@ class GivenWhenThenBuilder:
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
 
-        scenario_data: MockScenarioData = {
+        scenario_data: dict[str, t.ContainerValue] = {
             "given": given_converted,
             "when": when_converted,
             "then": then_converted,
@@ -302,9 +302,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FixtureCaseDict] = []
-        self._success_cases: list[FixtureCaseDict] = []
-        self._failure_cases: list[FixtureCaseDict] = []
+        self._cases: list[dict[str, str]] = []
+        self._success_cases: list[dict[str, str]] = []
+        self._failure_cases: list[dict[str, str]] = []
 
     def add_case(
         self,
@@ -321,7 +321,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[FixtureCaseDict],
+        cases: list[dict[str, str]],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -334,7 +334,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FixtureCaseDict],
+        cases: list[dict[str, str]],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -345,7 +345,7 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FixtureCaseDict]:
+    def build(self) -> list[dict[str, str]]:
         """Build method.
 
         Returns:
@@ -397,10 +397,7 @@ class AssertionBuilder:
         """Initialize assertionbuilder:."""
         super().__init__()
         self.data: (
-            list[t.ContainerValue]
-            | t.ConfigurationMapping
-            | str
-            | tuple[object, ...]
+            list[t.ContainerValue] | t.ConfigurationMapping | str | tuple[object, ...]
         ) = data
         self._assertions: list[Callable[[], None]] = []
 
@@ -595,7 +592,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: MockScenarioData = {
+        scenario_data: dict[str, t.ContainerValue] = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},

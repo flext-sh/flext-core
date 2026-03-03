@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
-from datetime import datetime
 from enum import StrEnum
 from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 

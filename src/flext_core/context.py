@@ -25,7 +25,6 @@ from flext_core._models.context import FlextModelsContext
 _logger = FlextLogger(__name__)
 
 
-
 class FlextContext(FlextRuntime):
     """Context manager for correlation, request data, and timing metadata.
 

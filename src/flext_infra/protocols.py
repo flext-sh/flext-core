@@ -13,10 +13,8 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult, t
 
-type FlextInfraPayload = (
-    t.ScalarValue | Mapping[str, t.ScalarValue] | Sequence[t.ScalarValue]
-)
-type FlextInfraPayloadMap = Mapping[str, FlextInfraPayload]
+
+
 
 
 class FlextInfraProtocols(FlextProtocols):
@@ -63,7 +61,7 @@ class FlextInfraProtocols(FlextProtocols):
             self,
             project: str,
             gates: Sequence[str],
-        ) -> FlextResult[FlextInfraPayloadMap]:
+        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
             """Execute quality gates for a project."""
             ...
 
@@ -75,7 +73,7 @@ class FlextInfraProtocols(FlextProtocols):
             self,
             source: Path,
             target: Path,
-        ) -> FlextResult[FlextInfraPayloadMap]:
+        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
             """Synchronize source and target paths."""
             ...
 
@@ -85,7 +83,7 @@ class FlextInfraProtocols(FlextProtocols):
 
         def generate(
             self,
-            config: FlextInfraPayloadMap,
+            config: Mapping[str, t.ContainerValue],
         ) -> FlextResult[str]:
             """Generate text or artifacts from configuration."""
             ...
@@ -96,7 +94,7 @@ class FlextInfraProtocols(FlextProtocols):
 
         def report(
             self,
-            results: Sequence[FlextResult[FlextInfraPayloadMap]],
+            results: Sequence[FlextResult[Mapping[str, t.ContainerValue]]],
         ) -> FlextResult[Path]:
             """Write validation results to a report file."""
             ...
@@ -117,7 +115,7 @@ class FlextInfraProtocols(FlextProtocols):
             self,
             projects: Sequence[FlextInfraProtocols.ProjectInfoProtocol],
             verb: str,
-        ) -> FlextResult[FlextInfraPayloadMap]:
+        ) -> FlextResult[Mapping[str, t.ContainerValue]]:
             """Orchestrate operations across multiple projects."""
             ...
 

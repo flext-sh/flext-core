@@ -19,7 +19,7 @@ from typing import overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime, c, m, r, t
+from flext_core import FlextRuntime, c, r, t
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards

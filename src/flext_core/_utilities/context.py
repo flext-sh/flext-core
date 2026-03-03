@@ -14,8 +14,8 @@ from collections.abc import Mapping
 from datetime import datetime
 
 from flext_core import p, t
-from flext_core._models.context import FlextModelsContext
 from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.context import FlextModelsContext
 
 
 class FlextUtilitiesContext:
