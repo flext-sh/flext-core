@@ -405,9 +405,7 @@ class FlextRegistry(s[bool]):
         # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.ConfigMapValue | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.ConfigMapValue
-        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = (
-            handler
-        )
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = handler
         registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(

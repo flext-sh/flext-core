@@ -37,8 +37,8 @@ class FlextUtilitiesModel:
 
     """
 
-    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.JsonPrimitive]] = (
-        TypeAdapter(t.JsonPrimitive)
+    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.JsonPrimitive]] = TypeAdapter(
+        t.JsonPrimitive
     )
 
     @staticmethod
@@ -169,7 +169,10 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_metadata(
-        value: t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelFoundation.Metadata | None,
+        value: t.ScalarValue
+        | FlextModelsContainers.ConfigMap
+        | FlextModelFoundation.Metadata
+        | None,
     ) -> FlextModelFoundation.Metadata:  # Returns m.Metadata at runtime
         """Normalize any value to FlextModelFoundation.Metadata.
 

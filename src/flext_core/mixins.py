@@ -703,11 +703,7 @@ class FlextMixins(FlextRuntime):
 
             # Type annotation for type checker
             _stack: ClassVar[
-                list[
-                    m.Handler.ExecutionContext
-                    | m.ConfigMap
-                    | t.ConfigurationMapping
-                ]
+                list[m.Handler.ExecutionContext | m.ConfigMap | t.ConfigurationMapping]
             ] = []
 
             def __init__(

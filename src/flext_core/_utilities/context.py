@@ -107,11 +107,13 @@ class FlextUtilitiesContext:
 
         """
         # Explicit instantiation with full type
-        proxy: FlextModelsContext.StructlogProxyContextVar[FlextModelsContainers.ConfigMap] = (
-            FlextModelsContext.StructlogProxyContextVar[FlextModelsContainers.ConfigMap](
-                key,
-                default=default,
-            )
+        proxy: FlextModelsContext.StructlogProxyContextVar[
+            FlextModelsContainers.ConfigMap
+        ] = FlextModelsContext.StructlogProxyContextVar[
+            FlextModelsContainers.ConfigMap
+        ](
+            key,
+            default=default,
         )
         return proxy
 

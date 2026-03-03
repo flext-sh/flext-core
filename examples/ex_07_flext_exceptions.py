@@ -5,11 +5,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_core import FlextExceptions, c, e, r, u
+from flext_core import FlextExceptions, c, e, r, t, u
 
-type _SerValue = (
-    t.JsonPrimitive | list[_SerValue] | dict[str, _SerValue] | None
-)
+type _SerValue = t.JsonPrimitive | list[_SerValue] | dict[str, _SerValue] | None
 
 _RESULTS: list[str] = []
 

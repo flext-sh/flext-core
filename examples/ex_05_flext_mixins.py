@@ -5,12 +5,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_core import FlextRuntime, FlextSettings, c, r, u, x
+from flext_core import FlextRuntime, FlextSettings, c, r, t, u, x
 
 _RESULTS: list[str] = []
-type _SerValue = (
-    t.JsonPrimitive | list["_SerValue"] | dict[str, "_SerValue"]
-)
+type _SerValue = t.JsonPrimitive | list[_SerValue] | dict[str, _SerValue]
 
 
 def _check(label: str, value: _SerValue) -> None:

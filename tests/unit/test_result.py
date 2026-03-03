@@ -209,8 +209,8 @@ class Testr:
         elif op_type == ResultOperationType.ALT:
             # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                result_alt: r[t.ContainerValue] = (
-                    u.Tests.Result.create_success_result(value)
+                result_alt: r[t.ContainerValue] = u.Tests.Result.create_success_result(
+                    value
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))

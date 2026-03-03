@@ -19,11 +19,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult, t, u
-from tests.typings import TestsFlextTypes
 
-# Type aliases removed — use dict[str, str] / dict[str, t.ContainerValue] inline
-
-# Type alias for test functions
 TestFunction = Callable[[object], None]
 
 

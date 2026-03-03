@@ -14,9 +14,6 @@ from typing import Protocol, runtime_checkable
 from flext_core import FlextProtocols, FlextResult, t
 
 
-
-
-
 class FlextInfraProtocols(FlextProtocols):
     """Structural contracts for flext-infra services and adapters."""
 

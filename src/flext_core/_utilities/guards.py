@@ -940,10 +940,7 @@ class FlextUtilitiesGuards:
         value: t.ContainerValue,
         *,
         target_type: str = "auto",
-        default: str
-        | list[t.ContainerValue]
-        | t.ConfigurationMapping
-        | None = None,
+        default: str | list[t.ContainerValue] | t.ConfigurationMapping | None = None,
     ) -> str | list[t.ContainerValue] | t.ConfigurationMapping:
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""

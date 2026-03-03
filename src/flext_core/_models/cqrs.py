@@ -129,7 +129,9 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        filters: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict
+        )
         pagination: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
         )
@@ -184,12 +186,18 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict | Mapping[str, t.ScalarValue] | None,
+            v: FlextModelsCqrs.Pagination
+            | FlextModelsContainers.Dict
+            | Mapping[str, t.ScalarValue]
+            | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
             adapter: TypeAdapter[
-                FlextModelsCqrs.Pagination | FlextModelsContainers.Dict | Mapping[str, t.ScalarValue] | None
+                FlextModelsCqrs.Pagination
+                | FlextModelsContainers.Dict
+                | Mapping[str, t.ScalarValue]
+                | None
             ] = TypeAdapter(
                 FlextModelsCqrs.Pagination
                 | FlextModelsContainers.Dict

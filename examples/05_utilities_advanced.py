@@ -279,9 +279,9 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: r[Mapping[str, t.ContainerValue]] = r[
-            t.ConfigurationMapping
-        ].fail("Invalid data types")
+        map_result: r[Mapping[str, t.ContainerValue]] = r[t.ConfigurationMapping].fail(
+            "Invalid data types"
+        )
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
             source_dict = {str(k): v for k, v in source_value.items()}
             mapped_dict = u.transform_values(source_dict, str)

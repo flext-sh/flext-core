@@ -93,7 +93,9 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_configuration_mapping(value: t.ContainerValue) -> FlextModelsContainers.ConfigMap:
+    def _narrow_to_configuration_mapping(
+        value: t.ContainerValue,
+    ) -> FlextModelsContainers.ConfigMap:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
         if isinstance(value, FlextModelsContainers.ConfigMap):
             return value
@@ -1048,12 +1050,7 @@ class FlextUtilitiesMapper:
         as_type: type | None = None,
         default: t.ContainerValue | None = None,
         from_start: bool = True,
-    ) -> (
-        t.ConfigurationMapping
-        | list[t.ContainerValue]
-        | t.ContainerValue
-        | None
-    ):
+    ) -> t.ConfigurationMapping | list[t.ContainerValue] | t.ContainerValue | None:
         """Unified take function (generalized from take_n).
 
         Generic replacement for: list slicing, dict slicing
@@ -2596,7 +2593,9 @@ class FlextUtilitiesMapper:
     @staticmethod
     def process_context_data(
         primary_data: FlextModelsContainers.ConfigMap | t.ContainerValue | None = None,
-        secondary_data: FlextModelsContainers.ConfigMap | t.ContainerValue | None = None,
+        secondary_data: FlextModelsContainers.ConfigMap
+        | t.ContainerValue
+        | None = None,
         *,
         transformer: Callable[[t.ContainerValue], t.ContainerValue] | None = None,
         field_overrides: Mapping[str, t.ContainerValue] | None = None,
@@ -2864,7 +2863,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields(
-        obj: FlextModelsContainers.ConfigMap | t.ConfigurationMapping | t.ContainerValue,
+        obj: FlextModelsContainers.ConfigMap
+        | t.ConfigurationMapping
+        | t.ContainerValue,
         *field_names: str | t.ConfigurationMapping,
     ) -> Mapping[str, t.ContainerValue]:
         """Extract specified fields from object.

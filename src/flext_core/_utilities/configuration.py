@@ -874,7 +874,9 @@ class FlextUtilitiesConfiguration:
     def register_singleton(
         container: p.DI,
         name: str,
-        instance: t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelsContainers.Dict,
+        instance: t.ScalarValue
+        | FlextModelsContainers.ConfigMap
+        | FlextModelsContainers.Dict,
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -901,7 +903,12 @@ class FlextUtilitiesConfiguration:
     def register_factory(
         container: p.DI,
         name: str,
-        factory: Callable[[], t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelsContainers.Dict],
+        factory: Callable[
+            [],
+            t.ScalarValue
+            | FlextModelsContainers.ConfigMap
+            | FlextModelsContainers.Dict,
+        ],
         *,
         _cache: bool = False,
     ) -> r[bool]:
@@ -933,7 +940,12 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def bulk_register(
         container: p.DI,
-        registrations: Mapping[str, t.ScalarValue | FlextModelsContainers.ConfigMap | FlextModelsContainers.Dict],
+        registrations: Mapping[
+            str,
+            t.ScalarValue
+            | FlextModelsContainers.ConfigMap
+            | FlextModelsContainers.Dict,
+        ],
     ) -> r[int]:
         """Register multiple services at once.
 

@@ -317,14 +317,18 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        data: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict
+        )
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        filters: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict
+        )
         pagination: FlextModelsContainers.Dict | None = None
 
     class EventMessage(BaseModel):
@@ -333,7 +337,9 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: FlextModelsContainers.Dict = Field(default_factory=FlextModelsContainers.Dict)
+        data: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict
+        )
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )
