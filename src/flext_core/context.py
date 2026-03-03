@@ -776,7 +776,6 @@ class FlextContext(FlextRuntime):
                 if not result:
                     # If setting fails, log warning but continue cloning
                     pass
-        # Clone metadata and statistics using public methods
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
         statistics_copy: m.ContextStatistics = self._statistics.model_copy()
         cloned.set_statistics_for_clone(statistics_copy)
@@ -931,14 +930,6 @@ class FlextContext(FlextRuntime):
             all_values.extend(scope_dict.values())
         return all_values
 
-    def _suspend(self) -> None:
-        """Suspend the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        """
-        self._suspended = True
-
     def set_metadata(self, key: str, value: ContextValue) -> None:
         """Set metadata for the context.
 
@@ -1000,21 +991,11 @@ class FlextContext(FlextRuntime):
         self,
         statistics: m.ContextStatistics,
     ) -> None:
-        """Set context statistics (used internally for cloning).
-
-        Args:
-            statistics: ContextStatistics model to set
-
-        """
+        """Set context statistics (used internally for cloning)."""
         self._statistics = statistics
 
     def set_all_metadata_for_clone(self, metadata: m.Metadata) -> None:
-        """Set all metadata for the context (used internally for cloning).
-
-        Args:
-            metadata: Metadata model to set
-
-        """
+        """Set all metadata for the context (used internally for cloning)."""
         self._metadata = metadata
 
     def _get_all_metadata(self) -> dict[str, t.ConfigMapValue]:

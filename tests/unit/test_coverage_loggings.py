@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult, FlextSettings, m
+from flext_core import FlextLogger, FlextSettings, m, r
 from tests.test_utils import assertion_helpers
 
 
@@ -32,7 +32,7 @@ def make_result_logger(
     _correlation_id: str | None = None,
     _force_new: bool = False,
 ) -> FlextLogger.ResultAdapter:
-    """Helper to build loggers returning FlextResult for logging tests."""
+    """Helper to build loggers returning r for logging tests."""
     return FlextLogger(
         name,
         config=config,
@@ -95,7 +95,7 @@ class TestGlobalContextManagement:
         context = FlextLogger._get_global_context()
         assert isinstance(context, m.ConfigMap)
 
-    def test_unbind_global_context(self) -> None:
+    def test_unbind_global_context_specific_key(self) -> None:
         """Test unbind_global_context with valid keys."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123")
@@ -806,12 +806,12 @@ class TestResultAdapter:
 
 
 class TestResultIntegration:
-    """Test FlextResult integration with logging via with_result()."""
+    """Test r integration with logging via with_result()."""
 
     def test_log_result_success(self) -> None:
         """Test logging successful result via with_result()."""
         logger = make_result_logger("test")
-        result = FlextResult[str].ok("test_value")
+        result = r[str].ok("test_value")
         log_result = logger.with_result().info(
             f"Operation completed with: {result.value}",
         )
@@ -820,28 +820,28 @@ class TestResultIntegration:
     def test_log_result_failure(self) -> None:
         """Test logging failed result via with_result()."""
         logger = make_result_logger("test")
-        result: FlextResult[str] = FlextResult[str].fail("Something went wrong")
+        result: r[str] = r[str].fail("Something went wrong")
         log_result = logger.with_result().error(f"Operation failed: {result.error}")
         assert log_result.is_success
 
     def test_log_result_without_operation(self) -> None:
         """Test logging result without operation name."""
         logger = make_result_logger("test")
-        result = FlextResult[str].ok("value")
+        result = r[str].ok("value")
         log_result = logger.with_result().info(f"Result: {result.value}")
         assert log_result.is_success
 
     def test_log_result_with_custom_level(self) -> None:
         """Test logging result with debug level."""
         logger = make_result_logger("test")
-        result = FlextResult[str].ok("value")
+        result = r[str].ok("value")
         log_result = logger.with_result().debug(f"Debug result: {result.value}")
         assert log_result.is_success
 
     def test_log_result_failure_includes_error_details(self) -> None:
         """Test logging result includes error details."""
         logger = make_result_logger("test")
-        result: FlextResult[str] = FlextResult[str].fail("Error occurred")
+        result: r[str] = r[str].fail("Error occurred")
         log_result = logger.with_result().error(f"Error: {result.error}")
         assert log_result.is_success
 

@@ -747,108 +747,6 @@ class Teste:
         assert error.metadata is not None
         assert context_key in error.metadata.attributes
 
-    def test_extract_from_context_none(self) -> None:
-        """Test _extract_context_values with None - tests line 477-478."""
-        result = e.NotFoundError._extract_context_values(None)
-        assert result == (None, None, False, False)
-
-    def test_extract_from_context_full(self) -> None:
-        """Test _extract_context_values with full context - tests lines 480-498."""
-        metadata_obj = m.Metadata(attributes={"key": "value"})
-        # Convert values to MetadataAttributeValue
-        context: dict[str, t.MetadataAttributeValue] = {
-            "correlation_id": "test-correlation-id",
-            "metadata": cast(
-                "t.MetadataAttributeValue",
-                cast("object", metadata_obj),
-            ),  # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
-            "auto_log": True,
-            "auto_correlation": True,
-        }
-        corr_id, metadata, auto_log, auto_corr = (
-            e.NotFoundError._extract_context_values(context)
-        )
-        assert corr_id == "test-correlation-id"
-        assert metadata == metadata_obj
-        assert auto_log is True
-        assert auto_corr is True
-
-    def test_extract_from_context_partial(self) -> None:
-        """Test _extract_context_values with partial context - tests lines 480-496."""
-        context: dict[str, t.MetadataAttributeValue] = {
-            "correlation_id": 123,  # Not a string, should return None
-            "metadata": "not_metadata",  # Not Metadata, should return None
-            "auto_log": "not_bool",  # Not bool, should return False
-            "auto_correlation": "not_bool",  # Not bool, should return False
-        }
-        corr_id, metadata, auto_log, auto_corr = (
-            e.NotFoundError._extract_context_values(context)
-        )
-        assert corr_id is None
-        assert metadata is None
-        assert auto_log is False
-        assert auto_corr is False
-
-    def test_extract_from_context_empty(self) -> None:
-        """Test _extract_context_values with empty context - tests line 477."""
-        result = e.NotFoundError._extract_context_values({})
-        assert result == (None, None, False, False)
-
-    def test_extract_from_context_with_string_correlation_id(self) -> None:
-        """Test _extract_context_values with string correlation_id - tests line 481."""
-        context = {"correlation_id": "test-id"}
-        corr_id, _metadata, _auto_log, _auto_corr = (
-            e.NotFoundError._extract_context_values(context)
-        )
-        assert corr_id == "test-id"
-
-    def test_extract_from_context_with_metadata_object(self) -> None:
-        """Test _extract_context_values with Metadata object - tests lines 483-488."""
-        metadata_obj = m.Metadata(attributes={"key": "value"})
-        # Convert to Mapping[str, t.MetadataAttributeValue] for _extract_context_values
-        context: dict[str, t.MetadataAttributeValue] = {
-            "metadata": cast("t.MetadataAttributeValue", cast("object", metadata_obj)),
-        }
-        _corr_id, metadata, _auto_log, _auto_corr = (
-            e.NotFoundError._extract_context_values(context)
-        )
-        assert metadata == metadata_obj
-
-    def test_extract_from_context_with_bool_auto_log(self) -> None:
-        """Test _extract_context_values with bool auto_log - tests lines 490-491."""
-        context = {"auto_log": True}
-        _corr_id, _metadata, auto_log, _auto_corr = (
-            e.NotFoundError._extract_context_values(context)
-        )
-        assert auto_log is True
-
-    def test_extract_from_context_with_bool_auto_correlation(self) -> None:
-        """Test _extract_context_values with bool auto_correlation - tests lines 493-496."""
-        context = {"auto_correlation": True}
-        _corr_id, _metadata, _auto_log, auto_corr = (
-            e.NotFoundError._extract_context_values(context)
-        )
-        assert auto_corr is True
-
-    def test_extract_from_context_return_tuple(self) -> None:
-        """Test _extract_context_values returns correct tuple - tests line 498."""
-        # Convert to Mapping[str, t.MetadataAttributeValue] for _extract_context_values
-        context: dict[str, t.MetadataAttributeValue] = {
-            "correlation_id": "test-id",
-            "metadata": cast(
-                "t.MetadataAttributeValue",
-                cast("object", m.Metadata(attributes={"key": "value"})),
-            ),
-            "auto_log": True,
-            "auto_correlation": True,
-        }
-        result = e.NotFoundError._extract_context_values(context)
-        assert len(result) == 4
-        assert result[0] == "test-id"
-        assert isinstance(result[1], m.Metadata)
-        assert result[2] is True
-        assert result[3] is True
-
     def test_not_found_error_with_context(self) -> None:
         """Test NotFoundError with context - tests lines 518-547."""
         context_raw = {
@@ -874,69 +772,6 @@ class Teste:
         assert "key1" in error.metadata.attributes
         # Reserved keys should not be in metadata
         assert "correlation_id" not in error.metadata.attributes
-
-    def test_not_found_error_build_kwargs_with_invalid_values(self) -> None:
-        """Test NotFoundError._build_notfound_kwargs with invalid values - tests lines 524-528."""
-        # Test with extra_kwargs containing invalid types
-        extra_kwargs_raw = {
-            "valid_str": "value",
-            "valid_int": 123,
-            "invalid_type": object(),  # Should be normalized to string (not filtered out)
-        }
-        # Convert to t.MetadataAttributeDict
-        # normalize_to_metadata_value converts object() to string, so it won't be filtered
-        # The test expectation is wrong - object() gets normalized to string, not filtered
-        extra_kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(
-                cast(
-                    "t.GeneralValueType",
-                    str(v)
-                    if not isinstance(v, (str, int, float, bool, type(None)))
-                    else v,
-                ),
-            )
-            for k, v in extra_kwargs_raw.items()
-        }
-        context_raw = {"key1": "value1"}
-        # Convert to t.MetadataAttributeDict
-        # All values need to be t.GeneralValueType for normalize_to_metadata_value
-        context: dict[str, t.MetadataAttributeValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
-            for k, v in context_raw.items()
-        }
-        kwargs = e.NotFoundError._build_notfound_kwargs(
-            "User",
-            "123",
-            extra_kwargs,
-            context,
-        )
-        assert "valid_str" in kwargs
-        assert "valid_int" in kwargs
-        # object() gets normalized to string, not filtered out
-        assert "invalid_type" in kwargs  # Normalized to string representation
-        assert isinstance(kwargs["invalid_type"], str)
-
-    def test_not_found_error_build_kwargs_with_excluded_context(self) -> None:
-        """Test NotFoundError._build_notfound_kwargs excludes reserved keys - tests lines 532-545."""
-        context_raw = {
-            "correlation_id": "test-id",
-            "metadata": "test",
-            "auto_log": True,
-            "auto_correlation": True,
-            "valid_key": "value",
-        }
-        # Convert to t.MetadataAttributeDict
-        # All values need to be t.GeneralValueType for normalize_to_metadata_value
-        context: dict[str, t.MetadataAttributeValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
-            for k, v in context_raw.items()
-        }
-        kwargs = e.NotFoundError._build_notfound_kwargs("User", "123", {}, context)
-        assert "valid_key" in kwargs
-        assert "correlation_id" not in kwargs
-        assert "metadata" not in kwargs
-        assert "auto_log" not in kwargs
-        assert "auto_correlation" not in kwargs
 
     def test_conflict_error_with_context(self) -> None:
         """Test ConflictError with context - tests line 624."""
@@ -1700,15 +1535,6 @@ class Teste:
         assert "obj" in error.metadata.attributes
         assert "lst" in error.metadata.attributes
         assert "dct" in error.metadata.attributes
-
-    def test_prepare_metadata_value(self) -> None:
-        """Test _prepare_metadata_value - tests line 1074."""
-        metadata_obj = m.Metadata(attributes={"key": "value"})
-        result = e._prepare_metadata_value(metadata_obj)
-        assert result == metadata_obj.attributes
-
-        result_none = e._prepare_metadata_value(None)
-        assert result_none is None
 
     def test_determine_error_type(self) -> None:
         """Test _determine_error_type - tests lines 1105-1308."""

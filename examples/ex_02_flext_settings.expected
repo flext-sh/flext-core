@@ -1,0 +1,68 @@
+[singleton_and_global]
+constructor.singleton_identity: True
+get_global_instance.identity: True
+_reset_instance.recreates_singleton: True
+reset_global_instance.recreates_global: True
+subclass.singleton_identity: True
+
+[configuration_fields_and_validation]
+field.app_name: 'demo-app'
+field.version: '9.8.7'
+field.debug: True
+field.trace: False
+field.log_level: <LogLevel.INFO: 'INFO'>
+field.async_logging: False
+field.enable_caching: False
+field.cache_ttl: 321
+field.database_url: 'sqlite:///tmp/demo.db'
+field.database_pool_size: 11
+field.circuit_breaker_threshold: 4
+field.rate_limit_max_requests: 77
+field.rate_limit_window_seconds: 42
+field.retry_delay: 5
+field.max_retry_attempts: 6
+field.enable_timeout_executor: False
+field.dispatcher_enable_logging: False
+field.dispatcher_auto_context: False
+field.dispatcher_timeout_seconds: 2.5
+field.dispatcher_enable_metrics: False
+field.executor_workers: 3
+field.timeout_seconds: 13.0
+field.max_workers: 7
+field.max_batch_size: 29
+field.api_key: 'demo-key'
+field.exception_failure_level: <FailureLevel.PERMISSIVE: 'permissive'>
+validate_configuration.indirect_via_model_validate: 'demo-app'
+
+[effective_log_level_and_override]
+effective_log_level.base: <LogLevel.ERROR: 'ERROR'>
+apply_override.valid_return: True
+apply_override.valid_applied: True
+effective_log_level.debug: <LogLevel.INFO: 'INFO'>
+effective_log_level.trace: <LogLevel.DEBUG: 'DEBUG'>
+apply_override.invalid_return: False
+
+[materialize_and_provider]
+materialize.clone_same_values: True
+materialize.clone_new_object: False
+materialize.override.app_name: 'materialized'
+materialize.override.timeout_seconds: 55.0
+get_di_config_provider.type: 'Singleton'
+
+[resolve_env_file_and_auto_config]
+resolve_env_file.custom_path: '/home/marlonsc/flext/.venv/flext_settings_example.env'
+AutoConfig.create_config.type: '_TestConfig'
+AutoConfig.create_config.service_name: 'test-service'
+
+[namespace_system]
+get_namespace_config.decorated: _DecoratedNamespace
+get_namespace_config.registered: _RegisteredNamespace
+auto_register.class_used: '_DecoratedNamespace'
+get_namespace.decorated.service_name: 'decorated'
+get_namespace.registered.service_name: 'registered'
+
+[context_system]
+register_context_overrides.service_name: 'worker-service'
+for_context.registered.timeout_seconds: 41.0
+for_context.registered.max_workers: 2
+for_context.runtime_override.feature_enabled: False

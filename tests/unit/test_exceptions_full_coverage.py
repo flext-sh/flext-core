@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import MappingProxyType
 
 import flext_core.exceptions as exceptions_module
-from flext_core import c, e, m, r, t, u
+from flext_core import c, e, m, r, u
 
 
 def test_base_error_normalize_metadata_merges_existing_metadata_model() -> None:
@@ -52,11 +52,7 @@ def test_not_found_error_correlation_id_selection_and_extra_kwargs() -> None:
     assert err_preserved.correlation_id == "preserved-cid"
 
 
-def test_get_str_from_kwargs_and_merge_metadata_context_paths() -> None:
-    kwargs: dict[str, t.MetadataAttributeValue] = {"value": 123}
-    assert e._get_str_from_kwargs(kwargs, "value") == "123"
-    assert e._get_str_from_kwargs(kwargs, "missing") is None
-
+def test_merge_metadata_context_paths() -> None:
     context = m.ConfigMap(root={})
 
     err = e.BaseError("meta", metadata={"x": 1})

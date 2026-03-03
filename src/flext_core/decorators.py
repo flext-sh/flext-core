@@ -894,7 +894,7 @@ class FlextDecorators:
                 retry_func = func
                 # Create retry config from parameters
                 retry_config = m.RetryConfiguration(
-                    max_attempts=attempts,
+                    max_retries=attempts,
                     initial_delay_seconds=delay,
                     exponential_backoff=(
                         strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL

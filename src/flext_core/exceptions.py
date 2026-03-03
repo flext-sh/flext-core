@@ -749,84 +749,6 @@ class FlextExceptions:
     class NotFoundError(BaseError):
         """Exception raised when a resource is not found."""
 
-        @staticmethod
-        def _extract_context_values(
-            context: Mapping[str, t.MetadataAttributeValue] | None,
-        ) -> tuple[
-            str | None,
-            MetadataProtocol | None,
-            bool,
-            bool,
-        ]:
-            """Extract context values from mapping.
-
-            Returns:
-                Tuple of (correlation_id, metadata, auto_log, auto_correlation)
-
-            """
-            if context is None:
-                return (None, None, False, False)
-
-            correlation_id_val = e._safe_optional_str(context.get("correlation_id"))
-            metadata_val = e._safe_metadata(context.get("metadata"))
-            auto_log_val = e._safe_bool(context.get("auto_log"), default=False)
-            auto_correlation_val = e._safe_bool(
-                context.get("auto_correlation"),
-                default=False,
-            )
-
-            return (
-                correlation_id_val,
-                metadata_val,
-                auto_log_val,
-                auto_correlation_val,
-            )
-
-        @staticmethod
-        def _build_notfound_kwargs(
-            resource_type: str | None,
-            resource_id: str | None,
-            extra_kwargs: MutableMapping[str, t.MetadataAttributeValue],
-            context: Mapping[str, t.MetadataAttributeValue] | None,
-        ) -> m.ConfigMap:
-            """Build notfound-specific kwargs from fields and context.
-
-            Returns:
-                Dictionary of notfound kwargs
-
-            """
-            param_values = e._build_param_map(
-                context,
-                extra_kwargs,
-                keys={"resource_type", "resource_id"},
-            )
-            if resource_type is not None:
-                param_values["resource_type"] = resource_type
-            if resource_id is not None:
-                param_values["resource_id"] = resource_id
-
-            notfound_params = e.NotFoundErrorParams.model_validate(dict(param_values))
-            notfound_kwargs: m.ConfigMap = m.ConfigMap(
-                root=notfound_params.model_dump(exclude_none=True),
-            )
-
-            notfound_kwargs.update(
-                dict(
-                    e._build_context_map(
-                        context,
-                        extra_kwargs,
-                        excluded_keys={
-                            "correlation_id",
-                            "metadata",
-                            "auto_log",
-                            "auto_correlation",
-                        },
-                    ).items(),
-                ),
-            )
-
-            return notfound_kwargs
-
         def __init__(
             self,
             message: str,
@@ -1297,29 +1219,6 @@ class FlextExceptions:
                 return error_type
 
         return None
-
-    @staticmethod
-    def _prepare_metadata_value(
-        meta: MetadataProtocol | Mapping[str, t.MetadataAttributeValue] | None,
-    ) -> Mapping[str, t.MetadataAttributeValue] | None:
-        """Prepare metadata value for error creation."""
-        if meta is None:
-            return None
-        if isinstance(meta, Mapping):
-            return {
-                key: FlextRuntime.normalize_to_metadata_value(value)
-                for key, value in meta.items()
-            }
-        return dict(meta.attributes)
-
-    @staticmethod
-    def _get_str_from_kwargs(
-        kwargs: Mapping[str, t.MetadataAttributeValue],
-        key: str,
-    ) -> str | None:
-        """Extract and convert value from kwargs to string."""
-        val = kwargs.get(key)
-        return str(val) if val is not None else None
 
     @staticmethod
     def _create_error_by_type(

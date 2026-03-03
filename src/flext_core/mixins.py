@@ -651,10 +651,6 @@ class FlextMixins(FlextRuntime):
         class MetricsTracker:
             """Tracks handler execution metrics."""
 
-            def _protocol_name(self) -> str:
-                """Return protocol name for BaseProtocol compliance."""
-                return "MetricsTracker"
-
             # Type annotation for type checker
             _metrics: ClassVar[MutableMapping[str, t.ConfigMapValue]] = {}
 
@@ -723,10 +719,6 @@ class FlextMixins(FlextRuntime):
                 super().__init__(*args, **kwargs)
                 # Initialize _stack as instance attribute (not PrivateAttr for mixin compatibility)
                 object.__setattr__(self, "_stack", [])
-
-            def _protocol_name(self) -> str:
-                """Return the protocol name for introspection."""
-                return "ContextStack"
 
             def push_context(
                 self,

@@ -7,15 +7,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from typing import Never, cast, override
 
 from pydantic import BaseModel
 from returns.io import IOResult, IOSuccess
 
 from flext_core import FlextRuntime, r, t
-
-result_module = importlib.import_module("flext_core.result")
 
 
 class _ValidationLikeError(ValueError):
@@ -73,8 +70,8 @@ class _TargetModel(BaseModel):
 def test_type_guards_and_protocol_name() -> None:
     ok_res = r[int].ok(1)
     fail_res: r[int] = cast("r[int]", r.fail("x"))
-    assert result_module.is_success_result(ok_res)
-    assert result_module.is_failure_result(fail_res)
+    assert r.is_success_result(ok_res)
+    assert r.is_failure_result(fail_res)
     assert ok_res._protocol_name() == "FlextResult"
 
 
