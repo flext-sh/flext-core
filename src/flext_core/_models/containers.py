@@ -23,11 +23,11 @@ type GeneralValueType = (
     | float
     | bool
     | datetime
-    | None
     | BaseModel
     | Path
     | Sequence[GeneralValueType]
     | Mapping[str, GeneralValueType]
+    | None
 )
 type _ContainerValue = GeneralValueType
 type _ScalarML = str | int | float | bool | datetime | None

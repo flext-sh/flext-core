@@ -143,9 +143,6 @@ class FlextInfraProtocols(FlextProtocols):
 p = FlextInfraProtocols
 
 __all__ = [
-    "FlextInfraPayload",
-    "FlextInfraPayloadMap",
     "FlextInfraProtocols",
-    "FlextInfraScalar",
     "p",
 ]

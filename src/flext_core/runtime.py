@@ -58,7 +58,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard, override
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -72,6 +72,9 @@ from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
 from flext_core._models.containers import FlextModelsContainers
+
+if TYPE_CHECKING:
+    from flext_core import m
 
 
 class _LazyMetadata:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, overload, override
+from typing import TYPE_CHECKING, Self, TypeIs, overload, override
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -20,6 +20,9 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import FlextRuntime, T_Model, U, t
+
+if TYPE_CHECKING:
+    from flext_core import m
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
