@@ -296,6 +296,72 @@ class ImportModernizerRule(RefactorRule):
         return tree.visit(modernizer), changes
 
 
+class EnsureFutureAnnotationsRule(RefactorRule):
+    """Garante que 'from __future__ import annotations' existe no arquivo."""
+
+    def apply(
+        self, tree: cst.Module, file_path: Path | None = None
+    ) -> tuple[cst.Module, list[str]]:
+        changes = []
+
+        # Verificar se já existe
+        has_future_annotations = False
+        for stmt in tree.body:
+            if isinstance(stmt, cst.SimpleStatementLine):
+                for line in stmt.body:
+                    if isinstance(line, cst.ImportFrom):
+                        if (
+                            isinstance(line.module, cst.Name)
+                            and line.module.value == "__future__"
+                        ):
+                            if hasattr(line.names, "elements"):
+                                for alias in line.names.elements:
+                                    if (
+                                        hasattr(alias.name, "value")
+                                        and alias.name.value == "annotations"
+                                    ):
+                                        has_future_annotations = True
+                                    elif (
+                                        isinstance(alias.name, cst.Name)
+                                        and alias.name.value == "annotations"
+                                    ):
+                                        has_future_annotations = True
+
+        if has_future_annotations:
+            return tree, changes
+
+        # Adicionar se não existir
+        future_import = cst.SimpleStatementLine(
+            body=[
+                cst.ImportFrom(
+                    module=cst.Name("__future__"),
+                    names=cst.ImportFrom([
+                        cst.ImportAlias(name=cst.Name("annotations"))
+                    ]),
+                )
+            ]
+        )
+
+        # Inserir após docstring
+        body = list(tree.body)
+        insert_idx = 0
+
+        # Pular docstring se existir
+        if (
+            body
+            and isinstance(body[0], cst.SimpleStatementLine)
+            and len(body[0].body) == 1
+            and isinstance(body[0].body[0], cst.Expr)
+            and isinstance(body[0].body[0].value, cst.SimpleString)
+        ):
+            insert_idx = 1
+
+        new_body = body[:insert_idx] + [future_import] + body[insert_idx:]
+        changes.append("Added: from __future__ import annotations")
+
+        return tree.with_changes(body=new_body), changes
+
+
 class ClassReconstructorRule(RefactorRule):
     """Reconstrói classes: ordena métodos, organiza estrutura."""
 
@@ -486,7 +552,9 @@ class FlextRefactorEngine:
 
                     # Instanciar regra apropriada
                     rule: RefactorRule | None = None
-                    if any(x in rule_id for x in ["legacy", "alias", "deprecated"]):
+                    if "ensure-future" in rule_id or "future-annotations" in rule_id:
+                        rule = EnsureFutureAnnotationsRule(rule_def)
+                    elif any(x in rule_id for x in ["legacy", "alias", "deprecated"]):
                         rule = LegacyRemovalRule(rule_def)
                     elif any(x in rule_id for x in ["import", "modernize"]):
                         rule = ImportModernizerRule(rule_def)
