@@ -72,10 +72,10 @@ class TestFlextModelsCollectionsCategories:
         assert categories.categories == {}
         assert len(categories) == 0
 
-    def test_categories_get_entries_empty(self) -> None:
-        """Test get_entries with empty category."""
+    def test_categories_get_empty(self) -> None:
+        """Test get with empty category."""
         categories: m.Categories = m.Categories()
-        assert categories.get_entries("nonexistent") == []
+        assert categories.get("nonexistent") == []
 
     @pytest.mark.parametrize(
         "scenario",
