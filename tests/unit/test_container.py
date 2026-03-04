@@ -137,7 +137,7 @@ class TestFlextContainer:
     ) -> None:
         """Test service registration with various types using fixtures."""
         result = clean_container.register(scenario.name, scenario.service)
-        u.Tests.Result.assert_success_with_value(result, True)
+        assert result is clean_container
 
     @pytest.mark.parametrize(
         "scenario",
