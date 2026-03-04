@@ -53,14 +53,8 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: Annotated[
-            list[m.HandlerRegistrationDetails],
-            Field(
-                default_factory=list,
-                description="Successfully registered handlers with registration details",
-            ),
-        ] = Field(
-            default_factory=list,
+        registered: list[m.HandlerRegistrationDetails] = Field(
+            default_factory=lambda: list[m.HandlerRegistrationDetails](),
             description="Successfully registered handlers with registration details.",
         )
         skipped: Annotated[
@@ -108,7 +102,7 @@ class FlextRegistry(s[bool]):
 
     # Private attributes using Pydantic v2 PrivateAttr pattern
     _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
-    _registered_keys: set[str] = PrivateAttr(default_factory=set)
+    _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
 
     # Class-level storage declarations (created per-subclass via __init_subclass__)
     # These ClassVars are automatically created for each subclass to ensure
@@ -359,10 +353,6 @@ class FlextRegistry(s[bool]):
             r[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
         """
-        if handler is None:
-            return r[m.HandlerRegistrationDetails].fail(
-                "Handler cannot be None",
-            )
         try:
             m.HandlerRegistrationDetails.model_validate({
                 "registration_id": handler.__class__.__name__,
