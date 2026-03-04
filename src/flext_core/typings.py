@@ -29,7 +29,6 @@ T_contra = TypeVar("T_contra", contravariant=True)
 E = TypeVar("E")
 U = TypeVar("U")
 R = TypeVar("R")
-R2 = TypeVar("R2")
 DictValueT = TypeVar("DictValueT")
 P = ParamSpec("P")
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -87,6 +86,8 @@ class FlextTypes:
     ConfigurationMapping: TypeAlias = Mapping[str, Container]
 
     # ── Service / DI ──────────────────────────────────────────────────
+    LazyExportType: TypeAlias = tuple[str, str]
+    AnnotationMap: TypeAlias = Mapping[str, LazyExportType]
     RegisterableService: TypeAlias = (
         Container | BindableLogger | Callable[..., Container]
     )
@@ -154,7 +155,6 @@ class FlextTypes:
 
 
 __all__ = [
-    "R2",
     "FlextTypes",
     "MessageT_contra",
     "P",
