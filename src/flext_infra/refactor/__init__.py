@@ -17,6 +17,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import difflib
 import fnmatch
 import sys
 from dataclasses import dataclass, field
@@ -27,7 +28,7 @@ from typing import Any
 import libcst as cst
 import yaml
 
-from flext_core import FlextService, r
+from flext_core import r
 from flext_infra.output import output
 
 
@@ -346,7 +347,7 @@ class ClassReconstructorRule(RefactorRule):
                 name = node.name.value
                 decorators = []
 
-                for dec in node.decorators.elements:
+                for dec in node.decorators:
                     if isinstance(dec.decorator, cst.Name):
                         decorators.append(dec.decorator.value)
                     elif isinstance(dec.decorator, cst.Attribute):
@@ -436,11 +437,10 @@ class MRORedundancyChecker(RefactorRule):
         return tree.visit(MRORemover()), changes
 
 
-class FlextRefactorEngine(FlextService[dict[str, Any]]):
+class FlextRefactorEngine:
     """Engine de refatoração que orquestra regras declarativas."""
 
     def __init__(self, config_path: Path | None = None):
-        super().__init__()
         self.config_path = config_path or self._default_config_path()
         self.config: dict[str, Any] = {}
         self.rules: list[RefactorRule] = []
@@ -454,23 +454,28 @@ class FlextRefactorEngine(FlextService[dict[str, Any]]):
         """Define filtros para regras (apenas regras que correspondem serão executadas)."""
         self.rule_filters = [f.lower() for f in filters]
 
-    def load_config(self) -> r[None]:
+    def load_config(self) -> r[dict[str, Any]]:
         """Carrega configuração do YAML."""
         try:
-            self.config = yaml.safe_load(self.config_path.read_text())
+            content = self.config_path.read_text()
+            loaded = yaml.safe_load(content)
+            self.config = loaded if loaded is not None else {}
             output.info(f"Loaded config from {self.config_path}")
-            return r[None].ok(None)
+            return r[dict[str, Any]].ok(self.config)
         except Exception as e:
-            return r[None].fail(f"Failed to load config: {e}")
+            return r[dict[str, Any]].fail(f"Failed to load config: {e}")
 
-    def load_rules(self) -> r[None]:
+    def load_rules(self) -> r[list[RefactorRule]]:
         """Carrega regras de arquivos YAML."""
         try:
             rules_dir = self.config_path.parent / "rules"
+            loaded_rules: list[RefactorRule] = []
 
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 output.info(f"Loading rules from {rule_file.name}")
                 rule_config = yaml.safe_load(rule_file.read_text())
+                if rule_config is None:
+                    continue
                 rules = rule_config.get("rules", [])
 
                 for rule_def in rules:
@@ -494,16 +499,17 @@ class FlextRefactorEngine(FlextService[dict[str, Any]]):
                         # Aplicar filtros se existirem
                         if self.rule_filters:
                             if any(rule.matches_filter(f) for f in self.rule_filters):
-                                self.rules.append(rule)
+                                loaded_rules.append(rule)
                         else:
-                            self.rules.append(rule)
+                            loaded_rules.append(rule)
 
+            self.rules = loaded_rules
             output.info(f"Loaded {len(self.rules)} rules")
             if self.rule_filters:
                 output.info(f"Active filters: {', '.join(self.rule_filters)}")
-            return r[None].ok(None)
+            return r[list[RefactorRule]].ok(loaded_rules)
         except Exception as e:
-            return r[None].fail(f"Failed to load rules: {e}")
+            return r[list[RefactorRule]].fail(f"Failed to load rules: {e}")
 
     def list_rules(self) -> list[dict[str, Any]]:
         """Lista todas as regras disponíveis."""
@@ -600,20 +606,17 @@ class FlextRefactorEngine(FlextService[dict[str, Any]]):
         # Processar arquivos
         return self.refactor_files(files, dry_run=dry_run)
 
-    def execute(self) -> r[dict[str, Any]]:
-        """Executa refatoração (interface FlextService)."""
+    def initialize(self) -> r[bool]:
+        """Inicializa engine carregando config e regras."""
         result = self.load_config()
         if not result.is_success:
-            return r[dict[str, Any]].fail(f"Config error: {result.error}")
+            return r[bool].fail(f"Config error: {result.error}")
 
         result = self.load_rules()
         if not result.is_success:
-            return r[dict[str, Any]].fail(f"Rules error: {result.error}")
+            return r[bool].fail(f"Rules error: {result.error}")
 
-        return r[dict[str, Any]].ok({
-            "status": "ready",
-            "rules_loaded": len(self.rules),
-        })
+        return r[bool].ok(True)
 
 
 def print_rules_table(rules: list[dict[str, Any]]) -> None:
@@ -640,6 +643,28 @@ def print_rules_table(rules: list[dict[str, Any]]) -> None:
         output.info(line)
         if rule["description"]:
             output.info(f"  └─ {rule['description']}")
+
+
+def print_diff(original: str, refactored: str, file_path: Path) -> None:
+    """Imprime diff entre código original e refatorado."""
+    output.header(f"Diff for {file_path.name}")
+
+    original_lines = original.splitlines(keepends=True)
+    refactored_lines = refactored.splitlines(keepends=True)
+
+    diff = difflib.unified_diff(
+        original_lines,
+        refactored_lines,
+        fromfile=f"{file_path.name} (original)",
+        tofile=f"{file_path.name} (refactored)",
+        lineterm="",
+    )
+
+    diff_text = "".join(diff)
+    if diff_text:
+        print(diff_text)
+    else:
+        output.info("No changes")
 
 
 def print_summary(results: list[RefactorResult], dry_run: bool) -> None:
@@ -728,6 +753,12 @@ Examples:
         help="Mostrar o que seria feito sem aplicar",
     )
     parser.add_argument(
+        "--show-diff",
+        "-d",
+        action="store_true",
+        help="Mostrar diff detalhado das mudanças",
+    )
+    parser.add_argument(
         "--config", "-c", type=Path, help="Path do arquivo de configuração YAML"
     )
 
@@ -785,8 +816,28 @@ Examples:
         if not args.file.exists():
             output.error(f"File not found: {args.file}")
             sys.exit(1)
+
+        # Ler código original para diff
+        original_code = args.file.read_text(encoding="utf-8")
         result_single = engine.refactor_file(args.file, dry_run=args.dry_run)
         results = [result_single]
+
+        # Mostrar diff se solicitado e arquivo foi modificado
+        if args.show_diff and result_single.modified:
+            # Ler código refatorado (do resultado ou do arquivo se não for dry-run)
+            if args.dry_run:
+                # Para dry-run, precisamos aplicar as regras novamente para obter o código
+                import libcst as cst
+
+                tree = cst.parse_module(original_code)
+                for rule in engine.rules:
+                    if rule.enabled:
+                        tree, _ = rule.apply(tree, args.file)
+                refactored_code = tree.code if hasattr(tree, "code") else str(tree)
+            else:
+                refactored_code = args.file.read_text(encoding="utf-8")
+
+            print_diff(original_code, refactored_code, args.file)
     elif args.files:
         output.info(f"Files: {len(args.files)}")
         existing_files = [f for f in args.files if f.exists()]
