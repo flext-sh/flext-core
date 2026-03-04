@@ -1,0 +1,39 @@
+"""{{ description }}
+
+Runtime alias: {{ runtime_alias }} = {{ facade_name }}
+"""
+
+from __future__ import annotations
+
+from typing import Annotated, Any
+from pydantic import BaseModel, Field
+
+
+class {{ facade_name }}(BaseModel):
+    """{{ docstring }}
+    
+    Runtime alias: {{ runtime_alias }} = {{ facade_name }}
+    """
+    
+{% for section in sections %}
+    class {{ section.name }}:
+        """{{ section.description }}"""
+        {% for model in section.models %}
+        class {{ model.name }}(BaseModel):
+            """{{ model.description }}"""
+            {% for field in model.fields %}
+            {{ field.name }}: {{ field.type }}{% if field.default %} = {{ field.default }}{% endif %}
+            {% endfor %}
+        
+        {% endfor %}
+    
+    # Runtime aliases
+{% for model in section.models %}
+    {{ model.name }} = {{ section.name }}.{{ model.name }}
+{% endfor %}
+    
+{% endfor %}
+
+
+# Runtime alias
+{{ runtime_alias }} = {{ facade_name }}
