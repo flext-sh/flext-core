@@ -17,7 +17,7 @@ import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
-from typing import Any, ClassVar, Self
+from typing import ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -266,8 +266,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
 
-    # Any required: BaseSettings.__init__ has field-specific types; no union satisfies all.
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
