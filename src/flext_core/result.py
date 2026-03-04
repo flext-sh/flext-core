@@ -44,7 +44,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         is_success: bool = True,
     ) -> None:
         """Initialize FlextResult from value/error/is_success only (direct typing, no Result unwrap)."""
-        normalized_error_data: t.ConfigurationMapping = error_data
+        normalized_error_data: t.ConfigurationMapping = (
+            error_data or MappingProxyType({})
+        )
         if source is not None and value is None and error is None:
             self._result = source
             try:
@@ -113,13 +115,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     @override
-    def fail[U](
+    def fail(
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping = MappingProxyType({}),
+        error_data: t.ConfigurationMapping | None = None,
+        *,
         exception: BaseException | None = None,
-    ) -> FlextResult[U]:
+    ) -> FlextResult[T_co]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
@@ -145,8 +148,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         error_msg = error if error is not None else ""
-        normalized_error_data: t.ConfigurationMapping = error_data
-        result = FlextResult[U](
+        normalized_error_data: t.ConfigurationMapping = (
+            error_data or MappingProxyType({})
+        )
+        result = FlextResult[T_co](
             error_code=error_code,
             error_data=normalized_error_data,
             error=error_msg,
@@ -213,7 +218,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     ) -> FlextResult[U]:
         """Build result from Maybe by mapping Nothing to failure."""
         if maybe is Nothing:
-            return cls.fail(error_message)
+            return FlextResult[U].fail(error_message)
         return cls.ok(maybe.unwrap())
 
     def to_io(self) -> IO[T_co]:
@@ -240,14 +245,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         unwrap = getattr(io_result, "unwrap", None)
         failure = getattr(io_result, "failure", None)
         if not callable(unwrap) or not callable(failure):
-            return cls.fail("Invalid IOResult structure")
+            return FlextResult[U | IO[U]].fail("Invalid IOResult structure")
         try:
             io_value = cast("U | IO[U]", unwrap())
             return FlextResult[U | IO[U]](value=io_value, is_success=True)
         except UnwrapFailedError as exc:
             logging.getLogger(__name__).debug("Failed to unwrap IOResult", exc_info=exc)
             io_error = failure()
-            return cls.fail(str(io_error), exception=exc)
+            return FlextResult[U | IO[U]].fail(str(io_error), exception=exc)
 
     # error_code and error_data properties are inherited from RuntimeResult
 
@@ -340,11 +345,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         try:
             value = func()
             if value is None:
-                return cls.fail("Callable returned None", error_code=error_code)
+                return FlextResult[V].fail(
+                    "Callable returned None", error_code=error_code
+                )
             return cls.ok(value)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             logging.getLogger(__name__).debug("Callable execution failed", exc_info=e)
-            return cls.fail(str(e), error_code=error_code, exception=e)
+            return FlextResult[V].fail(str(e), error_code=error_code, exception=e)
 
     @classmethod
     def from_validation(
@@ -401,13 +408,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         if self.is_failure:
-            return FlextResult.fail(self.error or "")
+            return FlextResult[U].fail(self.error or "")
         try:
             converted = model.model_validate(self.value)
             return FlextResult.ok(converted)
         except (ValueError, TypeError, AttributeError, RuntimeError) as e:
             self.logger.debug("Model conversion failed", exc_info=e)
-            return FlextResult.fail(f"Model conversion failed: {e!s}", exception=e)
+            return FlextResult[U].fail(f"Model conversion failed: {e!s}", exception=e)
 
     # lash is inherited from RuntimeResult
     # But we override to return FlextResult for type consistency
@@ -488,8 +495,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                     if inner.is_success:
                         current = FlextResult[U](value=inner.value, is_success=True)
                     else:
-                        fail_result: FlextResult[U] = FlextResult.fail(
-                            inner.error or "",
+                        fail_result: FlextResult[U] = FlextResult[U].fail(
+                            inner.error or ""
                         )
                         fail_result._exception = inner._exception
                         current = fail_result
