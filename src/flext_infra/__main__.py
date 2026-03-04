@@ -12,6 +12,7 @@ Groups:
     docs          Documentation audit, fix, build, generate, validate
     github        GitHub workflows, linting, and PR automation
     maintenance   Python version enforcement
+    refactor      Declarative code refactoring (libcst + YAML rules)
     release       Release orchestration
     workspace     Workspace detection, sync, orchestration, migration
 
@@ -40,6 +41,7 @@ _GROUPS: Mapping[str, str] = MappingProxyType({
     "docs": "flext_infra.docs.__main__",
     "github": "flext_infra.github.__main__",
     "maintenance": "flext_infra.maintenance.__main__",
+    "refactor": "flext_infra.refactor",
     "release": "flext_infra.release.__main__",
     "workspace": "flext_infra.workspace.__main__",
 })
@@ -57,6 +59,7 @@ def _print_help() -> None:
         "docs": "Documentation audit, fix, build, generate, validate",
         "github": "GitHub workflows, linting, and PR automation",
         "maintenance": "Python version enforcement",
+        "refactor": "Declarative code refactoring (libcst + YAML rules)",
         "release": "Release orchestration",
         "workspace": "Workspace detection, sync, orchestration, migration",
     }
