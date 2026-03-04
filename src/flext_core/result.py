@@ -37,16 +37,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping = MappingProxyType({}),
+        error_data: t.ConfigurationMapping | None = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
         is_success: bool = True,
     ) -> None:
         """Initialize FlextResult from value/error/is_success only (direct typing, no Result unwrap)."""
-        normalized_error_data: t.ConfigurationMapping = (
-            error_data or MappingProxyType({})
-        )
         if source is not None and value is None and error is None:
             self._result = source
             try:
@@ -55,7 +52,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 super().__init__(
                     value=source.unwrap(),
                     error_code=error_code,
-                    error_data=normalized_error_data,
+                    error_data=error_data,
                     is_success=True,
                 )
                 self.logger.debug(
@@ -65,7 +62,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return
             super().__init__(
                 error_code=error_code,
-                error_data=normalized_error_data,
+                error_data=error_data,
                 error=str(failure_value),
                 is_success=False,
             )
@@ -76,7 +73,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             value=value,
             error=error,
             error_code=error_code,
-            error_data=normalized_error_data,
+            error_data=error_data,
             is_success=is_success,
         )
 
@@ -148,12 +145,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         error_msg = error if error is not None else ""
-        normalized_error_data: t.ConfigurationMapping = (
-            error_data or MappingProxyType({})
-        )
         result = FlextResult[T_co](
             error_code=error_code,
-            error_data=normalized_error_data,
+            error_data=error_data,
             error=error_msg,
             is_success=False,
         )
