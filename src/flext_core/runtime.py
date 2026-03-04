@@ -405,19 +405,20 @@ class FlextRuntime:
                 if not (callable(keys) and callable(items) and callable(get)):
                     return False
                 try:
-                    keys_values = keys()
-                    item_values = items()
+                    keys_values: Sequence[object] = keys()
+                    item_values: Sequence[object] = items()
                     tuple_entry_size = 2
                     if not isinstance(keys_values, Sequence):
                         return False
                     if not isinstance(item_values, Sequence):
                         return False
-                    if not all(isinstance(key, str) for key in keys_values):
-                        return False
+                    for key in keys_values:
+                        if not isinstance(key, str):
+                            return False
                     for entry in item_values:
-                        if not (
-                            isinstance(entry, tuple) and len(entry) == tuple_entry_size
-                        ):
+                        if not isinstance(entry, tuple):
+                            return False
+                        if len(entry) != tuple_entry_size:
                             return False
                     return True
                 except (AttributeError, TypeError):
@@ -851,9 +852,9 @@ class FlextRuntime:
             services_provider = bridge.services
             resources_provider = bridge.resources
             # Call override via getattr to work around incomplete type stubs
-            _ = services_provider.override(service_module)
-            _ = resources_provider.override(resource_module)
-            _ = cls.bind_configuration_provider(bridge.config, config)
+            services_provider.override(service_module)
+            resources_provider.override(resource_module)
+            cls.bind_configuration_provider(bridge.config, config)
             return bridge, service_module, resource_module
 
         @classmethod
@@ -1133,7 +1134,7 @@ class FlextRuntime:
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict = {}
+        filtered_dict: dict[str, t.Container] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):

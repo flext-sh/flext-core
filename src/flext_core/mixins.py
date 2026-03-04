@@ -14,7 +14,7 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager, suppress
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -90,7 +90,12 @@ class FlextMixins(FlextRuntime):
     ) -> r[t.Container]:
         """Create failed result with error message."""
         fail_error_data: t.ConfigurationMapping = (
-            dict(error_data.root) if error_data is not None else {}
+            {
+                str(k): FlextRuntime.normalize_to_general_value(v)
+                for k, v in error_data.root.items()
+            }
+            if error_data is not None
+            else {}
         )
         return r[t.Container].fail(
             error,
@@ -131,7 +136,7 @@ class FlextMixins(FlextRuntime):
                     else:
                         normalized_value = str(value)
                     normalized_model_dump[str(key)] = normalized_value
-                return m.ConfigMap(root=normalized_model_dump)
+                return m.ConfigMap.model_validate(normalized_model_dump)
             except (TypeError, ValueError, AttributeError) as exc:
                 cls._get_or_create_logger().debug(
                     "Model dump normalization fallback to string conversion",
@@ -267,9 +272,8 @@ class FlextMixins(FlextRuntime):
             overrides=options.config_overrides,
         )
 
-        runtime_context: p.Context = cast(
-            "p.Context",
-            options.context if options.context is not None else FlextContext.create(),
+        runtime_context: p.Context = (
+            options.context if options.context is not None else FlextContext.create()
         )
 
         # Use FlextSettings directly - it's guaranteed to be FlextSettings
@@ -331,7 +335,12 @@ class FlextMixins(FlextRuntime):
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
                 metrics_map: dict[str, t.Container] = (
-                    dict(metrics.items()) if hasattr(metrics, "items") else {}
+                    {
+                        str(k): FlextRuntime.normalize_to_general_value(v)
+                        for k, v in metrics.items()
+                    }
+                    if hasattr(metrics, "items")
+                    else {}
                 )
                 # Add aggregated stats to metrics for visibility
                 metrics_map["operation_count"] = stats["operation_count"]
@@ -451,7 +460,11 @@ class FlextMixins(FlextRuntime):
             if logger_result.is_success:
                 # Use .value directly - FlextResult never returns None on success
                 # Explicit annotation: get returns r[RegisterableService] but we know it's FlextLogger
-                logger: FlextLogger = cast("FlextLogger", logger_result.value)
+                logger: FlextLogger = (
+                    logger_result.value
+                    if isinstance(logger_result.value, FlextLogger)
+                    else FlextLogger(logger_name)
+                )
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
@@ -471,7 +484,7 @@ class FlextMixins(FlextRuntime):
 
                     _ = container_impl.register(
                         logger_key,
-                        cast("t.RegisterableService", logger_factory),
+                        logger_factory,
                         kind="factory",
                     )
                 else:
@@ -510,7 +523,7 @@ class FlextMixins(FlextRuntime):
                 ),
                 **{
                     k: FlextRuntime.normalize_to_general_value(
-                        cast("t.Container", v),
+                        v,
                     )
                     for k, v in extra.items()
                 },
