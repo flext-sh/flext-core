@@ -93,7 +93,7 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data = m.Context.ContextData(
+        initial_data = m.ContextData(
             data=m.Dict(root={"user_id": "123", "session_id": "abc"}),
         )
         context = FlextContext(initial_data)

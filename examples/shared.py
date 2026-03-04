@@ -12,7 +12,7 @@ script subclasses.  Through MRO each subclass inherits:
 
 Usage (inside an ``ex_*.py`` file)::
 
-    from shared import Examples
+    from .shared import Examples
 
 
     class Ex01FlextResult(Examples):

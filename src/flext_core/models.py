@@ -15,6 +15,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypeAlias
 
+from pydantic import ConfigDict
+
 from flext_core import p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
@@ -26,7 +28,6 @@ from flext_core._models.decorators import FlextModelsDecorators
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
-from flext_core._models.mixin import FlextModelsMixin
 from flext_core._models.settings import FlextModelsConfig
 
 
@@ -48,6 +49,9 @@ class FlextModels:
     Pydantic v2 integration supplies BaseModel validation, computed fields,
     and JSON-ready serialization for all exported types.
     """
+
+    DOMAIN_MODEL_CONFIG: ConfigDict = FlextModelsConfig.DOMAIN_MODEL_CONFIG
+    """Domain model configuration defaults."""
 
     # =========================================================================
     # CORE DOMAIN ENTITIES - Inheritable base classes
@@ -93,57 +97,8 @@ class FlextModels:
     class Conversion(FlextGenericModels.Progress.Conversion):
         """Progress of conversion with errors/warnings (from Progress namespace)."""
 
-    # GENERIC CONTAINERS - Replace dict aliases
-    ConfigMap: TypeAlias = FlextModelsContainers.ConfigMap
-    """Configuration map container (replaces ConfigurationDict)."""
-
-    ServiceMap: TypeAlias = FlextModelsContainers.ServiceMap
-    """Service registry map container."""
-
-    ErrorMap: TypeAlias = FlextModelsContainers.ErrorMap
-    """Error type mapping container."""
-
-    Dict: TypeAlias = FlextModelsContainers.Dict
-    """Generic dictionary container."""
-
-    ObjectList: TypeAlias = FlextModelsContainers.ObjectList
-    """Sequence of container values for batch operations."""
-
-    FactoryMap: TypeAlias = FlextModelsContainers.FactoryMap
-    """Map of factory registration callables."""
-
-    ResourceMap: TypeAlias = FlextModelsContainers.ResourceMap
-    """Map of resource callables."""
-
-    ValidatorCallable: TypeAlias = FlextModelsContainers.ValidatorCallable
-    """Callable validator container."""
-
-    FieldValidatorMap: TypeAlias = FlextModelsContainers.FieldValidatorMap
-    """Map of field validators."""
-
-    ConsistencyRuleMap: TypeAlias = FlextModelsContainers.ConsistencyRuleMap
-    """Map of consistency rules."""
-
-    EventValidatorMap: TypeAlias = FlextModelsContainers.EventValidatorMap
-    """Map of event validators."""
-
-    BatchResultDict: TypeAlias = FlextModelsContainers.BatchResultDict
-    """Result payload model for batch operation outputs."""
-    # =========================================================================
-    # NAMESPACE CLASSES - Direct access for internal model classes
-    # =========================================================================
-
-    Base = FlextModelFoundation
-    Validators = FlextModelFoundation.Validators
-    Cqrs = FlextModelsCqrs
-    EntityModels = FlextModelsEntity
-    Entity_ns = FlextModelsEntity
-    ContextModels = FlextModelsContext
-    Context = FlextModelsContext
-    HandlerModels = FlextModelsHandler
-    Handler_ns = FlextModelsHandler
-    ValidationModels = FlextModelFoundation.Validators
-    Validation = FlextModelFoundation.Validators
+    class Validators(FlextModelFoundation.Validators):
+        """Validators — real re-export for pydantic-mypy compatibility."""
 
     # =========================================================================
     # CQRS MESSAGING - Direct access for common usage
@@ -194,8 +149,6 @@ class FlextModels:
     # CONFIGURATION MODELS - Direct access for common usage
     # =========================================================================
 
-    Config: TypeAlias = FlextModelsConfig
-
     class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
         """Processing request — real re-export for pydantic-mypy compatibility."""
 
@@ -210,6 +163,21 @@ class FlextModels:
 
     class HandlerRegistration(FlextModelsHandler.Registration):
         """Handler registration — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerRegistrationResult(FlextModelsHandler.RegistrationResult):
+        """Handler registration result — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerRegistrationDetails(FlextModelsHandler.RegistrationDetails):
+        """Handler registration details — real re-export for pydantic-mypy compatibility."""
+
+    class Handler(FlextModelsCqrs.Handler):
+        """CQRS handler model — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerDecoratorConfig(FlextModelsHandler.DecoratorConfig):
+        """Handler decorator config — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerFactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+        """Handler factory decorator config — real re-export for pydantic-mypy compatibility."""
 
     class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
         """Handler execution config — real re-export for pydantic-mypy compatibility."""
@@ -252,11 +220,14 @@ class FlextModels:
     class ContextMetadata(FlextModelsContext.ContextMetadata):
         """Context metadata — real re-export for pydantic-mypy compatibility."""
 
+    class StructlogProxyContextVar[T: t.Container](
+        FlextModelsContext.StructlogProxyContextVar[T]
+    ):
+        """ContextVar-like proxy using structlog as single source of truth."""
+
     # =========================================================================
     # COLLECTIONS MODELS - Direct access for common usage
     # =========================================================================
-
-    Collections = FlextModelsCollections
 
     class CollectionsCategories(FlextModelsCollections.Categories):
         """Collections categories — real re-export for pydantic-mypy compatibility."""
@@ -289,11 +260,20 @@ class FlextModels:
     # CONTAINER MODELS - DI registry and service registration
     # =========================================================================
 
-    class Container(FlextModelsContainer):
-        """Container models namespace for DI and service registry.
+    class ServiceRegistration(FlextModelsContainer.ServiceRegistration):
+        """Service registration — real re-export for pydantic-mypy compatibility."""
 
-        Re-exports FlextModelsContainer as a proper class for mypy compatibility.
-        """
+    class FactoryRegistration(FlextModelsContainer.FactoryRegistration):
+        """Factory registration — real re-export for pydantic-mypy compatibility."""
+
+    class ResourceRegistration(FlextModelsContainer.ResourceRegistration):
+        """Resource registration — real re-export for pydantic-mypy compatibility."""
+
+    class ContainerConfig(FlextModelsContainer.ContainerConfig):
+        """Container config — real re-export for pydantic-mypy compatibility."""
+
+    class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+        """Factory decorator config — real re-export for pydantic-mypy compatibility."""
 
     # =========================================================================
     # CONFIG CLASSES - Direct access for common usage
@@ -408,76 +388,64 @@ class FlextModels:
     # HANDLER MODELS - Direct access for common usage
     # =========================================================================
 
-    class Handler(FlextModelsCqrs.Handler):
-        """Handler base class - real inheritance."""
+    class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
+        """Handler registration details - real inheritance."""
 
-        class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
-            """Handler registration details - real inheritance."""
+    class RegistrationResult(FlextModelsHandler.RegistrationResult):
+        """Handler registration result - real inheritance."""
 
-        class RegistrationResult(FlextModelsHandler.RegistrationResult):
-            """Handler registration result - real inheritance."""
+    class RegistrationRequest(FlextModelsHandler.RegistrationRequest):
+        """Handler registration request - real inheritance."""
 
-        class RegistrationRequest(FlextModelsHandler.RegistrationRequest):
-            """Handler registration request - real inheritance."""
+    class ExecutionContext(FlextModelsHandler.ExecutionContext):
+        """Handler execution context - real inheritance."""
 
-        class ExecutionContext(FlextModelsHandler.ExecutionContext):
-            """Handler execution context - real inheritance."""
-
-        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
-            """Handler decorator configuration - direct class for mypy compatibility."""
-
-        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
-            """Handler factory decorator configuration - direct class for mypy compatibility."""
-
-    # Direct aliases for top-level access
-    class HandlerDecoratorConfig(Handler.DecoratorConfig):
-        """Handler decorator config — real re-export for pydantic-mypy compatibility."""
-
-    class HandlerFactoryDecoratorConfig(Handler.FactoryDecoratorConfig):
-        """Handler factory decorator config — real re-export for pydantic-mypy compatibility."""
-
-    class HandlerRegistrationDetails(Handler.RegistrationDetails):
-        """Handler registration details — real re-export for pydantic-mypy compatibility."""
-
-    class HandlerRegistrationResult(Handler.RegistrationResult):
-        """Handler registration result — real re-export for pydantic-mypy compatibility."""
-
-    class HandlerExecutionContext(Handler.ExecutionContext):
-        """Handler execution context — real re-export for pydantic-mypy compatibility."""
-
-    class HandlerRegistrationRequest(Handler.RegistrationRequest):
-        """Handler registration request — real re-export for pydantic-mypy compatibility."""
-
-    class CqrsHandler(Handler):
-        """CQRS handler — real re-export for pydantic-mypy compatibility."""
-
-    # =========================================================================
-    # MIXIN MODELS - State models for FlextMixins infrastructure
-    # =========================================================================
-
-    class Mixin(FlextModelsMixin):
-        """Mixin state models namespace for FlextMixins infrastructure.
-
-        The runtime triple (config, context, container) is ``m.ServiceRuntime``.
-        This namespace adds mixin-specific state models not covered by it.
-
-        Models:
-            OperationStats: Accumulated metrics from ``x.track()`` calls.
-        """
+    class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
+        """Handler decorator configuration - direct class for mypy compatibility."""
 
     # =========================================================================
     # DECORATOR MODELS - Direct access for common usage
     # =========================================================================
 
-    class Decorator(FlextModelsDecorators):
-        """Decorator configuration models namespace.
+    class TimeoutConfig(FlextModelsDecorators.TimeoutConfig):
+        """Timeout config — real re-export for pydantic-mypy compatibility."""
 
-        Re-exports FlextModelsDecorators as a proper class for mypy compatibility.
-        """
+    # GENERIC CONTAINERS - Replace dict aliases
+    ConfigMap: TypeAlias = FlextModelsContainers.ConfigMap
+    """Configuration map container (replaces ConfigurationDict)."""
 
-        TimeoutConfig: type[FlextModelsDecorators.TimeoutConfig] = (
-            FlextModelsDecorators.TimeoutConfig
-        )
+    ServiceMap: TypeAlias = FlextModelsContainers.ServiceMap
+    """Service registry map container."""
+
+    ErrorMap: TypeAlias = FlextModelsContainers.ErrorMap
+    """Error type mapping container."""
+
+    Dict: TypeAlias = FlextModelsContainers.Dict
+    """Generic dictionary container."""
+
+    ObjectList: TypeAlias = FlextModelsContainers.ObjectList
+    """Sequence of container values for batch operations."""
+
+    FactoryMap: TypeAlias = FlextModelsContainers.FactoryMap
+    """Map of factory registration callables."""
+
+    ResourceMap: TypeAlias = FlextModelsContainers.ResourceMap
+    """Map of resource callables."""
+
+    ValidatorCallable: TypeAlias = FlextModelsContainers.ValidatorCallable
+    """Callable validator container."""
+
+    FieldValidatorMap: TypeAlias = FlextModelsContainers.FieldValidatorMap
+    """Map of field validators."""
+
+    ConsistencyRuleMap: TypeAlias = FlextModelsContainers.ConsistencyRuleMap
+    """Map of consistency rules."""
+
+    EventValidatorMap: TypeAlias = FlextModelsContainers.EventValidatorMap
+    """Map of event validators."""
+
+    BatchResultDict: TypeAlias = FlextModelsContainers.BatchResultDict
+    """Result payload model for batch operation outputs."""
 
     # =========================================================================
     # UNIONS - Pydantic discriminated unions
@@ -492,6 +460,5 @@ class FlextModels:
 
 # Main alias for direct access
 m = FlextModels
-_typing_namespace_t = t
 
 __all__ = ["FlextModels", "m"]

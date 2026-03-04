@@ -373,8 +373,15 @@ class TestFlextModels:
             "Value",
             "AggregateRoot",
             "DomainEvent",
-            "Cqrs",
             "Metadata",
+            "Command",
+            "Query",
+            "Pagination",
+            "Handler",
+            "HandlerExecutionConfig",
+            "BatchProcessingConfig",
+            "RetryConfiguration",
+            "ValidationConfiguration",
         ]
         for class_name in critical_classes:
             tm.that(
@@ -387,44 +394,6 @@ class TestFlextModels:
                 class_obj,
                 none=False,
                 msg=f"Critical class {class_name} must not be None",
-            )
-        # Config classes are in Config namespace
-        config_classes = [
-            "HandlerExecutionConfig",
-            "BatchProcessingConfig",
-            "RetryConfiguration",
-            "ValidationConfiguration",
-        ]
-        for class_name in config_classes:
-            tm.that(
-                hasattr(m.Config, class_name),
-                eq=True,
-                msg=f"Config class {class_name} must be available in Config namespace",
-            )
-            class_obj = getattr(m.Config, class_name)
-            tm.that(
-                class_obj,
-                none=False,
-                msg=f"Config class {class_name} must not be None",
-            )
-        # RegistrationDetails is in Handler namespace
-        tm.that(
-            hasattr(m.Handler, "RegistrationDetails"),
-            eq=True,
-            msg="RegistrationDetails must be available in Handler namespace",
-        )
-        cqrs_classes = ["Command", "Query", "Pagination", "Bus", "Handler"]
-        for class_name in cqrs_classes:
-            tm.that(
-                hasattr(m.Cqrs, class_name),
-                eq=True,
-                msg=f"CQRS class {class_name} must be available",
-            )
-            class_obj = getattr(m.Cqrs, class_name)
-            tm.that(
-                class_obj,
-                none=False,
-                msg=f"CQRS class {class_name} must not be None",
             )
 
     def test_entity_equality_and_hash(self) -> None:
@@ -1050,7 +1019,7 @@ class TestFlextModels:
 
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""
-        handler_config = m.Handler(
+        handler_config = m.HandlerExecutionConfig(
             handler_id="handler-123",
             handler_name="CreateUserHandler",
             handler_type=c.Cqrs.HandlerType.COMMAND,

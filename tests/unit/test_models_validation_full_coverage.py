@@ -1,6 +1,6 @@
 """Full coverage tests for FlextModelFoundation.Validators.
 
-Tests all staticmethod validators available on m.Validation (which is
+Tests all staticmethod validators available on m.Validators (which is
 FlextModelFoundation.Validators):
   - strip_whitespace
   - ensure_utc_datetime
@@ -20,8 +20,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 from flext_core._models.base import FlextModelFoundation
 
 # ---------------------------------------------------------------------------
@@ -30,15 +31,15 @@ from flext_core._models.base import FlextModelFoundation
 
 
 def test_strip_whitespace_trims_leading_trailing() -> None:
-    assert m.Validation.strip_whitespace("  hello  ") == "hello"
+    assert m.Validators.strip_whitespace("  hello  ") == "hello"
 
 
 def test_strip_whitespace_preserves_clean() -> None:
-    assert m.Validation.strip_whitespace("already") == "already"
+    assert m.Validators.strip_whitespace("already") == "already"
 
 
 def test_strip_whitespace_returns_empty_on_spaces() -> None:
-    assert m.Validation.strip_whitespace("   ") == ""
+    assert m.Validators.strip_whitespace("   ") == ""
 
 
 # ---------------------------------------------------------------------------
@@ -48,19 +49,19 @@ def test_strip_whitespace_returns_empty_on_spaces() -> None:
 
 def test_ensure_utc_datetime_adds_tzinfo_when_naive() -> None:
     naive = datetime(2025, 1, 1, 12, 0, 0)  # noqa: DTZ001
-    result = m.Validation.ensure_utc_datetime(naive)
+    result = m.Validators.ensure_utc_datetime(naive)
     assert result is not None
     assert result.tzinfo is UTC
 
 
 def test_ensure_utc_datetime_preserves_aware() -> None:
     aware = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    result = m.Validation.ensure_utc_datetime(aware)
+    result = m.Validators.ensure_utc_datetime(aware)
     assert result is aware
 
 
 def test_ensure_utc_datetime_returns_none_on_none() -> None:
-    assert m.Validation.ensure_utc_datetime(None) is None
+    assert m.Validators.ensure_utc_datetime(None) is None
 
 
 # ---------------------------------------------------------------------------
@@ -69,17 +70,17 @@ def test_ensure_utc_datetime_returns_none_on_none() -> None:
 
 
 def test_normalize_to_list_wraps_scalar() -> None:
-    result = m.Validation.normalize_to_list("single")
+    result = m.Validators.normalize_to_list("single")
     assert result == ["single"]
 
 
 def test_normalize_to_list_passes_list_through() -> None:
-    result = m.Validation.normalize_to_list([1, 2, 3])
+    result = m.Validators.normalize_to_list(cast("t.Container", [1, 2, 3]))
     assert result == [1, 2, 3]
 
 
 def test_normalize_to_list_wraps_int() -> None:
-    result = m.Validation.normalize_to_list(42)
+    result = m.Validators.normalize_to_list(42)
     assert result == [42]
 
 
@@ -89,7 +90,7 @@ def test_normalize_to_list_wraps_int() -> None:
 
 
 def test_validate_config_dict_normalizes_dict() -> None:
-    result = m.Validation.validate_config_dict({"key": "value"})
+    result = m.Validators.validate_config_dict(cast("t.Container", {"key": "value"}))
     assert isinstance(result, dict)
     assert result["key"] == "value"
 
@@ -100,14 +101,16 @@ def test_validate_config_dict_normalizes_dict() -> None:
 
 
 def test_validate_tags_list_normalizes() -> None:
-    result = m.Validation.validate_tags_list(["tag1", "  TAG1  ", "tag2"])
+    result = m.Validators.validate_tags_list(
+        cast("t.Container", ["tag1", "  TAG1  ", "tag2"])
+    )
     assert isinstance(result, list)
     # Tags should be deduplicated and cleaned
     assert len(result) <= 3
 
 
 def test_validate_tags_list_from_string() -> None:
-    result = m.Validation.validate_tags_list(["hello", "world"])
+    result = m.Validators.validate_tags_list(cast("t.Container", ["hello", "world"]))
     assert "hello" in result
     assert "world" in result
 
@@ -118,8 +121,8 @@ def test_validate_tags_list_from_string() -> None:
 
 
 def test_facade_binding_is_correct() -> None:
-    """m.Validation IS FlextModelFoundation.Validators."""
-    assert m.Validation is FlextModelFoundation.Validators
+    """m.Validators IS FlextModelFoundation.Validators."""
+    assert issubclass(m.Validators, FlextModelFoundation.Validators)
 
 
 def test_basic_imports_work() -> None:

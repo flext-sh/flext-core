@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Literal, Self, TypeGuard, override
+from typing import Annotated, ClassVar, Literal, Self, TypeGuard, cast, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -286,7 +286,6 @@ class FlextRegistry(s[bool]):
     ) -> t.HandlerLike:
         """Convert handler to dispatcher-compatible callable."""
         # Wrap handler.handle() to return ContainerValue | None
-        # Wrap handler.handle() to return ContainerValue | None
         handler_ref = handler_for_dispatch
 
         def _dispatch_wrapper(*args: t.Container) -> t.Container | None:
@@ -305,7 +304,7 @@ class FlextRegistry(s[bool]):
         can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
         if can_handle_attr is not None:
             setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
-        return _dispatch_wrapper
+        return cast("t.HandlerLike", _dispatch_wrapper)
 
     def _create_registration_details(
         self,
@@ -482,7 +481,7 @@ class FlextRegistry(s[bool]):
             operation="register_handler",
             handler_name=handler_name,
             handler_key=key,
-            error=error_msg,
+            error=error_msg or "",
             consequence="Handler will not be available for dispatch",
         )
         # Use error property for type-safe str
@@ -923,13 +922,13 @@ class FlextRegistry(s[bool]):
         # Normalize metadata to dict for internal use
         validated_metadata: m.ConfigMap | None = None
         if metadata is not None:
-            metadata_source: Mapping[str, t.Container] | m.ConfigMap
+            raw_metadata: object
             if isinstance(metadata, m.Metadata):
-                metadata_source = metadata.attributes
+                raw_metadata = metadata.attributes
             else:
-                metadata_source = metadata
+                raw_metadata = metadata
             validated_metadata = m.ConfigMap.model_validate(
-                metadata_source,
+                raw_metadata,
             )
 
         # Store metadata if provided (for future use)

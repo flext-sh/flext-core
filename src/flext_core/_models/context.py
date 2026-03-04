@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Annotated
+from typing import Annotated, Self
 
 import structlog.contextvars
 from pydantic import (
@@ -762,7 +762,7 @@ class FlextModelsContext:
         )
 
         @model_validator(mode="after")
-        def validate_context_protocol(self) -> FlextModelsContext.ContextMetadata:
+        def validate_context_protocol(self) -> Self:
             """Validate context instance has get() and set() methods."""
             # Find the field that holds the context instance
             context_field = None

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from shared import Examples
+from typing import cast, override
 
 from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t
+
+from .shared import Examples
 
 
 class _CommandA(m.Command):
@@ -43,6 +45,7 @@ def _discovered_handler(_message: t.ContainerValue) -> t.ContainerValue:
 class Ex12FlextRegistry(Examples):
     """Exercise FlextRegistry public API."""
 
+    @override
     def exercise(self) -> None:
         """Run all FlextRegistry example sections."""
         registry, dispatcher = self._exercise_create_and_service_methods()
@@ -204,7 +207,9 @@ class Ex12FlextRegistry(Examples):
         self.check("register_handler.a.success", reg_one.is_success)
         self.check(
             "register_handler.a.id",
-            reg_one.value.registration_id if reg_one.is_success else "",
+            cast("m.HandlerRegistrationDetails", reg_one.value).registration_id
+            if reg_one.is_success
+            else "",
         )
         self.check("register_handler.duplicate.success", reg_dup.is_success)
         self.check("register_handler.b.success", reg_two.is_success)
@@ -215,11 +220,15 @@ class Ex12FlextRegistry(Examples):
         self.check("register_handlers.success", batch.is_success)
         self.check(
             "register_handlers.registered_len",
-            len(batch.value.registered) if batch.is_success else -1,
+            len(cast("FlextRegistry.Summary", batch.value).registered)
+            if batch.is_success
+            else -1,
         )
         self.check(
             "register_handlers.errors_len",
-            len(batch.value.errors) if batch.is_success else -1,
+            len(cast("FlextRegistry.Summary", batch.value).errors)
+            if batch.is_success
+            else -1,
         )
 
         cmd_a = _CommandA(value=cmd_a_value)
@@ -271,7 +280,9 @@ class Ex12FlextRegistry(Examples):
         self.check("register_bindings.success", bindings_result.is_success)
         self.check(
             "register_bindings.registered_len",
-            len(bindings_result.value.registered) if bindings_result.is_success else -1,
+            len(cast("FlextRegistry.Summary", bindings_result.value).registered)
+            if bindings_result.is_success
+            else -1,
         )
 
         plugin_ok = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
@@ -313,7 +324,10 @@ class Ex12FlextRegistry(Examples):
 
         self.check("get_plugin.ok", plugin_get_ok.unwrap_or("") == plugin_value_a)
         self.check("get_plugin.missing", plugin_get_missing.is_failure)
-        self.check("list_plugins.transports", sorted(plugin_list.unwrap_or([])))
+        self.check(
+            "list_plugins.transports",
+            sorted(cast("list[str]", plugin_list.unwrap_or([]))),
+        )
         self.check("unregister_plugin.ok", plugin_unreg_ok.is_success)
         self.check("unregister_plugin.missing", plugin_unreg_missing.is_failure)
 

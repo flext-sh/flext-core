@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextExceptions, c, e, r, t, u
 
@@ -280,8 +281,8 @@ def _exercise_metrics() -> None:
     metric_map = metrics.root
     _check("metrics.total_exceptions", metric_map.get("total_exceptions"))
     counts_obj = metric_map.get("exception_counts")
-    if u.is_dict_like(counts_obj):
-        counts_map = dict(counts_obj)
+    if counts_obj is not None and u.is_dict_like(cast("t.Container", counts_obj)):
+        counts_map = dict(cast("dict[str, t.Container]", counts_obj))
         _check("metrics.validation_count", counts_map.get("ValidationError"))
         _check("metrics.configuration_count", counts_map.get("ConfigurationError"))
     else:

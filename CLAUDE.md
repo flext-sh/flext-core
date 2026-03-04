@@ -95,11 +95,12 @@ After Phase 2 API consolidation, these are the ONLY canonical method names. Old 
 Any agent editing `typings.py`, or any file that imports `from flext_core import t` or `from flext_core.typings import`, MUST:
 
 1. Load skill `flext-strict-typing` before starting work.
-2. Read the `typings.py` inline warnings before making ANY changes.
-3. Run `make validate-typings` after editing `typings.py`.
-4. Non-recursive TypeAlias syntax is NON-NEGOTIABLE — violations cause runtime crashes.
+1. Read the `typings.py` inline warnings before making ANY changes.
+1. Run `make validate-typings` after editing `typings.py`.
+1. Non-recursive TypeAlias syntax is NON-NEGOTIABLE — violations cause runtime crashes.
 
 Agent prompts MUST include:
+
 ```
 ⚠️ TYPINGS.PY RULE: Non-recursive aliases use `X: TypeAlias = ...` (NOT `type X = ...`).
 Do NOT convert any TypeAlias to a type statement. See CLAUDE.md Zero Tolerance Rules.

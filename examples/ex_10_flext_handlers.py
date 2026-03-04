@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
-from shared import Examples
+from flext_core import FlextHandlers, c, e, h, m, p, r, t, u
 
-from flext_core import FlextHandlers, c, e, h, m, r, t, u
+from .shared import Examples
 
 
 class _Message(m.Command):
@@ -66,6 +67,7 @@ class _ProcessorGood(m.Value):
     def process(self) -> str:
         return "ok"
 
+    @override
     def validate(self) -> bool:
         return True
 
@@ -116,6 +118,7 @@ class _DemoHandler(h[t.ContainerValue, str]):
 class Ex10FlextHandlers(Examples):
     """Exercise FlextHandlers public API."""
 
+    @override
     def exercise(self) -> None:
         """Run all FlextHandlers example sections."""
         self.demo_handler_core()
@@ -169,15 +172,20 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
 
-        execute_value = handler.execute(_Message(text=payload_text)).unwrap_or("-")
+        execute_value = handler.execute(
+            cast("t.ContainerValue", _Message(text=payload_text))
+        ).unwrap_or("-")
         self.check(
             "execute.success.value",
             payload_text in str(execute_value),
         )
-        self.check("execute.validation_failure", handler.execute("bad").error)
+        self.check(
+            "execute.validation_failure",
+            handler.execute(cast("t.ContainerValue", "bad")).error,
+        )
 
         dispatch_value = handler.dispatch_message(
-            _Message(text=dispatch_text)
+            cast("t.ContainerValue", _Message(text=dispatch_text))
         ).unwrap_or("-")
         self.check(
             "dispatch.success",
@@ -186,13 +194,15 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "dispatch.mode_mismatch",
             handler.dispatch_message(
-                _Message(text="go"), operation=c.Dispatcher.HANDLER_MODE_QUERY
+                cast("t.ContainerValue", _Message(text="go")),
+                operation=c.Dispatcher.HANDLER_MODE_QUERY,
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                "explode", operation=c.Dispatcher.HANDLER_MODE_COMMAND
+                cast("t.ContainerValue", "explode"),
+                operation=c.Dispatcher.HANDLER_MODE_COMMAND,
             ).error,
         )
 
@@ -218,17 +228,15 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "pop_context.1",
-            handler
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
+            cast(
+                "m.ConfigMap", handler.pop_context().unwrap_or(m.ConfigMap(root={}))
+            ).get("handler_name", "-"),
         )
         self.check(
             "pop_context.2",
-            handler
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
+            cast(
+                "m.ConfigMap", handler.pop_context().unwrap_or(m.ConfigMap(root={}))
+            ).get("handler_name", "-"),
         )
 
     def demo_create_from_callable(self) -> None:
@@ -400,16 +408,23 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.get_metrics",
-            tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get(hit_key, -1),
+            cast(
+                "m.ConfigMap", tracker.get_metrics().unwrap_or(m.ConfigMap(root={}))
+            ).get(hit_key, -1),
         )
 
         stack = h.CQRS.ContextStack()
         self.check(
             "cqrs.push_context.mapping",
-            stack.push_context({
-                "handler_name": ctx_name,
-                "handler_mode": "command",
-            }).is_success,
+            stack.push_context(
+                cast(
+                    "t.Container",
+                    {
+                        "handler_name": ctx_name,
+                        "handler_mode": "command",
+                    },
+                )
+            ).is_success,
         )
         current_context = stack.current_context()
         self.check(
@@ -417,10 +432,12 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.pop_context",
-            stack
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
+            cast(
+                "m.ConfigMap",
+                stack.pop_context().unwrap_or(
+                    cast("Mapping[str, t.Container]", m.ConfigMap(root={}))
+                ),
+            ).get("handler_name", "-"),
         )
 
         di = h.DependencyIntegration
@@ -478,33 +495,37 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("integration.calls", True)
 
-        meta = h.Metadata(version=metadata_version, attributes={"tag": metadata_tag})
+        metadata_cls = cast("type", h.Metadata)
+        meta = metadata_cls(version=metadata_version, attributes={"tag": metadata_tag})
         self.check("metadata.version", meta.version)
         self.check("metadata.attributes", meta.attributes)
 
         protocol_handler = _ProtocolHandler()
         self.check(
             "protocol.is_handler.true",
-            h.ProtocolValidation.is_handler(protocol_handler),
+            h.ProtocolValidation.is_handler(cast("t.Container", protocol_handler)),
         )
         self.check(
             "protocol.is_handler.false",
             h.ProtocolValidation.is_handler(m.ConfigMap(root={})),
         )
         self.check(
-            "protocol.is_service", h.ProtocolValidation.is_service(_ServiceStub())
+            "protocol.is_service",
+            h.ProtocolValidation.is_service(
+                cast("p.Service[t.Container]", _ServiceStub())
+            ),
         )
         self.check("protocol.is_command_bus", h.ProtocolValidation.is_command_bus())
         self.check(
             "protocol.validate_known",
             h.ProtocolValidation.validate_protocol_compliance(
-                protocol_handler, "Handler"
+                cast("p.Handler[t.Container, t.Container]", protocol_handler), "Handler"
             ).is_success,
         )
         self.check(
             "protocol.validate_unknown",
             h.ProtocolValidation.validate_protocol_compliance(
-                protocol_handler, "Unknown"
+                cast("p.Handler[t.Container, t.Container]", protocol_handler), "Unknown"
             ).error,
         )
         self.check(
@@ -695,9 +716,15 @@ class Ex10FlextHandlers(Examples):
             h.validate_http_status_codes([Path("x")]).error,
         )
 
-        self.check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))
-        self.check("runtime.is_dict_like.false", h.is_dict_like([1, 2]))
-        self.check("runtime.is_list_like.true", h.is_list_like([1, 2]))
+        self.check(
+            "runtime.is_dict_like.true", h.is_dict_like(cast("t.Container", {"a": 1}))
+        )
+        self.check(
+            "runtime.is_dict_like.false", h.is_dict_like(cast("t.Container", [1, 2]))
+        )
+        self.check(
+            "runtime.is_list_like.true", h.is_list_like(cast("t.Container", [1, 2]))
+        )
         self.check("runtime.is_list_like.false", h.is_list_like("ab"))
         self.check(
             "runtime.is_valid_json.true",
@@ -723,10 +750,11 @@ class Ex10FlextHandlers(Examples):
         self.check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
         self.check(
             "runtime.normalize_general",
-            h.normalize_to_general_value({dict_key: dict_value}),
+            h.normalize_to_general_value(cast("t.Container", {dict_key: dict_value})),
         )
         self.check(
-            "runtime.normalize_metadata", h.normalize_to_metadata_value({"k": [1, 2]})
+            "runtime.normalize_metadata",
+            h.normalize_to_metadata_value(cast("t.Container", {"k": [1, 2]})),
         )
 
 

@@ -433,11 +433,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             | Mapping[str, t.Tests.ContainerValue]
         ) = self._coerce_file_content(params.content)
 
-        # Convert Pydantic model to dict using u.Model.to_dict()
-        # Ensure actual_content is a BaseModel instance before calling to_dict
+        # Convert Pydantic model to dict using u.Model.dump()
+        # Ensure actual_content is a BaseModel instance before calling dump
         if isinstance(actual_content, BaseModel):
-            actual_content = self._mapping_to_payload(u.Model.to_dict(actual_content))
-        # If it's already a dict, leave it as is - u.Model.to_dict expects BaseModel
+            actual_content = self._mapping_to_payload(u.Model.dump(actual_content))
+        # If it's already a dict, leave it as is - u.Model.dump expects BaseModel
         # If it's something else (str, bytes, list), it will be handled by auto-detection
 
         # Auto-detect format using utilities
@@ -477,9 +477,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             else:
                 _ = file_path.write_bytes(str(actual_content).encode(params.enc))
         elif actual_fmt == c.Tests.Files.Format.JSON:
-            # Convert Mapping to dict if needed using u.Mapper.to_dict()
+            # Convert Mapping to dict if needed
             if isinstance(actual_content, Mapping):
-                data = u.Mapper.to_dict(actual_content)
+                data = dict(actual_content)
             else:
                 empty_data: dict[str, t.Tests.ContainerValue] = {}
                 data = {"value": actual_content} if actual_content else empty_data
@@ -489,7 +489,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         elif actual_fmt == c.Tests.Files.Format.YAML:
             if isinstance(actual_content, Mapping):
-                data = u.Mapper.to_dict(actual_content)
+                data = dict(actual_content)
             else:
                 # Fallback - convert to dict representation
                 empty_data_y: dict[str, t.Tests.ContainerValue] = {}

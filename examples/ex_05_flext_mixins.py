@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
-from flext_core import FlextRuntime, FlextSettings, c, r, t, u, x
+from flext_core import FlextRuntime, FlextSettings, c, m, r, t, u, x
 
 _RESULTS: list[str] = []
 
@@ -194,7 +194,7 @@ def _exercise_runtime_properties_and_tracking(service: _DemoService) -> None:
     _check("track.failure.message", failure_message)
 
 
-def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
+def _exercise_cqrs_validation_and_protocols(_service: _DemoService) -> None:
     _section("cqrs_validation_protocols")
 
     tracker = x.CQRS.MetricsTracker()
@@ -202,7 +202,9 @@ def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
     metrics_result = tracker.get_metrics()
     _check("metrics.get_metrics.success", metrics_result.is_success)
     metrics_value_str: str = (
-        str(metrics_result.value.root) if metrics_result.is_success else "{}"
+        str(cast("m.ConfigMap", metrics_result.value).root)
+        if metrics_result.is_success
+        else "{}"
     )
     _check(
         "metrics.get_metrics.value",
@@ -212,7 +214,9 @@ def _exercise_cqrs_validation_and_protocols(service: _DemoService) -> None:
     stack = x.CQRS.ContextStack()
     _check(
         "context_stack.push_context",
-        stack.push_context({"handler_name": "Q", "handler_mode": "query"}).is_success,
+        stack.push_context(
+            cast("t.Container", {"handler_name": "Q", "handler_mode": "query"})
+        ).is_success,
     )
     _check(
         "context_stack.current_context.before_pop", stack.current_context() is not None

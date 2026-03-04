@@ -18,9 +18,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import TypedDict, override
 
-from flext_core import FlextModels, FlextProtocols, FlextTypes, m, t
-from flext_core._models.collections import FlextModelsCollections
-from flext_tests import FlextTestsModels
+from flext_core import FlextModels, p, t
 
 
 class TestsFlextModels:
@@ -30,30 +28,23 @@ class TestsFlextModels:
     for flext-core-specific model definitions.
 
     Access patterns:
-    - TestsFlextModels.Tests.* = flext_tests test models (via composition)
+    - TestsFlextModels.FlextTestsModels.Tests.* = flext_tests test models (via composition)
     - TestsFlextModels.Core.* = flext-core-specific test models
-    - TestsFlextModels.Entity, .Value, etc. = FlextModels domain models (via composition)
+    - TestsFlextModels.FlextModels.Entity, .FlextModels.Value, etc. = FlextModels domain models (via composition)
 
     Rules:
     - Use composition, not inheritance (FlextTestsModels deprecates subclassing)
     - flext-core-specific models go in Core namespace
-    - Generic models accessed via Tests namespace
+    - Generic models accessed via FlextTestsModels.Tests namespace
     """
 
-    # Composition: expose FlextTestsModels namespaces
-    Tests = FlextTestsModels.Tests
-
-    # Composition: expose FlextModels domain model classes
-    Entity = FlextModels.Entity
-    Value = m.Value
     AggregateRoot = FlextModels.AggregateRoot
     DomainEvent = FlextModels.DomainEvent
-    Collections = FlextModels.Collections
 
     # Type aliases for domain test input
-    type DomainInputValue = FlextTypes.Container | FlextProtocols.HasModelDump | object
+    type DomainInputValue = t.Container | p.HasModelDump | object
     type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
-    type DomainExpectedResult = FlextTypes.Container | type[FlextTypes.Container]
+    type DomainExpectedResult = t.Container | type[t.Container]
 
     class Core:
         """flext-core-specific test models namespace."""
@@ -105,7 +96,7 @@ class TestsFlextModels:
                 self.data = data
 
         class ComplexValue:
-            """Value object with non-hashable attributes."""
+            """FlextModels.Value object with non-hashable attributes."""
 
             def __init__(self, data: str, items: list[str]) -> None:
                 """Initialize complex value with non-hashable items."""
@@ -158,9 +149,7 @@ class TestsFlextModels:
 
         # ParseOptions reference for string parser tests
         # ParseOptions reference for string parser tests
-        class ParseOptions(FlextModelsCollections.ParseOptions):
-            """Parse options - real inheritance."""
-
+        class ParseOptions(FlextModels.CollectionsParseOptions):
             """Parse options - real inheritance."""
 
     @dataclass(frozen=True, slots=True)
@@ -171,7 +160,7 @@ class TestsFlextModels:
         delimiter: str
         expected: list[str] | None = None
         expected_error: str | None = None
-        options: m.CollectionsParseOptions | None = None
+        options: FlextModels.CollectionsParseOptions | None = None
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-# pyright: reportUnknownArgumentType=none, reportUnknownVariableType=none, reportGeneralTypeIssues=none, reportAttributeAccessIssue=none, reportUnknownMemberType=none, reportUnknownParameterType=none, reportArgumentType=none, reportOperatorIssue=none, reportUnnecessaryComparison=none, reportUnnecessaryIsInstance=none
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
-from flext_core import FlextContext, FlextRuntime, c, r, t, u
+from flext_core import FlextContext, FlextRuntime, c, p, r, t, u
 
 _RESULTS: list[str] = []
 
@@ -107,7 +108,7 @@ class _ContainerStub:
     def register_factory(
         self,
         name: str,
-        factory: callable[[], t.Container],
+        factory: Callable[[], t.Container],
     ) -> r[bool]:
         self._services[name] = factory()
         return r[bool].ok(True)
@@ -119,7 +120,7 @@ class _ContainerStub:
     def with_factory(
         self,
         name: str,
-        factory: callable[[], t.Container],
+        factory: Callable[[], t.Container],
     ) -> _ContainerStub:
         self._services[name] = factory()
         return self
@@ -135,7 +136,7 @@ class _ContainerStub:
             return r[t.Container].fail(result.error or "missing")
         value = result.value
         if isinstance(value, type_cls):
-            return r[t.Container].ok(value)
+            return r[t.Container].ok(cast("t.Container", value))
         return r[t.Container].fail("wrong-type")
 
     def list_services(self) -> list[str]:
@@ -168,7 +169,7 @@ def demo_core_context_methods() -> None:
     if payload is not None:
         set_all_ok = ctx.set(payload).is_success
     _check("set_all.success", set_all_ok)
-    _check("get.k1", ctx.get("k1").unwrap_or("missing"))
+    _check("get.k1", cast("t.Container", ctx.get("k1").unwrap_or("missing")))
     _check("has.k2", ctx.has("k2"))
     ctx.remove("k2")
     _check("remove.k2", ctx.has("k2"))
@@ -178,15 +179,18 @@ def demo_core_context_methods() -> None:
     _check("items.count", len(ctx.items()))
 
     merged = ctx.clone().merge({"k4": "merged"})
-    _check("merge.get", merged.get("k4").unwrap_or("missing"))
+    _check("merge.get", cast("t.Container", merged.get("k4").unwrap_or("missing")))
 
     cloned = ctx.clone()
-    _check("clone.get", cloned.get("k1").unwrap_or("missing"))
+    _check("clone.get", cast("t.Container", cloned.get("k1").unwrap_or("missing")))
 
     _check("validate.success", ctx.validate().is_success)
 
     ctx.set_metadata("meta_key", "meta_value")
-    _check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
+    _check(
+        "get_metadata",
+        cast("t.Container", ctx.get_metadata("meta_key").unwrap_or("missing")),
+    )
 
     exported_min = ctx.export(as_dict=True)
     exported_full = ctx.export(
@@ -194,12 +198,18 @@ def demo_core_context_methods() -> None:
         include_metadata=True,
         as_dict=True,
     )
-    _check("export.min.has_global", "global" in exported_min)
-    _check("export.full.has_statistics", "statistics" in exported_full)
-    _check("export.full.has_metadata", "metadata" in exported_full)
+    exported_min_dict = (
+        dict(exported_min) if not isinstance(exported_min, dict) else exported_min
+    )
+    exported_full_dict = (
+        dict(exported_full) if not isinstance(exported_full, dict) else exported_full
+    )
+    _check("export.min.has_global", "global" in exported_min_dict)
+    _check("export.full.has_statistics", "statistics" in exported_full_dict)
+    _check("export.full.has_metadata", "metadata" in exported_full_dict)
 
     scope_names = sorted(ctx.iter_scope_vars().keys())
-    _check("iter_scope_vars", scope_names)
+    _check("iter_scope_vars", str(scope_names))
 
     ctx.clear()
     _check("clear.keys", len(ctx.keys()))
@@ -211,7 +221,7 @@ def demo_container_and_service_methods() -> None:
     _check("runtime.class", FlextRuntime.__name__)
 
     container = _ContainerStub()
-    FlextContext.set_container(container)
+    FlextContext.set_container(cast("p.DI", container))
     fetched_container = FlextContext.get_container()
     _check("set_get_container.same", fetched_container is container)
 
@@ -226,7 +236,10 @@ def demo_container_and_service_methods() -> None:
     )
     _check(
         "service.get.ok",
-        FlextContext.Service.get_service("demo-service").unwrap_or("missing"),
+        cast(
+            "t.Container",
+            FlextContext.Service.get_service("demo-service").unwrap_or("missing"),
+        ),
     )
     _check(
         "service.get.missing",
@@ -237,11 +250,11 @@ def demo_container_and_service_methods() -> None:
     with FlextContext.Service.service_context("orders", version="1.2.3"):
         _check(
             "service_context.name",
-            FlextContext.Variables.ServiceName.get(),
+            FlextContext.Variables.ServiceName.get() or "",
         )
         _check(
             "service_context.version",
-            FlextContext.Variables.ServiceVersion.get(),
+            FlextContext.Variables.ServiceVersion.get() or "",
         )
     _check(
         "service_context.restored",
@@ -310,24 +323,26 @@ def demo_variables_and_domains() -> None:
     )
 
     FlextContext.Correlation.set_correlation_id("cid-1")
-    _check("correlation.get_set", FlextContext.Correlation.get_correlation_id())
+    _check("correlation.get_set", FlextContext.Correlation.get_correlation_id() or "")
     with FlextContext.Correlation.new_correlation(
         "cid-2", parent_id="cid-parent"
     ) as corr_id:
         _check("correlation.new.value", corr_id)
         _check(
             "correlation.new.current",
-            FlextContext.Correlation.get_correlation_id(),
+            FlextContext.Correlation.get_correlation_id() or "",
         )
 
     FlextContext.Request.set_operation_name("sync-users")
-    _check("request.get_set", FlextContext.Request.get_operation_name())
+    _check("request.get_set", FlextContext.Request.get_operation_name() or "")
 
     with FlextContext.Performance.timed_operation("bulk-sync") as op_meta:
         _check(
             "timed_operation.has_start", c.Context.METADATA_KEY_START_TIME in op_meta
         )
-        _check("timed_operation.has_name", op_meta.get(c.Context.KEY_OPERATION_NAME))
+        _check(
+            "timed_operation.has_name", op_meta.get(c.Context.KEY_OPERATION_NAME) or ""
+        )
         full_context = FlextContext.Serialization.get_full_context()
         _check(
             "serialization.has_correlation_key",
@@ -335,7 +350,7 @@ def demo_variables_and_domains() -> None:
         )
         _check(
             "serialization.has_operation_name",
-            full_context.get(c.Context.KEY_OPERATION_NAME),
+            full_context.get(c.Context.KEY_OPERATION_NAME) or "",
         )
     _check("timed_operation.has_end", c.Context.METADATA_KEY_END_TIME in op_meta)
     _check(
@@ -347,7 +362,7 @@ def demo_variables_and_domains() -> None:
     cleared_context = FlextContext.Serialization.get_full_context()
     _check(
         "utilities.clear_context.correlation",
-        cleared_context.get(c.Context.KEY_CORRELATION_ID),
+        cleared_context.get(c.Context.KEY_CORRELATION_ID) or "",
     )
     ensured = FlextContext.Utilities.ensure_correlation_id()
     _check("utilities.ensure_correlation_id.non_empty", len(ensured) > 0)

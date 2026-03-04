@@ -25,7 +25,6 @@ from typing import override
 
 from flext_core import (
     FlextConstants,
-    FlextModels,
     FlextResult,
     FlextService,
     c,
@@ -255,8 +254,8 @@ class UtilitiesService(FlextService[m.ConfigMap]):
 
         # Parse delimited strings using railway pattern (DRY)
         parser = u.Parser()
-        # Use FlextModels.Collections.ParseOptions instead of private import
-        options = FlextModels.Collections.ParseOptions(strip=True, remove_empty=True)
+        # Use m.CollectionsParseOptions instead of private import
+        options = m.CollectionsParseOptions(strip=True, remove_empty=True)
         parser.parse_delimited("a, b, c", ",", options=options).map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
         )

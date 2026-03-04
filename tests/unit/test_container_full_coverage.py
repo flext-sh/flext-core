@@ -140,7 +140,7 @@ def test_sync_config_namespace_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
     c._config = FlextSettings()
     c._user_overrides = m.ConfigMap(root={})
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -163,17 +163,17 @@ def test_register_existing_providers_skips_and_register_core_fallback(
 ) -> None:
     c = FlextContainer.create()
     c._services = {
-        "svc": m.Container.ServiceRegistration(
+        "svc": m.ServiceRegistration(
             name="svc",
             service="v",
             service_type="str",
         ),
     }
     c._factories = {
-        "fac": m.Container.FactoryRegistration(name="fac", factory=lambda: "v"),
+        "fac": m.FactoryRegistration(name="fac", factory=lambda: "v"),
     }
     c._resources = {
-        "res": m.Container.ResourceRegistration(name="res", factory=lambda: "v"),
+        "res": m.ResourceRegistration(name="res", factory=lambda: "v"),
     }
 
     setattr(c._di_services, "svc", object())
@@ -193,7 +193,7 @@ def test_configure_with_resource_register_and_factory_error_paths(
 ) -> None:
     c = FlextContainer.create()
     c._user_overrides = m.ConfigMap(root={})
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=100,
@@ -241,13 +241,13 @@ def test_configure_with_resource_register_and_factory_error_paths(
 def test_get_and_get_typed_resource_factory_paths() -> None:
     c = FlextContainer.create()
     c._factories = {
-        "f": m.Container.FactoryRegistration(
+        "f": m.FactoryRegistration(
             name="f",
             factory=lambda: (_ for _ in ()).throw(ValueError("x")),
         ),
     }
     c._resources = {
-        "r": m.Container.ResourceRegistration(
+        "r": m.ResourceRegistration(
             name="r",
             factory=lambda: (_ for _ in ()).throw(ValueError("x")),
         ),
@@ -255,17 +255,17 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
     assert c.get("r").is_failure
 
     c._factories = {
-        "f2": m.Container.FactoryRegistration(name="f2", factory=lambda: "abc"),
+        "f2": m.FactoryRegistration(name="f2", factory=lambda: "abc"),
     }
     assert c.get("f2", type_cls=dict).is_failure
 
     c._resources = {
-        "r2": m.Container.ResourceRegistration(name="r2", factory=lambda: "abc"),
+        "r2": m.ResourceRegistration(name="r2", factory=lambda: "abc"),
     }
     assert c.get("r2", type_cls=dict).is_failure
 
     c._factories = {
-        "f3": m.Container.FactoryRegistration(
+        "f3": m.FactoryRegistration(
             name="f3",
             factory=lambda: (_ for _ in ()).throw(ValueError("err")),
         ),
@@ -273,7 +273,7 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
     assert c.get("f3", type_cls=str).is_failure
 
     c._resources = {
-        "r3": m.Container.ResourceRegistration(
+        "r3": m.ResourceRegistration(
             name="r3",
             factory=lambda: (_ for _ in ()).throw(ValueError("err")),
         ),
@@ -302,7 +302,7 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     c._factories = {}
     c._resources = {}
     c._user_overrides = m.ConfigMap(root={})
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -424,7 +424,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
 
     c_any: Any = c
     c_any._config = _Cfg()
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -449,17 +449,17 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
 def test_register_existing_providers_full_paths_and_misc_methods() -> None:
     c = FlextContainer.create()
     c._services = {
-        "s1": m.Container.ServiceRegistration(
+        "s1": m.ServiceRegistration(
             name="s1",
             service="v",
             service_type="str",
         ),
     }
     c._factories = {
-        "f1": m.Container.FactoryRegistration(name="f1", factory=lambda: "fv"),
+        "f1": m.FactoryRegistration(name="f1", factory=lambda: "fv"),
     }
     c._resources = {
-        "r1": m.Container.ResourceRegistration(name="r1", factory=lambda: "rv"),
+        "r1": m.ResourceRegistration(name="r1", factory=lambda: "rv"),
     }
     c.register_existing_providers()
     assert hasattr(c._di_container, "s1")
@@ -487,7 +487,7 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         factories={},
         resources={},
         user_overrides=m.ConfigMap(root={}),
-        container_config=m.Container.ContainerConfig(
+        container_config=m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
             max_services=10,
@@ -514,7 +514,7 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
 
 def test_additional_container_branches_cover_fluent_and_lookup_paths() -> None:
     c = FlextContainer.create()
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -538,7 +538,7 @@ def test_additional_container_branches_cover_fluent_and_lookup_paths() -> None:
 
 def test_additional_register_factory_and_unregister_paths() -> None:
     c = FlextContainer.create()
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -563,7 +563,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
 
 def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     c = FlextContainer.create()
-    c._global_config = m.Container.ContainerConfig(
+    c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -640,7 +640,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     delattr(c_any, "register_factory")
 
     c2 = FlextContainer.create()
-    c2._global_config = m.Container.ContainerConfig(
+    c2._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
         max_services=10,
@@ -650,7 +650,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     assert c2._factories["fac-call"].factory() == "value"
 
     c2._factories = {
-        "boom": m.Container.FactoryRegistration(
+        "boom": m.FactoryRegistration(
             name="boom",
             factory=lambda: (_ for _ in ()).throw(RuntimeError("boom")),
         ),
@@ -658,7 +658,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     assert c2.get("boom").is_failure
 
     c2._factories = {
-        "ok-factory": m.Container.FactoryRegistration(
+        "ok-factory": m.FactoryRegistration(
             name="ok-factory",
             factory=lambda: "ok",
         ),
@@ -666,7 +666,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     assert c2.get("ok-factory").is_success
 
     c2._services = {
-        "svc-int": m.Container.ServiceRegistration(
+        "svc-int": m.ServiceRegistration(
             name="svc-int",
             service="str",
             service_type="str",

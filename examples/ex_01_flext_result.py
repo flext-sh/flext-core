@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from returns.io import IOFailure, IOSuccess
+from typing import cast, override
+
+from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
 from examples.shared import Examples
@@ -246,7 +248,7 @@ class Ex01FlextResult(Examples):
 
         from_io_ok = r[int].from_io_result(IOSuccess(11))
         from_io_fail = r[int].from_io_result(IOFailure("x"))
-        from_io_bad = r[int].from_io_result("bad-io-result")
+        from_io_bad = r[int].from_io_result(cast("IOResult[int, str]", "bad-io-result"))
         self.check("from_io_result.success", from_io_ok.is_success)
         self.check("from_io_result.failure", from_io_fail.error)
         self.check("from_io_result.invalid", from_io_bad.error)
@@ -333,6 +335,7 @@ class Ex01FlextResult(Examples):
     # Runner
     # ------------------------------------------------------------------
 
+    @override
     def run(self) -> None:
         """Run all sections and verify against the golden file."""
         self.factories_and_guards()

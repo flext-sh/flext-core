@@ -38,7 +38,7 @@ class TestFactoryDecoratorsDiscoveryScanModule:
         def _private_factory() -> None:
             pass
 
-        config = m.Container.FactoryDecoratorConfig(name="private")
+        config = m.FactoryDecoratorConfig(name="private")
         setattr(_private_factory, c.Discovery.FACTORY_ATTR, config)
         mod.__dict__["_private_factory"] = _private_factory
         result = FactoryDecoratorsDiscovery.scan_module(mod)
@@ -51,7 +51,7 @@ class TestFactoryDecoratorsDiscoveryScanModule:
         def my_factory() -> None:
             pass
 
-        config = m.Container.FactoryDecoratorConfig(name="my_factory")
+        config = m.FactoryDecoratorConfig(name="my_factory")
         setattr(my_factory, c.Discovery.FACTORY_ATTR, config)
         mod.__dict__["my_factory"] = my_factory
 
@@ -70,8 +70,8 @@ class TestFactoryDecoratorsDiscoveryScanModule:
         def alpha_factory() -> None:
             pass
 
-        config_z = m.Container.FactoryDecoratorConfig(name="zebra")
-        config_a = m.Container.FactoryDecoratorConfig(name="alpha")
+        config_z = m.FactoryDecoratorConfig(name="zebra")
+        config_a = m.FactoryDecoratorConfig(name="alpha")
         setattr(zebra_factory, c.Discovery.FACTORY_ATTR, config_z)
         setattr(alpha_factory, c.Discovery.FACTORY_ATTR, config_a)
         mod.__dict__["zebra_factory"] = zebra_factory
@@ -111,7 +111,7 @@ class TestFactoryDecoratorsDiscoveryHasFactories:
         def my_factory() -> None:
             pass
 
-        config = m.Container.FactoryDecoratorConfig(name="my_factory")
+        config = m.FactoryDecoratorConfig(name="my_factory")
         setattr(my_factory, c.Discovery.FACTORY_ATTR, config)
         mod.__dict__["my_factory"] = my_factory
         assert FactoryDecoratorsDiscovery.has_factories(mod) is True
@@ -123,7 +123,7 @@ class TestFactoryDecoratorsDiscoveryHasFactories:
         def _hidden() -> None:
             pass
 
-        config = m.Container.FactoryDecoratorConfig(name="hidden")
+        config = m.FactoryDecoratorConfig(name="hidden")
         setattr(_hidden, c.Discovery.FACTORY_ATTR, config)
         mod.__dict__["_hidden"] = _hidden
         assert FactoryDecoratorsDiscovery.has_factories(mod) is False

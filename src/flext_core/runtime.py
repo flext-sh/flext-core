@@ -58,7 +58,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard, override
+from typing import ClassVar, Self, TypeGuard, cast, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -82,7 +82,7 @@ class _LazyMetadata:
         obj: object,
         objtype: type | None = None,
     ) -> type:
-        from flext_core._runtime_metadata import (
+        from flext_core._runtime_metadata import (  # noqa: PLC0415
             Metadata,  # JUSTIFIED: lazy import avoids runtime circular import at module import time — https://docs.astral.sh/ruff/rules/import-outside-top-level/
         )
 
@@ -376,7 +376,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: t.Container,
+        value: t.Container | t.MetadataValue,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Type guard to check if value is dict-like.
 
@@ -425,14 +425,14 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: t.Container,
+        value: t.Container | t.MetadataValue,
     ) -> TypeGuard[Sequence[t.Container]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, list)
 
     @staticmethod
     def _is_scalar(
-        value: t.Container,
+        value: t.Container | t.MetadataValue,
     ) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         match value:
@@ -443,7 +443,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: t.Container,
+        val: t.Container | t.MetadataValue,
     ) -> t.Container:
         """Normalize any value to t.Container recursively.
 
@@ -473,22 +473,27 @@ class FlextRuntime:
             return str(val)
 
         if isinstance(val, BaseModel):
-            return FlextRuntime.normalize_to_general_value(val.model_dump())
+            return FlextRuntime.normalize_to_general_value(
+                cast("t.Container", val.model_dump())
+            )
 
         if FlextRuntime.is_dict_like(val):
             dict_v = getattr(val, "root", val)
             result: dict[str, t.Container] = {}
             for k, v in dict_v.items():
                 result[str(k)] = FlextRuntime.normalize_to_general_value(v)
-            return result
+            return cast("t.Container", result)
 
         if FlextRuntime.is_list_like(val):
-            return [FlextRuntime.normalize_to_general_value(item) for item in val]
-        return val
+            return cast(
+                "t.Container",
+                [FlextRuntime.normalize_to_general_value(item) for item in val],
+            )
+        return cast("t.Container", val)
 
     @staticmethod
     def normalize_to_metadata_value(
-        val: t.Container,
+        val: t.Container | t.MetadataValue,
     ) -> t.MetadataValue:
         """Normalize any value to t.MetadataAttributeValue.
 
@@ -516,7 +521,9 @@ class FlextRuntime:
             return result_scalar
 
         if isinstance(val, BaseModel):
-            return FlextRuntime.normalize_to_metadata_value(val.model_dump())
+            return FlextRuntime.normalize_to_metadata_value(
+                cast("t.Container", val.model_dump())
+            )
 
         if FlextRuntime.is_dict_like(val):
             raw_mapping = getattr(val, "root", val)
@@ -536,7 +543,7 @@ class FlextRuntime:
                 else:
                     result_list.append(str(item))
             # Explicit annotation to ensure MetadataAttributeValue return type
-            result_list_typed: t.MetadataValue = result_list
+            result_list_typed: t.MetadataValue = cast("t.MetadataValue", result_list)
             return result_list_typed
         # Return type is t.MetadataAttributeValue (str type)
         result_str: t.MetadataValue = str(val)
@@ -600,8 +607,8 @@ class FlextRuntime:
     def safe_get_attribute(
         obj: t.Container,
         attr: str,
-        default: t.Container = None,
-    ) -> t.Container:
+        default: t.Container | None = None,
+    ) -> t.Container | None:
         """Safe attribute access without raising AttributeError.
 
         Business Rule: Accesses object attributes safely using getattr() with
@@ -1437,7 +1444,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping = None,
+            error_data: t.ConfigurationMapping | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1571,7 +1578,7 @@ class FlextRuntime:
             return FlextRuntime.RuntimeResult(
                 error=self._error or "",
                 error_code=self._error_code,
-                error_data=self._error_data,
+                error_data=cast("t.ConfigurationMapping | None", self._error_data),
                 is_success=False,
             )
 
@@ -1585,7 +1592,7 @@ class FlextRuntime:
             return FlextRuntime.RuntimeResult(
                 error=self._error or "",
                 error_code=self._error_code,
-                error_data=self._error_data,
+                error_data=cast("t.ConfigurationMapping | None", self._error_data),
                 is_success=False,
             )
 
@@ -1651,7 +1658,7 @@ class FlextRuntime:
                 return FlextRuntime.RuntimeResult(
                     error=func(self._error or ""),
                     error_code=self._error_code,
-                    error_data=self._error_data,
+                    error_data=cast("t.ConfigurationMapping | None", self._error_data),
                     is_success=False,
                 )
             return self
@@ -1747,7 +1754,7 @@ class FlextRuntime:
             cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping = None,
+            error_data: t.ConfigurationMapping | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
@@ -2068,13 +2075,13 @@ class FlextRuntime:
 
         """
         context_dict = FlextModelsContainers.ConfigMap(root={})
-        if FlextRuntime._is_scalar(context):
+        if FlextRuntime._is_scalar(cast("t.Container", context)):
             context_dict = FlextModelsContainers.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
-        elif FlextRuntime.is_dict_like(context):
+        elif FlextRuntime.is_dict_like(cast("t.Container", context)):
             try:
-                for k_obj, v_obj in context.items():
+                for k_obj, v_obj in cast("Mapping[str, t.Container]", context).items():
                     key_str = str(k_obj)
                     val_typed = FlextRuntime.normalize_to_general_value(v_obj)
                     context_dict[key_str] = val_typed

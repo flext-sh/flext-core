@@ -62,10 +62,10 @@ class FlextContainer(p.DI):
     _config_provider: di_providers.Configuration
     _base_config_provider: di_providers.Configuration
     _user_config_provider: di_providers.Configuration
-    _services: MutableMapping[str, m.Container.ServiceRegistration]
-    _factories: MutableMapping[str, m.Container.FactoryRegistration]
-    _resources: MutableMapping[str, m.Container.ResourceRegistration]
-    _global_config: m.Container.ContainerConfig
+    _services: MutableMapping[str, m.ServiceRegistration]
+    _factories: MutableMapping[str, m.FactoryRegistration]
+    _resources: MutableMapping[str, m.ResourceRegistration]
+    _global_config: m.ContainerConfig
 
     @override
     def _protocol_name(self) -> str:
@@ -77,16 +77,16 @@ class FlextContainer(p.DI):
         *,
         _config: p.Config | None = None,
         _context: p.Context | None = None,
-        _services: Mapping[str, m.Container.ServiceRegistration] | None = None,
-        _factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
-        _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
+        _services: Mapping[str, m.ServiceRegistration] | None = None,
+        _factories: Mapping[str, m.FactoryRegistration] | None = None,
+        _resources: Mapping[str, m.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
             str,
             t.Scalar | m.ConfigMap | Sequence[t.Scalar],
         ]
         | m.ConfigMap
         | None = None,
-        _container_config: m.Container.ContainerConfig | None = None,
+        _container_config: m.ContainerConfig | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -111,16 +111,16 @@ class FlextContainer(p.DI):
         *,
         _config: p.Config | None = None,
         _context: p.Context | None = None,
-        _services: Mapping[str, m.Container.ServiceRegistration] | None = None,
-        _factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
-        _resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
+        _services: Mapping[str, m.ServiceRegistration] | None = None,
+        _factories: Mapping[str, m.FactoryRegistration] | None = None,
+        _resources: Mapping[str, m.ResourceRegistration] | None = None,
         _user_overrides: Mapping[
             str,
             t.Scalar | m.ConfigMap | Sequence[t.Scalar],
         ]
         | m.ConfigMap
         | None = None,
-        _container_config: m.Container.ContainerConfig | None = None,
+        _container_config: m.ContainerConfig | None = None,
     ) -> None:
         """Wire the Dependency Injector container and supporting registries.
 
@@ -225,7 +225,7 @@ class FlextContainer(p.DI):
                                     factory_func_raw
                                 ),
                                 _factory_name: str = factory_name,
-                                _factory_config: m.Container.FactoryDecoratorConfig = factory_config,
+                                _factory_config: m.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
                                 config_callable = getattr(_factory_config, "fn", None)
                                 if callable(config_callable):
@@ -246,7 +246,7 @@ class FlextContainer(p.DI):
                                             f"{raw_result.__class__.__name__}"
                                         )
                                         raise TypeError(msg)
-                                    m.Container.ServiceRegistration(
+                                    m.ServiceRegistration(
                                         name=_factory_name,
                                         service=raw_result,
                                     )
@@ -309,7 +309,7 @@ class FlextContainer(p.DI):
         def provide_callable(name: str) -> t.RegisterableService:
             provided = provide_fn(name)
             try:
-                m.Container.ServiceRegistration(
+                m.ServiceRegistration(
                     name="provided",
                     service=provided,
                 )
@@ -424,10 +424,10 @@ class FlextContainer(p.DI):
     def initialize_registrations(
         self,
         *,
-        services: Mapping[str, m.Container.ServiceRegistration] | None = None,
-        factories: Mapping[str, m.Container.FactoryRegistration] | None = None,
-        resources: Mapping[str, m.Container.ResourceRegistration] | None = None,
-        global_config: m.Container.ContainerConfig | None = None,
+        services: Mapping[str, m.ServiceRegistration] | None = None,
+        factories: Mapping[str, m.FactoryRegistration] | None = None,
+        resources: Mapping[str, m.ResourceRegistration] | None = None,
+        global_config: m.ContainerConfig | None = None,
         user_overrides: Mapping[
             str,
             t.Scalar | m.ConfigMap | Sequence[t.Scalar],
@@ -467,9 +467,9 @@ class FlextContainer(p.DI):
         return FlextSettings.get_global()
 
     @staticmethod
-    def _create_container_config() -> m.Container.ContainerConfig:
+    def _create_container_config() -> m.ContainerConfig:
         """Create default configuration values for container behavior."""
-        return m.Container.ContainerConfig(
+        return m.ContainerConfig(
             enable_singleton=True,
             # Factories should default to new instances on each resolution to
             # preserve expected DI semantics; caching can be opt-in via
@@ -669,6 +669,7 @@ class FlextContainer(p.DI):
             if self._is_registerable_service(dispatcher):
                 _ = self.register("command_bus", dispatcher)
 
+    @override
     def configure(
         self,
         config: t.ConfigurationMapping | None = None,
@@ -733,6 +734,7 @@ class FlextContainer(p.DI):
             },
         )
 
+    @override
     def register(
         self,
         name: str,
@@ -769,7 +771,7 @@ class FlextContainer(p.DI):
                     return self
                 if hasattr(self._di_services, name):
                     return self
-                registration = m.Container.ServiceRegistration(
+                registration = m.ServiceRegistration(
                     name=name,
                     service=impl,
                     service_type=impl.__class__.__name__,
@@ -790,8 +792,10 @@ class FlextContainer(p.DI):
                 if hasattr(self._di_services, name):
                     return self
 
+                factory_fn: t.FactoryCallable = impl
+
                 def normalized_factory() -> t.RegisterableService:
-                    raw_result = impl()
+                    raw_result = factory_fn()
                     narrowed = FlextContainer._narrow_factory_result(raw_result)
                     if not self._is_registerable_service(narrowed):
                         msg = (
@@ -801,7 +805,7 @@ class FlextContainer(p.DI):
                         raise ValueError(msg)
                     return narrowed
 
-                registration = m.Container.FactoryRegistration(
+                registration = m.FactoryRegistration(
                     name=name,
                     factory=normalized_factory,
                 )
@@ -820,7 +824,7 @@ class FlextContainer(p.DI):
                 return self
             if hasattr(self._di_resources, name):
                 return self
-            registration = m.Container.ResourceRegistration(
+            registration = m.ResourceRegistration(
                 name=name,
                 factory=impl,
             )
@@ -849,6 +853,7 @@ class FlextContainer(p.DI):
     def _is_resource_callable(value: object) -> TypeGuard[t.ResourceCallable]:
         return callable(value)
 
+    @override
     def get[T](
         self,
         name: str,
@@ -879,7 +884,7 @@ class FlextContainer(p.DI):
             service_registration = self._services[name]
             service = service_registration.service
             try:
-                m.Container.ServiceRegistration(
+                m.ServiceRegistration(
                     name=name,
                     service=service,
                 )
@@ -905,7 +910,7 @@ class FlextContainer(p.DI):
                 )
                 resolved = factory_callable()
                 try:
-                    m.Container.ServiceRegistration(
+                    m.ServiceRegistration(
                         name=name,
                         service=resolved,
                     )
@@ -1081,11 +1086,11 @@ class FlextContainer(p.DI):
         *,
         config: p.Config,
         context: p.Context,
-        services: Mapping[str, m.Container.ServiceRegistration],
-        factories: Mapping[str, m.Container.FactoryRegistration],
-        resources: Mapping[str, m.Container.ResourceRegistration],
+        services: Mapping[str, m.ServiceRegistration],
+        factories: Mapping[str, m.FactoryRegistration],
+        resources: Mapping[str, m.ResourceRegistration],
         user_overrides: m.ConfigMap,
-        container_config: m.Container.ContainerConfig,
+        container_config: m.ContainerConfig,
     ) -> FlextContainer:
         """Create a scoped container instance bypassing singleton pattern.
 
@@ -1191,15 +1196,15 @@ class FlextContainer(p.DI):
         # Clone services from parent container
         # Use deep=False to avoid issues with non-serializable objects (e.g., ContextVar in FlextContext)
         # The service instances themselves are shared, but the registration metadata is cloned
-        cloned_services: MutableMapping[str, m.Container.ServiceRegistration] = {
+        cloned_services: MutableMapping[str, m.ServiceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._services.items()
         }
-        cloned_factories: MutableMapping[str, m.Container.FactoryRegistration] = {
+        cloned_factories: MutableMapping[str, m.FactoryRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._factories.items()
         }
-        cloned_resources: MutableMapping[str, m.Container.ResourceRegistration] = {
+        cloned_resources: MutableMapping[str, m.ResourceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._resources.items()
         }
@@ -1208,20 +1213,20 @@ class FlextContainer(p.DI):
             # Type narrowing: service is compatible with ServiceRegistration.service type
             # ServiceRegistration.service accepts: t.Container | BaseModel | p.VariadicCallable[t.Container] | t.Container
             # The service parameter matches this union type
-            cloned_services[name] = m.Container.ServiceRegistration(
+            cloned_services[name] = m.ServiceRegistration(
                 name=name,
                 service=service,
                 service_type=service.__class__.__name__,
             )
         for name, factory in (factories or {}).items():
-            cloned_factories[name] = m.Container.FactoryRegistration(
+            cloned_factories[name] = m.FactoryRegistration(
                 name=name,
                 factory=factory,
             )
         for name, resource_factory in (resources or {}).items():
             # resources param is Mapping[str, object] - validate callable
             if callable(resource_factory):
-                cloned_resources[name] = m.Container.ResourceRegistration(
+                cloned_resources[name] = m.ResourceRegistration(
                     name=name,
                     factory=resource_factory,
                 )

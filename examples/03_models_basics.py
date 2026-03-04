@@ -302,7 +302,7 @@ if __name__ == "__main__":
 class Email(m.Value):
     """Email value object with advanced Pydantic 2 EmailStr validation."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     address: Annotated[
         EmailStr,
@@ -316,7 +316,7 @@ class Email(m.Value):
 class Money(m.Value):
     """Money value object with StrEnum currency and railway operations."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     amount: Annotated[Decimal, Field(gt=Decimal(0))]
     currency: c.Domain.Currency | str = Field(
@@ -335,7 +335,7 @@ class Money(m.Value):
 class User(m.Entity):
     """User entity with comprehensive validation and domain rules."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     name: str = Field(
         min_length=c.Validation.MIN_NAME_LENGTH,
@@ -354,7 +354,7 @@ class User(m.Entity):
 class OrderItem(m.Value):
     """Order item with computed fields and railway validation."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     product_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
@@ -374,7 +374,7 @@ class OrderItem(m.Value):
 class Order(m.AggregateRoot):
     """Order aggregate root with advanced business rules."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     customer_id: str = Field(min_length=1)
     items: list[OrderItem] = Field(default_factory=list)

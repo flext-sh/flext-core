@@ -19,7 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Self, override
+from typing import ClassVar, Self, cast, override
 
 from structlog.typing import Context
 
@@ -260,11 +260,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
             current_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(value)
+                key: FlextRuntime.normalize_to_general_value(
+                    cast("t.Container", value),
+                )
                 for key, value in cls._scoped_contexts[scope].items()
             }
             incoming_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(value)
+                key: FlextRuntime.normalize_to_general_value(
+                    cast("t.Container", value),
+                )
                 for key, value in context.items()
             }
             merge_result = u.merge(
@@ -272,14 +276,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 incoming_context,
                 strategy="deep",
             )
-            if merge_result.is_success:
-                # merge_result.value is compatible with m.ConfigMap payloads.
-                merged_value: dict[str, t.Container] = merge_result.value
-                merged_context: dict[str, t.MetadataValue] = {
-                    key: FlextRuntime.normalize_to_metadata_value(value)
-                    for key, value in merged_value.items()
-                }
-                cls._scoped_contexts[scope] = merged_context
+            merged_value: dict[str, t.Container] = merge_result.unwrap_or(
+                current_context,
+            )
+            merged_context: dict[str, t.MetadataValue] = {
+                key: FlextRuntime.normalize_to_metadata_value(value)
+                for key, value in merged_value.items()
+            }
+            cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -1106,9 +1110,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 dict(exception_data.root),
                 strategy="deep",
             )
-            if merge_result.is_success:
-                merged_value: dict[str, t.Container] = merge_result.value
-                context_dict = m.ConfigMap(root=dict(merged_value))
+            base_context = dict(context_dict.root)
+            merged_value: dict[str, t.Container] = merge_result.unwrap_or(
+                base_context,
+            )
+            context_dict = m.ConfigMap(root=dict(merged_value))
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
@@ -1374,7 +1380,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context = self._base_logger.build_exception_context(
                 exception=resolved_exception,
                 exc_info=exc_info,
-                context=context_kwargs,
+                context=cast("Mapping[str, t.Container | Exception]", context_kwargs),
             )
             self._base_logger.error(message, **context.root)
             return r[bool].ok(value=True)

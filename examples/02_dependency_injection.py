@@ -54,7 +54,7 @@ from flext_core import (
 class DatabaseService(m.ArbitraryTypesModel):
     """Database service using centralized types and railway pattern."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     config: m.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
@@ -114,7 +114,7 @@ class DatabaseService(m.ArbitraryTypesModel):
 class CacheService(m.ArbitraryTypesModel):
     """Cache service using centralized types."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     config: m.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
@@ -165,7 +165,7 @@ class CacheService(m.ArbitraryTypesModel):
 class EmailService(m.ArbitraryTypesModel):
     """Email service using centralized types."""
 
-    model_config = m.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.DOMAIN_MODEL_CONFIG
 
     config: m.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE

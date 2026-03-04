@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
-
-from shared import Examples
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -18,6 +17,8 @@ from flext_core import (
     r,
     t,
 )
+
+from .shared import Examples
 
 
 class Ex09FlextDecorators(Examples):
@@ -464,6 +465,7 @@ class Ex09FlextDecorators(Examples):
             "combined.railway.fail.error_code", rail_fail.error_code == "E_COMBINED"
         )
 
+    @override
     def exercise(self) -> None:
         """Run all decorator demonstrations and record golden output."""
         _ = self._setup_container()

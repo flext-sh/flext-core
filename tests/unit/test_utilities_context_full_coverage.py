@@ -19,17 +19,17 @@ from flext_core import m, p, t, u
 
 
 class TestCreateStrProxy:
-    """Tests for u.Context.create_str_proxy()."""
+    """Tests for u.create_str_proxy()."""
 
     def test_create_str_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[str] with given key."""
-        proxy = u.Context.create_str_proxy("my_key")
+        proxy = u.create_str_proxy("my_key")
         assert proxy is not None
         assert proxy._key == "my_key"
 
     def test_create_str_proxy_with_default(self) -> None:
         """Creates proxy with default value."""
-        proxy = u.Context.create_str_proxy("my_key", default="fallback")
+        proxy = u.create_str_proxy("my_key", default="fallback")
         assert proxy._default == "fallback"
 
 

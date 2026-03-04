@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import MappingProxyType
 from typing import Self, TypeIs, cast, overload, override
 
@@ -331,11 +331,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     @classmethod
-    def create_from_callable(
+    def create_from_callable[V](
         cls,
-        func: Callable[[], T_co | None],
+        func: Callable[[], V | None],
         error_code: str | None = None,
-    ) -> FlextResult[T_co]:
+    ) -> FlextResult[V]:
         """Create result from callable, catching exceptions."""
         try:
             value = func()
@@ -346,12 +346,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             logging.getLogger(__name__).debug("Callable execution failed", exc_info=e)
             return cls.fail(str(e), error_code=error_code, exception=e)
 
-    # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
-
     @classmethod
     def from_validation(
         cls: type[FlextResult[T_Model]],
-        data: t.Container,
+        data: t.Container | Mapping[str, t.Container],
         model: type[T_Model],
     ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.
@@ -456,7 +454,53 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     @override
-    def unwrap_or(self, default: T_co) -> T_co:
+    def flow_through[U](
+        self,
+        *funcs: Callable[[T_co | U], FlextRuntime.RuntimeResult[U]],
+    ) -> FlextResult[T_co] | FlextResult[U]:
+        """Chain multiple operations in a pipeline.
+
+        Overrides RuntimeResult.flow_through to return FlextResult for type
+        consistency. Accepts callables returning any RuntimeResult subclass
+        (including FlextResult) and wraps results as FlextResult.
+
+        Args:
+            funcs: Functions to apply in sequence, each taking the previous
+                result's value and returning a RuntimeResult.
+
+        Returns:
+            FlextResult[T_co] if no funcs, value is None, or chain
+            short-circuits on failure. FlextResult[U] if all funcs applied.
+
+        Example:
+            result = r[ConfigMap].ok(data).flow_through(validate, enrich)
+
+        """
+        if self.is_failure or not funcs:
+            return self
+
+        current: FlextResult[T_co] | FlextResult[U] = self
+        for func in funcs:
+            if current.is_success:
+                result_value = current.value
+                if result_value is not None:
+                    inner = func(result_value)
+                    if inner.is_success:
+                        current = FlextResult[U](value=inner.value, is_success=True)
+                    else:
+                        fail_result: FlextResult[U] = FlextResult.fail(
+                            inner.error or "",
+                        )
+                        fail_result._exception = inner._exception
+                        current = fail_result
+                else:
+                    break
+            else:
+                break
+        return current
+
+    @override
+    def unwrap_or[D](self, default: D) -> T_co | D:
         """Return value if success, otherwise return default.
 
         Safe way to extract value without raising exceptions.

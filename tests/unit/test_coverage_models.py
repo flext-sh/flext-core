@@ -30,8 +30,6 @@ from pydantic import ValidationError, field_validator
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
 
-FlextModelsCqrs = m.Cqrs
-
 
 class ModelScenarios:
     """Centralized model test scenarios using FlextConstants."""

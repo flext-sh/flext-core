@@ -903,12 +903,10 @@ class FlextDecorators:
                 if attempt > 1:
                     logger.info(
                         "retry_attempt",
-                        extra={
-                            "function": func.__name__,
-                            "attempt": attempt,
-                            "max_attempts": attempts,
-                            "delay_seconds": current_delay,
-                        },
+                        function=func.__name__,
+                        attempt=attempt,
+                        max_attempts=attempts,
+                        delay_seconds=current_delay,
                     )
                     time.sleep(current_delay)
 
@@ -925,13 +923,11 @@ class FlextDecorators:
 
                 logger.warning(
                     "operation_failed_retrying",
-                    extra={
-                        "function": func.__name__,
-                        "attempt": attempt,
-                        "max_attempts": attempts,
-                        "error": str(e),
-                        "error_type": e.__class__.__name__,
-                    },
+                    function=func.__name__,
+                    attempt=attempt,
+                    max_attempts=attempts,
+                    error=str(e),
+                    error_type=e.__class__.__name__,
                 )
 
                 # Calculate next delay based on strategy
@@ -963,12 +959,10 @@ class FlextDecorators:
         # All retries exhausted
         logger.error(
             "operation_failed_all_retries_exhausted",
-            extra={
-                "function": func.__name__,
-                "attempts": attempts,
-                "error": str(last_exception),
-                "error_type": last_exception.__class__.__name__,
-            },
+            function=func.__name__,
+            attempts=attempts,
+            error=str(last_exception),
+            error_type=last_exception.__class__.__name__,
         )
         if last_exception:
             raise last_exception
@@ -1009,13 +1003,11 @@ class FlextDecorators:
         if binding_result.is_failure:
             logger.warning(
                 "operation_context_binding_failed",
-                extra={
-                    "function": function_name,
-                    "operation": operation,
-                    "error": binding_result.error,
-                    "error_code": binding_result.error_code,
-                    "correlation_id": correlation_id,
-                },
+                function=function_name,
+                operation=operation,
+                error=binding_result.error or "",
+                error_code=binding_result.error_code or "",
+                correlation_id=correlation_id or "",
             )
         return correlation_id
 
@@ -1370,14 +1362,17 @@ class FlextDecorators:
                 try:
                     # Bind context variables to global logging context
                     if context_vars:
-                        bind_result = FlextLogger.bind_global_context(**context_vars)
+                        filtered_vars: dict[str, t.MetadataValue] = {
+                            k: v for k, v in context_vars.items() if v is not None
+                        }
+                        bind_result = FlextLogger.bind_global_context(**filtered_vars)
                         if bind_result.is_failure:
                             logger.warning(
                                 "global_context_binding_failed",
                                 function=func.__name__,
-                                error=bind_result.error,
-                                error_code=bind_result.error_code,
-                                bound_keys=list(context_vars.keys()),
+                                error=bind_result.error or "",
+                                error_code=bind_result.error_code or "",
+                                bound_keys=", ".join(context_vars.keys()),
                             )
 
                     return func(*args, **kwargs)
@@ -1392,9 +1387,9 @@ class FlextDecorators:
                             logger.warning(
                                 "global_context_unbind_failed",
                                 function=func.__name__,
-                                error=unbind_result.error,
-                                error_code=unbind_result.error_code,
-                                bound_keys=list(context_vars.keys()),
+                                error=unbind_result.error or "",
+                                error_code=unbind_result.error_code or "",
+                                bound_keys=", ".join(context_vars.keys()),
                             )
 
             return wrapper
@@ -1463,10 +1458,8 @@ class FlextDecorators:
                 if track_correlation and correlation_id is None:
                     logger.warning(
                         "correlation_id_missing",
-                        extra={
-                            "function": func.__name__,
-                            "operation": op_name,
-                        },
+                        function=func.__name__,
+                        operation=op_name,
                     )
 
                 try:

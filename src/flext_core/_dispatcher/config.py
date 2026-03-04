@@ -1,6 +1,6 @@
 """Dispatcher configuration types.
 
-Use m.Config.DispatcherConfig at call sites (runtime alias m from project __init__).
+Use m.DispatcherConfig at call sites (runtime alias m from project __init__).
 No local alias; MRO protocol only.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

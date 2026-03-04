@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import overload
 
 from flext_core import FlextRuntime, p, r, t
@@ -464,10 +465,12 @@ class FlextUtilities:
     def fail[U](
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping = None,
+        error_data: t.ConfigurationMapping | None = None,
     ) -> r[U]:
         """Create failed result with optional code and data."""
-        return r.fail(error, error_code=error_code, error_data=error_data)
+        return r.fail(
+            error, error_code=error_code, error_data=error_data or MappingProxyType({})
+        )
 
     not_ = staticmethod(FlextUtilitiesResultHelpers.not_)
 

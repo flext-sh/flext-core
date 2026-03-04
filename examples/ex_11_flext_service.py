@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import sys
 from collections import UserDict
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
 from pydantic import BaseModel, PrivateAttr
-from shared import Examples
 
 from flext_core import (
     FlextContext,
@@ -20,6 +19,8 @@ from flext_core import (
     s,
     t,
 )
+
+from .shared import Examples
 
 
 class _Payload(BaseModel):
@@ -74,6 +75,8 @@ class _DeclarativeService(s[str]):
     auto_execute: ClassVar[bool] = True
     _execute_count: int = PrivateAttr(default=0)
 
+    _execution_result: r[str] = PrivateAttr()
+
     def __init__(self) -> None:
         super().__init__()
         if self.auto_execute:
@@ -103,7 +106,7 @@ class _RuntimeFactoryService(s[str]):
         return cls._create_runtime(
             config_type=FlextSettings,
             config_overrides={},
-            context=FlextContext.create(),
+            context=cast("p.Context", FlextContext.create()),
             subproject="examples",
             services={"svc_name": "service-value"},
             factories={"factory_name": lambda: "factory-value"},
@@ -190,6 +193,7 @@ class _ProcessorProtocolBad:
 class Ex11FlextService(Examples):
     """Exercise FlextService public API."""
 
+    @override
     def exercise(self) -> None:
         """Run all FlextService example sections."""
         self.demo_service_core_api()
@@ -408,28 +412,37 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "CQRS.MetricsTracker.get",
-            metrics.get_metrics().unwrap_or(m.ConfigMap(root={})).get(metric_key)
+            cast(
+                "m.ConfigMap", metrics.get_metrics().unwrap_or(m.ConfigMap(root={}))
+            ).get(metric_key)
             == metric_value,
         )
 
         stack = s.CQRS.ContextStack()
         self.check(
             "CQRS.ContextStack.push.dict",
-            stack.push_context({
-                "handler_name": ctx_handler_name,
-                "handler_mode": "query",
-            }).is_success,
+            stack.push_context(
+                cast(
+                    "t.Container",
+                    {
+                        "handler_name": ctx_handler_name,
+                        "handler_mode": "query",
+                    },
+                )
+            ).is_success,
         )
         current = stack.current_context()
         self.check(
             "CQRS.ContextStack.current.type",
             type(current).__name__ if current is not None else "None",
         )
-        popped = stack.pop_context().unwrap_or({})
+        popped = cast("m.ConfigMap", stack.pop_context().unwrap_or({}))
         self.check("CQRS.ContextStack.pop.handler_name", popped.get("handler_name"))
         self.check("CQRS.ContextStack.pop.empty", stack.pop_context().unwrap_or({}))
 
-        proto_handler = s.ProtocolValidation.is_handler(_HandlerLike())
+        proto_handler = s.ProtocolValidation.is_handler(
+            cast("t.Container", _HandlerLike())
+        )
         service_like = _ServiceLike()
         is_service_fn = getattr(s.ProtocolValidation, "is_service")
         proto_service = bool(is_service_fn(service_like))
@@ -506,7 +519,8 @@ class Ex11FlextService(Examples):
         other_entity_id = self.rand_str(8)
 
         # Metadata namespace class (lazy-loaded from runtime)
-        metadata = s.Metadata(attributes={"service": service_name})
+        metadata_cls = cast("type", s.Metadata)
+        metadata = metadata_cls(attributes={"service": service_name})
         self.check("Metadata.version", metadata.version)
         self.check("Metadata.attributes", metadata.attributes)
 

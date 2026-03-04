@@ -31,9 +31,9 @@ _expected_validation_errors: tuple[type[Exception], ...] = (
 
 def _service_reg_with_metadata(
     name: str, service: str, metadata: object
-) -> m.Container.ServiceRegistration:
+) -> m.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
-    return m.Container.ServiceRegistration.model_validate({
+    return m.ServiceRegistration.model_validate({
         "name": name,
         "service": service,
         "metadata": metadata,
@@ -44,9 +44,9 @@ def _factory_reg_with_metadata(
     name: str,
     factory: Callable[[], t.Scalar],
     metadata: object,
-) -> m.Container.FactoryRegistration:
+) -> m.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
-    return m.Container.FactoryRegistration.model_validate({
+    return m.FactoryRegistration.model_validate({
         "name": name,
         "factory": factory,
         "metadata": metadata,
@@ -141,7 +141,7 @@ class TestFlextModelsContainer:
 
     def test_service_registration_defaults(self) -> None:
         """Test ServiceRegistration default values."""
-        registration = m.Container.ServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
         )
@@ -159,7 +159,7 @@ class TestFlextModelsContainer:
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
         metadata = m.Metadata(attributes={"env": "test"})
-        registration = m.Container.ServiceRegistration(
+        registration = m.ServiceRegistration(
             name="full_service",
             service={"data": "value"},
             metadata=metadata,
@@ -213,7 +213,7 @@ class TestFlextModelsContainer:
         def factory() -> t.Scalar:
             return "value"
 
-        registration = m.Container.FactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
         )
@@ -235,7 +235,7 @@ class TestFlextModelsContainer:
             return "created"
 
         metadata = m.Metadata(attributes={"type": "factory"})
-        registration = m.Container.FactoryRegistration(
+        registration = m.FactoryRegistration(
             name="full_factory",
             factory=factory,
             metadata=metadata,
@@ -262,7 +262,7 @@ class TestFlextModelsContainer:
         """Test ContainerConfig creation with various configurations."""
         # ContainerConfig accepts keyword arguments directly
         # Use model_construct for dynamic dict unpacking in tests
-        config = m.Container.ContainerConfig.model_validate(config_dict)
+        config = m.ContainerConfig.model_validate(config_dict)
         assert config.enable_singleton is u.Mapper.get(
             config_dict,
             "enable_singleton",
@@ -301,7 +301,7 @@ class TestFlextModelsContainer:
 
     def test_container_config_defaults(self) -> None:
         """Test ContainerConfig default values."""
-        config = m.Container.ContainerConfig()
+        config = m.ContainerConfig()
         assert config.enable_singleton is True
         assert config.enable_factory_caching is True
         assert config.max_services == 1000
@@ -313,34 +313,34 @@ class TestFlextModelsContainer:
     def test_container_config_validation_limits(self) -> None:
         """Test ContainerConfig field validation limits."""
         # Test max_services bounds
-        config_min = m.Container.ContainerConfig(max_services=1)
+        config_min = m.ContainerConfig(max_services=1)
         assert config_min.max_services == 1
 
-        config_max = m.Container.ContainerConfig(max_services=10000)
+        config_max = m.ContainerConfig(max_services=10000)
         assert config_max.max_services == 10000
 
         with pytest.raises(ValidationError):
-            m.Container.ContainerConfig(max_services=0)
+            m.ContainerConfig(max_services=0)
 
         with pytest.raises(ValidationError):
-            m.Container.ContainerConfig(max_services=10001)
+            m.ContainerConfig(max_services=10001)
 
         # Test max_factories bounds
-        config_fact_min = m.Container.ContainerConfig(max_factories=1)
+        config_fact_min = m.ContainerConfig(max_factories=1)
         assert config_fact_min.max_factories == 1
 
-        config_fact_max = m.Container.ContainerConfig(max_factories=5000)
+        config_fact_max = m.ContainerConfig(max_factories=5000)
         assert config_fact_max.max_factories == 5000
 
         with pytest.raises(ValidationError):
-            m.Container.ContainerConfig(max_factories=0)
+            m.ContainerConfig(max_factories=0)
 
         with pytest.raises(ValidationError):
-            m.Container.ContainerConfig(max_factories=5001)
+            m.ContainerConfig(max_factories=5001)
 
     def test_service_registration_metadata_none_handling(self) -> None:
         """Test ServiceRegistration handles None metadata correctly."""
-        registration = m.Container.ServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
             metadata=None,
@@ -355,7 +355,7 @@ class TestFlextModelsContainer:
         def factory() -> t.Scalar:
             return "value"
 
-        registration = m.Container.FactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
             metadata=None,

@@ -1039,8 +1039,6 @@ class FlextModelsConfig:
             description="Enable dispatcher metrics collection",
         )
 
-    # Domain model configuration - moved from constants.py
-    # constants.py cannot import ConfigDict, so this belongs here
     DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,

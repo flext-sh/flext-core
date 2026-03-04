@@ -146,7 +146,7 @@ class FlextService[TDomainResult](
     _config: FlextSettings | None = PrivateAttr(default=None)
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: list[tuple[str, m.Handler.DecoratorConfig]] = PrivateAttr(
+    _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
         default_factory=list,
     )
 
@@ -305,7 +305,7 @@ class FlextService[TDomainResult](
         for name, service in services.items():
             try:
                 # Validate service using ServiceRegistration model
-                m.Container.ServiceRegistration(
+                m.ServiceRegistration(
                     name=str(name),
                     service=service,
                 )

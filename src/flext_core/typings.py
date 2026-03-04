@@ -97,6 +97,7 @@ class FlextTypes:
     MetadataValue: TypeAlias = (
         Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
     )
+    MetadataAttributeValue: TypeAlias = MetadataValue
 
     # ── Handlers ──────────────────────────────────────────────────────
     HandlerCallable: TypeAlias = Callable[[Container], Container]
@@ -124,11 +125,15 @@ class FlextTypes:
     SortableObjectType: TypeAlias = str | int | float
     ConversionMode: TypeAlias = Literal["to_str", "to_str_list", "normalize", "join"]
     TypeHintSpecifier: TypeAlias = type | str | Callable[[Scalar], Scalar]
+    TypeOriginSpecifier: TypeAlias = TypeHintSpecifier
     GenericTypeArgument: TypeAlias = str | type[Scalar]
     MessageTypeSpecifier: TypeAlias = str | type
     IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
 
     TYPE_CHECKING: TypeAlias = bool
+
+    # ── Collection convenience ────────────────────────────────────────
+    Dict: TypeAlias = Mapping[str, Container]
 
     # ── Validation (Pydantic-annotated) ───────────────────────────────
     class Validation:

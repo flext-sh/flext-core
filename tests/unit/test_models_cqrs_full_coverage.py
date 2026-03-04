@@ -37,7 +37,7 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     monkeypatch.setitem(
         sys.modules, "flext_core.models", ModuleType("flext_core.models")
     )
-    assert Wrapper.Query._resolve_pagination_class() is m.Cqrs.Pagination
+    assert Wrapper.Query._resolve_pagination_class() is m.Pagination
 
 
 def test_query_validate_pagination_dict_and_default() -> None:
@@ -45,19 +45,19 @@ def test_query_validate_pagination_dict_and_default() -> None:
         "pagination": {"page": "4", "size": "20"},
         "filters": {},
     })
-    assert isinstance(parsed.pagination, m.Cqrs.Pagination)
+    assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 4
     assert parsed.pagination.size == 20
 
     defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
-    assert isinstance(defaulted.pagination, m.Cqrs.Pagination)
+    assert isinstance(defaulted.pagination, m.Pagination)
     assert defaulted.pagination.page == c.Pagination.DEFAULT_PAGE_NUMBER
 
 
 def test_handler_builder_fluent_methods() -> None:
     metadata = m.Metadata(attributes={"owner": "tests"})
     built = (
-        m.Cqrs.Handler
+        m.Handler
         .Builder(c.Cqrs.HandlerType.QUERY)
         .with_id("handler-id")
         .with_name("handler-name")
@@ -88,13 +88,13 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     mock_module = ModuleType("flext_core.models")
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
-    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Cqrs.Pagination
+    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Pagination
 
     parsed = m.Query.model_validate({
         "pagination": {"page": 2, "size": 10},
         "filters": {},
     })
-    assert isinstance(parsed.pagination, m.Cqrs.Pagination)
+    assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 2
     assert parsed.pagination.size == 10
 

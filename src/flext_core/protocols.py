@@ -14,6 +14,7 @@ from typing import (
     Literal,
     Protocol,
     Self,
+    overload,
     override,
     runtime_checkable,
 )
@@ -274,10 +275,29 @@ class FlextProtocols:
             """Clone context for isolated execution."""
             ...
 
+        @overload
         def set(
             self,
-            key: str,
+            key_or_data: str,
             value: t.Container,
+            *,
+            scope: str = ...,
+        ) -> r[bool]: ...
+
+        @overload
+        def set(
+            self,
+            key_or_data: FlextModelsContainers.ConfigMap,
+            value: None = ...,
+            *,
+            scope: str = ...,
+        ) -> r[bool]: ...
+
+        def set(
+            self,
+            key_or_data: str | FlextModelsContainers.ConfigMap,
+            value: t.Container | None = ...,
+            *,
             scope: str = ...,
         ) -> r[bool]:
             """Set a context value. Returns Result-like object."""

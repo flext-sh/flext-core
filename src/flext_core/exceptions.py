@@ -383,6 +383,8 @@ class FlextExceptions:
         | t.ConfigurationMapping
         | m.ConfigMap
         | t.Container
+        | t.MetadataValue
+        | Mapping[str, t.MetadataValue]
         | None,
     ) -> Mapping[str, t.MetadataValue] | None:
         """Extract ConfigMap when value is mapping-compatible."""
@@ -400,6 +402,8 @@ class FlextExceptions:
         | t.ConfigurationMapping
         | m.ConfigMap
         | t.Container
+        | t.MetadataValue
+        | Mapping[str, t.MetadataValue]
         | None,
     ) -> MetadataProtocol | None:
         """Normalize supported metadata inputs to runtime metadata model."""
@@ -615,14 +619,14 @@ class FlextExceptions:
 
         def to_dict(
             self,
-        ) -> Mapping[str, t.MetadataValue]:
+        ) -> Mapping[str, t.MetadataValue | None]:
             """Convert exception to dictionary representation.
 
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: dict[str, t.MetadataValue] = {
+            result: dict[str, t.MetadataValue | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -1275,10 +1279,10 @@ class FlextExceptions:
         specific_params: Mapping[str, t.MetadataValue] | None = None,
     ) -> tuple[
         str | None,
-        t.MetadataValue,
+        t.MetadataValue | None,
         bool,
         bool,
-        t.MetadataValue,
+        t.MetadataValue | None,
         Mapping[str, t.MetadataValue],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
