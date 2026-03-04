@@ -677,7 +677,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             """
             # Only set if not already set (innermost decorator wins)
             if not hasattr(func, c.Discovery.HANDLER_ATTR):
-                config = m.DecoratorConfig(
+                config = m.HandlerDecoratorConfig(
                     command=command,
                     priority=priority,
                     timeout=timeout,
@@ -703,7 +703,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> list[tuple[str, m.DecoratorConfig]]:
+        ) -> list[tuple[str, m.HandlerDecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -721,11 +721,11 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     print(f"{method_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, m.DecoratorConfig]] = []
+            handlers: list[tuple[str, m.HandlerDecoratorConfig]] = []
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
-                    config: m.DecoratorConfig = getattr(
+                    config: m.HandlerDecoratorConfig = getattr(
                         method,
                         c.Discovery.HANDLER_ATTR,
                     )
@@ -765,7 +765,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, t.HandlerCallable, m.DecoratorConfig]]:
+        ) -> list[tuple[str, t.HandlerCallable, m.HandlerDecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -783,7 +783,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     print(f"{func_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, t.HandlerCallable, m.DecoratorConfig]] = []
+            handlers: list[tuple[str, t.HandlerCallable, m.HandlerDecoratorConfig]] = []
             for name in dir(module):
                 if name.startswith("_"):
                     continue
@@ -794,7 +794,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     continue
                 if not callable(func):
                     continue
-                config: m.DecoratorConfig = getattr(
+                config: m.HandlerDecoratorConfig = getattr(
                     func,
                     c.Discovery.HANDLER_ATTR,
                 )

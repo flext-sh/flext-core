@@ -25,6 +25,9 @@ class _ContainerStub:
         self.services[name] = service
         return self
 
+    def register(self, name: str, service: object) -> _ContainerStub:
+        return self.with_service(name, service)
+
 
 def test_narrow_contextvar_invalid_inputs() -> None:
     assert FlextContext._narrow_contextvar_to_configuration_dict(cast("Any", "x")) == {}
@@ -148,10 +151,10 @@ def test_update_statistics_remove_hook_and_clone_false_result(
 
     clone_source = FlextContext()
     _ = clone_source.set("a", "b")
-    original_set_all = FlextContext.set_all
-    monkeypatch.setattr(FlextContext, "set_all", lambda *_a, **_k: r[bool].fail("x"))
+    original_set = FlextContext.set
+    monkeypatch.setattr(FlextContext, "set", lambda *_a, **_k: r[bool].fail("x"))
     cloned = clone_source.clone()
-    monkeypatch.setattr(FlextContext, "set_all", original_set_all)
+    monkeypatch.setattr(FlextContext, "set", original_set)
     assert isinstance(cloned, FlextContext)
 
 

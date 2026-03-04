@@ -25,8 +25,8 @@ class _Handler(FlextHandlers[t.Container, t.Container]):
         return "Handler"
 
 
-def _success_details(reg_id: str) -> m.Handler.RegistrationDetails:
-    return m.Handler.RegistrationDetails(
+def _success_details(reg_id: str) -> m.HandlerRegistrationDetails:
+    return m.HandlerRegistrationDetails(
         registration_id=reg_id,
         handler_mode=c.Cqrs.HandlerType.COMMAND,
         timestamp="",
@@ -112,7 +112,7 @@ def test_create_auto_discover_and_mode_mapping(
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",
-        lambda self, handler: r[m.Handler.RegistrationDetails].ok(
+        lambda self, handler: r[m.HandlerRegistrationDetails].ok(
             _success_details(getattr(handler, "__name__", "h")),
         ),
     )
@@ -147,7 +147,7 @@ def test_summary_error_paths_and_bindings_failures(
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",
-        lambda self, _handler: r[m.Handler.RegistrationDetails].fail("x"),
+        lambda self, _handler: r[m.HandlerRegistrationDetails].fail("x"),
     )
     batch = registry.register_handlers([_as_registry_handler(_Handler())])
     assert batch.is_failure
@@ -200,7 +200,7 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
 
     monkeypatch.setattr(
         registry.container,
-        "with_service",
+        "register",
         lambda _name, _service: (_ for _ in ()).throw(ValueError("nope")),
     )
     reg_fail = registry.register("svc2", "service")

@@ -367,6 +367,15 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
         return instance
 
+    @classmethod
+    def materialize(
+        cls,
+        *,
+        overrides: t.ConfigurationMapping | None = None,
+    ) -> Self:
+        """Backward-compatible alias for global settings materialization."""
+        return cls.get_global(overrides=overrides)
+
     def get_di_config_provider(self) -> t.Scalar:
         """Get dependency injection provider for this config.
 
@@ -473,6 +482,11 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
         cls._namespace_registry[namespace] = config_class
         return None
+
+    @classmethod
+    def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
+        """Backward-compatible namespace registry lookup."""
+        return cls._namespace_registry.get(namespace)
 
     def get_namespace(
         self,

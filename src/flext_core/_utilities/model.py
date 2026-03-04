@@ -127,7 +127,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_metadata(
         value: t.Scalar | m.ConfigMap | FlextModelFoundation.Metadata | None,
-    ) -> FlextModelFoundation.Metadata:  # Returns m.Metadata at runtime
+    ) -> m.Metadata:
         """Normalize any value to FlextModelFoundation.Metadata.
 
         Business Rule: Always returns Metadata, never None.
@@ -156,11 +156,14 @@ class FlextUtilitiesModel:
         """
         # Handle None - return empty Metadata
         if value is None:
-            return FlextModelFoundation.Metadata(attributes={})
+            return m.Metadata(attributes={})
 
         # Handle existing Metadata instance - return as-is
-        if isinstance(value, FlextModelFoundation.Metadata):
+        if isinstance(value, m.Metadata):
             return value
+
+        if isinstance(value, FlextModelFoundation.Metadata):
+            return m.Metadata.model_validate(value.model_dump())
 
         # Handle dict-like values (dict or m.ConfigMap)
         if FlextRuntime.is_dict_like(value):
@@ -168,7 +171,7 @@ class FlextUtilitiesModel:
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
 
-            return FlextModelFoundation.Metadata.model_validate(
+            return m.Metadata.model_validate(
                 {"attributes": attributes},
             )
 

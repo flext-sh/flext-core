@@ -941,8 +941,8 @@ class Teste:
     def test_type_error_build_type_context_none_types(self) -> None:
         """Test TypeError._build_type_context with None types."""
         type_context = e.TypeError._build_type_context(None, None, None, {})
-        assert type_context["expected_type"] is None
-        assert type_context["actual_type"] is None
+        assert "expected_type" not in type_context
+        assert "actual_type" not in type_context
 
     def test_type_error_build_type_context_with_type_objects(self) -> None:
         """Test TypeError._build_type_context with type objects."""
@@ -962,8 +962,8 @@ class Teste:
         context = {"key1": "value1"}
         type_context = e.TypeError._build_type_context(None, None, context, {})
         assert "key1" in type_context
-        assert type_context["expected_type"] is None
-        assert type_context["actual_type"] is None
+        assert "expected_type" not in type_context
+        assert "actual_type" not in type_context
 
     def test_type_error_build_type_context_expected_type_string(self) -> None:
         """Test TypeError._build_type_context with string expected_type."""
@@ -983,8 +983,8 @@ class Teste:
             None,
             {"custom": "value"},
         )
-        assert type_context["expected_type"] is None
-        assert type_context["actual_type"] is None
+        assert "expected_type" not in type_context
+        assert "actual_type" not in type_context
         assert type_context["custom"] == "value"
 
     def test_create_error_with_invalid_type(self) -> None:
@@ -1504,7 +1504,7 @@ class Teste:
             value1=123,
             value2="string",
             value3=True,
-            value4=None,
+            value4="none",
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -1653,6 +1653,23 @@ class Teste:
         # Dict-like metadata is converted to dict
         assert isinstance(metadata_dl, dict)
         assert "key" in metadata_dl
+
+    def test_extract_common_kwargs_metadata_protocol_like(self) -> None:
+        class _MetadataLike:
+            def __init__(self) -> None:
+                self.attributes = {"source": "protocol"}
+
+        kwargs = {
+            "correlation_id": "test-id",
+            "metadata": cast("t.MetadataAttributeValue", _MetadataLike()),
+        }
+        kwargs_cast = cast("Mapping[str, t.MetadataValue]", kwargs)
+
+        corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
+        assert corr_id == "test-id"
+        assert metadata is not None
+        attrs = getattr(metadata, "attributes", {})
+        assert attrs.get("source") == "protocol"
 
 
 __all__ = ["Teste"]

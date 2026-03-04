@@ -405,6 +405,17 @@ class FlextUtilitiesCollection:
                     result_value = getattr(result_raw, "value", None)
                     result_error = getattr(result_raw, "error", None)
                     if is_success:
+                        if do_flatten and isinstance(result_value, list):
+                            for item in result_value:
+                                if FlextUtilitiesGuards.is_general_value_type(item):
+                                    results.append(
+                                        FlextUtilitiesCollection._coerce_guard_value(
+                                            item,
+                                        ),
+                                    )
+                                else:
+                                    results.append(str(item))
+                            continue
                         value = FlextUtilitiesCollection._coerce_guard_value(
                             result_value,
                         )
@@ -428,6 +439,15 @@ class FlextUtilitiesCollection:
                     continue
 
                 try:
+                    if do_flatten and isinstance(result_raw, list):
+                        for item in result_raw:
+                            if FlextUtilitiesGuards.is_general_value_type(item):
+                                results.append(
+                                    FlextUtilitiesCollection._coerce_guard_value(item),
+                                )
+                            else:
+                                results.append(str(item))
+                        continue
                     # Narrow result_raw to ContainerValue via TypeGuard
                     if FlextUtilitiesGuards.is_general_value_type(result_raw):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(

@@ -40,7 +40,7 @@ def test_models_settings_branch_paths() -> None:
     with pytest.raises(TypeError, match="Validator must be callable"):
         FlextModelsConfig.ValidationConfiguration(custom_validators=[1])
 
-    with pytest.raises(ValueError, match="Batch size cannot exceed"):
+    with pytest.raises(ValueError, match="less than or equal to 1000"):
         FlextModelsConfig.BatchProcessingConfig(batch_size=100000)
 
 

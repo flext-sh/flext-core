@@ -110,6 +110,15 @@ class FlextModels:
     class Query(FlextModelsCqrs.Query):
         """CQRS Query base."""
 
+        @classmethod
+        def _resolve_pagination_class(
+            cls: type[FlextModels.Query],
+        ) -> type[FlextModelsCqrs.Pagination]:
+            resolved = super()._resolve_pagination_class()
+            if resolved is FlextModelsCqrs.Pagination:
+                return FlextModels.Pagination
+            return resolved
+
     class Event(FlextModelsCqrs.Event):
         """CQRS Event base."""
 
@@ -173,6 +182,21 @@ class FlextModels:
     class Handler(FlextModelsCqrs.Handler):
         """CQRS handler model — real re-export for pydantic-mypy compatibility."""
 
+        class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
+            """Legacy nested registration details compatibility alias."""
+
+        class RegistrationResult(FlextModelsHandler.RegistrationResult):
+            """Legacy nested registration result compatibility alias."""
+
+        class RegistrationRequest(FlextModelsHandler.RegistrationRequest):
+            """Legacy nested registration request compatibility alias."""
+
+        class ExecutionContext(FlextModelsHandler.ExecutionContext):
+            """Legacy nested execution context compatibility alias."""
+
+        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
+            """Legacy nested decorator config compatibility alias."""
+
     class HandlerDecoratorConfig(FlextModelsHandler.DecoratorConfig):
         """Handler decorator config — real re-export for pydantic-mypy compatibility."""
 
@@ -181,6 +205,9 @@ class FlextModels:
 
     class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
         """Handler execution config — real re-export for pydantic-mypy compatibility."""
+
+    class HandlerExecutionContext(FlextModelsHandler.ExecutionContext):
+        """Handler execution context — real re-export for pydantic-mypy compatibility."""
 
     # =========================================================================
     # SERVICE MODELS

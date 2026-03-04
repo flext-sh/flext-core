@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import fnmatch
+import re
 import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 import libcst as cst
+from libcst.metadata import QualifiedNameProvider, QualifiedNameSource
 import yaml
 
 from flext_core import r
@@ -102,24 +103,184 @@ class LegacyRemovalRule(RefactorRule):
     def apply(
         self, tree: cst.Module, file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
-        changes = []
+        changes: list[str] = []
 
-        # Remover aliases simples (OldName = NewName)
-        tree, alias_changes = self._remove_aliases(tree)
-        changes.extend(alias_changes)
+        if "alias" in self.rule_id:
+            tree, alias_changes = self._remove_aliases(tree)
+            changes.extend(alias_changes)
 
-        # Remover classes deprecated
-        tree, deprecated_changes = self._remove_deprecated(tree)
-        changes.extend(deprecated_changes)
+        if "deprecated" in self.rule_id:
+            tree, deprecated_changes = self._remove_deprecated(tree)
+            changes.extend(deprecated_changes)
+
+        if "wrapper" in self.rule_id:
+            tree, wrapper_changes = self._remove_wrappers(tree)
+            changes.extend(wrapper_changes)
+
+        if "bypass" in self.rule_id:
+            tree, bypass_changes = self._remove_import_bypasses(tree)
+            changes.extend(bypass_changes)
 
         return tree, changes
 
+    def _remove_wrappers(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
+        changes: list[str] = []
+
+        new_body: list[cst.BaseStatement] = []
+        for stmt in tree.body:
+            if not isinstance(stmt, cst.FunctionDef):
+                new_body.append(stmt)
+                continue
+
+            target_name = self._get_passthrough_target(stmt)
+            if target_name is None:
+                new_body.append(stmt)
+                continue
+
+            alias_assign = cst.SimpleStatementLine(
+                body=[
+                    cst.Assign(
+                        targets=[cst.AssignTarget(target=cst.Name(stmt.name.value))],
+                        value=cst.Name(target_name),
+                    )
+                ]
+            )
+            new_body.append(alias_assign)
+            changes.append(f"Inlined wrapper: {stmt.name.value} -> {target_name}")
+
+        return tree.with_changes(body=new_body), changes
+
+    def _get_passthrough_target(self, func: cst.FunctionDef) -> str | None:
+        if not isinstance(func.body, cst.IndentedBlock):
+            return None
+        if len(func.body.body) != 1:
+            return None
+
+        stmt = func.body.body[0]
+        if not isinstance(stmt, cst.SimpleStatementLine):
+            return None
+        if len(stmt.body) != 1:
+            return None
+
+        small_stmt = stmt.body[0]
+        if not isinstance(small_stmt, cst.Return):
+            return None
+        if not isinstance(small_stmt.value, cst.Call):
+            return None
+        if not isinstance(small_stmt.value.func, cst.Name):
+            return None
+
+        call_args = small_stmt.value.args
+        param_names = [
+            param.name.value
+            for param in func.params.params
+            if isinstance(param.name, cst.Name)
+        ]
+        if len(call_args) != len(param_names):
+            return None
+
+        for idx, arg in enumerate(call_args):
+            if arg.keyword is not None:
+                return None
+            if arg.star not in {"", None}:
+                return None
+            if not isinstance(arg.value, cst.Name):
+                return None
+            if arg.value.value != param_names[idx]:
+                return None
+
+        return small_stmt.value.func.value
+
+    def _remove_import_bypasses(
+        self,
+        tree: cst.Module,
+    ) -> tuple[cst.Module, list[str]]:
+        changes: list[str] = []
+
+        class ImportBypassRemover(cst.CSTTransformer):
+            def leave_Try(self, original_node, updated_node):
+                if len(updated_node.body.body) != 1:
+                    return updated_node
+                if len(updated_node.handlers) != 1:
+                    return updated_node
+
+                body_stmt = updated_node.body.body[0]
+                handler = updated_node.handlers[0]
+                if not isinstance(handler, cst.ExceptHandler):
+                    return updated_node
+                if not isinstance(handler.body, cst.IndentedBlock):
+                    return updated_node
+                if len(handler.body.body) != 1:
+                    return updated_node
+
+                fallback_stmt = handler.body.body[0]
+                if not (
+                    isinstance(body_stmt, cst.SimpleStatementLine)
+                    and isinstance(fallback_stmt, cst.SimpleStatementLine)
+                ):
+                    return updated_node
+                if len(body_stmt.body) != 1 or len(fallback_stmt.body) != 1:
+                    return updated_node
+
+                primary_import = body_stmt.body[0]
+                fallback_import = fallback_stmt.body[0]
+                if not (
+                    isinstance(primary_import, cst.ImportFrom)
+                    and isinstance(fallback_import, cst.ImportFrom)
+                ):
+                    return updated_node
+
+                handler_type = handler.type
+                if not isinstance(handler_type, cst.Name):
+                    return updated_node
+                if handler_type.value != "ImportError":
+                    return updated_node
+
+                changes.append("Removed import bypass fallback")
+                return body_stmt
+
+        return tree.visit(ImportBypassRemover()), changes
+
     def _remove_aliases(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
         """Remove aliases de compatibilidade no nível do módulo."""
-        changes = []
+        changes: list[str] = []
+        allow_aliases = set(self.config.get("allow_aliases", []))
+        allow_target_suffixes = tuple(self.config.get("allow_target_suffixes", []))
 
         class AliasRemover(cst.CSTTransformer):
+            def __init__(self) -> None:
+                self._scope_depth = 0
+
+            def visit_ClassDef(self, node: cst.ClassDef) -> None:
+                self._scope_depth += 1
+
+            def leave_ClassDef(
+                self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+            ) -> cst.ClassDef:
+                self._scope_depth -= 1
+                return updated_node
+
+            def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
+                self._scope_depth += 1
+
+            def leave_FunctionDef(
+                self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+            ) -> cst.FunctionDef:
+                self._scope_depth -= 1
+                return updated_node
+
+            def visit_AsyncFunctionDef(self, node: cst.FunctionDef) -> None:
+                self._scope_depth += 1
+
+            def leave_AsyncFunctionDef(
+                self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+            ) -> cst.FunctionDef:
+                self._scope_depth -= 1
+                return updated_node
+
             def leave_Assign(self, original_node, updated_node):
+                if self._scope_depth > 0:
+                    return updated_node
                 # Verificar se é simples: Name = Name (alias)
                 if (
                     len(original_node.targets) == 1
@@ -128,7 +289,10 @@ class LegacyRemovalRule(RefactorRule):
                 ):
                     target = original_node.targets[0].target.value
                     value = original_node.value.value
-                    # Remover se for alias (nomes diferentes) e não for __version__, __all__
+                    if target in allow_aliases:
+                        return updated_node
+                    if allow_target_suffixes and value.endswith(allow_target_suffixes):
+                        return updated_node
                     if target != value and target not in {"__version__", "__all__"}:
                         changes.append(f"Removed alias: {target} = {value}")
                         return cst.RemovalSentinel.REMOVE
@@ -179,15 +343,18 @@ class ImportModernizerRule(RefactorRule):
     def apply(
         self, tree: cst.Module, file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
-        forbidden = self.config.get("forbidden_imports", [])
+        if "lazy-import" in self.rule_id:
+            return self._fix_lazy_imports(tree)
+
+        forbidden = self.config.get("forbidden_imports")
+        if forbidden is None:
+            forbidden = [self.config]
 
         if not forbidden:
             return tree, []
 
-        # Mapear imports a substituir
-        imports_to_remove = []
+        imports_to_remove: list[str] = []
         symbols_to_replace: dict[str, str] = {}
-        needed_aliases: set[str] = set()
 
         for rule in forbidden:
             module = rule.get("module", "")
@@ -197,31 +364,103 @@ class ImportModernizerRule(RefactorRule):
 
             for symbol, alias_path in mapping.items():
                 symbols_to_replace[symbol] = alias_path
-                # Extrair alias principal (c, m, r, t, u)
-                alias = alias_path.split(".")[0]
-                needed_aliases.add(alias)
-
-        # Aplicar transformações
         changes = []
 
         class ImportModernizer(cst.CSTTransformer):
+            METADATA_DEPENDENCIES = (QualifiedNameProvider,)
+
             def __init__(self):
                 self.modified_imports = False
+                self.aliases_needed: set[str] = set()
+                self.aliases_present: set[str] = set()
+                self.active_symbol_replacements: dict[str, str] = {}
 
             def leave_ImportFrom(self, original_node, updated_node):
                 module_name = self._get_module_name(original_node.module)
 
+                if module_name == "flext_core":
+                    imported_aliases = self._extract_import_aliases(original_node.names)
+                    for imported_alias in imported_aliases:
+                        if not isinstance(imported_alias.name, cst.Name):
+                            continue
+                        imported_name = imported_alias.name.value
+                        bound_name = imported_name
+                        if imported_alias.asname is not None and isinstance(
+                            imported_alias.asname.name, cst.Name
+                        ):
+                            bound_name = imported_alias.asname.name.value
+                        if bound_name in {
+                            "c",
+                            "m",
+                            "r",
+                            "t",
+                            "u",
+                            "p",
+                            "d",
+                            "e",
+                            "h",
+                            "s",
+                            "x",
+                        }:
+                            self.aliases_present.add(bound_name)
+
                 for mod in imports_to_remove:
-                    if mod in module_name:
+                    if module_name == mod:
+                        imported_aliases = self._extract_import_aliases(
+                            original_node.names
+                        )
+                        if not imported_aliases:
+                            return updated_node
+
+                        mapped_aliases: list[cst.ImportAlias] = []
+                        unmapped_aliases: list[cst.ImportAlias] = []
+                        for imported_alias in imported_aliases:
+                            if not isinstance(imported_alias.name, cst.Name):
+                                unmapped_aliases.append(imported_alias)
+                                continue
+                            imported_symbol = imported_alias.name.value
+                            if imported_symbol not in symbols_to_replace:
+                                unmapped_aliases.append(imported_alias)
+                                continue
+                            mapped_aliases.append(imported_alias)
+                            local_symbol = imported_symbol
+                            if imported_alias.asname is not None and isinstance(
+                                imported_alias.asname.name, cst.Name
+                            ):
+                                local_symbol = imported_alias.asname.name.value
+                            alias_path = symbols_to_replace[imported_symbol]
+                            self.active_symbol_replacements[local_symbol] = alias_path
+                            self.aliases_needed.add(alias_path.split(".")[0])
+
+                        if not mapped_aliases:
+                            return updated_node
+
                         self.modified_imports = True
                         changes.append(f"Removed import: from {module_name}")
+                        if unmapped_aliases:
+                            return updated_node.with_changes(
+                                names=tuple(unmapped_aliases)
+                            )
                         return cst.RemovalSentinel.REMOVE
 
                 return updated_node
 
             def leave_Name(self, original_node, updated_node):
-                if original_node.value in symbols_to_replace:
-                    alias_path = symbols_to_replace[original_node.value]
+                if original_node.value in self.active_symbol_replacements:
+                    qualified_names = self.get_metadata(
+                        QualifiedNameProvider,
+                        original_node,
+                        default=set(),
+                    )
+                    if not qualified_names:
+                        return updated_node
+                    if any(
+                        qualified_name.source != QualifiedNameSource.IMPORT
+                        for qualified_name in qualified_names
+                    ):
+                        return updated_node
+
+                    alias_path = self.active_symbol_replacements[original_node.value]
                     parts = alias_path.split(".")
 
                     # Construir atributo: c.System.PLATFORM
@@ -232,6 +471,17 @@ class ImportModernizerRule(RefactorRule):
                     changes.append(f"Replaced: {original_node.value} -> {alias_path}")
                     return result
                 return updated_node
+
+            def _extract_import_aliases(self, names: Any) -> list[cst.ImportAlias]:
+                imported_aliases: list[cst.ImportAlias] = []
+                if isinstance(names, cst.ImportStar):
+                    return imported_aliases
+
+                aliases: tuple[cst.ImportAlias, ...] = tuple(names)
+                for alias in aliases:
+                    imported_aliases.append(alias)
+
+                return imported_aliases
 
             def _get_module_name(self, module) -> str:
                 if isinstance(module, cst.Name):
@@ -248,12 +498,16 @@ class ImportModernizerRule(RefactorRule):
                 return ""
 
             def leave_Module(self, original_node, updated_node):
-                if self.modified_imports and needed_aliases:
-                    # Adicionar import dos aliases
+                missing_aliases = sorted(self.aliases_needed - self.aliases_present)
+                if self.modified_imports and missing_aliases:
+                    alias_imports = [
+                        cst.ImportAlias(name=cst.Name(alias))
+                        for alias in missing_aliases
+                    ]
                     new_import = cst.SimpleStatementLine(
                         body=[
                             cst.ImportFrom(
-                                module=cst.Name("flext_core"), names=cst.ImportStar()
+                                module=cst.Name("flext_core"), names=alias_imports
                             )
                         ]
                     )
@@ -287,13 +541,100 @@ class ImportModernizerRule(RefactorRule):
                         else:
                             break
 
-                    changes.append(f"Added: from flext_core import *")
+                    changes.append(
+                        f"Added: from flext_core import {', '.join(missing_aliases)}"
+                    )
                     new_body = body[:insert_idx] + [new_import] + body[insert_idx:]
                     return updated_node.with_changes(body=new_body)
                 return updated_node
 
         modernizer = ImportModernizer()
-        return tree.visit(modernizer), changes
+        wrapper = cst.MetadataWrapper(tree)
+        return wrapper.visit(modernizer), changes
+
+    def _fix_lazy_imports(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
+        changes: list[str] = []
+
+        class LazyImportFixer(cst.CSTTransformer):
+            def __init__(self) -> None:
+                self.hoisted_imports: list[cst.SimpleStatementLine] = []
+
+            def leave_FunctionDef(self, original_node, updated_node):
+                if not isinstance(updated_node.body, cst.IndentedBlock):
+                    return updated_node
+
+                new_function_body: list[cst.BaseStatement] = []
+                for stmt in updated_node.body.body:
+                    if (
+                        isinstance(stmt, cst.SimpleStatementLine)
+                        and len(stmt.body) == 1
+                        and isinstance(stmt.body[0], (cst.Import, cst.ImportFrom))
+                    ):
+                        self.hoisted_imports.append(stmt)
+                        changes.append(
+                            f"Hoisted lazy import in function {original_node.name.value}"
+                        )
+                        continue
+                    new_function_body.append(stmt)
+
+                return updated_node.with_changes(
+                    body=updated_node.body.with_changes(body=new_function_body)
+                )
+
+            def leave_Module(self, original_node, updated_node):
+                if not self.hoisted_imports:
+                    return updated_node
+
+                existing_import_codes: set[str] = set()
+                for stmt in updated_node.body:
+                    if not isinstance(stmt, cst.SimpleStatementLine):
+                        continue
+                    if len(stmt.body) != 1:
+                        continue
+                    if isinstance(stmt.body[0], (cst.Import, cst.ImportFrom)):
+                        existing_import_codes.add(cst.Module(body=[stmt]).code)
+
+                unique_hoisted: list[cst.SimpleStatementLine] = []
+                for stmt in self.hoisted_imports:
+                    stmt_code = cst.Module(body=[stmt]).code
+                    if stmt_code in existing_import_codes:
+                        continue
+                    existing_import_codes.add(stmt_code)
+                    unique_hoisted.append(stmt)
+
+                if not unique_hoisted:
+                    return updated_node
+
+                body = list(updated_node.body)
+                insert_idx = 0
+                if (
+                    body
+                    and isinstance(body[0], cst.SimpleStatementLine)
+                    and len(body[0].body) == 1
+                    and isinstance(body[0].body[0], cst.Expr)
+                    and isinstance(body[0].body[0].value, cst.SimpleString)
+                ):
+                    insert_idx = 1
+
+                while insert_idx < len(body) and isinstance(
+                    body[insert_idx], cst.SimpleStatementLine
+                ):
+                    stmt = body[insert_idx]
+                    if (
+                        len(stmt.body) == 1
+                        and isinstance(stmt.body[0], cst.ImportFrom)
+                        and isinstance(stmt.body[0].module, cst.Name)
+                        and stmt.body[0].module.value == "__future__"
+                    ):
+                        insert_idx += 1
+                        continue
+                    break
+
+                new_body = body[:insert_idx] + unique_hoisted + body[insert_idx:]
+                return updated_node.with_changes(body=new_body)
+
+        fixer = LazyImportFixer()
+        return tree.visit(fixer), changes
 
 
 class EnsureFutureAnnotationsRule(RefactorRule):
@@ -302,51 +643,11 @@ class EnsureFutureAnnotationsRule(RefactorRule):
     def apply(
         self, tree: cst.Module, file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
-        changes = []
-
-        # Verificar se já existe
-        has_future_annotations = False
-        for stmt in tree.body:
-            if isinstance(stmt, cst.SimpleStatementLine):
-                for line in stmt.body:
-                    if isinstance(line, cst.ImportFrom):
-                        if (
-                            isinstance(line.module, cst.Name)
-                            and line.module.value == "__future__"
-                        ):
-                            if hasattr(line.names, "elements"):
-                                for alias in line.names.elements:
-                                    if (
-                                        hasattr(alias.name, "value")
-                                        and alias.name.value == "annotations"
-                                    ):
-                                        has_future_annotations = True
-                                    elif (
-                                        isinstance(alias.name, cst.Name)
-                                        and alias.name.value == "annotations"
-                                    ):
-                                        has_future_annotations = True
-
-        if has_future_annotations:
-            return tree, changes
-
-        # Adicionar se não existir
-        future_import = cst.SimpleStatementLine(
-            body=[
-                cst.ImportFrom(
-                    module=cst.Name("__future__"),
-                    names=cst.ImportFrom([
-                        cst.ImportAlias(name=cst.Name("annotations"))
-                    ]),
-                )
-            ]
-        )
-
-        # Inserir após docstring
+        changes: list[str] = []
         body = list(tree.body)
         insert_idx = 0
+        has_docstring = False
 
-        # Pular docstring se existir
         if (
             body
             and isinstance(body[0], cst.SimpleStatementLine)
@@ -354,10 +655,70 @@ class EnsureFutureAnnotationsRule(RefactorRule):
             and isinstance(body[0].body[0], cst.Expr)
             and isinstance(body[0].body[0].value, cst.SimpleString)
         ):
+            has_docstring = True
             insert_idx = 1
 
-        new_body = body[:insert_idx] + [future_import] + body[insert_idx:]
-        changes.append("Added: from __future__ import annotations")
+        existing_annotations_stmt: cst.SimpleStatementLine | None = None
+        non_annotation_future_stmts: list[cst.BaseStatement] = []
+        body_without_future: list[cst.BaseStatement] = []
+
+        for stmt in body:
+            if not isinstance(stmt, cst.SimpleStatementLine):
+                body_without_future.append(stmt)
+                continue
+
+            if (
+                len(stmt.body) == 1
+                and isinstance(stmt.body[0], cst.ImportFrom)
+                and isinstance(stmt.body[0].module, cst.Name)
+                and stmt.body[0].module.value == "__future__"
+            ):
+                import_from = stmt.body[0]
+                aliases: tuple[cst.ImportAlias, ...] = tuple(import_from.names)
+                contains_annotations = any(
+                    isinstance(alias.name, cst.Name)
+                    and alias.name.value == "annotations"
+                    for alias in aliases
+                )
+                if contains_annotations:
+                    existing_annotations_stmt = stmt
+                else:
+                    non_annotation_future_stmts.append(stmt)
+                continue
+
+            body_without_future.append(stmt)
+
+        needs_leading_blank_line = has_docstring
+        if existing_annotations_stmt is not None:
+            annotations_stmt = existing_annotations_stmt
+        else:
+            annotations_stmt = cst.SimpleStatementLine(
+                body=[
+                    cst.ImportFrom(
+                        module=cst.Name("__future__"),
+                        names=[cst.ImportAlias(name=cst.Name("annotations"))],
+                    )
+                ]
+            )
+            changes.append("Ensured: from __future__ import annotations")
+
+        if needs_leading_blank_line:
+            annotations_stmt = annotations_stmt.with_changes(
+                leading_lines=[cst.EmptyLine()]
+            )
+
+        future_block = [annotations_stmt, *non_annotation_future_stmts]
+        new_body = (
+            body_without_future[:insert_idx]
+            + future_block
+            + body_without_future[insert_idx:]
+        )
+
+        if (
+            new_body != body
+            and "Ensured: from __future__ import annotations" not in changes
+        ):
+            changes.append("Moved: from __future__ import annotations")
 
         return tree.with_changes(body=new_body), changes
 
@@ -368,7 +729,7 @@ class ClassReconstructorRule(RefactorRule):
     def apply(
         self, tree: cst.Module, file_path: Path | None = None
     ) -> tuple[cst.Module, list[str]]:
-        order_config = self.config.get("order", [])
+        order_config = self.config.get("method_order") or self.config.get("order", [])
 
         if not order_config:
             return tree, []
@@ -397,7 +758,11 @@ class ClassReconstructorRule(RefactorRule):
                 # Ordenar métodos
                 sorted_methods = self._sort_methods(methods)
 
-                # Reconstruir corpo
+                original_method_names = [method.name for method in methods]
+                sorted_method_names = [method.name for method in sorted_methods]
+                if original_method_names == sorted_method_names:
+                    return updated_node
+
                 new_body = other_members + [m.node for m in sorted_methods]
 
                 changes.append(
@@ -450,20 +815,76 @@ class ClassReconstructorRule(RefactorRule):
                     return MethodCategory.PUBLIC
 
             def _sort_methods(self, methods: list[MethodInfo]) -> list[MethodInfo]:
-                """Ordena métodos por categoria."""
-                category_order = [
-                    MethodCategory.MAGIC,
-                    MethodCategory.PROPERTY,
-                    MethodCategory.STATIC,
-                    MethodCategory.CLASS,
-                    MethodCategory.PUBLIC,
-                    MethodCategory.PROTECTED,
-                    MethodCategory.PRIVATE,
-                ]
+                def matches_rule(method: MethodInfo, rule: dict[str, Any]) -> bool:
+                    decorators = set(method.decorators)
+                    exclude_decorators = set(rule.get("exclude_decorators", []))
+                    if exclude_decorators and decorators.intersection(
+                        exclude_decorators
+                    ):
+                        return False
 
-                return sorted(
-                    methods, key=lambda m: (category_order.index(m.category), m.name)
-                )
+                    visibility = rule.get("visibility")
+                    if visibility == "public" and method.name.startswith("_"):
+                        return False
+                    if visibility == "protected" and not (
+                        method.name.startswith("_") and not method.name.startswith("__")
+                    ):
+                        return False
+                    if visibility == "private" and not (
+                        method.name.startswith("__") and not method.name.endswith("__")
+                    ):
+                        return False
+
+                    rule_decorators = rule.get("decorators", [])
+                    if rule_decorators and not decorators.intersection(rule_decorators):
+                        return False
+
+                    patterns = rule.get("patterns", [])
+                    if patterns:
+                        matched = False
+                        for pattern in patterns:
+                            if isinstance(pattern, str):
+                                if re.match(pattern, method.name):
+                                    matched = True
+                                continue
+
+                            regex = pattern.get("regex")
+                            if regex and re.match(regex, method.name):
+                                matched = True
+
+                            pattern_decorators = pattern.get("decorators", [])
+                            if pattern_decorators and decorators.intersection(
+                                pattern_decorators
+                            ):
+                                matched = True
+                        if not matched:
+                            return False
+
+                    return True
+
+                def sort_key(method: MethodInfo) -> tuple[int, int, str]:
+                    for idx, rule in enumerate(self.order_config):
+                        if rule.get("category") == "class_attributes":
+                            continue
+                        if matches_rule(method, rule):
+                            explicit_order = rule.get("order", [])
+                            if explicit_order:
+                                if method.name in explicit_order:
+                                    return (
+                                        idx,
+                                        explicit_order.index(method.name),
+                                        method.name,
+                                    )
+                                if "*" in explicit_order:
+                                    return (
+                                        idx,
+                                        explicit_order.index("*") + 1,
+                                        method.name,
+                                    )
+                            return (idx, 0, method.name)
+                    return (len(self.order_config), 0, method.name)
+
+                return sorted(methods, key=sort_key)
 
         return tree.visit(ClassReconstructor()), changes
 
@@ -492,7 +913,7 @@ class MRORedundancyChecker(RefactorRule):
                                 changes.append(
                                     f"Fixed MRO redeclaration: {stmt.name.value}"
                                 )
-                                stmt = stmt.with_changes(bases=[])
+                                stmt = stmt.with_changes(bases=(), lpar=(), rpar=())
                                 break
                     new_body.append(stmt)
 
@@ -554,7 +975,10 @@ class FlextRefactorEngine:
                     rule: RefactorRule | None = None
                     if "ensure-future" in rule_id or "future-annotations" in rule_id:
                         rule = EnsureFutureAnnotationsRule(rule_def)
-                    elif any(x in rule_id for x in ["legacy", "alias", "deprecated"]):
+                    elif any(
+                        x in rule_id
+                        for x in ["legacy", "alias", "deprecated", "wrapper", "bypass"]
+                    ):
                         rule = LegacyRemovalRule(rule_def)
                     elif any(x in rule_id for x in ["import", "modernize"]):
                         rule = ImportModernizerRule(rule_def)

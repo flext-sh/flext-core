@@ -123,6 +123,7 @@ def test_main_all_groups_defined() -> None:
         "docs",
         "github",
         "maintenance",
+        "refactor",
         "release",
         "workspace",
     }
@@ -135,7 +136,9 @@ def test_main_group_modules_are_valid() -> None:
     for group, module_path in _GROUPS.items():
         assert isinstance(module_path, str)
         assert module_path.startswith("flext_infra.")
-        assert module_path.endswith(".__main__")
+        assert (
+            module_path.endswith(".__main__") or module_path == "flext_infra.refactor"
+        )
         assert group in module_path
 
 

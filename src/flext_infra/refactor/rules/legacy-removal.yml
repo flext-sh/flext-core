@@ -8,6 +8,8 @@ rules:
     enabled: true
     severity: error
     pattern: '^(\w+)\s*=\s*(\w+)$'
+    allow_aliases: ["c", "m", "r", "t", "u", "p", "d", "e", "h", "s", "x"]
+    allow_target_suffixes: ["Constants", "Models", "Protocols", "Utilities", "Types", "Handlers", "Services", "Mixins"]
     conditions:
       - type: module_level
         value: true

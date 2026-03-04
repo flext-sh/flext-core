@@ -1496,6 +1496,11 @@ class FlextRuntime:
             return self._value
 
         @property
+        def data(self) -> T:
+            """Backward-compatible alias for value."""
+            return self.value
+
+        @property
         def result(self) -> Self:
             """Access internal result for protocol compatibility.
 
@@ -2073,7 +2078,10 @@ class FlextRuntime:
 
         """
         context_dict = FlextModelsContainers.ConfigMap(root={})
-        if not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):  # type: ignore[arg-type]
+        if isinstance(context, Mapping):
+            for key, value in context.items():
+                context_dict[str(key)] = FlextRuntime.normalize_to_general_value(value)
+        elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):  # type: ignore[arg-type]
             context_dict = FlextModelsContainers.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())

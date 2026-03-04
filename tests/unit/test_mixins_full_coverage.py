@@ -36,18 +36,36 @@ class _ContainerForLogger:
         self.success: bool = success
         self.logger: object | None = logger
         self.factories: dict[str, object] = {}
+        self.register_calls: list[tuple[str, str]] = []
 
     def get_typed(self, _key: str, _tp: object) -> r[object]:
         if self.success:
             return r[object].ok(self.logger or object())
         return r[object].fail("missing")
 
-    def register_factory(self, key: str, factory: object) -> r[bool]:
-        self.factories[key] = factory
-        return r[bool].ok(True)
+    def get(self, _key: str, *, type_cls: object | None = None) -> r[object]:
+        _ = type_cls
+        if self.success:
+            return r[object].ok(self.logger or object())
+        return r[object].fail("missing")
 
-    def register(self, _name: str, _value: object) -> r[bool]:
-        return r[bool].ok(True)
+    def register_factory(self, key: str, factory: object) -> r[bool]:
+        _ = key
+        _ = factory
+        msg = "register_factory path should not be used"
+        raise AssertionError(msg)
+
+    def register(
+        self,
+        name: str,
+        value: object,
+        *,
+        kind: str = "service",
+    ) -> _ContainerForLogger:
+        self.register_calls.append((name, kind))
+        if kind == "factory":
+            self.factories[name] = value
+        return self
 
 
 def test_mixins_result_and_model_conversion_paths(
@@ -141,8 +159,11 @@ def test_mixins_container_registration_and_logger_paths(
     assert ok_register.is_success
 
     class _AlreadyContainer:
-        def register(self, _name: str, _value: object) -> r[bool]:
-            return r[bool].fail("already registered")
+        def has_service(self, _name: str) -> bool:
+            return True
+
+        def register(self, _name: str, _value: object) -> _AlreadyContainer:
+            return self
 
     monkeypatch.setattr(
         _Service,
@@ -152,8 +173,11 @@ def test_mixins_container_registration_and_logger_paths(
     assert service._register_in_container("svc").is_success
 
     class _FailContainer:
-        def register(self, _name: str, _value: object) -> r[bool]:
-            return r[bool].fail("hard fail")
+        def has_service(self, _name: str) -> bool:
+            return False
+
+        def register(self, _name: str, _value: object) -> _FailContainer:
+            return self
 
     monkeypatch.setattr(_Service, "container", property(lambda _self: _FailContainer()))
     service._init_service("svc")
@@ -335,10 +359,17 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, object] = {}
 
     class _RegContainer:
-        def register(self, name: str, value: object) -> r[bool]:
+        def __init__(self) -> None:
+            self._services: dict[str, object] = {}
+
+        def has_service(self, name: str) -> bool:
+            return name in self._services
+
+        def register(self, name: str, value: object) -> _RegContainer:
+            self._services[name] = value
             captured["name"] = name
             captured["value"] = value
-            return r[bool].ok(True)
+            return self
 
     monkeypatch.setattr(
         _ModelService,
@@ -410,11 +441,12 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         staticmethod(lambda: factory_container),
     )
     _ = _LoggerService._get_or_create_logger()
+    assert any(kind == "factory" for _name, kind in factory_container.register_calls)
     factory = next(iter(factory_container.factories.values()))
     assert callable(factory)
     factory_value = factory()
-    assert isinstance(factory_value, dict)
-    assert "logger" in factory_value
+    assert isinstance(factory_value, str)
+    assert "_LoggerService" in factory_value
 
     class _BrokenContainer:
         def get_typed(self, _key: str, _tp: object) -> r[object]:

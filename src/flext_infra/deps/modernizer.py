@@ -739,6 +739,9 @@ class FlextInfraPyprojectModernizer:
         return 1 if has_warning else 0
 
 
+PyprojectModernizer = FlextInfraPyprojectModernizer
+
+
 def _parser() -> argparse.ArgumentParser:
     """Create argument parser for modernizer CLI."""
     parser = argparse.ArgumentParser(description="Modernize workspace pyproject files")

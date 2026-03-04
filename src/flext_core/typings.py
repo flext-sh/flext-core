@@ -89,7 +89,7 @@ class FlextTypes:
     LazyExportType: TypeAlias = tuple[str, str]
     AnnotationMap: TypeAlias = Mapping[str, LazyExportType]
     RegisterableService: TypeAlias = (
-        Container | BindableLogger | Callable[..., Container]
+        ContainerValue | BindableLogger | Callable[..., Container]
     )
     FactoryCallable: TypeAlias = Callable[[], RegisterableService]
     ResourceCallable: TypeAlias = Callable[[], Container]

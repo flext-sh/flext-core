@@ -1020,12 +1020,8 @@ class TestFlextModels:
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""
         handler_config = m.HandlerExecutionConfig(
-            handler_id="handler-123",
             handler_name="CreateUserHandler",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
-        assert handler_config.handler_id == "handler-123"
         assert handler_config.handler_name == "CreateUserHandler"
 
     def test_pagination_model_creation(self) -> None:

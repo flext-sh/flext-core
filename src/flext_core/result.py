@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
-from types import MappingProxyType
 from typing import Self, TypeIs, cast, overload, override
 
 from pydantic import BaseModel
@@ -187,6 +186,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     def result(self) -> Self:
         """Protocol compatibility: return self (same as RuntimeResult)."""
         return self
+
+    @property
+    def data(self) -> T_co:
+        return self.value
 
     @property
     def _returns_result(self) -> Result[T_co, str]:
@@ -739,6 +742,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             result: FlextResult[T_co] = FlextResult[T_co].fail(
                 transformed_error,
                 error_code=self.error_code,
+                error_data=self.error_data,
             )
             result._exception = self._exception
             return result

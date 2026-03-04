@@ -357,8 +357,8 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate_command(self, command: object) -> FlextResult[bool]:
-                _ = command
+            def validate(self, message: object) -> FlextResult[bool]:
+                _ = message
                 return FlextResult[bool].fail("Validation failed for test")
 
             @override

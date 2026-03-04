@@ -1124,10 +1124,12 @@ class FlextExceptions:
         ) -> m.ConfigMap:
             """Build type context dictionary."""
             type_context = e._build_context_map(context, extra_kwargs)
-            type_context["expected_type"] = e.TypeError._resolve_type_name(
-                expected_type,
-            )
-            type_context["actual_type"] = e.TypeError._resolve_type_name(actual_type)
+            resolved_expected_type = e.TypeError._resolve_type_name(expected_type)
+            resolved_actual_type = e.TypeError._resolve_type_name(actual_type)
+            if resolved_expected_type is not None:
+                type_context["expected_type"] = resolved_expected_type
+            if resolved_actual_type is not None:
+                type_context["actual_type"] = resolved_actual_type
 
             return type_context
 
@@ -1276,7 +1278,7 @@ class FlextExceptions:
     @staticmethod
     def _prepare_exception_kwargs(
         kwargs: MutableMapping[str, t.MetadataValue],
-        specific_params: Mapping[str, t.MetadataValue] | None = None,
+        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
     ) -> tuple[
         str | None,
         t.MetadataValue | None,
@@ -1287,10 +1289,11 @@ class FlextExceptions:
     ]:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
-            # Filter out None values - specific_params is already MetadataAttributeDict (dict)
-            filtered_params = {
-                k: v for k, v in specific_params.items() if v is not None
-            }
+            filtered_params: dict[str, t.MetadataValue] = {}
+            for k, v in specific_params.items():
+                if v is None:
+                    continue
+                filtered_params[k] = v
             kwargs.update(filtered_params)
         extra_kwargs = {
             k: v
@@ -1335,7 +1338,37 @@ class FlextExceptions:
             metadata = e._safe_metadata(metadata_raw)
         if metadata is None:
             metadata = e._safe_config_map(metadata_raw)
+        if metadata is None:
+            attrs_raw = getattr(metadata_raw, "attributes", None)
+            attrs_map = e._safe_config_map(attrs_raw)
+            if attrs_map is not None:
+                metadata = m.Metadata.model_validate({
+                    "attributes": dict(attrs_map.items())
+                })
         return (correlation_id, metadata)
+
+    @staticmethod
+    def prepare_exception_kwargs(
+        kwargs: MutableMapping[str, t.MetadataValue],
+        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
+    ) -> tuple[
+        str | None,
+        t.MetadataValue | None,
+        bool,
+        bool,
+        t.MetadataValue | None,
+        Mapping[str, t.MetadataValue],
+    ]:
+        return e._prepare_exception_kwargs(kwargs, specific_params)
+
+    @staticmethod
+    def extract_common_kwargs(
+        kwargs: Mapping[str, t.MetadataValue],
+    ) -> tuple[
+        str | None,
+        MetadataProtocol | Mapping[str, t.MetadataValue] | None,
+    ]:
+        return e._extract_common_kwargs(kwargs)
 
     @staticmethod
     def _determine_error_type(
@@ -1395,6 +1428,10 @@ class FlextExceptions:
             "authentication": e.AuthenticationError,
             "authorization": e.AuthorizationError,
             "not_found": e.NotFoundError,
+            "conflict": e.ConflictError,
+            "rate_limit": e.RateLimitError,
+            "circuit_breaker": e.CircuitBreakerError,
+            "type": e.TypeError,
             "operation": e.OperationError,
             "attribute_access": e.AttributeAccessError,
         }
@@ -1475,8 +1512,40 @@ class FlextExceptions:
         **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
+        legacy_type_map: Mapping[str, str] = {
+            "ValidationError": "validation",
+            "ConfigurationError": "configuration",
+            "ConnectionError": "connection",
+            "TimeoutError": "timeout",
+            "AuthenticationError": "authentication",
+            "AuthorizationError": "authorization",
+            "NotFoundError": "not_found",
+            "ConflictError": "conflict",
+            "RateLimitError": "rate_limit",
+            "CircuitBreakerError": "circuit_breaker",
+            "TypeError": "type",
+            "OperationError": "operation",
+            "AttributeAccessError": "attribute_access",
+            "AttributeError": "attribute_access",
+        }
+
+        explicit_error_type = legacy_type_map.get(message)
+        resolved_message = message
+        resolved_error_code = error_code
+        if (
+            explicit_error_type is None
+            and error_code is not None
+            and not kwargs
+            and (message.endswith("Error") or "_" in message)
+        ):
+            msg = f"Unknown error type: {message}"
+            raise ValueError(msg)
+        if explicit_error_type is not None and error_code is not None:
+            resolved_message = error_code
+            resolved_error_code = None
+
         correlation_id_obj, metadata_obj = e._extract_common_kwargs(kwargs)
-        error_type = e._determine_error_type(kwargs)
+        error_type = explicit_error_type or e._determine_error_type(kwargs)
         # correlation_id_obj is already str | None from _extract_common_kwargs
         correlation_id: str | None = correlation_id_obj
 
@@ -1484,8 +1553,8 @@ class FlextExceptions:
 
         return e._create_error_by_type(
             error_type,
-            message,
-            error_code,
+            resolved_message,
+            resolved_error_code,
             context=error_context or None,
         )
 

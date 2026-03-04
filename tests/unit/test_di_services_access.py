@@ -130,10 +130,11 @@ class TestLoggerServiceViaDI:
             return FlextLogger.create_module_logger("service_logger")
 
         # Register custom logger factory with different name
-        result = container.register(
+        returned_container = container.register(
             "custom_logger", create_custom_logger, kind="factory"
         )
-        assertion_helpers.assert_flext_result_success(result)
+        assert returned_container is container
+        assert container.has_service("custom_logger")
 
         # Retrieve custom logger
         custom_logger_result = container.get("custom_logger")
@@ -170,11 +171,12 @@ class TestContextServiceViaDI:
 
         # Test registering a custom context with a different name
         custom_context = FlextContext()
-        result = container.register(
+        returned_container = container.register(
             "custom_context",
             cast("t.ContainerValue", custom_context),
         )
-        assertion_helpers.assert_flext_result_success(result)
+        assert returned_container is container
+        assert container.has_service("custom_context")
 
         # Retrieve custom context
         custom_context_result = container.get("custom_context")

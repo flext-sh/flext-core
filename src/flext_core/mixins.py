@@ -412,18 +412,16 @@ class FlextMixins(FlextRuntime):
             """Register service in container."""
             # Get container with explicit type for registration
             container = self.container
+            was_registered = container.has_service(service_name)
             if isinstance(self, BaseModel):
-                result = container.register(service_name, self)
+                container.register(service_name, self)
             else:
-                result = container.register(service_name, service_name)
-            # Use u.when() for conditional error handling (DSL pattern)
-            if result.is_failure:
-                error_msg = result.error or ""
-                # Check if error is "already registered" (using native 'in' for string check)
-                if "already registered" in error_msg.lower():
-                    return True  # Already registered is success
-                raise RuntimeError(error_msg or "Service registration failed")
-            return True
+                container.register(service_name, service_name)
+            if was_registered:
+                return True
+            if container.has_service(service_name):
+                return True
+            raise RuntimeError("Service registration failed")
 
         try:
             result = register()

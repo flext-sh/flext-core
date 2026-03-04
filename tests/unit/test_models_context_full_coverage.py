@@ -156,7 +156,7 @@ def test_context_data_validator_forces_non_dict_normalized_branch(
         "flext_core._models.context.FlextRuntime.is_dict_like",
         lambda _v: False,
     )
-    with pytest.raises(TypeError, match="Value must be a dictionary or Metadata"):
+    with pytest.raises(TypeError, match="Normalized value must be dict"):
         FlextModelsContext.ContextData.validate_dict_serializable({"a": 1})
 
 
@@ -215,7 +215,7 @@ def test_context_export_validate_dict_serializable_mapping_and_errors() -> None:
         "flext_core._models.context.FlextRuntime.is_dict_like",
         lambda _v: False,
     )
-    with pytest.raises(TypeError, match="Value must be a dict or Pydantic model"):
+    with pytest.raises(TypeError, match="Non-JSON-serializable type dict"):
         FlextModelsContext.ContextExport.validate_dict_serializable({"a": 1})
     monkeypatch.undo()
 

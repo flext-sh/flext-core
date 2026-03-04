@@ -44,8 +44,10 @@ class FlextInfraDependencyDetectorModels(m):
         projects: dict[str, dict[str, t.Container]] = Field(
             default_factory=dict,
         )
-        pip_check: dict[str, t.Scalar] | None = None
-        dependency_limits: dict[str, t.Scalar] | None = None
+        pip_check: FlextInfraDependencyDetectorModels.PipCheckReport | None = None
+        dependency_limits: (
+            FlextInfraDependencyDetectorModels.DependencyLimitsInfo | None
+        ) = None
 
 
 ddm = FlextInfraDependencyDetectorModels
@@ -193,7 +195,7 @@ class FlextInfraRuntimeDevDependencyDetector:
                 report_model.dependency_limits = ddm.DependencyLimitsInfo(
                     python_version=python_version,
                     limits_path=str(limits_path),
-                ).model_dump()
+                )
 
         for project_path in projects:
             project_name = project_path.name
@@ -259,7 +261,7 @@ class FlextInfraRuntimeDevDependencyDetector:
             report_model.pip_check = ddm.PipCheckReport(
                 ok=pip_exit == 0,
                 lines=pip_lines,
-            ).model_dump()
+            )
 
         report_payload = report_model.model_dump()
 

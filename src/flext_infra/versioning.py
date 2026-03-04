@@ -42,6 +42,13 @@ class FlextInfraVersioningService(FlextService[str]):
         self._toml = toml or FlextInfraTomlService()
 
     @staticmethod
+    def _has_project_table(content: str) -> bool:
+        for raw_line in content.splitlines():
+            if raw_line.strip() == "[project]":
+                return True
+        return False
+
+    @staticmethod
     def _extract_project_version_from_text(content: str) -> str | None:
         in_project_section = False
         for raw_line in content.splitlines():
@@ -202,6 +209,9 @@ class FlextInfraVersioningService(FlextService[str]):
             content = pyproject.read_text(encoding=c.Encoding.DEFAULT)
         except OSError as exc:
             return r[bool].fail(f"read failed: {exc}")
+
+        if not self._has_project_table(content):
+            return r[bool].fail(f"missing [project] table in {pyproject}")
 
         updated_content = self._replace_project_version_in_text(content, version)
         if updated_content is None:

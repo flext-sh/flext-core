@@ -78,8 +78,8 @@ class TestDIBridgeRealExecution:
         container = FlextContainer.create()
 
         # Register a service using container
-        register_result = container.register("test_service", "test_value")
-        assert register_result.is_success
+        container.register("test_service", "test_value")
+        assert container.has_service("test_service") is True
 
         # Resolve the service
         resolved = container.get("test_service")

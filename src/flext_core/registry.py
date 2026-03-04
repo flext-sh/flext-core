@@ -438,8 +438,19 @@ class FlextRegistry(s[bool]):
                     protocol_result.error or "Unknown error",
                 )
             else:
+                protocol_value = protocol_result.value
+                if isinstance(protocol_value, m.HandlerRegistrationResult):
+                    normalized_result = protocol_value
+                elif isinstance(protocol_value, BaseModel):
+                    normalized_result = m.HandlerRegistrationResult.model_validate(
+                        protocol_value.model_dump(),
+                    )
+                else:
+                    normalized_result = m.HandlerRegistrationResult.model_validate(
+                        protocol_value,
+                    )
                 registration_result = r[m.HandlerRegistrationResult].ok(
-                    m.HandlerRegistrationResult.model_validate(protocol_result.value),
+                    normalized_result,
                 )
         if registration_result.is_success:
             # Convert model result to RegistrationDetails

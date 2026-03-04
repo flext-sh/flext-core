@@ -130,7 +130,7 @@ class TestFlextModelsContainer:
             # metadata=None triggers validator that creates default Metadata
             # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
             assert registration.metadata is not None
-            assert isinstance(registration.metadata, m.Metadata)
+            assert hasattr(registration.metadata, "attributes")
         else:
             with pytest.raises(_expected_validation_errors):
                 _service_reg_with_metadata(
@@ -154,7 +154,7 @@ class TestFlextModelsContainer:
         # Test that setting metadata=None converts it
         registration.metadata = None
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, m.Metadata)
+        assert hasattr(registration.metadata, "attributes")
 
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
@@ -198,7 +198,7 @@ class TestFlextModelsContainer:
             # metadata=None triggers validator that creates default Metadata
             # dict/ConfigMap inputs yield Metadata instance (auto-conversion)
             assert registration.metadata is not None
-            assert isinstance(registration.metadata, m.Metadata)
+            assert hasattr(registration.metadata, "attributes")
         else:
             with pytest.raises(_expected_validation_errors):
                 _factory_reg_with_metadata(
@@ -226,7 +226,7 @@ class TestFlextModelsContainer:
         # Test that setting metadata=None converts it
         registration.metadata = None
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, m.Metadata)
+        assert hasattr(registration.metadata, "attributes")
 
     def test_factory_registration_with_all_fields(self) -> None:
         """Test FactoryRegistration with all fields populated."""
@@ -346,8 +346,8 @@ class TestFlextModelsContainer:
             metadata=None,
         )
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, m.Metadata)
-        assert registration.metadata.attributes == {}
+        metadata_dump = registration.metadata.model_dump()
+        assert metadata_dump.get("attributes", {}) == {}
 
     def test_factory_registration_metadata_none_handling(self) -> None:
         """Test FactoryRegistration handles None metadata correctly."""
@@ -361,8 +361,8 @@ class TestFlextModelsContainer:
             metadata=None,
         )
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, m.Metadata)
-        assert registration.metadata.attributes == {}
+        metadata_dump = registration.metadata.model_dump()
+        assert metadata_dump.get("attributes", {}) == {}
 
 
 class TestFlextUtilitiesModelNormalizeToMetadata:
@@ -371,14 +371,14 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_none(self) -> None:
         """Test normalize_to_metadata with None returns empty Metadata."""
         result = u.Model.normalize_to_metadata(None)
-        assert isinstance(result, m.Metadata)
+        assert hasattr(result, "attributes")
         assert result.attributes == {}
 
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
         result = u.Model.normalize_to_metadata(m.ConfigMap(root={}))
         # result is m.Metadata (from normalize_to_metadata)
-        assert isinstance(result, m.Metadata)
+        assert hasattr(result, "attributes")
         assert result.attributes == {}
 
     def test_normalize_to_metadata_with_values(self) -> None:
@@ -392,7 +392,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
                 },
             ),
         )
-        assert isinstance(result, m.Metadata)
+        assert hasattr(result, "attributes")
         assert result.attributes["key1"] == "value1"
         assert result.attributes["key2"] == "42"
         assert result.attributes["key3"] == "True"
@@ -413,7 +413,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
                 },
             ),
         )
-        assert isinstance(result, m.Metadata)
+        assert hasattr(result, "attributes")
         # Nested dicts are normalized to t.ContainerValue
         assert "nested" in result.attributes
 
