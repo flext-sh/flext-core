@@ -474,23 +474,22 @@ class FlextRuntime:
             return str(val)
 
         if isinstance(val, BaseModel):
-            return FlextRuntime.normalize_to_general_value(
-                cast("t.Container", val.model_dump())
-            )
+            model_dump_result: t.Container = val.model_dump()
+            return FlextRuntime.normalize_to_general_value(model_dump_result)
 
         if FlextRuntime.is_dict_like(val):
             dict_v = getattr(val, "root", val)
             result: dict[str, t.Container] = {}
             for k, v in dict_v.items():
                 result[str(k)] = FlextRuntime.normalize_to_general_value(v)
-            return cast("t.Container", result)
+            return result  # type: ignore[return-value]
 
         if FlextRuntime.is_list_like(val):
-            return cast(
-                "t.Container",
-                [FlextRuntime.normalize_to_general_value(item) for item in val],
-            )
-        return cast("t.Container", val)
+            list_result: t.Container = [
+                FlextRuntime.normalize_to_general_value(item) for item in val
+            ]
+            return list_result
+        return val  # type: ignore[return-value]
 
     @staticmethod
     def normalize_to_metadata_value(
@@ -522,9 +521,8 @@ class FlextRuntime:
             return result_scalar
 
         if isinstance(val, BaseModel):
-            return FlextRuntime.normalize_to_metadata_value(
-                cast("t.Container", val.model_dump())
-            )
+            model_dump_result: t.Container = val.model_dump()
+            return FlextRuntime.normalize_to_metadata_value(model_dump_result)
 
         if FlextRuntime.is_dict_like(val):
             raw_mapping = getattr(val, "root", val)
@@ -544,8 +542,7 @@ class FlextRuntime:
                 else:
                     result_list.append(str(item))
             # Explicit annotation to ensure MetadataAttributeValue return type
-            result_list_typed: t.MetadataValue = cast("t.MetadataValue", result_list)
-            return result_list_typed
+            return result_list  # type: ignore[return-value]
         # Return type is t.MetadataAttributeValue (str type)
         result_str: t.MetadataValue = str(val)
         return result_str
@@ -1579,7 +1576,7 @@ class FlextRuntime:
             return FlextRuntime.RuntimeResult(
                 error=self._error or "",
                 error_code=self._error_code,
-                error_data=cast("t.ConfigurationMapping | None", self._error_data),
+                error_data=self._error_data,  # type: ignore[arg-type]
                 is_success=False,
             )
 
@@ -1593,7 +1590,7 @@ class FlextRuntime:
             return FlextRuntime.RuntimeResult(
                 error=self._error or "",
                 error_code=self._error_code,
-                error_data=cast("t.ConfigurationMapping | None", self._error_data),
+                error_data=self._error_data,  # type: ignore[arg-type]
                 is_success=False,
             )
 
@@ -1659,7 +1656,7 @@ class FlextRuntime:
                 return FlextRuntime.RuntimeResult(
                     error=func(self._error or ""),
                     error_code=self._error_code,
-                    error_data=cast("t.ConfigurationMapping | None", self._error_data),
+                    error_data=self._error_data,  # type: ignore[arg-type]
                     is_success=False,
                 )
             return self
@@ -2076,13 +2073,13 @@ class FlextRuntime:
 
         """
         context_dict = FlextModelsContainers.ConfigMap(root={})
-        if FlextRuntime._is_scalar(cast("t.Container", context)):
+        if not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):  # type: ignore[arg-type]
             context_dict = FlextModelsContainers.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
-        elif FlextRuntime.is_dict_like(cast("t.Container", context)):
+        elif not isinstance(context, Mapping) and FlextRuntime.is_dict_like(context):  # type: ignore[arg-type]
             try:
-                for k_obj, v_obj in cast("Mapping[str, t.Container]", context).items():
+                for k_obj, v_obj in context.items():  # type: ignore[union-attr]
                     key_str = str(k_obj)
                     val_typed = FlextRuntime.normalize_to_general_value(v_obj)
                     context_dict[key_str] = val_typed

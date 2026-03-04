@@ -19,7 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Self, cast, override
+from typing import ClassVar, Self, override
 
 from structlog.typing import Context
 
@@ -260,15 +260,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
             current_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(
-                    cast("t.Container", value),
-                )
+                key: FlextRuntime.normalize_to_general_value(value)  # type: ignore[arg-type]
                 for key, value in cls._scoped_contexts[scope].items()
             }
             incoming_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(
-                    cast("t.Container", value),
-                )
+                key: FlextRuntime.normalize_to_general_value(value)  # type: ignore[arg-type]
                 for key, value in context.items()
             }
             merge_result = u.merge(
@@ -1380,7 +1376,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context = self._base_logger.build_exception_context(
                 exception=resolved_exception,
                 exc_info=exc_info,
-                context=cast("Mapping[str, t.Container | Exception]", context_kwargs),
+                context=context_kwargs,  # type: ignore[arg-type]
             )
             self._base_logger.error(message, **context.root)
             return r[bool].ok(value=True)
