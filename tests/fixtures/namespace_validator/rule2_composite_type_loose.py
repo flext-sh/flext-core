@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
+from flext_core import t
+
 JsonValue: TypeAlias = t.Primitives | None  # VIOLATION
 
 
