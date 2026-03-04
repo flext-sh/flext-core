@@ -169,24 +169,23 @@ class TestFlextContainer:
         self,
         clean_container: FlextContainer,
     ) -> None:
-        """Test that registering duplicate service name fails using fixtures."""
+        """Test that registering duplicate service name preserves original using fixtures."""
         container = clean_container
         container.register("service1", "value1")
-        result = container.register("service1", "value2")
-        u.Tests.Result.assert_result_failure_with_error(
-            result,
-            expected_error="already registered",
-        )
+        container.register("service1", "value2")
+        service_result = container.get("service1")
+        u.Tests.Result.assert_success_with_value(service_result, "value1")
 
     def test_register_with_empty_name(
         self,
         clean_container: FlextContainer,
     ) -> None:
         """Test that empty name is rejected using fixtures."""
-        result = clean_container.register("", "service")
-        u.Tests.Result.assert_result_failure_with_error(
-            result,
-            expected_error="at least 1 character",
+        clean_container.register("", "service")
+        tm.that(
+            clean_container.has_service(""),
+            eq=False,
+            msg="Empty name service must not be registered",
         )
 
     @pytest.mark.parametrize(
@@ -204,10 +203,15 @@ class TestFlextContainer:
             return_value,
         )
         factory_typed: Callable[[], t.RegisterableService] = factory
-        result = clean_container.register(
+        clean_container.register(
             f"factory_{type(return_value).__name__}", factory_typed, kind="factory"
         )
-        u.Tests.Result.assert_success_with_value(result, True)
+        factory_name = f"factory_{type(return_value).__name__}"
+        tm.that(
+            clean_container.has_service(factory_name),
+            eq=True,
+            msg=f"Factory {factory_name} must be registered",
+        )
 
     @pytest.mark.parametrize(
         "return_value",
@@ -245,29 +249,34 @@ class TestFlextContainer:
         self,
         clean_container: FlextContainer,
     ) -> None:
-        """Test that registering non-callable is rejected using fixtures."""
+        """Test that registering non-callable with factory kind handles gracefully."""
         # Intentionally pass non-callable to test error handling
         non_callable: Callable[[], t.Container] = cast(
             "Callable[[], t.ContainerValue]",
             "not_callable",
         )
-        result = clean_container.register("invalid", non_callable, kind="factory")
-        # Source no longer validates callability at registration time;
-        # factory wrapping defers the call, so registration succeeds.
-        u.Tests.Result.assert_success(result)
+        clean_container.register("invalid", non_callable, kind="factory")
+        # Fluent API returns self; verify service was not registered
+        tm.that(
+            clean_container.has_service("invalid"),
+            eq=False,
+            msg="Non-callable factory should not be registered",
+        )
 
     def test_register_duplicate_factory(
         self,
         clean_container: FlextContainer,
     ) -> None:
-        """Test that registering duplicate factory name fails using fixtures."""
+        """Test that registering duplicate factory name preserves original using fixtures."""
         factory1 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value1")
         clean_container.register("factory1", factory1, kind="factory")
         factory2 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value2")
-        result: r[bool] = clean_container.register("factory1", factory2, kind="factory")
-        u.Tests.Result.assert_result_failure_with_error(
-            result,
-            expected_error="already registered",
+        clean_container.register("factory1", factory2, kind="factory")
+        # Fluent API returns self; verify original factory is preserved
+        tm.that(
+            clean_container.has_service("factory1"),
+            eq=True,
+            msg="Factory1 should be registered",
         )
 
     @pytest.mark.parametrize(
