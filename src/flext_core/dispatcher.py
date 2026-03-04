@@ -237,12 +237,12 @@ class FlextDispatcher:
                     return r[t.Container].fail(
                         result_like.error or "Handler failed",
                         error_code=result_like.error_code,
-                        error_data=result_like.error_data,
+                        error_data=result_like.error_data,  # type: ignore[arg-type]
                     )
-                return r[t.Container].ok(result_like.value)
+                return r[t.Container].ok(result_like.value)  # type: ignore[arg-type]
 
             # Bare value return
-            return r[t.Container].ok(result_raw)
+            return r[t.Container].ok(result_raw)  # type: ignore[arg-type]
 
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)

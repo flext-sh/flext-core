@@ -146,7 +146,8 @@ class FlextService[TDomainResult](
     _config: FlextSettings | None = PrivateAttr(default=None)
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
+    # type: ignore[var-annotated]
+    _discovered_handlers: list[tuple[str, m.DecoratorConfig]] = PrivateAttr(
         default_factory=list,
     )
 
