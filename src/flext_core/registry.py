@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, ClassVar, Literal, Self, TypeGuard, cast, override
+from typing import Annotated, ClassVar, Literal, Self, TypeGuard, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
 
@@ -304,7 +304,7 @@ class FlextRegistry(s[bool]):
         can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
         if can_handle_attr is not None:
             setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
-        return cast("t.HandlerLike", _dispatch_wrapper)
+        return _dispatch_wrapper  # type: ignore[return-value]
 
     def _create_registration_details(
         self,
