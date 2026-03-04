@@ -212,8 +212,8 @@ class TestFlextTypings:
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
         # Verify flat type aliases are accessible
         flat_types = [
-            "ContainerValue",
-            "ScalarValue",
+            "Container",
+            "Scalar",
             "HandlerCallable",
         ]
         for type_alias in flat_types:
