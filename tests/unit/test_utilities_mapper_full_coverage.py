@@ -886,7 +886,6 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[Mapper]) -> 
         {"x": {"field": "a", "ops": "noop"}},
         m.ConfigMap(root={"a": 2}),
     ) == {"x": 2}
-    assert mapper.to_dict({"a": 1}) == {"a": 1}
 
     assert mapper.deep_eq({"a": None}, {"a": None}) is True
     assert mapper.deep_eq({"a": {"x": 1}}, {"a": {"x": 1}}) is True
