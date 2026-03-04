@@ -87,11 +87,11 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories()
         if scenario.operation == "add":
             categories.add_entries(scenario.category, scenario.entries)
-            assert categories.get_entries(scenario.category) == scenario.entries
+            assert categories.get(scenario.category) == scenario.entries
         elif scenario.operation == "set":
             categories.add_entries(scenario.category, ["existing"])
-            categories.set_entries(scenario.category, scenario.entries)
-            assert categories.get_entries(scenario.category) == scenario.entries
+            categories.categories[scenario.category] = list(scenario.entries)
+            assert categories.get(scenario.category) == scenario.entries
         elif scenario.operation == "remove":
             categories.add_entries(scenario.category, ["temp"])
             categories.remove_category(scenario.category)
@@ -103,7 +103,7 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1"])
         categories.add_entries("users", ["user2", "user3"])
-        assert categories.get_entries("users") == ["user1", "user2", "user3"]
+        assert categories.get("users") == ["user1", "user2", "user3"]
 
     def test_categories_has_category(self) -> None:
         """Test has_category via categories dict."""
@@ -156,7 +156,7 @@ class TestFlextModelsCollectionsCategories:
         assert ["user1"] in categories.categories.values()
         assert categories.categories["users"] == ["user1"]
         categories.categories["groups"] = ["group1"]
-        assert categories.get_entries("groups") == ["group1"]
+        assert categories.get("groups") == ["group1"]
         assert "users" in categories.categories
         assert "nonexistent" not in categories.categories
         assert len(categories.categories) == 2
@@ -167,18 +167,19 @@ class TestFlextModelsCollectionsCategories:
         assert categories.get("nonexistent", ["default"]) == ["default"]
         assert categories.get("nonexistent") == []
 
-    def test_categories_from_dict(self) -> None:
-        """Test from_dict class method."""
-        data = {"users": ["user1"], "groups": ["group1"]}
-        categories: m.Categories = m.Categories.from_dict(data)
-        assert categories.get_entries("users") == ["user1"]
-        assert categories.get_entries("groups") == ["group1"]
+    def test_categories_model_validate(self) -> None:
+        """Test Categories construction via model_validate."""
+        data = {"categories": {"users": ["user1"], "groups": ["group1"]}}
+        categories: m.Categories = m.Categories.model_validate(data)
+        assert categories.get("users") == ["user1"]
+        assert categories.get("groups") == ["group1"]
 
-    def test_categories_to_dict(self) -> None:
-        """Test to_dict method."""
+    def test_categories_to_mapping(self) -> None:
+        """Test to_mapping method."""
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1"])
-        assert categories.to_dict() == {"users": ["user1"]}
+        result = categories.to_mapping()
+        assert result == {"users": ["user1"]}
 
 
 class TestFlextModelsCollectionsStatistics:
@@ -259,9 +260,9 @@ class TestFlextModelsCollectionsSettings:
         assert merged.retries == 3
 
     def test_config_from_dict(self) -> None:
-        """Test from_dict class method."""
+        """Test from_mapping class method."""
         config_data = m.ConfigMap(root={"timeout": 60})
-        config: _TestConfig = _TestConfig.from_dict(config_data)
+        config: _TestConfig = _TestConfig.from_mapping(config_data)
         assert config.timeout == 60
 
     def test_config_to_dict(self) -> None:
