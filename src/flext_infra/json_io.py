@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextResult, FlextService, r, t
 from flext_infra import c
@@ -45,13 +45,18 @@ class FlextInfraJsonService(FlextService[bool]):
         if not path.exists():
             return r[t.ConfigurationMapping].ok({})
         try:
-            loaded = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
-            if not isinstance(loaded, dict):
+            loaded_obj: object = json.loads(path.read_text(encoding=c.Encoding.DEFAULT))
+            if not isinstance(loaded_obj, dict):
                 return r[t.ConfigurationMapping].fail(
                     "JSON root must be object",
                 )
-            data: Mapping[str, t.Container] = loaded
+            parser = TypeAdapter(dict[str, t.Scalar])
+            data = parser.validate_python(loaded_obj, strict=True)
             return r[t.ConfigurationMapping].ok(data)
+        except ValidationError as exc:
+            return r[t.ConfigurationMapping].fail(
+                f"JSON object validation error: {exc}"
+            )
         except (json.JSONDecodeError, OSError) as exc:
             return r[t.ConfigurationMapping].fail(f"JSON read error: {exc}")
 

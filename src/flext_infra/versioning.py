@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+import re
 from pathlib import Path
 from typing import override
 
@@ -38,7 +38,45 @@ class FlextInfraVersioningService(FlextService[str]):
 
     def __init__(self, toml: FlextInfraTomlService | None = None) -> None:
         """Initialize the versioning service."""
+        super().__init__()
         self._toml = toml or FlextInfraTomlService()
+
+    @staticmethod
+    def _extract_project_version_from_text(content: str) -> str | None:
+        in_project_section = False
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if line.startswith("[") and line.endswith("]"):
+                in_project_section = line == "[project]"
+                continue
+            if not in_project_section or not line.startswith("version"):
+                continue
+            match = re.match(r'^version\s*=\s*["\']([^"\']+)["\']\s*$', line)
+            if match:
+                return match.group(1)
+        return None
+
+    @staticmethod
+    def _replace_project_version_in_text(content: str, version: str) -> str | None:
+        lines = content.splitlines(keepends=True)
+        in_project_section = False
+        updated_lines: list[str] = []
+        replaced = False
+        for raw_line in lines:
+            line = raw_line.strip()
+            if line.startswith("[") and line.endswith("]"):
+                in_project_section = line == "[project]"
+                updated_lines.append(raw_line)
+                continue
+            if in_project_section and line.startswith("version") and not replaced:
+                line_ending = "\n" if raw_line.endswith("\n") else ""
+                updated_lines.append(f'version = "{version}"{line_ending}')
+                replaced = True
+                continue
+            updated_lines.append(raw_line)
+        if not replaced:
+            return None
+        return "".join(updated_lines)
 
     def parse_semver(
         self,
@@ -134,15 +172,13 @@ class FlextInfraVersioningService(FlextService[str]):
 
         """
         pyproject = workspace_root / c.Files.PYPROJECT_FILENAME
-        doc_result = self._toml.read_document(pyproject)
-        if doc_result.is_failure:
-            return r[str].fail(doc_result.error or "read failed")
+        try:
+            content = pyproject.read_text(encoding=c.Encoding.DEFAULT)
+        except OSError as exc:
+            return r[str].fail(f"read failed: {exc}")
 
-        doc = doc_result.value
-        project = doc.get("project")
-        project_table = project if isinstance(project, MutableMapping) else None
-        version = project_table.get("version") if project_table is not None else None
-        if not isinstance(version, str) or not version.strip():
+        version = self._extract_project_version_from_text(content)
+        if version is None or not version.strip():
             return r[str].fail("version not found in pyproject.toml")
         return r[str].ok(version)
 
@@ -162,21 +198,20 @@ class FlextInfraVersioningService(FlextService[str]):
 
         """
         pyproject = project_path / c.Files.PYPROJECT_FILENAME
-        doc_result = self._toml.read_document(pyproject)
-        if doc_result.is_failure:
-            return r[bool].fail(doc_result.error or "read failed")
+        try:
+            content = pyproject.read_text(encoding=c.Encoding.DEFAULT)
+        except OSError as exc:
+            return r[bool].fail(f"read failed: {exc}")
 
-        doc = doc_result.value
-        project = doc.get("project")
-        if not isinstance(project, MutableMapping):
+        updated_content = self._replace_project_version_in_text(content, version)
+        if updated_content is None:
             return r[bool].fail(
-                f"missing [project] table in {pyproject}",
+                f"missing [project] version in {pyproject}",
             )
-
-        project["version"] = version
-        write_result = self._toml.write_document(pyproject, doc)
-        if write_result.is_failure:
-            return r[bool].fail(write_result.error or "write failed")
+        try:
+            _ = pyproject.write_text(updated_content, encoding=c.Encoding.DEFAULT)
+        except OSError as exc:
+            return r[bool].fail(f"write failed: {exc}")
         return r[bool].ok(True)
 
 

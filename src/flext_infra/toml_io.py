@@ -25,12 +25,12 @@ type TomlScalar = t.Primitives | None
 type TomlValue = (
     TomlScalar | list[TomlScalar] | list[TomlValue] | MutableMapping[str, TomlValue]
 )
-type TomlMap = MutableMapping[str, t.Container]
-type TomlMutableMap = MutableMapping[str, t.Container]
+type TomlMap = MutableMapping[str, TomlValue]
+type TomlMutableMap = MutableMapping[str, TomlValue]
 
 
-def _as_toml_mapping(value: t.Container) -> TomlMutableMap | None:
-    if isinstance(value, MutableMapping) and all(isinstance(key, str) for key in value):
+def _as_toml_mapping(value: TomlValue) -> TomlMutableMap | None:
+    if isinstance(value, MutableMapping):
         return value
     return None
 
@@ -59,9 +59,10 @@ class FlextInfraTomlService(FlextService[bool]):
         if not path.exists():
             return r[TomlMap].ok({})
         try:
-            data = tomllib.loads(
+            data_raw = tomllib.loads(
                 path.read_text(encoding=c.Encoding.DEFAULT),
             )
+            data: TomlMap = data_raw
             return r[TomlMap].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
             return r[TomlMap].fail(f"TOML read error: {exc}")
@@ -93,7 +94,7 @@ class FlextInfraTomlService(FlextService[bool]):
     def write(
         self,
         path: Path,
-        payload: tomlkit.TOMLDocument | MutableMapping[str, t.Container],
+        payload: tomlkit.TOMLDocument | MutableMapping[str, TomlValue],
     ) -> FlextResult[bool]:
         """Write a TOML payload to a file.
 
@@ -110,7 +111,7 @@ class FlextInfraTomlService(FlextService[bool]):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             if isinstance(payload, tomlkit.TOMLDocument):
-                content = tomlkit.dumps(payload)
+                content = payload.as_string()
             else:
                 # Convert dict to TOMLDocument
                 doc = tomlkit.document()
@@ -120,7 +121,7 @@ class FlextInfraTomlService(FlextService[bool]):
                         doc[key] = self.build_table(nested_mapping)
                     else:
                         doc[key] = value
-                content = tomlkit.dumps(doc)
+                content = doc.as_string()
             _ = path.write_text(content, encoding=c.Encoding.DEFAULT)
             return r[bool].ok(True)
         except (OSError, TypeError) as exc:
@@ -143,7 +144,7 @@ class FlextInfraTomlService(FlextService[bool]):
         """
         try:
             _ = path.write_text(
-                tomlkit.dumps(doc),
+                doc.as_string(),
                 encoding=c.Encoding.DEFAULT,
             )
         except OSError as exc:
@@ -151,7 +152,7 @@ class FlextInfraTomlService(FlextService[bool]):
         return r[bool].ok(True)
 
     @staticmethod
-    def value_differs(current: t.Container, expected: t.Container) -> bool:
+    def value_differs(current: TomlValue, expected: TomlValue) -> bool:
         """Return True if current and expected differ.
 
         Compares as strings for lists.
@@ -189,9 +190,11 @@ class FlextInfraTomlService(FlextService[bool]):
             path = f"{prefix}.{key}" if prefix else key
             expected_mapping = _as_toml_mapping(expected)
             if expected_mapping is not None:
-                current_mapping = _as_toml_mapping(current)
+                current_mapping = (
+                    _as_toml_mapping(current) if current is not None else None
+                )
                 if current_mapping is None:
-                    target[key] = self.build_table(expected_mapping)
+                    target[key] = expected_mapping
                     added.append(path)
                     continue
                 self.sync_mapping(
