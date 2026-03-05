@@ -495,16 +495,7 @@ class AutomationService(s[m.ConfigMap]):
             print(f"   💾 Loaded {len(data)} records successfully")
             return r[list[m.ConfigMap]].ok(data)
 
-        result = extract().flow_through(
-            cast(
-                "Callable[[list[m.ConfigMap]], FlextRuntime.RuntimeResult[list[m.ConfigMap]]]",
-                transform,
-            ),
-            cast(
-                "Callable[[list[m.ConfigMap]], FlextRuntime.RuntimeResult[list[m.ConfigMap]]]",
-                load,
-            ),
-        )
+        result = extract().flow_through(transform, load)
         if result.is_success:
             print(f"✅ ETL Pipeline: {result.value}")
         else:

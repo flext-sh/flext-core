@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
 from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, cast, override
@@ -210,21 +209,21 @@ class Ex10FlextHandlers(Examples):
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
+        context_payload_query: dict[str, t.Container] = {
+            "handler_name": context_name_1,
+            "handler_mode": "query",
+        }
         self.check(
             "push_context.mapping",
-            handler.push_context({
-                "handler_name": context_name_1,
-                "handler_mode": "query",
-            }).is_success,
+            handler.push_context(context_payload_query).is_success,
         )
+        context_payload_event: dict[str, t.Container] = {
+            "handler_name": context_name_2,
+            "handler_mode": "event",
+        }
         self.check(
             "push_context.execution",
-            handler.push_context(
-                m.Handler.ExecutionContext.create_for_handler(
-                    handler_name=context_name_2,
-                    handler_mode="event",
-                )
-            ).is_success,
+            handler.push_context(context_payload_event).is_success,
         )
         self.check(
             "pop_context.1",
@@ -410,21 +409,18 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.get_metrics",
-            cast(
-                "m.ConfigMap", tracker.get_metrics().unwrap_or(m.ConfigMap(root={}))
-            ).get(hit_key, -1),
+            tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get(hit_key, -1),
         )
 
         stack = h.CQRS.ContextStack()
         self.check(
             "cqrs.push_context.mapping",
             stack.push_context(
-                cast(
-                    "t.Container",
-                    {
+                m.ConfigMap(
+                    root={
                         "handler_name": ctx_name,
                         "handler_mode": "command",
-                    },
+                    }
                 )
             ).is_success,
         )
@@ -434,12 +430,10 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.pop_context",
-            cast(
-                "m.ConfigMap",
-                stack.pop_context().unwrap_or(
-                    cast("Mapping[str, t.Container]", m.ConfigMap(root={}))
-                ),
-            ).get("handler_name", "-"),
+            stack
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
         )
 
         di = h.DependencyIntegration
@@ -497,7 +491,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("integration.calls", True)
 
-        metadata_cls = cast("type", h.Metadata)
+        metadata_cls = h.Metadata
         meta = metadata_cls(version=metadata_version, attributes={"tag": metadata_tag})
         self.check("metadata.version", meta.version)
         self.check("metadata.attributes", meta.attributes)
