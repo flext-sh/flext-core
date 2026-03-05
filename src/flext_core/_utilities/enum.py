@@ -89,7 +89,7 @@ class FlextUtilitiesEnum:
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
             enum_name = enum_cls.__name__
-            return r.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            return r[EnumT].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
@@ -174,7 +174,7 @@ class FlextUtilitiesEnum:
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
             enum_name = enum_cls.__name__
-            return r.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            return r[EnumT].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
     def parse_or_default[E: StrEnum](
@@ -429,7 +429,7 @@ class FlextUtilitiesEnum:
         return name.lower()
 
     @staticmethod
-    def bi_map[K, V](data: dict[K, V]) -> tuple[dict[K, V], dict[V, K]]:
+    def bi_map[K, V](data: Mapping[K, V]) -> tuple[dict[K, V], dict[V, K]]:
         """Create bidirectional mapping from dict.
 
         Returns (forward, inverse) tuple of dicts.

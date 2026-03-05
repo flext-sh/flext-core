@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Mapping
 
 
 def lazy_getattr(
     name: str,
-    lazy_imports: dict[str, tuple[str, str]],
+    lazy_imports: Mapping[str, tuple[str, str]],
     module_globals: dict[str, object],
     module_name: str,
 ) -> object:
@@ -40,7 +41,7 @@ def lazy_getattr(
 
 def cleanup_submodule_namespace(
     module_name: str,
-    lazy_imports: dict[str, tuple[str, str]],
+    lazy_imports: Mapping[str, tuple[str, str]],
 ) -> None:
     """Remove submodules from namespace to force __getattr__ usage.
 

@@ -484,7 +484,7 @@ class FlextExceptions:
     def _init_error_params[TParams: BaseModel](
         context: Mapping[str, t.MetadataValue] | None,
         extra_kwargs: dict[str, t.MetadataValue],
-        named_params: dict[str, t.MetadataValue | None],
+        named_params: Mapping[str, t.MetadataValue | None],
         params_cls: type[TParams],
         existing_params: TParams | None,
         param_keys: set[str] | frozenset[str],

@@ -39,7 +39,7 @@ class FlextInfraRefactorViolationAnalyzer:
         for file_path in files:
             try:
                 content = file_path.read_text(encoding="utf-8")
-            except OSError:
+            except (OSError, UnicodeDecodeError):
                 continue
 
             file_counts: dict[str, int] = {}

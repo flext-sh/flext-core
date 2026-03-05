@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import cast
 
 import libcst as cst
+import pytest
 
 from flext_infra.refactor import (
     FlextInfraRefactorClassReconstructorRule,
@@ -521,6 +523,66 @@ def test_pattern_rule_optionally_converts_return_annotations_to_mapping() -> Non
     assert "-> Mapping[str, t.Container]" in updated
 
 
+def test_pattern_rule_keeps_dict_param_when_subscript_mutated() -> None:
+    source = (
+        "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n"
+        '    data["k"] = "v"\n'
+        "    return data\n"
+    )
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "fix-container-invariance-annotations",
+        "fix_action": "convert_dict_to_mapping_annotations",
+    })
+
+    updated_tree, changes = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert updated == source
+    assert changes == []
+
+
+def test_pattern_rule_keeps_dict_param_when_copy_used() -> None:
+    source = (
+        "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n"
+        "    clone = data.copy()\n"
+        "    return clone\n"
+    )
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "fix-container-invariance-annotations",
+        "fix_action": "convert_dict_to_mapping_annotations",
+    })
+
+    updated_tree, changes = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert updated == source
+    assert changes == []
+
+
+def test_pattern_rule_skips_overload_signatures() -> None:
+    source = (
+        "from typing import overload\n\n"
+        "@overload\n"
+        "def f(data: dict[str, t.Container]) -> str: ...\n\n"
+        "def f(data: dict[str, t.Container]) -> str:\n"
+        "    return str(data)\n"
+    )
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "fix-container-invariance-annotations",
+        "fix_action": "convert_dict_to_mapping_annotations",
+    })
+
+    updated_tree, _ = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert "@overload" in updated
+    assert "def f(data: dict[str, t.Container]) -> str: ..." in updated
+    assert "def f(data: Mapping[str, t.Container]) -> str:" in updated
+
+
 def test_pattern_rule_removes_configured_redundant_casts() -> None:
     source = 'value = cast("m.ConfigMap", result.unwrap_or(m.ConfigMap(root={})))\n'
     tree = cst.parse_module(source)
@@ -535,6 +597,38 @@ def test_pattern_rule_removes_configured_redundant_casts() -> None:
 
     assert "cast(" not in updated
     assert "value = result.unwrap_or(m.ConfigMap(root={}))" in updated
+
+
+def test_pattern_rule_removes_nested_type_object_cast_chain() -> None:
+    source = 'value = cast("type", cast("object", FlextSettings))\n'
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "remove-validated-redundant-casts",
+        "fix_action": "remove_redundant_casts",
+        "redundant_type_targets": ["type"],
+    })
+
+    updated_tree, _ = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert "cast(" not in updated
+    assert "value = FlextSettings" in updated
+
+
+def test_pattern_rule_keeps_type_cast_when_not_nested_object_cast() -> None:
+    source = 'metadata_cls = cast("type", FlextRuntime.Metadata)\n'
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "remove-validated-redundant-casts",
+        "fix_action": "remove_redundant_casts",
+        "redundant_type_targets": ["type"],
+    })
+
+    updated_tree, changes = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert updated == source
+    assert changes == []
 
 
 def test_rule_dispatch_prefers_fix_action_metadata(tmp_path: Path) -> None:
@@ -880,3 +974,99 @@ rules:
     assert totals["container_invariance"] >= 2
     assert totals["redundant_cast"] >= 1
     assert totals["direct_submodule_import"] >= 1
+
+
+def test_main_analyze_violations_is_read_only(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: ensure-future-annotations
+    enabled: true
+    fix_action: ensure_future_annotations
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n',
+        encoding="utf-8",
+    )
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir(parents=True)
+    target_file = src_dir / "sample.py"
+    target_file.write_text("import os\n", encoding="utf-8")
+    original = target_file.read_text(encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "refactor-engine",
+            "--file",
+            str(target_file),
+            "--analyze-violations",
+            "--config",
+            str(config_path),
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        FlextInfraRefactorEngine.main()
+
+    assert exc_info.value.code == 0
+
+    assert target_file.read_text(encoding="utf-8") == original
+
+
+def test_refactor_files_skips_non_python_inputs(tmp_path: Path) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: ensure-future-annotations
+    enabled: true
+    fix_action: ensure_future_annotations
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text('refactor_engine:\n  project_scan_dirs: ["src"]\n')
+
+    py_file = tmp_path / "sample.py"
+    py_file.write_text("import os\n", encoding="utf-8")
+    md_file = tmp_path / "README.md"
+    md_file.write_text("# doc\n", encoding="utf-8")
+
+    engine = FlextInfraRefactorEngine(config_path=config_path)
+    loaded = engine.load_rules()
+    assert loaded.is_success
+
+    results = engine.refactor_files([py_file, md_file], dry_run=True)
+    assert len(results) == 2
+    md_result = next(item for item in results if item.file_path == md_file)
+    assert md_result.success
+    assert not md_result.modified
+    assert "Skipped non-Python file" in md_result.changes
+
+
+def test_violation_analyzer_skips_non_utf8_files(tmp_path: Path) -> None:
+    file_path = tmp_path / "binary.py"
+    file_path.write_bytes(b"\x80\x81\x82")
+
+    result = FlextInfraRefactorViolationAnalyzer.analyze_files([file_path])
+    files_scanned = result.get("files_scanned")
+    assert files_scanned == 1
+    totals = result.get("totals")
+    assert isinstance(totals, dict)
+    assert totals == {}

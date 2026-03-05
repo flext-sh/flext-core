@@ -224,6 +224,14 @@ class FlextInfraRefactorEngine:
     ) -> FlextInfraRefactorResult:
         """Refactor one file with currently loaded rules."""
         try:
+            if file_path.suffix != ".py":
+                return FlextInfraRefactorResult(
+                    file_path=file_path,
+                    success=True,
+                    modified=False,
+                    changes=["Skipped non-Python file"],
+                    refactored_code=None,
+                )
             source = file_path.read_text(encoding="utf-8")
             tree = cst.parse_module(source)
             all_changes: list[str] = []
@@ -264,6 +272,18 @@ class FlextInfraRefactorEngine:
         """Refactor many files and collect individual results."""
         results: list[FlextInfraRefactorResult] = []
         for file_path in file_paths:
+            if file_path.suffix != ".py":
+                output.info(f"Skipped non-Python file: {file_path.name}")
+                results.append(
+                    FlextInfraRefactorResult(
+                        file_path=file_path,
+                        success=True,
+                        modified=False,
+                        changes=["Skipped non-Python file"],
+                        refactored_code=None,
+                    )
+                )
+                continue
             result = self.refactor_file(file_path, dry_run=dry_run)
             results.append(result)
             if result.success:
@@ -729,6 +749,7 @@ class FlextInfraRefactorEngine:
                     encoding="utf-8",
                 )
                 output.info(f"Analysis report written: {args.analysis_output}")
+            sys.exit(0)
 
         results: list[FlextInfraRefactorResult] = []
         if args.project:

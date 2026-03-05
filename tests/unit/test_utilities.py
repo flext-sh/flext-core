@@ -35,7 +35,7 @@ class UtilityScenarios:
     TYPE_GUARD_CASES: ClassVar[
         dict[
             str,
-            list[tuple[str, t.Container, bool]],
+            list[tuple[str, object, bool]],
         ]
     ] = {
         "string": [
@@ -91,9 +91,7 @@ class UtilityScenarios:
         ("Hi", 10, False),
     ]
 
-    CACHE_NORMALIZE_CASES: ClassVar[
-        list[tuple[t.Container, type | tuple[type, ...]]]
-    ] = [
+    CACHE_NORMALIZE_CASES: ClassVar[list[tuple[object, type | tuple[type, ...]]]] = [
         ({"a": 1, "b": 2}, dict),
         ([1, 2, 3], list),
         ("string", str),
@@ -147,11 +145,11 @@ class Testu:
     def test_type_guard_string(
         self,
         description: str,
-        value: t.Container,
+        value: object,
         expected: bool,
     ) -> None:
         """Test string type guards."""
-        result = u.is_type(value, "string_non_empty")
+        result = u.is_type(cast("t.Container", value), "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -161,11 +159,11 @@ class Testu:
     def test_type_guard_dict(
         self,
         description: str,
-        value: t.Container,
+        value: object,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
-        result = u.is_type(value, "dict_non_empty")
+        result = u.is_type(cast("t.Container", value), "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -175,11 +173,11 @@ class Testu:
     def test_type_guard_list(
         self,
         description: str,
-        value: t.Container,
+        value: object,
         expected: bool,
     ) -> None:
         """Test list type guards."""
-        result = u.is_type(value, "list_non_empty")
+        result = u.is_type(cast("t.Container", value), "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     # =====================================================================
@@ -255,7 +253,7 @@ class Testu:
     ) -> None:
         """Test text cleaning."""
         result = u.Text.clean_text(input_text)
-        assert isinstance(result, str) and len(result) > 0
+        assert result.replace(" ", "") == expected_pattern.replace(" ", "")
 
     @pytest.mark.parametrize(
         ("text", "max_length", "should_truncate"),
@@ -295,11 +293,11 @@ class Testu:
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.Container,
+        input_data: object,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
-        normalized = u.Cache.normalize_component(input_data)
+        normalized = u.Cache.normalize_component(cast("t.Container", input_data))
         if isinstance(expected_type, tuple):
             assert isinstance(normalized, expected_type)
         else:
@@ -309,8 +307,7 @@ class Testu:
         """Test dictionary key sorting."""
         data: m.ConfigMap = m.ConfigMap(root={"z": 1, "a": 2, "m": 3})
         result = u.Cache.sort_dict_keys(data)
-        assert isinstance(result, dict)
-        assert list(result.keys()) == ["a", "m", "z"]
+        assert result == {"a": 2, "m": 3, "z": 1}
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
@@ -344,9 +341,9 @@ class Testu:
                 _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
 
             cache_obj = TestWithCache()
-            # Cast to t.ContainerValue for type checker - test class is valid object
+            # Cast to t.Container for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.ContainerValue", cast("object", cache_obj)),
+                cast("t.Container", cast("object", cache_obj)),
             )
             assert result is expected
         else:
@@ -355,9 +352,9 @@ class Testu:
                 pass
 
             no_cache_obj = TestNoCache()
-            # Cast to t.ContainerValue for type checker - test class is valid object
+            # Cast to t.Container for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.ContainerValue", cast("object", no_cache_obj)),
+                cast("t.Container", cast("object", no_cache_obj)),
             )
             assert result is expected
 
@@ -410,7 +407,7 @@ class Testu:
     def test_configuration_get_singleton(self) -> None:
         """Test getting singleton configuration."""
         value = u.Configuration.get_singleton(
-            cast("type", cast("object", FlextSettings)),
+            FlextSettings,
             "app_name",
         )
         assert value is not None

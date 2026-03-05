@@ -18,6 +18,7 @@ import ast
 import contextlib
 import subprocess  # noqa: S404  # JUSTIFIED: Python stdlib subprocess needed for ruff invocation — https://bandit.readthedocs.io/en/latest/plugins/b404_import_subprocess.html
 from collections import defaultdict
+from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
@@ -374,7 +375,7 @@ def _resolve_unmapped(
 
 
 def _generate_type_checking(
-    groups: dict[str, list[tuple[str, str]]],
+    groups: Mapping[str, list[tuple[str, str]]],
 ) -> list[str]:
     """Generate the ``if TYPE_CHECKING`` import block.
 
@@ -423,8 +424,8 @@ def _generate_type_checking(
 def _generate_file(
     docstring_source: str,
     exports: list[str],
-    filtered: dict[str, tuple[str, str]],
-    inline_constants: dict[str, str],
+    filtered: Mapping[str, tuple[str, str]],
+    inline_constants: Mapping[str, str],
     current_pkg: str,
 ) -> str:
     """Generate the complete ``__init__.py`` content."""

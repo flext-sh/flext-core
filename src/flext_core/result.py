@@ -252,6 +252,32 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             io_error = failure()
             return FlextResult[U | IO[U]].fail(str(io_error), exception=exc)
 
+    @classmethod
+    def _fail_like[S](
+        cls,
+        source: FlextRuntime.RuntimeResult[S],
+        *,
+        default_error: str = "",
+    ) -> FlextResult[t.Container]:
+        if source.is_success:
+            msg = "Cannot mirror failure from successful result"
+            raise ValueError(msg)
+        return FlextResult[t.Container].fail(
+            source.error or default_error,
+            error_code=source.error_code,
+            error_data=cast("t.ConfigurationMapping | None", source.error_data),
+            exception=source.exception,
+        )
+
+    @classmethod
+    def _from_runtime_result[U](
+        cls,
+        source: FlextRuntime.RuntimeResult[U],
+    ) -> FlextResult[U]:
+        if source.is_success:
+            return FlextResult[U].ok(source.value)
+        return cast("FlextResult[U]", cls._fail_like(source))
+
     # error_code and error_data properties are inherited from RuntimeResult
 
     # unwrap, unwrap_or, unwrap_or_else are inherited from RuntimeResult
@@ -303,14 +329,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_success:
             inner_result = func(self.value)
-            if inner_result.is_success:
-                return FlextResult[U].ok(inner_result.value)
-            result: FlextResult[U] = FlextResult[U].fail(inner_result.error or "")
-            result._exception = inner_result._exception
-            return result
-        result = FlextResult[U].fail(self.error or "")
-        result._exception = self._exception
-        return result
+            return FlextResult[U]._from_runtime_result(inner_result)
+        return cast("FlextResult[U]", FlextResult._fail_like(self))
 
     @override
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
@@ -406,7 +426,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         if self.is_failure:
-            return FlextResult[U].fail(self.error or "")
+            return cast("FlextResult[U]", FlextResult._fail_like(self))
         try:
             converted = model.model_validate(self.value)
             return FlextResult.ok(converted)
@@ -439,13 +459,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_failure:
             inner_result = func(self.error or "")
-            if inner_result.is_success:
-                return FlextResult[T_co].ok(inner_result.value)
-            lash_result: FlextResult[T_co] = FlextResult[T_co].fail(
-                inner_result.error or ""
-            )
-            lash_result._exception = inner_result._exception
-            return lash_result
+            return FlextResult[T_co]._from_runtime_result(inner_result)
         return self
 
     @override
@@ -490,14 +504,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 result_value = current.value
                 if result_value is not None:
                     inner = func(result_value)
-                    if inner.is_success:
-                        current = FlextResult[U](value=inner.value, is_success=True)
-                    else:
-                        fail_result: FlextResult[U] = FlextResult[U].fail(
-                            inner.error or ""
-                        )
-                        fail_result._exception = inner._exception
-                        current = fail_result
+                    current = FlextResult[U]._from_runtime_result(inner)
                 else:
                     break
             else:
@@ -684,11 +691,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             for item in items:
                 result = func(item)
                 if result.is_failure:
-                    failure_result: FlextResult[list[U]] = FlextResult[list[U]].fail(
-                        result.error or "Unknown error",
+                    return cast(
+                        "FlextResult[list[U]]",
+                        FlextResult[list[U]]._fail_like(
+                            result,
+                            default_error="Unknown error",
+                        ),
                     )
-                    failure_result._exception = result._exception
-                    return failure_result
                 results.append(result.value)
             return FlextResult[list[U]](value=results, is_success=True)
         # Collect all errors
@@ -743,7 +752,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             result: FlextResult[T_co] = FlextResult[T_co].fail(
                 transformed_error,
                 error_code=self.error_code,
-                error_data=self.error_data,
+                error_data=cast("t.ConfigurationMapping | None", self.error_data),
             )
             result._exception = self._exception
             return result

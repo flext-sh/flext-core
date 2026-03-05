@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -77,8 +78,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def normalize_component(
-        component: t.Container | BaseModel,
-    ) -> t.Container:
+        component: t.ContainerValue,
+    ) -> t.ContainerValue:
         """Normalize a component recursively for consistent representation.
 
         Business Rule: Recursive Component Normalization
@@ -110,12 +111,9 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.model_dump().items()
             }
-        # component is already t.Container (not BaseModel)
-        # Check if dict-like
-        if FlextRuntime.is_dict_like(component):
-            # Type narrowing: component is now Mapping[str, t.Container]
-            # Convert to dict for consistent iteration
-            dict_component: Mapping[str, t.Container] = dict(component.items())
+        # component is already t.ContainerValue (not BaseModel)
+        if isinstance(component, Mapping):
+            dict_component: Mapping[str, t.ContainerValue] = dict(component.items())
             # dict_component has mapping semantics for normalized iteration
             # so v is t.Container
             return {
@@ -127,10 +125,12 @@ class FlextUtilitiesCache:
             return component
         # Handle collections
         if isinstance(component, set):
-            # Type narrowing: component is set[t.Container]
-            # Convert set to tuple for hashability - normalize each item
-            normalized_items: list[t.Container] = [
-                FlextUtilitiesCache.normalize_component(item) for item in component
+            set_component = cast("set[object]", component)
+            normalized_items: list[t.ContainerValue] = [
+                FlextUtilitiesCache.normalize_component(
+                    cast("t.ContainerValue", item),
+                )
+                for item in set_component
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):
@@ -175,8 +175,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def sort_dict_keys(
-        data: t.Container,
-    ) -> t.Container:
+        data: t.ContainerValue,
+    ) -> t.ContainerValue:
         """Sort dictionary keys recursively for consistent representations.
 
         Business Rule: Recursive Key Sorting for Cache Consistency
@@ -206,9 +206,11 @@ class FlextUtilitiesCache:
             Sorted dict if input is dict-like, unchanged otherwise
 
         """
-        if FlextRuntime.is_dict_like(data):
-            # Type narrowing: data is now Mapping[str, t.Container]
-            result: dict[str, t.Container] = {}
+        if isinstance(data, BaseModel):
+            return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
+
+        if isinstance(data, Mapping):
+            result: dict[str, t.ContainerValue] = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 # Handle None values - convert to empty dict for consistency
@@ -223,7 +225,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def clear_object_cache(
-        obj: t.Container | BaseModel,
+        obj: object,
     ) -> r[bool]:
         """Clear cache-like attributes on an object.
 
@@ -283,7 +285,7 @@ class FlextUtilitiesCache:
             return r[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def has_cache_attributes(obj: t.Container) -> bool:
+    def has_cache_attributes(obj: object) -> bool:
         """Check if an object exposes any known cache-related attributes.
 
         Business Rule: Cache Detection
@@ -304,8 +306,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def generate_cache_key(
-        *args: t.Container,
-        **kwargs: t.Container,
+        *args: t.ContainerValue,
+        **kwargs: t.ContainerValue,
     ) -> str:
         """Generate a deterministic cache key from arguments.
 
@@ -342,7 +344,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def generate_cache_key_for_command(
-        command: t.Container | None,
+        command: t.ContainerValue,
         command_type: type,
     ) -> str:
         if isinstance(command, Mapping):

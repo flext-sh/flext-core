@@ -49,22 +49,89 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         self.changes.append("Converted annotation dict[...] to Mapping[...]")
         return replacement
 
-    @override
-    def leave_Param(
+    @staticmethod
+    def _collect_mutated_params(function_node: cst.FunctionDef) -> set[str]:
+        param_names: set[str] = set()
+        parameters = function_node.params
+        param_names.update(param.name.value for param in parameters.posonly_params)
+        param_names.update(param.name.value for param in parameters.params)
+        param_names.update(param.name.value for param in parameters.kwonly_params)
+        if isinstance(parameters.star_arg, cst.Param):
+            param_names.add(parameters.star_arg.name.value)
+        if parameters.star_kwarg is not None:
+            param_names.add(parameters.star_kwarg.name.value)
+
+        mutating_methods = {
+            "clear",
+            "copy",
+            "pop",
+            "popitem",
+            "setdefault",
+            "update",
+        }
+
+        class _MutableParamVisitor(cst.CSTVisitor):
+            def __init__(self) -> None:
+                self.mutated: set[str] = set()
+
+            @override
+            def visit_AssignTarget(self, node: cst.AssignTarget) -> None:
+                target = node.target
+                if isinstance(target, cst.Subscript):
+                    value = target.value
+                    if isinstance(value, cst.Name) and value.value in param_names:
+                        self.mutated.add(value.value)
+
+            @override
+            def visit_AugAssign(self, node: cst.AugAssign) -> None:
+                target = node.target
+                if isinstance(target, cst.Subscript):
+                    value = target.value
+                    if isinstance(value, cst.Name) and value.value in param_names:
+                        self.mutated.add(value.value)
+
+            @override
+            def visit_Call(self, node: cst.Call) -> None:
+                func = node.func
+                if not isinstance(func, cst.Attribute):
+                    return
+                if not isinstance(func.value, cst.Name):
+                    return
+                if func.value.value not in param_names:
+                    return
+                if func.attr.value in mutating_methods:
+                    self.mutated.add(func.value.value)
+
+        visitor = _MutableParamVisitor()
+        function_node.visit(visitor)
+        return visitor.mutated
+
+    def _rewrite_param_if_safe(
         self,
-        original_node: cst.Param,
-        updated_node: cst.Param,
+        param: cst.Param,
+        mutated_names: set[str],
     ) -> cst.Param:
-        del original_node
-        annotation = updated_node.annotation
+        if param.name.value in mutated_names:
+            return param
+        annotation = param.annotation
         if annotation is None:
-            return updated_node
+            return param
         rewritten = self._rewrite_annotation_expr(annotation.annotation)
         if rewritten is annotation.annotation:
-            return updated_node
-        return updated_node.with_changes(
+            return param
+        return param.with_changes(
             annotation=annotation.with_changes(annotation=rewritten)
         )
+
+    @staticmethod
+    def _is_overload_function(function_node: cst.FunctionDef) -> bool:
+        for decorator in function_node.decorators:
+            expr = decorator.decorator
+            if isinstance(expr, cst.Name) and expr.value == "overload":
+                return True
+            if isinstance(expr, cst.Attribute) and expr.attr.value == "overload":
+                return True
+        return False
 
     @override
     def leave_FunctionDef(
@@ -72,16 +139,51 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         original_node: cst.FunctionDef,
         updated_node: cst.FunctionDef,
     ) -> cst.BaseStatement:
-        del original_node
+        if self._is_overload_function(original_node):
+            return updated_node
+        mutated_names = self._collect_mutated_params(original_node)
+        parameters = updated_node.params
+
+        star_arg_updated = parameters.star_arg
+        if isinstance(star_arg_updated, cst.Param):
+            star_arg_updated = self._rewrite_param_if_safe(
+                star_arg_updated, mutated_names
+            )
+
+        star_kwarg_updated = parameters.star_kwarg
+        if star_kwarg_updated is not None:
+            star_kwarg_updated = self._rewrite_param_if_safe(
+                star_kwarg_updated,
+                mutated_names,
+            )
+
+        rewritten_params = parameters.with_changes(
+            posonly_params=[
+                self._rewrite_param_if_safe(param, mutated_names)
+                for param in parameters.posonly_params
+            ],
+            params=[
+                self._rewrite_param_if_safe(param, mutated_names)
+                for param in parameters.params
+            ],
+            kwonly_params=[
+                self._rewrite_param_if_safe(param, mutated_names)
+                for param in parameters.kwonly_params
+            ],
+            star_arg=star_arg_updated,
+            star_kwarg=star_kwarg_updated,
+        )
+
+        working_node = updated_node.with_changes(params=rewritten_params)
         if not self._include_return_annotations:
-            return updated_node
-        returns = updated_node.returns
+            return working_node
+        returns = working_node.returns
         if returns is None:
-            return updated_node
+            return working_node
         rewritten = self._rewrite_annotation_expr(returns.annotation)
         if rewritten is returns.annotation:
-            return updated_node
-        return updated_node.with_changes(
+            return working_node
+        return working_node.with_changes(
             returns=returns.with_changes(annotation=rewritten)
         )
 
@@ -142,6 +244,32 @@ class _RedundantCastRemover(cst.CSTTransformer):
         self.removable_types = removable_types
         self.changes: list[str] = []
 
+    def _extract_target_string(self, node: cst.Arg) -> str | None:
+        value = node.value
+        if not isinstance(value, cst.SimpleString):
+            return None
+        evaluated = value.evaluated_value
+        if not isinstance(evaluated, str):
+            return None
+        return evaluated
+
+    def _unwrap_nested_object_cast(
+        self, node: cst.BaseExpression
+    ) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call):
+            return None
+        if not isinstance(node.func, cst.Name) or node.func.value != "cast":
+            return None
+        if len(node.args) != self._CAST_ARITY:
+            return None
+        type_arg, value_arg = node.args
+        if type_arg.keyword is not None or value_arg.keyword is not None:
+            return None
+        target = self._extract_target_string(type_arg)
+        if target != "object":
+            return None
+        return value_arg.value
+
     @override
     def leave_Call(
         self,
@@ -157,14 +285,18 @@ class _RedundantCastRemover(cst.CSTTransformer):
         type_arg, value_arg = updated_node.args
         if type_arg.keyword is not None or value_arg.keyword is not None:
             return updated_node
-        if not isinstance(type_arg.value, cst.SimpleString):
-            return updated_node
-
-        target = type_arg.value.evaluated_value
-        if not isinstance(target, str):
+        target = self._extract_target_string(type_arg)
+        if target is None:
             return updated_node
         if target not in self.removable_types:
             return updated_node
+
+        if target == "type":
+            unwrapped = self._unwrap_nested_object_cast(value_arg.value)
+            if unwrapped is None:
+                return updated_node
+            self.changes.append("Removed redundant cast chain for type/object")
+            return unwrapped
 
         self.changes.append(f"Removed redundant cast for {target}")
         return value_arg.value
@@ -182,11 +314,11 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
         fix_action = str(self.config.get("fix_action", "")).strip().lower()
         if fix_action == "convert_dict_to_mapping_annotations":
             include_returns = bool(self.config.get("include_return_annotations", False))
-            transformer = _DictToMappingTransformer(
+            dict_to_mapping_transformer = _DictToMappingTransformer(
                 include_return_annotations=include_returns,
             )
-            updated = tree.visit(transformer)
-            return updated, transformer.changes
+            updated = tree.visit(dict_to_mapping_transformer)
+            return updated, dict_to_mapping_transformer.changes
 
         if fix_action == "remove_redundant_casts":
             raw_types = self.config.get("redundant_type_targets", [])
@@ -195,9 +327,9 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
                 for item in cast("list[object]", raw_types)
                 if isinstance(item, str)
             }
-            transformer = _RedundantCastRemover(removable_types=removable_types)
-            updated = tree.visit(transformer)
-            return updated, transformer.changes
+            cast_remover = _RedundantCastRemover(removable_types=removable_types)
+            updated = tree.visit(cast_remover)
+            return updated, cast_remover.changes
 
         return tree, []
 
