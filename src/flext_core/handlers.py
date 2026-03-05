@@ -790,7 +790,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, t.HandlerCallable, m.HandlerDecoratorConfig]]:
+        ) -> list[
+            tuple[str, Callable[..., t.Container | None], m.HandlerDecoratorConfig]
+        ]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -808,7 +810,9 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     print(f"{func_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, t.HandlerCallable, m.HandlerDecoratorConfig]] = []
+            handlers: list[
+                tuple[str, Callable[..., t.Container | None], m.HandlerDecoratorConfig]
+            ] = []
             for name in dir(module):
                 if name.startswith("_"):
                     continue

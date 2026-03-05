@@ -25,7 +25,7 @@ Reusable templates for creating consistent FLEXT-Core documentation.
 
 Use for new feature documentation (guides/ directory).
 
-`````markdown
+````markdown
 # [Feature Name] Guide
 
 [One sentence: What is this and why use it?]
@@ -48,10 +48,11 @@ Use for new feature documentation (guides/ directory).
 from flext_core import [Import]
 
 # Your example here
-```
-`````
+````
 
-`````
+```
+
+```
 
 ### Common Patterns - Feature Guide Template
 
@@ -135,13 +136,13 @@ from flext_core import [Import]
 - Related Guide 2
 - API Reference
 
-`````
+````
 
 ## API Reference Template
 
 Use for API documentation (api-reference/ directory).
 
-````markdown
+```markdown
 # [Layer Name] API Reference
 
 [Overview of what this layer provides]
@@ -171,7 +172,8 @@ Use for API documentation (api-reference/ directory).
 from flext_core import [Import]
 
 # Example usage
-```
+````
+
 ````
 
 **See Also:**
@@ -190,7 +192,7 @@ from flext_core import [Import]
 
 ```python
 obj.property_name  # Access property
-```
+````
 
 ## Quality Metrics - API Reference Template
 
@@ -220,7 +222,7 @@ obj.property_name  # Access property
 
 Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
-````markdown
+```markdown
 # [System/Component] Troubleshooting
 
 ## [Category of Issues] - Troubleshooting Template
@@ -242,14 +244,15 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
 ```bash
 # Commands or code
-```
+````
+
 ````
 
 **Solution 2: [Approach Name]**
 
 ```bash
 # Commands or code
-```
+````
 
 **When to check:**
 
@@ -308,13 +311,13 @@ Use for architecture/decisions.md.
 
 - Related ADR
 - Related pattern
-```
+````
 
 ## Best Practices Guide Template
 
 Use for comprehensive guide on patterns/best practices.
 
-`````markdown
+````markdown
 # [Topic] Best Practices
 
 [Intro: Why is this important?]
@@ -326,10 +329,11 @@ Use for comprehensive guide on patterns/best practices.
 ```python
 # ✅ CORRECT
 # Example showing best practice
-```
-`````
+````
 
-`````
+```
+
+```
 
 ```python
 # ❌ WRONG
@@ -370,20 +374,21 @@ Use for comprehensive guide on patterns/best practices.
 
 [Key takeaways]
 
-`````
+````
 
 ## Quick Reference Card Template
 
 Use for cheat sheets or quick reference.
 
-````markdown
+```markdown
 # [Feature] Quick Reference
 
 ## Installation - Quick Reference Card Template
 
 ```bash
 pip install flext-core
-```
+````
+
 ````
 
 ## Basic Setup - Quick Reference Card Template
@@ -392,7 +397,7 @@ pip install flext-core
 from flext_core import [Import]
 
 # Quick setup
-```
+````
 
 ## Common Tasks - Quick Reference Card Template
 
@@ -427,7 +432,7 @@ from flext_core import [Import]
 
 Use for documenting configuration options.
 
-````markdown
+```markdown
 # [Component] Configuration
 
 ## Overview - Configuration Documentation Template
@@ -444,14 +449,15 @@ Use for documenting configuration options.
 [section]
 key1 = "value"
 key2 = 123
-```
+````
+
 ````
 
 ### Method 2: Environment Variables - Configuration Documentation Template
 
 ```bash
 export SETTING_NAME=value
-```
+````
 
 ### Method 3: Programmatic - Configuration Documentation Template
 
@@ -500,7 +506,7 @@ config = Component
 
 Use when comparing similar features.
 
-````markdown
+```markdown
 # [Feature A] vs [Feature B] vs [Feature C]
 
 | Aspect         | [Feature A]        | [Feature B]     | [Feature C]     |
@@ -515,14 +521,15 @@ Use when comparing similar features.
 
 ```python
 # Example usage
-```
+````
+
 ````
 
 ## [Feature B] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
-```
+````
 
 ## [Feature C] Details - Comparison/Alternatives Template
 
@@ -542,7 +549,7 @@ Use when comparing similar features.
 
 Use for step-by-step implementation instructions.
 
-````markdown
+```markdown
 # Implementing [Feature Name]
 
 **Time Required:** X hours
@@ -558,14 +565,15 @@ Use for step-by-step implementation instructions.
 
 ```python
 # Code for step 1
-```
+````
+
 ````
 
 **Verify:**
 
 ```bash
 # How to verify this step worked
-```
+````
 
 ## Step 2: [Name] - Implementation Guide Template
 
@@ -635,4 +643,3 @@ See Configuration Guide as a real example of the Feature Guide Template.
 - Keep examples current and working
 - Review template usage quarterly
 ```
-````

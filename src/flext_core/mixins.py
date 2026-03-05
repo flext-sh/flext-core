@@ -259,7 +259,7 @@ class FlextMixins(FlextRuntime):
                 # Ignore if already registered (race condition)
                 if hasattr(container_impl, "register_factory"):
 
-                    def logger_factory() -> t.RegisterableService:
+                    def logger_factory() -> t.Container:
                         return logger_name
 
                     _ = container_impl.register(

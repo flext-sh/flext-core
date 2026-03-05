@@ -358,4 +358,6 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_service.py` for comprehensive service pattern examples and test cases.
-````
+
+```
+```

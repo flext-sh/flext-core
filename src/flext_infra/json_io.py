@@ -122,6 +122,7 @@ def read_json(path: Path) -> FlextResult[Mapping[str, t.Container]]:
         >>> result = read_json(Path("config.json"))
         >>> if result.is_success:
         ...     data = result.value
+
     """
     return FlextInfraJsonService().read(path)
 
@@ -149,6 +150,7 @@ def write_json(
     Example:
         >>> result = write_json(Path("output.json"), {"key": "value"})
         >>> assert result.is_success
+
     """
     return FlextInfraJsonService().write(
         path, payload, sort_keys=sort_keys, ensure_ascii=ensure_ascii

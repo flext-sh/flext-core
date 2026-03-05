@@ -40,4 +40,3 @@ Final checklist
 - Update architecture or guide docs in the same change when DI behavior/public usage changes.
 - Keep examples aligned with root policy and avoid direct dependency-injector imports in upper layers.
 ```
-````

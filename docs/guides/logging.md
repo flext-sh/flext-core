@@ -248,4 +248,6 @@ For custom configuration, you can still call `FlextRuntime.configure_structlog()
 - Service Patterns Guide - Using logging in services
 - Error Handling Guide - Logging errors and exceptions
 - Testing Guide - Testing with structured logging
-````
+
+```
+```

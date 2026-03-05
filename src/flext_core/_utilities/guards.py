@@ -22,7 +22,7 @@ from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import m, p, r, t
+from flext_core import FlextResult, m, p, r, t
 
 
 class FlextUtilitiesGuards:
@@ -1265,7 +1265,7 @@ class FlextUtilitiesGuards:
 def validate_pydantic_model[T: BaseModel](
     model_class: type[T],
     data: Mapping[str, t.ContainerValue],
-) -> "r[T]":
+) -> r[T]:
     """Validate data using Pydantic v2 model and return FlextResult.
 
     This template function reduces boilerplate for validation + error handling
@@ -1286,9 +1286,8 @@ def validate_pydantic_model[T: BaseModel](
         >>> result = validate_pydantic_model(Config, {"name": "test", "value": 42})
         >>> if result.is_success:
         ...     config = result.value
-    """
-    from flext_core import FlextResult
 
+    """
     try:
         validated = model_class.model_validate(data)
         return FlextResult[T].ok(validated)

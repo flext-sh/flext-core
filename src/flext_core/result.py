@@ -504,7 +504,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 result_value = current.value
                 if result_value is not None:
                     inner = func(result_value)
-                    current = FlextResult[U]._from_runtime_result(inner)  # type: ignore[arg-type]
+                    current = FlextResult[U]._from_runtime_result(inner)
                 else:
                     break
             else:

@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
+import enum
 from collections.abc import Generator, Mapping, MutableMapping
 from contextlib import contextmanager
 from datetime import datetime
@@ -21,7 +22,14 @@ from pydantic import BaseModel
 
 from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
 
-_SENTINEL: Final[object] = object()
+
+class _Sentinel(enum.Enum):
+    """Sentinel enum for distinguishing 'not provided' from None."""
+
+    MISSING = "__sentinel_missing__"
+
+
+_SENTINEL: Final[str] = _Sentinel.MISSING.value
 
 
 class FlextContext(FlextRuntime):
@@ -747,7 +755,7 @@ class FlextContext(FlextRuntime):
     def set(
         self,
         key_or_data: str | m.ConfigMap,
-        value: t.Container | None = _SENTINEL,  # type: ignore[assignment]
+        value: t.Container | None = _SENTINEL,
         *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:

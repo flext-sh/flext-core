@@ -7,8 +7,7 @@ from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import libcst as cst
 
@@ -84,7 +83,7 @@ class FlextInfraRefactorLooseClassScanner:
         ast_grep_index = self._scan_with_ast_grep(project_root)
 
         violations: list[FlextInfraRefactorLooseClassViolation] = []
-        targets_found = {name: False for name in self._REQUIRED_CLASS_TARGETS}
+        targets_found = dict.fromkeys(self._REQUIRED_CLASS_TARGETS, False)
         classes_scanned = 0
 
         for file_path in python_files:

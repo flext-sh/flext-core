@@ -680,7 +680,9 @@ def test_parse_invalid_ldif():
    # Set PYTHONPATH
    export PYTHONPATH=src
    pytest
-```
+   ```
+
+````
 
 1. **Fixture Not Found**
 
@@ -689,21 +691,23 @@ def test_parse_invalid_ldif():
    @pytest.fixture(scope="function")
    def my_fixture():
        return "value"
-```
+````
 
 1. **Test Timeout**
 
    ```bash
    # Increase timeout
    pytest --timeout=300
-```
+   ```
+
+````
 
 1. **Coverage Issues**
 
    ```bash
    # Check coverage configuration
    pytest --cov=src --cov-report=term-missing
-```
+````
 
 ## Resources
 
@@ -712,4 +716,6 @@ def test_parse_invalid_ldif():
 - FLEXT Quality Standards
 - Test Examples
 - CI/CD Configuration
-````
+
+```
+```

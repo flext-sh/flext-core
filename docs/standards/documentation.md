@@ -98,7 +98,7 @@ FLEXT-Core documentation follows strict standards for clarity, accuracy, and mai
 - **Best Practices**: Do's and don'ts
 - **Common Issues**: Troubleshooting guide
 
-``````markdown
+````markdown
 # Feature Name
 
 ## Overview
@@ -107,10 +107,11 @@ One paragraph explaining what this feature does and why use it.
 
 ## Basic Usage
 
-````python
+```python
 # Working example
-```
-````markdown
+````
+
+```markdown
 
 ## API Reference
 
@@ -135,9 +136,9 @@ One paragraph explaining what this feature does and why use it.
 ### Issue: Something breaks
 
 **Solution**: How to fix it
-``````
+```
 
-``````
+````
 
 ## Code Examples
 
@@ -158,13 +159,13 @@ if result.is_success:
     print(f"Result: {result.value}")
 else:
     print(f"Error: {result.error}")
-```
+````
 
 ### Import Cleanup
 
 **Rule**: Import ONLY what each example uses.
 
-````python
+```python
 # ✅ CORRECT - Only FlextResult
 from flext_core import FlextResult
 
@@ -479,15 +480,16 @@ Before publishing documentation:
 
 ```python
 # Working example
-```
-````markdown
+````
+
+```markdown
 
 **Raises/Errors:**
 
 - Error1: When this happens
 - Error2: When that happens
 
-``````
+```
 
 ### For Classes
 
@@ -502,7 +504,8 @@ Before publishing documentation:
 
 ```python
 # Basic usage example
-```
+````
+
 ````
 
 ### Methods
@@ -511,14 +514,14 @@ Each method documented as above.
 
 ### Properties
 
-`````markdown
+```markdown
 ### property_name
 
 **Type**: DataType
 
 **Description**: What does this property represent?
 
-```
+````
 
 ## Writing Guidelines
 
@@ -702,7 +705,10 @@ FLEXT-Core documentation standards:
 - ✅ Pass quality gate before publishing
 
 Documentation is part of the product. Maintain the same standards as the code.
-`````
+
+```
+
+```
 
 ```
 ```

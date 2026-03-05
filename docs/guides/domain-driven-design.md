@@ -1021,4 +1021,6 @@ def add_to_cart(cart, item):
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_models.py` for 200+ test cases demonstrating DDD patterns with FlextModels.
-````
+
+```
+```

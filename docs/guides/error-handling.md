@@ -619,4 +619,6 @@ This approach makes error handling explicit, composable, and maintainable.
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for comprehensive test cases demonstrating all error handling patterns.
-````
+
+```
+```

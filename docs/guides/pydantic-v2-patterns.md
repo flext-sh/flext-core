@@ -597,7 +597,9 @@ else:
 
    # Avoid - no documentation
    name: str
-```
+   ```
+
+````
 
 1. **Validate in `@field_validator`**
 
@@ -612,7 +614,7 @@ else:
 
    # Avoid - validation hidden in constraints
    age: int = Field(ge=0)  # Only for simple cases
-```
+````
 
 1. **Use ConfigDict for strict validation**
 
@@ -624,7 +626,9 @@ else:
    class Config:
        validate_assignment = False
        extra = "allow"
-```
+   ```
+
+````
 
 1. **Use computed_field for derived properties**
 
@@ -639,7 +643,7 @@ else:
    @property
    def full_name(self) -> str:  # Not in model_dump()
        return f"{self.first_name} {self.last_name}"
-```
+````
 
 ## Checklists
 
@@ -679,4 +683,6 @@ ______________________________________________________________________
 **Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Pydantic**: v2.12.3+
-````
+
+```
+```

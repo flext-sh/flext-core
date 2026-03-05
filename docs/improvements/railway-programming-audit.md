@@ -111,8 +111,6 @@ These **production-ready methods** exist in source but are **NOT documented**:
    # FlextResult[list[int]].ok([1, 2, 3])
    ```
 
-```
-
 1. **collect_successes()** - Line 1144
 
    - **Purpose**: Extract all successful values from list of results
@@ -424,4 +422,3 @@ The Railway-Oriented Programming guide is **accurate but significantly incomplet
 ______________________________________________________________________
 
 **Next**: Continue verification of instance methods and create improved version of the guide.
-````

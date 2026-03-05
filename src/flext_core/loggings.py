@@ -213,12 +213,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(value)  # type: ignore[arg-type]
+            current_context: dict[str, t.ContainerValue] = {
+                key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(value)  # type: ignore[arg-type]
+            incoming_context: dict[str, t.ContainerValue] = {
+                key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in context.items()
             }
             merge_result = u.merge(
@@ -1331,10 +1331,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 case _:
                     pass
 
+            # Normalize MetadataValue kwargs to Container | Exception for build_exception_context
+            normalized_context: dict[str, t.Container | Exception] = {}
+            for ctx_key, ctx_val in context_kwargs.items():
+                if isinstance(ctx_val, Exception):
+                    normalized_context[ctx_key] = ctx_val
+                else:
+                    normalized_context[ctx_key] = str(ctx_val)
+
             context = self._base_logger.build_exception_context(
                 exception=resolved_exception,
                 exc_info=exc_info,
-                context=context_kwargs,  # type: ignore[arg-type]
+                context=normalized_context,
             )
             self._base_logger.error(message, **context.root)
             return r[bool].ok(value=True)

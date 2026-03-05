@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeAlias
+from typing import TypeAlias, override
 
 from pydantic import ConfigDict
 
@@ -111,6 +111,7 @@ class FlextModels:
         """CQRS Query base."""
 
         @classmethod
+        @override
         def _resolve_pagination_class(
             cls: type[FlextModels.Query],
         ) -> type[FlextModelsCqrs.Pagination]:

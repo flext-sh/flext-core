@@ -13,6 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping
 from typing import Protocol, TypeAlias, runtime_checkable
 
+from pydantic import BaseModel
+
 from flext_core import c, p, r, t
 from flext_core.loggings import FlextLogger
 
@@ -230,15 +232,25 @@ class FlextDispatcher:
             if isinstance(result_raw, p.ResultLike):
                 result_like = result_raw
                 if result_like.is_failure:
+                    error_data_value = result_like.error_data
                     return r[t.Container].fail(
                         result_like.error or "Handler failed",
                         error_code=result_like.error_code,
-                        error_data=result_like.error_data,  # type: ignore[arg-type]
+                        error_data=error_data_value
+                        if isinstance(error_data_value, BaseModel)
+                        else None,
                     )
-                return r[t.Container].ok(result_like.value)  # type: ignore[arg-type]
+                value = result_like.value
+                if value is None:
+                    return r[t.Container].fail(
+                        "Handler returned None in success result"
+                    )
+                return r[t.Container].ok(value)
 
             # Bare value return
-            return r[t.Container].ok(result_raw)  # type: ignore[arg-type]
+            if result_raw is None:
+                return r[t.Container].fail("Handler returned None")
+            return r[t.Container].ok(result_raw)
 
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)

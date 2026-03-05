@@ -500,6 +500,8 @@ ______________________________________________________________________
    # To:
 
    "See `src/flext_core/config.py` (674 lines)"
+   ```
+
 ```
 
 ### Medium Priority
@@ -600,4 +602,4 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 ______________________________________________________________________
 
 **Next**: Complete Phase 1.6 - API Reference audits
-````
+```

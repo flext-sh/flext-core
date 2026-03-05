@@ -85,7 +85,7 @@ ______________________________________________________________________
 
 **Source Code Evidence**:
 
-````bash
+```bash
 # FlextResult usage across codebase
 $ grep -n "FlextResult\[" src/flext_core/*.py | wc -l
 1121
@@ -570,7 +570,9 @@ ______________________________________________________________________
 
    ```markdown
    Example: Anti-Pattern 1 - See result.py:313 (ok method)
-```
+   ```
+
+````
 
 ### Medium Priority
 
@@ -586,7 +588,7 @@ ______________________________________________________________________
 
 1. **Add Anti-Pattern Detection**:
 
-   ````markdown
+   ```markdown
    ## How to Detect These Anti-Patterns
 
    ### Anti-Pattern 1: Exceptions for Business Logic
@@ -594,8 +596,9 @@ ______________________________________________________________________
    ```bash
    # Search for business logic exceptions
    grep -r "raise ValueError\|raise KeyError" src/
+````
+
 ```
-`````
 
 ### Low Priority
 
@@ -659,3 +662,4 @@ The Anti-Patterns and Best Practices guide is **EXCELLENT** and serves as a **go
 ______________________________________________________________________
 
 **Next**: Audit Pydantic v2 Patterns guide
+```

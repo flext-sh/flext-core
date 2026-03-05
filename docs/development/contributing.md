@@ -224,7 +224,9 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Reinstall dependencies
    make install
-```
+   ```
+
+````
 
 1. **Type Errors**
 
@@ -234,7 +236,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Check specific files
    mypy src/flext_core/your_module.py
-```
+````
 
 1. **Test Failures**
 
@@ -244,6 +246,8 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Debug specific test
    pytest tests/unit/test_result.py::TestFlextResult::test_ok -v -s
+   ```
+
 ```
 
 ### Documentation Updates
@@ -299,17 +303,19 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **Module Structure:**
 
 ```
+
 src/flext_core/
-├── __init__.py          # Public API exports
-├── result.py           # Railway pattern implementation
-├── container.py        # Dependency injection
-├── models.py           # DDD base classes
-├── service.py          # Domain service base
-├── bus.py             # Message bus
-├── config.py          # Configuration management
-├── loggings.py        # Structured logging
+├── **init**.py # Public API exports
+├── result.py # Railway pattern implementation
+├── container.py # Dependency injection
+├── models.py # DDD base classes
+├── service.py # Domain service base
+├── bus.py # Message bus
+├── config.py # Configuration management
+├── loggings.py # Structured logging
 └── ... (other modules)
-```
+
+````
 
 **Import Guidelines:**
 
@@ -339,7 +345,7 @@ from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
 from .result import FlextResult
-```
+````
 
 ## Review Process
 
@@ -430,4 +436,6 @@ ______________________________________________________________________
 Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
 
 **Happy coding!** 🚀
-````
+
+```
+```

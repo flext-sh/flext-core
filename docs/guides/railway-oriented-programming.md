@@ -1068,4 +1068,6 @@ except Exception:
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for 250+ test cases demonstrating all FlextResult patterns and edge cases.
-````
+
+```
+```

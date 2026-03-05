@@ -470,4 +470,6 @@ make validate  # In flext-core directory
 - ✅ No exceptions
 
 **If a standard seems wrong, raise an issue.** Standards can evolve, but when they exist, they apply universally.
-````
+
+```
+```

@@ -677,7 +677,9 @@ monitor_cpu()
 
    # Project-specific check
    cd flext-core && make validate
-```
+   ```
+
+````
 
 1. **Check Logs**
 
@@ -685,7 +687,7 @@ monitor_cpu()
    # Enable debug logging
    export FLEXT_LOG_LEVEL=DEBUG
    python your_script.py
-```
+````
 
 ### Community Support
 
@@ -716,7 +718,9 @@ When reporting issues, include:
    python --version
    poetry env info
    make info
-```
+   ```
+
+````
 
 1. **Error Details**
 
@@ -727,14 +731,16 @@ When reporting issues, include:
        # Your code here
    except Exception as e:
        traceback.print_exc()
-```
+````
 
 1. **Minimal Reproduction**
 
    ```python
    # Minimal code that reproduces the issue
    from flext_core import FlextBus
-```
+   ```
+
+````
 
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -778,7 +784,7 @@ def process(data: dict) -> FlextResult[ProcessedData]:
 # ❌ BAD
 def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
-```
+````
 
 1. **Validate Input Early**
 
@@ -789,7 +795,9 @@ def process(data: dict) -> ProcessedData:
 
        # Process data
        return FlextResult.ok(processed_data)
-```
+   ```
+
+````
 
 1. **Use Type Hints**
 
@@ -801,7 +809,7 @@ def process(data: dict) -> ProcessedData:
    # ❌ BAD
    def process(items):
        pass
-```
+````
 
 1. **Test Thoroughly**
 
@@ -814,6 +822,8 @@ def process(data: dict) -> ProcessedData:
        # Test failure case
        result = process_data(None)
        assert result.is_failure
+   ```
+
 ```
 
 ## Resources
@@ -824,4 +834,4 @@ def process(data: dict) -> ProcessedData:
 - Testing Guide
 - [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
-````
+```

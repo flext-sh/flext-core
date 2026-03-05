@@ -16,6 +16,8 @@ from pydantic import Field
 
 from flext_core import FlextModels as _FlextModels
 
+_PROJECT_NAME_DESC = "Project name"
+
 
 class FlextInfraModels(_FlextModels):
     """Pydantic model namespace for infrastructure services."""
@@ -23,7 +25,7 @@ class FlextInfraModels(_FlextModels):
     class ProjectInfo(_FlextModels.ArbitraryTypesModel):
         """Discovered project metadata for workspace operations."""
 
-        name: str = Field(min_length=1, description="Project name")
+        name: str = Field(min_length=1, description=_PROJECT_NAME_DESC)
         path: Path = Field(description="Absolute or relative project path")
         stack: str = Field(min_length=1, description="Primary technology stack")
         has_tests: bool = Field(default=False, description="Project has test suite")
@@ -33,7 +35,7 @@ class FlextInfraModels(_FlextModels):
         """Result summary for a single quality gate execution."""
 
         gate: str = Field(min_length=1, description="Gate name")
-        project: str = Field(min_length=1, description="Project name")
+        project: str = Field(min_length=1, description=_PROJECT_NAME_DESC)
         passed: bool = Field(description="Gate execution status")
         errors: list[str] = Field(
             default_factory=list,

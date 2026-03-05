@@ -12,6 +12,9 @@ from types import MappingProxyType
 from typing import ClassVar, TypedDict, cast
 
 import libcst as cst
+import yaml
+
+from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
 
 def _dotted_name(expr: cst.BaseExpression) -> str:
@@ -39,6 +42,19 @@ class _HelperFileAnalysis(TypedDict):
     suggestions: list[dict[str, object]]
     totals: Counter[str]
     manual_review: list[dict[str, object]]
+
+
+class _ClassNestingMappingEntry(TypedDict):
+    target_namespace: str
+    confidence: str
+
+
+class _ClassNestingViolation(TypedDict):
+    file: str
+    line: int
+    class_name: str
+    target_namespace: str
+    confidence: str
 
 
 def _asname_to_local(asname: cst.AsName | None) -> str | None:
@@ -90,6 +106,190 @@ class _FunctionDependencyCollector(cst.CSTVisitor):
 
     def visit_Name(self, node: cst.Name) -> None:
         self.names.add(node.value)
+
+
+class FlextInfraRefactorClassNestingAnalyzer:
+    _MAPPINGS_RELATIVE_PATH: ClassVar[Path] = (
+        Path("rules") / "class-nesting-mappings.yml"
+    )
+
+    @classmethod
+    def analyze_files(cls, files: list[Path]) -> Mapping[str, object]:
+        if not files:
+            return {
+                "violations_count": 0,
+                "confidence_counts": {},
+                "violations": [],
+                "per_file_counts": {},
+            }
+
+        grouped_targets = cls._group_targets_by_project_root(files)
+        if not grouped_targets:
+            return {
+                "violations_count": 0,
+                "confidence_counts": {},
+                "violations": [],
+                "per_file_counts": {},
+            }
+
+        scanner = FlextInfraRefactorLooseClassScanner()
+        mapping_index = cls._load_mapping_index()
+        confidence_counts: Counter[str] = Counter()
+        per_file_counts: Counter[str] = Counter()
+        violations: list[_ClassNestingViolation] = []
+
+        for project_root, target_files in grouped_targets.items():
+            scan_result = scanner.scan(project_root)
+            raw_violations = scan_result.get("violations", [])
+            if not isinstance(raw_violations, list):
+                continue
+
+            for raw_violation in cast("list[object]", raw_violations):
+                if not isinstance(raw_violation, dict):
+                    continue
+                typed_violation = cast("dict[object, object]", raw_violation)
+
+                raw_file = typed_violation.get("file")
+                raw_line = typed_violation.get("line")
+                raw_class_name = typed_violation.get("class_name")
+                raw_confidence = typed_violation.get("confidence")
+                raw_expected_prefix = typed_violation.get("expected_prefix")
+
+                if not isinstance(raw_file, str):
+                    continue
+                if not isinstance(raw_class_name, str):
+                    continue
+
+                normalized_file = cls._normalize_module_path(raw_file)
+                if target_files and normalized_file not in target_files:
+                    continue
+
+                line = 1
+                if isinstance(raw_line, int) and raw_line > 0:
+                    line = raw_line
+
+                confidence = "low"
+                if isinstance(raw_confidence, str) and raw_confidence:
+                    confidence = raw_confidence
+
+                target_namespace = ""
+                mapped_entry = mapping_index.get((normalized_file, raw_class_name))
+                if mapped_entry is not None:
+                    target_namespace = mapped_entry["target_namespace"]
+                    confidence = mapped_entry["confidence"]
+                elif isinstance(raw_expected_prefix, str):
+                    target_namespace = raw_expected_prefix
+
+                violations.append({
+                    "file": normalized_file,
+                    "line": line,
+                    "class_name": raw_class_name,
+                    "target_namespace": target_namespace,
+                    "confidence": confidence,
+                })
+                confidence_counts[confidence] += 1
+                per_file_counts[normalized_file] += 1
+
+        return {
+            "violations_count": len(violations),
+            "confidence_counts": dict(confidence_counts),
+            "violations": violations,
+            "per_file_counts": dict(per_file_counts),
+        }
+
+    @classmethod
+    def _group_targets_by_project_root(cls, files: list[Path]) -> dict[Path, set[str]]:
+        grouped: dict[Path, set[str]] = {}
+        for file_path in files:
+            project_root = cls._find_project_root(file_path)
+            if project_root is None:
+                continue
+
+            module_path = cls._module_path_for_file(file_path, project_root)
+            if module_path is None:
+                continue
+
+            grouped.setdefault(project_root, set()).add(module_path)
+        return grouped
+
+    @classmethod
+    def _find_project_root(cls, file_path: Path) -> Path | None:
+        resolved = file_path.resolve()
+        for parent in (resolved.parent, *resolved.parents):
+            src_dir = parent / "src"
+            if not src_dir.is_dir():
+                continue
+            try:
+                resolved.relative_to(src_dir.resolve())
+                return parent
+            except ValueError:
+                continue
+        return None
+
+    @classmethod
+    def _module_path_for_file(cls, file_path: Path, project_root: Path) -> str | None:
+        src_dir = (project_root / "src").resolve()
+        resolved = file_path.resolve()
+        try:
+            relative = resolved.relative_to(src_dir)
+        except ValueError:
+            return None
+        return relative.as_posix()
+
+    @classmethod
+    def _load_mapping_index(cls) -> Mapping[tuple[str, str], _ClassNestingMappingEntry]:
+        mapping_path = Path(__file__).resolve().parent / cls._MAPPINGS_RELATIVE_PATH
+        try:
+            raw_content = mapping_path.read_text(encoding="utf-8")
+            parsed = cast("object", yaml.safe_load(raw_content))
+        except (OSError, yaml.YAMLError):
+            return {}
+
+        if not isinstance(parsed, dict):
+            return {}
+
+        parsed_dict = cast("dict[object, object]", parsed)
+        raw_entries = parsed_dict.get("class_nesting", [])
+        if not isinstance(raw_entries, list):
+            return {}
+
+        index: dict[tuple[str, str], _ClassNestingMappingEntry] = {}
+        for raw_entry in cast("list[object]", raw_entries):
+            if not isinstance(raw_entry, dict):
+                continue
+            typed_entry = cast("dict[object, object]", raw_entry)
+            loose_name = typed_entry.get("loose_name")
+            current_file = typed_entry.get("current_file")
+            target_namespace = typed_entry.get("target_namespace")
+            confidence = typed_entry.get("confidence")
+            if not isinstance(loose_name, str):
+                continue
+            if not isinstance(current_file, str):
+                continue
+            if not isinstance(target_namespace, str):
+                continue
+            if not isinstance(confidence, str):
+                continue
+
+            normalized_file = cls._normalize_module_path(current_file)
+            index[normalized_file, loose_name] = {
+                "target_namespace": target_namespace,
+                "confidence": confidence,
+            }
+
+        return index
+
+    @classmethod
+    def _normalize_module_path(cls, raw_path: str) -> str:
+        normalized = raw_path.replace("\\", "/")
+        path = Path(normalized)
+        parts = path.parts
+        if "src" in parts:
+            src_index = parts.index("src")
+            suffix = parts[src_index + 1 :]
+            if suffix:
+                return Path(*suffix).as_posix()
+        return path.as_posix().lstrip("./")
 
 
 class FlextInfraRefactorViolationAnalyzer:
@@ -175,6 +375,27 @@ class FlextInfraRefactorViolationAnalyzer:
             if file_counts:
                 per_file[str(file_path)] = file_counts
 
+        class_nesting = FlextInfraRefactorClassNestingAnalyzer.analyze_files(files)
+        class_nesting_count_obj = class_nesting.get("violations_count", 0)
+        class_nesting_count = (
+            class_nesting_count_obj if isinstance(class_nesting_count_obj, int) else 0
+        )
+        if class_nesting_count > 0:
+            totals["class_nesting"] += class_nesting_count
+
+        class_nesting_per_file_obj = class_nesting.get("per_file_counts", {})
+        if isinstance(class_nesting_per_file_obj, dict):
+            typed_class_nesting_per_file = cast(
+                "dict[object, object]", class_nesting_per_file_obj
+            )
+            for raw_file, raw_count in typed_class_nesting_per_file.items():
+                if not isinstance(raw_file, str):
+                    continue
+                if not isinstance(raw_count, int):
+                    continue
+                counts = per_file.setdefault(raw_file, {})
+                counts["class_nesting"] = raw_count
+
         ranked_files: list[tuple[str, int, dict[str, int]]] = []
         for file_name, counts in per_file.items():
             ranked_files.append((file_name, sum(counts.values()), counts))
@@ -199,6 +420,7 @@ class FlextInfraRefactorViolationAnalyzer:
                 "suggestions": helper_suggestions,
                 "manual_review": helper_manual_review,
             },
+            "class_nesting": class_nesting,
         }
 
     @classmethod
@@ -359,4 +581,7 @@ class FlextInfraRefactorViolationAnalyzer:
         return True
 
 
-__all__ = ["FlextInfraRefactorViolationAnalyzer"]
+__all__ = [
+    "FlextInfraRefactorClassNestingAnalyzer",
+    "FlextInfraRefactorViolationAnalyzer",
+]

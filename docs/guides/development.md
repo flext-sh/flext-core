@@ -63,7 +63,7 @@ This guide covers setting up a development environment for FLEXT contributions a
 
 ### 1. Clone the Repository
 
-````bash
+```bash
 git clone https://github.com/flext-sh/flext.git
 cd flext
 ```
@@ -468,9 +468,12 @@ config = FlextNewlibSettings(new_setting="value")
 
    # Reinstall dependencies
    make clean && make setup
-```
 
-````markdown
+   ```
+
+````
+
+```markdown
 
 2. **Test Failures**
 
@@ -480,7 +483,7 @@ config = FlextNewlibSettings(new_setting="value")
 
    # Check specific test
    pytest tests/unit/test_specific.py::test_function -v
-````markdown
+```markdown
 
 1. **Build Issues**
 
@@ -489,7 +492,7 @@ config = FlextNewlibSettings(new_setting="value")
    make clean-all
    make setup
    make build-all
-```
+````
 
 ## Resources
 
@@ -504,4 +507,6 @@ config = FlextNewlibSettings(new_setting="value")
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
 - **Email**: <dev@flext.com>
-`````
+
+```
+```
