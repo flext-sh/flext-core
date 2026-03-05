@@ -1,0 +1,190 @@
+version: 2
+engine: class_refactor_policy
+description: Declarative policy matrix for module-family-aware class refactoring.
+policy_matrix:
+  - family_name: _models
+    module_patterns:
+      - "_models"
+      - "_models/*"
+    facade_family: m
+    allowed_operations:
+      - reorganize_composition_classes_under_models_facade
+      - move_top_level_classes_to_flext_models_namespace
+      - normalize_nested_class_path_within_models_facade
+      - propagate_symbol_references_after_models_relocation
+    forbidden_operations:
+      - move_or_promote_classes_to_utilities_facade
+      - move_or_promote_classes_to_decorators_facade
+      - move_or_promote_classes_to_dispatcher_facade
+      - convert_models_to_static_helper_functions
+    forbidden_targets:
+      - FlextUtilities
+      - FlextDecorators
+      - FlextDispatcher
+      - "u.*"
+      - "d.*"
+      - "dispatcher.*"
+    validation_requirements:
+      pre_checks:
+        - source_symbol_is_class_definition
+        - source_module_family_matches_models
+        - target_facade_alias_is_m
+      post_checks:
+        - no_models_symbol_rewritten_to_u_or_d_or_dispatcher
+        - nested_class_path_resolves_from_m_alias
+        - cross_file_symbol_references_updated_for_models
+      quality_gates:
+        - lsp_diagnostics_clean
+
+  - family_name: _utilities
+    module_patterns:
+      - "_utilities"
+      - "_utilities/*"
+    facade_family: u
+    allowed_operations:
+      - consolidate_helper_classes_under_utilities_facade
+      - convert_safe_top_level_helpers_to_static_or_nested_helpers
+      - deduplicate_equivalent_helper_implementations_within_u
+      - propagate_symbol_references_after_utility_relocation
+    forbidden_operations:
+      - alter_helper_state_shape_without_validation
+      - alter_public_helper_signature_without_validation
+      - relocate_utilities_helpers_to_models_or_dispatcher_or_decorators
+      - rewrite_helper_contracts_without_cross_project_update
+    forbidden_targets:
+      - FlextModels
+      - FlextDispatcher
+      - FlextDecorators
+      - "m.*"
+      - "d.*"
+      - "dispatcher.*"
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_utilities
+        - helper_state_model_and_signature_snapshotted
+        - target_facade_alias_is_u
+      post_checks:
+        - helper_state_contract_preserved_or_explicitly_migrated
+        - callable_signature_preserved_or_propagated
+        - cross_project_references_rewritten_when_signature_changes
+      quality_gates:
+        - lsp_diagnostics_clean
+
+  - family_name: _dispatcher
+    module_patterns:
+      - "_dispatcher"
+      - "_dispatcher/*"
+    facade_family: dispatcher
+    allowed_operations:
+      - reorganize_classes_under_flext_dispatcher_namespace
+      - normalize_dispatcher_nested_class_paths
+      - consolidate_dispatch_routing_related_classes
+      - propagate_dispatcher_symbol_references_workspace_scope
+    forbidden_operations:
+      - move_dispatcher_classes_to_models_or_utilities_or_decorators
+      - rename_dispatch_contract_symbols_without_propagation
+      - narrow_dispatcher_protocols_without_cross_project_validation
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDecorators
+      - "m.*"
+      - "u.*"
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_dispatcher
+        - target_namespace_is_flext_dispatcher
+        - rewrite_scope_is_project_or_workspace
+      post_checks:
+        - dispatcher_references_propagated_across_projects
+        - no_stale_dispatcher_imports_left_after_rewrite
+        - dispatcher_callable_contracts_remain_resolvable
+      quality_gates:
+        - lsp_diagnostics_clean
+
+  - family_name: _decorators
+    module_patterns:
+      - "_decorators"
+      - "_decorators/*"
+    facade_family: d
+    allowed_operations:
+      - consolidate_decorator_classes_under_flext_decorators_namespace
+      - normalize_decorator_nesting_paths
+      - propagate_decorator_references_after_relocation
+      - co_locate_related_factory_decorators
+    forbidden_operations:
+      - move_decorator_classes_to_models_or_utilities_or_dispatcher
+      - change_callable_contract_arity_or_return_semantics
+      - rewrite_decorator_protocol_without_contract_validation
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDispatcher
+      - "m.*"
+      - "u.*"
+      - "dispatcher.*"
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_decorators
+        - target_namespace_is_flext_decorators
+        - callable_contract_snapshot_created
+      post_checks:
+        - callable_contract_preserved
+        - decorator_invocation_sites_still_type_resolvable
+        - references_rewritten_for_decorator_namespace
+      quality_gates:
+        - lsp_diagnostics_clean
+
+  - family_name: _runtime
+    module_patterns:
+      - "_runtime"
+      - "_runtime*"
+    facade_family: x
+    allowed_operations:
+      - apply_explicitly_whitelisted_runtime_transforms_only
+      - propagate_references_for_whitelisted_runtime_moves
+    forbidden_operations:
+      - any_transform_not_explicitly_whitelisted
+      - implicit_or_heuristic_runtime_relocation
+      - move_runtime_symbols_to_non_runtime_facades
+      - mutate_runtime_contracts_without_whitelist_entry
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDispatcher
+      - FlextDecorators
+      - "m.*"
+      - "u.*"
+      - "d.*"
+      - "dispatcher.*"
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_runtime
+        - transform_id_present_in_runtime_whitelist
+        - target_namespace_matches_whitelist_entry
+      post_checks:
+        - transformed_symbols_match_whitelist_expectations
+        - runtime_alias_access_remains_resolvable
+        - no_non_whitelisted_runtime_changes_detected
+      quality_gates:
+        - lsp_diagnostics_clean
+
+runtime_whitelist:
+  - transform_id: runtime_metadata_class_nesting
+    source_module_pattern: "_runtime_metadata.py"
+    source_symbol: Metadata
+    target_namespace: FlextRuntimeMetadata
+    target_name: Metadata
+    rewrite_scope: workspace
+  - transform_id: runtime_lazy_metadata_normalization
+    source_module_pattern: "runtime.py"
+    source_symbol: _LazyMetadata
+    target_namespace: FlextRuntime
+    target_name: _LazyMetadata
+    rewrite_scope: project
+
+defaults:
+  enforcement:
+    unknown_family: blocked
+    unknown_operation: blocked
+    runtime_default: blocked
