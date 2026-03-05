@@ -78,6 +78,44 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         return tree.with_changes(body=new_body), changes
 
     def _get_passthrough_target(self, func: cst.FunctionDef) -> str | None:
+        passthrough = self._extract_passthrough_call(func)
+        if passthrough is None:
+            return None
+
+        target_name, call_args = passthrough
+        (
+            positional_expected,
+            kwonly_expected,
+            expected_star_arg,
+            expected_star_kwarg,
+        ) = self._expected_forwarding_params(func)
+
+        parsed_forwarding = self._parse_forwarded_arguments(call_args)
+        if parsed_forwarding is None:
+            return None
+
+        positional_forwarded, keyword_forwarded, star_forwarded, star_kw_forwarded = (
+            parsed_forwarding
+        )
+
+        if not self._is_forwarding_compatible(
+            positional_expected=positional_expected,
+            kwonly_expected=kwonly_expected,
+            expected_star_arg=expected_star_arg,
+            expected_star_kwarg=expected_star_kwarg,
+            positional_forwarded=positional_forwarded,
+            keyword_forwarded=keyword_forwarded,
+            star_forwarded=star_forwarded,
+            star_kw_forwarded=star_kw_forwarded,
+        ):
+            return None
+
+        return target_name
+
+    def _extract_passthrough_call(
+        self,
+        func: cst.FunctionDef,
+    ) -> tuple[str, list[cst.Arg]] | None:
         if not isinstance(func.body, cst.IndentedBlock):
             return None
         if len(func.body.body) != 1:
@@ -96,8 +134,12 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         if not isinstance(small_stmt.value.func, cst.Name):
             return None
 
-        call_args = list(small_stmt.value.args)
+        return small_stmt.value.func.value, list(small_stmt.value.args)
 
+    def _expected_forwarding_params(
+        self,
+        func: cst.FunctionDef,
+    ) -> tuple[list[str], list[str], str | None, str | None]:
         posonly_names = [param.name.value for param in func.params.posonly_params]
         positional_names = [param.name.value for param in func.params.params]
         positional_expected = posonly_names + positional_names
@@ -111,34 +153,46 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         if isinstance(func.params.star_kwarg, cst.Param):
             expected_star_kwarg = func.params.star_kwarg.name.value
 
+        return (
+            positional_expected,
+            kwonly_expected,
+            expected_star_arg,
+            expected_star_kwarg,
+        )
+
+    @staticmethod
+    def _name_value(expr: cst.BaseExpression) -> str | None:
+        value = getattr(expr, "value", None)
+        if isinstance(value, str):
+            return value
+        return None
+
+    def _parse_forwarded_arguments(
+        self,
+        call_args: list[cst.Arg],
+    ) -> tuple[list[str], dict[str, str], str | None, str | None] | None:
         positional_forwarded: list[str] = []
         keyword_forwarded: dict[str, str] = {}
         star_forwarded: str | None = None
         star_kw_forwarded: str | None = None
 
-        def _name_value(expr: cst.BaseExpression) -> str | None:
-            value = getattr(expr, "value", None)
-            if isinstance(value, str):
-                return value
-            return None
-
         for arg in call_args:
             if arg.keyword is not None:
-                name_value = _name_value(arg.value)
+                name_value = self._name_value(arg.value)
                 if name_value is None:
                     return None
                 keyword_forwarded[arg.keyword.value] = name_value
                 continue
 
             if arg.star == "*":
-                name_value = _name_value(arg.value)
+                name_value = self._name_value(arg.value)
                 if name_value is None:
                     return None
                 star_forwarded = name_value
                 continue
 
             if arg.star == "**":
-                name_value = _name_value(arg.value)
+                name_value = self._name_value(arg.value)
                 if name_value is None:
                     return None
                 star_kw_forwarded = name_value
@@ -146,29 +200,49 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
 
             if arg.star not in {"", None}:
                 return None
-            name_value = _name_value(arg.value)
+            name_value = self._name_value(arg.value)
             if name_value is None:
                 return None
             positional_forwarded.append(name_value)
+
+        return (
+            positional_forwarded,
+            keyword_forwarded,
+            star_forwarded,
+            star_kw_forwarded,
+        )
+
+    @staticmethod
+    def _is_forwarding_compatible(
+        *,
+        positional_expected: list[str],
+        kwonly_expected: list[str],
+        expected_star_arg: str | None,
+        expected_star_kwarg: str | None,
+        positional_forwarded: list[str],
+        keyword_forwarded: dict[str, str],
+        star_forwarded: str | None,
+        star_kw_forwarded: str | None,
+    ) -> bool:
 
         positional_by_name = len(positional_forwarded) == 0 and set(
             keyword_forwarded.keys()
         ) >= set(positional_expected)
         positional_by_position = positional_forwarded == positional_expected
         if not (positional_by_position or positional_by_name):
-            return None
+            return False
 
         for name in positional_expected:
             if name in keyword_forwarded and keyword_forwarded[name] != name:
-                return None
+                return False
 
         if kwonly_expected and not set(keyword_forwarded.keys()) >= set(
             kwonly_expected
         ):
-            return None
+            return False
         for name in kwonly_expected:
             if keyword_forwarded.get(name) != name:
-                return None
+                return False
 
         extra_keywords = (
             set(keyword_forwarded.keys())
@@ -176,19 +250,19 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
             - set(kwonly_expected)
         )
         if extra_keywords:
-            return None
+            return False
 
         if expected_star_arg is not None and star_forwarded != expected_star_arg:
-            return None
+            return False
         if expected_star_arg is None and star_forwarded is not None:
-            return None
+            return False
 
         if expected_star_kwarg is not None and star_kw_forwarded != expected_star_kwarg:
-            return None
+            return False
         if expected_star_kwarg is None and star_kw_forwarded is not None:
-            return None
+            return False
 
-        return small_stmt.value.func.value
+        return True
 
     def _remove_import_bypasses(
         self,
