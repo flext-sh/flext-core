@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Mapping
 from typing import override
 
 from flext_core import (
@@ -363,7 +364,7 @@ class Ex09FlextDecorators(Examples):
         enabled = self.rand_bool()
 
         @d.with_context(tenant=tenant, retries=retries, enabled=enabled, dropped=None)
-        def read_bound_context() -> dict[str, t.Scalar | None]:
+        def read_bound_context() -> Mapping[str, t.Scalar | None]:
             """Read context values while decorator-managed context is active."""
             context_vars = dict(FlextRuntime.structlog().contextvars.get_contextvars())
             return {

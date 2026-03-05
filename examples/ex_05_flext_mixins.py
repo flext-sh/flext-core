@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import cast, override
 
@@ -60,7 +61,7 @@ def _verify() -> None:
 
 
 class _DemoService(x):
-    def run_track_success(self) -> dict[str, t.Serializable]:
+    def run_track_success(self) -> Mapping[str, t.Serializable]:
         with self.track("demo_success") as metrics:
             has_duration = "duration_ms" in metrics
             operation_count = str(metrics.get("operation_count", -1))
@@ -105,12 +106,12 @@ class _ProtocolService:
     def is_valid(self) -> bool:
         return True
 
-    def get_service_info(self) -> dict[str, str]:
+    def get_service_info(self) -> Mapping[str, str]:
         return {"name": "protocol-service"}
 
 
 class _GoodProcessor:
-    def model_dump(self) -> dict[str, str]:
+    def model_dump(self) -> Mapping[str, str]:
         return {"status": "ok"}
 
     def process(self) -> bool:
@@ -124,7 +125,7 @@ class _GoodProcessor:
 
 
 class _BadProcessor:
-    def model_dump(self) -> dict[str, str]:
+    def model_dump(self) -> Mapping[str, str]:
         return {"status": "bad"}
 
     def _protocol_name(self) -> str:

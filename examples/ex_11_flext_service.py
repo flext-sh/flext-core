@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from collections import UserDict
+from collections.abc import Mapping
 from typing import ClassVar, cast, override
 
 from pydantic import BaseModel, PrivateAttr
@@ -172,7 +173,7 @@ class _ProcessorProtocolGood:
     def validate(self) -> bool:
         return True
 
-    def model_dump(self) -> dict[str, str]:
+    def model_dump(self) -> Mapping[str, str]:
         return {"status": "ok"}
 
     def _protocol_name(self) -> str:
@@ -183,7 +184,7 @@ class _ProcessorProtocolBad:
     def validate(self) -> bool:
         return False
 
-    def model_dump(self) -> dict[str, str]:
+    def model_dump(self) -> Mapping[str, str]:
         return {"status": "bad"}
 
     def _protocol_name(self) -> str:
@@ -517,7 +518,7 @@ class Ex11FlextService(Examples):
         other_entity_id = self.rand_str(8)
 
         # Metadata namespace class (lazy-loaded from runtime)
-        metadata_cls = cast("type", s.Metadata)
+        metadata_cls = m.Metadata
         metadata = metadata_cls(attributes={"service": service_name})
         self.check("Metadata.version", metadata.version)
         self.check("Metadata.attributes", metadata.attributes)

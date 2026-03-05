@@ -1,9 +1,9 @@
 """FlextDispatcher — exercises ALL public API methods with golden file validation."""
 
 from __future__ import annotations
-from collections.abc import Mapping
 
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar

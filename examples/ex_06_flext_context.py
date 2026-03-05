@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import cast
@@ -82,7 +82,7 @@ class _ContainerStub:
         self._context = FlextContext.create()
 
     @property
-    def config(self) -> dict[str, t.Container]:
+    def config(self) -> Mapping[str, t.Container]:
         return self._config
 
     @property
@@ -95,7 +95,7 @@ class _ContainerStub:
     def wire_modules(self, **_kwargs: object) -> None:
         return None
 
-    def get_config(self) -> dict[str, t.Container]:
+    def get_config(self) -> Mapping[str, t.Container]:
         return self._config
 
     def has_service(self, name: str) -> bool:
