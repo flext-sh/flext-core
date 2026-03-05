@@ -25,7 +25,10 @@ from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.enum import FlextUtilitiesEnum
 from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.guards import (
+    FlextUtilitiesGuards,
+    validate_pydantic_model,
+)
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core._utilities.pagination import FlextUtilitiesPagination
@@ -493,4 +496,5 @@ u = FlextUtilities
 __all__ = [
     "FlextUtilities",
     "u",
+    "validate_pydantic_model",
 ]
