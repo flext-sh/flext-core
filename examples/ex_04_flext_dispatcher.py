@@ -1,6 +1,7 @@
 """FlextDispatcher — exercises ALL public API methods with golden file validation."""
 
 from __future__ import annotations
+from collections.abc import Mapping
 
 import sys
 from dataclasses import dataclass
@@ -154,7 +155,7 @@ class GetUserDispatcher:
 
     message_type = GetUser
 
-    def dispatch_message(self, message: object) -> dict[str, str]:
+    def dispatch_message(self, message: object) -> Mapping[str, str]:
         """Return a synthetic user payload for supported query."""
         if isinstance(message, GetUser):
             return {"state": "active", "username": message.username}
