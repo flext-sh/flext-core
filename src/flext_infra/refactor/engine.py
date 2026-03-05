@@ -32,6 +32,12 @@ from flext_infra.refactor.rules.legacy_removal import (
 from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
+from flext_infra.refactor.rules.symbol_propagation import (
+    FlextInfraRefactorSymbolPropagationRule,
+)
+from flext_infra.refactor.rules.signature_propagation import (
+    FlextInfraRefactorSignaturePropagationRule,
+)
 
 
 class FlextInfraRefactorEngine:
@@ -128,6 +134,10 @@ class FlextInfraRefactorEngine:
             return FlextInfraRefactorClassReconstructorRule(rule_def)
         if fix_action in c.Infra.Refactor.MRO_FIX_ACTIONS:
             return FlextInfraRefactorMRORedundancyChecker(rule_def)
+        if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
+            if fix_action == "propagate_signature_migrations":
+                return FlextInfraRefactorSignaturePropagationRule(rule_def)
+            return FlextInfraRefactorSymbolPropagationRule(rule_def)
 
         rule_id_lower = rule_id.lower()
         if "ensure-future" in rule_id_lower or "future-annotations" in rule_id_lower:
@@ -143,6 +153,12 @@ class FlextInfraRefactorEngine:
             return FlextInfraRefactorClassReconstructorRule(rule_def)
         if "mro" in rule_id_lower:
             return FlextInfraRefactorMRORedundancyChecker(rule_def)
+        if any(
+            key in rule_id_lower for key in ["propagate", "symbol-rename", "rename"]
+        ):
+            if "signature" in rule_id_lower:
+                return FlextInfraRefactorSignaturePropagationRule(rule_def)
+            return FlextInfraRefactorSymbolPropagationRule(rule_def)
         return None
 
     def list_rules(self) -> list[dict[str, Any]]:
@@ -228,13 +244,18 @@ class FlextInfraRefactorEngine:
         dry_run: bool = False,
         pattern: str = "*.py",
     ) -> list[FlextInfraRefactorResult]:
-        """Refactor files under project src directory matching the pattern."""
-        src_dir = project_path / "src"
-        if not src_dir.exists():
-            output.error(f"No src/ directory in {project_path}")
+        """Refactor files under configured project directories matching the pattern."""
+        engine_config_obj = self.config.get("refactor_engine")
+        scan_dirs = self._extract_project_scan_dirs(engine_config_obj)
+        candidate_roots = [project_path / rel_dir for rel_dir in scan_dirs]
+        existing_roots = [root for root in candidate_roots if root.exists()]
+
+        if not existing_roots:
+            output.error(
+                f"No configured scan directories in {project_path}: {', '.join(scan_dirs)}"
+            )
             return []
 
-        engine_config_obj = self.config.get("refactor_engine")
         ignore_items, extension_items = self._extract_engine_file_filters(
             engine_config_obj
         )
@@ -242,25 +263,55 @@ class FlextInfraRefactorEngine:
         allowed_extensions = {str(item) for item in extension_items}
 
         files: list[Path] = []
-        for py_file in src_dir.rglob(pattern):
-            relative_path = py_file.relative_to(src_dir)
-            relative_path_str = str(relative_path)
+        for root_dir in existing_roots:
+            for py_file in root_dir.rglob(pattern):
+                relative_path = py_file.relative_to(project_path)
+                relative_path_str = str(relative_path)
 
-            if allowed_extensions and py_file.suffix not in allowed_extensions:
-                continue
-            if py_file.name in ignore_patterns:
-                continue
-            if any(part in ignore_patterns for part in relative_path.parts):
-                continue
-            if any(
-                fnmatch.fnmatch(relative_path_str, ignore_pattern)
-                for ignore_pattern in ignore_patterns
-            ):
-                continue
-            files.append(py_file)
+                if allowed_extensions and py_file.suffix not in allowed_extensions:
+                    continue
+                if py_file.name in ignore_patterns:
+                    continue
+                if any(part in ignore_patterns for part in relative_path.parts):
+                    continue
+                if any(
+                    fnmatch.fnmatch(relative_path_str, ignore_pattern)
+                    for ignore_pattern in ignore_patterns
+                ):
+                    continue
+                files.append(py_file)
 
         output.info(f"Found {len(files)} files to process")
         return self.refactor_files(files, dry_run=dry_run)
+
+    def refactor_workspace(
+        self,
+        workspace_root: Path,
+        *,
+        dry_run: bool = False,
+        pattern: str = "*.py",
+    ) -> list[FlextInfraRefactorResult]:
+        """Refactor all discoverable workspace projects with one command."""
+        root = workspace_root.resolve()
+        if not root.exists() or not root.is_dir():
+            output.error(f"Invalid workspace root: {workspace_root}")
+            return []
+
+        project_paths = self._discover_workspace_projects(root)
+        if not project_paths:
+            output.error(
+                f"No projects discovered under workspace root: {workspace_root}"
+            )
+            return []
+
+        output.info(f"Discovered {len(project_paths)} projects in workspace")
+        results: list[FlextInfraRefactorResult] = []
+        for project in project_paths:
+            output.header(f"Project: {project}")
+            results.extend(
+                self.refactor_project(project, dry_run=dry_run, pattern=pattern)
+            )
+        return results
 
     @staticmethod
     def print_rules_table(rules: list[dict[str, Any]]) -> None:
@@ -352,6 +403,45 @@ class FlextInfraRefactorEngine:
         return ignore_patterns, extensions
 
     @staticmethod
+    def _extract_project_scan_dirs(config_value: object) -> list[str]:
+        if not isinstance(config_value, dict):
+            return ["src", "tests", "scripts", "examples"]
+
+        typed_config = cast("dict[str, object]", config_value)
+        scan_dirs_raw = typed_config.get("project_scan_dirs", None)
+        if not isinstance(scan_dirs_raw, list):
+            return ["src", "tests", "scripts", "examples"]
+
+        scan_dirs = [
+            item.strip()
+            for item in cast("list[object]", scan_dirs_raw)
+            if isinstance(item, str) and item.strip()
+        ]
+        if not scan_dirs:
+            return ["src", "tests", "scripts", "examples"]
+        return scan_dirs
+
+    @staticmethod
+    def _discover_workspace_projects(workspace_root: Path) -> list[Path]:
+        projects: list[Path] = []
+
+        root_has_pyproject = (workspace_root / "pyproject.toml").exists()
+        root_has_makefile = (workspace_root / "Makefile").exists()
+        if root_has_pyproject and root_has_makefile:
+            projects.append(workspace_root)
+
+        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            if not (entry / "pyproject.toml").exists():
+                continue
+            if not (entry / "Makefile").exists():
+                continue
+            projects.append(entry)
+
+        return projects
+
+    @staticmethod
     def main() -> None:
         """CLI entry point."""
         parser = argparse.ArgumentParser(
@@ -361,6 +451,7 @@ class FlextInfraRefactorEngine:
 
         mode_group = parser.add_mutually_exclusive_group(required=True)
         mode_group.add_argument("--project", "-p", type=Path)
+        mode_group.add_argument("--workspace-root", "-w", type=Path)
         mode_group.add_argument("--file", "-f", type=Path)
         mode_group.add_argument("--files", nargs="+", type=Path)
         mode_group.add_argument("--list-rules", "-l", action="store_true")
@@ -400,6 +491,12 @@ class FlextInfraRefactorEngine:
         if args.project:
             results = engine.refactor_project(
                 args.project, dry_run=args.dry_run, pattern=args.pattern
+            )
+        elif args.workspace_root:
+            results = engine.refactor_workspace(
+                args.workspace_root,
+                dry_run=args.dry_run,
+                pattern=args.pattern,
             )
         elif args.file:
             if not args.file.exists():

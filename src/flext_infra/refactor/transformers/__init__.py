@@ -21,6 +21,12 @@ from flext_infra.refactor.transformers.lazy_import_fixer import (
     FlextInfraRefactorLazyImportFixer,
 )
 from flext_infra.refactor.transformers.mro_remover import FlextInfraRefactorMRORemover
+from flext_infra.refactor.transformers.signature_propagator import (
+    FlextInfraRefactorSignaturePropagator,
+)
+from flext_infra.refactor.transformers.symbol_propagator import (
+    FlextInfraRefactorSymbolPropagator,
+)
 
 __all__ = [
     "FlextInfraRefactorAliasRemover",
@@ -30,4 +36,6 @@ __all__ = [
     "FlextInfraRefactorImportModernizer",
     "FlextInfraRefactorLazyImportFixer",
     "FlextInfraRefactorMRORemover",
+    "FlextInfraRefactorSignaturePropagator",
+    "FlextInfraRefactorSymbolPropagator",
 ]

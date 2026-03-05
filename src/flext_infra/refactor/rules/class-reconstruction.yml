@@ -19,7 +19,7 @@ rules:
     severity: warning
     auto_fix: true
     fix_action: reorder_methods
-    
+
     # Ordem hierárquica dos métodos (de cima para baixo)
     method_order:
       # Nível 1: Atributos de classe e constantes
@@ -28,12 +28,12 @@ rules:
         patterns:
           - type: "attribute"
         sort_by: "name"
-      
+
       # Nível 2: Métodos especiais (dunder methods)
       - category: "magic_methods"
         description: "Métodos especiais do Python"
         patterns:
-          - regex: '^__.+__$'
+          - regex: "^__.+__$"
         order:
           - "__new__"
           - "__init__"
@@ -64,7 +64,7 @@ rules:
           - "__exit__"
           - "__call__"
           - "*"
-      
+
       # Nível 3: Propriedades
       - category: "properties"
         description: "Propriedades e descriptors"
@@ -72,50 +72,50 @@ rules:
           - decorators: ["property", "cached_property", "computed_field"]
         group_by_attribute: true
         sort_by: "name"
-      
+
       # Nível 4: Métodos de classe
       - category: "classmethods"
         description: "Métodos de classe e factories"
         patterns:
           - decorators: ["classmethod"]
         sort_by: "name"
-      
+
       # Nível 5: Métodos estáticos
       - category: "staticmethods"
         description: "Métodos utilitários estáticos"
         patterns:
           - decorators: ["staticmethod"]
         sort_by: "name"
-      
+
       # Nível 6: Métodos públicos (API)
       - category: "public_methods"
         description: "Métodos públicos da API"
         visibility: "public"
         exclude_decorators: ["property", "classmethod", "staticmethod"]
         sort_by: "name"
-      
+
       # Nível 7: Métodos protegidos
       - category: "protected_methods"
         description: "Métodos internos para subclasses"
         visibility: "protected"
         patterns:
-          - regex: '^_[^_].*'
+          - regex: "^_[^_].*"
         sort_by: "name"
-      
+
       # Nível 8: Métodos privados
       - category: "private_methods"
         description: "Métodos de implementação privada"
         visibility: "private"
         patterns:
-          - regex: '^__.+'
+          - regex: "^__.+"
         sort_by: "name"
-    
+
     spacing:
       blank_lines_between_methods: 1
       blank_lines_between_categories: 1
       blank_lines_before_class: 2
       blank_lines_after_class: 2
-    
+
     preserve:
       comments: true
       docstrings: true

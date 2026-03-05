@@ -1,28 +1,100 @@
-"""Public API for flext_infra.refactor."""
+"""Public API for flext_infra.refactor with lazy loading."""
 
 from __future__ import annotations
 
-from flext_infra.refactor.__main__ import main
-from flext_infra.refactor.constants import FlextInfraRefactorConstants
-from flext_infra.refactor.engine import FlextInfraRefactorEngine
-from flext_infra.refactor.method_info import FlextInfraRefactorMethodInfo
-from flext_infra.refactor.result import FlextInfraRefactorResult
-from flext_infra.refactor.rule import FlextInfraRefactorRule
-from flext_infra.refactor.rules.class_reconstructor import (
-    FlextInfraRefactorClassReconstructorRule,
-)
-from flext_infra.refactor.rules.ensure_future_annotations import (
-    FlextInfraRefactorEnsureFutureAnnotationsRule,
-)
-from flext_infra.refactor.rules.import_modernizer import (
-    FlextInfraRefactorImportModernizerRule,
-)
-from flext_infra.refactor.rules.legacy_removal import (
-    FlextInfraRefactorLegacyRemovalRule,
-)
-from flext_infra.refactor.rules.mro_redundancy_checker import (
-    FlextInfraRefactorMRORedundancyChecker,
-)
+import importlib
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from flext_infra.refactor.constants import FlextInfraRefactorConstants
+    from flext_infra.refactor.engine import FlextInfraRefactorEngine
+    from flext_infra.refactor.method_info import FlextInfraRefactorMethodInfo
+    from flext_infra.refactor.result import FlextInfraRefactorResult
+    from flext_infra.refactor.rule import FlextInfraRefactorRule
+    from flext_infra.refactor.rules.class_reconstructor import (
+        FlextInfraRefactorClassReconstructorRule,
+    )
+    from flext_infra.refactor.rules.ensure_future_annotations import (
+        FlextInfraRefactorEnsureFutureAnnotationsRule,
+    )
+    from flext_infra.refactor.rules.import_modernizer import (
+        FlextInfraRefactorImportModernizerRule,
+    )
+    from flext_infra.refactor.rules.legacy_removal import (
+        FlextInfraRefactorLegacyRemovalRule,
+    )
+    from flext_infra.refactor.rules.mro_redundancy_checker import (
+        FlextInfraRefactorMRORedundancyChecker,
+    )
+    from flext_infra.refactor.rules.symbol_propagation import (
+        FlextInfraRefactorSymbolPropagationRule,
+    )
+    from flext_infra.refactor.rules.signature_propagation import (
+        FlextInfraRefactorSignaturePropagationRule,
+    )
+
+_LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
+    "FlextInfraRefactorConstants": (
+        "flext_infra.refactor.constants",
+        "FlextInfraRefactorConstants",
+    ),
+    "FlextInfraRefactorEngine": (
+        "flext_infra.refactor.engine",
+        "FlextInfraRefactorEngine",
+    ),
+    "FlextInfraRefactorMethodInfo": (
+        "flext_infra.refactor.method_info",
+        "FlextInfraRefactorMethodInfo",
+    ),
+    "FlextInfraRefactorResult": (
+        "flext_infra.refactor.result",
+        "FlextInfraRefactorResult",
+    ),
+    "FlextInfraRefactorRule": (
+        "flext_infra.refactor.rule",
+        "FlextInfraRefactorRule",
+    ),
+    "FlextInfraRefactorClassReconstructorRule": (
+        "flext_infra.refactor.rules.class_reconstructor",
+        "FlextInfraRefactorClassReconstructorRule",
+    ),
+    "FlextInfraRefactorEnsureFutureAnnotationsRule": (
+        "flext_infra.refactor.rules.ensure_future_annotations",
+        "FlextInfraRefactorEnsureFutureAnnotationsRule",
+    ),
+    "FlextInfraRefactorImportModernizerRule": (
+        "flext_infra.refactor.rules.import_modernizer",
+        "FlextInfraRefactorImportModernizerRule",
+    ),
+    "FlextInfraRefactorLegacyRemovalRule": (
+        "flext_infra.refactor.rules.legacy_removal",
+        "FlextInfraRefactorLegacyRemovalRule",
+    ),
+    "FlextInfraRefactorMRORedundancyChecker": (
+        "flext_infra.refactor.rules.mro_redundancy_checker",
+        "FlextInfraRefactorMRORedundancyChecker",
+    ),
+    "FlextInfraRefactorSymbolPropagationRule": (
+        "flext_infra.refactor.rules.symbol_propagation",
+        "FlextInfraRefactorSymbolPropagationRule",
+    ),
+    "FlextInfraRefactorSignaturePropagationRule": (
+        "flext_infra.refactor.rules.signature_propagation",
+        "FlextInfraRefactorSignaturePropagationRule",
+    ),
+}
+
+
+def __getattr__(name: str) -> object:
+    if name not in _LAZY_IMPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, symbol_name = _LAZY_IMPORTS[name]
+    module = importlib.import_module(module_name)
+    value = getattr(module, symbol_name)
+    globals()[name] = value
+    return value
+
 
 __all__ = [
     "FlextInfraRefactorClassReconstructorRule",
@@ -35,5 +107,6 @@ __all__ = [
     "FlextInfraRefactorMethodInfo",
     "FlextInfraRefactorResult",
     "FlextInfraRefactorRule",
-    "main",
+    "FlextInfraRefactorSignaturePropagationRule",
+    "FlextInfraRefactorSymbolPropagationRule",
 ]

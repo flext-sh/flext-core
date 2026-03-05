@@ -17,6 +17,12 @@ from flext_infra.refactor.rules.legacy_removal import (
 from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
+from flext_infra.refactor.rules.symbol_propagation import (
+    FlextInfraRefactorSymbolPropagationRule,
+)
+from flext_infra.refactor.rules.signature_propagation import (
+    FlextInfraRefactorSignaturePropagationRule,
+)
 
 __all__ = [
     "FlextInfraRefactorClassReconstructorRule",
@@ -24,4 +30,6 @@ __all__ = [
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
     "FlextInfraRefactorMRORedundancyChecker",
+    "FlextInfraRefactorSignaturePropagationRule",
+    "FlextInfraRefactorSymbolPropagationRule",
 ]

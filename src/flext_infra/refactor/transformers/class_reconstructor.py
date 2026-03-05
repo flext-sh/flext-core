@@ -31,41 +31,53 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
         original_node: cst.ClassDef,
         updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
-        """Sort methods in contiguous method blocks of a class body."""
-        methods: list[FlextInfraRefactorMethodInfo] = []
-        method_indices: list[int] = []
-
+        """Sort methods in every contiguous method block of a class body."""
         # Cast the body to list[Any] to bypass Pyrefly's incorrect inference of Union type
         body = cast("list[Any]", list(updated_node.body.body))
-
-        for idx, stmt in enumerate(body):
-            if isinstance(stmt, cst.FunctionDef):
-                methods.append(self._analyze_method(stmt))
-                method_indices.append(idx)
-
-        if not methods:
-            return updated_node
-
-        first_method_idx = method_indices[0]
-        last_method_idx = method_indices[-1]
-        if any(
-            not isinstance(body[idx], cst.FunctionDef)
-            for idx in range(first_method_idx, last_method_idx + 1)
-        ):
-            return updated_node
-
-        sorted_methods = self._sort_methods(methods)
-        original_method_names = [method.name for method in methods]
-        sorted_method_names = [method.name for method in sorted_methods]
-        if original_method_names == sorted_method_names:
+        if not body:
             return updated_node
 
         new_body = list(body)
-        for idx, method in zip(method_indices, sorted_methods, strict=False):
-            new_body[idx] = method.node
+        block_start = 0
+        changed_blocks = 0
+        reordered_methods_total = 0
+
+        while block_start < len(body):
+            if not isinstance(body[block_start], cst.FunctionDef):
+                block_start += 1
+                continue
+
+            block_end = block_start
+            while block_end < len(body) and isinstance(
+                body[block_end], cst.FunctionDef
+            ):
+                block_end += 1
+
+            method_indices = list(range(block_start, block_end))
+            methods = [
+                self._analyze_method(cast("cst.FunctionDef", body[idx]))
+                for idx in method_indices
+            ]
+            sorted_methods = self._sort_methods(methods)
+
+            original_method_names = [method.name for method in methods]
+            sorted_method_names = [method.name for method in sorted_methods]
+
+            if original_method_names != sorted_method_names:
+                changed_blocks += 1
+                reordered_methods_total += len(methods)
+                for idx, method in zip(method_indices, sorted_methods, strict=False):
+                    new_body[idx] = method.node
+
+            block_start = block_end
+
+        if changed_blocks == 0:
+            return updated_node
 
         self._record_change(
-            f"Reordered {len(methods)} methods in class {original_node.name.value}"
+            "Reordered "
+            f"{reordered_methods_total} methods in class {original_node.name.value} "
+            f"across {changed_blocks} contiguous block(s)"
         )
         return updated_node.with_changes(
             body=updated_node.body.with_changes(body=new_body)

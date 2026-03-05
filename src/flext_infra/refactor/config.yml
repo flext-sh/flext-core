@@ -124,3 +124,10 @@ refactor_engine:
   # Extensões de arquivo a processar
   file_extensions:
     - ".py"
+
+  # Diretórios por projeto para propagação full-blast
+  project_scan_dirs:
+    - "src"
+    - "tests"
+    - "scripts"
+    - "examples"

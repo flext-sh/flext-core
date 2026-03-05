@@ -44,6 +44,12 @@ class FlextInfraRefactorConstants:
         "fix_mro_redeclaration",
     })
 
+    PROPAGATION_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
+        "propagate_symbol_renames",
+        "rename_imported_symbols",
+        "propagate_signature_migrations",
+    })
+
     FUTURE_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
         "ensure_future_annotations",
     })

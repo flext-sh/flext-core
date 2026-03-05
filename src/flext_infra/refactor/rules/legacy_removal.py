@@ -96,20 +96,97 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         if not isinstance(small_stmt.value.func, cst.Name):
             return None
 
-        call_args = small_stmt.value.args
-        param_names = [param.name.value for param in func.params.params]
-        if len(call_args) != len(param_names):
+        call_args = list(small_stmt.value.args)
+
+        posonly_names = [param.name.value for param in func.params.posonly_params]
+        positional_names = [param.name.value for param in func.params.params]
+        positional_expected = posonly_names + positional_names
+        kwonly_expected = [param.name.value for param in func.params.kwonly_params]
+
+        expected_star_arg: str | None = None
+        if isinstance(func.params.star_arg, cst.Param):
+            expected_star_arg = func.params.star_arg.name.value
+
+        expected_star_kwarg: str | None = None
+        if isinstance(func.params.star_kwarg, cst.Param):
+            expected_star_kwarg = func.params.star_kwarg.name.value
+
+        positional_forwarded: list[str] = []
+        keyword_forwarded: dict[str, str] = {}
+        star_forwarded: str | None = None
+        star_kw_forwarded: str | None = None
+
+        def _name_value(expr: cst.BaseExpression) -> str | None:
+            value = getattr(expr, "value", None)
+            if isinstance(value, str):
+                return value
             return None
 
-        for idx, arg in enumerate(call_args):
+        for arg in call_args:
             if arg.keyword is not None:
-                return None
+                name_value = _name_value(arg.value)
+                if name_value is None:
+                    return None
+                keyword_forwarded[arg.keyword.value] = name_value
+                continue
+
+            if arg.star == "*":
+                name_value = _name_value(arg.value)
+                if name_value is None:
+                    return None
+                star_forwarded = name_value
+                continue
+
+            if arg.star == "**":
+                name_value = _name_value(arg.value)
+                if name_value is None:
+                    return None
+                star_kw_forwarded = name_value
+                continue
+
             if arg.star not in {"", None}:
                 return None
-            if not isinstance(arg.value, cst.Name):
+            name_value = _name_value(arg.value)
+            if name_value is None:
                 return None
-            if arg.value.value != param_names[idx]:
+            positional_forwarded.append(name_value)
+
+        positional_by_name = len(positional_forwarded) == 0 and set(
+            keyword_forwarded.keys()
+        ) >= set(positional_expected)
+        positional_by_position = positional_forwarded == positional_expected
+        if not (positional_by_position or positional_by_name):
+            return None
+
+        for name in positional_expected:
+            if name in keyword_forwarded and keyword_forwarded[name] != name:
                 return None
+
+        if kwonly_expected and not set(keyword_forwarded.keys()) >= set(
+            kwonly_expected
+        ):
+            return None
+        for name in kwonly_expected:
+            if keyword_forwarded.get(name) != name:
+                return None
+
+        extra_keywords = (
+            set(keyword_forwarded.keys())
+            - set(positional_expected)
+            - set(kwonly_expected)
+        )
+        if extra_keywords:
+            return None
+
+        if expected_star_arg is not None and star_forwarded != expected_star_arg:
+            return None
+        if expected_star_arg is None and star_forwarded is not None:
+            return None
+
+        if expected_star_kwarg is not None and star_kw_forwarded != expected_star_kwarg:
+            return None
+        if expected_star_kwarg is None and star_kw_forwarded is not None:
+            return None
 
         return small_stmt.value.func.value
 
