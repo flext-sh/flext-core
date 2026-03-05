@@ -491,8 +491,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("integration.calls", True)
 
-        metadata_cls = h.Metadata
-        meta = metadata_cls(version=metadata_version, attributes={"tag": metadata_tag})
+        meta = h.Metadata(version=metadata_version, attributes={"tag": metadata_tag})
         self.check("metadata.version", meta.version)
         self.check("metadata.attributes", meta.attributes)
 
