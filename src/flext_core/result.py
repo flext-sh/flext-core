@@ -503,8 +503,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if current.is_success:
                 result_value = current.value
                 if result_value is not None:
-                    inner = func(result_value)
-                    current = FlextResult[U]._from_runtime_result(inner)
+                    inner: FlextRuntime.RuntimeResult[U] = func(result_value)
+                    converted: FlextResult[U] = FlextResult[U]._from_runtime_result(
+                        inner
+                    )
+                    current = converted
                 else:
                     break
             else:
