@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import override
 
@@ -191,7 +191,7 @@ class TestDependencyIntegrationRealExecution:
             lifecycle["created"] = True
             return {"connected": True}
 
-        def resource_teardown(resource: dict[str, bool]) -> None:
+        def resource_teardown(resource: Mapping[str, bool]) -> None:
             lifecycle["closed"] = True
 
         # Register resource
@@ -433,7 +433,7 @@ class TestRealWiringScenarios:
         @inject
         def process_request(
             logger_name: str = Provide["custom_logger"],
-            pool: dict[str, int] = Provide["db_pool"],
+            pool: Mapping[str, int] = Provide["db_pool"],
         ) -> dict[str, str | int]:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
@@ -462,11 +462,11 @@ class TestRealWiringScenarios:
         module = ModuleType("multi_function_module")
 
         @inject
-        def func1(config: dict[str, str] = Provide["shared_config"]) -> str:
+        def func1(config: Mapping[str, str] = Provide["shared_config"]) -> str:
             return config["env"]
 
         @inject
-        def func2(config: dict[str, str] = Provide["shared_config"]) -> bool:
+        def func2(config: Mapping[str, str] = Provide["shared_config"]) -> bool:
             return config["env"] == "test"
 
         setattr(module, "func1", func1)
