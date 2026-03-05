@@ -7,6 +7,7 @@ from pathlib import Path
 import libcst as cst
 
 from flext_infra.refactor import (
+    FlextInfraRefactorPatternCorrectionsRule,
     FlextInfraRefactorClassReconstructorRule,
     FlextInfraRefactorEngine,
     FlextInfraRefactorEnsureFutureAnnotationsRule,
@@ -486,6 +487,38 @@ def test_signature_propagation_removes_and_adds_keywords() -> None:
     assert "modern" in updated
 
 
+def test_pattern_rule_converts_dict_annotations_to_mapping() -> None:
+    source = "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n    return data\n"
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "fix-container-invariance-annotations",
+        "fix_action": "convert_dict_to_mapping_annotations",
+    })
+
+    updated_tree, _ = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert "from collections.abc import Mapping" in updated
+    assert "data: Mapping[str, t.Container]" in updated
+    assert "-> Mapping[str, t.Container]" in updated
+
+
+def test_pattern_rule_removes_configured_redundant_casts() -> None:
+    source = 'value = cast("m.ConfigMap", result.unwrap_or(m.ConfigMap(root={})))\n'
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "remove-validated-redundant-casts",
+        "fix_action": "remove_redundant_casts",
+        "redundant_type_targets": ["m.ConfigMap"],
+    })
+
+    updated_tree, _ = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert "cast(" not in updated
+    assert "value = result.unwrap_or(m.ConfigMap(root={}))" in updated
+
+
 def test_rule_dispatch_prefers_fix_action_metadata(tmp_path: Path) -> None:
     rules_dir = tmp_path / "rules"
     rules_dir.mkdir(parents=True)
@@ -517,6 +550,9 @@ rules:
   - id: custom-rule-g
     enabled: true
     fix_action: propagate_signature_migrations
+  - id: custom-rule-h
+    enabled: true
+    fix_action: convert_dict_to_mapping_annotations
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -526,7 +562,7 @@ rules:
     result = engine.load_rules()
 
     assert result.is_success
-    assert len(engine.rules) == 7
+    assert len(engine.rules) == 8
     assert isinstance(engine.rules[0], FlextInfraRefactorLegacyRemovalRule)
     assert isinstance(engine.rules[1], FlextInfraRefactorImportModernizerRule)
     assert isinstance(engine.rules[2], FlextInfraRefactorClassReconstructorRule)
@@ -534,6 +570,33 @@ rules:
     assert isinstance(engine.rules[4], FlextInfraRefactorEnsureFutureAnnotationsRule)
     assert isinstance(engine.rules[5], FlextInfraRefactorSymbolPropagationRule)
     assert isinstance(engine.rules[6], FlextInfraRefactorSignaturePropagationRule)
+    assert isinstance(engine.rules[7], FlextInfraRefactorPatternCorrectionsRule)
+
+
+def test_rule_dispatch_fails_on_invalid_pattern_rule_config(tmp_path: Path) -> None:
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir(parents=True)
+
+    config_path = tmp_path / "config.yml"
+    config_path.write_text("engine: test\n", encoding="utf-8")
+
+    (rules_dir / "rules.yml").write_text(
+        """
+rules:
+  - id: custom-pattern-rule
+    enabled: true
+    fix_action: remove_redundant_casts
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    engine = FlextInfraRefactorEngine(config_path=config_path)
+    result = engine.load_rules()
+
+    assert not result.is_success
+    assert result.error is not None
+    assert "redundant_type_targets" in result.error
 
 
 def test_rule_dispatch_fails_on_unknown_rule_mapping(tmp_path: Path) -> None:

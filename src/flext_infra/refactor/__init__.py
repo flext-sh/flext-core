@@ -30,6 +30,10 @@ if TYPE_CHECKING:
         FlextInfraRefactorSignaturePropagationRule,
         FlextInfraRefactorSymbolPropagationRule,
     )
+    from flext_infra.refactor.rules.pattern_corrections import (
+        FlextInfraRefactorPatternCorrectionsRule,
+    )
+    from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 
 _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
     "FlextInfraRefactorConstants": (
@@ -80,6 +84,14 @@ _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
         "flext_infra.refactor.rules.symbol_propagation",
         "FlextInfraRefactorSignaturePropagationRule",
     ),
+    "FlextInfraRefactorPatternCorrectionsRule": (
+        "flext_infra.refactor.rules.pattern_corrections",
+        "FlextInfraRefactorPatternCorrectionsRule",
+    ),
+    "FlextInfraRefactorViolationAnalyzer": (
+        "flext_infra.refactor.analysis",
+        "FlextInfraRefactorViolationAnalyzer",
+    ),
 }
 
 
@@ -103,9 +115,11 @@ __all__ = [
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
     "FlextInfraRefactorMRORedundancyChecker",
+    "FlextInfraRefactorPatternCorrectionsRule",
     "FlextInfraRefactorMethodInfo",
     "FlextInfraRefactorResult",
     "FlextInfraRefactorRule",
     "FlextInfraRefactorSignaturePropagationRule",
     "FlextInfraRefactorSymbolPropagationRule",
+    "FlextInfraRefactorViolationAnalyzer",
 ]

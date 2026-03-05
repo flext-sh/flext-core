@@ -19,6 +19,7 @@ from flext_infra import c
 from flext_infra.output import output
 from flext_infra.refactor.result import FlextInfraRefactorResult
 from flext_infra.refactor.rule import FlextInfraRefactorRule
+from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.rules.class_reconstructor import (
     FlextInfraRefactorClassReconstructorRule,
 )
@@ -37,6 +38,9 @@ from flext_infra.refactor.rules.mro_redundancy_checker import (
 from flext_infra.refactor.rules.symbol_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
+)
+from flext_infra.refactor.rules.pattern_corrections import (
+    FlextInfraRefactorPatternCorrectionsRule,
 )
 
 
@@ -84,6 +88,11 @@ class FlextInfraRefactorEngine:
 
                 for rule_def in rules:
                     if not rule_def.get("enabled", True):
+                        continue
+
+                    rule_validation = self._validate_rule_definition(rule_def)
+                    if rule_validation is not None:
+                        unknown_rules.append(rule_validation)
                         continue
 
                     rule = self._build_rule(rule_def)
@@ -138,6 +147,8 @@ class FlextInfraRefactorEngine:
             if fix_action == "propagate_signature_migrations":
                 return FlextInfraRefactorSignaturePropagationRule(rule_def)
             return FlextInfraRefactorSymbolPropagationRule(rule_def)
+        if fix_action in c.Infra.Refactor.PATTERN_FIX_ACTIONS:
+            return FlextInfraRefactorPatternCorrectionsRule(rule_def)
 
         rule_id_lower = rule_id.lower()
         if "ensure-future" in rule_id_lower or "future-annotations" in rule_id_lower:
@@ -159,6 +170,35 @@ class FlextInfraRefactorEngine:
             if "signature" in rule_id_lower:
                 return FlextInfraRefactorSignaturePropagationRule(rule_def)
             return FlextInfraRefactorSymbolPropagationRule(rule_def)
+        if any(
+            key in rule_id_lower
+            for key in ["redundant-cast", "dict-to-mapping", "container-invariance"]
+        ):
+            return FlextInfraRefactorPatternCorrectionsRule(rule_def)
+        return None
+
+    def _validate_rule_definition(self, rule_def: dict[str, Any]) -> str | None:
+        """Return validation error for malformed declarative rules."""
+        rule_id = str(rule_def.get("id", "unknown"))
+        fix_action = str(rule_def.get("fix_action", "")).strip().lower()
+        if not fix_action:
+            return f"{rule_id}: missing fix_action"
+
+        if fix_action in c.Infra.Refactor.PROPAGATION_FIX_ACTIONS:
+            if fix_action == "propagate_symbol_renames" and not isinstance(
+                rule_def.get("import_symbol_renames"), dict
+            ):
+                return f"{rule_id}: import_symbol_renames must be a mapping"
+            if fix_action == "propagate_signature_migrations":
+                migrations = rule_def.get("signature_migrations")
+                if not isinstance(migrations, list) or not migrations:
+                    return f"{rule_id}: signature_migrations must be a non-empty list"
+
+        if fix_action == "remove_redundant_casts":
+            targets = rule_def.get("redundant_type_targets")
+            if not isinstance(targets, list) or not targets:
+                return f"{rule_id}: redundant_type_targets must be a non-empty list"
+
         return None
 
     def list_rules(self) -> list[dict[str, Any]]:
@@ -245,6 +285,17 @@ class FlextInfraRefactorEngine:
         pattern: str = "*.py",
     ) -> list[FlextInfraRefactorResult]:
         """Refactor files under configured project directories matching the pattern."""
+        files = self.collect_project_files(project_path, pattern=pattern)
+        output.info(f"Found {len(files)} files to process")
+        return self.refactor_files(files, dry_run=dry_run)
+
+    def collect_project_files(
+        self,
+        project_path: Path,
+        *,
+        pattern: str = "*.py",
+    ) -> list[Path]:
+        """Collect project files that match current engine scope filters."""
         engine_config_obj = self.config.get("refactor_engine")
         scan_dirs = self._extract_project_scan_dirs(engine_config_obj)
         candidate_roots = [project_path / rel_dir for rel_dir in scan_dirs]
@@ -280,9 +331,7 @@ class FlextInfraRefactorEngine:
                 ):
                     continue
                 files.append(py_file)
-
-        output.info(f"Found {len(files)} files to process")
-        return self.refactor_files(files, dry_run=dry_run)
+        return files
 
     def refactor_workspace(
         self,
@@ -312,6 +361,49 @@ class FlextInfraRefactorEngine:
                 self.refactor_project(project, dry_run=dry_run, pattern=pattern)
             )
         return results
+
+    def collect_workspace_files(
+        self,
+        workspace_root: Path,
+        *,
+        pattern: str = "*.py",
+    ) -> list[Path]:
+        """Collect all candidate files under workspace projects."""
+        root = workspace_root.resolve()
+        project_paths = self._discover_workspace_projects(root)
+        all_files: list[Path] = []
+        for project in project_paths:
+            all_files.extend(self.collect_project_files(project, pattern=pattern))
+        return all_files
+
+    @staticmethod
+    def print_violation_summary(analysis: dict[str, object]) -> None:
+        """Print aggregate violation counts and hottest files."""
+        output.header("Violation Analysis")
+        totals_obj = analysis.get("totals", {})
+        top_files_obj = analysis.get("top_files", [])
+        files_scanned = int(analysis.get("files_scanned", 0))
+
+        output.info(f"Files scanned: {files_scanned}")
+        if not isinstance(totals_obj, dict) or not totals_obj:
+            output.info("No tracked violations found.")
+            return
+
+        output.info("Top pattern counts:")
+        for name, count in sorted(
+            totals_obj.items(), key=lambda item: int(item[1]), reverse=True
+        ):
+            output.info(f"  - {name}: {count}")
+
+        if not isinstance(top_files_obj, list) or not top_files_obj:
+            return
+        output.info("Hottest files:")
+        for entry in top_files_obj[:10]:
+            if not isinstance(entry, dict):
+                continue
+            file_name = str(entry.get("file", ""))
+            total_count = int(entry.get("total", 0))
+            output.info(f"  - {file_name}: {total_count}")
 
     @staticmethod
     def print_rules_table(rules: list[dict[str, Any]]) -> None:
@@ -560,6 +652,8 @@ class FlextInfraRefactorEngine:
         parser.add_argument("--dry-run", "-n", action="store_true")
         parser.add_argument("--show-diff", "-d", action="store_true")
         parser.add_argument("--impact-map-output", type=Path)
+        parser.add_argument("--analyze-violations", action="store_true")
+        parser.add_argument("--analysis-output", type=Path)
         parser.add_argument("--config", "-c", type=Path)
         args = parser.parse_args()
 
@@ -586,6 +680,38 @@ class FlextInfraRefactorEngine:
             if not rules_result.is_success:
                 output.error(f"Rules error: {rules_result.error}")
                 sys.exit(1)
+
+        if args.analyze_violations:
+            files_to_analyze: list[Path] = []
+            if args.project:
+                files_to_analyze = engine.collect_project_files(
+                    args.project,
+                    pattern=args.pattern,
+                )
+            elif args.workspace_root:
+                files_to_analyze = engine.collect_workspace_files(
+                    args.workspace_root,
+                    pattern=args.pattern,
+                )
+            elif args.file:
+                if not args.file.exists():
+                    output.error(f"File not found: {args.file}")
+                    sys.exit(1)
+                files_to_analyze = [args.file]
+            elif args.files:
+                files_to_analyze = [item for item in args.files if item.exists()]
+
+            analysis = FlextInfraRefactorViolationAnalyzer.analyze_files(
+                files_to_analyze
+            )
+            FlextInfraRefactorEngine.print_violation_summary(analysis)
+            if args.analysis_output is not None:
+                args.analysis_output.parent.mkdir(parents=True, exist_ok=True)
+                args.analysis_output.write_text(
+                    json.dumps(analysis, indent=2, ensure_ascii=True) + "\n",
+                    encoding="utf-8",
+                )
+                output.info(f"Analysis report written: {args.analysis_output}")
 
         results: list[FlextInfraRefactorResult] = []
         if args.project:

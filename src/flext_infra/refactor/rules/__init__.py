@@ -21,6 +21,9 @@ from flext_infra.refactor.rules.symbol_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
 )
+from flext_infra.refactor.rules.pattern_corrections import (
+    FlextInfraRefactorPatternCorrectionsRule,
+)
 
 __all__ = [
     "FlextInfraRefactorClassReconstructorRule",
@@ -28,6 +31,7 @@ __all__ = [
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
     "FlextInfraRefactorMRORedundancyChecker",
+    "FlextInfraRefactorPatternCorrectionsRule",
     "FlextInfraRefactorSignaturePropagationRule",
     "FlextInfraRefactorSymbolPropagationRule",
 ]

@@ -50,6 +50,11 @@ class FlextInfraRefactorConstants:
         "propagate_signature_migrations",
     })
 
+    PATTERN_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
+        "convert_dict_to_mapping_annotations",
+        "remove_redundant_casts",
+    })
+
     FUTURE_FIX_ACTIONS: ClassVar[frozenset[str]] = frozenset({
         "ensure_future_annotations",
     })
