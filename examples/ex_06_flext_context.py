@@ -136,7 +136,7 @@ class _ContainerStub:
             return r[t.Container].fail(result.error or "missing")
         value = result.value
         if isinstance(value, type_cls):
-            return r[t.Container].ok(cast("t.Container", value))
+            return r[t.Container].ok(value)
         return r[t.Container].fail("wrong-type")
 
     def list_services(self) -> list[str]:
@@ -236,10 +236,7 @@ def demo_container_and_service_methods() -> None:
     )
     _check(
         "service.get.ok",
-        cast(
-            "t.Container",
-            FlextContext.Service.get_service("demo-service").unwrap_or("missing"),
-        ),
+        FlextContext.Service.get_service("demo-service").unwrap_or("missing"),
     )
     _check(
         "service.get.missing",
