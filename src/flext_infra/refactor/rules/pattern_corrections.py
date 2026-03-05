@@ -31,24 +31,56 @@ class _DictToMappingTransformer(cst.CSTTransformer):
             if isinstance(alias.name, cst.Name) and alias.name.value == "Mapping":
                 self._has_mapping_import = True
 
-    @override
-    def leave_Annotation(
+    def _rewrite_annotation_expr(
         self,
-        original_node: cst.Annotation,
-        updated_node: cst.Annotation,
-    ) -> cst.Annotation:
+        annotation: cst.BaseExpression,
+    ) -> cst.BaseExpression:
+        if not isinstance(annotation, cst.Subscript):
+            return annotation
+        if not isinstance(annotation.value, cst.Name):
+            return annotation
+        if annotation.value.value != "dict":
+            return annotation
+
+        replacement: cst.BaseExpression = annotation.with_changes(
+            value=cst.Name("Mapping")
+        )
+        self.changes.append("Converted annotation dict[...] to Mapping[...]")
+        return replacement
+
+    @override
+    def leave_Param(
+        self,
+        original_node: cst.Param,
+        updated_node: cst.Param,
+    ) -> cst.Param:
         del original_node
         annotation = updated_node.annotation
-        if not isinstance(annotation, cst.Subscript):
+        if annotation is None:
             return updated_node
-        if not isinstance(annotation.value, cst.Name):
+        rewritten = self._rewrite_annotation_expr(annotation.annotation)
+        if rewritten is annotation.annotation:
             return updated_node
-        if annotation.value.value != "dict":
-            return updated_node
+        return updated_node.with_changes(
+            annotation=annotation.with_changes(annotation=rewritten)
+        )
 
-        replacement = annotation.with_changes(value=cst.Name("Mapping"))
-        self.changes.append("Converted annotation dict[...] to Mapping[...]")
-        return updated_node.with_changes(annotation=replacement)
+    @override
+    def leave_FunctionDef(
+        self,
+        original_node: cst.FunctionDef,
+        updated_node: cst.FunctionDef,
+    ) -> cst.BaseStatement:
+        del original_node
+        returns = updated_node.returns
+        if returns is None:
+            return updated_node
+        rewritten = self._rewrite_annotation_expr(returns.annotation)
+        if rewritten is returns.annotation:
+            return updated_node
+        return updated_node.with_changes(
+            returns=returns.with_changes(annotation=rewritten)
+        )
 
     @override
     def leave_Module(
