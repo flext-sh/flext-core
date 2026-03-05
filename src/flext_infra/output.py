@@ -160,6 +160,15 @@ class FlextInfraOutput(BaseModel):
         else:
             super().__delattr__(name)
 
+    def debug(self, message: str) -> None:
+        """Write an debug message in blue.
+
+        Args:
+            message: Information text.
+
+        """
+        self._write(f"{self._green}DEBUG{self._reset}: {message}")
+
     def error(self, message: str, detail: str | None = None) -> None:
         """Write an error message in red.
 

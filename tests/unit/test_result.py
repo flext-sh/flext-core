@@ -26,7 +26,7 @@ from typing import ClassVar, Never, cast
 
 import pytest
 
-from flext_core import c, m, p, r
+from flext_core import c, p, r
 from flext_tests import t, u
 from tests.test_utils import assertion_helpers
 
@@ -56,7 +56,7 @@ class ResultScenario:
     operation_type: ResultOperationType
     value: t.Container
     is_success_expected: bool = True
-    expected_result: t.Container = None
+    expected_result: t.Container | None = None
 
 
 class ResultScenarios:
@@ -699,7 +699,7 @@ class Testr:
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data = m.ConfigMap(root={"key": "value"})
+        error_data = {"key": "value"}
         result: r[str] = cast("r[str]", r.fail("error", error_data=error_data))
         assert result.error_data == error_data
 

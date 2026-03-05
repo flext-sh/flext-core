@@ -290,7 +290,7 @@ class TestuCacheNormalizeComponent:
 
         assert isinstance(result, tuple)
         # Type narrowing: result is tuple after assert_result_matches_expected
-        result_tuple = cast("tuple[t.ContainerValue, ...]", result)
+        result_tuple = result
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
         tm.that(
             set(result_tuple),

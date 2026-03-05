@@ -74,7 +74,7 @@ def test_extract_message_type_from_parameter_branches() -> None:
     assert (
         u.Checker._extract_message_type_from_parameter(
             param,
-            {"message": None},
+            cast("dict[str, t.Container]", {"message": None}),
             "message",
         )
         is None

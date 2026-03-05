@@ -30,10 +30,10 @@ class _NoArgs:
 
 
 class _ProtocolHandler:
-
     @staticmethod
     def _protocol_name() -> str:
         return "ProtocolHandler"
+
     def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         return r[t.ContainerValue].ok(message)
 
@@ -42,7 +42,6 @@ class _ProtocolHandler:
 
 
 class _ServiceStub:
-
     @property
     def is_valid(self) -> bool:
         return True
@@ -50,6 +49,7 @@ class _ServiceStub:
     @staticmethod
     def _protocol_name() -> str:
         return "ServiceStub"
+
     def execute(self) -> r[t.ContainerValue]:
         return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
 

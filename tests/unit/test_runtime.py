@@ -102,7 +102,7 @@ class RuntimeTestCase:
     operation: RuntimeOperationType
     # Business Rule: test_input supports both values and types for comprehensive testing
     # t.ContainerValue | type[object] | None allows testing runtime type checking with various inputs
-    test_input: t.Container | type[object] | None = None
+    test_input: t.ContainerValue | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
 
@@ -861,7 +861,11 @@ class TestFlextRuntime:
                 config=m.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
                 factories={"token_factory": token_factory},
-                resources={"api_client": lambda: {"connected": True}},
+                resources={
+                    "api_client": cast(
+                        "Callable[[], t.Container]", lambda: {"connected": True}
+                    )
+                },
                 wire_modules=[module],
                 factory_cache=False,
             )
@@ -914,7 +918,11 @@ class TestFlextRuntime:
                 config_overrides={"app_name": "runtime-service"},
                 services={"feature_flag": True},
                 factories={"token_factory": token_factory},
-                resources={"api_client": lambda: {"connected": True}},
+                resources={
+                    "api_client": cast(
+                        "Callable[[], t.Container]", lambda: {"connected": True}
+                    )
+                },
                 wire_modules=[module],
             )
             # Type narrowing: runtime is BaseModel, but is actually m.ServiceRuntime
@@ -948,7 +956,7 @@ class TestFlextRuntime:
                 @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                     def counter_factory() -> t.Container:
-                        return {"count": 1}
+                        return cast("t.Container", {"count": 1})
 
                     return FlextModelsService.RuntimeBootstrapOptions(
                         config_overrides={"app_name": "runtime-aware"},

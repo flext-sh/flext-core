@@ -46,7 +46,6 @@ class _WhalesClientConfigProtocol(Protocol):
 
 
 class _WhalesComposeProtocol(Protocol):
-
     def down(
         self,
         *,

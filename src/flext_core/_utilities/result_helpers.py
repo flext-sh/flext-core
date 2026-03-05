@@ -11,7 +11,6 @@ T = TypeVar("T")
 
 
 class ResultHelpers:
-
     @staticmethod
     def any_(*values: t.Container) -> bool:
         return any(bool(v) for v in values)
@@ -44,6 +43,7 @@ class ResultHelpers:
     @staticmethod
     def ends(value: str, suffix: str, *suffixes: str) -> bool:
         return any(value.endswith(s) for s in (suffix, *suffixes))
+
     @staticmethod
     def err(result: p.Result[T], *, default: str = "Unknown error") -> str:
         if result.is_failure and result.error:

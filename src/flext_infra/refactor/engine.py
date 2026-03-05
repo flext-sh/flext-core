@@ -375,7 +375,7 @@ class FlextInfraRefactorEngine:
         output.header("Summary")
         output.info(f"Total files: {len(results)}")
         output.info(f"Modified: {modified}")
-        output.info(f"Unchanged: {unchanged}")
+        output.debug(f"Unchanged: {unchanged}")
         output.info(f"Failed: {failed}")
 
         if dry_run:
@@ -657,7 +657,7 @@ class FlextInfraRefactorEngine:
                     for change in result.changes:
                         output.info(f"  - {change}")
                 else:
-                    output.info(f"Unchanged: {file_path.name}")
+                    output.debug(f"Unchanged: {file_path.name}")
             else:
                 output.error(f"Failed: {file_path.name} - {result.error}")
         return results

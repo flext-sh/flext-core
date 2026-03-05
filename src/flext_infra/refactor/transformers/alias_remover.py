@@ -1,5 +1,7 @@
 """Alias remover transformer for legacy compatibility cleanup."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import override
 

@@ -65,7 +65,7 @@ class CoerceListScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: t.Container
+    value: t.ContainerValue
     expected_success: bool
     expected_count: int | None = None
     error_type: type[Exception] | None = None
@@ -90,7 +90,7 @@ class CoerceDictScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: t.Container
+    value: t.ContainerValue
     expected_success: bool
     expected_keys: list[str] | None = None
     error_type: type[Exception] | None = None

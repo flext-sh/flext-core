@@ -1,5 +1,7 @@
 """Import bypass remover transformer for legacy import fallbacks."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import override
 

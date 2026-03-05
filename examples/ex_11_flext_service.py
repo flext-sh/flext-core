@@ -94,7 +94,6 @@ class _DeclarativeService(s[str]):
 
 
 class _RuntimeFactoryService(s[str]):
-
     @classmethod
     def create_runtime_default(cls) -> m.ServiceRuntime:
         return cls._create_runtime()
@@ -114,6 +113,7 @@ class _RuntimeFactoryService(s[str]):
             wire_packages=["flext_core"],
             wire_classes=[_EchoService],
         )
+
     @override
     def execute(self) -> r[str]:
         return r[str].ok("factory")
@@ -167,9 +167,9 @@ class _ServiceLike:
 
 
 class _ProcessorProtocolGood:
-
     def model_dump(self) -> Mapping[str, str]:
         return {"status": "ok"}
+
     def process(self) -> str:
         return "ok"
 
@@ -181,9 +181,9 @@ class _ProcessorProtocolGood:
 
 
 class _ProcessorProtocolBad:
-
     def model_dump(self) -> Mapping[str, str]:
         return {"status": "bad"}
+
     def validate(self) -> bool:
         return False
 

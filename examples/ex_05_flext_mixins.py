@@ -61,7 +61,6 @@ def _verify() -> None:
 
 
 class _DemoService(x):
-
     def run_track_failure(self) -> str:
         try:
             with self.track("demo_failure"):
@@ -69,6 +68,7 @@ class _DemoService(x):
                 raise ValueError(msg)
         except ValueError as exc:
             return str(exc)
+
     def run_track_success(self) -> Mapping[str, t.Serializable]:
         with self.track("demo_success") as metrics:
             has_duration = "duration_ms" in metrics
@@ -80,11 +80,11 @@ class _DemoService(x):
 
 
 class _HandlerLike(FlextSettings):
-
     @classmethod
     @override
     def validate(cls, value: object) -> _HandlerLike:
         return cls.model_validate(value)
+
     def handle(self, _data: object) -> object:
         return _data
 
@@ -94,7 +94,6 @@ class _HandlerBad(FlextSettings):
 
 
 class _ProtocolService:
-
     def execute(self) -> r[dict[str, str]]:
         return r[dict[str, str]].ok({"ok": "yes"})
 
@@ -106,6 +105,7 @@ class _ProtocolService:
 
     def validate_business_rules(self) -> r[bool]:
         return r[bool].ok(True)
+
     def _protocol_name(self) -> str:
         return "Service"
 

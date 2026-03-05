@@ -55,15 +55,15 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert not_found is None
 
     nested = u.Collection._merge_deep_single_key(
-        {"x": _BadCopyDict({"a": 1})},
+        cast("dict[str, t.Container]", {"x": _BadCopyDict({"a": 1})}),
         "x",
-        {"b": 2},
+        cast("t.Container", {"b": 2}),
     )
     assert nested.is_success
 
     deep = u.Collection.merge(
-        {"x": _BadCopyDict({"a": 1})},
-        {"x": {"b": 2}},
+        cast("dict[str, t.Container]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.Container]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success
