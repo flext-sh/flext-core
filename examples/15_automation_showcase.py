@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import cast, override
 
 from pydantic import PrivateAttr
@@ -168,29 +168,13 @@ class OrderService(s[m.ConfigMap]):
     @override
     def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
-        order_data_dict: dict[str, t.Container] = dict(self._order_data.root)
-        # Simple merge: new values override existing ones
-        merged: dict[str, t.Container] = dict(order_data_dict)
-        merged.update(
-            {
-                "order_id": u.get(order_data_dict, "order_id", default="ord_123")
-                or "ord_123",
-                "status": c.Cqrs.CommonStatus.PENDING.value,
-            },
-        )
-        order_data_dict = merged
-
-        def is_string_key(_k: str, _v: t.Container) -> bool:
-            # k is already typed as str from dict[str, t.Container]
-            return True
-
-        # Use u.filter to filter dict items with string keys
-        filtered_dict = u.filter_dict(
-            order_data_dict,
-            predicate=is_string_key,
-        )
+        order_id_raw = self._order_data.get("order_id", "ord_123")
+        order_id = str(order_id_raw) if order_id_raw else "ord_123"
         result_data = m.ConfigMap(
-            root=(dict(filtered_dict) if isinstance(filtered_dict, Mapping) else {}),
+            root={
+                "order_id": order_id,
+                "status": c.Cqrs.CommonStatus.PENDING.value,
+            }
         )
         return r[m.ConfigMap].ok(result_data)
 
@@ -201,9 +185,12 @@ class OrderService(s[m.ConfigMap]):
         correlation_id: str | None = None,
     ) -> r[m.ConfigMap]:
         """Process order with automatic context enrichment."""
-        order_data_dict: dict[str, t.Container] = dict(self._order_data.root)
-        order_data_dict["order_id"] = order_id
-        order_data_dict["customer_id"] = customer_id
+        self._order_data = m.ConfigMap(
+            root={
+                "order_id": order_id,
+                "customer_id": customer_id,
+            }
+        )
 
         correlation = correlation_id or f"order_{order_id}_{customer_id}"
         FlextContext.Correlation.set_correlation_id(correlation)
