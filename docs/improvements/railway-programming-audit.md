@@ -111,7 +111,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
    # FlextResult[list[int]].ok([1, 2, 3])
    ```
 
-````text
+```
 
 1. **collect_successes()** - Line 1144
 
@@ -288,7 +288,7 @@ ______________________________________________________________________
 8. Best Practices
 9. Backward Compatibility
 10. Key Takeaways
-```text
+```
 
 ### Recommended Structure
 
@@ -338,7 +338,7 @@ ______________________________________________________________________
 13. Backward Compatibility ✅
 14. Complete API Reference (NEW)
 15. Key Takeaways ✅
-```text
+```
 
 ______________________________________________________________________
 

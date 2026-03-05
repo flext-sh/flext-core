@@ -302,11 +302,11 @@ class Ex01FlextResult(Examples):
             base_ok.flat_map(lambda _: r[int].fail("flat failed")).error,
         )
         self.check(
-            "and_then.success",
+            "flat_map_chain.success",
             base_ok.flat_map(lambda n: r[int].ok(n - 2)).unwrap_or(-1),
         )
         self.check(
-            "and_then.failure",
+            "flat_map_chain.failure",
             base_fail.flat_map(lambda n: r[int].ok(n)).is_failure,
         )
 
@@ -316,11 +316,11 @@ class Ex01FlextResult(Examples):
         self.check("bind.failure", self.bind_status(bind_fail))
 
         self.check(
-            "alt.success_unchanged",
+            "map_error.success_unchanged",
             base_ok.map_error(lambda e: f"alt:{e}").unwrap_or(-1),
         )
         self.check(
-            "alt.failure_changed",
+            "map_error.failure_changed",
             base_fail.map_error(lambda e: f"alt:{e}").error,
         )
         self.check(

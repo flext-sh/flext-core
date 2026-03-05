@@ -114,11 +114,11 @@ Use for new feature documentation (guides/ directory).
 
 ### Simple Example
 
-````python
+```python
 from flext_core import [Import]
 
 # Your example here
-```text
+```
 `````
 
 `````
@@ -127,15 +127,15 @@ from flext_core import [Import]
 
 #### Pattern 1: [Name]
 
-````python
+```python
 # Example
-```text
+```
 
 #### Pattern 2: [Name]
 
 ```python
 # Example
-```text
+```
 
 ## API Reference - Feature Guide Template
 
@@ -147,7 +147,7 @@ from flext_core import [Import]
 
 ```python
 # Example
-```text
+```
 
 ### Method/Class 2
 
@@ -157,7 +157,7 @@ from flext_core import [Import]
 
 ```python
 # Example
-```text
+```
 
 ## Best Practices - Feature Guide Template
 
@@ -183,7 +183,7 @@ from flext_core import [Import]
 
 ```python
 # Example fix
-```text
+```
 
 ### Issue: [Problem Description]
 
@@ -258,9 +258,9 @@ from flext_core import [Import]
 
 **Example:**
 
-````python
+```python
 obj.property_name  # Access property
-```text
+```
 
 ## Quality Metrics - API Reference Template
 
@@ -277,7 +277,7 @@ obj.property_name  # Access property
 
 ```python
 # Full working example
-```text
+```
 
 ## See Also - API Reference Template
 
@@ -317,9 +317,9 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
 **Solution 2: [Approach Name]**
 
-````bash
+```bash
 # Commands or code
-```text
+```
 
 **When to check:**
 
@@ -393,18 +393,18 @@ Use for comprehensive guide on patterns/best practices.
 
 **When to use:** [Context]
 
-````python
+```python
 # ✅ CORRECT
 # Example showing best practice
-```text
+```
 `````
 
 `````
 
-````python
+```python
 # ❌ WRONG
 # Example showing anti-pattern
-```text
+```
 
 **Why:** [Explanation of benefits]
 
@@ -428,13 +428,13 @@ Use for comprehensive guide on patterns/best practices.
 
 ```python
 # ❌ WRONG - What to avoid
-```text
+```
 
 **Fix:**
 
 ```python
 # ✅ CORRECT - How to fix it
-```text
+```
 
 ## Summary - Best Practices Guide Template
 
@@ -458,11 +458,11 @@ pip install flext-core
 
 ## Basic Setup - Quick Reference Card Template
 
-````python
+```python
 from flext_core import [Import]
 
 # Quick setup
-```text
+```
 
 ## Common Tasks - Quick Reference Card Template
 
@@ -470,13 +470,13 @@ from flext_core import [Import]
 
 ```python
 # Code
-```text
+```
 
 ### Task 2 - Quick Reference Card Template
 
 ```python
 # Code
-```text
+```
 
 ## Common Issues - Quick Reference Card Template
 
@@ -519,9 +519,9 @@ key2 = 123
 
 ### Method 2: Environment Variables - Configuration Documentation Template
 
-````bash
+```bash
 export SETTING_NAME=value
-```text
+```
 
 ### Method 3: Programmatic - Configuration Documentation Template
 
@@ -529,7 +529,7 @@ export SETTING_NAME=value
 from flext_core import [Component]
 
 config = Component
-```text
+```
 
 ## Configuration Options - Configuration Documentation Template
 
@@ -542,7 +542,7 @@ config = Component
 
 ```python
 # Example
-```text
+```
 
 ## Environment-Specific - Configuration Documentation Template
 
@@ -550,19 +550,19 @@ config = Component
 
 ```toml
 [config.development]
-```text
+```
 
 ### Production - Configuration Documentation Template
 
 ```toml
 [config.production]
-```text
+```
 
 ## Complete Example - Configuration Documentation Template
 
 ```toml
 # Full working configuration
-```text
+```
 
 ````
 
@@ -590,15 +590,15 @@ Use when comparing similar features.
 
 ## [Feature B] Details - Comparison/Alternatives Template
 
-````python
+```python
 # Example usage
-```text
+```
 
 ## [Feature C] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
-```text
+```
 
 ## Decision Matrix - Comparison/Alternatives Template
 
@@ -633,9 +633,9 @@ Use for step-by-step implementation instructions.
 
 **Verify:**
 
-````bash
+```bash
 # How to verify this step worked
-```text
+```
 
 ## Step 2: [Name] - Implementation Guide Template
 
@@ -643,13 +643,13 @@ Use for step-by-step implementation instructions.
 
 ```python
 # Code for step 2
-```text
+```
 
 **Verify:**
 
 ```bash
 # How to verify this step worked
-```text
+```
 
 ## Step 3: [Name] - Implementation Guide Template
 
@@ -657,7 +657,7 @@ Use for step-by-step implementation instructions.
 
 ```python
 # Code for step 3
-```text
+```
 
 ## Verification - Implementation Guide Template
 
@@ -665,13 +665,13 @@ Run the following to verify complete implementation:
 
 ```bash
 # Test command
-```text
+```
 
 Expected output:
 
 ```json
 [Expected output]
-```text
+```
 
 ## Troubleshooting - Implementation Guide Template
 
@@ -682,7 +682,7 @@ Expected output:
 - Next feature
 - Related topic
 
-```text
+```
 
 ## Tips for Using Templates
 
@@ -704,5 +704,5 @@ See Configuration Guide as a real example of the Feature Guide Template.
 - Update existing templates based on feedback
 - Keep examples current and working
 - Review template usage quarterly
-```text
+```
 ````

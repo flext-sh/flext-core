@@ -5,7 +5,7 @@
 # - Project: flext-core
 # - Publisher: GitHub
 # - Repository: flext-sh/flext-core
-# - Workflow: publish.yml
+# - Workflow: workflow.yaml
 # - Environment name: pypi
 
 name: Publish to PyPI

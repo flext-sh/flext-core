@@ -202,7 +202,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         # Subset validation - using string value for type guard
         active_states = frozenset({StatusEnum.ACTIVE, StatusEnum.PENDING})
         test_status_str: str = "active"
-        if u.is_subset(type(StatusEnum.ACTIVE), active_states, test_status_str):
+        if u.is_subset(StatusEnum, active_states, test_status_str):
             print("✅ Subset validation: 'active' is in active states")
 
     @staticmethod

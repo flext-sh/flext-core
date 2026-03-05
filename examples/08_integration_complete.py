@@ -148,8 +148,7 @@ class IntegrationService(s[m.ConfigMap]):
         print("\n=== Registry/Dispatcher Integration ===")
 
         dispatcher = FlextDispatcher()
-        _registry = FlextRegistry()
-        _ = dispatcher
+        _registry = FlextRegistry(dispatcher=dispatcher)
         print("✅ Registry/Dispatcher initialized")
 
     @staticmethod

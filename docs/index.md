@@ -26,7 +26,7 @@ Concise navigation for FLEXT-Core reference materials. All documents follow the 
 
 ## Repository Structure (docs)
 
-````text
+```
 docs/
 ├── INDEX.md              # This file
 ├── quick-start.md        # Five-minute introduction
@@ -36,7 +36,7 @@ docs/
 ├── guides/               # How-to guides and patterns
 ├── improvements/         # Audit and quality reports
 └── standards/            # Coding and documentation standards
-```text
+```
 
 ## Notes on Accuracy and Duplication
 

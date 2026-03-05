@@ -35,12 +35,12 @@ map.failure: True
 map.exception_to_failure: 'map exploded'
 flat_map.success: 10
 flat_map.failure: 'flat failed'
-and_then.success: 3
-and_then.failure: True
+flat_map_chain.success: 3
+flat_map_chain.failure: True
 bind.success: "AttributeError:'FlextResult' object has no attribute 'bind'"
 bind.failure: "AttributeError:'FlextResult' object has no attribute 'bind'"
-alt.success_unchanged: 5
-alt.failure_changed: 'alt:bad-number'
+map_error.success_unchanged: 5
+map_error.failure_changed: 'alt:bad-number'
 map_error.failure_changed: 'mapped:bad-number'
 map_error.success_unchanged: 5
 lash.failure_recovered: 10

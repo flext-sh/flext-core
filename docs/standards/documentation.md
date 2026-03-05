@@ -107,9 +107,9 @@ One paragraph explaining what this feature does and why use it.
 
 ## Basic Usage
 
-`````python
+````python
 # Working example
-```text
+```
 ````markdown
 
 ## API Reference
@@ -164,7 +164,7 @@ else:
 
 **Rule**: Import ONLY what each example uses.
 
-`````python
+````python
 # ✅ CORRECT - Only FlextResult
 from flext_core import FlextResult
 
@@ -189,7 +189,7 @@ from flext_core import (
     t,
     u,
 )
-```text
+```
 
 ### Syntax Highlighting
 
@@ -197,15 +197,15 @@ Always use proper code fence language:
 
 ```python
 # Python code
-```text
+```
 
 ```bash
 # Bash commands
-```text
+```
 
 ```toml
 # Configuration files
-```text
+```
 
 ## Markdown Style
 
@@ -219,7 +219,7 @@ Always use proper code fence language:
 ### Subsection
 
 #### Detail
-```text
+```
 
 ### Lists
 
@@ -235,7 +235,7 @@ Always use proper code fence language:
 1. First step
 2. Second step
 3. Third step
-```text
+```
 
 ### Emphasis
 
@@ -243,7 +243,7 @@ Always use proper code fence language:
 - **Bold** for important terms
 - _Italics_ for stress/emphasis
 - `Code` for inline code references
-```text
+```
 
 ### Tables
 
@@ -252,7 +252,7 @@ Always use proper code fence language:
 | -------- | -------- | -------- |
 | Value 1  | Value 2  | Value 3  |
 | Value 4  | Value 5  | Value 6  |
-```text
+```
 
 ## Content Accuracy
 
@@ -275,7 +275,7 @@ FlextResult has three methods: ok(), fail(), and unwrap().
 
 FlextResult makes your code 100% bug-free.
 (This is false and unsupported)
-```text
+```
 
 ### Update Frequency
 
@@ -301,7 +301,7 @@ Use when documenting:
 ## Usage (1-2 examples)
 
 ## Best Practices (3-5 dos/don'ts)
-```text
+```
 
 ### Medium Format (1000-3000 words)
 
@@ -323,7 +323,7 @@ Use when documenting:
 ## Best Practices (300-400 words)
 
 ## Troubleshooting (300-500 words)
-```text
+```
 
 ### Long Format (3000+ words)
 
@@ -355,7 +355,7 @@ Use for comprehensive guides:
 ## Common Issues (500 words)
 
 ## Summary (200 words)
-```text
+```
 
 ## Status Badges
 
@@ -369,7 +369,7 @@ Use consistent status indicators:
 # ⚠️ Partial - Incomplete, use with caution
 
 # ❌ Deprecated - Don't use, see alternative
-```text
+```
 
 ## Cross-References
 
@@ -385,7 +385,7 @@ For advanced patterns, check Architecture Patterns.
 # ❌ WRONG
 
 See the getting started guide (file is located in docs/guides/)
-```text
+```
 
 ## Link Reference Standards
 
@@ -405,7 +405,7 @@ See [flext-ldif Architecture](https://github.com/organization/flext/tree/main/fl
 # ❌ WRONG - Relative paths for cross-project
 
 See flext-core
-```text
+```
 
 **Rationale**:
 
@@ -427,7 +427,7 @@ See API Reference
 # ❌ WRONG - GitHub URLs within project
 
 See [Getting Started](https://github.com/organization/flext/tree/main/flext-core/docs/guides/getting-started.md)
-```text
+```
 
 **Rationale**:
 
@@ -479,7 +479,7 @@ Before publishing documentation:
 
 ```python
 # Working example
-```text
+```
 ````markdown
 
 **Raises/Errors:**
@@ -518,7 +518,7 @@ Each method documented as above.
 
 **Description**: What does this property represent?
 
-````text
+```
 
 ## Writing Guidelines
 
@@ -532,7 +532,7 @@ FlextResult[T] returns either Ok(value) or Fail(error).
 # ❌ VAGUE
 
 FlextResult is cool and handles errors.
-```text
+```
 
 ### Be Concise
 
@@ -547,7 +547,7 @@ The ValidationMiddleware is a powerful tool that you can use in your
 application to validate incoming messages. When a message arrives at your
 bus, the middleware will check if it's valid. If it's not valid, it will
 fail the message...
-```text
+```
 
 ### Be Actionable
 
@@ -559,7 +559,7 @@ To enable debug logging, set `LOG_LEVEL=DEBUG` before running.
 # ❌ VAGUE - No action
 
 There is a debug mode available.
-```text
+```
 
 ### Avoid Passive Voice
 
@@ -571,7 +571,7 @@ You can register services with the container.
 # ❌ PASSIVE
 
 Services can be registered with the container.
-```text
+```
 
 ## Formatting Consistency
 
@@ -595,7 +595,7 @@ if result.is_success:
 result = FlextResult.ok(42)  # First example
 res = FlextResult[int].ok(42)  # Second example
 r = FlextResult[int].ok(42)  # Third example
-```text
+```
 
 ## Maintenance
 
@@ -632,7 +632,7 @@ result = (
 
 # ❌ WRONG - No explanation
 result = validate_email(email).flat_map(check_available).map(send_confirmation)
-```text
+```
 
 ### For Complex Topics
 
@@ -664,21 +664,21 @@ markdownlint docs/
 
 # Fix common issues
 markdownlint --fix docs/
-```text
+```
 
 ### Link Checking
 
 ```bash
 # Verify all links work
 markdown-link-check docs/**/*.md
-```text
+```
 
 ### Spelling
 
 ```bash
 # Check for spelling errors
 spell-check docs/
-```text
+```
 
 ## Examples of Excellent Documentation
 
