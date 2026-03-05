@@ -210,11 +210,11 @@ class DependencyInjectionService(s[m.ConfigMap]):
         print("\n=== Advanced DI Patterns ===")
 
         service_names = ["database", "cache", "email"]
-        services: dict[str, t.RegisterableService] = {
-            name: container.get(name).value
-            for name in service_names
-            if container.get(name).is_success
-        }
+        services: dict[str, t.RegisterableService] = {}
+        for name in service_names:
+            result = container.get(name)
+            if result.is_success:
+                services[name] = result.value
         print(f"✅ Auto-wired services: {len(services)}")
 
         print(f"✅ Singleton: {FlextContainer() is FlextContainer()}")
