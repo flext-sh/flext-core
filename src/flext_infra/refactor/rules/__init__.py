@@ -17,12 +17,12 @@ from flext_infra.refactor.rules.legacy_removal import (
 from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
+from flext_infra.refactor.rules.pattern_corrections import (
+    FlextInfraRefactorPatternCorrectionsRule,
+)
 from flext_infra.refactor.rules.symbol_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
-)
-from flext_infra.refactor.rules.pattern_corrections import (
-    FlextInfraRefactorPatternCorrectionsRule,
 )
 
 __all__ = [

@@ -92,7 +92,7 @@ class Examples:
         """Return a deterministic pseudo-random boolean."""
         return bool(self._rng.randint(0, 1))
 
-    def rand_person(self) -> "Examples.Person":
+    def rand_person(self) -> Examples.Person:
         """Return a ``Person`` with random name (6 chars) and age (1–99)."""
         return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
 

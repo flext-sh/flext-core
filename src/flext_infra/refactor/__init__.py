@@ -6,6 +6,7 @@ import importlib
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
+    from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
     from flext_infra.refactor.constants import FlextInfraRefactorConstants
     from flext_infra.refactor.engine import FlextInfraRefactorEngine
     from flext_infra.refactor.method_info import FlextInfraRefactorMethodInfo
@@ -26,14 +27,13 @@ if TYPE_CHECKING:
     from flext_infra.refactor.rules.mro_redundancy_checker import (
         FlextInfraRefactorMRORedundancyChecker,
     )
+    from flext_infra.refactor.rules.pattern_corrections import (
+        FlextInfraRefactorPatternCorrectionsRule,
+    )
     from flext_infra.refactor.rules.symbol_propagation import (
         FlextInfraRefactorSignaturePropagationRule,
         FlextInfraRefactorSymbolPropagationRule,
     )
-    from flext_infra.refactor.rules.pattern_corrections import (
-        FlextInfraRefactorPatternCorrectionsRule,
-    )
-    from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 
 _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
     "FlextInfraRefactorConstants": (
@@ -115,8 +115,8 @@ __all__ = [
     "FlextInfraRefactorImportModernizerRule",
     "FlextInfraRefactorLegacyRemovalRule",
     "FlextInfraRefactorMRORedundancyChecker",
-    "FlextInfraRefactorPatternCorrectionsRule",
     "FlextInfraRefactorMethodInfo",
+    "FlextInfraRefactorPatternCorrectionsRule",
     "FlextInfraRefactorResult",
     "FlextInfraRefactorRule",
     "FlextInfraRefactorSignaturePropagationRule",
