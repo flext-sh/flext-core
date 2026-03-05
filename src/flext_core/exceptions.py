@@ -1359,6 +1359,7 @@ class FlextExceptions:
         t.MetadataValue | None,
         Mapping[str, t.MetadataValue],
     ]:
+        """Prepare normalized kwargs payload for exception construction."""
         return e._prepare_exception_kwargs(kwargs, specific_params)
 
     @staticmethod
@@ -1368,6 +1369,7 @@ class FlextExceptions:
         str | None,
         MetadataProtocol | Mapping[str, t.MetadataValue] | None,
     ]:
+        """Extract common correlation and metadata fields from kwargs."""
         return e._extract_common_kwargs(kwargs)
 
     @staticmethod

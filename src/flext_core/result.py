@@ -189,6 +189,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @property
     def data(self) -> T_co:
+        """Compatibility alias returning successful payload value."""
         return self.value
 
     @property

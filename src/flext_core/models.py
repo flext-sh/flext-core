@@ -272,7 +272,7 @@ class FlextModels:
         """Collections statistics — real re-export for pydantic-mypy compatibility."""
 
     class Collections(FlextModelsCollections):
-        pass
+        """Collections namespace re-export for pydantic-mypy compatibility."""
 
     class Options(FlextModelsCollections.Options):
         """Options — real re-export for pydantic-mypy compatibility."""

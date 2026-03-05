@@ -487,6 +487,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     def auto_register(
         namespace: str,
     ) -> Callable[[type[T_Settings]], type[T_Settings]]:
+        """Build a decorator that registers a settings class by namespace."""
+
         def decorator(cls: type[T_Settings]) -> type[T_Settings]:
             FlextSettings._namespace_registry[namespace] = cls
             return cls
@@ -500,10 +502,12 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
     @classmethod
     def get_global_instance(cls) -> Self:
+        """Return the singleton settings instance."""
         return cls.get_global()
 
     @classmethod
     def get_instance(cls) -> Self:
+        """Backward-compatible alias for singleton settings access."""
         return cls.get_global()
 
     def get_namespace(
@@ -547,6 +551,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         return config_class()
 
     def __getattr__(self, name: str) -> BaseSettings:
+        """Resolve namespace-style attribute access to registered settings."""
         namespace = name.lower()
         if namespace in {"core", "root", "settings"}:
             return FlextSettings.get_instance()
@@ -635,6 +640,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
     @classmethod
     def reset_global_instance(cls) -> None:
+        """Reset singleton settings state for test/runtime reinitialization."""
         cls.reset_for_testing()
 
 

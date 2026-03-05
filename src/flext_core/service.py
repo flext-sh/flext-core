@@ -366,6 +366,7 @@ class FlextService[TDomainResult](
 
     @property
     def settings(self) -> FlextSettings:
+        """Return service config narrowed to FlextSettings."""
         config = self.config
         if isinstance(config, FlextSettings):
             return config

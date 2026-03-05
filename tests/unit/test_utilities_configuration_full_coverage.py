@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -26,7 +26,12 @@ class _Opts(BaseModel):
 
 
 class _ContainerOK:
-    def register(self, _name: str, _instance: t.JsonValue, **kwargs: Any) -> r[bool]:
+    def register(
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
+    ) -> r[bool]:
         return r[bool].ok(True)
 
     def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
@@ -34,7 +39,12 @@ class _ContainerOK:
 
 
 class _ContainerFail:
-    def register(self, _name: str, _instance: t.JsonValue, **kwargs: Any) -> r[bool]:
+    def register(
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
+    ) -> r[bool]:
         return r[bool].fail("reg fail")
 
     def register_factory(self, _name: str, _factory: Callable[[], object]) -> r[bool]:
@@ -42,7 +52,12 @@ class _ContainerFail:
 
 
 class _ContainerRaise:
-    def register(self, _name: str, _instance: t.JsonValue, **kwargs: Any) -> r[bool]:
+    def register(
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
+    ) -> r[bool]:
         msg = "reg ex"
         raise RuntimeError(msg)
 
