@@ -36,7 +36,7 @@ class FlextInfraJsonService(FlextService[bool]):
         """Execute the service (required by FlextService base class)."""
         return r[bool].ok(True)
 
-    def read(self, path: Path) -> FlextResult[Mapping[str, t.Container]]:
+    def read(self, path: Path) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Read and parse a JSON file.
 
         Args:
@@ -108,7 +108,7 @@ class FlextInfraJsonService(FlextService[bool]):
 # Module-level convenience functions for direct usage without instantiation
 
 
-def read_json(path: Path) -> FlextResult[Mapping[str, t.Container]]:
+def read_json(path: Path) -> FlextResult[Mapping[str, t.ContainerValue]]:
     """Read and parse a JSON file (convenience function).
 
     Args:

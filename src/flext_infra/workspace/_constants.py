@@ -38,12 +38,14 @@ class FlextInfraWorkspaceConstants:
             "python3 -m flext_infra github pr",
         ),
     )
-    GITIGNORE_REMOVE_EXACT: Final[frozenset[str]] = frozenset({
-        "!scripts/",
-        "!scripts/**",
-        "scripts/",
-        "/scripts/",
-    })
+    GITIGNORE_REMOVE_EXACT: Final[frozenset[str]] = frozenset(
+        {
+            "!scripts/",
+            "!scripts/**",
+            "scripts/",
+            "/scripts/",
+        }
+    )
     GITIGNORE_REQUIRED_PATTERNS: Final[tuple[str, ...]] = (
         ".reports/",
         ".venv/",

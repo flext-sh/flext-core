@@ -229,7 +229,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: t.Container) -> Self:
+    def __new__(cls, **_kwargs: t.ContainerValue) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -396,11 +396,13 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
         """
         # Check database URL scheme if provided
-        if self.database_url and not self.database_url.startswith((
-            "postgresql://",
-            "mysql://",
-            "sqlite://",
-        )):
+        if self.database_url and not self.database_url.startswith(
+            (
+                "postgresql://",
+                "mysql://",
+                "sqlite://",
+            )
+        ):
             msg = "Invalid database URL scheme"
             raise ValueError(msg)
 

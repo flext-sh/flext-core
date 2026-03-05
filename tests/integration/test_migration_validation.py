@@ -260,19 +260,19 @@ class TestMigrationComplexity:
             def process_data(
                 self,
                 data: dict[str, str],
-            ) -> FlextResult[dict[str, t.Container]]:
+            ) -> FlextResult[dict[str, t.ContainerValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict[str, t.Container]].fail(
+                    return FlextResult[dict[str, t.ContainerValue]].fail(
                         "Data required",
                     )
 
                 self.logger.info("Processing data", extra={"size": len(data)})
-                processed: dict[str, t.Container] = {
+                processed: dict[str, t.ContainerValue] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return FlextResult[dict[str, t.Container]].ok(processed)
+                return FlextResult[dict[str, t.ContainerValue]].ok(processed)
 
         # Test application works correctly
         app = ApplicationExample()

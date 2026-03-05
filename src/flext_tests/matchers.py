@@ -76,7 +76,7 @@ def _is_key_value_pair[TK, TV](
     return isinstance(key_equals, tuple) and len(key_equals) == 2
 
 
-def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.Container]]:
+def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ContainerValue]]:
     return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
 
@@ -90,7 +90,7 @@ def _to_test_payload(value: object) -> t.Tests.ContainerValue:
     return str(value)
 
 
-def _as_guard_input(value: object) -> core_t.Container:
+def _as_guard_input(value: object) -> core_t.ContainerValue:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -104,8 +104,8 @@ def _as_guard_input(value: object) -> core_t.Container:
 
 def _check_has_lacks(
     value: object,
-    has: t.Container | Sequence[t.Container] | None,
-    lacks: t.Container | Sequence[t.Container] | None,
+    has: t.ContainerValue | Sequence[t.ContainerValue] | None,
+    lacks: t.ContainerValue | Sequence[t.ContainerValue] | None,
     msg: str | None,
     *,
     as_str: bool = False,
@@ -512,7 +512,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}",
                 )
-            extract_source: BaseModel | core_t.Container
+            extract_source: BaseModel | core_t.ContainerValue
             if isinstance(result_value, BaseModel):
                 extract_source = result_value
             elif isinstance(result_value, Mapping):
@@ -754,11 +754,13 @@ class FlextTestsMatchers:
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
 
-            yield m.Tests.Matcher.TestScope.model_validate({
-                "config": cfg,
-                "container": container_dict,
-                "context": context_map,
-            })
+            yield m.Tests.Matcher.TestScope.model_validate(
+                {
+                    "config": cfg,
+                    "container": container_dict,
+                    "context": context_map,
+                }
+            )
 
         finally:
             # Restore environment variables

@@ -50,12 +50,14 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
     @staticmethod
     def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
-        result = FlextInfraCommandRunner().run_raw([
-            "make",
-            "-C",
-            str(project_path),
-            verb,
-        ])
+        result = FlextInfraCommandRunner().run_raw(
+            [
+                "make",
+                "-C",
+                str(project_path),
+                verb,
+            ]
+        )
         if result.is_failure:
             return r[tuple[int, str]].fail(result.error or "make execution failed")
 
@@ -112,15 +114,17 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
                 failures += 1
             log = output_dir / f"build-{name}.log"
             log.write_text(output + "\n", encoding=c.Encoding.DEFAULT)
-            records.append({
-                "project": name,
-                "path": str(path),
-                "exit_code": code,
-                "log": str(log),
-            })
+            records.append(
+                {
+                    "project": name,
+                    "path": str(path),
+                    "exit_code": code,
+                    "log": str(log),
+                }
+            )
             logger.info("release_phase_build_project", project=name, exit_code=code)
 
-        report: Mapping[str, t.Container] = {
+        report: Mapping[str, t.ContainerValue] = {
             "version": version,
             "total": len(records),
             "failures": failures,
@@ -535,18 +539,20 @@ class FlextInfraReleaseOrchestrator(FlextService[bool]):
             "- root",
         ]
         lines.extend(f"- {p.name}" for p in project_list)
-        lines.extend([
-            "",
-            "## Changes since last tag",
-            "",
-            changes or "- Initial tagged release",
-            "",
-            "## Verification",
-            "",
-            "- make release INTERACTIVE=0 CREATE_BRANCHES=0 RELEASE_PHASE=all",
-            "- make validate VALIDATE_SCOPE=workspace",
-            "- make build",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Changes since last tag",
+                "",
+                changes or "- Initial tagged release",
+                "",
+                "## Verification",
+                "",
+                "- make release INTERACTIVE=0 CREATE_BRANCHES=0 RELEASE_PHASE=all",
+                "- make validate VALIDATE_SCOPE=workspace",
+                "- make build",
+            ]
+        )
 
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)

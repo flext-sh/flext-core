@@ -14,17 +14,19 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Final, Literal
 
-KNOWN_VERBS: Final[frozenset[str]] = frozenset({
-    "build",
-    "check",
-    "dependencies",
-    "docs",
-    "preflight",
-    "release",
-    "tests",
-    "validate",
-    "workspace",
-})
+KNOWN_VERBS: Final[frozenset[str]] = frozenset(
+    {
+        "build",
+        "check",
+        "dependencies",
+        "docs",
+        "preflight",
+        "release",
+        "tests",
+        "validate",
+        "workspace",
+    }
+)
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
 _MAX_TIMEOUT_SECONDS: Final[int] = 3600
 _MIN_TIMEOUT_SECONDS: Final[int] = 1
@@ -544,13 +546,15 @@ class FlextConstants:
         ASYNC_QUEUE_SIZE: Final[int] = 10000
         ASYNC_WORKERS: Final[int] = 1
         ASYNC_BLOCK_ON_FULL: Final[bool] = False
-        LEVEL_HIERARCHY: Final[MappingProxyType[str, int]] = MappingProxyType({
-            "debug": 10,
-            "info": 20,
-            "warning": 30,
-            "error": 40,
-            "critical": 50,
-        })
+        LEVEL_HIERARCHY: Final[MappingProxyType[str, int]] = MappingProxyType(
+            {
+                "debug": 10,
+                "info": 20,
+                "warning": 30,
+                "error": 40,
+                "critical": 50,
+            }
+        )
         "Numeric log levels for comparison (lower = more verbose)."
 
         class ContextOperation(StrEnum):

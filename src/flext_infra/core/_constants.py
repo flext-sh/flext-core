@@ -11,39 +11,47 @@ class FlextInfraCoreConstants:
     """Core infrastructure constants."""
 
     # From namespace_validator.py
-    EXEMPT_FILENAMES: Final[frozenset[str]] = frozenset({
-        "__init__.py",
-        "conftest.py",
-        "__main__.py",
-    })
+    EXEMPT_FILENAMES: Final[frozenset[str]] = frozenset(
+        {
+            "__init__.py",
+            "conftest.py",
+            "__main__.py",
+        }
+    )
     EXEMPT_PREFIXES: Final[frozenset[str]] = frozenset({"test_", "_"})
-    ALIAS_NAMES: Final[frozenset[str]] = frozenset({
-        "c",
-        "t",
-        "m",
-        "p",
-        "u",
-        "r",
-        "d",
-        "e",
-        "h",
-        "s",
-        "x",
-        "tc",
-    })
+    ALIAS_NAMES: Final[frozenset[str]] = frozenset(
+        {
+            "c",
+            "t",
+            "m",
+            "p",
+            "u",
+            "r",
+            "d",
+            "e",
+            "h",
+            "s",
+            "x",
+            "tc",
+        }
+    )
     DUNDER_ALLOWED: Final[frozenset[str]] = frozenset({"__all__", "__version__"})
-    TYPEVAR_CALLABLES: Final[frozenset[str]] = frozenset({
-        "TypeVar",
-        "ParamSpec",
-        "TypeVarTuple",
-    })
+    TYPEVAR_CALLABLES: Final[frozenset[str]] = frozenset(
+        {
+            "TypeVar",
+            "ParamSpec",
+            "TypeVarTuple",
+        }
+    )
     ENUM_BASES: Final[frozenset[str]] = frozenset({"StrEnum", "Enum", "IntEnum"})
-    COLLECTION_CALLS: Final[frozenset[str]] = frozenset({
-        "frozenset",
-        "tuple",
-        "dict",
-        "list",
-    })
+    COLLECTION_CALLS: Final[frozenset[str]] = frozenset(
+        {
+            "frozenset",
+            "tuple",
+            "dict",
+            "list",
+        }
+    )
 
     # From skill_validator.py
     SKILLS_DIR: Final[Path] = Path(".claude/skills")

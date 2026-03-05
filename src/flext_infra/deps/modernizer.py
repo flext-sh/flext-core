@@ -53,12 +53,16 @@ def _find_ruff_shared_path(project_dir: Path, workspace_root: Path) -> tuple[Pat
     """Return target ruff-shared file path and relative extend value."""
     workspace_candidate = workspace_root / "ruff-shared.toml"
     if workspace_candidate.exists() or workspace_root == project_dir:
-        return workspace_candidate, workspace_candidate.relative_to(project_dir).as_posix()
+        return workspace_candidate, workspace_candidate.relative_to(
+            project_dir
+        ).as_posix()
 
     return workspace_candidate, workspace_candidate.relative_to(project_dir).as_posix()
 
 
-def _ensure_ruff_shared_template(project_dir: Path, workspace_root: Path) -> tuple[Path, bool]:
+def _ensure_ruff_shared_template(
+    project_dir: Path, workspace_root: Path
+) -> tuple[Path, bool]:
     """Create managed ruff-shared.toml in workspace root when missing."""
     target, _ = _find_ruff_shared_path(project_dir, workspace_root)
     if target.exists():
@@ -88,7 +92,7 @@ def _dedupe_specs(specs: Iterable[str]) -> list[str]:
     return [seen[k] for k in sorted(seen)]
 
 
-def _unwrap_item(value: t.Container | Item | None) -> t.Container | None:
+def _unwrap_item(value: t.ContainerValue | Item | None) -> t.ContainerValue | None:
     """Unwrap a tomlkit Item to get the underlying value."""
     if isinstance(value, Item):
         unwrapped = value.unwrap()
@@ -96,7 +100,7 @@ def _unwrap_item(value: t.Container | Item | None) -> t.Container | None:
     return value
 
 
-def _as_string_list(value: t.Container | Item | None) -> list[str]:
+def _as_string_list(value: t.ContainerValue | Item | None) -> list[str]:
     """Convert TOML value to list of strings."""
     if value is None or isinstance(value, (str, Mapping)):
         return []
@@ -219,14 +223,16 @@ class ConsolidateGroupsPhase:
             project["optional-dependencies"] = optional
 
         existing = _project_dev_groups(doc)
-        merged_dev = _dedupe_specs([
-            *canonical_dev,
-            *existing.get("dev", []),
-            *existing.get("docs", []),
-            *existing.get("security", []),
-            *existing.get("test", []),
-            *existing.get("typings", []),
-        ])
+        merged_dev = _dedupe_specs(
+            [
+                *canonical_dev,
+                *existing.get("dev", []),
+                *existing.get("docs", []),
+                *existing.get("security", []),
+                *existing.get("test", []),
+                *existing.get("typings", []),
+            ]
+        )
         current_dev = _as_string_list(optional.get("dev"))
         if current_dev != merged_dev:
             optional["dev"] = _array(merged_dev)
@@ -621,7 +627,7 @@ class EnsureFormattingToolingPhase:
             doc["tool"] = tool
 
         tomlsort = _ensure_table(tool, "tomlsort")
-        tomlsort_defaults: tuple[tuple[str, t.Container], ...] = (
+        tomlsort_defaults: tuple[tuple[str, t.ContainerValue], ...] = (
             ("all", True),
             ("in_place", True),
             ("sort_first", ["project", "build-system", "tool", "dependency-groups"]),
@@ -633,7 +639,7 @@ class EnsureFormattingToolingPhase:
                 changes.append(f"tool.tomlsort.{key} set")
 
         yamlfix = _ensure_table(tool, "yamlfix")
-        yamlfix_defaults: tuple[tuple[str, t.Container], ...] = (
+        yamlfix_defaults: tuple[tuple[str, t.ContainerValue], ...] = (
             ("line_length", 88),
             ("preserve_quotes", True),
             ("whitelines", 1),
@@ -767,7 +773,9 @@ class FlextInfraPyprojectModernizer:
 
         is_root = path.parent.resolve() == self.root.resolve()
 
-        shared_path, shared_written = _ensure_ruff_shared_template(path.parent, self.root)
+        shared_path, shared_written = _ensure_ruff_shared_template(
+            path.parent, self.root
+        )
         changes: list[str] = []
         if shared_written:
             changes.append(f"generated {shared_path.relative_to(path.parent)}")

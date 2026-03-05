@@ -16,11 +16,13 @@ from typing import Final
 class FlextInfraPathsConstants:
     """Path resolution constants for workspace navigation."""
 
-    WORKSPACE_MARKERS: Final[frozenset[str]] = frozenset({
-        ".git",
-        "Makefile",
-        "pyproject.toml",
-    })
+    WORKSPACE_MARKERS: Final[frozenset[str]] = frozenset(
+        {
+            ".git",
+            "Makefile",
+            "pyproject.toml",
+        }
+    )
     """Filesystem markers used to detect workspace root directories."""
 
 
@@ -37,11 +39,13 @@ class FlextInfraVersioningConstants:
     )
     """Regex pattern for matching development branch names."""
 
-    VALID_BUMP_TYPES: Final[frozenset[str]] = frozenset({
-        "major",
-        "minor",
-        "patch",
-    })
+    VALID_BUMP_TYPES: Final[frozenset[str]] = frozenset(
+        {
+            "major",
+            "minor",
+            "patch",
+        }
+    )
     """Allowed version bump type identifiers."""
 
 

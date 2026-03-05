@@ -67,7 +67,7 @@ class FlextInfraStubSupplyChain:
         self,
         project_dir: Path,
         workspace_root: Path,
-    ) -> FlextResult[Mapping[str, t.Container]]:
+    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Analyze a project for missing stubs and type packages.
 
         Runs mypy for hints and pyrefly for missing imports, then
@@ -94,7 +94,7 @@ class FlextInfraStubSupplyChain:
             ]
             unresolved = [m for m in external if not self._stub_exists(m, root)]
 
-            result: MutableMapping[str, t.Container] = {
+            result: MutableMapping[str, t.ContainerValue] = {
                 "project": proj.name,
                 "mypy_hints": mypy_hints,
                 "internal_missing": internal,
@@ -175,11 +175,13 @@ class FlextInfraStubSupplyChain:
         output = ""
         if result.is_success:
             output = result.value.stdout
-        return sorted({
-            m.group(1).strip()
-            for m in c.Infra.Core.MYPY_HINT_RE.finditer(output)
-            if m.group(1).strip()
-        })
+        return sorted(
+            {
+                m.group(1).strip()
+                for m in c.Infra.Core.MYPY_HINT_RE.finditer(output)
+                if m.group(1).strip()
+            }
+        )
 
     def _run_pyrefly_missing(self, project_dir: Path) -> list[str]:
         """Run pyrefly check and extract missing imports."""

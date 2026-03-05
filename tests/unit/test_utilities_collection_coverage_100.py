@@ -175,9 +175,9 @@ class ChunkScenario:
     """Chunk method test scenario."""
 
     name: str
-    items: list[t.Container] | tuple[t.Container, ...]
+    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...]
     size: int
-    expected_result: list[list[t.Container]]
+    expected_result: list[list[t.ContainerValue]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,7 +185,7 @@ class BatchScenario:
     """Batch method test scenario."""
 
     name: str
-    items: list[t.Container]
+    items: list[t.ContainerValue]
     operation: Callable[[object], object]
     expected_result: object
     size: int = 100

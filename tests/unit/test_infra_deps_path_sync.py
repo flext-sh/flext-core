@@ -586,15 +586,17 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
@@ -646,23 +648,25 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
                 side_effect=[
                     r[list[m.ProjectInfo]].ok([]),  # root rewrite
-                    r[list[m.ProjectInfo]].ok([
-                        "change1"
-                    ]),  # project rewrite with changes
+                    r[list[m.ProjectInfo]].ok(
+                        ["change1"]
+                    ),  # project rewrite with changes
                 ],
             ),
             patch(
@@ -706,15 +710,17 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "flext_infra.deps.path_sync.rewrite_dep_paths",
@@ -771,15 +777,17 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "sys.argv",
@@ -803,15 +811,17 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "sys.argv",
@@ -835,15 +845,17 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "sys.argv",
@@ -867,15 +879,17 @@ class TestMain:
             patch("flext_infra.deps.path_sync.ROOT", tmp_path),
             patch(
                 "flext_infra.FlextInfraDiscoveryService.discover_projects",
-                return_value=r[list[m.ProjectInfo]].ok([
-                    m.ProjectInfo(
-                        path=project_dir,
-                        name="flext-core",
-                        stack="python",
-                        has_tests=False,
-                        has_src=False,
-                    )
-                ]),
+                return_value=r[list[m.ProjectInfo]].ok(
+                    [
+                        m.ProjectInfo(
+                            path=project_dir,
+                            name="flext-core",
+                            stack="python",
+                            has_tests=False,
+                            has_src=False,
+                        )
+                    ]
+                ),
             ),
             patch(
                 "sys.argv",

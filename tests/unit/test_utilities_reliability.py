@@ -128,11 +128,11 @@ class TestFlextUtilitiesReliability:
         @staticmethod
         def create_delay_config(
             config_type: TestFlextUtilitiesReliability.DelayConfig,
-        ) -> dict[str, t.Container]:
+        ) -> dict[str, t.ContainerValue]:
             """Create delay configuration for given type."""
             configs: Mapping[
                 TestFlextUtilitiesReliability.DelayConfig,
-                dict[str, t.Container],
+                dict[str, t.ContainerValue],
             ] = {
                 TestFlextUtilitiesReliability.DelayConfig.EXPONENTIAL: {
                     "initial_delay_seconds": 0.1,

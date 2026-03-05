@@ -79,7 +79,7 @@ def test_set_set_all_get_validation_and_error_paths(
         def get(self) -> dict[str, object]:
             return {}
 
-        def set(self, _v: t.Container) -> None:
+        def set(self, _v: t.ContainerValue) -> None:
             msg = "boom"
             raise TypeError(msg)
 

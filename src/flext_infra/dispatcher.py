@@ -155,7 +155,7 @@ class FlextInfraDispatcher(FlextService[bool]):
                 self.message_type = message_type_value
                 self._command_cls = command_cls
 
-            def __call__(self, command: t.Container) -> t.Container:
+            def __call__(self, command: t.ContainerValue) -> t.ContainerValue:
                 if isinstance(command, self._command_cls):
                     return {
                         "command_type": command.command_type,

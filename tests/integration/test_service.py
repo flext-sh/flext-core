@@ -51,7 +51,7 @@ class UserQueryService(FlextService[bool]):
 
     def __init__(
         self,
-        **data: t.Container,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize user query service."""
         super().__init__(**data)
@@ -135,7 +135,7 @@ class NotificationService(FlextService[str]):
 
     def __init__(
         self,
-        **data: t.Container,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize notification service."""
         super().__init__(**data)
@@ -199,11 +199,13 @@ class ServiceConfig(m.CollectionsConfig):
 
 
 def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:
-    return ServiceConfig.model_validate({
-        "name": name,
-        "version": version,
-        "temp_dir": temp_dir,
-    })
+    return ServiceConfig.model_validate(
+        {
+            "name": name,
+            "version": version,
+            "temp_dir": temp_dir,
+        }
+    )
 
 
 class LifecycleService(FlextService[str]):
@@ -217,7 +219,7 @@ class LifecycleService(FlextService[str]):
 
     def __init__(
         self,
-        **data: t.Container,
+        **data: t.ContainerValue,
     ) -> None:
         """Initialize lifecycle service."""
         super().__init__(**data)

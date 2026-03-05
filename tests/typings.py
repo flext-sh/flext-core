@@ -43,13 +43,13 @@ class TestsFlextTypes(FlextTestsTypes):
 
         type ServiceConfigMapping = Mapping[
             str,
-            t.Container | Sequence[str] | Mapping[str, str | int] | None,
+            t.ContainerValue | Sequence[str] | Mapping[str, str | int] | None,
         ]
         """Service configuration mapping specific to flext-core services."""
 
         type HandlerConfigMapping = Mapping[
             str,
-            t.Container | Sequence[str] | Mapping[str, str] | None,
+            t.ContainerValue | Sequence[str] | Mapping[str, str] | None,
         ]
         """Handler configuration mapping specific to flext-core handlers."""
 

@@ -573,7 +573,7 @@ class TestHandlerDiscoveryEdgeCases:
         class TestService:
             @_test_handler(command=UserCreateCommand, priority=10)
             @_test_handler(command=UserDeleteCommand, priority=20)
-            def handle(self, cmd: t.Container) -> r[str]:
+            def handle(self, cmd: t.ContainerValue) -> r[str]:
                 return r[str].ok("ok")
 
         method = TestService.handle

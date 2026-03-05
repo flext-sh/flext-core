@@ -305,12 +305,14 @@ class FlextInfraPrWorkspaceManager:
                     break
 
         total = len(repos)
-        return r[OrchestrationSummary].ok({
-            "total": total,
-            "success": total - failures,
-            "fail": failures,
-            "results": results,
-        })
+        return r[OrchestrationSummary].ok(
+            {
+                "total": total,
+                "success": total - failures,
+                "fail": failures,
+                "results": results,
+            }
+        )
 
     def run_pr(
         self,
@@ -360,13 +362,15 @@ class FlextInfraPrWorkspaceManager:
 
         elapsed = int(time.monotonic() - started)
         status = c.Status.OK if exit_code == 0 else c.Status.FAIL
-        return r[Mapping[str, t.Scalar]].ok({
-            "display": display,
-            "status": status,
-            "elapsed": elapsed,
-            "exit_code": exit_code,
-            "log_path": str(log_path) if log_path else None,
-        })
+        return r[Mapping[str, t.Scalar]].ok(
+            {
+                "display": display,
+                "status": status,
+                "elapsed": elapsed,
+                "exit_code": exit_code,
+                "log_path": str(log_path) if log_path else None,
+            }
+        )
 
 
 __all__ = ["FlextInfraPrWorkspaceManager"]

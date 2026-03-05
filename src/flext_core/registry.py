@@ -234,7 +234,7 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _is_protocol_handler(
         value: object,
-    ) -> TypeGuard[p.Handler[t.Container, t.Container]]:
+    ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
         return bool(
             hasattr(value, "handle")
             and hasattr(value, "can_handle")
@@ -246,7 +246,7 @@ class FlextRegistry(s[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: p.Handler[t.Container, t.Container],
+        handler: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = getattr(handler, "handler_id", None)
@@ -292,13 +292,13 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _to_dispatcher_handler(
-        handler_for_dispatch: p.Handler[t.Container, t.Container],
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> t.HandlerLike:
         """Convert handler to dispatcher-compatible callable."""
         # Wrap handler.handle() to return ContainerValue | None
         handler_ref = handler_for_dispatch
 
-        def _dispatch_wrapper(*args: t.Container) -> t.Container | None:
+        def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
             if args:
                 result = handler_ref.handle(args[0])
                 return result.value if result.is_success else None
@@ -454,7 +454,7 @@ class FlextRegistry(s[bool]):
         self,
         bindings: Mapping[
             RegistryBindingKey,
-            p.Handler[t.Container, t.Container],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
@@ -487,12 +487,14 @@ class FlextRegistry(s[bool]):
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
                 try:
-                    m.HandlerRegistrationDetails.model_validate({
-                        "registration_id": key,
-                        "handler_mode": c.Cqrs.HandlerType.COMMAND,
-                        "timestamp": "",
-                        "status": c.Cqrs.CommonStatus.RUNNING,
-                    })
+                    m.HandlerRegistrationDetails.model_validate(
+                        {
+                            "registration_id": key,
+                            "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                            "timestamp": "",
+                            "status": c.Cqrs.CommonStatus.RUNNING,
+                        }
+                    )
                 except ValidationError:
                     _ = self._add_registration_error(
                         key,
@@ -501,8 +503,8 @@ class FlextRegistry(s[bool]):
                     )
                     continue
                 handler_for_dispatch: p.Handler[
-                    t.Container,
-                    t.Container,
+                    t.ContainerValue,
+                    t.ContainerValue,
                 ] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
@@ -599,7 +601,7 @@ class FlextRegistry(s[bool]):
 
     def register_handler(
         self,
-        handler: p.Handler[t.Container, t.Container],
+        handler: p.Handler[t.ContainerValue, t.ContainerValue],
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -612,12 +614,14 @@ class FlextRegistry(s[bool]):
 
         """
         try:
-            m.HandlerRegistrationDetails.model_validate({
-                "registration_id": handler.__class__.__name__,
-                "handler_mode": c.Cqrs.HandlerType.COMMAND,
-                "timestamp": "",
-                "status": c.Cqrs.CommonStatus.RUNNING,
-            })
+            m.HandlerRegistrationDetails.model_validate(
+                {
+                    "registration_id": handler.__class__.__name__,
+                    "handler_mode": c.Cqrs.HandlerType.COMMAND,
+                    "timestamp": "",
+                    "status": c.Cqrs.CommonStatus.RUNNING,
+                }
+            )
         except ValidationError:
             return r[m.HandlerRegistrationDetails].fail(
                 "Handler validation failed",
@@ -660,9 +664,9 @@ class FlextRegistry(s[bool]):
             handler_key=key,
         )
         # register_handler returns r[m.HandlerRegistrationResult]
-        # register_handler accepts t.Container | BaseModel, but h works via runtime check
-        # Type narrowing: handler is FlextHandlers which is compatible with t.Container
-        handler_for_dispatch: p.Handler[t.Container, t.Container] = handler
+        # register_handler accepts t.ContainerValue | BaseModel, but h works via runtime check
+        # Type narrowing: handler is FlextHandlers which is compatible with t.ContainerValue
+        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = handler
         registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
@@ -749,7 +753,7 @@ class FlextRegistry(s[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[p.Handler[t.Container, t.Container]],
+        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 

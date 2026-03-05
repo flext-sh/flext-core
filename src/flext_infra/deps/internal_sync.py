@@ -193,11 +193,13 @@ class FlextInfraInternalDependencySyncService:
 
         tool = data.get("tool")
         poetry = tool.get("poetry") if isinstance(tool, dict) else None
-        empty_deps: dict[str, t.Container] = {}
+        empty_deps: dict[str, t.ContainerValue] = {}
         deps_raw = (
             poetry.get("dependencies") if isinstance(poetry, dict) else empty_deps
         )
-        deps: dict[str, t.Container] = deps_raw if isinstance(deps_raw, dict) else {}
+        deps: dict[str, t.ContainerValue] = (
+            deps_raw if isinstance(deps_raw, dict) else {}
+        )
         if not isinstance(deps, dict):
             deps = {}
 
@@ -217,7 +219,7 @@ class FlextInfraInternalDependencySyncService:
         project_deps_raw = (
             project_obj.get("dependencies") if isinstance(project_obj, dict) else None
         )
-        project_deps: list[t.Container] = (
+        project_deps: list[t.ContainerValue] = (
             project_deps_raw if isinstance(project_deps_raw, list) else []
         )
 
@@ -256,16 +258,18 @@ class FlextInfraInternalDependencySyncService:
             except OSError as exc:
                 return r[bool].fail(f"cleanup failed for {dep_path.name}: {exc}")
 
-            cloned = self._runner.run_raw([
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                safe_ref_name,
-                safe_repo_url,
-                str(dep_path),
-            ])
+            cloned = self._runner.run_raw(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    safe_ref_name,
+                    safe_repo_url,
+                    str(dep_path),
+                ]
+            )
             if cloned.is_failure or cloned.value.exit_code != 0:
                 stderr = cloned.value.stderr.strip() if cloned.is_success else ""
                 return r[bool].fail(f"clone failed for {dep_path.name}: {stderr}")

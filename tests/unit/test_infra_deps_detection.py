@@ -450,10 +450,12 @@ class TestLoadDependencyLimits:
         """Test loading limits successfully."""
         service = FlextInfraDependencyDetectionService()
         service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
-            "key": "value",
-            "num": 42,
-        })
+        service._toml.read.return_value = r[dict[str, t.Any]].ok(
+            {
+                "key": "value",
+                "num": 42,
+            }
+        )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         assert result["key"] == "value"
         assert result["num"] == 42
@@ -470,10 +472,12 @@ class TestLoadDependencyLimits:
         """Test unconvertible values are skipped."""
         service = FlextInfraDependencyDetectionService()
         service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
-            "good": "val",
-            "bad": set(),
-        })
+        service._toml.read.return_value = r[dict[str, t.Any]].ok(
+            {
+                "good": "val",
+                "bad": set(),
+            }
+        )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         assert "good" in result
         assert "bad" not in result
@@ -575,20 +579,22 @@ class TestGetCurrentTypingsFromPyproject:
         """Test extracting typings from poetry group."""
         service = FlextInfraDependencyDetectionService()
         service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
-            "tool": {
-                "poetry": {
-                    "group": {
-                        "typings": {
-                            "dependencies": {
-                                "types-pyyaml": "^6.0",
-                                "types-requests": "^2.28",
+        service._toml.read.return_value = r[dict[str, t.Any]].ok(
+            {
+                "tool": {
+                    "poetry": {
+                        "group": {
+                            "typings": {
+                                "dependencies": {
+                                    "types-pyyaml": "^6.0",
+                                    "types-requests": "^2.28",
+                                },
                             },
                         },
                     },
                 },
-            },
-        })
+            }
+        )
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
         assert "types-requests" in result
@@ -597,16 +603,18 @@ class TestGetCurrentTypingsFromPyproject:
         """Test extracting typings from PEP 621 optional-dependencies list."""
         service = FlextInfraDependencyDetectionService()
         service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
-            "project": {
-                "optional-dependencies": {
-                    "typings": [
-                        "types-pyyaml>=6.0",
-                        "types-requests[extra]==2.28",
-                    ],
+        service._toml.read.return_value = r[dict[str, t.Any]].ok(
+            {
+                "project": {
+                    "optional-dependencies": {
+                        "typings": [
+                            "types-pyyaml>=6.0",
+                            "types-requests[extra]==2.28",
+                        ],
+                    },
                 },
-            },
-        })
+            }
+        )
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
         assert "types-requests" in result
@@ -615,13 +623,15 @@ class TestGetCurrentTypingsFromPyproject:
         """Test extracting typings from PEP 621 optional-dependencies mapping."""
         service = FlextInfraDependencyDetectionService()
         service._toml = Mock()
-        service._toml.read.return_value = r[dict[str, t.Any]].ok({
-            "project": {
-                "optional-dependencies": {
-                    "typings": {"types-pyyaml": ">=6.0"},
+        service._toml.read.return_value = r[dict[str, t.Any]].ok(
+            {
+                "project": {
+                    "optional-dependencies": {
+                        "typings": {"types-pyyaml": ">=6.0"},
+                    },
                 },
-            },
-        })
+            }
+        )
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
 
@@ -663,9 +673,9 @@ class TestGetRequiredTypings:
             # load_dependency_limits
             r[dict[str, t.Any]].ok({}),
             # get_current_typings_from_pyproject
-            r[dict[str, t.Any]].ok({
-                "project": {"optional-dependencies": {"typings": list[str]()}}
-            }),
+            r[dict[str, t.Any]].ok(
+                {"project": {"optional-dependencies": {"typings": list[str]()}}}
+            ),
         ]
 
         result = service.get_required_typings(tmp_path, venv_bin)
@@ -714,11 +724,13 @@ class TestGetRequiredTypings:
         service._runner.run_raw.return_value = r[Mock].ok(cmd_out)
 
         service._toml.read.side_effect = [
-            r[dict[str, t.Any]].ok({
-                "typing_libraries": {
-                    "exclude": ["types-excluded"],
-                },
-            }),
+            r[dict[str, t.Any]].ok(
+                {
+                    "typing_libraries": {
+                        "exclude": ["types-excluded"],
+                    },
+                }
+            ),
             r[dict[str, t.Any]].ok({}),
         ]
 
@@ -900,10 +912,12 @@ class TestDetectionUncoveredLines:
 
         # Mock run_mypy_stub_hints to return missing modules
         with patch.object(service, "run_mypy_stub_hints") as mock_mypy:
-            mock_mypy.return_value = r[tuple[t.Any, ...]].ok((
-                list[str](),
-                ["requests"],
-            ))  # hinted, missing_modules
+            mock_mypy.return_value = r[tuple[t.Any, ...]].ok(
+                (
+                    list[str](),
+                    ["requests"],
+                )
+            )  # hinted, missing_modules
             # Mock module_to_types_package to return a types package
             with patch.object(service, "module_to_types_package") as mock_module:
                 mock_module.return_value = "types-requests"
@@ -934,10 +948,12 @@ def test_run_deptry_wrapper(tmp_path: Path) -> None:
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
     with patch.object(detection, "_service") as mock_service:
-        mock_service.run_deptry.return_value = r[tuple[list[dict[str, t.Any]], int]].ok((
-            list[dict[str, t.Any]](),
-            0,
-        ))
+        mock_service.run_deptry.return_value = r[tuple[list[dict[str, t.Any]], int]].ok(
+            (
+                list[dict[str, t.Any]](),
+                0,
+            )
+        )
         result = detection.run_deptry(tmp_path, venv_bin)
         assert result.is_success
         mock_service.run_deptry.assert_called_once()
@@ -949,10 +965,12 @@ def test_run_pip_check_wrapper(tmp_path: Path) -> None:
     venv_bin = tmp_path / "venv" / "bin"
     venv_bin.mkdir(parents=True)
     with patch.object(detection, "_service") as mock_service:
-        mock_service.run_pip_check.return_value = r[tuple[list[str], int]].ok((
-            list[str](),
-            0,
-        ))
+        mock_service.run_pip_check.return_value = r[tuple[list[str], int]].ok(
+            (
+                list[str](),
+                0,
+            )
+        )
         result = detection.run_pip_check(tmp_path, venv_bin)
         assert result.is_success
         mock_service.run_pip_check.assert_called_once_with(tmp_path, venv_bin)

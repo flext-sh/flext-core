@@ -58,7 +58,7 @@ class ModelCreationScenario:
     """Scenario for testing model creation."""
 
     model_type: ModelType
-    field_data: dict[str, t.Container]
+    field_data: dict[str, t.ContainerValue]
     expected_checks: list[str]
     description: str = ""
 
@@ -743,9 +743,9 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             handler_called: bool = False
-            handler_data: dict[str, t.Container] = Field(default_factory=dict)
+            handler_data: dict[str, t.ContainerValue] = Field(default_factory=dict)
 
-            def _apply_test_event(self, data: dict[str, t.Container]) -> None:
+            def _apply_test_event(self, data: dict[str, t.ContainerValue]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -764,7 +764,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-            def _apply_failing_event(self, data: dict[str, t.Container]) -> None:
+            def _apply_failing_event(self, data: dict[str, t.ContainerValue]) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 
@@ -828,7 +828,7 @@ class TestFlextModels:
     def test_handler_registration_model_creation(self) -> None:
         """Test HandlerRegistration model with correct fields."""
 
-        def dummy_handler(value: t.Container) -> t.Container:
+        def dummy_handler(value: t.ContainerValue) -> t.ContainerValue:
             return value
 
         reg = m.HandlerRegistration(

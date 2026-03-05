@@ -35,7 +35,7 @@ class ComplexModel(BaseModel):
     """Complex test model."""
 
     id: int
-    data: dict[str, t.Container]
+    data: dict[str, t.ContainerValue]
     items: list[str]
 
 

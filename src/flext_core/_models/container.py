@@ -60,9 +60,11 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
             else value.items()
         )
     }
-    return FlextModelFoundation.Metadata.model_validate({
-        "attributes": normalized_attrs,
-    })
+    return FlextModelFoundation.Metadata.model_validate(
+        {
+            "attributes": normalized_attrs,
+        }
+    )
 
 
 class FlextModelsContainer:

@@ -57,7 +57,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, t.Container],
+        sample_data: dict[str, t.ContainerValue],
     ) -> None:
         """Test comprehensive integration of core library exports.
 

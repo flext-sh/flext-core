@@ -25,14 +25,14 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 from flext_core import FlextTypes, FlextUtilities, t
 
 type FixtureCaseDict = dict[str, str]
-type FixtureDataDict = dict[str, t.Container]
-type FixtureFixturesDict = dict[str, t.Container]
-type FixtureSuiteDict = dict[str, t.Container]
-type MockScenarioData = dict[str, t.Container]
+type FixtureDataDict = dict[str, t.ContainerValue]
+type FixtureFixturesDict = dict[str, t.ContainerValue]
+type FixtureSuiteDict = dict[str, t.ContainerValue]
+type MockScenarioData = dict[str, t.ContainerValue]
 
 
 def _to_general_mapping(
-    value: t.Container | None,
+    value: t.ContainerValue | None,
 ) -> dict[str, FlextTypes.Container]:
     if not isinstance(value, dict):
         return {}
@@ -42,13 +42,13 @@ def _to_general_mapping(
     }
 
 
-def _to_string_list(value: t.Container | None) -> list[str]:
+def _to_string_list(value: t.ContainerValue | None) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value]
 
 
-def _to_string(value: t.Container | None, *, default: str) -> str:
+def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -449,11 +449,13 @@ class TestPropertyBasedPatterns:
 
     @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(
-        st.fixed_dictionaries({
-            "id": st.uuids().map(str),
-            "name": st.text(),
-            "email": st.emails(),
-        }),
+        st.fixed_dictionaries(
+            {
+                "id": st.uuids().map(str),
+                "name": st.text(),
+                "email": st.emails(),
+            }
+        ),
     )
     def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
         """Property-based test for user profiles."""
@@ -870,11 +872,13 @@ class TestRealWorldScenarios:
             database_url=st.text(),
             debug=st.booleans(),
             timeout_seconds=st.integers(min_value=1, max_value=300),
-            environment=st.sampled_from([
-                "development",
-                "staging",
-                "production",
-            ]),
+            environment=st.sampled_from(
+                [
+                    "development",
+                    "staging",
+                    "production",
+                ]
+            ),
         ),
     )
     @settings()

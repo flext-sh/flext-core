@@ -67,7 +67,7 @@ class PreparePaginationDataScenario:
     """Prepare pagination data test scenario."""
 
     name: str
-    data: list[t.Container] | None
+    data: list[t.ContainerValue] | None
     total: int | None
     page: int
     page_size: int
@@ -408,7 +408,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
-        pagination_data: dict[str, t.Container] = {
+        pagination_data: dict[str, t.ContainerValue] = {
             "data": ["item1", "item2"],
             "pagination": {
                 "page": 1,
@@ -433,7 +433,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_no_message(self) -> None:
         """Test build_pagination_response without message."""
-        pagination_data: dict[str, t.Container] = {
+        pagination_data: dict[str, t.ContainerValue] = {
             "data": ["item1"],
             "pagination": {
                 "page": 1,
@@ -455,7 +455,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: dict[str, t.Container] = {"pagination": {}}
+        pagination_data: dict[str, t.ContainerValue] = {"pagination": {}}
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
@@ -466,7 +466,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
-        pagination_data: dict[str, t.Container] = {"data": []}
+        pagination_data: dict[str, t.ContainerValue] = {"data": []}
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
@@ -477,7 +477,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
-        pagination_data: dict[str, t.Container] = {
+        pagination_data: dict[str, t.ContainerValue] = {
             "data": {"key": "value"},  # dict instead of list
             "pagination": {
                 "page": 1,

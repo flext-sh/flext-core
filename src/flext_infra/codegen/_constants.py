@@ -23,11 +23,13 @@ class FlextInfraCodegenConstants:
 
     # -- Auto-fix constants --------------------------------------------------
 
-    TYPEVAR_CALLABLES: Final[frozenset[str]] = frozenset({
-        "TypeVar",
-        "ParamSpec",
-        "TypeVarTuple",
-    })
+    TYPEVAR_CALLABLES: Final[frozenset[str]] = frozenset(
+        {
+            "TypeVar",
+            "ParamSpec",
+            "TypeVarTuple",
+        }
+    )
     """Callable names that create type variables (for standalone detection)."""
 
     # -- Scaffolder constants ------------------------------------------------
@@ -74,21 +76,25 @@ class FlextInfraCodegenConstants:
     }
     """Single-letter alias → class suffix mapping for lazy-init generation."""
 
-    SKIP_MODULES: Final[frozenset[str]] = frozenset({
-        "__future__",
-        "typing",
-        "collections.abc",
-        "abc",
-    })
+    SKIP_MODULES: Final[frozenset[str]] = frozenset(
+        {
+            "__future__",
+            "typing",
+            "collections.abc",
+            "abc",
+        }
+    )
     """Modules to skip when deriving lazy import mappings."""
 
-    SKIP_STDLIB: Final[frozenset[str]] = frozenset({
-        "sys",
-        "importlib",
-        "typing",
-        "collections",
-        "abc",
-    })
+    SKIP_STDLIB: Final[frozenset[str]] = frozenset(
+        {
+            "sys",
+            "importlib",
+            "typing",
+            "collections",
+            "abc",
+        }
+    )
     """Stdlib modules to skip in lazy-init import derivation."""
 
     MAX_LINE_LENGTH: Final[int] = 88

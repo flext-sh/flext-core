@@ -32,11 +32,13 @@ def test_import_modernizer_partial_import_keeps_unmapped_symbols() -> None:
         "other = KEEP\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -50,11 +52,13 @@ def test_import_modernizer_partial_import_keeps_unmapped_symbols() -> None:
 def test_import_modernizer_updates_aliased_symbol_usage() -> None:
     source = "from flext_core.constants import PLATFORM as P\n\nvalue = P\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -71,11 +75,13 @@ def test_import_modernizer_partial_import_with_asname_keeps_unmapped_alias() -> 
         "other = K\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -89,9 +95,9 @@ def test_import_modernizer_partial_import_with_asname_keeps_unmapped_alias() -> 
 def test_ensure_future_annotations_after_docstring() -> None:
     source = '"""doc"""\n\nimport os\n'
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorEnsureFutureAnnotationsRule({
-        "id": "ensure-future-annotations"
-    })
+    rule = FlextInfraRefactorEnsureFutureAnnotationsRule(
+        {"id": "ensure-future-annotations"}
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -106,11 +112,13 @@ def test_import_modernizer_adds_c_when_existing_c_is_aliased() -> None:
         "value = PLATFORM\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -123,9 +131,9 @@ def test_import_modernizer_adds_c_when_existing_c_is_aliased() -> None:
 def test_ensure_future_annotations_moves_existing_import_to_top() -> None:
     source = "import os\nfrom __future__ import annotations\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorEnsureFutureAnnotationsRule({
-        "id": "ensure-future-annotations"
-    })
+    rule = FlextInfraRefactorEnsureFutureAnnotationsRule(
+        {"id": "ensure-future-annotations"}
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -142,11 +150,13 @@ def test_import_modernizer_does_not_rewrite_function_parameter_shadow() -> None:
         "value = P\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -163,11 +173,13 @@ def test_import_modernizer_does_not_rewrite_rebound_local_name_usage() -> None:
         "value = PLATFORM\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -232,10 +244,12 @@ def test_legacy_wrapper_non_passthrough_is_not_inlined() -> None:
 def test_legacy_rule_uses_fix_action_remove_for_aliases() -> None:
     source = "OldName = NewName\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorLegacyRemovalRule({
-        "id": "custom-legacy-rule",
-        "fix_action": "remove",
-    })
+    rule = FlextInfraRefactorLegacyRemovalRule(
+        {
+            "id": "custom-legacy-rule",
+            "fix_action": "remove",
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -276,10 +290,12 @@ def test_lazy_import_rule_hoists_import_to_module_level() -> None:
 def test_lazy_import_rule_uses_fix_action_for_hoist() -> None:
     source = "def build() -> None:\n    import json\n    return None\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "custom-lazy-rule",
-        "fix_action": "hoist_to_module_top",
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "custom-lazy-rule",
+            "fix_action": "hoist_to_module_top",
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -295,11 +311,13 @@ def test_import_modernizer_skips_when_runtime_alias_name_is_blocked() -> None:
         "value = PLATFORM\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -319,11 +337,13 @@ def test_import_modernizer_skips_rewrite_when_runtime_alias_shadowed_in_function
         "    return PLATFORM\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorImportModernizerRule({
-        "id": "modernize-constants-import",
-        "module": "flext_core.constants",
-        "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
-    })
+    rule = FlextInfraRefactorImportModernizerRule(
+        {
+            "id": "modernize-constants-import",
+            "module": "flext_core.constants",
+            "symbol_mapping": {"PLATFORM": "c.System.PLATFORM"},
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -345,13 +365,15 @@ def test_class_reconstructor_reorders_methods_by_config() -> None:
         "        return None\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorClassReconstructorRule({
-        "id": "reorder-class-methods",
-        "method_order": [
-            {"category": "magic", "patterns": [r"^__.+__$"]},
-            {"category": "public", "visibility": "public"},
-        ],
-    })
+    rule = FlextInfraRefactorClassReconstructorRule(
+        {
+            "id": "reorder-class-methods",
+            "method_order": [
+                {"category": "magic", "patterns": [r"^__.+__$"]},
+                {"category": "public", "visibility": "public"},
+            ],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -378,14 +400,16 @@ def test_symbol_propagation_renames_import_and_local_references() -> None:
         "rule_cls = LegacyRemovalRule\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorSymbolPropagationRule({
-        "id": "propagate-refactor-api-renames",
-        "fix_action": "propagate_symbol_renames",
-        "target_modules": ["flext_infra.refactor"],
-        "import_symbol_renames": {
-            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
-        },
-    })
+    rule = FlextInfraRefactorSymbolPropagationRule(
+        {
+            "id": "propagate-refactor-api-renames",
+            "fix_action": "propagate_symbol_renames",
+            "target_modules": ["flext_infra.refactor"],
+            "import_symbol_renames": {
+                "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+            },
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -403,14 +427,16 @@ def test_symbol_propagation_keeps_alias_reference_when_asname_used() -> None:
         "rule_cls = Legacy\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorSymbolPropagationRule({
-        "id": "propagate-refactor-api-renames",
-        "fix_action": "propagate_symbol_renames",
-        "target_modules": ["flext_infra.refactor"],
-        "import_symbol_renames": {
-            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
-        },
-    })
+    rule = FlextInfraRefactorSymbolPropagationRule(
+        {
+            "id": "propagate-refactor-api-renames",
+            "fix_action": "propagate_symbol_renames",
+            "target_modules": ["flext_infra.refactor"],
+            "import_symbol_renames": {
+                "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+            },
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -429,14 +455,16 @@ def test_symbol_propagation_updates_mro_base_references() -> None:
         "    pass\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorSymbolPropagationRule({
-        "id": "propagate-refactor-api-renames",
-        "fix_action": "propagate_symbol_renames",
-        "target_modules": ["flext_infra.refactor"],
-        "import_symbol_renames": {
-            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
-        },
-    })
+    rule = FlextInfraRefactorSymbolPropagationRule(
+        {
+            "id": "propagate-refactor-api-renames",
+            "fix_action": "propagate_symbol_renames",
+            "target_modules": ["flext_infra.refactor"],
+            "import_symbol_renames": {
+                "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+            },
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -447,20 +475,22 @@ def test_symbol_propagation_updates_mro_base_references() -> None:
 def test_signature_propagation_renames_call_keyword() -> None:
     source = "result = migrate(project_root=root, dry_run=True)\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorSignaturePropagationRule({
-        "id": "propagate-refactor-signature-migrations",
-        "fix_action": "propagate_signature_migrations",
-        "signature_migrations": [
-            {
-                "id": "migrate-project-root-to-workspace-root",
-                "enabled": True,
-                "target_simple_names": ["migrate"],
-                "keyword_renames": {
-                    "project_root": "workspace_root",
-                },
-            }
-        ],
-    })
+    rule = FlextInfraRefactorSignaturePropagationRule(
+        {
+            "id": "propagate-refactor-signature-migrations",
+            "fix_action": "propagate_signature_migrations",
+            "signature_migrations": [
+                {
+                    "id": "migrate-project-root-to-workspace-root",
+                    "enabled": True,
+                    "target_simple_names": ["migrate"],
+                    "keyword_renames": {
+                        "project_root": "workspace_root",
+                    },
+                }
+            ],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -471,19 +501,21 @@ def test_signature_propagation_renames_call_keyword() -> None:
 def test_signature_propagation_removes_and_adds_keywords() -> None:
     source = "run(legacy=True)\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorSignaturePropagationRule({
-        "id": "propagate-refactor-signature-migrations",
-        "fix_action": "propagate_signature_migrations",
-        "signature_migrations": [
-            {
-                "id": "run-signature-v2",
-                "enabled": True,
-                "target_simple_names": ["run"],
-                "remove_keywords": ["legacy"],
-                "add_keywords": {"mode": '"modern"'},
-            }
-        ],
-    })
+    rule = FlextInfraRefactorSignaturePropagationRule(
+        {
+            "id": "propagate-refactor-signature-migrations",
+            "fix_action": "propagate_signature_migrations",
+            "signature_migrations": [
+                {
+                    "id": "run-signature-v2",
+                    "enabled": True,
+                    "target_simple_names": ["run"],
+                    "remove_keywords": ["legacy"],
+                    "add_keywords": {"mode": '"modern"'},
+                }
+            ],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -493,48 +525,54 @@ def test_signature_propagation_removes_and_adds_keywords() -> None:
 
 
 def test_pattern_rule_converts_dict_annotations_to_mapping() -> None:
-    source = "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n    return data\n"
+    source = "def f(data: dict[str, t.ContainerValue]) -> dict[str, t.ContainerValue]:\n    return data\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "fix-container-invariance-annotations",
-        "fix_action": "convert_dict_to_mapping_annotations",
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "fix-container-invariance-annotations",
+            "fix_action": "convert_dict_to_mapping_annotations",
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
 
     assert "from collections.abc import Mapping" in updated
-    assert "data: Mapping[str, t.Container]" in updated
-    assert "-> dict[str, t.Container]" in updated
+    assert "data: Mapping[str, t.ContainerValue]" in updated
+    assert "-> dict[str, t.ContainerValue]" in updated
 
 
 def test_pattern_rule_optionally_converts_return_annotations_to_mapping() -> None:
-    source = "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n    return data\n"
+    source = "def f(data: dict[str, t.ContainerValue]) -> dict[str, t.ContainerValue]:\n    return data\n"
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "fix-container-invariance-annotations",
-        "fix_action": "convert_dict_to_mapping_annotations",
-        "include_return_annotations": True,
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "fix-container-invariance-annotations",
+            "fix_action": "convert_dict_to_mapping_annotations",
+            "include_return_annotations": True,
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
 
-    assert "data: Mapping[str, t.Container]" in updated
-    assert "-> Mapping[str, t.Container]" in updated
+    assert "data: Mapping[str, t.ContainerValue]" in updated
+    assert "-> Mapping[str, t.ContainerValue]" in updated
 
 
 def test_pattern_rule_keeps_dict_param_when_subscript_mutated() -> None:
     source = (
-        "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n"
+        "def f(data: dict[str, t.ContainerValue]) -> dict[str, t.ContainerValue]:\n"
         '    data["k"] = "v"\n'
         "    return data\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "fix-container-invariance-annotations",
-        "fix_action": "convert_dict_to_mapping_annotations",
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "fix-container-invariance-annotations",
+            "fix_action": "convert_dict_to_mapping_annotations",
+        }
+    )
 
     updated_tree, changes = rule.apply(tree)
     updated = updated_tree.code
@@ -545,15 +583,17 @@ def test_pattern_rule_keeps_dict_param_when_subscript_mutated() -> None:
 
 def test_pattern_rule_keeps_dict_param_when_copy_used() -> None:
     source = (
-        "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n"
+        "def f(data: dict[str, t.ContainerValue]) -> dict[str, t.ContainerValue]:\n"
         "    clone = data.copy()\n"
         "    return clone\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "fix-container-invariance-annotations",
-        "fix_action": "convert_dict_to_mapping_annotations",
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "fix-container-invariance-annotations",
+            "fix_action": "convert_dict_to_mapping_annotations",
+        }
+    )
 
     updated_tree, changes = rule.apply(tree)
     updated = updated_tree.code
@@ -566,32 +606,36 @@ def test_pattern_rule_skips_overload_signatures() -> None:
     source = (
         "from typing import overload\n\n"
         "@overload\n"
-        "def f(data: dict[str, t.Container]) -> str: ...\n\n"
-        "def f(data: dict[str, t.Container]) -> str:\n"
+        "def f(data: dict[str, t.ContainerValue]) -> str: ...\n\n"
+        "def f(data: dict[str, t.ContainerValue]) -> str:\n"
         "    return str(data)\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "fix-container-invariance-annotations",
-        "fix_action": "convert_dict_to_mapping_annotations",
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "fix-container-invariance-annotations",
+            "fix_action": "convert_dict_to_mapping_annotations",
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
 
     assert "@overload" in updated
-    assert "def f(data: dict[str, t.Container]) -> str: ..." in updated
-    assert "def f(data: Mapping[str, t.Container]) -> str:" in updated
+    assert "def f(data: dict[str, t.ContainerValue]) -> str: ..." in updated
+    assert "def f(data: Mapping[str, t.ContainerValue]) -> str:" in updated
 
 
 def test_pattern_rule_removes_configured_redundant_casts() -> None:
     source = 'value = cast("m.ConfigMap", result.unwrap_or(m.ConfigMap(root={})))\n'
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "remove-validated-redundant-casts",
-        "fix_action": "remove_redundant_casts",
-        "redundant_type_targets": ["m.ConfigMap"],
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "remove-validated-redundant-casts",
+            "fix_action": "remove_redundant_casts",
+            "redundant_type_targets": ["m.ConfigMap"],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -603,11 +647,13 @@ def test_pattern_rule_removes_configured_redundant_casts() -> None:
 def test_pattern_rule_removes_nested_type_object_cast_chain() -> None:
     source = 'value = cast("type", cast("object", FlextSettings))\n'
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "remove-validated-redundant-casts",
-        "fix_action": "remove_redundant_casts",
-        "redundant_type_targets": ["type"],
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "remove-validated-redundant-casts",
+            "fix_action": "remove_redundant_casts",
+            "redundant_type_targets": ["type"],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -619,11 +665,13 @@ def test_pattern_rule_removes_nested_type_object_cast_chain() -> None:
 def test_pattern_rule_keeps_type_cast_when_not_nested_object_cast() -> None:
     source = 'metadata_cls = cast("type", FlextRuntime.Metadata)\n'
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorPatternCorrectionsRule({
-        "id": "remove-validated-redundant-casts",
-        "fix_action": "remove_redundant_casts",
-        "redundant_type_targets": ["type"],
-    })
+    rule = FlextInfraRefactorPatternCorrectionsRule(
+        {
+            "id": "remove-validated-redundant-casts",
+            "fix_action": "remove_redundant_casts",
+            "redundant_type_targets": ["type"],
+        }
+    )
 
     updated_tree, changes = rule.apply(tree)
     updated = updated_tree.code
@@ -781,13 +829,15 @@ def test_class_reconstructor_skips_interleaved_non_method_members() -> None:
         "        return None\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorClassReconstructorRule({
-        "id": "reorder-class-methods",
-        "method_order": [
-            {"category": "magic", "patterns": [r"^__.+__$"]},
-            {"category": "public", "visibility": "public"},
-        ],
-    })
+    rule = FlextInfraRefactorClassReconstructorRule(
+        {
+            "id": "reorder-class-methods",
+            "method_order": [
+                {"category": "magic", "patterns": [r"^__.+__$"]},
+                {"category": "public", "visibility": "public"},
+            ],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -809,12 +859,14 @@ def test_class_reconstructor_reorders_each_contiguous_method_block() -> None:
         "        return None\n"
     )
     tree = cst.parse_module(source)
-    rule = FlextInfraRefactorClassReconstructorRule({
-        "id": "reorder-class-methods",
-        "method_order": [
-            {"category": "public", "visibility": "public"},
-        ],
-    })
+    rule = FlextInfraRefactorClassReconstructorRule(
+        {
+            "id": "reorder-class-methods",
+            "method_order": [
+                {"category": "public", "visibility": "public"},
+            ],
+        }
+    )
 
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
@@ -945,7 +997,7 @@ rules:
         "from typing import Mapping, cast\n"
         "from flext_core.models import User\n"
         "\n"
-        "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n"
+        "def f(data: dict[str, t.ContainerValue]) -> dict[str, t.ContainerValue]:\n"
         '    value = cast("m.ConfigMap", data)\n'
         "    return value\n",
         encoding="utf-8",

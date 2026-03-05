@@ -646,7 +646,7 @@ class TestFlextRuntime:
 
             test_obj = TestObj()
             # Type narrowing: TestObj is compatible with t.ContainerValue
-            test_obj_cast: t.Container = cast(
+            test_obj_cast: t.ContainerValue = cast(
                 "t.ContainerValue",
                 cast("object", test_obj),
             )
@@ -662,7 +662,7 @@ class TestFlextRuntime:
 
             test_obj_default_obj = TestObjDefault()
             # Type narrowing: TestObjDefault is compatible with t.ContainerValue
-            test_obj_default_cast: t.Container = cast(
+            test_obj_default_cast: t.ContainerValue = cast(
                 "t.ContainerValue",
                 cast("object", test_obj_default_obj),
             )
@@ -863,7 +863,7 @@ class TestFlextRuntime:
                 factories={"token_factory": token_factory},
                 resources={
                     "api_client": cast(
-                        "Callable[[], t.Container]", lambda: {"connected": True}
+                        "Callable[[], t.ContainerValue]", lambda: {"connected": True}
                     )
                 },
                 wire_modules=[module],
@@ -920,7 +920,7 @@ class TestFlextRuntime:
                 factories={"token_factory": token_factory},
                 resources={
                     "api_client": cast(
-                        "Callable[[], t.Container]", lambda: {"connected": True}
+                        "Callable[[], t.ContainerValue]", lambda: {"connected": True}
                     )
                 },
                 wire_modules=[module],
@@ -955,8 +955,8 @@ class TestFlextRuntime:
                 @classmethod
                 @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                    def counter_factory() -> t.Container:
-                        return cast("t.Container", {"count": 1})
+                    def counter_factory() -> t.ContainerValue:
+                        return cast("t.ContainerValue", {"count": 1})
 
                     return FlextModelsService.RuntimeBootstrapOptions(
                         config_overrides={"app_name": "runtime-aware"},
@@ -978,12 +978,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            service_result_raw: r[t.Container] = cast(
+            service_result_raw: r[t.ContainerValue] = cast(
                 "r[t.ContainerValue]",
                 component.container.get("preseed"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            service_result: r[t.Container] = service_result_raw
+            service_result: r[t.ContainerValue] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
 
@@ -992,12 +992,12 @@ class TestFlextRuntime:
             # Call method directly and let runtime type inference work
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
-            factory_result_raw: r[t.Container] = cast(
+            factory_result_raw: r[t.ContainerValue] = cast(
                 "r[t.ContainerValue]",
                 component.container.get("counter"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
-            factory_result: r[t.Container] = factory_result_raw
+            factory_result: r[t.ContainerValue] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 
@@ -1034,14 +1034,14 @@ class TestFlextRuntime:
             def custom_processor(
                 logger: object,
                 method_name: str,
-                event_dict: dict[str, t.Container],
-            ) -> dict[str, t.Container]:
+                event_dict: dict[str, t.ContainerValue],
+            ) -> dict[str, t.ContainerValue]:
                 event_dict["custom"] = True
                 return event_dict
 
             # Business Rule: Callable processors are compatible with t.ContainerValue at runtime
             # structlog accepts callable processors for custom processing
-            processor_typed: t.Container = cast(
+            processor_typed: t.ContainerValue = cast(
                 "t.ContainerValue",
                 custom_processor,
             )

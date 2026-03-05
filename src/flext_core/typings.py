@@ -83,16 +83,16 @@ class FlextTypes:
     JsonDict: TypeAlias = Mapping[str, JsonValue]
 
     # ── Config ────────────────────────────────────────────────────────
-    ConfigurationMapping: TypeAlias = Mapping[str, Container]
+    ConfigurationMapping: TypeAlias = Mapping[str, ContainerValue]
 
     # ── Service / DI ──────────────────────────────────────────────────
     LazyExportType: TypeAlias = tuple[str, str]
     AnnotationMap: TypeAlias = Mapping[str, LazyExportType]
     RegisterableService: TypeAlias = (
-        ContainerValue | BindableLogger | Callable[..., Container]
+        ContainerValue | BindableLogger | Callable[..., ContainerValue]
     )
     FactoryCallable: TypeAlias = Callable[[], RegisterableService]
-    ResourceCallable: TypeAlias = Callable[[], Container]
+    ResourceCallable: TypeAlias = Callable[[], ContainerValue]
 
     # ── Metadata ──────────────────────────────────────────────────────
     MetadataValue: TypeAlias = (
@@ -101,8 +101,8 @@ class FlextTypes:
     MetadataAttributeValue: TypeAlias = MetadataValue
 
     # ── Handlers ──────────────────────────────────────────────────────
-    HandlerCallable: TypeAlias = Callable[[Container], Container]
-    HandlerLike: TypeAlias = Callable[..., Container]
+    HandlerCallable: TypeAlias = Callable[[ContainerValue], ContainerValue]
+    HandlerLike: TypeAlias = Callable[..., ContainerValue]
 
     # ── Plugin / Constants ────────────────────────────────────────────
     RegistrablePlugin: TypeAlias = (
@@ -134,7 +134,7 @@ class FlextTypes:
     TYPE_CHECKING: TypeAlias = bool
 
     # ── Collection convenience ────────────────────────────────────────
-    Dict: TypeAlias = Mapping[str, Container]
+    Dict: TypeAlias = Mapping[str, ContainerValue]
 
     # ── Validation (Pydantic-annotated) ───────────────────────────────
     class Validation:

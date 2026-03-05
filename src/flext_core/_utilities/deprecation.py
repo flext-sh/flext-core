@@ -119,9 +119,9 @@ class FlextUtilitiesDeprecation:
             if original_init is None:
                 # If no __init__, create a no-op one
                 def noop_init(
-                    self: t.Container,
-                    *args: t.Container,
-                    **kwargs: t.Container,
+                    self: t.ContainerValue,
+                    *args: t.ContainerValue,
+                    **kwargs: t.ContainerValue,
                 ) -> None:
                     pass
 
@@ -129,9 +129,9 @@ class FlextUtilitiesDeprecation:
 
             @functools.wraps(original_init)
             def new_init(
-                self: t.Container,
-                *args: t.Container,
-                **kwargs: t.Container,
+                self: t.ContainerValue,
+                *args: t.ContainerValue,
+                **kwargs: t.ContainerValue,
             ) -> None:
                 cls_name = getattr(cls, "__name__", cls.__class__.__name__)
                 message_parts = [f"{cls_name} is deprecated"]

@@ -108,7 +108,7 @@ class TestAutomatedFlextHandlers:
         instance = fixture_factory.create_test_handlers_instance()
 
         # Test various error conditions
-        error_inputs: list[dict[str, t.Container] | None] = [
+        error_inputs: list[dict[str, t.ContainerValue] | None] = [
             None,
             {},
             {"invalid": "data"},
@@ -126,7 +126,7 @@ class TestAutomatedFlextHandlers:
         """Test performance characteristics of handlers."""
         instance = fixture_factory.create_test_handlers_instance()
 
-        def operation() -> r[t.Container]:
+        def operation() -> r[t.ContainerValue]:
             return self._execute_handlers_operation(
                 instance,
                 {"performance_test": True},
@@ -164,9 +164,9 @@ class TestAutomatedFlextHandlers:
 
     def _execute_handlers_operation(
         self,
-        instance: type[FlextHandlers[t.Container, t.Container]],
-        input_data: dict[str, t.Container],
-    ) -> r[t.Container]:
+        instance: type[FlextHandlers[t.ContainerValue, t.ContainerValue]],
+        input_data: dict[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on handlers instance.
 
         Tests FlextHandlers class methods and utilities.
@@ -175,7 +175,7 @@ class TestAutomatedFlextHandlers:
             # Test FlextHandlers class methods
             if instance is not FlextHandlers:
                 # Instance is not the FlextHandlers class
-                return r[t.Container].fail("Invalid handlers instance type")
+                return r[t.ContainerValue].fail("Invalid handlers instance type")
 
             # instance is the FlextHandlers class itself
             def test_handler(msg: t.Scalar) -> t.Scalar:
@@ -185,28 +185,28 @@ class TestAutomatedFlextHandlers:
             if input_data.get("type_safe"):
                 # Test handler creation from callable
                 instance.create_from_callable(test_handler)
-                return r[t.Container].ok(True)
+                return r[t.ContainerValue].ok(True)
             if input_data.get("validation"):
                 # Test validation - just ensure nested classes exist
                 has_validation = hasattr(instance, "Validation")
-                return r[t.Container].ok(has_validation)
+                return r[t.ContainerValue].ok(has_validation)
             if input_data.get("performance_test"):
                 # Test handler creation performance
                 instance.create_from_callable(test_handler)
-                return r[t.Container].ok(True)
+                return r[t.ContainerValue].ok(True)
             if input_data.get("resource_test"):
                 # Test resource handling with multiple handlers
                 instance.create_from_callable(test_handler)
                 instance.create_from_callable(test_handler)
-                return r[t.Container].ok(True)
+                return r[t.ContainerValue].ok(True)
             # Generic test - check class availability
-            return r[t.Container].ok("FlextHandlers class available")
+            return r[t.ContainerValue].ok("FlextHandlers class available")
         except Exception as e:
-            return r[t.Container].fail(f"FlextHandlers operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextHandlers operation failed: {e}")
 
     @pytest.fixture
     def test_handlers_instance(
         self,
-    ) -> type[FlextHandlers[t.Container, t.Container]]:
+    ) -> type[FlextHandlers[t.ContainerValue, t.ContainerValue]]:
         """Fixture for handlers test instance."""
         return fixture_factory.create_test_handlers_instance()

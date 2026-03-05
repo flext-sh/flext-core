@@ -98,8 +98,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def execute_and_assert_parser_result(
-            operation: Callable[[], FlextResult[t.Container]],
-            expected_value: t.Container | None = None,
+            operation: Callable[[], FlextResult[t.ContainerValue]],
+            expected_value: t.ContainerValue | None = None,
             expected_error: str | None = None,
             description: str = "",
         ) -> None:
@@ -141,8 +141,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
             def split(
                 self,
-                *_args: t.Container,
-                **_kwargs: t.Container,
+                *_args: t.ContainerValue,
+                **_kwargs: t.ContainerValue,
             ) -> list[str]:
                 """Raise error on split attempt."""
                 msg = "Bad split"
@@ -190,20 +190,20 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """Create object that fails on str()."""
             return TestsFlextUtilities.CoreBadObjects.BadStrObject()
 
-        class BadDict(UserDict[str, t.Container]):
+        class BadDict(UserDict[str, t.ContainerValue]):
             """Dict that raises on get()."""
 
             @override
-            def __getitem__(self, key: str) -> t.Container:
+            def __getitem__(self, key: str) -> t.ContainerValue:
                 """Raise error on get attempt."""
                 msg = "Bad dict get"
                 raise RuntimeError(msg)
 
-        class BadList(UserList[t.Container]):
+        class BadList(UserList[t.ContainerValue]):
             """List that raises on iteration."""
 
             @override
-            def __iter__(self) -> Iterator[t.Container]:
+            def __iter__(self) -> Iterator[t.ContainerValue]:
                 """Raise error on iteration."""
                 msg = "Bad list iteration"
                 raise RuntimeError(msg)
@@ -211,14 +211,14 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadModelDump:
             """Object with model_dump that raises."""
 
-            model_dump: Callable[[], dict[str, t.Container]] = staticmethod(
+            model_dump: Callable[[], dict[str, t.ContainerValue]] = staticmethod(
                 lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
             )
 
         class BadConfig:
             """Config object that raises on attribute access."""
 
-            def get_attribute(self, name: str) -> t.Container:
+            def get_attribute(self, name: str) -> t.ContainerValue:
                 """Raise error on attribute access."""
                 msg = f"Bad config: {name}"
                 raise AttributeError(msg)
@@ -228,7 +228,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def assert_failure(
-            result: FlextResult[t.Container],
+            result: FlextResult[t.ContainerValue],
             expected_error: str,
             description: str = "",
         ) -> None:
@@ -248,7 +248,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def assert_success(
-            result: FlextResult[t.Container],
+            result: FlextResult[t.ContainerValue],
             description: str = "",
         ) -> None:
             """Assert that result is a success.
@@ -265,8 +265,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         @staticmethod
         def assert_success_with_value(
-            result: FlextResult[t.Container],
-            expected_value: t.Container,
+            result: FlextResult[t.ContainerValue],
+            expected_value: t.ContainerValue,
             description: str = "",
         ) -> None:
             """Assert result is success with specific value.

@@ -275,10 +275,12 @@ class AutomationService(s[m.ConfigMap]):
         print("\n--- Data Pipeline with Error Recovery ---")
 
         def extract() -> r[list[m.ConfigMap]]:
-            return r[list[m.ConfigMap]].ok([
-                m.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
-                m.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
-            ])
+            return r[list[m.ConfigMap]].ok(
+                [
+                    m.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
+                    m.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
+                ]
+            )
 
         def transform(
             data: list[m.ConfigMap],
@@ -421,10 +423,12 @@ class AutomationService(s[m.ConfigMap]):
         def load_config() -> m.ConfigMap:
             if not cache:
                 print("   📄 Loading configuration from file...")
-                cache.update({
-                    "database_url": "postgresql://localhost:5432/testdb",
-                    "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
-                })
+                cache.update(
+                    {
+                        "database_url": "postgresql://localhost:5432/testdb",
+                        "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
+                    }
+                )
             return m.ConfigMap(root=dict(cache))
 
         fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail(

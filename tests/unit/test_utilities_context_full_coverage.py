@@ -89,7 +89,7 @@ class _FakeContext:
     def clone(self) -> _FakeContext:
         return _FakeContext()
 
-    def set(self, key: str, value: t.Container) -> None:
+    def set(self, key: str, value: t.ContainerValue) -> None:
         _ = key, value
 
     def get(self, key: str) -> object:

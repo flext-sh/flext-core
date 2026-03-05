@@ -180,8 +180,7 @@ class TestFlextTestsBuilders:
         """Test fluent interface method chaining."""
         builder = FlextTestsBuilders()
         result = (
-            builder
-            .with_users(2)
+            builder.with_users(2)
             .with_configs(production=False)
             .with_validation_fields(3)
             .build()
@@ -558,7 +557,7 @@ class TestFlextTestsBuilders:
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[t.Container] = tb.Tests.Result.fail("Error", code="E001")
+        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error", code="E001")
         result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 
@@ -731,7 +730,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         # Result.fail() delegates to tt.res("fail", error=...)
         # Result.fail() returns r[T] where T is inferred from context
-        result_raw: r[t.Container] = tb.Tests.Result.fail("Error")
+        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error")
         result = result_raw
         assertion_helpers.assert_flext_result_failure(result)
 

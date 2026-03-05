@@ -315,7 +315,7 @@ class FlextUtilities:
     def get(
         data: p.AccessibleData,
         key: str,
-    ) -> t.Container | None: ...
+    ) -> t.ContainerValue | None: ...
 
     @staticmethod
     @overload
@@ -359,16 +359,16 @@ class FlextUtilities:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.Container | None,
-    ) -> t.Container | None: ...
+        default: t.ContainerValue | None,
+    ) -> t.ContainerValue | None: ...
 
     @staticmethod
     def get(
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.Container | None = None,
-    ) -> t.Container | None:
+        default: t.ContainerValue | None = None,
+    ) -> t.ContainerValue | None:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)
 

@@ -54,13 +54,15 @@ def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None
     project_root.mkdir(parents=True)
     _write_project(project_root)
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "NEW_BASE\n")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -79,13 +81,15 @@ def test_migrator_apply_updates_project_files(tmp_path: Path) -> None:
     project_root.mkdir(parents=True)
     _write_project(project_root)
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "NEW_BASE\n")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
@@ -115,13 +119,15 @@ def test_migrator_handles_missing_pyproject_gracefully(tmp_path: Path) -> None:
     _ = (project_root / "Makefile").write_text("", encoding="utf-8")
     # No pyproject.toml
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "NEW_BASE\n")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
@@ -139,13 +145,15 @@ def test_migrator_preserves_custom_makefile_content(tmp_path: Path) -> None:
     makefile_path = project_root / "Makefile"
     makefile_path.write_text(custom_content, encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "NEW_BASE\n")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
@@ -222,13 +230,15 @@ def test_migrator_no_changes_needed(tmp_path: Path) -> None:
         ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
     )
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base.mk")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
@@ -243,18 +253,20 @@ def test_migrator_basemk_generation_failure(tmp_path: Path) -> None:
     project_root.mkdir(parents=True)
     _write_project(project_root)
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = FlextInfraProjectMigrator()
     migrator._discovery = Mock()
-    migrator._discovery.discover_projects.return_value = r[list[im.ProjectInfo]].ok([
-        project
-    ])
+    migrator._discovery.discover_projects.return_value = r[list[im.ProjectInfo]].ok(
+        [project]
+    )
     migrator._generator = Mock()
     migrator._generator.generate.return_value = r[str].fail("Generation failed")
 
@@ -274,13 +286,15 @@ def test_migrator_makefile_read_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base.mk")
 
     # Test normal migration without patching
@@ -298,13 +312,15 @@ def test_migrator_pyproject_parse_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("invalid toml {", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base.mk")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
@@ -323,13 +339,15 @@ def test_migrator_flext_core_project_skipped(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "flext-core",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "flext-core",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base.mk")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -348,13 +366,15 @@ def test_migrator_gitignore_write_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base.mk")
 
     # Mock gitignore write to fail
@@ -378,13 +398,15 @@ def test_migrator_has_flext_core_dependency_in_poetry(tmp_path: Path) -> None:
     )
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base.mk")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -403,13 +425,15 @@ def test_migrator_basemk_write_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "new content")
 
     with patch.object(Path, "write_text", side_effect=OSError("Write failed")):
@@ -429,13 +453,15 @@ def test_migrator_makefile_not_found_dry_run(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -460,13 +486,15 @@ def test_migrator_makefile_write_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     # Patch write_text to fail on Makefile
@@ -495,13 +523,15 @@ def test_migrator_pyproject_not_found_dry_run(tmp_path: Path) -> None:
     # No pyproject.toml
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -523,13 +553,15 @@ def test_migrator_flext_core_dry_run(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "flext-core",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "flext-core",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -551,13 +583,15 @@ def test_migrator_gitignore_read_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("existing", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     # Patch read_text to fail on .gitignore
@@ -588,13 +622,15 @@ def test_migrator_gitignore_already_normalized_dry_run(tmp_path: Path) -> None:
         ".reports/\n.venv/\n__pycache__/\n", encoding="utf-8"
     )
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -616,13 +652,15 @@ def test_migrator_pyproject_write_failure(tmp_path: Path) -> None:
     (project_root / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     # Patch write_text to fail on pyproject.toml
@@ -653,13 +691,15 @@ def test_migrator_has_flext_core_dependency_poetry_table_missing(
     (project_root / "pyproject.toml").write_text("[tool]\n", encoding="utf-8")
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -682,13 +722,15 @@ def test_migrator_has_flext_core_dependency_poetry_deps_not_table(
     )
     (project_root / ".gitignore").write_text("", encoding="utf-8")
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
@@ -707,13 +749,15 @@ def test_workspace_migrator_error_handling_on_invalid_workspace() -> None:
 
 def test_workspace_migrator_makefile_not_found_dry_run(tmp_path: Path) -> None:
     """Test _migrate_makefile returns success when Makefile not found in dry_run."""
-    project = im.ProjectInfo.model_validate({
-        "name": "test-proj",
-        "path": str(tmp_path),
-        "stack": "python",
-        "has_tests": True,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "test-proj",
+            "path": str(tmp_path),
+            "stack": "python",
+            "has_tests": True,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
     result = migrator._migrate_makefile(tmp_path, dry_run=True)
     assert result.is_success
@@ -726,13 +770,15 @@ def test_workspace_migrator_makefile_read_error(
     """Test _migrate_makefile handles read errors gracefully."""
     makefile = tmp_path / "Makefile"
     makefile.write_text("test")
-    project = im.ProjectInfo.model_validate({
-        "name": "test-proj",
-        "path": str(tmp_path),
-        "stack": "python",
-        "has_tests": True,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "test-proj",
+            "path": str(tmp_path),
+            "stack": "python",
+            "has_tests": True,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     def mock_read(*args: object, **kwargs: object) -> str:
@@ -752,13 +798,15 @@ def test_workspace_migrator_pyproject_write_error(
     """Test _migrate_pyproject handles write errors gracefully."""
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text("[tool.poetry]\n")
-    project = im.ProjectInfo.model_validate({
-        "name": "test-proj",
-        "path": str(tmp_path),
-        "stack": "python",
-        "has_tests": True,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "test-proj",
+            "path": str(tmp_path),
+            "stack": "python",
+            "has_tests": True,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     def mock_write(*args: object, **kwargs: object) -> None:
@@ -779,13 +827,15 @@ def test_migrate_makefile_not_found_non_dry_run(tmp_path: Path) -> None:
     (project_root / ".git").mkdir()
     # No Makefile created
 
-    project = im.ProjectInfo.model_validate({
-        "name": "project-a",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "project-a",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator._migrate_makefile(project_root, dry_run=False)
@@ -804,13 +854,15 @@ def test_migrate_pyproject_flext_core_non_dry_run(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    project = im.ProjectInfo.model_validate({
-        "name": "flext-core",
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": True,
-        "has_src": True,
-    })
+    project = im.ProjectInfo.model_validate(
+        {
+            "name": "flext-core",
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": True,
+            "has_src": True,
+        }
+    )
     migrator = _build_migrator(project, "base")
 
     result = migrator._migrate_pyproject(

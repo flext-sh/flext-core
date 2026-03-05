@@ -161,8 +161,8 @@ class TestAutomatedFlextLoggings:
     def _execute_loggings_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.Container],
-    ) -> r[t.Container]:
+        input_data: Mapping[str, t.ContainerValue],
+    ) -> r[t.ContainerValue]:
         """Execute a test operation on loggings instance.
 
         This method should be customized based on the actual loggings API.
@@ -176,23 +176,23 @@ class TestAutomatedFlextLoggings:
                 # Check if result is FlextResult or needs wrapping
                 if isinstance(result, r):
                     return cast("r[t.ContainerValue]", result)
-                return r[t.Container].ok(cast("t.ContainerValue", result))
+                return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
                     return cast("r[t.ContainerValue]", result)
-                return r[t.Container].ok(cast("t.ContainerValue", result))
+                return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
                     return cast("r[t.ContainerValue]", result)
-                return r[t.Container].ok(cast("t.ContainerValue", result))
+                return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             # Fallback: if no methods found, return the instance itself as success
-            return r[t.Container].ok(cast("t.ContainerValue", instance))
+            return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
         except Exception as e:
-            return r[t.Container].fail(f"FlextLoggings operation failed: {e}")
+            return r[t.ContainerValue].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
     def test_loggings_instance(self) -> object:

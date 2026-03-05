@@ -330,8 +330,8 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: Callable[
-            [t.Container],
-            p.ResultLike[t.Container],
+            [t.ContainerValue],
+            p.ResultLike[t.ContainerValue],
         ] = Field(
             description="Callable operation returning result",
         )

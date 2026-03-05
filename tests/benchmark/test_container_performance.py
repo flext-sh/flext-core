@@ -27,8 +27,8 @@ class PerformanceBenchmark:
 
     @staticmethod
     def measure_time(
-        func: Callable[[], t.Container],
-    ) -> tuple[t.Container, float]:
+        func: Callable[[], t.ContainerValue],
+    ) -> tuple[t.ContainerValue, float]:
         """Measure execution time of a function.
 
         Args:

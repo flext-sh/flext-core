@@ -73,8 +73,7 @@ class TestCompleteFlextSystemIntegration:
 
         # Teste de encadeamento de operações (pipeline)
         pipeline_result = (
-            success_result
-            .map(lambda x: x.upper())
+            success_result.map(lambda x: x.upper())
             .map(lambda x: f"processado_{x}")
             .map(lambda x: str(x).replace("_", "-"))
         )

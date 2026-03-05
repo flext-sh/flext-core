@@ -174,7 +174,7 @@ class FlextModelsCqrs:
             min_qualname_parts = 2
             if not models_module or len(parts) < min_qualname_parts:
                 return FlextModelsCqrs.Pagination
-            obj: t.Container | None = getattr(
+            obj: t.ContainerValue | None = getattr(
                 models_module,
                 parts[0],
                 None,
@@ -433,7 +433,7 @@ class FlextModelsCqrs:
     ]
 
     @staticmethod
-    def parse_message(payload: t.Container) -> FlextMessage:
+    def parse_message(payload: t.ContainerValue) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)

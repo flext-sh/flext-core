@@ -33,7 +33,7 @@ class FlextInfraInventoryService:
         workspace_root: Path,
         *,
         output_dir: Path | None = None,
-    ) -> FlextResult[Mapping[str, t.Container]]:
+    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Build and write scripts inventory reports.
 
         Args:
@@ -58,24 +58,24 @@ class FlextInfraInventoryService:
                 )
 
             now = datetime.now(UTC).isoformat()
-            inventory: Mapping[str, t.Container] = {
+            inventory: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
                 "repo_root": str(root),
                 "total_scripts": len(scripts),
                 "scripts": scripts,
             }
-            wiring: Mapping[str, t.Container] = {
+            wiring: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
                 "root_makefile": [c.Files.MAKEFILE_FILENAME],
                 "unwired_scripts": [],
             }
-            external: Mapping[str, t.Container] = {
+            external: Mapping[str, t.ContainerValue] = {
                 "generated_at": now,
                 "candidates": [],
             }
 
             reports_dir = output_dir or (root / ".reports")
-            outputs: Mapping[Path, Mapping[str, t.Container]] = {
+            outputs: Mapping[Path, Mapping[str, t.ContainerValue]] = {
                 reports_dir / "scripts-infra--json--scripts-inventory.json": inventory,
                 reports_dir / "scripts-infra--json--scripts-wiring.json": wiring,
                 reports_dir
@@ -95,7 +95,7 @@ class FlextInfraInventoryService:
                     )
                 written.append(str(path))
 
-            result: MutableMapping[str, t.Container] = {
+            result: MutableMapping[str, t.ContainerValue] = {
                 "total_scripts": len(scripts),
                 "reports_written": written,
             }

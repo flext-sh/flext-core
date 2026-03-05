@@ -58,19 +58,21 @@ class IntHandler(h[int, int]):
         return FlextResult[int].ok(message * 2)
 
 
-class DictHandler(h[dict[str, t.Container], dict[str, t.Container]]):
+class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
     """Handler for dict messages."""
 
     @override
     def handle(
         self,
-        message: dict[str, t.Container],
-    ) -> FlextResult[dict[str, t.Container]]:
+        message: dict[str, t.ContainerValue],
+    ) -> FlextResult[dict[str, t.ContainerValue]]:
         """Handle dict message."""
-        return FlextResult[dict[str, t.Container]].ok({
-            "processed": True,
-            **message,
-        })
+        return FlextResult[dict[str, t.ContainerValue]].ok(
+            {
+                "processed": True,
+                **message,
+            }
+        )
 
 
 class ObjectHandler(h[object, object]):
@@ -186,7 +188,7 @@ class TestuTypeChecker:
         assert u.Checker.can_handle_message_type(accepted, str) is False
         assert u.Checker.can_handle_message_type(accepted, dict) is True
         # dict[str, t.ContainerValue] should be compatible with dict
-        dict_type: type[dict[str, t.Container]] = dict
+        dict_type: type[dict[str, t.ContainerValue]] = dict
         assert u.Checker.can_handle_message_type(accepted, dict_type) is True
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -230,7 +232,7 @@ class TestuTypeChecker:
         """Test _evaluate_type_compatibility with dict types."""
         assert u.Checker._evaluate_type_compatibility(_type_origin(dict), dict) is True
         # dict[str, t.ContainerValue] should be compatible with dict
-        dict_type: type[dict[str, t.Container]] = dict
+        dict_type: type[dict[str, t.ContainerValue]] = dict
         assert (
             u.Checker._evaluate_type_compatibility(_type_origin(dict), dict_type)
             is True
@@ -286,7 +288,7 @@ class TestuTypeChecker:
         """Test _check_dict_compatibility with dict subclass."""
 
         # Business Rule: UserDict requires type parameters for generic type
-        class CustomDict(BaseUserDict[str, t.Container]):
+        class CustomDict(BaseUserDict[str, t.ContainerValue]):
             """Custom dict subclass."""
 
         result = u.Checker._check_dict_compatibility(

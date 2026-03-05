@@ -104,11 +104,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         source: FlextRuntime.RuntimeResult[S],
         *,
         default_error: str = "",
-    ) -> FlextResult[t.Container]:
+    ) -> FlextResult[t.ContainerValue]:
         if source.is_success:
             msg = "Cannot mirror failure from successful result"
             raise ValueError(msg)
-        return FlextResult[t.Container].fail(
+        return FlextResult[t.ContainerValue].fail(
             source.error or default_error,
             error_code=source.error_code,
             error_data=cast("t.ConfigurationMapping | None", source.error_data),
@@ -259,7 +259,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_validation(
         cls: type[FlextResult[T_Model]],
-        data: t.Container | Mapping[str, t.Container],
+        data: t.ContainerValue | Mapping[str, t.ContainerValue],
         model: type[T_Model],
     ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.
@@ -380,12 +380,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return str(error)
 
     @staticmethod
-    def is_failure_result(value: object) -> TypeIs[FlextResult[t.Container]]:
+    def is_failure_result(value: object) -> TypeIs[FlextResult[t.ContainerValue]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 
     @staticmethod
-    def is_success_result(value: object) -> TypeIs[FlextResult[t.Container]]:
+    def is_success_result(value: object) -> TypeIs[FlextResult[t.ContainerValue]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 

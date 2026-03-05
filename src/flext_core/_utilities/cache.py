@@ -61,7 +61,7 @@ class FlextUtilitiesCache:
        - Type-aware sorting for cross-type comparisons
 
     2. **Type Safety**:
-       - Handles all t.Container variants
+       - Handles all t.ContainerValue variants
        - BaseModel special handling with model_dump()
        - Graceful fallback to string representation
 
@@ -200,7 +200,7 @@ class FlextUtilitiesCache:
         Useful for deciding whether to attempt cache clearing.
 
         Args:
-            obj: t.Container object
+            obj: t.ContainerValue object
 
         Returns:
             True if any known cache attribute exists, False otherwise
@@ -249,7 +249,7 @@ class FlextUtilitiesCache:
         if isinstance(component, Mapping):
             dict_component: Mapping[str, t.ContainerValue] = dict(component.items())
             # dict_component has mapping semantics for normalized iteration
-            # so v is t.Container
+            # so v is t.ContainerValue
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
@@ -268,7 +268,7 @@ class FlextUtilitiesCache:
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):
-            # Type narrowing: component is Sequence, so items are t.Container
+            # Type narrowing: component is Sequence, so items are t.ContainerValue
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
         # For other types, convert to string as fallback
         return str(component)
@@ -297,10 +297,10 @@ class FlextUtilitiesCache:
         Type Safety:
         - Uses FlextRuntime.is_dict_like for Mapping detection
         - Returns input unchanged if not dict-like
-        - Preserves t.Container contract
+        - Preserves t.ContainerValue contract
 
         Args:
-            data: t.Container value
+            data: t.ContainerValue value
 
         Returns:
             Sorted dict if input is dict-like, unchanged otherwise

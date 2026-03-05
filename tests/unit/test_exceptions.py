@@ -646,10 +646,12 @@ class Teste:
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""
-        metadata_obj = u.Tests.ExceptionHelpers.create_metadata_object({
-            "field": "email",
-            "value": "invalid",
-        })
+        metadata_obj = u.Tests.ExceptionHelpers.create_metadata_object(
+            {
+                "field": "email",
+                "value": "invalid",
+            }
+        )
         # ValidationError accepts metadata via extra_kwargs, but BaseError.__init__ accepts it
         # Pass metadata via extra_kwargs - ValidationError.__init__ pops it and passes to BaseError
         # extra_kwargs accepts t.MetadataAttributeValue, and m.Metadata is compatible
@@ -1376,7 +1378,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             @override
             def __getitem__(self, key: str) -> object:
-                mapping: dict[str, t.Container] = {"key1": "value1", "key2": 123}
+                mapping: dict[str, t.ContainerValue] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)
@@ -1548,16 +1550,20 @@ class Teste:
         error_type = e._determine_error_type({"timeout_seconds": 30.0})
         assert error_type == "timeout"
 
-        error_type = e._determine_error_type({
-            "user_id": "user1",
-            "auth_method": "password",
-        })
+        error_type = e._determine_error_type(
+            {
+                "user_id": "user1",
+                "auth_method": "password",
+            }
+        )
         assert error_type == "authentication"
 
-        error_type = e._determine_error_type({
-            "user_id": "user1",
-            "permission": "read",
-        })
+        error_type = e._determine_error_type(
+            {
+                "user_id": "user1",
+                "permission": "read",
+            }
+        )
         assert error_type == "authorization"
 
         error_type = e._determine_error_type({"resource_id": "123"})
@@ -1573,10 +1579,12 @@ class Teste:
         """Test _determine_error_type with conflict pattern - tests line 585."""
         # ConflictError doesn't have a specific pattern, so it won't be detected
         # But we can test other patterns
-        error_type = e._determine_error_type({
-            "resource_type": "User",
-            "resource_id": "123",
-        })
+        error_type = e._determine_error_type(
+            {
+                "resource_type": "User",
+                "resource_id": "123",
+            }
+        )
         assert error_type == "not_found"
 
     def test_extract_common_kwargs(self) -> None:

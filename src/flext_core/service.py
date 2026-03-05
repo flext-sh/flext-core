@@ -295,11 +295,13 @@ class FlextService[TDomainResult](
                 classes=wire_classes,
             )
 
-        return m.ServiceRuntime.model_validate({
-            "config": runtime_config,
-            "context": runtime_container.context,
-            "container": runtime_container,
-        })
+        return m.ServiceRuntime.model_validate(
+            {
+                "config": runtime_config,
+                "context": runtime_container.context,
+                "container": runtime_container,
+            }
+        )
 
     @classmethod
     def _get_service_config_type(cls) -> type[FlextSettings]:
@@ -357,8 +359,8 @@ class FlextService[TDomainResult](
         Override to customize:
         - config_overrides: Dict of config values to override
         - services: Mapping[str, t.RegisterableService] to register as singletons
-        - factories: Mapping[str, Callable[..., t.Container]] to register as factories
-        - resources: Mapping[str, Callable[[], t.Container]] to register as resources
+        - factories: Mapping[str, Callable[..., t.ContainerValue]] to register as factories
+        - resources: Mapping[str, Callable[[], t.ContainerValue]] to register as resources
         - wire_modules: List of modules to wire for @inject
         - wire_packages: List of packages to wire
         - wire_classes: List of classes to wire

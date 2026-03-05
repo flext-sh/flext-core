@@ -25,7 +25,7 @@ type InfraValue = t.Primitives | list[InfraValue] | Mapping[str, InfraValue] | N
 type IssueMap = Mapping[str, InfraValue]
 
 
-def _to_infra_value(value: t.Container) -> InfraValue | None:
+def _to_infra_value(value: t.ContainerValue) -> InfraValue | None:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, list):
@@ -206,8 +206,7 @@ class FlextInfraDependencyDetectionService:
                     for spec in typings:
                         if isinstance(spec, str):
                             names.add(
-                                spec
-                                .split("[")[0]
+                                spec.split("[")[0]
                                 .split(">=")[0]
                                 .split("==")[0]
                                 .strip(),

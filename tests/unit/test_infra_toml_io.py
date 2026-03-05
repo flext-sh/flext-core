@@ -101,7 +101,9 @@ class TestFlextInfraTomlService:
         """Test writing a dict payload to TOML file."""
         toml_file = tmp_path / "output.toml"
         service = FlextInfraTomlService()
-        payload: dict[str, t.Container] = {"section": {"key": "value", "number": 42}}
+        payload: dict[str, t.ContainerValue] = {
+            "section": {"key": "value", "number": 42}
+        }
 
         result = service.write(toml_file, payload)
 
@@ -115,7 +117,7 @@ class TestFlextInfraTomlService:
         """Test write creates parent directories."""
         toml_file = tmp_path / "nested" / "deep" / "file.toml"
         service = FlextInfraTomlService()
-        payload: dict[str, t.Container] = {"key": "value"}
+        payload: dict[str, t.ContainerValue] = {"key": "value"}
 
         result = service.write(toml_file, payload)
 
@@ -210,7 +212,7 @@ class TestFlextInfraTomlService:
     def test_build_table_with_nested_mapping(self, tmp_path: Path) -> None:
         """Test build_table creates nested tomlkit tables."""
         service = FlextInfraTomlService()
-        data: dict[str, t.Container] = {
+        data: dict[str, t.ContainerValue] = {
             "section": {"key": "value", "nested": {"deep": "value"}},
             "simple": "scalar",
         }
@@ -224,8 +226,8 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_adds_new_keys(self, tmp_path: Path) -> None:
         """Test sync_mapping adds missing keys to target."""
         service = FlextInfraTomlService()
-        target: dict[str, t.Container] = {}
-        canonical: dict[str, t.Container] = {"new_key": "new_value"}
+        target: dict[str, t.ContainerValue] = {}
+        canonical: dict[str, t.ContainerValue] = {"new_key": "new_value"}
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
@@ -246,8 +248,8 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_updates_changed_values(self, tmp_path: Path) -> None:
         """Test sync_mapping updates changed values."""
         service = FlextInfraTomlService()
-        target: dict[str, t.Container] = {"key": "old_value"}
-        canonical: dict[str, t.Container] = {"key": "new_value"}
+        target: dict[str, t.ContainerValue] = {"key": "old_value"}
+        canonical: dict[str, t.ContainerValue] = {"key": "new_value"}
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
@@ -268,8 +270,8 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_prunes_extras(self, tmp_path: Path) -> None:
         """Test sync_mapping removes extra keys when prune_extras=True."""
         service = FlextInfraTomlService()
-        target: dict[str, t.Container] = {"keep": "value", "remove": "extra"}
-        canonical: dict[str, t.Container] = {"keep": "value"}
+        target: dict[str, t.ContainerValue] = {"keep": "value", "remove": "extra"}
+        canonical: dict[str, t.ContainerValue] = {"keep": "value"}
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
@@ -290,8 +292,8 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_nested_with_prefix(self, tmp_path: Path) -> None:
         """Test sync_mapping with nested mappings and prefix."""
         service = FlextInfraTomlService()
-        target: dict[str, t.Container] = {"section": {"key": "old"}}
-        canonical: dict[str, t.Container] = {"section": {"key": "new"}}
+        target: dict[str, t.ContainerValue] = {"section": {"key": "old"}}
+        canonical: dict[str, t.ContainerValue] = {"section": {"key": "new"}}
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
@@ -314,8 +316,8 @@ class TestFlextInfraTomlService:
     def test_sync_mapping_skips_prune_when_false(self, tmp_path: Path) -> None:
         """Test sync_mapping skips pruning when prune_extras=False."""
         service = FlextInfraTomlService()
-        target: dict[str, t.Container] = {"keep": "value", "extra": "stays"}
-        canonical: dict[str, t.Container] = {"keep": "value"}
+        target: dict[str, t.ContainerValue] = {"keep": "value", "extra": "stays"}
+        canonical: dict[str, t.ContainerValue] = {"keep": "value"}
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []
@@ -345,7 +347,7 @@ class TestFlextInfraTomlService:
         from flext_infra.toml_io import FlextInfraTomlService  # noqa: PLC0415
 
         service = FlextInfraTomlService()
-        nested: dict[str, t.Container] = {"key": {"nested": "value"}}
+        nested: dict[str, t.ContainerValue] = {"key": {"nested": "value"}}
         result = service.build_table(nested)
         assert result is not None
 
@@ -356,8 +358,8 @@ class TestFlextInfraTomlService:
         the scalar should be replaced with a new table.
         """
         service = FlextInfraTomlService()
-        target: dict[str, t.Container] = {"section": "scalar_value"}
-        canonical: dict[str, t.Container] = {"section": {"nested": "value"}}
+        target: dict[str, t.ContainerValue] = {"section": "scalar_value"}
+        canonical: dict[str, t.ContainerValue] = {"section": {"nested": "value"}}
         added: list[str] = []
         updated: list[str] = []
         removed: list[str] = []

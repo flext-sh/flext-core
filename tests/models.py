@@ -42,9 +42,9 @@ class TestsFlextModels:
     DomainEvent = FlextModels.DomainEvent
 
     # Type aliases for domain test input
-    type DomainInputValue = t.Container | p.HasModelDump | object
+    type DomainInputValue = t.ContainerValue | p.HasModelDump | object
     type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
-    type DomainExpectedResult = t.Container | type[t.Container]
+    type DomainExpectedResult = t.ContainerValue | type[t.ContainerValue]
 
     class Core:
         """flext-core-specific test models namespace."""
@@ -52,7 +52,7 @@ class TestsFlextModels:
         class DomainTestEntity:
             """Test entity for domain tests."""
 
-            def __init__(self, name: str, value: t.Container) -> None:
+            def __init__(self, name: str, value: t.ContainerValue) -> None:
                 """Initialize test entity with name and value."""
                 self.name = name
                 self.value = value
@@ -213,7 +213,7 @@ class AutomatedTestScenario(TypedDict):
     """TypedDict for automated test scenarios."""
 
     description: str
-    input: dict[str, t.Container]
+    input: dict[str, t.ContainerValue]
     expected_success: bool
 
 

@@ -29,42 +29,52 @@ _SRC_MODULES = (
 
 
 class _CompatCoreConstants:
-    EXEMPT_FILENAMES: ClassVar[frozenset[str]] = frozenset({
-        "__init__.py",
-        "conftest.py",
-        "__main__.py",
-    })
+    EXEMPT_FILENAMES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "__init__.py",
+            "conftest.py",
+            "__main__.py",
+        }
+    )
     EXEMPT_PREFIXES: ClassVar[tuple[str, ...]] = ("test_", "_")
-    DUNDER_ALLOWED: ClassVar[frozenset[str]] = frozenset({
-        "__all__",
-        "__version__",
-        "__version_info__",
-    })
-    ALIAS_NAMES: ClassVar[frozenset[str]] = frozenset({
-        "c",
-        "m",
-        "p",
-        "t",
-        "u",
-        "r",
-        "d",
-        "e",
-        "h",
-        "s",
-        "x",
-    })
-    TYPEVAR_CALLABLES: ClassVar[frozenset[str]] = frozenset({
-        "TypeVar",
-        "ParamSpec",
-        "TypeVarTuple",
-    })
-    COLLECTION_CALLS: ClassVar[frozenset[str]] = frozenset({
-        "dict",
-        "list",
-        "set",
-        "tuple",
-        "frozenset",
-    })
+    DUNDER_ALLOWED: ClassVar[frozenset[str]] = frozenset(
+        {
+            "__all__",
+            "__version__",
+            "__version_info__",
+        }
+    )
+    ALIAS_NAMES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "c",
+            "m",
+            "p",
+            "t",
+            "u",
+            "r",
+            "d",
+            "e",
+            "h",
+            "s",
+            "x",
+        }
+    )
+    TYPEVAR_CALLABLES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "TypeVar",
+            "ParamSpec",
+            "TypeVarTuple",
+        }
+    )
+    COLLECTION_CALLS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "dict",
+            "list",
+            "set",
+            "tuple",
+            "frozenset",
+        }
+    )
     ENUM_BASES: ClassVar[frozenset[str]] = frozenset({"Enum", "StrEnum", "IntEnum"})
 
 
@@ -85,16 +95,18 @@ def _write_complete_modules(pkg_dir: Path, package_name: str) -> None:
 def _write_package_init(pkg_dir: Path, package_name: str) -> None:
     prefix = _project_prefix(package_name)
     _ = (pkg_dir / "__init__.py").write_text(
-        "\n".join([
-            '"""Package init for pipeline test."""',
-            "",
-            f"from {package_name}.constants import {prefix}Constants",
-            "",
-            "__all__ = [",
-            f'    "{prefix}Constants",',
-            "]",
-            "",
-        ]),
+        "\n".join(
+            [
+                '"""Package init for pipeline test."""',
+                "",
+                f"from {package_name}.constants import {prefix}Constants",
+                "",
+                "__all__ = [",
+                f'    "{prefix}Constants",',
+                "]",
+                "",
+            ]
+        ),
         encoding="utf-8",
     )
 
@@ -127,16 +139,18 @@ def _make_project(
         tests_dir.mkdir()
         prefix = _project_prefix(package_name)
         _ = (tests_dir / "__init__.py").write_text(
-            "\n".join([
-                '"""Tests init for pipeline test."""',
-                "",
-                f"from tests.constants import Tests{prefix}Constants",
-                "",
-                "__all__ = [",
-                f'    "Tests{prefix}Constants",',
-                "]",
-                "",
-            ]),
+            "\n".join(
+                [
+                    '"""Tests init for pipeline test."""',
+                    "",
+                    f"from tests.constants import Tests{prefix}Constants",
+                    "",
+                    "__all__ = [",
+                    f'    "Tests{prefix}Constants",',
+                    "]",
+                    "",
+                ]
+            ),
             encoding="utf-8",
         )
 

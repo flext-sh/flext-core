@@ -23,7 +23,7 @@ from flext_core.loggings import FlextLogger
 class DispatchMessageProtocol(Protocol):
     """Protocol for objects that can dispatch messages."""
 
-    def dispatch_message(self, message: p.Routable) -> t.Container:
+    def dispatch_message(self, message: p.Routable) -> t.ContainerValue:
         """Dispatch a message."""
         ...
 
@@ -32,7 +32,7 @@ class DispatchMessageProtocol(Protocol):
 class HandleProtocol(Protocol):
     """Protocol for objects that can handle messages."""
 
-    def handle(self, message: p.Routable) -> t.Container:
+    def handle(self, message: p.Routable) -> t.ContainerValue:
         """Handle a message."""
         ...
 
@@ -41,7 +41,7 @@ class HandleProtocol(Protocol):
 class ExecuteProtocol(Protocol):
     """Protocol for objects that can execute messages."""
 
-    def execute(self, message: p.Routable) -> t.Container:
+    def execute(self, message: p.Routable) -> t.ContainerValue:
         """Execute a message."""
         ...
 
@@ -49,7 +49,7 @@ class ExecuteProtocol(Protocol):
 # Union of all handler types the dispatcher accepts
 # Callables returning ResultLike (FlextResult) or ContainerValue, plus protocol objects
 _DispatchableHandler: TypeAlias = (
-    Callable[..., p.ResultLike[t.Container] | t.Container | None]
+    Callable[..., p.ResultLike[t.ContainerValue] | t.ContainerValue | None]
     | DispatchMessageProtocol
     | HandleProtocol
     | ExecuteProtocol
@@ -75,7 +75,7 @@ class FlextDispatcher:
     def dispatch(
         self,
         message: p.Routable,
-    ) -> r[t.Container]:
+    ) -> r[t.ContainerValue]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -88,7 +88,7 @@ class FlextDispatcher:
         try:
             route_name = self._resolve_route(message)
         except (TypeError, ValueError) as e:
-            return r[t.Container].fail(
+            return r[t.ContainerValue].fail(
                 f"Dispatch failed: {e!s}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
@@ -104,7 +104,7 @@ class FlextDispatcher:
                     break
 
         if not handler:
-            return r[t.Container].fail(
+            return r[t.ContainerValue].fail(
                 f"No handler found for {route_name}",
                 error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
@@ -205,13 +205,13 @@ class FlextDispatcher:
         handler: _DispatchableHandler,
         message: p.Routable,
         route_name: str,
-    ) -> r[t.Container]:
+    ) -> r[t.ContainerValue]:
         """Execute a handler against a message.
 
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables.
         """
-        result_raw: p.ResultLike[t.Container] | t.Container | None = None
+        result_raw: p.ResultLike[t.ContainerValue] | t.ContainerValue | None = None
         try:
             if isinstance(handler, DispatchMessageProtocol):
                 result_raw = handler.dispatch_message(message)
@@ -224,7 +224,7 @@ class FlextDispatcher:
                     message,
                 )
             else:
-                return r[t.Container].fail(
+                return r[t.ContainerValue].fail(
                     f"Handler for {route_name} is not callable",
                 )
 
@@ -233,7 +233,7 @@ class FlextDispatcher:
                 result_like = result_raw
                 if result_like.is_failure:
                     error_data_value = result_like.error_data
-                    return r[t.Container].fail(
+                    return r[t.ContainerValue].fail(
                         result_like.error or "Handler failed",
                         error_code=result_like.error_code,
                         error_data=error_data_value
@@ -242,19 +242,19 @@ class FlextDispatcher:
                     )
                 value = result_like.value
                 if value is None:
-                    return r[t.Container].fail(
+                    return r[t.ContainerValue].fail(
                         "Handler returned None in success result"
                     )
-                return r[t.Container].ok(value)
+                return r[t.ContainerValue].ok(value)
 
             # Bare value return
             if result_raw is None:
-                return r[t.Container].fail("Handler returned None")
-            return r[t.Container].ok(result_raw)
+                return r[t.ContainerValue].fail("Handler returned None")
+            return r[t.ContainerValue].ok(result_raw)
 
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)
-            return r[t.Container].fail(
+            return r[t.ContainerValue].fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )

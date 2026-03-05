@@ -38,7 +38,7 @@ class _BadSequence:
         raise TypeError(msg)
 
 
-class _BadCopyDict(UserDict[str, t.Container]):
+class _BadCopyDict(UserDict[str, t.ContainerValue]):
     @override
     def copy(self) -> _BadCopyDict:
         msg = "copy failed"
@@ -55,15 +55,15 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert not_found is None
 
     nested = u.Collection._merge_deep_single_key(
-        cast("dict[str, t.Container]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
         "x",
-        cast("t.Container", {"b": 2}),
+        cast("t.ContainerValue", {"b": 2}),
     )
     assert nested.is_success
 
     deep = u.Collection.merge(
-        cast("dict[str, t.Container]", {"x": _BadCopyDict({"a": 1})}),
-        cast("dict[str, t.Container]", {"x": {"b": 2}}),
+        cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.ContainerValue]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success

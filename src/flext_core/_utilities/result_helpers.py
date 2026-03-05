@@ -12,13 +12,13 @@ T = TypeVar("T")
 
 class ResultHelpers:
     @staticmethod
-    def any_(*values: t.Container) -> bool:
+    def any_(*values: t.ContainerValue) -> bool:
         return any(bool(v) for v in values)
 
     @staticmethod
     def count(
-        items: Sequence[t.Container] | Mapping[str, t.Container],
-        predicate: Callable[[t.Container], bool] | None = None,
+        items: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue],
+        predicate: Callable[[t.ContainerValue], bool] | None = None,
     ) -> int:
         if predicate is None:
             return len(items)
@@ -28,7 +28,7 @@ class ResultHelpers:
 
     @staticmethod
     def empty(
-        items: Sequence[t.Container] | Mapping[str, t.Container] | str | None,
+        items: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue] | str | None,
     ) -> bool:
         if isinstance(items, r):
             if items.is_failure:
@@ -51,7 +51,7 @@ class ResultHelpers:
         return default
 
     @staticmethod
-    def not_(value: t.Container) -> bool:
+    def not_(value: t.ContainerValue) -> bool:
         return not bool(value)
 
     @staticmethod

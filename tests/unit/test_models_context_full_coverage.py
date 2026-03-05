@@ -23,7 +23,7 @@ class _ModelWithNoCallableDump:
 
 
 class _MappingLike(t.ConfigurationMapping):
-    def __init__(self, data: dict[str, t.Container]) -> None:
+    def __init__(self, data: dict[str, t.ContainerValue]) -> None:
         self._data = data
 
     @override
@@ -35,7 +35,7 @@ class _MappingLike(t.ConfigurationMapping):
         return len(self._data)
 
     @override
-    def __getitem__(self, key: str) -> t.Container:
+    def __getitem__(self, key: str) -> t.ContainerValue:
         return self._data[key]
 
 

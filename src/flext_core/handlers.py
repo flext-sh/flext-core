@@ -144,7 +144,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: dict[str, t.Container] = {}
+        self._metrics: dict[str, t.ContainerValue] = {}
         self._stack: list[m.ExecutionContext | m.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
@@ -222,7 +222,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             handler_config: Optional m configuration
 
         Returns:
-            FlextHandlers[t.Container, t.Container]: Handler instance wrapping the callable
+            FlextHandlers[t.ContainerValue, t.ContainerValue]: Handler instance wrapping the callable
 
         Raises:
             e.ValidationError: If invalid mode is provided
@@ -509,7 +509,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def push_context(
         self,
-        ctx: m.ExecutionContext | dict[str, t.Container],
+        ctx: m.ExecutionContext | dict[str, t.ContainerValue],
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext | m.ConfigMap):
@@ -542,7 +542,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._stack.append(execution_ctx)
         return r[bool].ok(value=True)
 
-    def record_metric(self, name: str, value: t.Container) -> r[bool]:
+    def record_metric(self, name: str, value: t.ContainerValue) -> r[bool]:
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
         return r[bool].ok(value=True)
@@ -791,7 +791,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         def scan_module(
             module: ModuleType,
         ) -> list[
-            tuple[str, Callable[..., t.Container | None], m.HandlerDecoratorConfig]
+            tuple[str, Callable[..., t.ContainerValue | None], m.HandlerDecoratorConfig]
         ]:
             """Scan module for functions decorated with @handler().
 
@@ -811,7 +811,11 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             """
             handlers: list[
-                tuple[str, Callable[..., t.Container | None], m.HandlerDecoratorConfig]
+                tuple[
+                    str,
+                    Callable[..., t.ContainerValue | None],
+                    m.HandlerDecoratorConfig,
+                ]
             ] = []
             for name in dir(module):
                 if name.startswith("_"):
@@ -830,10 +834,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                 callable_func: Callable[..., object] = func
 
                 def narrowed_func(
-                    message: t.Container,
+                    message: t.ContainerValue,
                     captured_callable: Callable[..., object] = callable_func,
-                    **kwargs: t.Container,
-                ) -> t.Container | None:
+                    **kwargs: t.ContainerValue,
+                ) -> t.ContainerValue | None:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""

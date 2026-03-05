@@ -217,14 +217,14 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: Mapping[str, t.Container],
+        type_hints: Mapping[str, t.ContainerValue],
         param_name: str,
     ) -> t.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
         if param_name in type_hints:
             # Return the type hint directly (plain types, generic aliases, etc.)
             hint = type_hints[param_name]
-            # Type narrowing: MessageTypeSpecifier = str | type[t.Container]
+            # Type narrowing: MessageTypeSpecifier = str | type[t.ContainerValue]
             # Check what hint is and return appropriately
             if hint is None:
                 return None
@@ -271,7 +271,7 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: Callable[..., object],
         handler_class: type,
-    ) -> Mapping[str, t.Container]:
+    ) -> Mapping[str, t.ContainerValue]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(

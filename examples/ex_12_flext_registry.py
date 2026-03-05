@@ -82,10 +82,12 @@ class Ex12FlextRegistry(Examples):
         invalid_error = self.rand_str(7)
         boom_message = self.rand_str(7)
 
-        bindings_result = registry.register_bindings({
-            _CommandA: handler_a,
-            custom_binding_name: handler_b,
-        })
+        bindings_result = registry.register_bindings(
+            {
+                _CommandA: handler_a,
+                custom_binding_name: handler_b,
+            }
+        )
         self.check("register_bindings.success", bindings_result.is_success)
         self.check(
             "register_bindings.registered_len",

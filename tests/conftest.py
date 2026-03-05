@@ -111,7 +111,7 @@ class FlextTestAutomationFramework:
     def create_test_entity(
         unique_id: str,
         name: str,
-        **kwargs: t.Container,
+        **kwargs: t.ContainerValue,
     ) -> TestResult[m.Entity]:
         """Create test entity with real functionality.
 
@@ -130,11 +130,13 @@ class FlextTestAutomationFramework:
                 model_config = ConfigDict(extra="allow")
                 name: str
 
-            entity = TestEntity.model_validate({
-                "unique_id": unique_id,
-                "name": name,
-                **kwargs,
-            })
+            entity = TestEntity.model_validate(
+                {
+                    "unique_id": unique_id,
+                    "name": name,
+                    **kwargs,
+                }
+            )
             return r[m.Entity].ok(entity)
         except Exception as e:
             return r[m.Entity].fail(f"Entity creation failed: {e}")
@@ -200,7 +202,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def parametrize_real_data(
-        *test_cases: dict[str, t.Container],
+        *test_cases: dict[str, t.ContainerValue],
     ) -> pytest.MarkDecorator:
         """Parametrize test with real data following architecture rules.
 
@@ -536,7 +538,7 @@ def mock_external_service() -> FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, t.Container]:
+def sample_data() -> dict[str, t.ContainerValue]:
     """Provide sample test data for integration tests."""
     return {
         "string": "test_value",

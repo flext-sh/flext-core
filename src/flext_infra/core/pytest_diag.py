@@ -172,7 +172,7 @@ class FlextInfraPytestDiagExtractor:
         self,
         junit_path: Path,
         log_path: Path,
-    ) -> FlextResult[Mapping[str, t.Container]]:
+    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Extract diagnostics from JUnit XML and pytest log.
 
         Args:
@@ -200,7 +200,7 @@ class FlextInfraPytestDiagExtractor:
             if not diag.slow_entries:
                 self._extract_slow_from_log(lines, diag)
 
-            result: MutableMapping[str, t.Container] = {
+            result: MutableMapping[str, t.ContainerValue] = {
                 "failed_count": len(diag.failed_cases),
                 "error_count": len(diag.error_traces),
                 "warning_count": len(diag.warning_lines),

@@ -251,7 +251,7 @@ class TestFlextContainer:
     ) -> None:
         """Test that registering non-callable with factory kind handles gracefully."""
         # Intentionally pass non-callable to test error handling
-        non_callable: Callable[[], t.Container] = cast(
+        non_callable: Callable[[], t.ContainerValue] = cast(
             "Callable[[], t.ContainerValue]",
             "not_callable",
         )
@@ -292,7 +292,7 @@ class TestFlextContainer:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
         result: r[t.RegisterableService] = clean_container.get(scenario.name)
-        expected_value: t.Container = cast(
+        expected_value: t.ContainerValue = cast(
             "t.ContainerValue",
             scenario.service,
         )
@@ -648,9 +648,11 @@ class TestFlextContainer:
         container = clean_container
         container.register("db_connection", {"host": FlextConstants.Network.LOCALHOST})
         container.register("cache", {"type": "redis"})
-        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory({
-            "logger": "instance",
-        })
+        factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
+            {
+                "logger": "instance",
+            }
+        )
         container.register("logger", factory, kind="factory")
         required_services = ["db_connection", "cache", "logger"]
         for service_name in required_services:
@@ -689,7 +691,7 @@ class TestFlextContainer:
         container = clean_container
         error_msg = "Factory failed"
 
-        def failing_factory() -> t.Container:
+        def failing_factory() -> t.ContainerValue:
             raise RuntimeError(error_msg)
 
         container.register("failing", failing_factory, kind="factory")

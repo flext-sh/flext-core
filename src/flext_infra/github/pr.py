@@ -119,10 +119,12 @@ class FlextInfraPrManager:
 
         existing = existing_result.value
         if existing:
-            return r[Mapping[str, t.Scalar]].ok({
-                "status": "already-open",
-                "pr_url": existing.get("url"),
-            })
+            return r[Mapping[str, t.Scalar]].ok(
+                {
+                    "status": "already-open",
+                    "pr_url": existing.get("url"),
+                }
+            )
 
         command = [
             "gh",
@@ -145,10 +147,12 @@ class FlextInfraPrManager:
             return r[Mapping[str, t.Scalar]].fail(
                 result.error or "PR creation failed",
             )
-        return r[Mapping[str, t.Scalar]].ok({
-            "status": "created",
-            "pr_url": result.value,
-        })
+        return r[Mapping[str, t.Scalar]].ok(
+            {
+                "status": "created",
+                "pr_url": result.value,
+            }
+        )
 
     def merge(
         self,
@@ -160,7 +164,7 @@ class FlextInfraPrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> FlextResult[Mapping[str, t.Container]]:
+    ) -> FlextResult[Mapping[str, t.ContainerValue]]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -207,7 +211,7 @@ class FlextInfraPrManager:
         if result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(result.error or "merge failed")
 
-        info: MutableMapping[str, t.Container] = {"status": "merged"}
+        info: MutableMapping[str, t.ContainerValue] = {"status": "merged"}
         if release_on_merge:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
@@ -354,10 +358,12 @@ class FlextInfraPrManager:
         )
         if dispatch_result.is_success:
             return r[Mapping[str, str]].ok({"status": "release-dispatched", "tag": tag})
-        return r[Mapping[str, str]].ok({
-            "status": "release-dispatch-failed",
-            "tag": tag,
-        })
+        return r[Mapping[str, str]].ok(
+            {
+                "status": "release-dispatch-failed",
+                "tag": tag,
+            }
+        )
 
 
 def _selector(pr_number: str, head: str) -> str:

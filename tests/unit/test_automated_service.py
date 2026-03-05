@@ -157,7 +157,7 @@ class TestAutomatedFlextService:
     def _execute_service_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.Container],
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on service instance.
 

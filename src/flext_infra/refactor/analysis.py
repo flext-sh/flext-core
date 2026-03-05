@@ -180,13 +180,15 @@ class FlextInfraRefactorClassNestingAnalyzer:
                 elif isinstance(raw_expected_prefix, str):
                     target_namespace = raw_expected_prefix
 
-                violations.append({
-                    "file": normalized_file,
-                    "line": line,
-                    "class_name": raw_class_name,
-                    "target_namespace": target_namespace,
-                    "confidence": confidence,
-                })
+                violations.append(
+                    {
+                        "file": normalized_file,
+                        "line": line,
+                        "class_name": raw_class_name,
+                        "target_namespace": target_namespace,
+                        "confidence": confidence,
+                    }
+                )
                 confidence_counts[confidence] += 1
                 per_file_counts[normalized_file] += 1
 
@@ -295,21 +297,23 @@ class FlextInfraRefactorClassNestingAnalyzer:
 class FlextInfraRefactorViolationAnalyzer:
     """Scan files and aggregate massive pattern violations."""
 
-    _PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = MappingProxyType({
-        "container_invariance": re.compile(
-            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
-        ),
-        "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
-        "direct_submodule_import": re.compile(
-            r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
-        ),
-        "legacy_typing_mapping": re.compile(
-            r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
-        ),
-        "runtime_alias_violation": re.compile(
-            r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
-        ),
-    })
+    _PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = MappingProxyType(
+        {
+            "container_invariance": re.compile(
+                r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
+            ),
+            "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
+            "direct_submodule_import": re.compile(
+                r"\bfrom\s+flext_core\.[\w\.]+\s+import\b"
+            ),
+            "legacy_typing_mapping": re.compile(
+                r"\bfrom\s+typing\s+import\s+.*\bMapping\b"
+            ),
+            "runtime_alias_violation": re.compile(
+                r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
+            ),
+        }
+    )
     _MODEL_TOKENS: ClassVar[tuple[str, ...]] = (
         "model",
         "schema",
@@ -329,12 +333,14 @@ class FlextInfraRefactorViolationAnalyzer:
         "query",
         "event",
     )
-    _NAMESPACE_PREFIXES: ClassVar[Mapping[str, str]] = MappingProxyType({
-        "utility": "FlextUtilities",
-        "models": "FlextModels",
-        "decorators": "FlextDecorators",
-        "dispatcher": "FlextDispatcher",
-    })
+    _NAMESPACE_PREFIXES: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {
+            "utility": "FlextUtilities",
+            "models": "FlextModels",
+            "decorators": "FlextDecorators",
+            "dispatcher": "FlextDispatcher",
+        }
+    )
     _CLASSIFICATION_PRIORITY: ClassVar[tuple[str, ...]] = (
         "dispatcher",
         "decorators",

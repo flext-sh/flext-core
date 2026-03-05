@@ -42,7 +42,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: t.Container,
+        value: t.ContainerValue,
     ) -> t.Scalar | list[t.Primitives | None] | None:
         """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
 
@@ -237,7 +237,7 @@ class FlextUtilitiesModel:
         fallbacks by centralizing all metadata normalization logic.
 
         Args:
-            value: None, dict, Mapping, Metadata, or any t.Container
+            value: None, dict, Mapping, Metadata, or any t.ContainerValue
 
         Returns:
             FlextModelFoundation.Metadata: Normalized metadata (empty attributes
@@ -296,7 +296,7 @@ class FlextUtilitiesModel:
             data: EventDataMapping (Mapping[str, ContainerValue]) or None
 
         Returns:
-            Mapping[str, t.Container]: Mapping with Pydantic-safe values
+            Mapping[str, t.ContainerValue]: Mapping with Pydantic-safe values
 
         Example:
             >>> u.Model.normalize_to_pydantic_dict(None)

@@ -248,7 +248,7 @@ class FlextModels:
     class ContextMetadata(FlextModelsContext.ContextMetadata):
         """Context metadata — real re-export for pydantic-mypy compatibility."""
 
-    class StructlogProxyContextVar[T: t.Container](
+    class StructlogProxyContextVar[T: t.ContainerValue](
         FlextModelsContext.StructlogProxyContextVar[T]
     ):
         """ContextVar-like proxy using structlog as single source of truth."""

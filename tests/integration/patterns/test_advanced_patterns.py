@@ -75,16 +75,16 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: dict[str, t.Container] = {}
-        self._when: dict[str, t.Container] = {}
-        self._then: dict[str, t.Container] = {}
+        self._given: dict[str, t.ContainerValue] = {}
+        self._when: dict[str, t.ContainerValue] = {}
+        self._then: dict[str, t.ContainerValue] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
     def given(
         self,
         _description: str,
-        **kwargs: t.Container,
+        **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Given method.
 
@@ -98,7 +98,7 @@ class GivenWhenThenBuilder:
     def when(
         self,
         _description: str,
-        **kwargs: t.Container,
+        **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """When method.
 
@@ -112,7 +112,7 @@ class GivenWhenThenBuilder:
     def then(
         self,
         _description: str,
-        **kwargs: t.Container,
+        **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Then method.
 
@@ -218,8 +218,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: dict[str, t.Container] = {}
-        self._validation_rules: dict[str, t.Container] = {}
+        self._data: dict[str, t.ContainerValue] = {}
+        self._validation_rules: dict[str, t.ContainerValue] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -241,7 +241,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: t.Container) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: t.ContainerValue) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -273,7 +273,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs: t.Container) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs: t.ContainerValue) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:
@@ -285,7 +285,7 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> dict[str, t.Container]:
+    def build(self) -> dict[str, t.ContainerValue]:
         """Build method.
 
         Returns:
@@ -389,12 +389,18 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[t.Container] | dict[str, t.Container] | str | tuple[object, ...],
+        data: list[t.ContainerValue]
+        | dict[str, t.ContainerValue]
+        | str
+        | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
         self.data: (
-            list[t.Container] | dict[str, t.Container] | str | tuple[object, ...]
+            list[t.ContainerValue]
+            | dict[str, t.ContainerValue]
+            | str
+            | tuple[object, ...]
         ) = data
         self._assertions: list[Callable[[], None]] = []
 
@@ -452,7 +458,10 @@ class AssertionBuilder:
         self,
         condition: Callable[
             [
-                list[t.Container] | dict[str, t.Container] | str | tuple[object, ...],
+                list[t.ContainerValue]
+                | dict[str, t.ContainerValue]
+                | str
+                | tuple[object, ...],
             ],
             bool,
         ],
@@ -567,7 +576,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, t.Container] = {
+        test_data: dict[str, t.ContainerValue] = {
             "name": "John",
             "age": 30,
             "active": True,

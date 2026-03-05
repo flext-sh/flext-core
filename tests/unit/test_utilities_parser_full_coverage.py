@@ -48,7 +48,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     parser = u.Parser()
-    sample: t.Container = "ok"
+    sample: t.ContainerValue = "ok"
     assert sample == "ok"
     assert isinstance(c.Processing.PATTERN_TUPLE_MIN_LENGTH, int)
 

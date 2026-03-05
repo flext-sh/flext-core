@@ -18,13 +18,13 @@ class _SvcModel(BaseModel):
 
 class _RuntimeContainer:
     def __init__(self) -> None:
-        self.configured: dict[str, t.Container] | None = None
+        self.configured: dict[str, t.ContainerValue] | None = None
         self.wired: dict[str, object] | None = None
 
     def scoped(self, **_kwargs: object) -> _RuntimeContainer:
         return self
 
-    def configure(self, overrides: dict[str, t.Container]) -> None:
+    def configure(self, overrides: dict[str, t.ContainerValue]) -> None:
         self.configured = overrides
 
     def wire_modules(self, **kwargs: object) -> None:
@@ -96,7 +96,7 @@ def test_mixins_result_and_model_conversion_paths(
             return 1
 
         @override
-        def __getitem__(self, _key: str) -> t.Container:
+        def __getitem__(self, _key: str) -> t.ContainerValue:
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -249,13 +249,13 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mixins_validation_and_protocol_paths() -> None:
-    validators: list[Callable[[t.Container], r[bool]]] = [
+    validators: list[Callable[[t.ContainerValue], r[bool]]] = [
         lambda _v: r[bool].ok(False),
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
 
-    fail_validators: list[Callable[[t.Container], r[bool]]] = [
+    fail_validators: list[Callable[[t.ContainerValue], r[bool]]] = [
         lambda _v: r[bool].fail("no"),
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)

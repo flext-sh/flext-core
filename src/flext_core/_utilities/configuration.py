@@ -200,7 +200,7 @@ class FlextUtilitiesConfiguration:
 
         Type Safety:
         - Uses hasattr() before getattr() to avoid AttributeError
-        - Cast to t.Container preserves union type safety
+        - Cast to t.ContainerValue preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
@@ -217,9 +217,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.Container],
+        obj: Mapping[str, t.ContainerValue],
         parameter: str,
-    ) -> tuple[bool, t.Container | None]:
+    ) -> tuple[bool, t.ContainerValue | None]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -255,7 +255,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_duck_model_dump(
         obj: object,
         parameter: str,
-    ) -> tuple[bool, t.Container | None]:
+    ) -> tuple[bool, t.ContainerValue | None]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
@@ -276,7 +276,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.Container | None]:
+    ) -> tuple[bool, t.ContainerValue | None]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -358,7 +358,7 @@ class FlextUtilitiesConfiguration:
                 self,
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
-                **format_kwargs: t.Container,
+                **format_kwargs: t.ContainerValue,
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)
                 def get_ldif_config_default() -> WriteFormatOptions:

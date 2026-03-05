@@ -81,7 +81,7 @@ class FlextTestsBuilders:
         return isinstance(value, r)
 
     @staticmethod
-    def _to_guard_input(value: t.Tests.ContainerValue) -> t.Container:
+    def _to_guard_input(value: t.Tests.ContainerValue) -> t.ContainerValue:
         if value is None or isinstance(value, t.Primitives | BaseModel):
             return value
         if isinstance(value, Mapping):
@@ -765,7 +765,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: t.Container = self._data
+        current: t.ContainerValue = self._data
 
         for part in parts:
             if not isinstance(current, Mapping):
@@ -1336,12 +1336,14 @@ class FlextTestsBuilders:
                 service_result = tt.model("service", name=f"service_{i}")
                 if not isinstance(service_result, m.Tests.Factory.Service):
                     continue
-                services.append({
-                    "id": service_result.id,
-                    "name": service_result.name,
-                    "type": service_result.type,
-                    "status": service_result.status,
-                })
+                services.append(
+                    {
+                        "id": service_result.id,
+                        "name": service_result.name,
+                        "type": service_result.type,
+                        "status": service_result.status,
+                    }
+                )
             return services
 
         if factory == "results":

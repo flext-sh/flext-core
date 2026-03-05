@@ -111,7 +111,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.Container,
+        *parts: t.ContainerValue,
         length: int = c.Utilities.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
@@ -143,21 +143,21 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _is_config_mapping(
-        value: t.Container,
-    ) -> TypeGuard[Mapping[str, t.Container]]:
+        value: t.ContainerValue,
+    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: Mapping[str, t.Container] | BaseModel | None,
-    ) -> Mapping[str, t.Container]:
+        context: Mapping[str, t.ContainerValue] | BaseModel | None,
+    ) -> Mapping[str, t.ContainerValue]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            Mapping[str, t.Container]: Normalized context dict
+            Mapping[str, t.ContainerValue]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -237,9 +237,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.Container | None,
-        default: Mapping[str, t.Container] | None = None,
-    ) -> Mapping[str, t.Container]:
+        value: t.ContainerValue | None,
+        default: Mapping[str, t.ContainerValue] | None = None,
+    ) -> Mapping[str, t.ContainerValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -258,7 +258,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            Mapping[str, t.Container]: Normalized dict or default
+            Mapping[str, t.ContainerValue]: Normalized dict or default
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -305,7 +305,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: Mapping[str, t.Container] | BaseModel | None,
+        context: Mapping[str, t.ContainerValue] | BaseModel | None,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -364,7 +364,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.Container, ...] | None = None,
+        parts: tuple[t.ContainerValue, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -406,7 +406,7 @@ class FlextUtilitiesGenerators:
         # Generate prefixed ID
         if actual_prefix is not None:
             # Build parts list
-            all_parts: list[t.Container] = []
+            all_parts: list[t.ContainerValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
@@ -467,7 +467,7 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
     @staticmethod
-    def generate_operation_id(message_type: str, message: t.Container) -> str:
+    def generate_operation_id(message_type: str, message: t.ContainerValue) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:

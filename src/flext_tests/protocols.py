@@ -342,10 +342,10 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose: t.Container
+                compose: t.ContainerValue
                 """Compose API access (python-on-whales style)."""
 
-                client_config: Mapping[str, t.Container]
+                client_config: Mapping[str, t.ContainerValue]
                 """Client configuration (python-on-whales style)."""
 
                 def down(
@@ -594,7 +594,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Used for validation and testing operations.
                 """
 
-                def assert_fail(self, result: FlextResult[t.Container]) -> str:
+                def assert_fail(self, result: FlextResult[t.ContainerValue]) -> str:
                     """Assert result is failure and return error."""
                     ...
 
@@ -650,7 +650,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def validate(
                     self,
-                    value: t.Container,
+                    value: t.ContainerValue,
                     spec: int | tuple[int, int],
                 ) -> bool:
                     """Validate length against spec.
@@ -678,7 +678,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def eq(
                     self,
-                    expected: t.Container,
+                    expected: t.ContainerValue,
                     msg: str | None = None,
                 ) -> Self:
                     """Assert value equals expected."""
@@ -696,7 +696,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is failure."""
                     ...
 
-                def has(self, item: t.Container, msg: str | None = None) -> Self:
+                def has(self, item: t.ContainerValue, msg: str | None = None) -> Self:
                     """Assert value/error contains item."""
                     ...
 
@@ -715,7 +715,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that can manage test execution scopes.
                 """
 
-                def exit_scope(self, scope: t.Container) -> None:
+                def exit_scope(self, scope: t.ContainerValue) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:
@@ -1053,7 +1053,7 @@ class FlextTestsProtocols(FlextProtocols):
                 functions used with sorted().
 
                 Example:
-                    def get_id(obj: t.Container) -> int:
+                    def get_id(obj: t.ContainerValue) -> int:
                         return obj.id  # int supports __lt__
 
                     sorted(items, key=get_id)  # OK - int satisfies SupportsLessThan

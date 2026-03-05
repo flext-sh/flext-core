@@ -109,15 +109,17 @@ def test_run_cli_with_multiple_projects(monkeypatch: MonkeyPatch) -> None:
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
 
-    exit_code = run_cli([
-        "run",
-        "--gates",
-        "lint",
-        "--project",
-        "proj1",
-        "--project",
-        "proj2",
-    ])
+    exit_code = run_cli(
+        [
+            "run",
+            "--gates",
+            "lint",
+            "--project",
+            "proj1",
+            "--project",
+            "proj2",
+        ]
+    )
 
     assert exit_code == 0
     assert "proj1" in captured_projects
@@ -144,14 +146,16 @@ def test_run_cli_with_fail_fast_flag(monkeypatch: MonkeyPatch) -> None:
         FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects
     )
 
-    exit_code = run_cli([
-        "run",
-        "--gates",
-        "lint",
-        "--fail-fast",
-        "--project",
-        "flext-core",
-    ])
+    exit_code = run_cli(
+        [
+            "run",
+            "--gates",
+            "lint",
+            "--fail-fast",
+            "--project",
+            "flext-core",
+        ]
+    )
 
     assert exit_code == 0
     assert captured_fail_fast[0] is True

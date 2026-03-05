@@ -1079,7 +1079,7 @@ class FlextContainer(p.DI):
 
         for name, service in (services or {}).items():
             # Type narrowing: service is compatible with ServiceRegistration.service type
-            # ServiceRegistration.service accepts: t.Container | BaseModel | p.VariadicCallable[t.Container] | t.Container
+            # ServiceRegistration.service accepts: t.ContainerValue | BaseModel | p.VariadicCallable[t.ContainerValue] | t.ContainerValue
             # The service parameter matches this union type
             cloned_services[name] = m.ServiceRegistration(
                 name=name,

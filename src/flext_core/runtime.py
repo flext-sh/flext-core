@@ -372,7 +372,7 @@ class FlextRuntime:
 
     @staticmethod
     def _is_scalar(
-        value: t.Container | t.MetadataValue,
+        value: t.ContainerValue | t.MetadataValue,
     ) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         match value:
@@ -423,9 +423,9 @@ class FlextRuntime:
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases - use actual type objects
-                # GenericTypeArgument = str | type[t.Container]
+                # GenericTypeArgument = str | type[t.ContainerValue]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
-                # since they represent type[T] where T is a scalar t.Container
+                # since they represent type[T] where T is a scalar t.ContainerValue
                 if type_name in {"StringList", "List"}:
                     return (str,)
                 if type_name == "IntList":
@@ -489,7 +489,7 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: t.Container) -> TypeGuard[object]:
+    def is_base_model(obj: t.ContainerValue) -> TypeGuard[object]:
         """Type guard to narrow object to BaseModel (part of ContainerValue).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
@@ -507,13 +507,13 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: t.Container | t.MetadataValue,
+        value: t.ContainerValue | t.MetadataValue,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Type guard to check if value is dict-like.
 
         Note:
             ``value`` remains broad because this guard is a boundary utility used
-            by normalization paths that accept full ``t.Container``.
+            by normalization paths that accept full ``t.ContainerValue``.
 
         Args:
             value: Value to check
@@ -559,8 +559,8 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: t.Container | t.MetadataValue,
-    ) -> TypeGuard[Sequence[t.Container]]:
+        value: t.ContainerValue | t.MetadataValue,
+    ) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, list)
 
@@ -617,14 +617,14 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_identifier(
-        value: t.Container,
+        value: t.ContainerValue,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier."""
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
     def is_valid_json(
-        value: t.Container,
+        value: t.ContainerValue,
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
@@ -658,8 +658,8 @@ class FlextRuntime:
     ) -> t.ContainerValue:
         """Normalize any value to t.ContainerValue recursively.
 
-        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.Container], and other types
-        to FlextModelsContainers.ConfigMap, Sequence[t.Container], etc.
+        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.ContainerValue], and other types
+        to FlextModelsContainers.ConfigMap, Sequence[t.ContainerValue], etc.
         This is the central conversion function for type safety.
 
         Args:
@@ -706,7 +706,7 @@ class FlextRuntime:
     ) -> t.MetadataValue:
         """Normalize any value to t.MetadataAttributeValue.
 
-        t.MetadataAttributeValue is more restrictive than t.Container,
+        t.MetadataAttributeValue is more restrictive than t.ContainerValue,
         so we need to normalize nested structures to flat types.
         This method is in FlextRuntime (Tier 0.5) to avoid circular dependencies.
 
@@ -735,7 +735,7 @@ class FlextRuntime:
 
         if FlextRuntime.is_dict_like(val):
             raw_mapping = getattr(val, "root", val)
-            normalized_mapping: dict[str, t.Container] = {}
+            normalized_mapping: dict[str, t.ContainerValue] = {}
             for key, value in raw_mapping.items():
                 normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
                     value,
@@ -762,10 +762,10 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: t.Container,
+        obj: t.ContainerValue,
         attr: str,
-        default: t.Container | None = None,
-    ) -> t.Container | None:
+        default: t.ContainerValue | None = None,
+    ) -> t.ContainerValue | None:
         """Safe attribute access without raising AttributeError.
 
         Business Rule: Accesses object attributes safely using getattr() with
@@ -833,7 +833,7 @@ class FlextRuntime:
                 ],
             ]
             | None = None,
-            resources: Mapping[str, Callable[[], t.Container]] | None = None,
+            resources: Mapping[str, Callable[[], t.ContainerValue]] | None = None,
             wire_modules: Sequence[ModuleType] | None = None,
             wire_packages: Sequence[str] | None = None,
             wire_classes: Sequence[type] | None = None,
@@ -884,8 +884,8 @@ class FlextRuntime:
             if resources:
                 for name, resource_factory in resources.items():
                     # register_resource[T] accepts Callable[[], T] and infers T
-                    # resource_factory is Callable[[], t.Container] from resources
-                    # T is inferred as t.Container, which is valid
+                    # resource_factory is Callable[[], t.ContainerValue] from resources
+                    # T is inferred as t.ContainerValue, which is valid
                     _ = cls.register_resource(
                         di_container,
                         name,
@@ -1078,7 +1078,7 @@ class FlextRuntime:
     def configure_structlog(
         cls,
         *,
-        config: t.Container | None = None,
+        config: t.ContainerValue | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[object] | None = None,
@@ -1227,7 +1227,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[t.Container] | None = None,
+        additional_processors: list[t.ContainerValue] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
@@ -1313,10 +1313,10 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: t.Container,
+        _logger: t.ContainerValue,
         method_name: str,
-        event_dict: Mapping[str, t.Container],
-    ) -> Mapping[str, t.Container]:
+        event_dict: Mapping[str, t.ContainerValue],
+    ) -> Mapping[str, t.ContainerValue]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -1369,7 +1369,7 @@ class FlextRuntime:
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: dict[str, t.Container] = {}
+        filtered_dict: dict[str, t.ContainerValue] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -1936,7 +1936,7 @@ class FlextRuntime:
     @classmethod
     def ensure_trace_context(
         cls,
-        context: Mapping[str, str] | t.Container,
+        context: Mapping[str, str] | t.ContainerValue,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -1997,8 +1997,8 @@ class FlextRuntime:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: t.Container,
-        entity_b: t.Container,
+        entity_a: t.ContainerValue,
+        entity_b: t.ContainerValue,
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by unique ID attribute."""
@@ -2027,8 +2027,8 @@ class FlextRuntime:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.Container,
-        obj_b: t.Container,
+        obj_a: t.ContainerValue,
+        obj_b: t.ContainerValue,
     ) -> bool:
         """Compare value objects by their values (all attributes)."""
         if FlextRuntime._is_scalar(obj_a):
@@ -2094,7 +2094,7 @@ class FlextRuntime:
 
     @staticmethod
     def hash_entity_by_id(
-        entity: t.Container,
+        entity: t.ContainerValue,
         id_attr: str = "unique_id",
     ) -> int:
         """Hash entity based on unique ID and type."""
@@ -2108,7 +2108,7 @@ class FlextRuntime:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.Container) -> int:
+    def hash_value_object_by_value(obj: t.ContainerValue) -> int:
         """Hash value object based on all attribute values."""
         if FlextRuntime._is_scalar(obj):
             return hash(obj)
@@ -2123,7 +2123,7 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[int] | list[str] | list[t.Container],
+        codes: list[int] | list[str] | list[t.ContainerValue],
         min_code: int | None = None,
         max_code: int | None = None,
     ) -> RuntimeResult[list[int]]:
