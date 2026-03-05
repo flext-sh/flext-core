@@ -259,10 +259,7 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
 
         if expected_star_kwarg is not None and star_kw_forwarded != expected_star_kwarg:
             return False
-        if expected_star_kwarg is None and star_kw_forwarded is not None:
-            return False
-
-        return True
+        return not (expected_star_kwarg is None and star_kw_forwarded is not None)
 
     def _remove_import_bypasses(
         self,
