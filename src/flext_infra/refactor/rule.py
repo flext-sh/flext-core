@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +12,7 @@ import libcst as cst
 class FlextInfraRefactorRule:
     """Base class for flext_infra refactor rules."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: Mapping[str, Any]) -> None:
         """Initialize rule metadata from rule config."""
         self.config = config
         self.rule_id = config.get("id", "unknown")

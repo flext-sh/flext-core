@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import cast, override
 
@@ -150,7 +150,7 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
 
     def _matches_migration(
         self,
-        migration: dict[str, object],
+        migration: Mapping[str, object],
         *,
         qualified_names: set[str],
         simple_name: str | None,
@@ -174,7 +174,7 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
             simple_name is not None and target_simple and simple_name in target_simple
         )
 
-    def _keyword_renames(self, migration: dict[str, object]) -> dict[str, str]:
+    def _keyword_renames(self, migration: Mapping[str, object]) -> Mapping[str, str]:
         raw = migration.get("keyword_renames", {})
         if not isinstance(raw, dict):
             return {}
@@ -184,13 +184,13 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
             if isinstance(k, str) and isinstance(v, str)
         }
 
-    def _remove_keywords(self, migration: dict[str, object]) -> set[str]:
+    def _remove_keywords(self, migration: Mapping[str, object]) -> set[str]:
         raw = migration.get("remove_keywords", [])
         if not isinstance(raw, list):
             return set()
         return {item for item in cast("list[object]", raw) if isinstance(item, str)}
 
-    def _add_keywords(self, migration: dict[str, object]) -> dict[str, str]:
+    def _add_keywords(self, migration: Mapping[str, object]) -> Mapping[str, str]:
         raw = migration.get("add_keywords", {})
         if not isinstance(raw, dict):
             return {}

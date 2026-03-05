@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
@@ -220,7 +221,7 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         expected_star_arg: str | None,
         expected_star_kwarg: str | None,
         positional_forwarded: list[str],
-        keyword_forwarded: dict[str, str],
+        keyword_forwarded: Mapping[str, str],
         star_forwarded: str | None,
         star_kw_forwarded: str | None,
     ) -> bool:

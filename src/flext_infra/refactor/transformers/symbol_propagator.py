@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import override
 
 import libcst as cst
@@ -18,8 +18,8 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
         self,
         *,
         target_modules: set[str],
-        module_renames: dict[str, str],
-        import_symbol_renames: dict[str, str],
+        module_renames: Mapping[str, str],
+        import_symbol_renames: Mapping[str, str],
         on_change: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize symbol propagation configuration and change collector."""

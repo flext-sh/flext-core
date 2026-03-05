@@ -31,7 +31,7 @@ class FlextInfraRefactorViolationAnalyzer:
     })
 
     @classmethod
-    def analyze_files(cls, files: list[Path]) -> dict[str, object]:
+    def analyze_files(cls, files: list[Path]) -> Mapping[str, object]:
         """Return aggregate and per-file violation counts."""
         totals: Counter[str] = Counter()
         per_file: dict[str, dict[str, int]] = {}

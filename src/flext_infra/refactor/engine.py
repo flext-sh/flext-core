@@ -8,6 +8,7 @@ import fnmatch
 import json
 import re
 import sys
+from collections.abc import Mapping
 from operator import itemgetter
 from pathlib import Path
 from typing import Any, cast
@@ -123,7 +124,7 @@ class FlextInfraRefactorEngine:
 
     def _build_rule(
         self,
-        rule_def: dict[str, Any],
+        rule_def: Mapping[str, Any],
     ) -> FlextInfraRefactorRule | None:
         rule_id = str(rule_def.get("id", "unknown"))
         fix_action = (
@@ -178,7 +179,7 @@ class FlextInfraRefactorEngine:
             return FlextInfraRefactorPatternCorrectionsRule(rule_def)
         return None
 
-    def _validate_rule_definition(self, rule_def: dict[str, Any]) -> str | None:
+    def _validate_rule_definition(self, rule_def: Mapping[str, Any]) -> str | None:
         """Return validation error for malformed declarative rules."""
         rule_id = str(rule_def.get("id", "unknown"))
         fix_action = str(rule_def.get("fix_action", "")).strip().lower()
@@ -378,7 +379,7 @@ class FlextInfraRefactorEngine:
         return all_files
 
     @staticmethod
-    def print_violation_summary(analysis: dict[str, object]) -> None:
+    def print_violation_summary(analysis: Mapping[str, object]) -> None:
         """Print aggregate violation counts and hottest files."""
 
         def _to_int(value: object) -> int:

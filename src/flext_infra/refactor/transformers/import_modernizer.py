@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
 import libcst as cst
@@ -17,7 +17,7 @@ class FlextInfraRefactorImportModernizer(cst.CSTTransformer):
     def __init__(
         self,
         imports_to_remove: list[str],
-        symbols_to_replace: dict[str, str],
+        symbols_to_replace: Mapping[str, str],
         runtime_aliases: set[str],
         blocked_aliases: set[str],
         on_change: Callable[[str], None] | None = None,

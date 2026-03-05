@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any, cast, override
 
 import libcst as cst
@@ -129,7 +129,7 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
     ) -> list[FlextInfraRefactorMethodInfo]:
         def matches_rule(
             method: FlextInfraRefactorMethodInfo,
-            rule_config: dict[str, Any],
+            rule_config: Mapping[str, Any],
         ) -> bool:
             decorators = set(method.decorators)
             exclude_decorators = set(rule_config.get("exclude_decorators", []))
