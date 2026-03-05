@@ -425,7 +425,7 @@ def test_build_apply_transform_and_process_error_paths(
     }
 
     def explode_transform_steps(
-        _result: dict[str, t.Container],
+        _result: Mapping[str, t.Container],
         *,
         normalize: bool,
         map_keys: Mapping[str, str] | None,

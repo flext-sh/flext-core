@@ -11,9 +11,10 @@ from flext_infra.refactor.rule import FlextInfraRefactorRule
 
 
 class _DictToMappingTransformer(cst.CSTTransformer):
-    def __init__(self) -> None:
+    def __init__(self, *, include_return_annotations: bool) -> None:
         self.changes: list[str] = []
         self._has_mapping_import = False
+        self._include_return_annotations = include_return_annotations
 
     @override
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
@@ -72,6 +73,8 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         updated_node: cst.FunctionDef,
     ) -> cst.BaseStatement:
         del original_node
+        if not self._include_return_annotations:
+            return updated_node
         returns = updated_node.returns
         if returns is None:
             return updated_node
@@ -178,7 +181,10 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
     ) -> tuple[cst.Module, list[str]]:
         fix_action = str(self.config.get("fix_action", "")).strip().lower()
         if fix_action == "convert_dict_to_mapping_annotations":
-            transformer = _DictToMappingTransformer()
+            include_returns = bool(self.config.get("include_return_annotations", False))
+            transformer = _DictToMappingTransformer(
+                include_return_annotations=include_returns,
+            )
             updated = tree.visit(transformer)
             return updated, transformer.changes
 

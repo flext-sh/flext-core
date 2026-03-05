@@ -7,6 +7,7 @@ rules:
     enabled: true
     severity: error
     fix_action: convert_dict_to_mapping_annotations
+    include_return_annotations: false
 
   - id: remove-validated-redundant-casts
     name: "Remove validated redundant casts"

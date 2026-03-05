@@ -502,6 +502,22 @@ def test_pattern_rule_converts_dict_annotations_to_mapping() -> None:
 
     assert "from collections.abc import Mapping" in updated
     assert "data: Mapping[str, t.Container]" in updated
+    assert "-> dict[str, t.Container]" in updated
+
+
+def test_pattern_rule_optionally_converts_return_annotations_to_mapping() -> None:
+    source = "def f(data: dict[str, t.Container]) -> dict[str, t.Container]:\n    return data\n"
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorPatternCorrectionsRule({
+        "id": "fix-container-invariance-annotations",
+        "fix_action": "convert_dict_to_mapping_annotations",
+        "include_return_annotations": True,
+    })
+
+    updated_tree, _ = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert "data: Mapping[str, t.Container]" in updated
     assert "-> Mapping[str, t.Container]" in updated
 
 
