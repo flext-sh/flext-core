@@ -369,7 +369,7 @@ class EnsurePyrightConfigPhase:
         ("typeCheckingMode", "strict"),
     )
 
-    def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
+    def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         """Merge standard Pyright config into existing, preserving project-specific entries."""
         changes: list[str] = []
 
@@ -649,7 +649,7 @@ class FlextInfraPyprojectModernizer:
 
         changes = ConsolidateGroupsPhase().apply(doc, canonical_dev)
         changes.extend(EnsurePytestConfigPhase().apply(doc))
-        changes.extend(EnsurePyreflyConfigPhase().apply(doc, is_root=is_root))
+        changes.extend(EnsurePyreflyConfigPhase().apply(doc))
         changes.extend(EnsureMypyConfigPhase().apply(doc))
         changes.extend(EnsurePydanticMypyConfigPhase().apply(doc))
         changes.extend(EnsureRuffConfigPhase().apply(doc, path=path, is_root=is_root))

@@ -572,7 +572,7 @@ class FlextUtilitiesCollection:
         return result
 
     @staticmethod
-    def extract_mapping_items[K, V](
+    def extract_mapping_items[K](
         mapping: Mapping[K, t.Container],
     ) -> list[tuple[str, t.Container]]:
         """Extract mapping items as typed list for iteration.

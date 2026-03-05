@@ -13,6 +13,9 @@ from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+_GITHUB_MODULE = "flext_infra.github"
+_CONTAINER_MODULE = "flext_infra.container"
+
 if TYPE_CHECKING:
     from flext_infra.__version__ import __version__, __version_info__
     from flext_infra.basemk import (
@@ -106,9 +109,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraOutput": ("flext_infra.output", "FlextInfraOutput"),
     "FlextInfraPathResolver": ("flext_infra.paths", "FlextInfraPathResolver"),
     "FlextInfraPatterns": ("flext_infra.patterns", "FlextInfraPatterns"),
-    "FlextInfraPrManager": ("flext_infra.github", "FlextInfraPrManager"),
+    "FlextInfraPrManager": (_GITHUB_MODULE, "FlextInfraPrManager"),
     "FlextInfraPrWorkspaceManager": (
-        "flext_infra.github",
+        _GITHUB_MODULE,
         "FlextInfraPrWorkspaceManager",
     ),
     "FlextInfraProjectSelector": ("flext_infra.selection", "FlextInfraProjectSelector"),
@@ -149,19 +152,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.versioning",
         "FlextInfraVersioningService",
     ),
-    "FlextInfraWorkflowLinter": ("flext_infra.github", "FlextInfraWorkflowLinter"),
-    "FlextInfraWorkflowSyncer": ("flext_infra.github", "FlextInfraWorkflowSyncer"),
+    "FlextInfraWorkflowLinter": (_GITHUB_MODULE, "FlextInfraWorkflowLinter"),
+    "FlextInfraWorkflowSyncer": (_GITHUB_MODULE, "FlextInfraWorkflowSyncer"),
     "KNOWN_VERBS": ("flext_infra.reporting", "KNOWN_VERBS"),
-    "SyncOperation": ("flext_infra.github", "SyncOperation"),
+    "SyncOperation": (_GITHUB_MODULE, "SyncOperation"),
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "c": ("flext_infra.constants", "FlextInfraConstants"),
     "configure_flext_infra_dependencies": (
-        "flext_infra.container",
+        _CONTAINER_MODULE,
         "configure_flext_infra_dependencies",
     ),
-    "get_flext_infra_container": ("flext_infra.container", "get_flext_infra_container"),
-    "get_flext_infra_service": ("flext_infra.container", "get_flext_infra_service"),
+    "get_flext_infra_container": (_CONTAINER_MODULE, "get_flext_infra_container"),
+    "get_flext_infra_service": (_CONTAINER_MODULE, "get_flext_infra_service"),
     "m": ("flext_infra.models", "FlextInfraModels"),
     "output": ("flext_infra.output", "output"),
     "p": ("flext_infra.protocols", "FlextInfraProtocols"),

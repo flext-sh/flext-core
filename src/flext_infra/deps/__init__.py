@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+_DETECTOR_MODULE = "flext_infra.deps.detector"
+
 if TYPE_CHECKING:
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionModels,
@@ -53,7 +55,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraDependencyDetectionService",
     ),
     "FlextInfraDependencyDetectorModels": (
-        "flext_infra.deps.detector",
+        _DETECTOR_MODULE,
         "FlextInfraDependencyDetectorModels",
     ),
     "FlextInfraDependencyPathSync": (
@@ -73,10 +75,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextInfraPyprojectModernizer",
     ),
     "FlextInfraRuntimeDevDependencyDetector": (
-        "flext_infra.deps.detector",
+        _DETECTOR_MODULE,
         "FlextInfraRuntimeDevDependencyDetector",
     ),
-    "ddm": ("flext_infra.deps.detector", "ddm"),
+    "ddm": (_DETECTOR_MODULE, "ddm"),
     "detect_mode": ("flext_infra.deps.path_sync", "detect_mode"),
     "dm": ("flext_infra.deps.detection", "dm"),
     "extract_dep_name": ("flext_infra.deps.path_sync", "extract_dep_name"),

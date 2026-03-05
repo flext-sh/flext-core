@@ -26,7 +26,7 @@ from typing import ClassVar, Never, cast
 
 import pytest
 
-from flext_core import c, p, r
+from flext_core import c, m, p, r
 from flext_tests import t, u
 from tests.test_utils import assertion_helpers
 
@@ -701,7 +701,8 @@ class Testr:
         """Test error_data property."""
         error_data = {"key": "value"}
         result: r[str] = cast("r[str]", r.fail("error", error_data=error_data))
-        assert result.error_data == error_data
+        # RuntimeResult auto-wraps plain dicts into ConfigMap
+        assert result.error_data == m.ConfigMap(root=error_data)
 
         success = r[str].ok("test")
         assert success.error_data is None

@@ -1624,7 +1624,10 @@ class FlextUtilitiesParser:
         """
         if text is None:
             return -1
-        result = self._safe_text_length(text)
+        try:
+            result = self._safe_text_length(text)
+        except Exception:
+            return -1
         if isinstance(result, int):
             return result
         return -1

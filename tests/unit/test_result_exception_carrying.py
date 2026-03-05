@@ -25,7 +25,7 @@ from collections.abc import Sized
 import pytest
 from returns.io import IO, IOSuccess
 
-from flext_core import p, r
+from flext_core import m, p, r
 from flext_core.exceptions import e
 
 
@@ -83,7 +83,8 @@ class TestFailWithException:
 
         assert result.is_failure
         assert result.error == error_msg
-        assert result.error_data == error_data
+        # RuntimeResult auto-wraps plain dicts into ConfigMap
+        assert result.error_data == m.ConfigMap(root=error_data)
         assert result.exception is exc
 
     def test_fail_with_none_error_and_exception(self) -> None:

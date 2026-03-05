@@ -62,11 +62,6 @@ class FlextExceptions:
 
         value: bool = Field(strict=True)
 
-    class _StrictIntValue(_ParamsModel):
-        """Strict integer extractor for kwargs/context parsing."""
-
-        value: int = Field(strict=True)
-
     class _StrictNumberValue(_ParamsModel):
         """Strict numeric extractor for kwargs/context parsing."""
 

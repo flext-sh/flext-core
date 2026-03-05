@@ -1444,8 +1444,14 @@ class TestSyncMethodEdgeCases:
 
         with patch.dict("os.environ", {"FLEXT_WORKSPACE_ROOT": str(workspace)}):
             service = FlextInfraInternalDependencySyncService()
-            result = service.sync(project)
-            assert isinstance(result.is_success, bool)
+            with (
+                patch.object(
+                    service, "_ensure_checkout", return_value=r[bool].ok(True)
+                ),
+                patch.object(service, "_resolve_ref", return_value="main"),
+            ):
+                result = service.sync(project)
+                assert isinstance(result.is_success, bool)
 
     def test_sync_with_synthesized_repo_map(self, tmp_path: Path) -> None:
         """Test sync synthesizes repo map from origin."""
@@ -1455,7 +1461,11 @@ class TestSyncMethodEdgeCases:
         )
 
         service = FlextInfraInternalDependencySyncService()
-        with patch.object(service, "_infer_owner_from_origin", return_value="flext-sh"):
+        with (
+            patch.object(service, "_infer_owner_from_origin", return_value="flext-sh"),
+            patch.object(service, "_ensure_checkout", return_value=r[bool].ok(True)),
+            patch.object(service, "_resolve_ref", return_value="main"),
+        ):
             result = service.sync(tmp_path)
             assert isinstance(result.is_success, bool)
 
@@ -1585,5 +1595,11 @@ class TestSyncMethodEdgeCases:
 
         with patch.dict("os.environ", {"FLEXT_WORKSPACE_ROOT": str(workspace)}):
             service = FlextInfraInternalDependencySyncService()
-            result = service.sync(project)
-            assert isinstance(result.is_success, bool)
+            with (
+                patch.object(
+                    service, "_ensure_checkout", return_value=r[bool].ok(True)
+                ),
+                patch.object(service, "_resolve_ref", return_value="main"),
+            ):
+                result = service.sync(project)
+                assert isinstance(result.is_success, bool)
