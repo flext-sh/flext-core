@@ -28,9 +28,8 @@ class _DictToMappingTransformer(cst.CSTTransformer):
             self._has_mapping_import = True
             return
         for alias in names:
-            if isinstance(alias.name, cst.Name):
-                if alias.name.value == "Mapping":
-                    self._has_mapping_import = True
+            if isinstance(alias.name, cst.Name) and alias.name.value == "Mapping":
+                self._has_mapping_import = True
 
     @override
     def leave_Annotation(
@@ -74,18 +73,24 @@ class _DictToMappingTransformer(cst.CSTTransformer):
         )
         body = list(updated_node.body)
         insert_at = 0
-        if body and isinstance(body[0], cst.SimpleStatementLine):
-            if body[0].body and isinstance(body[0].body[0], cst.Expr):
-                expr = body[0].body[0].value
-                if isinstance(expr, cst.SimpleString):
-                    insert_at = 1
-                    if len(body) > 1 and isinstance(body[1], cst.EmptyLine):
-                        insert_at = 2
+        if (
+            body
+            and isinstance(body[0], cst.SimpleStatementLine)
+            and body[0].body
+            and isinstance(body[0].body[0], cst.Expr)
+        ):
+            expr = body[0].body[0].value
+            if isinstance(expr, cst.SimpleString):
+                insert_at = 1
+                if len(body) > 1 and isinstance(body[1], cst.EmptyLine):
+                    insert_at = 2
         body.insert(insert_at, import_stmt)
         return updated_node.with_changes(body=body)
 
 
 class _RedundantCastRemover(cst.CSTTransformer):
+    _CAST_ARITY = 2
+
     def __init__(self, removable_types: set[str]) -> None:
         self.removable_types = removable_types
         self.changes: list[str] = []
@@ -100,7 +105,7 @@ class _RedundantCastRemover(cst.CSTTransformer):
         func = updated_node.func
         if not isinstance(func, cst.Name) or func.value != "cast":
             return updated_node
-        if len(updated_node.args) != 2:
+        if len(updated_node.args) != self._CAST_ARITY:
             return updated_node
         type_arg, value_arg = updated_node.args
         if type_arg.keyword is not None or value_arg.keyword is not None:

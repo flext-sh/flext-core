@@ -8,16 +8,17 @@ from typing import cast
 import libcst as cst
 
 from flext_infra.refactor import (
-    FlextInfraRefactorPatternCorrectionsRule,
     FlextInfraRefactorClassReconstructorRule,
     FlextInfraRefactorEngine,
     FlextInfraRefactorEnsureFutureAnnotationsRule,
     FlextInfraRefactorImportModernizerRule,
     FlextInfraRefactorLegacyRemovalRule,
     FlextInfraRefactorMRORedundancyChecker,
+    FlextInfraRefactorPatternCorrectionsRule,
     FlextInfraRefactorResult,
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
+    FlextInfraRefactorViolationAnalyzer,
 )
 
 
@@ -842,14 +843,12 @@ rules:
     engine = FlextInfraRefactorEngine(config_path=config_path)
     _ = engine.load_config()
     files = engine.collect_project_files(project_root)
-    from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
-
     result = FlextInfraRefactorViolationAnalyzer.analyze_files(files)
 
     totals_obj = result.get("totals", {})
     assert isinstance(totals_obj, dict)
     totals: dict[str, int] = {}
-    typed_totals_obj = cast(dict[object, object], totals_obj)
+    typed_totals_obj = cast("dict[object, object]", totals_obj)
     for raw_key in typed_totals_obj:
         raw_value = typed_totals_obj[raw_key]
         if not isinstance(raw_key, str):

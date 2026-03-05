@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from collections.abc import Mapping
+from operator import itemgetter
 from pathlib import Path
+from types import MappingProxyType
+from typing import ClassVar
 
 
 class FlextInfraRefactorViolationAnalyzer:
     """Scan files and aggregate massive pattern violations."""
 
-    _PATTERNS: dict[str, re.Pattern[str]] = {
+    _PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = MappingProxyType({
         "container_invariance": re.compile(
             r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]"
         ),
@@ -24,7 +28,7 @@ class FlextInfraRefactorViolationAnalyzer:
         "runtime_alias_violation": re.compile(
             r"\bfrom\s+flext_core\s+import\s+(?!.*\b(?:c|m|r|t|u|p|d|e|h|s|x)\b).*"
         ),
-    }
+    })
 
     @classmethod
     def analyze_files(cls, files: list[Path]) -> dict[str, object]:
@@ -52,7 +56,7 @@ class FlextInfraRefactorViolationAnalyzer:
         ranked_files: list[tuple[str, int, dict[str, int]]] = []
         for file_name, counts in per_file.items():
             ranked_files.append((file_name, sum(counts.values()), counts))
-        ranked_files.sort(key=lambda item: item[1], reverse=True)
+        ranked_files.sort(key=itemgetter(1), reverse=True)
 
         hottest_files = [
             {

@@ -8,6 +8,7 @@ import fnmatch
 import json
 import re
 import sys
+from operator import itemgetter
 from pathlib import Path
 from typing import Any, cast
 
@@ -17,9 +18,9 @@ import yaml
 from flext_core import r
 from flext_infra import c
 from flext_infra.output import output
+from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.result import FlextInfraRefactorResult
 from flext_infra.refactor.rule import FlextInfraRefactorRule
-from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.rules.class_reconstructor import (
     FlextInfraRefactorClassReconstructorRule,
 )
@@ -35,12 +36,12 @@ from flext_infra.refactor.rules.legacy_removal import (
 from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
+from flext_infra.refactor.rules.pattern_corrections import (
+    FlextInfraRefactorPatternCorrectionsRule,
+)
 from flext_infra.refactor.rules.symbol_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
-)
-from flext_infra.refactor.rules.pattern_corrections import (
-    FlextInfraRefactorPatternCorrectionsRule,
 )
 
 
@@ -403,7 +404,7 @@ class FlextInfraRefactorEngine:
             if not isinstance(raw_name, str):
                 continue
             totals_ranked.append((raw_name, _to_int(raw_count)))
-        totals_ranked.sort(key=lambda item: item[1], reverse=True)
+        totals_ranked.sort(key=itemgetter(1), reverse=True)
 
         output.info("Top pattern counts:")
         for name, count in totals_ranked:
