@@ -43,10 +43,7 @@ class FlextInfraVersioningService(FlextService[str]):
 
     @staticmethod
     def _has_project_table(content: str) -> bool:
-        for raw_line in content.splitlines():
-            if raw_line.strip() == "[project]":
-                return True
-        return False
+        return any(raw_line.strip() == "[project]" for raw_line in content.splitlines())
 
     @staticmethod
     def _extract_project_version_from_text(content: str) -> str | None:

@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import difflib
 import fnmatch
+import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -33,10 +35,8 @@ from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
 from flext_infra.refactor.rules.symbol_propagation import (
-    FlextInfraRefactorSymbolPropagationRule,
-)
-from flext_infra.refactor.rules.signature_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
+    FlextInfraRefactorSymbolPropagationRule,
 )
 
 
@@ -377,6 +377,97 @@ class FlextInfraRefactorEngine:
             output.info(f"{failed} files failed")
 
     @staticmethod
+    def build_impact_map(
+        results: list[FlextInfraRefactorResult],
+    ) -> list[dict[str, str]]:
+        """Build structured impact map from rule change messages."""
+        impact_map: list[dict[str, str]] = []
+        symbol_pattern = re.compile(r"^(.*):\s+(.+)\s+->\s+(.+?)(?:\s+\(|$)")
+        added_pattern = re.compile(r"^\[(.+)\]\s+Added keyword:\s+(.+)$")
+        removed_pattern = re.compile(r"^\[(.+)\]\s+Removed keyword:\s+(.+)$")
+
+        for result in results:
+            if not result.success:
+                impact_map.append({
+                    "project": FlextInfraRefactorEngine._project_name_from_path(
+                        result.file_path
+                    ),
+                    "file": str(result.file_path),
+                    "kind": "failure",
+                    "old": "",
+                    "new": "",
+                    "status": result.error or "failed",
+                })
+                continue
+
+            if not result.changes:
+                continue
+
+            project_name = FlextInfraRefactorEngine._project_name_from_path(
+                result.file_path
+            )
+            for change in result.changes:
+                symbol_match = symbol_pattern.match(change)
+                if symbol_match is not None:
+                    _, old_symbol, new_symbol = symbol_match.groups()
+                    impact_map.append({
+                        "project": project_name,
+                        "file": str(result.file_path),
+                        "kind": "rename",
+                        "old": old_symbol.strip(),
+                        "new": new_symbol.strip(),
+                        "status": "changed",
+                    })
+                    continue
+
+                add_match = added_pattern.match(change)
+                if add_match is not None:
+                    migration_id, payload = add_match.groups()
+                    impact_map.append({
+                        "project": project_name,
+                        "file": str(result.file_path),
+                        "kind": "signature_add",
+                        "old": "",
+                        "new": payload.strip(),
+                        "status": migration_id,
+                    })
+                    continue
+
+                remove_match = removed_pattern.match(change)
+                if remove_match is not None:
+                    migration_id, payload = remove_match.groups()
+                    impact_map.append({
+                        "project": project_name,
+                        "file": str(result.file_path),
+                        "kind": "signature_remove",
+                        "old": payload.strip(),
+                        "new": "",
+                        "status": migration_id,
+                    })
+
+        return impact_map
+
+    @staticmethod
+    def write_impact_map(
+        results: list[FlextInfraRefactorResult],
+        output_path: Path,
+    ) -> bool:
+        """Write impact map file in JSON format."""
+        impact_map = FlextInfraRefactorEngine.build_impact_map(results)
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(impact_map, indent=2, ensure_ascii=True) + "\n",
+                encoding="utf-8",
+            )
+            output.info(f"Impact map written: {output_path}")
+            output.info(f"Impact map entries: {len(impact_map)}")
+            return True
+        except OSError as exc:
+            output.error(f"Failed to write impact map {output_path}: {exc}")
+            return False
+
+    @staticmethod
     def _extract_engine_file_filters(
         config_value: object,
     ) -> tuple[list[str], list[str]]:
@@ -442,6 +533,14 @@ class FlextInfraRefactorEngine:
         return projects
 
     @staticmethod
+    def _project_name_from_path(file_path: Path) -> str:
+        """Infer project name from path using nearest pyproject marker."""
+        for parent in file_path.parents:
+            if (parent / "pyproject.toml").exists() and (parent / "Makefile").exists():
+                return parent.name
+        return "unknown"
+
+    @staticmethod
     def main() -> None:
         """CLI entry point."""
         parser = argparse.ArgumentParser(
@@ -460,6 +559,7 @@ class FlextInfraRefactorEngine:
         parser.add_argument("--pattern", default="*.py")
         parser.add_argument("--dry-run", "-n", action="store_true")
         parser.add_argument("--show-diff", "-d", action="store_true")
+        parser.add_argument("--impact-map-output", type=Path)
         parser.add_argument("--config", "-c", type=Path)
         args = parser.parse_args()
 
@@ -518,6 +618,12 @@ class FlextInfraRefactorEngine:
             results = engine.refactor_files(existing_files, dry_run=args.dry_run)
 
         FlextInfraRefactorEngine.print_summary(results, dry_run=args.dry_run)
+
+        if args.impact_map_output is not None:
+            _ = FlextInfraRefactorEngine.write_impact_map(
+                results,
+                args.impact_map_output,
+            )
         failed = sum(1 for item in results if not item.success)
         sys.exit(0 if failed == 0 else 1)
 

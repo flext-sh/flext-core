@@ -27,10 +27,8 @@ if TYPE_CHECKING:
         FlextInfraRefactorMRORedundancyChecker,
     )
     from flext_infra.refactor.rules.symbol_propagation import (
-        FlextInfraRefactorSymbolPropagationRule,
-    )
-    from flext_infra.refactor.rules.signature_propagation import (
         FlextInfraRefactorSignaturePropagationRule,
+        FlextInfraRefactorSymbolPropagationRule,
     )
 
 _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
@@ -79,7 +77,7 @@ _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
         "FlextInfraRefactorSymbolPropagationRule",
     ),
     "FlextInfraRefactorSignaturePropagationRule": (
-        "flext_infra.refactor.rules.signature_propagation",
+        "flext_infra.refactor.rules.symbol_propagation",
         "FlextInfraRefactorSignaturePropagationRule",
     ),
 }
@@ -87,7 +85,8 @@ _LAZY_IMPORTS: Final[dict[str, tuple[str, str]]] = {
 
 def __getattr__(name: str) -> object:
     if name not in _LAZY_IMPORTS:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+        msg = f"module {__name__!r} has no attribute {name!r}"
+        raise AttributeError(msg)
 
     module_name, symbol_name = _LAZY_IMPORTS[name]
     module = importlib.import_module(module_name)

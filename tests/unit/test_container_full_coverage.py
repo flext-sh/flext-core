@@ -9,7 +9,7 @@ from typing import Any, ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
+from flext_core import FlextContainer, FlextContext, FlextSettings, m
 
 
 class _FalseConfig:

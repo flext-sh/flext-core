@@ -566,8 +566,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         if config_class is None:
             msg = f"Namespace '{name}' not registered"
             raise AttributeError(msg)
-        result = self.get_namespace(namespace_key, config_class)
-        return result
+        return self.get_namespace(namespace_key, config_class)
 
     @classmethod
     def for_context(

@@ -421,7 +421,8 @@ class FlextMixins(FlextRuntime):
                 return True
             if container.has_service(service_name):
                 return True
-            raise RuntimeError("Service registration failed")
+            msg = "Service registration failed"
+            raise RuntimeError(msg)
 
         try:
             result = register()

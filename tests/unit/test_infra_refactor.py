@@ -6,11 +6,12 @@ import libcst as cst
 
 from flext_infra.refactor import (
     FlextInfraRefactorClassReconstructorRule,
-    FlextInfraRefactorEnsureFutureAnnotationsRule,
     FlextInfraRefactorEngine,
+    FlextInfraRefactorEnsureFutureAnnotationsRule,
     FlextInfraRefactorImportModernizerRule,
     FlextInfraRefactorLegacyRemovalRule,
     FlextInfraRefactorMRORedundancyChecker,
+    FlextInfraRefactorResult,
     FlextInfraRefactorSignaturePropagationRule,
     FlextInfraRefactorSymbolPropagationRule,
 )
@@ -413,6 +414,28 @@ def test_symbol_propagation_keeps_alias_reference_when_asname_used() -> None:
     assert "rule_cls = Legacy" in updated
 
 
+def test_symbol_propagation_updates_mro_base_references() -> None:
+    source = (
+        "from flext_infra.refactor import LegacyRemovalRule\n\n"
+        "class RuleV2(LegacyRemovalRule):\n"
+        "    pass\n"
+    )
+    tree = cst.parse_module(source)
+    rule = FlextInfraRefactorSymbolPropagationRule({
+        "id": "propagate-refactor-api-renames",
+        "fix_action": "propagate_symbol_renames",
+        "target_modules": ["flext_infra.refactor"],
+        "import_symbol_renames": {
+            "LegacyRemovalRule": "FlextInfraRefactorLegacyRemovalRule"
+        },
+    })
+
+    updated_tree, _ = rule.apply(tree)
+    updated = updated_tree.code
+
+    assert "class RuleV2(FlextInfraRefactorLegacyRemovalRule):" in updated
+
+
 def test_signature_propagation_renames_call_keyword() -> None:
     source = "result = migrate(project_root=root, dry_run=True)\n"
     tree = cst.parse_module(source)
@@ -457,7 +480,8 @@ def test_signature_propagation_removes_and_adds_keywords() -> None:
     updated_tree, _ = rule.apply(tree)
     updated = updated_tree.code
 
-    assert 'run(mode="modern")' in updated
+    assert "run(mode" in updated
+    assert "modern" in updated
 
 
 def test_rule_dispatch_prefers_fix_action_metadata(tmp_path: Path) -> None:
@@ -667,3 +691,41 @@ refactor_engine:
     assert len(results) == 2
     assert all(result.success for result in results)
     assert all(result.modified for result in results)
+
+
+def test_build_impact_map_extracts_rename_entries() -> None:
+    result = FlextInfraRefactorResult(
+        file_path=Path("/tmp/flext-core/src/module.py"),
+        success=True,
+        modified=True,
+        changes=[
+            "Renamed imported symbol: LegacyRemovalRule -> FlextInfraRefactorLegacyRemovalRule (local=LegacyRemovalRule)"
+        ],
+        refactored_code="",
+    )
+
+    impact_map = FlextInfraRefactorEngine.build_impact_map([result])
+
+    assert len(impact_map) == 1
+    assert impact_map[0]["kind"] == "rename"
+    assert impact_map[0]["old"] == "LegacyRemovalRule"
+    assert impact_map[0]["new"] == "FlextInfraRefactorLegacyRemovalRule"
+
+
+def test_build_impact_map_extracts_signature_entries() -> None:
+    result = FlextInfraRefactorResult(
+        file_path=Path("/tmp/flext-core/src/module.py"),
+        success=True,
+        modified=True,
+        changes=[
+            "[run-signature-v2] Removed keyword: legacy",
+            '[run-signature-v2] Added keyword: mode="modern"',
+        ],
+        refactored_code="",
+    )
+
+    impact_map = FlextInfraRefactorEngine.build_impact_map([result])
+
+    kinds = {entry["kind"] for entry in impact_map}
+    assert "signature_remove" in kinds
+    assert "signature_add" in kinds

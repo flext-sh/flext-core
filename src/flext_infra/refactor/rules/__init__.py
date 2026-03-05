@@ -18,10 +18,8 @@ from flext_infra.refactor.rules.mro_redundancy_checker import (
     FlextInfraRefactorMRORedundancyChecker,
 )
 from flext_infra.refactor.rules.symbol_propagation import (
-    FlextInfraRefactorSymbolPropagationRule,
-)
-from flext_infra.refactor.rules.signature_propagation import (
     FlextInfraRefactorSignaturePropagationRule,
+    FlextInfraRefactorSymbolPropagationRule,
 )
 
 __all__ = [
