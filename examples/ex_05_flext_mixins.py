@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import cast, override
 
-from flext_core import FlextRuntime, FlextSettings, c, m, r, t, u, x
+from flext_core import FlextRuntime, FlextSettings, c, r, t, u, x
 
 _RESULTS: list[str] = []
 
@@ -202,9 +202,7 @@ def _exercise_cqrs_validation_and_protocols(_service: _DemoService) -> None:
     metrics_result = tracker.get_metrics()
     _check("metrics.get_metrics.success", metrics_result.is_success)
     metrics_value_str: str = (
-        str(cast("m.ConfigMap", metrics_result.value).root)
-        if metrics_result.is_success
-        else "{}"
+        str(metrics_result.value.root) if metrics_result.is_success else "{}"
     )
     _check(
         "metrics.get_metrics.value",

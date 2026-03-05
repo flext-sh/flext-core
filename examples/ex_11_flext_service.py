@@ -412,9 +412,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "CQRS.MetricsTracker.get",
-            cast(
-                "m.ConfigMap", metrics.get_metrics().unwrap_or(m.ConfigMap(root={}))
-            ).get(metric_key)
+            metrics.get_metrics().unwrap_or(m.ConfigMap(root={})).get(metric_key)
             == metric_value,
         )
 
@@ -436,7 +434,7 @@ class Ex11FlextService(Examples):
             "CQRS.ContextStack.current.type",
             type(current).__name__ if current is not None else "None",
         )
-        popped = cast("m.ConfigMap", stack.pop_context().unwrap_or({}))
+        popped = stack.pop_context().unwrap_or(m.ConfigMap(root={}))
         self.check("CQRS.ContextStack.pop.handler_name", popped.get("handler_name"))
         self.check("CQRS.ContextStack.pop.empty", stack.pop_context().unwrap_or({}))
 
