@@ -536,13 +536,15 @@ class FlextRuntime:
                 if not (callable(keys) and callable(items) and callable(get)):
                     return False
                 try:
-                    keys_values: object = keys()
-                    item_values: object = items()
+                    keys_result = keys()
+                    items_result = items()
                     tuple_entry_size = 2
-                    if not isinstance(keys_values, Sequence):
+                    if not isinstance(keys_result, Sequence):
                         return False
-                    if not isinstance(item_values, Sequence):
+                    if not isinstance(items_result, Sequence):
                         return False
+                    keys_values: Sequence[object] = keys_result
+                    item_values: Sequence[object] = items_result
                     for key in keys_values:
                         if not isinstance(key, str):
                             return False
